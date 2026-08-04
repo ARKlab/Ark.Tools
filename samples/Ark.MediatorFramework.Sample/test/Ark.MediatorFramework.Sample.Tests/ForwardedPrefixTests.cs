@@ -5,6 +5,8 @@ using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using AwesomeAssertions;
 
+using System.Net;
+
 namespace Ark.MediatorFramework.Sample.Tests;
 
 /// <summary>Verifies strict forwarded-prefix handling in the sample host.</summary>

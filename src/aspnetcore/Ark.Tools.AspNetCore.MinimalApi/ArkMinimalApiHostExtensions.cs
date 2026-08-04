@@ -167,8 +167,9 @@ public static class ArkMinimalApiHostExtensions
         }
 
         var segments = value.Split('/');
-        foreach (var segment in segments)
+        for (var segmentIndex = 1; segmentIndex < segments.Length; segmentIndex++)
         {
+            var segment = segments[segmentIndex];
             if (segment.Length == 0 || segment is "." or "..")
             {
                 return false;
