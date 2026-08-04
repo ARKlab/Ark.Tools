@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.AspNetCore.MinimalApi;
@@ -33,14 +32,14 @@ public static class ArkMinimalApiSecurityExtensions
             {
                 var path = context.HttpContext.Request.Path;
 
-                if (path?.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase) == true
-                    || path?.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase) == true
-                    || path?.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase) == true)
+                if (path.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase)
+                    || path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase)
+                    || path.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase))
                 {
                     return context.ConfiguredPolicies["Scalar"];
                 }
 
-                if (path?.StartsWithSegments("/grpc.reflection", StringComparison.OrdinalIgnoreCase) == true)
+                if (path.StartsWithSegments("/grpc.reflection", StringComparison.OrdinalIgnoreCase))
                 {
                     return context.ConfiguredPolicies["GrpcReflection"];
                 }

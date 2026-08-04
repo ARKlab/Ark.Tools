@@ -22,7 +22,7 @@ public sealed class ArkMinimalApiSecurityTests
         using var client = host.GetTestClient();
         client.BaseAddress = new Uri("https://localhost");
 
-        using var response = await client.GetAsync("/").ConfigureAwait(false);
+        using var response = await client.GetAsync(new Uri("/", UriKind.Relative)).ConfigureAwait(false);
 
         response.Headers.Server.Should().BeNull();
         response.Headers.GetValues("X-Content-Type-Options").Should().ContainSingle("nosniff");
