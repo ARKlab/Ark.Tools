@@ -24,7 +24,7 @@ public sealed class ArkMinimalApiSecurityTests
 
         using var response = await client.GetAsync(new Uri("/", UriKind.Relative)).ConfigureAwait(false);
 
-        response.Headers.Server.Should().BeNull();
+        response.Headers.Server.ToString().Should().BeEmpty();
         response.Headers.GetValues("X-Content-Type-Options").Should().ContainSingle("nosniff");
         response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
         response.Headers.GetValues("Strict-Transport-Security").Should().ContainSingle("max-age=31536000");
