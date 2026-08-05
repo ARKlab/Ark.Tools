@@ -16,6 +16,7 @@
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
     <PackageReference Include="NodaTime.Testing" />
     <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
   </ItemGroup>
 
   <ItemGroup>

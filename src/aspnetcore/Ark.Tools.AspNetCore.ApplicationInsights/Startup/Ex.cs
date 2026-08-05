@@ -6,10 +6,11 @@ using Ark.Tools.NLog;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 using System.Diagnostics;
@@ -19,9 +20,25 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
 public static partial class Ex
 {
+    /// <summary>Registers the web request telemetry initializers used by Minimal API hosts.</summary>
+    /// <param name="services">The application service collection.</param>
+    /// <returns>The original service collection.</returns>
+    public static IServiceCollection ArkMinimalApiApplicationInsightsTelemetry(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>());
+        services.TryAdd(ServiceDescriptor.Transient<RequestTelemetry>(sp => sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
+            ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService.")));
+        return services;
+    }
+
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection. Configuration types and their properties may be trimmed.")]
     public static IServiceCollection ArkApplicationInsightsTelemetry(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddHttpContextAccessor();
+        services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
+        services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
         services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
         services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
 
@@ -95,12 +112,6 @@ public static partial class Ex
         if (!string.IsNullOrWhiteSpace(cs))
             services.AddSingleton<ITelemetryProcessorFactory>(
                 new SkipSqlDatabaseDependencyFilterFactory(cs));
-
-        services.Configure<SnapshotCollectorConfiguration>(o =>
-        {
-        });
-        services.Configure<SnapshotCollectorConfiguration>(configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
-        services.AddSnapshotCollector();
 
         return services;
     }
