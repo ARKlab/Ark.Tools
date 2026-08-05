@@ -116,6 +116,7 @@ public sealed class GeneratorSnapshotTests
         minimal.Should().Contain("IEnumerable<string>");
         minimal.Should().Contain("IAsyncEnumerable<string>");
         minimal.Should().Contain("WriteStreamingResponseAsync");
+        minimal.Should().NotContain("DisableResponseCompression");
 
         var grpc = RunGenerator<ArkGrpcEndpointGenerator>(
             """
