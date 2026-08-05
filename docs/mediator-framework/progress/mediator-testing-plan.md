@@ -20,9 +20,9 @@ boundaries:
    ASP.NET host.
 
 The sample becomes the executable example of the application testing pattern:
-Reqnroll scenarios use application contracts directly, local emulators or
-in-memory infrastructure, deterministic clocks and users, and bounded waiting
-for asynchronous effects.
+Reqnroll scenarios use application contracts directly, the SQL-backed profile by
+default, an explicitly selected in-memory store profile, deterministic clocks
+and users, and bounded waiting for asynchronous effects.
 
 ## 2. Target architecture
 
@@ -72,7 +72,7 @@ application.
 | Greeting create/query/update business rules | Sample application tests | Direct contract dispatch returns state or throws the domain exception |
 | FluentValidation errors | Sample application tests | Direct dispatch throws `ValidationException` with field failures |
 | Business violations and not-found behavior | Sample application tests | Direct dispatch throws the typed exception and preserves its payload |
-| Dapper SQL, transaction, paging, audit, and row-version behavior | Sample application tests | Same contract scenarios pass in the opt-in SQL profile |
+| Dapper SQL, transaction, paging, audit, and row-version behavior | Sample application tests | Same contract scenarios pass in the default SQL profile and alternate in-memory profile |
 | HTTP-to-Rebus application workflow | Sample application tests | Direct command publishes and the eventual state is observed |
 | Application authorization decorator and user context | Sample application tests | Claims principal changes the direct dispatch outcome |
 | URLs, status codes, ProblemDetails wire shape, serialization, OpenAPI | Not sample application tests | Covered only by framework hosting capability tests |
@@ -104,19 +104,21 @@ complete:
 4. Run
    `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`.
 5. Run the focused test project as well, using `-f net10.0` for hosting tests.
-6. Do not mark a task complete if the default in-memory profile, the opted-in
-   SQL profile (when SQL Server is available), or the full-solution gate fails.
+6. Do not mark a task complete if the default SQL profile, the explicitly
+   selected in-memory profile, or the full-solution gate fails. When SQL Server
+   is unavailable, record the blocked SQL run rather than silently changing the
+   default profile.
 
 ## 6. Work breakdown
 
 ### TST-01 — Approve ownership and update the delivery map
 
-**Depends on:** Decision log approval  
+**Depends on:** Decision log approval (complete)
 **Scope:** Documentation and progress tracking
 
 #### Implementation details
 
-1. Resolve D1–D7 in
+1. Record the accepted D1–D7 decisions from
    `/home/runner/work/Ark.Tools/Ark.Tools/docs/mediator-framework/progress/mediator-testing-decisions.md`.
 2. Add a testing-redesign workstream to
    `/home/runner/work/Ark.Tools/Ark.Tools/docs/mediator-framework/progress/tasks/README.md`
@@ -130,8 +132,8 @@ complete:
 
 #### Outcome
 
-- Reviewers can see who owns each test category and which decisions are still
-  open before code moves.
+- Reviewers can see who owns each test category and which accepted decisions
+  govern implementation before code moves.
 
 #### Acceptance
 
@@ -145,6 +147,11 @@ complete:
 
 - Check every new relative Markdown link with a repository-wide path search.
 - Run `git diff --check`.
+- Required scenarios/cases:
+  - each D1–D7 has one accepted option recorded in the decision log;
+  - the delivery map links every planned task and the superseded T9.8 wording;
+  - no application-test task assigns ownership of transport URLs, statuses,
+    ProblemDetails wire bodies, serialization, or OpenAPI.
 - Run the full documentation-independent build/test gate.
 
 ### TST-02 — Create framework-owned hosting test projects
@@ -198,6 +205,13 @@ complete:
 
 - `dotnet test tests/Ark.Tools.MediatorFramework.Hosting.Tests/ -f net10.0`.
 - Run the generated-client test once from a clean `obj/` directory.
+- Required scenarios/cases:
+  - the synthetic handler resolves and the fixture disposes its container and
+    host resources;
+  - a clean build exports the synthetic proto and generates the client without
+    sample project references;
+  - the project discovers the smoke test through the normal solution test
+    command.
 - Run the full-solution build and test gates.
 
 ### TST-03 — Prove generated Minimal API hosting
@@ -256,6 +270,13 @@ complete:
 - Generator snapshot tests remain in
   `tests/Ark.Tools.MediatorFramework.Tests/`; hosting tests invoke the generated
   registration to prove it works at runtime.
+- Required scenarios/cases:
+  - valid and invalid route/query/body/server-set binding, including a
+    versioned route;
+  - success, not-found, validation, business, unexpected-error, and
+    authorization outcomes with deterministic assertions;
+  - JSON/MessagePack negotiation, multipart limits/downloads, incremental
+    streaming/cancellation, and filtered versioned OpenAPI output.
 - Run the focused project, then the full-solution gates.
 
 ### TST-04 — Prove generated gRPC hosting
@@ -307,6 +328,13 @@ complete:
   `GrpcProtoExportTests`.
 - Run the client project before the hosting test project when invoking tests
   directly.
+- Required scenarios/cases:
+  - generate the client from exported proto text and use it for unary,
+    versioned, metadata-authenticated calls;
+  - inspect rich validation/business/not-found/authorization/concurrency
+    details;
+  - verify incremental server streaming, cancellation, client-streaming
+    uploads, and exported proto/client shape.
 - Run the full-solution gates.
 
 ### TST-05 — Prove generated Rebus hosting
@@ -354,6 +382,13 @@ complete:
 - Focused test classes: `RebusDispatchTests`, `RebusScopeTests`,
   `RebusRoutingTests`, `RebusRetryTests`, and `RebusCancellationTests`.
 - Run the focused project repeatedly to detect leaked workers.
+- Required scenarios/cases:
+  - a generated message wrapper changes state with a fresh scope and
+    propagated claims principal;
+  - routing, subscription, no-handler, retry, error-queue, deferred-message,
+    and cancellation outcomes complete within bounded waits;
+  - cleanup leaves empty queues and no running processor after success and
+    failure.
 - Run the full-solution gates.
 
 ### TST-06 — Keep other framework hosts under `tests/`
@@ -391,6 +426,13 @@ complete:
 
 - Run the affected framework host test projects.
 - Run a repository search for sample project references from `tests/`.
+- Required scenarios/cases:
+  - generic Azure Functions trigger, binding, authorization, ProblemDetails, and
+    Rebus composition tests run from `tests/`;
+  - a repository search reports no framework host dependency on
+    `SampleStartup`, `SampleComposition`, or a sample generated client;
+  - any retained sample host test is isolated and asserts only sample-owned
+    wiring.
 - Run the full-solution gates.
 
 ### APP-01 — Expose a direct application composition test seam
@@ -413,8 +455,12 @@ complete:
    - registers the deterministic `FakeClock`, test claims-principal provider,
      authorization services/decorators, and a scenario-owned store;
    - configures outbound Rebus using the scenario-owned network;
-   - exposes `DispatchAsync` overloads that resolve handler interfaces inside a
-     scope and always use `async`/`await`;
+   - exposes `DispatchAsync` overloads that resolve handler interfaces inside
+     exactly one scope per top-level contract call and always use
+     `async`/`await`;
+   - makes sequential top-level contract calls open separate scopes while a
+     handler calling another contract internally continues in the current
+     scope;
    - exposes the container only to infrastructure bindings, never to feature
      steps for concrete store access.
 3. Keep `SampleComposition` and `SampleStartup` unchanged as production host
@@ -424,6 +470,10 @@ complete:
    verification error.
 5. Make the context dispose outbound Rebus and all scoped resources even when a
    scenario assertion fails.
+6. Add a separately tagged process-wide fixture example that shares a
+   container, store, network, and processor, resets state before each scenario,
+   and disables parallel execution. Keep it out of the main scenario-owned
+   application suite.
 
 #### Outcome
 
@@ -436,6 +486,11 @@ complete:
   generated client, URL, or serializer dependency.
 - [ ] A test resolving a handler interface proves validation/audit/concurrency
   decorators are present.
+- [ ] A scope-lifecycle test proves sequential top-level dispatches do not reuse
+  a scope, while a nested contract call from a handler does reuse the current
+  scope.
+- [ ] Focused lifecycle tests demonstrate both scenario-owned resources and the
+  separately serialized process-wide fixture.
 - [ ] A step cannot obtain `IGreetingStore` as an application assertion API.
 - [ ] Container verification and disposal are deterministic.
 - [ ] All public test helper types and members have XML documentation where
@@ -445,8 +500,15 @@ complete:
 
 - Add a focused MSTest check for direct create/query dispatch and a failed
   validation dispatch.
-- Add a test that intentionally disposes a context after an exception.
-- Run the sample test project in its default in-memory profile.
+- Required scenarios/cases:
+  - dispatch two independent contracts and assert distinct scoped instances;
+  - dispatch a handler that calls another contract and assert the nested call
+    observes the current scope;
+  - run the process-wide fixture twice and assert reset, serialization, and
+    cleanup between scenarios;
+  - dispose the context after a failed dispatch and verify all resources close.
+- Run the sample test project in its default SQL profile and its explicit
+  in-memory profile.
 - Run the full-solution gates.
 
 ### APP-02 — Rewrite Reqnroll lifecycle and dispatch steps
@@ -498,7 +560,15 @@ complete:
 #### Tests
 
 - Run Reqnroll scenarios by their feature/category filter.
-- Run the entire sample test project with no SQL environment configured.
+- Required scenarios/cases:
+  - a scenario creates a context, sets a principal, dispatches a contract, and
+    observes either a response or typed exception;
+  - a failed step still runs cleanup and the next scenario gets fresh
+    scenario-owned resources;
+  - an async stream consumes items and observes cancellation without transport
+    assertions.
+- Run the entire sample test project in the default SQL profile and with
+  `ARK_SAMPLE_INMEMORY_TESTS=1`.
 - Run the full-solution gates.
 
 ### APP-03 — Cover synchronous application behavior
@@ -553,6 +623,13 @@ through earlier contract dispatches or the documented test adapter; do not call
 - Run each Reqnroll feature independently and as a complete suite.
 - Run focused MSTest tests for cancellation and the concurrency-fault test
   decorator.
+- Required scenarios/cases:
+  - create/read, update/not-found, versioned result, validation, business
+    violation, paging/search, auditing, and authorization;
+  - polymorphic results, attachments, streaming/empty/cancellation, and
+    command/notification side effects;
+  - all assertions use contract results, typed exceptions, or observed state,
+    never transport status or serialization.
 - Run the full-solution gates.
 
 ### APP-04 — Exercise asynchronous workflows through in-memory Rebus
@@ -603,20 +680,28 @@ through earlier contract dispatches or the documented test adapter; do not call
 #### Tests
 
 - Run the asynchronous feature repeatedly to expose races.
-- Run with in-memory transport both with and without the SQL outbox profile.
+- Run with in-memory Rebus transport in both the default SQL store profile and
+  the explicit in-memory store profile.
+- Required scenarios/cases:
+  - compose a greeting, observe the eventual query result, and preserve the
+    authenticated user context;
+  - cover retry success and retry exhaustion with bounded error-queue
+    diagnostics;
+  - verify cleanup leaves no worker, timer, network, or outbox work.
 - Run the full-solution gates.
 
-### APP-05 — Run the application suite against SQL and local emulators
+### APP-05 — Run the application suite against SQL and in-memory stores
 
 **Depends on:** APP-03, APP-04  
 **Scope:** Sample test hooks, Docker documentation, persistence behavior
 
 #### Implementation details
 
-1. Preserve the existing `ARK_SAMPLE_SQL_TESTS=1` opt-in and
-   `ARK_SAMPLE_SQL_CONNECTION` override in the direct test context.
-2. Deploy the existing DACPAC once before SQL scenarios using
-   `Microsoft.SqlServer.Dac`; reset the database before every scenario with
+1. Make SQL the default profile in the direct test context and preserve the
+   `ARK_SAMPLE_SQL_CONNECTION` override. Add
+   `ARK_SAMPLE_INMEMORY_TESTS=1` as the explicit alternate-profile switch.
+2. Deploy the existing DACPAC once before the default suite using
+   `Microsoft.SqlServer.Dac`; reset the database before every SQL scenario with
    `[ops].[ResetFull_OnlyForTesting]`.
 3. Keep the reset procedure's FK-safe order: use `DELETE FROM` for
    FK-constrained application tables and truncate only independent history
@@ -625,37 +710,44 @@ through earlier contract dispatches or the documented test adapter; do not call
    `InMemoryGreetingStore` and `SqlGreetingStore`: create/read/update,
    paging/search, audits, opaque row-version ETags, transactions, and SQL
    outbox effects.
-5. Keep Rebus in-memory for the default and SQL profiles. If an application
-   storage abstraction is added for Azure Blob, add a separate Azurite-tagged
-   profile and run the same attachment contracts against it; otherwise document
-   that the sample uses `DocumentStore` in memory and does not need Azurite.
-6. Serialize only the SQL profile if shared database state requires it; keep
-   scenario-owned in-memory profiles parallel where the Rebus test utilities
-   permit it.
+5. Keep Rebus in-memory in both the SQL default and in-memory store profiles.
+   If an application storage abstraction is added for Azure Blob, add a
+   separate Azurite-tagged profile and run the same attachment contracts
+   against it; otherwise document that the sample uses `DocumentStore` in
+   memory and does not need Azurite.
+6. Serialize the SQL profile if shared database state requires it; keep the
+   scenario-owned in-memory demonstration parallel where the Rebus test
+   utilities permit it.
 7. Update
    `samples/Ark.MediatorFramework.Sample/README.md` and its Docker instructions
-   with the exact environment variables, opt-in command, and cleanup behavior.
+   with the exact profile-selection commands and cleanup behavior.
 
 #### Outcome
 
 - The sample proves application persistence against the real local SQL
-  implementation while retaining a fast default test run.
+  implementation while retaining a fast explicit alternate test run.
 
 #### Acceptance
 
-- [ ] Default tests pass without Docker or SQL Server.
-- [ ] SQL-tagged tests deploy and reset the DACPAC and pass when SQL Server is
+- [ ] Default tests deploy and reset the DACPAC and pass when SQL Server is
   available.
+- [ ] The explicit in-memory profile passes without Docker or SQL Server.
 - [ ] Dapper query paths, transaction/outbox paths, audit persistence, paging,
   and row-version-to-opaque-ETag conversion have direct assertions.
 - [ ] SQL cleanup is FK-safe and leaves no scenario data.
-- [ ] Emulator documentation never embeds credentials or tokens.
+- [ ] Profile documentation never embeds credentials or tokens.
 
 #### Tests
 
-- Run the default sample test project.
-- Start `samples/Ark.MediatorFramework.Sample/docker-compose.yml`, set the SQL
-  environment variables, and run the SQL-tagged tests.
+- Start `samples/Ark.MediatorFramework.Sample/docker-compose.yml` and run the
+  default sample test project against SQL Server.
+- Set `ARK_SAMPLE_INMEMORY_TESTS=1` and run the same sample test project without
+  Docker or SQL Server.
+- Required scenarios/cases:
+  - create/read/update, paging/search, audits, opaque ETags, transactions, and
+    outbox behavior against SQL;
+  - the same persistence-sensitive contract cases against the in-memory stores;
+  - SQL reset after a failed scenario and no state leakage into the next case.
 - Run the full-solution gates after stopping the container.
 
 ### APP-06 — Remove obsolete application boundary tests and dependencies
@@ -710,6 +802,13 @@ through earlier contract dispatches or the documented test adapter; do not call
 - Run `dotnet list samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj package`
   and inspect the remaining test dependencies.
 - Run the sample test project and the framework hosting projects.
+- Required scenarios/cases:
+  - every removed transport assertion has a framework-hosting counterpart or an
+    explicit out-of-scope record;
+  - the direct application suite contains no `HttpClient`, gRPC client,
+    `TestServer`, URL, status, ProblemDetails, serialization, or OpenAPI
+    assertion;
+  - APP-03 and APP-04 behavior remains covered after dependency removal.
 - Run the full-solution gates.
 
 ### DOC-01 — Publish the revised testing guidance
@@ -725,14 +824,15 @@ through earlier contract dispatches or the documented test adapter; do not call
    - framework maintainers use `tests/Ark.Tools.MediatorFramework.Tests` and
      the hosting test project for generated host/wire behavior;
    - application teams use their composition root, a scenario-owned
-     SimpleInjector scope, direct contract dispatch, local emulators, and
-     Rebus idle/outbox waiting.
+     SimpleInjector scope, direct contract dispatch, the SQL default or
+     explicit in-memory store profile, and Rebus idle/outbox waiting.
 2. Add a “what not to assert” section explicitly excluding URLs, status codes,
    ProblemDetails format, serialization, and OpenAPI from application tests.
 3. Add a complete direct-dispatch example using the sample's
    `ApplicationComposition.Register` pattern, with no transport types.
-4. Document the SQL profile, Docker startup, DACPAC reset, default in-memory
-   profile, deterministic clock/user setup, and bounded background-bus wait.
+4. Document the default SQL profile, Docker startup, DACPAC reset, explicit
+   `ARK_SAMPLE_INMEMORY_TESTS=1` profile, deterministic clock/user setup, and
+   bounded background-bus wait.
 5. Update the testing section of
    `/home/runner/work/Ark.Tools/Ark.Tools/docs/mediator-framework/design.md`
    so it no longer says sample scenarios exercise HTTP/gRPC public interfaces.
@@ -753,8 +853,8 @@ through earlier contract dispatches or the documented test adapter; do not call
 - [ ] All documentation uses the same ownership terms as this plan.
 - [ ] Every code path in the direct-dispatch example exists in compiled sample
   code or is explicitly marked pseudocode-free guidance.
-- [ ] The guide documents failure assertions, SQL/emulator setup, Rebus waits,
-  cleanup, and cancellation.
+- [ ] The guide documents failure assertions, SQL and in-memory profile setup,
+  Rebus waits, cleanup, and cancellation.
 - [ ] Broken links and stale references to HTTP/gRPC sample BDD steps are
   removed.
 
@@ -764,6 +864,13 @@ through earlier contract dispatches or the documented test adapter; do not call
   application testing section, and stale T9.8 claims.
 - Validate Markdown links by checking each target path.
 - Run `git diff --check`.
+- Required scenarios/cases:
+  - a contributor can follow the direct-dispatch example with the application
+    composition root and one scope per top-level contract call;
+  - the guide distinguishes framework host/wire tests from sample application
+    tests and documents SQL default plus in-memory alternate profiles;
+  - failure assertions, bounded Rebus waits, cancellation, cleanup, and all
+    referenced paths are documented without credentials.
 - Run the full-solution build/test gates; documentation itself needs no
   separate compiler.
 
@@ -778,8 +885,9 @@ The redesign is complete only when:
 - Validation, business violations, not-found, authorization, SQL/Dapper,
   auditing, concurrency/opaque ETags, paging, attachments, streaming,
   cancellation, and asynchronous Rebus effects are covered.
-- Default tests use in-memory infrastructure; the documented SQL profile runs
-  the persistence-sensitive scenarios against the local SQL emulator.
+- Default tests use the local SQL implementation; the documented
+  `ARK_SAMPLE_INMEMORY_TESTS=1` profile demonstrates the same persistence-
+  sensitive scenarios with in-memory stores.
 - Background waits are bounded, diagnose stranded work, and clean up all
   resources.
 - Application tests contain none of the explicitly excluded transport
@@ -787,4 +895,3 @@ The redesign is complete only when:
 - The design guide, testing guide, sample README, task board, lock files (if
   project references changed), and solution project graph agree.
 - The full-solution build and test gates pass with zero warnings.
-
