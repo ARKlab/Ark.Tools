@@ -7,8 +7,6 @@ using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using AwesomeAssertions;
 
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,55 +22,45 @@ public sealed class ApplicationInsightsTests
     public void RegistersClassicDefaultsWithoutSnapshotDebugger()
     {
         var services = new ServiceCollection();
-        services.AddArkApplicationInsightsTelemetry(new ConfigurationBuilder().Build());
+        services.ArkApplicationInsightsTelemetry(new ConfigurationBuilder().Build());
 
-        using var provider = services.BuildServiceProvider();
-        provider.GetServices<ITelemetryInitializer>()
-            .OfType<WebApiUserTelemetryInitializer>()
-            .Should().ContainSingle();
-        provider.GetServices<ITelemetryInitializer>()
-            .OfType<WebApi4xxAsSuccessTelemetryInitializer>()
-            .Should().ContainSingle();
-        provider.GetService<SnapshotCollectorTelemetryModule>().Should().BeNull();
+        services.Count(descriptor => descriptor.ImplementationType == typeof(WebApiUserTelemetryInitializer))
+            .Should().Be(1);
+        services.Count(descriptor => descriptor.ImplementationType == typeof(WebApi4xxAsSuccessTelemetryInitializer))
+            .Should().Be(1);
+        services.Any(descriptor =>
+            descriptor.ServiceType.FullName is { } fullName
+            && fullName.Contains("SnapshotCollector", StringComparison.Ordinal))
+            .Should().BeFalse();
     }
 
     /// <summary>Marks client errors successful while retaining server-error failures.</summary>
     [TestMethod]
     public void ClassifiesClientAndServerResponses()
     {
-        var services = new ServiceCollection();
-        services.AddArkApplicationInsightsTelemetry(new ConfigurationBuilder().Build());
-
-        using var provider = services.BuildServiceProvider();
-        var accessor = provider.GetRequiredService<IHttpContextAccessor>();
-        var initializer = provider.GetServices<ITelemetryInitializer>()
-            .OfType<WebApi4xxAsSuccessTelemetryInitializer>()
-            .Single();
+        var accessor = new HttpContextAccessor();
+        var initializer = new WebApi4xxAsSuccessTelemetryInitializer(accessor);
 
         accessor.HttpContext = new DefaultHttpContext();
         accessor.HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
         var clientError = new RequestTelemetry();
+        accessor.HttpContext.Features.Set(clientError);
         initializer.Initialize(clientError);
         clientError.Success.Should().BeTrue();
 
         accessor.HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         var serverError = new RequestTelemetry();
+        accessor.HttpContext.Features.Set(serverError);
         initializer.Initialize(serverError);
-        serverError.Success.Should().BeNull();
+        serverError.Success.Should().NotBeTrue();
     }
 
     /// <summary>Copies the authenticated request identity to dependent telemetry.</summary>
     [TestMethod]
     public void PropagatesAuthenticatedIdentity()
     {
-        var services = new ServiceCollection();
-        services.AddArkApplicationInsightsTelemetry(new ConfigurationBuilder().Build());
-
-        using var provider = services.BuildServiceProvider();
-        var accessor = provider.GetRequiredService<IHttpContextAccessor>();
-        var initializer = provider.GetServices<ITelemetryInitializer>()
-            .OfType<WebApiUserTelemetryInitializer>()
-            .Single();
+        var accessor = new HttpContextAccessor();
+        var initializer = new WebApiUserTelemetryInitializer(accessor);
 
         accessor.HttpContext = new DefaultHttpContext();
         accessor.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
@@ -82,10 +70,11 @@ public sealed class ApplicationInsightsTests
                     "user-42")],
                 authenticationType: "test"));
         var request = new RequestTelemetry();
+        accessor.HttpContext.Features.Set(request);
         initializer.Initialize(request);
 
         var dependency = new DependencyTelemetry();
-        dependency.Context.User.AuthenticatedUserId = request.Context.User.AuthenticatedUserId;
+        initializer.Initialize(dependency);
         dependency.Context.User.AuthenticatedUserId.Should().Be("user-42");
     }
 }

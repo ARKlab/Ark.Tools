@@ -96,7 +96,7 @@ public sealed class SampleStartup
     {
         ArgumentNullException.ThrowIfNull(services);
         NodaTimeConverter.Register();
-        services.ArkApplicationInsightsTelemetry(_configuration);
+        services.ArkMinimalApiApplicationInsightsTelemetry();
 
         if (_configuration.GetSection("EntraId").Exists()
             || _configuration.GetSection("AzureAdB2C").Exists())

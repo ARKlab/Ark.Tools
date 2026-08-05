@@ -102,7 +102,7 @@ Decisions and evidence are recorded in
 
 1. [x] HST-01 → [x] HST-05.
 2. [x] HST-06.
-3. [ ] HST-07 → [ ] HST-09.
+3. [x] HST-07 → [ ] HST-09.
 
 ## Azure Functions hosting
 

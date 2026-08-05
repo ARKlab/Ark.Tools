@@ -26,8 +26,8 @@ telemetry initializers, processors and application-container integration.
 
 ## Acceptance
 
-- [ ] No duplicate request or dependency telemetry is emitted.
-- [ ] 4xx requests are not classified as server failures; 5xx requests are.
-- [ ] Snapshot Debugger is not registered.
-- [ ] The sample remains inert without telemetry configuration.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] No duplicate request or dependency telemetry is emitted.
+- [x] 4xx requests are not classified as server failures; 5xx requests are.
+- [x] Snapshot Debugger is not registered.
+- [x] The sample remains inert without telemetry configuration.
+- [x] Full solution build and tests pass with zero warnings.

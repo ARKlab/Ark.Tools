@@ -7,9 +7,10 @@ using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
-using Microsoft.AspNetCore.Http;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 using System.Diagnostics;
@@ -19,6 +20,19 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
 public static partial class Ex
 {
+    /// <summary>Registers the web request telemetry initializers used by Minimal API hosts.</summary>
+    /// <param name="services">The application service collection.</param>
+    /// <returns>The original service collection.</returns>
+    public static IServiceCollection ArkMinimalApiApplicationInsightsTelemetry(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>());
+        services.AddTransient(sp => sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>().HttpContext?.Features.Get<RequestTelemetry>()
+            ?? throw new InvalidOperationException("Request telemetry is only available during an HTTP request."));
+        return services;
+    }
+
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection. Configuration types and their properties may be trimmed.")]
     public static IServiceCollection ArkApplicationInsightsTelemetry(this IServiceCollection services, IConfiguration configuration)
     {
