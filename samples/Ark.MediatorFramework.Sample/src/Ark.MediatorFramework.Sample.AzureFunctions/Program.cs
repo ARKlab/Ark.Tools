@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
+using Ark.Tools.NLog;
 using Ark.Tools.AspNetCore.HealthChecks;
 
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,7 @@ public static class Program
     {
         var builder = FunctionsApplication.CreateBuilder(args);
         builder.ConfigureFunctionsWebApplication();
+        builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.AzureFunctions");
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
         var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];

@@ -14,6 +14,7 @@
     <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Rebus" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Nodatime.Protobuf" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.NLog.Configuration" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Outbox" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Outbox.Rebus" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Outbox.SqlServer" Version="999.9.9" />

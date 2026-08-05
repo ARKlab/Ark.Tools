@@ -88,6 +88,14 @@ request/reply bus semantics; messages are consumed by the separate processor.
 The generated anonymous `GET /healthCheck` endpoint executes the registered
 health checks.
 
+Application logging is configured at the worker process boundary with
+`Ark.Tools.NLog.Configuration`. Local Core Tools logs are written to the console;
+set `ApplicationInsights:InstrumentationKey` (or
+`APPINSIGHTS_INSTRUMENTATIONKEY`) through Functions configuration to enable the
+Application Insights target in Azure. The host clears the default logging
+providers before adding NLog, so each application event is emitted once. Do not
+put connection strings, keys, or tokens in `local.settings.json.example`.
+
 ## gRPC operations panel
 
 gRPCui is an external browser-based operations panel. The host exposes the
