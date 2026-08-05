@@ -68,7 +68,7 @@ public static class NLogConfigurer
                 e.ExceptionObject as Exception,
                 global::System.Globalization.CultureInfo.InvariantCulture,
                 "UnhandledException");
-            global::NLog.LogManager.Flush();
+            global::NLog.LogManager.Flush(global::System.TimeSpan.FromSeconds(5));
         };
     }
 
