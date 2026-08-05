@@ -28,8 +28,8 @@ public static partial class Ex
         services.AddHttpContextAccessor();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>());
-        services.AddTransient(sp => sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>().HttpContext?.Features.Get<RequestTelemetry>()
-            ?? throw new InvalidOperationException("Request telemetry is only available during an HTTP request."));
+        services.TryAdd(ServiceDescriptor.Transient<RequestTelemetry>(sp => sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
+            ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService.")));
         return services;
     }
 
