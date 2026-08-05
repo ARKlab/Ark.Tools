@@ -49,7 +49,7 @@ jobs:
         global-json-file: global.json
 
     - name: 'Install Azure Functions Core Tools'
-      run: npm install --global azure-functions-core-tools@^4.12.1
+      run: npm install --global azure-functions-core-tools@4.12.1
 
     - name: 'Restore packages'
       run: dotnet restore --locked-mode
@@ -62,6 +62,9 @@ jobs:
 
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
+
+    - name: 'Run Azure Functions boundary tests'
+      run: dotnet test tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests --no-build --no-restore --configuration Debug --filter TestCategory=AzureFunctionsBoundary --minimum-expected-tests 1
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
     - uses: actions/upload-artifact@v7  # upload test results
