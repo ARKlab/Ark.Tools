@@ -10,10 +10,11 @@ using AwesomeAssertions;
 
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Hosting;
+
+using NLog;
 
 using Rebus.Transport.InMem;
 
@@ -35,7 +36,7 @@ public sealed class CompositionRootTests
             greetingStore: store);
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
-            ApplicationName = typeof(Program).Assembly.GetName().Name,
+            ApplicationName = typeof(SampleHost).Assembly.GetName().Name,
             EnvironmentName = "IntegrationTests",
             ContentRootPath = AppContext.BaseDirectory,
         });
@@ -49,14 +50,18 @@ public sealed class CompositionRootTests
             sharedStore: store);
         await using var app = builder.Build();
         startup.Configure(app);
-        await app.StartAsync().ConfigureAwait(false);
+        await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         app.Services.GetService<ArkMinimalApiHostOptions>().Should().NotBeNull();
-        app.Services.GetService<IHealthCheckService>().Should().NotBeNull();
+        app.Services.GetService<HealthCheckService>().Should().NotBeNull();
         app.Services.GetServices<ITelemetryInitializer>()
             .Should().Contain(item => item is WebApiUserTelemetryInitializer);
+        container.IsLocked.Should().BeTrue();
+        LogManager.Configuration.Should().NotBeNull();
 
-        using var response = await app.GetTestClient().GetAsync("/healthCheck").ConfigureAwait(false);
+        using var response = await app.GetTestClient().GetAsync(
+            new Uri("/healthCheck", UriKind.Relative),
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 }

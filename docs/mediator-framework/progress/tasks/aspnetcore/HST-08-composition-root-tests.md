@@ -23,7 +23,7 @@ Current transport tests bypass production `Program` wiring.
 
 ## Acceptance
 
-- [ ] Tests execute the production composition root without live external services.
-- [ ] Local SQL Server or Azurite containers remain supported.
-- [ ] Missing or duplicate operational registrations fail a runnable check.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Tests execute the production composition root without live external services.
+- [x] Local SQL Server or Azurite containers remain supported.
+- [x] Missing or duplicate operational registrations fail a runnable check.
+- [x] Full solution build and tests pass with zero warnings.

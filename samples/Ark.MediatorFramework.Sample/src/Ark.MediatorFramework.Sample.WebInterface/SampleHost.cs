@@ -6,9 +6,6 @@ using Ark.Tools.NLog;
 
 using Azure.Identity;
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>Provides the sample's production host composition seam.</summary>
