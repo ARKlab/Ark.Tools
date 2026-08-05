@@ -57,7 +57,7 @@ public static class Program
                         options.TokenValidationParameters.ValidateIssuer = false;
 #pragma warning restore CA5404
                         options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.ASCII.GetBytes("IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLong"));
+                            Encoding.ASCII.GetBytes("IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong"));
                     });
             }
             else
