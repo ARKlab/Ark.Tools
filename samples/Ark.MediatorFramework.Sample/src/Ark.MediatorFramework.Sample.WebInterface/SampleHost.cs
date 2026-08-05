@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.AspNetCore.ApplicationInsights;
+using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
@@ -35,6 +36,7 @@ public static class SampleHost
         ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(network);
 
+        builder.UseArkMinimalApiStartupDiagnostics();
         builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.WebInterface");
 
         var keyVaultUri = builder.Configuration["KeyVault:Uri"];

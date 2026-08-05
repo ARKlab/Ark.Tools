@@ -22,7 +22,7 @@ failures during smoke tests.
 
 ## Acceptance
 
-- [ ] Startup failures are visible through the hosting diagnostic path.
-- [ ] The same failure is logged and still fails process startup.
-- [ ] Applications can omit the Ark defaults by composing the host directly.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Startup failures are visible through the hosting diagnostic path.
+- [x] The same failure is logged and still fails process startup.
+- [x] Applications can omit the Ark defaults by composing the host directly.
+- [x] Full solution build and tests pass with zero warnings.

@@ -51,6 +51,17 @@ public sealed class ArkMinimalApiHostVerificationTests
     }
 
     [TestMethod]
+    public void StartupDiagnosticsAreEnabledByTheOptionalHelper()
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        builder.UseArkMinimalApiStartupDiagnostics();
+
+        builder.WebHost.GetSetting(WebHostDefaults.CaptureStartupErrorsKey).Should().Be("true");
+        builder.WebHost.GetSetting(WebHostDefaults.DetailedErrorsKey).Should().Be("true");
+    }
+
+    [TestMethod]
     public async Task VerificationAndStartupCallbackCompleteBeforeFirstRequest()
     {
         await using var container = new Container();
