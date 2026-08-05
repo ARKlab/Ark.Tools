@@ -28,4 +28,4 @@ failures.
 - [x] Framework logging reaches NLog.
 - [x] Each startup failure produces one flushed fatal event.
 - [x] Startup failure cannot exit with code zero.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Full solution build and tests pass with zero warnings.
