@@ -37,9 +37,10 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 7. Commit a parity matrix listing every sample `[HttpEndpoint]`, its active
    versions, capabilities and exact test method(s) proving Minimal API and
    Functions behavior.
-8. Update `.github/workflows/ci.yml` to install an exact Core Tools version and run
+8. Update `.github/workflows/ci.yml` to install Core Tools from the supported 4.x
+   line and run
    the complete boundary suite in a dedicated job or explicit step on every pull
-   request. Cache only the pinned tool installation, archive sanitized Function host
+   request. Cache only the 4.x tool installation, archive sanitized Function host
    logs on failure, and fail when the tool or host is unavailable; do not mark tests
    passed through an internal skip.
 9. Add an Azure Functions guide covering package installation, host marker,

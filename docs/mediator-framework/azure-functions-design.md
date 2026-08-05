@@ -281,7 +281,7 @@ Testing has three layers:
 Core Tools availability must be explicit in CI. The complete Functions boundary
 suite runs on every pull request and fails if Core Tools or the host is unavailable;
 the test assembly must not silently pass when the host was never started. The
-implementation updates `.github/workflows/ci.yml` with a pinned Core Tools install
+implementation updates `.github/workflows/ci.yml` with a Core Tools 4.x install
 and a dedicated boundary-test job or step; adding tests without wiring that workflow
 is incomplete.
 

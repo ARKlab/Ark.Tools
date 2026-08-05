@@ -119,7 +119,8 @@ tasks.
 ### AZD-07 — Functions boundary-test execution
 
 - **Status:** DECIDED
-- **Decision:** install/pin Azure Functions Core Tools in CI and run the complete
+- **Decision:** install Azure Functions Core Tools from the supported 4.x major
+  line in CI and run the complete
   dedicated boundary-test job on every pull request. Unit/helper tests remain in
   the normal solution test command; the boundary job may be selected by category
   but may not silently skip.

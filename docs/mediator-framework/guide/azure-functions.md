@@ -48,6 +48,6 @@ The framework boundary project under
 `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests` launches the
 built sample with a dynamically allocated loopback port. It fails on missing
 Core Tools, early host exit, or readiness timeout; it never silently skips the
-host. CI installs Core Tools `4.12.1` and runs this project on every pull
+host. CI installs Core Tools from the supported `4.x` line and runs this project on every pull
 request. The parity inventory is recorded in
 [`AZF-10`](../progress/tasks/azure-functions/AZF-10-boundary-parity.md).
