@@ -24,7 +24,7 @@ are logged, flushed and returned as process failures.
 
 ## Acceptance
 
-- [ ] Framework logging reaches NLog.
-- [ ] Each startup failure produces one flushed fatal event.
-- [ ] Startup failure cannot exit with code zero.
+- [x] Framework logging reaches NLog.
+- [x] Each startup failure produces one flushed fatal event.
+- [x] Startup failure cannot exit with code zero.
 - [ ] Full solution build and tests pass with zero warnings.

@@ -98,6 +98,12 @@ Decisions and evidence are recorded in
 | [HST-08](aspnetcore/HST-08-composition-root-tests.md) | Production composition-root tests |
 | [HST-09](aspnetcore/HST-09-startup-error-diagnostics.md) | Startup-error diagnostics |
 
+### Recommended execution order
+
+1. [x] HST-01 → [x] HST-05.
+2. [x] HST-06.
+3. [ ] HST-07 → [ ] HST-09.
+
 ## Azure Functions hosting
 
 The design is in
