@@ -13,8 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
-
-using System.Globalization;
+using NLog.Extensions.Logging;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
@@ -83,7 +82,7 @@ public static class Program
                 "Unhandled startup or host failure: {Message}",
                 ex.Message);
 #pragma warning disable RS0030 // Exception handler - console output for critical failures
-            Console.Error.WriteLine(ex.ToString());
+            await Console.Error.WriteLineAsync(ex.ToString()).ConfigureAwait(false);
 #pragma warning restore RS0030
             Environment.ExitCode = 1;
         }

@@ -7,7 +7,6 @@ using Ark.Tools.NLog;
 using Rebus.Transport.InMem;
 using Azure.Identity;
 using NLog;
-using System.Globalization;
 
 try
 {
@@ -40,7 +39,7 @@ catch (Exception ex)
         "Unhandled startup or host failure: {Message}",
         ex.Message);
 #pragma warning disable RS0030 // Exception handler - console output for critical failures
-    Console.Error.WriteLine(ex.ToString());
+    await Console.Error.WriteLineAsync(ex.ToString()).ConfigureAwait(false);
 #pragma warning restore RS0030
     Environment.ExitCode = 1;
 }
