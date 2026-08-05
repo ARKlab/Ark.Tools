@@ -45,7 +45,7 @@ public static class SampleHost
             builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
         }
 
-        builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
+        builder.Host.AddApplicationInsightsTelemetryForWebHostArk();
         var startup = new SampleStartup(
             container,
             network,
