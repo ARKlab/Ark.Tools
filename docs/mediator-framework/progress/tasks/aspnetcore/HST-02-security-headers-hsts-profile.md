@@ -23,7 +23,7 @@ provided by the existing Ark startup libraries.
 
 ## Acceptance
 
-- [ ] The `Server` header is removed and expected security headers are present.
-- [ ] HSTS is enabled consistently with the existing Ark startup.
-- [ ] TLS-free hosting is not presented as a supported deployment.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] The `Server` header is removed and expected security headers are present.
+- [x] HSTS is enabled consistently with the existing Ark startup.
+- [x] TLS-free hosting is not presented as a supported deployment.
+- [x] Full solution build and tests pass with zero warnings.

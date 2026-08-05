@@ -4,12 +4,16 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
 using Ark.Tools.AspNetCore.HealthChecks;
+using Ark.Tools.NLog;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
+using NLog.Extensions.Logging;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
@@ -24,43 +28,68 @@ namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
-        var builder = FunctionsApplication.CreateBuilder(args);
-        builder.ConfigureFunctionsWebApplication();
+        try
+        {
+            var builder = FunctionsApplication.CreateBuilder(args);
+            NLogConfigurer.For("Ark.MediatorFramework.Sample.AzureFunctions")
+                .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration, async: false)
+                .Apply();
+            builder.Logging.ClearProviders();
+            builder.Logging.AddNLog();
+            builder.ConfigureFunctionsWebApplication();
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
-        var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
-        var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
+            var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
+            var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
 #pragma warning restore CA2000
-        builder.Services.AddArkAzureFunctions(rebusContainer);
-        builder.Services.AddArkHealthChecks();
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
-        {
-            builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
-                .AddAuthentication()
-                .AddJwtBearer("IntegrationTests", options =>
-                {
-                    options.Audience = "API";
+            builder.Services.AddArkAzureFunctions(rebusContainer);
+            builder.Services.AddArkHealthChecks();
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+            {
+                builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
+                    .AddAuthentication()
+                    .AddJwtBearer("IntegrationTests", options =>
+                    {
+                        options.Audience = "API";
 #pragma warning disable CA5404 // Integration-test-only scheme with a symmetric key: issuer validation is intentionally disabled.
-                    options.TokenValidationParameters.ValidateIssuer = false;
+                        options.TokenValidationParameters.ValidateIssuer = false;
 #pragma warning restore CA5404
-                    options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.ASCII.GetBytes("IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong"));
-                });
-        }
-        else
-        {
-            builder.Services.AddArkAzureFunctionsBearerAuthentication();
-        }
-        builder.Services.AddAuthorization(options =>
-        {
-            options.DefaultPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-        });
-        builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
+                        options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.ASCII.GetBytes("IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong"));
+                    });
+            }
+            else
+            {
+                builder.Services.AddArkAzureFunctionsBearerAuthentication();
+            }
+            builder.Services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
+            builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
 
-        builder.Build().Run();
+            await builder.Build().RunAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogManager.GetLogger("Main").Fatal(
+                ex,
+                CultureInfo.InvariantCulture,
+                "Unhandled startup or host failure: {Message}",
+                ex.Message);
+#pragma warning disable RS0030 // Exception handler - console output for critical failures
+            await Console.Error.WriteLineAsync(ex.ToString()).ConfigureAwait(false);
+#pragma warning restore RS0030
+            Environment.ExitCode = 1;
+        }
+        finally
+        {
+            LogManager.Flush(TimeSpan.FromSeconds(5));
+            LogManager.Shutdown();
+        }
     }
 }

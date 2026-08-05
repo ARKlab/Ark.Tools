@@ -34,6 +34,8 @@ public static class NLogConfigurer
 
     static NLogConfigurer()
     {
+        ConfigureUnhandledExceptionLogging();
+
         LogManager.Setup()
             .SetupExtensions(b => b
                 .RegisterTarget<SlackTarget>()
@@ -56,6 +58,18 @@ public static class NLogConfigurer
             .WithConsoleRule("*", global::NLog.LogLevel.Info)
             .Apply()
             ;
+    }
+
+    private static void ConfigureUnhandledExceptionLogging()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            global::NLog.LogManager.GetLogger("Main").Fatal(
+                e.ExceptionObject as Exception,
+                global::System.Globalization.CultureInfo.InvariantCulture,
+                "UnhandledException");
+            global::NLog.LogManager.Flush(global::System.TimeSpan.FromSeconds(5));
+        };
     }
 
     public static Configurer For(string appName)

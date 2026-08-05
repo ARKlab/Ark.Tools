@@ -27,4 +27,4 @@ The Minimal API defaults omit the established Ark `/healthCheck` contract.
 - [x] Path and response shape preserve the existing `/healthCheck` contract.
 - [x] Default registration contains no UI or history support.
 - [x] Responses disclose no secrets or exception details.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Full solution build and tests pass with zero warnings.

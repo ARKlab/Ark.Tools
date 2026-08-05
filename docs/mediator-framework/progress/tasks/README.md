@@ -98,6 +98,12 @@ Decisions and evidence are recorded in
 | [HST-08](aspnetcore/HST-08-composition-root-tests.md) | Production composition-root tests |
 | [HST-09](aspnetcore/HST-09-startup-error-diagnostics.md) | Startup-error diagnostics |
 
+### Recommended execution order
+
+1. [x] HST-01 → [x] HST-05.
+2. [x] HST-06.
+3. [ ] HST-07 → [ ] HST-09.
+
 ## Azure Functions hosting
 
 The design is in
@@ -181,7 +187,7 @@ recent security commits `8502585`, `fd4d600`, `938567d`, and `c0fc361`.
    [x] [FW-10](framework/FW-10-remove-http-auth-metadata.md)
    [x] [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md)
    [x] [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md)
-   [ ] [GEN-12](generator-dx/GEN-12-evolvable-enums.md)
+   [x] [GEN-12](generator-dx/GEN-12-evolvable-enums.md)
 9. Future improvements:
    [ ] [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md)
    [ ] [NET-03](aspnetcore/NET-03-json-patch.md)
