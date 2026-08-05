@@ -10,6 +10,8 @@ reference documentation (what the framework *is*) stays one level up:
 | [`tasks/README.md`](tasks/README.md) | **Current task board.** One self-contained task document per pending item, with Outcomes and Acceptance. Start here. |
 | [`tasks.md`](tasks.md) | Historical epic breakdown (Epics 1–12) with acceptance criteria. |
 | [`implementation-plan.md`](implementation-plan.md) | Phased delivery plan (Phases 1–10) with step-by-step instructions. |
+| [`mediator-testing-plan.md`](mediator-testing-plan.md) | Proposed redesign separating framework hosting tests under `tests/` from direct application-contract tests in the sample. |
+| [`mediator-testing-decisions.md`](mediator-testing-decisions.md) | Alternatives and approval points for the mediator testing redesign. |
 | [`pre-release-review.md`](pre-release-review.md) | Adversarial pre-release review (DX + security), gap analysis vs `Ark.ReferenceProject`, recorded decisions D1–D8. |
 | [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 items. |
 | [`azure-functions-decision-log.md`](azure-functions-decision-log.md) | Reviewable decisions for the proposed Azure Functions hosting workstream. |
