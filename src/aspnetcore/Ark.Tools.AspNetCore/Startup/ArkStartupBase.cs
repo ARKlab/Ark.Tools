@@ -28,9 +28,6 @@ internal sealed class ArkStartupBase
     {
         services.AddHttpContextAccessor();
 
-        services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
-        services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
-
         services.ArkApplicationInsightsTelemetry(Configuration);
 
         services.AddSecurityHeaderPolicies()

@@ -6,8 +6,8 @@ using Ark.Tools.NLog;
 using Microsoft.ApplicationInsights.AspNetCore;
 using Microsoft.ApplicationInsights.DependencyCollector;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights.SnapshotCollector;
 using Microsoft.ApplicationInsights.WindowsServer.Channel.Implementation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -22,6 +22,9 @@ public static partial class Ex
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection. Configuration types and their properties may be trimmed.")]
     public static IServiceCollection ArkApplicationInsightsTelemetry(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddHttpContextAccessor();
+        services.AddSingleton<ITelemetryInitializer, WebApiUserTelemetryInitializer>();
+        services.AddSingleton<ITelemetryInitializer, WebApi4xxAsSuccessTelemetryInitializer>();
         services.AddApplicationInsightsTelemetryProcessor<ArkSkipUselessSpamTelemetryProcessor>();
         services.AddSingleton<ITelemetryInitializer, GlobalInfoTelemetryInitializer>();
 
@@ -95,12 +98,6 @@ public static partial class Ex
         if (!string.IsNullOrWhiteSpace(cs))
             services.AddSingleton<ITelemetryProcessorFactory>(
                 new SkipSqlDatabaseDependencyFilterFactory(cs));
-
-        services.Configure<SnapshotCollectorConfiguration>(o =>
-        {
-        });
-        services.Configure<SnapshotCollectorConfiguration>(configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
-        services.AddSnapshotCollector();
 
         return services;
     }

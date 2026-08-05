@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.WebInterface;
-using Ark.Tools.AspNetCore.ApplicationInsights;
 using Ark.Tools.NLog;
 using Rebus.Transport.InMem;
 using Azure.Identity;
@@ -22,7 +21,6 @@ try
         builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     }
 
-    builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
     var startup = new SampleStartup(container, network, builder.Configuration);
     startup.ConfigureServices(builder.Services);
 
