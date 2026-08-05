@@ -3,29 +3,11 @@
 
 using System.Runtime.CompilerServices;
 
-using Microsoft.AspNetCore.Http;
-
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>Helpers used by generated streaming Minimal API endpoints.</summary>
 public static class ArkStreaming
 {
-    /// <summary>
-    /// Prevents response-compression middleware from buffering a streaming response.
-    /// </summary>
-    /// <param name="context">The current HTTP context.</param>
-    public static void DisableResponseCompression(HttpContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        var cacheControl = context.Response.Headers.CacheControl.ToString();
-        context.Response.Headers.CacheControl = string.IsNullOrEmpty(cacheControl)
-            ? "no-transform"
-            : cacheControl.Contains("no-transform", StringComparison.OrdinalIgnoreCase)
-                ? cacheControl
-                : cacheControl + ", no-transform";
-    }
-
     /// <summary>
     /// Adapts a response sequence to the request cancellation token while preserving
     /// ASP.NET Core's native JSON array streaming.

@@ -759,7 +759,6 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                             if (e.IsStreaming)
                             {
-                                sb.AppendLine("                global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.DisableResponseCompression(httpContext);");
                                 sb.AppendLine("                if (global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(httpContext.Request.Headers.Accept))");
                                 sb.AppendLine("                    return await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteStreamingResponseAsync<" + e.StreamElement + ">(httpContext, result, " + e.MaxMessagePackStreamedItems + ", cancellationToken, " + SuccessStatusCode(e) + ").ConfigureAwait(false);");
                                 sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), statusCode: " + SuccessStatusCode(e) + ");");
@@ -819,7 +818,6 @@ namespace Ark.MediatorFramework.Generators
                         sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
                         if (e.IsStreaming)
                         {
-                            sb.AppendLine("                global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.DisableResponseCompression(httpContext);");
                             sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken);");
                             sb.AppendLine("            }).Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>(" + SuccessStatusCode(e) + ")"
                                 + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
