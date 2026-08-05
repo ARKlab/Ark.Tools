@@ -10,7 +10,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NLog.Extensions.Logging;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
@@ -29,7 +31,11 @@ public static class Program
     {
         var builder = FunctionsApplication.CreateBuilder(args);
         builder.ConfigureFunctionsWebApplication();
-        builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.AzureFunctions");
+        NLogConfigurer.For("Ark.MediatorFramework.Sample.AzureFunctions")
+            .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration)
+            .Apply();
+        builder.Logging.ClearProviders();
+        builder.Logging.AddNLog();
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
         var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
