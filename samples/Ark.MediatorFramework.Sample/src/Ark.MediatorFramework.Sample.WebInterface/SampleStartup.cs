@@ -7,7 +7,6 @@ using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
-using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
@@ -96,7 +95,6 @@ public sealed class SampleStartup
     {
         ArgumentNullException.ThrowIfNull(services);
         NodaTimeConverter.Register();
-        services.ArkMinimalApiApplicationInsightsTelemetry();
 
         if (_configuration.GetSection("EntraId").Exists()
             || _configuration.GetSection("AzureAdB2C").Exists())

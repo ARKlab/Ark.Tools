@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
+using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.NLog;
 
@@ -39,6 +40,7 @@ public static class Program
             builder.Logging.ClearProviders();
             builder.Logging.AddNLog();
             builder.ConfigureFunctionsWebApplication();
+            builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
             var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
