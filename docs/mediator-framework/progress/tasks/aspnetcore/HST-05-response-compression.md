@@ -27,4 +27,4 @@ Minimal API hosting omits the accepted Ark Brotli/Gzip HTTPS compression default
 - [x] Brotli/Gzip over HTTPS is enabled by the Ark defaults.
 - [x] gRPC compression remains available.
 - [x] Streaming items are delivered without compressor buffering delays.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Full solution build and tests pass with zero warnings.
