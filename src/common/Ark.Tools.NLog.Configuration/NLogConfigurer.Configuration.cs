@@ -14,6 +14,8 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurerConfiguration
 {
+    private static int _unhandledExceptionLoggingConfigured;
+
     public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, bool async = true)
     {
         var config = new Config
@@ -68,15 +70,29 @@ public static class NLogConfigurerConfiguration
         return @this;
     }
 
+    /// <summary>
+    /// Registers NLog logging and flushing for unhandled process exceptions.
+    /// </summary>
+    public static void ConfigureUnhandledExceptionLogging()
+    {
+        if (Interlocked.Exchange(ref _unhandledExceptionLoggingConfigured, 1) != 0)
+            return;
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            global::NLog.LogManager.GetLogger("Main").Fatal(
+                e.ExceptionObject as Exception,
+                global::System.Globalization.CultureInfo.InvariantCulture,
+                "UnhandledException");
+            global::NLog.LogManager.Flush();
+        };
+    }
+
     public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, string? mailFrom = null, Action<Configurer>? configure = null)
     {
         appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
 
-        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
-        {
-            global::NLog.LogManager.GetLogger("Main").Fatal(e.ExceptionObject as Exception, global::System.Globalization.CultureInfo.InvariantCulture, "UnhandledException");
-            global::NLog.LogManager.Flush();
-        };
+        ConfigureUnhandledExceptionLogging();
 
         return builder.ConfigureLogging((ctx, logging) =>
         {
