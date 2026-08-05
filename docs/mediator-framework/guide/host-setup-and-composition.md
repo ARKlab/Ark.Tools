@@ -200,10 +200,16 @@ deployments retain their generated document paths and links.
 Set `UseForwardedPrefix` to `false` when the deployment handles this header
 outside the application.
 
-`UseArkMinimalApiStartupDiagnostics` is optional. It enables ASP.NET Core startup
-error capture and detailed startup diagnostics for smoke tests and development.
-Hosts that compose ASP.NET Core directly may omit it and select their own hosting
-diagnostic settings.
+Startup error capture and detailed hosting diagnostics are enabled automatically
+when you call the `WebApplicationBuilder` overload of `AddArkMinimalApiHost`:
+
+```csharp
+builder.AddArkMinimalApiHost(container, options => { ... });
+```
+
+Hosts that compose ASP.NET Core directly using the `IServiceCollection` overload
+can opt in explicitly by calling `builder.UseArkMinimalApiStartupDiagnostics()`
+before services are configured.
 
 ## Map generated endpoints from a marker type
 
