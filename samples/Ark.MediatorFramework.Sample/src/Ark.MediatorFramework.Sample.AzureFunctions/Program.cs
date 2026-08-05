@@ -33,7 +33,7 @@ public static class Program
         try
         {
             var builder = FunctionsApplication.CreateBuilder(args);
-            NLogConfigurer.ConfigureUnhandledExceptionLogging();
+            NLogConfigurerConfiguration.ConfigureUnhandledExceptionLogging();
             NLogConfigurer.For("Ark.MediatorFramework.Sample.AzureFunctions")
                 .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration, async: false)
                 .Apply();
