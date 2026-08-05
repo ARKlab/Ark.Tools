@@ -59,6 +59,24 @@ public sealed class ArkMinimalApiSecurityTests
         response.Headers.GetValues("Cross-Origin-Opener-Policy").Should().ContainSingle("unsafe-none");
     }
 
+    [TestMethod]
+    [DataRow("/error", 500)]
+    [DataRow("/not-found", 404)]
+    public async Task SecurityHeaders_ArePresentOnErrorAndNotFound(string path, int expectedStatusCode)
+    {
+        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var client = host.GetTestClient();
+        client.BaseAddress = new Uri("https://localhost");
+
+        using var response = await client.GetAsync(new Uri($"https://localhost{path}")).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be((System.Net.HttpStatusCode)expectedStatusCode);
+        response.Headers.Server.ToString().Should().BeEmpty();
+        response.Headers.Contains("Strict-Transport-Security").Should().BeTrue();
+        response.Headers.GetValues("X-Content-Type-Options").Should().ContainSingle("nosniff");
+        response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
+    }
+
     private static async Task<IHost> CreateHostAsync()
     {
         var host = new HostBuilder()
@@ -87,6 +105,7 @@ public sealed class ArkMinimalApiSecurityTests
                         endpoints.MapGet("/scalar/{**path}", () => "scalar ui");
                         endpoints.MapGet("/swagger/{**path}", () => "swagger ui");
                         endpoints.MapGet("/openapi/{**path}", () => "openapi ui");
+                        endpoints.MapGet("/error", () => Results.StatusCode(500));
                     });
                 });
             })
