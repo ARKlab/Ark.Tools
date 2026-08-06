@@ -71,7 +71,7 @@ public static class HostingEndpointMappings
 /// Deterministic request contract with route, query, body, and server-owned properties.
 /// </summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/requests/{id}", AllowAnonymous = true, AcceptsMessagePack = true)]
-[GrpcMethod]
+[GrpcMethod("ExecuteHostingRequest")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 [MessagePackObject(true)]
@@ -113,7 +113,7 @@ public sealed record HostingResponse
 
 /// <summary>Query contract with route and query parameters.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/queries/{id}", AllowAnonymous = true)]
-[GrpcMethod]
+[GrpcMethod("ExecuteHostingQuery")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingQuery : Ark.Tools.Solid.IQuery<HostingResponse>
@@ -131,7 +131,7 @@ public sealed record HostingQuery : Ark.Tools.Solid.IQuery<HostingResponse>
 
 /// <summary>Command contract exposed through HTTP, gRPC, and Rebus.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/commands", AllowAnonymous = true)]
-[GrpcMethod]
+[GrpcMethod("ExecuteHostingCommand")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingCommand : Ark.Tools.Solid.ICommand
@@ -153,7 +153,7 @@ public sealed record HostingRebusCommand : Ark.Tools.Solid.ICommand
 
 /// <summary>Request whose handler produces a validation failure.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/validation", AllowAnonymous = true)]
-[GrpcMethod]
+[GrpcMethod("ValidateHostingRequest")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingValidationRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -173,11 +173,14 @@ public sealed record HostingStatusRequest : Ark.Tools.Solid.IRequest<HostingResp
 
 /// <summary>Query whose handler returns no value.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/not-found", AllowAnonymous = true, NullResultStatusCode = 404)]
+[GrpcMethod("GetHostingNotFound")]
+[GrpcService("Hosting")]
+[ProtoBuf.ProtoContract]
 public sealed record HostingNotFoundQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
-[GrpcMethod]
+[GrpcMethod("TriggerHostingBusinessViolation")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingBusinessViolationRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -197,8 +200,41 @@ public sealed record HostingUnexpectedRequest : Ark.Tools.Solid.IRequest<Hosting
 
 /// <summary>Query protected by the transport-agnostic authorization decorator.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/authorized", AllowAnonymous = false)]
+[GrpcMethod("GetHostingAuthorized")]
+[GrpcService("Hosting")]
 [PolicyAuthorize(typeof(HostingScopePolicy))]
+[ProtoBuf.ProtoContract]
 public sealed record HostingAuthorizedQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
+
+/// <summary>Query returning the authenticated synthetic caller.</summary>
+[GrpcMethod("GetHostingUserContext")]
+[GrpcService("Hosting")]
+[ProtoBuf.ProtoContract]
+public sealed record HostingUserContextQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
+
+/// <summary>Request whose handler reports an opaque ETag mismatch.</summary>
+[GrpcMethod("CheckHostingETag")]
+[GrpcService("Hosting")]
+[ProtoBuf.ProtoContract]
+public sealed record HostingETagMismatchRequest : Ark.Tools.Solid.IRequest<HostingResponse>
+{
+    /// <summary>Gets the opaque ETag supplied by the caller.</summary>
+    [ProtoBuf.ProtoMember(1)]
+    [ETag]
+    public string ETag { get; set; } = string.Empty;
+}
+
+/// <summary>Request whose handler reports an optimistic concurrency conflict.</summary>
+[GrpcMethod("CheckHostingConcurrency")]
+[GrpcService("Hosting")]
+[ProtoBuf.ProtoContract]
+public sealed record HostingOptimisticConcurrencyRequest : Ark.Tools.Solid.IRequest<HostingResponse>
+{
+    /// <summary>Gets the opaque concurrency token supplied by the caller.</summary>
+    [ProtoBuf.ProtoMember(1)]
+    [ETag]
+    public string ETag { get; set; } = string.Empty;
+}
 
 /// <summary>Policy requiring the synthetic hosting scope.</summary>
 public sealed class HostingScopePolicy : IAuthorizationPolicy
@@ -222,7 +258,7 @@ public sealed class HostingScopePolicy : IAuthorizationPolicy
 
 /// <summary>Query returning a deterministic asynchronous stream.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/stream", AllowAnonymous = true)]
-[GrpcMethod]
+[GrpcMethod("StreamHosting")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingStreamQuery : Ark.Tools.Solid.IQuery<IAsyncEnumerable<HostingStreamItem>>
@@ -250,7 +286,7 @@ public sealed record HostingStreamItem
     MaxRequestBodySizeBytes = 1024,
     MaxFileCount = 1,
     AllowedContentTypes = ["text/plain"])]
-[GrpcMethod]
+[GrpcMethod("UploadHostingAttachment")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingAttachmentUploadRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -301,6 +337,29 @@ public sealed record HostingOpenApiResponse
 [HttpEndpoint("GET", "/api/v{version}/hosting/openapi", AllowAnonymous = true)]
 public sealed record HostingOpenApiQuery : Ark.Tools.Solid.IQuery<HostingOpenApiResponse>;
 
+/// <summary>Query used to verify NodaTime and polymorphic protobuf fields.</summary>
+[GrpcMethod("GetHostingWireTypes")]
+[GrpcService("Hosting")]
+[ProtoBuf.ProtoContract]
+public sealed record HostingWireTypesQuery : Ark.Tools.Solid.IQuery<HostingWireTypesResponse>;
+
+/// <summary>Response carrying NodaTime and polymorphic protobuf fields.</summary>
+[ProtoBuf.ProtoContract]
+public sealed record HostingWireTypesResponse
+{
+    /// <summary>Gets the representative local date.</summary>
+    [ProtoBuf.ProtoMember(1)]
+    public LocalDate Date { get; init; }
+
+    /// <summary>Gets the representative local date and time.</summary>
+    [ProtoBuf.ProtoMember(2)]
+    public LocalDateTime DateTime { get; init; }
+
+    /// <summary>Gets the representative shape.</summary>
+    [ProtoBuf.ProtoMember(3)]
+    public HostingShape Shape { get; init; } = new HostingCircle();
+}
+
 /// <summary>Discriminator values for synthetic OpenAPI shapes.</summary>
 public enum HostingShapeKind
 {
@@ -311,18 +370,22 @@ public enum HostingShapeKind
 /// <summary>Base type for synthetic OpenAPI polymorphism.</summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(HostingCircle), "circle")]
+[ProtoBuf.ProtoContract]
+[ProtoBuf.ProtoInclude(10, typeof(HostingCircle))]
 public abstract record HostingShape;
 
 /// <summary>Circle shape used by the OpenAPI schema.</summary>
+[ProtoBuf.ProtoContract]
 public sealed record HostingCircle : HostingShape
 {
     /// <summary>Gets or sets the circle radius.</summary>
+    [ProtoBuf.ProtoMember(1)]
     public int Radius { get; init; } = 1;
 }
 
 /// <summary>Versioned query used to exercise contract lifetime metadata.</summary>
 [HttpEndpoint("GET", "/hosting/versioned/{id}", AllowAnonymous = true)]
-[GrpcMethod]
+[GrpcMethod("GetHostingVersioned")]
 [GrpcService("Hosting")]
 [Versioning(Introduced = 2, Retired = 4)]
 [ProtoBuf.ProtoContract]

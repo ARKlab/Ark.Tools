@@ -4,8 +4,10 @@
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
+using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
@@ -21,6 +23,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.OpenApi;
 
 using ProtoBuf.Grpc.Server;
+using ProtoBuf.Meta;
 
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -28,6 +31,8 @@ using Rebus.Transport.InMem;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
+using NodaTime;
 
 using System.Security.Claims;
 
@@ -63,11 +68,15 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
         Container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
         Container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
+        Container.Register<IQueryHandler<HostingUserContextQuery, HostingResponse>, HostingUserContextHandler>();
+        Container.Register<IRequestHandler<HostingETagMismatchRequest, HostingResponse>, HostingETagMismatchHandler>();
+        Container.Register<IRequestHandler<HostingOptimisticConcurrencyRequest, HostingResponse>, HostingOptimisticConcurrencyHandler>();
         Container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
         Container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
         Container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
         Container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
         Container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
+        Container.Register<IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>, HostingWireTypesHandler>();
         Container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
 
         Container.RegisterAuthorization();
@@ -175,9 +184,20 @@ public sealed class HostingTestFixture : IAsyncDisposable
         ThrowIfDisposed();
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.AddCodeFirstGrpc();
+        builder.Services
+            .AddAuthentication(TestAuthenticationHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                TestAuthenticationHandler.SchemeName,
+                static _ => { });
+        builder.Services.AddAuthorization();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
         builder.Services.AddSingleton(Container);
+        builder.Services.AddSingleton(PrincipalProvider);
         var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         HostingEndpointMappings.MapGrpc(app);
         _hosts.Add(app);
         return app;
@@ -448,6 +468,46 @@ internal sealed class HostingAuthorizedHandler : IQueryHandler<HostingAuthorized
     }
 }
 
+internal sealed class HostingUserContextHandler : IQueryHandler<HostingUserContextQuery, HostingResponse>
+{
+    private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
+
+    public HostingUserContextHandler(IContextProvider<ClaimsPrincipal> principalProvider)
+    {
+        _principalProvider = principalProvider;
+    }
+
+    public async Task<HostingResponse> ExecuteAsync(HostingUserContextQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingResponse
+        {
+            Message = _principalProvider.Current.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingETagMismatchHandler : IRequestHandler<HostingETagMismatchRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(HostingETagMismatchRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The synthetic ETag does not match.");
+    }
+}
+
+internal sealed class HostingOptimisticConcurrencyHandler : IRequestHandler<HostingOptimisticConcurrencyRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(
+        HostingOptimisticConcurrencyRequest request,
+        CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new Ark.Tools.Core.OptimisticConcurrencyException("The synthetic entity was concurrently modified.");
+    }
+}
+
 internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>
 {
     private readonly HostingTestState _state;
@@ -565,6 +625,22 @@ internal sealed class HostingOpenApiHandler : IQueryHandler<HostingOpenApiQuery,
             Date = new NodaTime.LocalDate(2026, 8, 6),
             Shape = new HostingCircle { Radius = 3 },
             ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingWireTypesHandler : IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>
+{
+    public async Task<HostingWireTypesResponse> ExecuteAsync(
+        HostingWireTypesQuery query,
+        CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingWireTypesResponse
+        {
+            Date = new LocalDate(2026, 8, 6),
+            DateTime = new LocalDateTime(2026, 8, 6, 15, 44),
+            Shape = new HostingCircle { Radius = 7 },
         };
     }
 }
