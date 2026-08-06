@@ -52,15 +52,38 @@ public sealed class SimpleInjectorProcessorTests
             async () => await requestProcessor.ExecuteAsync(new FailingRequest(), cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
+    [TestMethod]
+    public async Task Processors_execute_self_generic_types_without_reflection()
+    {
+        await using var container = CreateContainer();
+        var trace = container.GetInstance<Trace>();
+        var requestProcessor = new SimpleInjectorRequestProcessor(container);
+        var queryProcessor = new SimpleInjectorQueryProcessor(container);
+        var commandProcessor = new SimpleInjectorCommandProcessor(container);
+
+        var requestResult = await requestProcessor.ExecuteAsync(new SelfRequest(4)).ConfigureAwait(false);
+        var queryResult = await queryProcessor.ExecuteAsync(new SelfQuery(5)).ConfigureAwait(false);
+        await commandProcessor.ExecuteAsync(new SelfCommand(6)).ConfigureAwait(false);
+
+        Assert.AreEqual(4, requestResult);
+        Assert.AreEqual(5, queryResult);
+        CollectionAssert.AreEqual(
+            _expectedEvents,
+            trace.Events);
+    }
+
     private static Container CreateContainer()
     {
         var container = new Container();
         container.RegisterInstance(new Trace());
         container.Register<IRequestHandler<TestRequest, int>, TestRequestHandler>();
         container.Register<IRequestHandler<FailingRequest, int>, FailingRequestHandler>();
+        container.Register<IRequestHandler<SelfRequest, int>, SelfRequestHandler>();
         container.Register<IQueryHandler<TestQuery, int>, TestQueryHandler>();
         container.Register<IQueryHandler<CancellableQuery, int>, CancellableQueryHandler>();
+        container.Register<IQueryHandler<SelfQuery, int>, SelfQueryHandler>();
         container.Register<ICommandHandler<TestCommand>, TestCommandHandler>();
+        container.Register<ICommandHandler<SelfCommand>, SelfCommandHandler>();
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestDecorator<,>));
         container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryDecorator<,>));
         container.RegisterDecorator(typeof(ICommandHandler<>), typeof(CommandDecorator<>));
@@ -78,6 +101,36 @@ public sealed class SimpleInjectorProcessorTests
     private sealed record TestQuery(int Value) : IQuery<int>;
     private sealed record CancellableQuery : IQuery<int>;
     private sealed record TestCommand(int Value) : ICommand;
+    private sealed record SelfRequest(int Value) : IRequest<SelfRequest, int>;
+    private sealed record SelfQuery(int Value) : IQuery<SelfQuery, int>;
+    private sealed record SelfCommand(int Value) : ICommand<SelfCommand>;
+
+    private sealed class SelfRequestHandler(Trace trace) : IRequestHandler<SelfRequest, int>
+    {
+        public Task<int> ExecuteAsync(SelfRequest request, CancellationToken ctk = default)
+        {
+            trace.Events.Add("request-handler");
+            return Task.FromResult(request.Value);
+        }
+    }
+
+    private sealed class SelfQueryHandler(Trace trace) : IQueryHandler<SelfQuery, int>
+    {
+        public Task<int> ExecuteAsync(SelfQuery query, CancellationToken ctk = default)
+        {
+            trace.Events.Add("query-handler");
+            return Task.FromResult(query.Value);
+        }
+    }
+
+    private sealed class SelfCommandHandler(Trace trace) : ICommandHandler<SelfCommand>
+    {
+        public Task ExecuteAsync(SelfCommand command, CancellationToken ctk = default)
+        {
+            trace.Events.Add("command-handler");
+            return Task.CompletedTask;
+        }
+    }
 
     private sealed class TestRequestHandler(Trace trace) : IRequestHandler<TestRequest, int>
     {

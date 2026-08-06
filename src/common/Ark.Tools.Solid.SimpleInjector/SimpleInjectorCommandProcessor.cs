@@ -30,4 +30,15 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
     {
         await CommandHandlerInvokerCache.ExecuteAsync(_container, command, ctk).ConfigureAwait(false);
     }
+
+    [DebuggerStepThrough]
+    public async Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
+        where TCommand : class, ICommand<TCommand>
+    {
+        if (command is not TCommand typedCommand)
+            throw new ArgumentException($"Command of type '{command.GetType()}' must be a '{typeof(TCommand)}'.", nameof(command));
+
+        var handler = _container.GetInstance<ICommandHandler<TCommand>>();
+        await handler.ExecuteAsync(typedCommand, ctk).ConfigureAwait(false);
+    }
 }

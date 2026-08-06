@@ -30,4 +30,15 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
     {
         return await QueryHandlerInvokerCache<TResult>.ExecuteAsync(_container, query, ctk).ConfigureAwait(false);
     }
+
+    [DebuggerStepThrough]
+    public async Task<TResult> ExecuteAsync<TQuery, TResult>(IQuery<TQuery, TResult> query, CancellationToken ctk = default)
+        where TQuery : class, IQuery<TQuery, TResult>
+    {
+        if (query is not TQuery typedQuery)
+            throw new ArgumentException($"Query of type '{query.GetType()}' must be a '{typeof(TQuery)}'.", nameof(query));
+
+        var handler = _container.GetInstance<IQueryHandler<TQuery, TResult>>();
+        return await handler.ExecuteAsync(typedQuery, ctk).ConfigureAwait(false);
+    }
 }
