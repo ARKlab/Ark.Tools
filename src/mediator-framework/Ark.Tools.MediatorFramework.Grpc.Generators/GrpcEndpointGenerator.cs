@@ -393,7 +393,9 @@ namespace Ark.MediatorFramework.Generators
                                     ? "await global::Ark.MediatorFramework.StreamingArkAttachments.ReadAllAsync(chunks, context.CancellationToken).ConfigureAwait(false)"
                                     : "new global::Ark.MediatorFramework.StreamingArkAttachment(chunks)";
                                 sb.AppendLine("                var request = new " + e.TypeFullName + " { " + e.AttachmentPropertyName + " = " + attachmentValue + " };");
-                                sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                AppendNotFoundGuard(sb);
+                                sb.AppendLine("                return result;");
                             }
                             else if (e.AttachmentResponse)
                             {
@@ -420,7 +422,9 @@ namespace Ark.MediatorFramework.Generators
                             }
                             else
                             {
-                                sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                AppendNotFoundGuard(sb);
+                                sb.AppendLine("                return result;");
                             }
                             sb.AppendLine("            }");
                         }
@@ -476,6 +480,19 @@ namespace Ark.MediatorFramework.Generators
                 : item.Kind == HandlerKind.Command
                     ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
                     : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
+        }
+
+        private static void AppendNotFoundGuard(StringBuilder sb)
+        {
+            sb.AppendLine("                if (result is null)");
+            sb.AppendLine("                {");
+            sb.AppendLine("                    var status = new global::Google.Rpc.Status");
+            sb.AppendLine("                    {");
+            sb.AppendLine("                        Code = (int)global::Grpc.Core.StatusCode.NotFound,");
+            sb.AppendLine("                        Message = \"The requested resource was not found.\",");
+            sb.AppendLine("                    };");
+            sb.AppendLine("                    throw global::Grpc.Core.RpcStatusExtensions.ToRpcException(status);");
+            sb.AppendLine("                }");
         }
 
         private static void EmitProtoAssets(

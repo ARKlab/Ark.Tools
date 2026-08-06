@@ -69,7 +69,7 @@ public sealed class GrpcErrorsTests
         violation.Detail.Should().Be("The synthetic business rule was violated.");
     }
 
-    /// <summary>Verifies null handler results are surfaced as a gRPC failure.</summary>
+    /// <summary>Verifies null handler results include a rich not-found status.</summary>
     [TestMethod]
     public async Task MapsNotFoundResultToGrpcFailure()
     {
@@ -83,7 +83,10 @@ public sealed class GrpcErrorsTests
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
         var exception = await action.Should().ThrowAsync<RpcException>().ConfigureAwait(false);
-        exception.Which.StatusCode.Should().Be(StatusCode.Internal);
+        var status = ReadRichStatus(exception.Which);
+        exception.Which.StatusCode.Should().Be(StatusCode.NotFound);
+        status.Code.Should().Be((int)StatusCode.NotFound);
+        status.Message.Should().Be("The requested resource was not found.");
     }
 
     /// <summary>Verifies opaque ETag failures use failed-precondition status.</summary>

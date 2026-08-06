@@ -579,7 +579,6 @@ internal sealed class HostingAttachmentUploadHandler : IRequestHandler<HostingAt
     public async Task<HostingResponse> ExecuteAsync(HostingAttachmentUploadRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.LastAttachmentName = request.Attachment?.Name;
         if (request.Attachment is not null)
         {
             using var reader = new StreamReader(request.Attachment.OpenRead(), Encoding.UTF8);
