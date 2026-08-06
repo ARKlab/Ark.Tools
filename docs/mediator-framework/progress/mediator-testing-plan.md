@@ -117,8 +117,8 @@ may proceed in parallel once their dependencies are complete.
 
 | Order | Task | Depends on | Status | Task file |
 | --- | --- | --- | --- | --- |
-| 1 | TST-01 — Approve ownership and update the delivery map | Decision log approval | [ ] Planned | [TST-01](tasks/testing/TST-01-ownership-delivery-map.md) |
-| 2 | TST-02 — Create framework-owned hosting test projects | TST-01 | [ ] Planned | [TST-02](tasks/testing/TST-02-hosting-test-projects.md) |
+| 1 | TST-01 — Approve ownership and update the delivery map | Decision log approval | [x] Complete | [TST-01](tasks/testing/TST-01-ownership-delivery-map.md) |
+| 2 | TST-02 — Create framework-owned hosting test projects | TST-01 | [x] Complete | [TST-02](tasks/testing/TST-02-hosting-test-projects.md) |
 | 3 | TST-03 — Prove generated Minimal API hosting | TST-02 | [ ] Planned | [TST-03](tasks/testing/TST-03-minimal-api-hosting.md) |
 | 3 | TST-04 — Prove generated gRPC hosting | TST-02 | [ ] Planned | [TST-04](tasks/testing/TST-04-grpc-hosting.md) |
 | 3 | TST-05 — Prove generated Rebus hosting | TST-02 | [ ] Planned | [TST-05](tasks/testing/TST-05-rebus-hosting.md) |
