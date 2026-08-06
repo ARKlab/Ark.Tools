@@ -64,6 +64,33 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// <summary>Gets whether the fixture has disposed its hosts and container.</summary>
     public bool IsDisposed => _disposed;
 
+    /// <summary>Gets the shared in-memory network used by the Rebus host.</summary>
+    public InMemNetwork Network => _network;
+
+    /// <summary>
+    /// Waits until every non-error queue in the in-memory network is empty, or throws
+    /// <see cref="TimeoutException"/> if <paramref name="timeout"/> elapses first.
+    /// </summary>
+    public async Task WaitForIdleAsync(TimeSpan? timeout = null, CancellationToken ctk = default)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
+        cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(5));
+
+        while (true)
+        {
+            cts.Token.ThrowIfCancellationRequested();
+
+            var pending = _network.Queues
+                .Where(q => !string.Equals(q, "error", StringComparison.OrdinalIgnoreCase))
+                .Sum(q => _network.GetCount(q));
+
+            if (pending == 0)
+                return;
+
+            await Task.Delay(50, cts.Token).ConfigureAwait(false);
+        }
+    }
+
     /// <summary>Builds and maps an independent Minimal API host.</summary>
     /// <returns>The unstarted Minimal API application.</returns>
     public WebApplication BuildMinimalApiHost()
@@ -102,7 +129,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         {
             Container.ConfigureRebus(config =>
             {
-                config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting-test"));
+                config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting"));
                 config.Routing(HostingEndpointMappings.ConfigureRebusRouting);
             });
             _rebusConfigured = true;

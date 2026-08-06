@@ -49,4 +49,24 @@ public sealed class HostingFixtureTests
         fixture.State.RequestExecutions.Should().Be(1);
         fixture.IsDisposed.Should().BeTrue();
     }
+
+    /// <summary>
+    /// Ensures a Rebus command sent via the bus is routed to the correct input queue,
+    /// consumed by the registered handler, and leaves no pending messages in the network.
+    /// </summary>
+    [TestMethod]
+    public async Task RebusCommandIsDeliveredAndProcessed()
+    {
+        var fixture = new HostingTestFixture();
+        await using (fixture.ConfigureAwait(false))
+        {
+            var bus = fixture.BuildRebusHost();
+
+            await bus.Send(new HostingRebusCommand()).ConfigureAwait(false);
+
+            await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            fixture.State.CommandExecutions.Should().Be(1);
+        }
+    }
 }
