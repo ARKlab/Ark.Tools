@@ -23,7 +23,7 @@ public sealed class GrpcProtoExportTests
         proto.Should().Contain("service HostingV1");
         proto.Should().Contain("service HostingV2");
         proto.Should().Contain("service HostingV3");
-        proto.Should().Contain("rpc HostingRequest(HostingRequest) returns (HostingResponse);");
+        proto.Should().Contain("rpc HostingRequest(HostingRequestMessage) returns (HostingResponse);");
         proto.Should().Contain("rpc UploadHostingAttachment(stream ark.mediator.UploadDocumentChunk)");
         proto.Should().NotContain("import \"ark/nodatime.proto\";");
     }

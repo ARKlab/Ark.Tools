@@ -26,7 +26,7 @@ public sealed class GrpcAuthorizationTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
-        var action = async () => await client.HostingAuthorizedQueryAsync(
+        var action = async () => await client.GetHostingAuthorizedAsync(
             new HostingAuthorizedQuery(),
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -45,7 +45,7 @@ public sealed class GrpcAuthorizationTests
         var client = new HostingV1.HostingV1Client(channel);
         var headers = new Metadata { { "authorization", "\u0042earer\u0020authenticated" } };
 
-        var action = async () => await client.HostingAuthorizedQueryAsync(
+        var action = async () => await client.GetHostingAuthorizedAsync(
             new HostingAuthorizedQuery(), headers, cancellationToken: app.Lifetime.ApplicationStopping)
             .ResponseAsync.ConfigureAwait(false);
 
@@ -64,7 +64,7 @@ public sealed class GrpcAuthorizationTests
         var client = new HostingV1.HostingV1Client(channel);
         var headers = new Metadata { { "authorization", "\u0042earer\u0020scope" } };
 
-        var result = await client.HostingAuthorizedQueryAsync(
+        var result = await client.GetHostingAuthorizedAsync(
             new HostingAuthorizedQuery(), headers, cancellationToken: app.Lifetime.ApplicationStopping)
             .ResponseAsync.ConfigureAwait(false);
 
@@ -82,7 +82,7 @@ public sealed class GrpcAuthorizationTests
         var client = new HostingV1.HostingV1Client(channel);
         var headers = new Metadata { { "authorization", "\u0042earer\u0020scope" } };
 
-        var result = await client.HostingUserContextQueryAsync(
+        var result = await client.GetHostingUserContextAsync(
             new HostingUserContextQuery(), headers, cancellationToken: app.Lifetime.ApplicationStopping)
             .ResponseAsync.ConfigureAwait(false);
 

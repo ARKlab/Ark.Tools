@@ -47,6 +47,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
 {
     private readonly InMemNetwork _network = new();
     private readonly List<WebApplication> _hosts = [];
+    private readonly List<Container> _hostContainers = [];
     private bool _rebusConfigured;
     private bool _disposed;
 
@@ -58,28 +59,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         State = new HostingTestState();
         PrincipalProvider = new TestPrincipalProvider();
 
-        Container.RegisterInstance(State);
-        Container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
-        Container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
-        Container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
-        Container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
-        Container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
-        Container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
-        Container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
-        Container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
-        Container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
-        Container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
-        Container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
-        Container.Register<IQueryHandler<HostingUserContextQuery, HostingResponse>, HostingUserContextHandler>();
-        Container.Register<IRequestHandler<HostingETagMismatchRequest, HostingResponse>, HostingETagMismatchHandler>();
-        Container.Register<IRequestHandler<HostingOptimisticConcurrencyRequest, HostingResponse>, HostingOptimisticConcurrencyHandler>();
-        Container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
-        Container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
-        Container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
-        Container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
-        Container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
-        Container.Register<IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>, HostingWireTypesHandler>();
-        Container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
+        RegisterHandlers(Container);
 
         Container.RegisterAuthorization();
         Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
@@ -203,13 +183,15 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
         builder.Services.AddCodeFirstGrpcReflection();
-        builder.Services.AddSingleton(Container);
+        var container = CreateHostContainer();
+        _hostContainers.Add(container);
+        builder.Services.AddSingleton(container);
         builder.Services.AddSingleton(PrincipalProvider);
-        builder.Services.AddSimpleInjector(Container, simpleInjector => simpleInjector.AddAspNetCore());
+        builder.Services.AddSimpleInjector(container, simpleInjector => simpleInjector.AddAspNetCore());
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseSimpleInjector(Container);
+        ((IApplicationBuilder)app).UseSimpleInjector(container);
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         HostingEndpointMappings.MapGrpc(app);
         app.MapCodeFirstGrpcReflectionService().AllowAnonymous();
@@ -263,12 +245,55 @@ public sealed class HostingTestFixture : IAsyncDisposable
         _disposed = true;
         for (var index = _hosts.Count - 1; index >= 0; index--)
             await _hosts[index].DisposeAsync().ConfigureAwait(false);
+        for (var index = _hostContainers.Count - 1; index >= 0; index--)
+            await _hostContainers[index].DisposeAsync().ConfigureAwait(false);
         await Container.DisposeAsync().ConfigureAwait(false);
     }
 
     private void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+    }
+
+    private Container CreateHostContainer()
+    {
+        var container = new Container
+        {
+            Options =
+            {
+                DefaultScopedLifestyle = new AsyncScopedLifestyle(),
+            },
+        };
+        RegisterHandlers(container);
+        container.RegisterAuthorization();
+        container.RegisterAuthorizationPolicy<HostingScopePolicy>();
+        return container;
+    }
+
+    private void RegisterHandlers(Container container)
+    {
+        container.RegisterInstance(State);
+        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
+        container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
+        container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
+        container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
+        container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
+        container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
+        container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
+        container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
+        container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
+        container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
+        container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
+        container.Register<IQueryHandler<HostingUserContextQuery, HostingResponse>, HostingUserContextHandler>();
+        container.Register<IRequestHandler<HostingETagMismatchRequest, HostingResponse>, HostingETagMismatchHandler>();
+        container.Register<IRequestHandler<HostingOptimisticConcurrencyRequest, HostingResponse>, HostingOptimisticConcurrencyHandler>();
+        container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
+        container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
+        container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
+        container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
+        container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
+        container.Register<IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>, HostingWireTypesHandler>();
+        container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
     }
 
     private static void ConfigureOpenApi(OpenApiOptions options)

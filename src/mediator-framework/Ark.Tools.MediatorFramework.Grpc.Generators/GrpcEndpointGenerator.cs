@@ -509,7 +509,9 @@ namespace Ark.MediatorFramework.Generators
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
             {
                 var active = group.ToArray();
-                var requestNames = active.Select(static item => SimpleName(item.TypeFullName)).ToHashSet(StringComparer.Ordinal);
+                var requestNames = active
+                    .Select(item => ProtoTypeName(item.TypeFullName, contracts))
+                    .ToHashSet(StringComparer.Ordinal);
                 var reachable = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
                 foreach (var endpoint in active)
                 {
@@ -571,11 +573,11 @@ namespace Ark.MediatorFramework.Generators
                     content.Append("service ").Append(Identifier(group.Key)).Append('V').Append(version).AppendLine(" {");
                     foreach (var item in versionItems)
                     {
-                                WriteComment(content, item.Summary, "  ");
-                                content.Append("  rpc ").Append(item.GrpcMethod)
-                                    .Append(item.AttachmentRequest != AttachmentRequestKind.None
-                                        ? "(stream ark.mediator.UploadDocumentChunk) returns "
-                                        : "(" + item.TypeName + ") returns ");
+                        WriteComment(content, item.Summary, "  ");
+                        content.Append("  rpc ").Append(item.GrpcMethod)
+                            .Append(item.AttachmentRequest != AttachmentRequestKind.None
+                                ? "(stream ark.mediator.UploadDocumentChunk) returns "
+                                : "(" + ProtoTypeName(item.TypeFullName, contracts) + ") returns ");
                                 if (item.AttachmentResponse)
                                     content.Append("(stream DownloadDocumentChunk);");
                                 else if (item.IsStreaming)
@@ -663,6 +665,8 @@ namespace Ark.MediatorFramework.Generators
                     .Where(type => type.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute))))
                 {
+                    var protoContract = type.GetAttributes().First(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
                     var members = AllProperties(type)
                         .Select(property => new
                         {
@@ -696,7 +700,15 @@ namespace Ark.MediatorFramework.Generators
                         .Select(include => new ProtoIncludeModel(include.Type!, include.Number))
                         .ToArray();
 
-                    result.Add(new ProtoContractModel(type, type.Name, XmlDocumentation.Summary(type), members, includes));
+                    var name = protoContract.NamedArguments
+                        .FirstOrDefault(argument => argument.Key == "Name")
+                        .Value.Value as string;
+                    result.Add(new ProtoContractModel(
+                        type,
+                        string.IsNullOrWhiteSpace(name) ? type.Name : name!,
+                        XmlDocumentation.Summary(type),
+                        members,
+                        includes));
                 }
             }
             return result;
@@ -708,7 +720,9 @@ namespace Ark.MediatorFramework.Generators
             ISet<INamedTypeSymbol> reachable)
         {
             var name = SimpleName(displayName);
-            var contract = contracts.FirstOrDefault(item => item.Name == name);
+            var contract = contracts.FirstOrDefault(item =>
+                item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == displayName)
+                ?? contracts.FirstOrDefault(item => item.Name == name);
             if (contract is null || !reachable.Add(contract.Type))
                 return;
 
