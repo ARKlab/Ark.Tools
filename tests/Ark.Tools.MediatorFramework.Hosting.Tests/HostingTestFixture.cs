@@ -1,13 +1,25 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.AspNetCore.MessagePackFormatter;
+using Ark.Tools.AspNetCore.MinimalApi;
+using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
+using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.Nodatime.SystemTextJson;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
+using Ark.Tools.Solid.Authorization;
 
+using MessagePack;
+using MessagePack.Resolvers;
+
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.OpenApi;
 
 using ProtoBuf.Grpc.Server;
 
@@ -19,6 +31,7 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
+using System.Text;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -38,19 +51,29 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container = new Container();
         Container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         State = new HostingTestState();
+        PrincipalProvider = new TestPrincipalProvider();
 
         Container.RegisterInstance(State);
-        Container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, TestPrincipalProvider>();
+        Container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
         Container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         Container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
         Container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
         Container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
         Container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
+        Container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
+        Container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse?>, HostingNotFoundHandler>();
         Container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
+        Container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
+        Container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
         Container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
         Container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
+        Container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
+        Container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment?>, HostingAttachmentDownloadHandler>();
+        Container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
         Container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
 
+        Container.RegisterAuthorization();
+        Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
         HostingEndpointMappings.RegisterRebusHandlers(Container);
         Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
     }
@@ -60,6 +83,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
 
     /// <summary>Gets deterministic state updated by synthetic handlers.</summary>
     public HostingTestState State { get; }
+
+    /// <summary>Gets the mutable test-only principal provider used by the HTTP host.</summary>
+    internal TestPrincipalProvider PrincipalProvider { get; }
 
     /// <summary>Gets whether the fixture has disposed its hosts and container.</summary>
     public bool IsDisposed => _disposed;
@@ -99,9 +125,36 @@ public sealed class HostingTestFixture : IAsyncDisposable
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddSingleton(Container);
+        builder.Services.AddSingleton(PrincipalProvider);
+        builder.Services
+            .AddAuthentication(TestAuthenticationHandler.Scheme)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                TestAuthenticationHandler.Scheme,
+                static _ => { });
+        builder.Services.AddArkMinimalApiHost(Container, options =>
+        {
+            options.CrossWireContainer = (container, services) =>
+                container.RegisterInstance(services.GetRequiredService<IHttpContextAccessor>());
+        });
+        builder.Services.AddArkProblemDetailsExceptionHandler();
+        builder.Services.AddMessagePackFormatter(StandardResolver.Instance);
+        builder.Services.AddOpenApi("v1", ConfigureOpenApi);
+        builder.Services.AddOpenApi("v2", ConfigureOpenApi);
         var app = builder.Build();
+        app.UseArkProblemDetailsExceptionHandler();
+        app.UseArkMinimalApiHost(Container);
         HostingEndpointMappings.MapMinimalApi(app);
+        app.MapOpenApi().AllowAnonymous();
         _hosts.Add(app);
+        return app;
+    }
+
+    /// <summary>Builds and starts an independent Minimal API test host.</summary>
+    /// <returns>The started Minimal API application.</returns>
+    public async Task<WebApplication> StartMinimalApiHostAsync()
+    {
+        var app = BuildMinimalApiHost();
+        await app.StartAsync().ConfigureAwait(false);
         return app;
     }
 
@@ -154,6 +207,17 @@ public sealed class HostingTestFixture : IAsyncDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
     }
+
+    private static void ConfigureOpenApi(OpenApiOptions options)
+    {
+        options
+            .AddArkServerSetProperties()
+            .AddArkXmlDocumentation()
+            .AddArkNodaTimeSchemas()
+            .AddArkPolymorphism<HostingShape, HostingShapeKind>(
+                "kind",
+                (HostingShapeKind.Circle, typeof(HostingCircle)));
+    }
 }
 
 /// <summary>Deterministic state shared by synthetic mediator handlers.</summary>
@@ -164,6 +228,12 @@ public sealed class HostingTestState
     /// <summary>Gets the number of request handler executions.</summary>
     public int RequestExecutions { get; internal set; }
 
+    /// <summary>Gets whether a generated request supplied a cancellable token.</summary>
+    public bool RequestCancellationTokenWasCancelable { get; internal set; }
+
+    /// <summary>Gets the server-owned stamp received by the request handler.</summary>
+    public string? LastRequestServerStamp { get; internal set; }
+
     /// <summary>Gets the number of command handler executions.</summary>
     public int CommandExecutions { get; internal set; }
 
@@ -173,10 +243,52 @@ public sealed class HostingTestState
     /// <summary>Gets the name of the last uploaded attachment.</summary>
     public string? LastAttachmentName { get; internal set; }
 
+    /// <summary>Gets the content read by the last single-file upload handler.</summary>
+    public string? LastAttachmentContent { get; internal set; }
+
+    /// <summary>Gets the number of files received by the last collection upload handler.</summary>
+    public int LastAttachmentCount { get; internal set; }
+
+    /// <summary>Gets the number of times an authorized handler executed.</summary>
+    public int AuthorizedExecutions { get; internal set; }
+
+    /// <summary>Gets or sets whether the stream producer waits after its first item.</summary>
+    public bool HoldStreamAfterFirst { get; set; }
+
+    /// <summary>Gets a task that completes when the stream producer yields its first item.</summary>
+    public Task StreamFirstItemProduced => _streamFirstItem.Task;
+
+    /// <summary>Gets a task that completes when stream cancellation reaches the producer.</summary>
+    public Task StreamCancellationObserved => _streamCancellation.Task;
+
+    private readonly TaskCompletionSource _streamFirstItem = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _streamRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _streamCancellation = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     internal void RecordCommandExecution()
     {
         CommandExecutions++;
         _commandExecution.TrySetResult();
+    }
+
+    internal void RecordFirstStreamItem()
+    {
+        _streamFirstItem.TrySetResult();
+    }
+
+    internal void RecordStreamCancellation()
+    {
+        _streamCancellation.TrySetResult();
+    }
+
+    internal void ReleaseStream()
+    {
+        _streamRelease.TrySetResult();
+    }
+
+    internal Task WaitForStreamReleaseAsync(CancellationToken ctk)
+    {
+        return _streamRelease.Task.WaitAsync(ctk);
     }
 }
 
@@ -193,6 +305,8 @@ internal sealed class HostingRequestHandler : IRequestHandler<HostingRequest, Ho
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RequestExecutions++;
+        _state.RequestCancellationTokenWasCancelable = ctk.CanBeCanceled;
+        _state.LastRequestServerStamp = request.ServerStamp;
         return new HostingResponse
         {
             Message = $"{request.Id}:{request.Filter}:{request.Value}",
@@ -211,6 +325,28 @@ internal sealed class HostingQueryHandler : IQueryHandler<HostingQuery, HostingR
             Message = $"{query.Id}:{query.Value}",
             ServerStamp = "hosting-server",
         };
+    }
+}
+
+internal sealed class HostingStatusHandler : IRequestHandler<HostingStatusRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(HostingStatusRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingResponse
+        {
+            Message = request.Value,
+            ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingNotFoundHandler : IQueryHandler<HostingNotFoundQuery, HostingResponse?>
+{
+    public async Task<HostingResponse?> ExecuteAsync(HostingNotFoundQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return null;
     }
 }
 
@@ -251,7 +387,10 @@ internal sealed class HostingValidationHandler : IRequestHandler<HostingValidati
     public async Task<HostingResponse> ExecuteAsync(HostingValidationRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        throw new FluentValidation.ValidationException("The synthetic value is invalid.");
+        throw new FluentValidation.ValidationException(
+            [
+                new FluentValidation.Results.ValidationFailure(nameof(HostingValidationRequest.Value), "The synthetic value is invalid."),
+            ]);
     }
 }
 
@@ -263,8 +402,39 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
         var violation = new Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
+            Status = 422,
         };
         throw new Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
+    }
+}
+
+internal sealed class HostingUnexpectedHandler : IRequestHandler<HostingUnexpectedRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(HostingUnexpectedRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new InvalidOperationException("The synthetic handler failed unexpectedly.");
+    }
+}
+
+internal sealed class HostingAuthorizedHandler : IQueryHandler<HostingAuthorizedQuery, HostingResponse>
+{
+    private readonly HostingTestState _state;
+
+    public HostingAuthorizedHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
+    public async Task<HostingResponse> ExecuteAsync(HostingAuthorizedQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        _state.AuthorizedExecutions++;
+        return new HostingResponse
+        {
+            Message = "authorized",
+            ServerStamp = "hosting-server",
+        };
     }
 }
 
@@ -273,17 +443,32 @@ internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, I
     public async Task<IAsyncEnumerable<HostingStreamItem>> ExecuteAsync(HostingStreamQuery query, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        return Enumerate(query.Count, ctk);
+        return Enumerate(query.Count, ctk, _state);
     }
 
     private static async IAsyncEnumerable<HostingStreamItem> Enumerate(
         int count,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk,
+        HostingTestState state)
     {
         for (var number = 1; number <= count; number++)
         {
             ctk.ThrowIfCancellationRequested();
+            if (number == 1)
+                state.RecordFirstStreamItem();
             yield return new HostingStreamItem { Number = number };
+            if (number == 1 && state.HoldStreamAfterFirst)
+            {
+                try
+                {
+                    await state.WaitForStreamReleaseAsync(ctk).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    state.RecordStreamCancellation();
+                    throw;
+                }
+            }
             await Task.Yield();
         }
     }
@@ -302,9 +487,66 @@ internal sealed class HostingAttachmentUploadHandler : IRequestHandler<HostingAt
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state.LastAttachmentName = request.Attachment?.Name;
+        if (request.Attachment is not null)
+        {
+            using var reader = new StreamReader(request.Attachment.OpenRead(), Encoding.UTF8);
+            _state.LastAttachmentContent = await reader.ReadToEndAsync(ctk).ConfigureAwait(false);
+        }
         return new HostingResponse
         {
             Message = request.Attachment?.Name ?? "none",
+            ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingAttachmentCollectionUploadHandler : IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>
+{
+    private readonly HostingTestState _state;
+
+    public HostingAttachmentCollectionUploadHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
+    public async Task<HostingResponse> ExecuteAsync(HostingAttachmentCollectionUploadRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        _state.LastAttachmentCount = request.Attachments.Count;
+        return new HostingResponse
+        {
+            Message = string.Join(",", request.Attachments.Select(attachment => attachment.Name)),
+            ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment?>
+{
+    public async Task<Ark.MediatorFramework.IArkAttachment?> ExecuteAsync(
+        HostingAttachmentDownloadQuery query,
+        CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        if (!string.Equals(query.Name, "download.txt", StringComparison.Ordinal))
+            return null;
+
+        return new Ark.MediatorFramework.ArkAttachment(
+            query.Name,
+            "text/plain",
+            () => new MemoryStream(Encoding.UTF8.GetBytes("downloaded content")));
+    }
+}
+
+internal sealed class HostingOpenApiHandler : IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>
+{
+    public async Task<HostingOpenApiResponse> ExecuteAsync(HostingOpenApiQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingOpenApiResponse
+        {
+            Date = new NodaTime.LocalDate(2026, 8, 6),
+            Shape = new HostingCircle { Radius = 3 },
             ServerStamp = "hosting-server",
         };
     }
@@ -317,7 +559,7 @@ internal sealed class HostingVersionedHandler : IQueryHandler<HostingVersionedQu
         await Task.CompletedTask.ConfigureAwait(false);
         return new HostingResponse
         {
-            Message = query.Value ?? "versioned",
+            Message = $"{query.Id}:{query.Value ?? "versioned"}",
             ServerStamp = "hosting-server",
         };
     }

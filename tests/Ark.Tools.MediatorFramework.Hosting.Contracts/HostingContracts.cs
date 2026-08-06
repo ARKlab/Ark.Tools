@@ -6,11 +6,17 @@ global using Microsoft.AspNetCore.Http;
 
 using Ark.MediatorFramework;
 using Ark.MediatorFramework.Generated;
+using Ark.Tools.Authorization;
+
+using MessagePack;
+using NodaTime;
 
 using Microsoft.AspNetCore.Routing;
 
 using Rebus.Config;
 using SimpleInjector;
+
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Contracts;
 
@@ -64,10 +70,11 @@ public static class HostingEndpointMappings
 /// <summary>
 /// Deterministic request contract with route, query, body, and server-owned properties.
 /// </summary>
-[HttpEndpoint("POST", "/hosting/requests/{id}", AllowAnonymous = true)]
+[HttpEndpoint("POST", "/hosting/requests/{id}", AllowAnonymous = true, AcceptsMessagePack = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[MessagePackObject(true)]
 public sealed record HostingRequest : Ark.Tools.Solid.IRequest<HostingResponse>
 {
     /// <summary>Gets or sets the route identifier.</summary>
@@ -92,6 +99,7 @@ public sealed record HostingRequest : Ark.Tools.Solid.IRequest<HostingResponse>
 
 /// <summary>Response returned by deterministic hosting handlers.</summary>
 [ProtoBuf.ProtoContract]
+[MessagePackObject(true)]
 public sealed record HostingResponse
 {
     /// <summary>Gets or sets the response message.</summary>
@@ -155,6 +163,18 @@ public sealed record HostingValidationRequest : Ark.Tools.Solid.IRequest<Hosting
     public string Value { get; set; } = string.Empty;
 }
 
+/// <summary>Request whose handler returns a configured success status.</summary>
+[HttpEndpoint("POST", "/hosting/status", AllowAnonymous = true, SuccessStatusCode = 201)]
+public sealed record HostingStatusRequest : Ark.Tools.Solid.IRequest<HostingResponse>
+{
+    /// <summary>Gets or sets the request value.</summary>
+    public string Value { get; set; } = string.Empty;
+}
+
+/// <summary>Query whose handler returns no value.</summary>
+[HttpEndpoint("GET", "/hosting/not-found", AllowAnonymous = true, NullResultStatusCode = 404)]
+public sealed record HostingNotFoundQuery : Ark.Tools.Solid.IQuery<HostingResponse?>;
+
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/hosting/business-violation", AllowAnonymous = true)]
 [GrpcMethod]
@@ -165,6 +185,39 @@ public sealed record HostingBusinessViolationRequest : Ark.Tools.Solid.IRequest<
     /// <summary>Gets or sets the value that violates the business rule.</summary>
     [ProtoBuf.ProtoMember(1)]
     public string Value { get; set; } = string.Empty;
+}
+
+/// <summary>Request whose handler produces an unexpected exception.</summary>
+[HttpEndpoint("POST", "/hosting/unexpected", AllowAnonymous = true)]
+public sealed record HostingUnexpectedRequest : Ark.Tools.Solid.IRequest<HostingResponse>
+{
+    /// <summary>Gets or sets the request value.</summary>
+    public string Value { get; set; } = string.Empty;
+}
+
+/// <summary>Query protected by the transport-agnostic authorization decorator.</summary>
+[HttpEndpoint("GET", "/hosting/authorized", AllowAnonymous = false)]
+[PolicyAuthorize(typeof(HostingScopePolicy))]
+public sealed record HostingAuthorizedQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
+
+/// <summary>Policy requiring the synthetic hosting scope.</summary>
+public sealed class HostingScopePolicy : IAuthorizationPolicy
+{
+    /// <summary>Initializes a new instance of the <see cref="HostingScopePolicy"/> class.</summary>
+    public HostingScopePolicy()
+    {
+        var policy = new AuthorizationPolicyBuilder(nameof(HostingScopePolicy))
+            .RequireClaim("scope", "hosting.test")
+            .Build();
+        Name = policy.Name;
+        Requirements = policy.Requirements;
+    }
+
+    /// <inheritdoc />
+    public string Name { get; }
+
+    /// <inheritdoc />
+    public IReadOnlyList<IAuthorizationRequirement> Requirements { get; }
 }
 
 /// <summary>Query returning a deterministic asynchronous stream.</summary>
@@ -190,7 +243,13 @@ public sealed record HostingStreamItem
 }
 
 /// <summary>Multipart request containing one transport-agnostic attachment.</summary>
-[HttpEndpoint("POST", "/hosting/attachments", AllowAnonymous = true)]
+[HttpEndpoint(
+    "POST",
+    "/hosting/attachments",
+    AllowAnonymous = true,
+    MaxRequestBodySizeBytes = 1024,
+    MaxFileCount = 1,
+    AllowedContentTypes = ["text/plain"])]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -201,16 +260,81 @@ public sealed record HostingAttachmentUploadRequest : Ark.Tools.Solid.IRequest<H
     public Ark.MediatorFramework.IArkAttachment? Attachment { get; set; }
 }
 
+/// <summary>Multipart request containing multiple transport-agnostic attachments.</summary>
+[HttpEndpoint(
+    "POST",
+    "/hosting/attachments/multiple",
+    AllowAnonymous = true,
+    MaxRequestBodySizeBytes = 1024,
+    MaxFileCount = 2,
+    AllowedContentTypes = ["text/plain"])]
+public sealed record HostingAttachmentCollectionUploadRequest : Ark.Tools.Solid.IRequest<HostingResponse>
+{
+    /// <summary>Gets or sets the uploaded attachments.</summary>
+    public IReadOnlyList<Ark.MediatorFramework.IArkAttachment> Attachments { get; set; } = [];
+}
+
+/// <summary>Query returning a downloadable synthetic attachment.</summary>
+[HttpEndpoint("GET", "/hosting/attachments/{name}", AllowAnonymous = true)]
+public sealed record HostingAttachmentDownloadQuery : Ark.Tools.Solid.IQuery<Ark.MediatorFramework.IArkAttachment?>
+{
+    /// <summary>Gets or sets the attachment name.</summary>
+    [HttpRoute]
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>Response model used to verify generated OpenAPI schemas.</summary>
+public sealed record HostingOpenApiResponse
+{
+    /// <summary>Gets or sets the representative date.</summary>
+    public LocalDate Date { get; init; }
+
+    /// <summary>Gets or sets the polymorphic shape.</summary>
+    public HostingShape Shape { get; init; } = new HostingCircle();
+
+    /// <summary>Gets or sets the server-owned response stamp.</summary>
+    [ServerSet]
+    public string ServerStamp { get; init; } = string.Empty;
+}
+
+/// <summary>Query used to expose the generated OpenAPI response schema.</summary>
+[HttpEndpoint("GET", "/hosting/openapi", AllowAnonymous = true)]
+public sealed record HostingOpenApiQuery : Ark.Tools.Solid.IQuery<HostingOpenApiResponse>;
+
+/// <summary>Discriminator values for synthetic OpenAPI shapes.</summary>
+public enum HostingShapeKind
+{
+    /// <summary>Circle shape.</summary>
+    Circle,
+}
+
+/// <summary>Base type for synthetic OpenAPI polymorphism.</summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
+[JsonDerivedType(typeof(HostingCircle), "circle")]
+public abstract record HostingShape;
+
+/// <summary>Circle shape used by the OpenAPI schema.</summary>
+public sealed record HostingCircle : HostingShape
+{
+    /// <summary>Gets or sets the circle radius.</summary>
+    public int Radius { get; init; } = 1;
+}
+
 /// <summary>Versioned query used to exercise contract lifetime metadata.</summary>
-[HttpEndpoint("GET", "/hosting/versioned", AllowAnonymous = true)]
+[HttpEndpoint("GET", "/hosting/versioned/{id}", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [Versioning(Introduced = 2, Retired = 4)]
 [ProtoBuf.ProtoContract]
 public sealed record HostingVersionedQuery : Ark.Tools.Solid.IQuery<HostingResponse>
 {
+    /// <summary>Gets or sets the route identifier.</summary>
+    [HttpRoute]
+    [ProtoBuf.ProtoMember(1)]
+    public int Id { get; set; }
+
     /// <summary>Gets or sets the request value.</summary>
     [HttpQuery]
-    [ProtoBuf.ProtoMember(1)]
+    [ProtoBuf.ProtoMember(2)]
     public string? Value { get; set; }
 }
