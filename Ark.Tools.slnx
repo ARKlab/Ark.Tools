@@ -39,6 +39,8 @@
     <Project Path="src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
     <Project Path="src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
     <Project Path="src/common/Ark.Tools.SimpleInjector/Ark.Tools.SimpleInjector.csproj" />
+    <Project Path="src/common/Ark.Tools.Solid.Analyzers.CodeFixes/Ark.Tools.Solid.Analyzers.CodeFixes.csproj" />
+    <Project Path="src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj" />
     <Project Path="src/common/Ark.Tools.Solid.Authorization/Ark.Tools.Solid.Authorization.csproj" />
     <Project Path="src/common/Ark.Tools.Solid.FluentValidaton/Ark.Tools.Solid.FluentValidaton.csproj" />
     <Project Path="src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
@@ -154,6 +156,7 @@
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />
     <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Sql.Oracle.Tests/Ark.Tools.Sql.Oracle.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Solid.Analyzers.Tests/Ark.Tools.Solid.Analyzers.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj" />
     <Project Path="tests/WebApplicationDemo.Tests/WebApplicationDemo.Tests.csproj" />
   </Folder>

@@ -29,4 +29,25 @@
     <ProjectReference Include="..\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Solid.Analyzers\Ark.Tools.Solid.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Ark.Tools.Solid.Analyzers.CodeFixes\Ark.Tools.Solid.Analyzers.CodeFixes.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <None Include="..\Ark.Tools.Solid.Analyzers\bin\$(Configuration)\netstandard2.0\Ark.Tools.Solid.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+    <None Include="..\Ark.Tools.Solid.Analyzers.CodeFixes\bin\$(Configuration)\netstandard2.0\Ark.Tools.Solid.Analyzers.CodeFixes.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+    <None Include="buildTransitive\Ark.Tools.Solid.targets"
+          Pack="true"
+          PackagePath="buildTransitive"
+          Visible="false" />
+  </ItemGroup>
+
 </Project>

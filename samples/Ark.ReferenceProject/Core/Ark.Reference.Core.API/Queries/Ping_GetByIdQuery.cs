@@ -11,7 +11,7 @@ public static class Ping_GetByIdQuery
     /// <summary>
     /// Version 1 of the GetById query
     /// </summary>
-    public record V1 : IQuery<Ping.V1.Output?>
+    public record V1 : IQuery<V1, Ping.V1.Output?>
     {
         /// <summary>
         /// Gets or initializes the ID of the Ping to retrieve

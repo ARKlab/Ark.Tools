@@ -2,6 +2,23 @@
 
 Extension to use Ark.Tools.Solid framework with SimpleInjector dependency injection.
 
+## Reflection-free dispatch
+
+Queries, requests and commands that implement the self-referencing generic interfaces are
+dispatched without reflection or runtime caches, as the processor resolves the handler at
+compile time:
+
+```csharp
+public sealed record MyQuery(int Id) : IQuery<MyQuery, MyResult>;
+
+// both TQuery and TResult are inferred at the call site
+var result = await queryProcessor.ExecuteAsync(new MyQuery(42));
+```
+
+The same applies to `IRequest<TSelf, TResponse>` and `ICommand<TSelf>`. The `ARKSOLID001`
+analyzer (shipped with the Ark.Tools.Solid package) reports a warning for types still using
+the legacy single-generic interfaces and offers a code fix to migrate them.
+
 ## Trimming Support
 
 **Status**: ❌ NOT TRIMMABLE
@@ -32,7 +49,9 @@ Applications using this library cannot be fully trimmed. The trimmer may remove:
 
 ### Alternatives
 
-For trim-compatible applications, consider:
+For trim-compatible applications, use the self-referencing generic interfaces described above
+(`IQuery<TSelf, TResult>`, `IRequest<TSelf, TResponse>`, `ICommand<TSelf>`): their processor
+overloads use static generic dispatch and are trim-safe. Otherwise consider:
 
 1. **Direct Handler Registration**: Register and resolve specific handler types explicitly
 2. **Static Dispatch**: Use compile-time generic constraints instead of dynamic invocation

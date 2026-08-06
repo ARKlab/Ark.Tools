@@ -230,8 +230,17 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static ITypeSymbol ResultType(INamedTypeSymbol type)
     {
-        var iface = type.AllInterfaces.FirstOrDefault(x => x.Name is "IQuery" or "IRequest" or "ICommand");
-        return iface?.TypeArguments.FirstOrDefault() ?? type;
+        // Look for IQuery<TResult> or IRequest<TResponse> (the 1-arg base interface that carries the
+        // result type). When the type uses the self-generic 2-arg variant such as IQuery<TSelf, TResult>,
+        // Roslyn's AllInterfaces also surfaces the 1-arg base, so filtering to TypeArguments.Length == 1
+        // correctly resolves the result type for both the legacy and self-generic patterns.
+        var resultIface = type.AllInterfaces.FirstOrDefault(
+            x => (x.Name is "IQuery" or "IRequest") && x.TypeArguments.Length == 1);
+        if (resultIface is not null)
+            return resultIface.TypeArguments[0];
+
+        // ICommand / ICommand<TSelf> have no result type; the contract type itself is its own identity.
+        return type;
     }
 
     private static ITypeSymbol Unwrap(ITypeSymbol type, out bool collection)

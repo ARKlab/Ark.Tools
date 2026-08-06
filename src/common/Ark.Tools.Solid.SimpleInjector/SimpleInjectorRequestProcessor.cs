@@ -30,4 +30,15 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
     {
         return await RequestHandlerInvokerCache<TResponse>.ExecuteAsync(_container, request, ctk).ConfigureAwait(false);
     }
+
+    [DebuggerStepThrough]
+    public async Task<TResponse> ExecuteAsync<TRequest, TResponse>(IRequest<TRequest, TResponse> request, CancellationToken ctk = default)
+        where TRequest : class, IRequest<TRequest, TResponse>
+    {
+        if (request is not TRequest typedRequest)
+            throw new ArgumentException($"Request of type '{request.GetType()}' must be a '{typeof(TRequest)}'.", nameof(request));
+
+        var handler = _container.GetInstance<IRequestHandler<TRequest, TResponse>>();
+        return await handler.ExecuteAsync(typedRequest, ctk).ConfigureAwait(false);
+    }
 }

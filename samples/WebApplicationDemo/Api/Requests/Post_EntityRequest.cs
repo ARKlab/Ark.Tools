@@ -6,7 +6,7 @@ namespace WebApplicationDemo.Api.Requests;
 
 public static class Post_EntityRequest
 {
-    public record V1 : Entity.V1.Input, IRequest<Entity.V1.Output>
+    public record V1 : Entity.V1.Input, IRequest<V1, Entity.V1.Output>
     {
         public V1() { }
         public V1(Entity.V1.Input input)

@@ -32,7 +32,7 @@ public sealed record UploadResponse
 /// Pure transport-agnostic request carrying an <see cref="IArkAttachment"/>.
 /// </summary>
 [HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}")]
-public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
+public sealed record UploadGreetingCardRequest : IRequest<UploadGreetingCardRequest, UploadResponse>
 {
     /// <summary>Gets the upload correlation identifier.</summary>
     public Guid Id { get; init; }
@@ -47,7 +47,7 @@ public sealed record UploadGreetingCardRequest : IRequest<UploadResponse>
 
 /// <summary>Pure request carrying an ordered collection of attachments.</summary>
 [HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}/batch", MaxFileCount = 4)]
-public sealed record UploadGreetingCardsRequest : IRequest<UploadBatchResponse>
+public sealed record UploadGreetingCardsRequest : IRequest<UploadGreetingCardsRequest, UploadBatchResponse>
 {
     /// <summary>Gets the upload correlation identifier.</summary>
     public Guid Id { get; init; }
@@ -73,7 +73,7 @@ public sealed record UploadBatchResponse
 [HttpEndpoint("GET", "/api/v{version}/greeting-cards/{id}/download")]
 [GrpcMethod("Download")]
 [GrpcService("GeneratedDocuments")]
-public sealed record GetDocumentQuery : IQuery<IArkAttachment>
+public sealed record GetDocumentQuery : IQuery<GetDocumentQuery, IArkAttachment>
 {
     /// <summary>Gets the upload correlation identifier.</summary>
     public Guid Id { get; init; }

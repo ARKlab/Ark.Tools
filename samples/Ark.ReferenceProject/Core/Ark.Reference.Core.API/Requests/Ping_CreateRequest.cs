@@ -11,7 +11,7 @@ public static class Ping_CreateRequest
     /// <summary>
     /// Version 1 of the create request
     /// </summary>
-    public record V1 : IRequest<Ping.V1.Output>
+    public record V1 : IRequest<V1, Ping.V1.Output>
     {
         /// <summary>
         /// Gets or initializes the creation data for the Ping

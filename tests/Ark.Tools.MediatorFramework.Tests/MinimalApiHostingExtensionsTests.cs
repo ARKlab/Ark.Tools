@@ -320,7 +320,7 @@ public sealed class MinimalApiHostingExtensionsTests
 
     private sealed record TestCircle : TestShape;
 
-    private sealed record TestRequest : IRequest<TestResponse>
+    private sealed record TestRequest : IRequest<TestRequest, TestResponse>
     {
         public required IArkAttachment Attachment { get; init; }
     }

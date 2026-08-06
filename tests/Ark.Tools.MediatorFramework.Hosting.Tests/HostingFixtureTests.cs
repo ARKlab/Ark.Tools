@@ -64,7 +64,19 @@ public sealed class HostingFixtureTests
 
             await bus.Send(new HostingRebusCommand()).ConfigureAwait(false);
 
-            await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            try
+            {
+                await fixture.State.CommandExecuted.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+                await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            }
+            catch (TimeoutException ex)
+            {
+                throw new TimeoutException("The Rebus command handler did not execute within 5 seconds.", ex);
+            }
+            catch (OperationCanceledException ex)
+            {
+                throw new TimeoutException("The Rebus input queue did not become idle within 5 seconds.", ex);
+            }
 
             fixture.State.CommandExecutions.Should().Be(1);
         }

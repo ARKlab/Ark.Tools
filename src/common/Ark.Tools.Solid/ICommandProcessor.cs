@@ -10,4 +10,14 @@ public interface ICommandProcessor
 
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     Task ExecuteAsync(ICommand command, CancellationToken ctk = default);
+
+    /// <summary>
+    /// Executes a command implementing <see cref="ICommand{TSelf}"/> resolving the handler
+    /// at compile time, without reflection or runtime caches.
+    /// </summary>
+    /// <typeparam name="TCommand">The concrete command type.</typeparam>
+    /// <param name="command">The command to execute.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
+        where TCommand : class, ICommand<TCommand>;
 }

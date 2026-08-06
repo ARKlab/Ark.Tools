@@ -10,7 +10,7 @@ public static class Ping_DeleteRequest
     /// <summary>
     /// Version 1 of the delete request
     /// </summary>
-    public record V1 : IRequest<bool>
+    public record V1 : IRequest<V1, bool>
     {
         /// <summary>
         /// Gets or initializes the ID of the Ping to delete
