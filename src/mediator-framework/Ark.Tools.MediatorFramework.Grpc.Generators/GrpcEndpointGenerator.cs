@@ -578,13 +578,13 @@ namespace Ark.MediatorFramework.Generators
                             .Append(item.AttachmentRequest != AttachmentRequestKind.None
                                 ? "(stream ark.mediator.UploadDocumentChunk) returns "
                                 : "(" + ProtoTypeName(item.TypeFullName, contracts) + ") returns ");
-                                if (item.AttachmentResponse)
-                                    content.Append("(stream DownloadDocumentChunk);");
-                                else if (item.IsStreaming)
-                                    content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contracts)).Append(");");
-                                else
-                                    content.Append('(').Append(ProtoTypeName(item.Response, contracts)).Append(");");
-                                content.AppendLine();
+                        if (item.AttachmentResponse)
+                            content.Append("(stream DownloadDocumentChunk);");
+                        else if (item.IsStreaming)
+                            content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contracts)).Append(");");
+                        else
+                            content.Append('(').Append(ProtoTypeName(item.Response, contracts)).Append(");");
+                        content.AppendLine();
                     }
                     content.AppendLine("}");
                     content.AppendLine();
