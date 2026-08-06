@@ -31,7 +31,7 @@ public sealed class HostingFixtureTests
                 Id = 7,
                 Filter = "filter",
                 Value = "value",
-            }).ConfigureAwait(false);
+            }, CancellationToken.None).ConfigureAwait(false);
 
             response.Message.Should().Be("7:filter:value");
             minimalApiHost.Should().NotBeNull();
