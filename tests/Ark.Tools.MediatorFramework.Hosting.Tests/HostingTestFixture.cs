@@ -178,12 +178,16 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds and maps an independent code-first gRPC host.</summary>
+    /// <param name="listenAddress">Optional Kestrel address; null selects TestServer.</param>
     /// <returns>The unstarted gRPC application.</returns>
-    public WebApplication BuildGrpcHost()
+    public WebApplication BuildGrpcHost(Uri? listenAddress = null)
     {
         ThrowIfDisposed();
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseTestServer();
+        if (listenAddress is null)
+            builder.WebHost.UseTestServer();
+        else
+            builder.WebHost.UseKestrel().UseUrls(listenAddress.ToString());
         builder.Services
             .AddAuthentication(TestAuthenticationHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
@@ -215,6 +219,16 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public async Task<WebApplication> StartGrpcHostAsync()
     {
         var app = BuildGrpcHost();
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        return app;
+    }
+
+    /// <summary>Builds and starts a gRPC host on a loopback Kestrel address for external tools.</summary>
+    /// <param name="port">The loopback TCP port.</param>
+    /// <returns>The started gRPC application.</returns>
+    public async Task<WebApplication> StartGrpcKestrelHostAsync(int port)
+    {
+        var app = BuildGrpcHost(new Uri($"http://127.0.0.1:{port}", UriKind.Absolute));
         await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }
