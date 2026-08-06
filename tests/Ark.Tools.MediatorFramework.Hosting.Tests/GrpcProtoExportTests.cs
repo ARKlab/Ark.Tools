@@ -59,7 +59,10 @@ public sealed class GrpcProtoExportTests
             "Ark.Tools.MediatorFramework.Hosting.Contracts",
             "obj");
         var proto = Directory.GetFiles(contractsObj, "Hosting.proto", SearchOption.AllDirectories)
-            .SingleOrDefault();
+            .SingleOrDefault(path =>
+                path.Contains(
+                    $"{Path.DirectorySeparatorChar}net10.0{Path.DirectorySeparatorChar}ark-proto{Path.DirectorySeparatorChar}",
+                    StringComparison.Ordinal));
         proto.Should().NotBeNull();
         return proto!;
     }
