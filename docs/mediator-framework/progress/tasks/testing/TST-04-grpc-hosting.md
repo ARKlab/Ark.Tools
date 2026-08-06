@@ -34,13 +34,13 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] The client is generated from the build-exported synthetic proto.
-- [ ] No test constructs the code-first service contract as a substitute for the
+- [x] The client is generated from the build-exported synthetic proto.
+- [x] No test constructs the code-first service contract as a substitute for the
   generated client.
-- [ ] Rich error tests inspect the documented status/detail fields rather than
+- [x] Rich error tests inspect the documented status/detail fields rather than
   internal exception strings.
-- [ ] Streaming and upload tests prove incremental/cancellation behavior.
-- [ ] Proto export and generated client builds are deterministic from a clean
+- [x] Streaming and upload tests prove incremental/cancellation behavior.
+- [x] Proto export and generated client builds are deterministic from a clean
   checkout.
 
 ## Tests
@@ -57,4 +57,7 @@ for every implementation task.
     details;
   - verify incremental server streaming, cancellation, client-streaming
     uploads, and exported proto/client shape.
+- External reflection validation:
+  - `grpc-curl --describe http://127.0.0.1:<port>` discovers `HostingV1`,
+    `HostingV2`, and `HostingV3` from the running reflection endpoint.
 - Run the full-solution gates.
