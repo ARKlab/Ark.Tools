@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 using ProtoBuf.Grpc.Server;
 using ProtoBuf.Meta;
@@ -188,7 +189,11 @@ public sealed class HostingTestFixture : IAsyncDisposable
         if (listenAddress is null)
             builder.WebHost.UseTestServer();
         else
-            builder.WebHost.UseKestrel().UseUrls(listenAddress.ToString());
+            builder.WebHost.UseKestrel(options =>
+                options.Listen(
+                    System.Net.IPAddress.Loopback,
+                    listenAddress.Port,
+                    listenOptions => listenOptions.Protocols = HttpProtocols.Http2));
         builder.Services
             .AddAuthentication(TestAuthenticationHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
