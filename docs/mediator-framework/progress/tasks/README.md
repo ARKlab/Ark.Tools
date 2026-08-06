@@ -7,6 +7,28 @@ dedicated PR from the document alone. Every task defines **Outcomes** (what exis
 Source analysis and decisions: [`../pre-release-review.md`](../pre-release-review.md).
 Delivery-tracking index: [`../README.md`](../README.md).
 
+## Mediator testing redesign
+
+The implementation plan and its execution-order tracker are in
+[`../mediator-testing-plan.md`](../mediator-testing-plan.md). Each task has a
+separate document under [`testing/`](testing/):
+
+| Task | Document |
+|---|---|
+| TST-01 | [Approve ownership and update the delivery map](testing/TST-01-ownership-delivery-map.md) |
+| TST-02 | [Create framework-owned hosting test projects](testing/TST-02-hosting-test-projects.md) |
+| TST-03 | [Prove generated Minimal API hosting](testing/TST-03-minimal-api-hosting.md) |
+| TST-04 | [Prove generated gRPC hosting](testing/TST-04-grpc-hosting.md) |
+| TST-05 | [Prove generated Rebus hosting](testing/TST-05-rebus-hosting.md) |
+| TST-06 | [Keep other framework hosts under `tests/`](testing/TST-06-other-framework-hosts.md) |
+| APP-01 | [Expose a direct application composition test seam](testing/APP-01-application-test-seam.md) |
+| APP-02 | [Rewrite Reqnroll lifecycle and dispatch steps](testing/APP-02-reqnroll-dispatch.md) |
+| APP-03 | [Cover synchronous application behavior](testing/APP-03-synchronous-application-behavior.md) |
+| APP-04 | [Exercise asynchronous workflows through in-memory Rebus](testing/APP-04-rebus-application-workflows.md) |
+| APP-05 | [Run the application suite against SQL and in-memory stores](testing/APP-05-sql-and-inmemory-stores.md) |
+| APP-06 | [Remove obsolete application boundary tests and dependencies](testing/APP-06-remove-boundary-tests.md) |
+| DOC-01 | [Publish the revised testing guidance](testing/DOC-01-testing-guidance.md) |
+
 ## Conventions for every task PR
 
 - Branch/PR per task; conventional-commit title (e.g. `feat(mediator): ...`, `fix(mediator): ...`).
