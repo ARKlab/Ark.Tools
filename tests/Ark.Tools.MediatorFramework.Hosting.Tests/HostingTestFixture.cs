@@ -164,7 +164,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public async Task<WebApplication> StartMinimalApiHostAsync()
     {
         var app = BuildMinimalApiHost();
-        await app.StartAsync(app.Lifetime.ApplicationStarted).ConfigureAwait(false);
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }
 
