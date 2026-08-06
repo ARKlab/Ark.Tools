@@ -6,12 +6,10 @@ using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
 using Ark.Tools.MediatorFramework.MinimalApi;
-using Ark.Tools.Nodatime.SystemTextJson;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 
-using MessagePack;
 using MessagePack.Resolvers;
 
 using Microsoft.AspNetCore.Authentication;
@@ -31,7 +29,6 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
-using System.Text;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -61,14 +58,14 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
         Container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
         Container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
-        Container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse?>, HostingNotFoundHandler>();
+        Container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
         Container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
         Container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
         Container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
         Container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
         Container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
         Container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
-        Container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment?>, HostingAttachmentDownloadHandler>();
+        Container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
         Container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
         Container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
 
@@ -127,9 +124,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.Services.AddSingleton(Container);
         builder.Services.AddSingleton(PrincipalProvider);
         builder.Services
-            .AddAuthentication(TestAuthenticationHandler.Scheme)
+            .AddAuthentication(TestAuthenticationHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.Scheme,
+                TestAuthenticationHandler.SchemeName,
                 static _ => { });
         builder.Services.AddArkMinimalApiHost(Container, options =>
         {
@@ -154,7 +151,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public async Task<WebApplication> StartMinimalApiHostAsync()
     {
         var app = BuildMinimalApiHost();
-        await app.StartAsync().ConfigureAwait(false);
+        await app.StartAsync(app.Lifetime.ApplicationStarted).ConfigureAwait(false);
         return app;
     }
 
@@ -341,12 +338,12 @@ internal sealed class HostingStatusHandler : IRequestHandler<HostingStatusReques
     }
 }
 
-internal sealed class HostingNotFoundHandler : IQueryHandler<HostingNotFoundQuery, HostingResponse?>
+internal sealed class HostingNotFoundHandler : IQueryHandler<HostingNotFoundQuery, HostingResponse>
 {
-    public async Task<HostingResponse?> ExecuteAsync(HostingNotFoundQuery query, CancellationToken ctk = default)
+    public async Task<HostingResponse> ExecuteAsync(HostingNotFoundQuery query, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        return null;
+        return null!;
     }
 }
 
@@ -440,16 +437,23 @@ internal sealed class HostingAuthorizedHandler : IQueryHandler<HostingAuthorized
 
 internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>
 {
+    private readonly HostingTestState _state;
+
+    public HostingStreamHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
     public async Task<IAsyncEnumerable<HostingStreamItem>> ExecuteAsync(HostingStreamQuery query, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        return Enumerate(query.Count, ctk, _state);
+        return Enumerate(query.Count, _state, ctk);
     }
 
     private static async IAsyncEnumerable<HostingStreamItem> Enumerate(
         int count,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk,
-        HostingTestState state)
+        HostingTestState state,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
     {
         for (var number = 1; number <= count; number++)
         {
@@ -521,15 +525,15 @@ internal sealed class HostingAttachmentCollectionUploadHandler : IRequestHandler
     }
 }
 
-internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment?>
+internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>
 {
-    public async Task<Ark.MediatorFramework.IArkAttachment?> ExecuteAsync(
+    public async Task<Ark.MediatorFramework.IArkAttachment> ExecuteAsync(
         HostingAttachmentDownloadQuery query,
         CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
         if (!string.Equals(query.Name, "download.txt", StringComparison.Ordinal))
-            return null;
+            return null!;
 
         return new Ark.MediatorFramework.ArkAttachment(
             query.Name,

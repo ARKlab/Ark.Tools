@@ -9,11 +9,13 @@ namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
 internal sealed class TestPrincipalProvider : IContextProvider<ClaimsPrincipal>
 {
-    public ClaimsPrincipal Current { get; } = new(
-        new ClaimsIdentity(
-        [
-            new Claim(ClaimTypes.NameIdentifier, "hosting-test-user"),
-            new Claim("scope", "hosting.test"),
-        ],
-        authenticationType: "hosting-test"));
+    private ClaimsPrincipal _current = new(new ClaimsIdentity());
+
+    public ClaimsPrincipal Current => _current;
+
+    internal void SetCurrent(ClaimsPrincipal principal)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+        _current = principal;
+    }
 }

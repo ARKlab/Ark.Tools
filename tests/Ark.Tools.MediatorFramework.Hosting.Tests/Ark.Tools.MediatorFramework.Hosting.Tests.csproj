@@ -10,16 +10,22 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="FluentValidation" />
     <ProjectReference Include="../Ark.Tools.MediatorFramework.Hosting.Contracts/Ark.Tools.MediatorFramework.Hosting.Contracts.csproj" />
     <ProjectReference Include="../Ark.Tools.MediatorFramework.Hosting.GrpcClient/Ark.Tools.MediatorFramework.Hosting.GrpcClient.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MessagePack/Ark.Tools.AspNetCore.MessagePack.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MinimalApi/Ark.Tools.AspNetCore.MinimalApi.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Solid.Authorization/Ark.Tools.Solid.Authorization.csproj" />
   </ItemGroup>
 
   <ItemGroup>

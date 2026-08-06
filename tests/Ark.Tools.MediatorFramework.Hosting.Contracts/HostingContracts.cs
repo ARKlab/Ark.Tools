@@ -173,7 +173,7 @@ public sealed record HostingStatusRequest : Ark.Tools.Solid.IRequest<HostingResp
 
 /// <summary>Query whose handler returns no value.</summary>
 [HttpEndpoint("GET", "/hosting/not-found", AllowAnonymous = true, NullResultStatusCode = 404)]
-public sealed record HostingNotFoundQuery : Ark.Tools.Solid.IQuery<HostingResponse?>;
+public sealed record HostingNotFoundQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/hosting/business-violation", AllowAnonymous = true)]
@@ -276,7 +276,7 @@ public sealed record HostingAttachmentCollectionUploadRequest : Ark.Tools.Solid.
 
 /// <summary>Query returning a downloadable synthetic attachment.</summary>
 [HttpEndpoint("GET", "/hosting/attachments/{name}", AllowAnonymous = true)]
-public sealed record HostingAttachmentDownloadQuery : Ark.Tools.Solid.IQuery<Ark.MediatorFramework.IArkAttachment?>
+public sealed record HostingAttachmentDownloadQuery : Ark.Tools.Solid.IQuery<Ark.MediatorFramework.IArkAttachment>
 {
     /// <summary>Gets or sets the attachment name.</summary>
     [HttpRoute]
