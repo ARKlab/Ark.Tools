@@ -22,6 +22,9 @@
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.FluentValidaton/Ark.Tools.Solid.FluentValidaton.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.HealthChecks/Ark.Tools.AspNetCore.HealthChecks.csproj" />
   </ItemGroup>

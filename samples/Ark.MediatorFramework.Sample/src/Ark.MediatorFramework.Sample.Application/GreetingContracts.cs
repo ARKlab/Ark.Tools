@@ -57,7 +57,7 @@ public sealed record GreetingResponse
 [GrpcService("Greetings")]
 [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 [ProtoContract]
-public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
+public sealed record UpdateGreetingMessageRequest : IRequest<UpdateGreetingMessageRequest, GreetingResponse>
 {
     /// <summary>Gets the greeting identifier.</summary>
     [HttpRoute("id")]
@@ -79,7 +79,7 @@ public sealed record UpdateGreetingMessageRequest : IRequest<GreetingResponse>
 [GrpcMethod("RefreshGreeting")]
 [GrpcService("Greetings")]
 [ProtoContract]
-public sealed record RefreshGreetingCommand : ICommand
+public sealed record RefreshGreetingCommand : ICommand<RefreshGreetingCommand>
 {
     /// <summary>Gets the greeting identifier to refresh.</summary>
     [ProtoMember(1)]
@@ -98,7 +98,7 @@ public sealed record RefreshGreetingCommand : ICommand
 [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 [ProtoContract]
 [MessagePackObject(true)]
-public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
+public sealed record CreateGreetingRequest : IRequest<CreateGreetingRequest, GreetingResponse>
 {
     /// <summary>Gets the name to greet.</summary>
     [ProtoMember(1)]
@@ -128,7 +128,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 /// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>
 [ApiGroup("Greetings")]
 [HttpEndpoint("POST", "/api/v{version}/greetings/compose")]
-public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingResponse>
+public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingRequest, ComposeGreetingResponse>
 {
     /// <summary>Gets the name to greet.</summary>
     public string Name { get; init; } = string.Empty;
@@ -146,7 +146,7 @@ public sealed record ComposeGreetingResponse
 
 /// <summary>Rebus-only request completed asynchronously by the composition workflow.</summary>
 [RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingResponse>
+public sealed record CompleteGreetingCompositionRequest : IRequest<CompleteGreetingCompositionRequest, GreetingResponse>
 {
     /// <summary>Gets the greeting identifier.</summary>
     public Guid Id { get; init; }
@@ -157,7 +157,7 @@ public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingRespo
 
 /// <summary>Notification emitted by the SQL transaction after a greeting is persisted.</summary>
 [RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record GreetingCreatedNotification : ICommand
+public sealed record GreetingCreatedNotification : ICommand<GreetingCreatedNotification>
 {
     /// <summary>Gets the persisted greeting.</summary>
     public required GreetingResponse Greeting { get; init; }
@@ -172,7 +172,7 @@ public sealed record GreetingCreatedNotification : ICommand
 [GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]
 [ProtoContract]
-public sealed record GetGreetingQuery : IQuery<GreetingResponse>
+public sealed record GetGreetingQuery : IQuery<GetGreetingQuery, GreetingResponse>
 {
     /// <summary>Gets the greeting identifier.</summary>
     [ProtoMember(1)]
@@ -205,7 +205,7 @@ public sealed record GreetingResponseV2
 [GrpcMethod("GetGreeting")]
 [GrpcService("Greetings")]
 [ProtoContract]
-public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
+public sealed record GetGreetingV2Query : IQuery<GetGreetingV2Query, GreetingResponseV2>
 {
     /// <summary>Gets the greeting identifier.</summary>
     [ProtoMember(1)]
@@ -217,7 +217,7 @@ public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>
 [GrpcMethod("SearchGreetings")]
 [GrpcService("Greetings")]
 [ProtoContract]
-public sealed record SearchGreetingsQuery : IQuery<GreetingPage>, IQueryPaged
+public sealed record SearchGreetingsQuery : IQuery<SearchGreetingsQuery, GreetingPage>, IQueryPaged
 {
     /// <summary>Gets the optional message filter.</summary>
     [HttpQuery]
@@ -259,7 +259,7 @@ public sealed record GreetingStreamItem
 [GrpcService("Greetings")]
 [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 [ProtoContract]
-public sealed record GetGreetingsStreamQuery : IQuery<IAsyncEnumerable<GreetingStreamItem>>
+public sealed record GetGreetingsStreamQuery : IQuery<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>
 {
     /// <summary>Gets the number of items to yield.</summary>
     [HttpQuery]
@@ -308,7 +308,7 @@ public sealed record EnvelopeBindingResponse
 
 /// <summary>Request demonstrating combined Minimal API envelope binding.</summary>
 [HttpEndpoint("POST", "/api/v{version}/greetings/{id}/envelope")]
-public sealed record UpdateGreetingRequest : IRequest<EnvelopeBindingResponse>
+public sealed record UpdateGreetingRequest : IRequest<UpdateGreetingRequest, EnvelopeBindingResponse>
 {
     /// <summary>Gets the route identifier.</summary>
     public Guid Id { get; init; }

@@ -63,7 +63,7 @@ public sealed record AuditRecord
 
 /// <summary>Queries the persisted audit trail.</summary>
 [HttpEndpoint("GET", "/api/v{version}/audits")]
-public sealed record GetAuditsQuery : IQuery<PagedResult<AuditRecord>>, IQueryPaged
+public sealed record GetAuditsQuery : IQuery<GetAuditsQuery, PagedResult<AuditRecord>>, IQueryPaged
 {
     /// <summary>Gets the user identifier filter.</summary>
     [HttpQuery]

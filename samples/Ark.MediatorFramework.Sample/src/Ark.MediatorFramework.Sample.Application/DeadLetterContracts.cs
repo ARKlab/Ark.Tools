@@ -14,7 +14,7 @@ public sealed record DeadLetterAck;
 /// forwarded to the error queue with the exception serialized into its headers.
 /// </summary>
 [RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record FailingRebusRequest : IRequest<DeadLetterAck>
+public sealed record FailingRebusRequest : IRequest<FailingRebusRequest, DeadLetterAck>
 {
     /// <summary>Gets the reason surfaced in the thrown exception.</summary>
     public string Reason { get; init; } = "boom";

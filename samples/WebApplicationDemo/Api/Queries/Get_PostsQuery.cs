@@ -7,7 +7,7 @@ namespace WebApplicationDemo.Api.Queries;
 
 public static class Get_PostsQuery
 {
-    public class V1 : IQuery<List<Post>>
+    public class V1 : IQuery<V1, List<Post>>
     {
     }
 }

@@ -8,7 +8,7 @@ public static class Audit_GetChangesQuery
 {
     public record V1
         : AuditChangesQueryDto.V1
-        , IQuery<IAuditRecordReturn<IAuditEntity>>
+        , IQuery<V1, IAuditRecordReturn<IAuditEntity>>
     {
     }
 }

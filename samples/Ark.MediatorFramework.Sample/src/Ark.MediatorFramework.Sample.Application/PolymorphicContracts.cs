@@ -117,7 +117,7 @@ public sealed record ShapeEnvelope
 [GrpcService("Greetings")]
 [ProtoContract]
 [MessagePackObject]
-public sealed record DescribeShapeRequest : IRequest<ShapeDescription>
+public sealed record DescribeShapeRequest : IRequest<DescribeShapeRequest, ShapeDescription>
 {
     /// <summary>Gets the shape to describe.</summary>
     [ProtoMember(1)]

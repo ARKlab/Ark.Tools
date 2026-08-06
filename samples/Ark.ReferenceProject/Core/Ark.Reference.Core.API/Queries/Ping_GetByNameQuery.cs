@@ -11,7 +11,7 @@ public static class Ping_GetByNameQuery
     /// <summary>
     /// Version 1 of the GetByName query
     /// </summary>
-    public record V1 : IQuery<Ping.V1.Output>
+    public record V1 : IQuery<V1, Ping.V1.Output>
     {
         /// <summary>
         /// Gets or initializes the name of the Ping to retrieve

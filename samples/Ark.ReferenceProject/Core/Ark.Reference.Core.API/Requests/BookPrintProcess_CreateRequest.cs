@@ -11,7 +11,7 @@ public static class BookPrintProcess_CreateRequest
     /// <summary>
     /// Version 1 of the create request
     /// </summary>
-    public record V1 : IRequest<BookPrintProcess.V1.Output>
+    public record V1 : IRequest<V1, BookPrintProcess.V1.Output>
     {
         /// <summary>
         /// Gets or initializes the print process data

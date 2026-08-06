@@ -9,7 +9,7 @@ public static class Audit_GetQuery
 {
     public record V1
         : AuditQueryDto.V1<AuditKind>
-        , IQuery<PagedResult<AuditDto<AuditKind>>>
+        , IQuery<V1, PagedResult<AuditDto<AuditKind>>>
     {
     }
 }

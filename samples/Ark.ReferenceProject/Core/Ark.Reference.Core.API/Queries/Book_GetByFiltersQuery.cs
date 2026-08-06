@@ -7,7 +7,7 @@ namespace Ark.Reference.Core.API.Queries;
 
 public static class Book_GetByFiltersQuery
 {
-    public record V1 : IQuery<PagedResult<Book.V1.Output>>
+    public record V1 : IQuery<V1, PagedResult<Book.V1.Output>>
     {
         public int[]? Id { get; init; }
         public string[]? Title { get; init; }

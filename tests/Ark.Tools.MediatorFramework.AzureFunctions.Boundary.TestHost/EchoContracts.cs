@@ -23,7 +23,7 @@ public sealed record EchoResponse
 
 /// <summary>Query exercising route and query binding with validation.</summary>
 [HttpEndpoint("GET", "/api/v{version}/echo/{id}")]
-public sealed record EchoQuery : IQuery<EchoResponse>
+public sealed record EchoQuery : IQuery<EchoQuery, EchoResponse>
 {
     /// <summary>Gets the route identifier.</summary>
     public Guid Id { get; init; }
@@ -39,7 +39,7 @@ public sealed record EchoQuery : IQuery<EchoResponse>
 
 /// <summary>Request exercising JSON body binding on a record contract.</summary>
 [HttpEndpoint("POST", "/api/v{version}/echo")]
-public sealed record EchoRequest : IRequest<EchoResponse>
+public sealed record EchoRequest : IRequest<EchoRequest, EchoResponse>
 {
     /// <summary>Gets the message to echo, must not be empty.</summary>
     public required string Message { get; init; }
@@ -47,7 +47,7 @@ public sealed record EchoRequest : IRequest<EchoResponse>
 
 /// <summary>Anonymous probe endpoint.</summary>
 [HttpEndpoint("GET", "/api/v{version}/ping", AllowAnonymous = true)]
-public sealed record PingQuery : IQuery<EchoResponse>
+public sealed record PingQuery : IQuery<PingQuery, EchoResponse>
 {
 }
 

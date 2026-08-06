@@ -96,11 +96,13 @@ public sealed class SimpleInjectorProcessorTests
         public List<string> Events { get; } = [];
     }
 
+#pragma warning disable ARKSOLID001 // Legacy types intentionally test the reflective dispatch path
     private sealed record TestRequest(int Value) : IRequest<int>;
     private sealed record FailingRequest : IRequest<int>;
     private sealed record TestQuery(int Value) : IQuery<int>;
     private sealed record CancellableQuery : IQuery<int>;
     private sealed record TestCommand(int Value) : ICommand;
+#pragma warning restore ARKSOLID001
     private sealed record SelfRequest(int Value) : IRequest<SelfRequest, int>;
     private sealed record SelfQuery(int Value) : IQuery<SelfQuery, int>;
     private sealed record SelfCommand(int Value) : ICommand<SelfCommand>;
