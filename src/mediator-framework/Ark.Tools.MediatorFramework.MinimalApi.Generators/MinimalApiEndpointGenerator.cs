@@ -741,7 +741,9 @@ namespace Ark.MediatorFramework.Generators
                                 var assignments = string.Join(", ", e.Properties
                                     .Where(property => property.IsRoute || property.IsQuery)
                                     .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + BindingValue(property))
-                                    .Concat(e.ServerSetProperties.Where(property => !e.Properties.Any(candidate => candidate.Name == property))
+                                    .Concat(e.ServerSetProperties.Where(property =>
+                                        !e.Properties.Any(candidate =>
+                                            candidate.Name == property && (candidate.IsRoute || candidate.IsQuery)))
                                         .Select(property => property + " = default")));
                                 sb.AppendLine("                var request = body with { " + assignments + " };");
                             }
@@ -1353,7 +1355,10 @@ namespace Ark.MediatorFramework.Generators
                 ETagProperty = etagProperty;
                 ResponseETagProperty = responseETagProperty;
                 IsRecord = isRecord;
-                ServerSetProperties = properties.Where(property => property.IsServerSet).Select(property => property.Name).ToImmutableArray();
+                ServerSetProperties = properties
+                    .Where(property => property.IsServerSet && property.HasPublicSetter)
+                    .Select(property => property.Name)
+                    .ToImmutableArray();
                 InvalidServerSetProperties = invalidServerSetProperties;
                 SuspiciousProperties = suspiciousProperties;
                 AttachmentCount = attachmentCount;

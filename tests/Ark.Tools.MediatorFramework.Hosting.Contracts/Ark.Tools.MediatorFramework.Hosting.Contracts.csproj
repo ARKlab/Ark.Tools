@@ -11,6 +11,9 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="MessagePack" />
+    <PackageReference Include="NodaTime" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <PackageReference Include="protobuf-net" />
     <PackageReference Include="SimpleInjector" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj" />
