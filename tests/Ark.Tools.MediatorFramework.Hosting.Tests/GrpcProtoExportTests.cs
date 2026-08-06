@@ -45,10 +45,17 @@ public sealed class GrpcProtoExportTests
 
     private static string FindExportedProto()
     {
-        var testsDirectory = Directory.GetParent(AppContext.BaseDirectory)!
-            .Parent!.Parent!.Parent!.Parent!.FullName;
+        var repositoryRoot = new DirectoryInfo(AppContext.BaseDirectory);
+        while (repositoryRoot is not null
+            && !File.Exists(Path.Combine(repositoryRoot.FullName, "Ark.Tools.slnx")))
+        {
+            repositoryRoot = repositoryRoot.Parent;
+        }
+
+        repositoryRoot.Should().NotBeNull();
         var contractsObj = Path.Combine(
-            testsDirectory,
+            repositoryRoot!.FullName,
+            "tests",
             "Ark.Tools.MediatorFramework.Hosting.Contracts",
             "obj");
         var proto = Directory.GetFiles(contractsObj, "Hosting.proto", SearchOption.AllDirectories)
