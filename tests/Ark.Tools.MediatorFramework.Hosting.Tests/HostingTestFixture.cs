@@ -198,10 +198,24 @@ public sealed class HostingTestFixture : IAsyncDisposable
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.Use(async (_, next) =>
+        {
+            await using var scope = AsyncScopedLifestyle.BeginScope(Container).ConfigureAwait(false);
+            await next().ConfigureAwait(false);
+        });
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         HostingEndpointMappings.MapGrpc(app);
         app.MapCodeFirstGrpcReflectionService().AllowAnonymous();
         _hosts.Add(app);
+        return app;
+    }
+
+    /// <summary>Builds and starts an independent gRPC test host.</summary>
+    /// <returns>The started gRPC application.</returns>
+    public async Task<WebApplication> StartGrpcHostAsync()
+    {
+        var app = BuildGrpcHost();
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }
 
@@ -570,6 +584,7 @@ internal sealed class HostingAttachmentUploadHandler : IRequestHandler<HostingAt
         {
             using var reader = new StreamReader(request.Attachment.OpenRead(), Encoding.UTF8);
             _state.LastAttachmentContent = await reader.ReadToEndAsync(ctk).ConfigureAwait(false);
+            _state.LastAttachmentName = request.Attachment.Name;
         }
         return new HostingResponse
         {

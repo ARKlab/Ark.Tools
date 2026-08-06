@@ -1,0 +1,59 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.Tools.MediatorFramework.Hosting.Contracts.GrpcClient;
+
+using AwesomeAssertions;
+
+namespace Ark.Tools.MediatorFramework.Hosting.Tests;
+
+/// <summary>Proves exported gRPC proto text and generated client shape.</summary>
+[TestClass]
+public sealed class GrpcProtoExportTests
+{
+    /// <summary>Verifies the clean-build proto contains the generated services and methods.</summary>
+    [TestMethod]
+    public void ExportsDeterministicProtoServices()
+    {
+        var protoPath = FindExportedProto();
+        var proto = File.ReadAllText(protoPath);
+
+        proto.Should().Contain("service HostingV1");
+        proto.Should().Contain("service HostingV2");
+        proto.Should().Contain("service HostingV3");
+        proto.Should().Contain("rpc ExecuteHostingRequest(HostingRequest) returns (HostingResponse);");
+        proto.Should().Contain("rpc UploadHostingAttachment(stream ark.mediator.UploadDocumentChunk)");
+        proto.Should().NotContain("import \"ark/nodatime.proto\";");
+    }
+
+    /// <summary>Verifies generated clients expose the exported versioned service descriptors.</summary>
+    [TestMethod]
+    public void GeneratesVersionedClientShape()
+    {
+        var services = HostingReflection.Descriptor.Services
+            .Select(service => service.Name)
+            .ToArray();
+
+        services.Should().Equal("HostingV1", "HostingV2", "HostingV3");
+        typeof(HostingV1.HostingV1Client).Should().NotBeNull();
+        typeof(HostingV2.HostingV2Client).Should().NotBeNull();
+        typeof(HostingV3.HostingV3Client).Should().NotBeNull();
+        HostingReflection.Descriptor.Services
+            .Single(service => service.Name == "HostingV1")
+            .Methods.Should().Contain(method => method.Name == "ExecuteHostingRequest");
+    }
+
+    private static string FindExportedProto()
+    {
+        var testsDirectory = Directory.GetParent(AppContext.BaseDirectory)!
+            .Parent!.Parent!.Parent!.Parent!.FullName;
+        var contractsObj = Path.Combine(
+            testsDirectory,
+            "Ark.Tools.MediatorFramework.Hosting.Contracts",
+            "obj");
+        var proto = Directory.GetFiles(contractsObj, "Hosting.proto", SearchOption.AllDirectories)
+            .SingleOrDefault();
+        proto.Should().NotBeNull();
+        return proto!;
+    }
+}
