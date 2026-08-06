@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ArkExportProto>false</ArkExportProto>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
+    <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
+    <PackageReference Include="Google.Api.CommonProtos" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ark.Tools.MediatorFramework.Hosting.Contracts/Ark.Tools.MediatorFramework.Hosting.Contracts.csproj"
+                      ReferenceOutputAssembly="false" />
+    <Protobuf Include="../Ark.Tools.MediatorFramework.Hosting.Contracts/obj/$(Configuration)/net10.0/ark-proto/Hosting.proto"
+              GrpcServices="Client"
+              Link="Hosting.proto" />
+    <Protobuf Update="@(Protobuf)"
+              AdditionalImportDirs="$(NuGetPackageRoot)/google.api.commonprotos/2.17.0/content/protos;../Ark.Tools.MediatorFramework.Hosting.Contracts/obj/$(Configuration)/net10.0/ark-proto" />
+  </ItemGroup>
+
+</Project>
