@@ -18,8 +18,8 @@ public sealed class HostingFixtureTests
     [TestMethod]
     public async Task FixtureBuildsHostsAndDisposesResources()
     {
-        var fixture = new HostingTestFixture();
-        using (AsyncScopedLifestyle.BeginScope(fixture.Container))
+        await using var fixture = new HostingTestFixture();
+        await using (AsyncScopedLifestyle.BeginScope(fixture.Container).ConfigureAwait(false))
         {
             var handler = fixture.Container.GetInstance<IRequestHandler<HostingRequest, HostingResponse>>();
             var response = await handler.ExecuteAsync(new HostingRequest

@@ -1,13 +1,15 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.AspNetCore.Http;
+
+using Ark.MediatorFramework;
 using Ark.MediatorFramework.Generated;
 
 using Microsoft.AspNetCore.Routing;
 
 using Rebus.Config;
-using Rebus.Routing;
-
 using SimpleInjector;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Contracts;
@@ -52,7 +54,7 @@ public static class HostingEndpointMappings
 
     /// <summary>Configures generated owner-queue routing for the synthetic Rebus messages.</summary>
     /// <param name="routing">The Rebus routing configuration.</param>
-    public static void ConfigureRebusRouting(StandardConfigurer<IRouter> routing)
+    public static void ConfigureRebusRouting(StandardConfigurer<global::Rebus.Routing.IRouter> routing)
     {
         ArgumentNullException.ThrowIfNull(routing);
         ArkGeneratedEndpoints.ConfigureArkRebusRouting<HostingMarker>(routing);
@@ -123,7 +125,6 @@ public sealed record HostingQuery : Ark.Tools.Solid.IQuery<HostingResponse>
 [HttpEndpoint("POST", "/hosting/commands", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
-[RebusMessage(OwnerQueue = "hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingCommand : Ark.Tools.Solid.ICommand
 {

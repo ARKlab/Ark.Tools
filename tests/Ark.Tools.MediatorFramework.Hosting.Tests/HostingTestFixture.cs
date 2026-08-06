@@ -6,8 +6,8 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.TestHost;
 
 using ProtoBuf.Grpc.Server;
 
@@ -29,7 +29,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
 {
     private readonly InMemNetwork _network = new();
     private readonly List<WebApplication> _hosts = [];
-    private IBus? _bus;
+    private bool _rebusConfigured;
     private bool _disposed;
 
     /// <summary>Initializes a fixture with deterministic handlers and test-only identity.</summary>
@@ -98,16 +98,17 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public IBus BuildRebusHost()
     {
         ThrowIfDisposed();
-        if (_bus is not null)
-            return _bus;
-
-        Container.ConfigureRebus(config =>
+        if (!_rebusConfigured)
         {
-            config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting-test"));
-            config.Routing(HostingEndpointMappings.ConfigureRebusRouting);
-        });
-        _bus = Container.GetInstance<IBus>();
-        return _bus;
+            Container.ConfigureRebus(config =>
+            {
+                config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting-test"));
+                config.Routing(HostingEndpointMappings.ConfigureRebusRouting);
+            });
+            _rebusConfigured = true;
+        }
+
+        return Container.GetInstance<IBus>();
     }
 
     /// <inheritdoc />
@@ -119,7 +120,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         _disposed = true;
         for (var index = _hosts.Count - 1; index >= 0; index--)
             await _hosts[index].DisposeAsync().ConfigureAwait(false);
-        Container.Dispose();
+        await Container.DisposeAsync().ConfigureAwait(false);
     }
 
     private void ThrowIfDisposed()
