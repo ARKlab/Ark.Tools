@@ -71,7 +71,7 @@ public static class HostingEndpointMappings
 /// Deterministic request contract with route, query, body, and server-owned properties.
 /// </summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/requests/{id}", AllowAnonymous = true, AcceptsMessagePack = true)]
-[GrpcMethod("ExecuteHostingRequest")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 [MessagePackObject(true)]
@@ -113,7 +113,7 @@ public sealed record HostingResponse
 
 /// <summary>Query contract with route and query parameters.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/queries/{id}", AllowAnonymous = true)]
-[GrpcMethod("ExecuteHostingQuery")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingQuery : Ark.Tools.Solid.IQuery<HostingResponse>
@@ -153,7 +153,7 @@ public sealed record HostingRebusCommand : Ark.Tools.Solid.ICommand
 
 /// <summary>Request whose handler produces a validation failure.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/validation", AllowAnonymous = true)]
-[GrpcMethod("ValidateHostingRequest")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingValidationRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -173,14 +173,14 @@ public sealed record HostingStatusRequest : Ark.Tools.Solid.IRequest<HostingResp
 
 /// <summary>Query whose handler returns no value.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/not-found", AllowAnonymous = true, NullResultStatusCode = 404)]
-[GrpcMethod("GetHostingNotFound")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingNotFoundQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
-[GrpcMethod("TriggerHostingBusinessViolation")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingBusinessViolationRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -200,20 +200,20 @@ public sealed record HostingUnexpectedRequest : Ark.Tools.Solid.IRequest<Hosting
 
 /// <summary>Query protected by the transport-agnostic authorization decorator.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/authorized", AllowAnonymous = false)]
-[GrpcMethod("GetHostingAuthorized")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [PolicyAuthorize(typeof(HostingScopePolicy))]
 [ProtoBuf.ProtoContract]
 public sealed record HostingAuthorizedQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
 /// <summary>Query returning the authenticated synthetic caller.</summary>
-[GrpcMethod("GetHostingUserContext")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingUserContextQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
 /// <summary>Request whose handler reports an opaque ETag mismatch.</summary>
-[GrpcMethod("CheckHostingETag")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingETagMismatchRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -225,7 +225,7 @@ public sealed record HostingETagMismatchRequest : Ark.Tools.Solid.IRequest<Hosti
 }
 
 /// <summary>Request whose handler reports an optimistic concurrency conflict.</summary>
-[GrpcMethod("CheckHostingConcurrency")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingOptimisticConcurrencyRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -258,7 +258,7 @@ public sealed class HostingScopePolicy : IAuthorizationPolicy
 
 /// <summary>Query returning a deterministic asynchronous stream.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/stream", AllowAnonymous = true)]
-[GrpcMethod("StreamHosting")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingStreamQuery : Ark.Tools.Solid.IQuery<IAsyncEnumerable<HostingStreamItem>>
@@ -286,7 +286,7 @@ public sealed record HostingStreamItem
     MaxRequestBodySizeBytes = 1024,
     MaxFileCount = 1,
     AllowedContentTypes = ["text/plain"])]
-[GrpcMethod("UploadHostingAttachment")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingAttachmentUploadRequest : Ark.Tools.Solid.IRequest<HostingResponse>
@@ -338,7 +338,7 @@ public sealed record HostingOpenApiResponse
 public sealed record HostingOpenApiQuery : Ark.Tools.Solid.IQuery<HostingOpenApiResponse>;
 
 /// <summary>Query used to verify NodaTime and polymorphic protobuf fields.</summary>
-[GrpcMethod("GetHostingWireTypes")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingWireTypesQuery : Ark.Tools.Solid.IQuery<HostingWireTypesResponse>;
@@ -385,7 +385,7 @@ public sealed record HostingCircle : HostingShape
 
 /// <summary>Versioned query used to exercise contract lifetime metadata.</summary>
 [HttpEndpoint("GET", "/hosting/versioned/{id}", AllowAnonymous = true)]
-[GrpcMethod("GetHostingVersioned")]
+[GrpcMethod]
 [GrpcService("Hosting")]
 [Versioning(Introduced = 2, Retired = 4)]
 [ProtoBuf.ProtoContract]

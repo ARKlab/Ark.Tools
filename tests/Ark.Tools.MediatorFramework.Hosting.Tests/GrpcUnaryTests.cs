@@ -27,10 +27,10 @@ public sealed class GrpcUnaryTests
         });
         var client = new HostingV1.HostingV1Client(channel);
 
-        var request = await client.ExecuteHostingRequestAsync(
+        var request = await client.HostingRequestAsync(
             new HostingRequest { Id = 42, Filter = "query", Value = "body" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
-        var query = await client.ExecuteHostingQueryAsync(
+        var query = await client.HostingQueryAsync(
             new HostingQuery { Id = 7, Value = "value" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -71,7 +71,7 @@ public sealed class GrpcUnaryTests
         });
         var client = new HostingV2.HostingV2Client(channel);
 
-        var result = await client.GetHostingVersionedAsync(
+        var result = await client.HostingVersionedQueryAsync(
             new HostingVersionedQuery { Id = 5, Value = "v2" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -90,7 +90,7 @@ public sealed class GrpcUnaryTests
         });
         var client = new HostingV1.HostingV1Client(channel);
 
-        var result = await client.GetHostingWireTypesAsync(
+        var result = await client.HostingWireTypesQueryAsync(
             new HostingWireTypesQuery(),
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 

@@ -23,7 +23,7 @@ public sealed class GrpcProtoExportTests
         proto.Should().Contain("service HostingV1");
         proto.Should().Contain("service HostingV2");
         proto.Should().Contain("service HostingV3");
-        proto.Should().Contain("rpc ExecuteHostingRequest(HostingRequest) returns (HostingResponse);");
+        proto.Should().Contain("rpc HostingRequest(HostingRequest) returns (HostingResponse);");
         proto.Should().Contain("rpc UploadHostingAttachment(stream ark.mediator.UploadDocumentChunk)");
         proto.Should().NotContain("import \"ark/nodatime.proto\";");
     }
@@ -42,7 +42,7 @@ public sealed class GrpcProtoExportTests
         typeof(HostingV3.HostingV3Client).Should().NotBeNull();
         HostingReflection.Descriptor.Services
             .Single(service => service.Name == "HostingV1")
-            .Methods.Should().Contain(method => method.Name == "ExecuteHostingRequest");
+            .Methods.Should().Contain(method => method.Name == "HostingRequest");
     }
 
     private static string FindExportedProto()

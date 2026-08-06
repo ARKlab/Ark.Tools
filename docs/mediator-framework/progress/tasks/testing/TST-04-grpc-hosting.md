@@ -46,8 +46,8 @@ for every implementation task.
 ## Tests
 
 - Focused test classes: `GrpcUnaryTests`, `GrpcErrorsTests`,
-  `GrpcAuthorizationTests`, `GrpcStreamingTests`, `GrpcUploadTests`, and
-  `GrpcProtoExportTests`.
+  `GrpcAuthorizationTests`, `GrpcStreamingTests`, `GrpcUploadTests`,
+  `GrpcProtoExportTests`, and `GrpcReflectionTests`.
 - Run the client project before the hosting test project when invoking tests
   directly.
 - Required scenarios/cases:
@@ -60,4 +60,6 @@ for every implementation task.
 - External reflection validation:
   - `grpc-curl --describe http://127.0.0.1:<port>` discovers `HostingV1`,
     `HostingV2`, and `HostingV3` from the running reflection endpoint.
+  - `GrpcReflectionTests` runs this check when `grpc-curl` is installed; set
+    `GRPC_CURL_PATH` when the executable is not on `PATH`.
 - Run the full-solution gates.

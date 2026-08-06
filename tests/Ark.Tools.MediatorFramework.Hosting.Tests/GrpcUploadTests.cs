@@ -26,7 +26,7 @@ public sealed class GrpcUploadTests
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
-        using var call = client.UploadHostingAttachment(
+        using var call = client.HostingAttachmentUploadRequest(
             cancellationToken: app.Lifetime.ApplicationStopping);
 
         await call.RequestStream.WriteAsync(new UploadDocumentChunk
@@ -58,7 +58,7 @@ public sealed class GrpcUploadTests
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
-        using var call = client.UploadHostingAttachment(
+        using var call = client.HostingAttachmentUploadRequest(
             cancellationToken: app.Lifetime.ApplicationStopping);
         await call.RequestStream.WriteAsync(new UploadDocumentChunk
         {

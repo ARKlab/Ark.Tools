@@ -205,14 +205,11 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.Services.AddCodeFirstGrpcReflection();
         builder.Services.AddSingleton(Container);
         builder.Services.AddSingleton(PrincipalProvider);
+        builder.Services.AddSimpleInjector(Container, simpleInjector => simpleInjector.AddAspNetCore());
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.Use(async (_, next) =>
-        {
-            await using var scope = AsyncScopedLifestyle.BeginScope(Container).ConfigureAwait(false);
-            await next().ConfigureAwait(false);
-        });
+        app.UseSimpleInjector(Container);
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         HostingEndpointMappings.MapGrpc(app);
         app.MapCodeFirstGrpcReflectionService().AllowAnonymous();

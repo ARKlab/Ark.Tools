@@ -30,7 +30,7 @@ public sealed class GrpcErrorsTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
-        var action = async () => await client.ValidateHostingRequestAsync(
+        var action = async () => await client.HostingValidationRequestAsync(
             new HostingValidationRequest { Value = "invalid" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -53,7 +53,7 @@ public sealed class GrpcErrorsTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
-        var action = async () => await client.TriggerHostingBusinessViolationAsync(
+        var action = async () => await client.HostingBusinessViolationRequestAsync(
             new HostingBusinessViolationRequest { Value = "invalid" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -78,7 +78,7 @@ public sealed class GrpcErrorsTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
-        var action = async () => await client.GetHostingNotFoundAsync(
+        var action = async () => await client.HostingNotFoundQueryAsync(
             new HostingNotFoundQuery(),
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -98,7 +98,7 @@ public sealed class GrpcErrorsTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
-        var action = async () => await client.CheckHostingETagAsync(
+        var action = async () => await client.HostingETagMismatchRequestAsync(
             new HostingETagMismatchRequest { ETag = "stale" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
@@ -116,7 +116,7 @@ public sealed class GrpcErrorsTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
-        var action = async () => await client.CheckHostingConcurrencyAsync(
+        var action = async () => await client.HostingOptimisticConcurrencyRequestAsync(
             new HostingOptimisticConcurrencyRequest { ETag = "stale" },
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 

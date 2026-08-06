@@ -24,7 +24,7 @@ public sealed class GrpcStreamingTests
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
-        using var call = client.StreamHosting(
+        using var call = client.HostingStreamQuery(
             new HostingStreamQuery { Count = 3 },
             cancellationToken: app.Lifetime.ApplicationStopping);
 
@@ -43,7 +43,7 @@ public sealed class GrpcStreamingTests
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
-        using var call = client.StreamHosting(
+        using var call = client.HostingStreamQuery(
             new HostingStreamQuery { Count = 0 },
             cancellationToken: app.Lifetime.ApplicationStopping);
 
@@ -61,7 +61,7 @@ public sealed class GrpcStreamingTests
         using var channel = CreateChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         using var cts = new CancellationTokenSource();
-        using var call = client.StreamHosting(new HostingStreamQuery { Count = 2 }, cancellationToken: cts.Token);
+        using var call = client.HostingStreamQuery(new HostingStreamQuery { Count = 2 }, cancellationToken: cts.Token);
 
         (await call.ResponseStream.MoveNext(app.Lifetime.ApplicationStopping).ConfigureAwait(false))
             .Should().BeTrue();
