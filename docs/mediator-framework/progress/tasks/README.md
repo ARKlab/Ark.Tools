@@ -32,7 +32,7 @@ separate document under [`testing/`](testing/):
 ### Recommended testing-redesign execution order
 
 1. [x] [TST-01](testing/TST-01-ownership-delivery-map.md)
-2. [ ] [TST-02](testing/TST-02-hosting-test-projects.md)
+2. [x] [TST-02](testing/TST-02-hosting-test-projects.md)
 3. [ ] [TST-03](testing/TST-03-minimal-api-hosting.md) · [ ] [TST-04](testing/TST-04-grpc-hosting.md) · [ ] [TST-05](testing/TST-05-rebus-hosting.md) · [ ] [TST-06](testing/TST-06-other-framework-hosts.md)
 4. [ ] [APP-01](testing/APP-01-application-test-seam.md)
 5. [ ] [APP-02](testing/APP-02-reqnroll-dispatch.md)
