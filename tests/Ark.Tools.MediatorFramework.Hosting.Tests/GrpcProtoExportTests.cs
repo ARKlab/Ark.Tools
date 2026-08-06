@@ -68,7 +68,7 @@ public sealed class GrpcProtoExportTests
             .SingleOrDefault(path =>
                 path.Contains(
                     $"{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}ark-proto{Path.DirectorySeparatorChar}",
-                    StringComparison.Ordinal));
+                    StringComparison.OrdinalIgnoreCase));
         proto.Should().NotBeNull();
         return proto!;
     }
