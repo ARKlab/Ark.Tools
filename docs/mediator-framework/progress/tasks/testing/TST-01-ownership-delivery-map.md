@@ -26,11 +26,11 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Every D1–D7 has an explicit accepted option or an owner and due decision.
-- [ ] The task board has a unique ID and dependency order for every task below.
-- [ ] No task claims that sample application tests must assert a URL, status,
+- [x] Every D1–D7 has an explicit accepted option or an owner and due decision.
+- [x] The task board has a unique ID and dependency order for every task below.
+- [x] No task claims that sample application tests must assert a URL, status,
   ProblemDetails wire body, serialization, or OpenAPI document.
-- [ ] Existing progress links remain valid.
+- [x] Existing progress links remain valid.
 
 ## Tests
 

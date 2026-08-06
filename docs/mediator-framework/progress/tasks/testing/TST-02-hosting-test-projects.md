@@ -40,13 +40,13 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] The new project is in the solution and passes the normal test command.
-- [ ] No hosting test project references the sample application.
-- [ ] A smoke test proves the synthetic handler can be resolved from its
+- [x] The new project is in the solution and passes the normal test command.
+- [x] No hosting test project references the sample application.
+- [x] A smoke test proves the synthetic handler can be resolved from its
   container and that the fixture disposes all host resources.
-- [ ] Generated proto/client artifacts are reproducible and are not committed
+- [x] Generated proto/client artifacts are reproducible and are not committed
   as generated `bin/` or `obj/` output.
-- [ ] All public fixture helpers have XML documentation.
+- [x] All public fixture helpers have XML documentation.
 
 ## Tests
 
@@ -60,3 +60,12 @@ for every implementation task.
   - the project discovers the smoke test through the normal solution test
     command.
 - Run the full-solution build and test gates.
+
+## Validation
+
+- `dotnet build tests/Ark.Tools.MediatorFramework.Hosting.Tests/Ark.Tools.MediatorFramework.Hosting.Tests.csproj --configuration Debug --no-restore`
+- `dotnet test tests/Ark.Tools.MediatorFramework.Hosting.Tests/ -f net10.0 --configuration Debug --no-build`
+- Clean `obj/` build of `Ark.Tools.MediatorFramework.Hosting.GrpcClient` exported
+  `Hosting.proto` and generated the client successfully.
+- `dotnet build Ark.Tools.slnx --configuration Debug`
+- `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`

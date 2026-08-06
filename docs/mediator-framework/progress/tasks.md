@@ -213,8 +213,10 @@ project builds under the repo's strict settings and its self-tests pass with
     (`IBus` injected into the pure handler) whose Rebus handler completes the
     workflow; a test mutates over HTTP and polls a query endpoint until the
     async effect is visible.
-- [x] **T9.8** Reqnroll behavioral tests for the sample.
-  - *Accept:* `…Sample.Tests` gains Gherkin feature files (Reqnroll.MsTest)
+- [x] **T9.8** Reqnroll behavioral tests for the sample. *(Superseded by the
+  [Mediator Framework testing redesign](mediator-testing-plan.md), beginning with
+  [TST-01](tasks/testing/TST-01-ownership-delivery-map.md).)*
+  - *Historical acceptance:* `…Sample.Tests` gains Gherkin feature files (Reqnroll.MsTest)
     covering create/query greetings, the business-rule violation, versioning
     and the HTTP→Rebus composition; step definitions call only HTTP/gRPC
     interfaces (no direct handler/store access); existing capability tests may
