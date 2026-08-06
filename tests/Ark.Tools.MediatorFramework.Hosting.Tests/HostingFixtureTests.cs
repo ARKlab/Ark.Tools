@@ -19,6 +19,10 @@ public sealed class HostingFixtureTests
     public async Task FixtureBuildsHostsAndDisposesResources()
     {
         await using var fixture = new HostingTestFixture();
+        var minimalApiHost = fixture.BuildMinimalApiHost();
+        var grpcHost = fixture.BuildGrpcHost();
+        var rebusHost = fixture.BuildRebusHost();
+
         await using (AsyncScopedLifestyle.BeginScope(fixture.Container).ConfigureAwait(false))
         {
             var handler = fixture.Container.GetInstance<IRequestHandler<HostingRequest, HostingResponse>>();
@@ -30,9 +34,9 @@ public sealed class HostingFixtureTests
             }).ConfigureAwait(false);
 
             response.Message.Should().Be("7:filter:value");
-            fixture.BuildMinimalApiHost().Should().NotBeNull();
-            fixture.BuildGrpcHost().Should().NotBeNull();
-            fixture.BuildRebusHost().Should().NotBeNull();
+            minimalApiHost.Should().NotBeNull();
+            grpcHost.Should().NotBeNull();
+            rebusHost.Should().NotBeNull();
         }
 
         await fixture.DisposeAsync().ConfigureAwait(false);
