@@ -1,7 +1,6 @@
 # Mediator Framework testing redesign — implementation plan
 
-**Status:** Proposed
-**Repository:** `/home/runner/work/Ark.Tools/Ark.Tools`
+**Status:** Approved for implementation
 **Decision log:** [`mediator-testing-decisions.md`](mediator-testing-decisions.md)
 
 ## 1. Objective
@@ -10,11 +9,11 @@ Finalize the Mediator Framework test story with two explicit ownership
 boundaries:
 
 1. Framework-owned tests under
-   `/home/runner/work/Ark.Tools/Ark.Tools/tests/` prove generated hosting and
+   `tests/` prove generated hosting and
    transport behavior using synthetic contracts. These tests may use
    `TestServer`, generated gRPC clients, and in-memory Rebus processors.
 2. The sample application tests under
-   `/home/runner/work/Ark.Tools/Ark.Tools/samples/Ark.MediatorFramework.Sample/test/`
+   `samples/Ark.MediatorFramework.Sample/test/`
    prove application behavior by resolving decorated contract handler
    interfaces from the SimpleInjector composition root. They do not build an
    ASP.NET host.
@@ -96,7 +95,7 @@ complete:
 
 1. Follow the repository's source/header/XML-documentation and analyzer rules.
 2. Use existing centrally managed packages; if a package reference changes,
-   update `/home/runner/work/Ark.Tools/Ark.Tools/Directory.Packages.props` and
+   update `Directory.Packages.props` and
    every affected `packages.lock.json` with
    `dotnet restore Ark.Tools.slnx --force-evaluate`.
 3. Run
