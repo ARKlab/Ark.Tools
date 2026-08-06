@@ -34,6 +34,7 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.Tools.Solid.Analyzers.CodeFixes\Ark.Tools.Solid.Analyzers.CodeFixes.csproj"
+                      OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <None Include="..\Ark.Tools.Solid.Analyzers\bin\$(Configuration)\netstandard2.0\Ark.Tools.Solid.Analyzers.dll"
           Pack="true"
