@@ -40,13 +40,13 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Tests use only synthetic contracts and framework registrations.
-- [ ] Each listed binding and error case has a named test with a deterministic
+- [x] Tests use only synthetic contracts and framework registrations.
+- [x] Each listed binding and error case has a named test with a deterministic
   assertion.
-- [ ] Streaming tests prove incremental delivery and cancellation, not merely
+- [x] Streaming tests prove incremental delivery and cancellation, not merely
   the final array.
-- [ ] OpenAPI and wire assertions do not appear in the sample Reqnroll suite.
-- [ ] Tests pass with no external HTTP service.
+- [x] OpenAPI and wire assertions do not appear in the sample Reqnroll suite.
+- [x] Tests pass with no external HTTP service.
 
 ## Tests
 
