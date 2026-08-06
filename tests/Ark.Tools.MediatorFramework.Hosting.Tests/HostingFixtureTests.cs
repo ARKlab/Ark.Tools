@@ -18,28 +18,33 @@ public sealed class HostingFixtureTests
     [TestMethod]
     public async Task FixtureBuildsHostsAndDisposesResources()
     {
-        await using var fixture = new HostingTestFixture();
-        var minimalApiHost = fixture.BuildMinimalApiHost();
-        var grpcHost = fixture.BuildGrpcHost();
-        var rebusHost = fixture.BuildRebusHost();
-
-        await using (AsyncScopedLifestyle.BeginScope(fixture.Container).ConfigureAwait(false))
+        var fixture = new HostingTestFixture();
+        try
         {
-            var handler = fixture.Container.GetInstance<IRequestHandler<HostingRequest, HostingResponse>>();
-            var response = await handler.ExecuteAsync(new HostingRequest
+            var minimalApiHost = fixture.BuildMinimalApiHost();
+            var grpcHost = fixture.BuildGrpcHost();
+            var rebusHost = fixture.BuildRebusHost();
+
+            await using (AsyncScopedLifestyle.BeginScope(fixture.Container).ConfigureAwait(false))
             {
-                Id = 7,
-                Filter = "filter",
-                Value = "value",
-            }, CancellationToken.None).ConfigureAwait(false);
+                var handler = fixture.Container.GetInstance<IRequestHandler<HostingRequest, HostingResponse>>();
+                var response = await handler.ExecuteAsync(new HostingRequest
+                {
+                    Id = 7,
+                    Filter = "filter",
+                    Value = "value",
+                }, CancellationToken.None).ConfigureAwait(false);
 
-            response.Message.Should().Be("7:filter:value");
-            minimalApiHost.Should().NotBeNull();
-            grpcHost.Should().NotBeNull();
-            rebusHost.Should().NotBeNull();
+                response.Message.Should().Be("7:filter:value");
+                minimalApiHost.Should().NotBeNull();
+                grpcHost.Should().NotBeNull();
+                rebusHost.Should().NotBeNull();
+            }
         }
-
-        await fixture.DisposeAsync().ConfigureAwait(false);
+        finally
+        {
+            await fixture.DisposeAsync().ConfigureAwait(false);
+        }
 
         fixture.State.RequestExecutions.Should().Be(1);
         fixture.IsDisposed.Should().BeTrue();
