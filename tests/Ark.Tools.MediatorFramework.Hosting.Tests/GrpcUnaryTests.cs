@@ -94,10 +94,10 @@ public sealed class GrpcUnaryTests
             new HostingWireTypesQuery(),
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
-        result.Date.Year.Should().Be(2026);
-        result.Date.Month.Should().Be(8);
-        result.Date.Day.Should().Be(6);
-        result.DateTime.Hours.Should().Be(15);
-        result.Shape.HostingCircle.Radius.Should().Be(7);
+        result.Date.Year.Should().Be(HostingWireTypeValues.Date.Year);
+        result.Date.Month.Should().Be(HostingWireTypeValues.Date.Month);
+        result.Date.Day.Should().Be(HostingWireTypeValues.Date.Day);
+        result.DateTime.Hours.Should().Be(HostingWireTypeValues.DateTime.Hour);
+        result.Shape.HostingCircle.Radius.Should().Be(HostingWireTypeValues.CircleRadius);
     }
 }

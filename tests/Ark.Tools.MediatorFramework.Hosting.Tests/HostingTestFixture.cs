@@ -358,6 +358,13 @@ public sealed class HostingTestState
     }
 }
 
+internal static class HostingWireTypeValues
+{
+    internal static readonly LocalDate Date = new(2026, 8, 6);
+    internal static readonly LocalDateTime DateTime = new(2026, 8, 6, 15, 44);
+    internal const int CircleRadius = 7;
+}
+
 internal sealed class HostingRequestHandler : IRequestHandler<HostingRequest, HostingResponse>
 {
     private readonly HostingTestState _state;
@@ -674,9 +681,9 @@ internal sealed class HostingWireTypesHandler : IQueryHandler<HostingWireTypesQu
         await Task.CompletedTask.ConfigureAwait(false);
         return new HostingWireTypesResponse
         {
-            Date = new LocalDate(2026, 8, 6),
-            DateTime = new LocalDateTime(2026, 8, 6, 15, 44),
-            Shape = new HostingCircle { Radius = 7 },
+            Date = HostingWireTypeValues.Date,
+            DateTime = HostingWireTypeValues.DateTime,
+            Shape = new HostingCircle { Radius = HostingWireTypeValues.CircleRadius },
         };
     }
 }

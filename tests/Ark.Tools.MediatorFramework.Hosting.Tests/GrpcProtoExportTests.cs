@@ -5,6 +5,8 @@ using Ark.Tools.MediatorFramework.Hosting.Contracts.GrpcClient;
 
 using AwesomeAssertions;
 
+using System.Runtime.Versioning;
+
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
 /// <summary>Proves exported gRPC proto text and generated client shape.</summary>
@@ -58,7 +60,10 @@ public sealed class GrpcProtoExportTests
             "tests",
             "Ark.Tools.MediatorFramework.Hosting.Contracts",
             "obj");
-        var targetFramework = new DirectoryInfo(AppContext.BaseDirectory).Name;
+        var frameworkName = AppContext.TargetFrameworkName
+            ?? throw new InvalidOperationException("The test target framework was not available.");
+        var version = new FrameworkName(frameworkName).Version;
+        var targetFramework = $"net{version.Major}.{version.Minor}";
         var proto = Directory.GetFiles(contractsObj, "Hosting.proto", SearchOption.AllDirectories)
             .SingleOrDefault(path =>
                 path.Contains(
