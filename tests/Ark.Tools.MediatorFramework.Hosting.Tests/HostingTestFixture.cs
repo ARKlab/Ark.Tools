@@ -15,6 +15,7 @@ using MessagePack.Resolvers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.OpenApi;
@@ -130,6 +131,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 static _ => { });
         builder.Services.AddArkMinimalApiHost(Container, options =>
         {
+            options.RequireAuthenticatedUser = false;
             options.CrossWireContainer = (container, services) =>
                 container.RegisterInstance(services.GetRequiredService<IHttpContextAccessor>());
         });
@@ -140,6 +142,17 @@ public sealed class HostingTestFixture : IAsyncDisposable
         var app = builder.Build();
         app.UseArkProblemDetailsExceptionHandler();
         app.UseArkMinimalApiHost(Container);
+        app.Use(async (context, next) =>
+        {
+            var sizeLimit = context.GetEndpoint()?.Metadata.GetMetadata<IRequestSizeLimitMetadata>()?.MaxRequestBodySize;
+            if (sizeLimit is not null && context.Request.ContentLength > sizeLimit)
+            {
+                context.Response.StatusCode = StatusCodes.Status413RequestEntityTooLarge;
+                return;
+            }
+
+            await next().ConfigureAwait(false);
+        });
         HostingEndpointMappings.MapMinimalApi(app);
         app.MapOpenApi().AllowAnonymous();
         _hosts.Add(app);

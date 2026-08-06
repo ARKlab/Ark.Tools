@@ -25,7 +25,7 @@ public sealed class MinimalApiBindingTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.PostAsJsonAsync(
-            "/hosting/requests/42?Filter=query",
+            "/api/v1/hosting/requests/42?Filter=query",
             new HostingRequest
             {
                 Id = 999,
@@ -52,7 +52,7 @@ public sealed class MinimalApiBindingTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/queries/7"),
+            new Uri("http://localhost/api/v1/hosting/queries/7"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<HostingResponse>(
@@ -61,7 +61,7 @@ public sealed class MinimalApiBindingTests
         result!.Message.Should().Be("7:");
 
         using var requestResponse = await client.PostAsJsonAsync(
-            "/hosting/requests/8",
+            "/api/v1/hosting/requests/8",
             new HostingRequest { Value = "cancelable" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         requestResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -77,10 +77,10 @@ public sealed class MinimalApiBindingTests
         using var client = app.GetTestServer().CreateClient();
 
         using var routeResponse = await client.GetAsync(
-            new Uri("http://localhost/hosting/queries/not-an-integer"),
+            new Uri("http://localhost/api/v1/hosting/queries/not-an-integer"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         using var queryResponse = await client.GetAsync(
-            new Uri("http://localhost/hosting/stream?Count=not-an-integer"),
+            new Uri("http://localhost/api/v1/hosting/stream?Count=not-an-integer"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         routeResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -98,7 +98,7 @@ public sealed class MinimalApiBindingTests
         using var content = new StringContent("{", Encoding.UTF8, "application/json");
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/requests/1"),
+            new Uri("http://localhost/api/v1/hosting/requests/1"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 

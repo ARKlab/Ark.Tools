@@ -8,7 +8,7 @@ using AwesomeAssertions;
 using Microsoft.AspNetCore.TestHost;
 
 using System.Net;
-using System.Text.Json;
+using System.Net.Http.Json;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -25,10 +25,10 @@ public sealed class MinimalApiStreamingTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/stream?Count=3"),
+            new Uri("http://localhost/api/v1/hosting/stream?Count=3"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        var items = JsonSerializer.Deserialize<HostingStreamItem[]>(
-            await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false));
+        var items = await response.Content.ReadFromJsonAsync<HostingStreamItem[]>(
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         items.Should().NotBeNull();
@@ -44,11 +44,8 @@ public sealed class MinimalApiStreamingTests
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/stream?Count=2"),
+            new Uri("http://localhost/api/v1/hosting/stream?Count=2"),
             HttpCompletionOption.ResponseHeadersRead,
-            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        await fixture.State.StreamFirstItemProduced.WaitAsync(
-            TimeSpan.FromSeconds(5),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         var stream = await response.Content.ReadAsStreamAsync(
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
@@ -64,6 +61,7 @@ public sealed class MinimalApiStreamingTests
                 output.Append(buffer, 0, read);
             }
 
+            fixture.State.StreamFirstItemProduced.IsCompleted.Should().BeTrue();
             fixture.State.StreamCancellationObserved.IsCompleted.Should().BeFalse();
             fixture.State.ReleaseStream();
             output.Append(await reader.ReadToEndAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false));
@@ -81,7 +79,7 @@ public sealed class MinimalApiStreamingTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/stream?Count=0"),
+            new Uri("http://localhost/api/v1/hosting/stream?Count=0"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -98,19 +96,32 @@ public sealed class MinimalApiStreamingTests
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
         using var cts = new CancellationTokenSource();
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/hosting/stream?Count=2");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/hosting/stream?Count=2");
         using var response = await client.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cts.Token).ConfigureAwait(false);
-        await fixture.State.StreamFirstItemProduced.WaitAsync(
-            TimeSpan.FromSeconds(5),
+        var stream = await response.Content.ReadAsStreamAsync(
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        await using (stream.ConfigureAwait(false))
+        {
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            var buffer = new char[64];
+            var output = new StringBuilder();
+            while (!output.ToString().Contains("\"number\":1", StringComparison.Ordinal))
+            {
+                var read = await reader.ReadAsync(buffer, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+                read.Should().BeGreaterThan(0);
+                output.Append(buffer, 0, read);
+            }
 
-        await cts.CancelAsync().ConfigureAwait(false);
+            fixture.State.StreamFirstItemProduced.IsCompleted.Should().BeTrue();
+            await cts.CancelAsync().ConfigureAwait(false);
+            response.Dispose();
 
-        await fixture.State.StreamCancellationObserved.WaitAsync(
-            TimeSpan.FromSeconds(5),
-            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+            await fixture.State.StreamCancellationObserved.WaitAsync(
+                TimeSpan.FromSeconds(5),
+                app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        }
     }
 }

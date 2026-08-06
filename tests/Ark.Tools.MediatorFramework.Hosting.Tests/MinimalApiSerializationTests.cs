@@ -28,7 +28,7 @@ public sealed class MinimalApiSerializationTests
         using var client = app.GetTestServer().CreateClient();
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/hosting/requests/11?Filter=json")
+            "/api/v1/hosting/requests/11?Filter=json")
         {
             Content = new StringContent(
                 """{"value":"json"}""",
@@ -62,7 +62,7 @@ public sealed class MinimalApiSerializationTests
             app.Lifetime.ApplicationStopping);
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/hosting/requests/12?Filter=packed")
+            "/api/v1/hosting/requests/12?Filter=packed")
         {
             Content = new ByteArrayContent(requestBytes),
         };

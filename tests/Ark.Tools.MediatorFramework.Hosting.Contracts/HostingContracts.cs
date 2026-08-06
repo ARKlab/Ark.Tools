@@ -70,7 +70,7 @@ public static class HostingEndpointMappings
 /// <summary>
 /// Deterministic request contract with route, query, body, and server-owned properties.
 /// </summary>
-[HttpEndpoint("POST", "/hosting/requests/{id}", AllowAnonymous = true, AcceptsMessagePack = true)]
+[HttpEndpoint("POST", "/api/v{version}/hosting/requests/{id}", AllowAnonymous = true, AcceptsMessagePack = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -112,7 +112,7 @@ public sealed record HostingResponse
 }
 
 /// <summary>Query contract with route and query parameters.</summary>
-[HttpEndpoint("GET", "/hosting/queries/{id}", AllowAnonymous = true)]
+[HttpEndpoint("GET", "/api/v{version}/hosting/queries/{id}", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -130,7 +130,7 @@ public sealed record HostingQuery : Ark.Tools.Solid.IQuery<HostingResponse>
 }
 
 /// <summary>Command contract exposed through HTTP, gRPC, and Rebus.</summary>
-[HttpEndpoint("POST", "/hosting/commands", AllowAnonymous = true)]
+[HttpEndpoint("POST", "/api/v{version}/hosting/commands", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -152,7 +152,7 @@ public sealed record HostingRebusCommand : Ark.Tools.Solid.ICommand
 }
 
 /// <summary>Request whose handler produces a validation failure.</summary>
-[HttpEndpoint("POST", "/hosting/validation", AllowAnonymous = true)]
+[HttpEndpoint("POST", "/api/v{version}/hosting/validation", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -164,7 +164,7 @@ public sealed record HostingValidationRequest : Ark.Tools.Solid.IRequest<Hosting
 }
 
 /// <summary>Request whose handler returns a configured success status.</summary>
-[HttpEndpoint("POST", "/hosting/status", AllowAnonymous = true, SuccessStatusCode = 201)]
+[HttpEndpoint("POST", "/api/v{version}/hosting/status", AllowAnonymous = true, SuccessStatusCode = 201)]
 public sealed record HostingStatusRequest : Ark.Tools.Solid.IRequest<HostingResponse>
 {
     /// <summary>Gets or sets the request value.</summary>
@@ -172,11 +172,11 @@ public sealed record HostingStatusRequest : Ark.Tools.Solid.IRequest<HostingResp
 }
 
 /// <summary>Query whose handler returns no value.</summary>
-[HttpEndpoint("GET", "/hosting/not-found", AllowAnonymous = true, NullResultStatusCode = 404)]
+[HttpEndpoint("GET", "/api/v{version}/hosting/not-found", AllowAnonymous = true, NullResultStatusCode = 404)]
 public sealed record HostingNotFoundQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
 /// <summary>Request whose handler produces a business-rule violation.</summary>
-[HttpEndpoint("POST", "/hosting/business-violation", AllowAnonymous = true)]
+[HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -188,7 +188,7 @@ public sealed record HostingBusinessViolationRequest : Ark.Tools.Solid.IRequest<
 }
 
 /// <summary>Request whose handler produces an unexpected exception.</summary>
-[HttpEndpoint("POST", "/hosting/unexpected", AllowAnonymous = true)]
+[HttpEndpoint("POST", "/api/v{version}/hosting/unexpected", AllowAnonymous = true)]
 public sealed record HostingUnexpectedRequest : Ark.Tools.Solid.IRequest<HostingResponse>
 {
     /// <summary>Gets or sets the request value.</summary>
@@ -196,7 +196,7 @@ public sealed record HostingUnexpectedRequest : Ark.Tools.Solid.IRequest<Hosting
 }
 
 /// <summary>Query protected by the transport-agnostic authorization decorator.</summary>
-[HttpEndpoint("GET", "/hosting/authorized", AllowAnonymous = false)]
+[HttpEndpoint("GET", "/api/v{version}/hosting/authorized", AllowAnonymous = false)]
 [PolicyAuthorize(typeof(HostingScopePolicy))]
 public sealed record HostingAuthorizedQuery : Ark.Tools.Solid.IQuery<HostingResponse>;
 
@@ -221,7 +221,7 @@ public sealed class HostingScopePolicy : IAuthorizationPolicy
 }
 
 /// <summary>Query returning a deterministic asynchronous stream.</summary>
-[HttpEndpoint("GET", "/hosting/stream", AllowAnonymous = true)]
+[HttpEndpoint("GET", "/api/v{version}/hosting/stream", AllowAnonymous = true)]
 [GrpcMethod]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
@@ -245,7 +245,7 @@ public sealed record HostingStreamItem
 /// <summary>Multipart request containing one transport-agnostic attachment.</summary>
 [HttpEndpoint(
     "POST",
-    "/hosting/attachments",
+    "/api/v{version}/hosting/attachments",
     AllowAnonymous = true,
     MaxRequestBodySizeBytes = 1024,
     MaxFileCount = 1,
@@ -263,7 +263,7 @@ public sealed record HostingAttachmentUploadRequest : Ark.Tools.Solid.IRequest<H
 /// <summary>Multipart request containing multiple transport-agnostic attachments.</summary>
 [HttpEndpoint(
     "POST",
-    "/hosting/attachments/multiple",
+    "/api/v{version}/hosting/attachments/multiple",
     AllowAnonymous = true,
     MaxRequestBodySizeBytes = 1024,
     MaxFileCount = 2,
@@ -275,7 +275,7 @@ public sealed record HostingAttachmentCollectionUploadRequest : Ark.Tools.Solid.
 }
 
 /// <summary>Query returning a downloadable synthetic attachment.</summary>
-[HttpEndpoint("GET", "/hosting/attachments/{name}", AllowAnonymous = true)]
+[HttpEndpoint("GET", "/api/v{version}/hosting/attachments/{name}", AllowAnonymous = true)]
 public sealed record HostingAttachmentDownloadQuery : Ark.Tools.Solid.IQuery<Ark.MediatorFramework.IArkAttachment>
 {
     /// <summary>Gets or sets the attachment name.</summary>
@@ -298,7 +298,7 @@ public sealed record HostingOpenApiResponse
 }
 
 /// <summary>Query used to expose the generated OpenAPI response schema.</summary>
-[HttpEndpoint("GET", "/hosting/openapi", AllowAnonymous = true)]
+[HttpEndpoint("GET", "/api/v{version}/hosting/openapi", AllowAnonymous = true)]
 public sealed record HostingOpenApiQuery : Ark.Tools.Solid.IQuery<HostingOpenApiResponse>;
 
 /// <summary>Discriminator values for synthetic OpenAPI shapes.</summary>

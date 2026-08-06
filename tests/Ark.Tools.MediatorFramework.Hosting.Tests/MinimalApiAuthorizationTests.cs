@@ -26,7 +26,7 @@ public sealed class MinimalApiAuthorizationTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/authorized"),
+            new Uri("http://localhost/api/v1/hosting/authorized"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -43,7 +43,7 @@ public sealed class MinimalApiAuthorizationTests
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "authenticated");
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/authorized"),
+            new Uri("http://localhost/api/v1/hosting/authorized"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -60,7 +60,7 @@ public sealed class MinimalApiAuthorizationTests
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "scope");
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/authorized"),
+            new Uri("http://localhost/api/v1/hosting/authorized"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);

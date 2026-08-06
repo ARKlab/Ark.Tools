@@ -27,7 +27,7 @@ public sealed class MinimalApiErrorsTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.PostAsJsonAsync(
-            "/hosting/status",
+            "/api/v1/hosting/status",
             new HostingStatusRequest { Value = "created" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -47,7 +47,7 @@ public sealed class MinimalApiErrorsTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/not-found"),
+            new Uri("http://localhost/api/v1/hosting/not-found"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -62,7 +62,7 @@ public sealed class MinimalApiErrorsTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.PostAsJsonAsync(
-            "/hosting/validation",
+            "/api/v1/hosting/validation",
             new HostingValidationRequest { Value = "invalid" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         var problem = await ReadProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
@@ -82,7 +82,7 @@ public sealed class MinimalApiErrorsTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.PostAsJsonAsync(
-            "/hosting/business-violation",
+            "/api/v1/hosting/business-violation",
             new HostingBusinessViolationRequest { Value = "invalid" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         var problem = await ReadProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
@@ -103,7 +103,7 @@ public sealed class MinimalApiErrorsTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.PostAsJsonAsync(
-            "/hosting/unexpected",
+            "/api/v1/hosting/unexpected",
             new HostingUnexpectedRequest { Value = "failure" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         var problem = await ReadProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);

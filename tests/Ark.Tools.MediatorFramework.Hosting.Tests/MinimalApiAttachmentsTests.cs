@@ -25,7 +25,7 @@ public sealed class MinimalApiAttachmentsTests
             ("attachment", "hello.txt", "text/plain", "hello attachment"));
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/attachments"),
+            new Uri("http://localhost/api/v1/hosting/attachments"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -46,7 +46,7 @@ public sealed class MinimalApiAttachmentsTests
             ("attachments", "two.txt", "text/plain", "two"));
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/attachments/multiple"),
+            new Uri("http://localhost/api/v1/hosting/attachments/multiple"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -66,7 +66,7 @@ public sealed class MinimalApiAttachmentsTests
             ("attachment", "two.txt", "text/plain", "two"));
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/attachments"),
+            new Uri("http://localhost/api/v1/hosting/attachments"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -88,7 +88,7 @@ public sealed class MinimalApiAttachmentsTests
             ("attachments", "three.txt", "text/plain", "three"));
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/attachments/multiple"),
+            new Uri("http://localhost/api/v1/hosting/attachments/multiple"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -107,7 +107,7 @@ public sealed class MinimalApiAttachmentsTests
             ("attachment", "payload.bin", "application/octet-stream", "payload"));
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/attachments"),
+            new Uri("http://localhost/api/v1/hosting/attachments"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -126,7 +126,7 @@ public sealed class MinimalApiAttachmentsTests
             ("attachment", "large.txt", "text/plain", new string('x', 2048)));
 
         using var response = await client.PostAsync(
-            new Uri("http://localhost/hosting/attachments"),
+            new Uri("http://localhost/api/v1/hosting/attachments"),
             content,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -143,12 +143,12 @@ public sealed class MinimalApiAttachmentsTests
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.GetAsync(
-            new Uri("http://localhost/hosting/attachments/download.txt"),
+            new Uri("http://localhost/api/v1/hosting/attachments/download.txt"),
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.Should().Be("text/plain");
-        response.Content.Headers.ContentDisposition!.FileName.Should().Be("\"download.txt\"");
+        response.Content.Headers.ContentDisposition!.FileName.Should().Be("download.txt");
         (await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false))
             .Should().Be("downloaded content");
     }
