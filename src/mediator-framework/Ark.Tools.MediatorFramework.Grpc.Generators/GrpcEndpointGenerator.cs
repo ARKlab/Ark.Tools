@@ -510,7 +510,12 @@ namespace Ark.MediatorFramework.Generators
                 content.AppendLine("import \"google/type/date.proto\";");
                 content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"google/protobuf/empty.proto\";");
-                content.AppendLine("import \"ark/nodatime.proto\";");
+                if (reachable.Any(type => contracts
+                    .FirstOrDefault(contract => SymbolEqualityComparer.Default.Equals(contract.Type, type))?
+                    .Members.Any(member => IsArkNodaTimePeriod(member.Type)) == true))
+                {
+                    content.AppendLine("import \"ark/nodatime.proto\";");
+                }
                 if (active.Any(item => item.AttachmentResponse || item.AttachmentRequest != AttachmentRequestKind.None))
                     content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
@@ -778,6 +783,17 @@ namespace Ark.MediatorFramework.Generators
 
             var contract = contracts.FirstOrDefault(item => item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == typeName);
             return contract?.Name ?? SimpleName(typeName);
+        }
+
+        private static bool IsArkNodaTimePeriod(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol array)
+                return IsArkNodaTimePeriod(array.ElementType);
+
+            if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
+                return IsArkNodaTimePeriod(named.TypeArguments[0]);
+
+            return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::NodaTime.Period";
         }
 
         private static string SimpleName(string value)

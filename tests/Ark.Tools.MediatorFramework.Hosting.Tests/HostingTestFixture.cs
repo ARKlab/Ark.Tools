@@ -192,6 +192,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.Services.AddAuthorization();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+        builder.Services.AddCodeFirstGrpcReflection();
         builder.Services.AddSingleton(Container);
         builder.Services.AddSingleton(PrincipalProvider);
         var app = builder.Build();
@@ -199,6 +200,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         app.UseAuthorization();
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         HostingEndpointMappings.MapGrpc(app);
+        app.MapCodeFirstGrpcReflectionService().AllowAnonymous();
         _hosts.Add(app);
         return app;
     }

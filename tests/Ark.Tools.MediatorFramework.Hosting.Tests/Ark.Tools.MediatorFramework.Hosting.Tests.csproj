@@ -20,6 +20,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore.Reflection" />
     <PackageReference Include="FluentValidation" />
     <ProjectReference Include="../Ark.Tools.MediatorFramework.Hosting.Contracts/Ark.Tools.MediatorFramework.Hosting.Contracts.csproj" />
     <ProjectReference Include="../Ark.Tools.MediatorFramework.Hosting.GrpcClient/Ark.Tools.MediatorFramework.Hosting.GrpcClient.csproj" />
