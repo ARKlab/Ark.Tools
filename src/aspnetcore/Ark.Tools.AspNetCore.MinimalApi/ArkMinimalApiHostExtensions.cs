@@ -101,6 +101,25 @@ public static class ArkMinimalApiHostExtensions
     }
 
     /// <summary>
+    /// Applies Ark Minimal API startup diagnostics and service defaults to a web application builder.
+    /// </summary>
+    /// <param name="builder">The web application builder.</param>
+    /// <param name="container">The application SimpleInjector container.</param>
+    /// <param name="configure">Optional host integration configuration.</param>
+    /// <returns>The original web application builder.</returns>
+    public static WebApplicationBuilder AddArkMinimalApiHost(
+        this WebApplicationBuilder builder,
+        Container container,
+        Action<ArkMinimalApiHostOptions>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.UseArkMinimalApiStartupDiagnostics();
+        builder.Services.AddArkMinimalApiHost(container, configure);
+        return builder;
+    }
+
+    /// <summary>
     /// Adds required Minimal API and SimpleInjector middleware to the application pipeline.
     /// </summary>
     /// <remarks>

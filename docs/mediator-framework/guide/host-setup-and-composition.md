@@ -126,6 +126,7 @@ separate purpose:
 | --- | --- | --- |
 | `services.ConfigureAuthentication(configuration)` | Chooses bearer authentication schemes | `AuthenticationEx.cs` |
 | `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline (default and fallback policies) and bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
+| `builder.UseArkMinimalApiStartupDiagnostics()` | Captures startup failures and enables detailed hosting diagnostics | `SampleHost.cs` |
 | `services.AddArkMinimalApiSecurity()` | Adds Ark security-header policies for API, documentation and gRPC reflection responses | `SampleStartup.cs` |
 | `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
 | `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
@@ -146,6 +147,7 @@ services.AddArkMinimalApiHost(container, options =>
     // Invoked after Verify(), while the host starts and before the server accepts requests.
     options.OnContainerVerified = container => container.StartBus();
 });
+builder.UseArkMinimalApiStartupDiagnostics();
 services.AddArkMinimalApiSecurity();
 
 services.AddMessagePackFormatter(messagePackResolver);
@@ -197,6 +199,17 @@ The prefix is applied before generated OpenAPI endpoints execute, so prefixed
 deployments retain their generated document paths and links.
 Set `UseForwardedPrefix` to `false` when the deployment handles this header
 outside the application.
+
+Startup error capture and detailed hosting diagnostics are enabled automatically
+when you call the `WebApplicationBuilder` overload of `AddArkMinimalApiHost`:
+
+```csharp
+builder.AddArkMinimalApiHost(container, options => { ... });
+```
+
+Hosts that compose ASP.NET Core directly using the `IServiceCollection` overload
+can opt in explicitly by calling `builder.UseArkMinimalApiStartupDiagnostics()`
+before services are configured.
 
 ## Map generated endpoints from a marker type
 

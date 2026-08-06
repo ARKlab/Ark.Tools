@@ -2,29 +2,16 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.WebInterface;
-using Ark.Tools.AspNetCore.ApplicationInsights;
-using Ark.Tools.NLog;
 using Rebus.Transport.InMem;
-using Azure.Identity;
 using NLog;
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
-    builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.WebInterface");
 
     var network = new InMemNetwork();
     var container = SampleComposition.BuildContainer(network);
-
-    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
-    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
-    {
-        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
-    }
-
-    builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
-    var startup = new SampleStartup(container, network, builder.Configuration);
-    startup.ConfigureServices(builder.Services);
+    var startup = SampleHost.Configure(builder, container, network);
 
     var app = builder.Build();
     startup.Configure(app);
