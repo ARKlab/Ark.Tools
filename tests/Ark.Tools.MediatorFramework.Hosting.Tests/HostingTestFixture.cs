@@ -159,14 +159,25 @@ public sealed class HostingTestFixture : IAsyncDisposable
 /// <summary>Deterministic state shared by synthetic mediator handlers.</summary>
 public sealed class HostingTestState
 {
+    private readonly TaskCompletionSource _commandExecution = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     /// <summary>Gets the number of request handler executions.</summary>
     public int RequestExecutions { get; internal set; }
 
     /// <summary>Gets the number of command handler executions.</summary>
     public int CommandExecutions { get; internal set; }
 
+    /// <summary>Gets a task that completes when a command handler executes.</summary>
+    public Task CommandExecuted => _commandExecution.Task;
+
     /// <summary>Gets the name of the last uploaded attachment.</summary>
     public string? LastAttachmentName { get; internal set; }
+
+    internal void RecordCommandExecution()
+    {
+        CommandExecutions++;
+        _commandExecution.TrySetResult();
+    }
 }
 
 internal sealed class HostingRequestHandler : IRequestHandler<HostingRequest, HostingResponse>
@@ -215,7 +226,7 @@ internal sealed class HostingCommandHandler : ICommandHandler<HostingCommand>
     public async Task ExecuteAsync(HostingCommand command, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.CommandExecutions++;
+        _state.RecordCommandExecution();
     }
 }
 
@@ -231,7 +242,7 @@ internal sealed class HostingRebusCommandHandler : ICommandHandler<HostingRebusC
     public async Task ExecuteAsync(HostingRebusCommand command, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.CommandExecutions++;
+        _state.RecordCommandExecution();
     }
 }
 
