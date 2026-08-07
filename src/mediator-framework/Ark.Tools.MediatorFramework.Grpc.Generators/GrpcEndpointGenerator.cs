@@ -393,7 +393,9 @@ namespace Ark.MediatorFramework.Generators
                                     ? "await global::Ark.MediatorFramework.StreamingArkAttachments.ReadAllAsync(chunks, context.CancellationToken).ConfigureAwait(false)"
                                     : "new global::Ark.MediatorFramework.StreamingArkAttachment(chunks)";
                                 sb.AppendLine("                var request = new " + e.TypeFullName + " { " + e.AttachmentPropertyName + " = " + attachmentValue + " };");
-                                sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                AppendNotFoundGuard(sb);
+                                sb.AppendLine("                return result;");
                             }
                             else if (e.AttachmentResponse)
                             {
@@ -420,7 +422,9 @@ namespace Ark.MediatorFramework.Generators
                             }
                             else
                             {
-                                sb.AppendLine("                return await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                AppendNotFoundGuard(sb);
+                                sb.AppendLine("                return result;");
                             }
                             sb.AppendLine("            }");
                         }
@@ -478,6 +482,19 @@ namespace Ark.MediatorFramework.Generators
                     : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
         }
 
+        private static void AppendNotFoundGuard(StringBuilder sb)
+        {
+            sb.AppendLine("                if (result is null)");
+            sb.AppendLine("                {");
+            sb.AppendLine("                    var status = new global::Google.Rpc.Status");
+            sb.AppendLine("                    {");
+            sb.AppendLine("                        Code = (int)global::Grpc.Core.StatusCode.NotFound,");
+            sb.AppendLine("                        Message = \"The requested resource was not found.\",");
+            sb.AppendLine("                    };");
+            sb.AppendLine("                    throw global::Grpc.Core.RpcStatusExtensions.ToRpcException(status);");
+            sb.AppendLine("                }");
+        }
+
         private static void EmitProtoAssets(
             StringBuilder sb,
             ImmutableArray<EndpointModel> items,
@@ -492,7 +509,9 @@ namespace Ark.MediatorFramework.Generators
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
             {
                 var active = group.ToArray();
-                var requestNames = active.Select(static item => SimpleName(item.TypeFullName)).ToHashSet(StringComparer.Ordinal);
+                var requestNames = active
+                    .Select(item => ProtoTypeName(item.TypeFullName, contracts))
+                    .ToHashSet(StringComparer.Ordinal);
                 var reachable = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
                 foreach (var endpoint in active)
                 {
@@ -510,7 +529,12 @@ namespace Ark.MediatorFramework.Generators
                 content.AppendLine("import \"google/type/date.proto\";");
                 content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"google/protobuf/empty.proto\";");
-                content.AppendLine("import \"ark/nodatime.proto\";");
+                if (reachable.Any(type => contracts
+                    .FirstOrDefault(contract => SymbolEqualityComparer.Default.Equals(contract.Type, type))?
+                    .Members.Any(member => IsArkNodaTimePeriod(member.Type)) == true))
+                {
+                    content.AppendLine("import \"ark/nodatime.proto\";");
+                }
                 if (active.Any(item => item.AttachmentResponse || item.AttachmentRequest != AttachmentRequestKind.None))
                     content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
@@ -549,18 +573,18 @@ namespace Ark.MediatorFramework.Generators
                     content.Append("service ").Append(Identifier(group.Key)).Append('V').Append(version).AppendLine(" {");
                     foreach (var item in versionItems)
                     {
-                                WriteComment(content, item.Summary, "  ");
-                                content.Append("  rpc ").Append(item.GrpcMethod)
-                                    .Append(item.AttachmentRequest != AttachmentRequestKind.None
-                                        ? "(stream ark.mediator.UploadDocumentChunk) returns "
-                                        : "(" + item.TypeName + ") returns ");
-                                if (item.AttachmentResponse)
-                                    content.Append("(stream DownloadDocumentChunk);");
-                                else if (item.IsStreaming)
-                                    content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contracts)).Append(");");
-                                else
-                                    content.Append('(').Append(ProtoTypeName(item.Response, contracts)).Append(");");
-                                content.AppendLine();
+                        WriteComment(content, item.Summary, "  ");
+                        content.Append("  rpc ").Append(item.GrpcMethod)
+                            .Append(item.AttachmentRequest != AttachmentRequestKind.None
+                                ? "(stream ark.mediator.UploadDocumentChunk) returns "
+                                : "(" + ProtoTypeName(item.TypeFullName, contracts) + ") returns ");
+                        if (item.AttachmentResponse)
+                            content.Append("(stream DownloadDocumentChunk);");
+                        else if (item.IsStreaming)
+                            content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contracts)).Append(");");
+                        else
+                            content.Append('(').Append(ProtoTypeName(item.Response, contracts)).Append(");");
+                        content.AppendLine();
                     }
                     content.AppendLine("}");
                     content.AppendLine();
@@ -641,6 +665,8 @@ namespace Ark.MediatorFramework.Generators
                     .Where(type => type.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute))))
                 {
+                    var protoContract = type.GetAttributes().First(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
                     var members = AllProperties(type)
                         .Select(property => new
                         {
@@ -674,7 +700,15 @@ namespace Ark.MediatorFramework.Generators
                         .Select(include => new ProtoIncludeModel(include.Type!, include.Number))
                         .ToArray();
 
-                    result.Add(new ProtoContractModel(type, type.Name, XmlDocumentation.Summary(type), members, includes));
+                    var name = protoContract.NamedArguments
+                        .FirstOrDefault(argument => argument.Key == "Name")
+                        .Value.Value as string;
+                    result.Add(new ProtoContractModel(
+                        type,
+                        string.IsNullOrWhiteSpace(name) ? type.Name : name!,
+                        XmlDocumentation.Summary(type),
+                        members,
+                        includes));
                 }
             }
             return result;
@@ -686,7 +720,9 @@ namespace Ark.MediatorFramework.Generators
             ISet<INamedTypeSymbol> reachable)
         {
             var name = SimpleName(displayName);
-            var contract = contracts.FirstOrDefault(item => item.Name == name);
+            var contract = contracts.FirstOrDefault(item =>
+                item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == displayName)
+                ?? contracts.FirstOrDefault(item => item.Name == name);
             if (contract is null || !reachable.Add(contract.Type))
                 return;
 
@@ -778,6 +814,17 @@ namespace Ark.MediatorFramework.Generators
 
             var contract = contracts.FirstOrDefault(item => item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == typeName);
             return contract?.Name ?? SimpleName(typeName);
+        }
+
+        private static bool IsArkNodaTimePeriod(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol array)
+                return IsArkNodaTimePeriod(array.ElementType);
+
+            if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
+                return IsArkNodaTimePeriod(named.TypeArguments[0]);
+
+            return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::NodaTime.Period";
         }
 
         private static string SimpleName(string value)

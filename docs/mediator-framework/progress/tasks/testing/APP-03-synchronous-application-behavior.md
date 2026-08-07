@@ -26,7 +26,7 @@ documented reason for exclusion. The initial coverage matrix is:
 | Attachments | Upload requests and `GetDocumentQuery` | Byte content, metadata, count/size validation, missing document exception |
 | Streaming | `GetGreetingsStreamQuery` | Item order/count, empty result, producer observes cancellation |
 | Inline command/notification | `RefreshGreetingCommand`, `GreetingCreatedNotification` | Command effect and notification side effect |
-| Failure/dead-letter behavior | `FailingRebusRequest` where application-owned | Typed failure and eventual error outcome when dispatched through Rebus |
+| Failure/dead-letter behavior | `FailingRebusRequest` where application-owned | Typed failure, second-level `IFailed<T>` handling, and error-queue outcome when the failed handler also fails |
 
 Use the real application decorators and public contracts. Arrange state only
 through earlier contract dispatches or the documented test adapter; do not call

@@ -43,7 +43,9 @@ public HTTP and gRPC interfaces:
 - create and query greetings over gRPC using the client generated from the server's `.proto` files;
 - reject duplicate greetings with an HTTP business-rule response;
 - read the evolved version-two greeting contract; and
-- queue an HTTP composition request and poll until Rebus completes it.
+- queue an HTTP composition request and poll until Rebus completes it;
+- support Rebus retry exhaustion, second-level `IFailed<T>` handling, and
+  error-queue handling when the failed handler also fails.
 
 Framework capabilities such as source generation, transport serialization,
 OpenAPI schema generation, attachments and rich gRPC errors are covered by
