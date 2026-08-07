@@ -38,7 +38,7 @@ for every implementation task.
   configured container.
 - [x] Retry, error queue, routing, cancellation, and deferred-message cases
   have bounded tests.
-- [ ] Second-level retry coverage verifies that an `IFailed<T>` handler receives
+- [x] Second-level retry coverage verifies that an `IFailed<T>` handler receives
   the original message and serialized exception information before error-queue
   handling is required.
 - [x] No Rebus test depends on wall-clock sleeps without a bounded retry and
