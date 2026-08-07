@@ -9,10 +9,16 @@ using System.Data;
 
 namespace Ark.Reference.Core.Tests.Init;
 
+/// <summary>
+/// Provides database setup and cleanup hooks for the reference project tests.
+/// </summary>
 [Binding]
 public sealed class DatabaseUtils
 {
-    public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=IntegrationTestsDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
+    /// <summary>
+    /// Gets the connection string used by the reference project test database.
+    /// </summary>
+    public const string DatabaseConnectionString =  @"Data Source=127.0.0.1;User Id=sa;Password=IntegrationTestsDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
     [BeforeTestRun(Order = -1)]
     public static async Task CreateNLogDatabaseIfNotExists()
