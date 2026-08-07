@@ -32,10 +32,17 @@ The trace is intentionally generated under `artifacts/` and is not committed.
 
 ## Trace summary
 
-The workload was designed to make framework and application CPU visible while
-keeping database and message-processing work representative. Analyze the
-`topN` report with the SQL and Rebus categories separated from ASP.NET pipeline
-overhead. The expected dominant application frames are SQL materialization and
-serialization; `ToDataTableArk()` is only a meaningful hotspot when the workload
-contains large batches, so the single-row call is a coverage check rather than a
-benchmark.
+The captured Release trace (`--warmup 1 --iterations 1`) reported these top
+exclusive samples:
+
+| Function | Exclusive samples |
+| --- | ---: |
+| `WaitHandle.WaitOneNoCheck` | 36.61% |
+| `LowLevelLifoSemaphore.WaitNative` | 23.81% |
+| `WaitHandle.WaitOne` | 9.27% |
+| `Sender.SendLoop` (inclusive) | 22.99% |
+
+The trace is dominated by synchronization and waiting, not CPU spent in SQL
+materialization or `ToDataTableArk()`. The actionable application hotspot in
+this run is the Rebus sender loop; the single-row `ToDataTableArk()` call is
+coverage only and requires a larger batch to become measurable.
