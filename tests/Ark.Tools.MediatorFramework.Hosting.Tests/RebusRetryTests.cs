@@ -26,4 +26,22 @@ public sealed class RebusRetryTests
             fixture.GetRebusCounts().Error.Should().Be(1);
         }
     }
+
+    /// <summary>Ensures second-level retries dispatch the failed message to its handler.</summary>
+    [TestMethod]
+    public async Task SecondLevelRetryDispatchesFailedMessageToHandler()
+    {
+        var fixture = new HostingTestFixture();
+        await using (fixture.ConfigureAwait(false))
+        {
+            var bus = fixture.BuildRebusHost(secondLevelRetriesEnabled: true);
+            await bus.Send(new HostingSecondLevelRetryCommand()).ConfigureAwait(false);
+            await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            fixture.State.SecondLevelRetryAttempts.Should().Be(2);
+            fixture.State.FailedMessageExecutions.Should().Be(1);
+            fixture.State.FailedMessageException.Should().Contain("Synthetic second-level retry failure.");
+            fixture.GetRebusCounts().Error.Should().Be(0);
+        }
+    }
 }

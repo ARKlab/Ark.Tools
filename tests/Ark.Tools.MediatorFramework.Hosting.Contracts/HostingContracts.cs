@@ -155,6 +155,10 @@ public sealed record HostingRebusCommand : Ark.Tools.Solid.ICommand
 [RebusMessage(OwnerQueue = "hosting")]
 public sealed record HostingRetryCommand : Ark.Tools.Solid.ICommand;
 
+/// <summary>Command whose handler fails so the hosting tests can verify second-level retry handling.</summary>
+[RebusMessage(OwnerQueue = "hosting")]
+public sealed record HostingSecondLevelRetryCommand : Ark.Tools.Solid.ICommand;
+
 /// <summary>Command whose handler records the cancellation token supplied by Rebus.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
 public sealed record HostingCancellationCommand : Ark.Tools.Solid.ICommand;

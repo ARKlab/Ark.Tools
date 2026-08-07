@@ -27,8 +27,8 @@ for every implementation task.
 6. Drain and clear the network, timeout manager, and outbox after each
    scenario. Do not use `TRUNCATE TABLE` for SQL tables with foreign keys.
 7. Add scenarios for the synchronous part of `ComposeGreetingRequest`, the
-   eventual Rebus effect, propagated user context, retry success, and retry
-   exhaustion.
+   eventual Rebus effect, propagated user context, retry success, retry
+   exhaustion, and second-level retry handling through `IFailed<T>`.
 
 ## Outcome
 
@@ -44,6 +44,8 @@ for every implementation task.
   container or if user context is lost.
 - [ ] Retry/error behavior is deterministic and diagnostics identify stranded
   messages.
+- [ ] A second-level retry scenario verifies the application-owned `IFailed<T>`
+  handler receives the original message and failure information.
 - [ ] No Rebus worker, timer, network, or outbox remains after a scenario.
 
 ## Tests
@@ -54,7 +56,7 @@ for every implementation task.
 - Required scenarios/cases:
   - compose a greeting, observe the eventual query result, and preserve the
     authenticated user context;
-  - cover retry success and retry exhaustion with bounded error-queue
-    diagnostics;
+  - cover retry success, retry exhaustion, and second-level `IFailed<T>`
+    handling with bounded error-queue diagnostics;
   - verify cleanup leaves no worker, timer, network, or outbox work.
 - Run the full-solution gates.

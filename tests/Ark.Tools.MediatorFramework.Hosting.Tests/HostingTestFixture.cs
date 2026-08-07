@@ -32,6 +32,7 @@ using ProtoBuf.Meta;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Pipeline;
+using Rebus.Retry.Simple;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -68,6 +69,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container.RegisterAuthorization();
         Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
         HostingEndpointMappings.RegisterRebusHandlers(Container);
+        Container.Collection.Append<IHandleMessages<IFailed<HostingSecondLevelRetryCommand>>, HostingSecondLevelRetryFailedHandler>();
         Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
     }
 
@@ -267,8 +269,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds an isolated in-memory Rebus bus for the synthetic messages.</summary>
+    /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="IFailed{TMessage}"/>.</param>
     /// <returns>The started Rebus bus.</returns>
-    public IBus BuildRebusHost()
+    public IBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
     {
         ThrowIfDisposed();
         if (!_rebusConfigured)
@@ -281,7 +284,10 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 {
                     options.AddInProcessMessageInspector();
                     options.AutomaticallyFlowUserContext(Container);
-                    options.ArkRetryStrategy(errorQueueName: "hosting-error", maxDeliveryAttempts: 2);
+                    options.ArkRetryStrategy(
+                        errorQueueName: "hosting-error",
+                        maxDeliveryAttempts: 2,
+                        secondLevelRetriesEnabled: secondLevelRetriesEnabled);
                 });
                 config.Timeouts(timeouts => timeouts.StoreInMemoryTests());
             });
@@ -340,6 +346,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         {
             container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
             container.Register<ICommandHandler<HostingRetryCommand>, HostingRetryCommandHandler>();
+            container.Register<ICommandHandler<HostingSecondLevelRetryCommand>, HostingSecondLevelRetryCommandHandler>();
             container.Register<ICommandHandler<HostingCancellationCommand>, HostingCancellationCommandHandler>();
             container.Register<ICommandHandler<HostingDeferredCommand>, HostingDeferredCommandHandler>();
             container.Register<HostingRebusScope>(Lifestyle.Scoped);
@@ -404,6 +411,15 @@ public sealed class HostingTestState
     /// <summary>Gets the number of failed retry handler attempts.</summary>
     public int RetryAttempts => Volatile.Read(ref _retryAttempts);
 
+    /// <summary>Gets the number of second-level retry handler attempts.</summary>
+    public int SecondLevelRetryAttempts => Volatile.Read(ref _secondLevelRetryAttempts);
+
+    /// <summary>Gets the number of failed-message handler executions.</summary>
+    public int FailedMessageExecutions => Volatile.Read(ref _failedMessageExecutions);
+
+    /// <summary>Gets the exception message supplied to the failed-message handler.</summary>
+    public string? FailedMessageException => Volatile.Read(ref _failedMessageException);
+
     /// <summary>Gets the cancellation status observed by the Rebus handler.</summary>
     public bool RebusCancellationTokenWasCancelable { get; internal set; }
 
@@ -424,6 +440,21 @@ public sealed class HostingTestState
     }
 
     private int _retryAttempts;
+    private int _secondLevelRetryAttempts;
+    private int _failedMessageExecutions;
+    private string? _failedMessageException;
+
+    internal void RecordSecondLevelRetryAttempt()
+    {
+        Interlocked.Increment(ref _secondLevelRetryAttempts);
+    }
+
+    internal void RecordFailedMessage(IFailed<HostingSecondLevelRetryCommand> message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        Interlocked.Increment(ref _failedMessageExecutions);
+        Interlocked.Exchange(ref _failedMessageException, message.Exceptions?.FirstOrDefault()?.Message);
+    }
 
     /// <summary>Gets the name of the last uploaded attachment.</summary>
     public string? LastAttachmentName { get; internal set; }
@@ -603,6 +634,39 @@ internal sealed class HostingRetryCommandHandler : ICommandHandler<HostingRetryC
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RecordRetryAttempt();
         throw new InvalidOperationException("Synthetic retry failure.");
+    }
+}
+
+internal sealed class HostingSecondLevelRetryCommandHandler : ICommandHandler<HostingSecondLevelRetryCommand>
+{
+    private readonly HostingTestState _state;
+
+    public HostingSecondLevelRetryCommandHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
+    public async Task ExecuteAsync(HostingSecondLevelRetryCommand command, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        _state.RecordSecondLevelRetryAttempt();
+        throw new InvalidOperationException("Synthetic second-level retry failure.");
+    }
+}
+
+internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFailed<HostingSecondLevelRetryCommand>>
+{
+    private readonly HostingTestState _state;
+
+    public HostingSecondLevelRetryFailedHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
+    public async Task Handle(IFailed<HostingSecondLevelRetryCommand> message)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        _state.RecordFailedMessage(message);
     }
 }
 

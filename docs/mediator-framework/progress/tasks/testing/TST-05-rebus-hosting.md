@@ -17,7 +17,8 @@ for every implementation task.
 3. Send a synthetic `[RebusMessage]` through `IBus` and assert the handler
    receives a fresh scope, cancellation token, and propagated claims principal.
 4. Assert generated owner routing, subscriptions, no-handler behavior, retry
-   exhaustion, error queue headers, and deferred messages.
+   exhaustion, error queue headers, second-level retry dispatch to an
+   `IFailed<T>` handler, and deferred messages.
 5. Add an outbox fixture where the framework package owns the integration; use
    a fake outbox context if persistence is not a framework responsibility.
 6. Add a bounded `WaitUntilIdleAsync` helper for this project. It must report
@@ -37,6 +38,9 @@ for every implementation task.
   configured container.
 - [x] Retry, error queue, routing, cancellation, and deferred-message cases
   have bounded tests.
+- [ ] Second-level retry coverage verifies that an `IFailed<T>` handler receives
+  the original message and serialized exception information before error-queue
+  handling is required.
 - [x] No Rebus test depends on wall-clock sleeps without a bounded retry and
   diagnostic counts.
 - [x] Every test leaves an empty network and no running processor.
@@ -49,8 +53,9 @@ for every implementation task.
 - Required scenarios/cases:
   - a generated message wrapper changes state with a fresh scope and
     propagated claims principal;
-  - routing, subscription, no-handler, retry, error-queue, deferred-message,
-    and cancellation outcomes complete within bounded waits;
+  - routing, subscription, no-handler, retry, error-queue, second-level retry
+    with `IFailed<T>`, deferred-message, and cancellation outcomes complete
+    within bounded waits;
   - cleanup leaves empty queues and no running processor after success and
     failure.
 - Run the full-solution gates.
