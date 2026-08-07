@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Auth;
@@ -11,6 +14,7 @@ using NLog;
 using Microsoft.SqlServer.Dac;
 
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 
 namespace Ark.Reference.Profiling;
 
@@ -19,12 +23,21 @@ internal static class Program
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private const int DefaultWarmupIterations = 10;
     private const int DefaultMeasuredIterations = 100;
+    private const string DisableDemystifierEnvironmentVariable = "ARK_TOOLS_DISABLE_DEMYSTIFIER";
 
     private static async Task Main(string[] args)
     {
         var warmupIterations = GetArgument(args, "--warmup", DefaultWarmupIterations);
         var measuredIterations = GetArgument(args, "--iterations", DefaultMeasuredIterations);
+        var traceOutput = GetStringArgument(args, "--trace");
+        var disableDemystifier = args.Contains("--without-demystifier", StringComparer.Ordinal);
+        Process? traceProcess = null;
 
+        Environment.SetEnvironmentVariable(
+            DisableDemystifierEnvironmentVariable,
+            disableDemystifier ? "1" : null);
+
+        traceOutput = traceOutput is null ? null : Path.GetFullPath(traceOutput);
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
         DeployDatabase();
         Environment.SetEnvironmentVariable(
@@ -41,19 +54,97 @@ internal static class Program
             _logger.Info(CultureInfo.InvariantCulture, "Warming up {0} iterations", warmupIterations);
             await RunIterations(client, auth, warmupIterations, false).ConfigureAwait(false);
 
+            if (traceOutput is not null)
+                traceProcess = await StartTrace(traceOutput).ConfigureAwait(false);
+
             _logger.Info(CultureInfo.InvariantCulture, "Running {0} measured iterations", measuredIterations);
             var stopwatch = Stopwatch.StartNew();
             await RunIterations(client, auth, measuredIterations, true).ConfigureAwait(false);
             stopwatch.Stop();
+
+            if (traceProcess is not null)
+            {
+                await StopTrace(traceProcess).ConfigureAwait(false);
+                traceProcess = null;
+            }
 
             _logger.Info(CultureInfo.InvariantCulture, "Completed {0} iterations in {1}", measuredIterations, stopwatch.Elapsed);
         }
 
         finally
         {
-            await TestHost.Server.StopAsync().ConfigureAwait(false);
-            TestHost.AfterTests();
+            try
+            {
+                if (traceProcess is not null)
+                    await StopTrace(traceProcess).ConfigureAwait(false);
+            }
+
+            finally
+            {
+                await TestHost.Server.StopAsync().ConfigureAwait(false);
+                TestHost.AfterTests();
+            }
         }
+    }
+
+    private static async Task<Process> StartTrace(string outputPath)
+    {
+        var outputDirectory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(outputDirectory))
+            Directory.CreateDirectory(outputDirectory);
+
+        var traceProcess = Process.Start(new ProcessStartInfo
+        {
+            FileName = "dotnet-trace",
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            ArgumentList =
+            {
+                "collect",
+                "--process-id",
+                Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
+                "--output",
+                outputPath,
+                "--providers",
+                ProfilingEventSource.ProviderName,
+                "--stopping-event-provider-name",
+                ProfilingEventSource.ProviderName,
+                "--stopping-event-event-name",
+                ProfilingEventSource.CaptureCompleteEventName
+            }
+        }) ?? throw new InvalidOperationException("Failed to start dotnet-trace.");
+
+        var traceReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        traceProcess.OutputDataReceived += (_, eventArgs) => SetTraceReady(traceReady, eventArgs.Data);
+        traceProcess.ErrorDataReceived += (_, eventArgs) => SetTraceReady(traceReady, eventArgs.Data);
+        traceProcess.BeginOutputReadLine();
+        traceProcess.BeginErrorReadLine();
+
+        var traceExit = traceProcess.WaitForExitAsync();
+        var completedTask = await Task.WhenAny(traceReady.Task, traceExit).ConfigureAwait(false);
+        if (completedTask == traceExit)
+            throw new InvalidOperationException($"dotnet-trace exited before capture started with code {traceProcess.ExitCode}.");
+
+        _logger.Info(CultureInfo.InvariantCulture, "Started CPU trace capture at {0}", outputPath);
+        return traceProcess;
+    }
+
+    private static async Task StopTrace(Process traceProcess)
+    {
+        ProfilingEventSource.Log.CaptureComplete();
+        await traceProcess.WaitForExitAsync().ConfigureAwait(false);
+        if (traceProcess.ExitCode != 0)
+            throw new InvalidOperationException($"dotnet-trace exited with code {traceProcess.ExitCode}.");
+
+        traceProcess.Dispose();
+    }
+
+    private static void SetTraceReady(TaskCompletionSource<bool> traceReady, string? output)
+    {
+        if (output?.Contains("Output File", StringComparison.Ordinal) == true)
+            traceReady.TrySetResult(true);
     }
 
     private static void DeployDatabase()
@@ -123,5 +214,25 @@ internal static class Program
         return index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], CultureInfo.InvariantCulture, out var value)
             ? value
             : defaultValue;
+    }
+
+    private static string? GetStringArgument(string[] args, string name)
+    {
+        var index = Array.IndexOf(args, name);
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+    }
+}
+
+[EventSource(Name = ProviderName)]
+internal sealed class ProfilingEventSource : EventSource
+{
+    public const string ProviderName = "Ark.Reference.Profiling";
+    public const string CaptureCompleteEventName = "CaptureComplete";
+    public static readonly ProfilingEventSource Log = new();
+
+    [Event(1, Level = EventLevel.Informational)]
+    public void CaptureComplete()
+    {
+        WriteEvent(1);
     }
 }
