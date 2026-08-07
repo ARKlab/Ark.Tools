@@ -55,3 +55,53 @@ intentional progressive-printing delays, not CPU spent in SQL materialization or
 `ToDataTableArk()`. Application frames for Rebus, Dapper, and the one-row
 `ToDataTableArk()` call are negligible in this workload; larger batches are
 needed to measure conversion cost.
+
+## Flame graph and inclusive analysis
+
+Install the open-source MIT-licensed Speedscope viewer and convert the trace:
+
+```bash
+npm install --global speedscope@1.25.0
+dotnet-trace convert artifacts/reference-profile.nettrace \
+  --format Speedscope --output artifacts/reference-profile
+speedscope artifacts/reference-profile.speedscope.json
+```
+
+The validated Speedscope file contained 24 evented thread profiles spanning
+about 24.4 seconds. The following inclusive durations are summed across threads,
+so they include blocked time and must not be interpreted as CPU time or elapsed
+wall-clock time:
+
+| Repository frame | Inclusive duration | Interpretation |
+| --- | ---: | --- |
+| `Program.DeployDatabase()` (`Profiling/Program.cs:59-72`) | 17.19 s | Startup-only DACPAC deployment |
+| `Program.RunIterations()` (`Profiling/Program.cs:75-112`) | 1.30 s | Measured workload coordinator |
+| `RebusProcessorService.StopAsync()` | 806 ms | Shutdown wait for message continuations |
+| `BookPrintProcess_CreateRequestHandler.ExecuteAsync()` | 667 ms | Request and expected duplicate-process error path |
+| `AbstractSqlAsyncContext.CommitAsync()` | 565 ms | Transaction commit path |
+| `ArkStartupBase.Configure()` | 561 ms | HTTP pipeline execution |
+| `SqlServerExtensions.ReadPagedAsync()` | 435 ms | SQL paging path |
+| `Dapper.SqlMapper.QueryMultipleAsync()` | 427 ms | SQL result materialization |
+| `DemystifiedExceptionLayoutRenderer.AppendToString()` | 348 ms | Formatting expected exception responses |
+| `DataTableExtensions.ToDataTableArk()` | 11 ms | 100 single-row conversion calls |
+
+The hottest stacks are:
+
+1. `Program.Main` → `DeployDatabase` → `DacServices.Deploy` → SQL client TDS/SSL
+   reads. This is setup cost and accounts for most of the SQL inclusive time; it
+   should be excluded when comparing steady-state application runs.
+2. `BookPrintProcess_CreateRequestHandler.ExecuteAsync` → exception middleware
+   → `ArkDefaultExceptionFilterAttribute` → NLog demystified exception
+   formatting. The workload intentionally sends one failing request per
+   iteration, so this is an expected error-path cost rather than a failure.
+3. `CoreDataContextFactory.CreateAsync` → `ReadPagedAsync` →
+   `QueryMultipleAsync` → SQL client network reads. The stack is I/O-bound; the
+   trace does not show a materialization CPU hotspot.
+4. `RebusProcessorService.StopAsync` → `RebusBus.Dispose` →
+   `WaitForContinuationsToFinish`. This is shutdown synchronization, not message
+   processing CPU.
+
+For a CPU-focused follow-up, capture after database deployment and separate the
+expected error path from the successful request path. Do not optimize the
+thread-pool semaphore, Rebus backoff, SQL socket waits, or finalizer stacks
+without a CPU-only trace showing application work behind them.
