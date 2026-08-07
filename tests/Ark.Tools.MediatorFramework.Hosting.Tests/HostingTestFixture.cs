@@ -31,6 +31,7 @@ using ProtoBuf.Meta;
 
 using Rebus.Bus;
 using Rebus.Handlers;
+using Rebus.Pipeline;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -71,18 +72,17 @@ public sealed class HostingTestFixture : IAsyncDisposable
 
     internal sealed class HostingDeferredCommandHandler : ICommandHandler<HostingDeferredCommand>
     {
-        private readonly IBus _bus;
         private readonly HostingTestState _state;
 
-        public HostingDeferredCommandHandler(IBus bus, HostingTestState state)
+        public HostingDeferredCommandHandler(HostingTestState state)
         {
-            _bus = bus;
             _state = state;
         }
 
         public async Task ExecuteAsync(HostingDeferredCommand command, CancellationToken ctk = default)
         {
-            await _bus.Advanced.TransportMessage.Defer(TimeSpan.FromHours(1)).ConfigureAwait(false);
+            await (_state.Bus ?? throw new InvalidOperationException("The Rebus bus was not initialized."))
+                .Advanced.TransportMessage.Defer(TimeSpan.FromHours(1)).ConfigureAwait(false);
             _state.DeferredMessages++;
         }
     }
@@ -108,8 +108,8 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// </summary>
     public async Task WaitForIdleAsync(
         TimeSpan? timeout = null,
-        CancellationToken ctk = default,
-        bool ignoreDeferred = false)
+        bool ignoreDeferred = false,
+        CancellationToken ctk = default)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
         cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(5));
@@ -276,7 +276,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         {
             Container.ConfigureRebus(config =>
             {
-                config.Transport(transport => transport.UseDrainableInMemoryTransport(_network, "hosting"));
+                config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting"));
                 config.Routing(HostingEndpointMappings.ConfigureRebusRouting);
                 config.Options(options =>
                 {
@@ -289,7 +289,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
             _rebusConfigured = true;
         }
 
-        return Container.GetInstance<IBus>();
+        var bus = Container.GetInstance<IBus>();
+        State.Bus = bus;
+        return bus;
     }
 
     /// <inheritdoc />
@@ -322,24 +324,27 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 DefaultScopedLifestyle = new AsyncScopedLifestyle(),
             },
         };
-        RegisterHandlers(container);
+        RegisterHandlers(container, includeRebusHandlers: false);
         container.RegisterAuthorization();
         container.RegisterAuthorizationPolicy<HostingScopePolicy>();
         return container;
     }
 
-    private void RegisterHandlers(Container container)
+    private void RegisterHandlers(Container container, bool includeRebusHandlers = true)
     {
         container.RegisterInstance(State);
         container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
-        container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
-        container.Register<ICommandHandler<HostingRetryCommand>, HostingRetryCommandHandler>();
-        container.Register<ICommandHandler<HostingCancellationCommand>, HostingCancellationCommandHandler>();
-        container.Register<ICommandHandler<HostingDeferredCommand>, HostingDeferredCommandHandler>();
-        container.Register<HostingRebusScope>(Lifestyle.Scoped);
+        if (includeRebusHandlers)
+        {
+            container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
+            container.Register<ICommandHandler<HostingRetryCommand>, HostingRetryCommandHandler>();
+            container.Register<ICommandHandler<HostingCancellationCommand>, HostingCancellationCommandHandler>();
+            container.Register<ICommandHandler<HostingDeferredCommand>, HostingDeferredCommandHandler>();
+            container.Register<HostingRebusScope>(Lifestyle.Scoped);
+        }
         container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
         container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
         container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
@@ -372,7 +377,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
 
 /// <summary>Deterministic state shared by synthetic mediator handlers.</summary>
 /// <summary>Counts synthetic Rebus work for bounded wait diagnostics.</summary>
-public readonly record struct RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error);
+public sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error);
 
 public sealed class HostingTestState
 {
@@ -404,6 +409,8 @@ public sealed class HostingTestState
 
     /// <summary>Gets the number of deferred messages scheduled by handlers.</summary>
     public int DeferredMessages { get; internal set; }
+
+    internal IBus? Bus { get; set; }
 
     /// <summary>Gets the scope identifiers observed by Rebus handlers.</summary>
     public List<Guid> RebusScopeIds { get; } = [];
@@ -552,23 +559,21 @@ internal sealed class HostingRebusCommandHandler : ICommandHandler<HostingRebusC
 {
     private readonly HostingTestState _state;
     private readonly HostingRebusScope _scope;
-    private readonly RebusPrincipalContextProvider _principalProvider;
 
     public HostingRebusCommandHandler(
         HostingTestState state,
-        HostingRebusScope scope,
-        RebusPrincipalContextProvider principalProvider)
+        HostingRebusScope scope)
     {
         _state = state;
         _scope = scope;
-        _principalProvider = principalProvider;
     }
 
     public async Task ExecuteAsync(HostingRebusCommand command, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RebusScopeIds.Add(_scope.Id);
-        _state.RebusUserId = _principalProvider.Current.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        _state.RebusUserId = MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
+            ?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
         _state.RecordCommandExecution();
     }

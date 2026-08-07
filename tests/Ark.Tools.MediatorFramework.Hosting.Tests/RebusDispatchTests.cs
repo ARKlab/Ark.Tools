@@ -53,5 +53,19 @@ public sealed class RebusDispatchTests
             fixture.State.DeferredMessages.Should().Be(1);
         }
     }
-}
 
+    /// <summary>Ensures generated dispatch supplies the processor cancellation token.</summary>
+    [TestMethod]
+    public async Task GeneratedWrapperSuppliesCancellationToken()
+    {
+        var fixture = new HostingTestFixture();
+        await using (fixture.ConfigureAwait(false))
+        {
+            var bus = fixture.BuildRebusHost();
+            await bus.Send(new HostingCancellationCommand()).ConfigureAwait(false);
+            await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            fixture.State.RebusCancellationTokenWasCancelable.Should().BeTrue();
+        }
+    }
+}
