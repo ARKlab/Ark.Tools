@@ -28,6 +28,7 @@ public sealed class RebusDispatchTests
             await bus.Send(new HostingRebusCommand()).ConfigureAwait(false);
             await bus.Send(new HostingRebusCommand()).ConfigureAwait(false);
             await fixture.State.CommandExecuted.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+            await fixture.State.SecondCommandExecuted.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
             await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
             fixture.State.CommandExecutions.Should().Be(2);

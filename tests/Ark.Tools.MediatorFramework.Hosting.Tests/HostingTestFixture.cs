@@ -140,9 +140,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public RebusWorkCounts GetRebusCounts()
     {
         var queues = _network.Queues.ToArray();
-        var inQueue = queues
-            .Where(queue => !string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
-            .Sum(queue => _network.GetCount(queue));
+        var inQueue = _network.GetCount("hosting");
         var error = queues
             .Where(queue => string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
             .Sum(queue => _network.GetCount(queue));
@@ -382,6 +380,7 @@ public sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, i
 public sealed class HostingTestState
 {
     private readonly TaskCompletionSource _commandExecution = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _secondCommandExecution = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>Gets the number of request handler executions.</summary>
     public int RequestExecutions { get; internal set; }
@@ -397,6 +396,9 @@ public sealed class HostingTestState
 
     /// <summary>Gets a task that completes when a command handler executes.</summary>
     public Task CommandExecuted => _commandExecution.Task;
+
+    /// <summary>Gets a task that completes when two commands have executed.</summary>
+    public Task SecondCommandExecuted => _secondCommandExecution.Task;
 
     /// <summary>Gets the number of failed retry handler attempts.</summary>
     public int RetryAttempts => Volatile.Read(ref _retryAttempts);
@@ -451,6 +453,8 @@ public sealed class HostingTestState
     {
         CommandExecutions++;
         _commandExecution.TrySetResult();
+        if (CommandExecutions >= 2)
+            _secondCommandExecution.TrySetResult();
     }
 
     internal void RecordFirstStreamItem()
@@ -568,14 +572,14 @@ internal sealed class HostingRebusCommandHandler : ICommandHandler<HostingRebusC
         _scope = scope;
     }
 
-    public Task ExecuteAsync(HostingRebusCommand command, CancellationToken ctk = default)
+    public async Task ExecuteAsync(HostingRebusCommand command, CancellationToken ctk = default)
     {
+        await Task.CompletedTask.ConfigureAwait(false);
         _state.RebusScopeIds.Add(_scope.Id);
         _state.RebusUserId = MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
             ?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
         _state.RecordCommandExecution();
-        return Task.CompletedTask;
     }
 }
 
@@ -593,8 +597,9 @@ internal sealed class HostingRetryCommandHandler : ICommandHandler<HostingRetryC
         _state = state;
     }
 
-    public Task ExecuteAsync(HostingRetryCommand command, CancellationToken ctk = default)
+    public async Task ExecuteAsync(HostingRetryCommand command, CancellationToken ctk = default)
     {
+        await Task.CompletedTask.ConfigureAwait(false);
         _state.RecordRetryAttempt();
         throw new InvalidOperationException("Synthetic retry failure.");
     }
@@ -609,10 +614,10 @@ internal sealed class HostingCancellationCommandHandler : ICommandHandler<Hostin
         _state = state;
     }
 
-    public Task ExecuteAsync(HostingCancellationCommand command, CancellationToken ctk = default)
+    public async Task ExecuteAsync(HostingCancellationCommand command, CancellationToken ctk = default)
     {
         _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
 
