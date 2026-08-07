@@ -41,7 +41,6 @@ public static class NLogConfigurer
                 .RegisterTarget<SlackTarget>()
                 .RegisterLayoutRenderer<ActivityIdLayoutRenderer>()
                 .RegisterLayoutRenderer<HostNameLayoutRenderer>()
-                .RegisterLayoutRenderer<DemystifiedExceptionLayoutRenderer>()
                 .RegisterLayoutRenderer<ActivityTraceLayoutRenderer>()
                 .RegisterTarget<DiagnosticListenerTarget>())
             ;
