@@ -23,19 +23,13 @@ internal static class Program
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private const int DefaultWarmupIterations = 10;
     private const int DefaultMeasuredIterations = 100;
-    private const string DisableDemystifierEnvironmentVariable = "ARK_TOOLS_DISABLE_DEMYSTIFIER";
 
     private static async Task Main(string[] args)
     {
         var warmupIterations = GetArgument(args, "--warmup", DefaultWarmupIterations);
         var measuredIterations = GetArgument(args, "--iterations", DefaultMeasuredIterations);
         var traceOutput = GetStringArgument(args, "--trace");
-        var disableDemystifier = args.Contains("--without-demystifier", StringComparer.Ordinal);
         Process? traceProcess = null;
-
-        Environment.SetEnvironmentVariable(
-            DisableDemystifierEnvironmentVariable,
-            disableDemystifier ? "1" : null);
 
         traceOutput = traceOutput is null ? null : Path.GetFullPath(traceOutput);
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
