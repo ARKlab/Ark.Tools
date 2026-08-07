@@ -32,7 +32,7 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 | `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc` | gRPC runtime package containing `[GrpcMethod]`, `[ServiceGroup]` and its transport-specific analyzer. |
 | `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, in-memory store and cross-cutting decorator. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
-| `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework** through application-owned composition. Framework-capability and host-boundary tests belong under `tests/` instead. |
+| `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework** with sample-owned behavior and integration coverage. Framework-capability and generic host-boundary tests belong under `tests/` instead. |
 
 ## Behavioral tests
 
