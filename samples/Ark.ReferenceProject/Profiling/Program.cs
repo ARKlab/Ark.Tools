@@ -75,8 +75,7 @@ internal static class Program
         {
             try
             {
-                if (traceProcess is not null)
-                    await StopTrace(traceProcess).ConfigureAwait(false);
+                await StopTraceIfRunning(traceProcess).ConfigureAwait(false);
             }
 
             finally
@@ -85,6 +84,12 @@ internal static class Program
                 TestHost.AfterTests();
             }
         }
+    }
+
+    private static async Task StopTraceIfRunning(Process? traceProcess)
+    {
+        if (traceProcess is not null)
+            await StopTrace(traceProcess).ConfigureAwait(false);
     }
 
     private static async Task<Process> StartTrace(string outputPath)
@@ -107,6 +112,8 @@ internal static class Program
                 Environment.ProcessId.ToString(CultureInfo.InvariantCulture),
                 "--output",
                 outputPath,
+                "--profile",
+                "dotnet-sampled-thread-time",
                 "--providers",
                 ProfilingEventSource.ProviderName,
                 "--stopping-event-provider-name",
@@ -223,7 +230,7 @@ internal static class Program
     }
 }
 
-[EventSource(Name = ProviderName)]
+[EventSource(Name = "Ark.Reference.Profiling")]
 internal sealed class ProfilingEventSource : EventSource
 {
     public const string ProviderName = "Ark.Reference.Profiling";
