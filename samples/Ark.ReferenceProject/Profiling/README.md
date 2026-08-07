@@ -50,6 +50,59 @@ and executes its generated benchmark project in Release configuration.
 Open `.nettrace` files in Visual Studio Profiler or PerfView. Open
 `.speedscope.json` files in [SpeedScope](https://www.speedscope.app/).
 
+Install the command-line viewers once:
+
+```bash
+dotnet tool install --global dotnet-trace
+dotnet tool install --global KlutzyNinja.Filtrace
+npm install --global speedscope
+```
+
+From the Ark.ReferenceProject directory, dump a `dotnet-trace` top-method report
+and convert every BenchmarkDotNet trace to SpeedScope:
+
+```bash
+find artifacts/BenchmarkDotNet.Artifacts -name '*.nettrace' -print0 |
+  while IFS= read -r -d '' trace; do
+    dotnet-trace report "$trace" topN -n 30 > "${trace%.nettrace}.topN.txt"
+    dotnet-trace convert "$trace" \
+      --format Speedscope \
+      --output "${trace%.nettrace}"
+  done
+```
+
+`dotnet-trace report` ranks the complete capture and cannot exclude
+`GlobalSetup`, harness, or cleanup frames. Use it to orient the investigation,
+not to assign benchmark-only percentages.
+
+For a workload-only report and SpeedScope file, use
+[filtrace](https://github.com/JeremyKuhne/filtrace). Its `--benchmark` preset
+keeps the BenchmarkDotNet `WorkloadAction` subtree and excludes `GlobalSetup`,
+warmup/harness overhead, `IterationCleanup`, and `GlobalCleanup`:
+
+```bash
+find artifacts/BenchmarkDotNet.Artifacts -name '*.nettrace' -print0 |
+  while IFS= read -r -d '' trace; do
+    workload="${trace%.nettrace}.workload"
+    filtrace cpu "$trace" --benchmark --top 30 > "$workload.cpu.txt"
+    filtrace cpu "$trace" --benchmark --measure inclusive --top 30 \
+      > "$workload.inclusive.txt"
+    filtrace export "$trace" --benchmark --format speedscope \
+      -o "$workload.speedscope.json"
+  done
+```
+
+Open one filtered profile with:
+
+```bash
+speedscope <trace.workload.speedscope.json>
+```
+
+For an unfiltered BenchmarkDotNet `.speedscope.json`, use the **Time Order**
+view, search for `WorkloadAction`, and double-click that frame to restrict the
+visible range. The filtered export is preferable because its totals use only
+the workload subtree.
+
 For every endpoint:
 
 1. Sort the call tree by **Exclusive** duration to find methods doing work
@@ -58,32 +111,73 @@ For every endpoint:
    call paths.
 3. Inspect the flame graph's widest application-owned stacks. Use the Sandwich
    view to compare total and self time.
-4. Ignore host setup and seed creation, which run in `GlobalSetup`, and separate
-   `IterationCleanup` Rebus draining from request handling.
+4. Verify that the analyzed root is `WorkloadAction`; do not compare a
+   whole-capture total with a workload-only duration.
 5. Confirm a candidate in its endpoint-specific trace before changing code.
 
-`dotnet-trace` can also print the top sampled methods:
+For deeper command-line analysis:
 
 ```bash
-dotnet-trace report <trace.nettrace> topN -n 30
+filtrace info <trace.nettrace>
+filtrace tree <trace.nettrace> --benchmark --max-depth 8
+filtrace callers <trace.nettrace> ReadPagedAsync --benchmark --callees
+filtrace callers <trace.nettrace> ProblemDetailsMiddleware --benchmark --callees
 ```
 
 Sampled thread time includes blocking. Thread-pool waits, Rebus backoff, SQL
 socket reads, and timer waits are not CPU optimization candidates unless a
 CPU-bound application stack appears beneath them.
 
+### Other open-source analyzers
+
+- [filtrace](https://github.com/JeremyKuhne/filtrace) reads `.nettrace` and
+  `.speedscope.json`, reports self/inclusive CPU, callers, call trees, source
+  lines, timelines, and diffs, and has the BenchmarkDotNet workload filter used
+  above.
+- [pvanalyze](https://github.com/adityamandaleeka/pvanalyze) reads `.nettrace`
+  cross-platform and provides CPU stacks, caller/callee trees, GC, JIT,
+  allocation, exception, event, JSON, and time-window reports. It has no
+  BenchmarkDotNet preset, so determine a workload time window first and pass
+  `--from` and `--to`.
+- [PerfView](https://github.com/microsoft/perfview) provides the most complete
+  Windows call-tree and event investigation. Use its include/exclude and
+  start/stop filters when the CLI summaries are insufficient.
+- [dotnet-trace](https://github.com/dotnet/diagnostics) is the first-party
+  collector, converter, and basic top-method reporter.
+- [SpeedScope](https://github.com/jlfwong/speedscope) is the interactive
+  time-order, left-heavy, and caller/callee viewer; it is not a general
+  `.nettrace` event analyzer.
+
 ## Optimization candidates
 
-The previous combined trace was dominated by synchronization and I/O. Its
-application-owned durations identified these candidates for endpoint-specific
-verification:
+The previous combined Release trace measured 419.82 seconds of wall-clock
+workload and 7,438.8 seconds of sampled thread time across 27 thread profiles.
+The following values are inclusive sampled-thread durations. Their percentage
+denominator is the 7,438.8-second sampled-thread total, not wall-clock time.
+Nested frames overlap, so rows must not be added together.
 
-| Candidate | Endpoint | Verification |
-| --- | --- | --- |
-| Exception formatting in `ProblemDetailsMiddleware` and NLog | Expected error responses | Compare exclusive exception-rendering time before changing logging |
-| SQL materialization in `ReadPagedAsync` and `QueryMultipleAsync` | Book reads | Separate materialization CPU from TDS/SSL wait time |
-| SQL transaction commit paths | Write endpoints | Optimize only application work around commits; database I/O is external |
-| `ToDataTableArk` conversion | Non-endpoint utility work | Not present in these endpoint benchmarks; profile separately if required |
+| Candidate frame | Inclusive duration | Share of sampled-thread total | Endpoint and interpretation |
+| --- | ---: | ---: | --- |
+| `AbstractSqlAsyncContext.CommitAsync` | 6.39 s | 0.0859% | Write endpoints; database commit is primarily external I/O |
+| `ProblemDetailsMiddleware` | 1.60 s | 0.0215% | Expected error path; contains downstream handling |
+| `BookPrintProcess_CreateRequestHandler` | 1.32 s | 0.0177% | Expected business-rule exception path |
+| `SqlServerExtensions.ReadPagedAsync` | 301 ms | 0.0040% | Book reads; includes SQL wait and materialization |
+| `Dapper.SqlMapper.QueryMultipleAsync` | 295 ms | 0.0040% | Nested book-read SQL path; do not add to `ReadPagedAsync` |
+| NLog `ExceptionLayoutRenderer.AppendToString` | 164 ms | 0.0022% | Exception formatting; compare exclusive CPU before changing logging |
+| `StackFrameHelper.InitializeSourceInfo` | 62 ms | 0.0008% | Standard stack-frame source lookup |
+| `DataTableExtensions.ToDataTableArk` | 15 ms | 0.0002% | 300 single-row conversions in the former combined workload |
+
+Analyze each candidate in its endpoint-specific workload trace:
+
+1. Compare self and inclusive rankings. A large inclusive duration with little
+   self time points to callees or waits rather than the named method.
+2. Use `filtrace callers` and `filtrace tree` to preserve call-path context.
+3. For SQL paths, inspect database-provider events or PerfView thread-time data
+   before attributing socket/TDS time to materialization CPU.
+4. For exception formatting, capture an expected-error benchmark and compare
+   NLog renderer self time with the whole `WorkloadAction` total.
+5. Compare changes with `filtrace diff <before.nettrace> <after.nettrace>
+   --benchmark`; use traces captured with the same benchmark and settings.
 
 The previous trace did not justify optimizing Rebus idle backoff, thread-pool
 semaphores, SQL/network waits, Application Insights timers, or
