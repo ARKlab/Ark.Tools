@@ -6,6 +6,7 @@ using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Auth;
 using Ark.Reference.Core.Tests.Init;
 using Ark.Tools.Core;
+using Ark.Tools.Rebus.Tests;
 
 using Flurl.Http;
 
@@ -55,6 +56,9 @@ internal static class Program
             var stopwatch = Stopwatch.StartNew();
             var businessRuleRequestTiming = await RunIterations(client, auth, measuredIterations, true).ConfigureAwait(false);
             stopwatch.Stop();
+
+            _logger.Info(CultureInfo.InvariantCulture, "Waiting for Rebus to become idle");
+            await WaitForRebusToBecomeIdle().ConfigureAwait(false);
 
             if (traceProcess is not null)
             {
@@ -221,6 +225,14 @@ internal static class Program
         }
 
         return (businessRuleRequestTotal, businessRuleRequestMaximum);
+    }
+
+    private static async Task WaitForRebusToBecomeIdle()
+    {
+        while (TestHost.Env.RebusNetwork.Count() > 0 || InProcessMessageInspectorStep.Count > 0)
+        {
+            await Task.Delay(100).ConfigureAwait(false);
+        }
     }
 
     private static IFlurlRequest Send(IFlurlClient client, AuthTestContext auth, string path)
