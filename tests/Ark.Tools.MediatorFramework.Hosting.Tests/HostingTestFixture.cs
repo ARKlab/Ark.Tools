@@ -4,8 +4,10 @@
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
+using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
@@ -14,13 +16,16 @@ using MessagePack.Resolvers;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 using ProtoBuf.Grpc.Server;
+using ProtoBuf.Meta;
 
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -28,6 +33,8 @@ using Rebus.Transport.InMem;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
+using NodaTime;
 
 using System.Security.Claims;
 
@@ -40,6 +47,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
 {
     private readonly InMemNetwork _network = new();
     private readonly List<WebApplication> _hosts = [];
+    private readonly List<Container> _hostContainers = [];
     private bool _rebusConfigured;
     private bool _disposed;
 
@@ -51,24 +59,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         State = new HostingTestState();
         PrincipalProvider = new TestPrincipalProvider();
 
-        Container.RegisterInstance(State);
-        Container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
-        Container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
-        Container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
-        Container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
-        Container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
-        Container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
-        Container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
-        Container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
-        Container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
-        Container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
-        Container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
-        Container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
-        Container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
-        Container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
-        Container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
-        Container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
-        Container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
+        RegisterHandlers(Container);
 
         Container.RegisterAuthorization();
         Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
@@ -169,17 +160,61 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds and maps an independent code-first gRPC host.</summary>
+    /// <param name="listenAddress">Optional Kestrel address; null selects TestServer.</param>
     /// <returns>The unstarted gRPC application.</returns>
-    public WebApplication BuildGrpcHost()
+    public WebApplication BuildGrpcHost(Uri? listenAddress = null)
     {
         ThrowIfDisposed();
         var builder = WebApplication.CreateBuilder();
-        builder.WebHost.UseTestServer();
-        builder.Services.AddCodeFirstGrpc();
-        builder.Services.AddSingleton(Container);
+        if (listenAddress is null)
+            builder.WebHost.UseTestServer();
+        else
+            builder.WebHost.UseKestrel(options =>
+                options.Listen(
+                    System.Net.IPAddress.Loopback,
+                    listenAddress.Port,
+                    listenOptions => listenOptions.Protocols = HttpProtocols.Http2));
+        builder.Services
+            .AddAuthentication(TestAuthenticationHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                TestAuthenticationHandler.SchemeName,
+                static _ => { });
+        builder.Services.AddAuthorization();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+        builder.Services.AddCodeFirstGrpcReflection();
+        var container = CreateHostContainer();
+        _hostContainers.Add(container);
+        builder.Services.AddSingleton(container);
+        builder.Services.AddSingleton(PrincipalProvider);
+        builder.Services.AddSimpleInjector(container, simpleInjector => simpleInjector.AddAspNetCore());
         var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        ((IApplicationBuilder)app).UseSimpleInjector(container);
+        RuntimeTypeModel.Default.AddNodaTimeSurrogates();
         HostingEndpointMappings.MapGrpc(app);
+        app.MapCodeFirstGrpcReflectionService().AllowAnonymous();
         _hosts.Add(app);
+        return app;
+    }
+
+    /// <summary>Builds and starts an independent gRPC test host.</summary>
+    /// <returns>The started gRPC application.</returns>
+    public async Task<WebApplication> StartGrpcHostAsync()
+    {
+        var app = BuildGrpcHost();
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        return app;
+    }
+
+    /// <summary>Builds and starts a gRPC host on a loopback Kestrel address for external tools.</summary>
+    /// <param name="port">The loopback TCP port.</param>
+    /// <returns>The started gRPC application.</returns>
+    public async Task<WebApplication> StartGrpcKestrelHostAsync(int port)
+    {
+        var app = BuildGrpcHost(new Uri($"http://127.0.0.1:{port}", UriKind.Absolute));
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }
 
@@ -210,12 +245,55 @@ public sealed class HostingTestFixture : IAsyncDisposable
         _disposed = true;
         for (var index = _hosts.Count - 1; index >= 0; index--)
             await _hosts[index].DisposeAsync().ConfigureAwait(false);
+        for (var index = _hostContainers.Count - 1; index >= 0; index--)
+            await _hostContainers[index].DisposeAsync().ConfigureAwait(false);
         await Container.DisposeAsync().ConfigureAwait(false);
     }
 
     private void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+    }
+
+    private Container CreateHostContainer()
+    {
+        var container = new Container
+        {
+            Options =
+            {
+                DefaultScopedLifestyle = new AsyncScopedLifestyle(),
+            },
+        };
+        RegisterHandlers(container);
+        container.RegisterAuthorization();
+        container.RegisterAuthorizationPolicy<HostingScopePolicy>();
+        return container;
+    }
+
+    private void RegisterHandlers(Container container)
+    {
+        container.RegisterInstance(State);
+        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
+        container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
+        container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
+        container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
+        container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
+        container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
+        container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
+        container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
+        container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
+        container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
+        container.Register<IQueryHandler<HostingAuthorizedQuery, HostingResponse>, HostingAuthorizedHandler>();
+        container.Register<IQueryHandler<HostingUserContextQuery, HostingResponse>, HostingUserContextHandler>();
+        container.Register<IRequestHandler<HostingETagMismatchRequest, HostingResponse>, HostingETagMismatchHandler>();
+        container.Register<IRequestHandler<HostingOptimisticConcurrencyRequest, HostingResponse>, HostingOptimisticConcurrencyHandler>();
+        container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
+        container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
+        container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
+        container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
+        container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
+        container.Register<IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>, HostingWireTypesHandler>();
+        container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
     }
 
     private static void ConfigureOpenApi(OpenApiOptions options)
@@ -300,6 +378,13 @@ public sealed class HostingTestState
     {
         return _streamRelease.Task.WaitAsync(ctk);
     }
+}
+
+internal static class HostingWireTypeValues
+{
+    internal static readonly LocalDate Date = new(2026, 8, 6);
+    internal static readonly LocalDateTime DateTime = new(2026, 8, 6, 15, 44);
+    internal const int CircleRadius = 7;
 }
 
 internal sealed class HostingRequestHandler : IRequestHandler<HostingRequest, HostingResponse>
@@ -448,6 +533,46 @@ internal sealed class HostingAuthorizedHandler : IQueryHandler<HostingAuthorized
     }
 }
 
+internal sealed class HostingUserContextHandler : IQueryHandler<HostingUserContextQuery, HostingResponse>
+{
+    private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
+
+    public HostingUserContextHandler(IContextProvider<ClaimsPrincipal> principalProvider)
+    {
+        _principalProvider = principalProvider;
+    }
+
+    public async Task<HostingResponse> ExecuteAsync(HostingUserContextQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingResponse
+        {
+            Message = _principalProvider.Current.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingETagMismatchHandler : IRequestHandler<HostingETagMismatchRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(HostingETagMismatchRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The synthetic ETag does not match.");
+    }
+}
+
+internal sealed class HostingOptimisticConcurrencyHandler : IRequestHandler<HostingOptimisticConcurrencyRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(
+        HostingOptimisticConcurrencyRequest request,
+        CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new Ark.Tools.Core.OptimisticConcurrencyException("The synthetic entity was concurrently modified.");
+    }
+}
+
 internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>
 {
     private readonly HostingTestState _state;
@@ -503,11 +628,11 @@ internal sealed class HostingAttachmentUploadHandler : IRequestHandler<HostingAt
     public async Task<HostingResponse> ExecuteAsync(HostingAttachmentUploadRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.LastAttachmentName = request.Attachment?.Name;
         if (request.Attachment is not null)
         {
             using var reader = new StreamReader(request.Attachment.OpenRead(), Encoding.UTF8);
             _state.LastAttachmentContent = await reader.ReadToEndAsync(ctk).ConfigureAwait(false);
+            _state.LastAttachmentName = request.Attachment.Name;
         }
         return new HostingResponse
         {
@@ -565,6 +690,22 @@ internal sealed class HostingOpenApiHandler : IQueryHandler<HostingOpenApiQuery,
             Date = new NodaTime.LocalDate(2026, 8, 6),
             Shape = new HostingCircle { Radius = 3 },
             ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingWireTypesHandler : IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>
+{
+    public async Task<HostingWireTypesResponse> ExecuteAsync(
+        HostingWireTypesQuery query,
+        CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingWireTypesResponse
+        {
+            Date = HostingWireTypeValues.Date,
+            DateTime = HostingWireTypeValues.DateTime,
+            Shape = new HostingCircle { Radius = HostingWireTypeValues.CircleRadius },
         };
     }
 }
