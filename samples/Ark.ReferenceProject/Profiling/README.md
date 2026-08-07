@@ -30,7 +30,9 @@ dotnet-trace report artifacts/reference-profile-default-net10.nettrace topN -n 2
 The profiling host launches `dotnet-trace` after database deployment, host
 startup, and warmup. It stops the capture before application shutdown, so setup
 and teardown are excluded from the CPU profile. Launch the compiled profiling
-DLL directly; do not wrap it in `dotnet run`.
+DLL directly; do not wrap it in `dotnet run`. The measured `RunIterations` call
+waits for the Rebus queue and in-process message count to reach zero before the
+trace is stopped.
 
 The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
 the application, matching the C# deployment used by the integration tests.
@@ -52,12 +54,11 @@ the demystified renderer from the default NLog registration:
 
 | Measurement | Result |
 | --- | ---: |
-| Measured workload | 8.26 s |
-| Business-rule request average | 5.97 ms |
-| Business-rule request maximum | 9.90 ms |
-| Speedscope evented thread profiles | 20 |
-| Summed sampled thread time | 155.1 s |
-| Aggregated CPU time | 10.3 s (6.64%) |
+| Measured workload, including Rebus drain | 6 m 59.82 s |
+| Business-rule request average | 6.34 ms |
+| Business-rule request maximum | 19.95 ms |
+| Speedscope evented thread profiles | 27 |
+| Summed sampled thread time | 7,438.8 s |
 
 The sampled-thread-time trace sums time across threads. Its inclusive durations
 include blocked time and must not be interpreted as CPU time or elapsed wall
@@ -67,13 +68,13 @@ The top exclusive samples were:
 
 | Function | Exclusive samples |
 | --- | ---: |
-| `LowLevelLifoSemaphore.WaitForSignal` | 28.02% |
-| `WaitHandle.WaitOneNoCheck` | 19.99% |
-| `Thread.Sleep` | 16.16% |
-| `ManualResetEventSlim.Wait` | 13.26% |
-| `Missing Symbol` | 5.66% |
-| `Interop+Sys.Read` | 5.39% |
-| `WaitAnyMultiple` | 5.39% |
+| `LowLevelLifoSemaphore.WaitForSignal` | 29.36% |
+| `Thread.Sleep` | 17.96% |
+| `WaitHandle.WaitOneNoCheck` | 12.40% |
+| `ManualResetEventSlim.Wait` | 9.53% |
+| `Missing Symbol` | 6.02% |
+| `WaitAnyMultiple` | 6.00% |
+| `Interop+Sys.Read` | 6.00% |
 
 The trace is dominated by synchronization, waits, the Application Insights
 aggregation timer, and SQL/network I/O. These are not actionable CPU hotspots
@@ -91,29 +92,29 @@ Selected inclusive frames from the Speedscope flame graph were:
 
 | Frame | Inclusive duration | Interpretation |
 | --- | ---: | --- |
-| `Rebus.DefaultBackoffStrategy.Wait` | 8.34 s | Idle worker backoff |
-| SQL transaction/network frames | 2.66 s | SQL Server I/O |
-| `AbstractSqlAsyncContext.CommitAsync()` | 1.58 s | Transaction commit path |
-| `ProblemDetailsMiddleware` | 1.52 s | Expected exception response path |
-| `BookPrintProcess_CreateRequestHandler` | 1.43 s | Expected business-rule exception |
-| `SqlServerExtensions.ReadPagedAsync()` | 1.11 s | SQL paging path |
-| `Dapper.SqlMapper.QueryMultipleAsync()` | 1.10 s | SQL result materialization |
-| NLog `ExceptionLayoutRenderer.AppendToString()` | 126 ms | Built-in exception formatting |
-| `StackFrameHelper.InitializeSourceInfo()` | 36 ms | Standard stack-frame lookup |
-| `DataTableExtensions.ToDataTableArk()` | 9.7 ms | 300 single-row conversions |
+| `ThreadPoolWorker.TryReceiveNextMessage()` | 420.52 s | Rebus receive loop while draining |
+| `Rebus.DefaultBackoffStrategy.Wait` | 13.88 s | Idle worker backoff |
+| `AbstractSqlAsyncContext.CommitAsync()` | 6.39 s | Transaction commit path |
+| `ProblemDetailsMiddleware` | 1.60 s | Expected exception response path |
+| `BookPrintProcess_CreateRequestHandler` | 1.32 s | Expected business-rule exception |
+| `SqlServerExtensions.ReadPagedAsync()` | 301 ms | SQL paging path |
+| `Dapper.SqlMapper.QueryMultipleAsync()` | 295 ms | SQL result materialization |
+| NLog `ExceptionLayoutRenderer.AppendToString()` | 164 ms | Built-in exception formatting |
+| `StackFrameHelper.InitializeSourceInfo()` | 62 ms | Standard stack-frame lookup |
+| `DataTableExtensions.ToDataTableArk()` | 15 ms | 300 single-row conversions |
 
 The hottest stacks are:
 
-1. `Rebus.DefaultBackoffStrategy.Wait` occupies the worker for the full capture
-   while it waits for messages; this is idle synchronization, not message
-   processing CPU.
+1. `ThreadPoolWorker.TryReceiveNextMessage` spans the Rebus drain and idle
+   period. The `DefaultBackoffStrategy.Wait` portion is idle synchronization,
+   not message-processing CPU.
 2. `BookPrintProcess_CreateRequestHandler` → ProblemDetails middleware →
    `ArkDefaultExceptionFilterAttribute` → NLog's built-in exception renderer is
    the expected error path. The demystified renderer is absent from the flame
    graph after removing its default registration.
 3. SQL transaction commits and TDS/SSL reads dominate the database path and are
    I/O-bound; the trace does not show a materialization CPU hotspot.
-4. `ToDataTableArk()` remains negligible at 9.7 ms for 300 single-row calls.
+4. `ToDataTableArk()` remains negligible at 15 ms for 300 single-row calls.
 
 Do not optimize the thread-pool semaphore, Rebus backoff, SQL socket waits, or
 Application Insights timer without a CPU-only trace showing application work
