@@ -19,6 +19,7 @@ described in the parent project README. Then run:
 ```bash
 dotnet build Ark.Reference.slnx --configuration Release
 dotnet tool install --global dotnet-trace
+env 'ConnectionStrings__Core.Database=<sql-connection-string>' \
 dotnet-trace collect --output artifacts/reference-profile.nettrace \
   -- dotnet run --project Profiling/Ark.Reference.Profiling.csproj \
   --configuration Release --no-build -- --warmup 10 --iterations 100

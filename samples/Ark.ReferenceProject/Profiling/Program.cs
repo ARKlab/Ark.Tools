@@ -6,12 +6,15 @@ using Ark.Tools.Core;
 
 using Flurl.Http;
 
+using NLog;
+
 using System.Diagnostics;
 
 namespace Ark.Reference.Profiling;
 
 internal static class Program
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private const int DefaultWarmupIterations = 10;
     private const int DefaultMeasuredIterations = 100;
 
@@ -29,15 +32,15 @@ internal static class Program
             var client = TestHost.Factory.Get(new Uri("https://localhost:5001"));
             var auth = new AuthTestContext();
 
-            Console.WriteLine($"Warming up {warmupIterations} iterations...");
+            _logger.Info(CultureInfo.InvariantCulture, "Warming up {0} iterations", warmupIterations);
             await RunIterations(client, auth, warmupIterations, false).ConfigureAwait(false);
 
-            Console.WriteLine($"Running {measuredIterations} measured iterations...");
+            _logger.Info(CultureInfo.InvariantCulture, "Running {0} measured iterations", measuredIterations);
             var stopwatch = Stopwatch.StartNew();
             await RunIterations(client, auth, measuredIterations, true).ConfigureAwait(false);
             stopwatch.Stop();
 
-            Console.WriteLine($"Completed {measuredIterations} iterations in {stopwatch.Elapsed}.");
+            _logger.Info(CultureInfo.InvariantCulture, "Completed {0} iterations in {1}", measuredIterations, stopwatch.Elapsed);
         }
         finally
         {
@@ -45,7 +48,7 @@ internal static class Program
         }
     }
 
-    private static async Task RunIterations(FlurlClient client, AuthTestContext auth, int iterations, bool measured)
+    private static async Task RunIterations(IFlurlClient client, AuthTestContext auth, int iterations, bool measured)
     {
         for (var iteration = 0; iteration < iterations; iteration++)
         {
@@ -81,11 +84,11 @@ internal static class Program
             using var table = new[] { book }.ToDataTableArk();
 
             if (measured && iteration % 10 == 0)
-                Console.WriteLine($"Measured iteration {iteration}.");
+                _logger.Info(CultureInfo.InvariantCulture, "Measured iteration {0}", iteration);
         }
     }
 
-    private static IFlurlRequest Send(FlurlClient client, AuthTestContext auth, string path)
+    private static IFlurlRequest Send(IFlurlClient client, AuthTestContext auth, string path)
     {
         return auth.SetAuth(client.Request(path));
     }
@@ -93,7 +96,7 @@ internal static class Program
     private static int GetArgument(string[] args, string name, int defaultValue)
     {
         var index = Array.IndexOf(args, name);
-        return index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], out var value)
+        return index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], CultureInfo.InvariantCulture, out var value)
             ? value
             : defaultValue;
     }
