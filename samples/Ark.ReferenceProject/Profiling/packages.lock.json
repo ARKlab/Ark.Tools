@@ -32,6 +32,26 @@
         "resolved": "4.1.5",
         "contentHash": "i5z+cNu/cOcdO0AgFB8aXk8w6In2H+haaDfSgd9ImvQIK+rSHavHZIogVoAZLL8jLwYx4bAcs5b7EyuMMG4mQQ=="
       },
+      "Microsoft.SqlServer.DacFx": {
+        "type": "Direct",
+        "requested": "[170.4.83, )",
+        "resolved": "170.4.83",
+        "contentHash": "SPwaGEBj+OboDFRXwEhmw2jJ4Z0VQFI7QWD8vlpWdFq+dA7i5CRg1dMYpJDnzk11JShFJNkRlmffW21VolBGQw==",
+        "dependencies": {
+          "Azure.Storage.Blobs": "12.18.0",
+          "Microsoft.ApplicationInsights": "2.23.0",
+          "Microsoft.Build": "15.9.20",
+          "Microsoft.Build.Framework": "15.9.20",
+          "Microsoft.Build.Utilities.Core": "15.9.20",
+          "Microsoft.Data.SqlClient": "6.1.5",
+          "Microsoft.SqlServer.TransactSql.ScriptDom": "180.18.1",
+          "Microsoft.SqlServer.Types": "170.1000.7",
+          "System.ComponentModel.Composition": "8.0.0",
+          "System.IO.Packaging": "8.0.1",
+          "System.Runtime.Caching": "8.0.1",
+          "System.Security.Permissions": "8.0.0"
+        }
+      },
       "Microsoft.VisualStudio.Threading.Analyzers": {
         "type": "Direct",
         "requested": "[18.7.23, )",
@@ -2457,26 +2477,6 @@
         "requested": "[2.11.0, )",
         "resolved": "2.11.0",
         "contentHash": "/ignjfdeKT2SGLIR7QEv19KnI0rvoxRG/TYDOZdK9EsWLjKK9IK8i1Mo5NRm9PRV3i64DzlTqnIflWvoyfljLg=="
-      },
-      "Microsoft.SqlServer.DacFx": {
-        "type": "CentralTransitive",
-        "requested": "[170.4.83, )",
-        "resolved": "170.4.83",
-        "contentHash": "SPwaGEBj+OboDFRXwEhmw2jJ4Z0VQFI7QWD8vlpWdFq+dA7i5CRg1dMYpJDnzk11JShFJNkRlmffW21VolBGQw==",
-        "dependencies": {
-          "Azure.Storage.Blobs": "12.18.0",
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.Build": "15.9.20",
-          "Microsoft.Build.Framework": "15.9.20",
-          "Microsoft.Build.Utilities.Core": "15.9.20",
-          "Microsoft.Data.SqlClient": "6.1.5",
-          "Microsoft.SqlServer.TransactSql.ScriptDom": "180.18.1",
-          "Microsoft.SqlServer.Types": "170.1000.7",
-          "System.ComponentModel.Composition": "8.0.0",
-          "System.IO.Packaging": "8.0.1",
-          "System.Runtime.Caching": "8.0.1",
-          "System.Security.Permissions": "8.0.0"
-        }
       },
       "Microsoft.Testing.Extensions.AzureDevOpsReport": {
         "type": "CentralTransitive",

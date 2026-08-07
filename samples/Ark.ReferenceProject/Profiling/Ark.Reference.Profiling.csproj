@@ -9,7 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.SqlServer.DacFx" />
     <ProjectReference Include="..\Core\Ark.Reference.Core.Tests\Ark.Reference.Core.Tests.csproj" />
+    <ProjectReference Include="..\Core\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>

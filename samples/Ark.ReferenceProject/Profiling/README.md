@@ -19,12 +19,14 @@ described in the parent project README. Then run:
 ```bash
 dotnet build Ark.Reference.slnx --configuration Release
 dotnet tool install --global dotnet-trace
-env 'ConnectionStrings__Core.Database=<sql-connection-string>' \
 dotnet-trace collect --output artifacts/reference-profile.nettrace \
   -- dotnet run --project Profiling/Ark.Reference.Profiling.csproj \
   --configuration Release --no-build -- --warmup 10 --iterations 100
 dotnet-trace report artifacts/reference-profile.nettrace topN -n 20
 ```
+
+The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
+the application, matching the C# deployment used by the integration tests.
 
 The trace is intentionally generated under `artifacts/` and is not committed.
 

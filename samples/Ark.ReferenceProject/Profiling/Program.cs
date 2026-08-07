@@ -8,6 +8,8 @@ using Flurl.Http;
 
 using NLog;
 
+using Microsoft.SqlServer.Dac;
+
 using System.Diagnostics;
 
 namespace Ark.Reference.Profiling;
@@ -24,6 +26,7 @@ internal static class Program
         var measuredIterations = GetArgument(args, "--iterations", DefaultMeasuredIterations);
 
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+        DeployDatabase();
         TestHost.BeforeTests0();
         TestHost.BeforeTests();
 
@@ -42,10 +45,27 @@ internal static class Program
 
             _logger.Info(CultureInfo.InvariantCulture, "Completed {0} iterations in {1}", measuredIterations, stopwatch.Elapsed);
         }
+
         finally
         {
             TestHost.AfterTests();
         }
+    }
+
+    private static void DeployDatabase()
+    {
+        var dacpacPath = Path.Combine(AppContext.BaseDirectory, "Ark.Reference.Core.Database.dacpac");
+        using var dacpac = DacPackage.Load(dacpacPath);
+        var services = new DacServices(DatabaseUtils.DatabaseConnectionString);
+        services.Deploy(
+            dacpac,
+            "Ark.Reference.Core.Database",
+            upgradeExisting: true,
+            new DacDeployOptions
+            {
+                CreateNewDatabase = true,
+                AllowIncompatiblePlatform = true
+            });
     }
 
     private static async Task RunIterations(IFlurlClient client, AuthTestContext auth, int iterations, bool measured)
@@ -69,11 +89,11 @@ internal static class Program
                 .ReceiveJson<Ping.V1.Output>()
                 .ConfigureAwait(false);
 
-            using var violation = await Send(client, auth, "v1/bookPrintProcess")
+            using var printResult = await Send(client, auth, "v1/bookPrintProcess")
                 .PostJsonAsync(new BookPrintProcess.V1.Create { BookId = book.Id, ShouldFail = true })
                 .ConfigureAwait(false);
-            if (!violation.ResponseMessage.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Book print process failed with {violation.StatusCode}.");
+            if (!printResult.ResponseMessage.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Book print process failed with {printResult.StatusCode}.");
 
             using var businessRuleViolation = await Send(client, auth, "v1/bookPrintProcess")
                 .PostJsonAsync(new BookPrintProcess.V1.Create { BookId = book.Id, ShouldFail = true })
