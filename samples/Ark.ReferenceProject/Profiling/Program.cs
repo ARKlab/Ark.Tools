@@ -59,7 +59,7 @@ internal static class Program
 
             _logger.Info(CultureInfo.InvariantCulture, "Running {0} measured iterations", measuredIterations);
             var stopwatch = Stopwatch.StartNew();
-            await RunIterations(client, auth, measuredIterations, true).ConfigureAwait(false);
+            var businessRuleRequestTiming = await RunIterations(client, auth, measuredIterations, true).ConfigureAwait(false);
             stopwatch.Stop();
 
             if (traceProcess is not null)
@@ -69,6 +69,14 @@ internal static class Program
             }
 
             _logger.Info(CultureInfo.InvariantCulture, "Completed {0} iterations in {1}", measuredIterations, stopwatch.Elapsed);
+            if (measuredIterations > 0)
+            {
+                _logger.Info(
+                    CultureInfo.InvariantCulture,
+                    "Business-rule request average {0:F2} ms, max {1:F2} ms",
+                    businessRuleRequestTiming.Total.TotalMilliseconds / measuredIterations,
+                    businessRuleRequestTiming.Maximum.TotalMilliseconds);
+            }
         }
 
         finally
@@ -170,8 +178,11 @@ internal static class Program
             });
     }
 
-    private static async Task RunIterations(IFlurlClient client, AuthTestContext auth, int iterations, bool measured)
+    private static async Task<(TimeSpan Total, TimeSpan Maximum)> RunIterations(IFlurlClient client, AuthTestContext auth, int iterations, bool measured)
     {
+        var businessRuleRequestTotal = TimeSpan.Zero;
+        var businessRuleRequestMaximum = TimeSpan.Zero;
+
         for (var iteration = 0; iteration < iterations; iteration++)
         {
             var book = await Send(client, auth, "v1/book")
@@ -197,9 +208,15 @@ internal static class Program
             if (!printResult.ResponseMessage.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Book print process failed with {printResult.StatusCode}.");
 
+            var businessRuleRequestStopwatch = Stopwatch.StartNew();
             using var businessRuleViolation = await Send(client, auth, "v1/bookPrintProcess")
                 .PostJsonAsync(new BookPrintProcess.V1.Create { BookId = book.Id, ShouldFail = true })
                 .ConfigureAwait(false);
+            businessRuleRequestStopwatch.Stop();
+            businessRuleRequestTotal += businessRuleRequestStopwatch.Elapsed;
+            if (businessRuleRequestStopwatch.Elapsed > businessRuleRequestMaximum)
+                businessRuleRequestMaximum = businessRuleRequestStopwatch.Elapsed;
+
             if (businessRuleViolation.StatusCode != 400)
                 throw new InvalidOperationException($"Expected BusinessRuleViolation response 400, got {businessRuleViolation.StatusCode}.");
 
@@ -208,6 +225,8 @@ internal static class Program
             if (measured && iteration % 10 == 0)
                 _logger.Info(CultureInfo.InvariantCulture, "Measured iteration {0}", iteration);
         }
+
+        return (businessRuleRequestTotal, businessRuleRequestMaximum);
     }
 
     private static IFlurlRequest Send(IFlurlClient client, AuthTestContext auth, string path)

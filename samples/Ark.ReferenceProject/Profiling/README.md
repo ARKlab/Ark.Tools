@@ -9,7 +9,8 @@ configuration. Each measured iteration exercises:
 - two `POST /v1/bookPrintProcess` calls (successful request followed by `BusinessRuleViolation`)
 - `ToDataTableArk()` on the returned book
 
-The first ten iterations are warmup and are excluded from the elapsed-time summary.
+The default ten warmup iterations are excluded from the elapsed-time summary. Both
+values can be changed with `--warmup` and `--iterations`.
 
 ## Run a Release trace
 
@@ -20,22 +21,82 @@ described in the parent project README. From the repository root, run:
 cd samples/Ark.ReferenceProject
 dotnet build Ark.Reference.slnx --configuration Release
 dotnet tool install --global dotnet-trace
-dotnet-trace collect --output artifacts/reference-profile.nettrace \
-  -- dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
-  --warmup 10 --iterations 100
+dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --warmup 50 --iterations 300 \
+  --trace artifacts/reference-profile.nettrace
 dotnet-trace report artifacts/reference-profile.nettrace topN -n 20
 ```
 
-Launch the compiled profiling DLL directly. Do not wrap it in `dotnet run`;
-tracing the `dotnet run` launcher can leave `dotnet-trace` waiting after the
-workload has completed.
+The profiling host launches `dotnet-trace` after database deployment, host
+startup, and warmup. It stops the capture before application shutdown, so setup
+and teardown are excluded from the CPU profile. Launch the compiled profiling
+DLL directly; do not wrap it in `dotnet run`.
 
 The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
 the application, matching the C# deployment used by the integration tests.
 
 The trace is intentionally generated under `artifacts/` and is not committed.
 
-## Trace summary
+## Demystifier evaluation on .NET 10
+
+`Ben.Demystifier` 0.4.1 targets .NET Standard 2.0/2.1 and runs on .NET 10
+through the standard compatibility contract. It has no .NET 10-specific
+implementation. Its value is diagnostic: `ExceptionExtensions.Demystify()`
+walks exception frames and formats compiler-generated async, iterator, lambda,
+and generic methods into readable stack traces. It does not change exception
+behavior or request payloads.
+
+Ark.Tools invokes it only when NLog renders an exception with
+`${exception:format=ToString,Data}`. Therefore its cost is paid on exception
+logging, not on successful requests. The formatting path performs additional
+stack-frame resolution and reflection and allocates the formatted trace.
+
+The profiling host supports an A/B run without removing the package:
+
+```bash
+dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --without-demystifier \
+  --warmup 50 --iterations 300 \
+  --trace artifacts/reference-profile-without-demystifier.nettrace
+```
+
+The following paired Release runs used 50 warmup iterations, 300 measured
+iterations, one expected business-rule exception per iteration, and
+post-warmup `dotnet-sampled-thread-time` traces:
+
+| Run | Demystifier | Total workload | Exception request average | Exception request maximum |
+| --- | --- | ---: | ---: | ---: |
+| A | enabled | 10.52 s | 6.71 ms | 14.27 ms |
+| A | disabled | 18.15 s | 4.48 ms | 105.72 ms |
+| B | enabled | 16.88 s | 6.24 ms | 131.72 ms |
+| B | disabled | 13.93 s | 4.97 ms | 98.16 ms |
+
+The exception request itself was consistently faster without Demystifier:
+33% faster in run A, 20% faster in run B, and 27% faster when comparing the
+averages across both runs. The total mixed workload is noisy because it includes SQL, Rebus,
+thread-pool scheduling, and intentional delays; its direction changed between
+runs, so it is not evidence of a whole-application latency regression.
+
+The CPU profile changed in the expected exception-formatting path:
+
+| Profile frame | Enabled | Disabled |
+| --- | ---: | ---: |
+| `ExceptionExtensions.Demystify` (inclusive) | 0.13% | absent |
+| `DemystifiedExceptionLayoutRenderer.AppendToString` (inclusive) | 0.11% | 0.04% |
+| `StackFrameHelper.InitializeSourceInfo` (exclusive) | 0.09% | 0.02% |
+
+The overall profile remains dominated by waits, sleeps, SQL/network I/O, and
+Rebus synchronization. Removing Demystifier therefore produces a noticeable
+method-level CPU change and a measurable latency reduction on exception-heavy
+requests, but not a reliable whole-workload CPU or latency improvement.
+
+**Recommendation:** keep Demystifier enabled for production diagnostics when
+readable async stack traces are useful. Disable or remove it only for workloads
+with a high volume of synchronously rendered exceptions where the diagnostic
+benefit does not justify the formatting cost. Use `--without-demystifier` to
+validate that trade-off against an application-specific exception rate.
+
+## Historical full-process trace summary
 
 The representative Release trace (`--warmup 10 --iterations 100`) reported these
 top exclusive samples:
@@ -101,7 +162,7 @@ The hottest stacks are:
    `WaitForContinuationsToFinish`. This is shutdown synchronization, not message
    processing CPU.
 
-For a CPU-focused follow-up, capture after database deployment and separate the
-expected error path from the successful request path. Do not optimize the
-thread-pool semaphore, Rebus backoff, SQL socket waits, or finalizer stacks
-without a CPU-only trace showing application work behind them.
+The post-warmup CPU comparison above separates setup and shutdown from the
+steady-state workload. Do not optimize the thread-pool semaphore, Rebus
+backoff, SQL socket waits, or finalizer stacks without a CPU-only trace showing
+application work behind them.
