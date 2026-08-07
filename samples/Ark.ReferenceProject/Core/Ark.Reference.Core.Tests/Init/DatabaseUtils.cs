@@ -20,6 +20,9 @@ public sealed class DatabaseUtils
     /// </summary>
     public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=IntegrationTestsDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
+    /// <summary>
+    /// Creates the logging database when it does not already exist.
+    /// </summary>
     [BeforeTestRun(Order = -1)]
     public static async Task CreateNLogDatabaseIfNotExists()
     {
@@ -31,6 +34,9 @@ public sealed class DatabaseUtils
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Deploys the reference project database schema.
+    /// </summary>
     [BeforeTestRun(Order = -1)]
     public static void DeployDB()
     {
@@ -43,6 +49,11 @@ public sealed class DatabaseUtils
         });
     }
 
+    /// <summary>
+    /// Cleans the database before scenarios tagged for database cleanup.
+    /// </summary>
+    /// <param name="fctx">The current feature context.</param>
+    /// <param name="sctx">The current scenario context.</param>
     [BeforeScenario]
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Reqnroll requires instance methods for BeforeScenario")]
     public async Task CleanUpEntireDbBeforeScenario(FeatureContext fctx, ScenarioContext sctx)
