@@ -234,10 +234,16 @@ internal static class Program
     private static async Task WaitForRebusToBecomeIdle()
     {
         var timeout = Stopwatch.StartNew();
-        while (TestHost.Env.RebusNetwork.Count() > 0 || InProcessMessageInspectorStep.Count > 0)
+        while (true)
         {
             if (timeout.Elapsed >= RebusIdleTimeout)
-                throw new TimeoutException($"Timed out after {RebusIdleTimeout} waiting for Rebus to become idle.");
+            {
+                var timeoutMinutes = RebusIdleTimeout.TotalMinutes.ToString("F0", CultureInfo.InvariantCulture);
+                throw new TimeoutException($"Timed out after {timeoutMinutes} minutes waiting for Rebus to become idle.");
+            }
+
+            if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
+                return;
 
             await Task.Delay(100).ConfigureAwait(false);
         }
