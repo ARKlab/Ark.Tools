@@ -41,6 +41,8 @@ for every implementation task.
 - [x] Second-level retry coverage verifies that an `IFailed<T>` handler receives
   the original message and serialized exception information before error-queue
   handling is required.
+- [x] A failing `IFailed<T>` handler is retried according to the configured
+  policy and its message reaches the error queue with bounded diagnostics.
 - [x] No Rebus test depends on wall-clock sleeps without a bounded retry and
   diagnostic counts.
 - [x] Every test leaves an empty network and no running processor.
@@ -54,8 +56,8 @@ for every implementation task.
   - a generated message wrapper changes state with a fresh scope and
     propagated claims principal;
   - routing, subscription, no-handler, retry, error-queue, second-level retry
-    with `IFailed<T>`, deferred-message, and cancellation outcomes complete
-    within bounded waits;
+    with successful and failing `IFailed<T>` handlers, deferred-message, and
+    cancellation outcomes complete within bounded waits;
   - cleanup leaves empty queues and no running processor after success and
     failure.
 - Run the full-solution gates.

@@ -46,6 +46,8 @@ for every implementation task.
   messages.
 - [ ] A second-level retry scenario verifies the application-owned `IFailed<T>`
   handler receives the original message and failure information.
+- [ ] A failing second-level `IFailed<T>` handler reaches the error queue with
+  bounded diagnostics.
 - [ ] No Rebus worker, timer, network, or outbox remains after a scenario.
 
 ## Tests
@@ -56,7 +58,7 @@ for every implementation task.
 - Required scenarios/cases:
   - compose a greeting, observe the eventual query result, and preserve the
     authenticated user context;
-  - cover retry success, retry exhaustion, and second-level `IFailed<T>`
-    handling with bounded error-queue diagnostics;
+  - cover retry success, retry exhaustion, second-level `IFailed<T>` handling,
+    and failed second-level handling with bounded error-queue diagnostics;
   - verify cleanup leaves no worker, timer, network, or outbox work.
 - Run the full-solution gates.

@@ -44,4 +44,22 @@ public sealed class RebusRetryTests
             fixture.GetRebusCounts().Error.Should().Be(0);
         }
     }
+
+    /// <summary>Ensures a failed second-level handler moves the message to the error queue.</summary>
+    [TestMethod]
+    public async Task FailedSecondLevelRetryIsMovedToErrorQueue()
+    {
+        var fixture = new HostingTestFixture();
+        await using (fixture.ConfigureAwait(false))
+        {
+            fixture.State.FailSecondLevelRetryHandler = true;
+            var bus = fixture.BuildRebusHost(secondLevelRetriesEnabled: true);
+            await bus.Send(new HostingSecondLevelRetryCommand()).ConfigureAwait(false);
+            await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+
+            fixture.State.SecondLevelRetryAttempts.Should().Be(2);
+            fixture.State.FailedMessageExecutions.Should().Be(1);
+            fixture.GetRebusCounts().Error.Should().Be(1);
+        }
+    }
 }

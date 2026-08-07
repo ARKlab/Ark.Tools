@@ -417,6 +417,9 @@ public sealed class HostingTestState
     /// <summary>Gets the number of failed-message handler executions.</summary>
     public int FailedMessageExecutions => Volatile.Read(ref _failedMessageExecutions);
 
+    /// <summary>Gets or sets whether the failed-message handler should throw.</summary>
+    public bool FailSecondLevelRetryHandler { get; set; }
+
     /// <summary>Gets the exception message supplied to the failed-message handler.</summary>
     public string? FailedMessageException => Volatile.Read(ref _failedMessageException);
 
@@ -667,6 +670,8 @@ internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFa
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RecordFailedMessage(message);
+        if (_state.FailSecondLevelRetryHandler)
+            throw new InvalidOperationException("Synthetic second-level retry handler failure.");
     }
 }
 
