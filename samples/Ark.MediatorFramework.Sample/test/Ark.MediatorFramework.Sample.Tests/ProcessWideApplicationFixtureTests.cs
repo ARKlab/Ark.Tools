@@ -5,9 +5,9 @@ using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
-using AwesomeAssertions;
+using Ark.Tools.Rebus;
 
-using Rebus.Transport.InMem;
+using AwesomeAssertions;
 
 using SimpleInjector;
 

@@ -4,7 +4,6 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
-using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
@@ -12,8 +11,6 @@ using Ark.Tools.Solid.Authorization;
 using NodaTime;
 using NodaTime.Testing;
 
-using Rebus.Config;
-using Rebus.Routing;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
