@@ -25,12 +25,13 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] A repository-wide search finds no framework host test that requires
+- [x] A repository-wide search finds no framework host test that requires
   `SampleStartup`, `SampleComposition`, or a sample generated client.
-- [ ] Azure Functions tests follow the existing `AZF-10` ownership under
+- [x] Azure Functions tests follow the existing `AZF-10` ownership under
   `tests/`.
-- [ ] Any retained sample host test is documented as sample-owned and does not
-  assert application behavior through a transport.
+- [x] The sample-owned Azure Functions boundary test project was removed; generic
+  Core Tools coverage remains in `tests/` and no sample host test asserts
+  application behavior through a transport.
 
 ## Tests
 
