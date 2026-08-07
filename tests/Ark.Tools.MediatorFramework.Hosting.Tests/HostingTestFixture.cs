@@ -54,6 +54,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     private readonly List<WebApplication> _hosts = [];
     private readonly List<Container> _hostContainers = [];
     private bool _rebusConfigured;
+    private bool? _secondLevelRetriesEnabled;
     private bool _disposed;
 
     /// <summary>Initializes a fixture with deterministic handlers and test-only identity.</summary>
@@ -143,7 +144,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public RebusWorkCounts GetRebusCounts()
     {
         var queues = _network.Queues.ToArray();
-        var inQueue = _network.GetCount("hosting");
+        var inQueue = queues
+            .Where(queue => !string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
+            .Sum(queue => _network.GetCount(queue));
         var error = queues
             .Where(queue => string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
             .Sum(queue => _network.GetCount(queue));
@@ -274,25 +277,33 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public IBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
     {
         ThrowIfDisposed();
-        if (!_rebusConfigured)
+        if (_rebusConfigured)
         {
-            Container.ConfigureRebus(config =>
-            {
-                config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting"));
-                config.Routing(HostingEndpointMappings.ConfigureRebusRouting);
-                config.Options(options =>
-                {
-                    options.AddInProcessMessageInspector();
-                    options.AutomaticallyFlowUserContext(Container);
-                    options.ArkRetryStrategy(
-                        errorQueueName: "hosting-error",
-                        maxDeliveryAttempts: 2,
-                        secondLevelRetriesEnabled: secondLevelRetriesEnabled);
-                });
-                config.Timeouts(timeouts => timeouts.StoreInMemoryTests());
-            });
-            _rebusConfigured = true;
+            if (_secondLevelRetriesEnabled != secondLevelRetriesEnabled)
+                throw new InvalidOperationException("The Rebus host was already configured with a different second-level retry setting.");
+
+            var existingBus = Container.GetInstance<IBus>();
+            State.Bus = existingBus;
+            return existingBus;
         }
+
+        _secondLevelRetriesEnabled = secondLevelRetriesEnabled;
+        Container.ConfigureRebus(config =>
+        {
+            config.Transport(transport => transport.UseInMemoryTransport(_network, "hosting"));
+            config.Routing(HostingEndpointMappings.ConfigureRebusRouting);
+            config.Options(options =>
+            {
+                options.AddInProcessMessageInspector();
+                options.AutomaticallyFlowUserContext(Container);
+                options.ArkRetryStrategy(
+                    errorQueueName: "hosting-error",
+                    maxDeliveryAttempts: 2,
+                    secondLevelRetriesEnabled: secondLevelRetriesEnabled);
+            });
+            config.Timeouts(timeouts => timeouts.StoreInMemoryTests());
+        });
+        _rebusConfigured = true;
 
         var bus = Container.GetInstance<IBus>();
         State.Bus = bus;
