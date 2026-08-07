@@ -400,7 +400,7 @@ public sealed class HostingTestState
     public string? LastRequestServerStamp { get; internal set; }
 
     /// <summary>Gets the number of command handler executions.</summary>
-    public int CommandExecutions { get; internal set; }
+    public int CommandExecutions => Volatile.Read(ref _commandExecutions);
 
     /// <summary>Gets a task that completes when a command handler executes.</summary>
     public Task CommandExecuted => _commandExecution.Task;
@@ -501,12 +501,13 @@ public sealed class HostingTestState
     private readonly TaskCompletionSource _streamFirstItem = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource _streamRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource _streamCancellation = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private int _commandExecutions;
 
     internal void RecordCommandExecution()
     {
-        CommandExecutions++;
+        var executions = Interlocked.Increment(ref _commandExecutions);
         _commandExecution.TrySetResult();
-        if (CommandExecutions >= 2)
+        if (executions >= 2)
             _secondCommandExecution.TrySetResult();
     }
 
