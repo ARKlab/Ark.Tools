@@ -54,6 +54,7 @@ public class ReferenceEndpointBenchmarks
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
         DeployDatabase();
+        await DatabaseUtils.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
         Environment.SetEnvironmentVariable(
             "ConnectionStrings__Core.Database",
             $"{DatabaseUtils.DatabaseConnectionString};Initial Catalog=Ark.Reference.Core.Database");
@@ -67,7 +68,7 @@ public class ReferenceEndpointBenchmarks
     }
 
     /// <summary>
-    /// Configures a short profiling run with one ten-request benchmark invocation per iteration.
+    /// Configures warmup and ten measured iterations with one ten-request batch per iteration.
     /// </summary>
     public sealed class ReferenceBenchmarkConfig : ManualConfig
     {
@@ -76,7 +77,11 @@ public class ReferenceEndpointBenchmarks
         /// </summary>
         public ReferenceBenchmarkConfig()
         {
-            AddJob(Job.ShortRun
+            BuildTimeout = TimeSpan.FromMinutes(10);
+            AddJob(Job.Default
+                .WithLaunchCount(1)
+                .WithWarmupCount(3)
+                .WithIterationCount(10)
                 .WithInvocationCount(1)
                 .WithUnrollFactor(1));
         }
@@ -151,16 +156,26 @@ public class ReferenceEndpointBenchmarks
     /// Waits for Rebus to become idle after each benchmark iteration.
     /// </summary>
     [IterationCleanup]
-    public async Task WaitForRebusToBecomeIdle()
+    public void WaitForRebusToBecomeIdle()
     {
         var timeout = Stopwatch.StartNew();
-        while (TestHost.Env.RebusNetwork.Count() != 0 || InProcessMessageInspectorStep.Count != 0)
+        var consecutiveIdleChecks = 0;
+        while (timeout.Elapsed < RebusIdleTimeout)
         {
-            if (timeout.Elapsed >= RebusIdleTimeout)
-                throw new TimeoutException("Timed out waiting for Rebus to become idle.");
-
-            await Task.Delay(100).ConfigureAwait(false);
+            _ = CancellationToken.None.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(100));
+            if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
+            {
+                consecutiveIdleChecks++;
+                if (consecutiveIdleChecks == 2)
+                    return;
+            }
+            else
+            {
+                consecutiveIdleChecks = 0;
+            }
         }
+
+        throw new TimeoutException("Timed out waiting for Rebus to become idle.");
     }
 
     /// <summary>
@@ -207,6 +222,7 @@ public class ReferenceEndpointBenchmarks
         services.Deploy(
             dacpac,
             "Ark.Reference.Core.Database",
+            // DacFx requires this permission before CreateNewDatabase can drop and replace the target.
             upgradeExisting: true,
             new DacDeployOptions
             {

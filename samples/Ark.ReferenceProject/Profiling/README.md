@@ -1,122 +1,96 @@
 # Ark.Reference profiling
 
-The profiling host runs the application through `TestServer` using the IntegrationTests
-configuration. Each measured iteration exercises:
+This project uses BenchmarkDotNet with `EventPipeProfiler` CPU sampling to profile
+the Ark.Reference API through its integration-test `TestServer`.
 
-- `POST /v1/book` (SQL write)
-- `GET /v1/book/{id}` (SQL read)
-- `POST /v1/ping/message` (Rebus and outbox pipeline)
-- two `POST /v1/bookPrintProcess` calls (successful request followed by `BusinessRuleViolation`)
-- `ToDataTableArk()` on the returned book
+Each benchmark invokes one endpoint ten times:
 
-The default ten warmup iterations are excluded from the elapsed-time summary. Both
-values can be changed with `--warmup` and `--iterations`.
+- `PostBook`: `POST /v1/book`
+- `GetBook`: `GET /v1/book/{id}`
+- `PostPingMessage`: `POST /v1/ping/message`
+- `PostBookPrintProcess`: `POST /v1/bookPrintProcess`
 
-## Run a Release trace
+`GlobalSetup` drops and recreates the database from
+`Ark.Reference.Core.Database.dacpac`, starts the host, and creates seed books.
+It does not upgrade an existing schema. `IterationCleanup` waits for the Rebus
+in-memory queue and in-process handlers to become idle. The idle wait has a
+15-minute timeout.
 
-Start the SQL Server and Azurite dependencies and deploy the sample database as
-described in the parent project README. From the repository root, run:
+## Run the benchmarks
+
+Start SQL Server and Azurite as described in the parent README. From the
+Ark.ReferenceProject directory, run:
 
 ```bash
-cd samples/Ark.ReferenceProject
 dotnet build Ark.Reference.slnx --configuration Release
-dotnet tool install --global dotnet-trace
 dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
-  --warmup 50 --iterations 300 \
-  --trace artifacts/reference-profile-default-net10.nettrace
-dotnet-trace report artifacts/reference-profile-default-net10.nettrace topN -n 20
+  --filter '*' \
+  --artifacts artifacts/BenchmarkDotNet.Artifacts
 ```
 
-The profiling host launches `dotnet-trace` after database deployment, host
-startup, and warmup. It stops the capture before application shutdown, so setup
-and teardown are excluded from the CPU profile. Launch the compiled profiling
-DLL directly; do not wrap it in `dotnet run`. The measured `RunIterations` call
-waits for the Rebus queue and in-process message count to reach zero before the
-trace is stopped.
-The idle wait has a 15-minute safety timeout.
+Run one endpoint by changing the filter:
 
-The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
-the application, matching the C# deployment used by the integration tests.
+```bash
+dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostPingMessage*' \
+  --artifacts artifacts/BenchmarkDotNet.Artifacts
+```
 
-The trace is intentionally generated under `artifacts/` and is not committed.
+BenchmarkDotNet executes the JIT stages, three warmup iterations, and ten
+measured iterations. Each iteration invokes one batch of ten requests, for 100
+measured requests per benchmark. This batching lets `IterationCleanup` drain
+Rebus once per ten requests instead of once per request. `EventPipeProfiler`
+performs an additional profiling run and writes one `.nettrace` and one
+`.speedscope.json` file per benchmark under the artifacts directory. Benchmark
+and trace artifacts are intentionally ignored by Git. BenchmarkDotNet builds
+and executes its generated benchmark project in Release configuration.
+
+## Analyze the traces
+
+Open `.nettrace` files in Visual Studio Profiler or PerfView. Open
+`.speedscope.json` files in [SpeedScope](https://www.speedscope.app/).
+
+For every endpoint:
+
+1. Sort the call tree by **Exclusive** duration to find methods doing work
+   directly.
+2. Sort by **Inclusive** duration and expand application frames to find expensive
+   call paths.
+3. Inspect the flame graph's widest application-owned stacks. Use the Sandwich
+   view to compare total and self time.
+4. Ignore host setup and seed creation, which run in `GlobalSetup`, and separate
+   `IterationCleanup` Rebus draining from request handling.
+5. Confirm a candidate in its endpoint-specific trace before changing code.
+
+`dotnet-trace` can also print the top sampled methods:
+
+```bash
+dotnet-trace report <trace.nettrace> topN -n 30
+```
+
+Sampled thread time includes blocking. Thread-pool waits, Rebus backoff, SQL
+socket reads, and timer waits are not CPU optimization candidates unless a
+CPU-bound application stack appears beneath them.
+
+## Optimization candidates
+
+The previous combined trace was dominated by synchronization and I/O. Its
+application-owned durations identified these candidates for endpoint-specific
+verification:
+
+| Candidate | Endpoint | Verification |
+| --- | --- | --- |
+| Exception formatting in `ProblemDetailsMiddleware` and NLog | Expected error responses | Compare exclusive exception-rendering time before changing logging |
+| SQL materialization in `ReadPagedAsync` and `QueryMultipleAsync` | Book reads | Separate materialization CPU from TDS/SSL wait time |
+| SQL transaction commit paths | Write endpoints | Optimize only application work around commits; database I/O is external |
+| `ToDataTableArk` conversion | Non-endpoint utility work | Not present in these endpoint benchmarks; profile separately if required |
+
+The previous trace did not justify optimizing Rebus idle backoff, thread-pool
+semaphores, SQL/network waits, Application Insights timers, or
+`ToDataTableArk`.
 
 ## Demystifier configuration
 
 `DemystifiedExceptionLayoutRenderer` remains available for explicit NLog
-registration, but the default `NLogConfigurer` no longer registers it. The
-default `${exception:format=ToString,Data}` layout therefore uses NLog's
-built-in exception renderer and avoids the demystification cost. The profiling
-host measures this default configuration; it does not switch the renderer.
-
-## Post-change trace summary
-
-The Release trace (`--warmup 50 --iterations 300`) was captured after removing
-the demystified renderer from the default NLog registration:
-
-| Measurement | Result |
-| --- | ---: |
-| Measured workload, including Rebus drain | 6 m 59.82 s |
-| Business-rule request average | 6.34 ms |
-| Business-rule request maximum | 19.95 ms |
-| Speedscope evented thread profiles | 27 |
-| Summed sampled thread time | 7,438.8 s |
-
-The sampled-thread-time trace sums time across threads. Its inclusive durations
-include blocked time and must not be interpreted as CPU time or elapsed wall
-clock time.
-
-The top exclusive samples were:
-
-| Function | Exclusive samples |
-| --- | ---: |
-| `LowLevelLifoSemaphore.WaitForSignal` | 29.36% |
-| `Thread.Sleep` | 17.96% |
-| `WaitHandle.WaitOneNoCheck` | 12.40% |
-| `ManualResetEventSlim.Wait` | 9.53% |
-| `Missing Symbol` | 6.02% |
-| `WaitAnyMultiple` | 6.00% |
-| `Interop+Sys.Read` | 6.00% |
-
-The trace is dominated by synchronization, waits, the Application Insights
-aggregation timer, and SQL/network I/O. These are not actionable CPU hotspots
-for this workload.
-
-## Flame graph analysis
-
-```bash
-dotnet-trace convert artifacts/reference-profile-default-net10.nettrace \
-  --format Speedscope --output artifacts/reference-profile-default-net10
-speedscope artifacts/reference-profile-default-net10.speedscope.json
-```
-
-Selected inclusive frames from the Speedscope flame graph were:
-
-| Frame | Inclusive duration | Interpretation |
-| --- | ---: | --- |
-| `ThreadPoolWorker.TryReceiveNextMessage()` | 420.52 s | Rebus receive loop while draining |
-| `Rebus.DefaultBackoffStrategy.Wait` | 13.88 s | Idle worker backoff |
-| `AbstractSqlAsyncContext.CommitAsync()` | 6.39 s | Transaction commit path |
-| `ProblemDetailsMiddleware` | 1.60 s | Expected exception response path |
-| `BookPrintProcess_CreateRequestHandler` | 1.32 s | Expected business-rule exception |
-| `SqlServerExtensions.ReadPagedAsync()` | 301 ms | SQL paging path |
-| `Dapper.SqlMapper.QueryMultipleAsync()` | 295 ms | SQL result materialization |
-| NLog `ExceptionLayoutRenderer.AppendToString()` | 164 ms | Built-in exception formatting |
-| `StackFrameHelper.InitializeSourceInfo()` | 62 ms | Standard stack-frame lookup |
-| `DataTableExtensions.ToDataTableArk()` | 15 ms | 300 single-row conversions |
-
-The hottest stacks are:
-
-1. `ThreadPoolWorker.TryReceiveNextMessage` spans the Rebus drain and idle
-   period. The `DefaultBackoffStrategy.Wait` portion is idle synchronization,
-   not message-processing CPU.
-2. `BookPrintProcess_CreateRequestHandler` → ProblemDetails middleware →
-   `ArkDefaultExceptionFilterAttribute` → NLog's built-in exception renderer is
-   the expected error path. The demystified renderer is absent from the flame
-   graph after removing its default registration.
-3. SQL transaction commits and TDS/SSL reads dominate the database path and are
-   I/O-bound; the trace does not show a materialization CPU hotspot.
-4. `ToDataTableArk()` remains negligible at 15 ms for 300 single-row calls.
-
-Do not optimize the thread-pool semaphore, Rebus backoff, SQL socket waits, or
-Application Insights timer without a CPU-only trace showing application work
-behind them.
+registration, but the default `NLogConfigurer` does not register it. These
+benchmarks profile NLog's built-in exception renderer.
