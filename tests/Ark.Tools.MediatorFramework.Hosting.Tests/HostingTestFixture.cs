@@ -375,10 +375,10 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 }
 
-/// <summary>Deterministic state shared by synthetic mediator handlers.</summary>
 /// <summary>Counts synthetic Rebus work for bounded wait diagnostics.</summary>
 public sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error);
 
+/// <summary>Deterministic state shared by synthetic mediator handlers.</summary>
 public sealed class HostingTestState
 {
     private readonly TaskCompletionSource _commandExecution = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -568,14 +568,14 @@ internal sealed class HostingRebusCommandHandler : ICommandHandler<HostingRebusC
         _scope = scope;
     }
 
-    public async Task ExecuteAsync(HostingRebusCommand command, CancellationToken ctk = default)
+    public Task ExecuteAsync(HostingRebusCommand command, CancellationToken ctk = default)
     {
-        await Task.CompletedTask.ConfigureAwait(false);
         _state.RebusScopeIds.Add(_scope.Id);
         _state.RebusUserId = MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
             ?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
         _state.RecordCommandExecution();
+        return Task.CompletedTask;
     }
 }
 
@@ -609,10 +609,10 @@ internal sealed class HostingCancellationCommandHandler : ICommandHandler<Hostin
         _state = state;
     }
 
-    public async Task ExecuteAsync(HostingCancellationCommand command, CancellationToken ctk = default)
+    public Task ExecuteAsync(HostingCancellationCommand command, CancellationToken ctk = default)
     {
         _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
-        await Task.CompletedTask.ConfigureAwait(false);
+        return Task.CompletedTask;
     }
 }
 
