@@ -86,7 +86,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         {
             await (_state.Bus ?? throw new InvalidOperationException("The Rebus bus was not initialized."))
                 .Advanced.TransportMessage.Defer(TimeSpan.FromHours(1)).ConfigureAwait(false);
-            _state.DeferredMessages++;
+            _state.RecordDeferredMessage();
         }
     }
 
@@ -424,13 +424,13 @@ public sealed class HostingTestState
     public string? FailedMessageException => Volatile.Read(ref _failedMessageException);
 
     /// <summary>Gets the cancellation status observed by the Rebus handler.</summary>
-    public bool RebusCancellationTokenWasCancelable { get; internal set; }
+    public bool RebusCancellationTokenWasCancelable => Volatile.Read(ref _rebusCancellationTokenWasCancelable);
 
     /// <summary>Gets the user identifier propagated through Rebus headers.</summary>
-    public string? RebusUserId { get; internal set; }
+    public string? RebusUserId => Volatile.Read(ref _rebusUserId);
 
     /// <summary>Gets the number of deferred messages scheduled by handlers.</summary>
-    public int DeferredMessages { get; internal set; }
+    public int DeferredMessages => Volatile.Read(ref _deferredMessages);
 
     internal IBus? Bus { get; set; }
 
@@ -446,6 +446,9 @@ public sealed class HostingTestState
     private int _secondLevelRetryAttempts;
     private int _failedMessageExecutions;
     private string? _failedMessageException;
+    private bool _rebusCancellationTokenWasCancelable;
+    private string? _rebusUserId;
+    private int _deferredMessages;
 
     internal void RecordSecondLevelRetryAttempt()
     {
@@ -457,6 +460,21 @@ public sealed class HostingTestState
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
         Interlocked.Exchange(ref _failedMessageException, message.Exceptions?.FirstOrDefault()?.Message);
+    }
+
+    internal void RecordDeferredMessage()
+    {
+        Interlocked.Increment(ref _deferredMessages);
+    }
+
+    internal void RecordRebusUserId(string? userId)
+    {
+        Interlocked.Exchange(ref _rebusUserId, userId);
+    }
+
+    internal void RecordRebusCancellationToken(bool canBeCanceled)
+    {
+        Volatile.Write(ref _rebusCancellationTokenWasCancelable, canBeCanceled);
     }
 
     /// <summary>Gets the name of the last uploaded attachment.</summary>
@@ -611,9 +629,9 @@ internal sealed class HostingRebusCommandHandler : ICommandHandler<HostingRebusC
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RebusScopeIds.Add(_scope.Id);
-        _state.RebusUserId = MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
-            ?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
+        _state.RecordRebusUserId(MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
+            ?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        _state.RecordRebusCancellationToken(ctk.CanBeCanceled);
         _state.RecordCommandExecution();
     }
 }
@@ -686,7 +704,7 @@ internal sealed class HostingCancellationCommandHandler : ICommandHandler<Hostin
 
     public async Task ExecuteAsync(HostingCancellationCommand command, CancellationToken ctk = default)
     {
-        _state.RebusCancellationTokenWasCancelable = ctk.CanBeCanceled;
+        _state.RecordRebusCancellationToken(ctk.CanBeCanceled);
         await Task.CompletedTask.ConfigureAwait(false);
     }
 }
