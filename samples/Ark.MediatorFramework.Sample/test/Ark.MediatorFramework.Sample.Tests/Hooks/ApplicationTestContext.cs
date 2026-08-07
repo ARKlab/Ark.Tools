@@ -312,6 +312,8 @@ internal sealed class FailingScopeHandler : IRequestHandler<FailingScopeRequest,
 {
     public FailingScopeHandler(ScopedDisposalResource resource)
     {
+        // Resolve the scoped resource so failed dispatch disposal is observable.
+        _ = resource;
     }
 
     public async Task<bool> ExecuteAsync(FailingScopeRequest request, CancellationToken ctk = default)
