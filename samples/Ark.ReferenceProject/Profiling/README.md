@@ -95,7 +95,7 @@ find artifacts/BenchmarkDotNet.Artifacts -name '*.nettrace' -print0 |
 Open one filtered profile with:
 
 ```bash
-speedscope <trace.workload.speedscope.json>
+speedscope artifacts/BenchmarkDotNet.Artifacts/results/trace.workload.speedscope.json
 ```
 
 For an unfiltered BenchmarkDotNet `.speedscope.json`, use the **Time Order**
@@ -118,10 +118,11 @@ For every endpoint:
 For deeper command-line analysis:
 
 ```bash
-filtrace info <trace.nettrace>
-filtrace tree <trace.nettrace> --benchmark --max-depth 8
-filtrace callers <trace.nettrace> ReadPagedAsync --benchmark --callees
-filtrace callers <trace.nettrace> ProblemDetailsMiddleware --benchmark --callees
+trace=artifacts/BenchmarkDotNet.Artifacts/results/trace.nettrace
+filtrace info "$trace"
+filtrace tree "$trace" --benchmark --max-depth 8
+filtrace callers "$trace" ReadPagedAsync --benchmark --callees
+filtrace callers "$trace" ProblemDetailsMiddleware --benchmark --callees
 ```
 
 Sampled thread time includes blocking. Thread-pool waits, Rebus backoff, SQL
@@ -176,7 +177,7 @@ Analyze each candidate in its endpoint-specific workload trace:
    before attributing socket/TDS time to materialization CPU.
 4. For exception formatting, capture an expected-error benchmark and compare
    NLog renderer self time with the whole `WorkloadAction` total.
-5. Compare changes with `filtrace diff <before.nettrace> <after.nettrace>
+5. Compare changes with `filtrace diff before.nettrace after.nettrace
    --benchmark`; use traces captured with the same benchmark and settings.
 
 The previous trace did not justify optimizing Rebus idle backoff, thread-pool
