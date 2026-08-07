@@ -14,16 +14,21 @@ The first ten iterations are warmup and are excluded from the elapsed-time summa
 ## Run a Release trace
 
 Start the SQL Server and Azurite dependencies and deploy the sample database as
-described in the parent project README. Then run:
+described in the parent project README. From the repository root, run:
 
 ```bash
+cd samples/Ark.ReferenceProject
 dotnet build Ark.Reference.slnx --configuration Release
 dotnet tool install --global dotnet-trace
 dotnet-trace collect --output artifacts/reference-profile.nettrace \
-  -- dotnet run --project Profiling/Ark.Reference.Profiling.csproj \
-  --configuration Release --no-build -- --warmup 10 --iterations 100
+  -- dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --warmup 10 --iterations 100
 dotnet-trace report artifacts/reference-profile.nettrace topN -n 20
 ```
+
+Launch the compiled profiling DLL directly. Do not wrap it in `dotnet run`;
+tracing the `dotnet run` launcher can leave `dotnet-trace` waiting after the
+workload has completed.
 
 The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
 the application, matching the C# deployment used by the integration tests.
@@ -32,17 +37,21 @@ The trace is intentionally generated under `artifacts/` and is not committed.
 
 ## Trace summary
 
-The captured Release trace (`--warmup 1 --iterations 1`) reported these top
-exclusive samples:
+The representative Release trace (`--warmup 10 --iterations 100`) reported these
+top exclusive samples:
 
 | Function | Exclusive samples |
 | --- | ---: |
-| `WaitHandle.WaitOneNoCheck` | 36.61% |
-| `LowLevelLifoSemaphore.WaitNative` | 23.81% |
-| `WaitHandle.WaitOne` | 9.27% |
-| `Sender.SendLoop` (inclusive) | 22.99% |
+| `LowLevelLifoSemaphore.WaitNative` | 27.38% |
+| `WaitHandle.WaitOneNoCheck` | 22.91% |
+| `Missing Symbol` | 9.38% |
+| `Thread.Sleep` | 7.56% |
+| `ManualResetEventSlim.Wait` | 7.37% |
+| `LowLevelLifoSemaphore.WaitForSignal` | 6.91% |
+| `GC.RunFinalizers` | 5.78% |
 
-The trace is dominated by synchronization and waiting, not CPU spent in SQL
-materialization or `ToDataTableArk()`. The actionable application hotspot in
-this run is the Rebus sender loop; the single-row `ToDataTableArk()` call is
-coverage only and requires a larger batch to become measurable.
+The trace is dominated by synchronization, waiting, finalization, and the
+intentional progressive-printing delays, not CPU spent in SQL materialization or
+`ToDataTableArk()`. Application frames for Rebus, Dapper, and the one-row
+`ToDataTableArk()` call are negligible in this workload; larger batches are
+needed to measure conversion cost.
