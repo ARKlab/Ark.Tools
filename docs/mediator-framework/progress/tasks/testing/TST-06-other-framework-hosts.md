@@ -30,8 +30,8 @@ for every implementation task.
 - [x] Azure Functions tests follow the existing `AZF-10` ownership under
   `tests/`.
 - [x] The sample-owned Azure Functions boundary test project was removed; generic
-  Core Tools coverage remains in `tests/` and no sample host test asserts
-  application behavior through a transport.
+  Core Tools coverage remains in `tests/` and no sample test asserts application behavior through
+  Azure Functions Core Tools (out-of-process boundary).
 
 ## Tests
 
