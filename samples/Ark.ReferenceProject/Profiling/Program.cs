@@ -27,6 +27,9 @@ internal static class Program
 
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
         DeployDatabase();
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__Core.Database",
+            $"{DatabaseUtils.DatabaseConnectionString};Initial Catalog=Ark.Reference.Core.Database");
         TestHost.BeforeTests0();
         TestHost.BeforeTests();
 
@@ -48,6 +51,7 @@ internal static class Program
 
         finally
         {
+            await TestHost.Server.StopAsync().ConfigureAwait(false);
             TestHost.AfterTests();
         }
     }
@@ -90,7 +94,7 @@ internal static class Program
                 .ConfigureAwait(false);
 
             using var printResult = await Send(client, auth, "v1/bookPrintProcess")
-                .PostJsonAsync(new BookPrintProcess.V1.Create { BookId = book.Id, ShouldFail = true })
+                .PostJsonAsync(new BookPrintProcess.V1.Create { BookId = book.Id, ShouldFail = false })
                 .ConfigureAwait(false);
             if (!printResult.ResponseMessage.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Book print process failed with {printResult.StatusCode}.");
