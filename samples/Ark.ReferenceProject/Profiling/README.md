@@ -42,13 +42,13 @@ top exclusive samples:
 
 | Function | Exclusive samples |
 | --- | ---: |
-| `LowLevelLifoSemaphore.WaitNative` | 27.38% |
-| `WaitHandle.WaitOneNoCheck` | 22.91% |
-| `Missing Symbol` | 9.38% |
-| `Thread.Sleep` | 7.56% |
-| `ManualResetEventSlim.Wait` | 7.37% |
-| `LowLevelLifoSemaphore.WaitForSignal` | 6.91% |
-| `GC.RunFinalizers` | 5.78% |
+| `LowLevelLifoSemaphore.WaitNative` | 30.50% |
+| `WaitHandle.WaitOneNoCheck` | 22.22% |
+| `Missing Symbol` | 9.13% |
+| `Thread.Sleep` | 7.31% |
+| `ManualResetEventSlim.Wait` | 7.11% |
+| `LowLevelLifoSemaphore.WaitForSignal` | 6.03% |
+| `GC.RunFinalizers` | 5.89% |
 
 The trace is dominated by synchronization, waiting, finalization, and the
 intentional progressive-printing delays, not CPU spent in SQL materialization or
