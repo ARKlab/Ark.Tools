@@ -123,7 +123,7 @@ may proceed in parallel once their dependencies are complete.
 | 3 | TST-04 — Prove generated gRPC hosting | TST-02 | [x] Complete | [TST-04](tasks/testing/TST-04-grpc-hosting.md) |
 | 3 | TST-05 — Prove generated Rebus hosting | TST-02 | [x] Complete | [TST-05](tasks/testing/TST-05-rebus-hosting.md) |
 | 3 | TST-06 — Keep other framework hosts under `tests/` | TST-02 | [x] Complete | [TST-06](tasks/testing/TST-06-other-framework-hosts.md) |
-| 4 | APP-01 — Expose a direct application composition test seam | D1, D4, D7 | [ ] Planned | [APP-01](tasks/testing/APP-01-application-test-seam.md) |
+| 4 | APP-01 — Expose a direct application composition test seam | D1, D4, D7 | [x] Complete | [APP-01](tasks/testing/APP-01-application-test-seam.md) |
 | 5 | APP-02 — Rewrite Reqnroll lifecycle and dispatch steps | APP-01 | [ ] Planned | [APP-02](tasks/testing/APP-02-reqnroll-dispatch.md) |
 | 6 | APP-03 — Cover synchronous application behavior | APP-02 | [ ] Planned | [APP-03](tasks/testing/APP-03-synchronous-application-behavior.md) |
 | 7 | APP-04 — Exercise asynchronous workflows through in-memory Rebus | APP-01, APP-02 | [ ] Planned | [APP-04](tasks/testing/APP-04-rebus-application-workflows.md) |

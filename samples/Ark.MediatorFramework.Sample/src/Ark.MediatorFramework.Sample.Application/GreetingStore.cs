@@ -63,6 +63,17 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     {
     }
 
+    /// <summary>Removes all greetings, versions, and audit records.</summary>
+    public void Reset()
+    {
+        lock (_sync)
+        {
+            _items.Clear();
+            _audits.Clear();
+            _versions.Clear();
+        }
+    }
+
     /// <inheritdoc />
     public Task<int> CountAsync(CancellationToken ctk = default)
     {

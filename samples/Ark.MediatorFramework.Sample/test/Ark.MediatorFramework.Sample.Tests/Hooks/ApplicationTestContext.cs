@@ -1,0 +1,325 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.RebusProcessor;
+
+using Ark.Tools.Rebus;
+using Ark.Tools.Rebus.Tests;
+using Ark.Tools.Solid;
+using Ark.Tools.Solid.Authorization;
+
+using NodaTime;
+using NodaTime.Testing;
+
+using Rebus.Config;
+using Rebus.Routing;
+using Rebus.Transport.InMem;
+
+using SimpleInjector;
+using SimpleInjector.Lifestyles;
+
+using System.Security.Claims;
+
+namespace Ark.MediatorFramework.Sample.Tests.Hooks;
+
+/// <summary>
+/// Owns the application composition used by direct contract tests.
+/// </summary>
+public sealed class ApplicationTestContext : IAsyncDisposable
+{
+    private readonly AsyncLocal<Scope?> _currentScope = new();
+    private readonly Container _container;
+    private readonly TestPrincipalProvider _principalProvider;
+    private bool _verified;
+    private bool _disposed;
+
+    /// <summary>
+    /// Initializes a scenario-owned application test context.
+    /// </summary>
+    /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
+    /// <param name="connectionString">The optional SQL connection string.</param>
+    /// <param name="greetingStore">The optional store shared with another test resource.</param>
+    public ApplicationTestContext(
+        bool? useSqlStore = null,
+        string? connectionString = null,
+        IGreetingStore? greetingStore = null)
+    {
+        Network = new InMemNetwork();
+        Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
+        _principalProvider = new TestPrincipalProvider();
+        _container = new Container
+        {
+            Options =
+            {
+                DefaultScopedLifestyle = new AsyncScopedLifestyle(),
+            },
+        };
+
+        var sqlStore = useSqlStore ?? !string.Equals(
+            Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
+            "1",
+            StringComparison.Ordinal);
+        ApplicationComposition.Register(
+            _container,
+            sqlStore,
+            connectionString ?? Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION"),
+            Clock,
+            greetingStore);
+        _container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
+        _container.RegisterAuthorization();
+        _container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+        _container.RegisterInstance(this);
+        _container.Register<DispatchScopeMarker>(Lifestyle.Scoped);
+        _container.RegisterSingleton<ScopedDisposalTracker>();
+        _container.Register<ScopedDisposalResource>(Lifestyle.Scoped);
+        _container.Register<IRequestHandler<ScopeProbeRequest, Guid>, ScopeProbeHandler>();
+        _container.Register<IRequestHandler<NestedScopeRequest, ScopeObservation>, NestedScopeHandler>();
+        _container.Register<IRequestHandler<FailingScopeRequest, bool>, FailingScopeHandler>();
+        ApplicationComposition.RegisterOutboundRebus(
+            _container,
+            transport => transport.UseDrainableInMemoryTransportAsOneWayClient(Network),
+            SampleRebusEndpoints.ConfigureRouting);
+        SetAuthenticatedUser();
+    }
+
+    /// <summary>Gets the scenario-owned in-memory Rebus network.</summary>
+    public InMemNetwork Network { get; }
+
+    /// <summary>Gets the deterministic application clock.</summary>
+    public FakeClock Clock { get; }
+
+    /// <summary>Gets the number of request handlers audited by the application graph.</summary>
+    public int AuditCount
+    {
+        get
+        {
+            Verify();
+            return _container.GetInstance<AuditCounter>().Count;
+        }
+    }
+
+    /// <summary>Gets whether the failing dispatch released its scoped resource.</summary>
+    public bool FailedDispatchResourceDisposed
+    {
+        get
+        {
+            Verify();
+            return _container.GetInstance<ScopedDisposalTracker>().Disposed;
+        }
+    }
+
+    /// <summary>Sets the principal used by authorization and auditing.</summary>
+    /// <param name="principal">The principal for subsequent dispatches.</param>
+    public void SetPrincipal(ClaimsPrincipal principal)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+        _principalProvider.SetCurrent(principal);
+    }
+
+    /// <summary>Sets an authenticated principal with the greeting write scope.</summary>
+    public void SetAuthenticatedUser()
+    {
+        SetPrincipal(new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, "application-test-user"),
+                new Claim("scope", ApplicationScopes.GreetingWrite),
+            ],
+            authenticationType: "application-test")));
+    }
+
+    /// <summary>Dispatches a request through its decorated application handler.</summary>
+    /// <typeparam name="TRequest">The request type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="request">The request instance.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The handler response.</returns>
+    public async Task<TResponse> DispatchRequestAsync<TRequest, TResponse>(
+        TRequest request,
+        CancellationToken ctk = default)
+        where TRequest : IRequest<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await DispatchAsync(
+            () => _container.GetInstance<IRequestHandler<TRequest, TResponse>>().ExecuteAsync(request, ctk))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Dispatches a query through its decorated application handler.</summary>
+    /// <typeparam name="TQuery">The query type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="query">The query instance.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The handler response.</returns>
+    public async Task<TResponse> DispatchQueryAsync<TQuery, TResponse>(
+        TQuery query,
+        CancellationToken ctk = default)
+        where TQuery : IQuery<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return await DispatchAsync(
+            () => _container.GetInstance<IQueryHandler<TQuery, TResponse>>().ExecuteAsync(query, ctk))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Dispatches a command through its decorated application handler.</summary>
+    /// <typeparam name="TCommand">The command type.</typeparam>
+    /// <param name="command">The command instance.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task DispatchCommandAsync<TCommand>(
+        TCommand command,
+        CancellationToken ctk = default)
+        where TCommand : ICommand
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        await DispatchAsync(
+            async () =>
+            {
+                await _container.GetInstance<ICommandHandler<TCommand>>()
+                    .ExecuteAsync(command, ctk)
+                    .ConfigureAwait(false);
+                return true;
+            }).ConfigureAwait(false);
+    }
+
+    /// <summary>Disposes Rebus and all application resources owned by the context.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        await _container.DisposeAsync().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
+    }
+
+    private async Task<TResponse> DispatchAsync<TResponse>(Func<Task<TResponse>> execute)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        Verify();
+
+        var scope = _currentScope.Value;
+        var ownsScope = scope is null;
+        if (ownsScope)
+        {
+            scope = AsyncScopedLifestyle.BeginScope(_container);
+            _currentScope.Value = scope;
+        }
+
+        try
+        {
+            return await execute().ConfigureAwait(false);
+        }
+        finally
+        {
+            if (ownsScope)
+            {
+                _currentScope.Value = null;
+                await scope!.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+    private void Verify()
+    {
+        if (_verified)
+            return;
+
+        _container.Verify();
+        _verified = true;
+    }
+
+    private sealed class TestPrincipalProvider : IContextProvider<ClaimsPrincipal>
+    {
+        private ClaimsPrincipal _current = new(new ClaimsIdentity());
+
+        public ClaimsPrincipal Current => _current;
+
+        public void SetCurrent(ClaimsPrincipal principal)
+        {
+            _current = principal;
+        }
+    }
+}
+
+internal sealed class DispatchScopeMarker
+{
+    internal Guid Id { get; } = Guid.NewGuid();
+}
+
+internal sealed record ScopeProbeRequest : IRequest<ScopeProbeRequest, Guid>;
+
+internal sealed record NestedScopeRequest : IRequest<NestedScopeRequest, ScopeObservation>;
+
+internal sealed record ScopeObservation(Guid OuterScopeId, Guid NestedScopeId);
+
+internal sealed record FailingScopeRequest : IRequest<FailingScopeRequest, bool>;
+
+internal sealed class ScopeProbeHandler : IRequestHandler<ScopeProbeRequest, Guid>
+{
+    private readonly DispatchScopeMarker _marker;
+
+    public ScopeProbeHandler(DispatchScopeMarker marker)
+    {
+        _marker = marker;
+    }
+
+    public async Task<Guid> ExecuteAsync(ScopeProbeRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return _marker.Id;
+    }
+}
+
+internal sealed class NestedScopeHandler : IRequestHandler<NestedScopeRequest, ScopeObservation>
+{
+    private readonly ApplicationTestContext _context;
+    private readonly DispatchScopeMarker _marker;
+
+    public NestedScopeHandler(ApplicationTestContext context, DispatchScopeMarker marker)
+    {
+        _context = context;
+        _marker = marker;
+    }
+
+    public async Task<ScopeObservation> ExecuteAsync(NestedScopeRequest request, CancellationToken ctk = default)
+    {
+        var nestedScopeId = await _context.DispatchRequestAsync<ScopeProbeRequest, Guid>(
+            new ScopeProbeRequest(),
+            ctk).ConfigureAwait(false);
+        return new ScopeObservation(_marker.Id, nestedScopeId);
+    }
+}
+
+internal sealed class ScopedDisposalTracker
+{
+    internal bool Disposed { get; set; }
+}
+
+internal sealed class ScopedDisposalResource : IDisposable
+{
+    private readonly ScopedDisposalTracker _tracker;
+
+    public ScopedDisposalResource(ScopedDisposalTracker tracker)
+    {
+        _tracker = tracker;
+    }
+
+    public void Dispose()
+    {
+        _tracker.Disposed = true;
+    }
+}
+
+internal sealed class FailingScopeHandler : IRequestHandler<FailingScopeRequest, bool>
+{
+    public FailingScopeHandler(ScopedDisposalResource resource)
+    {
+    }
+
+    public async Task<bool> ExecuteAsync(FailingScopeRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new InvalidOperationException("Synthetic dispatch failure.");
+    }
+}
