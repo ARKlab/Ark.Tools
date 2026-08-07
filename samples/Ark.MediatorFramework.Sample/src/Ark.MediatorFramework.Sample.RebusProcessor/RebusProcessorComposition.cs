@@ -33,6 +33,9 @@ public static class RebusProcessorComposition
     /// Optional pre-built store shared with the API container. When <see langword="null"/>
     /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory store is created.
     /// </param>
+    /// <param name="secondLevelRetriesEnabled">
+    /// Whether failed messages should be dispatched as <see cref="Rebus.Retry.Simple.IFailed{TMessage}"/>.
+    /// </param>
     /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
     /// <returns>An isolated processor container.</returns>
     public static Container BuildContainer(
@@ -41,7 +44,8 @@ public static class RebusProcessorComposition
         string? connectionString = null,
         IClock? clock = null,
         IGreetingStore? greetingStore = null,
-        Action<Container>? registerHandlers = null)
+        Action<Container>? registerHandlers = null,
+        bool secondLevelRetriesEnabled = false)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -66,7 +70,9 @@ public static class RebusProcessorComposition
             ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>, options =>
             {
                 options.SetNumberOfWorkers(1);
-                options.ArkRetryStrategy(maxDeliveryAttempts: 1);
+                options.ArkRetryStrategy(
+                    maxDeliveryAttempts: 1,
+                    secondLevelRetriesEnabled: secondLevelRetriesEnabled);
             });
         });
 

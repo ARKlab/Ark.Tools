@@ -151,6 +151,22 @@ public sealed record HostingRebusCommand : Ark.Tools.Solid.ICommand
     public string Value { get; set; } = string.Empty;
 }
 
+/// <summary>Command whose handler fails so the hosting tests can verify retry exhaustion.</summary>
+[RebusMessage(OwnerQueue = "hosting")]
+public sealed record HostingRetryCommand : Ark.Tools.Solid.ICommand;
+
+/// <summary>Command whose handler fails so the hosting tests can verify second-level retry handling.</summary>
+[RebusMessage(OwnerQueue = "hosting")]
+public sealed record HostingSecondLevelRetryCommand : Ark.Tools.Solid.ICommand;
+
+/// <summary>Command whose handler records the cancellation token supplied by Rebus.</summary>
+[RebusMessage(OwnerQueue = "hosting")]
+public sealed record HostingCancellationCommand : Ark.Tools.Solid.ICommand;
+
+/// <summary>Command whose handler schedules a deferred delivery.</summary>
+[RebusMessage(OwnerQueue = "hosting")]
+public sealed record HostingDeferredCommand : Ark.Tools.Solid.ICommand;
+
 /// <summary>Request whose handler produces a validation failure.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/validation", AllowAnonymous = true)]
 [GrpcMethod("ValidateHostingRequest")]
