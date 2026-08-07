@@ -162,7 +162,7 @@ public class ReferenceEndpointBenchmarks
         var consecutiveIdleChecks = 0;
         while (timeout.Elapsed < RebusIdleTimeout)
         {
-            _ = CancellationToken.None.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(100));
+            Thread.Sleep(TimeSpan.FromMilliseconds(100));
             if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
@@ -175,7 +175,7 @@ public class ReferenceEndpointBenchmarks
             }
         }
 
-        throw new TimeoutException("Timed out waiting for Rebus to become idle.");
+        throw new TimeoutException($"Timed out waiting for Rebus to become idle after {RebusIdleTimeout.TotalMinutes} minutes.");
     }
 
     /// <summary>

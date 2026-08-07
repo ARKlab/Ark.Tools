@@ -118,7 +118,7 @@ For every endpoint:
 For deeper command-line analysis:
 
 ```bash
-trace=artifacts/BenchmarkDotNet.Artifacts/results/trace.nettrace
+trace=artifacts/BenchmarkDotNet.Artifacts/results/ProfilingBenchmarks.GetPagedContractsAsync-20260101-120000.nettrace
 filtrace info "$trace"
 filtrace tree "$trace" --benchmark --max-depth 8
 filtrace callers "$trace" ReadPagedAsync --benchmark --callees
