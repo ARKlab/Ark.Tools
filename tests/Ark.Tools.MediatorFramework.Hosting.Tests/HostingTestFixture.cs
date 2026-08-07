@@ -39,6 +39,7 @@ using SimpleInjector.Lifestyles;
 
 using NodaTime;
 
+using System.Collections.Concurrent;
 using System.Security.Claims;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
@@ -415,7 +416,7 @@ public sealed class HostingTestState
     internal IBus? Bus { get; set; }
 
     /// <summary>Gets the scope identifiers observed by Rebus handlers.</summary>
-    public List<Guid> RebusScopeIds { get; } = [];
+    public ConcurrentBag<Guid> RebusScopeIds { get; } = [];
 
     internal void RecordRetryAttempt()
     {
