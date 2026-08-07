@@ -33,6 +33,7 @@ and teardown are excluded from the CPU profile. Launch the compiled profiling
 DLL directly; do not wrap it in `dotnet run`. The measured `RunIterations` call
 waits for the Rebus queue and in-process message count to reach zero before the
 trace is stopped.
+The idle wait has a 15-minute safety timeout.
 
 The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
 the application, matching the C# deployment used by the integration tests.

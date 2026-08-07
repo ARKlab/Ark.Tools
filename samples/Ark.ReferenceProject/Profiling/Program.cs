@@ -24,6 +24,7 @@ internal static class Program
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private const int DefaultWarmupIterations = 10;
     private const int DefaultMeasuredIterations = 100;
+    private static readonly TimeSpan RebusIdleTimeout = TimeSpan.FromMinutes(15);
 
     private static async Task Main(string[] args)
     {
@@ -232,8 +233,12 @@ internal static class Program
 
     private static async Task WaitForRebusToBecomeIdle()
     {
+        var timeout = Stopwatch.StartNew();
         while (TestHost.Env.RebusNetwork.Count() > 0 || InProcessMessageInspectorStep.Count > 0)
         {
+            if (timeout.Elapsed >= RebusIdleTimeout)
+                throw new TimeoutException($"Timed out after {RebusIdleTimeout} waiting for Rebus to become idle.");
+
             await Task.Delay(100).ConfigureAwait(false);
         }
     }
