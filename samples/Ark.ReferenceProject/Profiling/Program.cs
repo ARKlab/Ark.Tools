@@ -242,7 +242,7 @@ internal static class Program
                 throw new TimeoutException($"Timed out after {timeoutMinutes} minutes waiting for Rebus to become idle.");
             }
 
-            if (!TestHost.Env.RebusNetwork.Any() && InProcessMessageInspectorStep.Count == 0)
+            if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
                 return;
 
             await Task.Delay(100).ConfigureAwait(false);
