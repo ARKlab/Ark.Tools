@@ -418,7 +418,11 @@ public sealed class HostingTestState
     public int FailedMessageExecutions => Volatile.Read(ref _failedMessageExecutions);
 
     /// <summary>Gets or sets whether the failed-message handler should throw.</summary>
-    public bool FailSecondLevelRetryHandler { get; set; }
+    public bool FailSecondLevelRetryHandler
+    {
+        get => Volatile.Read(ref _failSecondLevelRetryHandler);
+        set => Volatile.Write(ref _failSecondLevelRetryHandler, value);
+    }
 
     /// <summary>Gets the exception message supplied to the failed-message handler.</summary>
     public string? FailedMessageException => Volatile.Read(ref _failedMessageException);
@@ -449,6 +453,7 @@ public sealed class HostingTestState
     private bool _rebusCancellationTokenWasCancelable;
     private string? _rebusUserId;
     private int _deferredMessages;
+    private bool _failSecondLevelRetryHandler;
 
     internal void RecordSecondLevelRetryAttempt()
     {
