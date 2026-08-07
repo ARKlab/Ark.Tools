@@ -57,9 +57,6 @@ internal static class Program
             var businessRuleRequestTiming = await RunIterations(client, auth, measuredIterations, true).ConfigureAwait(false);
             stopwatch.Stop();
 
-            _logger.Info(CultureInfo.InvariantCulture, "Waiting for Rebus to become idle");
-            await WaitForRebusToBecomeIdle().ConfigureAwait(false);
-
             if (traceProcess is not null)
             {
                 await StopTrace(traceProcess).ConfigureAwait(false);
@@ -222,6 +219,12 @@ internal static class Program
 
             if (measured && iteration % 10 == 0)
                 _logger.Info(CultureInfo.InvariantCulture, "Measured iteration {0}", iteration);
+        }
+
+        if (measured)
+        {
+            _logger.Info(CultureInfo.InvariantCulture, "Waiting for Rebus to become idle");
+            await WaitForRebusToBecomeIdle().ConfigureAwait(false);
         }
 
         return (businessRuleRequestTotal, businessRuleRequestMaximum);
