@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="Microsoft.SqlServer.DacFx" />
     <ProjectReference Include="..\Core\Ark.Reference.Core.Tests\Ark.Reference.Core.Tests.csproj" />
     <ProjectReference Include="..\Core\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">

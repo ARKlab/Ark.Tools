@@ -1,122 +1,191 @@
 # Ark.Reference profiling
 
-The profiling host runs the application through `TestServer` using the IntegrationTests
-configuration. Each measured iteration exercises:
+This project uses BenchmarkDotNet with `EventPipeProfiler` CPU sampling to profile
+the Ark.Reference API through its integration-test `TestServer`.
 
-- `POST /v1/book` (SQL write)
-- `GET /v1/book/{id}` (SQL read)
-- `POST /v1/ping/message` (Rebus and outbox pipeline)
-- two `POST /v1/bookPrintProcess` calls (successful request followed by `BusinessRuleViolation`)
-- `ToDataTableArk()` on the returned book
+Each benchmark invokes one endpoint ten times:
 
-The default ten warmup iterations are excluded from the elapsed-time summary. Both
-values can be changed with `--warmup` and `--iterations`.
+- `PostBook`: `POST /v1/book`
+- `GetBook`: `GET /v1/book/{id}`
+- `PostPingMessage`: `POST /v1/ping/message`
+- `PostBookPrintProcess`: `POST /v1/bookPrintProcess`
 
-## Run a Release trace
+`GlobalSetup` drops and recreates the database from
+`Ark.Reference.Core.Database.dacpac`, starts the host, and creates seed books.
+It does not upgrade an existing schema. `IterationCleanup` waits for the Rebus
+in-memory queue and in-process handlers to become idle. The idle wait has a
+15-minute timeout.
 
-Start the SQL Server and Azurite dependencies and deploy the sample database as
-described in the parent project README. From the repository root, run:
+## Run the benchmarks
+
+Start SQL Server and Azurite as described in the parent README. From the
+Ark.ReferenceProject directory, run:
 
 ```bash
-cd samples/Ark.ReferenceProject
 dotnet build Ark.Reference.slnx --configuration Release
-dotnet tool install --global dotnet-trace
 dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
-  --warmup 50 --iterations 300 \
-  --trace artifacts/reference-profile-default-net10.nettrace
-dotnet-trace report artifacts/reference-profile-default-net10.nettrace topN -n 20
+  --filter '*' \
+  --artifacts artifacts/BenchmarkDotNet.Artifacts
 ```
 
-The profiling host launches `dotnet-trace` after database deployment, host
-startup, and warmup. It stops the capture before application shutdown, so setup
-and teardown are excluded from the CPU profile. Launch the compiled profiling
-DLL directly; do not wrap it in `dotnet run`. The measured `RunIterations` call
-waits for the Rebus queue and in-process message count to reach zero before the
-trace is stopped.
-The idle wait has a 15-minute safety timeout.
+Run one endpoint by changing the filter:
 
-The profiling host deploys `Ark.Reference.Core.Database.dacpac` before starting
-the application, matching the C# deployment used by the integration tests.
+```bash
+dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostPingMessage*' \
+  --artifacts artifacts/BenchmarkDotNet.Artifacts
+```
 
-The trace is intentionally generated under `artifacts/` and is not committed.
+BenchmarkDotNet executes the JIT stages, three warmup iterations, and ten
+measured iterations. Each iteration invokes one batch of ten requests, for 100
+measured requests per benchmark. This batching lets `IterationCleanup` drain
+Rebus once per ten requests instead of once per request. `EventPipeProfiler`
+performs an additional profiling run and writes one `.nettrace` and one
+`.speedscope.json` file per benchmark under the artifacts directory. Benchmark
+and trace artifacts are intentionally ignored by Git. BenchmarkDotNet builds
+and executes its generated benchmark project in Release configuration.
+
+## Analyze the traces
+
+Open `.nettrace` files in Visual Studio Profiler or PerfView. Open
+`.speedscope.json` files in [SpeedScope](https://www.speedscope.app/).
+
+Install the command-line viewers once:
+
+```bash
+dotnet tool install --global dotnet-trace
+dotnet tool install --global KlutzyNinja.Filtrace
+npm install --global speedscope
+```
+
+From the Ark.ReferenceProject directory, dump a `dotnet-trace` top-method report
+and convert every BenchmarkDotNet trace to SpeedScope:
+
+```bash
+find artifacts/BenchmarkDotNet.Artifacts -name '*.nettrace' -print0 |
+  while IFS= read -r -d '' trace; do
+    dotnet-trace report "$trace" topN -n 30 > "${trace%.nettrace}.topN.txt"
+    dotnet-trace convert "$trace" \
+      --format Speedscope \
+      --output "${trace%.nettrace}"
+  done
+```
+
+`dotnet-trace report` ranks the complete capture and cannot exclude
+`GlobalSetup`, harness, or cleanup frames. Use it to orient the investigation,
+not to assign benchmark-only percentages.
+
+For a workload-only report and SpeedScope file, use
+[filtrace](https://github.com/JeremyKuhne/filtrace). Its `--benchmark` preset
+keeps the BenchmarkDotNet `WorkloadAction` subtree and excludes `GlobalSetup`,
+warmup/harness overhead, `IterationCleanup`, and `GlobalCleanup`:
+
+```bash
+find artifacts/BenchmarkDotNet.Artifacts -name '*.nettrace' -print0 |
+  while IFS= read -r -d '' trace; do
+    workload="${trace%.nettrace}.workload"
+    filtrace cpu "$trace" --benchmark --top 30 > "$workload.cpu.txt"
+    filtrace cpu "$trace" --benchmark --measure inclusive --top 30 \
+      > "$workload.inclusive.txt"
+    filtrace export "$trace" --benchmark --format speedscope \
+      -o "$workload.speedscope.json"
+  done
+```
+
+Open one filtered profile with:
+
+```bash
+speedscope artifacts/BenchmarkDotNet.Artifacts/results/trace.workload.speedscope.json
+```
+
+For an unfiltered BenchmarkDotNet `.speedscope.json`, use the **Time Order**
+view, search for `WorkloadAction`, and double-click that frame to restrict the
+visible range. The filtered export is preferable because its totals use only
+the workload subtree.
+
+For every endpoint:
+
+1. Sort the call tree by **Exclusive** duration to find methods doing work
+   directly.
+2. Sort by **Inclusive** duration and expand application frames to find expensive
+   call paths.
+3. Inspect the flame graph's widest application-owned stacks. Use the Sandwich
+   view to compare total and self time.
+4. Verify that the analyzed root is `WorkloadAction`; do not compare a
+   whole-capture total with a workload-only duration.
+5. Confirm a candidate in its endpoint-specific trace before changing code.
+
+For deeper command-line analysis:
+
+```bash
+trace=artifacts/BenchmarkDotNet.Artifacts/results/ProfilingBenchmarks.GetPagedContractsAsync-20260101-120000.nettrace
+filtrace info "$trace"
+filtrace tree "$trace" --benchmark --max-depth 8
+filtrace callers "$trace" ReadPagedAsync --benchmark --callees
+filtrace callers "$trace" ProblemDetailsMiddleware --benchmark --callees
+```
+
+Sampled thread time includes blocking. Thread-pool waits, Rebus backoff, SQL
+socket reads, and timer waits are not CPU optimization candidates unless a
+CPU-bound application stack appears beneath them.
+
+### Other open-source analyzers
+
+- [filtrace](https://github.com/JeremyKuhne/filtrace) reads `.nettrace` and
+  `.speedscope.json`, reports self/inclusive CPU, callers, call trees, source
+  lines, timelines, and diffs, and has the BenchmarkDotNet workload filter used
+  above.
+- [pvanalyze](https://github.com/adityamandaleeka/pvanalyze) reads `.nettrace`
+  cross-platform and provides CPU stacks, caller/callee trees, GC, JIT,
+  allocation, exception, event, JSON, and time-window reports. It has no
+  BenchmarkDotNet preset, so determine a workload time window first and pass
+  `--from` and `--to`.
+- [PerfView](https://github.com/microsoft/perfview) provides the most complete
+  Windows call-tree and event investigation. Use its include/exclude and
+  start/stop filters when the CLI summaries are insufficient.
+- [dotnet-trace](https://github.com/dotnet/diagnostics) is the first-party
+  collector, converter, and basic top-method reporter.
+- [SpeedScope](https://github.com/jlfwong/speedscope) is the interactive
+  time-order, left-heavy, and caller/callee viewer; it is not a general
+  `.nettrace` event analyzer.
+
+## Optimization candidates
+
+The previous combined Release trace measured 419.82 seconds of wall-clock
+workload and 7,438.8 seconds of sampled thread time across 27 thread profiles.
+The following values are inclusive sampled-thread durations. Their percentage
+denominator is the 7,438.8-second sampled-thread total, not wall-clock time.
+Nested frames overlap, so rows must not be added together.
+
+| Candidate frame | Inclusive duration | Share of sampled-thread total | Endpoint and interpretation |
+| --- | ---: | ---: | --- |
+| `AbstractSqlAsyncContext.CommitAsync` | 6.39 s | 0.0859% | Write endpoints; database commit is primarily external I/O |
+| `ProblemDetailsMiddleware` | 1.60 s | 0.0215% | Expected error path; contains downstream handling |
+| `BookPrintProcess_CreateRequestHandler` | 1.32 s | 0.0177% | Expected business-rule exception path |
+| `SqlServerExtensions.ReadPagedAsync` | 301 ms | 0.0040% | Book reads; includes SQL wait and materialization |
+| `Dapper.SqlMapper.QueryMultipleAsync` | 295 ms | 0.0040% | Nested book-read SQL path; do not add to `ReadPagedAsync` |
+| NLog `ExceptionLayoutRenderer.AppendToString` | 164 ms | 0.0022% | Exception formatting; compare exclusive CPU before changing logging |
+| `StackFrameHelper.InitializeSourceInfo` | 62 ms | 0.0008% | Standard stack-frame source lookup |
+| `DataTableExtensions.ToDataTableArk` | 15 ms | 0.0002% | 300 single-row conversions in the former combined workload |
+
+Analyze each candidate in its endpoint-specific workload trace:
+
+1. Compare self and inclusive rankings. A large inclusive duration with little
+   self time points to callees or waits rather than the named method.
+2. Use `filtrace callers` and `filtrace tree` to preserve call-path context.
+3. For SQL paths, inspect database-provider events or PerfView thread-time data
+   before attributing socket/TDS time to materialization CPU.
+4. For exception formatting, capture an expected-error benchmark and compare
+   NLog renderer self time with the whole `WorkloadAction` total.
+5. Compare changes with `filtrace diff before.nettrace after.nettrace
+   --benchmark`; use traces captured with the same benchmark and settings.
+
+The previous trace did not justify optimizing Rebus idle backoff, thread-pool
+semaphores, SQL/network waits, Application Insights timers, or
+`ToDataTableArk`.
 
 ## Demystifier configuration
 
 `DemystifiedExceptionLayoutRenderer` remains available for explicit NLog
-registration, but the default `NLogConfigurer` no longer registers it. The
-default `${exception:format=ToString,Data}` layout therefore uses NLog's
-built-in exception renderer and avoids the demystification cost. The profiling
-host measures this default configuration; it does not switch the renderer.
-
-## Post-change trace summary
-
-The Release trace (`--warmup 50 --iterations 300`) was captured after removing
-the demystified renderer from the default NLog registration:
-
-| Measurement | Result |
-| --- | ---: |
-| Measured workload, including Rebus drain | 6 m 59.82 s |
-| Business-rule request average | 6.34 ms |
-| Business-rule request maximum | 19.95 ms |
-| Speedscope evented thread profiles | 27 |
-| Summed sampled thread time | 7,438.8 s |
-
-The sampled-thread-time trace sums time across threads. Its inclusive durations
-include blocked time and must not be interpreted as CPU time or elapsed wall
-clock time.
-
-The top exclusive samples were:
-
-| Function | Exclusive samples |
-| --- | ---: |
-| `LowLevelLifoSemaphore.WaitForSignal` | 29.36% |
-| `Thread.Sleep` | 17.96% |
-| `WaitHandle.WaitOneNoCheck` | 12.40% |
-| `ManualResetEventSlim.Wait` | 9.53% |
-| `Missing Symbol` | 6.02% |
-| `WaitAnyMultiple` | 6.00% |
-| `Interop+Sys.Read` | 6.00% |
-
-The trace is dominated by synchronization, waits, the Application Insights
-aggregation timer, and SQL/network I/O. These are not actionable CPU hotspots
-for this workload.
-
-## Flame graph analysis
-
-```bash
-dotnet-trace convert artifacts/reference-profile-default-net10.nettrace \
-  --format Speedscope --output artifacts/reference-profile-default-net10
-speedscope artifacts/reference-profile-default-net10.speedscope.json
-```
-
-Selected inclusive frames from the Speedscope flame graph were:
-
-| Frame | Inclusive duration | Interpretation |
-| --- | ---: | --- |
-| `ThreadPoolWorker.TryReceiveNextMessage()` | 420.52 s | Rebus receive loop while draining |
-| `Rebus.DefaultBackoffStrategy.Wait` | 13.88 s | Idle worker backoff |
-| `AbstractSqlAsyncContext.CommitAsync()` | 6.39 s | Transaction commit path |
-| `ProblemDetailsMiddleware` | 1.60 s | Expected exception response path |
-| `BookPrintProcess_CreateRequestHandler` | 1.32 s | Expected business-rule exception |
-| `SqlServerExtensions.ReadPagedAsync()` | 301 ms | SQL paging path |
-| `Dapper.SqlMapper.QueryMultipleAsync()` | 295 ms | SQL result materialization |
-| NLog `ExceptionLayoutRenderer.AppendToString()` | 164 ms | Built-in exception formatting |
-| `StackFrameHelper.InitializeSourceInfo()` | 62 ms | Standard stack-frame lookup |
-| `DataTableExtensions.ToDataTableArk()` | 15 ms | 300 single-row conversions |
-
-The hottest stacks are:
-
-1. `ThreadPoolWorker.TryReceiveNextMessage` spans the Rebus drain and idle
-   period. The `DefaultBackoffStrategy.Wait` portion is idle synchronization,
-   not message-processing CPU.
-2. `BookPrintProcess_CreateRequestHandler` → ProblemDetails middleware →
-   `ArkDefaultExceptionFilterAttribute` → NLog's built-in exception renderer is
-   the expected error path. The demystified renderer is absent from the flame
-   graph after removing its default registration.
-3. SQL transaction commits and TDS/SSL reads dominate the database path and are
-   I/O-bound; the trace does not show a materialization CPU hotspot.
-4. `ToDataTableArk()` remains negligible at 15 ms for 300 single-row calls.
-
-Do not optimize the thread-pool semaphore, Rebus backoff, SQL socket waits, or
-Application Insights timer without a CPU-only trace showing application work
-behind them.
+registration, but the default `NLogConfigurer` does not register it. These
+benchmarks profile NLog's built-in exception renderer.
