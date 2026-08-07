@@ -156,13 +156,13 @@ public class ReferenceEndpointBenchmarks
     /// Waits for Rebus to become idle after each benchmark iteration.
     /// </summary>
     [IterationCleanup]
-    public void WaitForRebusToBecomeIdle()
+    public async Task WaitForRebusToBecomeIdle()
     {
         var timeout = Stopwatch.StartNew();
         var consecutiveIdleChecks = 0;
         while (timeout.Elapsed < RebusIdleTimeout)
         {
-            Thread.Sleep(TimeSpan.FromMilliseconds(100));
+            await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
             if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
