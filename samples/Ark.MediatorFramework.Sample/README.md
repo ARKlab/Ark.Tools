@@ -32,7 +32,7 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 | `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc` | gRPC runtime package containing `[GrpcMethod]`, `[ServiceGroup]` and its transport-specific analyzer. |
 | `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, in-memory store and cross-cutting decorator. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
-| `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework**: in-process `TestServer`, in-memory bus and in-process gRPC channel against the sample host. Framework-capability tests (generators, runtime adapters) belong in `tests/Ark.Tools.MediatorFramework.Tests` instead. |
+| `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework** with sample-owned behavior and integration coverage. Framework-capability and generic host-boundary tests belong under `tests/` instead. |
 
 ## Behavioral tests
 
@@ -89,6 +89,10 @@ The Function process has no input queue, workers, subscriptions, handlers, or
 request/reply bus semantics; messages are consumed by the separate processor.
 The generated anonymous `GET /healthCheck` endpoint executes the registered
 health checks.
+
+Generic Azure Functions host-boundary coverage is maintained by
+`tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`; the sample does
+not duplicate those transport tests.
 
 ## gRPC operations panel
 

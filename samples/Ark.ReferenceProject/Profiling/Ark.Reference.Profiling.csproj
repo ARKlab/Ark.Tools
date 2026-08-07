@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Content Include="..\Core\Ark.Reference.Core.Tests\appsettings.json" Link="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.IntegrationTests.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 # Azure Functions boundary tests
 
-This project starts the built mediator sample with Azure Functions Core Tools,
+This framework-owned project starts the synthetic Azure Functions boundary host
+with Azure Functions Core Tools,
 waits for the generated anonymous `/healthCheck` function, and stops the complete
 process tree after each test run. It is intentionally separate from the solution's
 in-process tests because it requires the pinned `func` executable.
