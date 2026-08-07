@@ -32,14 +32,14 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] A message travels through the generated wrapper and changes test state.
-- [ ] Scope and user-context assertions fail if the wrapper bypasses the
+- [x] A message travels through the generated wrapper and changes test state.
+- [x] Scope and user-context assertions fail if the wrapper bypasses the
   configured container.
-- [ ] Retry, error queue, routing, cancellation, and deferred-message cases
+- [x] Retry, error queue, routing, cancellation, and deferred-message cases
   have bounded tests.
-- [ ] No Rebus test depends on wall-clock sleeps without a bounded retry and
+- [x] No Rebus test depends on wall-clock sleeps without a bounded retry and
   diagnostic counts.
-- [ ] Every test leaves an empty network and no running processor.
+- [x] Every test leaves an empty network and no running processor.
 
 ## Tests
 
