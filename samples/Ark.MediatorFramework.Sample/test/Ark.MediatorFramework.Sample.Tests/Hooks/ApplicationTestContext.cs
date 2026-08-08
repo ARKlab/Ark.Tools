@@ -120,6 +120,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     public void SetAuthenticatedUser(string subject = "application-test-user", params string[] scopes)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(subject);
+        ArgumentNullException.ThrowIfNull(scopes);
         scopes = scopes.Length == 0 ? [ApplicationScopes.GreetingWrite] : scopes;
         SetPrincipal(new ClaimsPrincipal(new ClaimsIdentity(
             [

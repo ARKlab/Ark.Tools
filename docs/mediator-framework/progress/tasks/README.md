@@ -35,7 +35,7 @@ separate document under [`testing/`](testing/):
 2. [x] [TST-02](testing/TST-02-hosting-test-projects.md)
 3. [x] [TST-03](testing/TST-03-minimal-api-hosting.md) · [x] [TST-04](testing/TST-04-grpc-hosting.md) · [x] [TST-05](testing/TST-05-rebus-hosting.md) · [x] [TST-06](testing/TST-06-other-framework-hosts.md)
 4. [x] [APP-01](testing/APP-01-application-test-seam.md)
-5. [ ] [APP-02](testing/APP-02-reqnroll-dispatch.md)
+5. [x] [APP-02](testing/APP-02-reqnroll-dispatch.md)
 6. [ ] [APP-03](testing/APP-03-synchronous-application-behavior.md) · [ ] [APP-04](testing/APP-04-rebus-application-workflows.md)
 7. [ ] [APP-05](testing/APP-05-sql-and-inmemory-stores.md)
 8. [ ] [APP-06](testing/APP-06-remove-boundary-tests.md)

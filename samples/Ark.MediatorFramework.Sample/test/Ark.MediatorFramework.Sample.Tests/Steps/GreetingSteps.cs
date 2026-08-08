@@ -44,14 +44,14 @@ public sealed class GreetingSteps
     {
         _greeting = null;
         _exception = await CaptureAsync(async () =>
-            {
-                _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-                    new CreateGreetingRequest
-                    {
-                        Name = name,
-                    }).ConfigureAwait(false);
-                return _greeting;
-            }).ConfigureAwait(false);
+        {
+            _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
+                new CreateGreetingRequest
+                {
+                    Name = name,
+                }).ConfigureAwait(false);
+            return _greeting;
+        }).ConfigureAwait(false);
     }
 
     /// <summary>Queries the greeting through its public query contract.</summary>
@@ -64,7 +64,7 @@ public sealed class GreetingSteps
             _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
                 new GetGreetingQuery
                 {
-                    Id = _greeting?.Id ?? Guid.Empty,
+                    Id = _greeting!.Id,
                 }).ConfigureAwait(false);
             return _queriedGreeting;
         }).ConfigureAwait(false);

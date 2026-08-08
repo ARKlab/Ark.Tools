@@ -37,15 +37,25 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 ## Behavioral tests
 
 The Reqnroll scenarios exercise the sample as a real application through its
-public HTTP and gRPC interfaces:
+direct, decorated application contracts:
 
-- create and query greetings over HTTP;
-- create and query greetings over gRPC using the client generated from the server's `.proto` files;
-- reject duplicate greetings with an HTTP business-rule response;
-- read the evolved version-two greeting contract; and
-- queue an HTTP composition request and poll until Rebus completes it;
-- support Rebus retry exhaustion, second-level `IFailed<T>` handling, and
-  error-queue handling when the failed handler also fails.
+- create and query greetings through request and query contracts;
+- reject anonymous and duplicate requests with typed exceptions;
+- read the evolved version-two greeting contract;
+- consume an async stream with cancellation; and
+- read persisted audit state through its public query contract.
+
+Transport-boundary behavior remains covered by the focused MSTest classes in
+the same project:
+
+- HTTP and gRPC clients exercise generated hosting and authentication;
+- generated endpoint binding and OpenAPI behavior remain transport tests; and
+- Rebus workflow behavior, including retry exhaustion, second-level
+  `IFailed<T>` handling, and error-queue handling when the failed handler also
+  fails, is covered by the dedicated processor tests.
+
+The direct application scenarios do not assert URLs, status codes, serialized
+JSON, or generated transport wrappers.
 
 Framework capabilities such as source generation, transport serialization,
 OpenAPI schema generation, attachments and rich gRPC errors are covered by
@@ -65,9 +75,10 @@ or telemetry configuration. Set `ApplicationInsights:ConnectionString` to enable
 Application Insights.
 
 The SQL-backed sample uses SQL Server on `localhost:1433`. Build the database project or deploy
-`src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running SQL-backed scenarios.
-Greeting writes and their Rebus notifications share one SQL transaction; set
-`ARK_SAMPLE_SQL_TESTS=1` to run the SQL-backed Reqnroll path.
+`src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running the default scenarios.
+Greeting writes and their Rebus notifications share one SQL transaction. Set
+`ARK_SAMPLE_INMEMORY_TESTS=1` to run the direct application scenarios against
+the in-memory store.
 
 ### Azure Functions host
 
