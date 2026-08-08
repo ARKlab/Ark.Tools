@@ -11,7 +11,9 @@ using Ark.Tools.Solid.Authorization;
 
 using NodaTime;
 
+using Rebus.Config;
 using Rebus.Handlers;
+using Rebus.Timeouts;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -33,10 +35,15 @@ public static class RebusProcessorComposition
     /// Optional pre-built store shared with the API container. When <see langword="null"/>
     /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory store is created.
     /// </param>
+    /// <param name="bookStore">Optional book store shared with the API container.</param>
+    /// <param name="auditStore">Optional audit store shared with the API container.</param>
+    /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
     /// <param name="secondLevelRetriesEnabled">
     /// Whether failed messages should be dispatched as <see cref="Rebus.Retry.Simple.IFailed{TMessage}"/>.
     /// </param>
     /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
+    /// <param name="configureOptions">Configures optional Rebus processor options.</param>
+    /// <param name="configureTimeouts">Configures optional Rebus timeout storage.</param>
     /// <returns>An isolated processor container.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
@@ -44,14 +51,27 @@ public static class RebusProcessorComposition
         string? connectionString = null,
         IClock? clock = null,
         IGreetingStore? greetingStore = null,
+        IBookStore? bookStore = null,
+        IAuditStore? auditStore = null,
+        IPrintCompletedNotificationService? printCompletedNotificationService = null,
         Action<Container>? registerHandlers = null,
-        bool secondLevelRetriesEnabled = false)
+        bool secondLevelRetriesEnabled = false,
+        Action<OptionsConfigurer>? configureOptions = null,
+        Action<StandardConfigurer<ITimeoutManager>>? configureTimeouts = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        ApplicationComposition.Register(container, useSqlStore, connectionString, clock, greetingStore);
+        ApplicationComposition.Register(
+            container,
+            useSqlStore,
+            connectionString,
+            clock,
+            greetingStore,
+            bookStore,
+            auditStore,
+            printCompletedNotificationService);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
@@ -71,9 +91,12 @@ public static class RebusProcessorComposition
             {
                 options.SetNumberOfWorkers(1);
                 options.ArkRetryStrategy(
-                    maxDeliveryAttempts: 1,
+                    maxDeliveryAttempts: 2,
                     secondLevelRetriesEnabled: secondLevelRetriesEnabled);
+                configureOptions?.Invoke(options);
             });
+            if (configureTimeouts is not null)
+                cfg.Timeouts(configureTimeouts);
         });
 
         return container;

@@ -30,7 +30,7 @@ public sealed class PagingTests
     [TestMethod]
     public async Task HttpSearchReturnsPagesAndTotalCount()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
@@ -57,7 +57,7 @@ public sealed class PagingTests
     [TestMethod]
     public async Task HttpSearchRejectsInvalidLimit()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
@@ -74,7 +74,7 @@ public sealed class PagingTests
     [TestMethod]
     public async Task HttpSearchRejectsNegativeSkip()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
@@ -89,7 +89,7 @@ public sealed class PagingTests
     [TestMethod]
     public async Task HttpSearchRejectsZeroLimit()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());
@@ -104,7 +104,7 @@ public sealed class PagingTests
     [TestMethod]
     public async Task GrpcSearchRejectsInvalidLimit()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         var token = new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -125,7 +125,7 @@ public sealed class PagingTests
     [TestMethod]
     public async Task GrpcSearchReturnsPageAndTotalCount()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         var token = new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         await CreateGreetingAsync(context.Client, "grpc-page-one").ConfigureAwait(false);

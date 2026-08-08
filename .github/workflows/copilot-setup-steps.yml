@@ -31,6 +31,8 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+          # Azure Sql is Enterprise - match it
+          MSSQL_PID: EnterpriseDeveloper
 
     # You can define any steps you want, and they will run before the agent starts.
     # If you do not check out your code, Copilot will do this for you.
@@ -56,4 +58,3 @@ jobs:
 
       - name: 'Install Azure Functions Core Tools'
         run: npm install --global azure-functions-core-tools@^4.12.1
-

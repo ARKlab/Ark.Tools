@@ -21,7 +21,7 @@ public sealed class ClockParityTests
     [TestMethod]
     public async Task GreetingAuditUsesInjectedClock()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build());

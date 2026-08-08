@@ -22,7 +22,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithMalformedBearerReturnsUnauthorized()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             "not-a-jwt");
@@ -37,7 +37,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithBasicCredentialsReturnsUnauthorized()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Basic",
             "abc");
@@ -52,7 +52,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithoutCredentialsReturnsUnauthorized()
     {
-        using var context = SampleTestContext.WithoutFallbackPolicy();
+        using var context = TransportTestContext.WithoutFallbackPolicy();
 
         var response = await context.Client.GetAsync(
             new Uri($"/api/v1/greetings/{Guid.Empty}", UriKind.Relative)).ConfigureAwait(false);
@@ -64,7 +64,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithValidBearerReturnsSuccess()
     {
-        using var context = SampleTestContext.WithoutFallbackPolicy();
+        using var context = TransportTestContext.WithoutFallbackPolicy();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").Build());
@@ -84,7 +84,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task GrpcCallWithoutBearerMetadataReturnsUnauthenticated()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var channel = GrpcChannel.ForAddress(
             "http://localhost",
             new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
@@ -101,7 +101,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task GrpcCallWithValidBearerFlowsUserContext()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         var token = new JwtTokenBuilder().AddSubject("grpc-user").AddScope("greetings.write").Build();
         using var channel = GrpcChannel.ForAddress(
             "http://localhost",
@@ -118,7 +118,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCallWithoutGreetingWriteScopeReturnsForbidden()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").Build());
@@ -136,7 +136,7 @@ public sealed class AuthorizationTests
     [TestMethod]
     public async Task HttpCommandReturnsNoContent()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("test-user").Build());

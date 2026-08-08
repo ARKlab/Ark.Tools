@@ -6,47 +6,41 @@ using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Reqnroll;
 
-using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Tests.Auth;
 
-/// <summary>Controls the bearer token used by authentication scenarios.</summary>
+/// <summary>Controls the principal used by application authorization scenarios.</summary>
 [Binding]
 public sealed class AuthTestContext
 {
     private readonly SampleTestContext _context;
-    private readonly JwtTokenBuilder _tokenBuilder = new();
-
-    /// <summary>Gets the token used for authenticated requests.</summary>
-    public string Token { get; private set; } = string.Empty;
-
-    /// <summary>Configures the integration-test authentication environment.</summary>
-    [BeforeTestRun(Order = 0)]
-    public static void ConfigureEnvironment()
-    {
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-    }
 
     /// <summary>Initializes a new instance of the <see cref="AuthTestContext"/> class.</summary>
     public AuthTestContext(SampleTestContext context)
     {
         _context = context;
-        SetAuthenticatedUser();
     }
 
-    /// <summary>Sets the request client to use a valid integration-test token.</summary>
+    /// <summary>Sets the application principal to an authenticated user with the write scope.</summary>
     [Given("I am an authenticated user")]
-    [BeforeScenario]
     public void SetAuthenticatedUser()
     {
-        Token = _tokenBuilder.AddSubject("test-user").AddScope(ApplicationScopes.GreetingWrite).Build();
-        _context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        _context.Application.SetAuthenticatedUser("test-user", ApplicationScopes.GreetingWrite);
     }
 
-    /// <summary>Sets the request client to make anonymous requests.</summary>
+    /// <summary>Sets the application principal to the requested authenticated subject.</summary>
+    /// <param name="subject">The authenticated subject.</param>
+    [Given(@"I am an authenticated user named ""(.*)""")]
+    public void SetAuthenticatedUser(string subject)
+    {
+        _context.Application.SetAuthenticatedUser(subject, ApplicationScopes.GreetingWrite);
+    }
+
+    /// <summary>Sets the application principal to an anonymous user.</summary>
     [Given("I am an anonymous user")]
     public void SetAnonymousUser()
     {
-        _context.Client.DefaultRequestHeaders.Authorization = null;
+        _context.Application.SetPrincipal(new ClaimsPrincipal(new ClaimsIdentity()));
     }
 }

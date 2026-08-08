@@ -1,49 +1,40 @@
 Feature: Greetings
-    The sample application exposes greeting workflows through its public transports.
+    The sample application exposes transport-independent greeting contracts.
 
-    Scenario: Create and query a greeting over HTTP
+    Scenario: Create and query a greeting
         Given I am an authenticated user
-        When I create the greeting "HTTP greeting" over HTTP
-        Then the greeting is available over HTTP
+        When I create the greeting "Application greeting"
+        And I query the greeting
+        Then the greeting can be queried
 
-    Scenario: Anonymous HTTP requests are rejected
+    Scenario: Anonymous requests are rejected
         Given I am an anonymous user
-        When I create the greeting "Anonymous greeting" over HTTP
-        Then the request is unauthorized
-
-    Scenario: Create and query a greeting over gRPC
-        Given I am an authenticated user
-        When I create the greeting "gRPC greeting" over gRPC
-        Then the greeting is available over gRPC
+        When I create the greeting "Anonymous greeting"
+        Then the request fails with an authorization exception
 
     Scenario: Duplicate greetings violate the business rule
         Given I am an authenticated user
-        And I create the greeting "Duplicate greeting" over HTTP
-        When I create the greeting "Duplicate greeting" over HTTP
-        Then the request returns a business rule violation
+        And I create the greeting "Duplicate greeting"
+        When I create the greeting "Duplicate greeting"
+        Then the request fails with a greeting already exists violation for "Duplicate greeting"
 
-    Scenario: Invalid greeting is rejected over HTTP
+    Scenario: Invalid greetings are rejected
         Given I am an authenticated user
-        When I create the greeting "" over HTTP
-        Then the request returns validation errors
-
-    Scenario: Invalid greeting is rejected over gRPC
-        Given I am an authenticated user
-        When I create the greeting "" over gRPC
-        Then the gRPC request is invalid
+        When I create the greeting ""
+        Then the request fails validation
 
     Scenario: Version two exposes the evolved greeting contract
         Given I am an authenticated user
-        And I create the greeting "Versioned greeting" over HTTP
+        And I create the greeting "Versioned greeting"
         When I query the greeting through version two
         Then the version two greeting includes its message length
 
-    Scenario: HTTP composition completes asynchronously through Rebus
+    Scenario: A stream observes cancellation without a transport
         Given I am an authenticated user
-        When I compose the greeting "Asynchronous greeting" over HTTP
-        Then the composed greeting is eventually available over HTTP
+        When I consume a greeting stream and cancel after two items
+        Then the stream yields two items before cancellation
 
     Scenario: Creating a greeting writes a queryable audit record
         Given I am an authenticated user
-        When I create the greeting "Audited greeting" over HTTP
+        When I create the greeting "Audited greeting"
         Then the audit query contains a CreateGreetingRequest operation for "test-user"

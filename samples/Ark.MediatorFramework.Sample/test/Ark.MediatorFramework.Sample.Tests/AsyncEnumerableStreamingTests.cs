@@ -28,7 +28,7 @@ public sealed class AsyncEnumerableStreamingTests
     [TestMethod]
     public async Task HttpStreamDeliversFirstItemBeforeProducerCompletes()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         AddAuthorization(context.Client);
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
@@ -53,7 +53,7 @@ public sealed class AsyncEnumerableStreamingTests
     [TestMethod]
     public async Task HttpStreamUsesPlainJsonArray()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         AddAuthorization(context.Client);
 
         using var response = await context.Client.GetAsync(
@@ -72,7 +72,7 @@ public sealed class AsyncEnumerableStreamingTests
     [TestMethod]
     public async Task GrpcStreamDeliversIncrementallyAndSupportsCancellation()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         var token = AddAuthorization(context.Client);
         using var channel = GrpcChannel.ForAddress(
             "http://localhost",
@@ -99,7 +99,7 @@ public sealed class AsyncEnumerableStreamingTests
     [TestMethod]
     public async Task EmptyStreamIsEmptyOnHttpAndGrpc()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         var token = AddAuthorization(context.Client);
         using var response = await context.Client.GetAsync(
             new Uri("/api/v1/greetings/stream?count=0&delayMilliseconds=0", UriKind.Relative)).ConfigureAwait(false);

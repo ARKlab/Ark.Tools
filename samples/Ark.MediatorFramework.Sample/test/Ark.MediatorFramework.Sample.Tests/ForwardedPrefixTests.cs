@@ -18,7 +18,7 @@ public sealed class ForwardedPrefixTests
     [TestMethod]
     public async Task ValidPrefixIsAccepted()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/healthCheck");
         request.Headers.Add("X-Forwarded-Prefix", "/gateway");
 
@@ -31,7 +31,7 @@ public sealed class ForwardedPrefixTests
     [TestMethod]
     public async Task InvalidPrefixIsRejected()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/healthCheck");
         request.Headers.Add("X-Forwarded-Prefix", "/gateway/../internal");
 
@@ -44,7 +44,7 @@ public sealed class ForwardedPrefixTests
     [TestMethod]
     public async Task MultiplePrefixesAreRejected()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/healthCheck");
         request.Headers.TryAddWithoutValidation("X-Forwarded-Prefix", ["/one", "/two"]);
 
@@ -57,7 +57,7 @@ public sealed class ForwardedPrefixTests
     [TestMethod]
     public async Task ValidPrefixPreservesGeneratedOpenApiRouting()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/openapi/v1.json");
         request.Headers.Add("X-Forwarded-Prefix", "/gateway");
 

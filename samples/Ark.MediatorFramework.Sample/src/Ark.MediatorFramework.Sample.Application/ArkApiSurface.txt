@@ -1,8 +1,17 @@
-﻿/*
+/*
+CONTRACT BookPrintProcessResponse
+CONTRACT BookPrintProcessResponse.BookId : Guid
+CONTRACT BookPrintProcessResponse.ErrorMessage : string?
+CONTRACT BookPrintProcessResponse.Id : Guid
+CONTRACT BookPrintProcessResponse.Progress : double
+CONTRACT BookPrintProcessResponse.ShouldFail : bool
+CONTRACT BookPrintProcessResponse.Status : EvolvableEnum<BookPrintProcessStatus>
 CONTRACT CompleteGreetingCompositionRequest -> GreetingResponse [group=Ark]
+CONTRACT CompleteGreetingCompositionRequest.FailuresBeforeSuccess : int
 CONTRACT CompleteGreetingCompositionRequest.Id : Guid
 CONTRACT CompleteGreetingCompositionRequest.Name : string default=string.Empty
 CONTRACT ComposeGreetingRequest -> ComposeGreetingResponse [group=Greetings] [http=POST /api/v{version}/greetings/compose] [version=1+]
+CONTRACT ComposeGreetingRequest.FailuresBeforeSuccess : int
 CONTRACT ComposeGreetingRequest.Name : string default=string.Empty
 CONTRACT ComposeGreetingResponse
 CONTRACT ComposeGreetingResponse.Id : Guid
@@ -78,6 +87,8 @@ CONTRACT GreetingResponseV2.MessageLength : int
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
 CONTRACT PagedResult.IsCountPartial : bool
+CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
+CONTRACT ProcessBookPrintProcessRequest.Id : Guid
 CONTRACT RefreshGreetingCommand -> RefreshGreetingCommand [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings/refresh] [version=1+] [grpc=RefreshGreeting] [grpc-version=1+]
 CONTRACT RefreshGreetingCommand.Id : Guid
 CONTRACT SearchGreetingsQuery -> GreetingPage [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings] [version=1+] [grpc=SearchGreetings] [grpc-version=1+]
@@ -115,8 +126,14 @@ CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
 ENUM ShapeKind.Circle=0
 ENUM ShapeKind.Square=1
+EVOLVABLE-ENUM BookPrintProcessStatus.Completed=3
+EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
+EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
+EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
+EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
 REBUS CompleteGreetingCompositionRequest -> queue:ark.mediator.sample
 REBUS CreateGreetingRequest -> queue:default
 REBUS FailingRebusRequest -> queue:ark.mediator.sample
 REBUS GreetingCreatedNotification -> queue:ark.mediator.sample
+REBUS ProcessBookPrintProcessRequest -> queue:ark.mediator.sample
 */

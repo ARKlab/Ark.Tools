@@ -7,6 +7,7 @@ using Ark.Tools.Core;
 
 using Dapper;
 
+using NodaTime;
 using NodaTime.Text;
 
 using Rebus.Bus;
@@ -68,7 +69,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             greeting.Date,
             greeting.DateTime,
             greeting.OffsetDateTime,
-            Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
+            Period = PeriodPattern.NormalizingIso.Format(greeting.Period ?? Period.Zero),
             greeting.AuditId,
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
@@ -98,7 +99,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         const string sql = """
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
-                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
             WHERE [Id] = @Id
             """;
@@ -112,7 +113,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         const string sql = """
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
-                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
             """;
         var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
@@ -135,7 +136,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 UPDATE SET [Message] = @Message, [AuditId] = @AuditId
             OUTPUT inserted.[Id], inserted.[Message], inserted.[Date], inserted.[DateTime],
                    inserted.[OffsetDateTime], inserted.[Period], inserted.[AuditId],
-                   CONVERT(VARCHAR(MAX), inserted.[RowVersion], 1) AS [ETag];
+                   inserted.[RowVersion] AS [ETag];
             """;
         var command = new CommandDefinition(sql, new { Id = id, Message = message, AuditId = auditId, ETag = eTag }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
@@ -190,7 +191,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         const string sql = """
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
-                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
             WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\')
             ORDER BY [Id]
@@ -215,6 +216,175 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Limit = query.Limit,
             Data = rows.Select(row => row.ToResponse()).ToArray(),
         };
+    }
+
+    /// <summary>Saves a book in the current transaction.</summary>
+    public async Task SaveBookAsync(BookResponse book, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description])
+            VALUES (@Id, @Title, @Author, @Genre, @ISBN, @Description);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            book.Id,
+            book.Title,
+            book.Author,
+            book.Genre,
+            book.ISBN,
+            book.Description,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads a book by identifier in the current transaction.</summary>
+    public async Task<BookResponse?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            FROM [dbo].[Book]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        var row = await Connection.QuerySingleOrDefaultAsync<BookRow>(command).ConfigureAwait(false);
+        return row?.ToResponse();
+    }
+
+    /// <summary>Updates a book in the current transaction.</summary>
+    public async Task<bool> UpdateBookAsync(BookResponse book, CancellationToken ctk = default)
+    {
+        const string sql = """
+            UPDATE [dbo].[Book]
+            SET [Title] = @Title,
+                [Author] = @Author,
+                [Genre] = @Genre,
+                [ISBN] = @ISBN,
+                [Description] = @Description
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            book.Id,
+            book.Title,
+            book.Author,
+            book.Genre,
+            book.ISBN,
+            book.Description,
+        }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Deletes a book in the current transaction.</summary>
+    public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            DELETE FROM [dbo].[Book]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Reads a page of books in the current transaction.</summary>
+    public async Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            FROM [dbo].[Book]
+            WHERE (@Title IS NULL OR [Title] = @Title)
+              AND (@Author IS NULL OR [Author] = @Author)
+              AND (@Genre IS NULL OR [Genre] = @Genre)
+            ORDER BY [Id]
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            SELECT COUNT_BIG(*)
+            FROM [dbo].[Book]
+            WHERE (@Title IS NULL OR [Title] = @Title)
+              AND (@Author IS NULL OR [Author] = @Author)
+              AND (@Genre IS NULL OR [Genre] = @Genre);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            query.Title,
+            query.Author,
+            query.Genre,
+            query.Skip,
+            query.Limit,
+        }, Transaction, cancellationToken: ctk);
+        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var rows = await results.ReadAsync<BookRow>().ConfigureAwait(false);
+        var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
+        return new BookPage
+        {
+            Count = count,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = rows.Select(row => row.ToResponse()).ToArray(),
+        };
+    }
+
+    /// <summary>Saves a book print process when no pending or running process exists for the book.</summary>
+    public async Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[BookPrintProcess] ([Id], [BookId], [Progress], [Status], [IsActive], [ErrorMessage], [ShouldFail])
+            SELECT @Id, @BookId, @Progress, @Status, 1, @ErrorMessage, @ShouldFail
+            WHERE NOT EXISTS
+            (
+                SELECT 1
+                FROM [dbo].[BookPrintProcess] WITH (UPDLOCK, HOLDLOCK)
+                WHERE [BookId] = @BookId
+                  AND [Status] IN (@Pending, @Running)
+            );
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            process.Id,
+            process.BookId,
+            process.Progress,
+            process.Status,
+            process.ErrorMessage,
+            process.ShouldFail,
+            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
+            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+        }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Reads a book print process in the current transaction.</summary>
+    public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail]
+            FROM [dbo].[BookPrintProcess]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        return await Connection.QuerySingleOrDefaultAsync<BookPrintProcessResponse>(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Updates a book print process in the current transaction.</summary>
+    public async Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    {
+        const string sql = """
+            UPDATE [dbo].[BookPrintProcess]
+            SET [Progress] = @Progress,
+                [Status] = @Status,
+                [IsActive] = CASE WHEN @Status IN (@Pending, @Running) THEN 1 ELSE 0 END,
+                [ErrorMessage] = @ErrorMessage,
+                [ShouldFail] = @ShouldFail
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            process.Id,
+            process.Progress,
+            process.Status,
+            process.ErrorMessage,
+            process.ShouldFail,
+            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
+            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+        }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
 
     private static string EscapeLikePattern(string value)
@@ -267,7 +437,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
         public Guid AuditId { get; set; }
-        public string ETag { get; set; } = string.Empty;
+        public byte[] ETag { get; set; } = [];
 
         public GreetingResponse ToResponse()
         {
@@ -280,7 +450,30 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 OffsetDateTime = OffsetDateTime,
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
                 AuditId = AuditId,
-                ETag = ETag,
+                ETag = "0x" + Convert.ToHexString(ETag),
+            };
+        }
+    }
+
+    private sealed class BookRow
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public EvolvableEnum<BookGenre> Genre { get; set; }
+        public string? ISBN { get; set; }
+        public string Description { get; set; } = string.Empty;
+
+        public BookResponse ToResponse()
+        {
+            return new BookResponse
+            {
+                Id = Id,
+                Title = Title,
+                Author = Author,
+                Genre = Genre,
+                ISBN = ISBN,
+                Description = Description,
             };
         }
     }
@@ -331,16 +524,19 @@ public sealed class SqlGreetingStore : IGreetingStore
     /// <param name="greeting">The greeting to persist.</param>
     /// <param name="audit">The optional audit entry to persist in the transaction.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<GreetingResponse> SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         if (audit is not null)
             await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
+        var persisted = await context.ReadAsync(greeting.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Greeting '{greeting.Id}' was not found.");
         using var scope = _bus.Enlist(context);
-        await _bus.SendLocal(new GreetingCreatedNotification { Greeting = greeting }).ConfigureAwait(false);
+        await _bus.Send(new GreetingCreatedNotification { Greeting = persisted }).ConfigureAwait(false);
         await scope.CompleteAsync().ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
+        return persisted;
     }
 
     /// <inheritdoc />
@@ -397,7 +593,7 @@ public sealed class SqlGreetingStore : IGreetingStore
     /// <inheritdoc />
     public async Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        if (expectedETag is null)
+        if (expectedETag is null || !IsValidETag(expectedETag))
             throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
 
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -414,6 +610,21 @@ public sealed class SqlGreetingStore : IGreetingStore
             await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return updated;
+    }
+
+    private static bool IsValidETag(string eTag)
+    {
+        if (!eTag.StartsWith("0x", StringComparison.Ordinal) || eTag.Length != 18)
+            return false;
+
+        try
+        {
+            return Convert.FromHexString(eTag.AsSpan(2)).Length == 8;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 
     /// <inheritdoc />

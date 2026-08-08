@@ -37,12 +37,12 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] The compose scenario dispatches an application contract directly, waits
+- [x] The compose scenario dispatches an application contract directly, waits
   with a bounded idle/outbox verb, and observes the effect through a query
   contract.
-- [ ] A test fails if the generated wrapper does not run in the receiver
+- [x] A test fails if the generated wrapper does not run in the receiver
   container or if user context is lost.
-- [ ] Retry/error behavior is deterministic and diagnostics identify stranded
+- [x] Retry/error behavior is deterministic and diagnostics identify stranded
   messages.
 - [ ] A second-level retry scenario verifies the application-owned `IFailed<T>`
   handler receives the original message and failure information.
@@ -62,3 +62,8 @@ for every implementation task.
     and failed second-level handling with bounded error-queue diagnostics;
   - verify cleanup leaves no worker, timer, network, or outbox work.
 - Run the full-solution gates.
+
+## Validation
+
+- The workflow scenarios pass under the explicit in-memory profile and the SQL
+  profile, with the latter using the in-memory Rebus transport and SQL outbox.

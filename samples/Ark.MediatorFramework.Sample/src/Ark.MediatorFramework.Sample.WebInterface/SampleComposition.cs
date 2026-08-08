@@ -35,13 +35,17 @@ public static class SampleComposition
     /// Optional pre-built store shared with the processor container. When <see langword="null"/>
     /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory store is created.
     /// </param>
+    /// <param name="bookStore">Optional book store shared with the processor container.</param>
+    /// <param name="auditStore">Optional audit store shared with the processor container.</param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        IGreetingStore? greetingStore = null)
+        IGreetingStore? greetingStore = null,
+        IBookStore? bookStore = null,
+        IAuditStore? auditStore = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -50,7 +54,14 @@ public static class SampleComposition
         container.RegisterInstance(network);
 
         // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
-        ApplicationComposition.Register(container, useSqlStore, connectionString, clock, greetingStore);
+        ApplicationComposition.Register(
+            container,
+            useSqlStore,
+            connectionString,
+            clock,
+            greetingStore,
+            bookStore,
+            auditStore);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 

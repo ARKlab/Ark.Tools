@@ -1,224 +1,352 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
-
+using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
-using Ark.MediatorFramework.Sample.Tests.Auth;
+
+using Ark.Tools.Authorization;
+using Ark.Tools.Core;
+using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Core.EntityTag;
 
 using AwesomeAssertions;
 
-using Grpc.Core;
-using Grpc.Net.Client;
-
-using NodaTime.Text;
+using FluentValidation;
 
 using Reqnroll;
-
-using AppComposeGreetingRequest = Ark.MediatorFramework.Sample.Application.ComposeGreetingRequest;
-using AppComposeGreetingResponse = Ark.MediatorFramework.Sample.Application.ComposeGreetingResponse;
-using AppCreateGreetingRequest = Ark.MediatorFramework.Sample.Application.CreateGreetingRequest;
-using AppGreetingResponse = Ark.MediatorFramework.Sample.Application.GreetingResponse;
-using AppGreetingResponseV2 = Ark.MediatorFramework.Sample.Application.GreetingResponseV2;
-using AppAuditRecord = Ark.MediatorFramework.Sample.Application.AuditRecord;
-using GrpcCreateGreetingRequest = Ark.MediatorFramework.Sample.GrpcClient.CreateGreetingRequest;
-using GrpcGetGreetingQuery = Ark.MediatorFramework.Sample.GrpcClient.GetGreetingQuery;
-using GrpcGreetingResponse = Ark.MediatorFramework.Sample.GrpcClient.GreetingResponse;
-using GrpcGreetingsV1Client = Ark.MediatorFramework.Sample.GrpcClient.GreetingsV1.GreetingsV1Client;
+using Reqnroll.Assist;
 
 namespace Ark.MediatorFramework.Sample.Tests.Steps;
 
-/// <summary>Defines public-transport behavioral steps for the greeting sample.</summary>
+/// <summary>Defines application-contract behavioral steps for the greeting sample.</summary>
 [Binding]
 public sealed class GreetingSteps
 {
-    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    private readonly SampleTestContext _context;
-    private readonly AuthTestContext _authContext;
-    private AppGreetingResponse? _greeting;
-    private GrpcGreetingResponse? _grpcGreeting;
-    private AppGreetingResponseV2? _versionTwoGreeting;
-    private HttpResponseMessage? _response;
-    private StatusCode? _grpcErrorStatus;
-    private AppAuditRecord? _audit;
+    private readonly SampleTestContext _sampleContext;
+    private GreetingResponse? _greeting;
+    private GreetingResponse? _queriedGreeting;
+    private GreetingResponseV2? _versionTwoGreeting;
+    private PagedResult<AuditRecord>? _audits;
+    private GreetingPage? _greetingPage;
+    private string? _previousETag;
+    private Exception? _exception;
+    private List<GreetingStreamItem> _streamItems = [];
+    private bool _streamWasCancelled;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
-    /// <param name="context">The scenario's isolated sample host.</param>
-    /// <param name="authContext">The scenario's authentication context.</param>
-    public GreetingSteps(SampleTestContext context, AuthTestContext authContext)
+    /// <param name="context">The scenario's direct application context.</param>
+    public GreetingSteps(SampleTestContext context)
     {
-        _context = context;
-        _authContext = authContext;
+        _sampleContext = context;
     }
 
-    [Given(@"I create the greeting ""(.*)"" over HTTP")]
-    [When(@"I create the greeting ""(.*)"" over HTTP")]
-    public async Task WhenICreateTheGreetingOverHttp(string name)
-    {
-        _response = await _context.Client.PostAsJsonAsync(
-            "/api/v1/greetings",
-            new AppCreateGreetingRequest { Name = name },
-            JsonOptions).ConfigureAwait(false);
+    /// <summary>Gets the active greeting in the current scenario.</summary>
+    public GreetingResponse? Current => _greeting;
 
-        if (_response.IsSuccessStatusCode)
-            _greeting = await _response.Content.ReadFromJsonAsync<AppGreetingResponse>(JsonOptions).ConfigureAwait(false);
+    /// <summary>Creates and activates a greeting from a table-defined request.</summary>
+    /// <param name="table">The greeting request data.</param>
+    [Given("I create a greeting with")]
+    [When("I create a greeting with")]
+    public async Task CreateGreeting(Table table)
+    {
+        var request = table.CreateInstance<CreateGreetingRequest>();
+        await CreateGreetingAsync(request).ConfigureAwait(false);
     }
 
-    [When(@"I create the greeting ""(.*)"" over gRPC")]
-    public async Task WhenICreateTheGreetingOverGrpc(string name)
+    /// <summary>Creates greetings from table rows and activates the last result.</summary>
+    /// <param name="table">The greeting request data.</param>
+    [Given("I create greetings with")]
+    public async Task CreateGreetings(Table table)
     {
-        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+        foreach (var request in table.CreateSet<CreateGreetingRequest>())
+            await CreateGreetingAsync(request).ConfigureAwait(false);
+    }
+
+    /// <summary>Loads the active greeting through its public query contract.</summary>
+    [When("I retrieve the current greeting")]
+    public async Task RetrieveCurrentGreeting()
+    {
+        _greeting.Should().NotBeNull();
+        _exception = await CaptureAsync(async () =>
         {
-            HttpClient = _context.Client,
-        });
+            _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+                new GetGreetingQuery { Id = _greeting!.Id }).ConfigureAwait(false);
+            _greeting = _queriedGreeting;
+            return _queriedGreeting;
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Updates the active greeting from a table-defined request.</summary>
+    /// <param name="table">The replacement greeting data.</param>
+    [When("I update the current greeting with")]
+    public async Task UpdateCurrentGreeting(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        _previousETag = _greeting!.ETag;
+        var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
+        {
+            Id = _greeting.Id,
+            ETag = _greeting.ETag,
+        };
+        _greeting = await Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Attempts an update with the ETag from before the latest successful update.</summary>
+    /// <param name="table">The replacement greeting data.</param>
+    [When("I update the current greeting with a stale ETag and")]
+    public async Task UpdateCurrentGreetingWithStaleETag(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        _previousETag.Should().NotBeNullOrWhiteSpace();
+        var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
+        {
+            Id = _greeting!.Id,
+            ETag = _previousETag,
+        };
+        _exception = await CaptureAsync(() =>
+            Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)).ConfigureAwait(false);
+    }
+
+    /// <summary>Searches greetings using a table-defined query.</summary>
+    /// <param name="table">The search query data.</param>
+    [When("I search greetings by")]
+    public async Task SearchGreetings(Table table)
+    {
+        var query = table.CreateInstance<SearchGreetingsQuery>();
+        _greetingPage = await Context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(query)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that the active greeting matches the supplied table.</summary>
+    /// <param name="table">The expected greeting data.</param>
+    [Then("the current greeting is")]
+    public void CurrentGreetingIs(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        table.CompareToInstance(_greeting!);
+    }
+
+    /// <summary>Asserts that the current greeting has a changed, opaque concurrency token.</summary>
+    [Then("the current greeting has a refreshed opaque ETag")]
+    public void CurrentGreetingHasRefreshedOpaqueETag()
+    {
+        _greeting.Should().NotBeNull();
+        _greeting!.ETag.Should().NotBeNullOrWhiteSpace();
+        _greeting.ETag.Should().NotBe(_previousETag);
+    }
+
+    /// <summary>Asserts the typed stale-ETag failure.</summary>
+    [Then("the request fails because the greeting ETag is stale")]
+    public void RequestFailsBecauseGreetingETagIsStale()
+    {
+        _exception.Should().BeOfType<EntityTagMismatchException>();
+    }
+
+    /// <summary>Asserts that the active greeting audit matches the supplied table.</summary>
+    /// <param name="table">The expected audit data.</param>
+    [Then("the current greeting audit is")]
+    public async Task CurrentGreetingAuditIs(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+            new GetAuditsQuery
+            {
+                Identifier = _greeting!.Id.ToString("D"),
+                Limit = 25,
+            }).ConfigureAwait(false);
+        var audit = audits.Data.Single();
+        table.CompareToInstance(audit);
+    }
+
+    /// <summary>Asserts the current greeting-search result count.</summary>
+    /// <param name="count">The expected count.</param>
+    [Then(@"the greeting search has (.*) results")]
+    public void GreetingSearchHasResults(long count)
+    {
+        _greetingPage.Should().NotBeNull();
+        _greetingPage!.Count.Should().Be(count);
+    }
+
+    /// <summary>Asserts the current greeting-search result set.</summary>
+    /// <param name="table">The expected greeting data.</param>
+    [Then("the greeting search contains")]
+    public void GreetingSearchContains(Table table)
+    {
+        _greetingPage.Should().NotBeNull();
+        table.CompareToSet(_greetingPage!.Data);
+    }
+
+    /// <summary>Creates a greeting by dispatching its request contract.</summary>
+    /// <param name="name">The greeting name.</param>
+    [Given(@"I create the greeting ""(.*)""")]
+    [When(@"I create the greeting ""(.*)""")]
+    public async Task CreateGreeting(string name)
+    {
+        _greeting = null;
+        _exception = await CaptureAsync(async () =>
+        {
+            _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
+                new CreateGreetingRequest
+                {
+                    Name = name,
+                }).ConfigureAwait(false);
+            return _greeting;
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Queries the greeting through its public query contract.</summary>
+    [When("I query the greeting")]
+    public async Task QueryGreeting()
+    {
+        _greeting.Should().NotBeNull();
+        _exception = await CaptureAsync(async () =>
+        {
+            _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+                new GetGreetingQuery
+                {
+                    Id = _greeting!.Id,
+                }).ConfigureAwait(false);
+            return _queriedGreeting;
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Queries the evolved version-two contract.</summary>
+    [When("I query the greeting through version two")]
+    public async Task QueryGreetingVersionTwo()
+    {
+        _greeting.Should().NotBeNull();
+        _versionTwoGreeting = await Context.DispatchQueryAsync<GetGreetingV2Query, GreetingResponseV2>(
+            new GetGreetingV2Query
+            {
+                Id = _greeting!.Id,
+            }).ConfigureAwait(false);
+    }
+
+    /// <summary>Consumes a stream with a cancellation token owned by the step.</summary>
+    [When("I consume a greeting stream and cancel after two items")]
+    public async Task ConsumeGreetingStream()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var stream = await Context.DispatchQueryAsync<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>(
+            new GetGreetingsStreamQuery
+            {
+                Count = 10,
+                DelayMilliseconds = 0,
+            },
+            cancellation.Token).ConfigureAwait(false);
+
         try
         {
-            var result = await new GrpcGreetingsV1Client(channel).CreateGreetingAsync(
-                new GrpcCreateGreetingRequest { Name = name }).ResponseAsync.ConfigureAwait(false);
-            _grpcGreeting = result;
+            await foreach (var item in stream.WithCancellation(cancellation.Token).ConfigureAwait(false))
+            {
+                _streamItems.Add(item);
+                if (_streamItems.Count == 2)
+                    await cancellation.CancelAsync().ConfigureAwait(false);
+            }
         }
-        catch (RpcException exception)
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            _grpcErrorStatus = exception.StatusCode;
+            _streamWasCancelled = true;
         }
     }
 
-    [When(@"I query the greeting through version two")]
-    public async Task WhenIQueryTheGreetingThroughVersionTwo()
+    /// <summary>Reads persisted audit state through the public query contract.</summary>
+    [Then(@"the audit query contains a (.*) operation for ""(.*)""")]
+    public async Task QueryAudit(string operation, string userId)
     {
-        _greeting.Should().NotBeNull();
-        _versionTwoGreeting = await _context.Client.GetFromJsonAsync<AppGreetingResponseV2>(
-            $"/api/v2/greetings-v2/{_greeting!.Id}",
-            JsonOptions).ConfigureAwait(false);
+        _audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+            new GetAuditsQuery
+            {
+                UserId = userId,
+                Limit = 25,
+            }).ConfigureAwait(false);
+
+        var audit = _audits.Data.Single(record => record.Operation == operation);
+        audit.UserId.Should().Be(userId);
+        audit.EntityType.Should().Be(nameof(GreetingResponse));
+        audit.Identifier.Should().NotBeNullOrWhiteSpace();
+        audit.Timestamp.Should().NotBe(default);
     }
 
-    [When(@"I compose the greeting ""(.*)"" over HTTP")]
-    public async Task WhenIComposeTheGreetingOverHttp(string name)
+    /// <summary>Asserts that the greeting was returned by its query contract.</summary>
+    [Then("the greeting can be queried")]
+    public void GreetingCanBeQueried()
     {
-        _response = await _context.Client.PostAsJsonAsync(
-            "/api/v1/greetings/compose",
-            new AppComposeGreetingRequest { Name = name },
-            JsonOptions).ConfigureAwait(false);
-        _response.EnsureSuccessStatusCode();
-        var composition = await _response.Content.ReadFromJsonAsync<AppComposeGreetingResponse>(JsonOptions).ConfigureAwait(false);
-        _greeting = new AppGreetingResponse
-        {
-            Id = composition!.Id,
-            Message = string.Empty,
-        };
+        _exception.Should().BeNull();
+        _queriedGreeting.Should().NotBeNull();
+        _queriedGreeting!.Id.Should().Be(_greeting!.Id);
+        _queriedGreeting.Message.Should().Be(_greeting.Message);
     }
 
-    [Then(@"the greeting is available over HTTP")]
-    public async Task ThenTheGreetingIsAvailableOverHttp()
+    /// <summary>Asserts the typed authorization failure.</summary>
+    [Then("the request fails with an authorization exception")]
+    public void RequestFailsWithAuthorizationException()
     {
-        _greeting.Should().NotBeNull();
-        var response = await _context.Client.GetAsync(
-            new Uri($"/api/v1/greetings/{_greeting!.Id}", UriKind.Relative)).ConfigureAwait(false);
-
-        response.EnsureSuccessStatusCode();
-        var greeting = await response.Content.ReadFromJsonAsync<AppGreetingResponse>(JsonOptions).ConfigureAwait(false);
-        greeting.Should().NotBeNull();
-        greeting!.Id.Should().Be(_greeting.Id);
+        _exception.Should().BeOfType<PolicyAuthorizationException>();
     }
 
-    [Then(@"the greeting is available over gRPC")]
-    public async Task ThenTheGreetingIsAvailableOverGrpc()
+    /// <summary>Asserts the typed business violation and its domain property.</summary>
+    /// <param name="name">The duplicated greeting name.</param>
+    [Then(@"the request fails with a greeting already exists violation for ""(.*)""")]
+    public void RequestFailsWithBusinessViolation(string name)
     {
-        _grpcGreeting.Should().NotBeNull();
-        using var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
-        {
-            HttpClient = _context.Client,
-        });
-        var greeting = await new GrpcGreetingsV1Client(channel).GetGreetingAsync(
-            new GrpcGetGreetingQuery { Id = _grpcGreeting!.Id }).ResponseAsync.ConfigureAwait(false);
-
-        greeting.Id.Should().Equal(_grpcGreeting.Id);
-        greeting.Message.Should().Be(_grpcGreeting.Message);
+        _exception.Should().BeOfType<BusinessRuleViolationException>();
+        var violation = ((BusinessRuleViolationException)_exception!).BusinessRuleViolation;
+        violation.Should().BeOfType<GreetingAlreadyExistsViolation>();
+        ((GreetingAlreadyExistsViolation)violation).Name.Should().Be(name);
     }
 
-    [Then(@"the request returns a business rule violation")]
-    public void ThenTheRequestReturnsABusinessRuleViolation()
+    /// <summary>Asserts the typed validation failure.</summary>
+    [Then("the request fails validation")]
+    public void RequestFailsValidation()
     {
-        _response.Should().NotBeNull();
-        _response!.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        _response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+        _exception.Should().BeOfType<ValidationException>();
+        ((ValidationException)_exception!).Errors
+            .Should().Contain(error => error.PropertyName == nameof(CreateGreetingRequest.Name));
     }
 
-    [Then(@"the request returns validation errors")]
-    public async Task ThenTheRequestReturnsValidationErrors()
-    {
-        _response.Should().NotBeNull();
-        _response!.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        _response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
-
-        var problemDetails = await _response.Content.ReadFromJsonAsync<JsonElement>().ConfigureAwait(false);
-        problemDetails.GetProperty("errors").GetProperty("Name")[0].GetString().Should().Be("Name must not be empty.");
-    }
-
-    [Then(@"the gRPC request is invalid")]
-    public void ThenTheGrpcRequestIsInvalid()
-    {
-        _grpcErrorStatus.Should().Be(StatusCode.InvalidArgument);
-    }
-
-    [Then(@"the request is unauthorized")]
-    public void ThenTheRequestIsUnauthorized()
-    {
-        _response.Should().NotBeNull();
-        _response!.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Then(@"the version two greeting includes its message length")]
-    public void ThenTheVersionTwoGreetingIncludesItsMessageLength()
+    /// <summary>Asserts the evolved response field.</summary>
+    [Then("the version two greeting includes its message length")]
+    public void VersionTwoGreetingIncludesMessageLength()
     {
         _versionTwoGreeting.Should().NotBeNull();
         _versionTwoGreeting!.MessageLength.Should().Be(_versionTwoGreeting.Message.Length);
     }
 
-    [Then(@"the composed greeting is eventually available over HTTP")]
-    public async Task ThenTheComposedGreetingIsEventuallyAvailableOverHttp()
+    /// <summary>Asserts stream items and cancellation.</summary>
+    [Then("the stream yields two items before cancellation")]
+    public void StreamYieldsTwoItemsBeforeCancellation()
     {
-        _greeting.Should().NotBeNull();
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        HttpResponseMessage? response;
-        do
+        _streamItems.Should().HaveCount(2);
+        _streamWasCancelled.Should().BeTrue();
+    }
+
+    private static async Task<Exception?> CaptureAsync<T>(Func<Task<T>> action)
+    {
+        try
         {
-            response = await _context.Client.GetAsync(
-                new Uri($"/api/v1/greetings/{_greeting!.Id}", UriKind.Relative)).ConfigureAwait(false);
-            if (response.IsSuccessStatusCode)
-            {
-                response.Dispose();
-                return;
-            }
-
-            response.Dispose();
-            await Task.Delay(50).ConfigureAwait(false);
+            await action().ConfigureAwait(false);
+            return null;
         }
-        while (DateTime.UtcNow < deadline);
-
-        throw new TimeoutException("The composed greeting was not completed within 10 seconds.");
+        catch (Exception exception)
+        {
+#pragma warning disable ERP022 // Reqnroll needs the exception for a later typed assertion.
+            return exception;
+#pragma warning restore ERP022
+        }
     }
 
-    [Then(@"the audit query contains a (.*) operation for ""(.*)""")]
-    public async Task ThenTheAuditQueryContainsRecordFor(string operation, string userId)
+    private async Task CreateGreetingAsync(CreateGreetingRequest request)
     {
-        var response = await _context.Client.GetAsync(
-            new Uri("/api/v1/audits?skip=0&limit=25", UriKind.Relative)).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        response.IsSuccessStatusCode.Should().BeTrue(body);
-        var audits = JsonSerializer.Deserialize<Ark.Tools.Core.PagedResult<AppAuditRecord>>(body, JsonOptions);
-        _audit = audits!.Data.Single(record => record.Operation == operation && record.UserId == userId);
-        _audit.EntityType.Should().Be(typeof(AppGreetingResponse).Name);
-        _audit.Identifier.Should().NotBeNullOrWhiteSpace();
-        _audit.Timestamp.Should().NotBe(default);
-
-        var timestamp = Uri.EscapeDataString(InstantPattern.ExtendedIso.Format(_audit.Timestamp));
-        var filteredResponse = await _context.Client.GetAsync(
-            new Uri("/api/v1/audits?skip=0&limit=25&fromTimestamp=" + timestamp, UriKind.Relative)).ConfigureAwait(false);
-        filteredResponse.EnsureSuccessStatusCode();
-        var filteredAudits = await filteredResponse.Content.ReadFromJsonAsync<Ark.Tools.Core.PagedResult<AppAuditRecord>>(JsonOptions).ConfigureAwait(false);
-        filteredAudits!.Data.Should().Contain(record => record.Id == _audit.Id);
+        _greeting = null;
+        _exception = await CaptureAsync(async () =>
+        {
+            _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(request)
+                .ConfigureAwait(false);
+            return _greeting;
+        }).ConfigureAwait(false);
     }
+
+    private ApplicationTestContext Context => _sampleContext.Application;
 }

@@ -18,7 +18,7 @@ public sealed class FileDownloadTests
     [TestMethod]
     public async Task MultiFileUploadPreservesFormOrder()
     {
-        using var context = SampleTestContext.WithoutFallbackPolicy();
+        using var context = TransportTestContext.WithoutFallbackPolicy();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer", new JwtTokenBuilder().AddSubject("file-user").Build());
         using var form = new MultipartFormDataContent();
@@ -40,7 +40,7 @@ public sealed class FileDownloadTests
     [TestMethod]
     public async Task MultiFileUploadRejectsTooManyFiles()
     {
-        using var context = SampleTestContext.WithoutFallbackPolicy();
+        using var context = TransportTestContext.WithoutFallbackPolicy();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer", new JwtTokenBuilder().AddSubject("file-user").Build());
         using var form = new MultipartFormDataContent();
@@ -64,7 +64,7 @@ public sealed class FileDownloadTests
     [TestMethod]
     public async Task UploadThenDownloadReturnsSameBytes()
     {
-        using var context = SampleTestContext.WithoutFallbackPolicy();
+        using var context = TransportTestContext.WithoutFallbackPolicy();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("file-user").Build());
@@ -90,7 +90,7 @@ public sealed class FileDownloadTests
     [TestMethod]
     public async Task MissingDownloadReturnsNotFound()
     {
-        using var context = SampleTestContext.WithoutFallbackPolicy();
+        using var context = TransportTestContext.WithoutFallbackPolicy();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             new JwtTokenBuilder().AddSubject("file-user").Build());

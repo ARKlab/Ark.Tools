@@ -29,11 +29,13 @@ public sealed class CompositionRootTests
     public async Task ProductionCompositionStartsAndExposesHealth()
     {
         var network = new InMemNetwork();
-        var store = new InMemoryGreetingStore();
+        var audits = new InMemoryAuditStore();
+        var store = new InMemoryGreetingStore(audits);
         var container = SampleComposition.BuildContainer(
             network,
             useSqlStore: false,
-            greetingStore: store);
+            greetingStore: store,
+            auditStore: audits);
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             ApplicationName = typeof(SampleHost).Assembly.GetName().Name,

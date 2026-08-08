@@ -743,6 +743,13 @@
           "NodaTime": "[3.3.3, )"
         }
       },
+      "ark.tools.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Dapper": "[2.1.79, )"
+        }
+      },
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {

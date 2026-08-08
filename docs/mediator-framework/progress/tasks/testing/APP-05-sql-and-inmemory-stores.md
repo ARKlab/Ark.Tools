@@ -40,13 +40,13 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Default tests deploy and reset the DACPAC and pass when SQL Server is
+- [x] Default tests deploy and reset the DACPAC and pass when SQL Server is
   available.
-- [ ] The explicit in-memory profile passes without Docker or SQL Server.
+- [x] The explicit in-memory profile passes without Docker or SQL Server.
 - [ ] Dapper query paths, transaction/outbox paths, audit persistence, paging,
   and row-version-to-opaque-ETag conversion have direct assertions.
 - [ ] SQL cleanup is FK-safe and leaves no scenario data.
-- [ ] Profile documentation never embeds credentials or tokens.
+- [x] Profile documentation never embeds credentials or tokens.
 
 ## Tests
 
@@ -60,3 +60,9 @@ for every implementation task.
   - the same persistence-sensitive contract cases against the in-memory stores;
   - SQL reset after a failed scenario and no state leakage into the next case.
 - Run the full-solution gates after stopping the container.
+
+## Validation
+
+- The complete sample suite passes with `ARK_SAMPLE_INMEMORY_TESTS=1`.
+- The complete sample suite passes with SQL Server, using
+  `ARK_SAMPLE_SQL_CONNECTION` supplied outside the repository.

@@ -10,6 +10,7 @@ using FluentValidation.Results;
 
 using Rebus.Bus;
 
+using System.Collections.Concurrent;
 using System.Security.Claims;
 
 using NodaTime;
@@ -59,11 +60,11 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Date = Request.Date,
             DateTime = Request.DateTime,
             OffsetDateTime = Request.OffsetDateTime,
-            Period = Request.Period,
+            Period = Request.Period ?? Period.Zero,
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
-        await _store.SaveAndPublishAsync(response, new AuditEntry
+        return await _store.SaveAndPublishAsync(response, new AuditEntry
         {
             Id = auditId,
             UserId = _user.GetUserId() ?? "anonymous",
@@ -72,7 +73,6 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Operation = nameof(CreateGreetingRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
-        return response;
     }
 
 }
@@ -132,6 +132,7 @@ public sealed class ComposeGreetingHandler : IRequestHandler<ComposeGreetingRequ
         {
             Id = id,
             Name = Request.Name,
+            FailuresBeforeSuccess = Request.FailuresBeforeSuccess,
         }).ConfigureAwait(false);
 
         return new ComposeGreetingResponse
@@ -148,19 +149,28 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
     private readonly IGreetingStore _store;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
+    private readonly GreetingCompositionRetryTracker _retryTracker;
 
     /// <summary>Initializes a new instance of the <see cref="CompleteGreetingCompositionHandler"/> class.</summary>
-    public CompleteGreetingCompositionHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    public CompleteGreetingCompositionHandler(
+        IGreetingStore store,
+        IContextProvider<ClaimsPrincipal> user,
+        IClock clock,
+        GreetingCompositionRetryTracker retryTracker)
     {
         _store = store;
         _user = user;
         _clock = clock;
+        _retryTracker = retryTracker;
     }
 
     /// <inheritdoc />
     public async Task<GreetingResponse> ExecuteAsync(CompleteGreetingCompositionRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
+
+        if (_retryTracker.RecordAttempt(Request.Id) <= Request.FailuresBeforeSuccess)
+            throw new InvalidOperationException($"Greeting composition '{Request.Id}' failed transiently.");
 
         var auditId = Guid.NewGuid();
         var response = new GreetingResponse
@@ -183,6 +193,20 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
         return response;
     }
 
+}
+
+/// <summary>Tracks deterministic transient failures for one composition workflow.</summary>
+public sealed class GreetingCompositionRetryTracker
+{
+    private readonly ConcurrentDictionary<Guid, int> _attempts = new();
+
+    /// <summary>Records an attempt and returns its one-based ordinal.</summary>
+    /// <param name="id">The composition workflow identifier.</param>
+    /// <returns>The one-based attempt number.</returns>
+    public int RecordAttempt(Guid id)
+    {
+        return _attempts.AddOrUpdate(id, 1, static (_, attempts) => attempts + 1);
+    }
 }
 
 /// <summary>Consumes greeting-created notifications after their transaction commits.</summary>
@@ -430,6 +454,7 @@ public sealed class GetDocumentHandler : IQueryHandler<GetDocumentQuery, IArkAtt
     public Task<IArkAttachment> ExecuteAsync(GetDocumentQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return Task.FromResult(_documents.Get(query.Id)!);
+        return Task.FromResult(_documents.Get(query.Id)
+            ?? throw new EntityNotFoundException($"Greeting card '{query.Id}' was not found."));
     }
 }
