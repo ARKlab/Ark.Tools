@@ -160,7 +160,7 @@ public sealed class CreateBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        _ = await _store.GetAsync(request.BookId, ctk).ConfigureAwait(false);
+        await _store.GetAsync(request.BookId, ctk).ConfigureAwait(false);
         if (await _store.HasActivePrintProcessAsync(request.BookId, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
 

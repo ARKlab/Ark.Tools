@@ -47,14 +47,14 @@ public sealed class SearchBooksQueryValidator : AbstractValidator<SearchBooksQue
         RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
         RuleFor(query => query.Limit).InclusiveBetween(1, 100);
     }
+}
 
-    /// <summary>Validates book print-process creation requests.</summary>
-    public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<CreateBookPrintProcessRequest>
+/// <summary>Validates book print-process creation requests.</summary>
+public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<CreateBookPrintProcessRequest>
+{
+    /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessRequestValidator"/> class.</summary>
+    public CreateBookPrintProcessRequestValidator()
     {
-        /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessRequestValidator"/> class.</summary>
-        public CreateBookPrintProcessRequestValidator()
-        {
-            RuleFor(request => request.BookId).NotEmpty();
-        }
+        RuleFor(request => request.BookId).NotEmpty();
     }
 }
