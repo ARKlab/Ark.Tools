@@ -27,6 +27,7 @@
           CopyToOutputDirectory="PreserveNewest"
           Link="Greetings.proto" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.GrpcClient\Ark.MediatorFramework.Sample.GrpcClient.csproj" />
+    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Reqnroll\Ark.Tools.Reqnroll.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.Database\Ark.MediatorFramework.Sample.Database.sqlproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>Content</OutputItemType>
