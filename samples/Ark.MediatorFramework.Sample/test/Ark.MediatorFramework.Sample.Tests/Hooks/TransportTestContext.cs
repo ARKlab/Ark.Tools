@@ -39,8 +39,8 @@ public sealed class TransportTestContext : IDisposable
     private TransportTestContext(bool configureFallbackPolicy)
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-        var useSqlStore = string.Equals(
-            Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"),
+        var useSqlStore = !string.Equals(
+            Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
             "1",
             StringComparison.Ordinal);
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
