@@ -58,6 +58,7 @@ public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookR
     {
         return new AuditEntry
         {
+            Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(BookResponse),
             Identifier = id.ToString("D"),
@@ -92,6 +93,7 @@ public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookR
         };
         return await _store.UpdateAsync(book, new AuditEntry
         {
+            Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(BookResponse),
             Identifier = book.Id.ToString("D"),
@@ -122,6 +124,7 @@ public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
         ArgumentNullException.ThrowIfNull(request);
         await _store.DeleteAsync(request.Id, new AuditEntry
         {
+            Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(BookResponse),
             Identifier = request.Id.ToString("D"),
@@ -181,6 +184,7 @@ public sealed class CreateBookPrintProcessHandler :
     {
         return new AuditEntry
         {
+            Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(BookPrintProcessResponse),
             Identifier = id.ToString("D"),
@@ -244,6 +248,7 @@ public sealed class ProcessBookPrintProcessHandler :
     {
         return new AuditEntry
         {
+            Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(BookPrintProcessResponse),
             Identifier = id.ToString("D"),
