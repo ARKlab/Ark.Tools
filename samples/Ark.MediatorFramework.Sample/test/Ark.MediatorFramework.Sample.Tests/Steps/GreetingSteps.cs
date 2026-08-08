@@ -189,7 +189,9 @@ public sealed class GreetingSteps
         }
         catch (Exception exception)
         {
+#pragma warning disable ERP022 // Reqnroll needs the exception for a later typed assertion.
             return exception;
+#pragma warning restore ERP022
         }
     }
 

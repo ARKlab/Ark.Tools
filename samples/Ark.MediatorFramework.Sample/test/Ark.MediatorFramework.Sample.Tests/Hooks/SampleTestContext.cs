@@ -7,7 +7,7 @@ namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
 /// <summary>Owns the direct application composition for one Reqnroll scenario.</summary>
 [Binding]
-public sealed class SampleTestContext
+public sealed class SampleTestContext : IAsyncDisposable
 {
     private ApplicationTestContext? _application;
 
@@ -33,10 +33,16 @@ public sealed class SampleTestContext
     [AfterScenario(Order = int.MaxValue)]
     public async Task DisposeApplication()
     {
-        if (_application is null)
-            return;
+        await DisposeAsync().ConfigureAwait(false);
+    }
 
-        await _application.DisposeAsync().ConfigureAwait(false);
-        _application = null;
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_application is not null)
+        {
+            await _application.DisposeAsync().ConfigureAwait(false);
+            _application = null;
+        }
     }
 }
