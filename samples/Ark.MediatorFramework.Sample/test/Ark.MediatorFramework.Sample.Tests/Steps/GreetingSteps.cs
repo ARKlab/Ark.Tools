@@ -122,6 +122,7 @@ public sealed class GreetingSteps
             }).ConfigureAwait(false);
 
         var audit = _audits.Data.Single(record => record.Operation == operation);
+        audit.UserId.Should().Be(userId);
         audit.EntityType.Should().Be(nameof(GreetingResponse));
         audit.Identifier.Should().NotBeNullOrWhiteSpace();
         audit.Timestamp.Should().Be(Context.Clock.GetCurrentInstant());
