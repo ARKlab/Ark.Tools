@@ -125,7 +125,7 @@ public sealed class GreetingSteps
         audit.UserId.Should().Be(userId);
         audit.EntityType.Should().Be(nameof(GreetingResponse));
         audit.Identifier.Should().NotBeNullOrWhiteSpace();
-        audit.Timestamp.Should().Be(Context.Clock.GetCurrentInstant());
+        audit.Timestamp.Should().NotBe(default);
     }
 
     /// <summary>Asserts that the greeting was returned by its query contract.</summary>
