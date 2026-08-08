@@ -61,11 +61,48 @@ Framework capabilities such as source generation, transport serialization,
 OpenAPI schema generation, attachments and rich gRPC errors are covered by
 unit tests in `tests/Ark.Tools.MediatorFramework.Tests`.
 
-## Run
+### Table-driven application scenarios
+
+`Books.feature`, `GreetingTables.feature`, `GreetingCards.feature`, and
+`GreetingWorkflow.feature` keep scenario state in their injected step context.
+The table verbs create request DTOs with `Reqnroll.Assist`, dispatch application
+contracts, and make the resulting entity, collection, or attachment the active
+scenario value. Assertions compare those active values through contracts rather
+than reimplementing transport behavior.
+
+## Test profiles
+
+The SQL profile is the default. Start only the SQL Server dependency, provide
+`ARK_SAMPLE_SQL_CONNECTION` through secure local configuration, then run the
+sample project:
 
 ```bash
-docker compose up -d
+docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d db
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
+```
+
+The test hook deploys the DACPAC once and resets the database with
+`[ops].[ResetFull_OnlyForTesting]` before every Reqnroll scenario and
+transport-test context. Reset uses the FK-safe database procedure; no manual
+schema deployment or table cleanup is required.
+
+Run the same suite without Docker or SQL Server by selecting the explicit
+in-memory profile:
+
+```bash
+ARK_SAMPLE_INMEMORY_TESTS=1 \
+  dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
+```
+
+The test assembly is serialized because its SQL profile shares a database. Rebus
+continues to use the in-memory transport for both profiles. Greeting-card
+attachments use the sample's in-memory `DocumentStore` in both profiles, so the
+sample does not require Azurite.
+
+Stop the local database when finished:
+
+```bash
+docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml down
 ```
 
 Configuration layers are loaded in this order: `appsettings.json`,
@@ -74,11 +111,10 @@ optional Azure Key Vault named by `KeyVault:Uri`. The sample runs without Key Va
 or telemetry configuration. Set `ApplicationInsights:ConnectionString` to enable
 Application Insights.
 
-The SQL-backed sample uses SQL Server on `localhost:1433`. Build the database project or deploy
-`src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running the default scenarios.
-Greeting writes and their Rebus notifications share one SQL transaction. Set
-`ARK_SAMPLE_INMEMORY_TESTS=1` to run the direct application scenarios against
-the in-memory store.
+Greeting writes and their Rebus notifications share one SQL transaction. The
+SQL connection string is never stored in this repository; use
+`ARK_SAMPLE_SQL_CONNECTION` from secure local configuration when the Docker
+default is not appropriate.
 
 ### Azure Functions host
 
@@ -159,7 +195,7 @@ curl -X PUT -H "Authorization: ******" -H "If-Match: \"$ETAG\"" \
 ```
 
 The sample stores the version as SQL Server `ROWVERSION` (or a monotonic in-memory
-version), while clients only see the opaque base64 token. A stale token returns
+version), while contracts expose only an opaque string token. A stale token returns
 `412 Precondition Failed`; transient server concurrency failures are retried twice
 and then return `409 Conflict`.
 
