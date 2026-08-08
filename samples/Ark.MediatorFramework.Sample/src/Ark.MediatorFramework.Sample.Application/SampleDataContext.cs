@@ -217,6 +217,110 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         };
     }
 
+    /// <summary>Saves a book in the current transaction.</summary>
+    public async Task SaveBookAsync(BookResponse book, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description])
+            VALUES (@Id, @Title, @Author, @Genre, @ISBN, @Description);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            book.Id,
+            book.Title,
+            book.Author,
+            Genre = book.Genre.ToString(),
+            book.ISBN,
+            book.Description,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads a book by identifier in the current transaction.</summary>
+    public async Task<BookResponse?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            FROM [dbo].[Book]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        var row = await Connection.QuerySingleOrDefaultAsync<BookRow>(command).ConfigureAwait(false);
+        return row?.ToResponse();
+    }
+
+    /// <summary>Updates a book in the current transaction.</summary>
+    public async Task<bool> UpdateBookAsync(BookResponse book, CancellationToken ctk = default)
+    {
+        const string sql = """
+            UPDATE [dbo].[Book]
+            SET [Title] = @Title,
+                [Author] = @Author,
+                [Genre] = @Genre,
+                [ISBN] = @ISBN,
+                [Description] = @Description
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            book.Id,
+            book.Title,
+            book.Author,
+            Genre = book.Genre.ToString(),
+            book.ISBN,
+            book.Description,
+        }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Deletes a book in the current transaction.</summary>
+    public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            DELETE FROM [dbo].[Book]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Reads a page of books in the current transaction.</summary>
+    public async Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            FROM [dbo].[Book]
+            WHERE (@Title IS NULL OR [Title] = @Title)
+              AND (@Author IS NULL OR [Author] = @Author)
+              AND (@Genre IS NULL OR [Genre] = @Genre)
+            ORDER BY [Id]
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            SELECT COUNT_BIG(*)
+            FROM [dbo].[Book]
+            WHERE (@Title IS NULL OR [Title] = @Title)
+              AND (@Author IS NULL OR [Author] = @Author)
+              AND (@Genre IS NULL OR [Genre] = @Genre);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            query.Title,
+            query.Author,
+            Genre = query.Genre?.ToString(),
+            query.Skip,
+            query.Limit,
+        }, Transaction, cancellationToken: ctk);
+        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var rows = await results.ReadAsync<BookRow>().ConfigureAwait(false);
+        var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
+        return new BookPage
+        {
+            Count = count,
+            Skip = query.Skip,
+            Limit = query.Limit,
+            Data = rows.Select(row => row.ToResponse()).ToArray(),
+        };
+    }
+
     private static string EscapeLikePattern(string value)
     {
         return value
@@ -281,6 +385,29 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
                 AuditId = AuditId,
                 ETag = ETag,
+            };
+        }
+    }
+
+    private sealed class BookRow
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public string Genre { get; set; } = string.Empty;
+        public string? ISBN { get; set; }
+        public string Description { get; set; } = string.Empty;
+
+        public BookResponse ToResponse()
+        {
+            return new BookResponse
+            {
+                Id = Id,
+                Title = Title,
+                Author = Author,
+                Genre = Enum.Parse<BookGenre>(Genre),
+                ISBN = ISBN,
+                Description = Description,
             };
         }
     }

@@ -137,6 +137,11 @@ public static class ApplicationComposition
         }
         else
             container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
+
+        if (useSqlStore)
+            container.RegisterSingleton<IBookStore, SqlBookStore>();
+        else
+            container.RegisterSingleton<IBookStore, InMemoryBookStore>();
         container.RegisterSingleton<DocumentStore>();
         container.RegisterSingleton<IClock>(() => clock ?? SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
@@ -152,10 +157,15 @@ public static class ApplicationComposition
         container.Register<ICommandHandler<RefreshGreetingCommand>, RefreshGreetingHandler>();
         container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
         container.Register<IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>, UpdateGreetingMessageHandler>();
+        container.Register<IRequestHandler<CreateBookRequest, BookResponse>, CreateBookHandler>();
+        container.Register<IRequestHandler<UpdateBookRequest, BookResponse>, UpdateBookHandler>();
+        container.Register<IRequestHandler<DeleteBookRequest, bool>, DeleteBookHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();
         container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
         container.Register<IQueryHandler<GetGreetingV2Query, GreetingResponseV2>, GetGreetingV2Handler>();
+        container.Register<IQueryHandler<GetBookQuery, BookResponse>, GetBookHandler>();
+        container.Register<IQueryHandler<SearchBooksQuery, BookPage>, SearchBooksHandler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();
