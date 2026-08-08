@@ -458,16 +458,19 @@ public sealed class SqlGreetingStore : IGreetingStore
     /// <param name="greeting">The greeting to persist.</param>
     /// <param name="audit">The optional audit entry to persist in the transaction.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<GreetingResponse> SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         if (audit is not null)
             await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
+        var persisted = await context.ReadAsync(greeting.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Greeting '{greeting.Id}' was not found.");
         using var scope = _bus.Enlist(context);
-        await _bus.SendLocal(new GreetingCreatedNotification { Greeting = greeting }).ConfigureAwait(false);
+        await _bus.SendLocal(new GreetingCreatedNotification { Greeting = persisted }).ConfigureAwait(false);
         await scope.CompleteAsync().ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
+        return persisted;
     }
 
     /// <inheritdoc />

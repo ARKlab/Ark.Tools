@@ -21,7 +21,7 @@ public interface IGreetingStore
     /// <param name="greeting">The greeting to persist.</param>
     /// <param name="audit">The optional audit entry to persist with the greeting.</param>
     /// <param name="ctk">The cancellation token.</param>
-    Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
+    Task<GreetingResponse> SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Returns a page of persisted audit records.</summary>
     Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
@@ -94,9 +94,10 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<GreetingResponse> SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        return SaveAsync(greeting, audit, ctk);
+        await SaveAsync(greeting, audit, ctk).ConfigureAwait(false);
+        return await GetAsync(greeting.Id, ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

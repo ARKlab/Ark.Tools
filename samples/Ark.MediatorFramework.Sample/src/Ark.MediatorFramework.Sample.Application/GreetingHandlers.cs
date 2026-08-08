@@ -64,7 +64,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
-        await _store.SaveAndPublishAsync(response, new AuditEntry
+        return await _store.SaveAndPublishAsync(response, new AuditEntry
         {
             Id = auditId,
             UserId = _user.GetUserId() ?? "anonymous",
@@ -73,7 +73,6 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Operation = nameof(CreateGreetingRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
-        return response;
     }
 
 }
@@ -455,6 +454,7 @@ public sealed class GetDocumentHandler : IQueryHandler<GetDocumentQuery, IArkAtt
     public Task<IArkAttachment> ExecuteAsync(GetDocumentQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return Task.FromResult(_documents.Get(query.Id)!);
+        return Task.FromResult(_documents.Get(query.Id)
+            ?? throw new EntityNotFoundException($"Greeting card '{query.Id}' was not found."));
     }
 }

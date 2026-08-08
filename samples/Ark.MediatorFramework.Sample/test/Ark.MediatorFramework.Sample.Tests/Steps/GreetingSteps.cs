@@ -13,6 +13,7 @@ using AwesomeAssertions;
 using FluentValidation;
 
 using Reqnroll;
+using Reqnroll.Assist;
 
 namespace Ark.MediatorFramework.Sample.Tests.Steps;
 
@@ -25,6 +26,7 @@ public sealed class GreetingSteps
     private GreetingResponse? _queriedGreeting;
     private GreetingResponseV2? _versionTwoGreeting;
     private PagedResult<AuditRecord>? _audits;
+    private GreetingPage? _greetingPage;
     private Exception? _exception;
     private List<GreetingStreamItem> _streamItems = [];
     private bool _streamWasCancelled;
@@ -34,6 +36,110 @@ public sealed class GreetingSteps
     public GreetingSteps(SampleTestContext context)
     {
         _sampleContext = context;
+    }
+
+    /// <summary>Gets the active greeting in the current scenario.</summary>
+    public GreetingResponse? Current => _greeting;
+
+    /// <summary>Creates and activates a greeting from a table-defined request.</summary>
+    /// <param name="table">The greeting request data.</param>
+    [Given("I create a greeting with")]
+    [When("I create a greeting with")]
+    public async Task CreateGreeting(Table table)
+    {
+        var request = table.CreateInstance<CreateGreetingRequest>();
+        await CreateGreetingAsync(request).ConfigureAwait(false);
+    }
+
+    /// <summary>Creates greetings from table rows and activates the last result.</summary>
+    /// <param name="table">The greeting request data.</param>
+    [Given("I create greetings with")]
+    public async Task CreateGreetings(Table table)
+    {
+        foreach (var request in table.CreateSet<CreateGreetingRequest>())
+            await CreateGreetingAsync(request).ConfigureAwait(false);
+    }
+
+    /// <summary>Loads the active greeting through its public query contract.</summary>
+    [When("I retrieve the current greeting")]
+    public async Task RetrieveCurrentGreeting()
+    {
+        _greeting.Should().NotBeNull();
+        _exception = await CaptureAsync(async () =>
+        {
+            _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+                new GetGreetingQuery { Id = _greeting!.Id }).ConfigureAwait(false);
+            _greeting = _queriedGreeting;
+            return _queriedGreeting;
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Updates the active greeting from a table-defined request.</summary>
+    /// <param name="table">The replacement greeting data.</param>
+    [When("I update the current greeting with")]
+    public async Task UpdateCurrentGreeting(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
+        {
+            Id = _greeting!.Id,
+            ETag = _greeting.ETag,
+        };
+        _greeting = await Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Searches greetings using a table-defined query.</summary>
+    /// <param name="table">The search query data.</param>
+    [When("I search greetings by")]
+    public async Task SearchGreetings(Table table)
+    {
+        var query = table.CreateInstance<SearchGreetingsQuery>();
+        _greetingPage = await Context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(query)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that the active greeting matches the supplied table.</summary>
+    /// <param name="table">The expected greeting data.</param>
+    [Then("the current greeting is")]
+    public void CurrentGreetingIs(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        table.CompareToInstance(_greeting!);
+    }
+
+    /// <summary>Asserts that the active greeting audit matches the supplied table.</summary>
+    /// <param name="table">The expected audit data.</param>
+    [Then("the current greeting audit is")]
+    public async Task CurrentGreetingAuditIs(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+            new GetAuditsQuery
+            {
+                Identifier = _greeting!.Id.ToString("D"),
+                Limit = 25,
+            }).ConfigureAwait(false);
+        var audit = audits.Data.Single();
+        table.CompareToInstance(audit);
+    }
+
+    /// <summary>Asserts the current greeting-search result count.</summary>
+    /// <param name="count">The expected count.</param>
+    [Then(@"the greeting search has (.*) results")]
+    public void GreetingSearchHasResults(long count)
+    {
+        _greetingPage.Should().NotBeNull();
+        _greetingPage!.Count.Should().Be(count);
+    }
+
+    /// <summary>Asserts the current greeting-search result set.</summary>
+    /// <param name="table">The expected greeting data.</param>
+    [Then("the greeting search contains")]
+    public void GreetingSearchContains(Table table)
+    {
+        _greetingPage.Should().NotBeNull();
+        table.CompareToSet(_greetingPage!.Data);
     }
 
     /// <summary>Creates a greeting by dispatching its request contract.</summary>
@@ -194,6 +300,17 @@ public sealed class GreetingSteps
             return exception;
 #pragma warning restore ERP022
         }
+    }
+
+    private async Task CreateGreetingAsync(CreateGreetingRequest request)
+    {
+        _greeting = null;
+        _exception = await CaptureAsync(async () =>
+        {
+            _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(request)
+                .ConfigureAwait(false);
+            return _greeting;
+        }).ConfigureAwait(false);
     }
 
     private ApplicationTestContext Context => _sampleContext.Application;

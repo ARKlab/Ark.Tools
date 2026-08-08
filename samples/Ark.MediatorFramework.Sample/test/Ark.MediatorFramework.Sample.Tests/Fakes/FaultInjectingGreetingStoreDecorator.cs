@@ -58,7 +58,7 @@ public sealed class FaultInjectingGreetingStoreDecorator : IGreetingStore
         => _inner.SaveAsync(greeting, audit, ctk);
 
     /// <inheritdoc />
-    public Task SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
+    public Task<GreetingResponse> SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
         => _inner.SaveAndPublishAsync(greeting, audit, ctk);
 
     /// <inheritdoc />
