@@ -7,6 +7,7 @@ using Ark.MediatorFramework.Sample.Tests.Hooks;
 using Ark.Tools.Authorization;
 using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Core.EntityTag;
 
 using AwesomeAssertions;
 
@@ -27,6 +28,7 @@ public sealed class GreetingSteps
     private GreetingResponseV2? _versionTwoGreeting;
     private PagedResult<AuditRecord>? _audits;
     private GreetingPage? _greetingPage;
+    private string? _previousETag;
     private Exception? _exception;
     private List<GreetingStreamItem> _streamItems = [];
     private bool _streamWasCancelled;
@@ -80,13 +82,30 @@ public sealed class GreetingSteps
     public async Task UpdateCurrentGreeting(Table table)
     {
         _greeting.Should().NotBeNull();
+        _previousETag = _greeting!.ETag;
         var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
         {
-            Id = _greeting!.Id,
+            Id = _greeting.Id,
             ETag = _greeting.ETag,
         };
         _greeting = await Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>Attempts an update with the ETag from before the latest successful update.</summary>
+    /// <param name="table">The replacement greeting data.</param>
+    [When("I update the current greeting with a stale ETag and")]
+    public async Task UpdateCurrentGreetingWithStaleETag(Table table)
+    {
+        _greeting.Should().NotBeNull();
+        _previousETag.Should().NotBeNullOrWhiteSpace();
+        var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
+        {
+            Id = _greeting!.Id,
+            ETag = _previousETag,
+        };
+        _exception = await CaptureAsync(() =>
+            Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)).ConfigureAwait(false);
     }
 
     /// <summary>Searches greetings using a table-defined query.</summary>
@@ -106,6 +125,22 @@ public sealed class GreetingSteps
     {
         _greeting.Should().NotBeNull();
         table.CompareToInstance(_greeting!);
+    }
+
+    /// <summary>Asserts that the current greeting has a changed, opaque concurrency token.</summary>
+    [Then("the current greeting has a refreshed opaque ETag")]
+    public void CurrentGreetingHasRefreshedOpaqueETag()
+    {
+        _greeting.Should().NotBeNull();
+        _greeting!.ETag.Should().NotBeNullOrWhiteSpace();
+        _greeting.ETag.Should().NotBe(_previousETag);
+    }
+
+    /// <summary>Asserts the typed stale-ETag failure.</summary>
+    [Then("the request fails because the greeting ETag is stale")]
+    public void RequestFailsBecauseGreetingETagIsStale()
+    {
+        _exception.Should().BeOfType<EntityTagMismatchException>();
     }
 
     /// <summary>Asserts that the active greeting audit matches the supplied table.</summary>

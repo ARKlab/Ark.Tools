@@ -30,6 +30,11 @@ Feature: Greeting contracts
             Then the current greeting is
                 | Message               |
                 | Updated table greeting |
+            And the current greeting has a refreshed opaque ETag
+            When I update the current greeting with a stale ETag and
+                | Message               |
+                | Rejected table update |
+            Then the request fails because the greeting ETag is stale
 
     Rule: Search results are prepared and compared through tables
 
