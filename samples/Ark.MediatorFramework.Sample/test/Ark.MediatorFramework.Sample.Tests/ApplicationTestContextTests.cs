@@ -86,7 +86,7 @@ public sealed class ApplicationTestContextTests
     [TestMethod]
     public async Task ConcurrentPrintRequestsCreateOneActiveProcess()
     {
-        await using var context = new ApplicationTestContext(useSqlStore: false);
+        await using var context = new ApplicationTestContext();
         context.SetAuthenticatedUser();
         context.StartOutboundBus();
         var book = await context.DispatchRequestAsync<CreateBookRequest, BookResponse>(
@@ -113,7 +113,7 @@ public sealed class ApplicationTestContextTests
     [TestMethod]
     public async Task RedeliveryResumesRunningPrintProcess()
     {
-        await using var context = new ApplicationTestContext(useSqlStore: false);
+        await using var context = new ApplicationTestContext();
         context.SetAuthenticatedUser();
         context.StartOutboundBus();
         var book = await context.DispatchRequestAsync<CreateBookRequest, BookResponse>(
