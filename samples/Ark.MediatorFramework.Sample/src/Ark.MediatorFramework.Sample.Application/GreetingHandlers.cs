@@ -60,7 +60,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Date = Request.Date,
             DateTime = Request.DateTime,
             OffsetDateTime = Request.OffsetDateTime,
-            Period = Request.Period,
+            Period = Request.Period ?? Period.Zero,
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 

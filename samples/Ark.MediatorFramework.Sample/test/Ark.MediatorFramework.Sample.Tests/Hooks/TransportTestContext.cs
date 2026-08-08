@@ -43,6 +43,10 @@ public sealed class TransportTestContext : IDisposable
             Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
             "1",
             StringComparison.Ordinal);
+#pragma warning disable MA0045, VSTHRD002 // Test contexts must be synchronously constructible.
+        if (useSqlStore)
+            DatabaseHooks.ResetDatabaseAsync().GetAwaiter().GetResult();
+#pragma warning restore MA0045, VSTHRD002
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         var network = new InMemNetwork();
         // When not using SQL, share one InMemoryGreetingStore between the API container and the

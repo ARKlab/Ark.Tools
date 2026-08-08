@@ -7,6 +7,7 @@ using Ark.Tools.Core;
 
 using Dapper;
 
+using NodaTime;
 using NodaTime.Text;
 
 using Rebus.Bus;
@@ -68,7 +69,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             greeting.Date,
             greeting.DateTime,
             greeting.OffsetDateTime,
-            Period = PeriodPattern.NormalizingIso.Format(greeting.Period),
+            Period = PeriodPattern.NormalizingIso.Format(greeting.Period ?? Period.Zero),
             greeting.AuditId,
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
@@ -98,7 +99,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         const string sql = """
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
-                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
             WHERE [Id] = @Id
             """;
@@ -112,7 +113,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         const string sql = """
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
-                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
             """;
         var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
@@ -135,7 +136,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 UPDATE SET [Message] = @Message, [AuditId] = @AuditId
             OUTPUT inserted.[Id], inserted.[Message], inserted.[Date], inserted.[DateTime],
                    inserted.[OffsetDateTime], inserted.[Period], inserted.[AuditId],
-                   CONVERT(VARCHAR(MAX), inserted.[RowVersion], 1) AS [ETag];
+                   inserted.[RowVersion] AS [ETag];
             """;
         var command = new CommandDefinition(sql, new { Id = id, Message = message, AuditId = auditId, ETag = eTag }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
@@ -190,7 +191,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         const string sql = """
             SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
-                   CONVERT(VARCHAR(MAX), [RowVersion], 1) AS [ETag]
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
             WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\')
             ORDER BY [Id]
@@ -371,7 +372,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
         public Guid AuditId { get; set; }
-        public string ETag { get; set; } = string.Empty;
+        public byte[] ETag { get; set; } = [];
 
         public GreetingResponse ToResponse()
         {
@@ -384,7 +385,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 OffsetDateTime = OffsetDateTime,
                 Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
                 AuditId = AuditId,
-                ETag = ETag,
+                ETag = "0x" + Convert.ToHexString(ETag),
             };
         }
     }
@@ -467,7 +468,7 @@ public sealed class SqlGreetingStore : IGreetingStore
         var persisted = await context.ReadAsync(greeting.Id, ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Greeting '{greeting.Id}' was not found.");
         using var scope = _bus.Enlist(context);
-        await _bus.SendLocal(new GreetingCreatedNotification { Greeting = persisted }).ConfigureAwait(false);
+        await _bus.Send(new GreetingCreatedNotification { Greeting = persisted }).ConfigureAwait(false);
         await scope.CompleteAsync().ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return persisted;
@@ -527,7 +528,7 @@ public sealed class SqlGreetingStore : IGreetingStore
     /// <inheritdoc />
     public async Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
     {
-        if (expectedETag is null)
+        if (expectedETag is null || !IsValidETag(expectedETag))
             throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
 
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -544,6 +545,21 @@ public sealed class SqlGreetingStore : IGreetingStore
             await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return updated;
+    }
+
+    private static bool IsValidETag(string eTag)
+    {
+        if (!eTag.StartsWith("0x", StringComparison.Ordinal) || eTag.Length != 18)
+            return false;
+
+        try
+        {
+            return Convert.FromHexString(eTag.AsSpan(2)).Length == 8;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 
     /// <inheritdoc />
