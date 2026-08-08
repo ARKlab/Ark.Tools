@@ -45,6 +45,8 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             connectionString: application.ConnectionString,
             clock: application.Clock,
             greetingStore: application.UsesSqlStore ? null : application.GreetingStore,
+            bookStore: application.UsesSqlStore ? null : application.BookStore,
+            auditStore: application.UsesSqlStore ? null : application.AuditStore,
             registerHandlers: container =>
             {
                 SampleRebusEndpoints.RegisterHandlers(container);

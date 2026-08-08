@@ -230,7 +230,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Id,
             book.Title,
             book.Author,
-            Genre = book.Genre.ToString(),
+            book.Genre,
             book.ISBN,
             book.Description,
         }, Transaction, cancellationToken: ctk);
@@ -267,7 +267,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Id,
             book.Title,
             book.Author,
-            Genre = book.Genre.ToString(),
+            book.Genre,
             book.ISBN,
             book.Description,
         }, Transaction, cancellationToken: ctk);
@@ -306,7 +306,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         {
             query.Title,
             query.Author,
-            Genre = query.Genre?.ToString(),
+            query.Genre,
             query.Skip,
             query.Limit,
         }, Transaction, cancellationToken: ctk);
@@ -320,6 +320,69 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Limit = query.Limit,
             Data = rows.Select(row => row.ToResponse()).ToArray(),
         };
+    }
+
+    /// <summary>Saves a book print process in the current transaction.</summary>
+    public async Task SaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[BookPrintProcess] ([Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail])
+            VALUES (@Id, @BookId, @Progress, @Status, @ErrorMessage, @ShouldFail);
+            """;
+        var command = new CommandDefinition(sql, process, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads a book print process in the current transaction.</summary>
+    public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail]
+            FROM [dbo].[BookPrintProcess]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        return await Connection.QuerySingleOrDefaultAsync<BookPrintProcessResponse>(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Updates a book print process in the current transaction.</summary>
+    public async Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    {
+        const string sql = """
+            UPDATE [dbo].[BookPrintProcess]
+            SET [Progress] = @Progress,
+                [Status] = @Status,
+                [ErrorMessage] = @ErrorMessage,
+                [ShouldFail] = @ShouldFail
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, process, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Gets whether a book has a pending or running print process.</summary>
+    public async Task<bool> HasActiveBookPrintProcessAsync(Guid bookId, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT CAST(CASE WHEN EXISTS
+            (
+                SELECT 1
+                FROM [dbo].[BookPrintProcess]
+                WHERE [BookId] = @BookId
+                  AND [Status] IN (@Pending, @Running)
+            ) THEN 1 ELSE 0 END AS bit);
+            """;
+        var command = new CommandDefinition(
+            sql,
+            new
+            {
+                BookId = bookId,
+                Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
+                Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+            },
+            Transaction,
+            cancellationToken: ctk);
+        return await Connection.QuerySingleAsync<bool>(command).ConfigureAwait(false);
     }
 
     private static string EscapeLikePattern(string value)
@@ -395,7 +458,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
-        public string Genre { get; set; } = string.Empty;
+        public EvolvableEnum<BookGenre> Genre { get; set; }
         public string? ISBN { get; set; }
         public string Description { get; set; } = string.Empty;
 
@@ -406,7 +469,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 Id = Id,
                 Title = Title,
                 Author = Author,
-                Genre = Enum.Parse<BookGenre>(Genre),
+                Genre = Genre,
                 ISBN = ISBN,
                 Description = Description,
             };

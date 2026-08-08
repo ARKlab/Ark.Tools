@@ -3,6 +3,7 @@
 
 using Ark.Tools.Solid;
 using Ark.Tools.Core;
+using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
@@ -112,14 +113,26 @@ public static class ApplicationComposition
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
     /// <param name="greetingStore">Optional store shared with another host container.</param>
+    /// <param name="bookStore">Optional book store shared with another host container.</param>
+    /// <param name="auditStore">Optional in-memory audit store shared with another host container.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        IGreetingStore? greetingStore = null)
+        IGreetingStore? greetingStore = null,
+        IBookStore? bookStore = null,
+        IAuditStore? auditStore = null)
     {
         ArgumentNullException.ThrowIfNull(container);
+
+        if (!useSqlStore)
+        {
+            if (auditStore is not null)
+                container.RegisterInstance(auditStore);
+            else
+                container.RegisterSingleton<IAuditStore, InMemoryAuditStore>();
+        }
 
         if (greetingStore is not null)
             container.RegisterInstance(greetingStore);
@@ -127,6 +140,8 @@ public static class ApplicationComposition
         {
             // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
             NodaTimeDapperSqlServer.Setup();
+            EvolvableEnumDapper.Register<BookGenre>();
+            EvolvableEnumDapper.Register<BookPrintProcessStatus>();
             var config = new SampleDataContextConfig(
                 connectionString ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False");
             container.RegisterInstance(config);
@@ -138,7 +153,9 @@ public static class ApplicationComposition
         else
             container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
 
-        if (useSqlStore)
+        if (bookStore is not null)
+            container.RegisterInstance(bookStore);
+        else if (useSqlStore)
             container.RegisterSingleton<IBookStore, SqlBookStore>();
         else
             container.RegisterSingleton<IBookStore, InMemoryBookStore>();
@@ -161,11 +178,14 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<CreateBookRequest, BookResponse>, CreateBookHandler>();
         container.Register<IRequestHandler<UpdateBookRequest, BookResponse>, UpdateBookHandler>();
         container.Register<IRequestHandler<DeleteBookRequest, bool>, DeleteBookHandler>();
+        container.Register<IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>, CreateBookPrintProcessHandler>();
+        container.Register<IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();
         container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
         container.Register<IQueryHandler<GetGreetingV2Query, GreetingResponseV2>, GetGreetingV2Handler>();
         container.Register<IQueryHandler<GetBookQuery, BookResponse>, GetBookHandler>();
+        container.Register<IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>, GetBookPrintProcessHandler>();
         container.Register<IQueryHandler<SearchBooksQuery, BookPage>, SearchBooksHandler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();

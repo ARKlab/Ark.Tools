@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -9,7 +10,7 @@ namespace Ark.MediatorFramework.Sample.Application;
 public enum BookGenre
 {
     /// <summary>No category has been selected.</summary>
-    NotSet,
+    NOT_SET = 0,
 
     /// <summary>A fiction book.</summary>
     Fiction,
@@ -37,7 +38,7 @@ public sealed record BookResponse
     public string Author { get; init; } = string.Empty;
 
     /// <summary>Gets the book category.</summary>
-    public BookGenre Genre { get; init; }
+    public EvolvableEnum<BookGenre> Genre { get; init; }
 
     /// <summary>Gets the optional ISBN.</summary>
     public string? ISBN { get; init; }
@@ -56,7 +57,7 @@ public sealed record CreateBookRequest : IRequest<CreateBookRequest, BookRespons
     public string Author { get; init; } = string.Empty;
 
     /// <summary>Gets the book category.</summary>
-    public BookGenre Genre { get; init; }
+    public EvolvableEnum<BookGenre> Genre { get; init; }
 
     /// <summary>Gets the optional ISBN.</summary>
     public string? ISBN { get; init; }
@@ -75,7 +76,7 @@ public sealed record UpdateBookRequest : IRequest<UpdateBookRequest, BookRespons
     public string Author { get; init; } = string.Empty;
 
     /// <summary>Gets the replacement category.</summary>
-    public BookGenre Genre { get; init; }
+    public EvolvableEnum<BookGenre> Genre { get; init; }
 
     /// <summary>Gets the replacement ISBN.</summary>
     public string? ISBN { get; init; }
@@ -105,7 +106,7 @@ public sealed record SearchBooksQuery : IQuery<SearchBooksQuery, BookPage>
     public string? Author { get; init; }
 
     /// <summary>Gets the optional category filter.</summary>
-    public BookGenre? Genre { get; init; }
+    public EvolvableEnum<BookGenre>? Genre { get; init; }
 
     /// <summary>Gets the number of rows to skip.</summary>
     public int Skip { get; init; }

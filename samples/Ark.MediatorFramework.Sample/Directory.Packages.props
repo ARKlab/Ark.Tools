@@ -8,6 +8,7 @@
     <PackageVersion Include="Ark.Tools.AspNetCore.MessagePack" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.ApplicationInsights" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.MinimalApi" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Dapper" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.AzureFunctions" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.9" />

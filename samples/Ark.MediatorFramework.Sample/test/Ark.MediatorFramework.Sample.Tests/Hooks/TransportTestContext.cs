@@ -49,15 +49,18 @@ public sealed class TransportTestContext : IDisposable
 #pragma warning restore MA0045, VSTHRD002
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         var network = new InMemNetwork();
-        // When not using SQL, share one InMemoryGreetingStore between the API container and the
-        // processor container so both operate on the same data (same pattern as InMemNetwork).
-        var sharedStore = useSqlStore ? null : (IGreetingStore)new InMemoryGreetingStore();
+        // When not using SQL, share each in-memory store between the API and processor containers.
+        var sharedAuditStore = useSqlStore ? null : new InMemoryAuditStore();
+        var sharedStore = useSqlStore ? null : (IGreetingStore)new InMemoryGreetingStore(sharedAuditStore!);
+        var sharedBookStore = useSqlStore ? null : (IBookStore)new InMemoryBookStore(sharedAuditStore!);
         var container = SampleComposition.BuildContainer(
             network,
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString,
             clock: Clock,
-            greetingStore: sharedStore);
+            greetingStore: sharedStore,
+            bookStore: sharedBookStore,
+            auditStore: sharedAuditStore);
         // Test-only: inject deterministic concurrency failures via a store decorator.
         container.RegisterSingleton<ConcurrencyFaultInjector>();
         container.RegisterDecorator<IGreetingStore, FaultInjectingGreetingStoreDecorator>(Lifestyle.Singleton);
@@ -76,7 +79,9 @@ public sealed class TransportTestContext : IDisposable
             useSqlStore: useSqlStore,
             connectionString: DatabaseHooks.ConnectionString,
             configureFallbackPolicy: configureFallbackPolicy,
-            sharedStore: sharedStore);
+            sharedStore: sharedStore,
+            sharedBookStore: sharedBookStore,
+            sharedAuditStore: sharedAuditStore);
         _host = new HostBuilder()
             .ConfigureWebHost(web => web
                 .UseTestServer()

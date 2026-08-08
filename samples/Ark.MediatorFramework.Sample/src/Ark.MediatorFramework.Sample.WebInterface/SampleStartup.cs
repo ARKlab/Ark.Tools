@@ -42,6 +42,8 @@ public sealed class SampleStartup
     private readonly bool _useSqlStore;
     private readonly string? _connectionString;
     private readonly IGreetingStore? _sharedStore;
+    private readonly IBookStore? _sharedBookStore;
+    private readonly IAuditStore? _sharedAuditStore;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
     private readonly IConfiguration _configuration;
     private readonly bool _configureFallbackPolicy;
@@ -58,6 +60,8 @@ public sealed class SampleStartup
     /// on the same data without a database. <see langword="null"/> when <paramref name="useSqlStore"/>
     /// is <see langword="true"/> (the SQL database is the shared state).
     /// </param>
+    /// <param name="sharedBookStore">Optional book store shared between the API and processor containers.</param>
+    /// <param name="sharedAuditStore">Optional audit store shared between the API and processor containers.</param>
     public SampleStartup(
         Container container,
         InMemNetwork network,
@@ -65,13 +69,17 @@ public sealed class SampleStartup
         bool useSqlStore = true,
         string? connectionString = null,
         bool configureFallbackPolicy = true,
-        IGreetingStore? sharedStore = null)
+        IGreetingStore? sharedStore = null,
+        IBookStore? sharedBookStore = null,
+        IAuditStore? sharedAuditStore = null)
     {
         _container = container;
         _network = network;
         _useSqlStore = useSqlStore;
         _connectionString = connectionString;
         _sharedStore = sharedStore;
+        _sharedBookStore = sharedBookStore;
+        _sharedAuditStore = sharedAuditStore;
         _configuration = configuration ?? new ConfigurationBuilder().Build();
         _configureFallbackPolicy = configureFallbackPolicy;
         var instance = _configuration["EntraId:Instance"]!;
@@ -126,7 +134,9 @@ public sealed class SampleStartup
             sp.GetRequiredService<InMemNetwork>(),
             useSqlStore: _useSqlStore,
             connectionString: _connectionString,
-            sharedStore: _sharedStore));
+            sharedStore: _sharedStore,
+            sharedBookStore: _sharedBookStore,
+            sharedAuditStore: _sharedAuditStore));
 
         services.AddRouting();
         services.AddControllers();

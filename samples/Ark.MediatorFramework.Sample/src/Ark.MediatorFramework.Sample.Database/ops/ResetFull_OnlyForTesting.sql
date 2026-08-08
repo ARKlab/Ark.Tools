@@ -8,6 +8,7 @@ BEGIN
         DELETE FROM [dbo].[Outbox];
         DELETE FROM [dbo].[Audit];
         DELETE FROM [dbo].[Greeting];
+        DELETE FROM [dbo].[BookPrintProcess];
         DELETE FROM [dbo].[Book];
     END
 END

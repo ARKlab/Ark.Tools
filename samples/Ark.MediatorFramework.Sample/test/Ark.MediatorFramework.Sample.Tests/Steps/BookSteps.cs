@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
-using Ark.MediatorFramework.Sample.Tests.Hooks;
+using Ark.MediatorFramework.Sample.Tests.Drivers;
 
 using AwesomeAssertions;
 
@@ -11,23 +11,18 @@ using Reqnroll.Assist;
 
 namespace Ark.MediatorFramework.Sample.Tests.Steps;
 
-/// <summary>Defines reusable table-driven contract steps for books.</summary>
+/// <summary>Defines reusable current-book verbs for table-driven application scenarios.</summary>
 [Binding]
 public sealed class BookSteps
 {
-    private readonly SampleTestContext _sampleContext;
-    private readonly Dictionary<string, BookResponse> _booksByTitle = new(StringComparer.Ordinal);
-    private BookPage? _bookPage;
+    private readonly BookDriver _books;
 
     /// <summary>Initializes a new instance of the <see cref="BookSteps"/> class.</summary>
-    /// <param name="sampleContext">The scenario's direct application context.</param>
-    public BookSteps(SampleTestContext sampleContext)
+    /// <param name="books">The scenario-owned book driver.</param>
+    public BookSteps(BookDriver books)
     {
-        _sampleContext = sampleContext;
+        _books = books;
     }
-
-    /// <summary>Gets the active book in the current scenario.</summary>
-    public BookResponse? Current { get; private set; }
 
     /// <summary>Creates and activates a book from one table row.</summary>
     /// <param name="table">The create request data.</param>
@@ -35,55 +30,38 @@ public sealed class BookSteps
     [When("I create a book with")]
     public async Task CreateBook(Table table)
     {
-        var request = table.CreateInstance<CreateBookRequest>();
-        Current = await Context.DispatchRequestAsync<CreateBookRequest, BookResponse>(request).ConfigureAwait(false);
-        _booksByTitle[Current.Title] = Current;
+        await _books.CreateAsync(table.CreateInstance<CreateBookRequest>()).ConfigureAwait(false);
     }
 
     /// <summary>Creates books from a table and activates the last created book.</summary>
     /// <param name="table">The create request data.</param>
     [Given("I create books with")]
-    [When("I create books with")]
     public async Task CreateBooks(Table table)
     {
         foreach (var request in table.CreateSet<CreateBookRequest>())
-            await CreateBook(request).ConfigureAwait(false);
+            await _books.CreateAsync(request).ConfigureAwait(false);
     }
 
-    /// <summary>Loads and activates a book identified by its title.</summary>
-    /// <param name="title">The previously created book title.</param>
-    [When(@"I retrieve the book ""(.*)""")]
-    public async Task RetrieveBook(string title)
+    /// <summary>Loads the active book through its query contract.</summary>
+    [When("I retrieve the current book")]
+    public async Task RetrieveCurrentBook()
     {
-        var known = GetBook(title);
-        Current = await Context.DispatchQueryAsync<GetBookQuery, BookResponse>(
-            new GetBookQuery { Id = known.Id }).ConfigureAwait(false);
-        _booksByTitle[Current.Title] = Current;
+        await _books.RetrieveCurrentAsync().ConfigureAwait(false);
     }
 
-    /// <summary>Updates a book identified by its current title.</summary>
-    /// <param name="title">The title used to locate the active book.</param>
+    /// <summary>Updates the active book from a table-defined request.</summary>
     /// <param name="table">The replacement book data.</param>
-    [When(@"I update the book ""(.*)"" with")]
-    public async Task UpdateBook(string title, Table table)
+    [When("I update the current book with")]
+    public async Task UpdateCurrentBook(Table table)
     {
-        var known = GetBook(title);
-        var update = table.CreateInstance<UpdateBookRequest>() with { Id = known.Id };
-        Current = await Context.DispatchRequestAsync<UpdateBookRequest, BookResponse>(update).ConfigureAwait(false);
-        _booksByTitle.Remove(title);
-        _booksByTitle[Current.Title] = Current;
+        await _books.UpdateCurrentAsync(table.CreateInstance<UpdateBookRequest>()).ConfigureAwait(false);
     }
 
-    /// <summary>Deletes a book identified by its title.</summary>
-    /// <param name="title">The title used to locate the book.</param>
-    [When(@"I delete the book ""(.*)""")]
-    public async Task DeleteBook(string title)
+    /// <summary>Deletes the active book.</summary>
+    [When("I delete the current book")]
+    public async Task DeleteCurrentBook()
     {
-        var known = GetBook(title);
-        await Context.DispatchRequestAsync<DeleteBookRequest, bool>(
-            new DeleteBookRequest { Id = known.Id }).ConfigureAwait(false);
-        _booksByTitle.Remove(title);
-        Current = null;
+        await _books.DeleteCurrentAsync().ConfigureAwait(false);
     }
 
     /// <summary>Searches books using the supplied table filters.</summary>
@@ -91,8 +69,7 @@ public sealed class BookSteps
     [When("I search books by")]
     public async Task SearchBooks(Table table)
     {
-        var query = table.CreateInstance<SearchBooksQuery>();
-        _bookPage = await Context.DispatchQueryAsync<SearchBooksQuery, BookPage>(query).ConfigureAwait(false);
+        await _books.SearchAsync(table.CreateInstance<SearchBooksQuery>()).ConfigureAwait(false);
     }
 
     /// <summary>Asserts that the active book matches the supplied table.</summary>
@@ -100,8 +77,7 @@ public sealed class BookSteps
     [Then("the current book is")]
     public void CurrentBookIs(Table table)
     {
-        Current.Should().NotBeNull();
-        table.CompareToInstance(Current!);
+        table.CompareToInstance(_books.Current);
     }
 
     /// <summary>Asserts the current book-search result count.</summary>
@@ -109,8 +85,8 @@ public sealed class BookSteps
     [Then(@"the book search has (.*) results")]
     public void BookSearchHasResults(long count)
     {
-        _bookPage.Should().NotBeNull();
-        _bookPage!.Count.Should().Be(count);
+        _books.SearchResults.Should().NotBeNull();
+        _books.SearchResults!.Count.Should().Be(count);
     }
 
     /// <summary>Asserts the current book-search result set.</summary>
@@ -118,22 +94,16 @@ public sealed class BookSteps
     [Then("the book search contains")]
     public void BookSearchContains(Table table)
     {
-        _bookPage.Should().NotBeNull();
-        table.CompareToSet(_bookPage!.Data);
+        _books.SearchResults.Should().NotBeNull();
+        table.CompareToSet(_books.SearchResults!.Data);
     }
 
-    private async Task CreateBook(CreateBookRequest request)
+    /// <summary>Asserts that the active book's audit matches the supplied table.</summary>
+    /// <param name="table">The expected audit data.</param>
+    [Then("the current book audit is")]
+    public async Task CurrentBookAuditIs(Table table)
     {
-        Current = await Context.DispatchRequestAsync<CreateBookRequest, BookResponse>(request).ConfigureAwait(false);
-        _booksByTitle[Current.Title] = Current;
+        var audits = await _books.ReadCurrentAuditsAsync().ConfigureAwait(false);
+        table.CompareToInstance(audits.Data.Single());
     }
-
-    private BookResponse GetBook(string title)
-    {
-        return _booksByTitle.TryGetValue(title, out var book)
-            ? book
-            : throw new InvalidOperationException($"Book '{title}' is not active in this scenario.");
-    }
-
-    private ApplicationTestContext Context => _sampleContext.Application;
 }

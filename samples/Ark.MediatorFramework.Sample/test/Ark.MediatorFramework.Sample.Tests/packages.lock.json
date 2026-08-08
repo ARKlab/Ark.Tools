@@ -1856,6 +1856,7 @@
       "ark.mediatorframework.sample.application": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
@@ -2001,6 +2002,13 @@
         "type": "Project",
         "dependencies": {
           "NodaTime": "[3.3.3, )"
+        }
+      },
+      "ark.tools.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Dapper": "[2.1.79, )"
         }
       },
       "ark.tools.http": {

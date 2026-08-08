@@ -54,13 +54,15 @@ public interface IGreetingStore
 public sealed class InMemoryGreetingStore : IGreetingStore
 {
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _items = new();
-    private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, long> _versions = new();
     private readonly System.Threading.Lock _sync = new();
+    private readonly IAuditStore _audits;
 
     /// <summary>Initializes a new in-memory store.</summary>
-    public InMemoryGreetingStore()
+    /// <param name="audits">The shared audit store.</param>
+    public InMemoryGreetingStore(IAuditStore audits)
     {
+        _audits = audits;
     }
 
     /// <summary>Removes all greetings, versions, and audit records.</summary>
@@ -69,7 +71,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         lock (_sync)
         {
             _items.Clear();
-            _audits.Clear();
+            _audits.Reset();
             _versions.Clear();
         }
     }
@@ -81,7 +83,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(greeting);
         var version = _versions.GetOrAdd(greeting.Id, 1);
@@ -89,8 +91,8 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         {
             ETag = $"0x{version:X16}",
         };
-        AddAudit(audit);
-        return Task.CompletedTask;
+        if (audit is not null)
+            await _audits.WriteAsync(audit, ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -103,29 +105,7 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     /// <inheritdoc />
     public Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
     {
-        ValidateAuditSorts(query.Sort ?? []);
-        var filtered = _audits.Where(record =>
-            (query.UserId is null || record.UserId == query.UserId)
-            && (query.EntityType is null || record.EntityType == query.EntityType)
-            && (query.Identifier is null || record.Identifier == query.Identifier)
-            && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp.Value)
-            && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp.Value));
-        var sorts = query.Sort ?? [];
-        var sorted = sorts.Any()
-            ? filtered.OrderBy(string.Join(", ", sorts))
-            : filtered.OrderByDescending(record => record.Timestamp);
-        var filteredRecords = sorted.ToArray();
-        var records = filteredRecords
-            .Skip(query.Skip)
-            .Take(query.Limit)
-            .ToArray();
-        return Task.FromResult(new PagedResult<AuditRecord>
-        {
-            Count = filteredRecords.Length,
-            Skip = query.Skip,
-            Limit = query.Limit,
-            Data = records,
-        });
+        return _audits.ReadAsync(query, ctk);
     }
 
     /// <inheritdoc />
@@ -145,28 +125,6 @@ public sealed class InMemoryGreetingStore : IGreetingStore
         });
     }
 
-    private static void ValidateAuditSorts(IEnumerable<string> sorts)
-    {
-        var properties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            nameof(AuditRecord.Id),
-            nameof(AuditRecord.UserId),
-            nameof(AuditRecord.EntityType),
-            nameof(AuditRecord.Identifier),
-            nameof(AuditRecord.Operation),
-            nameof(AuditRecord.Timestamp),
-        };
-        foreach (var sort in sorts.Where(sort => !string.IsNullOrWhiteSpace(sort)))
-        {
-            var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length > 2 || !properties.Contains(parts[0]))
-                throw new ArgumentException($"Invalid audit sort '{sort}'.", nameof(sorts));
-            if (parts.Length == 2 && !parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
-                && !parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts));
-        }
-    }
-
     /// <inheritdoc />
     public Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default)
     {
@@ -183,8 +141,9 @@ public sealed class InMemoryGreetingStore : IGreetingStore
     }
 
     /// <inheritdoc />
-    public Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
     {
+        GreetingResponse updated;
         lock (_sync)
         {
             if (expectedETag is null || !_items.TryGetValue(id, out var current))
@@ -194,37 +153,23 @@ public sealed class InMemoryGreetingStore : IGreetingStore
             if (!string.Equals(expectedETag, currentETag, StringComparison.Ordinal))
                 throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
 
-            var updated = current with
+            updated = current with
             {
                 Message = message,
                 ETag = $"0x{version + 1:X16}",
             };
             _items[id] = updated;
             _versions[id] = version + 1;
-            AddAudit(audit);
-            return Task.FromResult(updated);
         }
+
+        if (audit is not null)
+            await _audits.WriteAsync(audit, ctk).ConfigureAwait(false);
+        return updated;
     }
 
     /// <inheritdoc />
     public Task<IReadOnlyCollection<GreetingResponse>> AllAsync(CancellationToken ctk = default)
     {
         return Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_items.Values.ToArray());
-    }
-
-    private void AddAudit(AuditEntry? audit)
-    {
-        if (audit is null)
-            return;
-
-        _audits.Enqueue(new AuditRecord
-        {
-            Id = Guid.NewGuid(),
-            UserId = audit.UserId,
-            EntityType = audit.EntityType,
-            Identifier = audit.Identifier,
-            Operation = audit.Operation,
-            Timestamp = audit.Timestamp,
-        });
     }
 }

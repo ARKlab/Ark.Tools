@@ -29,13 +29,23 @@ internal sealed class SampleBusHostedService : IHostedService
     /// Optional in-memory store shared with the API container. <see langword="null"/> when
     /// <paramref name="useSqlStore"/> is <see langword="true"/> (both containers share the database).
     /// </param>
-    public SampleBusHostedService(InMemNetwork network, bool useSqlStore, string? connectionString, IGreetingStore? sharedStore)
+    /// <param name="sharedBookStore">Optional book store shared with the API container.</param>
+    /// <param name="sharedAuditStore">Optional audit store shared with the API container.</param>
+    public SampleBusHostedService(
+        InMemNetwork network,
+        bool useSqlStore,
+        string? connectionString,
+        IGreetingStore? sharedStore,
+        IBookStore? sharedBookStore,
+        IAuditStore? sharedAuditStore)
     {
         _processorContainer = RebusProcessorComposition.BuildContainer(
             network,
             useSqlStore: useSqlStore,
             connectionString: connectionString,
             greetingStore: sharedStore,
+            bookStore: sharedBookStore,
+            auditStore: sharedAuditStore,
             registerHandlers: SampleRebusEndpoints.RegisterHandlers);
     }
 
@@ -53,4 +63,3 @@ internal sealed class SampleBusHostedService : IHostedService
         await _processorContainer.DisposeAsync().ConfigureAwait(false);
     }
 }
-

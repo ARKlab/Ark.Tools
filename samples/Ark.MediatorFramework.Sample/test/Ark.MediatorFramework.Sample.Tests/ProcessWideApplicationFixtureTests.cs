@@ -40,18 +40,22 @@ internal sealed class ProcessWideApplicationFixture : IAsyncDisposable
 
     internal ProcessWideApplicationFixture()
     {
-        Store = new InMemoryGreetingStore();
-        _context = new ApplicationTestContext(useSqlStore: false, greetingStore: Store);
+        Audits = new InMemoryAuditStore();
+        Store = new InMemoryGreetingStore(Audits);
+        _context = new ApplicationTestContext(useSqlStore: false, greetingStore: Store, auditStore: Audits);
         _processor = RebusProcessorComposition.BuildContainer(
             _context.Network,
             useSqlStore: false,
             greetingStore: Store,
+            auditStore: Audits,
             registerHandlers: SampleRebusEndpoints.RegisterHandlers);
         _processor.Verify();
         _processor.StartBus();
     }
 
     internal InMemoryGreetingStore Store { get; }
+
+    internal InMemoryAuditStore Audits { get; }
 
     internal async Task RunScenarioAsync(string name)
     {

@@ -18,7 +18,7 @@ public sealed class CreateBookRequestValidator : AbstractValidator<CreateBookReq
             .NotEmpty()
             .MaximumLength(100);
         RuleFor(request => request.Genre)
-            .NotEqual(BookGenre.NotSet);
+            .NotEqual(Ark.Tools.Core.EvolvableEnum<BookGenre>.NotSet);
         RuleFor(request => request.ISBN)
             .MaximumLength(20);
     }
@@ -33,7 +33,7 @@ public sealed class UpdateBookRequestValidator : AbstractValidator<UpdateBookReq
         RuleFor(request => request.Id).NotEmpty();
         RuleFor(request => request.Title).NotEmpty().MaximumLength(200);
         RuleFor(request => request.Author).NotEmpty().MaximumLength(100);
-        RuleFor(request => request.Genre).NotEqual(BookGenre.NotSet);
+        RuleFor(request => request.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<BookGenre>.NotSet);
         RuleFor(request => request.ISBN).MaximumLength(20);
     }
 }
@@ -46,5 +46,15 @@ public sealed class SearchBooksQueryValidator : AbstractValidator<SearchBooksQue
     {
         RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
         RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+    }
+
+    /// <summary>Validates book print-process creation requests.</summary>
+    public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<CreateBookPrintProcessRequest>
+    {
+        /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessRequestValidator"/> class.</summary>
+        public CreateBookPrintProcessRequestValidator()
+        {
+            RuleFor(request => request.BookId).NotEmpty();
+        }
     }
 }

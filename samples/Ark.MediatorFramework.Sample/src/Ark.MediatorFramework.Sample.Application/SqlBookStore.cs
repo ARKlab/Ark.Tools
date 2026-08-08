@@ -17,10 +17,12 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> CreateAsync(BookResponse book, CancellationToken ctk = default)
+    public async Task<BookResponse> CreateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(book);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return book;
@@ -36,10 +38,12 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> UpdateAsync(BookResponse book, CancellationToken ctk = default)
+    public async Task<BookResponse> UpdateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(book);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
             throw new EntityNotFoundException($"Book '{book.Id}' was not found.");
 
@@ -48,9 +52,11 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(Guid id, CancellationToken ctk = default)
+    public async Task DeleteAsync(Guid id, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (audit is not null)
+            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         if (!await context.DeleteBookAsync(id, ctk).ConfigureAwait(false))
             throw new EntityNotFoundException($"Book '{id}' was not found.");
 
@@ -65,5 +71,55 @@ public sealed class SqlBookStore : IBookStore
         var result = await context.ReadBooksAsync(query, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return result;
+    }
+
+    /// <inheritdoc />
+    public async Task<BookPrintProcessResponse> CreatePrintProcessAsync(
+        BookPrintProcessResponse process,
+        AuditEntry audit,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(process);
+        ArgumentNullException.ThrowIfNull(audit);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
+        await context.SaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return process;
+    }
+
+    /// <inheritdoc />
+    public async Task<BookPrintProcessResponse> GetPrintProcessAsync(Guid id, CancellationToken ctk = default)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var process = await context.ReadBookPrintProcessAsync(id, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return process ?? throw new EntityNotFoundException($"Book print process '{id}' was not found.");
+    }
+
+    /// <inheritdoc />
+    public async Task<BookPrintProcessResponse> UpdatePrintProcessAsync(
+        BookPrintProcessResponse process,
+        AuditEntry audit,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(process);
+        ArgumentNullException.ThrowIfNull(audit);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
+        if (!await context.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
+            throw new EntityNotFoundException($"Book print process '{process.Id}' was not found.");
+
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return process;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> HasActivePrintProcessAsync(Guid bookId, CancellationToken ctk = default)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var hasActiveProcess = await context.HasActiveBookPrintProcessAsync(bookId, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return hasActiveProcess;
     }
 }

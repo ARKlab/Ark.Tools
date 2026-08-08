@@ -43,10 +43,14 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">The optional SQL connection string.</param>
     /// <param name="greetingStore">The optional store shared with another test resource.</param>
+    /// <param name="bookStore">The optional book store shared with another test resource.</param>
+    /// <param name="auditStore">The optional audit store shared with another test resource.</param>
     public ApplicationTestContext(
         bool? useSqlStore = null,
         string? connectionString = null,
-        IGreetingStore? greetingStore = null)
+        IGreetingStore? greetingStore = null,
+        IBookStore? bookStore = null,
+        IAuditStore? auditStore = null)
     {
         Network = new InMemNetwork();
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
@@ -69,7 +73,9 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             _usesSqlStore,
             _connectionString,
             Clock,
-            greetingStore);
+            greetingStore,
+            bookStore,
+            auditStore);
         _container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         _container.RegisterAuthorization();
         _container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
@@ -106,6 +112,26 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         {
             Verify();
             return _container.GetInstance<IGreetingStore>();
+        }
+    }
+
+    /// <summary>Gets the store shared by the sender and receiver for in-memory book workflows.</summary>
+    public IBookStore BookStore
+    {
+        get
+        {
+            Verify();
+            return _container.GetInstance<IBookStore>();
+        }
+    }
+
+    /// <summary>Gets the store shared by the sender and receiver for in-memory audit workflows.</summary>
+    public IAuditStore AuditStore
+    {
+        get
+        {
+            Verify();
+            return _container.GetInstance<IAuditStore>();
         }
     }
 
