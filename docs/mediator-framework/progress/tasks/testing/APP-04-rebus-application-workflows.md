@@ -44,11 +44,11 @@ for every implementation task.
   container or if user context is lost.
 - [x] Retry/error behavior is deterministic and diagnostics identify stranded
   messages.
-- [x] A second-level retry scenario verifies the application-owned `IFailed<T>`
+- [ ] A second-level retry scenario verifies the application-owned `IFailed<T>`
   handler receives the original message and failure information.
-- [x] A failing second-level `IFailed<T>` handler reaches the error queue with
+- [ ] A failing second-level `IFailed<T>` handler reaches the error queue with
   bounded diagnostics.
-- [x] No Rebus worker, timer, network, or outbox remains after a scenario.
+- [ ] No Rebus worker, timer, network, or outbox remains after a scenario.
 
 ## Tests
 

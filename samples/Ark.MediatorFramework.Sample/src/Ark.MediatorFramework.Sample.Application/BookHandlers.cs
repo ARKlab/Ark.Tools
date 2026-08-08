@@ -164,8 +164,6 @@ public sealed class CreateBookPrintProcessHandler :
     {
         ArgumentNullException.ThrowIfNull(request);
         await _store.GetAsync(request.BookId, ctk).ConfigureAwait(false);
-        if (await _store.HasActivePrintProcessAsync(request.BookId, ctk).ConfigureAwait(false))
-            throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
 
         var process = new BookPrintProcessResponse
         {
@@ -174,9 +172,12 @@ public sealed class CreateBookPrintProcessHandler :
             Status = BookPrintProcessStatus.Pending,
             ShouldFail = request.ShouldFail,
         };
-        await _store.CreatePrintProcessAsync(process, CreateAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk)
-            .ConfigureAwait(false);
-        await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
+        if (!await _store.TryCreateAndQueuePrintProcessAsync(
+                process,
+                CreateAudit(process.Id, nameof(CreateBookPrintProcessRequest)),
+                _bus,
+                ctk).ConfigureAwait(false))
+            throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
         return process;
     }
 
@@ -228,15 +229,18 @@ public sealed class ProcessBookPrintProcessHandler :
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
             return process;
         }
-        if (process.Status != BookPrintProcessStatus.Pending)
+        if (process.Status != BookPrintProcessStatus.Pending && process.Status != BookPrintProcessStatus.Running)
             return process;
 
-        process = process with
+        if (process.Status == BookPrintProcessStatus.Pending)
         {
-            Progress = 0.5,
-            Status = BookPrintProcessStatus.Running,
-        };
-        await _store.UpdatePrintProcessAsync(process, CreateAudit(process.Id), ctk).ConfigureAwait(false);
+            process = process with
+            {
+                Progress = 0.5,
+                Status = BookPrintProcessStatus.Running,
+            };
+            await _store.UpdatePrintProcessAsync(process, CreateAudit(process.Id), ctk).ConfigureAwait(false);
+        }
 
         process = process.ShouldFail
             ? process with

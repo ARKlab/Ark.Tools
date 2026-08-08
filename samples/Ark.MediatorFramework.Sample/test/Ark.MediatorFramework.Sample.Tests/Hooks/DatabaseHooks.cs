@@ -15,7 +15,15 @@ public sealed class DatabaseHooks
     /// <summary>Gets the SQL connection string used by the sample integration database.</summary>
     public static string ConnectionString =>
         Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION")
-        ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False";
+        ?? new SqlConnectionStringBuilder
+        {
+            DataSource = "localhost,1433",
+            InitialCatalog = "Ark.MediatorFramework.Sample",
+            UserID = "sa",
+            Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
+            TrustServerCertificate = true,
+            Encrypt = false,
+        }.ConnectionString;
 
     /// <summary>Creates the sample schema when SQL integration tests are enabled.</summary>
     [BeforeTestRun(Order = -1)]

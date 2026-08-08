@@ -322,15 +322,32 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         };
     }
 
-    /// <summary>Saves a book print process in the current transaction.</summary>
-    public async Task SaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    /// <summary>Saves a book print process when no pending or running process exists for the book.</summary>
+    public async Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
     {
         const string sql = """
-            INSERT INTO [dbo].[BookPrintProcess] ([Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail])
-            VALUES (@Id, @BookId, @Progress, @Status, @ErrorMessage, @ShouldFail);
+            INSERT INTO [dbo].[BookPrintProcess] ([Id], [BookId], [Progress], [Status], [IsActive], [ErrorMessage], [ShouldFail])
+            SELECT @Id, @BookId, @Progress, @Status, 1, @ErrorMessage, @ShouldFail
+            WHERE NOT EXISTS
+            (
+                SELECT 1
+                FROM [dbo].[BookPrintProcess] WITH (UPDLOCK, HOLDLOCK)
+                WHERE [BookId] = @BookId
+                  AND [Status] IN (@Pending, @Running)
+            );
             """;
-        var command = new CommandDefinition(sql, process, Transaction, cancellationToken: ctk);
-        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+        var command = new CommandDefinition(sql, new
+        {
+            process.Id,
+            process.BookId,
+            process.Progress,
+            process.Status,
+            process.ErrorMessage,
+            process.ShouldFail,
+            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
+            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+        }, Transaction, cancellationToken: ctk);
+        return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
 
     /// <summary>Reads a book print process in the current transaction.</summary>
@@ -352,37 +369,22 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             UPDATE [dbo].[BookPrintProcess]
             SET [Progress] = @Progress,
                 [Status] = @Status,
+                [IsActive] = CASE WHEN @Status IN (@Pending, @Running) THEN 1 ELSE 0 END,
                 [ErrorMessage] = @ErrorMessage,
                 [ShouldFail] = @ShouldFail
             WHERE [Id] = @Id;
             """;
-        var command = new CommandDefinition(sql, process, Transaction, cancellationToken: ctk);
+        var command = new CommandDefinition(sql, new
+        {
+            process.Id,
+            process.Progress,
+            process.Status,
+            process.ErrorMessage,
+            process.ShouldFail,
+            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
+            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+        }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
-    }
-
-    /// <summary>Gets whether a book has a pending or running print process.</summary>
-    public async Task<bool> HasActiveBookPrintProcessAsync(Guid bookId, CancellationToken ctk = default)
-    {
-        const string sql = """
-            SELECT CAST(CASE WHEN EXISTS
-            (
-                SELECT 1
-                FROM [dbo].[BookPrintProcess]
-                WHERE [BookId] = @BookId
-                  AND [Status] IN (@Pending, @Running)
-            ) THEN 1 ELSE 0 END AS bit);
-            """;
-        var command = new CommandDefinition(
-            sql,
-            new
-            {
-                BookId = bookId,
-                Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
-                Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
-            },
-            Transaction,
-            cancellationToken: ctk);
-        return await Connection.QuerySingleAsync<bool>(command).ConfigureAwait(false);
     }
 
     private static string EscapeLikePattern(string value)

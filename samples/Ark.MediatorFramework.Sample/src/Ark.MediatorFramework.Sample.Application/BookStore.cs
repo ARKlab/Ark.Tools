@@ -3,6 +3,8 @@
 
 using Ark.Tools.Core;
 
+using Rebus.Bus;
+
 using System.Collections.Concurrent;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -25,10 +27,11 @@ public interface IBookStore
     /// <summary>Searches books.</summary>
     Task<BookPage> SearchAsync(SearchBooksQuery query, CancellationToken ctk = default);
 
-    /// <summary>Creates a book print process.</summary>
-    Task<BookPrintProcessResponse> CreatePrintProcessAsync(
+    /// <summary>Atomically creates and queues a book print process when the book has no active process.</summary>
+    Task<bool> TryCreateAndQueuePrintProcessAsync(
         BookPrintProcessResponse process,
         AuditEntry audit,
+        IBus bus,
         CancellationToken ctk = default);
 
     /// <summary>Reads a book print process.</summary>
@@ -40,8 +43,6 @@ public interface IBookStore
         AuditEntry audit,
         CancellationToken ctk = default);
 
-    /// <summary>Gets whether a book has a pending or running print process.</summary>
-    Task<bool> HasActivePrintProcessAsync(Guid bookId, CancellationToken ctk = default);
 }
 
 /// <summary>Thread-safe in-memory <see cref="IBookStore"/>.</summary>
@@ -49,6 +50,7 @@ public sealed class InMemoryBookStore : IBookStore
 {
     private readonly ConcurrentDictionary<Guid, BookResponse> _books = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
+    private readonly System.Threading.Lock _sync = new();
     private readonly IAuditStore _audits;
 
     /// <summary>Initializes a new instance of the in-memory book store.</summary>
@@ -123,18 +125,35 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookPrintProcessResponse> CreatePrintProcessAsync(
+    public async Task<bool> TryCreateAndQueuePrintProcessAsync(
         BookPrintProcessResponse process,
         AuditEntry audit,
+        IBus bus,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(process);
         ArgumentNullException.ThrowIfNull(audit);
-        if (!_printProcesses.TryAdd(process.Id, process))
-            throw new InvalidOperationException($"Book print process '{process.Id}' already exists.");
+        ArgumentNullException.ThrowIfNull(bus);
+        lock (_sync)
+        {
+            if (_printProcesses.Values.Any(item => item.BookId == process.BookId
+                && (item.Status == BookPrintProcessStatus.Pending || item.Status == BookPrintProcessStatus.Running)))
+                return false;
+            if (!_printProcesses.TryAdd(process.Id, process))
+                throw new InvalidOperationException($"Book print process '{process.Id}' already exists.");
+        }
 
-        await _audits.WriteAsync(audit, ctk).ConfigureAwait(false);
-        return process;
+        try
+        {
+            await _audits.WriteAsync(audit, ctk).ConfigureAwait(false);
+            await bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            _printProcesses.TryRemove(process.Id, out _);
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -162,11 +181,4 @@ public sealed class InMemoryBookStore : IBookStore
         return process;
     }
 
-    /// <inheritdoc />
-    public async Task<bool> HasActivePrintProcessAsync(Guid bookId, CancellationToken ctk = default)
-    {
-        await Task.CompletedTask.ConfigureAwait(false);
-        return _printProcesses.Values.Any(process => process.BookId == bookId
-            && (process.Status == BookPrintProcessStatus.Pending || process.Status == BookPrintProcessStatus.Running));
-    }
 }

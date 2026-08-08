@@ -2,6 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core;
+using Ark.Tools.Outbox.Rebus;
+
+using Microsoft.Data.SqlClient;
+
+using Rebus.Bus;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
@@ -74,18 +79,31 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookPrintProcessResponse> CreatePrintProcessAsync(
+    public async Task<bool> TryCreateAndQueuePrintProcessAsync(
         BookPrintProcessResponse process,
         AuditEntry audit,
+        IBus bus,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(process);
         ArgumentNullException.ThrowIfNull(audit);
+        ArgumentNullException.ThrowIfNull(bus);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
-        await context.SaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
+        try
+        {
+            if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
+                return false;
+        }
+        catch (SqlException exception) when (exception.Number is 2601 or 2627)
+        {
+            return false;
+        }
+        using var scope = bus.Enlist(context);
+        await bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
+        await scope.CompleteAsync().ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
-        return process;
+        return true;
     }
 
     /// <inheritdoc />
@@ -114,12 +132,4 @@ public sealed class SqlBookStore : IBookStore
         return process;
     }
 
-    /// <inheritdoc />
-    public async Task<bool> HasActivePrintProcessAsync(Guid bookId, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var hasActiveProcess = await context.HasActiveBookPrintProcessAsync(bookId, ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return hasActiveProcess;
-    }
 }

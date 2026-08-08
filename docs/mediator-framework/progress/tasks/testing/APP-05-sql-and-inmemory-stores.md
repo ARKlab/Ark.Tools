@@ -43,9 +43,9 @@ for every implementation task.
 - [x] Default tests deploy and reset the DACPAC and pass when SQL Server is
   available.
 - [x] The explicit in-memory profile passes without Docker or SQL Server.
-- [x] Dapper query paths, transaction/outbox paths, audit persistence, paging,
+- [ ] Dapper query paths, transaction/outbox paths, audit persistence, paging,
   and row-version-to-opaque-ETag conversion have direct assertions.
-- [x] SQL cleanup is FK-safe and leaves no scenario data.
+- [ ] SQL cleanup is FK-safe and leaves no scenario data.
 - [x] Profile documentation never embeds credentials or tokens.
 
 ## Tests

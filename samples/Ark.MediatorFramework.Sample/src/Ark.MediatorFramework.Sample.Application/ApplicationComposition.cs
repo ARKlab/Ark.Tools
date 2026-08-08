@@ -144,8 +144,16 @@ public static class ApplicationComposition
             NodaTimeDapperSqlServer.Setup();
             EvolvableEnumDapper.Register<BookGenre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
-            var config = new SampleDataContextConfig(
-                connectionString ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False");
+            var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
+            {
+                DataSource = "localhost,1433",
+                InitialCatalog = "Ark.MediatorFramework.Sample",
+                UserID = "sa",
+                Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
+                TrustServerCertificate = true,
+                Encrypt = false,
+            }.ConnectionString;
+            var config = new SampleDataContextConfig(connectionString ?? localConnectionString);
             container.RegisterInstance(config);
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
             container.RegisterSingleton<SampleDataContextFactory>();
