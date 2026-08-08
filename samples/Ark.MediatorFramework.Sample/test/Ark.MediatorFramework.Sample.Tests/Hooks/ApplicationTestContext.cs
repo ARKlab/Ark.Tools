@@ -4,6 +4,8 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
+using Ark.Tools.Outbox;
+using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
@@ -12,6 +14,7 @@ using NodaTime;
 using NodaTime.Testing;
 
 using Rebus.Transport.InMem;
+using Rebus.Bus;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -28,7 +31,10 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     private readonly AsyncLocal<Scope?> _currentScope = new();
     private readonly Container _container;
     private readonly TestPrincipalProvider _principalProvider;
+    private readonly bool _usesSqlStore;
+    private readonly string? _connectionString;
     private bool _verified;
+    private bool _busStarted;
     private bool _disposed;
 
     /// <summary>
@@ -53,14 +59,15 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             },
         };
 
-        var sqlStore = useSqlStore ?? !string.Equals(
+        _usesSqlStore = useSqlStore ?? !string.Equals(
             Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
             "1",
             StringComparison.Ordinal);
+        _connectionString = connectionString ?? Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION");
         ApplicationComposition.Register(
             _container,
-            sqlStore,
-            connectionString ?? Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION"),
+            _usesSqlStore,
+            _connectionString,
             Clock,
             greetingStore);
         _container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
@@ -85,6 +92,22 @@ public sealed class ApplicationTestContext : IAsyncDisposable
 
     /// <summary>Gets the deterministic application clock.</summary>
     public FakeClock Clock { get; }
+
+    /// <summary>Gets whether this scenario uses the SQL-backed persistence profile.</summary>
+    public bool UsesSqlStore => _usesSqlStore;
+
+    /// <summary>Gets the optional SQL Server connection-string override for this scenario.</summary>
+    public string? ConnectionString => _connectionString;
+
+    /// <summary>Gets the store shared by the sender and receiver for in-memory workflows.</summary>
+    public IGreetingStore GreetingStore
+    {
+        get
+        {
+            Verify();
+            return _container.GetInstance<IGreetingStore>();
+        }
+    }
 
     /// <summary>Gets the number of request handlers audited by the application graph.</summary>
     public int AuditCount
@@ -182,6 +205,59 @@ public sealed class ApplicationTestContext : IAsyncDisposable
                     .ConfigureAwait(false);
                 return true;
             }).ConfigureAwait(false);
+    }
+
+    /// <summary>Starts the scenario-owned outbound Rebus client.</summary>
+    public void StartOutboundBus()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        Verify();
+        if (_busStarted)
+            return;
+
+        _container.StartBus();
+        _busStarted = true;
+    }
+
+    /// <summary>Sends a Rebus message through the scenario-owned outbound client.</summary>
+    /// <typeparam name="TMessage">The message type.</typeparam>
+    /// <param name="message">The message to send.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task SendAsync<TMessage>(TMessage message, CancellationToken ctk = default)
+        where TMessage : class
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        StartOutboundBus();
+        await _container.GetInstance<IBus>().Send(message).ConfigureAwait(false);
+    }
+
+    /// <summary>Gets the number of pending SQL outbox messages.</summary>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task<int> GetOutboxCountAsync(CancellationToken ctk = default)
+    {
+        if (!UsesSqlStore)
+            return 0;
+
+        Verify();
+        await using var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
+            .CreateAsync(ctk).ConfigureAwait(false);
+        var count = await context.CountAsync(ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return count;
+    }
+
+    /// <summary>Clears all pending SQL outbox messages during scenario cleanup.</summary>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task ClearOutboxAsync(CancellationToken ctk = default)
+    {
+        if (!UsesSqlStore)
+            return;
+
+        Verify();
+        await using var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
+            .CreateAsync(ctk).ConfigureAwait(false);
+        await context.ClearAsync(ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
     }
 
     /// <summary>Disposes Rebus and all application resources owned by the context.</summary>

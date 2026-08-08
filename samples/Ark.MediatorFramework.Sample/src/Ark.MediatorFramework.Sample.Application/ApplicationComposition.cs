@@ -145,6 +145,7 @@ public static class ApplicationComposition
         container.RegisterSingleton<DocumentStore>();
         container.RegisterSingleton<IClock>(() => clock ?? SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
+        container.RegisterSingleton<GreetingCompositionRetryTracker>();
 
         var applicationAssembly = typeof(ApplicationComposition).Assembly;
         container.Register(

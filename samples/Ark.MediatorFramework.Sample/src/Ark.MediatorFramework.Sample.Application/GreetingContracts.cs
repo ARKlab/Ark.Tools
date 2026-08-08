@@ -132,6 +132,9 @@ public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingRequest, C
 {
     /// <summary>Gets the name to greet.</summary>
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>Gets the number of transient processing failures to simulate before completing the workflow.</summary>
+    public int FailuresBeforeSuccess { get; init; }
 }
 
 /// <summary>Response returned when a composition request has been queued.</summary>
@@ -153,6 +156,9 @@ public sealed record CompleteGreetingCompositionRequest : IRequest<CompleteGreet
 
     /// <summary>Gets the name to greet.</summary>
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>Gets the number of transient processing failures to simulate before completing the workflow.</summary>
+    public int FailuresBeforeSuccess { get; init; }
 }
 
 /// <summary>Notification emitted by the SQL transaction after a greeting is persisted.</summary>

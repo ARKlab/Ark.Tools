@@ -11,7 +11,9 @@ using Ark.Tools.Solid.Authorization;
 
 using NodaTime;
 
+using Rebus.Config;
 using Rebus.Handlers;
+using Rebus.Timeouts;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -37,6 +39,8 @@ public static class RebusProcessorComposition
     /// Whether failed messages should be dispatched as <see cref="Rebus.Retry.Simple.IFailed{TMessage}"/>.
     /// </param>
     /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
+    /// <param name="configureOptions">Configures optional Rebus processor options.</param>
+    /// <param name="configureTimeouts">Configures optional Rebus timeout storage.</param>
     /// <returns>An isolated processor container.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
@@ -45,7 +49,9 @@ public static class RebusProcessorComposition
         IClock? clock = null,
         IGreetingStore? greetingStore = null,
         Action<Container>? registerHandlers = null,
-        bool secondLevelRetriesEnabled = false)
+        bool secondLevelRetriesEnabled = false,
+        Action<OptionsConfigurer>? configureOptions = null,
+        Action<StandardConfigurer<ITimeoutManager>>? configureTimeouts = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -71,9 +77,12 @@ public static class RebusProcessorComposition
             {
                 options.SetNumberOfWorkers(1);
                 options.ArkRetryStrategy(
-                    maxDeliveryAttempts: 1,
+                    maxDeliveryAttempts: 2,
                     secondLevelRetriesEnabled: secondLevelRetriesEnabled);
+                configureOptions?.Invoke(options);
             });
+            if (configureTimeouts is not null)
+                cfg.Timeouts(configureTimeouts);
         });
 
         return container;
