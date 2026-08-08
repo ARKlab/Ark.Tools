@@ -10,6 +10,8 @@ using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
 
+using Rebus.Bus;
+
 namespace Ark.MediatorFramework.Sample.Tests;
 
 /// <summary>Verifies direct application composition and scope ownership.</summary>
@@ -86,7 +88,9 @@ public sealed class ApplicationTestContextTests
     [TestMethod]
     public async Task ConcurrentPrintRequestsCreateOneActiveProcess()
     {
-        await using var context = new ApplicationTestContext();
+        var audits = new InMemoryAuditStore();
+        var store = new CoordinatedBookStore(new InMemoryBookStore(audits));
+        await using var context = new ApplicationTestContext(useSqlStore: false, bookStore: store, auditStore: audits);
         context.SetAuthenticatedUser();
         context.StartOutboundBus();
         var book = await context.DispatchRequestAsync<CreateBookRequest, BookResponse>(
@@ -160,6 +164,77 @@ public sealed class ApplicationTestContextTests
 #pragma warning disable ERP022 // The test asserts the exact exception after both requests finish.
             return exception;
 #pragma warning restore ERP022
+        }
+    }
+
+    private sealed class CoordinatedBookStore : IBookStore
+    {
+        private readonly IBookStore _inner;
+        private readonly TaskCompletionSource _bothRequestsArrived =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _requestCount;
+
+        internal CoordinatedBookStore(IBookStore inner)
+        {
+            _inner = inner;
+        }
+
+        public async Task<BookResponse> CreateAsync(
+            BookResponse book,
+            AuditEntry? audit = null,
+            CancellationToken ctk = default)
+        {
+            return await _inner.CreateAsync(book, audit, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<BookResponse> GetAsync(Guid id, CancellationToken ctk = default)
+        {
+            return await _inner.GetAsync(id, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<BookResponse> UpdateAsync(
+            BookResponse book,
+            AuditEntry? audit = null,
+            CancellationToken ctk = default)
+        {
+            return await _inner.UpdateAsync(book, audit, ctk).ConfigureAwait(false);
+        }
+
+        public async Task DeleteAsync(Guid id, AuditEntry? audit = null, CancellationToken ctk = default)
+        {
+            await _inner.DeleteAsync(id, audit, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<BookPage> SearchAsync(SearchBooksQuery query, CancellationToken ctk = default)
+        {
+            return await _inner.SearchAsync(query, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<bool> TryCreateAndQueuePrintProcessAsync(
+            BookPrintProcessResponse process,
+            AuditEntry audit,
+            IBus bus,
+            CancellationToken ctk = default)
+        {
+            if (Interlocked.Increment(ref _requestCount) == 2)
+                _bothRequestsArrived.TrySetResult();
+            await _bothRequestsArrived.Task.WaitAsync(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
+            return await _inner.TryCreateAndQueuePrintProcessAsync(process, audit, bus, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<BookPrintProcessResponse> GetPrintProcessAsync(
+            Guid id,
+            CancellationToken ctk = default)
+        {
+            return await _inner.GetPrintProcessAsync(id, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<BookPrintProcessResponse> UpdatePrintProcessAsync(
+            BookPrintProcessResponse process,
+            AuditEntry audit,
+            CancellationToken ctk = default)
+        {
+            return await _inner.UpdatePrintProcessAsync(process, audit, ctk).ConfigureAwait(false);
         }
     }
 }
