@@ -26,7 +26,7 @@ public sealed class ConcurrencyRoundtripTests
     [TestMethod]
     public async Task MinimalApiRoundtripUsesAndRejectsStaleETags()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer", new JwtTokenBuilder().AddSubject("test-user").AddScope("greetings.write").Build());
 
@@ -81,7 +81,7 @@ public sealed class ConcurrencyRoundtripTests
     [TestMethod]
     public async Task GrpcRoundtripUsesAndRejectsStaleETags()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var channel = GrpcChannel.ForAddress(
             "http://localhost", new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
         var metadata = new Metadata
@@ -133,7 +133,7 @@ public sealed class ConcurrencyRoundtripTests
     {
         const int MaxRetries = 2;
         const int ExhaustedRetries = MaxRetries + 1;
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer", new JwtTokenBuilder().AddSubject("retry-user").AddScope("greetings.write").Build());
         var created = await context.Client.PostAsJsonAsync("/api/v1/greetings", new { name = "retry" }).ConfigureAwait(false);

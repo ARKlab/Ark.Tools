@@ -1,0 +1,66 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Microsoft.Data.SqlClient;
+using Microsoft.SqlServer.Dac;
+
+using Reqnroll;
+
+namespace Ark.MediatorFramework.Sample.Tests.Hooks;
+
+/// <summary>Creates and resets the sample SQL database for integration runs.</summary>
+[Binding]
+public sealed class DatabaseHooks
+{
+    /// <summary>Gets the SQL connection string used by the sample integration database.</summary>
+    public static string ConnectionString =>
+        Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION")
+        ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False";
+
+    /// <summary>Creates the sample schema when SQL integration tests are enabled.</summary>
+    [BeforeTestRun(Order = -1)]
+    public static void EnsureDatabase()
+    {
+        if (!SqlEnabled())
+            return;
+
+        var builder = new SqlConnectionStringBuilder(ConnectionString);
+        builder.Remove("Initial Catalog");
+        using var dacpac = DacPackage.Load("Ark.MediatorFramework.Sample.Database.dacpac");
+        var instance = new DacServices(builder.ConnectionString);
+        instance.Deploy(
+            dacpac,
+            "Ark.MediatorFramework.Sample",
+            upgradeExisting: true,
+            new DacDeployOptions
+            {
+                CreateNewDatabase = true,
+                AllowIncompatiblePlatform = true,
+            });
+    }
+
+    /// <summary>Clears SQL state between scenarios when SQL integration tests are enabled.</summary>
+    [BeforeScenario(Order = -1)]
+    public static async Task ResetDatabaseAsync()
+    {
+        if (!SqlEnabled())
+            return;
+
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync().ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "[ops].[ResetFull_OnlyForTesting]";
+        command.CommandType = System.Data.CommandType.StoredProcedure;
+        var parameter = command.Parameters.Add("@areYouReallySure", System.Data.SqlDbType.Bit);
+        parameter.Value = true;
+        await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+    }
+
+    private static bool SqlEnabled()
+    {
+        return !string.Equals(
+            Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
+            "1",
+            StringComparison.Ordinal);
+    }
+}

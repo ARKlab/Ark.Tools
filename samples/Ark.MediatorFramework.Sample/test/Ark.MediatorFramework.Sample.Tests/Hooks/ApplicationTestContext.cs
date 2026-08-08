@@ -114,13 +114,17 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         _principalProvider.SetCurrent(principal);
     }
 
-    /// <summary>Sets an authenticated principal with the greeting write scope.</summary>
-    public void SetAuthenticatedUser()
+    /// <summary>Sets an authenticated principal with the requested policy claims.</summary>
+    /// <param name="subject">The authenticated subject.</param>
+    /// <param name="scopes">The scope claims granted to the subject.</param>
+    public void SetAuthenticatedUser(string subject = "application-test-user", params string[] scopes)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(subject);
+        scopes = scopes.Length == 0 ? [ApplicationScopes.GreetingWrite] : scopes;
         SetPrincipal(new ClaimsPrincipal(new ClaimsIdentity(
             [
-                new Claim(ClaimTypes.NameIdentifier, "application-test-user"),
-                new Claim("scope", ApplicationScopes.GreetingWrite),
+                new Claim(ClaimTypes.NameIdentifier, subject),
+                new Claim("scope", string.Join(' ', scopes)),
             ],
             authenticationType: "application-test")));
     }

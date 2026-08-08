@@ -17,7 +17,7 @@ public sealed class OpenApiTests
     [TestMethod]
     public async Task V1DocumentContainsRepresentativeSchemasAndOperations()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var response = await context.Client.GetAsync(new Uri("/openapi/v1.json", UriKind.Relative)).ConfigureAwait(false);
         var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, responseBody);
@@ -49,7 +49,7 @@ public sealed class OpenApiTests
     [TestMethod]
     public async Task V2DocumentContainsIntroducedOperation()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var response = await context.Client.GetAsync(new Uri("/openapi/v2.json", UriKind.Relative)).ConfigureAwait(false);
         var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, responseBody);
@@ -65,7 +65,7 @@ public sealed class OpenApiTests
     {
         foreach (var version in new[] { "v1", "v2" })
         {
-            using var context = new SampleTestContext();
+            using var context = new TransportTestContext();
             using var response = await context.Client.GetAsync(new Uri($"/openapi/{version}.json", UriKind.Relative))
                 .ConfigureAwait(false);
             var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -101,7 +101,7 @@ public sealed class OpenApiTests
     [TestMethod]
     public async Task YamlDocumentIsReachable()
     {
-        using var context = new SampleTestContext();
+        using var context = new TransportTestContext();
         using var response = await context.Client.GetAsync(new Uri("/openapi/v1.yaml", UriKind.Relative)).ConfigureAwait(false);
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
