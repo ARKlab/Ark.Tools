@@ -191,7 +191,7 @@ public sealed class GreetingSteps
         {
             return exception;
         }
-
-        private ApplicationTestContext Context => _sampleContext.Application;
     }
+
+    private ApplicationTestContext Context => _sampleContext.Application;
 }
