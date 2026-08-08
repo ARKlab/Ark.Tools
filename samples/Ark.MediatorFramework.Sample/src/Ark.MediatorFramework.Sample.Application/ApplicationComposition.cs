@@ -115,6 +115,7 @@ public static class ApplicationComposition
     /// <param name="greetingStore">Optional store shared with another host container.</param>
     /// <param name="bookStore">Optional book store shared with another host container.</param>
     /// <param name="auditStore">Optional in-memory audit store shared with another host container.</param>
+    /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
@@ -122,7 +123,8 @@ public static class ApplicationComposition
         IClock? clock = null,
         IGreetingStore? greetingStore = null,
         IBookStore? bookStore = null,
-        IAuditStore? auditStore = null)
+        IAuditStore? auditStore = null,
+        IPrintCompletedNotificationService? printCompletedNotificationService = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -160,6 +162,10 @@ public static class ApplicationComposition
         else
             container.RegisterSingleton<IBookStore, InMemoryBookStore>();
         container.RegisterSingleton<DocumentStore>();
+        if (printCompletedNotificationService is not null)
+            container.RegisterInstance(printCompletedNotificationService);
+        else
+            container.RegisterSingleton<IPrintCompletedNotificationService, NoOpPrintCompletedNotificationService>();
         container.RegisterSingleton<IClock>(() => clock ?? SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
         container.RegisterSingleton<GreetingCompositionRetryTracker>();

@@ -37,6 +37,7 @@ public static class RebusProcessorComposition
     /// </param>
     /// <param name="bookStore">Optional book store shared with the API container.</param>
     /// <param name="auditStore">Optional audit store shared with the API container.</param>
+    /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
     /// <param name="secondLevelRetriesEnabled">
     /// Whether failed messages should be dispatched as <see cref="Rebus.Retry.Simple.IFailed{TMessage}"/>.
     /// </param>
@@ -52,6 +53,7 @@ public static class RebusProcessorComposition
         IGreetingStore? greetingStore = null,
         IBookStore? bookStore = null,
         IAuditStore? auditStore = null,
+        IPrintCompletedNotificationService? printCompletedNotificationService = null,
         Action<Container>? registerHandlers = null,
         bool secondLevelRetriesEnabled = false,
         Action<OptionsConfigurer>? configureOptions = null,
@@ -68,7 +70,8 @@ public static class RebusProcessorComposition
             clock,
             greetingStore,
             bookStore,
-            auditStore);
+            auditStore,
+            printCompletedNotificationService);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();

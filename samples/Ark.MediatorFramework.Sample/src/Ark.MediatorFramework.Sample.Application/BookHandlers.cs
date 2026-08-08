@@ -201,16 +201,19 @@ public sealed class ProcessBookPrintProcessHandler :
     private readonly IBookStore _store;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
+    private readonly IPrintCompletedNotificationService _printCompletedNotificationService;
 
     /// <summary>Initializes a new instance of the <see cref="ProcessBookPrintProcessHandler"/> class.</summary>
     public ProcessBookPrintProcessHandler(
         IBookStore store,
         IContextProvider<ClaimsPrincipal> user,
-        IClock clock)
+        IClock clock,
+        IPrintCompletedNotificationService printCompletedNotificationService)
     {
         _store = store;
         _user = user;
         _clock = clock;
+        _printCompletedNotificationService = printCompletedNotificationService;
     }
 
     /// <inheritdoc />
@@ -220,6 +223,11 @@ public sealed class ProcessBookPrintProcessHandler :
     {
         ArgumentNullException.ThrowIfNull(request);
         var process = await _store.GetPrintProcessAsync(request.Id, ctk).ConfigureAwait(false);
+        if (process.Status == BookPrintProcessStatus.Completed)
+        {
+            await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
+            return process;
+        }
         if (process.Status != BookPrintProcessStatus.Pending)
             return process;
 
@@ -241,7 +249,10 @@ public sealed class ProcessBookPrintProcessHandler :
                 Progress = 1,
                 Status = BookPrintProcessStatus.Completed,
             };
-        return await _store.UpdatePrintProcessAsync(process, CreateAudit(process.Id), ctk).ConfigureAwait(false);
+        process = await _store.UpdatePrintProcessAsync(process, CreateAudit(process.Id), ctk).ConfigureAwait(false);
+        if (process.Status == BookPrintProcessStatus.Completed)
+            await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
+        return process;
     }
 
     private AuditEntry CreateAudit(Guid id)

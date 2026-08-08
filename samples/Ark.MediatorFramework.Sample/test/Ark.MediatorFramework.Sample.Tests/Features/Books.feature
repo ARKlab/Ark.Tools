@@ -85,3 +85,13 @@ Feature: Books
                 | ShouldFail |
                 | false      |
             Then the request fails because the current book is already printing
+
+        Scenario: Surface a failed external print-completion notification
+            Given the print-completion notification service fails
+            And I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I start a book print process for the current book with
+                | ShouldFail |
+                | false      |
+            Then the error queue contains the failed message

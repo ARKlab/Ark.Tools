@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
+using Ark.MediatorFramework.Sample.Tests.Fakes;
 
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus;
@@ -31,6 +32,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     private readonly AsyncLocal<Scope?> _currentScope = new();
     private readonly Container _container;
     private readonly TestPrincipalProvider _principalProvider;
+    private readonly MockPrintCompletedNotificationService _printCompletedNotificationService;
     private readonly bool _usesSqlStore;
     private readonly string? _connectionString;
     private bool _verified;
@@ -55,6 +57,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         Network = new InMemNetwork();
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         _principalProvider = new TestPrincipalProvider();
+        _printCompletedNotificationService = new MockPrintCompletedNotificationService();
         _container = new Container
         {
             Options =
@@ -75,7 +78,8 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             Clock,
             greetingStore,
             bookStore,
-            auditStore);
+            auditStore,
+            _printCompletedNotificationService);
         _container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         _container.RegisterAuthorization();
         _container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
@@ -104,6 +108,8 @@ public sealed class ApplicationTestContext : IAsyncDisposable
 
     /// <summary>Gets the optional SQL Server connection-string override for this scenario.</summary>
     public string? ConnectionString => _connectionString;
+
+    internal IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationService;
 
     /// <summary>Gets the store shared by the sender and receiver for in-memory workflows.</summary>
     public IGreetingStore GreetingStore
@@ -177,6 +183,13 @@ public sealed class ApplicationTestContext : IAsyncDisposable
                 new Claim("scope", string.Join(' ', scopes)),
             ],
             authenticationType: "application-test")));
+    }
+
+    /// <summary>Configures failures from the simulated external print-completion service.</summary>
+    /// <param name="count">The number of notifications that should fail.</param>
+    public void FailNextPrintCompletionNotifications(int count)
+    {
+        _printCompletedNotificationService.FailNext(count);
     }
 
     /// <summary>Dispatches a request through its decorated application handler.</summary>
