@@ -130,18 +130,18 @@ namespace Ark.MediatorFramework.Generators
                 else if (member is INamedTypeSymbol type)
                 {
                     yield return type;
-                    foreach (var nested in _allNestedTypes(type))
+                    foreach (var nested in AllNestedTypes(type))
                         yield return nested;
                 }
             }
         }
 
-        private static IEnumerable<INamedTypeSymbol> _allNestedTypes(INamedTypeSymbol type)
+        private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type)
         {
             foreach (var nested in type.GetTypeMembers())
             {
                 yield return nested;
-                foreach (var child in _allNestedTypes(nested))
+                foreach (var child in AllNestedTypes(nested))
                     yield return child;
             }
         }

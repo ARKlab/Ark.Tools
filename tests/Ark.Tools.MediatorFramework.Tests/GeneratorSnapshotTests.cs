@@ -310,6 +310,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("new global::Update(_bodyNullable, default!)");
+        azure.Generated.Should().Contain("body = body with { Id = _route_Id };");
     }
 
     [TestMethod]
