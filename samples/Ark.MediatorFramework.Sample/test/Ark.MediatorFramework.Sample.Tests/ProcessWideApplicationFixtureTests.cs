@@ -66,17 +66,18 @@ internal sealed class ProcessWideApplicationFixture : IAsyncDisposable
                 await Task.Delay(50, timeout.Token).ConfigureAwait(false);
         }
 
-        internal async Task<int> CountGreetingsAsync(CancellationToken ctk = default)
-        {
-            var page = await _context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(
-                new SearchGreetingsQuery { Limit = 1 },
-                ctk).ConfigureAwait(false);
-            return checked((int)page.Count);
-        }
         finally
         {
             _serial.Release();
         }
+    }
+
+    internal async Task<int> CountGreetingsAsync(CancellationToken ctk = default)
+    {
+        var page = await _context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(
+            new SearchGreetingsQuery { Limit = 1 },
+            ctk).ConfigureAwait(false);
+        return checked((int)page.Count);
     }
 
     public async ValueTask DisposeAsync()
