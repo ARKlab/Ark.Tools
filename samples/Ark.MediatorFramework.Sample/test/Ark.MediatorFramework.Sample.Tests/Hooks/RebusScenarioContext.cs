@@ -164,7 +164,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         }
 
         var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
-        if (remaining != new RebusWorkCounts(0, 0, 0, 0, 0))
+        if (remaining != RebusWorkCounts.Empty)
         {
             throw new InvalidOperationException(
                 string.Format(
@@ -208,7 +208,10 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             await Task.Delay(TimeSpan.FromMilliseconds(50), ctk).ConfigureAwait(false);
     }
 
-    private sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error);
+    private sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error)
+    {
+        public static RebusWorkCounts Empty => new(0, 0, 0, 0, 0);
+    }
 
     private sealed class FailedMessageRecorder
     {
