@@ -177,6 +177,28 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             await _inner.CommitAsync(reuse, ctk).ConfigureAwait(false);
         }
 
+        public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
+        {
+            await _inner.SendAsync(messages, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<OutboxMessage>> PeekLockMessagesAsync(
+            int messageCount = 10,
+            CancellationToken ctk = default)
+        {
+            return await _inner.PeekLockMessagesAsync(messageCount, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<int> CountAsync(CancellationToken ctk = default)
+        {
+            return await _inner.CountAsync(ctk).ConfigureAwait(false);
+        }
+
+        public async Task ClearAsync(CancellationToken ctk = default)
+        {
+            await _inner.ClearAsync(ctk).ConfigureAwait(false);
+        }
+
         public async ValueTask DisposeAsync()
         {
             await _inner.DisposeAsync().ConfigureAwait(false);

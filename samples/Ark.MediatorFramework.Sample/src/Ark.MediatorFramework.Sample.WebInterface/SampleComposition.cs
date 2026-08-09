@@ -49,7 +49,7 @@ public static class SampleComposition
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         container.RegisterInstance(network);
 
-        // Transport-agnostic domain graph (handlers, store, cross-cutting decorator).
+        // Transport-agnostic domain graph (handlers, context factory, cross-cutting decorator).
         ApplicationComposition.Register(
             container,
             useSqlStore,

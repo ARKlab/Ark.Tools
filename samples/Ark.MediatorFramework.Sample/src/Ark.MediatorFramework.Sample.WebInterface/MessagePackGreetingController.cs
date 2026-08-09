@@ -34,11 +34,11 @@ public sealed class MessagePackGreetingController : ControllerBase
     [Produces("application/x-msgpack", "application/json")]
     [Consumes("application/x-msgpack", "application/json")]
     public async Task<ActionResult<Greeting.V1.Output>> CreateAsync(
-        Greeting_CreateRequest.V1 request,
+        Greeting.V1.Create request,
         CancellationToken cancellationToken)
     {
         var handler = _container.GetInstance<IRequestHandler<Greeting_CreateRequest.V1, Greeting.V1.Output>>();
-        var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
+        var result = await handler.ExecuteAsync(new Greeting_CreateRequest.V1(request), cancellationToken).ConfigureAwait(false);
         return Ok(result);
     }
 }

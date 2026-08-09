@@ -287,6 +287,20 @@ public sealed class ApplicationTestContextTests
             public async Task CommitAsync(bool reuse, CancellationToken ctk = default) =>
                 await _inner.CommitAsync(reuse, ctk).ConfigureAwait(false);
 
+            public async Task SendAsync(IEnumerable<Ark.Tools.Outbox.OutboxMessage> messages, CancellationToken ctk = default) =>
+                await _inner.SendAsync(messages, ctk).ConfigureAwait(false);
+
+            public async Task<IEnumerable<Ark.Tools.Outbox.OutboxMessage>> PeekLockMessagesAsync(
+                int messageCount = 10,
+                CancellationToken ctk = default) =>
+                await _inner.PeekLockMessagesAsync(messageCount, ctk).ConfigureAwait(false);
+
+            public async Task<int> CountAsync(CancellationToken ctk = default) =>
+                await _inner.CountAsync(ctk).ConfigureAwait(false);
+
+            public async Task ClearAsync(CancellationToken ctk = default) =>
+                await _inner.ClearAsync(ctk).ConfigureAwait(false);
+
             public async ValueTask DisposeAsync() =>
                 await _inner.DisposeAsync().ConfigureAwait(false);
         }

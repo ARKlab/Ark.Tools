@@ -58,7 +58,7 @@ for every implementation task.
   scope.
 - [ ] Focused lifecycle tests demonstrate both scenario-owned resources and the
   separately serialized process-wide fixture.
-- [ ] A step cannot obtain `IGreetingStore` as an application assertion API.
+- [ ] A step cannot obtain a persistence context as an application assertion API.
 - [ ] Container verification and disposal are deterministic.
 - [ ] All public test helper types and members have XML documentation where
   repository analyzers require it.

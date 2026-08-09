@@ -16,7 +16,7 @@ using System.Data.Common;
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Composes fine-grained greeting and audit operations in one application transaction.</summary>
-public interface ISampleDataContext : IAsyncDisposable
+public interface ISampleDataContext : IOutboxAsyncContext
 {
     /// <summary>Gets the transactional outbox context for the current data transaction.</summary>
     IOutboxContextCore OutboxContext { get; }

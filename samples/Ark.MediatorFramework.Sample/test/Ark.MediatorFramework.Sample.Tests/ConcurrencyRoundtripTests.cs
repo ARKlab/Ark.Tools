@@ -40,7 +40,7 @@ public sealed class ConcurrencyRoundtripTests
             .Which.Message.Should().Contain("ETag");
     }
 
-    /// <summary>Retries transient store failures before completing an update.</summary>
+    /// <summary>Retries transient context failures before completing an update.</summary>
     [TestMethod]
     public async Task DirectRoundtripRetriesTransientFailures()
     {

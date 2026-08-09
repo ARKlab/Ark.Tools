@@ -5,7 +5,7 @@
 ## Problem
 
 The mediator sample persists in memory
-(`samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/GreetingStore.cs`)
+(`samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/SampleDataContext.cs`)
 and publishes bus messages non-transactionally. The ReferenceProject demonstrates the recommended
 production pattern: Dapper over SQL Server with a transactional **Outbox**.
 
@@ -20,7 +20,9 @@ production pattern: Dapper over SQL Server with a transactional **Outbox**.
 
 1. Add a database project for the sample (mirror the ReferenceProject database project layout) with a `Greeting` table schema and the Outbox tables (`Ark.Tools.Outbox.SqlServer` schema helpers).
 2. Add/extend `docker-compose.yml` under `samples/Ark.MediatorFramework.Sample/` for SQL Server (mirror ReferenceProject's compose file, including the test-reset stored procedure pattern `[ops].[ResetFull_OnlyForTesting]` — note: use `DELETE FROM` not `TRUNCATE` for FK-referenced tables).
-3. Implement `SampleDataContext : AbstractSqlAsyncContextWithOutbox` replacing `InMemoryGreetingStore`; handlers use it via the existing store interface (keep the interface, swap the implementation) registered in `ApplicationComposition.cs`/`SampleComposition.cs`.
+3. Implement `SampleDataContext : AbstractSqlAsyncContextWithOutbox` and an
+   `InMemorySampleDataContextFactory` behind the same `ISampleDataContext` contract; handlers
+   use the context factory registered in `ApplicationComposition.cs`/`SampleComposition.cs`.
 4. Make the greeting-created bus notification go through the Outbox within the SQL transaction.
 5. Test infra: wire the docker dependency in the Reqnroll test hooks (`Hooks/SampleTestContext.cs`), with per-scenario DB reset (ReferenceProject pattern).
 6. Keep the in-memory implementation available behind configuration **only if trivial**; otherwise delete it — SQL becomes the sample default.

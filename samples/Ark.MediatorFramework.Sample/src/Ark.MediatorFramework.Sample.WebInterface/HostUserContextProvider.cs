@@ -18,7 +18,7 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 /// </summary>
 /// <remarks>
 /// ponytail: a single container serving both HTTP and Rebus is a sample simplification so the
-/// transport-parity test can share one store. Production hosts the Rebus processor in its own
+/// transport-parity test can share one context factory. Production hosts the Rebus processor in its own
 /// container (see the ReferenceProject), each with its own <see cref="IContextProvider{T}"/>.
 /// </remarks>
 public sealed class HostUserContextProvider : IContextProvider<ClaimsPrincipal>

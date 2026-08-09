@@ -18,7 +18,7 @@ for every implementation task.
    FK-constrained application tables and truncate only independent history
    tables.
 4. Run the persistence-sensitive contract scenarios against both
-   `InMemoryGreetingStore` and `SqlGreetingStore`: create/read/update,
+   `InMemorySampleDataContextFactory` and `SampleDataContext`: create/read/update,
    paging/search, audits, opaque row-version ETags, transactions, and
    transactional outbox effects.
 5. Keep Rebus in-memory and enable the same transactional outbox in both the

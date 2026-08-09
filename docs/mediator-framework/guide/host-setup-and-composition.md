@@ -14,7 +14,7 @@ The sample shows this split in two files:
 
 | Layer | Owns | Must not own |
 | --- | --- | --- |
-| Application assembly | Contracts, handlers, validators, policy types, repositories, decorators, clocks | `HttpContext`, `IApplicationBuilder`, gRPC server registration, Rebus transport setup |
+| Application assembly | Contracts, handlers, validators, policy types, context factories, decorators, clocks | `HttpContext`, `IApplicationBuilder`, gRPC server registration, Rebus transport setup |
 | ASP.NET Core host | Authentication, authorization fallback policy, JSON/MessagePack, ProblemDetails, OpenAPI, generated HTTP + gRPC mapping | Business rules or persistence decisions |
 | Rebus host | Transport, routing, generated message handlers, message serialization, worker retry behavior | HTTP request parsing or UI concerns |
 
@@ -23,7 +23,7 @@ The sample shows this split in two files:
 The sample's `ApplicationComposition.Register(...)` method is the reference
 pattern to copy. It performs four jobs:
 
-1. Chooses concrete infrastructure (`SqlGreetingStore` or `InMemoryGreetingStore`).
+1. Chooses the SQL or in-memory `ISampleDataContextFactory`.
 2. Registers shared singletons such as `IClock` and the document store.
 3. Registers validators and a null-validator fallback.
 4. Registers handlers and transport-agnostic decorators.
@@ -32,9 +32,9 @@ pattern to copy. It performs four jobs:
 public static void Register(Container container, bool useSqlStore = true)
 {
     if (useSqlStore)
-        container.RegisterSingleton<IGreetingStore, SqlGreetingStore>();
+        container.RegisterSingleton<ISampleDataContextFactory, SampleDataContextFactory>();
     else
-        container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
+        container.RegisterSingleton<ISampleDataContextFactory, InMemorySampleDataContextFactory>();
 
     container.RegisterSingleton<IClock>(() => SystemClock.Instance);
 

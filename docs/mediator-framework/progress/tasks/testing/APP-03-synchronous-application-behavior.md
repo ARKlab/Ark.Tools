@@ -30,7 +30,7 @@ documented reason for exclusion. The initial coverage matrix is:
 
 Use the real application decorators and public contracts. Arrange state only
 through earlier contract dispatches or the documented test adapter; do not call
-`SampleDataContext` or `IGreetingStore` from a step.
+`SampleDataContext` from a step.
 
 ## Outcome
 
