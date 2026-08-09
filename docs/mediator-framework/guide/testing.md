@@ -1,147 +1,75 @@
 # Testing
 
-Test an application through the interfaces its consumers use. This verifies
-generated binding, serialization, authentication, authorization, exception
-mapping, handler dispatch, and host configuration together.
+Test application behavior through the application contracts that handlers
+implement. Keep generated endpoint, serialization, authentication, and host
+configuration checks in framework-owned tests under `tests/`.
 
-## Boundary test workflow
-
-1. Build a test host with the same application assembly, handler registration,
-   decorators, and generated endpoint mapping as production.
-2. Create HTTP requests for success, malformed input, unauthenticated,
-   unauthorized, and domain-failure cases.
-3. Generate a gRPC client from the exported proto and repeat the equivalent
-   success and denied cases through gRPC.
-4. Run Rebus handlers with the configured message scope and assert the durable
-   business result.
-5. Add focused tests for streaming, attachments, or concurrency when those
-   features are publicly exposed.
-
-## Build the in-process host once
+## Application behavior tests
 
 The sample's
-`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs`
-is the source to copy for a TestServer host. It builds the production container,
-uses the normal startup registration and mapping, starts an in-process host,
-and provides both an `HttpClient` and a gRPC message handler.
+`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/ApplicationTestContext.cs`
+creates a scenario-owned `SimpleInjector` composition and calls
+`ApplicationComposition.Register`. It provides deterministic clocks and users,
+the selected SQL or in-memory persistence profile, and the outbound Rebus
+composition.
 
-Condensed pattern:
-
-```csharp
-var container = SampleComposition.BuildContainer(new InMemNetwork(), useSqlStore: false);
-var startup = new SampleStartup(container, configuration, configureFallbackPolicy: true);
-
-_host = new HostBuilder()
-    .ConfigureWebHost(web => web
-        .UseTestServer()
-        .ConfigureServices(startup.ConfigureServices)
-        .Configure(startup.Configure))
-    .Build();
-_host.Start();
-
-Client = _host.GetTestServer().CreateClient();
-```
-
-**Outcome:** every test hits the same generated endpoints, middleware, auth,
-serializers, and decorators the real host uses.
-
-## HTTP test example
+Dispatch a request, query, or command directly:
 
 ```csharp
-using var context = new SampleTestContext();
-context.Client.DefaultRequestHeaders.Authorization =
-    new AuthenticationHeaderValue("Bearer", token);
+await using var context = new ApplicationTestContext(useSqlStore: false);
+context.SetAuthenticatedUser("test-user", ApplicationScopes.GreetingWrite);
 
-using var response = await context.Client.GetAsync("/api/v1/greetings/" + id);
-response.StatusCode.Should().Be(HttpStatusCode.OK);
+var greeting = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
+    new CreateGreetingRequest { Name = "Ada" });
 ```
 
-Typical expectations to assert:
+Application tests should assert:
 
-- status code;
-- content type (`application/json` or `application/problem+json`);
-- JSON body shape;
-- auth failures (`401`/`403`) and validation failures (`400`).
+- returned contract values and persisted business state;
+- typed validation, authorization, not-found, and business-rule exceptions;
+- deterministic audit entries, concurrency behavior, paging, attachments, and
+  streaming cancellation;
+- eventual effects and retry/dead-letter outcomes for asynchronous Rebus
+  workflows.
 
-## gRPC client for tests
+Do not resolve stores to arrange or assert behavior in a scenario. Use an
+earlier contract dispatch or a documented test adapter. Do not assert URLs,
+status codes, headers, serialized payloads, OpenAPI documents, or generated
+wrapper internals.
 
-The generated proto should be consumed by a separate test client project. The
-sample's
-`samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj`
-uses `Grpc.Tools` with `GrpcServices="Client"` and references the exported
-schema. Create the in-process gRPC client from the same test host:
+## Framework hosting tests
 
-```csharp
-using var context = new SampleTestContext();
-using var channel = GrpcChannel.ForAddress(
-    "http://localhost",
-    new GrpcChannelOptions { HttpHandler = context.CreateGrpcHandler() });
-var client = new GreetingsV1.GreetingsV1Client(channel);
+Framework capability tests under
+`tests/Ark.Tools.MediatorFramework.Hosting.Tests/` own the transport boundary.
+They use synthetic contracts and may use `TestServer`, generated gRPC clients,
+and in-memory Rebus processors.
 
-var reply = await client.GetGreetingAsync(
-    new GetGreetingQuery { Id = ByteString.CopyFrom(id.ToByteArray()) },
-    new Metadata { { "Authorization", "Bearer " + token } }).ResponseAsync;
+These tests cover:
 
-reply.Message.Should().Be("Hello Ada");
-```
+- generated route, query, body, multipart, server-set, version, and streaming
+  binding;
+- HTTP status semantics, ProblemDetails, content negotiation, and auth
+  middleware;
+- exported `.proto` shape, generated gRPC clients, rich errors, metadata, and
+  cancellation;
+- generated Rebus wrappers, scope, retry, and dead-letter behavior.
 
-The channel is disposed with the test, requests never leave the process, and
-the call follows the generated protobuf contract.
-
-## gRPC failure example
-
-```csharp
-var action = async () => await client.GetGreetingAsync(
-    new GetGreetingQuery { Id = ByteString.Empty }).ResponseAsync;
-
-var exception = await action.Should().ThrowAsync<RpcException>();
-exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
-```
-
-This proves the generated gRPC surface enforces host auth and rich error
-mapping, not only the happy path.
-
-## Feature-specific test patterns from the sample
-
-| Capability | Sample test file | What it proves |
-| --- | --- | --- |
-| Auth and permission failures | `AuthorizationTests.cs` | `401`, `403`, and gRPC `Unauthenticated` / `PermissionDenied` behavior |
-| Paging validation | `PagingTests.cs` | HTTP and gRPC return the same validated pagination rules |
-| Streaming | `AsyncEnumerableStreamingTests.cs` | first HTTP item arrives before the producer completes; gRPC can cancel mid-stream |
-| Attachments and downloads | `FileDownloadTests.cs` | multipart upload, download content type, and file-count rules |
-| ETag and optimistic concurrency | `ConcurrencyRoundtripTests.cs` | HTTP `ETag`, `If-Match`, `412`, and gRPC concurrency parity |
-
-## Streaming test example
-
-The sample proves HTTP streaming is still plain JSON, not SSE framing:
-
-```csharp
-using var response = await context.Client.GetAsync(
-    new Uri("/api/v1/greetings/stream?count=2&delayMilliseconds=0", UriKind.Relative));
-var body = await response.Content.ReadAsStringAsync();
-
-response.StatusCode.Should().Be(HttpStatusCode.OK);
-response.Content.Headers.ContentType!.MediaType.Should().Be("application/json");
-body.Should().NotContain("data:");
-```
+The sample's `CompositionRootTests` remains a narrow sample-owned host
+composition check. It does not replace framework hosting coverage.
 
 ## Rebus testing guidance
 
-For Rebus, assert business outcomes rather than generated wrapper internals.
-The host setup already proves the generated handler registration and scope
-creation. Application tests should verify that sending a message produces the
-durable effect, outbox entry, or dead-letter behavior your workflow promises.
+Assert business outcomes rather than generated wrapper internals. Application
+tests should verify that sending a message produces the durable effect, outbox
+entry, or dead-letter behavior the workflow promises. Framework tests verify
+message registration, scope creation, retry, and transport mechanics.
 
 ## Test the exceptional paths
 
-Issue valid bearer tokens for authorized calls and tokens without the required
-scope for denied calls. Assert the safe public error code and status, not an
-internal exception string. Cancel a streamed call and assert that the producer
-observes cancellation. Upload files that exceed count, size, or content-type
-limits and assert rejection before storage.
-
-Use small unit tests for pure business rules. Keep generator and framework
-capability tests with the framework; adopting applications should concentrate
-on their public contracts and business outcomes.
+Use typed exception assertions for application failures. In framework hosting
+tests, issue malformed and unauthorized requests, exceed upload limits, cancel
+streamed calls, and assert the documented wire result. Keep pure business-rule
+tests with the application and generator/transport capability tests with the
+framework.
 
 Architecture rationale: [design.md](../design.md).
