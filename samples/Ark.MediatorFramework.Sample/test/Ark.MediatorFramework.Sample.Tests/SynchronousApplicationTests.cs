@@ -28,7 +28,7 @@ public sealed class SynchronousApplicationTests
             new Book_UpdateRequest.V1(new Book.V1.Input(), Guid.Empty));
         (await updateBook.Should().ThrowAsync<ValidationException>().ConfigureAwait(false))
             .Which.Errors.Should().Contain(error => error.PropertyName == nameof(Book_UpdateRequest.V1.Id));
-        var searchBooks = () => context.DispatchQueryAsync<Book_SearchQuery.V1, BookPage>(
+        var searchBooks = () => context.DispatchQueryAsync<Book_SearchQuery.V1, Book.V1.Page>(
             new Book_SearchQuery.V1 { Limit = 0 });
         (await searchBooks.Should().ThrowAsync<ValidationException>().ConfigureAwait(false))
             .Which.Errors.Should().Contain(error => error.PropertyName == nameof(Book_SearchQuery.V1.Limit));

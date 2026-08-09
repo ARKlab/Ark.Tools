@@ -233,7 +233,7 @@ public sealed class ApplicationTestContextTests
             await _inner.DeleteAsync(id, audit, ctk).ConfigureAwait(false);
         }
 
-        public async Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+        public async Task<Book.V1.Page> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
         {
             return await _inner.SearchAsync(query, ctk).ConfigureAwait(false);
         }

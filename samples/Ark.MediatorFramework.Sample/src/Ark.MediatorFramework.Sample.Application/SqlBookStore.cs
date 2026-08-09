@@ -69,7 +69,7 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+    public async Task<Book.V1.Page> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);

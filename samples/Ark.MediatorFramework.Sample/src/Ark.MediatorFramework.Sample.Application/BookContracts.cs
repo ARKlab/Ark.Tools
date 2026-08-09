@@ -64,6 +64,22 @@ public static class Book
             [ServerSet]
             public string Description { get; init; } = string.Empty;
         }
+
+        /// <summary>Represents a page of books.</summary>
+        public sealed record Page
+        {
+            /// <summary>Gets the total number of matching books.</summary>
+            public long Count { get; init; }
+
+            /// <summary>Gets the requested offset.</summary>
+            public int Skip { get; init; }
+
+            /// <summary>Gets the requested page size.</summary>
+            public int Limit { get; init; }
+
+            /// <summary>Gets the matching books.</summary>
+            public IReadOnlyList<Output> Data { get; init; } = [];
+        }
     }
 }
 
@@ -102,7 +118,7 @@ public static class Book_GetQuery
 public static class Book_SearchQuery
 {
     /// <summary>Version one of the book search query.</summary>
-    public sealed record V1 : IQuery<V1, BookPage>
+    public sealed record V1 : IQuery<V1, Book.V1.Page>
     {
         /// <summary>Gets the optional exact title filter.</summary>
         public string? Title { get; init; }
@@ -119,20 +135,4 @@ public static class Book_SearchQuery
         /// <summary>Gets the maximum number of rows to return.</summary>
         public int Limit { get; init; } = 25;
     }
-}
-
-/// <summary>Represents a page of books.</summary>
-public sealed record BookPage
-{
-    /// <summary>Gets the total number of matching books.</summary>
-    public long Count { get; init; }
-
-    /// <summary>Gets the requested offset.</summary>
-    public int Skip { get; init; }
-
-    /// <summary>Gets the requested page size.</summary>
-    public int Limit { get; init; }
-
-    /// <summary>Gets the matching books.</summary>
-    public IReadOnlyList<Book.V1.Output> Data { get; init; } = [];
 }

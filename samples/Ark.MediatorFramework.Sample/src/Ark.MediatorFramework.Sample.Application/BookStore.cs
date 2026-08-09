@@ -25,7 +25,7 @@ public interface IBookStore
     Task DeleteAsync(Guid id, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Searches books.</summary>
-    Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
+    Task<Book.V1.Page> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
 
     /// <summary>Atomically creates and queues a book print process when the book has no active process.</summary>
     Task<bool> TryCreateAndQueuePrintProcessAsync(
@@ -107,7 +107,7 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+    public Task<Book.V1.Page> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         var matching = _books.Values
@@ -118,7 +118,7 @@ public sealed class InMemoryBookStore : IBookStore
             .OrderBy(book => book.Id)
             .ToArray();
 
-        return Task.FromResult(new BookPage
+        return Task.FromResult(new Book.V1.Page
         {
             Count = matching.LongLength,
             Skip = query.Skip,

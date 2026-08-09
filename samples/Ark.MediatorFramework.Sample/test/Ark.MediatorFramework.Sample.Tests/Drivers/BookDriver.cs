@@ -24,7 +24,7 @@ public sealed class BookDriver
     public Book.V1.Output Current => _current ?? throw new InvalidOperationException("No current book is available in this scenario.");
 
     /// <summary>Gets the latest book search page.</summary>
-    public BookPage? SearchResults { get; private set; }
+    public Book.V1.Page? SearchResults { get; private set; }
 
     private Book.V1.Output? _current;
 
@@ -71,7 +71,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
-        SearchResults = await Context.DispatchQueryAsync<Book_SearchQuery.V1, BookPage>(query, ctk).ConfigureAwait(false);
+        SearchResults = await Context.DispatchQueryAsync<Book_SearchQuery.V1, Book.V1.Page>(query, ctk).ConfigureAwait(false);
     }
 
     /// <summary>Reads audit records for the active book.</summary>

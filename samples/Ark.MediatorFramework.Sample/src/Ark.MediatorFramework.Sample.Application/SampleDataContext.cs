@@ -60,7 +60,7 @@ public interface ISampleDataContext : IAsyncDisposable
     Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Reads a page of books.</summary>
-    Task<BookPage> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
+    Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
 
     /// <summary>Saves a book print process when no active process exists for the book.</summary>
     Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
@@ -352,7 +352,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Reads a page of books in the current transaction.</summary>
-    public async Task<BookPage> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+    public async Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         const string sql = """
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
@@ -379,7 +379,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
         var rows = await results.ReadAsync<BookRow>().ConfigureAwait(false);
         var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
-        return new BookPage
+        return new Book.V1.Page
         {
             Count = count,
             Skip = query.Skip,

@@ -133,7 +133,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return DeleteBookCoreAsync(id, ctk);
         }
 
-        public Task<BookPage> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+        public Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
         {
             return _books.SearchAsync(query, ctk);
         }

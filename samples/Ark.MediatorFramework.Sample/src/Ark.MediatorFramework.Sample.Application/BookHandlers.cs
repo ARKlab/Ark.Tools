@@ -355,7 +355,7 @@ public sealed class GetBookHandler : IQueryHandler<Book_GetQuery.V1, Book.V1.Out
 }
 
 /// <summary>Searches books through the application contract.</summary>
-public sealed class SearchBooksHandler : IQueryHandler<Book_SearchQuery.V1, BookPage>
+public sealed class SearchBooksHandler : IQueryHandler<Book_SearchQuery.V1, Book.V1.Page>
 {
     private readonly ISampleDataContextFactory _factory;
 
@@ -366,7 +366,7 @@ public sealed class SearchBooksHandler : IQueryHandler<Book_SearchQuery.V1, Book
     }
 
     /// <inheritdoc />
-    public async Task<BookPage> ExecuteAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+    public async Task<Book.V1.Page> ExecuteAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
