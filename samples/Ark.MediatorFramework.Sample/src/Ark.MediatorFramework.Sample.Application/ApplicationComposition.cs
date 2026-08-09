@@ -25,8 +25,8 @@ using SimpleInjector;
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>
-/// Transport-agnostic composition of the application layer: the pure handlers, the shared store
-/// and the cross-cutting decorator. The hosting layer adds the transport concerns (user context,
+/// Transport-agnostic composition of the application layer: the pure handlers, the shared context
+/// factory and the cross-cutting decorator. The hosting layer adds the transport concerns (user context,
 /// Minimal API endpoints, Rebus) on top of this registration.
 /// </summary>
 public static class ApplicationComposition
@@ -109,35 +109,26 @@ public static class ApplicationComposition
 
     /// <summary>Registers the pure domain graph into the given container.</summary>
     /// <param name="container">The SimpleInjector container to register into.</param>
-    /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
+    /// <param name="useSqlStore">Whether to use the SQL-backed context.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
-    /// <param name="greetingStore">Optional store shared with another host container.</param>
-    /// <param name="bookStore">Optional book store shared with another host container.</param>
-    /// <param name="auditStore">Optional in-memory audit store shared with another host container.</param>
+    /// <param name="dataContextFactory">Optional context factory shared with another host container.</param>
     /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        IGreetingStore? greetingStore = null,
-        IBookStore? bookStore = null,
-        IAuditStore? auditStore = null,
+        ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null)
     {
         ArgumentNullException.ThrowIfNull(container);
 
-        if (!useSqlStore)
+        if (dataContextFactory is not null)
         {
-            if (auditStore is not null)
-                container.RegisterInstance(auditStore);
-            else
-                container.RegisterSingleton<IAuditStore, InMemoryAuditStore>();
+            container.RegisterInstance<ISampleDataContextFactory>(dataContextFactory);
+            container.RegisterInstance<IOutboxAsyncContextFactory>(dataContextFactory);
         }
-
-        if (greetingStore is not null)
-            container.RegisterInstance(greetingStore);
         else if (useSqlStore)
         {
             // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
@@ -159,25 +150,15 @@ public static class ApplicationComposition
             container.RegisterSingleton<SampleDataContextFactory>();
             container.RegisterSingleton<IOutboxAsyncContextFactory, SampleDataContextFactory>();
             container.RegisterSingleton<ISampleDataContextFactory, SampleDataContextFactory>();
-            container.RegisterSingleton<IGreetingStore, SqlGreetingStore>();
         }
         else
-        {
-            container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
-        }
-
-        if (bookStore is not null)
-            container.RegisterInstance(bookStore);
-        else if (useSqlStore)
-            container.RegisterSingleton<IBookStore, SqlBookStore>();
-        else
-            container.RegisterSingleton<IBookStore, InMemoryBookStore>();
-        if (!useSqlStore)
         {
             container.RegisterSingleton(() => new InMemoryOutboxContextFactory());
             container.RegisterSingleton<IOutboxAsyncContextFactory>(
                 () => container.GetInstance<InMemoryOutboxContextFactory>());
-            container.RegisterSingleton<ISampleDataContextFactory, InMemorySampleDataContextFactory>();
+            container.RegisterSingleton<InMemorySampleDataContextFactory>();
+            container.RegisterSingleton<ISampleDataContextFactory>(
+                () => container.GetInstance<InMemorySampleDataContextFactory>());
         }
         container.RegisterSingleton<DocumentStore>();
         if (printCompletedNotificationService is not null)
@@ -197,8 +178,8 @@ public static class ApplicationComposition
         container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
 
         container.Register<ICommandHandler<RefreshGreetingCommand>, RefreshGreetingHandler>();
-        container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
-        container.Register<IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>, UpdateGreetingMessageHandler>();
+        container.Register<IRequestHandler<Greeting_CreateRequest.V1, Greeting.V1.Output>, CreateGreetingHandler>();
+        container.Register<IRequestHandler<Greeting_UpdateRequest.V1, Greeting.V1.Output>, UpdateGreetingMessageHandler>();
         container.Register<IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>, CreateBookHandler>();
         container.Register<IRequestHandler<Book_UpdateRequest.V1, Book.V1.Output>, UpdateBookHandler>();
         container.Register<IRequestHandler<Book_DeleteRequest.V1, bool>, DeleteBookHandler>();
@@ -214,7 +195,7 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();
-        container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingHandler>();
+        container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingEnvelopeHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
         container.Register<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>, UploadGreetingCardHandler.UploadGreetingCardsHandler>();

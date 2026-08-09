@@ -2,82 +2,102 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core;
+using Ark.Tools.Core.Reflection;
 using Ark.Tools.Outbox;
+
+using System.Collections.Concurrent;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Creates shared in-memory contexts for handler-owned transactions.</summary>
 public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 {
-    private readonly IGreetingStore _greetings;
-    private readonly IAuditStore _audits;
-    private readonly IBookStore _books;
+    private readonly ConcurrentDictionary<Guid, GreetingResponse> _greetings = new();
+    private readonly ConcurrentDictionary<Guid, long> _greetingVersions = new();
+    private readonly ConcurrentQueue<AuditRecord> _audits = new();
+    private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
+    private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
+    private readonly System.Threading.Lock _sync = new();
     private readonly IOutboxAsyncContextFactory _outboxFactory;
 
     /// <summary>Initializes a new instance of the <see cref="InMemorySampleDataContextFactory"/> class.</summary>
-    /// <param name="greetings">The shared in-memory greeting state.</param>
-    /// <param name="audits">The shared in-memory audit state.</param>
-    /// <param name="books">The shared in-memory book state.</param>
     /// <param name="outboxFactory">The shared in-memory outbox factory.</param>
-    public InMemorySampleDataContextFactory(
-        IGreetingStore greetings,
-        IAuditStore audits,
-        IBookStore books,
-        IOutboxAsyncContextFactory outboxFactory)
+    public InMemorySampleDataContextFactory(IOutboxAsyncContextFactory outboxFactory)
     {
-        _greetings = greetings;
-        _audits = audits;
-        _books = books;
         _outboxFactory = outboxFactory;
+    }
+
+    /// <summary>Removes all sample data from this factory.</summary>
+    public void Reset()
+    {
+        lock (_sync)
+        {
+            _greetings.Clear();
+            _greetingVersions.Clear();
+            _audits.Clear();
+            _books.Clear();
+            _printProcesses.Clear();
+        }
     }
 
     /// <inheritdoc />
     public async Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default)
     {
         var outbox = await _outboxFactory.CreateAsync(ctk).ConfigureAwait(false);
-        return await Task.FromResult<ISampleDataContext>(
-            new Context(_greetings, _audits, _books, outbox)).ConfigureAwait(false);
+        return new Context(this, outbox);
+    }
+
+    async Task<IOutboxAsyncContext> IOutboxAsyncContextFactory.CreateAsync(CancellationToken ctk)
+    {
+        return await _outboxFactory.CreateAsync(ctk).ConfigureAwait(false);
     }
 
     private sealed class Context : ISampleDataContext
     {
-        private readonly IGreetingStore _greetings;
-        private readonly IAuditStore _audits;
-        private readonly IBookStore _books;
+        private readonly InMemorySampleDataContextFactory _owner;
         private readonly IOutboxAsyncContext _outbox;
 
-        public Context(
-            IGreetingStore greetings,
-            IAuditStore audits,
-            IBookStore books,
-            IOutboxAsyncContext outbox)
+        public Context(InMemorySampleDataContextFactory owner, IOutboxAsyncContext outbox)
         {
-            _greetings = greetings;
-            _audits = audits;
-            _books = books;
+            _owner = owner;
             _outbox = outbox;
         }
 
         public IOutboxContextCore OutboxContext => _outbox;
 
-        public Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+        public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
         {
-            return _greetings.SaveAsync(greeting, ctk: ctk);
+            ArgumentNullException.ThrowIfNull(greeting);
+            var version = _owner._greetingVersions.GetOrAdd(greeting.Id, 1);
+            _owner._greetings[greeting.Id] = greeting with { ETag = $"0x{version:X16}" };
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
+        public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
         {
-            return _audits.WriteAsync(audit, ctk);
+            ArgumentNullException.ThrowIfNull(audit);
+            _owner._audits.Enqueue(new AuditRecord
+            {
+                Id = audit.Id,
+                UserId = audit.UserId,
+                EntityType = audit.EntityType,
+                Identifier = audit.Identifier,
+                Operation = audit.Operation,
+                Timestamp = audit.Timestamp,
+            });
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
+        public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
         {
-            return _greetings.TryGetAsync(id, ctk);
+            _owner._greetings.TryGetValue(id, out var greeting);
+            return await Task.FromResult(greeting).ConfigureAwait(false);
         }
 
-        public Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
+        public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
         {
-            return _greetings.AllAsync(ctk);
+            return await Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_owner._greetings.Values.ToArray())
+                .ConfigureAwait(false);
         }
 
         public async Task<GreetingResponse?> UpdateAsync(
@@ -87,24 +107,67 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             Guid auditId,
             CancellationToken ctk = default)
         {
-            try
+            GreetingResponse? updated = null;
+            lock (_owner._sync)
             {
-                return await _greetings.UpdateAsync(id, message, eTag, ctk: ctk).ConfigureAwait(false);
+                if (_owner._greetings.TryGetValue(id, out var current))
+                {
+                    var version = _owner._greetingVersions.GetOrAdd(id, 1);
+                    if (string.Equals(eTag, $"0x{version:X16}", StringComparison.Ordinal))
+                    {
+                        updated = current with { Message = message, ETag = $"0x{version + 1:X16}", AuditId = auditId };
+                        _owner._greetings[id] = updated;
+                        _owner._greetingVersions[id] = version + 1;
+                    }
+                }
             }
-            catch (Ark.Tools.Core.EntityTag.EntityTagMismatchException)
-            {
-                return null;
-            }
+
+            return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
-        public Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+        public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(
+            GetAuditsQuery query,
+            CancellationToken ctk = default)
         {
-            return _audits.ReadAsync(query, ctk);
+            ArgumentNullException.ThrowIfNull(query);
+            ValidateAuditSorts(query.Sort ?? []);
+            var filtered = _owner._audits.Where(record =>
+                (query.UserId is null || record.UserId == query.UserId)
+                && (query.EntityType is null || record.EntityType == query.EntityType)
+                && (query.Identifier is null || record.Identifier == query.Identifier)
+                && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp.Value)
+                && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp.Value));
+            var sorts = query.Sort ?? [];
+            var ordered = sorts.Any()
+                ? filtered.OrderBy(string.Join(", ", sorts))
+                : filtered.OrderByDescending(record => record.Timestamp);
+            var records = ordered.ToArray();
+            return await Task.FromResult(new PagedResult<AuditRecord>
+            {
+                Count = records.LongLength,
+                Skip = query.Skip,
+                Limit = query.Limit,
+                Data = records.Skip(query.Skip).Take(query.Limit).ToArray(),
+            }).ConfigureAwait(false);
         }
 
-        public Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
+        public async Task<GreetingPage> ReadGreetingsAsync(
+            SearchGreetingsQuery query,
+            CancellationToken ctk = default)
         {
-            return _greetings.ReadGreetingsAsync(query, ctk);
+            ArgumentNullException.ThrowIfNull(query);
+            var matching = _owner._greetings.Values
+                .Where(greeting => query.MessageContains is null
+                    || greeting.Message.Contains(query.MessageContains, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(greeting => greeting.Id)
+                .ToArray();
+            return await Task.FromResult(new GreetingPage
+            {
+                Count = matching.Length,
+                Skip = query.Skip,
+                Limit = query.Limit,
+                Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
+            }).ConfigureAwait(false);
         }
 
         public async Task CommitAsync(CancellationToken ctk = default)
@@ -112,97 +175,122 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await _outbox.CommitAsync(ctk).ConfigureAwait(false);
         }
 
-        public Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
+        public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
-            return _books.CreateAsync(book, ctk: ctk);
+            ArgumentNullException.ThrowIfNull(book);
+            if (!_owner._books.TryAdd(book.Id, book))
+                throw new InvalidOperationException($"Book '{book.Id}' already exists.");
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
         {
-            return ReadBookCoreAsync(id, ctk);
+            _owner._books.TryGetValue(id, out var book);
+            return await Task.FromResult(book).ConfigureAwait(false);
         }
 
         public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
-            await _books.UpdateAsync(book, ctk: ctk).ConfigureAwait(false);
-            return true;
+            ArgumentNullException.ThrowIfNull(book);
+            var updated = _owner._books.ContainsKey(book.Id);
+            if (updated)
+                _owner._books[book.Id] = book;
+            return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
-        public Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
         {
-            return DeleteBookCoreAsync(id, ctk);
+            return await Task.FromResult(_owner._books.TryRemove(id, out _)).ConfigureAwait(false);
         }
 
-        public Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
+        public async Task<Book.V1.Page> ReadBooksAsync(
+            Book_SearchQuery.V1 query,
+            CancellationToken ctk = default)
         {
-            return _books.SearchAsync(query, ctk);
-        }
-
-        public async Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
-        {
-            return await _books.TryCreatePrintProcessAsync(process, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
-        {
-            return await ReadPrintProcessAsync(id, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
-        {
-            return await UpdatePrintProcessAsync(process, ctk).ConfigureAwait(false);
-        }
-
-        private async Task<BookPrintProcessResponse?> ReadPrintProcessAsync(Guid id, CancellationToken ctk)
-        {
-            try
+            ArgumentNullException.ThrowIfNull(query);
+            var matching = _owner._books.Values
+                .Where(book =>
+                    (query.Title is null || string.Equals(book.Title, query.Title, StringComparison.Ordinal))
+                    && (query.Author is null || string.Equals(book.Author, query.Author, StringComparison.Ordinal))
+                    && (query.Genre is null || book.Genre == query.Genre))
+                .OrderBy(book => book.Id)
+                .ToArray();
+            return await Task.FromResult(new Book.V1.Page
             {
-                return await _books.GetPrintProcessAsync(id, ctk).ConfigureAwait(false);
-            }
-            catch (EntityNotFoundException)
-            {
-                return null;
-            }
+                Count = matching.LongLength,
+                Skip = query.Skip,
+                Limit = query.Limit,
+                Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
+            }).ConfigureAwait(false);
         }
 
-        private async Task<bool> UpdatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk)
+        public async Task<bool> TrySaveBookPrintProcessAsync(
+            BookPrintProcessResponse process,
+            CancellationToken ctk = default)
         {
-            await _books.UpdatePrintProcessAsync(
-                process,
-                new AuditEntry
-                {
-                    Id = Guid.NewGuid(),
-                    EntityType = nameof(BookPrintProcessResponse),
-                    Identifier = process.Id.ToString("D"),
-                    Operation = nameof(UpdateBookPrintProcessAsync),
-                    UserId = "context",
-                    Timestamp = NodaTime.SystemClock.Instance.GetCurrentInstant(),
-                },
-                ctk).ConfigureAwait(false);
-            return true;
+            ArgumentNullException.ThrowIfNull(process);
+            lock (_owner._sync)
+            {
+                if (_owner._printProcesses.Values.Any(item => item.BookId == process.BookId
+                    && (item.Status == BookPrintProcessStatus.Pending || item.Status == BookPrintProcessStatus.Running)))
+                    return false;
+                if (!_owner._printProcesses.TryAdd(process.Id, process))
+                    throw new InvalidOperationException($"Book print process '{process.Id}' already exists.");
+            }
+
+            return await Task.FromResult(true).ConfigureAwait(false);
         }
 
-        private async Task<Book.V1.Output?> ReadBookCoreAsync(Guid id, CancellationToken ctk)
+        public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
+            Guid id,
+            CancellationToken ctk = default)
         {
-            try
-            {
-                return await _books.GetAsync(id, ctk).ConfigureAwait(false);
-            }
-            catch (Ark.Tools.Core.EntityNotFoundException)
-            {
-                return null;
-            }
+            _owner._printProcesses.TryGetValue(id, out var process);
+            return await Task.FromResult(process).ConfigureAwait(false);
         }
 
-        private async Task<bool> DeleteBookCoreAsync(Guid id, CancellationToken ctk)
+        public async Task<bool> UpdateBookPrintProcessAsync(
+            BookPrintProcessResponse process,
+            CancellationToken ctk = default)
         {
-            await _books.DeleteAsync(id, ctk: ctk).ConfigureAwait(false);
-            return true;
+            ArgumentNullException.ThrowIfNull(process);
+            var updated = _owner._printProcesses.ContainsKey(process.Id);
+            if (updated)
+                _owner._printProcesses[process.Id] = process;
+            return await Task.FromResult(updated).ConfigureAwait(false);
+        }
+
+        public async Task CommitAsync(bool reuse, CancellationToken ctk = default)
+        {
+            await _outbox.CommitAsync(reuse, ctk).ConfigureAwait(false);
         }
 
         public ValueTask DisposeAsync()
         {
             return _outbox.DisposeAsync();
+        }
+
+        private static void ValidateAuditSorts(IEnumerable<string> sorts)
+        {
+            var properties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                nameof(AuditRecord.Id),
+                nameof(AuditRecord.UserId),
+                nameof(AuditRecord.EntityType),
+                nameof(AuditRecord.Identifier),
+                nameof(AuditRecord.Operation),
+                nameof(AuditRecord.Timestamp),
+            };
+            foreach (var sort in sorts.Where(sort => !string.IsNullOrWhiteSpace(sort)))
+            {
+                var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 2 || !properties.Contains(parts[0]))
+                    throw new ArgumentException($"Invalid audit sort '{sort}'.", nameof(sorts));
+                if (parts.Length == 2
+                    && !parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
+                    && !parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
+                    throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts));
+            }
         }
     }
 }

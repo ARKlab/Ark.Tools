@@ -336,7 +336,7 @@ public sealed class GeneratorSnapshotTests
         minimal.Should().Contain("Audit");
         minimal.Should().Contain("new global::Update(body, Id)");
 
-        var grpc = RunGenerator<Ark.Tools.MediatorFramework.Grpc.Generators.GrpcEndpointGenerator>(source);
+        var grpc = RunGenerator<Ark.MediatorFramework.Generators.GrpcEndpointGenerator>(source);
         grpc.Should().Contain("Audit");
         grpc.Should().Contain("Data");
 

@@ -44,15 +44,11 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// </summary>
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">The optional SQL connection string.</param>
-    /// <param name="greetingStore">The optional store shared with another test resource.</param>
-    /// <param name="bookStore">The optional book store shared with another test resource.</param>
-    /// <param name="auditStore">The optional audit store shared with another test resource.</param>
+    /// <param name="dataContextFactory">The optional context factory shared with another test resource.</param>
     public ApplicationTestContext(
         bool? useSqlStore = null,
         string? connectionString = null,
-        IGreetingStore? greetingStore = null,
-        IBookStore? bookStore = null,
-        IAuditStore? auditStore = null)
+        ISampleDataContextFactory? dataContextFactory = null)
     {
         Network = new InMemNetwork();
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
@@ -76,9 +72,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             _usesSqlStore,
             _connectionString,
             Clock,
-            greetingStore,
-            bookStore,
-            auditStore,
+            dataContextFactory,
             _printCompletedNotificationService);
         _container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         _container.RegisterAuthorization();
@@ -111,33 +105,25 @@ public sealed class ApplicationTestContext : IAsyncDisposable
 
     internal IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationService;
 
-    /// <summary>Gets the store shared by the sender and receiver for in-memory workflows.</summary>
-    public IGreetingStore GreetingStore
+    /// <summary>Gets the context factory shared by the sender and receiver.</summary>
+    public ISampleDataContextFactory DataContextFactory
     {
         get
         {
             Verify();
-            return _container.GetInstance<IGreetingStore>();
+            return _container.GetInstance<ISampleDataContextFactory>();
         }
     }
 
-    /// <summary>Gets the store shared by the sender and receiver for in-memory book workflows.</summary>
-    public IBookStore BookStore
+    /// <summary>Gets the in-memory context factory when this scenario uses in-memory persistence.</summary>
+    public InMemorySampleDataContextFactory InMemoryDataContextFactory
     {
         get
         {
             Verify();
-            return _container.GetInstance<IBookStore>();
-        }
-    }
-
-    /// <summary>Gets the store shared by the sender and receiver for in-memory audit workflows.</summary>
-    public IAuditStore AuditStore
-    {
-        get
-        {
-            Verify();
-            return _container.GetInstance<IAuditStore>();
+            return _container.GetInstance<ISampleDataContextFactory>()
+                as InMemorySampleDataContextFactory
+                ?? throw new InvalidOperationException("The scenario does not use in-memory persistence.");
         }
     }
 

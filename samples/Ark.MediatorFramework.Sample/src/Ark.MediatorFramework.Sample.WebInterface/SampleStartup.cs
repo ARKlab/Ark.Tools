@@ -41,9 +41,7 @@ public sealed class SampleStartup
     private readonly InMemNetwork _network;
     private readonly bool _useSqlStore;
     private readonly string? _connectionString;
-    private readonly IGreetingStore? _sharedStore;
-    private readonly IBookStore? _sharedBookStore;
-    private readonly IAuditStore? _sharedAuditStore;
+    private readonly ISampleDataContextFactory? _sharedDataContextFactory;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
     private readonly IConfiguration _configuration;
     private readonly bool _configureFallbackPolicy;
@@ -55,13 +53,11 @@ public sealed class SampleStartup
     /// <param name="useSqlStore">Whether the processor should use SQL persistence.</param>
     /// <param name="connectionString">Optional SQL Server connection string for the processor.</param>
     /// <param name="configureFallbackPolicy">Whether to configure the defense-in-depth fallback policy.</param>
-    /// <param name="sharedStore">
-    /// Optional in-memory store shared between the API and processor containers so both operate
+    /// <param name="sharedDataContextFactory">
+    /// Optional in-memory context factory shared between the API and processor containers so both operate
     /// on the same data without a database. <see langword="null"/> when <paramref name="useSqlStore"/>
     /// is <see langword="true"/> (the SQL database is the shared state).
     /// </param>
-    /// <param name="sharedBookStore">Optional book store shared between the API and processor containers.</param>
-    /// <param name="sharedAuditStore">Optional audit store shared between the API and processor containers.</param>
     public SampleStartup(
         Container container,
         InMemNetwork network,
@@ -69,17 +65,13 @@ public sealed class SampleStartup
         bool useSqlStore = true,
         string? connectionString = null,
         bool configureFallbackPolicy = true,
-        IGreetingStore? sharedStore = null,
-        IBookStore? sharedBookStore = null,
-        IAuditStore? sharedAuditStore = null)
+        ISampleDataContextFactory? sharedDataContextFactory = null)
     {
         _container = container;
         _network = network;
         _useSqlStore = useSqlStore;
         _connectionString = connectionString;
-        _sharedStore = sharedStore;
-        _sharedBookStore = sharedBookStore;
-        _sharedAuditStore = sharedAuditStore;
+        _sharedDataContextFactory = sharedDataContextFactory;
         _configuration = configuration ?? new ConfigurationBuilder().Build();
         _configureFallbackPolicy = configureFallbackPolicy;
         var instance = _configuration["EntraId:Instance"]!;
@@ -134,9 +126,7 @@ public sealed class SampleStartup
             sp.GetRequiredService<InMemNetwork>(),
             useSqlStore: _useSqlStore,
             connectionString: _connectionString,
-            sharedStore: _sharedStore,
-            sharedBookStore: _sharedBookStore,
-            sharedAuditStore: _sharedAuditStore));
+            sharedDataContextFactory: _sharedDataContextFactory));
 
         services.AddRouting();
         services.AddControllers();

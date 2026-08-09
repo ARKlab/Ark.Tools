@@ -44,9 +44,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             useSqlStore: application.UsesSqlStore,
             connectionString: application.ConnectionString,
             clock: application.Clock,
-            greetingStore: application.UsesSqlStore ? null : application.GreetingStore,
-            bookStore: application.UsesSqlStore ? null : application.BookStore,
-            auditStore: application.UsesSqlStore ? null : application.AuditStore,
+            dataContextFactory: application.UsesSqlStore ? null : application.DataContextFactory,
             printCompletedNotificationService: application.PrintCompletedNotificationService,
             registerHandlers: container =>
             {

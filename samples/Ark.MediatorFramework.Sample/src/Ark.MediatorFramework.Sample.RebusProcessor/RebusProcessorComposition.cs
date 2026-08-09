@@ -31,12 +31,10 @@ public static class RebusProcessorComposition
     /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
-    /// <param name="greetingStore">
-    /// Optional pre-built store shared with the API container. When <see langword="null"/>
-    /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory store is created.
+    /// <param name="dataContextFactory">
+    /// Optional context factory shared with the API container. When <see langword="null"/>
+    /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory factory is created.
     /// </param>
-    /// <param name="bookStore">Optional book store shared with the API container.</param>
-    /// <param name="auditStore">Optional audit store shared with the API container.</param>
     /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
     /// <param name="secondLevelRetriesEnabled">
     /// Whether failed messages should be dispatched as <see cref="Rebus.Retry.Simple.IFailed{TMessage}"/>.
@@ -50,9 +48,7 @@ public static class RebusProcessorComposition
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        IGreetingStore? greetingStore = null,
-        IBookStore? bookStore = null,
-        IAuditStore? auditStore = null,
+        ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,
         Action<Container>? registerHandlers = null,
         bool secondLevelRetriesEnabled = false,
@@ -68,9 +64,7 @@ public static class RebusProcessorComposition
             useSqlStore,
             connectionString,
             clock,
-            greetingStore,
-            bookStore,
-            auditStore,
+            dataContextFactory,
             printCompletedNotificationService);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();

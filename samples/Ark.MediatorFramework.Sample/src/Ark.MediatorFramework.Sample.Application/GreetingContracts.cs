@@ -12,7 +12,93 @@ using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
-/// <summary>Response returned by the greeting operations.</summary>
+/// <summary>Defines the versioned greeting model.</summary>
+public static class Greeting
+{
+    /// <summary>Defines version one of the greeting model.</summary>
+    public static class V1
+    {
+        /// <summary>Fields accepted when a greeting is updated.</summary>
+        [ProtoContract]
+        [MessagePackObject(true)]
+        public sealed record Input
+        {
+            /// <summary>Gets the replacement greeting message.</summary>
+            [ProtoMember(1)]
+            public string Message { get; init; } = string.Empty;
+        }
+
+        /// <summary>Fields accepted when a greeting is created.</summary>
+        [ProtoContract]
+        [MessagePackObject(true)]
+        public sealed record Create
+        {
+            /// <summary>Gets the name to greet.</summary>
+            [ProtoMember(1)]
+            public string Name { get; init; } = string.Empty;
+
+            /// <summary>Gets the representative local date.</summary>
+            [ProtoMember(2)]
+            public LocalDate Date { get; init; }
+
+            /// <summary>Gets the representative local date and time.</summary>
+            [ProtoMember(3)]
+            public LocalDateTime DateTime { get; init; }
+
+            /// <summary>Gets the representative offset date and time.</summary>
+            [ProtoMember(4)]
+            public OffsetDateTime OffsetDateTime { get; init; }
+
+            /// <summary>Gets the representative period.</summary>
+            [ProtoMember(5)]
+            public Period Period { get; init; } = Period.Zero;
+        }
+
+        /// <summary>Fields returned for a greeting.</summary>
+        [ProtoContract]
+        [MessagePackObject(true)]
+        public sealed record Output
+        {
+            /// <summary>Gets the greeting identifier assigned by the server.</summary>
+            [ProtoMember(1)]
+            [ServerSet]
+            public Guid Id { get; init; }
+
+            /// <summary>Gets the greeting message.</summary>
+            [ProtoMember(2)]
+            [ServerSet]
+            public string Message { get; init; } = string.Empty;
+
+            /// <summary>Gets the representative local date.</summary>
+            [ProtoMember(3)]
+            public LocalDate Date { get; init; }
+
+            /// <summary>Gets the representative local date and time.</summary>
+            [ProtoMember(4)]
+            public LocalDateTime DateTime { get; init; }
+
+            /// <summary>Gets the representative offset date and time.</summary>
+            [ProtoMember(5)]
+            public OffsetDateTime OffsetDateTime { get; init; }
+
+            /// <summary>Gets the representative period.</summary>
+            [ProtoMember(6)]
+            public Period Period { get; init; } = Period.Zero;
+
+            /// <summary>Gets the audit identifier associated with this entity version.</summary>
+            [ProtoMember(7)]
+            [ServerSet]
+            public Guid AuditId { get; init; }
+
+            /// <summary>Gets the opaque concurrency token echoed in update preconditions.</summary>
+            [ProtoMember(8)]
+            [ETag]
+            public string? ETag { get; init; }
+        }
+    }
+}
+
+/// <summary>Response returned by legacy greeting operations.</summary>
 [ProtoContract]
 [MessagePackObject(true)]
 public sealed record GreetingResponse
@@ -51,27 +137,36 @@ public sealed record GreetingResponse
     public string? ETag { get; init; }
 }
 
-/// <summary>Updates a greeting using an opaque ETag precondition.</summary>
-[HttpEndpoint("PUT", "/api/v{version}/greetings/{id}")]
-[GrpcMethod("UpdateGreetingMessage")]
-[GrpcService("Greetings")]
-[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
-[ProtoContract]
-public sealed record UpdateGreetingMessageRequest : IRequest<UpdateGreetingMessageRequest, GreetingResponse>
+/// <summary>Creates a greeting.</summary>
+public static class Greeting_CreateRequest
 {
-    /// <summary>Gets the greeting identifier.</summary>
-    [HttpRoute("id")]
-    [ProtoMember(1)]
-    public Guid Id { get; init; }
+    /// <summary>Version one of the greeting creation request.</summary>
+    [HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true, SuccessStatusCode = 201)]
+    [RebusMessage]
+    [GrpcMethod("CreateGreeting")]
+    [GrpcService("Greetings")]
+    [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
+    [ProtoContract]
+    [MessagePackObject(true)]
+    public sealed record V1(
+        [property: HttpBody, ProtoMember(1)] Greeting.V1.Create Data,
+        [property: ServerSet] string? UserId = null) : IRequest<V1, Greeting.V1.Output>;
+}
 
-    /// <summary>Gets the replacement message.</summary>
-    [ProtoMember(2)]
-    public string Message { get; init; } = string.Empty;
-
-    /// <summary>Gets the opaque concurrency token.</summary>
-    [ProtoMember(3)]
-    [ETag]
-    public string? ETag { get; init; }
+/// <summary>Updates a greeting using an opaque ETag precondition.</summary>
+public static class Greeting_UpdateRequest
+{
+    /// <summary>Version one of the greeting update request.</summary>
+    [HttpEndpoint("PUT", "/api/v{version}/greetings/{id}")]
+    [GrpcMethod("UpdateGreetingMessage")]
+    [GrpcService("Greetings")]
+    [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
+    [ProtoContract]
+    [MessagePackObject(true)]
+    public sealed record V1(
+        [property: HttpBody, ProtoMember(1)] Greeting.V1.Input Data,
+        [property: HttpRoute("id"), ProtoMember(2)] Guid Id,
+        [property: ETag, ProtoMember(3)] string? ETag = null) : IRequest<V1, Greeting.V1.Output>;
 }
 
 /// <summary>Command used to exercise the synchronous command transport contract.</summary>
@@ -84,45 +179,6 @@ public sealed record RefreshGreetingCommand : ICommand<RefreshGreetingCommand>
     /// <summary>Gets the greeting identifier to refresh.</summary>
     [ProtoMember(1)]
     public Guid Id { get; init; }
-}
-
-/// <summary>
-/// Pure transport-agnostic request (mutation). Transport is declared explicitly and per-transport:
-/// <see cref="HttpEndpointAttribute"/> exposes it as an HTTP POST and <see cref="RebusMessageAttribute"/>
-/// exposes it as a Rebus message; the generator emits the wiring for each declared transport.
-/// </summary>
-[HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true, SuccessStatusCode = 201)]
-[RebusMessage]
-[GrpcMethod("CreateGreeting")]
-[GrpcService("Greetings")]
-[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
-[ProtoContract]
-[MessagePackObject(true)]
-public sealed record CreateGreetingRequest : IRequest<CreateGreetingRequest, GreetingResponse>
-{
-    /// <summary>Gets the name to greet.</summary>
-    [ProtoMember(1)]
-    public string Name { get; init; } = string.Empty;
-
-    /// <summary>Gets the representative local date.</summary>
-    [ProtoMember(2)]
-    public LocalDate Date { get; init; }
-
-    /// <summary>Gets the representative local date and time.</summary>
-    [ProtoMember(3)]
-    public LocalDateTime DateTime { get; init; }
-
-    /// <summary>Gets the representative offset date and time.</summary>
-    [ProtoMember(4)]
-    public OffsetDateTime OffsetDateTime { get; init; }
-
-    /// <summary>Gets the representative period.</summary>
-    [ProtoMember(5)]
-    public Period Period { get; init; } = Period.Zero;
-
-    /// <summary>Gets the authenticated user populated by the server.</summary>
-    [ServerSet]
-    public string? UserId { get; init; }
 }
 
 /// <summary>HTTP-only request that publishes work to Rebus and returns immediately.</summary>

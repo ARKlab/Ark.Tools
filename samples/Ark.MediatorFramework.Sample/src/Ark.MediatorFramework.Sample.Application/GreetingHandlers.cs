@@ -28,8 +28,8 @@ public sealed class RefreshGreetingHandler : ICommandHandler<RefreshGreetingComm
     }
 }
 
-/// <summary>Pure handler for <see cref="CreateGreetingRequest"/> — no transport types.</summary>
-public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingRequest, GreetingResponse>
+/// <summary>Creates greetings through the versioned application contract.</summary>
+public sealed class CreateGreetingHandler : IRequestHandler<Greeting_CreateRequest.V1, Greeting.V1.Output>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -44,24 +44,24 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
     }
 
     /// <inheritdoc />
-    public async Task<GreetingResponse> ExecuteAsync(CreateGreetingRequest Request, CancellationToken ctk = default)
+    public async Task<Greeting.V1.Output> ExecuteAsync(Greeting_CreateRequest.V1 request, CancellationToken ctk = default)
     {
-        ArgumentNullException.ThrowIfNull(Request);
+        ArgumentNullException.ThrowIfNull(request);
 
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        if ((await context.ReadAllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
-            throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(Request.Name));
+        if ((await context.ReadAllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {request.Data.Name}!", StringComparison.Ordinal)))
+            throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(request.Data.Name));
 
         var auditId = Guid.NewGuid();
-        var response = new GreetingResponse
+        var response = new Greeting.V1.Output
         {
             Id = Guid.NewGuid(),
             AuditId = auditId,
-            Message = $"Hello, {Request.Name}! (by {_user.GetUserId() ?? "anonymous"})",
-            Date = Request.Date,
-            DateTime = Request.DateTime,
-            OffsetDateTime = Request.OffsetDateTime,
-            Period = Request.Period ?? Period.Zero,
+            Message = $"Hello, {request.Data.Name}! (by {_user.GetUserId() ?? "anonymous"})",
+            Date = request.Data.Date,
+            DateTime = request.Data.DateTime,
+            OffsetDateTime = request.Data.OffsetDateTime,
+            Period = request.Data.Period,
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
@@ -71,20 +71,49 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(GreetingResponse),
             Identifier = response.Id.ToString("D"),
-            Operation = nameof(CreateGreetingRequest),
+            Operation = $"{typeof(Greeting_CreateRequest).Name}.{typeof(Greeting_CreateRequest.V1).Name}",
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
-        await context.SaveAsync(response, ctk).ConfigureAwait(false);
+        await context.SaveAsync(ToLegacy(response), ctk).ConfigureAwait(false);
         var persisted = await context.ReadAsync(response.Id, ctk).ConfigureAwait(false)
             ?? throw new InvalidOperationException("The greeting was not persisted.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
-        return persisted;
+        return ToOutput(persisted);
     }
 
+    internal static GreetingResponse ToLegacy(Greeting.V1.Output greeting)
+    {
+        return new GreetingResponse
+        {
+            Id = greeting.Id,
+            Message = greeting.Message,
+            Date = greeting.Date,
+            DateTime = greeting.DateTime,
+            OffsetDateTime = greeting.OffsetDateTime,
+            Period = greeting.Period,
+            AuditId = greeting.AuditId,
+            ETag = greeting.ETag,
+        };
+    }
+
+    internal static Greeting.V1.Output ToOutput(GreetingResponse greeting)
+    {
+        return new Greeting.V1.Output
+        {
+            Id = greeting.Id,
+            Message = greeting.Message,
+            Date = greeting.Date,
+            DateTime = greeting.DateTime,
+            OffsetDateTime = greeting.OffsetDateTime,
+            Period = greeting.Period,
+            AuditId = greeting.AuditId,
+            ETag = greeting.ETag,
+        };
+    }
 }
 
 /// <summary>Updates a greeting after validating its opaque concurrency token.</summary>
-public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>
+public sealed class UpdateGreetingMessageHandler : IRequestHandler<Greeting_UpdateRequest.V1, Greeting.V1.Output>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -99,7 +128,7 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetin
     }
 
     /// <inheritdoc />
-    public async Task<GreetingResponse> ExecuteAsync(UpdateGreetingMessageRequest request, CancellationToken ctk = default)
+    public async Task<Greeting.V1.Output> ExecuteAsync(Greeting_UpdateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -109,14 +138,14 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetin
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(GreetingResponse),
             Identifier = request.Id.ToString("D"),
-            Operation = nameof(UpdateGreetingMessageRequest),
+            Operation = $"{typeof(Greeting_UpdateRequest).Name}.{typeof(Greeting_UpdateRequest.V1).Name}",
             Timestamp = _clock.GetCurrentInstant(),
         };
-        var updated = await context.UpdateAsync(request.Id, request.Message, request.ETag ?? string.Empty, audit.Id, ctk).ConfigureAwait(false)
+        var updated = await context.UpdateAsync(request.Id, request.Data.Message, request.ETag ?? string.Empty, audit.Id, ctk).ConfigureAwait(false)
             ?? throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
         await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
-        return updated;
+        return CreateGreetingHandler.ToOutput(updated);
     }
 }
 
@@ -369,7 +398,7 @@ public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, Gre
 }
 
 /// <summary>Pure handler for <see cref="UpdateGreetingRequest"/>.</summary>
-public sealed class UpdateGreetingHandler : IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>
+public sealed class UpdateGreetingEnvelopeHandler : IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>
 {
     /// <inheritdoc />
     public async Task<EnvelopeBindingResponse> ExecuteAsync(UpdateGreetingRequest Request, CancellationToken ctk = default)

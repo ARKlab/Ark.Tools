@@ -11,8 +11,6 @@ using Dapper;
 using NodaTime;
 using NodaTime.Text;
 
-using Rebus.Bus;
-
 using System.Data.Common;
 
 namespace Ark.MediatorFramework.Sample.Application;
@@ -73,7 +71,7 @@ public interface ISampleDataContext : IAsyncDisposable
 }
 
 /// <summary>Creates application contexts for handler-owned transactions.</summary>
-public interface ISampleDataContextFactory
+public interface ISampleDataContextFactory : IOutboxAsyncContextFactory
 {
     /// <summary>Creates a context.</summary>
     Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default);
@@ -576,146 +574,5 @@ public sealed class SampleDataContextFactory :
     async Task<Ark.Tools.Outbox.IOutboxAsyncContext> Ark.Tools.Outbox.IOutboxAsyncContextFactory.CreateAsync(CancellationToken ctk)
     {
         return await CreateAsync(ctk).ConfigureAwait(false);
-    }
-}
-
-/// <summary>SQL-backed greeting store with one transaction per operation.</summary>
-public sealed class SqlGreetingStore : IGreetingStore
-{
-    private readonly SampleDataContextFactory _factory;
-    private readonly IBus _bus;
-
-    /// <summary>Initializes a new instance of the <see cref="SqlGreetingStore"/> class.</summary>
-    /// <param name="factory">The sample context factory.</param>
-    /// <param name="bus">The Rebus bus used by the transactional outbox.</param>
-    public SqlGreetingStore(SampleDataContextFactory factory, IBus bus)
-    {
-        _factory = factory;
-        _bus = bus;
-    }
-
-    /// <inheritdoc />
-    /// <param name="greeting">The greeting to persist.</param>
-    /// <param name="audit">The optional audit entry to persist in the transaction.</param>
-    /// <param name="ctk">The cancellation token.</param>
-    public async Task<GreetingResponse> SaveAndPublishAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        if (audit is not null)
-            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
-        await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
-        var persisted = await context.ReadAsync(greeting.Id, ctk).ConfigureAwait(false)
-            ?? throw new EntityNotFoundException($"Greeting '{greeting.Id}' was not found.");
-        using var scope = _bus.Enlist(context);
-        await _bus.Send(new GreetingCreatedNotification { Greeting = persisted }).ConfigureAwait(false);
-        await scope.CompleteAsync().ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return persisted;
-    }
-
-    /// <inheritdoc />
-    /// <param name="greeting">The greeting to persist.</param>
-    /// <param name="audit">The optional audit entry to persist in the transaction.</param>
-    /// <param name="ctk">The cancellation token.</param>
-    public async Task SaveAsync(GreetingResponse greeting, AuditEntry? audit = null, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        if (audit is not null)
-            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
-        await context.SaveAsync(greeting, ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc />
-    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var result = await context.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return result;
-    }
-
-    /// <inheritdoc />
-    public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var result = await context.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return result;
-    }
-
-    /// <inheritdoc />
-    public async Task<GreetingResponse> GetAsync(Guid id, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var greeting = await context.ReadAsync(id, ctk).ConfigureAwait(false);
-        if (greeting is null)
-            throw new Ark.Tools.Core.EntityNotFoundException($"Greeting '{id}' was not found.");
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return greeting;
-    }
-
-    /// <inheritdoc />
-    public async Task<GreetingResponse?> TryGetAsync(Guid id, CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var greeting = await context.ReadAsync(id, ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return greeting;
-    }
-
-    /// <inheritdoc />
-    public async Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit = null, CancellationToken ctk = default)
-    {
-        if (expectedETag is null || !IsValidETag(expectedETag))
-            throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
-
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var auditId = audit?.Id ?? Guid.NewGuid();
-        var updated = await context.UpdateAsync(id, message, expectedETag, auditId, ctk).ConfigureAwait(false);
-        if (updated is null)
-        {
-            var exists = await context.ReadAsync(id, ctk).ConfigureAwait(false);
-            if (exists is null)
-                throw new EntityNotFoundException($"Greeting '{id}' was not found.");
-            throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
-        }
-        if (audit is not null)
-            await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return updated;
-    }
-
-    private static bool IsValidETag(string eTag)
-    {
-        if (!eTag.StartsWith("0x", StringComparison.Ordinal) || eTag.Length != 18)
-            return false;
-
-        try
-        {
-            return Convert.FromHexString(eTag.AsSpan(2)).Length == 8;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<int> CountAsync(CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var greetings = await context.ReadAllAsync(ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return greetings.Count;
-    }
-
-    /// <inheritdoc />
-    public async Task<IReadOnlyCollection<GreetingResponse>> AllAsync(CancellationToken ctk = default)
-    {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        var greetings = await context.ReadAllAsync(ctk).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
-        return greetings;
     }
 }

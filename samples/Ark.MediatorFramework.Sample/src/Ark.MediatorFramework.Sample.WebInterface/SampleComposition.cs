@@ -31,21 +31,17 @@ public static class SampleComposition
     /// <param name="useSqlStore">Whether to use SQL persistence and the outbox.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
-    /// <param name="greetingStore">
-    /// Optional pre-built store shared with the processor container. When <see langword="null"/>
-    /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory store is created.
+    /// <param name="dataContextFactory">
+    /// Optional context factory shared with the processor container. When <see langword="null"/>
+    /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory factory is created.
     /// </param>
-    /// <param name="bookStore">Optional book store shared with the processor container.</param>
-    /// <param name="auditStore">Optional audit store shared with the processor container.</param>
     /// <returns>The configured container. Hosting verifies it and starts the bus after integration.</returns>
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
-        IGreetingStore? greetingStore = null,
-        IBookStore? bookStore = null,
-        IAuditStore? auditStore = null)
+        ISampleDataContextFactory? dataContextFactory = null)
     {
         ArgumentNullException.ThrowIfNull(network);
 
@@ -59,9 +55,7 @@ public static class SampleComposition
             useSqlStore,
             connectionString,
             clock,
-            greetingStore,
-            bookStore,
-            auditStore);
+            dataContextFactory);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
