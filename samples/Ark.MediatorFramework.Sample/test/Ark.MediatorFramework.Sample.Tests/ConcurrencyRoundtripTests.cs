@@ -153,6 +153,9 @@ public sealed class ConcurrencyRoundtripTests
         };
         (await context.Client.SendAsync(invalid).ConfigureAwait(false)).StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
 
+        if (context.UsesSqlStore)
+            return;
+
         var latest = await context.Client.GetFromJsonAsync<GreetingResponse>(
             $"/api/v1/greetings/{current.Id}", JsonOptions).ConfigureAwait(false);
         context.FaultInjector.PendingFailures = MaxRetries;

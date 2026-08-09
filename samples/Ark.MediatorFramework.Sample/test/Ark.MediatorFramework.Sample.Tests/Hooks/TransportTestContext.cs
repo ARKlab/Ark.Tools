@@ -43,6 +43,7 @@ public sealed class TransportTestContext : IDisposable
             Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
             "1",
             StringComparison.Ordinal);
+        UsesSqlStore = useSqlStore;
 #pragma warning disable MA0045, VSTHRD002 // Test contexts must be synchronously constructible.
         if (useSqlStore)
             DatabaseHooks.ResetDatabaseAsync().GetAwaiter().GetResult();
@@ -100,6 +101,9 @@ public sealed class TransportTestContext : IDisposable
 
     /// <summary>Gets the deterministic clock used by the application graph.</summary>
     public FakeClock Clock { get; }
+
+    /// <summary>Gets whether this host uses the SQL-backed persistence profile.</summary>
+    public bool UsesSqlStore { get; }
 
     /// <summary>Gets the deterministic fault injector used by concurrency tests.</summary>
     public ConcurrencyFaultInjector FaultInjector { get; }
