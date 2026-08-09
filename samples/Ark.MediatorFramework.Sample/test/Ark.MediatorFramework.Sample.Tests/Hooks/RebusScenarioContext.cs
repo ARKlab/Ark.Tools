@@ -129,7 +129,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         if (_disposed)
             return;
         _disposed = true;
-        _disposed = true;
         using var drainer = DrainableInMemTransport.Drain();
         using var cleanupCancellation = new CancellationTokenSource(_idleTimeout);
         try
