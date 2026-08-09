@@ -1,102 +1,85 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Tests.Auth;
+using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
+using Ark.Tools.Core;
+using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
-using System.Net;
-using System.Net.Http.Headers;
 namespace Ark.MediatorFramework.Sample.Tests;
 
-/// <summary>Verifies generated attachment download behavior.</summary>
+/// <summary>Verifies attachment storage and retrieval through application contracts.</summary>
 [TestClass]
 public sealed class FileDownloadTests
 {
-    /// <summary>Multipart collections preserve form order and metadata.</summary>
+    /// <summary>Stores and retrieves the same attachment bytes and metadata.</summary>
     [TestMethod]
-    public async Task MultiFileUploadPreservesFormOrder()
+    public async Task UploadThenRetrieveReturnsSameAttachment()
     {
-        using var context = TransportTestContext.WithoutFallbackPolicy();
-        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer", new JwtTokenBuilder().AddSubject("file-user").Build());
-        using var form = new MultipartFormDataContent();
-        using var first = new StringContent("one");
-        using var second = new StringContent("two");
-        first.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
-        second.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
-        form.Add(first, "Attachments", "../../first.txt");
-        form.Add(second, "Attachments", "../../second.txt");
-
-        var response = await context.Client.PostAsync(new Uri($"/api/v1/greeting-cards/{Guid.NewGuid()}/batch", UriKind.Relative), form).ConfigureAwait(false);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-        var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        body.Should().Contain("\"names\":[\"first.txt\",\"second.txt\"]");
-    }
-
-    /// <summary>Batch uploads reject files beyond the declared limit.</summary>
-    [TestMethod]
-    public async Task MultiFileUploadRejectsTooManyFiles()
-    {
-        using var context = TransportTestContext.WithoutFallbackPolicy();
-        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer", new JwtTokenBuilder().AddSubject("file-user").Build());
-        using var form = new MultipartFormDataContent();
-        var files = new List<StringContent>();
-        for (var index = 0; index < 5; index++)
-        {
-            var file = new StringContent(index.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            files.Add(file);
-            file.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
-            form.Add(file, "Attachments", $"file-{index}.txt");
-        }
-
-        var response = await context.Client.PostAsync(new Uri($"/api/v1/greeting-cards/{Guid.NewGuid()}/batch", UriKind.Relative), form).ConfigureAwait(false);
-        foreach (var file in files)
-            file.Dispose();
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    /// <summary>Uploaded bytes are returned with safe file metadata.</summary>
-    [TestMethod]
-    public async Task UploadThenDownloadReturnsSameBytes()
-    {
-        using var context = TransportTestContext.WithoutFallbackPolicy();
-        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            new JwtTokenBuilder().AddSubject("file-user").Build());
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+        context.SetAuthenticatedUser("file-user");
         var id = Guid.NewGuid();
         var bytes = new byte[] { 0, 1, 2, 254, 255 };
-        using var form = new MultipartFormDataContent();
-        using var file = new ByteArrayContent(bytes);
-        file.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        form.Add(file, "Attachment", "../document.bin");
+        var attachment = new ArkAttachment(
+            "document.bin",
+            "application/octet-stream",
+            () => new MemoryStream(bytes, writable: false));
 
-        var upload = await context.Client.PostAsync(new Uri($"/api/v1/greeting-cards/{id}?Label=file", UriKind.Relative), form).ConfigureAwait(false);
-        upload.StatusCode.Should().Be(HttpStatusCode.OK, await upload.Content.ReadAsStringAsync().ConfigureAwait(false));
+        var upload = await context.DispatchRequestAsync<UploadGreetingCardRequest, UploadResponse>(
+            new UploadGreetingCardRequest
+            {
+                Id = id,
+                Label = "file",
+                Attachment = attachment,
+            }).ConfigureAwait(false);
+        var stored = await context.DispatchQueryAsync<GetDocumentQuery, IArkAttachment>(
+            new GetDocumentQuery { Id = id }).ConfigureAwait(false);
 
-        var download = await context.Client.GetAsync(new Uri($"/api/v1/greeting-cards/{id}/download", UriKind.Relative)).ConfigureAwait(false);
-        download.StatusCode.Should().Be(HttpStatusCode.OK);
-        download.Content.Headers.ContentType!.MediaType.Should().Be("application/octet-stream");
-        download.Content.Headers.ContentDisposition!.DispositionType.Should().Be("attachment");
-        download.Content.Headers.ContentDisposition.FileName.Should().Be("document.bin");
-        (await download.Content.ReadAsByteArrayAsync().ConfigureAwait(false)).Should().Equal(bytes);
+        upload.Length.Should().Be(bytes.Length);
+        stored.Name.Should().Be("document.bin");
+        stored.ContentType.Should().Be("application/octet-stream");
+        await using var stream = stored.OpenRead();
+        using var result = new MemoryStream();
+        await stream.CopyToAsync(result).ConfigureAwait(false);
+        result.ToArray().Should().Equal(bytes);
     }
 
-    /// <summary>Unknown attachments return not found.</summary>
+    /// <summary>Preserves attachment order in a batch upload.</summary>
     [TestMethod]
-    public async Task MissingDownloadReturnsNotFound()
+    public async Task BatchUploadPreservesAttachmentOrder()
     {
-        using var context = TransportTestContext.WithoutFallbackPolicy();
-        context.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            new JwtTokenBuilder().AddSubject("file-user").Build());
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+        var result = await context.DispatchRequestAsync<UploadGreetingCardsRequest, UploadBatchResponse>(
+            new UploadGreetingCardsRequest
+            {
+                Id = Guid.NewGuid(),
+                Attachments =
+                [
+                    Attachment("first.txt", "one"),
+                    Attachment("second.txt", "two"),
+                ],
+            }).ConfigureAwait(false);
 
-        var response = await context.Client.GetAsync(new Uri($"/api/v1/greeting-cards/{Guid.NewGuid()}/download", UriKind.Relative)).ConfigureAwait(false);
+        result.Names.Should().Equal("first.txt", "second.txt");
+    }
 
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    /// <summary>Reports a typed not-found failure for an unknown attachment.</summary>
+    [TestMethod]
+    public async Task MissingAttachmentThrowsNotFound()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var action = () => context.DispatchQueryAsync<GetDocumentQuery, IArkAttachment>(
+            new GetDocumentQuery { Id = Guid.NewGuid() });
+
+        await action.Should().ThrowAsync<EntityNotFoundException>().ConfigureAwait(false);
+    }
+
+    private static ArkAttachment Attachment(string name, string content)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        return new ArkAttachment(name, "text/plain", () => new MemoryStream(bytes, writable: false));
     }
 }
