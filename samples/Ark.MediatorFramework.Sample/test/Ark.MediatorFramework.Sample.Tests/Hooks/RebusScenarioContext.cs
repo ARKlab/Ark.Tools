@@ -131,7 +131,8 @@ public sealed class RebusScenarioContext : IAsyncDisposable
 
         _disposed = true;
         using var drainer = DrainableInMemTransport.Drain();
-        do
+        using var cleanupCancellation = new CancellationTokenSource(_idleTimeout);
+        try
         {
             if (_receiver is not null)
             {
@@ -139,19 +140,41 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                 _receiver = null;
             }
 
-            await _sampleContext.Application.ClearOutboxAsync().ConfigureAwait(false);
-            TestsInMemoryTimeoutManager.ClearPendingDue();
-            _sampleContext.Application.Network.Reset();
-            await WaitForInProcessMessagesAsync().ConfigureAwait(false);
+            do
+            {
+                await _sampleContext.Application.ClearOutboxAsync(cleanupCancellation.Token).ConfigureAwait(false);
+                TestsInMemoryTimeoutManager.ClearPendingDue();
+                _sampleContext.Application.Network.Reset();
+                await WaitForInProcessMessagesAsync(cleanupCancellation.Token).ConfigureAwait(false);
+            }
+            while (drainer.StillDraining);
         }
-        while (drainer.StillDraining);
+        catch (OperationCanceledException) when (cleanupCancellation.IsCancellationRequested)
+        {
+            var counts = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
+            throw new TimeoutException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Rebus cleanup timed out. queue={0}, in-process={1}, deferred={2}, outbox={3}, error={4}.",
+                    counts.InQueue,
+                    counts.InProcess,
+                    counts.Deferred,
+                    counts.Outbox,
+                    counts.Error));
+        }
 
         var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
         if (remaining != new RebusWorkCounts(0, 0, 0, 0, 0))
         {
             throw new InvalidOperationException(
-                $"Rebus cleanup left work behind. queue={remaining.InQueue}, in-process={remaining.InProcess}, " +
-                $"deferred={remaining.Deferred}, outbox={remaining.Outbox}, error={remaining.Error}.");
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Rebus cleanup left work behind. queue={0}, in-process={1}, deferred={2}, outbox={3}, error={4}.",
+                    remaining.InQueue,
+                    remaining.InProcess,
+                    remaining.Deferred,
+                    remaining.Outbox,
+                    remaining.Error));
         }
 
         GC.SuppressFinalize(this);
@@ -179,19 +202,10 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             errors);
     }
 
-    private static async Task WaitForInProcessMessagesAsync()
+    private static async Task WaitForInProcessMessagesAsync(CancellationToken ctk)
     {
-        using var cancellation = new CancellationTokenSource(_idleTimeout);
-        try
-        {
-            while (InProcessMessageInspectorStep.Count > 0)
-                await Task.Delay(TimeSpan.FromMilliseconds(50), cancellation.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
-        {
-            throw new TimeoutException(
-                $"Rebus cleanup did not finish in-process messages. in-process={InProcessMessageInspectorStep.Count}.");
-        }
+        while (InProcessMessageInspectorStep.Count > 0)
+            await Task.Delay(TimeSpan.FromMilliseconds(50), ctk).ConfigureAwait(false);
     }
 
     private sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error);
