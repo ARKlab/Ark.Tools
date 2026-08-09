@@ -136,6 +136,24 @@ public sealed class GreetingSteps
         _greeting.ETag.Should().NotBe(_previousETag);
     }
 
+    /// <summary>Asserts that an application mutation wrote a deterministic audit record.</summary>
+    /// <param name="operation">The expected operation name.</param>
+    [Then(@"the current greeting has a deterministic audit for ""(.*)""")]
+    public async Task CurrentGreetingHasDeterministicAudit(string operation)
+    {
+        _greeting.Should().NotBeNull();
+        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+            new GetAuditsQuery
+            {
+                Identifier = _greeting!.Id.ToString("D"),
+                Limit = 25,
+            }).ConfigureAwait(false);
+        var audit = audits.Data.Single(record => record.Operation == operation);
+        audit.UserId.Should().Be("test-user");
+        audit.EntityType.Should().Be(nameof(GreetingResponse));
+        audit.Timestamp.Should().Be(Context.Clock.GetCurrentInstant());
+    }
+
     /// <summary>Asserts the typed stale-ETag failure.</summary>
     [Then("the request fails because the greeting ETag is stale")]
     public void RequestFailsBecauseGreetingETagIsStale()
@@ -266,7 +284,7 @@ public sealed class GreetingSteps
         audit.UserId.Should().Be(userId);
         audit.EntityType.Should().Be(nameof(GreetingResponse));
         audit.Identifier.Should().NotBeNullOrWhiteSpace();
-        audit.Timestamp.Should().NotBe(default);
+        audit.Timestamp.Should().Be(Context.Clock.GetCurrentInstant());
     }
 
     /// <summary>Asserts that the greeting was returned by its query contract.</summary>

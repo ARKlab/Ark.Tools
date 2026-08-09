@@ -31,6 +31,7 @@ Feature: Greeting contracts
                 | Message               |
                 | Updated table greeting |
             And the current greeting has a refreshed opaque ETag
+            And the current greeting has a deterministic audit for "UpdateGreetingMessageRequest"
             When I update the current greeting with a stale ETag and
                 | Message               |
                 | Rejected table update |

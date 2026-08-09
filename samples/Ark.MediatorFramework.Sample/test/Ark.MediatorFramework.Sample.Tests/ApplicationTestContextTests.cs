@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.Tests.Fakes;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using AwesomeAssertions;
@@ -82,6 +83,33 @@ public sealed class ApplicationTestContextTests
 
         await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
         context.FailedDispatchResourceDisposed.Should().BeTrue();
+    }
+
+    /// <summary>Retries deterministic optimistic-concurrency failures before updating a greeting.</summary>
+    [TestMethod]
+    public async Task OptimisticConcurrencyDecoratorRetriesTransientFailures()
+    {
+        var audits = new InMemoryAuditStore();
+        var faults = new ConcurrencyFaultInjector { PendingFailures = 2 };
+        var store = new InMemoryGreetingStore(audits);
+        var decoratedStore = new FaultInjectingGreetingStoreDecorator(store, faults);
+        await using var context = new ApplicationTestContext(
+            useSqlStore: false,
+            greetingStore: decoratedStore,
+            auditStore: audits);
+
+        var greeting = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
+            new CreateGreetingRequest { Name = "Retry me" }).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(
+            new UpdateGreetingMessageRequest
+            {
+                Id = greeting.Id,
+                Message = "Retried successfully",
+                ETag = greeting.ETag,
+            }).ConfigureAwait(false);
+
+        updated.Message.Should().Be("Retried successfully");
+        faults.PendingFailures.Should().Be(0);
     }
 
     /// <summary>Allows only one active print process when requests overlap.</summary>

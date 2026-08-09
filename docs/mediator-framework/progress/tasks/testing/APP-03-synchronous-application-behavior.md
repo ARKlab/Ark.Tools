@@ -39,14 +39,29 @@ through earlier contract dispatches or the documented test adapter; do not call
 
 ## Acceptance
 
-- [ ] The coverage table maps every current application handler to a scenario or
+- [x] The coverage table maps every current application handler to a scenario or
   an explicit follow-up task.
-- [ ] Business violations, validation failures, not-found, authorization, and
+- [x] Business violations, validation failures, not-found, authorization, and
   cancellation are tested by throws/observations rather than transport errors.
-- [ ] Paging, SQL-independent business rules, attachment behavior, streaming,
+- [x] Paging, SQL-independent business rules, attachment behavior, streaming,
   and auditing are covered without serialization.
-- [ ] No scenario relies on `DateTime.UtcNow`, random sleeps, or shared mutable
+- [x] No scenario relies on `DateTime.UtcNow`, random sleeps, or shared mutable
   state.
+
+## Coverage
+
+The synchronous application suite covers the registered handlers as follows:
+
+| Handler family | Contract-level coverage |
+| --- | --- |
+| Greeting create, read, update, versioning, search, audit, and stream | `Greetings.feature`, `GreetingTables.feature`, and `SynchronousApplication.feature` |
+| Book create, update, delete, read, and search | `Books.feature` and `SynchronousApplicationTests` |
+| Envelope binding and polymorphic descriptions | `SynchronousApplication.feature` |
+| Attachment upload, batch upload, and retrieval | `GreetingCards.feature` |
+| Refresh command | `SynchronousApplication.feature` |
+| Print-process and composition handlers | `Books.feature` and `GreetingWorkflow.feature`; asynchronous dispatch remains APP-04 coverage |
+| Rebus failure and second-level handling | `GreetingWorkflow.feature` and `RebusRetryTests` |
+| Greeting-created notification | Emitted and consumed through the transactional outbox; covered by APP-04 workflow tests rather than a direct no-op dispatch |
 
 ## Tests
 

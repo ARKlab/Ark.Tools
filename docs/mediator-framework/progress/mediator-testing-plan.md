@@ -135,7 +135,7 @@ may proceed in parallel once their dependencies are complete.
 | 3 | TST-06 — Keep other framework hosts under `tests/` | TST-02 | [x] Complete | [TST-06](tasks/testing/TST-06-other-framework-hosts.md) |
 | 4 | APP-01 — Expose a direct application composition test seam | D1, D4, D7 | [x] Complete | [APP-01](tasks/testing/APP-01-application-test-seam.md) |
 | 5 | APP-02 — Rewrite Reqnroll lifecycle and dispatch steps | APP-01 | [x] Complete | [APP-02](tasks/testing/APP-02-reqnroll-dispatch.md) |
-| 6 | APP-03 — Cover synchronous application behavior | APP-02 | [ ] Planned | [APP-03](tasks/testing/APP-03-synchronous-application-behavior.md) |
+| 6 | APP-03 — Cover synchronous application behavior | APP-02 | [x] Complete | [APP-03](tasks/testing/APP-03-synchronous-application-behavior.md) |
 | 7 | APP-04 — Exercise asynchronous workflows through in-memory Rebus | APP-01, APP-02 | [ ] Planned | [APP-04](tasks/testing/APP-04-rebus-application-workflows.md) |
 | 8 | APP-05 — Run the application suite against SQL and in-memory stores | APP-03, APP-04 | [ ] Planned | [APP-05](tasks/testing/APP-05-sql-and-inmemory-stores.md) |
 | 9 | APP-06 — Remove obsolete application boundary tests and dependencies | TST-03, TST-04, TST-05, APP-03, APP-05 | [ ] Planned | [APP-06](tasks/testing/APP-06-remove-boundary-tests.md) |
