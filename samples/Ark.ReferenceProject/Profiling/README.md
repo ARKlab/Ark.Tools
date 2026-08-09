@@ -10,6 +10,17 @@ Each benchmark invokes one endpoint ten times:
 - `PostPingMessage`: `POST /v1/ping/message`
 - `PostBookPrintProcess`: `POST /v1/bookPrintProcess`
 
+The profiler supports three separate SqlClient configurations selected with
+`ARK_SQLCLIENT_SWITCH`:
+
+- unset or `baseline`: default SqlClient behavior
+- `make-read-async-blocking`: synchronously reads the DONE token
+- `experimental-async`: enables the paired continuation switches for async reads
+
+The switch is applied in `GlobalSetup` before the database is deployed or any
+`SqlConnection` is created. Do not compare these configurations as BenchmarkDotNet
+methods in one process: SqlClient caches the values after first connection access.
+
 `GlobalSetup` drops and recreates the database from
 `Ark.Reference.Core.Database.dacpac`, starts the host, and creates seed books.
 It does not upgrade an existing schema. `IterationCleanup` waits for the Rebus
@@ -27,6 +38,26 @@ dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
   --filter '*' \
   --artifacts artifacts/BenchmarkDotNet.Artifacts
 ```
+
+Run each configuration in a separate process and use a separate artifacts
+directory:
+
+```bash
+ARK_SQLCLIENT_SWITCH=baseline \
+  dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostBook*' --artifacts artifacts/sqlclient-baseline
+
+ARK_SQLCLIENT_SWITCH=make-read-async-blocking \
+  dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostBook*' --artifacts artifacts/sqlclient-blocking
+
+ARK_SQLCLIENT_SWITCH=experimental-async \
+  dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostBook*' --artifacts artifacts/sqlclient-experimental
+```
+
+Repeat the three runs for each endpoint being compared. Compare CPU samples
+from the workload-only reports, not BenchmarkDotNet latency statistics.
 
 Run one endpoint by changing the filter:
 
@@ -183,6 +214,22 @@ Analyze each candidate in its endpoint-specific workload trace:
 The previous trace did not justify optimizing Rebus idle backoff, thread-pool
 semaphores, SQL/network waits, Application Insights timers, or
 `ToDataTableArk`.
+
+## SqlClient switch comparison
+
+Use the same endpoint, build, database environment, filter, and profiler
+settings for all three invocations. For each `.nettrace`, generate the
+workload-only reports above and compare:
+
+- total workload sampled-thread time
+- self CPU samples for `AbstractSqlAsyncContext.CommitAsync`
+- its inclusive callers/callees, especially SQL socket and wait frames
+
+The `make-read-async-blocking` switch trades thread-pool scalability for
+synchronous DONE-token reads. The `experimental-async` configuration requires
+both continuation switches and targets broader async read overhead. A switch
+is an improvement only when the relevant `CommitAsync` CPU samples decrease
+without moving equivalent CPU work into another application-owned frame.
 
 ## Demystifier configuration
 

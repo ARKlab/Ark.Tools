@@ -40,6 +40,7 @@ public class ReferenceEndpointBenchmarks
 {
     private const int RequestsPerBenchmark = 10;
     private static readonly TimeSpan RebusIdleTimeout = TimeSpan.FromMinutes(15);
+    private const string SqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
 
     private readonly AuthTestContext _auth = new();
     private IFlurlClient? _client;
@@ -53,6 +54,7 @@ public class ReferenceEndpointBenchmarks
     public async Task Setup()
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+        ConfigureSqlClientSwitch();
         DeployDatabase();
         await DatabaseUtils.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
         Environment.SetEnvironmentVariable(
@@ -187,6 +189,27 @@ public class ReferenceEndpointBenchmarks
         _client?.Dispose();
         await TestHost.Server.StopAsync().ConfigureAwait(false);
         TestHost.AfterTests();
+    }
+
+    private static void ConfigureSqlClientSwitch()
+    {
+        switch (Environment.GetEnvironmentVariable(SqlClientSwitchEnvironmentVariable))
+        {
+            case null:
+            case "":
+            case "baseline":
+                return;
+            case "make-read-async-blocking":
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking", true);
+                return;
+            case "experimental-async":
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", false);
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour", false);
+                return;
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported {SqlClientSwitchEnvironmentVariable} value. Use baseline, make-read-async-blocking, or experimental-async.");
+        }
     }
 
     private async Task<Book.V1.Output> CreateBook()
