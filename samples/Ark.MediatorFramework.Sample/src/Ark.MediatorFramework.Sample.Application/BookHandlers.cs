@@ -35,7 +35,7 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
         ArgumentNullException.ThrowIfNull(request);
         var book = CreateResponse(Guid.NewGuid(), request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        await context.WriteAuditAsync(CreateAudit(book.Id, nameof(Book_CreateRequest) + ".V1"), ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(CreateAudit(book.Id, typeof(Book_CreateRequest).Name + "." + typeof(Book_CreateRequest.V1).Name), ctk).ConfigureAwait(false);
         await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return book;
@@ -105,7 +105,7 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(Book.V1.Output),
             Identifier = book.Id.ToString("D"),
-            Operation = nameof(Book_UpdateRequest) + ".V1",
+            Operation = typeof(Book_UpdateRequest).Name + "." + typeof(Book_UpdateRequest.V1).Name,
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
@@ -141,7 +141,7 @@ public sealed class DeleteBookHandler : IRequestHandler<Book_DeleteRequest.V1, b
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(Book.V1.Output),
             Identifier = request.Id.ToString("D"),
-            Operation = nameof(Book_DeleteRequest) + ".V1",
+            Operation = typeof(Book_DeleteRequest).Name + "." + typeof(Book_DeleteRequest.V1).Name,
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
