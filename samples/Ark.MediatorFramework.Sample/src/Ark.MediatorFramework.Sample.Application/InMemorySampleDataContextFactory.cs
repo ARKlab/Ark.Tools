@@ -27,8 +27,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     /// <inheritdoc />
     public async Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default)
     {
-        await Task.CompletedTask.ConfigureAwait(false);
-        return new Context(_greetings, _audits, _books);
+        return await Task.FromResult<ISampleDataContext>(
+            new Context(_greetings, _audits, _books)).ConfigureAwait(false);
     }
 
     private sealed class Context : ISampleDataContext
