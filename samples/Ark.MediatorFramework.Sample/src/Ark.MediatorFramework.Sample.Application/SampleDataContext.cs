@@ -198,7 +198,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         const string sql = """
             MERGE [dbo].[Greeting] AS target
             USING (SELECT @Id AS [Id]) AS source ON target.[Id] = source.[Id]
-            WHEN MATCHED AND target.[RowVersion] = CONVERT(VARBINARY(8), @ETag, 1) THEN
+            WHEN MATCHED AND target.[RowVersion] = TRY_CONVERT(VARBINARY(8), @ETag, 1) THEN
                 UPDATE SET [Message] = @Message, [AuditId] = @AuditId
             OUTPUT inserted.[Id], inserted.[Message], inserted.[Date], inserted.[DateTime],
                    inserted.[OffsetDateTime], inserted.[Period], inserted.[AuditId],

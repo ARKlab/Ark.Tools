@@ -40,7 +40,7 @@ separate document under [`testing/`](testing/):
 4. [x] [APP-01](testing/APP-01-application-test-seam.md)
 5. [x] [APP-02](testing/APP-02-reqnroll-dispatch.md)
 6. [x] [APP-03](testing/APP-03-synchronous-application-behavior.md) · [x] [APP-04](testing/APP-04-rebus-application-workflows.md)
-7. [ ] [APP-05](testing/APP-05-sql-and-inmemory-stores.md)
+7. [x] [APP-05](testing/APP-05-sql-and-inmemory-stores.md)
 8. [ ] [APP-06](testing/APP-06-remove-boundary-tests.md)
 9. [ ] [APP-07](testing/APP-07-request-dto-composition.md) · [ ] [APP-08](testing/APP-08-context-factory-architecture.md)
 10. [ ] [APP-09](testing/APP-09-inmemory-outbox.md)

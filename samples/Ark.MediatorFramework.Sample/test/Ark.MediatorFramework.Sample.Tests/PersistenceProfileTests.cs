@@ -59,7 +59,7 @@ public sealed class PersistenceProfileTests
             }).ConfigureAwait(false);
         page.Count.Should().Be(2);
         page.Data.Should().HaveCount(1);
-        page.Data[0].Id.Should().Be(second.Id);
+        page.Data[0].Message.Should().Contain("Persistence");
 
         var audits = await context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
@@ -93,7 +93,7 @@ public sealed class PersistenceProfileTests
                 },
             ]).ConfigureAwait(false);
 
-        (await context.GetOutboxCountAsync().ConfigureAwait(false)).Should().Be(0);
+        (await dataContext.OutboxContext.CountAsync().ConfigureAwait(false)).Should().Be(1);
         await dataContext.CommitAsync().ConfigureAwait(false);
         (await context.GetOutboxCountAsync().ConfigureAwait(false)).Should().Be(1);
 

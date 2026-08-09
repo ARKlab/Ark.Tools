@@ -99,6 +99,13 @@ continues to use the in-memory transport for both profiles. Greeting-card
 attachments use the sample's in-memory `DocumentStore` in both profiles, so the
 sample does not require Azurite.
 
+The `PersistenceProfileTests` contract checks run in whichever profile is
+selected. They cover Dapper-backed and in-memory create/read/update, search
+paging, audit persistence, opaque ETags, and transactional outbox commit
+behavior. The SQL hook deploys the DACPAC once, then calls
+`[ops].[ResetFull_OnlyForTesting]` before each scenario; its `DELETE FROM` order
+keeps the `BookPrintProcess` foreign key safe and leaves no scenario data.
+
 Stop the local database when finished:
 
 ```bash
