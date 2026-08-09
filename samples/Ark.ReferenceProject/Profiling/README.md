@@ -57,7 +57,8 @@ ARK_SQLCLIENT_SWITCH=experimental-async \
 ```
 
 Repeat the three runs for each endpoint being compared. Compare CPU samples
-from the workload-only reports, not BenchmarkDotNet latency statistics.
+from the workload-only reports for trace analysis. For runtime analysis, compare
+the BenchmarkDotNet mean and error values from the benchmark summaries.
 
 Run one endpoint by changing the filter:
 
@@ -249,6 +250,35 @@ Neither switch reduced `CommitAsync` CPU samples in this benchmark. The
 blocking switch was higher than baseline, while the experimental continuation
 path was effectively unchanged within sampling noise and slightly higher.
 These results do not justify enabling either switch for this workload.
+
+### Observed runtime result
+
+The three full benchmark runs were executed on 2026-08-09 in Release mode with
+.NET 10.0.10 and BenchmarkDotNet 0.15.8. Each operation contains ten HTTP
+requests; the values below are BenchmarkDotNet mean durations per operation.
+The `±` value is the reported 99.9% confidence-interval margin.
+
+| Configuration | `PostBook` | `GetBook` | `PostPingMessage` | `PostBookPrintProcess` |
+| --- | ---: | ---: | ---: | ---: |
+| baseline | 39.93 ± 2.21 ms | 21.32 ± 1.37 ms | 35.59 ± 5.38 ms | 41.47 ± 5.24 ms |
+| `make-read-async-blocking` | 40.62 ± 2.56 ms | 21.31 ± 1.35 ms | 35.79 ± 4.12 ms | 40.66 ± 2.75 ms |
+| `experimental-async` | 39.83 ± 2.49 ms | 21.98 ± 1.73 ms | 37.34 ± 5.13 ms | 41.05 ± 4.51 ms |
+
+Runtime change relative to baseline:
+
+| Configuration | `PostBook` | `GetBook` | `PostPingMessage` | `PostBookPrintProcess` |
+| --- | ---: | ---: | ---: | ---: |
+| `make-read-async-blocking` | +1.72% | -0.06% | +0.57% | -1.96% |
+| `experimental-async` | -0.25% | +3.11% | +4.91% | -1.02% |
+
+Neither switch produces a consistent runtime improvement. The apparent
+differences are within the reported confidence intervals, and the benchmark
+reported `MinIterationTime` warnings because each iteration completes quickly.
+The blocking switch is slightly slower for `PostBook`, while the experimental
+switch is slower for `GetBook` and `PostPingMessage`; these results do not
+justify enabling either switch for this workload. More requests per operation
+or more repetitions would be needed to resolve changes smaller than the
+observed benchmark variance.
 
 ## Demystifier configuration
 
