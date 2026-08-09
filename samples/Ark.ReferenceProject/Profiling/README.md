@@ -10,6 +10,17 @@ Each benchmark invokes one endpoint ten times:
 - `PostPingMessage`: `POST /v1/ping/message`
 - `PostBookPrintProcess`: `POST /v1/bookPrintProcess`
 
+The profiler supports three separate SqlClient configurations selected with
+`ARK_SQLCLIENT_SWITCH`:
+
+- unset or `baseline`: default SqlClient behavior
+- `make-read-async-blocking`: synchronously reads the DONE token
+- `experimental-async`: enables the paired continuation switches for async reads
+
+The switch is applied in `GlobalSetup` before the database is deployed or any
+`SqlConnection` is created. Do not compare these configurations as BenchmarkDotNet
+methods in one process: SqlClient caches the values after first connection access.
+
 `GlobalSetup` drops and recreates the database from
 `Ark.Reference.Core.Database.dacpac`, starts the host, and creates seed books.
 It does not upgrade an existing schema. `IterationCleanup` waits for the Rebus
@@ -27,6 +38,27 @@ dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
   --filter '*' \
   --artifacts artifacts/BenchmarkDotNet.Artifacts
 ```
+
+Run each configuration in a separate process and use a separate artifacts
+directory:
+
+```bash
+ARK_SQLCLIENT_SWITCH=baseline \
+  dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostBook*' --artifacts artifacts/sqlclient-baseline
+
+ARK_SQLCLIENT_SWITCH=make-read-async-blocking \
+  dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostBook*' --artifacts artifacts/sqlclient-blocking
+
+ARK_SQLCLIENT_SWITCH=experimental-async \
+  dotnet Profiling/bin/Release/net10.0/Ark.Reference.Profiling.dll \
+  --filter '*PostBook*' --artifacts artifacts/sqlclient-experimental
+```
+
+Repeat the three runs for each endpoint being compared. Compare CPU samples
+from the workload-only reports for trace analysis. For runtime analysis, compare
+the BenchmarkDotNet mean and error values from the benchmark summaries.
 
 Run one endpoint by changing the filter:
 
@@ -183,6 +215,70 @@ Analyze each candidate in its endpoint-specific workload trace:
 The previous trace did not justify optimizing Rebus idle backoff, thread-pool
 semaphores, SQL/network waits, Application Insights timers, or
 `ToDataTableArk`.
+
+## SqlClient switch comparison
+
+Use the same endpoint, build, database environment, filter, and profiler
+settings for all three invocations. For each `.nettrace`, generate the
+workload-only reports above and compare:
+
+- total workload sampled-thread time
+- self CPU samples for `AbstractSqlAsyncContext.CommitAsync`
+- its inclusive callers/callees, especially SQL socket and wait frames
+
+The `make-read-async-blocking` switch trades thread-pool scalability for
+synchronous DONE-token reads. The `experimental-async` configuration requires
+both continuation switches and targets broader async read overhead. A switch
+is an improvement only when the relevant `CommitAsync` CPU samples decrease
+without moving equivalent CPU work into another application-owned frame.
+
+### Observed PostBook result
+
+The three separate `PostBook` captures were analyzed with `filtrace callers`
+for `AbstractSqlAsyncContext`, using the `DbTransaction.CommitAsync` callee.
+These are sampled-thread CPU durations from the complete capture; the
+BenchmarkDotNet workload root contains too few server continuation samples for
+this asynchronous in-process HTTP workload.
+
+| Configuration | `DbTransaction.CommitAsync` samples | Share of complete capture |
+| --- | ---: | ---: |
+| baseline | 199 ms | 0.095% |
+| `make-read-async-blocking` | 220 ms | 0.111% |
+| `experimental-async` | 205 ms | 0.118% |
+
+Neither switch reduced `CommitAsync` CPU samples in this benchmark. The
+blocking switch was higher than baseline, while the experimental continuation
+path was effectively unchanged within sampling noise and slightly higher.
+These results do not justify enabling either switch for this workload.
+
+### Observed runtime result
+
+The three full benchmark runs were executed on 2026-08-09 in Release mode with
+.NET 10.0.10 and BenchmarkDotNet 0.15.8. Each operation contains ten HTTP
+requests; the values below are BenchmarkDotNet mean durations per operation.
+The `±` value is the reported 99.9% confidence-interval margin.
+
+| Configuration | `PostBook` | `GetBook` | `PostPingMessage` | `PostBookPrintProcess` |
+| --- | ---: | ---: | ---: | ---: |
+| baseline | 39.93 ± 2.21 ms | 21.32 ± 1.37 ms | 35.59 ± 5.38 ms | 41.47 ± 5.24 ms |
+| `make-read-async-blocking` | 40.62 ± 2.56 ms | 21.31 ± 1.35 ms | 35.79 ± 4.12 ms | 40.66 ± 2.75 ms |
+| `experimental-async` | 39.83 ± 2.49 ms | 21.98 ± 1.73 ms | 37.34 ± 5.13 ms | 41.05 ± 4.51 ms |
+
+Runtime change relative to baseline:
+
+| Configuration | `PostBook` | `GetBook` | `PostPingMessage` | `PostBookPrintProcess` |
+| --- | ---: | ---: | ---: | ---: |
+| `make-read-async-blocking` | +1.72% | -0.06% | +0.57% | -1.96% |
+| `experimental-async` | -0.25% | +3.11% | +4.91% | -1.02% |
+
+Neither switch produces a consistent runtime improvement. The apparent
+differences are within the reported confidence intervals, and the benchmark
+reported `MinIterationTime` warnings because each iteration completes quickly.
+The blocking switch is slightly slower for `PostBook`, while the experimental
+switch is slower for `GetBook` and `PostPingMessage`; these results do not
+justify enabling either switch for this workload. More requests per operation
+or more repetitions would be needed to resolve changes smaller than the
+observed benchmark variance.
 
 ## Demystifier configuration
 
