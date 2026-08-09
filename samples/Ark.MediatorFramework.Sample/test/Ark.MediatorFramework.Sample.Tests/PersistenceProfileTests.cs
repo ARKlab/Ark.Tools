@@ -22,7 +22,7 @@ public sealed class PersistenceProfileTests
     {
         await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
         await using var context = new ApplicationTestContext();
-        context.SetAuthenticatedUser("persistence-user");
+        context.SetAuthenticatedUser("profile-user");
 
         var first = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
             new CreateGreetingRequest { Name = "Persistence alpha" }).ConfigureAwait(false);
@@ -43,7 +43,7 @@ public sealed class PersistenceProfileTests
             new UpdateGreetingMessageRequest
             {
                 Id = first.Id,
-                Message = "Updated greeting",
+                Message = "Updated Persistence greeting",
                 ETag = first.ETag,
             }).ConfigureAwait(false);
         updated.ETag.Should().StartWith("0x");
@@ -70,7 +70,7 @@ public sealed class PersistenceProfileTests
         audits.Count.Should().Be(2);
         audits.Data.Should().Contain(record => record.Operation == nameof(CreateGreetingRequest));
         audits.Data.Should().Contain(record => record.Operation == nameof(UpdateGreetingMessageRequest));
-        audits.Data.Should().OnlyContain(record => record.UserId == "persistence-user");
+        audits.Data.Should().OnlyContain(record => record.UserId == "profile-user");
     }
 
     /// <summary>Verifies that both profiles commit application outbox messages transactionally.</summary>
