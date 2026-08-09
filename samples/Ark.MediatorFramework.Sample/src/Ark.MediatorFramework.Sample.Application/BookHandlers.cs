@@ -15,7 +15,7 @@ using System.Security.Claims;
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Creates books through the application contract.</summary>
-public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookResponse>
+public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -30,25 +30,25 @@ public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookR
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> ExecuteAsync(CreateBookRequest request, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> ExecuteAsync(Book_CreateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var book = CreateResponse(Guid.NewGuid(), request.Title, request.Author, request.Genre, request.ISBN);
+        var book = CreateResponse(Guid.NewGuid(), request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        await context.WriteAuditAsync(CreateAudit(book.Id, nameof(CreateBookRequest)), ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(CreateAudit(book.Id, nameof(Book_CreateRequest.V1)), ctk).ConfigureAwait(false);
         await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return book;
     }
 
-    internal static BookResponse CreateResponse(
+    internal static Book.V1.Output CreateResponse(
         Guid id,
         string title,
         string author,
-        Ark.Tools.Core.EvolvableEnum<BookGenre> genre,
+        Ark.Tools.Core.EvolvableEnum<Book.V1.Genre> genre,
         string? isbn)
     {
-        return new BookResponse
+        return new Book.V1.Output
         {
             Id = id,
             Title = title,
@@ -65,7 +65,7 @@ public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookR
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
-            EntityType = nameof(BookResponse),
+            EntityType = nameof(Book.V1.Output),
             Identifier = id.ToString("D"),
             Operation = operation,
             Timestamp = _clock.GetCurrentInstant(),
@@ -74,7 +74,7 @@ public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookR
 }
 
 /// <summary>Updates books through the application contract.</summary>
-public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookResponse>
+public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, Book.V1.Output>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -89,12 +89,12 @@ public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookR
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> ExecuteAsync(UpdateBookRequest request, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> ExecuteAsync(Book_UpdateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var book = CreateBookHandler.CreateResponse(request.Id, request.Title, request.Author, request.Genre, request.ISBN) with
+        var book = CreateBookHandler.CreateResponse(request.Id, request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN) with
         {
-            Description = $"Book updated: {request.Title} by {request.Author}",
+            Description = $"Book updated: {request.Data.Title} by {request.Data.Author}",
         };
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
@@ -103,9 +103,9 @@ public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookR
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
-            EntityType = nameof(BookResponse),
+            EntityType = nameof(Book.V1.Output),
             Identifier = book.Id.ToString("D"),
-            Operation = nameof(UpdateBookRequest),
+            Operation = nameof(Book_UpdateRequest.V1),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
@@ -114,7 +114,7 @@ public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookR
 }
 
 /// <summary>Deletes books through the application contract.</summary>
-public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
+public sealed class DeleteBookHandler : IRequestHandler<Book_DeleteRequest.V1, bool>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -129,7 +129,7 @@ public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
     }
 
     /// <inheritdoc />
-    public async Task<bool> ExecuteAsync(DeleteBookRequest request, CancellationToken ctk = default)
+    public async Task<bool> ExecuteAsync(Book_DeleteRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -139,9 +139,9 @@ public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
-            EntityType = nameof(BookResponse),
+            EntityType = nameof(Book.V1.Output),
             Identifier = request.Id.ToString("D"),
-            Operation = nameof(DeleteBookRequest),
+            Operation = nameof(Book_DeleteRequest.V1),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
@@ -332,7 +332,7 @@ public sealed class GetBookPrintProcessHandler :
 }
 
 /// <summary>Reads books through the application contract.</summary>
-public sealed class GetBookHandler : IQueryHandler<GetBookQuery, BookResponse>
+public sealed class GetBookHandler : IQueryHandler<Book_GetQuery.V1, Book.V1.Output>
 {
     private readonly ISampleDataContextFactory _factory;
 
@@ -343,7 +343,7 @@ public sealed class GetBookHandler : IQueryHandler<GetBookQuery, BookResponse>
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> ExecuteAsync(GetBookQuery query, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> ExecuteAsync(Book_GetQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -355,7 +355,7 @@ public sealed class GetBookHandler : IQueryHandler<GetBookQuery, BookResponse>
 }
 
 /// <summary>Searches books through the application contract.</summary>
-public sealed class SearchBooksHandler : IQueryHandler<SearchBooksQuery, BookPage>
+public sealed class SearchBooksHandler : IQueryHandler<Book_SearchQuery.V1, BookPage>
 {
     private readonly ISampleDataContextFactory _factory;
 
@@ -366,7 +366,7 @@ public sealed class SearchBooksHandler : IQueryHandler<SearchBooksQuery, BookPag
     }
 
     /// <inheritdoc />
-    public async Task<BookPage> ExecuteAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    public async Task<BookPage> ExecuteAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);

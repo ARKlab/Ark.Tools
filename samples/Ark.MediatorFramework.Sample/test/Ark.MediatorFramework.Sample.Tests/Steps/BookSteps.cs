@@ -30,7 +30,7 @@ public sealed class BookSteps
     [When("I create a book with")]
     public async Task CreateBook(Table table)
     {
-        await _books.CreateAsync(table.CreateInstance<CreateBookRequest>()).ConfigureAwait(false);
+        await _books.CreateAsync(table.CreateInstance<Book.V1.Create>()).ConfigureAwait(false);
     }
 
     /// <summary>Creates books from a table and activates the last created book.</summary>
@@ -38,8 +38,8 @@ public sealed class BookSteps
     [Given("I create books with")]
     public async Task CreateBooks(Table table)
     {
-        foreach (var request in table.CreateSet<CreateBookRequest>())
-            await _books.CreateAsync(request).ConfigureAwait(false);
+        foreach (var input in table.CreateSet<Book.V1.Create>())
+            await _books.CreateAsync(input).ConfigureAwait(false);
     }
 
     /// <summary>Loads the active book through its query contract.</summary>
@@ -54,7 +54,7 @@ public sealed class BookSteps
     [When("I update the current book with")]
     public async Task UpdateCurrentBook(Table table)
     {
-        await _books.UpdateCurrentAsync(table.CreateInstance<UpdateBookRequest>()).ConfigureAwait(false);
+        await _books.UpdateCurrentAsync(table.CreateInstance<Book.V1.Input>()).ConfigureAwait(false);
     }
 
     /// <summary>Deletes the active book.</summary>
@@ -69,7 +69,7 @@ public sealed class BookSteps
     [When("I search books by")]
     public async Task SearchBooks(Table table)
     {
-        await _books.SearchAsync(table.CreateInstance<SearchBooksQuery>()).ConfigureAwait(false);
+        await _books.SearchAsync(table.CreateInstance<Book_SearchQuery.V1>()).ConfigureAwait(false);
     }
 
     /// <summary>Asserts that the active book matches the supplied table.</summary>

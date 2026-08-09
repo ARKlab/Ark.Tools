@@ -21,37 +21,38 @@ public sealed class BookDriver
     }
 
     /// <summary>Gets the active book for the scenario.</summary>
-    public BookResponse Current => _current ?? throw new InvalidOperationException("No current book is available in this scenario.");
+    public Book.V1.Output Current => _current ?? throw new InvalidOperationException("No current book is available in this scenario.");
 
     /// <summary>Gets the latest book search page.</summary>
     public BookPage? SearchResults { get; private set; }
 
-    private BookResponse? _current;
+    private Book.V1.Output? _current;
 
     /// <summary>Creates and activates a book.</summary>
     /// <param name="request">The book creation request.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task CreateAsync(CreateBookRequest request, CancellationToken ctk = default)
+    public async Task CreateAsync(Book.V1.Create input, CancellationToken ctk = default)
     {
-        _current = await Context.DispatchRequestAsync<CreateBookRequest, BookResponse>(request, ctk).ConfigureAwait(false);
+        _current = await Context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(input), ctk).ConfigureAwait(false);
     }
 
     /// <summary>Retrieves the active book through its query contract.</summary>
     /// <param name="ctk">The cancellation token.</param>
     public async Task RetrieveCurrentAsync(CancellationToken ctk = default)
     {
-        _current = await Context.DispatchQueryAsync<GetBookQuery, BookResponse>(
-            new GetBookQuery { Id = Current.Id },
+        _current = await Context.DispatchQueryAsync<Book_GetQuery.V1, Book.V1.Output>(
+            new Book_GetQuery.V1(Current.Id),
             ctk).ConfigureAwait(false);
     }
 
     /// <summary>Updates the active book.</summary>
     /// <param name="request">The replacement book details.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task UpdateCurrentAsync(UpdateBookRequest request, CancellationToken ctk = default)
+    public async Task UpdateCurrentAsync(Book.V1.Input input, CancellationToken ctk = default)
     {
-        _current = await Context.DispatchRequestAsync<UpdateBookRequest, BookResponse>(
-            request with { Id = Current.Id },
+        _current = await Context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+            new Book_UpdateRequest.V1(input, Current.Id),
             ctk).ConfigureAwait(false);
     }
 
@@ -59,8 +60,8 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task DeleteCurrentAsync(CancellationToken ctk = default)
     {
-        await Context.DispatchRequestAsync<DeleteBookRequest, bool>(
-            new DeleteBookRequest { Id = Current.Id },
+        await Context.DispatchRequestAsync<Book_DeleteRequest.V1, bool>(
+            new Book_DeleteRequest.V1(Current.Id),
             ctk).ConfigureAwait(false);
         _current = null;
     }
@@ -68,9 +69,9 @@ public sealed class BookDriver
     /// <summary>Searches books through the query contract.</summary>
     /// <param name="query">The search query.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task SearchAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    public async Task SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
-        SearchResults = await Context.DispatchQueryAsync<SearchBooksQuery, BookPage>(query, ctk).ConfigureAwait(false);
+        SearchResults = await Context.DispatchQueryAsync<Book_SearchQuery.V1, BookPage>(query, ctk).ConfigureAwait(false);
     }
 
     /// <summary>Reads audit records for the active book.</summary>

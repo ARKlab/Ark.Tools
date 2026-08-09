@@ -142,7 +142,7 @@ public static class ApplicationComposition
         {
             // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
             NodaTimeDapperSqlServer.Setup();
-            EvolvableEnumDapper.Register<BookGenre>();
+            EvolvableEnumDapper.Register<Book.V1.Genre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
             var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
             {
@@ -199,18 +199,18 @@ public static class ApplicationComposition
         container.Register<ICommandHandler<RefreshGreetingCommand>, RefreshGreetingHandler>();
         container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
         container.Register<IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>, UpdateGreetingMessageHandler>();
-        container.Register<IRequestHandler<CreateBookRequest, BookResponse>, CreateBookHandler>();
-        container.Register<IRequestHandler<UpdateBookRequest, BookResponse>, UpdateBookHandler>();
-        container.Register<IRequestHandler<DeleteBookRequest, bool>, DeleteBookHandler>();
+        container.Register<IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>, CreateBookHandler>();
+        container.Register<IRequestHandler<Book_UpdateRequest.V1, Book.V1.Output>, UpdateBookHandler>();
+        container.Register<IRequestHandler<Book_DeleteRequest.V1, bool>, DeleteBookHandler>();
         container.Register<IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>, CreateBookPrintProcessHandler>();
         container.Register<IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();
         container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
         container.Register<IQueryHandler<GetGreetingV2Query, GreetingResponseV2>, GetGreetingV2Handler>();
-        container.Register<IQueryHandler<GetBookQuery, BookResponse>, GetBookHandler>();
+        container.Register<IQueryHandler<Book_GetQuery.V1, Book.V1.Output>, GetBookHandler>();
         container.Register<IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>, GetBookPrintProcessHandler>();
-        container.Register<IQueryHandler<SearchBooksQuery, BookPage>, SearchBooksHandler>();
+        container.Register<IQueryHandler<Book_SearchQuery.V1, BookPage>, SearchBooksHandler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();

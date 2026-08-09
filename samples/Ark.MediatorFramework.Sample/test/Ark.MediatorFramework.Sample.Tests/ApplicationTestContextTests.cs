@@ -121,13 +121,13 @@ public sealed class ApplicationTestContextTests
         await using var context = new ApplicationTestContext(useSqlStore: false, bookStore: store, auditStore: audits);
         context.SetAuthenticatedUser();
         context.StartOutboundBus();
-        var book = await context.DispatchRequestAsync<CreateBookRequest, BookResponse>(
-            new CreateBookRequest
+        var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
             {
                 Title = "Concurrent Systems",
                 Author = "Test Author",
-                Genre = BookGenre.Technology,
-            }).ConfigureAwait(false);
+                Genre = Book.V1.Genre.Technology,
+            })).ConfigureAwait(false);
         var request = new CreateBookPrintProcessRequest { BookId = book.Id };
 
         var attempts = await Task.WhenAll(
@@ -148,13 +148,13 @@ public sealed class ApplicationTestContextTests
         await using var context = new ApplicationTestContext();
         context.SetAuthenticatedUser();
         context.StartOutboundBus();
-        var book = await context.DispatchRequestAsync<CreateBookRequest, BookResponse>(
-            new CreateBookRequest
+        var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
             {
                 Title = "Reliable Systems",
                 Author = "Test Author",
-                Genre = BookGenre.Technology,
-            }).ConfigureAwait(false);
+                Genre = Book.V1.Genre.Technology,
+            })).ConfigureAwait(false);
         var process = await context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(
             new CreateBookPrintProcessRequest { BookId = book.Id }).ConfigureAwait(false);
         process = await context.BookStore.UpdatePrintProcessAsync(
@@ -207,21 +207,21 @@ public sealed class ApplicationTestContextTests
             _inner = inner;
         }
 
-        public async Task<BookResponse> CreateAsync(
-            BookResponse book,
+        public async Task<Book.V1.Output> CreateAsync(
+            Book.V1.Output book,
             AuditEntry? audit = null,
             CancellationToken ctk = default)
         {
             return await _inner.CreateAsync(book, audit, ctk).ConfigureAwait(false);
         }
 
-        public async Task<BookResponse> GetAsync(Guid id, CancellationToken ctk = default)
+        public async Task<Book.V1.Output> GetAsync(Guid id, CancellationToken ctk = default)
         {
             return await _inner.GetAsync(id, ctk).ConfigureAwait(false);
         }
 
-        public async Task<BookResponse> UpdateAsync(
-            BookResponse book,
+        public async Task<Book.V1.Output> UpdateAsync(
+            Book.V1.Output book,
             AuditEntry? audit = null,
             CancellationToken ctk = default)
         {
@@ -233,7 +233,7 @@ public sealed class ApplicationTestContextTests
             await _inner.DeleteAsync(id, audit, ctk).ConfigureAwait(false);
         }
 
-        public async Task<BookPage> SearchAsync(SearchBooksQuery query, CancellationToken ctk = default)
+        public async Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
         {
             return await _inner.SearchAsync(query, ctk).ConfigureAwait(false);
         }

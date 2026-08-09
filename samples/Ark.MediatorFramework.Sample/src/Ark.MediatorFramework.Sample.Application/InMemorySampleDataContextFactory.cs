@@ -112,17 +112,17 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await _outbox.CommitAsync(ctk).ConfigureAwait(false);
         }
 
-        public Task SaveBookAsync(BookResponse book, CancellationToken ctk = default)
+        public Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             return _books.CreateAsync(book, ctk: ctk);
         }
 
-        public Task<BookResponse?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+        public Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
         {
             return ReadBookCoreAsync(id, ctk);
         }
 
-        public async Task<bool> UpdateBookAsync(BookResponse book, CancellationToken ctk = default)
+        public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             await _books.UpdateAsync(book, ctk: ctk).ConfigureAwait(false);
             return true;
@@ -133,7 +133,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return DeleteBookCoreAsync(id, ctk);
         }
 
-        public Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default)
+        public Task<BookPage> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
         {
             return _books.SearchAsync(query, ctk);
         }
@@ -182,7 +182,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return true;
         }
 
-        private async Task<BookResponse?> ReadBookCoreAsync(Guid id, CancellationToken ctk)
+        private async Task<Book.V1.Output?> ReadBookCoreAsync(Guid id, CancellationToken ctk)
         {
             try
             {

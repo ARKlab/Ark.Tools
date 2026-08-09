@@ -48,19 +48,19 @@ public interface ISampleDataContext : IAsyncDisposable
     Task CommitAsync(CancellationToken ctk = default);
 
     /// <summary>Saves a book.</summary>
-    Task SaveBookAsync(BookResponse book, CancellationToken ctk = default);
+    Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
-    Task<BookResponse?> ReadBookAsync(Guid id, CancellationToken ctk = default);
+    Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Updates a book.</summary>
-    Task<bool> UpdateBookAsync(BookResponse book, CancellationToken ctk = default);
+    Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default);
 
     /// <summary>Deletes a book.</summary>
     Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Reads a page of books.</summary>
-    Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default);
+    Task<BookPage> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
 
     /// <summary>Saves a book print process when no active process exists for the book.</summary>
     Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
@@ -285,7 +285,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Saves a book in the current transaction.</summary>
-    public async Task SaveBookAsync(BookResponse book, CancellationToken ctk = default)
+    public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
     {
         const string sql = """
             INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description])
@@ -304,7 +304,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
-    public async Task<BookResponse?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+    public async Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
     {
         const string sql = """
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
@@ -317,7 +317,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Updates a book in the current transaction.</summary>
-    public async Task<bool> UpdateBookAsync(BookResponse book, CancellationToken ctk = default)
+    public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
     {
         const string sql = """
             UPDATE [dbo].[Book]
@@ -352,7 +352,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Reads a page of books in the current transaction.</summary>
-    public async Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    public async Task<BookPage> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         const string sql = """
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
@@ -526,13 +526,13 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
-        public EvolvableEnum<BookGenre> Genre { get; set; }
+        public EvolvableEnum<Book.V1.Genre> Genre { get; set; }
         public string? ISBN { get; set; }
         public string Description { get; set; } = string.Empty;
 
-        public BookResponse ToResponse()
+        public Book.V1.Output ToResponse()
         {
-            return new BookResponse
+            return new Book.V1.Output
             {
                 Id = Id,
                 Title = Title,

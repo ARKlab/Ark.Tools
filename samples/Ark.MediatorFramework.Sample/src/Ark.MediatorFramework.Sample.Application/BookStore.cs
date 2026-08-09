@@ -13,19 +13,19 @@ namespace Ark.MediatorFramework.Sample.Application;
 public interface IBookStore
 {
     /// <summary>Creates a book.</summary>
-    Task<BookResponse> CreateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default);
+    Task<Book.V1.Output> CreateAsync(Book.V1.Output book, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Reads a book by identifier.</summary>
-    Task<BookResponse> GetAsync(Guid id, CancellationToken ctk = default);
+    Task<Book.V1.Output> GetAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Updates a book.</summary>
-    Task<BookResponse> UpdateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default);
+    Task<Book.V1.Output> UpdateAsync(Book.V1.Output book, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Deletes a book.</summary>
     Task DeleteAsync(Guid id, AuditEntry? audit = null, CancellationToken ctk = default);
 
     /// <summary>Searches books.</summary>
-    Task<BookPage> SearchAsync(SearchBooksQuery query, CancellationToken ctk = default);
+    Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
 
     /// <summary>Atomically creates and queues a book print process when the book has no active process.</summary>
     Task<bool> TryCreateAndQueuePrintProcessAsync(
@@ -51,7 +51,7 @@ public interface IBookStore
 /// <summary>Thread-safe in-memory <see cref="IBookStore"/>.</summary>
 public sealed class InMemoryBookStore : IBookStore
 {
-    private readonly ConcurrentDictionary<Guid, BookResponse> _books = new();
+    private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
     private readonly System.Threading.Lock _sync = new();
     private readonly IAuditStore _audits;
@@ -64,7 +64,7 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> CreateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> CreateAsync(Book.V1.Output book, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(book);
         if (!_books.TryAdd(book.Id, book))
@@ -76,7 +76,7 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public Task<BookResponse> GetAsync(Guid id, CancellationToken ctk = default)
+    public Task<Book.V1.Output> GetAsync(Guid id, CancellationToken ctk = default)
     {
         return _books.TryGetValue(id, out var book)
             ? Task.FromResult(book)
@@ -84,7 +84,7 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> UpdateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> UpdateAsync(Book.V1.Output book, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(book);
         if (!_books.ContainsKey(book.Id))
@@ -107,7 +107,7 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public Task<BookPage> SearchAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    public Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         var matching = _books.Values

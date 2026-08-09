@@ -6,40 +6,40 @@ using FluentValidation;
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Validates book creation requests.</summary>
-public sealed class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
+public sealed class CreateBookRequestValidator : AbstractValidator<Book_CreateRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="CreateBookRequestValidator"/> class.</summary>
     public CreateBookRequestValidator()
     {
-        RuleFor(request => request.Title)
+        RuleFor(request => request.Data.Title)
             .NotEmpty()
             .MaximumLength(200);
-        RuleFor(request => request.Author)
+        RuleFor(request => request.Data.Author)
             .NotEmpty()
             .MaximumLength(100);
-        RuleFor(request => request.Genre)
-            .NotEqual(Ark.Tools.Core.EvolvableEnum<BookGenre>.NotSet);
-        RuleFor(request => request.ISBN)
+        RuleFor(request => request.Data.Genre)
+            .NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
+        RuleFor(request => request.Data.ISBN)
             .MaximumLength(20);
     }
 }
 
 /// <summary>Validates book update requests.</summary>
-public sealed class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
+public sealed class UpdateBookRequestValidator : AbstractValidator<Book_UpdateRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="UpdateBookRequestValidator"/> class.</summary>
     public UpdateBookRequestValidator()
     {
         RuleFor(request => request.Id).NotEmpty();
-        RuleFor(request => request.Title).NotEmpty().MaximumLength(200);
-        RuleFor(request => request.Author).NotEmpty().MaximumLength(100);
-        RuleFor(request => request.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<BookGenre>.NotSet);
-        RuleFor(request => request.ISBN).MaximumLength(20);
+        RuleFor(request => request.Data.Title).NotEmpty().MaximumLength(200);
+        RuleFor(request => request.Data.Author).NotEmpty().MaximumLength(100);
+        RuleFor(request => request.Data.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
+        RuleFor(request => request.Data.ISBN).MaximumLength(20);
     }
 }
 
 /// <summary>Validates book search requests.</summary>
-public sealed class SearchBooksQueryValidator : AbstractValidator<SearchBooksQuery>
+public sealed class SearchBooksQueryValidator : AbstractValidator<Book_SearchQuery.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="SearchBooksQueryValidator"/> class.</summary>
     public SearchBooksQueryValidator()

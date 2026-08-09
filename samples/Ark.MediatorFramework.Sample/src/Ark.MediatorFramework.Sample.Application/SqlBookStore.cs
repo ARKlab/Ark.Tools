@@ -22,7 +22,7 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> CreateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> CreateAsync(Book.V1.Output book, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(book);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -34,7 +34,7 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> GetAsync(Guid id, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> GetAsync(Guid id, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         var book = await context.ReadBookAsync(id, ctk).ConfigureAwait(false);
@@ -43,7 +43,7 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookResponse> UpdateAsync(BookResponse book, AuditEntry? audit = null, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> UpdateAsync(Book.V1.Output book, AuditEntry? audit = null, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(book);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
@@ -69,7 +69,7 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public async Task<BookPage> SearchAsync(SearchBooksQuery query, CancellationToken ctk = default)
+    public async Task<BookPage> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
