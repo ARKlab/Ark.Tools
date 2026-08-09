@@ -23,6 +23,13 @@ Reqnroll scenarios use application contracts directly, the SQL-backed profile by
 default, an explicitly selected in-memory store profile, deterministic clocks
 and users, and bounded waiting for asynchronous effects.
 
+The sample also defines the application layering used by those tests:
+handlers own transaction lifecycles, context factories expose fine-grained
+composable persistence operations, singleton domain services own reusable
+business behavior, and external adapters isolate systems outside the service.
+The Store pattern is explicitly rejected because it hides transaction,
+idempotency, and lock decisions inside one-operation methods.
+
 ## 2. Target architecture
 
 ```text
@@ -33,7 +40,7 @@ ApplicationTestContext
     |
     +-- SimpleInjector container
     |      ApplicationComposition.Register(...)
-    |      test user/clock/store adapters
+    |      test user/clock/context adapters
     |      outbound Rebus configuration
     |
     +-- scoped contract dispatch
@@ -74,6 +81,7 @@ application.
 | Dapper SQL, transaction, paging, audit, and row-version behavior | Sample application tests | Same contract scenarios pass in the default SQL profile and alternate in-memory profile |
 | HTTP-to-Rebus application workflow | Sample application tests | Direct command publishes and the eventual state is observed |
 | Application authorization decorator and user context | Sample application tests | Claims principal changes the direct dispatch outcome |
+| Request/model composition and driver bindings | Sample application tests | Drivers keep the current model and compose operation envelopes |
 | URLs, status codes, ProblemDetails wire shape, serialization, OpenAPI | Not sample application tests | Covered only by framework hosting capability tests |
 
 ## 4. Non-goals
@@ -129,7 +137,9 @@ may proceed in parallel once their dependencies are complete.
 | 7 | APP-04 — Exercise asynchronous workflows through in-memory Rebus | APP-01, APP-02 | [ ] Planned | [APP-04](tasks/testing/APP-04-rebus-application-workflows.md) |
 | 8 | APP-05 — Run the application suite against SQL and in-memory stores | APP-03, APP-04 | [ ] Planned | [APP-05](tasks/testing/APP-05-sql-and-inmemory-stores.md) |
 | 9 | APP-06 — Remove obsolete application boundary tests and dependencies | TST-03, TST-04, TST-05, APP-03, APP-05 | [ ] Planned | [APP-06](tasks/testing/APP-06-remove-boundary-tests.md) |
-| 10 | DOC-01 — Publish the revised testing guidance | TST-03, TST-04, TST-05, APP-06 | [ ] Planned | [DOC-01](tasks/testing/DOC-01-testing-guidance.md) |
+| 10 | APP-07 — Adopt composed request and DTO contracts | APP-03, APP-06 | [ ] Planned | [APP-07](tasks/testing/APP-07-request-dto-composition.md) |
+| 11 | APP-08 — Replace Stores with context factories and domain services | APP-03, APP-04, APP-05, APP-07 | [ ] Planned | [APP-08](tasks/testing/APP-08-context-factory-architecture.md) |
+| 12 | DOC-01 — Publish the revised testing and application guidance | APP-07, APP-08 | [ ] Planned | [DOC-01](tasks/testing/DOC-01-testing-guidance.md) |
 
 ## 7. Completion definition
 
@@ -139,6 +149,10 @@ The redesign is complete only when:
   contracts, generated clients/wrappers, and no sample dependency.
 - The sample Reqnroll suite resolves only decorated application contract
   handler interfaces from a scenario-owned SimpleInjector composition.
+- All sample operation contracts use the model/request composition pattern and
+  test drivers compose payloads without exposing persistence contexts.
+- The sample has no Store abstraction; SQL and in-memory profiles implement the
+  same fine-grained context factory contract.
 - Validation, business violations, not-found, authorization, SQL/Dapper,
   auditing, concurrency/opaque ETags, paging, attachments, streaming,
   cancellation, and asynchronous Rebus effects are covered.

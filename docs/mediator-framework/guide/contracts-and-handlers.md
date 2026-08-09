@@ -6,6 +6,10 @@ dispatch, and serialize.
 
 ## Choose the contract shape
 
+For model and operation naming, follow
+[Request and DTO best practices](request-and-dto-best-practices.md). Keep
+versioned `Input`/`Output` models separate from composed request envelopes.
+
 | Need | Contract | Handler |
 | --- | --- | --- |
 | Read with a value | `IQuery<T>` | `IQueryHandler<TQuery, T>` |

@@ -280,6 +280,55 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 - **Messaging**: Rebus for asynchronous message processing
 - **Outbox Pattern**: Ensures reliable message delivery
 
+### Request and DTO composition
+
+Use static classes to namespace versioned models and operation contracts. Keep
+the model separate from the request, query, or command that carries it:
+
+```csharp
+public static class Book
+{
+    public static class V1
+    {
+        public record Input;
+        public record Create : Input;
+        public record Output : Input;
+    }
+}
+
+public static class Book_CreateRequest
+{
+    public record V1([property: HttpBody] Book.V1.Create Data)
+        : IRequest<V1, Book.V1.Output>;
+}
+```
+
+**DO:**
+
+- Put reusable `Input`, `Create`, `Update`, and `Output` models under a
+  versioned static model namespace.
+- Compose model payloads into operation envelopes.
+- Keep route and query values on the operation envelope.
+- Inject a context factory into handlers and compose reads, validation, writes,
+  locks, external calls, and commit in the handler's transaction lifecycle.
+- Put reusable business rules and side-effects in singleton domain services.
+- Put calls to systems not owned by the service behind mockable external
+  adapters, with a test binding driver.
+
+**DON'T:**
+
+- Duplicate the same model fields across every request and response.
+- Put transport types in application contracts or handlers.
+- Add a `Store` abstraction whose methods each open and commit a transaction.
+- Hide transaction, lock, idempotency, or external-call decisions inside a
+  Store. The Store pattern is explicitly rejected.
+- Treat an API persistence context, SQL, bus, or blob storage as an external
+  adapter. Those belong to the service's context/DAL.
+
+Handlers own transaction lifecycles. Contexts/DALs expose fine-grained,
+composable ORM operations. Domain services own reusable business behavior;
+external adapters own only systems outside the current service.
+
 ## Common Code Patterns
 
 ### NLog Configuration
