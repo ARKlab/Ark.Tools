@@ -40,6 +40,7 @@ public class ReferenceEndpointBenchmarks
 {
     private const int RequestsPerBenchmark = 10;
     private static readonly TimeSpan RebusIdleTimeout = TimeSpan.FromMinutes(15);
+    private static readonly ManualResetEventSlim IterationCleanupDelay = new();
     private const string SqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
 
     private readonly AuthTestContext _auth = new();
@@ -165,7 +166,7 @@ public class ReferenceEndpointBenchmarks
         var consecutiveIdleChecks = 0;
         while (timeout.Elapsed < RebusIdleTimeout)
         {
-            Task.Delay(TimeSpan.FromMilliseconds(100)).GetAwaiter().GetResult();
+            IterationCleanupDelay.Wait(TimeSpan.FromMilliseconds(100));
             if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
@@ -209,7 +210,10 @@ public class ReferenceEndpointBenchmarks
                 return;
             default:
                 throw new InvalidOperationException(
-                    $"Unsupported {SqlClientSwitchEnvironmentVariable} value. Use baseline, make-read-async-blocking, or experimental-async.");
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Unsupported {0} value. Use baseline, make-read-async-blocking, or experimental-async.",
+                        SqlClientSwitchEnvironmentVariable));
         }
     }
 

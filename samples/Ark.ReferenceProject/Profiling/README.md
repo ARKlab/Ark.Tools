@@ -231,6 +231,25 @@ both continuation switches and targets broader async read overhead. A switch
 is an improvement only when the relevant `CommitAsync` CPU samples decrease
 without moving equivalent CPU work into another application-owned frame.
 
+### Observed PostBook result
+
+The three separate `PostBook` captures were analyzed with `filtrace callers`
+for `AbstractSqlAsyncContext`, using the `DbTransaction.CommitAsync` callee.
+These are sampled-thread CPU durations from the complete capture; the
+BenchmarkDotNet workload root contains too few server continuation samples for
+this asynchronous in-process HTTP workload.
+
+| Configuration | `DbTransaction.CommitAsync` samples | Share of complete capture |
+| --- | ---: | ---: |
+| baseline | 199 ms | 0.095% |
+| `make-read-async-blocking` | 220 ms | 0.111% |
+| `experimental-async` | 205 ms | 0.118% |
+
+Neither switch reduced `CommitAsync` CPU samples in this benchmark. The
+blocking switch was higher than baseline, while the experimental continuation
+path was effectively unchanged within sampling noise and slightly higher.
+These results do not justify enabling either switch for this workload.
+
 ## Demystifier configuration
 
 `DemystifiedExceptionLayoutRenderer` remains available for explicit NLog
