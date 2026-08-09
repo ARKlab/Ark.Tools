@@ -484,6 +484,7 @@ namespace Ark.MediatorFramework.Generators
                 etagProperties.Length == 0 ? null : etagProperties[0].Name,
                 responseETagProperties.Length == 0 ? null : responseETagProperties[0].Name,
                 type.IsRecord,
+                ConstructorParameters(type, properties),
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
                     .Select(property => property.Name)
                     .ToImmutableArray(),
@@ -508,6 +509,22 @@ namespace Ark.MediatorFramework.Generators
             INamedTypeSymbol? attributeType)
             => property.GetAttributes().Any(attribute =>
                 attributeType is not null && SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeType));
+
+        private static ImmutableArray<string> ConstructorParameters(
+            INamedTypeSymbol type,
+            ImmutableArray<PropertyModel> properties)
+        {
+            var propertyNames = properties.Select(property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var constructor = type.InstanceConstructors
+                .Where(constructor => constructor.DeclaredAccessibility == Accessibility.Public)
+                .Where(constructor => constructor.Parameters.Length > 0)
+                .Where(constructor => constructor.Parameters.All(parameter => propertyNames.Contains(parameter.Name)))
+                .OrderByDescending(constructor => constructor.Parameters.Length)
+                .FirstOrDefault();
+            return constructor is null
+                ? ImmutableArray<string>.Empty
+                : constructor.Parameters.Select(parameter => parameter.Name).ToImmutableArray();
+        }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
         {
@@ -771,7 +788,7 @@ namespace Ark.MediatorFramework.Generators
                                         .Select(property => property + " = default")));
                                 sb.AppendLine(e.BodyProperty is null
                                     ? "                var request = body with { " + assignments + " };"
-                                    : "                var request = new " + e.TypeFullName + " { " + assignments + " };");
+                                    : "                var request = " + ConstructEnvelope(e, assignments) + ";");
                             }
                             else
                             {
@@ -834,9 +851,9 @@ namespace Ark.MediatorFramework.Generators
                             if (bodyVerb)
                                 sb.AppendLine(e.BodyProperty is null
                                     ? "                var request = body with { " + assignments + " };"
-                                    : "                var request = new " + e.TypeFullName + " { " + assignments + " };");
+                                    : "                var request = " + ConstructEnvelope(e, assignments) + ";");
                             else
-                                sb.AppendLine("                var request = new " + e.TypeFullName + " { " + assignments + " };");
+                                sb.AppendLine("                var request = " + ConstructEnvelope(e, assignments) + ";");
                         }
                         else if (e.IsRecord && e.ServerSetProperties.Length > 0)
                         {
@@ -1317,6 +1334,28 @@ namespace Ark.MediatorFramework.Generators
         private static string Literal(string value)
             => SyntaxFactory.Literal(value).ToFullString();
 
+        private static string ConstructEnvelope(EndpointModel endpoint, string assignments)
+        {
+            if (endpoint.ConstructorParameters.IsDefaultOrEmpty)
+                return "new " + endpoint.TypeFullName + " { " + assignments + " }";
+
+            var values = assignments
+                .Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(assignment =>
+                {
+                    var separator = assignment.IndexOf(" = ", StringComparison.Ordinal);
+                    return separator < 0
+                        ? (Name: string.Empty, Value: string.Empty)
+                        : (Name: assignment[..separator], Value: assignment[(separator + 3)..]);
+                })
+                .Where(assignment => assignment.Name.Length > 0)
+                .ToDictionary(assignment => assignment.Name, assignment => assignment.Value, StringComparer.OrdinalIgnoreCase);
+            return "new " + endpoint.TypeFullName + "("
+                + string.Join(", ", endpoint.ConstructorParameters.Select(parameter =>
+                    values.TryGetValue(parameter, out var value) ? value : "default!"))
+                + ")";
+        }
+
         private enum HandlerKind
         {
             None = 0,
@@ -1357,6 +1396,7 @@ namespace Ark.MediatorFramework.Generators
                 string? etagProperty,
                 string? responseETagProperty,
                 bool isRecord,
+                ImmutableArray<string> constructorParameters,
                 ImmutableArray<string> invalidServerSetProperties,
                 ImmutableArray<string> suspiciousProperties,
                 int attachmentCount,
@@ -1393,6 +1433,7 @@ namespace Ark.MediatorFramework.Generators
                 ETagProperty = etagProperty;
                 ResponseETagProperty = responseETagProperty;
                 IsRecord = isRecord;
+                ConstructorParameters = constructorParameters;
                 ServerSetProperties = properties
                     .Where(property => property.IsServerSet && property.HasPublicSetter)
                     .Select(property => property.Name)
@@ -1428,6 +1469,7 @@ namespace Ark.MediatorFramework.Generators
                 BodyProperty = null;
                 ETagProperty = null;
                 ResponseETagProperty = null;
+                ConstructorParameters = ImmutableArray<string>.Empty;
                 ServerSetProperties = ImmutableArray<string>.Empty;
                 InvalidServerSetProperties = ImmutableArray<string>.Empty;
                 SuspiciousProperties = ImmutableArray<string>.Empty;
@@ -1469,6 +1511,7 @@ namespace Ark.MediatorFramework.Generators
             public string? ETagProperty { get; }
             public string? ResponseETagProperty { get; }
             public bool IsRecord { get; }
+            public ImmutableArray<string> ConstructorParameters { get; }
             public ImmutableArray<string> ServerSetProperties { get; }
             public ImmutableArray<string> InvalidServerSetProperties { get; }
             public ImmutableArray<string> SuspiciousProperties { get; }

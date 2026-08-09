@@ -238,7 +238,22 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_FILE_COUNT\", detail: \"The uploaded file count is invalid.\");");
         }
 
-        if (hasBody && !hasAttachment)
+        if (hasBody && !hasAttachment && endpoint.BodyProperty is null)
+        {
+            source.Append("        ").Append(endpoint.FullyQualifiedType).AppendLine("? _bodyNullable;");
+            source.AppendLine("        try");
+            source.AppendLine("        {");
+            source.Append("            _bodyNullable = await global::Microsoft.AspNetCore.Http.HttpRequestJsonExtensions.ReadFromJsonAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        }");
+            source.AppendLine("        catch (global::System.Text.Json.JsonException ex)");
+            source.AppendLine("        {");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: ex.Message);");
+            source.AppendLine("        }");
+            source.AppendLine("        if (_bodyNullable is null)");
+            source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
+            source.AppendLine("        var body = _bodyNullable;");
+        }
+        else if (hasBody && !hasAttachment)
         {
             source.Append("        ").Append(endpoint.BodyType).AppendLine("? _bodyNullable;");
             source.AppendLine("        try");
@@ -251,22 +266,18 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("        }");
             source.AppendLine("        if (_bodyNullable is null)");
             source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
-            source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).AppendLine("();");
-            if (endpoint.BodyProperty is not null)
-                EmitPropertyAssignment(source, endpoint, "        ", endpoint.BodyProperty, "_bodyNullable");
-            else
-                source.AppendLine("        body = _bodyNullable;");
+            source.Append("        var body = ").Append(ConstructEnvelope(endpoint, endpoint.BodyProperty!, "_bodyNullable")).AppendLine(";");
         }
         else if (!hasAttachment)
         {
-            source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).AppendLine("();");
+            source.Append("        var body = ").Append(ConstructEnvelope(endpoint, null, null)).AppendLine(";");
         }
         else
         {
-            source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).Append(" { ")
-                .Append(attachment.Name).Append(" = ")
-                .Append(attachment.IsAttachmentCollection ? "_attachments" : "_attachments[0]")
-                .AppendLine(" };");
+            source.Append("        var body = ").Append(ConstructEnvelope(
+                endpoint,
+                attachment.Name,
+                attachment.IsAttachmentCollection ? "_attachments" : "_attachments[0]")).AppendLine(";");
         }
 
         // Route value binding (per-property, no runtime reflection)
@@ -375,6 +386,23 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append(indent).Append("body = body with { ").Append(propertyName).Append(" = ").Append(value).AppendLine(" };");
         else
             source.Append(indent).Append("body.").Append(propertyName).Append(" = ").Append(value).AppendLine(";");
+    }
+
+    private static string ConstructEnvelope(Endpoint endpoint, string? assignedProperty, string? assignedValue)
+    {
+        if (endpoint.ConstructorParameters.IsDefaultOrEmpty)
+        {
+            return assignedProperty is null
+                ? "new " + endpoint.FullyQualifiedType + "()"
+                : "new " + endpoint.FullyQualifiedType + " { " + assignedProperty + " = " + assignedValue + " }";
+        }
+
+        return "new " + endpoint.FullyQualifiedType + "("
+            + string.Join(", ", endpoint.ConstructorParameters.Select(parameter =>
+                string.Equals(parameter, assignedProperty, StringComparison.OrdinalIgnoreCase)
+                    ? assignedValue
+                    : "default!"))
+            + ")";
     }
 
     private static void EmitHealthCheckFunction(StringBuilder source)
@@ -552,7 +580,24 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             allowedContentTypes,
             responseSymbol is INamedTypeSymbol responseNamed
                 && responseNamed.OriginalDefinition.ToDisplayString() == AsyncEnumerable,
-            type.IsRecord);
+            type.IsRecord,
+            ConstructorParameters(type, properties));
+    }
+
+    private static ImmutableArray<string> ConstructorParameters(
+        INamedTypeSymbol type,
+        ImmutableArray<PropertyInfo> properties)
+    {
+        var propertyNames = properties.Select(property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var constructor = type.InstanceConstructors
+            .Where(candidate => candidate.DeclaredAccessibility == Accessibility.Public
+                && candidate.Parameters.Length > 0
+                && candidate.Parameters.All(parameter => propertyNames.Contains(parameter.Name)))
+            .OrderByDescending(candidate => candidate.Parameters.Length)
+            .FirstOrDefault();
+        return constructor is null
+            ? ImmutableArray<string>.Empty
+            : constructor.Parameters.Select(parameter => parameter.Name).ToImmutableArray();
     }
 
     private static bool IsSelected(
@@ -699,7 +744,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         int MaxFileCount,
         ImmutableArray<string> AllowedContentTypes,
         bool IsStreaming,
-        bool IsRecord);
+        bool IsRecord,
+        ImmutableArray<string> ConstructorParameters);
 
     private enum HandlerKind
     {

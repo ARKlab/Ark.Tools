@@ -86,7 +86,10 @@ CONTRACT GreetingResponseV2.Message : string
 CONTRACT GreetingResponseV2.MessageLength : int
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
+CONTRACT PagedResult.Data : IEnumerable<AuditRecord>
 CONTRACT PagedResult.IsCountPartial : bool
+CONTRACT PagedResult.Limit : int
+CONTRACT PagedResult.Skip : int
 CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
 CONTRACT ProcessBookPrintProcessRequest.Id : Guid
 CONTRACT RefreshGreetingCommand -> RefreshGreetingCommand [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings/refresh] [version=1+] [grpc=RefreshGreeting] [grpc-version=1+]
