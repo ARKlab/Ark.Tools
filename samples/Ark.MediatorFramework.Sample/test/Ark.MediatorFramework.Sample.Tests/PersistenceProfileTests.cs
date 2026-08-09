@@ -4,6 +4,9 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
+using Ark.Tools.Core;
+using Ark.Tools.Outbox;
+
 using AwesomeAssertions;
 
 namespace Ark.MediatorFramework.Sample.Tests;
@@ -40,7 +43,7 @@ public sealed class PersistenceProfileTests
             new UpdateGreetingMessageRequest
             {
                 Id = first.Id,
-                Message = "Updated persistence greeting",
+                Message = "Updated greeting",
                 ETag = first.ETag,
             }).ConfigureAwait(false);
         updated.ETag.Should().StartWith("0x");
@@ -70,19 +73,28 @@ public sealed class PersistenceProfileTests
         audits.Data.Should().OnlyContain(record => record.UserId == "persistence-user");
     }
 
-    /// <summary>Verifies that both profiles expose the committed application outbox.</summary>
+    /// <summary>Verifies that both profiles commit application outbox messages transactionally.</summary>
     [TestMethod]
     [TestCategory("persistence")]
-    public async Task ComposedGreetingUsesTheProfileOutbox()
+    public async Task ProfileOutboxCommitsMessagesTransactionally()
     {
         await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
         await using var context = new ApplicationTestContext();
-        context.StartOutboundBus();
+        await using var dataContext = await context.CreateDataContextAsync().ConfigureAwait(false);
+        await dataContext.OutboxContext.SendAsync(
+            [
+                new OutboxMessage
+                {
+                    Headers = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        ["type"] = nameof(CompleteGreetingCompositionRequest),
+                    },
+                    Body = [1, 2, 3],
+                },
+            ]).ConfigureAwait(false);
 
-        var composition = await context.DispatchRequestAsync<ComposeGreetingRequest, ComposeGreetingResponse>(
-            new ComposeGreetingRequest { Name = "Outbox greeting" }).ConfigureAwait(false);
-
-        composition.Status.Should().Be("queued");
+        (await context.GetOutboxCountAsync().ConfigureAwait(false)).Should().Be(0);
+        await dataContext.CommitAsync().ConfigureAwait(false);
         (await context.GetOutboxCountAsync().ConfigureAwait(false)).Should().Be(1);
 
         await context.ClearOutboxAsync().ConfigureAwait(false);

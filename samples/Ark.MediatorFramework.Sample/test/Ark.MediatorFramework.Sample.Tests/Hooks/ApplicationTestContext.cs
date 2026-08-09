@@ -282,6 +282,13 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         return count;
     }
 
+    internal async Task<ISampleDataContext> CreateDataContextAsync(CancellationToken ctk = default)
+    {
+        Verify();
+        return await _container.GetInstance<ISampleDataContextFactory>()
+            .CreateAsync(ctk).ConfigureAwait(false);
+    }
+
     /// <summary>Clears all pending outbox messages during scenario cleanup.</summary>
     /// <param name="ctk">The cancellation token.</param>
     public async Task ClearOutboxAsync(CancellationToken ctk = default)
