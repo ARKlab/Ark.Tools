@@ -210,7 +210,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
 
     private sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error)
     {
-        public static RebusWorkCounts Empty => new(0, 0, 0, 0, 0);
+        public static readonly RebusWorkCounts Empty = new(0, 0, 0, 0, 0);
     }
 
     private sealed class FailedMessageRecorder
