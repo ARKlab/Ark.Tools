@@ -31,7 +31,6 @@ public sealed class AuthorizationTests
     public async Task MissingGreetingWriteScopeThrowsAuthorizationException()
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
-        context.SetAuthenticatedUser("unauthorized-user");
         context.SetPrincipal(new System.Security.Claims.ClaimsPrincipal(
             new System.Security.Claims.ClaimsIdentity(
                 [new System.Security.Claims.Claim(
