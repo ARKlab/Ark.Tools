@@ -158,10 +158,13 @@ public static class ApplicationComposition
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
             container.RegisterSingleton<SampleDataContextFactory>();
             container.RegisterSingleton<IOutboxAsyncContextFactory, SampleDataContextFactory>();
+            container.RegisterSingleton<ISampleDataContextFactory, SampleDataContextFactory>();
             container.RegisterSingleton<IGreetingStore, SqlGreetingStore>();
         }
         else
+        {
             container.RegisterSingleton<IGreetingStore, InMemoryGreetingStore>();
+        }
 
         if (bookStore is not null)
             container.RegisterInstance(bookStore);
@@ -169,6 +172,8 @@ public static class ApplicationComposition
             container.RegisterSingleton<IBookStore, SqlBookStore>();
         else
             container.RegisterSingleton<IBookStore, InMemoryBookStore>();
+        if (!useSqlStore)
+            container.RegisterSingleton<ISampleDataContextFactory, InMemorySampleDataContextFactory>();
         container.RegisterSingleton<DocumentStore>();
         if (printCompletedNotificationService is not null)
             container.RegisterInstance(printCompletedNotificationService);

@@ -16,6 +16,56 @@ using System.Data.Common;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
+/// <summary>Composes fine-grained greeting and audit operations in one application transaction.</summary>
+public interface ISampleDataContext : IAsyncDisposable
+{
+    /// <summary>Saves a greeting.</summary>
+    Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
+
+    /// <summary>Writes an audit entry.</summary>
+    Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default);
+
+    /// <summary>Reads a greeting.</summary>
+    Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default);
+
+    /// <summary>Reads all greetings.</summary>
+    Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default);
+
+    /// <summary>Updates a greeting using its expected ETag.</summary>
+    Task<GreetingResponse?> UpdateAsync(Guid id, string message, string eTag, Guid auditId, CancellationToken ctk = default);
+
+    /// <summary>Reads audit records.</summary>
+    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
+
+    /// <summary>Reads greetings.</summary>
+    Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default);
+
+    /// <summary>Commits the transaction.</summary>
+    Task CommitAsync(CancellationToken ctk = default);
+
+    /// <summary>Saves a book.</summary>
+    Task SaveBookAsync(BookResponse book, CancellationToken ctk = default);
+
+    /// <summary>Reads a book.</summary>
+    Task<BookResponse?> ReadBookAsync(Guid id, CancellationToken ctk = default);
+
+    /// <summary>Updates a book.</summary>
+    Task<bool> UpdateBookAsync(BookResponse book, CancellationToken ctk = default);
+
+    /// <summary>Deletes a book.</summary>
+    Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default);
+
+    /// <summary>Reads a page of books.</summary>
+    Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default);
+}
+
+/// <summary>Creates application contexts for handler-owned transactions.</summary>
+public interface ISampleDataContextFactory
+{
+    /// <summary>Creates a context.</summary>
+    Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default);
+}
+
 /// <summary>SQL configuration used by the mediator sample.</summary>
 public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools.Sql.ISqlContextConfig
 {
@@ -40,7 +90,7 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools
 }
 
 /// <summary>Transactional SQL context for greetings and Rebus outbox messages.</summary>
-public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>
+public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, ISampleDataContext
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContext"/> class.</summary>
     /// <param name="transaction">The transaction to use.</param>
@@ -480,7 +530,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 }
 
 /// <summary>Creates transactional sample SQL contexts.</summary>
-public sealed class SampleDataContextFactory : Ark.Tools.Sql.AbstractSqlAsyncContextFactory<SampleDataContext, SampleDataContext>, Ark.Tools.Outbox.IOutboxAsyncContextFactory
+public sealed class SampleDataContextFactory :
+    Ark.Tools.Sql.AbstractSqlAsyncContextFactory<SampleDataContext, SampleDataContext>,
+    Ark.Tools.Outbox.IOutboxAsyncContextFactory,
+    ISampleDataContextFactory
 {
     private readonly SampleDataContextConfig _config;
 
@@ -497,6 +550,11 @@ public sealed class SampleDataContextFactory : Ark.Tools.Sql.AbstractSqlAsyncCon
     protected override SampleDataContext CreateContext(DbTransaction transaction)
     {
         return new SampleDataContext(transaction, _config);
+    }
+
+    async Task<ISampleDataContext> ISampleDataContextFactory.CreateAsync(CancellationToken ctk)
+    {
+        return await CreateAsync(ctk).ConfigureAwait(false);
     }
 
     async Task<Ark.Tools.Outbox.IOutboxAsyncContext> Ark.Tools.Outbox.IOutboxAsyncContextFactory.CreateAsync(CancellationToken ctk)

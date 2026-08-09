@@ -16,14 +16,14 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// <summary>Creates books through the application contract.</summary>
 public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookResponse>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateBookHandler"/> class.</summary>
-    public CreateBookHandler(IBookStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    public CreateBookHandler(ISampleDataContextFactory factory, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
     }
@@ -33,7 +33,11 @@ public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookR
     {
         ArgumentNullException.ThrowIfNull(request);
         var book = CreateResponse(Guid.NewGuid(), request.Title, request.Author, request.Genre, request.ISBN);
-        return await _store.CreateAsync(book, CreateAudit(book.Id, nameof(CreateBookRequest)), ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(CreateAudit(book.Id, nameof(CreateBookRequest)), ctk).ConfigureAwait(false);
+        await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return book;
     }
 
     internal static BookResponse CreateResponse(
@@ -71,14 +75,14 @@ public sealed class CreateBookHandler : IRequestHandler<CreateBookRequest, BookR
 /// <summary>Updates books through the application contract.</summary>
 public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookResponse>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="UpdateBookHandler"/> class.</summary>
-    public UpdateBookHandler(IBookStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    public UpdateBookHandler(ISampleDataContextFactory factory, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
     }
@@ -91,7 +95,10 @@ public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookR
         {
             Description = $"Book updated: {request.Title} by {request.Author}",
         };
-        return await _store.UpdateAsync(book, new AuditEntry
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
+            throw new EntityNotFoundException($"Book '{book.Id}' was not found.");
+        await context.WriteAuditAsync(new AuditEntry
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
@@ -100,20 +107,22 @@ public sealed class UpdateBookHandler : IRequestHandler<UpdateBookRequest, BookR
             Operation = nameof(UpdateBookRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return book;
     }
 }
 
 /// <summary>Deletes books through the application contract.</summary>
 public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="DeleteBookHandler"/> class.</summary>
-    public DeleteBookHandler(IBookStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    public DeleteBookHandler(ISampleDataContextFactory factory, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
     }
@@ -122,7 +131,10 @@ public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
     public async Task<bool> ExecuteAsync(DeleteBookRequest request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await _store.DeleteAsync(request.Id, new AuditEntry
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (!await context.DeleteBookAsync(request.Id, ctk).ConfigureAwait(false))
+            throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
+        await context.WriteAuditAsync(new AuditEntry
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
@@ -131,6 +143,7 @@ public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
             Operation = nameof(DeleteBookRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return true;
     }
 }
@@ -298,37 +311,44 @@ public sealed class GetBookPrintProcessHandler :
 /// <summary>Reads books through the application contract.</summary>
 public sealed class GetBookHandler : IQueryHandler<GetBookQuery, BookResponse>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="GetBookHandler"/> class.</summary>
-    public GetBookHandler(IBookStore store)
+    public GetBookHandler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
     public async Task<BookResponse> ExecuteAsync(GetBookQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await _store.GetAsync(query.Id, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var book = await context.ReadBookAsync(query.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book '{query.Id}' was not found.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return book;
     }
 }
 
 /// <summary>Searches books through the application contract.</summary>
 public sealed class SearchBooksHandler : IQueryHandler<SearchBooksQuery, BookPage>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="SearchBooksHandler"/> class.</summary>
-    public SearchBooksHandler(IBookStore store)
+    public SearchBooksHandler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
     public async Task<BookPage> ExecuteAsync(SearchBooksQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await _store.SearchAsync(query, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var result = await context.ReadBooksAsync(query, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return result;
     }
 }

@@ -107,8 +107,8 @@ CONTRACT UpdateGreetingMessageRequest.Id : Guid
 CONTRACT UpdateGreetingMessageRequest.Message : string default=string.Empty
 CONTRACT UpdateGreetingRequest -> EnvelopeBindingResponse [group=Ark] [http=POST /api/v{version}/greetings/{id}/envelope] [version=1+]
 CONTRACT UpdateGreetingRequest.Audit : string default=string.Empty
+CONTRACT UpdateGreetingRequest.Body.Message : string default=string.Empty
 CONTRACT UpdateGreetingRequest.Id : Guid
-CONTRACT UpdateGreetingRequest.Message : string default=string.Empty
 CONTRACT UploadBatchResponse
 CONTRACT UploadBatchResponse.Id : Guid
 CONTRACT UploadBatchResponse.Names : IReadOnlyList<string>

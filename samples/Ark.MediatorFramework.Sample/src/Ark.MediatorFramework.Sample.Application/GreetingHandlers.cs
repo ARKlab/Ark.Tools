@@ -31,14 +31,14 @@ public sealed class RefreshGreetingHandler : ICommandHandler<RefreshGreetingComm
 /// <summary>Pure handler for <see cref="CreateGreetingRequest"/> — no transport types.</summary>
 public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingRequest, GreetingResponse>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateGreetingHandler"/> class.</summary>
-    public CreateGreetingHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    public CreateGreetingHandler(ISampleDataContextFactory factory, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
     }
@@ -48,7 +48,8 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
     {
         ArgumentNullException.ThrowIfNull(Request);
 
-        if ((await _store.AllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if ((await context.ReadAllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {Request.Name}!", StringComparison.Ordinal)))
             throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(Request.Name));
 
         var auditId = Guid.NewGuid();
@@ -64,7 +65,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
-        return await _store.SaveAndPublishAsync(response, new AuditEntry
+        await context.WriteAuditAsync(new AuditEntry
         {
             Id = auditId,
             UserId = _user.GetUserId() ?? "anonymous",
@@ -73,6 +74,11 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
             Operation = nameof(CreateGreetingRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
+        await context.SaveAsync(response, ctk).ConfigureAwait(false);
+        var persisted = await context.ReadAsync(response.Id, ctk).ConfigureAwait(false)
+            ?? throw new InvalidOperationException("The greeting was not persisted.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return persisted;
     }
 
 }
@@ -80,14 +86,14 @@ public sealed class CreateGreetingHandler : IRequestHandler<CreateGreetingReques
 /// <summary>Updates a greeting after validating its opaque concurrency token.</summary>
 public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetingMessageRequest, GreetingResponse>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="UpdateGreetingMessageHandler"/> class.</summary>
-    public UpdateGreetingMessageHandler(IGreetingStore store, IContextProvider<ClaimsPrincipal> user, IClock clock)
+    public UpdateGreetingMessageHandler(ISampleDataContextFactory factory, IContextProvider<ClaimsPrincipal> user, IClock clock)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
     }
@@ -96,7 +102,8 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetin
     public async Task<GreetingResponse> ExecuteAsync(UpdateGreetingMessageRequest request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return await _store.UpdateAsync(request.Id, request.Message, request.ETag, new AuditEntry
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var audit = new AuditEntry
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
@@ -104,7 +111,12 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<UpdateGreetin
             Identifier = request.Id.ToString("D"),
             Operation = nameof(UpdateGreetingMessageRequest),
             Timestamp = _clock.GetCurrentInstant(),
-        }, ctk).ConfigureAwait(false);
+        };
+        var updated = await context.UpdateAsync(request.Id, request.Message, request.ETag ?? string.Empty, audit.Id, ctk).ConfigureAwait(false)
+            ?? throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+        await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return updated;
     }
 }
 
@@ -146,19 +158,19 @@ public sealed class ComposeGreetingHandler : IRequestHandler<ComposeGreetingRequ
 /// <summary>Pure handler for <see cref="CompleteGreetingCompositionRequest"/> that completes the workflow.</summary>
 public sealed class CompleteGreetingCompositionHandler : IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
     private readonly GreetingCompositionRetryTracker _retryTracker;
 
     /// <summary>Initializes a new instance of the <see cref="CompleteGreetingCompositionHandler"/> class.</summary>
     public CompleteGreetingCompositionHandler(
-        IGreetingStore store,
+        ISampleDataContextFactory factory,
         IContextProvider<ClaimsPrincipal> user,
         IClock clock,
         GreetingCompositionRetryTracker retryTracker)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
         _retryTracker = retryTracker;
@@ -181,7 +193,8 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
-        await _store.SaveAsync(response, new AuditEntry
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(new AuditEntry
         {
             Id = auditId,
             UserId = _user.GetUserId() ?? "anonymous",
@@ -190,6 +203,8 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             Operation = nameof(CompleteGreetingCompositionRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
+        await context.SaveAsync(response, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return response;
     }
 
@@ -223,38 +238,44 @@ public sealed class GreetingCreatedHandler : ICommandHandler<GreetingCreatedNoti
 /// <summary>Handles paged reads of the persisted audit trail.</summary>
 public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="GetAuditsHandler"/> class.</summary>
-    public GetAuditsHandler(IGreetingStore store)
+    public GetAuditsHandler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
     public async Task<PagedResult<AuditRecord>> ExecuteAsync(GetAuditsQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await _store.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var result = await context.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return result;
     }
 }
 
 /// <summary>Handles paged reads of greetings.</summary>
 public sealed class SearchGreetingsHandler : IQueryHandler<SearchGreetingsQuery, GreetingPage>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="SearchGreetingsHandler"/> class.</summary>
-    public SearchGreetingsHandler(IGreetingStore store)
+    public SearchGreetingsHandler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
     public async Task<GreetingPage> ExecuteAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await _store.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var result = await context.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return result;
     }
 }
 
@@ -298,31 +319,35 @@ public sealed class GetGreetingsStreamHandler : IQueryHandler<GetGreetingsStream
 /// <summary>Pure handler for <see cref="GetGreetingQuery"/> — no transport types.</summary>
 public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, GreetingResponse>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="GetGreetingHandler"/> class.</summary>
-    public GetGreetingHandler(IGreetingStore store)
+    public GetGreetingHandler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
     public async Task<GreetingResponse> ExecuteAsync(GetGreetingQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await _store.GetAsync(query.Id, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var greeting = await context.ReadAsync(query.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Greeting '{query.Id}' was not found.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return greeting;
     }
 }
 
 /// <summary>Pure handler for <see cref="GetGreetingV2Query"/> — no transport types.</summary>
 public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, GreetingResponseV2>
 {
-    private readonly IGreetingStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="GetGreetingV2Handler"/> class.</summary>
-    public GetGreetingV2Handler(IGreetingStore store)
+    public GetGreetingV2Handler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
@@ -330,7 +355,10 @@ public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, Gre
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var greeting = await _store.GetAsync(query.Id, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var greeting = await context.ReadAsync(query.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Greeting '{query.Id}' was not found.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return new GreetingResponseV2
         {
             Id = greeting.Id,
@@ -352,7 +380,7 @@ public sealed class UpdateGreetingHandler : IRequestHandler<UpdateGreetingReques
         {
             Id = Request.Id,
             Audit = Request.Audit,
-            Message = Request.Message,
+            Message = Request.Body.Message,
         };
     }
 }
