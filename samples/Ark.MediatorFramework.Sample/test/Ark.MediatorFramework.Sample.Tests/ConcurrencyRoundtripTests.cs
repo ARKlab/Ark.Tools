@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.Tests.Fakes;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 using Ark.Tools.Core.EntityTag;
 

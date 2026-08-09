@@ -138,7 +138,7 @@ may proceed in parallel once their dependencies are complete.
 | 6 | APP-03 — Cover synchronous application behavior | APP-02 | [x] Complete | [APP-03](tasks/testing/APP-03-synchronous-application-behavior.md) |
 | 7 | APP-04 — Exercise asynchronous workflows through in-memory Rebus | APP-01, APP-02 | [x] Complete | [APP-04](tasks/testing/APP-04-rebus-application-workflows.md) |
 | 8 | APP-05 — Run the application suite against SQL and in-memory stores | APP-03, APP-04 | [x] Complete | [APP-05](tasks/testing/APP-05-sql-and-inmemory-stores.md) |
-| 9 | APP-06 — Remove obsolete application boundary tests and dependencies | TST-03, TST-04, TST-05, APP-03, APP-05 | [ ] Planned | [APP-06](tasks/testing/APP-06-remove-boundary-tests.md) |
+| 9 | APP-06 — Remove obsolete application boundary tests and dependencies | TST-03, TST-04, TST-05, APP-03, APP-05 | [x] Complete | [APP-06](tasks/testing/APP-06-remove-boundary-tests.md) |
 | 10 | APP-07 — Adopt composed request and DTO contracts | APP-03, APP-06 | [ ] Planned | [APP-07](tasks/testing/APP-07-request-dto-composition.md) |
 | 11 | APP-08 — Replace Stores with context factories and domain services | APP-03, APP-04, APP-05, APP-07 | [ ] Planned | [APP-08](tasks/testing/APP-08-context-factory-architecture.md) |
 | 12 | APP-09 — Keep transactional outbox parity in test profiles | APP-04, APP-05 | [ ] Planned | [APP-09](tasks/testing/APP-09-inmemory-outbox.md) |

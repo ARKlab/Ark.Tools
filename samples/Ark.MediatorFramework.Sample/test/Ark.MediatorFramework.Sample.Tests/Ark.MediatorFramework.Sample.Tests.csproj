@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- CompositionRootTests validates the sample host startup with TestServer. -->
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Microsoft.SqlServer.DacFx" />
     <PackageReference Include="Reqnroll.MsTest" />

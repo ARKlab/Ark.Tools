@@ -4,7 +4,6 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 using Ark.Tools.Core;
-using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
