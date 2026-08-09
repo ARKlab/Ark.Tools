@@ -75,8 +75,7 @@ public static class SampleComposition
             cfg.Transport(t =>
             {
                 t.UseDrainableInMemoryTransportAsOneWayClient(network);
-                if (useSqlStore)
-                    ApplicationComposition.ConfigureRebusOutbox(t, container, startProcessor: false);
+                ApplicationComposition.ConfigureRebusOutbox(t, container, startProcessor: false);
             });
             ApplicationComposition.ConfigureRebusCommon(cfg, container, SampleRebusEndpoints.ConfigureRouting);
         });

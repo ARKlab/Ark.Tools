@@ -27,6 +27,9 @@ separate document under [`testing/`](testing/):
 | APP-04 | [Exercise asynchronous workflows through in-memory Rebus](testing/APP-04-rebus-application-workflows.md) |
 | APP-05 | [Run the application suite against SQL and in-memory stores](testing/APP-05-sql-and-inmemory-stores.md) |
 | APP-06 | [Remove obsolete application boundary tests and dependencies](testing/APP-06-remove-boundary-tests.md) |
+| APP-07 | [Adopt composed request and DTO contracts](testing/APP-07-request-dto-composition.md) |
+| APP-08 | [Replace Stores with context factories and domain services](testing/APP-08-context-factory-architecture.md) |
+| APP-09 | [Keep transactional outbox parity in test profiles](testing/APP-09-inmemory-outbox.md) |
 | DOC-01 | [Publish the revised testing guidance](testing/DOC-01-testing-guidance.md) |
 
 ### Recommended testing-redesign execution order
@@ -39,7 +42,9 @@ separate document under [`testing/`](testing/):
 6. [ ] [APP-03](testing/APP-03-synchronous-application-behavior.md) · [ ] [APP-04](testing/APP-04-rebus-application-workflows.md)
 7. [ ] [APP-05](testing/APP-05-sql-and-inmemory-stores.md)
 8. [ ] [APP-06](testing/APP-06-remove-boundary-tests.md)
-9. [ ] [DOC-01](testing/DOC-01-testing-guidance.md)
+9. [ ] [APP-07](testing/APP-07-request-dto-composition.md) · [ ] [APP-08](testing/APP-08-context-factory-architecture.md)
+10. [ ] [APP-09](testing/APP-09-inmemory-outbox.md)
+11. [ ] [DOC-01](testing/DOC-01-testing-guidance.md)
 
 ## Conventions for every task PR
 

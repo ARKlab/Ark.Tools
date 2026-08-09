@@ -20,8 +20,8 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// <summary>Composes fine-grained greeting and audit operations in one application transaction.</summary>
 public interface ISampleDataContext : IAsyncDisposable
 {
-    /// <summary>Gets the transactional outbox context when the context is SQL-backed.</summary>
-    IOutboxContextCore? OutboxContext { get; }
+    /// <summary>Gets the transactional outbox context for the current data transaction.</summary>
+    IOutboxContextCore OutboxContext { get; }
 
     /// <summary>Saves a greeting.</summary>
     Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
@@ -106,7 +106,7 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools
 public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, ISampleDataContext
 {
     /// <inheritdoc />
-    public Ark.Tools.Outbox.IOutboxContextCore? OutboxContext => this;
+    public Ark.Tools.Outbox.IOutboxContextCore OutboxContext => this;
 
     /// <summary>Initializes a new instance of the <see cref="SampleDataContext"/> class.</summary>
     /// <param name="transaction">The transaction to use.</param>

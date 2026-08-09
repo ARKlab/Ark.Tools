@@ -191,18 +191,10 @@ public sealed class CreateBookPrintProcessHandler :
         if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
         await context.WriteAuditAsync(CreateAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
-        if (context.OutboxContext is { } outbox)
-        {
-            using var scope = _bus.Enlist(outbox);
-            await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
-            await scope.CompleteAsync().ConfigureAwait(false);
-            await context.CommitAsync(ctk).ConfigureAwait(false);
-        }
-        else
-        {
-            await context.CommitAsync(ctk).ConfigureAwait(false);
-            await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
-        }
+        using var scope = _bus.Enlist(context.OutboxContext);
+        await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
+        await scope.CompleteAsync().ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return process;
     }
 

@@ -19,9 +19,12 @@ for every implementation task.
    tables.
 4. Run the persistence-sensitive contract scenarios against both
    `InMemoryGreetingStore` and `SqlGreetingStore`: create/read/update,
-   paging/search, audits, opaque row-version ETags, transactions, and SQL
-   outbox effects.
-5. Keep Rebus in-memory in both the SQL default and in-memory store profiles.
+   paging/search, audits, opaque row-version ETags, transactions, and
+   transactional outbox effects.
+5. Keep Rebus in-memory and enable the same transactional outbox in both the
+   SQL default and in-memory store profiles. The in-memory profile must use the
+   composable `Ark.Tools.Outbox.InMemoryOutboxContextFactory`; it must not
+   bypass the outbox or send directly.
    If an application storage abstraction is added for Azure Blob, add a
    separate Azurite-tagged profile and run the same attachment contracts
    against it; otherwise document that the sample uses `DocumentStore` in
@@ -45,6 +48,8 @@ for every implementation task.
 - [x] The explicit in-memory profile passes without Docker or SQL Server.
 - [ ] Dapper query paths, transaction/outbox paths, audit persistence, paging,
   and row-version-to-opaque-ETag conversion have direct assertions.
+- [ ] The SQL and in-memory profiles expose the same outbox context contract and
+  handler enlistment path.
 - [ ] SQL cleanup is FK-safe and leaves no scenario data.
 - [x] Profile documentation never embeds credentials or tokens.
 

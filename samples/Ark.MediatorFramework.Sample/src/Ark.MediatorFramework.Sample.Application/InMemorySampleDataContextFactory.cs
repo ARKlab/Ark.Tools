@@ -12,23 +12,31 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     private readonly IGreetingStore _greetings;
     private readonly IAuditStore _audits;
     private readonly IBookStore _books;
+    private readonly IOutboxAsyncContextFactory _outboxFactory;
 
     /// <summary>Initializes a new instance of the <see cref="InMemorySampleDataContextFactory"/> class.</summary>
     /// <param name="greetings">The shared in-memory greeting state.</param>
     /// <param name="audits">The shared in-memory audit state.</param>
     /// <param name="books">The shared in-memory book state.</param>
-    public InMemorySampleDataContextFactory(IGreetingStore greetings, IAuditStore audits, IBookStore books)
+    /// <param name="outboxFactory">The shared in-memory outbox factory.</param>
+    public InMemorySampleDataContextFactory(
+        IGreetingStore greetings,
+        IAuditStore audits,
+        IBookStore books,
+        IOutboxAsyncContextFactory outboxFactory)
     {
         _greetings = greetings;
         _audits = audits;
         _books = books;
+        _outboxFactory = outboxFactory;
     }
 
     /// <inheritdoc />
     public async Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default)
     {
+        var outbox = await _outboxFactory.CreateAsync(ctk).ConfigureAwait(false);
         return await Task.FromResult<ISampleDataContext>(
-            new Context(_greetings, _audits, _books)).ConfigureAwait(false);
+            new Context(_greetings, _audits, _books, outbox)).ConfigureAwait(false);
     }
 
     private sealed class Context : ISampleDataContext
@@ -36,15 +44,21 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         private readonly IGreetingStore _greetings;
         private readonly IAuditStore _audits;
         private readonly IBookStore _books;
+        private readonly IOutboxAsyncContext _outbox;
 
-        public Context(IGreetingStore greetings, IAuditStore audits, IBookStore books)
+        public Context(
+            IGreetingStore greetings,
+            IAuditStore audits,
+            IBookStore books,
+            IOutboxAsyncContext outbox)
         {
             _greetings = greetings;
             _audits = audits;
             _books = books;
+            _outbox = outbox;
         }
 
-        public IOutboxContextCore? OutboxContext => null;
+        public IOutboxContextCore OutboxContext => _outbox;
 
         public Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
         {
@@ -93,9 +107,9 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return _greetings.ReadGreetingsAsync(query, ctk);
         }
 
-        public Task CommitAsync(CancellationToken ctk = default)
+        public async Task CommitAsync(CancellationToken ctk = default)
         {
-            return Task.CompletedTask;
+            await _outbox.CommitAsync(ctk).ConfigureAwait(false);
         }
 
         public Task SaveBookAsync(BookResponse book, CancellationToken ctk = default)
@@ -188,7 +202,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public ValueTask DisposeAsync()
         {
-            return ValueTask.CompletedTask;
+            return _outbox.DisposeAsync();
         }
     }
 }

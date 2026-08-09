@@ -309,25 +309,42 @@ public static class Book_CreateRequest
   versioned static model namespace.
 - Compose model payloads into operation envelopes.
 - Keep route and query values on the operation envelope.
-- Inject a context factory into handlers and compose reads, validation, writes,
-  locks, external calls, and commit in the handler's transaction lifecycle.
-- Put reusable business rules and side-effects in singleton domain services.
-- Put calls to systems not owned by the service behind mockable external
-  adapters, with a test binding driver.
 
 **DON'T:**
 
 - Duplicate the same model fields across every request and response.
 - Put transport types in application contracts or handlers.
+
+### Application architecture: handlers, contexts, services, and adapters
+
+Handlers own the transaction lifecycle. Inject a context factory and compose
+fine-grained reads, validation, writes, locks, idempotency checks, external
+calls, and commit in the handler. Contexts/DALs own ORM operations and expose
+composable methods; they do not decide when a transaction starts or commits.
+
+Singleton domain services own reusable business rules and side-effects. Use
+them from handlers and messages when the same domain action is needed by more
+than one entry point. External adapters own calls to systems outside the
+current service. Each adapter must have a mock/stub implementation and a
+binding driver for tests. SQL, the bus, blob storage, and other persistence
+owned by this service remain contexts/DALs, not external adapters.
+
+**DO:**
+
+- Compose the transaction in the handler and commit once the complete
+  read/verify/write workflow is ready.
+- Keep contexts/DALs fine-grained so handlers can choose locking or optimistic
+  concurrency for each workflow.
+- Put reusable domain behavior in singleton domain services.
+- Hide external systems behind mockable adapters and test binding drivers.
+
+**DON'T:**
+
 - Add a `Store` abstraction whose methods each open and commit a transaction.
 - Hide transaction, lock, idempotency, or external-call decisions inside a
   Store. The Store pattern is explicitly rejected.
-- Treat an API persistence context, SQL, bus, or blob storage as an external
-  adapter. Those belong to the service's context/DAL.
-
-Handlers own transaction lifecycles. Contexts/DALs expose fine-grained,
-composable ORM operations. Domain services own reusable business behavior;
-external adapters own only systems outside the current service.
+- Move business rules or side-effects into a context/DAL.
+- Treat service-owned SQL, bus, or blob storage as an external adapter.
 
 ## Common Code Patterns
 

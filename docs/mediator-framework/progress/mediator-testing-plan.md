@@ -28,7 +28,9 @@ handlers own transaction lifecycles, context factories expose fine-grained
 composable persistence operations, singleton domain services own reusable
 business behavior, and external adapters isolate systems outside the service.
 The Store pattern is explicitly rejected because it hides transaction,
-idempotency, and lock decisions inside one-operation methods.
+idempotency, and lock decisions inside one-operation methods. Rebus outbox
+composition is enabled in every sample profile; SQL and in-memory contexts
+must provide the same transactional outbox seam.
 
 ## 2. Target architecture
 
@@ -41,7 +43,7 @@ ApplicationTestContext
     +-- SimpleInjector container
     |      ApplicationComposition.Register(...)
     |      test user/clock/context adapters
-    |      outbound Rebus configuration
+    |      outbound Rebus configuration and outbox
     |
     +-- scoped contract dispatch
     |      IQueryHandler<TQuery,TResponse>
@@ -50,7 +52,7 @@ ApplicationTestContext
     |
     +-- optional RebusProcessorComposition
            scenario-owned InMemNetwork
-           generated wrappers, retry, scope, outbox
+           generated wrappers, retry, scope, always-enabled outbox
 
 tests/Ark.Tools.MediatorFramework.Hosting.Tests
     |
@@ -139,7 +141,8 @@ may proceed in parallel once their dependencies are complete.
 | 9 | APP-06 — Remove obsolete application boundary tests and dependencies | TST-03, TST-04, TST-05, APP-03, APP-05 | [ ] Planned | [APP-06](tasks/testing/APP-06-remove-boundary-tests.md) |
 | 10 | APP-07 — Adopt composed request and DTO contracts | APP-03, APP-06 | [ ] Planned | [APP-07](tasks/testing/APP-07-request-dto-composition.md) |
 | 11 | APP-08 — Replace Stores with context factories and domain services | APP-03, APP-04, APP-05, APP-07 | [ ] Planned | [APP-08](tasks/testing/APP-08-context-factory-architecture.md) |
-| 12 | DOC-01 — Publish the revised testing and application guidance | APP-07, APP-08 | [ ] Planned | [DOC-01](tasks/testing/DOC-01-testing-guidance.md) |
+| 12 | APP-09 — Keep transactional outbox parity in test profiles | APP-04, APP-05 | [ ] Planned | [APP-09](tasks/testing/APP-09-inmemory-outbox.md) |
+| 13 | DOC-01 — Publish the revised testing and application guidance | APP-07, APP-08, APP-09 | [ ] Planned | [DOC-01](tasks/testing/DOC-01-testing-guidance.md) |
 
 ## 7. Completion definition
 
@@ -158,7 +161,8 @@ The redesign is complete only when:
   cancellation, and asynchronous Rebus effects are covered.
 - Default tests use the local SQL implementation; the documented
   `ARK_SAMPLE_INMEMORY_TESTS=1` profile demonstrates the same persistence-
-  sensitive scenarios with in-memory stores.
+  sensitive scenarios with in-memory stores and the composable in-memory
+  outbox.
 - Background waits are bounded, diagnose stranded work, and clean up all
   resources.
 - Application tests contain none of the explicitly excluded transport

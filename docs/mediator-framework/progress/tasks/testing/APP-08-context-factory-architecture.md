@@ -9,10 +9,11 @@ for every implementation task.
 ## Implementation details
 
 1. Remove `Store` interfaces, implementations, and one-operation transaction
-   wrappers from the sample.
+   wrappers from the sample. Keep this concern separate from request/DTO
+   composition.
 2. Give handlers an application context factory and make each handler compose
    fine-grained context reads, validation, writes, locks, external calls, and
-   commit in one explicit lifecycle.
+   outbox enlistment, and commit in one explicit lifecycle.
 3. Keep SQL and in-memory implementations behind the same context factory
    contract; the in-memory profile must use an `InMemory...ContextFactory`.
 4. Extract reusable business rules and side-effects into singleton domain
@@ -25,6 +26,8 @@ for every implementation task.
 
 - [ ] Repository search finds no application `Store` abstraction.
 - [ ] Handlers visibly own transaction boundaries and lock/idempotency choices.
+- [ ] Handlers use the same always-enabled outbox enlistment path for SQL and
+  in-memory contexts.
 - [ ] SQL and in-memory context factories pass the same application scenarios.
 - [ ] Domain services are singleton and reusable by requests and messages.
 - [ ] External adapters are mockable and covered by binding drivers.

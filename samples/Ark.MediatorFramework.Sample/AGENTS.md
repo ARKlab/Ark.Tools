@@ -15,7 +15,9 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
   interleaved external calls, and commit/rollback.
 - Context factories and DAL contexts expose fine-grained, composable ORM
   operations. The in-memory profile must use an in-memory context factory with
-  the same context interface as SQL.
+  the same context interface as SQL, including the composable in-memory outbox.
+- Configure Rebus with the outbox in every profile. Handlers always enlist the
+  current context's outbox; do not branch on SQL versus in-memory storage.
 - Singleton domain services own reusable business logic and side-effects.
 - External adapters own calls to systems outside this service. Each adapter
   must have a mock/stub implementation and a test binding driver.

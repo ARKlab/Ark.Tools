@@ -14,6 +14,9 @@ for every implementation task.
    namespace with a versioned nested contract.
 3. Compose request bodies with `[HttpBody]` and keep route/query values on the
    operation envelope.
+   Update operations normally compose `Input` directly; do not duplicate the
+   route identifier in the update body. Server-owned identifiers and computed
+   values belong on `Output` with `[ServerSet]`.
 4. Extend Minimal API, gRPC, Azure Functions, and API-surface generators to
    discover inherited properties and composed body members consistently.
 5. Update binding drivers and Reqnroll tables so `Current` remains the model

@@ -173,7 +173,12 @@ public static class ApplicationComposition
         else
             container.RegisterSingleton<IBookStore, InMemoryBookStore>();
         if (!useSqlStore)
+        {
+            container.RegisterSingleton(() => new InMemoryOutboxContextFactory());
+            container.RegisterSingleton<IOutboxAsyncContextFactory>(
+                () => container.GetInstance<InMemoryOutboxContextFactory>());
             container.RegisterSingleton<ISampleDataContextFactory, InMemorySampleDataContextFactory>();
+        }
         container.RegisterSingleton<DocumentStore>();
         if (printCompletedNotificationService is not null)
             container.RegisterInstance(printCompletedNotificationService);

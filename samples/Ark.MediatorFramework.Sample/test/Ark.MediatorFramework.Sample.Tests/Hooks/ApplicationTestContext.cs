@@ -270,13 +270,10 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         await _container.GetInstance<IBus>().Send(message).ConfigureAwait(false);
     }
 
-    /// <summary>Gets the number of pending SQL outbox messages.</summary>
+    /// <summary>Gets the number of pending outbox messages.</summary>
     /// <param name="ctk">The cancellation token.</param>
     public async Task<int> GetOutboxCountAsync(CancellationToken ctk = default)
     {
-        if (!UsesSqlStore)
-            return 0;
-
         Verify();
         await using var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
             .CreateAsync(ctk).ConfigureAwait(false);
@@ -285,13 +282,10 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         return count;
     }
 
-    /// <summary>Clears all pending SQL outbox messages during scenario cleanup.</summary>
+    /// <summary>Clears all pending outbox messages during scenario cleanup.</summary>
     /// <param name="ctk">The cancellation token.</param>
     public async Task ClearOutboxAsync(CancellationToken ctk = default)
     {
-        if (!UsesSqlStore)
-            return;
-
         Verify();
         await using var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
             .CreateAsync(ctk).ConfigureAwait(false);
