@@ -154,19 +154,20 @@ public sealed class InMemoryBookStore : IBookStore
     }
 
     /// <inheritdoc />
-    public Task<bool> TryCreatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    public async Task<bool> TryCreatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(process);
+        await Task.CompletedTask.ConfigureAwait(false);
         lock (_sync)
         {
             if (_printProcesses.Values.Any(item => item.BookId == process.BookId
                 && (item.Status == BookPrintProcessStatus.Pending || item.Status == BookPrintProcessStatus.Running)))
-                return Task.FromResult(false);
+                return false;
             if (!_printProcesses.TryAdd(process.Id, process))
                 throw new InvalidOperationException($"Book print process '{process.Id}' already exists.");
         }
 
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <inheritdoc />

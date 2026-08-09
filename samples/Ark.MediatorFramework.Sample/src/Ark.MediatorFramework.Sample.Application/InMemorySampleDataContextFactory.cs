@@ -124,19 +124,19 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return _books.SearchAsync(query, ctk);
         }
 
-        public Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+        public async Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
         {
-            return _books.TryCreatePrintProcessAsync(process, ctk);
+            return await _books.TryCreatePrintProcessAsync(process, ctk).ConfigureAwait(false);
         }
 
-        public Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+        public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
         {
-            return ReadPrintProcessAsync(id, ctk);
+            return await ReadPrintProcessAsync(id, ctk).ConfigureAwait(false);
         }
 
-        public Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+        public async Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
         {
-            return UpdatePrintProcessAsync(process, ctk);
+            return await UpdatePrintProcessAsync(process, ctk).ConfigureAwait(false);
         }
 
         private async Task<BookPrintProcessResponse?> ReadPrintProcessAsync(Guid id, CancellationToken ctk)
