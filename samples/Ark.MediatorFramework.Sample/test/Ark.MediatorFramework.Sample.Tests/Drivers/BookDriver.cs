@@ -29,7 +29,7 @@ public sealed class BookDriver
     private Book.V1.Output? _current;
 
     /// <summary>Creates and activates a book.</summary>
-    /// <param name="request">The book creation request.</param>
+    /// <param name="input">The book creation fields.</param>
     /// <param name="ctk">The cancellation token.</param>
     public async Task CreateAsync(Book.V1.Create input, CancellationToken ctk = default)
     {
@@ -47,7 +47,7 @@ public sealed class BookDriver
     }
 
     /// <summary>Updates the active book.</summary>
-    /// <param name="request">The replacement book details.</param>
+    /// <param name="input">The replacement book details.</param>
     /// <param name="ctk">The cancellation token.</param>
     public async Task UpdateCurrentAsync(Book.V1.Input input, CancellationToken ctk = default)
     {
