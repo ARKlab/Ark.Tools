@@ -147,6 +147,20 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                 await WaitForInProcessMessagesAsync(cleanupCancellation.Token).ConfigureAwait(false);
             }
             while (drainer.StillDraining);
+
+            var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
+            if (remaining != RebusWorkCounts.Empty)
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Rebus cleanup left work behind. queue={0}, in-process={1}, deferred={2}, outbox={3}, error={4}.",
+                        remaining.InQueue,
+                        remaining.InProcess,
+                        remaining.Deferred,
+                        remaining.Outbox,
+                        remaining.Error));
+            }
         }
         catch (OperationCanceledException) when (cleanupCancellation.IsCancellationRequested)
         {
@@ -160,20 +174,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                     counts.Deferred,
                     counts.Outbox,
                     counts.Error));
-        }
-
-        var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
-        if (remaining != RebusWorkCounts.Empty)
-        {
-            throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Rebus cleanup left work behind. queue={0}, in-process={1}, deferred={2}, outbox={3}, error={4}.",
-                    remaining.InQueue,
-                    remaining.InProcess,
-                    remaining.Deferred,
-                    remaining.Outbox,
-                    remaining.Error));
         }
     }
 
