@@ -79,6 +79,7 @@ public class ReferenceEndpointBenchmarks
         /// </summary>
         public ReferenceBenchmarkConfig()
         {
+            Options |= ConfigOptions.DisableOptimizationsValidator;
             BuildTimeout = TimeSpan.FromMinutes(10);
             AddJob(Job.Default
                 .WithLaunchCount(1)
@@ -158,13 +159,13 @@ public class ReferenceEndpointBenchmarks
     /// Waits for Rebus to become idle after each benchmark iteration.
     /// </summary>
     [IterationCleanup]
-    public async Task WaitForRebusToBecomeIdle()
+    public void WaitForRebusToBecomeIdle()
     {
         var timeout = Stopwatch.StartNew();
         var consecutiveIdleChecks = 0;
         while (timeout.Elapsed < RebusIdleTimeout)
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
+            Task.Delay(TimeSpan.FromMilliseconds(100)).GetAwaiter().GetResult();
             if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
