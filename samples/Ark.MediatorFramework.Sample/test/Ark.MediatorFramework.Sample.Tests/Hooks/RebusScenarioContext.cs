@@ -162,6 +162,10 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                     counts.Outbox,
                     counts.Error));
         }
+        finally
+        {
+            GC.SuppressFinalize(this);
+        }
 
         var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
         if (remaining != RebusWorkCounts.Empty)
@@ -176,8 +180,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                     remaining.Outbox,
                     remaining.Error));
         }
-
-        GC.SuppressFinalize(this);
     }
 
     private FailedMessageRecorder FailedMessages =>
