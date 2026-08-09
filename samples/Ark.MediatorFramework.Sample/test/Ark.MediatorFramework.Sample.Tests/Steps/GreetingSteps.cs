@@ -23,7 +23,7 @@ namespace Ark.MediatorFramework.Sample.Tests.Steps;
 public sealed class GreetingSteps
 {
     private readonly SampleTestContext _sampleContext;
-    private GreetingResponse? _greeting;
+    private Greeting.V1.Output? _greeting;
     private GreetingResponse? _queriedGreeting;
     private GreetingResponseV2? _versionTwoGreeting;
     private PagedResult<AuditRecord>? _audits;
@@ -41,7 +41,7 @@ public sealed class GreetingSteps
     }
 
     /// <summary>Gets the active greeting in the current scenario.</summary>
-    public GreetingResponse? Current => _greeting;
+    public Greeting.V1.Output? Current => _greeting;
 
     /// <summary>Creates and activates a greeting from a table-defined request.</summary>
     /// <param name="table">The greeting request data.</param>
@@ -49,7 +49,7 @@ public sealed class GreetingSteps
     [When("I create a greeting with")]
     public async Task CreateGreeting(Table table)
     {
-        var request = table.CreateInstance<CreateGreetingRequest>();
+        var request = table.CreateInstance<Greeting.V1.Create>();
         await CreateGreetingAsync(request).ConfigureAwait(false);
     }
 
@@ -58,7 +58,7 @@ public sealed class GreetingSteps
     [Given("I create greetings with")]
     public async Task CreateGreetings(Table table)
     {
-        foreach (var request in table.CreateSet<CreateGreetingRequest>())
+        foreach (var request in table.CreateSet<Greeting.V1.Create>())
             await CreateGreetingAsync(request).ConfigureAwait(false);
     }
 
@@ -69,9 +69,10 @@ public sealed class GreetingSteps
         _greeting.Should().NotBeNull();
         _exception = await CaptureAsync(async () =>
         {
-            _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+            var queried = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
                 new GetGreetingQuery { Id = _greeting!.Id }).ConfigureAwait(false);
-            _greeting = _queriedGreeting;
+            _queriedGreeting = queried;
+            _greeting = ToOutput(queried);
             return _queriedGreeting;
         }).ConfigureAwait(false);
     }
@@ -83,12 +84,11 @@ public sealed class GreetingSteps
     {
         _greeting.Should().NotBeNull();
         _previousETag = _greeting!.ETag;
-        var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
-        {
-            Id = _greeting.Id,
-            ETag = _greeting.ETag,
-        };
-        _greeting = await Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)
+        var request = new Greeting_UpdateRequest.V1(
+            table.CreateInstance<Greeting.V1.Input>(),
+            _greeting.Id,
+            _greeting.ETag);
+        _greeting = await Context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(request)
             .ConfigureAwait(false);
     }
 
@@ -99,13 +99,12 @@ public sealed class GreetingSteps
     {
         _greeting.Should().NotBeNull();
         _previousETag.Should().NotBeNullOrWhiteSpace();
-        var request = table.CreateInstance<UpdateGreetingMessageRequest>() with
-        {
-            Id = _greeting!.Id,
-            ETag = _previousETag,
-        };
+        var request = new Greeting_UpdateRequest.V1(
+            table.CreateInstance<Greeting.V1.Input>(),
+            _greeting!.Id,
+            _previousETag);
         _exception = await CaptureAsync(() =>
-            Context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(request)).ConfigureAwait(false);
+            Context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(request)).ConfigureAwait(false);
     }
 
     /// <summary>Searches greetings using a table-defined query.</summary>
@@ -204,11 +203,8 @@ public sealed class GreetingSteps
         _greeting = null;
         _exception = await CaptureAsync(async () =>
         {
-            _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-                new CreateGreetingRequest
-                {
-                    Name = name,
-                }).ConfigureAwait(false);
+            _greeting = await Context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+                new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = name })).ConfigureAwait(false);
             return _greeting;
         }).ConfigureAwait(false);
     }
@@ -225,6 +221,7 @@ public sealed class GreetingSteps
                 {
                     Id = _greeting!.Id,
                 }).ConfigureAwait(false);
+            _greeting = ToOutput(_queriedGreeting);
             return _queriedGreeting;
         }).ConfigureAwait(false);
     }
@@ -321,7 +318,7 @@ public sealed class GreetingSteps
     {
         _exception.Should().BeOfType<ValidationException>();
         ((ValidationException)_exception!).Errors
-            .Should().Contain(error => error.PropertyName == nameof(CreateGreetingRequest.Name));
+            .Should().Contain(error => error.PropertyName == "Data.Name");
     }
 
     /// <summary>Asserts the evolved response field.</summary>
@@ -355,16 +352,32 @@ public sealed class GreetingSteps
         }
     }
 
-    private async Task CreateGreetingAsync(CreateGreetingRequest request)
+    private async Task CreateGreetingAsync(Greeting.V1.Create request)
     {
         _greeting = null;
         _exception = await CaptureAsync(async () =>
         {
-            _greeting = await Context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(request)
+            _greeting = await Context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+                    new Greeting_CreateRequest.V1(request))
                 .ConfigureAwait(false);
             return _greeting;
         }).ConfigureAwait(false);
     }
 
     private ApplicationTestContext Context => _sampleContext.Application;
+
+    private static Greeting.V1.Output ToOutput(GreetingResponse greeting)
+    {
+        return new Greeting.V1.Output
+        {
+            Id = greeting.Id,
+            Message = greeting.Message,
+            Date = greeting.Date,
+            DateTime = greeting.DateTime,
+            OffsetDateTime = greeting.OffsetDateTime,
+            Period = greeting.Period,
+            AuditId = greeting.AuditId,
+            ETag = greeting.ETag,
+        };
+    }
 }

@@ -48,14 +48,12 @@ public sealed class ConcurrencyRoundtripTests
     [TestMethod]
     public async Task DirectRoundtripRetriesTransientFailures()
     {
-        var audits = new InMemoryAuditStore();
         var faults = new ConcurrencyFaultInjector { PendingFailures = 2 };
-        var store = new InMemoryGreetingStore(audits);
-        var decoratedStore = new FaultInjectingGreetingStoreDecorator(store, faults);
+        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        var decoratedFactory = new FaultInjectingSampleDataContextFactory(factory, faults);
         await using var context = new ApplicationTestContext(
             useSqlStore: false,
-            greetingStore: decoratedStore,
-            auditStore: audits);
+            dataContextFactory: decoratedFactory);
 
         var created = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
             new CreateGreetingRequest { Name = "retry" }).ConfigureAwait(false);

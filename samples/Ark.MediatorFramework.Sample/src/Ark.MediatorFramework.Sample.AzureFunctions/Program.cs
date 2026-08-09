@@ -21,7 +21,7 @@ using NLog.Extensions.Logging;
     "/api/v{version}",
     ExcludedContracts = new[]
     {
-        typeof(CreateGreetingRequest),
+        typeof(Greeting_CreateRequest.V1),
         typeof(DescribeShapeRequest),
     })]
 

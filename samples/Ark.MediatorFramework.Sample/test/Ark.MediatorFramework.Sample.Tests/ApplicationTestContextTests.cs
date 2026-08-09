@@ -89,14 +89,12 @@ public sealed class ApplicationTestContextTests
     [TestMethod]
     public async Task OptimisticConcurrencyDecoratorRetriesTransientFailures()
     {
-        var audits = new InMemoryAuditStore();
         var faults = new ConcurrencyFaultInjector { PendingFailures = 2 };
-        var store = new InMemoryGreetingStore(audits);
-        var decoratedStore = new FaultInjectingGreetingStoreDecorator(store, faults);
+        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        var decoratedFactory = new FaultInjectingSampleDataContextFactory(factory, faults);
         await using var context = new ApplicationTestContext(
             useSqlStore: false,
-            greetingStore: decoratedStore,
-            auditStore: audits);
+            dataContextFactory: decoratedFactory);
 
         var greeting = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
             new CreateGreetingRequest { Name = "Retry me" }).ConfigureAwait(false);
@@ -116,9 +114,11 @@ public sealed class ApplicationTestContextTests
     [TestMethod]
     public async Task ConcurrentPrintRequestsCreateOneActiveProcess()
     {
-        var audits = new InMemoryAuditStore();
-        var store = new CoordinatedBookStore(new InMemoryBookStore(audits));
-        await using var context = new ApplicationTestContext(useSqlStore: false, bookStore: store, auditStore: audits);
+        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        var coordinatedFactory = new CoordinatedSampleDataContextFactory(factory);
+        await using var context = new ApplicationTestContext(
+            useSqlStore: false,
+            dataContextFactory: coordinatedFactory);
         context.SetAuthenticatedUser();
         context.StartOutboundBus();
         var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
@@ -195,81 +195,108 @@ public sealed class ApplicationTestContextTests
         }
     }
 
-    private sealed class CoordinatedBookStore : IBookStore
+    private sealed class CoordinatedSampleDataContextFactory : ISampleDataContextFactory
     {
-        private readonly IBookStore _inner;
-        private readonly TaskCompletionSource _bothRequestsArrived =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private int _requestCount;
+        private readonly ISampleDataContextFactory _inner;
+        private readonly Coordinator _coordinator = new();
 
-        internal CoordinatedBookStore(IBookStore inner)
+        internal CoordinatedSampleDataContextFactory(ISampleDataContextFactory inner)
         {
             _inner = inner;
         }
 
-        public async Task<Book.V1.Output> CreateAsync(
-            Book.V1.Output book,
-            AuditEntry? audit = null,
-            CancellationToken ctk = default)
+        public async Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default)
         {
-            return await _inner.CreateAsync(book, audit, ctk).ConfigureAwait(false);
+            var context = await _inner.CreateAsync(ctk).ConfigureAwait(false);
+            return new CoordinatedContext(context, _coordinator);
         }
 
-        public async Task<Book.V1.Output> GetAsync(Guid id, CancellationToken ctk = default)
+        async Task<Ark.Tools.Outbox.IOutboxAsyncContext> Ark.Tools.Outbox.IOutboxAsyncContextFactory.CreateAsync(
+            CancellationToken ctk)
         {
-            return await _inner.GetAsync(id, ctk).ConfigureAwait(false);
+            return await _inner.CreateAsync(ctk).ConfigureAwait(false);
         }
 
-        public async Task<Book.V1.Output> UpdateAsync(
-            Book.V1.Output book,
-            AuditEntry? audit = null,
-            CancellationToken ctk = default)
+        private sealed class CoordinatedContext : ISampleDataContext
         {
-            return await _inner.UpdateAsync(book, audit, ctk).ConfigureAwait(false);
+            private readonly ISampleDataContext _inner;
+            private readonly Coordinator _coordinator;
+
+            public CoordinatedContext(
+                ISampleDataContext inner,
+                Coordinator coordinator)
+            {
+                _inner = inner;
+                _coordinator = coordinator;
+            }
+
+            public Ark.Tools.Outbox.IOutboxContextCore OutboxContext => _inner.OutboxContext;
+
+            public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default) =>
+                await _inner.SaveAsync(greeting, ctk).ConfigureAwait(false);
+
+            public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default) =>
+                await _inner.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
+
+            public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default) =>
+                await _inner.ReadAsync(id, ctk).ConfigureAwait(false);
+
+            public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default) =>
+                await _inner.ReadAllAsync(ctk).ConfigureAwait(false);
+
+            public async Task<GreetingResponse?> UpdateAsync(Guid id, string message, string eTag, Guid auditId, CancellationToken ctk = default) =>
+                await _inner.UpdateAsync(id, message, eTag, auditId, ctk).ConfigureAwait(false);
+
+            public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default) =>
+                await _inner.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
+
+            public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default) =>
+                await _inner.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
+
+            public async Task CommitAsync(CancellationToken ctk = default) =>
+                await _inner.CommitAsync(ctk).ConfigureAwait(false);
+
+            public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default) =>
+                await _inner.SaveBookAsync(book, ctk).ConfigureAwait(false);
+
+            public async Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default) =>
+                await _inner.ReadBookAsync(id, ctk).ConfigureAwait(false);
+
+            public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default) =>
+                await _inner.UpdateBookAsync(book, ctk).ConfigureAwait(false);
+
+            public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default) =>
+                await _inner.DeleteBookAsync(id, ctk).ConfigureAwait(false);
+
+            public async Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default) =>
+                await _inner.ReadBooksAsync(query, ctk).ConfigureAwait(false);
+
+            public async Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+            {
+                if (Interlocked.Increment(ref _coordinator.RequestCount) == 2)
+                    _coordinator.BothRequestsArrived.TrySetResult();
+                await _coordinator.BothRequestsArrived.Task.WaitAsync(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
+                return await _inner.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
+            }
+
+            public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default) =>
+                await _inner.ReadBookPrintProcessAsync(id, ctk).ConfigureAwait(false);
+
+            public async Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default) =>
+                await _inner.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
+
+            public async Task CommitAsync(bool reuse, CancellationToken ctk = default) =>
+                await _inner.CommitAsync(reuse, ctk).ConfigureAwait(false);
+
+            public async ValueTask DisposeAsync() =>
+                await _inner.DisposeAsync().ConfigureAwait(false);
         }
 
-        public async Task DeleteAsync(Guid id, AuditEntry? audit = null, CancellationToken ctk = default)
+        private sealed class Coordinator
         {
-            await _inner.DeleteAsync(id, audit, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<Book.V1.Page> SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
-        {
-            return await _inner.SearchAsync(query, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<bool> TryCreateAndQueuePrintProcessAsync(
-            BookPrintProcessResponse process,
-            AuditEntry audit,
-            IBus bus,
-            CancellationToken ctk = default)
-        {
-            if (Interlocked.Increment(ref _requestCount) == 2)
-                _bothRequestsArrived.TrySetResult();
-            await _bothRequestsArrived.Task.WaitAsync(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
-            return await _inner.TryCreateAndQueuePrintProcessAsync(process, audit, bus, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<bool> TryCreatePrintProcessAsync(
-            BookPrintProcessResponse process,
-            CancellationToken ctk = default)
-        {
-            return await _inner.TryCreatePrintProcessAsync(process, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<BookPrintProcessResponse> GetPrintProcessAsync(
-            Guid id,
-            CancellationToken ctk = default)
-        {
-            return await _inner.GetPrintProcessAsync(id, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<BookPrintProcessResponse> UpdatePrintProcessAsync(
-            BookPrintProcessResponse process,
-            AuditEntry audit,
-            CancellationToken ctk = default)
-        {
-            return await _inner.UpdatePrintProcessAsync(process, audit, ctk).ConfigureAwait(false);
+            internal readonly TaskCompletionSource BothRequestsArrived =
+                new(TaskCreationOptions.RunContinuationsAsynchronously);
+            internal int RequestCount;
         }
     }
 }
