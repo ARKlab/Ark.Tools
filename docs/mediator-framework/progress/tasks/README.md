@@ -43,7 +43,7 @@ separate document under [`testing/`](testing/):
 7. [x] [APP-05](testing/APP-05-sql-and-inmemory-stores.md)
 8. [x] [APP-06](testing/APP-06-remove-boundary-tests.md)
 9. [ ] [APP-07](testing/APP-07-request-dto-composition.md) · [ ] [APP-08](testing/APP-08-context-factory-architecture.md)
-10. [ ] [APP-09](testing/APP-09-inmemory-outbox.md)
+10. [x] [APP-09](testing/APP-09-inmemory-outbox.md)
 11. [ ] [DOC-01](testing/DOC-01-testing-guidance.md)
 
 ## Conventions for every task PR
