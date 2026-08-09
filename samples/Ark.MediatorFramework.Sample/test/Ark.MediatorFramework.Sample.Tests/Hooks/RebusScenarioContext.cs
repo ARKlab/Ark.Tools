@@ -130,6 +130,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             return;
 
         _disposed = true;
+        GC.SuppressFinalize(this);
         using var drainer = DrainableInMemTransport.Drain();
         using var cleanupCancellation = new CancellationTokenSource(_idleTimeout);
         try
@@ -161,10 +162,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                     counts.Deferred,
                     counts.Outbox,
                     counts.Error));
-        }
-        finally
-        {
-            GC.SuppressFinalize(this);
         }
 
         var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
