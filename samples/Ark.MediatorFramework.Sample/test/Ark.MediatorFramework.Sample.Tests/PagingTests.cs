@@ -48,8 +48,8 @@ public sealed class PagingTests
 
     private static async Task CreateAsync(ApplicationTestContext context, string name)
     {
-        await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = name }).ConfigureAwait(false);
+        await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = name })).ConfigureAwait(false);
     }
 
     private static async Task<GreetingPage> SearchAsync(ApplicationTestContext context, int skip, int limit)

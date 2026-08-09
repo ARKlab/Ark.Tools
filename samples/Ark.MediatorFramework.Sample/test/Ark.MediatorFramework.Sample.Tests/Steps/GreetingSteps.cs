@@ -216,13 +216,14 @@ public sealed class GreetingSteps
         _greeting.Should().NotBeNull();
         _exception = await CaptureAsync(async () =>
         {
-            _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+            var queried = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
                 new GetGreetingQuery
                 {
                     Id = _greeting!.Id,
                 }).ConfigureAwait(false);
-            _greeting = ToOutput(_queriedGreeting);
-            return _queriedGreeting;
+            _queriedGreeting = queried;
+            _greeting = ToOutput(queried);
+            return queried;
         }).ConfigureAwait(false);
     }
 

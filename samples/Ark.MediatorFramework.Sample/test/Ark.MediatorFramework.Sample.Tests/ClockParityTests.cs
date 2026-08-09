@@ -20,8 +20,8 @@ public sealed class ClockParityTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("clock-user");
 
-        var greeting = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "clock" }).ConfigureAwait(false);
+        var greeting = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "clock" })).ConfigureAwait(false);
         var audits = await context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
             {
@@ -29,7 +29,7 @@ public sealed class ClockParityTests
                 Limit = 25,
             }).ConfigureAwait(false);
 
-        audits.Data.Single(audit => audit.Operation == nameof(CreateGreetingRequest))
+        audits.Data.Single(audit => audit.Operation == $"{typeof(Greeting_CreateRequest).Name}.{typeof(Greeting_CreateRequest.V1).Name}")
             .Timestamp.Should().Be(context.Clock.GetCurrentInstant());
     }
 }

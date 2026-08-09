@@ -25,11 +25,11 @@ public sealed class ApplicationTestContextTests
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
 
-        var response = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest
+        var response = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create
             {
                 Name = "Ada",
-            }).ConfigureAwait(false);
+            })).ConfigureAwait(false);
 
         response.Message.Should().Contain("Hello, Ada!");
         context.AuditCount.Should().Be(1);
@@ -40,11 +40,11 @@ public sealed class ApplicationTestContextTests
     public async Task InvalidRequestThrowsValidationException()
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
-        var action = () => context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest());
+        var action = () => context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create()));
 
         var exception = await action.Should().ThrowAsync<ValidationException>().ConfigureAwait(false);
-        exception.Which.Errors.Should().Contain(error => error.PropertyName == nameof(CreateGreetingRequest.Name));
+        exception.Which.Errors.Should().Contain(error => error.PropertyName == "Data.Name");
     }
 
     /// <summary>Uses a new scoped graph for each top-level dispatch.</summary>
@@ -96,15 +96,13 @@ public sealed class ApplicationTestContextTests
             useSqlStore: false,
             dataContextFactory: decoratedFactory);
 
-        var greeting = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "Retry me" }).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(
-            new UpdateGreetingMessageRequest
-            {
-                Id = greeting.Id,
-                Message = "Retried successfully",
-                ETag = greeting.ETag,
-            }).ConfigureAwait(false);
+        var greeting = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "Retry me" })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
+            new Greeting_UpdateRequest.V1(
+                new Greeting.V1.Input { Message = "Retried successfully" },
+                greeting.Id,
+                greeting.ETag)).ConfigureAwait(false);
 
         updated.Message.Should().Be("Retried successfully");
         faults.PendingFailures.Should().Be(0);
@@ -157,12 +155,13 @@ public sealed class ApplicationTestContextTests
             })).ConfigureAwait(false);
         var process = await context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(
             new CreateBookPrintProcessRequest { BookId = book.Id }).ConfigureAwait(false);
-        process = await context.BookStore.UpdatePrintProcessAsync(
-            process with
-            {
-                Progress = 0.5,
-                Status = BookPrintProcessStatus.Running,
-            },
+        var runningProcess = process with
+        {
+            Progress = 0.5,
+            Status = BookPrintProcessStatus.Running,
+        };
+        await context.UpdateBookPrintProcessAsync(
+            runningProcess,
             new AuditEntry
             {
                 Id = Guid.NewGuid(),

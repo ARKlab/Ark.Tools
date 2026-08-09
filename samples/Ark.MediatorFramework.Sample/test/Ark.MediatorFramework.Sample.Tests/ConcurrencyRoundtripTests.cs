@@ -21,24 +21,20 @@ public sealed class ConcurrencyRoundtripTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("concurrency-user");
 
-        var created = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "etag" }).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(
-            new UpdateGreetingMessageRequest
-            {
-                Id = created.Id,
-                Message = "updated once",
-                ETag = created.ETag,
-            }).ConfigureAwait(false);
+        var created = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "etag" })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
+            new Greeting_UpdateRequest.V1(
+                new Greeting.V1.Input { Message = "updated once" },
+                created.Id,
+                created.ETag)).ConfigureAwait(false);
 
         updated.ETag.Should().NotBe(created.ETag);
-        var stale = () => context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(
-            new UpdateGreetingMessageRequest
-            {
-                Id = created.Id,
-                Message = "stale",
-                ETag = created.ETag,
-            });
+        var stale = () => context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
+            new Greeting_UpdateRequest.V1(
+                new Greeting.V1.Input { Message = "stale" },
+                created.Id,
+                created.ETag));
 
         (await stale.Should().ThrowAsync<EntityTagMismatchException>().ConfigureAwait(false))
             .Which.Message.Should().Contain("ETag");
@@ -55,15 +51,13 @@ public sealed class ConcurrencyRoundtripTests
             useSqlStore: false,
             dataContextFactory: decoratedFactory);
 
-        var created = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "retry" }).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(
-            new UpdateGreetingMessageRequest
-            {
-                Id = created.Id,
-                Message = "retried",
-                ETag = created.ETag,
-            }).ConfigureAwait(false);
+        var created = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "retry" })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
+            new Greeting_UpdateRequest.V1(
+                new Greeting.V1.Input { Message = "retried" },
+                created.Id,
+                created.ETag)).ConfigureAwait(false);
 
         updated.Message.Should().Be("retried");
         faults.PendingFailures.Should().Be(0);

@@ -17,7 +17,7 @@ Feature: Greeting contracts
                 | Hello, Table hello! (by test-user) |
             And the current greeting audit is
                 | UserId    | Operation            | EntityType       |
-                | test-user | CreateGreetingRequest | GreetingResponse |
+                | test-user | Greeting_CreateRequest.V1 | GreetingResponse |
 
         Scenario: Update an active greeting
             Given I am an authenticated user
@@ -31,7 +31,7 @@ Feature: Greeting contracts
                 | Message               |
                 | Updated table greeting |
             And the current greeting has a refreshed opaque ETag
-            And the current greeting has a deterministic audit for "UpdateGreetingMessageRequest"
+            And the current greeting has a deterministic audit for "Greeting_UpdateRequest.V1"
             When I update the current greeting with a stale ETag and
                 | Message               |
                 | Rejected table update |

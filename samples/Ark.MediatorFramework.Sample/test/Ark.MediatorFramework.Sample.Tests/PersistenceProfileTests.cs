@@ -24,12 +24,12 @@ public sealed class PersistenceProfileTests
         await using var context = new ApplicationTestContext();
         context.SetAuthenticatedUser("profile-user");
 
-        var first = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "Persistence alpha" }).ConfigureAwait(false);
-        var second = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "Persistence beta" }).ConfigureAwait(false);
-        await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "Other greeting" }).ConfigureAwait(false);
+        var first = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "Persistence alpha" })).ConfigureAwait(false);
+        var second = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "Persistence beta" })).ConfigureAwait(false);
+        await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "Other greeting" })).ConfigureAwait(false);
 
         first.ETag.Should().StartWith("0x");
         first.ETag.Length.Should().Be(18);
@@ -39,13 +39,11 @@ public sealed class PersistenceProfileTests
         queried.Message.Should().Be(first.Message);
         queried.ETag.Should().Be(first.ETag);
 
-        var updated = await context.DispatchRequestAsync<UpdateGreetingMessageRequest, GreetingResponse>(
-            new UpdateGreetingMessageRequest
-            {
-                Id = first.Id,
-                Message = "Updated Persistence greeting",
-                ETag = first.ETag,
-            }).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
+            new Greeting_UpdateRequest.V1(
+                new Greeting.V1.Input { Message = "Updated Persistence greeting" },
+                first.Id,
+                first.ETag)).ConfigureAwait(false);
         updated.ETag.Should().StartWith("0x");
         updated.ETag.Length.Should().Be(18);
         updated.ETag.Should().NotBe(first.ETag);
@@ -68,8 +66,8 @@ public sealed class PersistenceProfileTests
                 Limit = 25,
             }).ConfigureAwait(false);
         audits.Count.Should().Be(2);
-        audits.Data.Should().Contain(record => record.Operation == nameof(CreateGreetingRequest));
-        audits.Data.Should().Contain(record => record.Operation == nameof(UpdateGreetingMessageRequest));
+        audits.Data.Should().Contain(record => record.Operation == $"{typeof(Greeting_CreateRequest).Name}.{typeof(Greeting_CreateRequest.V1).Name}");
+        audits.Data.Should().Contain(record => record.Operation == $"{typeof(Greeting_UpdateRequest).Name}.{typeof(Greeting_UpdateRequest.V1).Name}");
         audits.Data.Should().OnlyContain(record => record.UserId == "profile-user");
     }
 

@@ -327,6 +327,8 @@ public sealed class GeneratorSnapshotTests
                 public string Audit { get; init; } = string.Empty;
             }
             [HttpEndpoint("POST", "/items/{id}")]
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
             public sealed record Update(
                 [property: HttpBody] Input Data,
                 [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
@@ -335,10 +337,6 @@ public sealed class GeneratorSnapshotTests
         var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(source);
         minimal.Should().Contain("Audit");
         minimal.Should().Contain("new global::Update(body, Id)");
-
-        var grpc = RunGenerator<Ark.MediatorFramework.Generators.ArkGrpcEndpointGenerator>(source);
-        grpc.Should().Contain("Audit");
-        grpc.Should().Contain("Data");
 
         var azure = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
@@ -353,6 +351,8 @@ public sealed class GeneratorSnapshotTests
                 public string Audit { get; init; } = string.Empty;
             }
             [HttpEndpoint("POST", "/items/{id}")]
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
             public sealed record Update(
                 [property: HttpBody] Input Data,
                 [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;

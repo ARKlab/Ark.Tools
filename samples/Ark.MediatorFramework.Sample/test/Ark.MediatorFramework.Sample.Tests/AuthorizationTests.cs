@@ -20,8 +20,8 @@ public sealed class AuthorizationTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("authorized-user", ApplicationScopes.GreetingWrite);
 
-        var response = await context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "authorized" }).ConfigureAwait(false);
+        var response = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "authorized" })).ConfigureAwait(false);
 
         response.Message.Should().Contain("authorized-user");
     }
@@ -38,8 +38,8 @@ public sealed class AuthorizationTests
                     "unauthorized-user")],
                 authenticationType: "application-test")));
 
-        var action = () => context.DispatchRequestAsync<CreateGreetingRequest, GreetingResponse>(
-            new CreateGreetingRequest { Name = "unauthorized" });
+        var action = () => context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "unauthorized" }));
 
         await action.Should().ThrowAsync<PolicyAuthorizationException>().ConfigureAwait(false);
     }
