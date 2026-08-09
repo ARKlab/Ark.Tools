@@ -22,6 +22,7 @@ public sealed class SynchronousApplicationSteps
     private Exception? _exception;
     private EnvelopeBindingResponse? _envelope;
     private ShapeDescription? _shape;
+    private double _circleRadius;
     private bool _refreshCompleted;
 
     /// <summary>Initializes a new instance of the <see cref="SynchronousApplicationSteps"/> class.</summary>
@@ -70,6 +71,7 @@ public sealed class SynchronousApplicationSteps
     [When(@"I describe a circle with radius (.*)")]
     public async Task DescribeCircle(double radius)
     {
+        _circleRadius = radius;
         _shape = await Context.DispatchRequestAsync<DescribeShapeRequest, ShapeDescription>(
             new DescribeShapeRequest
             {
@@ -117,7 +119,7 @@ public sealed class SynchronousApplicationSteps
     public void ShapeDescriptionIsCircle(double area)
     {
         _shape.Should().NotBeNull();
-        _shape!.Shape.Should().BeOfType<Circle>().Which.Radius.Should().Be(2);
+        _shape!.Shape.Should().BeOfType<Circle>().Which.Radius.Should().Be(_circleRadius);
         _shape.Metadata.FeaturedShape.Should().BeOfType<Circle>();
         _shape.Area.Should().BeApproximately(area, 0.000000000000001);
     }
