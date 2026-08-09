@@ -131,16 +131,29 @@ public sealed class RebusScenarioContext : IAsyncDisposable
 
         _disposed = true;
         using var drainer = DrainableInMemTransport.Drain();
-        if (_receiver is not null)
+        do
         {
-            await _receiver.DisposeAsync().ConfigureAwait(false);
-            _receiver = null;
+            if (_receiver is not null)
+            {
+                await _receiver.DisposeAsync().ConfigureAwait(false);
+                _receiver = null;
+            }
+
+            await _sampleContext.Application.ClearOutboxAsync().ConfigureAwait(false);
+            TestsInMemoryTimeoutManager.ClearPendingDue();
+            _sampleContext.Application.Network.Reset();
+            await WaitForInProcessMessagesAsync().ConfigureAwait(false);
+        }
+        while (drainer.StillDraining);
+
+        var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
+        if (remaining != new RebusWorkCounts(0, 0, 0, 0, 0))
+        {
+            throw new InvalidOperationException(
+                $"Rebus cleanup left work behind. queue={remaining.InQueue}, in-process={remaining.InProcess}, " +
+                $"deferred={remaining.Deferred}, outbox={remaining.Outbox}, error={remaining.Error}.");
         }
 
-        await _sampleContext.Application.ClearOutboxAsync().ConfigureAwait(false);
-        TestsInMemoryTimeoutManager.ClearPendingDue();
-        _sampleContext.Application.Network.Reset();
-        await WaitForInProcessMessagesAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 
@@ -169,8 +182,16 @@ public sealed class RebusScenarioContext : IAsyncDisposable
     private static async Task WaitForInProcessMessagesAsync()
     {
         using var cancellation = new CancellationTokenSource(_idleTimeout);
-        while (InProcessMessageInspectorStep.Count > 0)
-            await Task.Delay(TimeSpan.FromMilliseconds(50), cancellation.Token).ConfigureAwait(false);
+        try
+        {
+            while (InProcessMessageInspectorStep.Count > 0)
+                await Task.Delay(TimeSpan.FromMilliseconds(50), cancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"Rebus cleanup did not finish in-process messages. in-process={InProcessMessageInspectorStep.Count}.");
+        }
     }
 
     private sealed record RebusWorkCounts(int InQueue, int InProcess, int Deferred, int Outbox, int Error);
