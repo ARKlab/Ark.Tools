@@ -314,6 +314,54 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsDiscoverInheritedBindingProperties()
+    {
+        var source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            public record Input(string Message);
+            public record BaseRequest
+            {
+                [HttpQuery]
+                public string Audit { get; init; } = string.Empty;
+            }
+            [HttpEndpoint("POST", "/items/{id}")]
+            public sealed record Update(
+                [property: HttpBody] Input Data,
+                [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
+            """;
+
+        var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(source);
+        minimal.Should().Contain("Audit");
+        minimal.Should().Contain("new global::Update(body, Id)");
+
+        var grpc = RunGenerator<Ark.Tools.MediatorFramework.Grpc.Generators.GrpcEndpointGenerator>(source);
+        grpc.Should().Contain("Audit");
+        grpc.Should().Contain("Data");
+
+        var azure = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.MediatorFramework.HttpHost(typeof(Marker), "/api")]
+            public sealed class Marker { }
+            public record Input(string Message);
+            public record BaseRequest
+            {
+                [HttpQuery]
+                public string Audit { get; init; } = string.Empty;
+            }
+            [HttpEndpoint("POST", "/items/{id}")]
+            public sealed record Update(
+                [property: HttpBody] Input Data,
+                [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
+            """);
+        azure.Generated.Should().Contain("Audit");
+        azure.Generated.Should().Contain("body = body with { Id = _route_Id };");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorBindsETagPreconditionAndEmitsResponseETag()
     {
         var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
