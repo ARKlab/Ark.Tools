@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core;
+using Ark.Tools.Outbox;
 
 namespace Ark.MediatorFramework.Sample.Application;
 
@@ -42,6 +43,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             _audits = audits;
             _books = books;
         }
+
+        public IOutboxContextCore? OutboxContext => null;
 
         public Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
         {
@@ -119,6 +122,50 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         public Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default)
         {
             return _books.SearchAsync(query, ctk);
+        }
+
+        public Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+        {
+            return _books.TryCreatePrintProcessAsync(process, ctk);
+        }
+
+        public Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+        {
+            return ReadPrintProcessAsync(id, ctk);
+        }
+
+        public Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+        {
+            return UpdatePrintProcessAsync(process, ctk);
+        }
+
+        private async Task<BookPrintProcessResponse?> ReadPrintProcessAsync(Guid id, CancellationToken ctk)
+        {
+            try
+            {
+                return await _books.GetPrintProcessAsync(id, ctk).ConfigureAwait(false);
+            }
+            catch (EntityNotFoundException)
+            {
+                return null;
+            }
+        }
+
+        private async Task<bool> UpdatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk)
+        {
+            await _books.UpdatePrintProcessAsync(
+                process,
+                new AuditEntry
+                {
+                    Id = Guid.NewGuid(),
+                    EntityType = nameof(BookPrintProcessResponse),
+                    Identifier = process.Id.ToString("D"),
+                    Operation = nameof(UpdateBookPrintProcessAsync),
+                    UserId = "context",
+                    Timestamp = NodaTime.SystemClock.Instance.GetCurrentInstant(),
+                },
+                ctk).ConfigureAwait(false);
+            return true;
         }
 
         private async Task<BookResponse?> ReadBookCoreAsync(Guid id, CancellationToken ctk)

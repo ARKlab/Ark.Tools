@@ -4,6 +4,7 @@
 using Ark.Tools.Solid;
 using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Outbox.Rebus;
 
 using NodaTime;
 
@@ -152,19 +153,19 @@ public sealed class DeleteBookHandler : IRequestHandler<DeleteBookRequest, bool>
 public sealed class CreateBookPrintProcessHandler :
     IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IBus _bus;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessHandler"/> class.</summary>
     public CreateBookPrintProcessHandler(
-        IBookStore store,
+        ISampleDataContextFactory factory,
         IBus bus,
         IContextProvider<ClaimsPrincipal> user,
         IClock clock)
     {
-        _store = store;
+        _factory = factory;
         _bus = bus;
         _user = user;
         _clock = clock;
@@ -176,7 +177,9 @@ public sealed class CreateBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await _store.GetAsync(request.BookId, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        if (await context.ReadBookAsync(request.BookId, ctk).ConfigureAwait(false) is null)
+            throw new EntityNotFoundException($"Book '{request.BookId}' was not found.");
 
         var process = new BookPrintProcessResponse
         {
@@ -185,12 +188,18 @@ public sealed class CreateBookPrintProcessHandler :
             Status = BookPrintProcessStatus.Pending,
             ShouldFail = request.ShouldFail,
         };
-        if (!await _store.TryCreateAndQueuePrintProcessAsync(
-                process,
-                CreateAudit(process.Id, nameof(CreateBookPrintProcessRequest)),
-                _bus,
-                ctk).ConfigureAwait(false))
+        if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
+        await context.WriteAuditAsync(CreateAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
+        if (context.OutboxContext is { } outbox)
+        {
+            using var scope = _bus.Enlist(outbox);
+            await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
+            await scope.CompleteAsync().ConfigureAwait(false);
+        }
+        else
+            await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return process;
     }
 
@@ -212,19 +221,19 @@ public sealed class CreateBookPrintProcessHandler :
 public sealed class ProcessBookPrintProcessHandler :
     IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
     private readonly IPrintCompletedNotificationService _printCompletedNotificationService;
 
     /// <summary>Initializes a new instance of the <see cref="ProcessBookPrintProcessHandler"/> class.</summary>
     public ProcessBookPrintProcessHandler(
-        IBookStore store,
+        ISampleDataContextFactory factory,
         IContextProvider<ClaimsPrincipal> user,
         IClock clock,
         IPrintCompletedNotificationService printCompletedNotificationService)
     {
-        _store = store;
+        _factory = factory;
         _user = user;
         _clock = clock;
         _printCompletedNotificationService = printCompletedNotificationService;
@@ -236,7 +245,10 @@ public sealed class ProcessBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var process = await _store.GetPrintProcessAsync(request.Id, ctk).ConfigureAwait(false);
+        await using var readContext = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var process = await readContext.ReadBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
+        await readContext.CommitAsync(ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
         {
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
@@ -252,7 +264,7 @@ public sealed class ProcessBookPrintProcessHandler :
                 Progress = 0.5,
                 Status = BookPrintProcessStatus.Running,
             };
-            await _store.UpdatePrintProcessAsync(process, CreateAudit(process.Id), ctk).ConfigureAwait(false);
+            process = await PersistAsync(process, ctk).ConfigureAwait(false);
         }
 
         process = process.ShouldFail
@@ -266,9 +278,21 @@ public sealed class ProcessBookPrintProcessHandler :
                 Progress = 1,
                 Status = BookPrintProcessStatus.Completed,
             };
-        process = await _store.UpdatePrintProcessAsync(process, CreateAudit(process.Id), ctk).ConfigureAwait(false);
+        process = await PersistAsync(process, ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
+        return process;
+    }
+
+    private async Task<BookPrintProcessResponse> PersistAsync(
+        BookPrintProcessResponse process,
+        CancellationToken ctk)
+    {
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(CreateAudit(process.Id), ctk).ConfigureAwait(false);
+        if (!await context.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
+            throw new EntityNotFoundException($"Book print process '{process.Id}' was not found.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
         return process;
     }
 
@@ -290,12 +314,12 @@ public sealed class ProcessBookPrintProcessHandler :
 public sealed class GetBookPrintProcessHandler :
     IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>
 {
-    private readonly IBookStore _store;
+    private readonly ISampleDataContextFactory _factory;
 
     /// <summary>Initializes a new instance of the <see cref="GetBookPrintProcessHandler"/> class.</summary>
-    public GetBookPrintProcessHandler(IBookStore store)
+    public GetBookPrintProcessHandler(ISampleDataContextFactory factory)
     {
-        _store = store;
+        _factory = factory;
     }
 
     /// <inheritdoc />
@@ -304,7 +328,11 @@ public sealed class GetBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await _store.GetPrintProcessAsync(query.Id, ctk).ConfigureAwait(false);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var process = await context.ReadBookPrintProcessAsync(query.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book print process '{query.Id}' was not found.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return process;
     }
 }
 

@@ -107,6 +107,16 @@ public sealed class SqlBookStore : IBookStore
     }
 
     /// <inheritdoc />
+    public async Task<bool> TryCreatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(process);
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var created = await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return created;
+    }
+
+    /// <inheritdoc />
     public async Task<BookPrintProcessResponse> GetPrintProcessAsync(Guid id, CancellationToken ctk = default)
     {
         await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);

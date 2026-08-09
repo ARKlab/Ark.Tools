@@ -3,6 +3,7 @@
 
 using Ark.Tools.Outbox.SqlServer;
 using Ark.Tools.Outbox.Rebus;
+using Ark.Tools.Outbox;
 using Ark.Tools.Core;
 
 using Dapper;
@@ -19,6 +20,9 @@ namespace Ark.MediatorFramework.Sample.Application;
 /// <summary>Composes fine-grained greeting and audit operations in one application transaction.</summary>
 public interface ISampleDataContext : IAsyncDisposable
 {
+    /// <summary>Gets the transactional outbox context when the context is SQL-backed.</summary>
+    IOutboxContextCore? OutboxContext { get; }
+
     /// <summary>Saves a greeting.</summary>
     Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
 
@@ -57,6 +61,15 @@ public interface ISampleDataContext : IAsyncDisposable
 
     /// <summary>Reads a page of books.</summary>
     Task<BookPage> ReadBooksAsync(SearchBooksQuery query, CancellationToken ctk = default);
+
+    /// <summary>Saves a book print process when no active process exists for the book.</summary>
+    Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
+
+    /// <summary>Reads a book print process.</summary>
+    Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default);
+
+    /// <summary>Updates a book print process.</summary>
+    Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
 }
 
 /// <summary>Creates application contexts for handler-owned transactions.</summary>
@@ -92,6 +105,9 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools
 /// <summary>Transactional SQL context for greetings and Rebus outbox messages.</summary>
 public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, ISampleDataContext
 {
+    /// <inheritdoc />
+    public Ark.Tools.Outbox.IOutboxContextCore? OutboxContext => this;
+
     /// <summary>Initializes a new instance of the <see cref="SampleDataContext"/> class.</summary>
     /// <param name="transaction">The transaction to use.</param>
     /// <param name="config">The SQL and outbox configuration.</param>

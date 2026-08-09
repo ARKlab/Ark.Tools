@@ -34,6 +34,9 @@ public interface IBookStore
         IBus bus,
         CancellationToken ctk = default);
 
+    /// <summary>Atomically creates a book print process when no active process exists.</summary>
+    Task<bool> TryCreatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
+
     /// <summary>Reads a book print process.</summary>
     Task<BookPrintProcessResponse> GetPrintProcessAsync(Guid id, CancellationToken ctk = default);
 
@@ -134,14 +137,8 @@ public sealed class InMemoryBookStore : IBookStore
         ArgumentNullException.ThrowIfNull(process);
         ArgumentNullException.ThrowIfNull(audit);
         ArgumentNullException.ThrowIfNull(bus);
-        lock (_sync)
-        {
-            if (_printProcesses.Values.Any(item => item.BookId == process.BookId
-                && (item.Status == BookPrintProcessStatus.Pending || item.Status == BookPrintProcessStatus.Running)))
-                return false;
-            if (!_printProcesses.TryAdd(process.Id, process))
-                throw new InvalidOperationException($"Book print process '{process.Id}' already exists.");
-        }
+        if (!await TryCreatePrintProcessAsync(process, ctk).ConfigureAwait(false))
+            return false;
 
         try
         {
@@ -154,6 +151,22 @@ public sealed class InMemoryBookStore : IBookStore
             _printProcesses.TryRemove(process.Id, out _);
             throw;
         }
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TryCreatePrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(process);
+        lock (_sync)
+        {
+            if (_printProcesses.Values.Any(item => item.BookId == process.BookId
+                && (item.Status == BookPrintProcessStatus.Pending || item.Status == BookPrintProcessStatus.Running)))
+                return Task.FromResult(false);
+            if (!_printProcesses.TryAdd(process.Id, process))
+                throw new InvalidOperationException($"Book print process '{process.Id}' already exists.");
+        }
+
+        return Task.FromResult(true);
     }
 
     /// <inheritdoc />

@@ -222,6 +222,13 @@ public sealed class ApplicationTestContextTests
             return await _inner.TryCreateAndQueuePrintProcessAsync(process, audit, bus, ctk).ConfigureAwait(false);
         }
 
+        public async Task<bool> TryCreatePrintProcessAsync(
+            BookPrintProcessResponse process,
+            CancellationToken ctk = default)
+        {
+            return await _inner.TryCreatePrintProcessAsync(process, ctk).ConfigureAwait(false);
+        }
+
         public async Task<BookPrintProcessResponse> GetPrintProcessAsync(
             Guid id,
             CancellationToken ctk = default)
