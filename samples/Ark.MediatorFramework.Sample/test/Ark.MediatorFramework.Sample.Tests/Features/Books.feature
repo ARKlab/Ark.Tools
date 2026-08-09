@@ -46,7 +46,7 @@ Feature: Books
                 | Dune  | Herbert | Fiction |
             Then the current book audit is
                 | UserId    | EntityType   | Operation         |
-                | application-test-user | BookResponse | CreateBookRequest |
+                | application-test-user | Output | V1 |
 
     Rule: Book printing runs asynchronously
 
