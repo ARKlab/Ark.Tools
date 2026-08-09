@@ -153,6 +153,7 @@ public sealed class ConcurrencyRoundtripTests
         };
         (await context.Client.SendAsync(invalid).ConfigureAwait(false)).StatusCode.Should().Be(HttpStatusCode.PreconditionFailed);
 
+        // The synthetic fault injector decorates only the in-memory greeting store.
         if (context.UsesSqlStore)
             return;
 
