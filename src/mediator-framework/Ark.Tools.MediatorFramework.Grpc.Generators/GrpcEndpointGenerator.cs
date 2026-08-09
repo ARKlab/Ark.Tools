@@ -156,7 +156,19 @@ namespace Ark.MediatorFramework.Generators
                 else if (member is INamedTypeSymbol type)
                 {
                     yield return type;
+                    foreach (var nested in _allNestedTypes(type))
+                        yield return nested;
                 }
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> _allNestedTypes(INamedTypeSymbol type)
+        {
+            foreach (var nested in type.GetTypeMembers())
+            {
+                yield return nested;
+                foreach (var child in _allNestedTypes(nested))
+                    yield return child;
             }
         }
 
@@ -208,7 +220,7 @@ namespace Ark.MediatorFramework.Generators
                     type.Name,
                     GetLocation(grpc)));
 
-            var attachmentProperties = type.GetMembers().OfType<IPropertySymbol>()
+            var attachmentProperties = AllProperties(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                 .Where(property => IsAttachmentType(property.Type, attachmentType) || IsAttachmentCollection(property.Type, attachmentType))
                 .ToArray();

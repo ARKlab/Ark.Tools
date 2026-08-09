@@ -24,6 +24,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
     private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
     private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
+    private const string HttpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
     private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
     private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
     private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
@@ -239,10 +240,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
         if (hasBody && !hasAttachment)
         {
-            source.Append("        ").Append(endpoint.FullyQualifiedType).AppendLine("? _bodyNullable;");
+            source.Append("        ").Append(endpoint.BodyType).AppendLine("? _bodyNullable;");
             source.AppendLine("        try");
             source.AppendLine("        {");
-            source.Append("            _bodyNullable = await global::Microsoft.AspNetCore.Http.HttpRequestJsonExtensions.ReadFromJsonAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
+            source.Append("            _bodyNullable = await global::Microsoft.AspNetCore.Http.HttpRequestJsonExtensions.ReadFromJsonAsync<").Append(endpoint.BodyType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        }");
             source.AppendLine("        catch (global::System.Text.Json.JsonException ex)");
             source.AppendLine("        {");
@@ -250,7 +251,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("        }");
             source.AppendLine("        if (_bodyNullable is null)");
             source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
-            source.AppendLine("        var body = _bodyNullable;");
+            source.Append("        var body = new ").Append(endpoint.FullyQualifiedType).AppendLine("();");
+            if (endpoint.BodyProperty is not null)
+                EmitPropertyAssignment(source, endpoint, "        ", endpoint.BodyProperty, "_bodyNullable");
+            else
+                source.AppendLine("        body = _bodyNullable;");
         }
         else if (!hasAttachment)
         {
@@ -491,6 +496,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
                 var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpQueryAttribute);
+                var isBody = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpBodyAttribute);
                 var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
                 var isETag = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ETagAttribute);
                 var isString = p.Type.SpecialType == SpecialType.System_String;
@@ -505,6 +511,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                     isRoute,
                     bindingName,
                     isQuery,
+                    isBody,
                     isServerSet,
                     isString,
                     isETag,
@@ -518,6 +525,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 .FirstOrDefault(property => property.GetAttributes().Any(attribute =>
                     attribute.AttributeClass?.ToDisplayString() == ETagAttribute))
                 ?.Name;
+        var bodyProperty = properties.FirstOrDefault(property => property.IsBody);
 
         return new Endpoint(
             type.Name,
@@ -538,6 +546,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             successStatusCode,
             nullResultStatusCode,
             responseETagProperty,
+            bodyProperty.Name,
+            bodyProperty.Name is null ? type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : bodyProperty.TypeFullName,
             maxFileCount,
             allowedContentTypes,
             responseSymbol is INamedTypeSymbol responseNamed
@@ -581,7 +591,19 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             else if (member is INamedTypeSymbol type)
             {
                 yield return type;
+                foreach (var nested in AllNestedTypes(type))
+                    yield return nested;
             }
+        }
+    }
+
+    private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type)
+    {
+        foreach (var nested in type.GetTypeMembers())
+        {
+            yield return nested;
+            foreach (var child in AllNestedTypes(nested))
+                yield return child;
         }
     }
 
@@ -646,6 +668,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         bool IsRoute,
         string BindingName,
         bool IsQuery,
+        bool IsBody,
         bool IsServerSet,
         bool IsString,
         bool IsETag,
@@ -671,6 +694,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         int SuccessStatusCode,
         int NullResultStatusCode,
         string? ResponseETagProperty,
+        string? BodyProperty,
+        string? BodyType,
         int MaxFileCount,
         ImmutableArray<string> AllowedContentTypes,
         bool IsStreaming,
