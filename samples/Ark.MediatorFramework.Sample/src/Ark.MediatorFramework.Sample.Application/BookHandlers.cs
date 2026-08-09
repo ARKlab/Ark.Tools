@@ -196,10 +196,13 @@ public sealed class CreateBookPrintProcessHandler :
             using var scope = _bus.Enlist(outbox);
             await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
             await scope.CompleteAsync().ConfigureAwait(false);
+            await context.CommitAsync(ctk).ConfigureAwait(false);
         }
         else
+        {
+            await context.CommitAsync(ctk).ConfigureAwait(false);
             await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
-        await context.CommitAsync(ctk).ConfigureAwait(false);
+        }
         return process;
     }
 
