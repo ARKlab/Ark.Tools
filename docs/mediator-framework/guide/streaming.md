@@ -1,59 +1,101 @@
-# Streaming
+# Returning an items stream
 
-Return `IAsyncEnumerable<T>` from a query handler when results should be
-produced incrementally. Generated HTTP and gRPC endpoints preserve the stream
-and stop enumerating when the caller disconnects or cancels.
+Use `IAsyncEnumerable<T>` when the result is naturally produced over time or is
+too large to buffer. The handler owns the iterator and must propagate the
+caller cancellation token.
 
-## Stream from the handler
-
-The sample uses the safest pattern: `ExecuteAsync` remains an `async` method,
-then returns a separate iterator method.
+## 1. Define a stream query
 
 ```csharp
-public sealed class WatchGreetingsHandler
-    : IQueryHandler<WatchGreetingsQuery, IAsyncEnumerable<GreetingEvent>>
+[HttpEndpoint("GET", "/api/v{version}/greetings/stream")]
+[GrpcMethod("StreamGreetings")]
+[GrpcService("Greetings")]
+[ProtoContract]
+public sealed record StreamGreetingsQuery :
+    IQuery<StreamGreetingsQuery, IAsyncEnumerable<GreetingItem>>
 {
-    public async Task<IAsyncEnumerable<GreetingEvent>> ExecuteAsync(
-        WatchGreetingsQuery query,
+    [HttpQuery]
+    [ProtoMember(1)]
+    public int Count { get; init; }
+}
+
+[ProtoContract]
+public sealed record GreetingItem
+{
+    [ProtoMember(1)]
+    public int Index { get; init; }
+
+    [ProtoMember(2)]
+    public required string Message { get; init; }
+}
+```
+
+The same query is now eligible for generated HTTP JSON and gRPC server-stream
+endpoints. It is not a Rebus response; a queue message has no caller stream.
+
+## 2. Yield from the handler
+
+Keep `ExecuteAsync` asynchronous, then return a separate iterator:
+
+```csharp
+public sealed class StreamGreetingsHandler :
+    IQueryHandler<StreamGreetingsQuery, IAsyncEnumerable<GreetingItem>>
+{
+    public async Task<IAsyncEnumerable<GreetingItem>> ExecuteAsync(
+        StreamGreetingsQuery query,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(query);
+        if (query.Count < 0 || query.Count > 1000)
+            throw new ArgumentOutOfRangeException(nameof(query.Count));
+
         await Task.CompletedTask.ConfigureAwait(false);
-        return ReadEventsAsync(query, cancellationToken);
+        return ReadAsync(query.Count, cancellationToken);
     }
 
-    private async IAsyncEnumerable<GreetingEvent> ReadEventsAsync(
-        WatchGreetingsQuery query,
+    private static async IAsyncEnumerable<GreetingItem> ReadAsync(
+        int count,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var item in _events.ReadAsync(query.Id, cancellationToken))
-            yield return item;
+        for (var index = 0; index < count; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return new GreetingItem
+            {
+                Index = index,
+                Message = $"Hello, stream item {index}!",
+            };
+            await Task.Yield();
+        }
     }
 }
 ```
 
-Why this shape matters:
+The `[EnumeratorCancellation]` parameter allows generated transports to cancel
+enumeration when a client disconnects. Check cancellation inside a long-running
+loop or before each upstream read.
 
-- the handler still follows the normal `async`/`await` guidance used across the repository;
-- `[EnumeratorCancellation]` lets the generated transport cancel the iterator cleanly;
-- the actual business enumeration stays in one method that can check cancellation inside the loop.
+## 3. Map both generated transports
 
-**Outcome:** HTTP JSON and gRPC clients start receiving items without waiting
-for the complete sequence, and the cancellation token stops the upstream read.
+```csharp
+services.AddCodeFirstGrpc();
 
-## What HTTP callers receive
-
-HTTP streaming stays plain JSON. It is not SSE framing.
-
-Example request:
-
-```http
-GET /api/v1/greetings/stream?count=2&delayMilliseconds=1500
-Authorization: ******
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapArkEndpointsFromAssembly<StreamGreetingsQuery>(
+        versionPrefix: "/api/v{version}");
+    endpoints.MapArkGrpcServicesFromAssembly<StreamGreetingsQuery>();
+});
 ```
 
-The sample test proves the first JSON object arrives before the producer has
-finished the whole sequence. For a fast complete read, the body is a normal
-JSON array such as:
+## HTTP behavior
+
+```http
+GET /api/v1/greetings/stream?count=2
+Authorization: Bearer <token>
+```
+
+The generated JSON result is:
 
 ```json
 [
@@ -62,57 +104,35 @@ JSON array such as:
 ]
 ```
 
-An empty stream is simply:
+JSON clients observe items as the response is written. The exact buffering
+behavior depends on the selected formatter; JSON is the default generated
+representation. A zero-count stream returns `[]`.
 
-```json
-[]
-```
-
-## What gRPC callers receive
-
-gRPC consumers receive a normal server stream. The sample test consumes one
-item, then cancels:
+## gRPC behavior
 
 ```csharp
-using var call = client.GetGreetingsStream(
-    new GetGreetingsStreamQuery { Count = 100, DelayMilliseconds = 1500 },
-    new Metadata { { "authorization", "Bearer " + token } },
+using var call = client.StreamGreetings(
+    new StreamGreetingsQuery { Count = 100 },
     cancellationToken: cancellation.Token);
 
-(await call.ResponseStream.MoveNext(cancellation.Token).ConfigureAwait(false)).Should().BeTrue();
+(await call.ResponseStream.MoveNext(cancellation.Token)
+    .ConfigureAwait(false)).Should().BeTrue();
 call.ResponseStream.Current.Index.Should().Be(0);
 await cancellation.CancelAsync().ConfigureAwait(false);
 ```
 
-Expected result after cancellation:
+The client receives a server stream and sees `Cancelled` when it cancels.
 
-```text
-RpcException with StatusCode = Cancelled
-```
+## Choose the right transport
 
-## Choose a suitable representation
+| Need | Choice |
+| --- | --- |
+| Simple incremental API response | Generated HTTP JSON |
+| Typed high-throughput stream | Generated gRPC |
+| Browser SSE framing | Handwritten adapter |
+| Bidirectional stream | Handwritten gRPC service |
+| Background work | Rebus command plus durable progress |
+| MessagePack stream | Avoid; top-level length requires buffering |
 
-| Consumer need | Use | Why |
-| --- | --- | --- |
-| Incremental browser/API consumer | HTTP JSON | Easy to call and inspect |
-| Efficient typed streaming | gRPC | True stream semantics and typed client generation |
-| Binary HTTP payload without unbounded buffering | Do not use MessagePack streaming | MessagePack needs the top-level length |
-| Queue/worker processing | Rebus command + durable state | Rebus does not model streaming responses |
-
-MessagePack responses are intentionally buffered into one array because the
-format needs a top-level length. Set `MaxMessagePackStreamedItems` to a safe
-ceiling when MessagePack is enabled; exceeding it returns a server error instead
-of exhausting memory.
-
-## Practical rules
-
-- Validate obviously invalid inputs before returning the stream.
-- Check cancellation inside the iterator loop, not only before it starts.
-- Do not capture request-scoped mutable state that may disappear before the
-  stream finishes.
-- Test both a non-empty stream and an empty stream.
-
-Use a custom transport adapter when the consumer requires SSE, bidirectional
-streaming, or another framing protocol not provided by generated endpoints.
-
-Architecture rationale: [design.md](../design.md).
+Set a safe count ceiling. Test a non-empty stream, an empty stream, invalid
+counts, upstream cancellation, and a client disconnect.

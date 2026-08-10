@@ -24,6 +24,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <PackageReference Include="Microsoft.Identity.Web" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.RebusProcessor\Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
   </ItemGroup>
 

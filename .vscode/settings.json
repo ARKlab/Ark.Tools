@@ -14,5 +14,6 @@
   "cucumber.features": [ // sets the location of the feature files
     "**/*.feature",
   ],
-  "terminal.integrated.shellIntegration.enabled": true
+  "terminal.integrated.shellIntegration.enabled": true,
+  "azureFunctions.projectSubpath": "samples\\Ark.MediatorFramework.Sample\\src\\Ark.MediatorFramework.Sample.AzureFunctions"
 }

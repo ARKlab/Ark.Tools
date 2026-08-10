@@ -1,144 +1,190 @@
-# Rebus
+# Rebus background work
 
-`[RebusMessage]` makes a request or command available to generated Rebus
-handlers. Delivery creates a message scope and then invokes the same
-transport-neutral handler used by HTTP or gRPC. Rebus is the best fit for
-asynchronous work, retried delivery, and decoupled sender/worker processes.
+Use Rebus when work should be retried, delayed, or processed by another
+process. Do not turn an HTTP response into a long-running queue operation by
+accident. Model the immediate API operation and the background activity as
+separate contracts.
 
-## Attribute reference
-
-| Member | Default | Meaning | Observable effect |
-| --- | --- | --- | --- |
-| `[RebusMessage]` | no explicit route | Generates Rebus wrapper(s) for the contract | The contract can be sent or received through generated Rebus glue |
-| `OwnerQueue` | `null` | Queue that owns this message type | Generated routing maps the message type to that queue |
-
-`OwnerQueue` may be omitted when a process-local or custom routing convention
-already decides the destination. It must never be blank or whitespace.
-
-## Declare ownership
-
-```csharp
-[RebusMessage(OwnerQueue = "greetings")]
-public sealed record CompleteGreetingCommand : ICommand
-{
-    public required Guid Id { get; init; }
-}
-```
-
-**Outcome:** sending `CompleteGreetingCommand` routes it to `greetings`; the
-receiver creates its scoped dependencies, calls
-`ICommandHandler<CompleteGreetingCommand>`, and propagates delivery
-cancellation to that handler.
-
-## Generate handlers and routing
-
-A receiving process registers generated handlers. A sending process registers
-generated routing. A process that does both usually calls both helpers.
-
-```csharp
-ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<ApplicationAssemblyMarker>(container);
-
-Configure.With(activator)
-    .Transport(t => t.UseInMemoryTransport(network, "sender"))
-    .Routing(r => r.ConfigureArkRebusRouting<ApplicationAssemblyMarker>())
-    .Start();
-```
-
-Generated routing is type based. The declaration below produces the equivalent
-of `typeBased.Map<CompleteGreetingCommand>("greetings")`:
-
-```csharp
-[RebusMessage(OwnerQueue = "greetings")]
-public sealed record CompleteGreetingCommand : ICommand;
-```
-
-| `OwnerQueue` value | Generated routing | Use case |
-| --- | --- | --- |
-| `"greetings"` | Maps this message type to `greetings` | One owned worker queue |
-| `null` / omitted | No explicit type map | A local message or application-specific routing convention |
-| Empty / whitespace | Invalid | Never valid |
-
-## Sample hosting pattern
-
-`SampleComposition.BuildContainer(...)` is the reference setup. It adds:
-
-- generated handler registration from the application assembly;
-- `RebusScopeDecorator<>` so each message gets a SimpleInjector scope;
-- optional protobuf serialization for Rebus messages;
-- `AutomaticallyFlowUserContext(container)` so handlers see the caller identity;
-- `ArkRetryStrategy(maxDeliveryAttempts: 1)` so failures dead-letter quickly.
-
-That means the same validators, authorization decorators, and application
-services used by HTTP and gRPC also run for Rebus messages.
-
-## Compose synchronous and asynchronous work deliberately
-
-Keep an immediate HTTP operation and delayed bus work as separate contracts when
-they represent different public behaviors. The sample does this for greeting
-composition:
+## 1. Keep the public request immediate
 
 ```csharp
 [HttpEndpoint("POST", "/api/v{version}/greetings/compose")]
-public sealed record ComposeGreetingRequest : IRequest<ComposeGreetingResponse>;
+public sealed record ComposeGreetingRequest :
+    IRequest<ComposeGreetingRequest, ComposeGreetingResponse>
+{
+    public required string Name { get; init; }
+}
 
-[RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record CompleteGreetingCompositionRequest : IRequest<GreetingResponse>;
+public sealed record ComposeGreetingResponse
+{
+    public required Guid Id { get; init; }
+    public required string Status { get; init; }
+}
 ```
 
-A handler or decorator can enqueue follow-up work:
+The handler persists a pending workflow and sends a second contract:
 
 ```csharp
-var greeting = await _store.CreateAsync(request.Name, cancellationToken)
-    .ConfigureAwait(false);
-await _bus.Send(new CompleteGreetingCommand { Id = greeting.Id })
-    .ConfigureAwait(false);
-return greeting;
+await _bus.Send(new CompleteGreetingCompositionRequest
+{
+    Id = workflow.Id,
+    Name = request.Name,
+}).ConfigureAwait(false);
+
+return new ComposeGreetingResponse
+{
+    Id = workflow.Id,
+    Status = "queued",
+};
 ```
 
-Public outcome:
+## 2. Put the background contract in Application
 
-- the HTTP caller gets a normal immediate HTTP response;
-- the worker later receives the queued message;
-- retries and dead-letter behavior follow the Rebus host configuration.
+The worker message is not part of the public API assembly:
 
-## What to expect from routing
+```csharp
+namespace MyApp.Application.Messages;
 
-When `ConfigureArkRebusRouting<TAssemblyMarker>()` is in use, changing
-`OwnerQueue` on a contract is a public operational change. The API-surface
-snapshot records it and should be reviewed like any other queue-boundary change.
+[RebusMessage(OwnerQueue = "greetings")]
+public sealed record CompleteGreetingCompositionRequest :
+    IRequest<CompleteGreetingCompositionRequest, GreetingResponse>
+{
+    public required Guid Id { get; init; }
+    public required string Name { get; init; }
+}
+```
 
-## Outbound-only hosts
+`OwnerQueue` is operational contract metadata. Changing it changes deployment
+topology and must be reviewed with the application.
 
-Hosts that must not run a Rebus processor, such as Azure Functions, register only
-the generated owner routing and configure a one-way transport:
+The sample follows this boundary:
+
+- public requests and DTOs:
+  [`API/`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API);
+- internal messages:
+  [`Application/Messages/`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Messages);
+- processor registration:
+  [`SampleRebusEndpoints.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/SampleRebusEndpoints.cs).
+
+## 3. Implement the same application handler
+
+```csharp
+public sealed class CompleteGreetingCompositionHandler :
+    IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>
+{
+    public async Task<GreetingResponse> ExecuteAsync(
+        CompleteGreetingCompositionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await _store.CompleteAsync(request.Id, request.Name, cancellationToken)
+            .ConfigureAwait(false);
+        return await _store.ReadAsync(request.Id, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException("The workflow was not persisted.");
+    }
+}
+```
+
+The generated Rebus wrapper resolves this handler in a message scope. The
+handler does not know whether the sender is HTTP, Functions, or another worker.
+
+## 4. Configure a receiver
+
+```csharp
+var container = new Container();
+container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+ApplicationComposition.Register(container, useSqlStore: true);
+container.RegisterAuthorization();
+container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+
+ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly
+    <CompleteGreetingCompositionRequest>(container);
+container.RegisterDecorator(
+    typeof(IHandleMessages<>),
+    typeof(RebusScopeDecorator<>));
+
+container.ConfigureRebus(config =>
+{
+    config.Transport(transport =>
+    {
+        transport.UseAzureServiceBus(
+            connectionString,
+            "greetings");
+        ApplicationComposition.ConfigureRebusOutbox(
+            transport,
+            container,
+            startProcessor: true);
+    });
+    ApplicationComposition.ConfigureRebusCommon(
+        config,
+        container,
+        ArkGeneratedEndpoints.ConfigureArkRebusRouting
+            <CompleteGreetingCompositionRequest>);
+});
+```
+
+For local tests, use the sample's `InMemNetwork`. It still exercises routing,
+scopes, retries, and outbox behavior.
+
+## 5. Configure a sender-only host
+
+An outbound-only host must not register receivers, workers, subscriptions, or
+an outbox processor:
 
 ```csharp
 ApplicationComposition.RegisterOutboundRebus(
     container,
     transport => transport.UseAzureServiceBusAsOneWayClient(
-        connectionString,
+        serviceBusConnectionString,
         new DefaultAzureCredential()),
-    ArkGeneratedEndpoints.ConfigureArkRebusRouting<ApplicationAssemblyMarker>);
+    ArkGeneratedEndpoints.ConfigureArkRebusRouting
+        <CompleteGreetingCompositionRequest>);
 ```
 
-Do not register generated Rebus handlers, an input queue, subscriptions, workers,
-or an outbox processor in an outbound-only host. Send owned messages with
-`IBus.Send`; `SendLocal` requires a receiver in the current process.
+Azure Functions uses this pattern. The processor is a separate deployment.
 
-Example snapshot line:
+## 6. Use source-generated JSON and NLog
 
-```text
-REBUS CompleteGreetingCommand -> queue:greetings
+The common composition should be shared by every process:
+
+```csharp
+config.Logging(logging => logging.NLog());
+config.Serialization(serializer =>
+{
+    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
+    var rebusOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    rebusOptions.TypeInfoResolver = jsonContext;
+    serializer.UseSystemTextJson(rebusOptions);
+});
 ```
 
-## When not to use generated Rebus wiring
+Include every internal message and nested public payload in
+`ApplicationJsonSerializerContext`. Rebus serialization must not depend on the
+web host's private JSON context.
 
-Rebus messages are not streaming responses: an `IAsyncEnumerable<T>` result
-cannot be meaningfully delivered and is rejected. Write `IHandleMessages<T>`
-directly when you need:
+## 7. Configure retries and failure behavior
 
-- a legacy message type you cannot annotate from the application assembly;
-- custom retry or subscription behavior outside generated routing;
-- transport-specific headers or topology that should not leak into shared contracts.
+```csharp
+options.ArkRetryStrategy(
+    maxDeliveryAttempts: 3,
+    secondLevelRetriesEnabled: true);
+```
 
-Architecture rationale: [design.md](../design.md).
+Decide what is transient and what is final. Test:
+
+- successful delivery;
+- retry followed by success;
+- exhausted delivery to the error queue;
+- an `IFailed<T>` application handler when the workflow owns one;
+- a failure in the failure handler itself.
+
+Wait with a bounded timeout and include queue, outbox, and error-queue
+diagnostics in timeout messages. Never use an infinite test wait.
+
+## 8. Do not use Rebus for streams
+
+Rebus has no streaming response. Store durable progress and send a command if
+another process must advance work. Use `IAsyncEnumerable<T>` for HTTP/gRPC
+streaming; see [Streaming](streaming.md).

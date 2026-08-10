@@ -1320,14 +1320,28 @@
           "System.Drawing.Common": "6.0.0"
         }
       },
+      "ark.mediatorframework.sample.api": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
+          "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.Solid.Authorization": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )"
+        }
+      },
       "ark.mediatorframework.sample.application": {
         "type": "Project",
         "dependencies": {
+          "Ark.MediatorFramework.Sample.API": "[0.9.1, )",
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
+          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
@@ -1344,6 +1358,7 @@
       "ark.mediatorframework.sample.rebusprocessor": {
         "type": "Project",
         "dependencies": {
+          "Ark.MediatorFramework.Sample.API": "[0.9.1, )",
           "Ark.MediatorFramework.Sample.Application": "[0.9.1, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",

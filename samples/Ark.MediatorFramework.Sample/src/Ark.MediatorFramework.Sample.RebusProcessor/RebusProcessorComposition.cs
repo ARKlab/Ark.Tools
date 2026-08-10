@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Generated;
-using Ark.MediatorFramework.Sample.Application;
-
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
@@ -70,7 +68,7 @@ public static class RebusProcessorComposition
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
 
-        (registerHandlers ?? ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<RefreshGreetingCommand>)(container);
+        (registerHandlers ?? ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<CompleteGreetingCompositionRequest>)(container);
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
         container.ConfigureRebus(cfg =>
@@ -80,7 +78,7 @@ public static class RebusProcessorComposition
                 transport.UseInMemoryTransport(network, "ark.mediator.sample");
                 ApplicationComposition.ConfigureRebusOutbox(transport, container, startProcessor: true);
             });
-            ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>, options =>
+            ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<CompleteGreetingCompositionRequest>, options =>
             {
                 options.SetNumberOfWorkers(1);
                 options.ArkRetryStrategy(

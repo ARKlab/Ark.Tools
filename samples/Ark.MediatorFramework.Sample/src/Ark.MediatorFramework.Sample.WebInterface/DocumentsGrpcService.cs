@@ -1,11 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using GrpcDownloadChunk = Ark.MediatorFramework.DownloadDocumentChunk;
 using GrpcDownloadMetadata = Ark.MediatorFramework.DownloadDocumentMetadata;
 using GrpcGetDocumentQuery = Ark.MediatorFramework.DownloadDocumentQuery;
-using ApplicationGetDocumentQuery = Ark.MediatorFramework.Sample.Application.GetDocumentQuery;
+using ApplicationGetDocumentQuery = Ark.MediatorFramework.Sample.API.GetDocumentQuery;
 using Ark.Tools.Solid;
 
 using Grpc.Core;

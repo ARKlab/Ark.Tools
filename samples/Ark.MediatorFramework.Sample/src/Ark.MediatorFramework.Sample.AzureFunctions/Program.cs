@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.AzureFunctions;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
@@ -17,7 +16,7 @@ using NLog;
 using NLog.Extensions.Logging;
 
 [assembly: Ark.MediatorFramework.HttpHost(
-    typeof(ApplicationComposition),
+    typeof(RefreshGreetingCommand),
     "/api/v{version}",
     // These contracts require MessagePack, which the isolated Functions binding
     // does not provide; they remain covered by the HTTP host.
@@ -46,7 +45,11 @@ public static class Program
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
             var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
-            var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
+var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];
+var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(
+    serviceBusConnectionString,
+    useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
+    connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(rebusContainer);
             builder.Services.AddArkHealthChecks();
