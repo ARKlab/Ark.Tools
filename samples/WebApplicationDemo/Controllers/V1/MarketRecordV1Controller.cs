@@ -33,8 +33,6 @@ public class MarketRecordV1Controller : ODataController
             offset = offset.AddSeconds(1);
         }
     }
-    #pragma warning restore AV0014
-
     [EnableQuery]
     public IQueryable<MarketRecordV1> Get()
     {
@@ -54,3 +52,4 @@ public class MarketRecordV1Controller : ODataController
         return SingleResult.Create(record.AsQueryable());
     }
 }
+#pragma warning restore AV0014
