@@ -30,32 +30,91 @@ ASP.NET Core **Minimal API** and **Rebus** — with the hosting code produced by
 | `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi` | Minimal API runtime package containing `[HttpEndpoint]` and its transport-specific analyzer. |
 | `src/mediator-framework/Ark.Tools.MediatorFramework.Rebus` | Rebus runtime package containing `[RebusMessage]` and its transport-specific analyzer. |
 | `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc` | gRPC runtime package containing `[GrpcMethod]`, `[ServiceGroup]` and its transport-specific analyzer. |
-| `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, in-memory store and cross-cutting decorator. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
+| `src/Ark.MediatorFramework.Sample.Application` | Pure, transport-agnostic contracts/handlers, SQL and in-memory context factories, and cross-cutting decorators. Uses `IContextProvider<ClaimsPrincipal>` for the caller identity. |
 | `src/Ark.MediatorFramework.Sample.WebInterface` | Hosting: composition root, ASP.NET Core startup and the endpoints exposing the selected requests/queries. Wires the user context (AspNetCore auth + Rebus propagation) and starts the bus. |
 | `test/Ark.MediatorFramework.Sample.Tests` | Demonstrates **how to test an application built on the framework** with sample-owned behavior and integration coverage. Framework-capability and generic host-boundary tests belong under `tests/` instead. |
 
 ## Behavioral tests
 
 The Reqnroll scenarios exercise the sample as a real application through its
-public HTTP and gRPC interfaces:
+direct, decorated application contracts:
 
-- create and query greetings over HTTP;
-- create and query greetings over gRPC using the client generated from the server's `.proto` files;
-- reject duplicate greetings with an HTTP business-rule response;
-- read the evolved version-two greeting contract; and
-- queue an HTTP composition request and poll until Rebus completes it;
-- support Rebus retry exhaustion, second-level `IFailed<T>` handling, and
-  error-queue handling when the failed handler also fails.
+- create and query greetings through request and query contracts;
+- reject anonymous and duplicate requests with typed exceptions;
+- read the evolved version-two greeting contract;
+- consume an async stream with cancellation; and
+- read persisted audit state through its public query contract.
+
+Transport-boundary behavior remains covered by the focused MSTest classes in
+the same project:
+
+- HTTP and gRPC clients exercise generated hosting and authentication;
+- generated endpoint binding and OpenAPI behavior remain transport tests; and
+- Rebus workflow behavior, including retry exhaustion, second-level
+  `IFailed<T>` handling, and error-queue handling when the failed handler also
+  fails, is covered by the dedicated processor tests.
+
+The direct application scenarios do not assert URLs, status codes, serialized
+JSON, or generated transport wrappers.
+
+External adapters are singleton proxies over explicitly attached,
+scenario-owned bindings. Rebus sender and receiver containers share that
+binding without relying on `AsyncLocal`; exhausted workflows observe the
+application-owned failure handler through persisted state or external calls.
 
 Framework capabilities such as source generation, transport serialization,
 OpenAPI schema generation, attachments and rich gRPC errors are covered by
 unit tests in `tests/Ark.Tools.MediatorFramework.Tests`.
 
-## Run
+### Table-driven application scenarios
+
+`Books.feature`, `GreetingTables.feature`, `GreetingCards.feature`, and
+`GreetingWorkflow.feature` keep scenario state in their injected step context.
+The table verbs create request DTOs with `Reqnroll.Assist`, dispatch application
+contracts, and make the resulting entity, collection, or attachment the active
+scenario value. Assertions compare those active values through contracts rather
+than reimplementing transport behavior.
+
+## Test profiles
+
+The SQL profile is the default. Start only the SQL Server dependency, provide
+`ARK_SAMPLE_SQL_CONNECTION` through secure local configuration, then run the
+sample project:
 
 ```bash
-docker compose up -d
+docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d db
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
+```
+
+The test hook deploys the DACPAC once and resets the database with
+`[ops].[ResetFull_OnlyForTesting]` before every Reqnroll scenario and
+transport-test context. Reset uses the FK-safe database procedure; no manual
+schema deployment or table cleanup is required.
+
+Run the same suite without Docker or SQL Server by selecting the explicit
+in-memory profile:
+
+```bash
+ARK_SAMPLE_INMEMORY_TESTS=1 \
+  dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
+```
+
+The test assembly is serialized because its SQL profile shares a database. Rebus
+continues to use the in-memory transport for both profiles. Greeting-card
+attachments use the sample's in-memory `DocumentStore` in both profiles, so the
+sample does not require Azurite.
+
+The `PersistenceProfileTests` contract checks run in whichever profile is
+selected. They cover Dapper-backed and in-memory create/read/update, search
+paging, audit persistence, opaque ETags, and transactional outbox commit
+behavior. The SQL hook deploys the DACPAC once, then calls
+`[ops].[ResetFull_OnlyForTesting]` before each scenario; its `DELETE FROM` order
+keeps the `BookPrintProcess` foreign key safe and leaves no scenario data.
+
+Stop the local database when finished:
+
+```bash
+docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml down
 ```
 
 Configuration layers are loaded in this order: `appsettings.json`,
@@ -64,10 +123,10 @@ optional Azure Key Vault named by `KeyVault:Uri`. The sample runs without Key Va
 or telemetry configuration. Set `ApplicationInsights:ConnectionString` to enable
 Application Insights.
 
-The SQL-backed sample uses SQL Server on `localhost:1433`. Build the database project or deploy
-`src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj` before running SQL-backed scenarios.
-Greeting writes and their Rebus notifications share one SQL transaction; set
-`ARK_SAMPLE_SQL_TESTS=1` to run the SQL-backed Reqnroll path.
+Greeting writes and their Rebus notifications share one SQL transaction. The
+SQL connection string is never stored in this repository; use
+`ARK_SAMPLE_SQL_CONNECTION` from secure local configuration when the Docker
+default is not appropriate.
 
 ### Azure Functions host
 
@@ -148,7 +207,7 @@ curl -X PUT -H "Authorization: ******" -H "If-Match: \"$ETAG\"" \
 ```
 
 The sample stores the version as SQL Server `ROWVERSION` (or a monotonic in-memory
-version), while clients only see the opaque base64 token. A stale token returns
+version), while contracts expose only an opaque string token. A stale token returns
 `412 Precondition Failed`; transient server concurrency failures are retried twice
 and then return `409 Conflict`.
 

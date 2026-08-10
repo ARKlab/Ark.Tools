@@ -49,7 +49,16 @@ namespace Ark.MediatorFramework.Generators
                 .Combine(endpointAssemblies)
                 .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
 
-            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
+            var sourceWithFailedHandlers = context.CompilationProvider
+                .Combine(sourceEndpoints.Collect())
+                .Select(static (pair, _) =>
+                {
+                    var failedHandlers = FailedHandlers(pair.Left.Assembly);
+                    return pair.Right
+                        .Select(endpoint => endpoint.WithFailedHandlers(failedHandlers))
+                        .ToImmutableArray();
+                });
+            var collected = sourceWithFailedHandlers.Combine(referencedEndpoints.Collect());
 
             context.RegisterSourceOutput(
                 collected,
@@ -87,6 +96,7 @@ namespace Ark.MediatorFramework.Generators
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
                 .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
+                var failedHandlers = FailedHandlers(assembly);
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
                     var attrs = type.GetAttributes();
@@ -97,12 +107,46 @@ namespace Ark.MediatorFramework.Generators
 
                     var model = Extract(type, rebus);
                     if (model is not null)
-                        builder.Add(model.Value);
+                        builder.Add(model.Value.WithFailedHandlers(failedHandlers));
                 }
             }
 
             return builder.ToImmutable();
         }
+
+        private static IReadOnlyList<FailedHandlerModel> FailedHandlers(IAssemblySymbol assembly)
+        {
+            var handlers = new List<FailedHandlerModel>();
+            foreach (var type in _allTypes(assembly.GlobalNamespace))
+            {
+                if (type.TypeKind != TypeKind.Class
+                    || type.IsAbstract
+                    || type.DeclaredAccessibility != Accessibility.Public)
+                    continue;
+
+                foreach (var iface in type.AllInterfaces)
+                {
+                    if (!IsType(iface.OriginalDefinition, "IHandleMessages", "Rebus.Handlers")
+                        || iface.TypeArguments.Length != 1)
+                        continue;
+
+                    if (iface.TypeArguments[0] is not INamedTypeSymbol failed
+                        || !IsType(failed.OriginalDefinition, "IFailed", "Rebus.Retry.Simple")
+                        || failed.TypeArguments.Length != 1)
+                        continue;
+
+                    handlers.Add(new FailedHandlerModel(
+                        iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
+                }
+            }
+
+            return handlers;
+        }
+
+        private static bool IsType(INamedTypeSymbol type, string name, string @namespace)
+            => type.Name == name
+                && type.ContainingNamespace.ToDisplayString() == @namespace;
 
         private static IEnumerable<IAssemblySymbol> _referencedAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
         {
@@ -130,7 +174,19 @@ namespace Ark.MediatorFramework.Generators
                 else if (member is INamedTypeSymbol type)
                 {
                     yield return type;
+                    foreach (var nested in AllNestedTypes(type))
+                        yield return nested;
                 }
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type)
+        {
+            foreach (var nested in type.GetTypeMembers())
+            {
+                yield return nested;
+                foreach (var child in AllNestedTypes(nested))
+                    yield return child;
             }
         }
 
@@ -149,13 +205,13 @@ namespace Ark.MediatorFramework.Generators
                     {
                         diagnostics.Add(new DiagnosticInfo(
                             InvalidOwnerQueue,
-                            type.Name,
+                            GeneratedName(type),
                             GetLocation(rebusAttribute)));
                     }
 
                     return new EndpointModel(
                         type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        type.Name,
+                        GeneratedName(type),
                         null,
                         ownerQueue is not null && diagnostics.Count == 0 ? ownerQueue : null,
                         diagnostics,
@@ -183,7 +239,7 @@ namespace Ark.MediatorFramework.Generators
 
                     return new EndpointModel(
                         type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        type.Name,
+                        GeneratedName(type),
                         response,
                         ownerQueue is not null && diagnostics.Count == 0 ? ownerQueue : null,
                         diagnostics,
@@ -273,6 +329,13 @@ namespace Ark.MediatorFramework.Generators
                     sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
                 }
             }
+            foreach (var handler in items
+                .SelectMany(static item => item.FailedHandlers)
+                .Distinct()
+                .OrderBy(static handler => handler.HandlerTypeFullName, StringComparer.Ordinal))
+            {
+                sb.AppendLine("            container.Collection.Append(typeof(" + handler.InterfaceTypeFullName + "), typeof(" + handler.HandlerTypeFullName + "));");
+            }
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var handler in items
                 .Select(HandlerService)
@@ -348,7 +411,8 @@ namespace Ark.MediatorFramework.Generators
                 string? ownerQueue,
                 IReadOnlyList<DiagnosticInfo> diagnostics,
                 bool isCommand,
-                Location location)
+                Location location,
+                IReadOnlyList<FailedHandlerModel>? failedHandlers = null)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -358,20 +422,33 @@ namespace Ark.MediatorFramework.Generators
                 IsCommand = isCommand;
                 Location = location;
                 IsValid = diagnostics.Count == 0;
+                FailedHandlers = failedHandlers ?? Array.Empty<FailedHandlerModel>();
             }
 
             private EndpointModel(INamedTypeSymbol type, DiagnosticInfo diagnostic)
             {
                 TypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                TypeName = type.Name;
+                TypeName = GeneratedName(type);
                 Diagnostics = new[] { diagnostic };
                 IsCommand = false;
                 Location = diagnostic.Location;
                 IsValid = false;
+                FailedHandlers = Array.Empty<FailedHandlerModel>();
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, DiagnosticInfo diagnostic)
                 => new(type, diagnostic);
+
+            public EndpointModel WithFailedHandlers(IReadOnlyList<FailedHandlerModel> failedHandlers)
+                => new(
+                    TypeFullName,
+                    TypeName,
+                    Response,
+                    OwnerQueue,
+                    Diagnostics,
+                    IsCommand,
+                    Location,
+                    failedHandlers);
 
             public string TypeFullName { get; }
             public string TypeName { get; }
@@ -381,7 +458,12 @@ namespace Ark.MediatorFramework.Generators
             public bool IsCommand { get; }
             public Location Location { get; }
             public bool IsValid { get; }
+            public IReadOnlyList<FailedHandlerModel> FailedHandlers { get; }
         }
+
+        private readonly record struct FailedHandlerModel(
+            string InterfaceTypeFullName,
+            string HandlerTypeFullName);
 
         private readonly record struct DiagnosticInfo
         {
@@ -401,5 +483,13 @@ namespace Ark.MediatorFramework.Generators
 
         private static string StringLiteral(string value)
             => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
+        private static string GeneratedName(INamedTypeSymbol type)
+        {
+            var names = new Stack<string>();
+            for (var current = type; current is not null; current = current.ContainingType)
+                names.Push(current.Name);
+            return string.Join("_", names);
+        }
     }
 }

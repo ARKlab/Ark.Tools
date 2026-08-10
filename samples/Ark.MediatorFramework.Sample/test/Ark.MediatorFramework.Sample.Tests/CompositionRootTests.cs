@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+
+using Ark.Tools.Outbox;
 using Ark.MediatorFramework.Sample.WebInterface;
 using Ark.Tools.AspNetCore.ApplicationInsights;
 using Ark.Tools.AspNetCore.MinimalApi;
@@ -29,11 +31,11 @@ public sealed class CompositionRootTests
     public async Task ProductionCompositionStartsAndExposesHealth()
     {
         var network = new InMemNetwork();
-        var store = new InMemoryGreetingStore();
+        var dataContextFactory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         var container = SampleComposition.BuildContainer(
             network,
             useSqlStore: false,
-            greetingStore: store);
+            dataContextFactory: dataContextFactory);
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             ApplicationName = typeof(SampleHost).Assembly.GetName().Name,
@@ -47,7 +49,7 @@ public sealed class CompositionRootTests
             container,
             network,
             useSqlStore: false,
-            sharedStore: store);
+            sharedDataContextFactory: dataContextFactory);
         await using var app = builder.Build();
         startup.Configure(app);
         await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);

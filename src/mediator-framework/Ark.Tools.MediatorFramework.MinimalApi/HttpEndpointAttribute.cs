@@ -87,6 +87,15 @@ public sealed class HttpQueryAttribute : Attribute
 }
 
 /// <summary>
+/// Marks the request property that receives the deserialized HTTP body when route or query
+/// properties are also present on the request envelope.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class HttpBodyAttribute : Attribute
+{
+}
+
+/// <summary>
 /// Marks a request property as an HTTP route value. The optional name overrides
 /// the property name used in the route template.
 /// </summary>

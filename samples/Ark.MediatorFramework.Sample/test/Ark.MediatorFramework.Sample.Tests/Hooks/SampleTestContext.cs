@@ -1,172 +1,61 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.WebInterface;
-using Ark.MediatorFramework.Sample.Application;
-using Ark.MediatorFramework.Sample.Tests.Fakes;
-
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-
-using Microsoft.Data.SqlClient;
-using Microsoft.SqlServer.Dac;
-
-using Rebus.Transport.InMem;
 using Reqnroll;
 
-using SimpleInjector;
-using NodaTime;
-using NodaTime.Testing;
+using Ark.MediatorFramework.Sample.Tests.Fakes;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
-/// <summary>Provides an isolated public test host for one behavioral scenario.</summary>
-public sealed class SampleTestContext : IDisposable
+/// <summary>Owns the direct application composition for one Reqnroll scenario.</summary>
+[Binding]
+public sealed class SampleTestContext : IAsyncDisposable
 {
-    private readonly IHost _host;
+    private ApplicationTestContext? _application;
+    private readonly MockPrintCompletedNotificationService _printCompletedNotificationService;
 
-    /// <summary>Initializes a new instance of the <see cref="SampleTestContext"/> class.</summary>
-    public SampleTestContext()
-        : this(configureFallbackPolicy: true)
+    /// <summary>Initializes the scenario context with its external-service mock binding.</summary>
+    /// <param name="printCompletedNotificationService">The scenario-owned print notification mock.</param>
+    public SampleTestContext(MockPrintCompletedNotificationService printCompletedNotificationService)
     {
+        _printCompletedNotificationService = printCompletedNotificationService;
     }
 
-    /// <summary>Creates a test context without the fallback authorization policy.</summary>
-    /// <returns>The configured test context.</returns>
-    public static SampleTestContext WithoutFallbackPolicy()
-    {
-        return new SampleTestContext(configureFallbackPolicy: false);
-    }
+    /// <summary>Gets the scenario-owned application context.</summary>
+    public ApplicationTestContext Application =>
+        _application ?? throw new InvalidOperationException("The scenario application is not initialized.");
 
-    private SampleTestContext(bool configureFallbackPolicy)
+    internal ApplicationTestContext? ApplicationIfInitialized => _application;
+
+    /// <summary>Sets the integration-test environment before scenarios are created.</summary>
+    [BeforeTestRun(Order = HooksOrder.TestInfrastructure)]
+    public static void ConfigureEnvironment()
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-        var useSqlStore = string.Equals(
-            Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"),
-            "1",
-            StringComparison.Ordinal);
-        Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
-        var network = new InMemNetwork();
-        // When not using SQL, share one InMemoryGreetingStore between the API container and the
-        // processor container so both operate on the same data (same pattern as InMemNetwork).
-        var sharedStore = useSqlStore ? null : (IGreetingStore)new InMemoryGreetingStore();
-        var container = SampleComposition.BuildContainer(
-            network,
-            useSqlStore: useSqlStore,
-            connectionString: DatabaseHooks.ConnectionString,
-            clock: Clock,
-            greetingStore: sharedStore);
-        // Test-only: inject deterministic concurrency failures via a store decorator.
-        container.RegisterSingleton<ConcurrencyFaultInjector>();
-        container.RegisterDecorator<IGreetingStore, FaultInjectingGreetingStoreDecorator>(Lifestyle.Singleton);
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false)
-            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                ["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests",
-            })
-            .Build();
-        var startup = new SampleStartup(
-            container,
-            network,
-            configuration,
-            useSqlStore: useSqlStore,
-            connectionString: DatabaseHooks.ConnectionString,
-            configureFallbackPolicy: configureFallbackPolicy,
-            sharedStore: sharedStore);
-        _host = new HostBuilder()
-            .ConfigureWebHost(web => web
-                .UseTestServer()
-                .ConfigureServices(startup.ConfigureServices)
-                .Configure(startup.Configure))
-            .Build();
-#pragma warning disable MA0045, VSTHRD002 // Reqnroll requires a synchronously constructible binding context.
-        _host.Start();
-#pragma warning restore MA0045, VSTHRD002
-        Client = _host.GetTestServer().CreateClient();
-        FaultInjector = container.GetInstance<ConcurrencyFaultInjector>();
     }
 
-    /// <summary>Creates and resets the sample SQL database for opt-in integration runs.</summary>
-    [Binding]
-    #pragma warning disable CA2100 // SQL is fixed schema setup; the only interpolated identifier is validated.
-    public sealed class DatabaseHooks
+    /// <summary>Creates the scenario-owned application graph and its resources.</summary>
+    [BeforeScenario(Order = HooksOrder.ApplicationSetup)]
+    public void CreateApplication()
     {
-        /// <summary>Gets the SQL connection string used by the sample integration database.</summary>
-        public static string ConnectionString =>
-            Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION")
-            ?? "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;******;TrustServerCertificate=True;Encrypt=False";
-
-        /// <summary>Creates the sample schema when SQL integration tests are enabled.</summary>
-        [BeforeTestRun(Order = -1)]
-        public static void EnsureDatabase()
-        {
-            if (!SqlEnabled())
-                return;
-
-            var builder = new SqlConnectionStringBuilder(ConnectionString);
-            builder.Remove("Initial Catalog");
-            using var dacpac = DacPackage.Load("Ark.MediatorFramework.Sample.Database.dacpac");
-            var instance = new DacServices(builder.ConnectionString);
-            instance.Deploy(
-                dacpac,
-                "Ark.MediatorFramework.Sample",
-                upgradeExisting: true,
-                new DacDeployOptions
-                {
-                    CreateNewDatabase = true,
-                    // The test SQL Server version differs from the DACPAC target platform.
-                    AllowIncompatiblePlatform = true,
-                });
-        }
-
-        /// <summary>Clears SQL state between scenarios when SQL integration tests are enabled.</summary>
-        [BeforeScenario(Order = -1)]
-        public static async Task ResetDatabaseAsync()
-        {
-            if (!SqlEnabled())
-                return;
-
-            await using var connection = new SqlConnection(ConnectionString);
-            await connection.OpenAsync().ConfigureAwait(false);
-            await using var command = connection.CreateCommand();
-            command.CommandText = "[ops].[ResetFull_OnlyForTesting]";
-            command.CommandType = System.Data.CommandType.StoredProcedure;
-            var parameter = command.Parameters.Add("@areYouReallySure", System.Data.SqlDbType.Bit);
-            parameter.Value = true;
-            await command.ExecuteNonQueryAsync().ConfigureAwait(false);
-        }
-
-        private static bool SqlEnabled()
-        {
-            return string.Equals(Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"), "1", StringComparison.Ordinal);
-        }
-
+        _application = new ApplicationTestContext(
+            printCompletedNotificationService: _printCompletedNotificationService);
     }
-#pragma warning restore CA2100
 
-    /// <summary>Gets the HTTP client for the sample's public API.</summary>
-    public HttpClient Client { get; }
-
-    /// <summary>Gets the deterministic clock used by the application graph.</summary>
-    public FakeClock Clock { get; }
-
-    /// <summary>Gets the deterministic fault injector used by concurrency tests.</summary>
-    public ConcurrencyFaultInjector FaultInjector { get; }
-
-    /// <summary>Creates a handler for an in-process gRPC client.</summary>
-    public HttpMessageHandler CreateGrpcHandler()
+    /// <summary>Disposes the scenario-owned application graph after every scenario.</summary>
+    [AfterScenario(Order = HooksOrder.ApplicationCleanup)]
+    public async Task DisposeApplication()
     {
-        return _host.GetTestServer().CreateHandler();
+        await DisposeAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Client.Dispose();
-        _host.Dispose();
+        if (_application is not null)
+        {
+            await _application.DisposeAsync().ConfigureAwait(false);
+            _application = null;
+        }
     }
 }

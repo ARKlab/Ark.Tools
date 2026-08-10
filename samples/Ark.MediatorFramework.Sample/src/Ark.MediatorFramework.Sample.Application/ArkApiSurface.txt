@@ -1,19 +1,21 @@
 ﻿/*
+CONTRACT BookPrintProcessResponse
+CONTRACT BookPrintProcessResponse.BookId : Guid
+CONTRACT BookPrintProcessResponse.ErrorMessage : string?
+CONTRACT BookPrintProcessResponse.Id : Guid
+CONTRACT BookPrintProcessResponse.Progress : double
+CONTRACT BookPrintProcessResponse.ShouldFail : bool
+CONTRACT BookPrintProcessResponse.Status : EvolvableEnum<BookPrintProcessStatus>
 CONTRACT CompleteGreetingCompositionRequest -> GreetingResponse [group=Ark]
+CONTRACT CompleteGreetingCompositionRequest.FailuresBeforeSuccess : int
 CONTRACT CompleteGreetingCompositionRequest.Id : Guid
 CONTRACT CompleteGreetingCompositionRequest.Name : string default=string.Empty
 CONTRACT ComposeGreetingRequest -> ComposeGreetingResponse [group=Greetings] [http=POST /api/v{version}/greetings/compose] [version=1+]
+CONTRACT ComposeGreetingRequest.FailuresBeforeSuccess : int
 CONTRACT ComposeGreetingRequest.Name : string default=string.Empty
 CONTRACT ComposeGreetingResponse
 CONTRACT ComposeGreetingResponse.Id : Guid
 CONTRACT ComposeGreetingResponse.Status : string default=string.Empty
-CONTRACT CreateGreetingRequest -> GreetingResponse [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings] [version=1+] [grpc=CreateGreeting] [grpc-version=1+]
-CONTRACT CreateGreetingRequest.Date : LocalDate
-CONTRACT CreateGreetingRequest.DateTime : LocalDateTime
-CONTRACT CreateGreetingRequest.Name : string default=string.Empty
-CONTRACT CreateGreetingRequest.OffsetDateTime : OffsetDateTime
-CONTRACT CreateGreetingRequest.Period : Period default=Period.Zero
-CONTRACT CreateGreetingRequest.UserId : string? server-set=true
 CONTRACT DeadLetterAck
 CONTRACT DescribeShapeRequest -> ShapeDescription [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/shapes/describe] [version=1+] [grpc=DescribeShape] [grpc-version=1+]
 CONTRACT DescribeShapeRequest.Shape.Kind : ShapeKind
@@ -75,9 +77,23 @@ CONTRACT GreetingResponseV2
 CONTRACT GreetingResponseV2.Id : Guid
 CONTRACT GreetingResponseV2.Message : string
 CONTRACT GreetingResponseV2.MessageLength : int
+CONTRACT Output
+CONTRACT Output.AuditId : Guid server-set=true
+CONTRACT Output.Date : LocalDate
+CONTRACT Output.DateTime : LocalDateTime
+CONTRACT Output.ETag : string?
+CONTRACT Output.Id : Guid server-set=true
+CONTRACT Output.Message : string server-set=true default=string.Empty
+CONTRACT Output.OffsetDateTime : OffsetDateTime
+CONTRACT Output.Period : Period default=Period.Zero
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
+CONTRACT PagedResult.Data : IEnumerable<AuditRecord>
 CONTRACT PagedResult.IsCountPartial : bool
+CONTRACT PagedResult.Limit : int
+CONTRACT PagedResult.Skip : int
+CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
+CONTRACT ProcessBookPrintProcessRequest.Id : Guid
 CONTRACT RefreshGreetingCommand -> RefreshGreetingCommand [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings/refresh] [version=1+] [grpc=RefreshGreeting] [grpc-version=1+]
 CONTRACT RefreshGreetingCommand.Id : Guid
 CONTRACT SearchGreetingsQuery -> GreetingPage [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings] [version=1+] [grpc=SearchGreetings] [grpc-version=1+]
@@ -90,14 +106,10 @@ CONTRACT ShapeDescription.Area : double
 CONTRACT ShapeDescription.Metadata.FeaturedShape.Kind : ShapeKind
 CONTRACT ShapeDescription.Metadata.Label : string
 CONTRACT ShapeDescription.Shape.Kind : ShapeKind
-CONTRACT UpdateGreetingMessageRequest -> GreetingResponse [group=Ark] [grpc-group=Greetings] [http=PUT /api/v{version}/greetings/{id}] [version=1+] [grpc=UpdateGreetingMessage] [grpc-version=1+]
-CONTRACT UpdateGreetingMessageRequest.ETag : string?
-CONTRACT UpdateGreetingMessageRequest.Id : Guid
-CONTRACT UpdateGreetingMessageRequest.Message : string default=string.Empty
 CONTRACT UpdateGreetingRequest -> EnvelopeBindingResponse [group=Ark] [http=POST /api/v{version}/greetings/{id}/envelope] [version=1+]
 CONTRACT UpdateGreetingRequest.Audit : string default=string.Empty
+CONTRACT UpdateGreetingRequest.Body.Message : string default=string.Empty
 CONTRACT UpdateGreetingRequest.Id : Guid
-CONTRACT UpdateGreetingRequest.Message : string default=string.Empty
 CONTRACT UploadBatchResponse
 CONTRACT UploadBatchResponse.Id : Guid
 CONTRACT UploadBatchResponse.Names : IReadOnlyList<string>
@@ -113,10 +125,27 @@ CONTRACT UploadResponse.ContentType : string
 CONTRACT UploadResponse.Id : Guid
 CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
+CONTRACT V1 -> Output [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings] [version=1+] [grpc=CreateGreeting] [grpc-version=1+]
+CONTRACT V1 -> Output [group=Ark] [grpc-group=Greetings] [http=PUT /api/v{version}/greetings/{id}] [version=1+] [grpc=UpdateGreetingMessage] [grpc-version=1+]
+CONTRACT V1.Data.Date : LocalDate
+CONTRACT V1.Data.DateTime : LocalDateTime
+CONTRACT V1.Data.Message : string default=string.Empty
+CONTRACT V1.Data.Name : string default=string.Empty
+CONTRACT V1.Data.OffsetDateTime : OffsetDateTime
+CONTRACT V1.Data.Period : Period default=Period.Zero
+CONTRACT V1.ETag : string?
+CONTRACT V1.Id : Guid
+CONTRACT V1.UserId : string? server-set=true
 ENUM ShapeKind.Circle=0
 ENUM ShapeKind.Square=1
+EVOLVABLE-ENUM BookPrintProcessStatus.Completed=3
+EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
+EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
+EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
+EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
 REBUS CompleteGreetingCompositionRequest -> queue:ark.mediator.sample
-REBUS CreateGreetingRequest -> queue:default
 REBUS FailingRebusRequest -> queue:ark.mediator.sample
 REBUS GreetingCreatedNotification -> queue:ark.mediator.sample
+REBUS ProcessBookPrintProcessRequest -> queue:ark.mediator.sample
+REBUS V1 -> queue:default
 */

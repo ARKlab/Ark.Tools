@@ -19,9 +19,11 @@ using NLog.Extensions.Logging;
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(ApplicationComposition),
     "/api/v{version}",
+    // These contracts require MessagePack, which the isolated Functions binding
+    // does not provide; they remain covered by the HTTP host.
     ExcludedContracts = new[]
     {
-        typeof(CreateGreetingRequest),
+        typeof(Greeting_CreateRequest.V1),
         typeof(DescribeShapeRequest),
     })]
 

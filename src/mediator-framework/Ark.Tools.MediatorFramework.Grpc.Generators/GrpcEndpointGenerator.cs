@@ -156,7 +156,19 @@ namespace Ark.MediatorFramework.Generators
                 else if (member is INamedTypeSymbol type)
                 {
                     yield return type;
+                    foreach (var nested in AllNestedTypes(type))
+                        yield return nested;
                 }
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type)
+        {
+            foreach (var nested in type.GetTypeMembers())
+            {
+                yield return nested;
+                foreach (var child in AllNestedTypes(nested))
+                    yield return child;
             }
         }
 
@@ -208,7 +220,7 @@ namespace Ark.MediatorFramework.Generators
                     type.Name,
                     GetLocation(grpc)));
 
-            var attachmentProperties = type.GetMembers().OfType<IPropertySymbol>()
+            var attachmentProperties = AllProperties(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                 .Where(property => IsAttachmentType(property.Type, attachmentType) || IsAttachmentCollection(property.Type, attachmentType))
                 .ToArray();
@@ -235,7 +247,7 @@ namespace Ark.MediatorFramework.Generators
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                type.Name,
+                GeneratedName(type),
                 grpcMethod,
                 group,
                 response,
@@ -705,7 +717,7 @@ namespace Ark.MediatorFramework.Generators
                         .Value.Value as string;
                     result.Add(new ProtoContractModel(
                         type,
-                        string.IsNullOrWhiteSpace(name) ? type.Name : name!,
+                        string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
                         XmlDocumentation.Summary(type),
                         members,
                         includes));
@@ -963,7 +975,7 @@ namespace Ark.MediatorFramework.Generators
             private EndpointModel(INamedTypeSymbol type, DiagnosticInfo diagnostic)
             {
                 TypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                TypeName = type.Name;
+                TypeName = GeneratedName(type);
                 Diagnostics = new[] { diagnostic };
                 Location = diagnostic.Location;
                 IsValid = false;
@@ -1013,6 +1025,14 @@ namespace Ark.MediatorFramework.Generators
             public DiagnosticDescriptor Descriptor { get; }
             public Location Location { get; }
             public object[] Arguments { get; }
+        }
+
+        private static string GeneratedName(INamedTypeSymbol type)
+        {
+            var names = new Stack<string>();
+            for (var current = type; current is not null; current = current.ContainingType)
+                names.Push(current.Name);
+            return string.Join("_", names);
         }
 
         private sealed class ProtoContractModel

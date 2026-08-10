@@ -184,13 +184,13 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             + (metadata.Count == 0 ? string.Empty : " [" + string.Join("] [", metadata) + "]"));
 
         var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
-        foreach (var member in type.GetMembers().OfType<IPropertySymbol>())
+        foreach (var member in AllProperties(type))
             AddContract(lines, request, member, string.Empty, visited);
         if (result is INamedTypeSymbol resultType && resultType.TypeKind == TypeKind.Class
             && !SymbolEqualityComparer.Default.Equals(resultType, type))
         {
             lines.Add($"CONTRACT {resultType.Name}");
-            foreach (var member in resultType.GetMembers().OfType<IPropertySymbol>())
+            foreach (var member in AllProperties(resultType))
                 AddContract(lines, resultType.Name, member, string.Empty, visited);
         }
         else
@@ -215,7 +215,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             && named.ContainingAssembly.Name == property.ContainingAssembly.Name
             && visited.Add(named))
         {
-            foreach (var child in named.GetMembers().OfType<IPropertySymbol>())
+            foreach (var child in AllProperties(named))
                 AddContract(lines, owner, child, path + (collection ? "[]." : "."), visited);
             visited.Remove(named);
         }
@@ -324,6 +324,13 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             foreach (var child in AllNestedTypes(nested))
                 yield return child;
         }
+    }
+
+    private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
+                yield return property;
     }
 
     private static AttributeData? Attribute(ISymbol symbol, string name) =>

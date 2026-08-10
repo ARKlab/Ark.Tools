@@ -21,7 +21,7 @@ public static class SampleHost
     /// <param name="useSqlStore">Whether the processor should use SQL persistence.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <param name="configureFallbackPolicy">Whether to configure the fallback authorization policy.</param>
-    /// <param name="sharedStore">Optional in-memory store shared by the API and processor.</param>
+    /// <param name="sharedDataContextFactory">Optional in-memory context factory shared by the API and processor.</param>
     /// <returns>The startup configuration used to complete application wiring.</returns>
     public static SampleStartup Configure(
         WebApplicationBuilder builder,
@@ -30,7 +30,7 @@ public static class SampleHost
         bool useSqlStore = true,
         string? connectionString = null,
         bool configureFallbackPolicy = true,
-        Ark.MediatorFramework.Sample.Application.IGreetingStore? sharedStore = null)
+        Ark.MediatorFramework.Sample.Application.ISampleDataContextFactory? sharedDataContextFactory = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(container);
@@ -53,7 +53,7 @@ public static class SampleHost
             useSqlStore,
             connectionString,
             configureFallbackPolicy,
-            sharedStore);
+            sharedDataContextFactory);
         startup.ConfigureServices(builder.Services);
         return startup;
     }

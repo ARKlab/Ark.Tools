@@ -6,14 +6,27 @@ using FluentValidation;
 namespace Ark.MediatorFramework.Sample.Application;
 
 /// <summary>Validates requests that create greetings.</summary>
-public sealed class CreateGreetingValidator : AbstractValidator<CreateGreetingRequest>
+public sealed class CreateGreetingValidator : AbstractValidator<Greeting_CreateRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="CreateGreetingValidator"/> class.</summary>
     public CreateGreetingValidator()
     {
-        RuleFor(request => request.Name)
+        RuleFor(request => request.Data.Name)
             .NotEmpty()
             .WithMessage("Name must not be empty.");
+    }
+}
+
+/// <summary>Validates requests that update greetings.</summary>
+public sealed class UpdateGreetingValidator : AbstractValidator<Greeting_UpdateRequest.V1>
+{
+    /// <summary>Initializes a new instance of the <see cref="UpdateGreetingValidator"/> class.</summary>
+    public UpdateGreetingValidator()
+    {
+        RuleFor(request => request.Id).NotEmpty();
+        RuleFor(request => request.Data.Message)
+            .NotEmpty()
+            .WithMessage("Message must not be empty.");
     }
 }
 

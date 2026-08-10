@@ -36,16 +36,22 @@ for every implementation task.
 
 - The sample test project is a focused application behavior example, not a
   second framework hosting suite.
+- OpenAPI, generated endpoint binding, multipart/download wire behavior,
+  streaming wire behavior, and transport authorization remain covered by the
+  framework hosting tests.
+- The sample's forwarded-prefix host policy is intentionally out of scope for
+  the application behavior suite; it is a host-composition concern rather than
+  application or mediator behavior.
 
 ## Acceptance
 
-- [ ] A repository search finds no HTTP/gRPC client or `TestServer` in the
+- [x] A repository search finds no HTTP/gRPC client or `TestServer` in the
   direct application BDD suite.
-- [ ] The removed dependencies are absent unless a documented sample-owned test
+- [x] The removed dependencies are absent unless a documented sample-owned test
   still requires them.
-- [ ] Every deleted assertion is represented by a framework-owned test or is
+- [x] Every deleted assertion is represented by a framework-owned test or is
   explicitly listed as intentionally out of scope.
-- [ ] The sample still demonstrates every application behavior in APP-03 and
+- [x] The sample still demonstrates every application behavior in APP-03 and
   APP-04.
 
 ## Tests

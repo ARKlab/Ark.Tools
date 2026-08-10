@@ -38,8 +38,8 @@ Reference implementations to mirror (read them before starting):
   something is missing, stop and record it — do not patch the generator from this task.
 - **The default test run uses the in-memory store**: SQL tests are opt-in via `ARK_SAMPLE_SQL_TESTS=1`
   (see `samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs`).
-  Every behavior below must therefore work identically on `InMemoryGreetingStore` and
-  `SqlGreetingStore`, and the tests must not require SQL.
+  Every behavior below must therefore work identically on the in-memory context factory and
+  `SampleDataContext`, and the tests must not require SQL.
 - **Do not rename or renumber existing `ProtoMember` numbers or MessagePack keys.** New fields get
   new numbers (`GreetingResponse` currently uses 1–7 → the ETag is 8).
 - **Do not weaken existing endpoints**: `GetGreetingQuery`, `CreateGreetingRequest`,
@@ -79,10 +79,10 @@ explicitly. `ops/ResetFull_OnlyForTesting.sql` needs no change.
 
 ### 3. Store and DAL
 
-`IGreetingStore` gains
+`ISampleDataContext` gains
 `Task<GreetingResponse> UpdateAsync(Guid id, string message, string? expectedETag, AuditEntry? audit, CancellationToken ctk)`.
 
-`SqlGreetingStore` / `SampleDataContext`:
+`SampleDataContext`:
 
 - Token encoding, DAL-private: `Convert.ToBase64String(rowVersionBytes)` on read;
   `Convert.FromBase64String(token)` on write, wrapped so that a malformed token becomes
@@ -103,7 +103,7 @@ explicitly. `ops/ResetFull_OnlyForTesting.sql` needs no change.
 - A `null`/absent `expectedETag` on the update path (neither header nor body field) throws
   `EntityTagMismatchException` — the sample requires the precondition. (`428 Precondition Required` is deliberately out of scope; say so in the
   handler XML docs.)
-- `InMemoryGreetingStore` must expose the same semantics with an in-memory monotonic version per id
+- `InMemorySampleDataContextFactory` must expose the same semantics with an in-memory monotonic version per id
   (for example `Convert.ToBase64String(BitConverter.GetBytes(version))`), compared under the same
   lock/`ConcurrentDictionary` update that stores the new value, so a stale token loses.
 

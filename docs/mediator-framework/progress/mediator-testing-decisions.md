@@ -231,7 +231,7 @@ tested, while also demonstrating an in-memory store profile?
 
 **B — In-memory store profile (accepted demonstration)**
 
-- Use `InMemoryGreetingStore` and in-memory document storage when the sample is
+- Use `InMemorySampleDataContextFactory` and in-memory document storage when the sample is
   explicitly run with `ARK_SAMPLE_INMEMORY_TESTS=1`.
 - Run the same contract-level scenarios against both profiles where the
   behavior depends on persistence, so the sample demonstrates both store

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.Dapper" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
