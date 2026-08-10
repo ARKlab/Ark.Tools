@@ -25,6 +25,8 @@ public sealed class SampleTestContext : IAsyncDisposable
     public ApplicationTestContext Application =>
         _application ?? throw new InvalidOperationException("The scenario application is not initialized.");
 
+    internal ApplicationTestContext? ApplicationIfInitialized => _application;
+
     /// <summary>Sets the integration-test environment before scenarios are created.</summary>
     [BeforeTestRun(Order = HooksOrder.TestInfrastructure)]
     public static void ConfigureEnvironment()
