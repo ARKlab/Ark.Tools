@@ -53,7 +53,7 @@ public sealed class MockPrintCompletedNotificationService
     [BeforeScenario(Order = HooksOrder.ExternalServiceSetup)]
     public void Attach(SampleTestContext sampleContext)
     {
-        sampleContext.ApplicationIfInitialized?.AttachPrintCompletedNotificationService(Mock.Object);
+        sampleContext.Application.AttachPrintCompletedNotificationService(Mock.Object);
     }
 
     /// <summary>Detaches this mock after the scenario's background work has stopped.</summary>
