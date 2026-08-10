@@ -92,11 +92,16 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
     public async Task<Book.V1.Output> ExecuteAsync(Book_UpdateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var book = CreateBookHandler.CreateResponse(request.Id, request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN) with
+        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var current = await context.ReadBookAsync(request.Id, ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
+        var book = current with
         {
+            Title = request.Data.Title,
+            Author = request.Data.Author,
+            Genre = request.Data.Genre,
             Description = $"Book updated: {request.Data.Title} by {request.Data.Author}",
         };
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
             throw new EntityNotFoundException($"Book '{book.Id}' was not found.");
         await context.WriteAuditAsync(new AuditEntry

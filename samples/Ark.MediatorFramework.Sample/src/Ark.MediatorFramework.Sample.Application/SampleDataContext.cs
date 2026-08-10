@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Outbox.SqlServer;
-using Ark.Tools.Outbox.Rebus;
 using Ark.Tools.Outbox;
 using Ark.Tools.Core;
 
@@ -43,7 +42,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default);
 
     /// <summary>Commits the transaction.</summary>
-    Task CommitAsync(CancellationToken ctk = default);
+    new Task CommitAsync(CancellationToken ctk = default);
 
     /// <summary>Saves a book.</summary>
     Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
@@ -74,7 +73,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
 public interface ISampleDataContextFactory : IOutboxAsyncContextFactory
 {
     /// <summary>Creates a context.</summary>
-    Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default);
+    new Task<ISampleDataContext> CreateAsync(CancellationToken ctk = default);
 }
 
 /// <summary>SQL configuration used by the mediator sample.</summary>

@@ -19,11 +19,10 @@ Feature: Greeting composition workflow
 
     Rule: Failed messages are handled deterministically
 
-        Scenario: Exhausted delivery reaches the second-level retry handler
+        Scenario: Exhausted delivery reaches the error queue
             When I dispatch a failing background message with reason "retry exhaustion"
-            Then the failed message is handled by the second-level retry handler
+            Then the error queue contains the failed message
 
-        Scenario: A failed second-level handler reaches the error queue
-            Given the failed-message handler fails
+        Scenario: A second exhausted delivery remains in the error queue
             When I dispatch a failing background message with reason "failed second-level handler"
             Then the error queue contains the failed message

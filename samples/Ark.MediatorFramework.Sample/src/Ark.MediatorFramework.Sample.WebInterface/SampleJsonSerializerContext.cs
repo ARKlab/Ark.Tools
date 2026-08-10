@@ -36,11 +36,11 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
         typeof(LocalDateTimeRangeConverter),
         typeof(ZonedDateTimeRangeConverter),
     })]
-[JsonSerializable(typeof(Greeting_CreateRequest.V1))]
-[JsonSerializable(typeof(Greeting_UpdateRequest.V1))]
-[JsonSerializable(typeof(Greeting.V1.Create))]
-[JsonSerializable(typeof(Greeting.V1.Input))]
-[JsonSerializable(typeof(Greeting.V1.Output))]
+[JsonSerializable(typeof(Greeting_CreateRequest.V1), TypeInfoPropertyName = "GreetingCreateRequestV1")]
+[JsonSerializable(typeof(Greeting_UpdateRequest.V1), TypeInfoPropertyName = "GreetingUpdateRequestV1")]
+[JsonSerializable(typeof(Greeting.V1.Create), TypeInfoPropertyName = "GreetingCreateV1")]
+[JsonSerializable(typeof(Greeting.V1.Input), TypeInfoPropertyName = "GreetingInputV1")]
+[JsonSerializable(typeof(Greeting.V1.Output), TypeInfoPropertyName = "GreetingOutputV1")]
 [JsonSerializable(typeof(RefreshGreetingCommand))]
 [JsonSerializable(typeof(GreetingResponse))]
 [JsonSerializable(typeof(ComposeGreetingRequest))]

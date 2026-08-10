@@ -5,13 +5,14 @@ using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Fakes;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
+using Ark.Tools.Core;
+using Ark.Tools.Outbox;
+
 using AwesomeAssertions;
 
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using FluentValidation;
-
-using Rebus.Bus;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 

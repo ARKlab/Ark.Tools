@@ -7,9 +7,6 @@ using Ark.MediatorFramework.Sample.RebusProcessor;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 
-using Rebus.Handlers;
-using Rebus.Retry.Simple;
-
 using Reqnroll;
 
 using SimpleInjector;
@@ -23,7 +20,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
     private static readonly TimeSpan _idleTimeout = TimeSpan.FromSeconds(5);
     private readonly SampleTestContext _sampleContext;
     private Container? _receiver;
-    private FailedMessageRecorder? _failedMessages;
     private bool _disposed;
 
     /// <summary>Initializes a new instance of the <see cref="RebusScenarioContext"/> class.</summary>
@@ -34,11 +30,10 @@ public sealed class RebusScenarioContext : IAsyncDisposable
     }
 
     /// <summary>Starts an isolated receiver after the scenario sender is initialized.</summary>
-    [BeforeScenario(Order = 1)]
+    [BeforeScenario(Order = HooksOrder.RebusReceiver)]
     public void StartReceiver()
     {
         var application = _sampleContext.Application;
-        _failedMessages = new FailedMessageRecorder();
         _receiver = RebusProcessorComposition.BuildContainer(
             application.Network,
             useSqlStore: application.UsesSqlStore,
@@ -49,10 +44,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             registerHandlers: container =>
             {
                 SampleRebusEndpoints.RegisterHandlers(container);
-                container.RegisterInstance(_failedMessages);
-                container.Collection.Append<
-                    IHandleMessages<IFailed<FailingRebusRequest>>,
-                    FailedMessageHandler>();
             },
             secondLevelRetriesEnabled: true,
             configureOptions: options => options.AddInProcessMessageInspector(),
@@ -60,13 +51,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         _receiver.Verify();
         _receiver.StartBus();
         application.StartOutboundBus();
-    }
-
-    /// <summary>Gets or sets whether the second-level retry handler should fail.</summary>
-    public bool FailSecondLevelRetryHandler
-    {
-        get => FailedMessages.ThrowOnHandle;
-        set => FailedMessages.ThrowOnHandle = value;
     }
 
     /// <summary>Sends a message that demonstrates retry exhaustion.</summary>
@@ -77,6 +61,20 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         {
             Reason = reason,
         }).ConfigureAwait(false);
+    }
+
+    /// <summary>Waits for all background and outbox work to complete.</summary>
+    [When("I wait for the background bus to be idle and the outbox to be empty")]
+    public async Task WaitForBackgroundBus()
+    {
+        await WaitForIdleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Waits for all non-scheduled background and outbox work to complete.</summary>
+    [When("I wait for the background bus to be idle and the outbox to be empty ignoring scheduled messages")]
+    public async Task WaitForBackgroundBusIgnoringScheduledMessages()
+    {
+        await WaitForIdleAsync(ignoreDeferred: true).ConfigureAwait(false);
     }
 
     /// <summary>Waits until no scenario-owned background work remains.</summary>
@@ -105,17 +103,11 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         }
     }
 
-    /// <summary>Waits for the application-owned second-level retry handler to observe a failed message.</summary>
-    public async Task<IFailed<FailingRebusRequest>> WaitForFailedMessageAsync()
-    {
-        return await FailedMessages.Message.WaitAsync(_idleTimeout).ConfigureAwait(false);
-    }
-
     /// <summary>Gets the number of failed messages currently in the error queue.</summary>
     public int ErrorQueueCount => _sampleContext.Application.Network.GetCount("error");
 
     /// <summary>Cleans up background resources before the scenario application container is disposed.</summary>
-    [AfterScenario(Order = int.MaxValue - 1)]
+    [AfterScenario(Order = HooksOrder.RebusCleanup)]
     public async Task CleanupAsync()
     {
         await DisposeAsync().ConfigureAwait(false);
@@ -175,9 +167,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         }
     }
 
-    private FailedMessageRecorder FailedMessages =>
-        _failedMessages ?? throw new InvalidOperationException("The Rebus receiver is not initialized.");
-
     private async Task<RebusWorkCounts> GetWorkCountsAsync(CancellationToken ctk)
     {
         var network = _sampleContext.Application.Network;
@@ -208,31 +197,4 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         public static readonly RebusWorkCounts Empty = new(0, 0, 0, 0, 0);
     }
 
-    private sealed class FailedMessageRecorder
-    {
-        internal TaskCompletionSource<IFailed<FailingRebusRequest>> Completion { get; } =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        internal Task<IFailed<FailingRebusRequest>> Message => Completion.Task;
-
-        internal bool ThrowOnHandle { get; set; }
-    }
-
-    private sealed class FailedMessageHandler : IHandleMessages<IFailed<FailingRebusRequest>>
-    {
-        private readonly FailedMessageRecorder _recorder;
-
-        public FailedMessageHandler(FailedMessageRecorder recorder)
-        {
-            _recorder = recorder;
-        }
-
-        public async Task Handle(IFailed<FailingRebusRequest> message)
-        {
-            await Task.CompletedTask.ConfigureAwait(false);
-            _recorder.Completion.TrySetResult(message);
-            if (_recorder.ThrowOnHandle)
-                throw new InvalidOperationException("Synthetic failed-message handler failure.");
-        }
-    }
 }

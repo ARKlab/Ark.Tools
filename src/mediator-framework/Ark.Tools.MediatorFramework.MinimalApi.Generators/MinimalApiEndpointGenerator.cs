@@ -458,7 +458,7 @@ namespace Ark.MediatorFramework.Generators
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                type.Name,
+                GeneratedName(type),
                 XmlDocumentation.Summary(type),
                 XmlDocumentation.Remarks(type),
                 apiGroup ?? defaultTag,
@@ -761,7 +761,7 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
                             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
                             sb.AppendLine("            {");
-                            sb.AppendLine("                " + e.TypeFullName + "? body;");
+                            sb.AppendLine("                " + BodyType(e) + "? body;");
                             sb.AppendLine("                try");
                             sb.AppendLine("                {");
                             sb.AppendLine("                    body = await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ReadRequestAsync<" + BodyType(e) + ">(httpContext, cancellationToken).ConfigureAwait(false);");
@@ -942,6 +942,14 @@ namespace Ark.MediatorFramework.Generators
             return endpoint.BodyProperty is null
                 ? endpoint.TypeFullName
                 : endpoint.Properties.Single(property => property.Name == endpoint.BodyProperty).TypeFullName;
+        }
+
+        private static string GeneratedName(INamedTypeSymbol type)
+        {
+            var names = new Stack<string>();
+            for (var current = type; current is not null; current = current.ContainingType)
+                names.Push(current.Name);
+            return string.Join("_", names);
         }
 
         private static string BindingValue(PropertyModel property)

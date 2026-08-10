@@ -4,6 +4,8 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Drivers;
 
+using Ark.Tools.Reqnroll;
+
 using AwesomeAssertions;
 
 using Reqnroll;
@@ -27,6 +29,12 @@ public sealed class BookSteps
     /// <summary>Creates and activates a book from one table row.</summary>
     /// <param name="table">The create request data.</param>
     [Given("I create a book with")]
+    public async Task GivenCreateBook(Table table)
+    {
+        await CreateBook(table).ConfigureAwait(false);
+        _books.Current.Should().NotBeNull();
+    }
+
     [When("I create a book with")]
     public async Task CreateBook(Table table)
     {
@@ -36,6 +44,13 @@ public sealed class BookSteps
     /// <summary>Creates books from a table and activates the last created book.</summary>
     /// <param name="table">The create request data.</param>
     [Given("I create books with")]
+    public async Task GivenCreateBooks(Table table)
+    {
+        await CreateBooks(table).ConfigureAwait(false);
+        _books.Current.Should().NotBeNull();
+    }
+
+    [When("I create books with")]
     public async Task CreateBooks(Table table)
     {
         foreach (var input in table.CreateSet<Book.V1.Create>())
@@ -54,7 +69,13 @@ public sealed class BookSteps
     [When("I update the current book with")]
     public async Task UpdateCurrentBook(Table table)
     {
-        await _books.UpdateCurrentAsync(table.CreateInstance<Book.V1.Input>()).ConfigureAwait(false);
+        var merged = table.MergeInstance(_books.Current);
+        await _books.UpdateCurrentAsync(new Book.V1.Input
+        {
+            Title = merged.Title,
+            Author = merged.Author,
+            Genre = merged.Genre,
+        }).ConfigureAwait(false);
     }
 
     /// <summary>Deletes the active book.</summary>

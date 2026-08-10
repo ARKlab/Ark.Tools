@@ -34,7 +34,6 @@ public sealed class UpdateBookRequestValidator : AbstractValidator<Book_UpdateRe
         RuleFor(request => request.Data.Title).NotEmpty().MaximumLength(200);
         RuleFor(request => request.Data.Author).NotEmpty().MaximumLength(100);
         RuleFor(request => request.Data.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
-        RuleFor(request => request.Data.ISBN).MaximumLength(20);
     }
 }
 

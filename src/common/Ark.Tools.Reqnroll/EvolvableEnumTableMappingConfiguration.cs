@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Reqnroll;
 using Ark.Tools.Core;
 
 using Reqnroll;
@@ -9,13 +8,13 @@ using Reqnroll.Assist;
 
 using System.ComponentModel;
 
-namespace Ark.MediatorFramework.Sample.Tests.Hooks;
+namespace Ark.Tools.Reqnroll;
 
-/// <summary>Registers the table mappings used by the sample's contract scenarios.</summary>
+/// <summary>Registers Reqnroll table conversion and comparison for evolvable enums.</summary>
 [Binding]
-public sealed class TableMappingConfiguration
+public sealed class EvolvableEnumTableMappingConfiguration
 {
-    /// <summary>Registers enum conversion and comparison once for the test run.</summary>
+    /// <summary>Registers the evolvable-enum table mappings once per test run.</summary>
     [BeforeTestRun]
     public static void RegisterMappings()
     {
@@ -33,6 +32,14 @@ internal sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, 
         return IsEvolvableEnum(propertyType);
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "Reqnroll resolves table property types dynamically at test runtime.")]
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2067",
+        Justification = "Reqnroll resolves table property types dynamically at test runtime.")]
     public object? Retrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
     {
         var type = Nullable.GetUnderlyingType(propertyType) ?? propertyType;

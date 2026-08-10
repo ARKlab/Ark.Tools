@@ -23,8 +23,10 @@ namespace Ark.MediatorFramework.Sample.Tests.Steps;
 public sealed class GreetingSteps
 {
     private readonly SampleTestContext _sampleContext;
+    private readonly RebusScenarioContext _rebusContext;
     private Greeting.V1.Output? _greeting;
     private GreetingResponse? _queriedGreeting;
+    private ComposeGreetingResponse? _composition;
     private GreetingResponseV2? _versionTwoGreeting;
     private PagedResult<AuditRecord>? _audits;
     private GreetingPage? _greetingPage;
@@ -35,9 +37,11 @@ public sealed class GreetingSteps
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
     /// <param name="context">The scenario's direct application context.</param>
-    public GreetingSteps(SampleTestContext context)
+    /// <param name="rebusContext">The scenario's background bus context.</param>
+    public GreetingSteps(SampleTestContext context, RebusScenarioContext rebusContext)
     {
         _sampleContext = context;
+        _rebusContext = rebusContext;
     }
 
     /// <summary>Gets the active greeting in the current scenario.</summary>
@@ -46,6 +50,13 @@ public sealed class GreetingSteps
     /// <summary>Creates and activates a greeting from a table-defined request.</summary>
     /// <param name="table">The greeting request data.</param>
     [Given("I create a greeting with")]
+    public async Task GivenCreateGreeting(Table table)
+    {
+        await CreateGreeting(table).ConfigureAwait(false);
+        _exception.Should().BeNull();
+        _greeting.Should().NotBeNull();
+    }
+
     [When("I create a greeting with")]
     public async Task CreateGreeting(Table table)
     {
@@ -56,6 +67,14 @@ public sealed class GreetingSteps
     /// <summary>Creates greetings from table rows and activates the last result.</summary>
     /// <param name="table">The greeting request data.</param>
     [Given("I create greetings with")]
+    public async Task GivenCreateGreetings(Table table)
+    {
+        await CreateGreetings(table).ConfigureAwait(false);
+        _exception.Should().BeNull();
+        _greeting.Should().NotBeNull();
+    }
+
+    [When("I create greetings with")]
     public async Task CreateGreetings(Table table)
     {
         foreach (var request in table.CreateSet<Greeting.V1.Create>())
@@ -197,6 +216,13 @@ public sealed class GreetingSteps
     /// <summary>Creates a greeting by dispatching its request contract.</summary>
     /// <param name="name">The greeting name.</param>
     [Given(@"I create the greeting ""(.*)""")]
+    public async Task GivenCreateGreeting(string name)
+    {
+        await CreateGreeting(name).ConfigureAwait(false);
+        _exception.Should().BeNull();
+        _greeting.Should().NotBeNull();
+    }
+
     [When(@"I create the greeting ""(.*)""")]
     public async Task CreateGreeting(string name)
     {
@@ -225,6 +251,44 @@ public sealed class GreetingSteps
             _greeting = ToOutput(queried);
             return queried;
         }).ConfigureAwait(false);
+    }
+
+    /// <summary>Queues a greeting composition through the application contract.</summary>
+    /// <param name="table">The composition request data.</param>
+    [When("I compose a greeting with")]
+    public async Task ComposeGreeting(Table table)
+    {
+        _composition = await Context.DispatchRequestAsync<ComposeGreetingRequest, ComposeGreetingResponse>(
+            table.CreateInstance<ComposeGreetingRequest>()).ConfigureAwait(false);
+        _composition.Status.Should().Be("queued");
+    }
+
+    /// <summary>Observes the queued greeting through its public query contract.</summary>
+    [Then("the background greeting is eventually visible through the query contract")]
+    public async Task BackgroundGreetingIsEventuallyVisible()
+    {
+        _composition.Should().NotBeNull();
+        await _rebusContext.WaitForIdleAsync().ConfigureAwait(false);
+        _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+            new GetGreetingQuery { Id = _composition!.Id }).ConfigureAwait(false);
+        _queriedGreeting.Id.Should().Be(_composition.Id);
+    }
+
+    /// <summary>Asserts that the queued greeting keeps the authenticated user in its audit.</summary>
+    /// <param name="userId">The expected user identifier.</param>
+    [Then(@"the background greeting audit is attributed to ""(.*)""")]
+    public async Task BackgroundGreetingAuditIsAttributedTo(string userId)
+    {
+        _queriedGreeting.Should().NotBeNull();
+        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+            new GetAuditsQuery
+            {
+                Identifier = _queriedGreeting!.Id.ToString("D"),
+                Limit = 25,
+            }).ConfigureAwait(false);
+        audits.Data.Should().Contain(record =>
+            record.Operation == nameof(CompleteGreetingCompositionRequest)
+            && record.UserId == userId);
     }
 
     /// <summary>Queries the evolved version-two contract.</summary>

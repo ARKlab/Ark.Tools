@@ -38,6 +38,13 @@ public sealed class BookPrintingProcessSteps
     /// <summary>Starts a print process for the active book.</summary>
     /// <param name="table">The print process data.</param>
     [Given("I start a book print process for the current book with")]
+    public async Task GivenStartCurrentBookPrintProcess(Table table)
+    {
+        await StartCurrentBookPrintProcess(table).ConfigureAwait(false);
+        _exception.Should().BeNull();
+        Current.Should().NotBeNull();
+    }
+
     [When("I start a book print process for the current book with")]
     public async Task StartCurrentBookPrintProcess(Table table)
     {

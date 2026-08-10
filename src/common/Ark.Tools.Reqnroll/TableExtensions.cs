@@ -8,6 +8,95 @@ namespace Ark.Tools.Reqnroll;
 
 public static class TableExtensions
 {
+    /// <summary>
+    /// Creates a shallow clone of an existing object and replaces only the
+    /// properties supplied by the table.
+    /// </summary>
+    /// <typeparam name="T">The record or object type.</typeparam>
+    /// <param name="table">The partial property table.</param>
+    /// <param name="existing">The object to clone.</param>
+    /// <returns>A clone with the table values applied.</returns>
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to clone test objects. Test types must be preserved.")]
+    public static T MergeInstance<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(
+        this DataTable table,
+        T existing)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(existing);
+
+        var partial = table.CreateInstance<T>();
+        var cloneMethod = existing.GetType().GetMethod(
+            "<Clone>$",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        var clone = cloneMethod?.Invoke(existing, null)
+            ?? existing.GetType().GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(existing, null)!;
+
+        foreach (var header in table.Header)
+        {
+            var property = existing.GetType().GetProperty(
+                header,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (property is null || property.SetMethod is null)
+                throw new ArgumentException(
+                    $"Type {existing.GetType().Name} does not have a writable property named '{header}'.",
+                    nameof(table));
+
+            property.SetValue(clone, property.GetValue(partial));
+        }
+
+        return (T)clone;
+    }
+
+    /// <summary>Creates a clone and replaces only the properties supplied by the table.</summary>
+    /// <typeparam name="T">The record or object type.</typeparam>
+    /// <param name="table">The partial property table.</param>
+    /// <param name="existing">The object to clone.</param>
+    /// <returns>A clone with the table values applied.</returns>
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to clone test objects. Test types must be preserved.")]
+    public static T MergeInstance<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(
+        this Table table,
+        T existing)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        ArgumentNullException.ThrowIfNull(existing);
+        var partial = table.CreateInstance<T>();
+        return MergeProperties(table.Header, existing, partial);
+    }
+
+    [RequiresUnreferencedCode("Reqnroll test helper uses reflection to clone test objects. Test types must be preserved.")]
+    private static T MergeProperties<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicProperties
+            | DynamicallyAccessedMemberTypes.NonPublicProperties
+            | DynamicallyAccessedMemberTypes.NonPublicMethods)] T>(
+        IEnumerable<string> headers,
+        T existing,
+        T partial)
+    {
+        var cloneMethod = existing!.GetType().GetMethod(
+            "<Clone>$",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        var clone = cloneMethod?.Invoke(existing, null)
+            ?? existing.GetType().GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .Invoke(existing, null)!;
+
+        foreach (var header in headers)
+        {
+            var property = existing.GetType().GetProperty(
+                header,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (property is null || property.SetMethod is null)
+                throw new ArgumentException(
+                    $"Type {existing.GetType().Name} does not have a writable property named '{header}'.",
+                    nameof(headers));
+
+            property.SetValue(clone, property.GetValue(partial));
+        }
+
+        return (T)clone;
+    }
+
     [RequiresUnreferencedCode("Reqnroll test helper uses reflection to create test objects. Test types must be preserved.")]
     public static T CreateComplexObject<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTable table)
     {

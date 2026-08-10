@@ -26,7 +26,7 @@ public sealed class DatabaseHooks
         }.ConnectionString;
 
     /// <summary>Creates the sample schema when SQL integration tests are enabled.</summary>
-    [BeforeTestRun(Order = -1)]
+    [BeforeTestRun(Order = HooksOrder.DatabaseSetup)]
     public static void EnsureDatabase()
     {
         if (!SqlEnabled())
@@ -48,7 +48,7 @@ public sealed class DatabaseHooks
     }
 
     /// <summary>Clears SQL state between scenarios when SQL integration tests are enabled.</summary>
-    [BeforeScenario(Order = -1)]
+    [BeforeScenario(Order = HooksOrder.DatabaseReset)]
     public static async Task ResetDatabaseAsync()
     {
         if (!SqlEnabled())

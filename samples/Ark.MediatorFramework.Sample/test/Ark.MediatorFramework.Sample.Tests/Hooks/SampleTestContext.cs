@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Reqnroll;
+
 using Reqnroll;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
@@ -16,21 +18,22 @@ public sealed class SampleTestContext : IAsyncDisposable
         _application ?? throw new InvalidOperationException("The scenario application is not initialized.");
 
     /// <summary>Sets the integration-test environment before scenarios are created.</summary>
-    [BeforeTestRun(Order = -2)]
+    [BeforeTestRun(Order = HooksOrder.TestInfrastructure)]
     public static void ConfigureEnvironment()
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
+        EvolvableEnumTableMappingConfiguration.RegisterMappings();
     }
 
     /// <summary>Creates the scenario-owned application graph and its resources.</summary>
-    [BeforeScenario(Order = 0)]
+    [BeforeScenario(Order = HooksOrder.ApplicationSetup)]
     public void CreateApplication()
     {
         _application = new ApplicationTestContext();
     }
 
     /// <summary>Disposes the scenario-owned application graph after every scenario.</summary>
-    [AfterScenario(Order = int.MaxValue)]
+    [AfterScenario(Order = HooksOrder.ApplicationCleanup)]
     public async Task DisposeApplication()
     {
         await DisposeAsync().ConfigureAwait(false);

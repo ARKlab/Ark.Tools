@@ -11,15 +11,15 @@ Feature: Books
                 | Title                    | Author          | Genre      | ISBN           |
                 | The Pragmatic Programmer | Hunt and Thomas | Technology | 978-0135957059 |
             When I update the current book with
-                | Title                 | Author      | Genre   | ISBN           |
-                | The Pragmatic Coder 2 | Hunt Thomas | Science | 978-0135957059 |
+                | Title                 |
+                | The Pragmatic Coder 2 |
             Then the current book is
-                | Title                 | Author      | Genre   | ISBN           |
-                | The Pragmatic Coder 2 | Hunt Thomas | Science | 978-0135957059 |
+                | Title                 | Author          | Genre      | ISBN           |
+                | The Pragmatic Coder 2 | Hunt and Thomas | Technology | 978-0135957059 |
             When I retrieve the current book
             Then the current book is
-                | Title                 | Author      | Genre   | ISBN           |
-                | The Pragmatic Coder 2 | Hunt Thomas | Science | 978-0135957059 |
+                | Title                 | Author          | Genre      | ISBN           |
+                | The Pragmatic Coder 2 | Hunt and Thomas | Technology | 978-0135957059 |
             When I delete the current book
 
     Rule: Book searches use table-defined entities and filters

@@ -43,18 +43,20 @@ public static class Book
             /// <summary>Gets the book category.</summary>
             public EvolvableEnum<Genre> Genre { get; init; }
 
-            /// <summary>Gets the optional ISBN.</summary>
-            public string? ISBN { get; init; }
         }
 
         /// <summary>Fields accepted when a book is created.</summary>
-        public record Create : Input;
+        public record Create : Input
+        {
+            /// <summary>Gets the optional ISBN assigned when the book is created.</summary>
+            public string? ISBN { get; init; }
+        }
 
         /// <summary>Fields accepted when a book is updated.</summary>
         public record Update : Input;
 
         /// <summary>Fields returned for a book.</summary>
-        public record Output : Input
+        public record Output : Create
         {
             /// <summary>Gets the book identifier.</summary>
             [ServerSet]
