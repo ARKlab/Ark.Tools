@@ -4,6 +4,9 @@
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <FunctionsEnableWorkerIndexing>false</FunctionsEnableWorkerIndexing>
+    <FunctionsEnableExecutorSourceGen>false</FunctionsEnableExecutorSourceGen>
+    <FunctionsAutoRegisterGeneratedFunctionsExecutor>false</FunctionsAutoRegisterGeneratedFunctionsExecutor>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
