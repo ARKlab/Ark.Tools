@@ -18,11 +18,17 @@ public static class HooksOrder
     /// <summary>Creates the scenario application composition.</summary>
     public const int ApplicationSetup = 0;
 
+    /// <summary>Attaches scenario-owned external service mocks.</summary>
+    public const int ExternalServiceSetup = 5;
+
     /// <summary>Starts the scenario Rebus receiver.</summary>
     public const int RebusReceiver = 10;
 
     /// <summary>Stops Rebus before the application is disposed.</summary>
-    public const int RebusCleanup = int.MaxValue - 1;
+    public const int RebusCleanup = int.MaxValue - 2;
+
+    /// <summary>Detaches scenario-owned external service mocks.</summary>
+    public const int ExternalServiceCleanup = int.MaxValue - 1;
 
     /// <summary>Disposes the scenario application composition.</summary>
     public const int ApplicationCleanup = int.MaxValue;

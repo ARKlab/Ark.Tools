@@ -3,6 +3,8 @@
 
 using Reqnroll;
 
+using Ark.MediatorFramework.Sample.Tests.Fakes;
+
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
 /// <summary>Owns the direct application composition for one Reqnroll scenario.</summary>
@@ -10,6 +12,14 @@ namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 public sealed class SampleTestContext : IAsyncDisposable
 {
     private ApplicationTestContext? _application;
+    private readonly MockPrintCompletedNotificationService _printCompletedNotificationService;
+
+    /// <summary>Initializes the scenario context with its external-service mock binding.</summary>
+    /// <param name="printCompletedNotificationService">The scenario-owned print notification mock.</param>
+    public SampleTestContext(MockPrintCompletedNotificationService printCompletedNotificationService)
+    {
+        _printCompletedNotificationService = printCompletedNotificationService;
+    }
 
     /// <summary>Gets the scenario-owned application context.</summary>
     public ApplicationTestContext Application =>
@@ -26,7 +36,8 @@ public sealed class SampleTestContext : IAsyncDisposable
     [BeforeScenario(Order = HooksOrder.ApplicationSetup)]
     public void CreateApplication()
     {
-        _application = new ApplicationTestContext();
+        _application = new ApplicationTestContext(
+            printCompletedNotificationService: _printCompletedNotificationService);
     }
 
     /// <summary>Disposes the scenario-owned application graph after every scenario.</summary>

@@ -2,13 +2,17 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Moq;
+
+using Reqnroll;
 
 namespace Ark.MediatorFramework.Sample.Tests.Fakes;
 
 /// <summary>Controls deterministic failures from the simulated external print-completion service.</summary>
-internal sealed class MockPrintCompletedNotificationService
+[Binding]
+public sealed class MockPrintCompletedNotificationService
 {
     private int _pendingFailures;
 
@@ -42,6 +46,22 @@ internal sealed class MockPrintCompletedNotificationService
         Mock.Verify(service => service.NotifyAsync(
             It.Is<BookPrintProcessResponse>(candidate => candidate.Id == process.Id),
             It.IsAny<CancellationToken>()));
+    }
+
+    /// <summary>Attaches this mock for the current scenario.</summary>
+    /// <param name="sampleContext">The scenario application context.</param>
+    [BeforeScenario(Order = HooksOrder.ExternalServiceSetup)]
+    public void Attach(SampleTestContext sampleContext)
+    {
+        sampleContext.Application.AttachPrintCompletedNotificationService(Mock.Object);
+    }
+
+    /// <summary>Detaches this mock after the scenario's background work has stopped.</summary>
+    /// <param name="sampleContext">The scenario application context.</param>
+    [AfterScenario(Order = HooksOrder.ExternalServiceCleanup)]
+    public void Detach(SampleTestContext sampleContext)
+    {
+        sampleContext.Application.DetachPrintCompletedNotificationService();
     }
 
     private async Task NotifyAsync(BookPrintProcessResponse process, CancellationToken ctk)

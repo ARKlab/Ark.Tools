@@ -47,17 +47,18 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="useSqlStore">Whether to use the SQL-backed store.</param>
     /// <param name="connectionString">The optional SQL connection string.</param>
     /// <param name="dataContextFactory">The optional context factory shared with another test resource.</param>
+    /// <param name="printCompletedNotificationService">The optional scenario-owned external-service mock.</param>
     public ApplicationTestContext(
         bool? useSqlStore = null,
         string? connectionString = null,
-        ISampleDataContextFactory? dataContextFactory = null)
+        ISampleDataContextFactory? dataContextFactory = null,
+        MockPrintCompletedNotificationService? printCompletedNotificationService = null)
     {
         Network = new InMemNetwork();
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         _principalProvider = new TestPrincipalProvider();
-        _printCompletedNotificationService = new MockPrintCompletedNotificationService();
+        _printCompletedNotificationService = printCompletedNotificationService ?? new MockPrintCompletedNotificationService();
         _printCompletedNotificationBinding = new ScenarioBindingHolder<IPrintCompletedNotificationService>();
-        _printCompletedNotificationBinding.Attach(_printCompletedNotificationService.Mock.Object);
         _printCompletedNotificationProxy = new ScenarioPrintCompletedNotificationService(_printCompletedNotificationBinding);
         _container = new Container
         {
@@ -109,6 +110,16 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     public string? ConnectionString => _connectionString;
 
     internal IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationProxy;
+
+    internal void AttachPrintCompletedNotificationService(IPrintCompletedNotificationService service)
+    {
+        _printCompletedNotificationBinding.Attach(service);
+    }
+
+    internal void DetachPrintCompletedNotificationService()
+    {
+        _printCompletedNotificationBinding.Detach();
+    }
 
     /// <summary>Gets the context factory shared by the sender and receiver.</summary>
     public ISampleDataContextFactory DataContextFactory
