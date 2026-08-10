@@ -59,6 +59,8 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         _principalProvider = new TestPrincipalProvider();
         _printCompletedNotificationService = printCompletedNotificationService ?? new MockPrintCompletedNotificationService();
         _printCompletedNotificationBinding = new ScenarioBindingHolder<IPrintCompletedNotificationService>();
+        if (printCompletedNotificationService is null)
+            _printCompletedNotificationBinding.Attach(_printCompletedNotificationService.Mock.Object);
         _printCompletedNotificationProxy = new ScenarioPrintCompletedNotificationService(_printCompletedNotificationBinding);
         _container = new Container
         {
