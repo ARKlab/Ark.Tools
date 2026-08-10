@@ -25,8 +25,6 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkRebusEndpointGenerator : IIncrementalGenerator
     {
         private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
-        private const string RebusHandlerInterface = "Rebus.Handlers.IHandleMessages<T>";
-        private const string FailedMessageInterface = "Rebus.Retry.Simple.IFailed<T>";
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
@@ -128,9 +126,12 @@ namespace Ark.MediatorFramework.Generators
 
                 foreach (var iface in type.AllInterfaces)
                 {
-                    if (iface.OriginalDefinition.ToDisplayString() != RebusHandlerInterface
-                        || iface.TypeArguments[0] is not INamedTypeSymbol failed
-                        || failed.OriginalDefinition.ToDisplayString() != FailedMessageInterface
+                    if (!IsType(iface.OriginalDefinition, "IHandleMessages", "Rebus.Handlers")
+                        || iface.TypeArguments.Length != 1)
+                        continue;
+
+                    if (iface.TypeArguments[0] is not INamedTypeSymbol failed
+                        || !IsType(failed.OriginalDefinition, "IFailed", "Rebus.Retry.Simple")
                         || failed.TypeArguments.Length != 1)
                         continue;
 
@@ -142,6 +143,10 @@ namespace Ark.MediatorFramework.Generators
 
             return handlers;
         }
+
+        private static bool IsType(INamedTypeSymbol type, string name, string @namespace)
+            => type.Name == name
+                && type.ContainingNamespace.ToDisplayString() == @namespace;
 
         private static IEnumerable<IAssemblySymbol> _referencedAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
         {
