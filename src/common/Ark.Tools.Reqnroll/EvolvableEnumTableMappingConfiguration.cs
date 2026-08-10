@@ -14,10 +14,15 @@ namespace Ark.Tools.Reqnroll;
 [Binding]
 public sealed class EvolvableEnumTableMappingConfiguration
 {
+    private static int _registered;
+
     /// <summary>Registers the evolvable-enum table mappings once per test run.</summary>
     [BeforeTestRun]
     public static void RegisterMappings()
     {
+        if (Interlocked.Exchange(ref _registered, 1) != 0)
+            return;
+
         Service.Instance.ValueRetrievers.Register(new EnumValueRetrieverAndComparer());
         Service.Instance.ValueComparers.Register(new EnumValueRetrieverAndComparer());
         Service.Instance.ValueRetrievers.Register(new EvolvableEnumValueRetrieverAndComparer());
