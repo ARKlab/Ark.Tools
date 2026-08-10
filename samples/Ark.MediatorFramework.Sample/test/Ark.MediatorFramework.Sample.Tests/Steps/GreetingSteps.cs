@@ -359,6 +359,15 @@ public sealed class GreetingSteps
         _queriedGreeting.Message.Should().Be(_greeting.Message);
     }
 
+    /// <summary>Asserts that the authenticated subject is included in the greeting.</summary>
+    /// <param name="subject">The expected authenticated subject.</param>
+    [Then(@"the greeting message identifies ""(.*)""")]
+    public void GreetingMessageIdentifies(string subject)
+    {
+        _greeting.Should().NotBeNull();
+        _greeting!.Message.Should().Contain(subject);
+    }
+
     /// <summary>Asserts the typed authorization failure.</summary>
     [Then("the request fails with an authorization exception")]
     public void RequestFailsWithAuthorizationException()

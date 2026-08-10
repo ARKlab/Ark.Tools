@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Reqnroll;
-
 using Reqnroll;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
@@ -22,7 +20,6 @@ public sealed class SampleTestContext : IAsyncDisposable
     public static void ConfigureEnvironment()
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-        EvolvableEnumTableMappingConfiguration.RegisterMappings();
     }
 
     /// <summary>Creates the scenario-owned application graph and its resources.</summary>

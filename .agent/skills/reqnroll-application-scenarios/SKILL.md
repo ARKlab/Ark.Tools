@@ -44,6 +44,10 @@ Use this skill when adding or reviewing Reqnroll features for any project.
   scenario data after every scenario.
 - Keep public binding and driver types documented and follow the project’s
   source style.
+- A `Given` setup binding may invoke the same operation as a `When`, but it must
+  assert that the operation succeeded.
+- Every scenario must finish with a `Then` assertion (or an `And` continuation
+  of one); never leave the last action as an unchecked `When`.
 
 ## Example
 

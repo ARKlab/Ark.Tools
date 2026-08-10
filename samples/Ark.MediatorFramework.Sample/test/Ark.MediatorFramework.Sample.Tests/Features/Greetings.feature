@@ -12,6 +12,16 @@ Feature: Greetings
         When I create the greeting "Anonymous greeting"
         Then the request fails with an authorization exception
 
+    Scenario: An authorized identity is used by the application
+        Given I am an authenticated user named "authorized-user"
+        When I create the greeting "Authorized greeting"
+        Then the greeting message identifies "authorized-user"
+
+    Scenario: An authenticated user without the write scope is rejected
+        Given I am an authenticated user without the greeting write scope
+        When I create the greeting "Unauthorized greeting"
+        Then the request fails with an authorization exception
+
     Scenario: Duplicate greetings violate the business rule
         Given I am an authenticated user
         And I create the greeting "Duplicate greeting"

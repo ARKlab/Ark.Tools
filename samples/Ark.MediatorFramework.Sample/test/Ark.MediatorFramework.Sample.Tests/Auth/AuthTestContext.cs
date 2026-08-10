@@ -37,6 +37,13 @@ public sealed class AuthTestContext
         _context.Application.SetAuthenticatedUser(subject, ApplicationScopes.GreetingWrite);
     }
 
+    /// <summary>Sets an authenticated principal without the greeting-write scope.</summary>
+    [Given("I am an authenticated user without the greeting write scope")]
+    public void SetAuthenticatedUserWithoutGreetingWriteScope()
+    {
+        _context.Application.SetAuthenticatedUser("unauthorized-user", "other-scope");
+    }
+
     /// <summary>Sets the application principal to an anonymous user.</summary>
     [Given("I am an anonymous user")]
     public void SetAnonymousUser()

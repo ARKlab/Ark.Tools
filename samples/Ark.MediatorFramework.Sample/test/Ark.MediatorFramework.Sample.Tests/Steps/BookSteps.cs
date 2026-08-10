@@ -85,6 +85,13 @@ public sealed class BookSteps
         await _books.DeleteCurrentAsync().ConfigureAwait(false);
     }
 
+    /// <summary>Asserts that the active book was deleted successfully.</summary>
+    [Then("the current book was deleted")]
+    public void CurrentBookWasDeleted()
+    {
+        _books.HasCurrent.Should().BeFalse();
+    }
+
     /// <summary>Searches books using the supplied table filters.</summary>
     /// <param name="table">The search query data.</param>
     [When("I search books by")]

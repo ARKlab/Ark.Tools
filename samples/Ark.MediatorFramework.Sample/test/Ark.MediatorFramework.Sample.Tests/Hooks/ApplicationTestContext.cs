@@ -275,18 +275,6 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             .CreateAsync(ctk).ConfigureAwait(false);
     }
 
-    internal async Task UpdateBookPrintProcessAsync(
-        BookPrintProcessResponse process,
-        AuditEntry audit,
-        CancellationToken ctk = default)
-    {
-        await using var dataContext = await CreateDataContextAsync(ctk).ConfigureAwait(false);
-        if (!await dataContext.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
-            throw new InvalidOperationException($"Book print process '{process.Id}' was not found.");
-        await dataContext.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
-        await dataContext.CommitAsync(ctk).ConfigureAwait(false);
-    }
-
     /// <summary>Clears all pending outbox messages during scenario cleanup.</summary>
     /// <param name="ctk">The cancellation token.</param>
     public async Task ClearOutboxAsync(CancellationToken ctk = default)

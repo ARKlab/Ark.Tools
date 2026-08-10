@@ -21,6 +21,7 @@ Feature: Books
                 | Title                 | Author          | Genre      | ISBN           |
                 | The Pragmatic Coder 2 | Hunt and Thomas | Technology | 978-0135957059 |
             When I delete the current book
+            Then the current book was deleted
 
     Rule: Book searches use table-defined entities and filters
 
@@ -85,6 +86,16 @@ Feature: Books
                 | ShouldFail |
                 | false      |
             Then the request fails because the current book is already printing
+
+        Scenario: Resume an interrupted book print process
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I have a running book print process for the current book
+            When I resume the current book print process
+            Then the current book print process is
+                | Status    | Progress |
+                | Completed | 1        |
 
         Scenario: Surface a failed external print-completion notification
             Given the print-completion notification service fails

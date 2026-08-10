@@ -66,6 +66,32 @@ public sealed class BookPrintingProcessSteps
             new GetBookPrintProcessQuery { Id = Current!.Id }).ConfigureAwait(false);
     }
 
+    /// <summary>Seeds a running process to represent interrupted background work.</summary>
+    [Given("I have a running book print process for the current book")]
+    public async Task GivenRunningBookPrintProcess()
+    {
+        var process = new BookPrintProcessResponse
+        {
+            Id = Guid.NewGuid(),
+            BookId = _books.Current.Id,
+            Progress = 0.5,
+            Status = BookPrintProcessStatus.Running,
+        };
+        await using var context = await Context.CreateDataContextAsync().ConfigureAwait(false);
+        (await context.TrySaveBookPrintProcessAsync(process).ConfigureAwait(false)).Should().BeTrue();
+        await context.CommitAsync().ConfigureAwait(false);
+        Current = process;
+    }
+
+    /// <summary>Resumes the active process through its application request.</summary>
+    [When("I resume the current book print process")]
+    public async Task ResumeCurrentBookPrintProcess()
+    {
+        Current.Should().NotBeNull();
+        Current = await Context.DispatchRequestAsync<ProcessBookPrintProcessRequest, BookPrintProcessResponse>(
+            new ProcessBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
+    }
+
     /// <summary>Asserts that the active print process matches the supplied table.</summary>
     /// <param name="table">The expected print process data.</param>
     [Then("the current book print process is")]
@@ -88,9 +114,8 @@ public sealed class BookPrintingProcessSteps
     [Then("the request fails because the current book is already printing")]
     public void RequestFailsBecauseCurrentBookIsAlreadyPrinting()
     {
-        _exception.Should().BeOfType<BusinessRuleViolationException>();
-        ((BusinessRuleViolationException)_exception!).BusinessRuleViolation
-            .Should().BeOfType<BookPrintingProcessAlreadyRunningViolation>();
+        _exception.Should().BeOfType<BusinessRuleViolationException>()
+            .Which.BusinessRuleViolation.Should().BeOfType<BookPrintingProcessAlreadyRunningViolation>();
     }
 
     private static async Task<Exception?> CaptureAsync<T>(Func<Task<T>> action)

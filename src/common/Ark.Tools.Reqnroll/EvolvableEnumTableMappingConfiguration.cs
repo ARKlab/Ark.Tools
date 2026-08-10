@@ -3,40 +3,22 @@
 
 using Ark.Tools.Core;
 
-using Reqnroll;
 using Reqnroll.Assist;
 
 using System.ComponentModel;
 
 namespace Ark.Tools.Reqnroll;
 
-/// <summary>Registers Reqnroll table conversion and comparison for evolvable enums.</summary>
-[Binding]
-public sealed class EvolvableEnumTableMappingConfiguration
+/// <summary>Converts and compares evolvable-enum values in Reqnroll tables.</summary>
+public sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
 {
-    private static int _registered;
-
-    /// <summary>Registers the evolvable-enum table mappings once per test run.</summary>
-    [BeforeTestRun]
-    public static void RegisterMappings()
-    {
-        if (Interlocked.Exchange(ref _registered, 1) != 0)
-            return;
-
-        Service.Instance.ValueRetrievers.Register(new EnumValueRetrieverAndComparer());
-        Service.Instance.ValueComparers.Register(new EnumValueRetrieverAndComparer());
-        Service.Instance.ValueRetrievers.Register(new EvolvableEnumValueRetrieverAndComparer());
-        Service.Instance.ValueComparers.Register(new EvolvableEnumValueRetrieverAndComparer());
-    }
-}
-
-internal sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
-{
+    /// <inheritdoc />
     public bool CanRetrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
     {
         return IsEvolvableEnum(propertyType);
     }
 
+    /// <inheritdoc />
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
@@ -54,11 +36,13 @@ internal sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, 
         return TypeDescriptor.GetConverter(type).ConvertFrom(null, CultureInfo.InvariantCulture, keyValuePair.Value);
     }
 
+    /// <inheritdoc />
     public bool CanCompare(object actualValue)
     {
         return IsEvolvableEnum(actualValue.GetType());
     }
 
+    /// <inheritdoc />
     public bool Compare(string expectedValue, object actualValue)
     {
         return string.Equals(expectedValue, actualValue.ToString(), StringComparison.Ordinal);

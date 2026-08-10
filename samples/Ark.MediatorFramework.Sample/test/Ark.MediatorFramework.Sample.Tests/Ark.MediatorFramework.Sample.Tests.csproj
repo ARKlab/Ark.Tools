@@ -17,13 +17,13 @@
     <PackageReference Include="NodaTime.Testing" />
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
+    <PackageReference Include="Ark.Tools.Reqnroll" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\appsettings.json"
           CopyToOutputDirectory="PreserveNewest"
           Link="appsettings.json" />
-    <ProjectReference Include="..\..\..\..\src\common\Ark.Tools.Reqnroll\Ark.Tools.Reqnroll.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.Database\Ark.MediatorFramework.Sample.Database.sqlproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>Content</OutputItemType>

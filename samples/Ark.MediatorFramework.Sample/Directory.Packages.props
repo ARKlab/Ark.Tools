@@ -19,6 +19,7 @@
     <PackageVersion Include="Ark.Tools.Outbox.Rebus" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Outbox.SqlServer" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Rebus" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Reqnroll" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Sql" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Sql.SqlServer" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid" Version="999.9.9" />

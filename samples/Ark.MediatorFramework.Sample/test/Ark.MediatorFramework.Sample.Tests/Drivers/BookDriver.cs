@@ -26,6 +26,9 @@ public sealed class BookDriver
     /// <summary>Gets the latest book search page.</summary>
     public Book.V1.Page? SearchResults { get; private set; }
 
+    /// <summary>Gets whether the scenario has an active book.</summary>
+    public bool HasCurrent => _current is not null;
+
     private Book.V1.Output? _current;
 
     /// <summary>Creates and activates a book.</summary>
