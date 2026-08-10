@@ -120,30 +120,25 @@ complete:
 
 ## 6. Task files and progress
 
-Each implementation task has its own file. The tracker below is the progress
-source of truth for this testing redesign; check a task only after its
-acceptance criteria and required scenarios pass. Tasks in the same order group
-may proceed in parallel once their dependencies are complete.
+Each implementation task remains self-contained. The current status board is
+[`tasks/README.md`](tasks/README.md); it derives status from each task file's
+acceptance checklist and is the only place that tracks completion. This plan
+defines the testing architecture and dependency boundaries, not a duplicate
+execution table.
 
-| Order | Task | Depends on | Status | Task file |
-| --- | --- | --- | --- | --- |
-| 1 | TST-01 — Approve ownership and update the delivery map | Decision log approval | [x] Complete | [TST-01](tasks/testing/TST-01-ownership-delivery-map.md) |
-| 2 | TST-02 — Create framework-owned hosting test projects | TST-01 | [x] Complete | [TST-02](tasks/testing/TST-02-hosting-test-projects.md) |
-| 3 | TST-03 — Prove generated Minimal API hosting | TST-02 | [x] Complete | [TST-03](tasks/testing/TST-03-minimal-api-hosting.md) |
-| 3 | TST-04 — Prove generated gRPC hosting | TST-02 | [x] Complete | [TST-04](tasks/testing/TST-04-grpc-hosting.md) |
-| 3 | TST-05 — Prove generated Rebus hosting | TST-02 | [x] Complete | [TST-05](tasks/testing/TST-05-rebus-hosting.md) |
-| 3 | TST-06 — Keep other framework hosts under `tests/` | TST-02 | [x] Complete | [TST-06](tasks/testing/TST-06-other-framework-hosts.md) |
-| 4 | APP-01 — Expose a direct application composition test seam | D1, D4, D7 | [x] Complete | [APP-01](tasks/testing/APP-01-application-test-seam.md) |
-| 5 | APP-02 — Rewrite Reqnroll lifecycle and dispatch steps | APP-01 | [x] Complete | [APP-02](tasks/testing/APP-02-reqnroll-dispatch.md) |
-| 6 | APP-03 — Cover synchronous application behavior | APP-02 | [x] Complete | [APP-03](tasks/testing/APP-03-synchronous-application-behavior.md) |
-| 7 | APP-04 — Exercise asynchronous workflows through in-memory Rebus | APP-01, APP-02 | [x] Complete | [APP-04](tasks/testing/APP-04-rebus-application-workflows.md) |
-| 8 | APP-05 — Run the application suite against SQL and in-memory stores | APP-03, APP-04 | [x] Complete | [APP-05](tasks/testing/APP-05-sql-and-inmemory-stores.md) |
-| 9 | APP-06 — Remove obsolete application boundary tests and dependencies | TST-03, TST-04, TST-05, APP-03, APP-05 | [x] Complete | [APP-06](tasks/testing/APP-06-remove-boundary-tests.md) |
-| 10 | APP-07 — Adopt composed request and DTO contracts | APP-03, APP-06 | [ ] In progress | [APP-07](tasks/testing/APP-07-request-dto-composition.md) |
-| 11 | APP-08 — Replace Stores with context factories and domain services | APP-03, APP-04, APP-05, APP-07 | [ ] In progress | [APP-08](tasks/testing/APP-08-context-factory-architecture.md) |
-| 12 | APP-09 — Keep transactional outbox parity in test profiles | APP-04, APP-05 | [x] Complete | [APP-09](tasks/testing/APP-09-inmemory-outbox.md) |
-| 13 | APP-10 — Scenario-scoped external mocks and application failure observation | APP-04, APP-08 | [x] Complete | [APP-10](tasks/testing/APP-10-scenario-scoped-external-mocks.md) |
-| 14 | DOC-01 — Publish the revised testing and application guidance | APP-07, APP-08, APP-09, APP-10 | [ ] In progress | [DOC-01](tasks/testing/DOC-01-testing-guidance.md) |
+The testing task sequence is:
+
+1. TST-01 through TST-06 establish framework-owned hosting-test ownership.
+2. APP-01 and APP-02 establish direct application composition and dispatch.
+3. APP-03 through APP-06 cover synchronous behavior, Rebus workflows, store
+   profiles, and removal of obsolete boundary tests.
+4. APP-07 and APP-08 complete request composition and context-factory
+   architecture.
+5. APP-09 and APP-10 preserve outbox parity and scenario-scoped external
+   mocks.
+6. The path-qualified testing task
+   [`testing/DOC-01`](tasks/testing/DOC-01-testing-guidance.md) documents the
+   resulting architecture.
 
 ## 7. Completion definition
 

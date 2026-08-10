@@ -29,11 +29,14 @@ Start with the [Mediator Framework user guide](guide/README.md).
 | Document | Purpose |
 | --- | --- |
 | [`progress/README.md`](progress/README.md) | Index of all delivery tracking documents. |
-| [`progress/implementation-plan.md`](progress/implementation-plan.md) | Phased delivery plan with the packages to introduce. |
-| [`progress/tasks.md`](progress/tasks.md) | Verifiable task breakdown with explicit acceptance criteria (epics). |
-| [`progress/tasks/README.md`](progress/tasks/README.md) | Task board: one self-contained task document per item, organized by category, with Outcomes and Acceptance criteria. |
+| [`progress/implementation-plan.md`](progress/implementation-plan.md) | Delivery sequence and workstream ownership map. |
+| [`progress/tasks.md`](progress/tasks.md) | Historical epic index and feature sequence. |
+| [`progress/tasks/README.md`](progress/tasks/README.md) | Canonical current task board with one status and link per task. |
 | [`progress/pre-release-review.md`](progress/pre-release-review.md) | Adversarial pre-release review (DX + security), feature-gap analysis vs Ark.ReferenceProject, and recorded decisions. |
-| [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md) | Reviewable open decisions that block Azure Functions implementation tasks. |
+| [`progress/aspnetcore-hosting-gap-analysis.md`](progress/aspnetcore-hosting-gap-analysis.md) | Accepted Minimal API hosting gap analysis and startup decisions. |
+| [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md) | Accepted Azure Functions hosting decisions. |
+| [`progress/mediator-testing-plan.md`](progress/mediator-testing-plan.md) | Testing architecture and implementation boundaries. |
+| [`progress/mediator-testing-decisions.md`](progress/mediator-testing-decisions.md) | Accepted testing architecture decisions. |
 | [`progress/future-improvements.md`](progress/future-improvements.md) | Explicitly deferred post-1.0 items. |
 
 ## Relationship with existing Ark.Tools building blocks
