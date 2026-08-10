@@ -25,27 +25,7 @@ public static class TableExtensions
         ArgumentNullException.ThrowIfNull(existing);
 
         var partial = table.CreateInstance<T>();
-        var cloneMethod = existing.GetType().GetMethod(
-            "<Clone>$",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        var clone = cloneMethod?.Invoke(existing, null)
-            ?? existing.GetType().GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .Invoke(existing, null)!;
-
-        foreach (var header in table.Header)
-        {
-            var property = existing.GetType().GetProperty(
-                header,
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            if (property is null || property.SetMethod is null)
-                throw new ArgumentException(
-                    $"Type {existing.GetType().Name} does not have a writable property named '{header}'.",
-                    nameof(table));
-
-            property.SetValue(clone, property.GetValue(partial));
-        }
-
-        return (T)clone;
+        return MergeProperties(table.Header, existing, partial);
     }
 
     /// <summary>Creates a clone and replaces only the properties supplied by the table.</summary>
