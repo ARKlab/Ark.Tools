@@ -12,10 +12,15 @@ namespace Ark.MediatorFramework.Sample.Tests.Init;
 [Binding]
 public sealed class TableMappingConfiguration
 {
+    private static int _registered;
+
     /// <summary>Registers the table retrievers and comparers used by the sample.</summary>
     [BeforeTestRun]
     public static void RegisterMappings()
     {
+        if (Interlocked.Exchange(ref _registered, 1) != 0)
+            return;
+
         Service.Instance.ValueRetrievers.Register(new EnumValueRetrieverAndComparer());
         Service.Instance.ValueComparers.Register(new EnumValueRetrieverAndComparer());
         Service.Instance.ValueRetrievers.Register(new EvolvableEnumValueRetrieverAndComparer());

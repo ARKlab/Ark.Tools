@@ -70,6 +70,7 @@ public sealed class BookPrintingProcessSteps
     [Given("I have a running book print process for the current book")]
     public async Task GivenRunningBookPrintProcess()
     {
+        _books.HasCurrent.Should().BeTrue();
         var process = new BookPrintProcessResponse
         {
             Id = Guid.NewGuid(),
