@@ -83,6 +83,18 @@ public sealed class ApplicationTestContextTests
         context.FailedDispatchResourceDisposed.Should().BeTrue();
     }
 
+    /// <summary>Rejects external calls after the scenario binding is detached.</summary>
+    [TestMethod]
+    public async Task ExternalServiceProxyFailsOutsideScenario()
+    {
+        var context = new ApplicationTestContext(useSqlStore: false);
+        var proxy = context.PrintCompletedNotificationService;
+        await context.DisposeAsync().ConfigureAwait(false);
+
+        var action = () => proxy.NotifyAsync(new BookPrintProcessResponse());
+        await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
+    }
+
     /// <summary>Retries deterministic optimistic-concurrency failures before updating a greeting.</summary>
     [TestMethod]
     public async Task OptimisticConcurrencyDecoratorRetriesTransientFailures()

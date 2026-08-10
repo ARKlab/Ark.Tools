@@ -105,4 +105,7 @@ Feature: Books
             When I start a book print process for the current book with
                 | ShouldFail |
                 | false      |
-            Then the error queue contains the failed message
+            And I wait for the background bus to be idle and the outbox to be empty
+            And I retrieve the current book print process
+            Then the current book print process has error details
+            And the print-completion notification service was called

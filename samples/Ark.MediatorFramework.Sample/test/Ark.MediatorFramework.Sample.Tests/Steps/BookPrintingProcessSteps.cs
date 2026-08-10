@@ -111,6 +111,14 @@ public sealed class BookPrintingProcessSteps
         Current.ErrorMessage.Should().NotBeNullOrWhiteSpace();
     }
 
+    /// <summary>Asserts that the external notification service was called for the active process.</summary>
+    [Then("the print-completion notification service was called")]
+    public void PrintCompletionNotificationServiceWasCalled()
+    {
+        Current.Should().NotBeNull();
+        _sampleContext.Application.VerifyPrintCompletionNotification(Current!);
+    }
+
     /// <summary>Asserts the typed duplicate-print-process business-rule violation.</summary>
     [Then("the request fails because the current book is already printing")]
     public void RequestFailsBecauseCurrentBookIsAlreadyPrinting()

@@ -32,7 +32,9 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     private readonly AsyncLocal<Scope?> _currentScope = new();
     private readonly Container _container;
     private readonly TestPrincipalProvider _principalProvider;
+    private readonly ScenarioBindingHolder<IPrintCompletedNotificationService> _printCompletedNotificationBinding;
     private readonly MockPrintCompletedNotificationService _printCompletedNotificationService;
+    private readonly ScenarioPrintCompletedNotificationService _printCompletedNotificationProxy;
     private readonly bool _usesSqlStore;
     private readonly string? _connectionString;
     private bool _verified;
@@ -54,6 +56,9 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         _principalProvider = new TestPrincipalProvider();
         _printCompletedNotificationService = new MockPrintCompletedNotificationService();
+        _printCompletedNotificationBinding = new ScenarioBindingHolder<IPrintCompletedNotificationService>();
+        _printCompletedNotificationBinding.Attach(_printCompletedNotificationService.Mock.Object);
+        _printCompletedNotificationProxy = new ScenarioPrintCompletedNotificationService(_printCompletedNotificationBinding);
         _container = new Container
         {
             Options =
@@ -73,7 +78,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             _connectionString,
             Clock,
             dataContextFactory,
-            _printCompletedNotificationService);
+            _printCompletedNotificationProxy);
         _container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         _container.RegisterAuthorization();
         _container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
@@ -103,7 +108,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <summary>Gets the optional SQL Server connection-string override for this scenario.</summary>
     public string? ConnectionString => _connectionString;
 
-    internal IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationService;
+    internal IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationProxy;
 
     /// <summary>Gets the context factory shared by the sender and receiver.</summary>
     public ISampleDataContextFactory DataContextFactory
@@ -176,6 +181,13 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     public void FailNextPrintCompletionNotifications(int count)
     {
         _printCompletedNotificationService.FailNext(count);
+    }
+
+    /// <summary>Verifies that the external print-completion service was called for a process.</summary>
+    /// <param name="process">The expected process.</param>
+    public void VerifyPrintCompletionNotification(BookPrintProcessResponse process)
+    {
+        _printCompletedNotificationService.VerifyNotification(process);
     }
 
     /// <summary>Dispatches a request through its decorated application handler.</summary>
@@ -293,6 +305,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             return;
 
         _disposed = true;
+        _printCompletedNotificationBinding.Detach();
         await _container.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
