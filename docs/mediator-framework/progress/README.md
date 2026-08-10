@@ -1,29 +1,51 @@
 # Mediator Framework — delivery tracking
 
-Everything in this folder tracks **how** the framework is being built. The
-reference documentation (what the framework *is*) stays one level up:
-[`../design.md`](../design.md), [`../research.md`](../research.md),
+This directory tracks delivery. The framework reference documentation remains
+one level up:
+[`../design.md`](../design.md), [`../research.md`](../research.md), and
 [`../migration-from-mvc.md`](../migration-from-mvc.md).
+
+## Delivery sequence
+
+| Sequence | Workstream | Tracking |
+| --- | --- | --- |
+| 1 | Initial implementation and productization: pure handlers, Minimal API, Rebus, gRPC, cross-cutting behavior, OpenAPI, attachments, and packages | [`tasks.md`](tasks.md) |
+| 2 | Review-driven gap analysis and release scope | [`pre-release-review.md`](pre-release-review.md) |
+| 3 | Minimal API hosting parity and startup defaults | [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) and [`tasks/README.md`](tasks/README.md) |
+| 4 | Azure Functions isolated-worker hosting | [`azure-functions-decision-log.md`](azure-functions-decision-log.md) and [`tasks/README.md`](tasks/README.md) |
+| 5 | Framework hosting tests and direct application tests | [`mediator-testing-decisions.md`](mediator-testing-decisions.md), [`mediator-testing-plan.md`](mediator-testing-plan.md), and [`tasks/README.md`](tasks/README.md) |
+| 6 | Deferred and post-release work | [`future-improvements.md`](future-improvements.md) and [`tasks/README.md`](tasks/README.md) |
+
+## Tracking documents
 
 | Document | Purpose |
 | --- | --- |
-| [`tasks/README.md`](tasks/README.md) | **Current task board.** One self-contained task document per pending item, with Outcomes and Acceptance. Start here. |
-| [`tasks.md`](tasks.md) | Historical epic breakdown (Epics 1–12) with acceptance criteria. |
-| [`implementation-plan.md`](implementation-plan.md) | Phased delivery plan (Phases 1–10) with step-by-step instructions. |
-| [`mediator-testing-plan.md`](mediator-testing-plan.md) | Proposed redesign separating framework hosting tests under `tests/` from direct application-contract tests in the sample. |
-| [`mediator-testing-decisions.md`](mediator-testing-decisions.md) | Alternatives and approval points for the mediator testing redesign. |
-| [`pre-release-review.md`](pre-release-review.md) | Adversarial pre-release review (DX + security), gap analysis vs `Ark.ReferenceProject`, recorded decisions D1–D8. |
-| [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 items. |
-| [`azure-functions-decision-log.md`](azure-functions-decision-log.md) | Reviewable decisions for the proposed Azure Functions hosting workstream. |
-| [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) | Reviewable 2026 gap analysis and implementation tasks for Minimal API hosting and sample startup parity. |
+| [`tasks/README.md`](tasks/README.md) | **Canonical current task board.** One status and one link per task. |
+| [`tasks.md`](tasks.md) | Historical epic index and feature sequence; not a second status board. |
+| [`implementation-plan.md`](implementation-plan.md) | Historical delivery record and workstream map; executable detail stays in task files. |
+| [`pre-release-review.md`](pre-release-review.md) | Adversarial review, feature gaps, and decisions D1–D9. |
+| [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) | Accepted Minimal API hosting gap analysis and HSD decisions. |
+| [`azure-functions-decision-log.md`](azure-functions-decision-log.md) | Accepted Azure Functions hosting decisions. |
+| [`mediator-testing-decisions.md`](mediator-testing-decisions.md) | Accepted testing architecture decisions. |
+| [`mediator-testing-plan.md`](mediator-testing-plan.md) | Testing architecture and implementation boundaries. |
+| [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 work. |
+
+## Status rules
+
+- The individual task file owns its Outcomes and Acceptance content.
+- [`tasks/README.md`](tasks/README.md) is the only current status board.
+- `Complete` means every acceptance checkbox in the task file is checked;
+  `In progress` means the task has both checked and unchecked acceptance items;
+  `Pending` means none are checked. Explicitly cancelled or deferred tasks keep
+  those labels.
+- Design and decision documents record rationale and constraints; they are not
+  duplicated or rewritten as progress summaries.
 
 ## Working agreement
 
 - Every task is executed in its own branch/PR with a conventional-commit title.
-- Full-solution build gate on every step:
-  `dotnet build Ark.Tools.slnx --configuration Debug` (zero warnings) and
+- Full-solution build gate:
+  `dotnet build Ark.Tools.slnx --configuration Debug` and
   `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`.
-- A task that changes framework behavior described in [`../design.md`](../design.md)
+- A task that changes behavior described in [`../design.md`](../design.md)
   updates that document in the same PR.
-- Progress is recorded in [`tasks/README.md`](tasks/README.md) (checkbox in the
-  execution order) — that file is the single source of truth for "what is left".
