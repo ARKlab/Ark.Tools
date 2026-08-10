@@ -26,15 +26,15 @@ affected entity after the bus is idle.
 
 ## Acceptance
 
-- [ ] A singleton application service can call a scenario mock with parameter
+- [x] A singleton application service can call a scenario mock with parameter
   matching and verification.
-- [ ] A call outside a scenario fails as a global test failure.
-- [ ] The real external service is not registered in the scenario container.
-- [ ] Sender and Rebus receiver resolve the same scenario binding without
+- [x] A call outside a scenario fails as a global test failure.
+- [x] The real external service is not registered in the scenario container.
+- [x] Sender and Rebus receiver resolve the same scenario binding without
   depending on `AsyncLocal` flow across Rebus threads.
-- [ ] Generated Rebus registration discovers same-assembly `IFailed<T>` handlers.
-- [ ] No sample test registers or asserts an `IFailed<T>` recorder.
-- [ ] Failure scenarios verify external calls or reread application state.
+- [x] Generated Rebus registration discovers same-assembly `IFailed<T>` handlers.
+- [x] No sample test registers or asserts an `IFailed<T>` recorder.
+- [x] Failure scenarios verify external calls or reread application state.
 
 ## Tests
 

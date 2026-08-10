@@ -142,7 +142,7 @@ may proceed in parallel once their dependencies are complete.
 | 10 | APP-07 — Adopt composed request and DTO contracts | APP-03, APP-06 | [ ] In progress | [APP-07](tasks/testing/APP-07-request-dto-composition.md) |
 | 11 | APP-08 — Replace Stores with context factories and domain services | APP-03, APP-04, APP-05, APP-07 | [ ] In progress | [APP-08](tasks/testing/APP-08-context-factory-architecture.md) |
 | 12 | APP-09 — Keep transactional outbox parity in test profiles | APP-04, APP-05 | [x] Complete | [APP-09](tasks/testing/APP-09-inmemory-outbox.md) |
-| 13 | APP-10 — Scenario-scoped external mocks and application failure observation | APP-04, APP-08 | [ ] Planned | [APP-10](tasks/testing/APP-10-scenario-scoped-external-mocks.md) |
+| 13 | APP-10 — Scenario-scoped external mocks and application failure observation | APP-04, APP-08 | [x] Complete | [APP-10](tasks/testing/APP-10-scenario-scoped-external-mocks.md) |
 | 14 | DOC-01 — Publish the revised testing and application guidance | APP-07, APP-08, APP-09, APP-10 | [ ] In progress | [DOC-01](tasks/testing/DOC-01-testing-guidance.md) |
 
 ## 7. Completion definition

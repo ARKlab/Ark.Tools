@@ -45,7 +45,7 @@ separate document under [`testing/`](testing/):
 8. [x] [APP-06](testing/APP-06-remove-boundary-tests.md)
 9. [ ] [APP-07](testing/APP-07-request-dto-composition.md) · [ ] [APP-08](testing/APP-08-context-factory-architecture.md)
 10. [x] [APP-09](testing/APP-09-inmemory-outbox.md)
-11. [ ] [APP-10](testing/APP-10-scenario-scoped-external-mocks.md)
+11. [x] [APP-10](testing/APP-10-scenario-scoped-external-mocks.md)
 12. [ ] [DOC-01](testing/DOC-01-testing-guidance.md)
 
 ## Conventions for every task PR

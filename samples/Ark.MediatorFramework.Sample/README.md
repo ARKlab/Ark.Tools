@@ -57,6 +57,11 @@ the same project:
 The direct application scenarios do not assert URLs, status codes, serialized
 JSON, or generated transport wrappers.
 
+External adapters are singleton proxies over explicitly attached,
+scenario-owned bindings. Rebus sender and receiver containers share that
+binding without relying on `AsyncLocal`; exhausted workflows observe the
+application-owned failure handler through persisted state or external calls.
+
 Framework capabilities such as source generation, transport serialization,
 OpenAPI schema generation, attachments and rich gRPC errors are covered by
 unit tests in `tests/Ark.Tools.MediatorFramework.Tests`.
