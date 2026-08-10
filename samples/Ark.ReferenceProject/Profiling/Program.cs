@@ -40,6 +40,8 @@ public class ReferenceEndpointBenchmarks
 {
     private const int RequestsPerBenchmark = 10;
     private static readonly TimeSpan RebusIdleTimeout = TimeSpan.FromMinutes(15);
+    private static readonly ManualResetEventSlim IterationCleanupDelay = new();
+    private const string SqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
 
     private readonly AuthTestContext _auth = new();
     private IFlurlClient? _client;
@@ -53,6 +55,7 @@ public class ReferenceEndpointBenchmarks
     public async Task Setup()
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+        ConfigureSqlClientSwitch();
         DeployDatabase();
         await DatabaseUtils.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
         Environment.SetEnvironmentVariable(
@@ -77,6 +80,7 @@ public class ReferenceEndpointBenchmarks
         /// </summary>
         public ReferenceBenchmarkConfig()
         {
+            Options |= ConfigOptions.DisableOptimizationsValidator;
             BuildTimeout = TimeSpan.FromMinutes(10);
             AddJob(Job.Default
                 .WithLaunchCount(1)
@@ -156,13 +160,13 @@ public class ReferenceEndpointBenchmarks
     /// Waits for Rebus to become idle after each benchmark iteration.
     /// </summary>
     [IterationCleanup]
-    public async Task WaitForRebusToBecomeIdle()
+    public void WaitForRebusToBecomeIdle()
     {
         var timeout = Stopwatch.StartNew();
         var consecutiveIdleChecks = 0;
         while (timeout.Elapsed < RebusIdleTimeout)
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
+            IterationCleanupDelay.Wait(TimeSpan.FromMilliseconds(100));
             if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
@@ -187,6 +191,30 @@ public class ReferenceEndpointBenchmarks
         _client?.Dispose();
         await TestHost.Server.StopAsync().ConfigureAwait(false);
         TestHost.AfterTests();
+    }
+
+    private static void ConfigureSqlClientSwitch()
+    {
+        switch (Environment.GetEnvironmentVariable(SqlClientSwitchEnvironmentVariable))
+        {
+            case null:
+            case "":
+            case "baseline":
+                return;
+            case "make-read-async-blocking":
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking", true);
+                return;
+            case "experimental-async":
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", false);
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour", false);
+                return;
+            default:
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Unsupported {0} value. Use baseline, make-read-async-blocking, or experimental-async.",
+                        SqlClientSwitchEnvironmentVariable));
+        }
     }
 
     private async Task<Book.V1.Output> CreateBook()
