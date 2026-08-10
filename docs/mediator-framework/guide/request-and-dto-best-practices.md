@@ -22,7 +22,7 @@ public static class Book
             public required string ISBN { get; init; }
         }
 
-        public record Output : Input
+        public record Output : Create
         {
             [ServerSet]
             public Guid Id { get; init; }

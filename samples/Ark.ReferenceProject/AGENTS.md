@@ -319,12 +319,16 @@ public static class Book_CreateRequest
 
 Handlers own the transaction lifecycle. Inject a context factory and compose
 fine-grained reads, validation, writes, locks, idempotency checks, external
-calls, and commit in the handler. Contexts/DALs own ORM operations and expose
-composable methods; they do not decide when a transaction starts or commits.
+calls, and commit in the handler. Business rules belong in domain services,
+which handlers call with the necessary contexts and clients. Contexts/DALs own
+ORM operations and persistence side-effects and expose composable methods; they
+do not decide when a transaction starts or commits.
 
 Singleton domain services own reusable business rules and side-effects. Use
 them from handlers and messages when the same domain action is needed by more
-than one entry point. External adapters own calls to systems outside the
+than one entry point; they are the DRY solution for handlers, not a mandatory
+layer. Domain services publish or send events/messages and call external
+services through adapters. External adapters own calls to systems outside the
 current service. Each adapter must have a mock/stub implementation and a
 binding driver for tests. SQL, the bus, blob storage, and other persistence
 owned by this service remain contexts/DALs, not external adapters.
@@ -336,6 +340,8 @@ owned by this service remain contexts/DALs, not external adapters.
 - Keep contexts/DALs fine-grained so handlers can choose locking or optimistic
   concurrency for each workflow.
 - Put reusable domain behavior in singleton domain services.
+- Put persistence side-effects in contexts/DALs.
+- Publish/send events and call external services from domain services.
 - Hide external systems behind mockable adapters and test binding drivers.
 
 **DON'T:**
@@ -345,6 +351,7 @@ owned by this service remain contexts/DALs, not external adapters.
   Store. The Store pattern is explicitly rejected.
 - Move business rules or side-effects into a context/DAL.
 - Treat service-owned SQL, bus, or blob storage as an external adapter.
+- Add a domain service when a single handler has no reusable business logic.
 
 ## Common Code Patterns
 

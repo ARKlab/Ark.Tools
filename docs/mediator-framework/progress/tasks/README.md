@@ -30,6 +30,7 @@ separate document under [`testing/`](testing/):
 | APP-07 | [Adopt composed request and DTO contracts](testing/APP-07-request-dto-composition.md) |
 | APP-08 | [Replace Stores with context factories and domain services](testing/APP-08-context-factory-architecture.md) |
 | APP-09 | [Keep transactional outbox parity in test profiles](testing/APP-09-inmemory-outbox.md) |
+| APP-10 | [Scenario-scoped external mocks and application failure observation](testing/APP-10-scenario-scoped-external-mocks.md) |
 | DOC-01 | [Publish the revised testing guidance](testing/DOC-01-testing-guidance.md) |
 
 ### Recommended testing-redesign execution order
@@ -44,7 +45,8 @@ separate document under [`testing/`](testing/):
 8. [x] [APP-06](testing/APP-06-remove-boundary-tests.md)
 9. [ ] [APP-07](testing/APP-07-request-dto-composition.md) · [ ] [APP-08](testing/APP-08-context-factory-architecture.md)
 10. [x] [APP-09](testing/APP-09-inmemory-outbox.md)
-11. [ ] [DOC-01](testing/DOC-01-testing-guidance.md)
+11. [ ] [APP-10](testing/APP-10-scenario-scoped-external-mocks.md)
+12. [ ] [DOC-01](testing/DOC-01-testing-guidance.md)
 
 ## Conventions for every task PR
 

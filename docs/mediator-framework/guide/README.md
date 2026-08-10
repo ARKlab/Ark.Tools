@@ -11,7 +11,8 @@ and states the observable request, response, or generated output to expect.
 1. Start with [Getting started](getting-started.md) for the end-to-end workflow.
 2. Read [Host setup and composition](host-setup-and-composition.md) before wiring
    a real application host.
-3. Read [Request and DTO best practices](request-and-dto-best-practices.md) and
+3. Read [Request and DTO best practices](request-and-dto-best-practices.md),
+   [Application architecture](application-architecture-best-practices.md), and
    [Contracts and handlers](contracts-and-handlers.md) before exposing a
    contract on any transport.
 4. Then go to the transport-specific guide for each public interface you expose.
@@ -24,6 +25,7 @@ and states the observable request, response, or generated output to expect.
 | Host wiring, DI, middleware, startup order | [Host setup and composition](host-setup-and-composition.md) | A reproducible `ConfigureServices`/`Configure` setup that matches the sample |
 | Contract and handler design | [Contracts and handlers](contracts-and-handlers.md) | Pure handlers with stable contracts and clear trust boundaries |
 | Request and DTO composition | [Request and DTO best practices](request-and-dto-best-practices.md) | Versioned models and composed operation envelopes |
+| Application layering | [Application architecture](application-architecture-best-practices.md) | Explicit handler transactions, contexts, domain services, and adapters |
 | HTTP exposure | [HTTP endpoints](http-endpoints.md) | Generated Minimal API routes, documented status codes, and predictable binding |
 | gRPC exposure | [gRPC](grpc.md) | Generated code-first services, exported `.proto`, and reusable test/client setup |
 | Rebus exposure | [Rebus](rebus.md) | Generated handlers and routing for asynchronous processing |
