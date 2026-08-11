@@ -11,7 +11,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 
-using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost;
+using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 

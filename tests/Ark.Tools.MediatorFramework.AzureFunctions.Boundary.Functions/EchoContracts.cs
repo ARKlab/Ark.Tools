@@ -6,7 +6,7 @@ using Ark.Tools.Solid;
 
 using FluentValidation;
 
-namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost;
+namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
 /// <summary>Response returned by the echo contracts.</summary>
 public sealed record EchoResponse
