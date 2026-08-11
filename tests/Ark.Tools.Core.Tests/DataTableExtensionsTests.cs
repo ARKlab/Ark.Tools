@@ -424,7 +424,7 @@ public class DataTableExtensionsTests
     {
         using var table = new DataTable();
 
-        var act = () => ThrowAfterFirst().ToDataTable(table, null);
+        var act = () => _throwAfterFirst().ToDataTable(table, null);
 
         act.Should().Throw<InvalidOperationException>().WithMessage("Enumeration failed.");
 
@@ -495,7 +495,7 @@ public class DataTableExtensionsTests
         second.Rows[1]["Id"].Should().Be(3);
     }
 
-    private static IEnumerable<Entity> ThrowAfterFirst()
+    private static IEnumerable<Entity> _throwAfterFirst()
     {
         yield return new Entity { Id = 1 };
         throw new InvalidOperationException("Enumeration failed.");

@@ -32,7 +32,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     [TestMethod]
     public async Task FirstPolicySuccessStopsEvaluation()
     {
-        await using var container = CreateContainer<AuthorizedRequest, TestPolicy>();
+        await using var container = _createContainer<AuthorizedRequest, TestPolicy>();
         var auth = new AuthorizationService(true);
         var inner = new RequestHandler();
         var decorator = new PolicyAuthorizeOrLogicRequestDecorator<AuthorizedRequest, object>(inner, auth, new UserContext(), container);
@@ -46,7 +46,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     [TestMethod]
     public async Task AllPoliciesFailurePreservesPolicyMessages()
     {
-        await using var container = CreateContainer<DeniedRequest, TestPolicy>();
+        await using var container = _createContainer<DeniedRequest, TestPolicy>();
         var decorator = new PolicyAuthorizeOrLogicRequestDecorator<DeniedRequest, object>(
             new RequestHandler(), new AuthorizationService(false), new UserContext(), container);
 
@@ -84,7 +84,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
         values.Distinct().Count().Should().Be(1);
     }
 
-    private static Container CreateContainer<TRequest, TPolicy>()
+    private static Container _createContainer<TRequest, TPolicy>()
         where TRequest : class
         where TPolicy : class, IAuthorizationPolicy
     {

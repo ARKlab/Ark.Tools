@@ -34,7 +34,7 @@ public static class NLogConfigurer
 
     static NLogConfigurer()
     {
-        ConfigureUnhandledExceptionLogging();
+        _configureUnhandledExceptionLogging();
 
         LogManager.Setup()
             .SetupExtensions(b => b
@@ -59,7 +59,7 @@ public static class NLogConfigurer
             ;
     }
 
-    private static void ConfigureUnhandledExceptionLogging()
+    private static void _configureUnhandledExceptionLogging()
     {
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {

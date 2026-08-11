@@ -38,7 +38,8 @@ public sealed class ProcessBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await using var readContext = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var readContext = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = readContext.ConfigureAwait(false);
         var process = await readContext.ReadBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
         await readContext.CommitAsync(ctk).ConfigureAwait(false);
@@ -57,7 +58,7 @@ public sealed class ProcessBookPrintProcessHandler :
                 Progress = 0.5,
                 Status = BookPrintProcessStatus.Running,
             };
-            process = await PersistAsync(process, ctk).ConfigureAwait(false);
+            process = await _persistAsync(process, ctk).ConfigureAwait(false);
         }
 
         process = process.ShouldFail
@@ -71,25 +72,26 @@ public sealed class ProcessBookPrintProcessHandler :
                 Progress = 1,
                 Status = BookPrintProcessStatus.Completed,
             };
-        process = await PersistAsync(process, ctk).ConfigureAwait(false);
+        process = await _persistAsync(process, ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
         return process;
     }
 
-    private async Task<BookPrintProcessResponse> PersistAsync(
+    private async Task<BookPrintProcessResponse> _persistAsync(
         BookPrintProcessResponse process,
         CancellationToken ctk)
     {
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
-        await context.WriteAuditAsync(CreateAudit(process.Id), ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
+        await context.WriteAuditAsync(_createAudit(process.Id), ctk).ConfigureAwait(false);
         if (!await context.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new EntityNotFoundException($"Book print process '{process.Id}' was not found.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return process;
     }
 
-    private AuditEntry CreateAudit(Guid id)
+    private AuditEntry _createAudit(Guid id)
     {
         return new AuditEntry
         {

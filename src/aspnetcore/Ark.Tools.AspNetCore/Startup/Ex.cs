@@ -20,7 +20,7 @@ namespace Ark.Tools.AspNetCore.Startup;
 
 public static class Ex
 {
-    internal static IServiceCollection ArkConfigureSwaggerVersions(this IServiceCollection services, IEnumerable<ApiVersion> versions, Func<ApiVersion, OpenApiInfo> infoBuilder)
+    internal static IServiceCollection _arkConfigureSwaggerVersions(this IServiceCollection services, IEnumerable<ApiVersion> versions, Func<ApiVersion, OpenApiInfo> infoBuilder)
     {
         services.ConfigureSwaggerGen(c =>
         {

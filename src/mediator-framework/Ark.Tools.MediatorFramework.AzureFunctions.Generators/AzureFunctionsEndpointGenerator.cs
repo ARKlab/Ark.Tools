@@ -19,21 +19,21 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 {
     // ponytail: [GeneratedRegex] is not available for netstandard2.0 targets; static field compiles and caches once.
     private static readonly Regex _routeParamRegex = new Regex(@"\{(?<param>[^}:]+)(?::[^}]+)?\}", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
-    private const string HostAttribute = "Ark.MediatorFramework.HttpHostAttribute";
-    private const string EndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
-    private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
-    private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
-    private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
-    private const string HttpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
-    private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
-    private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
-    private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
-    private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
-    private const string SolidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
-    private const string SolidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
-    private const string SolidCommand = "global::Ark.Tools.Solid.ICommand";
+    private const string _hostAttribute = "Ark.MediatorFramework.HttpHostAttribute";
+    private const string _endpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
+    private const string _versioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
+    private const string _httpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
+    private const string _httpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
+    private const string _httpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
+    private const string _serverSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
+    private const string _eTagAttribute = "Ark.MediatorFramework.ETagAttribute";
+    private const string _arkAttachment = "Ark.MediatorFramework.IArkAttachment";
+    private const string _asyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
+    private const string _solidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
+    private const string _solidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
+    private const string _solidCommand = "global::Ark.Tools.Solid.ICommand";
 
-    private static readonly DiagnosticDescriptor MessagePackNotSupported = new(
+    private static readonly DiagnosticDescriptor _messagePackNotSupported = new(
         "ARKMF030",
         "MessagePack is not supported by Azure Functions",
         "HTTP endpoint '{0}' enables MessagePack and cannot be selected by an Azure Functions host",
@@ -41,7 +41,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
-    private static readonly DiagnosticDescriptor DuplicateRoute = new(
+    private static readonly DiagnosticDescriptor _duplicateRoute = new(
         "ARKMF031",
         "Duplicate Azure Functions route",
         "HTTP endpoints '{0}' and '{1}' resolve to the same Azure Functions route '{2}'",
@@ -49,7 +49,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
-    private static readonly DiagnosticDescriptor DuplicateFunction = new(
+    private static readonly DiagnosticDescriptor _duplicateFunction = new(
         "ARKMF032",
         "Duplicate Azure Functions name",
         "HTTP endpoints '{0}' and '{1}' resolve to the same Azure Functions name '{2}'",
@@ -61,14 +61,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
-                HostAttribute,
+                _hostAttribute,
                 static (_, _) => true,
-                static (attributeContext, _) => ExtractHost(attributeContext))
+                static (attributeContext, _) => _extractHost(attributeContext))
             .Where(static host => host is not null)
             .Select(static (host, _) => host!.Value)
             .Collect();
         var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
-                EndpointAttribute,
+                _endpointAttribute,
                 static (_, _) => true,
                 static (attributeContext, _) => new EndpointCandidate(
                     (INamedTypeSymbol)attributeContext.TargetSymbol,
@@ -77,10 +77,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(
             hosts.Combine(sourceEndpoints),
-            static (productionContext, pair) => Emit(productionContext, pair.Left, pair.Right));
+            static (productionContext, pair) => _emit(productionContext, pair.Left, pair.Right));
     }
 
-    private static HostInfo? ExtractHost(GeneratorAttributeSyntaxContext context)
+    private static HostInfo? _extractHost(GeneratorAttributeSyntaxContext context)
     {
         var host = context.Attributes[0];
         if (host.ConstructorArguments.Length < 2
@@ -91,12 +91,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return new HostInfo(
             marker,
             prefix,
-            GetTypes(host, "IncludedContracts"),
-            GetTypes(host, "ExcludedContracts"),
+            _getTypes(host, "IncludedContracts"),
+            _getTypes(host, "ExcludedContracts"),
             marker.Locations.Any(location => location.IsInSource));
     }
 
-    private static void Emit(
+    private static void _emit(
         SourceProductionContext context,
         ImmutableArray<HostInfo> hosts,
         ImmutableArray<EndpointCandidate> sourceEndpoints)
@@ -110,18 +110,18 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             var candidates = host.MarkerIsInSource
                 ? sourceEndpoints.Where(candidate =>
                     SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
-                : AllTypes(host.Marker.ContainingAssembly.GlobalNamespace)
+                : _allTypes(host.Marker.ContainingAssembly.GlobalNamespace)
                     .Select(type => new EndpointCandidate(
                         type,
                         type.GetAttributes().FirstOrDefault(attribute =>
-                            attribute.AttributeClass?.ToDisplayString() == EndpointAttribute)))
+                            attribute.AttributeClass?.ToDisplayString() == _endpointAttribute)))
                     .Where(candidate => candidate.Attribute is not null);
             foreach (var candidate in candidates)
             {
-                if (!IsSelected(candidate.Type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
+                if (!_isSelected(candidate.Type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
                     continue;
 
-                var endpoint = CreateEndpoint(candidate.Type, candidate.Attribute!, host.Prefix);
+                var endpoint = _createEndpoint(candidate.Type, candidate.Attribute!, host.Prefix);
                 if (endpoint is not null)
                     endpoints.Add(endpoint.Value);
             }
@@ -135,8 +135,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 .Where(version => endpoint.Retired == 0 || version < endpoint.Retired)
                 .Select(version => endpoint with
                 {
-                    Route = ExpandRoute(endpoint.Prefix, endpoint.Template, version),
-                    FunctionName = Sanitize(endpoint.TypeName + "_v" + version.ToString(CultureInfo.InvariantCulture)),
+                    Route = _expandRoute(endpoint.Prefix, endpoint.Template, version),
+                    FunctionName = _sanitize(endpoint.TypeName + "_v" + version.ToString(CultureInfo.InvariantCulture)),
                 }));
 
         var valid = new List<Endpoint>();
@@ -144,7 +144,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             if (endpoint.MessagePack)
             {
-                context.ReportDiagnostic(Diagnostic.Create(MessagePackNotSupported, endpoint.Location, endpoint.TypeName));
+                context.ReportDiagnostic(Diagnostic.Create(_messagePackNotSupported, endpoint.Location, endpoint.TypeName));
                 continue;
             }
 
@@ -154,7 +154,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             if (duplicateRoute.TypeName is not null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    DuplicateRoute, endpoint.Location, duplicateRoute.TypeName, endpoint.TypeName, endpoint.Route));
+                    _duplicateRoute, endpoint.Location, duplicateRoute.TypeName, endpoint.TypeName, endpoint.Route));
                 continue;
             }
 
@@ -163,7 +163,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             if (duplicateFunction.TypeName is not null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    DuplicateFunction, endpoint.Location, duplicateFunction.TypeName, endpoint.TypeName, endpoint.FunctionName));
+                    _duplicateFunction, endpoint.Location, duplicateFunction.TypeName, endpoint.TypeName, endpoint.FunctionName));
                 continue;
             }
 
@@ -179,14 +179,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("{");
         foreach (var endpoint in valid)
         {
-            EmitFunction(source, endpoint);
+            _emitFunction(source, endpoint);
         }
-        EmitHealthCheckFunction(source);
+        _emitHealthCheckFunction(source);
         source.AppendLine("}");
         context.AddSource("ArkGeneratedFunctions.g.cs", source.ToString());
     }
 
-    private static void EmitFunction(StringBuilder source, Endpoint endpoint)
+    private static void _emitFunction(StringBuilder source, Endpoint endpoint)
     {
         var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
         var routeProperties = endpoint.Properties.Where(p => p.IsRoute && !p.IsServerSet).ToArray();
@@ -202,7 +202,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.Append("        [global::Microsoft.Azure.Functions.Worker.HttpTrigger(")
             .Append("global::Microsoft.Azure.Functions.Worker.AuthorizationLevel.Anonymous, \"")
             .Append(endpoint.Verb.ToLowerInvariant()).Append("\", Route = \"")
-            .Append(Escape(endpoint.Route)).AppendLine("\")]");
+            .Append(_escape(endpoint.Route)).AppendLine("\")]");
         source.AppendLine("        global::Microsoft.AspNetCore.Http.HttpRequest request,");
         source.AppendLine("        global::System.Threading.CancellationToken cancellationToken)");
         source.AppendLine("    {");
@@ -223,7 +223,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 .Append(", ")
                 .Append(endpoint.AllowedContentTypes.IsDefaultOrEmpty
                     ? "global::System.Array.Empty<string>()"
-                    : "new string[] { " + string.Join(", ", endpoint.AllowedContentTypes.Select(Literal)) + " }")
+                    : "new string[] { " + string.Join(", ", endpoint.AllowedContentTypes.Select(_literal)) + " }")
                 .AppendLine(", cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        }");
             source.AppendLine("        catch (global::System.NotSupportedException)");
@@ -266,15 +266,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("        }");
             source.AppendLine("        if (_bodyNullable is null)");
             source.AppendLine("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"INVALID_REQUEST_BODY\", detail: \"Request body is missing or could not be deserialized.\");");
-            source.Append("        var body = ").Append(ConstructEnvelope(endpoint, endpoint.BodyProperty!, "_bodyNullable")).AppendLine(";");
+            source.Append("        var body = ").Append(_constructEnvelope(endpoint, endpoint.BodyProperty!, "_bodyNullable")).AppendLine(";");
         }
         else if (!hasAttachment)
         {
-            source.Append("        var body = ").Append(ConstructEnvelope(endpoint, null, null)).AppendLine(";");
+            source.Append("        var body = ").Append(_constructEnvelope(endpoint, null, null)).AppendLine(";");
         }
         else
         {
-            source.Append("        var body = ").Append(ConstructEnvelope(
+            source.Append("        var body = ").Append(_constructEnvelope(
                 endpoint,
                 attachment.Name,
                 attachment.IsAttachmentCollection ? "_attachments" : "_attachments[0]")).AppendLine(";");
@@ -285,26 +285,26 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             if (prop.IsString)
             {
-                EmitPropertyAssignment(source, endpoint, "        ", prop.Name,
-                    "request.RouteValues[" + Literal(prop.BindingName) + "]?.ToString()!");
+                _emitPropertyAssignment(source, endpoint, "        ", prop.Name,
+                    "request.RouteValues[" + _literal(prop.BindingName) + "]?.ToString()!");
             }
             else
             {
                 var varName = "_route_" + prop.Name;
-                source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(Literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
+                source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(_literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
                 source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '").Append(prop.BindingName).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-                EmitPropertyAssignment(source, endpoint, "        ", prop.Name, varName);
+                _emitPropertyAssignment(source, endpoint, "        ", prop.Name, varName);
             }
         }
 
         // Query string binding (per-property, no runtime reflection)
         foreach (var prop in queryProperties)
         {
-            source.Append("        if (request.Query.TryGetValue(").Append(Literal(prop.Name)).Append(", out var _qs_").Append(prop.Name).AppendLine("))");
+            source.Append("        if (request.Query.TryGetValue(").Append(_literal(prop.Name)).Append(", out var _qs_").Append(prop.Name).AppendLine("))");
             source.AppendLine("        {");
             if (prop.IsString)
             {
-                EmitPropertyAssignment(source, endpoint, "            ", prop.Name,
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name,
                     "((string?)_qs_" + prop.Name + ")!");
             }
             else
@@ -312,7 +312,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 var varName = "_query_" + prop.Name;
                 source.Append("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(_qs_").Append(prop.Name).Append(", out var ").Append(varName).AppendLine("))");
                 source.Append("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-                EmitPropertyAssignment(source, endpoint, "            ", prop.Name, varName);
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, varName);
             }
             source.AppendLine("        }");
         }
@@ -320,7 +320,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         // Server-set property reset (per-property, no runtime reflection)
         foreach (var prop in serverSetProperties)
         {
-            EmitPropertyAssignment(source, endpoint, "        ", prop.Name, "default!");
+            _emitPropertyAssignment(source, endpoint, "        ", prop.Name, "default!");
         }
         var _etagProperties = endpoint.Properties.Where(p => p.IsETag).ToArray();
         if (_etagProperties.Length > 0)
@@ -329,7 +329,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             foreach (var prop in _etagProperties)
             {
                 source.AppendLine("        if (_etag is not null)");
-                EmitPropertyAssignment(source, endpoint, "            ", prop.Name, "_etag");
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, "_etag");
             }
         }
 
@@ -354,8 +354,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "404" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
-            EmitResponseETag(source, endpoint, "_result");
-            EmitResponse(source, endpoint);
+            _emitResponseETag(source, endpoint, "_result");
+            _emitResponse(source, endpoint);
         }
         else
         {
@@ -364,8 +364,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "204" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
-            EmitResponseETag(source, endpoint, "_result");
-            EmitResponse(source, endpoint);
+            _emitResponseETag(source, endpoint, "_result");
+            _emitResponse(source, endpoint);
         }
 
         source.AppendLine("        }");
@@ -380,7 +380,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("    }");
     }
 
-    private static void EmitPropertyAssignment(StringBuilder source, Endpoint endpoint, string indent, string propertyName, string value)
+    private static void _emitPropertyAssignment(StringBuilder source, Endpoint endpoint, string indent, string propertyName, string value)
     {
         if (endpoint.IsRecord)
             source.Append(indent).Append("body = body with { ").Append(propertyName).Append(" = ").Append(value).AppendLine(" };");
@@ -388,7 +388,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append(indent).Append("body.").Append(propertyName).Append(" = ").Append(value).AppendLine(";");
     }
 
-    private static string ConstructEnvelope(Endpoint endpoint, string? assignedProperty, string? assignedValue)
+    private static string _constructEnvelope(Endpoint endpoint, string? assignedProperty, string? assignedValue)
     {
         if (endpoint.ConstructorParameters.IsDefaultOrEmpty)
         {
@@ -405,7 +405,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             + ")";
     }
 
-    private static void EmitHealthCheckFunction(StringBuilder source)
+    private static void _emitHealthCheckFunction(StringBuilder source)
     {
         source.AppendLine("    [global::Microsoft.Azure.Functions.Worker.Function(\"ArkHealthCheck\")]");
         source.AppendLine("    public static async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Http.IResult> ArkHealthCheck(");
@@ -417,7 +417,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("    }");
     }
 
-    private static void EmitResponse(StringBuilder source, Endpoint endpoint)
+    private static void _emitResponse(StringBuilder source, Endpoint endpoint)
     {
         if (endpoint.ResponseType == "global::Ark.MediatorFramework.IArkAttachment")
         {
@@ -436,7 +436,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
     }
 
-    private static void EmitResponseETag(StringBuilder source, Endpoint endpoint, string resultName)
+    private static void _emitResponseETag(StringBuilder source, Endpoint endpoint, string resultName)
     {
         if (endpoint.ResponseETagProperty is null)
             return;
@@ -456,7 +456,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private readonly record struct EndpointCandidate(INamedTypeSymbol Type, AttributeData? Attribute);
 
-    private static Endpoint? CreateEndpoint(
+    private static Endpoint? _createEndpoint(
         INamedTypeSymbol type,
         AttributeData attribute,
         string prefix)
@@ -468,35 +468,35 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             return null;
 
         var versioning = type.GetAttributes()
-            .FirstOrDefault(item => item.AttributeClass?.ToDisplayString() == VersioningAttribute);
-        var introduced = GetNamedInt(versioning, "Introduced", 1);
-        var retired = GetNamedInt(versioning, "Retired", 0);
-        var messagePack = GetNamedBool(attribute, "AcceptsMessagePack");
-        var successStatusCode = GetNamedInt(attribute, "SuccessStatusCode", 200);
-        var nullResultStatusCode = GetNamedInt(attribute, "NullResultStatusCode", 0);
-        var maxFileCount = GetNamedInt(attribute, "MaxFileCount", 0);
-        var allowedContentTypes = GetNamedStrings(attribute, "AllowedContentTypes");
+            .FirstOrDefault(item => item.AttributeClass?.ToDisplayString() == _versioningAttribute);
+        var introduced = _getNamedInt(versioning, "Introduced", 1);
+        var retired = _getNamedInt(versioning, "Retired", 0);
+        var messagePack = _getNamedBool(attribute, "AcceptsMessagePack");
+        var successStatusCode = _getNamedInt(attribute, "SuccessStatusCode", 200);
+        var nullResultStatusCode = _getNamedInt(attribute, "NullResultStatusCode", 0);
+        var maxFileCount = _getNamedInt(attribute, "MaxFileCount", 0);
+        var allowedContentTypes = _getNamedStrings(attribute, "AllowedContentTypes");
         var kind = HandlerKind.None;
         string? responseType = null;
         INamedTypeSymbol? responseSymbol = null;
         foreach (var iface in type.AllInterfaces)
         {
             var definition = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            if (definition == SolidRequest)
+            if (definition == _solidRequest)
             {
                 kind = HandlerKind.Request;
                 responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
-            if (definition == SolidQuery)
+            if (definition == _solidQuery)
             {
                 kind = HandlerKind.Query;
                 responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
-            if (definition == SolidCommand)
+            if (definition == _solidCommand)
             {
                 kind = HandlerKind.Command;
                 break;
@@ -514,25 +514,25 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             StringComparer.OrdinalIgnoreCase);
 
         // Extract per-property binding info at generation time (no runtime reflection per request)
-        var properties = AllProperties(type)
+        var properties = _allProperties(type)
             .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
                 && p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
             .Select(p =>
             {
                 var routeAttr = p.GetAttributes()
-                    .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == HttpRouteAttribute);
+                    .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == _httpRouteAttribute);
                 var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
-                var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpQueryAttribute);
-                var isBody = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == HttpBodyAttribute);
-                var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ServerSetAttribute);
-                var isETag = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == ETagAttribute);
+                var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _httpQueryAttribute);
+                var isBody = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _httpBodyAttribute);
+                var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute);
+                var isETag = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _eTagAttribute);
                 var isString = p.Type.SpecialType == SpecialType.System_String;
-                var isAttachment = p.Type.ToDisplayString() == ArkAttachment;
+                var isAttachment = p.Type.ToDisplayString() == _arkAttachment;
                 var isAttachmentCollection = p.Type is INamedTypeSymbol collection
                     && collection.AllInterfaces.Any(item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
                     && collection.TypeArguments.Length == 1
-                    && collection.TypeArguments[0].ToDisplayString() == ArkAttachment;
+                    && collection.TypeArguments[0].ToDisplayString() == _arkAttachment;
                 return new PropertyInfo(
                     p.Name,
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -549,9 +549,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .ToImmutableArray();
         var responseETagProperty = responseSymbol is null
             ? null
-            : AllProperties(responseSymbol)
+            : _allProperties(responseSymbol)
                 .FirstOrDefault(property => property.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == ETagAttribute))
+                    attribute.AttributeClass?.ToDisplayString() == _eTagAttribute))
                 ?.Name;
         var bodyProperty = properties.FirstOrDefault(property => property.IsBody);
 
@@ -570,7 +570,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             kind,
             responseType ?? "global::System.Void",
             properties,
-            GetNamedBool(attribute, "AllowAnonymous"),
+            _getNamedBool(attribute, "AllowAnonymous"),
             successStatusCode,
             nullResultStatusCode,
             responseETagProperty,
@@ -579,12 +579,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             maxFileCount,
             allowedContentTypes,
             responseSymbol is INamedTypeSymbol responseNamed
-                && responseNamed.OriginalDefinition.ToDisplayString() == AsyncEnumerable,
+                && responseNamed.OriginalDefinition.ToDisplayString() == _asyncEnumerable,
             type.IsRecord,
-            ConstructorParameters(type, properties));
+            _constructorParameters(type, properties));
     }
 
-    private static ImmutableArray<string> ConstructorParameters(
+    private static ImmutableArray<string> _constructorParameters(
         INamedTypeSymbol type,
         ImmutableArray<PropertyInfo> properties)
     {
@@ -600,7 +600,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             : constructor.Parameters.Select(parameter => parameter.Name).ToImmutableArray();
     }
 
-    private static bool IsSelected(
+    private static bool _isSelected(
         INamedTypeSymbol type,
         IAssemblySymbol assembly,
         ImmutableArray<INamedTypeSymbol> included,
@@ -613,7 +613,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return included.IsDefaultOrEmpty || included.Any(item => SymbolEqualityComparer.Default.Equals(item, type));
     }
 
-    private static ImmutableArray<INamedTypeSymbol> GetTypes(AttributeData attribute, string name)
+    private static ImmutableArray<INamedTypeSymbol> _getTypes(AttributeData attribute, string name)
     {
         var argument = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
         if (argument.Kind != TypedConstantKind.Array)
@@ -624,42 +624,42 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .ToImmutableArray();
     }
 
-    private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol space)
+    private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol space)
     {
         foreach (var member in space.GetMembers())
         {
             if (member is INamespaceSymbol child)
             {
-                foreach (var type in AllTypes(child))
+                foreach (var type in _allTypes(child))
                     yield return type;
             }
             else if (member is INamedTypeSymbol type)
             {
                 yield return type;
-                foreach (var nested in AllNestedTypes(type))
+                foreach (var nested in _allNestedTypes(type))
                     yield return nested;
             }
         }
     }
 
-    private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type)
+    private static IEnumerable<INamedTypeSymbol> _allNestedTypes(INamedTypeSymbol type)
     {
         foreach (var nested in type.GetTypeMembers())
         {
             yield return nested;
-            foreach (var child in AllNestedTypes(nested))
+            foreach (var child in _allNestedTypes(nested))
                 yield return child;
         }
     }
 
-    private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
+    private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)
     {
         for (var current = type; current is not null; current = current.BaseType)
             foreach (var member in current.GetMembers().OfType<IPropertySymbol>())
                 yield return member;
     }
 
-    private static int GetNamedInt(AttributeData? attribute, string name, int fallback)
+    private static int _getNamedInt(AttributeData? attribute, string name, int fallback)
     {
         if (attribute is null)
             return fallback;
@@ -668,12 +668,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return value.Value is int number ? number : fallback;
     }
 
-    private static bool GetNamedBool(AttributeData attribute, string name)
+    private static bool _getNamedBool(AttributeData attribute, string name)
     {
         return attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value.Value is true;
     }
 
-    private static ImmutableArray<string> GetNamedStrings(AttributeData attribute, string name)
+    private static ImmutableArray<string> _getNamedStrings(AttributeData attribute, string name)
     {
         var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
         return value.Kind == TypedConstantKind.Array
@@ -681,12 +681,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             : ImmutableArray<string>.Empty;
     }
 
-    private static string Combine(string prefix, string template)
+    private static string _combine(string prefix, string template)
     {
         return prefix.TrimEnd('/') + "/" + template.TrimStart('/');
     }
 
-    private static string Sanitize(string value)
+    private static string _sanitize(string value)
     {
         var builder = new StringBuilder(value.Length);
         foreach (var character in value)
@@ -694,16 +694,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return builder.ToString();
     }
 
-    private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    private static string _escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
-    private static string Literal(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+    private static string _literal(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
-    private static string ExpandRoute(string prefix, string template, int version)
+    private static string _expandRoute(string prefix, string template, int version)
     {
         var versionText = version.ToString(CultureInfo.InvariantCulture);
         var route = template.Contains("{version}", StringComparison.OrdinalIgnoreCase)
             ? template.Replace("{version}", versionText)
-            : Combine(prefix.Replace("{version}", versionText), template);
+            : _combine(prefix.Replace("{version}", versionText), template);
         return route.Trim('/');
     }
 

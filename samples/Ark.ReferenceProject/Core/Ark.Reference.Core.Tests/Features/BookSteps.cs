@@ -172,13 +172,13 @@ public sealed class BookSteps
     [Then(@"the stored Book response should be")]
     public void ThenTheStoredBookResponseShouldBe(Table table)
     {
-        BookMatched(_output, table);
+        _bookMatched(_output, table);
     }
 
     [Then(@"the Book response should match")]
     public void ThenTheBookResponseShouldMatch(Table table)
     {
-        BookMatched(_output, table);
+        _bookMatched(_output, table);
     }
 
     [Then(@"the Book response count should be (.*)")]
@@ -189,7 +189,7 @@ public sealed class BookSteps
         res!.Count.Should().Be(expectedCount);
     }
 
-    private static void BookMatched(Book.V1.Output? output, Table table)
+    private static void _bookMatched(Book.V1.Output? output, Table table)
     {
         output.Should().NotBeNull();
         var expected = table.CreateInstance<Book.V1.Output>();

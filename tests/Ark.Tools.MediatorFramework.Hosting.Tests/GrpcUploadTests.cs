@@ -24,7 +24,7 @@ public sealed class GrpcUploadTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         using var call = client.UploadHostingAttachment(
             cancellationToken: app.Lifetime.ApplicationStopping);
@@ -56,7 +56,7 @@ public sealed class GrpcUploadTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         using var call = client.UploadHostingAttachment(
             cancellationToken: app.Lifetime.ApplicationStopping);
@@ -81,7 +81,7 @@ public sealed class GrpcUploadTests
         fixture.State.LastAttachmentName.Should().BeNull();
     }
 
-    private static GrpcChannel CreateChannel(WebApplication app)
+    private static GrpcChannel _createChannel(WebApplication app)
     {
         return GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {

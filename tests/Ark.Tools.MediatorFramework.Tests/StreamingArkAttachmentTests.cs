@@ -13,7 +13,7 @@ public sealed class StreamingArkAttachmentTests
     [TestMethod]
     public async Task OpenReadAsyncReadsMetadataAndAllChunks()
     {
-        var attachment = new StreamingArkAttachment(ChunksAsync());
+        var attachment = new StreamingArkAttachment(_chunksAsync());
         var stream = attachment.OpenRead();
         await using (stream.ConfigureAwait(false))
         {
@@ -29,7 +29,7 @@ public sealed class StreamingArkAttachmentTests
     [TestMethod]
     public async Task OpenReadAsyncRejectsMissingMetadata()
     {
-        var attachment = new StreamingArkAttachment(MissingMetadataAsync());
+        var attachment = new StreamingArkAttachment(_missingMetadataAsync());
         var stream = attachment.OpenRead();
         await using (stream.ConfigureAwait(false))
         {
@@ -41,7 +41,7 @@ public sealed class StreamingArkAttachmentTests
     [TestMethod]
     public async Task ReadAllAsyncReadsMetadataDelimitedFilesInOrder()
     {
-        var attachments = await StreamingArkAttachments.ReadAllAsync(MultipleChunksAsync()).ConfigureAwait(false);
+        var attachments = await StreamingArkAttachments.ReadAllAsync(_multipleChunksAsync()).ConfigureAwait(false);
 
         attachments.Select(attachment => attachment.Name).Should().Equal("first.txt", "second.txt");
         attachments.Select(attachment => attachment.ContentType).Should().Equal("text/plain", "text/plain");
@@ -57,7 +57,7 @@ public sealed class StreamingArkAttachmentTests
         }
     }
 
-    private static async IAsyncEnumerable<UploadDocumentChunk> ChunksAsync()
+    private static async IAsyncEnumerable<UploadDocumentChunk> _chunksAsync()
     {
         yield return new UploadDocumentChunk
         {
@@ -68,13 +68,13 @@ public sealed class StreamingArkAttachmentTests
         await Task.CompletedTask.ConfigureAwait(false);
     }
 
-    private static async IAsyncEnumerable<UploadDocumentChunk> MissingMetadataAsync()
+    private static async IAsyncEnumerable<UploadDocumentChunk> _missingMetadataAsync()
     {
         yield return new UploadDocumentChunk { Data = Encoding.UTF8.GetBytes("invalid") };
         await Task.CompletedTask.ConfigureAwait(false);
     }
 
-    private static async IAsyncEnumerable<UploadDocumentChunk> MultipleChunksAsync()
+    private static async IAsyncEnumerable<UploadDocumentChunk> _multipleChunksAsync()
     {
         yield return new UploadDocumentChunk
         {

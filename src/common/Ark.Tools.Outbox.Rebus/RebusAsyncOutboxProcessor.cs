@@ -15,7 +15,7 @@ internal sealed class RebusAsyncOutboxProcessor : RebusOutboxProcessorCore
         _outboxAsyncContextFactory = outboxContextFactory;
     }
 
-    protected override async Task<bool> _loop(CancellationToken ctk)
+    private protected override async Task<bool> _loop(CancellationToken ctk)
     {
         bool waitForMessages = true;
         var ctx = await _outboxAsyncContextFactory.CreateAsync(ctk).ConfigureAwait(false);

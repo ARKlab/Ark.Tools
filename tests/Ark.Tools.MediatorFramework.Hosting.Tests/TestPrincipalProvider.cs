@@ -13,7 +13,7 @@ internal sealed class TestPrincipalProvider : IContextProvider<ClaimsPrincipal>
 
     public ClaimsPrincipal Current => _current;
 
-    internal void SetCurrent(ClaimsPrincipal principal)
+    public void SetCurrent(ClaimsPrincipal principal)
     {
         ArgumentNullException.ThrowIfNull(principal);
         _current = principal;

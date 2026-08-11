@@ -36,14 +36,14 @@ public sealed class SwaggerSpecSteps : IDisposable
         _swaggerDoc = JsonDocument.Parse(json);
     }
 
-    private JsonDocument Doc => _swaggerDoc ?? throw new InvalidOperationException("Fetch the swagger spec first");
+    private JsonDocument _doc => _swaggerDoc ?? throw new InvalidOperationException("Fetch the swagger spec first");
 
     // ── Paths ──────────────────────────────────────────────────────────────────
 
     [Then(@"the swagger spec contains path matching (.*)")]
     public void ThenSwaggerSpecContainsPathMatching(string pathFragment)
     {
-        var paths = Doc.RootElement.GetProperty("paths");
+        var paths = _doc.RootElement.GetProperty("paths");
         var found = paths.EnumerateObject().Any(p =>
             p.Name.Contains(pathFragment, StringComparison.OrdinalIgnoreCase));
         found.Should().BeTrue($"Swagger paths should contain '{pathFragment}'");
@@ -52,7 +52,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec does not contain path matching (.*)")]
     public void ThenSwaggerSpecDoesNotContainPathMatching(string pathFragment)
     {
-        var paths = Doc.RootElement.GetProperty("paths");
+        var paths = _doc.RootElement.GetProperty("paths");
         var found = paths.EnumerateObject().Any(p =>
             p.Name.Contains(pathFragment, StringComparison.OrdinalIgnoreCase));
         found.Should().BeFalse($"Swagger paths should NOT contain '{pathFragment}'");
@@ -67,7 +67,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec LocalDateRange schema has start property with format date")]
     public void ThenLocalDateRangeHasStartWithFormatDate()
     {
-        var schema = GetSchema("LocalDateRange");
+        var schema = _getSchema("LocalDateRange");
         schema.TryGetProperty("properties", out var props).Should().BeTrue("LocalDateRange should have 'properties'");
         props.TryGetProperty("start", out var startProp).Should().BeTrue("LocalDateRange should have 'start' property");
 
@@ -78,7 +78,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec Entity.V1.Output allOf has date property with format date")]
     public void ThenEntityOutputAllOfHasDateWithFormatDate()
     {
-        var schema = GetSchema("Entity.V1.Output");
+        var schema = _getSchema("Entity.V1.Output");
         schema.TryGetProperty("allOf", out var allOf).Should().BeTrue("Entity.V1.Output should use allOf for inheritance");
 
         // The second allOf entry contains the output-specific properties
@@ -98,7 +98,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec schema (.*) does not have property (.*)")]
     public void ThenSwaggerSchemaDoesNotHaveProperty(string schemaName, string propertyName)
     {
-        var schema = GetSchema(schemaName);
+        var schema = _getSchema(schemaName);
         if (schema.TryGetProperty("properties", out var props))
         {
             props.TryGetProperty(propertyName, out _).Should().BeFalse(
@@ -110,7 +110,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec schema (.*) allOf has property (.*)")]
     public void ThenSwaggerSchemaAllOfHasProperty(string schemaName, string propertyName)
     {
-        var schema = GetSchema(schemaName);
+        var schema = _getSchema(schemaName);
         schema.TryGetProperty("allOf", out var allOf).Should().BeTrue(
             $"Schema {schemaName} should use allOf");
 
@@ -125,7 +125,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec entity endpoint has no odata content type in responses")]
     public void ThenEntityEndpointHasNoODataContentType()
     {
-        var paths = Doc.RootElement.GetProperty("paths");
+        var paths = _doc.RootElement.GetProperty("paths");
 
         // Find any entity path (non-OData standard controller)
         var entityPath = paths.EnumerateObject()
@@ -155,7 +155,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec GET entity endpoint has EntityResult as array parameter")]
     public void ThenEntityGetEndpointHasEntityResultAsArray()
     {
-        var paths = Doc.RootElement.GetProperty("paths");
+        var paths = _doc.RootElement.GetProperty("paths");
 
         // Find GET /entity/{entityId} path (contains entityId in path template)
         var entityPath = paths.EnumerateObject()
@@ -186,7 +186,7 @@ public sealed class SwaggerSpecSteps : IDisposable
     [Then(@"the swagger spec entity GET endpoint has response (\d+)")]
     public void ThenEntityGetEndpointHasResponse(string statusCode)
     {
-        var paths = Doc.RootElement.GetProperty("paths");
+        var paths = _doc.RootElement.GetProperty("paths");
 
         // Match any entity get endpoint
         var entityGetOp = paths.EnumerateObject()
@@ -206,9 +206,9 @@ public sealed class SwaggerSpecSteps : IDisposable
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private JsonElement GetSchema(string schemaName)
+    private JsonElement _getSchema(string schemaName)
     {
-        if (!Doc.RootElement.TryGetProperty("components", out var components))
+        if (!_doc.RootElement.TryGetProperty("components", out var components))
             throw new InvalidOperationException("Swagger doc has no 'components' section");
 
         if (!components.TryGetProperty("schemas", out var schemas))

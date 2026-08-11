@@ -50,12 +50,12 @@ public sealed class AttachmentSteps
     {
         var card = table.CreateInstance<GreetingCardTable>();
         _id = Guid.NewGuid();
-        _upload = await Context.DispatchRequestAsync<UploadGreetingCardRequest, UploadResponse>(
+        _upload = await _context.DispatchRequestAsync<UploadGreetingCardRequest, UploadResponse>(
             new UploadGreetingCardRequest
             {
                 Id = _id,
                 Label = card.Name,
-                Attachment = CreateAttachment(card),
+                Attachment = _createAttachment(card),
             }).ConfigureAwait(false);
     }
 
@@ -66,11 +66,11 @@ public sealed class AttachmentSteps
     {
         var cards = table.CreateSet<GreetingCardTable>().ToArray();
         _id = Guid.NewGuid();
-        _batch = await Context.DispatchRequestAsync<UploadGreetingCardsRequest, UploadBatchResponse>(
+        _batch = await _context.DispatchRequestAsync<UploadGreetingCardsRequest, UploadBatchResponse>(
             new UploadGreetingCardsRequest
             {
                 Id = _id,
-                Attachments = cards.Select(CreateAttachment).ToArray(),
+                Attachments = cards.Select(_createAttachment).ToArray(),
             }).ConfigureAwait(false);
     }
 
@@ -78,7 +78,7 @@ public sealed class AttachmentSteps
     [When("I retrieve the current greeting card")]
     public async Task RetrieveGreetingCard()
     {
-        _attachment = await Context.DispatchQueryAsync<GetDocumentQuery, IArkAttachment>(
+        _attachment = await _context.DispatchQueryAsync<GetDocumentQuery, IArkAttachment>(
             new GetDocumentQuery { Id = _id }).ConfigureAwait(false);
     }
 
@@ -88,7 +88,7 @@ public sealed class AttachmentSteps
     {
         try
         {
-            _attachment = await Context.DispatchQueryAsync<GetDocumentQuery, IArkAttachment>(
+            _attachment = await _context.DispatchQueryAsync<GetDocumentQuery, IArkAttachment>(
                 new GetDocumentQuery { Id = Guid.NewGuid() }).ConfigureAwait(false);
             _exception = null;
         }
@@ -115,7 +115,8 @@ public sealed class AttachmentSteps
     public async Task CurrentGreetingCardIs(Table table)
     {
         _attachment.Should().NotBeNull();
-        await using var stream = _attachment!.OpenRead();
+        var stream = _attachment!.OpenRead();
+        await using var __ctx = stream.ConfigureAwait(false);
         using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: false);
         var card = new GreetingCardTable
         {
@@ -143,11 +144,11 @@ public sealed class AttachmentSteps
         _exception.Should().BeOfType<EntityNotFoundException>();
     }
 
-    private static ArkAttachment CreateAttachment(GreetingCardTable card)
+    private static ArkAttachment _createAttachment(GreetingCardTable card)
     {
         var content = Encoding.UTF8.GetBytes(card.Content);
         return new ArkAttachment(card.Name, card.ContentType, () => new MemoryStream(content, writable: false));
     }
 
-    private ApplicationTestContext Context => _sampleContext.Application;
+    private ApplicationTestContext _context => _sampleContext.Application;
 }

@@ -24,7 +24,8 @@ public sealed class GetBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var process = await context.ReadBookPrintProcessAsync(query.Id, ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book print process '{query.Id}' was not found.");
         await context.CommitAsync(ctk).ConfigureAwait(false);

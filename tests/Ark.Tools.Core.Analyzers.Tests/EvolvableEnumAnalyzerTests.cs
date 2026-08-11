@@ -19,7 +19,7 @@ public class EvolvableEnumAnalyzerTests
     [TestMethod]
     public async Task ValidEnums_ShouldNotReportDiagnostics()
     {
-        var diagnostics = await AnalyzeAsync(
+        var diagnostics = await _analyzeAsync(
             """
             namespace Ark.Tools.Core
             {
@@ -42,7 +42,7 @@ public class EvolvableEnumAnalyzerTests
     [TestMethod]
     public async Task InvalidEnums_ShouldReportActionableErrors()
     {
-        var diagnostics = await AnalyzeAsync(
+        var diagnostics = await _analyzeAsync(
             """
             namespace Ark.Tools.Core
             {
@@ -60,7 +60,7 @@ public class EvolvableEnumAnalyzerTests
         diagnostics.Should().OnlyContain(item => item.Severity == DiagnosticSeverity.Error);
     }
 
-    private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
+    private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
             "AnalyzerTests",

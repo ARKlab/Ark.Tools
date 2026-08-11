@@ -216,7 +216,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
               AND (@FromTimestamp IS NULL OR [Timestamp] >= @FromTimestamp)
               AND (@ToTimestamp IS NULL OR [Timestamp] <= @ToTimestamp)
             """;
-        var orderBy = BuildAuditOrderBy(query.Sort ?? []);
+        var orderBy = _buildAuditOrderBy(query.Sort ?? []);
         var sql = $"""
             SELECT [Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp]
             FROM [dbo].[Audit]
@@ -237,7 +237,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             query.Limit,
         };
         var command = new CommandDefinition(sql, parameters, Transaction, cancellationToken: ctk);
-        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        await using var __ctx = results.ConfigureAwait(false);
         var records = await results.ReadAsync<AuditRecord>().ConfigureAwait(false);
         var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
         return new PagedResult<AuditRecord>
@@ -265,11 +266,12 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             """;
         var command = new CommandDefinition(sql, new
         {
-            MessageContains = query.MessageContains is null ? null : EscapeLikePattern(query.MessageContains),
+            MessageContains = query.MessageContains is null ? null : _escapeLikePattern(query.MessageContains),
             query.Skip,
             query.Limit,
         }, Transaction, cancellationToken: ctk);
-        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        await using var __ctx = results.ConfigureAwait(false);
         var rows = await results.ReadAsync<GreetingRow>().ConfigureAwait(false);
         var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
         return new GreetingPage
@@ -373,7 +375,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             query.Skip,
             query.Limit,
         }, Transaction, cancellationToken: ctk);
-        await using var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        var results = await Connection.QueryMultipleAsync(command).ConfigureAwait(false);
+        await using var __ctx = results.ConfigureAwait(false);
         var rows = await results.ReadAsync<BookRow>().ConfigureAwait(false);
         var count = await results.ReadSingleAsync<long>().ConfigureAwait(false);
         return new Book.V1.Page
@@ -450,7 +453,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
 
-    private static string EscapeLikePattern(string value)
+    private static string _escapeLikePattern(string value)
     {
         return value
             .Replace(@"\", @"\\", StringComparison.Ordinal)
@@ -459,7 +462,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             .Replace("[", @"\[", StringComparison.Ordinal);
     }
 
-    private static string BuildAuditOrderBy(IEnumerable<string> sorts)
+    private static string _buildAuditOrderBy(IEnumerable<string> sorts)
     {
         var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {

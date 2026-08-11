@@ -16,16 +16,16 @@ internal sealed partial class ArkAzureFunctionsEasyAuthHandler(
     System.Text.Encodings.Web.UrlEncoder encoder)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
-    private const string PlatformSwitch = "WEBSITE_AUTH_ENABLED";
-    private const string PrincipalHeader = "X-MS-CLIENT-PRINCIPAL";
+    private const string _platformSwitch = "WEBSITE_AUTH_ENABLED";
+    private const string _principalHeader = "X-MS-CLIENT-PRINCIPAL";
     private readonly ILogger _logger = logger.CreateLogger<ArkAzureFunctionsEasyAuthHandler>();
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!string.Equals(Environment.GetEnvironmentVariable(PlatformSwitch), "True", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(Environment.GetEnvironmentVariable(_platformSwitch), "True", StringComparison.OrdinalIgnoreCase))
             return await Task.FromResult(AuthenticateResult.Fail("Easy Auth is not enabled for this deployment.")).ConfigureAwait(false);
 
-        if (!Request.Headers.TryGetValue(PrincipalHeader, out var values))
+        if (!Request.Headers.TryGetValue(_principalHeader, out var values))
             return await Task.FromResult(AuthenticateResult.NoResult()).ConfigureAwait(false);
 
         var encoded = values.ToString();

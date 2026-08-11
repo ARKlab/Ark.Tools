@@ -19,7 +19,7 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
     /// <summary>The diagnostic id reported by this analyzer.</summary>
     public const string DiagnosticId = "ARKSOLID001";
 
-    internal static readonly DiagnosticDescriptor Rule = new(
+    internal static readonly DiagnosticDescriptor _rule = new(
         DiagnosticId,
         "Use the self-referencing generic interface for reflection-free dispatch",
         "Type '{0}' should implement '{1}' to enable reflection-free processor dispatch",
@@ -30,7 +30,7 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-        => ImmutableArray.Create(Rule);
+        => ImmutableArray.Create(_rule);
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
@@ -58,14 +58,14 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
                 if (type.IsAbstract)
                     return;
 
-                CheckGeneric(symbolContext, type, query1, query2, "IQuery");
-                CheckGeneric(symbolContext, type, request1, request2, "IRequest");
-                CheckCommand(symbolContext, type, command0, command1);
+                _checkGeneric(symbolContext, type, query1, query2, "IQuery");
+                _checkGeneric(symbolContext, type, request1, request2, "IRequest");
+                _checkCommand(symbolContext, type, command0, command1);
             }, SymbolKind.NamedType);
         });
     }
 
-    private static void CheckGeneric(
+    private static void _checkGeneric(
         SymbolAnalysisContext context,
         INamedTypeSymbol type,
         INamedTypeSymbol? legacyDefinition,
@@ -80,14 +80,14 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
         if (legacy is null)
             return;
 
-        if (ImplementsSelf(type, selfDefinition))
+        if (_implementsSelf(type, selfDefinition))
             return;
 
         var resultType = legacy.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        Report(context, type, $"{interfaceName}<{type.Name}, {resultType}>");
+        _report(context, type, $"{interfaceName}<{type.Name}, {resultType}>");
     }
 
-    private static void CheckCommand(
+    private static void _checkCommand(
         SymbolAnalysisContext context,
         INamedTypeSymbol type,
         INamedTypeSymbol? commandDefinition,
@@ -99,25 +99,25 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
         if (!type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, commandDefinition)))
             return;
 
-        if (ImplementsSelf(type, selfDefinition))
+        if (_implementsSelf(type, selfDefinition))
             return;
 
-        Report(context, type, $"ICommand<{type.Name}>");
+        _report(context, type, $"ICommand<{type.Name}>");
     }
 
-    private static bool ImplementsSelf(INamedTypeSymbol type, INamedTypeSymbol selfDefinition)
+    private static bool _implementsSelf(INamedTypeSymbol type, INamedTypeSymbol selfDefinition)
     {
         return type.AllInterfaces.Any(i =>
             SymbolEqualityComparer.Default.Equals(i.OriginalDefinition, selfDefinition)
             && SymbolEqualityComparer.Default.Equals(i.TypeArguments[0], type));
     }
 
-    private static void Report(SymbolAnalysisContext context, INamedTypeSymbol type, string suggested)
+    private static void _report(SymbolAnalysisContext context, INamedTypeSymbol type, string suggested)
     {
         var location = type.Locations.FirstOrDefault(l => l.IsInSource);
         if (location is null)
             return;
 
-        context.ReportDiagnostic(Diagnostic.Create(Rule, location, type.Name, suggested));
+        context.ReportDiagnostic(Diagnostic.Create(_rule, location, type.Name, suggested));
     }
 }

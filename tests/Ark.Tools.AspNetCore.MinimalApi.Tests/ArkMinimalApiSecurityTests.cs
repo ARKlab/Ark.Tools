@@ -20,7 +20,7 @@ public sealed class ArkMinimalApiSecurityTests
     [TestMethod]
     public async Task AddsSecurityHeadersAndHsts()
     {
-        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var host = await _createHostAsync().ConfigureAwait(false);
         using var client = host.GetTestClient();
         client.BaseAddress = new Uri("https://localhost");
 
@@ -35,7 +35,7 @@ public sealed class ArkMinimalApiSecurityTests
     [TestMethod]
     public async Task ApiPolicy_HasSameOriginCrossOriginOpenerPolicy()
     {
-        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var host = await _createHostAsync().ConfigureAwait(false);
         using var client = host.GetTestClient();
         client.BaseAddress = new Uri("https://localhost");
 
@@ -51,7 +51,7 @@ public sealed class ArkMinimalApiSecurityTests
     [DataRow("/openapi")]
     public async Task DocumentationPolicy_HasUnsafeNoneCrossOriginOpenerPolicy(string path)
     {
-        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var host = await _createHostAsync().ConfigureAwait(false);
         using var client = host.GetTestClient();
         client.BaseAddress = new Uri("https://localhost");
 
@@ -65,7 +65,7 @@ public sealed class ArkMinimalApiSecurityTests
     [DataRow("/not-found", 404)]
     public async Task SecurityHeaders_ArePresentOnErrorAndNotFound(string path, int expectedStatusCode)
     {
-        using var host = await CreateHostAsync().ConfigureAwait(false);
+        using var host = await _createHostAsync().ConfigureAwait(false);
         using var client = host.GetTestClient();
         client.BaseAddress = new Uri("https://localhost");
 
@@ -78,7 +78,7 @@ public sealed class ArkMinimalApiSecurityTests
         response.Headers.GetValues("X-Frame-Options").Should().ContainSingle("DENY");
     }
 
-    private static async Task<IHost> CreateHostAsync()
+    private static async Task<IHost> _createHostAsync()
     {
         var host = new HostBuilder()
             .ConfigureWebHost(web =>

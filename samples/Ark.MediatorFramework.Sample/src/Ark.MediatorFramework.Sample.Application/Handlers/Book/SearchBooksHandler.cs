@@ -20,7 +20,8 @@ public sealed class SearchBooksHandler : IQueryHandler<Book_SearchQuery.V1, Book
     public async Task<Book.V1.Page> ExecuteAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var result = await context.ReadBooksAsync(query, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return result;

@@ -23,7 +23,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails;
 /// <summary>Maps application exceptions to RFC 7807 responses.</summary>
 public static class ExceptionProblemDetailsMapper
 {
-    private static readonly ConcurrentDictionary<Type, Accessor[]> BusinessRuleViolationAccessors = new();
+    private static readonly ConcurrentDictionary<Type, Accessor[]> _businessRuleViolationAccessors = new();
 
     /// <summary>Creates a ProblemDetails response for an application exception.</summary>
     /// <param name="exception">The exception to map.</param>
@@ -34,22 +34,22 @@ public static class ExceptionProblemDetailsMapper
 
         return exception switch
         {
-            PolicyAuthorizationException => Create(StatusCodes.Status403Forbidden),
-            EntityNotFoundException => Create(StatusCodes.Status404NotFound),
-            ValidationException validation => CreateValidation(validation),
-            EntityTagMismatchException => Create(StatusCodes.Status412PreconditionFailed),
-            OptimisticConcurrencyException => Create(StatusCodes.Status409Conflict),
-            SqlException sql => Create(SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(sql)
+            PolicyAuthorizationException => _create(StatusCodes.Status403Forbidden),
+            EntityNotFoundException => _create(StatusCodes.Status404NotFound),
+            ValidationException validation => _createValidation(validation),
+            EntityTagMismatchException => _create(StatusCodes.Status412PreconditionFailed),
+            OptimisticConcurrencyException => _create(StatusCodes.Status409Conflict),
+            SqlException sql => _create(SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(sql)
                 ? StatusCodes.Status409Conflict
                 : StatusCodes.Status500InternalServerError),
-            BusinessRuleViolationException businessRule => CreateBusinessRuleViolation(businessRule),
-            NotImplementedException => Create(StatusCodes.Status501NotImplemented),
-            HttpRequestException => Create(StatusCodes.Status503ServiceUnavailable),
-            _ => Create(StatusCodes.Status500InternalServerError),
+            BusinessRuleViolationException businessRule => _createBusinessRuleViolation(businessRule),
+            NotImplementedException => _create(StatusCodes.Status501NotImplemented),
+            HttpRequestException => _create(StatusCodes.Status503ServiceUnavailable),
+            _ => _create(StatusCodes.Status500InternalServerError),
         };
     }
 
-    private static MvcProblemDetails Create(int statusCode)
+    private static MvcProblemDetails _create(int statusCode)
     {
         return new MvcProblemDetails
         {
@@ -58,7 +58,7 @@ public static class ExceptionProblemDetailsMapper
         };
     }
 
-    private static MvcProblemDetails CreateValidation(ValidationException exception)
+    private static MvcProblemDetails _createValidation(ValidationException exception)
     {
         var problemDetails = new MvcProblemDetails
         {
@@ -76,12 +76,12 @@ public static class ExceptionProblemDetailsMapper
         return problemDetails;
     }
 
-    private static MvcProblemDetails CreateBusinessRuleViolation(BusinessRuleViolationException exception)
+    private static MvcProblemDetails _createBusinessRuleViolation(BusinessRuleViolationException exception)
     {
         var violation = exception.BusinessRuleViolation;
         var violationType = violation.GetType();
-        if (!BusinessRuleViolationAccessors.TryGetValue(violationType, out var accessors))
-            accessors = BusinessRuleViolationAccessors.GetOrAdd(violationType, CreateAccessors(violationType));
+        if (!_businessRuleViolationAccessors.TryGetValue(violationType, out var accessors))
+            accessors = _businessRuleViolationAccessors.GetOrAdd(violationType, _createAccessors(violationType));
         var payload = accessors
             .ToDictionary(
                 accessor => accessor.Name,
@@ -102,16 +102,16 @@ public static class ExceptionProblemDetailsMapper
         return problemDetails;
     }
 
-    private static Accessor[] CreateAccessors([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type violationType)
+    private static Accessor[] _createAccessors([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type violationType)
     {
         return violationType
             .GetProperties()
             .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
-            .Select(property => new Accessor(property.Name, CreateGetter(violationType, property)))
+            .Select(property => new Accessor(property.Name, _createGetter(violationType, property)))
             .ToArray();
     }
 
-    private static Func<BusinessRuleViolation, object?> CreateGetter(Type violationType, PropertyInfo property)
+    private static Func<BusinessRuleViolation, object?> _createGetter(Type violationType, PropertyInfo property)
     {
         var violation = Expression.Parameter(typeof(BusinessRuleViolation), "violation");
         var typedViolation = Expression.Convert(violation, violationType);

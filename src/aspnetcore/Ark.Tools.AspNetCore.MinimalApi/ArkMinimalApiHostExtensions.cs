@@ -145,7 +145,7 @@ public static class ArkMinimalApiHostExtensions
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-Prefix", out var values))
                 {
-                    if (values.Count != 1 || !TryGetForwardedPrefix(values[0], out var prefix))
+                    if (values.Count != 1 || !_tryGetForwardedPrefix(values[0], out var prefix))
                     {
                         context.Response.StatusCode = StatusCodes.Status400BadRequest;
                         return Task.CompletedTask;
@@ -178,7 +178,7 @@ public static class ArkMinimalApiHostExtensions
         return endpoints;
     }
 
-    private static bool TryGetForwardedPrefix(string? value, out string prefix)
+    private static bool _tryGetForwardedPrefix(string? value, out string prefix)
     {
         prefix = string.Empty;
         if (string.IsNullOrEmpty(value)

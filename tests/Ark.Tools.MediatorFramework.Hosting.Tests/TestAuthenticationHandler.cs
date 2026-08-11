@@ -12,7 +12,7 @@ namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
 internal sealed class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    internal const string SchemeName = "HostingTest";
+    internal const string _schemeName = "HostingTest";
 
     private readonly TestPrincipalProvider _principalProvider;
 
@@ -46,8 +46,8 @@ internal sealed class TestAuthenticationHandler : AuthenticationHandler<Authenti
         if (string.Equals(token, "scope", StringComparison.Ordinal))
             claims.Add(new Claim("scope", "hosting.test"));
 
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName));
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, _schemeName));
         _principalProvider.SetCurrent(principal);
-        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName)));
+        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, _schemeName)));
     }
 }

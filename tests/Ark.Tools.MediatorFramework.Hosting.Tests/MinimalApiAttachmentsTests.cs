@@ -21,7 +21,7 @@ public sealed class MinimalApiAttachmentsTests
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
-        using var content = CreateMultipart(
+        using var content = _createMultipart(
             ("attachment", "hello.txt", "text/plain", "hello attachment"));
 
         using var response = await client.PostAsync(
@@ -41,7 +41,7 @@ public sealed class MinimalApiAttachmentsTests
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
-        using var content = CreateMultipart(
+        using var content = _createMultipart(
             ("attachments", "one.txt", "text/plain", "one"),
             ("attachments", "two.txt", "text/plain", "two"));
 
@@ -61,7 +61,7 @@ public sealed class MinimalApiAttachmentsTests
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
-        using var content = CreateMultipart(
+        using var content = _createMultipart(
             ("attachment", "one.txt", "text/plain", "one"),
             ("attachment", "two.txt", "text/plain", "two"));
 
@@ -82,7 +82,7 @@ public sealed class MinimalApiAttachmentsTests
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
-        using var content = CreateMultipart(
+        using var content = _createMultipart(
             ("attachments", "one.txt", "text/plain", "one"),
             ("attachments", "two.txt", "text/plain", "two"),
             ("attachments", "three.txt", "text/plain", "three"));
@@ -103,7 +103,7 @@ public sealed class MinimalApiAttachmentsTests
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
-        using var content = CreateMultipart(
+        using var content = _createMultipart(
             ("attachment", "payload.bin", "application/octet-stream", "payload"));
 
         using var response = await client.PostAsync(
@@ -122,7 +122,7 @@ public sealed class MinimalApiAttachmentsTests
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
         using var client = app.GetTestServer().CreateClient();
-        using var content = CreateMultipart(
+        using var content = _createMultipart(
             ("attachment", "large.txt", "text/plain", new string('x', 2048)));
 
         using var response = await client.PostAsync(
@@ -153,7 +153,7 @@ public sealed class MinimalApiAttachmentsTests
             .Should().Be("downloaded content");
     }
 
-    private static MultipartFormDataContent CreateMultipart(
+    private static MultipartFormDataContent _createMultipart(
         params (string Name, string FileName, string ContentType, string Content)[] files)
     {
         var form = new MultipartFormDataContent();

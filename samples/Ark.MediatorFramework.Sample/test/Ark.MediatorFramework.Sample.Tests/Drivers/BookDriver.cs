@@ -35,7 +35,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task CreateAsync(Book.V1.Create input, CancellationToken ctk = default)
     {
-        _current = await Context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+        _current = await _context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
             new Book_CreateRequest.V1(input), ctk).ConfigureAwait(false);
     }
 
@@ -43,7 +43,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task RetrieveCurrentAsync(CancellationToken ctk = default)
     {
-        _current = await Context.DispatchQueryAsync<Book_GetQuery.V1, Book.V1.Output>(
+        _current = await _context.DispatchQueryAsync<Book_GetQuery.V1, Book.V1.Output>(
             new Book_GetQuery.V1(Current.Id),
             ctk).ConfigureAwait(false);
     }
@@ -53,7 +53,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task UpdateCurrentAsync(Book.V1.Input input, CancellationToken ctk = default)
     {
-        _current = await Context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+        _current = await _context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
             new Book_UpdateRequest.V1(input, Current.Id),
             ctk).ConfigureAwait(false);
     }
@@ -62,7 +62,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task DeleteCurrentAsync(CancellationToken ctk = default)
     {
-        await Context.DispatchRequestAsync<Book_DeleteRequest.V1, bool>(
+        await _context.DispatchRequestAsync<Book_DeleteRequest.V1, bool>(
             new Book_DeleteRequest.V1(Current.Id),
             ctk).ConfigureAwait(false);
         _current = null;
@@ -73,7 +73,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
-        SearchResults = await Context.DispatchQueryAsync<Book_SearchQuery.V1, Book.V1.Page>(query, ctk).ConfigureAwait(false);
+        SearchResults = await _context.DispatchQueryAsync<Book_SearchQuery.V1, Book.V1.Page>(query, ctk).ConfigureAwait(false);
     }
 
     /// <summary>Reads audit records for the active book.</summary>
@@ -81,7 +81,7 @@ public sealed class BookDriver
     /// <returns>The matching audit records.</returns>
     public async Task<PagedResult<AuditRecord>> ReadCurrentAuditsAsync(CancellationToken ctk = default)
     {
-        return await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+        return await _context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
             {
                 Identifier = Current.Id.ToString("D"),
@@ -90,5 +90,5 @@ public sealed class BookDriver
             ctk).ConfigureAwait(false);
     }
 
-    private ApplicationTestContext Context => _sampleContext.Application;
+    private ApplicationTestContext _context => _sampleContext.Application;
 }

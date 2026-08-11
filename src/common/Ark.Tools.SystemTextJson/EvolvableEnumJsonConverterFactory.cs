@@ -76,7 +76,7 @@ internal static class EvolvableEnumJsonConverter
             {
                 JsonTokenType.String => EvolvableEnum<TEnum>.FromName(reader.GetString()!),
                 JsonTokenType.Number => EvolvableEnum<TEnum>.FromNumber(reader.GetInt32()),
-                _ => throw UnexpectedToken<TEnum>(reader.TokenType),
+                _ => throw _unexpectedToken<TEnum>(reader.TokenType),
             };
 
         public override void Write(
@@ -90,7 +90,7 @@ internal static class EvolvableEnumJsonConverter
                 return;
             }
 
-            WriteName(writer, value.Name, value);
+            _writeName(writer, value.Name, value);
         }
     }
 
@@ -114,8 +114,8 @@ internal static class EvolvableEnumJsonConverter
             JsonSerializerOptions options) => reader.TokenType switch
             {
                 JsonTokenType.String => EvolvableEnum<TEnum, TBacking>.FromName(reader.GetString()!),
-                JsonTokenType.Number => EvolvableEnum<TEnum, TBacking>.FromNumber(ReadNumber<TBacking>(ref reader)),
-                _ => throw UnexpectedToken<TEnum>(reader.TokenType),
+                JsonTokenType.Number => EvolvableEnum<TEnum, TBacking>.FromNumber(_readNumber<TBacking>(ref reader)),
+                _ => throw _unexpectedToken<TEnum>(reader.TokenType),
             };
 
         public override void Write(
@@ -125,18 +125,18 @@ internal static class EvolvableEnumJsonConverter
         {
             if (_format == EvolvableEnumWireFormat.Number)
             {
-                WriteNumber(writer, value.ToNumber());
+                _writeNumber(writer, value.ToNumber());
                 return;
             }
 
-            WriteName(writer, value.Name, value);
+            _writeName(writer, value.Name, value);
         }
     }
 
-    private static JsonException UnexpectedToken<TEnum>(JsonTokenType token)
+    private static JsonException _unexpectedToken<TEnum>(JsonTokenType token)
         => new($"Cannot deserialize EvolvableEnum<{typeof(TEnum).Name}> from {token}.");
 
-    private static void WriteName(Utf8JsonWriter writer, string? name, object value)
+    private static void _writeName(Utf8JsonWriter writer, string? name, object value)
     {
         if (name is null)
             throw new EvolvableEnumConversionException(
@@ -145,7 +145,7 @@ internal static class EvolvableEnumJsonConverter
         writer.WriteStringValue(name);
     }
 
-    private static TBacking ReadNumber<TBacking>(ref Utf8JsonReader reader)
+    private static TBacking _readNumber<TBacking>(ref Utf8JsonReader reader)
         where TBacking : struct, IBinaryInteger<TBacking>
     {
         object value = Type.GetTypeCode(typeof(TBacking)) switch
@@ -163,7 +163,7 @@ internal static class EvolvableEnumJsonConverter
         return (TBacking)value;
     }
 
-    private static void WriteNumber<TBacking>(Utf8JsonWriter writer, TBacking value)
+    private static void _writeNumber<TBacking>(Utf8JsonWriter writer, TBacking value)
         where TBacking : struct, IBinaryInteger<TBacking>
     {
         switch (value)

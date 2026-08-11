@@ -7,7 +7,7 @@ namespace Ark.Tools.Core.Benchmarks;
 
 internal static class RowsAddConverter
 {
-    internal static DataTable Convert(BenchmarkEntity[] source)
+    internal static DataTable _convert(BenchmarkEntity[] source)
     {
         var table = new DataTable(nameof(BenchmarkEntity));
         table.Columns.Add(nameof(BenchmarkEntity.Id), typeof(int));

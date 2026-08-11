@@ -21,7 +21,7 @@ public sealed class SimpleInjectorProcessorTests
     [TestMethod]
     public async Task Processors_execute_decorated_handlers()
     {
-        await using var container = CreateContainer();
+        await using var container = _createContainer();
         var trace = container.GetInstance<Trace>();
         var requestProcessor = new SimpleInjectorRequestProcessor(container);
         var queryProcessor = new SimpleInjectorQueryProcessor(container);
@@ -41,7 +41,7 @@ public sealed class SimpleInjectorProcessorTests
     [TestMethod]
     public async Task Processors_propagate_cancellation_and_exceptions()
     {
-        await using var container = CreateContainer();
+        await using var container = _createContainer();
         var queryProcessor = new SimpleInjectorQueryProcessor(container);
         var requestProcessor = new SimpleInjectorRequestProcessor(container);
         var cancellationToken = new CancellationToken(canceled: true);
@@ -55,7 +55,7 @@ public sealed class SimpleInjectorProcessorTests
     [TestMethod]
     public async Task Processors_execute_self_generic_types_without_reflection()
     {
-        await using var container = CreateContainer();
+        await using var container = _createContainer();
         var trace = container.GetInstance<Trace>();
         var requestProcessor = new SimpleInjectorRequestProcessor(container);
         var queryProcessor = new SimpleInjectorQueryProcessor(container);
@@ -72,7 +72,7 @@ public sealed class SimpleInjectorProcessorTests
             trace.Events);
     }
 
-    private static Container CreateContainer()
+    private static Container _createContainer()
     {
         var container = new Container();
         container.RegisterInstance(new Trace());

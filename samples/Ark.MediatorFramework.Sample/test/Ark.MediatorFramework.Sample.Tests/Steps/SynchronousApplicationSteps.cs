@@ -35,7 +35,7 @@ public sealed class SynchronousApplicationSteps
     [When("I query a missing greeting")]
     public async Task QueryMissingGreeting()
     {
-        _exception = await CaptureAsync(() => Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+        _exception = await _captureAsync(() => _context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
             new GetGreetingQuery { Id = Guid.NewGuid() })).ConfigureAwait(false);
     }
 
@@ -44,7 +44,7 @@ public sealed class SynchronousApplicationSteps
     public async Task DispatchEnvelopeUpdate()
     {
         var id = Guid.NewGuid();
-        _envelope = await Context.DispatchRequestAsync<UpdateGreetingRequest, EnvelopeBindingResponse>(
+        _envelope = await _context.DispatchRequestAsync<UpdateGreetingRequest, EnvelopeBindingResponse>(
             new UpdateGreetingRequest
             {
                 Id = id,
@@ -57,7 +57,7 @@ public sealed class SynchronousApplicationSteps
     [When("I search greetings with invalid paging")]
     public async Task SearchGreetingsWithInvalidPaging()
     {
-        _exception = await CaptureAsync(() => Context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(
+        _exception = await _captureAsync(() => _context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(
             new SearchGreetingsQuery
             {
                 Skip = -1,
@@ -71,7 +71,7 @@ public sealed class SynchronousApplicationSteps
     public async Task DescribeCircle(double radius)
     {
         _circleRadius = radius;
-        _shape = await Context.DispatchRequestAsync<DescribeShapeRequest, ShapeDescription>(
+        _shape = await _context.DispatchRequestAsync<DescribeShapeRequest, ShapeDescription>(
             new DescribeShapeRequest
             {
                 Shape = new Circle { Radius = radius },
@@ -82,7 +82,7 @@ public sealed class SynchronousApplicationSteps
     [When("I dispatch the refresh greeting command")]
     public async Task DispatchRefreshGreeting()
     {
-        await Context.DispatchCommandAsync(new RefreshGreetingCommand { Id = Guid.NewGuid() }).ConfigureAwait(false);
+        await _context.DispatchCommandAsync(new RefreshGreetingCommand { Id = Guid.NewGuid() }).ConfigureAwait(false);
         _refreshCompleted = true;
     }
 
@@ -130,7 +130,7 @@ public sealed class SynchronousApplicationSteps
         _refreshCompleted.Should().BeTrue();
     }
 
-    private static async Task<Exception?> CaptureAsync<T>(Func<Task<T>> action)
+    private static async Task<Exception?> _captureAsync<T>(Func<Task<T>> action)
     {
         try
         {
@@ -145,5 +145,5 @@ public sealed class SynchronousApplicationSteps
         }
     }
 
-    private ApplicationTestContext Context => _sampleContext.Application;
+    private ApplicationTestContext _context => _sampleContext.Application;
 }

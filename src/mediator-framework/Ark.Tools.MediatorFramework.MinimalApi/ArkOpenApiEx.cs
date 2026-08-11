@@ -46,23 +46,23 @@ public static class ArkOpenApiEx
                 }
             }
 
-            ApplySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(content => content.Schema), metadata);
+            _applySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(content => content.Schema), metadata);
             foreach (var response in operation.Responses?.Values.OfType<OpenApiResponse>() ?? [])
-                ApplySchemaDescriptions(response.Content?.Values.Select(content => content.Schema), metadata);
+                _applySchemaDescriptions(response.Content?.Values.Select(content => content.Schema), metadata);
             return Task.CompletedTask;
         });
 
         return options;
     }
 
-    private static void ApplySchemaDescriptions(
+    private static void _applySchemaDescriptions(
         IEnumerable<IOpenApiSchema?>? schemas,
         ArkDocumentationMetadata metadata)
     {
         if (schemas is null)
             return;
 
-        foreach (var schema in schemas.Select(ResolveSchema).OfType<OpenApiSchema>())
+        foreach (var schema in schemas.Select(_resolveSchema).OfType<OpenApiSchema>())
         {
             foreach (var property in schema.Properties ?? new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal))
             {
@@ -75,7 +75,7 @@ public static class ArkOpenApiEx
 
     }
 
-    private static IOpenApiSchema? ResolveSchema(IOpenApiSchema? schema)
+    private static IOpenApiSchema? _resolveSchema(IOpenApiSchema? schema)
         => schema is OpenApiSchemaReference reference ? reference.Target : schema;
 
     /// <summary>

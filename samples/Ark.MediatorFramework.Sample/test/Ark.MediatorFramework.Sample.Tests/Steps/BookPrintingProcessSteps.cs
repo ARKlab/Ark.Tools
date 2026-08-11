@@ -48,9 +48,9 @@ public sealed class BookPrintingProcessSteps
     public async Task StartCurrentBookPrintProcess(Table table)
     {
         var request = table.CreateInstance<CreateBookPrintProcessRequest>() with { BookId = _books.Current.Id };
-        _exception = await CaptureAsync(async () =>
+        _exception = await _captureAsync(async () =>
         {
-            Current = await Context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request)
+            Current = await _context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request)
                 .ConfigureAwait(false);
             return Current;
         }).ConfigureAwait(false);
@@ -61,7 +61,7 @@ public sealed class BookPrintingProcessSteps
     public async Task RetrieveCurrentBookPrintProcess()
     {
         Current.Should().NotBeNull();
-        Current = await Context.DispatchQueryAsync<GetBookPrintProcessQuery, BookPrintProcessResponse>(
+        Current = await _context.DispatchQueryAsync<GetBookPrintProcessQuery, BookPrintProcessResponse>(
             new GetBookPrintProcessQuery { Id = Current!.Id }).ConfigureAwait(false);
     }
 
@@ -77,7 +77,8 @@ public sealed class BookPrintingProcessSteps
             Progress = 0.5,
             Status = BookPrintProcessStatus.Running,
         };
-        await using var context = await Context.CreateDataContextAsync().ConfigureAwait(false);
+        var context = await _context.CreateDataContextAsync().ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         (await context.TrySaveBookPrintProcessAsync(process).ConfigureAwait(false)).Should().BeTrue();
         await context.CommitAsync().ConfigureAwait(false);
         Current = process;
@@ -88,7 +89,7 @@ public sealed class BookPrintingProcessSteps
     public async Task ResumeCurrentBookPrintProcess()
     {
         Current.Should().NotBeNull();
-        Current = await Context.DispatchRequestAsync<ProcessBookPrintProcessRequest, BookPrintProcessResponse>(
+        Current = await _context.DispatchRequestAsync<ProcessBookPrintProcessRequest, BookPrintProcessResponse>(
             new ProcessBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
     }
 
@@ -126,7 +127,7 @@ public sealed class BookPrintingProcessSteps
             .Which.BusinessRuleViolation.Should().BeOfType<BookPrintingProcessAlreadyRunningViolation>();
     }
 
-    private static async Task<Exception?> CaptureAsync<T>(Func<Task<T>> action)
+    private static async Task<Exception?> _captureAsync<T>(Func<Task<T>> action)
     {
         try
         {
@@ -141,5 +142,5 @@ public sealed class BookPrintingProcessSteps
         }
     }
 
-    private ApplicationTestContext Context => _sampleContext.Application;
+    private ApplicationTestContext _context => _sampleContext.Application;
 }

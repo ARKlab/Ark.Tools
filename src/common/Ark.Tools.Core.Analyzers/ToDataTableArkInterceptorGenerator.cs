@@ -33,8 +33,8 @@ namespace Ark.Tools.Core.Analyzers;
 [Generator(LanguageNames.CSharp)]
 public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 {
-    private const string TargetMethodName = "ToDataTableArk";
-    private const string TargetContainingType = "Ark.Tools.Core.DataTableExtensions";
+    private const string _targetMethodName = "ToDataTableArk";
+    private const string _targetContainingType = "Ark.Tools.Core.DataTableExtensions";
 
     /// <summary>The namespace interceptor methods are emitted into; must be listed in the consuming project's InterceptorsNamespaces.</summary>
     public const string GeneratedNamespace = "Ark.Tools.Core.Generated";
@@ -43,8 +43,8 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var callSites = context.SyntaxProvider.CreateSyntaxProvider(
-                predicate: static (node, _) => IsCandidateInvocation(node),
-                transform: static (ctx, ct) => Analyze(ctx, ct))
+                predicate: static (node, _) => _isCandidateInvocation(node),
+                transform: static (ctx, ct) => _analyze(ctx, ct))
             .Where(static model => model is not null)
             .Select(static (model, _) => model!.Value)
             .Collect();
@@ -61,29 +61,29 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             if (!languageOk || sites.IsDefaultOrEmpty)
                 return;
 
-            var source = Emit(sites);
+            var source = _emit(sites);
             if (source is not null)
                 spc.AddSource("ToDataTableArkInterceptors.g.cs", source);
         });
     }
 
-    private static bool IsCandidateInvocation(SyntaxNode node)
+    private static bool _isCandidateInvocation(SyntaxNode node)
     {
         if (node is not InvocationExpressionSyntax invocation)
             return false;
 
-        var name = GetSimpleName(invocation.Expression);
-        return name is not null && name.Identifier.ValueText == TargetMethodName;
+        var name = _getSimpleName(invocation.Expression);
+        return name is not null && name.Identifier.ValueText == _targetMethodName;
     }
 
-    private static SimpleNameSyntax? GetSimpleName(ExpressionSyntax expression) => expression switch
+    private static SimpleNameSyntax? _getSimpleName(ExpressionSyntax expression) => expression switch
     {
         SimpleNameSyntax simple => simple,
         MemberAccessExpressionSyntax memberAccess => memberAccess.Name,
         _ => null,
     };
 
-    private static CallSiteModel? Analyze(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+    private static CallSiteModel? _analyze(GeneratorSyntaxContext context, CancellationToken cancellationToken)
     {
         var invocation = (InvocationExpressionSyntax)context.Node;
         var semanticModel = context.SemanticModel;
@@ -93,8 +93,8 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             return null;
 
         var original = (method.ReducedFrom ?? method).OriginalDefinition;
-        if (original.Name != TargetMethodName
-            || original.ContainingType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)) != TargetContainingType
+        if (original.Name != _targetMethodName
+            || original.ContainingType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)) != _targetContainingType
             || original.TypeParameters.Length != 1
             || original.Parameters.Length != 1
             || method.TypeArguments.Length != 1)
@@ -105,7 +105,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         if (method.TypeArguments[0] is not INamedTypeSymbol elementType)
             return null; // T is an open type parameter, array, pointer, etc. - not compile-time-known here.
 
-        var typeModel = BuildTypeModel(elementType);
+        var typeModel = _buildTypeModel(elementType);
         if (typeModel is null)
             return null; // T does not meet the "flat, public, instance-only" eligibility rules.
 
@@ -122,9 +122,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     // its containing types accessible from anywhere in the assembly (so the generated code - which
     // lives in an unrelated namespace - can reference it), and every property having an accessible
     // public getter. Anything else is left for the reflection-based fallback to handle.
-    private static TypeModel? BuildTypeModel(INamedTypeSymbol type)
+    private static TypeModel? _buildTypeModel(INamedTypeSymbol type)
     {
-        if (type.IsAnonymousType || !IsGloballyAccessible(type))
+        if (type.IsAnonymousType || !_isGloballyAccessible(type))
             return null;
 
         if (type.TypeKind == TypeKind.Struct)
@@ -149,19 +149,19 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             switch (member)
             {
                 case IFieldSymbol { DeclaredAccessibility: Accessibility.Public, IsImplicitlyDeclared: false } field:
-                    if (field.IsStatic || RequiresRuntimeValueConversion(field.Type))
+                    if (field.IsStatic || _requiresRuntimeValueConversion(field.Type))
                         return null;
-                    fields.Add(BuildMemberModel(field.Name, field.Type));
+                    fields.Add(_buildMemberModel(field.Name, field.Type));
                     break;
                 case IPropertySymbol { DeclaredAccessibility: Accessibility.Public } property:
                     if (property.IsStatic
                         || property.IsIndexer
-                        || RequiresRuntimeValueConversion(property.Type)
+                        || _requiresRuntimeValueConversion(property.Type)
                         || property.GetMethod is not { DeclaredAccessibility: Accessibility.Public })
                     {
                         return null; // The runtime fallback safely excludes unreadable and indexed properties.
                     }
-                    properties.Add(BuildMemberModel(property.Name, property.Type));
+                    properties.Add(_buildMemberModel(property.Name, property.Type));
                     break;
             }
         }
@@ -174,15 +174,15 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             Members: fields.ToImmutable().AddRange(properties));
     }
 
-    private static bool RequiresRuntimeValueConversion(ITypeSymbol type)
+    private static bool _requiresRuntimeValueConversion(ITypeSymbol type)
     {
         return type.SpecialType == SpecialType.System_Object || type.TypeKind == TypeKind.Interface;
     }
 
-    private static MemberModel BuildMemberModel(string name, ITypeSymbol declaredType)
+    private static MemberModel _buildMemberModel(string name, ITypeSymbol declaredType)
     {
-        var underlying = UnwrapNullable(declaredType, out var isNullable);
-        var conversion = DetermineConversion(underlying);
+        var underlying = _unwrapNullable(declaredType, out var isNullable);
+        var conversion = _determineConversion(underlying);
         var columnType = conversion switch
         {
             ConversionKind.EnumToString => "global::System.String",
@@ -195,7 +195,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return new MemberModel(name, isNullable, conversion, columnType);
     }
 
-    private static ITypeSymbol UnwrapNullable(ITypeSymbol type, out bool isNullable)
+    private static ITypeSymbol _unwrapNullable(ITypeSymbol type, out bool isNullable)
     {
         if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } named)
         {
@@ -207,7 +207,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return type;
     }
 
-    private static ConversionKind DetermineConversion(ITypeSymbol type)
+    private static ConversionKind _determineConversion(ITypeSymbol type)
     {
         if (type.TypeKind == TypeKind.Enum)
             return ConversionKind.EnumToString;
@@ -224,7 +224,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         };
     }
 
-    private static bool IsGloballyAccessible(INamedTypeSymbol type)
+    private static bool _isGloballyAccessible(INamedTypeSymbol type)
     {
         for (var current = type; current is not null; current = current.ContainingType)
         {
@@ -235,7 +235,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return true;
     }
 
-    private static string? Emit(ImmutableArray<CallSiteModel> callSites)
+    private static string? _emit(ImmutableArray<CallSiteModel> callSites)
     {
         // Grouped by the fully-qualified type name (a plain string) rather than by TypeModel itself:
         // ImmutableArray<T> equality is reference-based, so two BuildTypeModel calls for the exact
@@ -260,7 +260,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         var methodIndex = 0;
         foreach (var group in groups)
         {
-            EmitInterceptorMethod(sb, group.First().Type, group.ToArray(), methodIndex++);
+            _emitInterceptorMethod(sb, group.First().Type, group.ToArray(), methodIndex++);
         }
 
         sb.AppendLine("    }");
@@ -278,7 +278,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static void EmitInterceptorMethod(StringBuilder sb, TypeModel type, CallSiteModel[] sites, int methodIndex)
+    private static void _emitInterceptorMethod(StringBuilder sb, TypeModel type, CallSiteModel[] sites, int methodIndex)
     {
         foreach (var site in sites)
         {
@@ -296,18 +296,18 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         if (type.IsPrimitiveScalar)
         {
-            EmitPrimitiveBody(sb, type);
+            _emitPrimitiveBody(sb, type);
         }
         else
         {
-            EmitObjectBody(sb, type);
+            _emitObjectBody(sb, type);
         }
 
         sb.AppendLine("        }");
         sb.AppendLine();
     }
 
-    private static void EmitPrimitiveBody(StringBuilder sb, TypeModel type)
+    private static void _emitPrimitiveBody(StringBuilder sb, TypeModel type)
     {
         sb.Append("            var table = new global::System.Data.DataTable(\"").Append(type.SimpleName).AppendLine("\");");
         sb.Append("            table.Columns.Add(\"Value\", typeof(").Append(type.FullyQualifiedName).AppendLine("));");
@@ -329,7 +329,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("            return table;");
     }
 
-    private static void EmitObjectBody(StringBuilder sb, TypeModel type)
+    private static void _emitObjectBody(StringBuilder sb, TypeModel type)
     {
         sb.Append("            var table = new global::System.Data.DataTable(\"").Append(type.SimpleName).AppendLine("\");");
         foreach (var member in type.Members)
@@ -354,7 +354,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.Append("                    var values = new object?[").Append(type.Members.Length).AppendLine("];");
         for (var i = 0; i < type.Members.Length; i++)
         {
-            sb.Append("                    values[").Append(i).Append("] = ").Append(BuildValueExpressionText(type.Members[i])).AppendLine(";");
+            sb.Append("                    values[").Append(i).Append("] = ").Append(_buildValueExpressionText(type.Members[i])).AppendLine(";");
         }
 
         sb.AppendLine("                    table.LoadDataRow(values, true);");
@@ -370,7 +370,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     // Builds a C# expression equivalent to the runtime's BuildValueExpression/BuildNonNullableConversion:
     // for a nullable member, only converts/boxes when HasValue (else null); otherwise applies the
     // member's conversion (enum-to-string, NodaTime-to-.NET, or a direct passthrough) unconditionally.
-    private static string BuildValueExpressionText(MemberModel member)
+    private static string _buildValueExpressionText(MemberModel member)
     {
         var accessor = "it.@" + member.Name;
 
@@ -383,15 +383,15 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         if (!member.IsNullable)
         {
-            return ApplyConversion(accessor, member.Conversion);
+            return _applyConversion(accessor, member.Conversion);
         }
 
         var nonNullAccessor = accessor + ".Value";
-        var convertedExpression = ApplyConversion(nonNullAccessor, member.Conversion);
+        var convertedExpression = _applyConversion(nonNullAccessor, member.Conversion);
         return accessor + ".HasValue ? (object)(" + convertedExpression + ") : null";
     }
 
-    private static string ApplyConversion(string accessor, ConversionKind conversion) => conversion switch
+    private static string _applyConversion(string accessor, ConversionKind conversion) => conversion switch
     {
         ConversionKind.EnumToString => accessor + ".ToString()",
         ConversionKind.LocalDateToDateTime => accessor + ".ToDateTimeUnspecified()",

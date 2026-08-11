@@ -28,7 +28,7 @@ public class PolicyAuthorizeOrLogicCommandDecorator<TCommand> : ICommandHandler<
 
     private static class PolicyMetadata
     {
-        internal static readonly PolicyAuthorizeAttribute[] Policies =
+        public static readonly PolicyAuthorizeAttribute[] Policies =
             typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 

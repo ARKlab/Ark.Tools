@@ -43,7 +43,7 @@ public interface IDocumentsGrpcService
 /// <summary>Hosts the client-streaming document upload endpoint.</summary>
 public sealed class DocumentsGrpcService : IDocumentsGrpcService
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly SimpleInjector.Container _container;
 
     /// <summary>Initializes a new instance of the <see cref="DocumentsGrpcService"/> class.</summary>
@@ -69,7 +69,7 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
         }
         catch (InvalidOperationException exception)
         {
-            Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
+            _logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
         }
     }
@@ -89,7 +89,7 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
         }
         catch (InvalidOperationException exception)
         {
-            Logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
+            _logger.Error(exception, CultureInfo.InvariantCulture, "Document upload failed.");
             throw new RpcException(new Status(StatusCode.InvalidArgument, "Document upload failed."));
         }
     }
@@ -114,7 +114,8 @@ public sealed class DocumentsGrpcService : IDocumentsGrpcService
                 ContentType = attachment.ContentType,
             },
         };
-        await using var stream = attachment.OpenRead();
+        var stream = attachment.OpenRead();
+        await using var __ctx = stream.ConfigureAwait(false);
         var buffer = new byte[64 * 1024];
         int bytesRead;
         while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(), context.CancellationToken).ConfigureAwait(false)) > 0)

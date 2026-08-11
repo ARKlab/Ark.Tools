@@ -225,7 +225,7 @@ public readonly struct TimeInterval
         return ZonedDateTime.Comparer.Instant.Compare(_start, other._start);
     }
 
-    private static int CompareTo(TimeInterval x, TimeInterval y)
+    private static int _compareTo(TimeInterval x, TimeInterval y)
     {
         return x.CompareTo(y);
     }
@@ -258,22 +258,22 @@ public readonly struct TimeInterval
 
     public static bool operator <(TimeInterval x, TimeInterval y)
     {
-        return CompareTo(x, y) < 0;
+        return _compareTo(x, y) < 0;
     }
 
     public static bool operator >(TimeInterval x, TimeInterval y)
     {
-        return CompareTo(x, y) > 0;
+        return _compareTo(x, y) > 0;
     }
 
     public static bool operator <=(TimeInterval x, TimeInterval y)
     {
-        return CompareTo(x, y) <= 0;
+        return _compareTo(x, y) <= 0;
     }
 
     public static bool operator >=(TimeInterval x, TimeInterval y)
     {
-        return CompareTo(x, y) >= 0;
+        return _compareTo(x, y) >= 0;
     }
 
     public override readonly bool Equals(object? obj)

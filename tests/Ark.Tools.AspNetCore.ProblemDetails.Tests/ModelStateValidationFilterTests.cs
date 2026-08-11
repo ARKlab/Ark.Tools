@@ -19,7 +19,7 @@ public sealed class ModelStateValidationFilterTests
     [TestMethod]
     public void ReturnsBadRequestForInvalidUnmarkedAction()
     {
-        var context = CreateContext(nameof(TestController.UnmarkedAction), isValid: false);
+        var context = _createContext(nameof(TestController.UnmarkedAction), isValid: false);
 
         new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
@@ -29,7 +29,7 @@ public sealed class ModelStateValidationFilterTests
     [TestMethod]
     public void DoesNotReturnBadRequestForValidUnmarkedAction()
     {
-        var context = CreateContext(nameof(TestController.UnmarkedAction), isValid: true);
+        var context = _createContext(nameof(TestController.UnmarkedAction), isValid: true);
 
         new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
@@ -39,7 +39,7 @@ public sealed class ModelStateValidationFilterTests
     [TestMethod]
     public void SkipsInvalidModelStateForMarkedAction()
     {
-        var context = CreateContext(nameof(TestController.MarkedAction), isValid: false);
+        var context = _createContext(nameof(TestController.MarkedAction), isValid: false);
 
         new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
@@ -49,7 +49,7 @@ public sealed class ModelStateValidationFilterTests
     [TestMethod]
     public void SkipsValidModelStateForMarkedAction()
     {
-        var context = CreateContext(nameof(TestController.MarkedAction), isValid: true);
+        var context = _createContext(nameof(TestController.MarkedAction), isValid: true);
 
         new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
@@ -66,7 +66,7 @@ public sealed class ModelStateValidationFilterTests
             var actionName = index % 2 == 0
                 ? nameof(TestController.UnmarkedAction)
                 : nameof(TestController.MarkedAction);
-            var context = CreateContext(actionName, isValid: false);
+            var context = _createContext(actionName, isValid: false);
             filter.OnActionExecuting(context);
             if (index % 2 == 0)
             {
@@ -79,7 +79,7 @@ public sealed class ModelStateValidationFilterTests
         });
     }
 
-    private static ActionExecutingContext CreateContext(string actionName, bool isValid)
+    private static ActionExecutingContext _createContext(string actionName, bool isValid)
     {
         var methodInfo = typeof(TestController).GetMethod(actionName)!;
         var actionContext = new ActionContext(

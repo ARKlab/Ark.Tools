@@ -23,7 +23,7 @@ public sealed class GrpcAuthorizationTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
         var action = async () => await client.GetHostingAuthorizedAsync(
@@ -41,7 +41,7 @@ public sealed class GrpcAuthorizationTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         var headers = new Metadata { { "authorization", "\u0042earer\u0020authenticated" } };
 
@@ -60,7 +60,7 @@ public sealed class GrpcAuthorizationTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         var headers = new Metadata { { "authorization", "\u0042earer\u0020scope" } };
 
@@ -78,7 +78,7 @@ public sealed class GrpcAuthorizationTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         var headers = new Metadata { { "authorization", "\u0042earer\u0020scope" } };
 
@@ -89,7 +89,7 @@ public sealed class GrpcAuthorizationTests
         result.Message.Should().Be("hosting-test-user");
     }
 
-    private static GrpcChannel CreateChannel(WebApplication app)
+    private static GrpcChannel _createChannel(WebApplication app)
     {
         return GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {

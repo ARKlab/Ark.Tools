@@ -32,11 +32,11 @@ public sealed class RebusRetryTests
         container.StartBus();
         await container.GetInstance<IBus>().Send(new FailingRebusRequest { Reason = "sample failure" }).ConfigureAwait(false);
 
-        await WaitForQueueAsync(network, "error").ConfigureAwait(false);
+        await _waitForQueueAsync(network, "error").ConfigureAwait(false);
         Assert.AreEqual(1, network.GetCount("error"));
     }
 
-    private static async Task WaitForQueueAsync(InMemNetwork network, string queueName)
+    private static async Task _waitForQueueAsync(InMemNetwork network, string queueName)
     {
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         while (network.GetCount(queueName) == 0)

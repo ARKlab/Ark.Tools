@@ -66,7 +66,7 @@ public class BookPrintProcess_StartMessageHandler
 
             // Update progress
             var updateCtx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
-            await using var _updateCtx = updateCtx.ConfigureAwait(false);
+            await using var __ctx = updateCtx.ConfigureAwait(false);
             var currentProcess = await updateCtx.ReadBookPrintProcessByIdAsync(message.BookPrintProcessId).ConfigureAwait(false);
             if (currentProcess == null) return; // Process was deleted
 

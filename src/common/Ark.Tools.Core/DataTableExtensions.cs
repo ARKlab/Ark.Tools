@@ -107,10 +107,10 @@ public static class DataTableExtensions
         private static readonly PropertyInfo _localTimeMidnight = typeof(LocalTime).GetProperty(nameof(LocalTime.Midnight))!;
         private static readonly PropertyInfo _localTimeTickOfDay = typeof(LocalTime).GetProperty(nameof(LocalTime.TickOfDay))!;
         private static readonly MethodInfo _timeSpanFromTicks = typeof(TimeSpan).GetMethod(nameof(TimeSpan.FromTicks), [typeof(long)])!;
-        private static readonly MethodInfo _convertColumnValue = typeof(ShredObjectToDataTable<T>).GetMethod(nameof(ConvertColumnValue), BindingFlags.Static | BindingFlags.NonPublic)!;
+        private static readonly MethodInfo _convertColumnValue = typeof(ShredObjectToDataTable<T>).GetMethod(nameof(_convertColumnValueValue), BindingFlags.Static | BindingFlags.NonPublic)!;
 
         private static readonly bool _isPrimitive = typeof(T).IsPrimitive;
-        private static readonly ColumnPlan[] _plan = BuildPlan();
+        private static readonly ColumnPlan[] _plan = _buildPlan();
 
         // Reference-type instances can legitimately be null in the source sequence. Reflection's
         // FieldInfo/PropertyInfo.GetValue(null) throws TargetException("Non-static method requires a
@@ -125,14 +125,14 @@ public static class DataTableExtensions
             // Load the table from the scalar sequence if T is a primitive type.
             if (_isPrimitive)
             {
-                return ShredPrimitive(source, table, options);
+                return _shredPrimitive(source, table, options);
             }
 
             // Fast path: new table with sequential field/property ordering
             if (table == null)
             {
                 table = new DataTable(typeof(T).Name);
-                InitializeNewTable(table);
+                _initializeNewTable(table);
 
                 // Enumerate the source sequence using fast sequential path
                 table.BeginLoadData();
@@ -141,7 +141,7 @@ public static class DataTableExtensions
                     using var e = source.GetEnumerator();
                     while (e.MoveNext())
                     {
-                        var values = ShredObjectSequential(e.Current);
+                        var values = _shredObjectSequential(e.Current);
 
                         if (options is not null)
                         {
@@ -162,7 +162,7 @@ public static class DataTableExtensions
             }
 
             // Slow path: existing table - use ordinal map
-            var ordinalMap = GetOrdinalMap(table);
+            var ordinalMap = _getOrdinalMap(table);
 
             table.BeginLoadData();
             try
@@ -170,7 +170,7 @@ public static class DataTableExtensions
                 using var e = source.GetEnumerator();
                 while (e.MoveNext())
                 {
-                    var values = ShredObject(table, e.Current, ordinalMap);
+                    var values = _shredObject(table, e.Current, ordinalMap);
 
                     if (options is not null)
                     {
@@ -190,7 +190,7 @@ public static class DataTableExtensions
             return table;
         }
 
-        private static DataTable ShredPrimitive(IEnumerable<T> source, DataTable? table, LoadOption? options)
+        private static DataTable _shredPrimitive(IEnumerable<T> source, DataTable? table, LoadOption? options)
         {
             // Create a new table if the input table is null.
             if (table == null)
@@ -231,9 +231,9 @@ public static class DataTableExtensions
             return table;
         }
 
-        private static object?[] ShredObject(DataTable table, T? instance, FrozenDictionary<string, int> ordinalMap)
+        private static object?[] _shredObject(DataTable table, T? instance, FrozenDictionary<string, int> ordinalMap)
         {
-            RequireNonNullInstance(instance);
+            _requireNonNullInstance(instance);
 
             // Add the cached, already-converted column values of the instance to an array.
             var values = new object?[table.Columns.Count];
@@ -246,9 +246,9 @@ public static class DataTableExtensions
             return values;
         }
 
-        private static object?[] ShredObjectSequential(T? instance)
+        private static object?[] _shredObjectSequential(T? instance)
         {
-            RequireNonNullInstance(instance);
+            _requireNonNullInstance(instance);
 
             // Fast path: columns are already in fields-then-properties sequential order.
             var values = new object?[_plan.Length];
@@ -261,7 +261,7 @@ public static class DataTableExtensions
             return values;
         }
 
-        private static void RequireNonNullInstance(T? instance)
+        private static void _requireNonNullInstance(T? instance)
         {
             if (_requiresInstanceNullCheck && instance is null)
             {
@@ -270,7 +270,7 @@ public static class DataTableExtensions
             }
         }
 
-        private static void InitializeNewTable(DataTable table)
+        private static void _initializeNewTable(DataTable table)
         {
             // Columns are added in the cached fields-then-properties sequential order.
             foreach (var column in _plan)
@@ -285,7 +285,7 @@ public static class DataTableExtensions
             }
         }
 
-        private static FrozenDictionary<string, int> GetOrdinalMap(DataTable table)
+        private static FrozenDictionary<string, int> _getOrdinalMap(DataTable table)
         {
             // For existing tables, build ordinal map and add missing columns
             var ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -309,7 +309,7 @@ public static class DataTableExtensions
             return ordinalMap.ToFrozenDictionary();
         }
 
-        private static Type DeriveColumnType(Type elementType)
+        private static Type _deriveColumnType(Type elementType)
         {
             var nullableType = Nullable.GetUnderlyingType(elementType);
             if (nullableType is not null)
@@ -338,7 +338,7 @@ public static class DataTableExtensions
         // closed generic type T, since it is only ever invoked from the static field initializer above.
         [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
             Justification = "T is annotated with DynamicallyAccessedMembers on the enclosing generic type, preserving public fields/properties for reflection.")]
-        private static ColumnPlan[] BuildPlan()
+        private static ColumnPlan[] _buildPlan()
         {
             var fields = typeof(T).GetFields()
                 .Where(static field => !field.IsStatic)
@@ -354,12 +354,12 @@ public static class DataTableExtensions
             var index = 0;
             foreach (var f in fields)
             {
-                plan[index++] = BuildColumnPlan(f.Name, f.FieldType, Expression.Field(param, f), param);
+                plan[index++] = _buildColumnPlan(f.Name, f.FieldType, Expression.Field(param, f), param);
             }
 
             foreach (var p in properties)
             {
-                plan[index++] = BuildColumnPlan(p.Name, p.PropertyType, Expression.Property(param, p), param);
+                plan[index++] = _buildColumnPlan(p.Name, p.PropertyType, Expression.Property(param, p), param);
             }
 
             return plan;
@@ -368,10 +368,10 @@ public static class DataTableExtensions
         // Suppress IL2072: DeriveColumnType returns known-safe types (DateTime, DateTimeOffset, TimeSpan, string, or the member's own type).
         [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
             Justification = "DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives).")]
-        private static ColumnPlan BuildColumnPlan(string name, Type memberType, MemberExpression access, ParameterExpression param)
+        private static ColumnPlan _buildColumnPlan(string name, Type memberType, MemberExpression access, ParameterExpression param)
         {
-            var columnType = DeriveColumnType(memberType);
-            var valueExpression = BuildValueExpression(access, memberType);
+            var columnType = _deriveColumnType(memberType);
+            var valueExpression = _buildValueExpression(access, memberType);
             var accessor = Expression.Lambda<Func<T, object?>>(valueExpression, param).Compile();
             return new ColumnPlan(name, columnType, accessor);
         }
@@ -381,7 +381,7 @@ public static class DataTableExtensions
         // ConvertColumnValue(f.GetValue(instance)) but with no runtime type inspection.
         [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
             Justification = "System.Nullable<T> always exposes public HasValue/Value instance properties regardless of T; trimming cannot remove them.")]
-        private static Expression BuildValueExpression(Expression access, Type memberType)
+        private static Expression _buildValueExpression(Expression access, Type memberType)
         {
             var nullableUnderlying = Nullable.GetUnderlyingType(memberType);
             if (nullableUnderlying is not null)
@@ -394,15 +394,15 @@ public static class DataTableExtensions
                 var valueProperty = memberType.GetProperty(nameof(Nullable<int>.Value))!;
                 var hasValue = Expression.Property(access, hasValueProperty);
                 var value = Expression.Property(access, valueProperty);
-                var convertedValue = Expression.Convert(BuildNonNullableConversion(value, nullableUnderlying), typeof(object));
+                var convertedValue = Expression.Convert(_buildNonNullableConversion(value, nullableUnderlying), typeof(object));
                 var nullConstant = Expression.Constant(null, typeof(object));
                 return Expression.Condition(hasValue, convertedValue, nullConstant);
             }
 
-            return Expression.Convert(BuildNonNullableConversion(access, memberType), typeof(object));
+            return Expression.Convert(_buildNonNullableConversion(access, memberType), typeof(object));
         }
 
-        private static Expression BuildNonNullableConversion(Expression access, Type memberType)
+        private static Expression _buildNonNullableConversion(Expression access, Type memberType)
         {
             if (memberType == typeof(object) || memberType.IsInterface)
                 return Expression.Call(_convertColumnValue, Expression.Convert(access, typeof(object)));
@@ -439,7 +439,7 @@ public static class DataTableExtensions
             return access;
         }
 
-        private static object? ConvertColumnValue(object? value)
+        private static object? _convertColumnValueValue(object? value)
         {
             if (value is null)
                 return null;

@@ -28,7 +28,7 @@ public class ExceptionProblemDetailsBenchmarks
     [Benchmark]
     public object ReflectionEmpty()
     {
-        return MapWithReflection(_empty);
+        return _mapWithReflection(_empty);
     }
 
     [Benchmark]
@@ -40,7 +40,7 @@ public class ExceptionProblemDetailsBenchmarks
     [Benchmark]
     public object ReflectionSingle()
     {
-        return MapWithReflection(_single);
+        return _mapWithReflection(_single);
     }
 
     [Benchmark]
@@ -52,7 +52,7 @@ public class ExceptionProblemDetailsBenchmarks
     [Benchmark]
     public object ReflectionSeveral()
     {
-        return MapWithReflection(_several);
+        return _mapWithReflection(_several);
     }
 
     [Benchmark]
@@ -61,7 +61,7 @@ public class ExceptionProblemDetailsBenchmarks
         return ExceptionProblemDetailsMapper.Map(_several);
     }
 
-    private static object MapWithReflection(BusinessRuleViolationException exception)
+    private static object _mapWithReflection(BusinessRuleViolationException exception)
     {
         var violation = exception.BusinessRuleViolation;
         var payload = violation

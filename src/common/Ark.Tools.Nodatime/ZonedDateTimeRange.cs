@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 namespace Ark.Tools.Nodatime;
 
 [StructLayout(LayoutKind.Auto)]
-[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+[DebuggerDisplay($"{{{nameof(_getDebuggerDisplay)}(),nq}}")]
 public readonly struct ZonedDateTimeRange
     : IEquatable<ZonedDateTimeRange>
 {
@@ -193,7 +193,7 @@ public readonly struct ZonedDateTimeRange
         return Equals((ZonedDateTimeRange)obj);
     }
 
-    private readonly string GetDebuggerDisplay()
+    private readonly string _getDebuggerDisplay()
     {
         return ToString();
     }

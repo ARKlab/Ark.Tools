@@ -25,7 +25,7 @@ public static class TableExtensions
         ArgumentNullException.ThrowIfNull(existing);
 
         var partial = table.CreateInstance<T>();
-        return MergeProperties(table.Header, existing, partial);
+        return _mergeProperties(table.Header, existing, partial);
     }
 
     /// <summary>Creates a clone and replaces only the properties supplied by the table.</summary>
@@ -41,11 +41,11 @@ public static class TableExtensions
         ArgumentNullException.ThrowIfNull(table);
         ArgumentNullException.ThrowIfNull(existing);
         var partial = table.CreateInstance<T>();
-        return MergeProperties(table.Header, existing, partial);
+        return _mergeProperties(table.Header, existing, partial);
     }
 
     [RequiresUnreferencedCode("Reqnroll test helper uses reflection to clone test objects. Test types must be preserved.")]
-    private static T MergeProperties<
+    private static T _mergeProperties<
         [DynamicallyAccessedMembers(
             DynamicallyAccessedMemberTypes.PublicProperties
             | DynamicallyAccessedMemberTypes.NonPublicProperties

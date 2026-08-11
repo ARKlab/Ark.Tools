@@ -47,7 +47,7 @@ public sealed class EvolvableEnumSurrogateTests
         public EvolvableEnum<ULongStatus, ulong> Status { get; set; }
     }
 
-    private static RuntimeTypeModel CreateModel()
+    private static RuntimeTypeModel _createModel()
     {
         var model = RuntimeTypeModel.Create();
         model.AddEvolvableEnumSurrogate<Status>();
@@ -62,7 +62,7 @@ public sealed class EvolvableEnumSurrogateTests
     public void Roundtrips_DefinedValue()
     {
         // Arrange
-        var model = CreateModel();
+        var model = _createModel();
         var original = new Wrapper { Status = EvolvableEnum<Status>.FromValue(Status.Archived) };
 
         // Act
@@ -81,7 +81,7 @@ public sealed class EvolvableEnumSurrogateTests
     public void Roundtrips_UnknownNumber()
     {
         // Arrange
-        var model = CreateModel();
+        var model = _createModel();
         var original = new Wrapper { Status = EvolvableEnum<Status>.FromNumber(999) };
 
         // Act
@@ -100,7 +100,7 @@ public sealed class EvolvableEnumSurrogateTests
     public void Roundtrips_ULongMaxValue_WithoutSignCorruption()
     {
         // Arrange
-        var model = CreateModel();
+        var model = _createModel();
         var original = new ULongWrapper
         {
             Status = EvolvableEnum<ULongStatus, ulong>.FromValue(ULongStatus.Huge),
@@ -125,7 +125,7 @@ public sealed class EvolvableEnumSurrogateTests
     public void Serializing_UnknownName_ShouldThrowExplicitly()
     {
         // Arrange
-        var model = CreateModel();
+        var model = _createModel();
         var original = new Wrapper { Status = EvolvableEnum<Status>.FromName("FutureMember") };
 
         // Act

@@ -13,12 +13,12 @@ namespace Ark.MediatorFramework.Sample.Application.Services.Decorators;
 public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-    private static readonly IAsyncPolicy RetryPolicy = Policy
-        .Handle<Exception>(static ex => IsOptimistic(ex))
+    private static readonly IAsyncPolicy _retryPolicy = Policy
+        .Handle<Exception>(static ex => _isOptimistic(ex))
         .RetryAsync(2, onRetry: static (_, attempt) =>
-            Logger.Warn(CultureInfo.InvariantCulture,
+            _logger.Warn(CultureInfo.InvariantCulture,
                 "Retrying optimistic-concurrency request {RequestType}, attempt {Attempt}.",
                 typeof(TRequest).FullName,
                 attempt));
@@ -34,12 +34,12 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> :
     /// <inheritdoc />
     public async Task<TResponse> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
-        return await RetryPolicy
+        return await _retryPolicy
             .ExecuteAsync(ct => _inner.ExecuteAsync(request, ct), ctk)
             .ConfigureAwait(false);
     }
 
-    private static bool IsOptimistic(Exception? exception)
+    private static bool _isOptimistic(Exception? exception)
     {
         while (exception is not null)
         {

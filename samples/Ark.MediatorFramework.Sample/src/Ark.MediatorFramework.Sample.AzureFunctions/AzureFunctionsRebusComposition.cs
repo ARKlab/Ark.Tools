@@ -46,12 +46,12 @@ public static class AzureFunctionsRebusComposition
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         ApplicationComposition.RegisterOutboundRebus(
             container,
-            transport => ConfigureTransport(transport, serviceBusConnectionString),
+            transport => _configureTransport(transport, serviceBusConnectionString),
             SampleRebusEndpoints.ConfigureRouting);
         return container;
     }
 
-    private static void ConfigureTransport(
+    private static void _configureTransport(
         StandardConfigurer<ITransport> transport,
         string serviceBusConnectionString)
     {

@@ -36,7 +36,7 @@ public static class Program
         builder.ConfigureFunctionsWebApplication();
 
 #pragma warning disable CA2000 // The container lives for the whole process.
-        var container = BuildContainer();
+        var container = _buildContainer();
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(container);
         builder.Services.AddArkHealthChecks();
@@ -61,7 +61,7 @@ public static class Program
         builder.Build().Run();
     }
 
-    private static Container BuildContainer()
+    private static Container _buildContainer()
     {
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();

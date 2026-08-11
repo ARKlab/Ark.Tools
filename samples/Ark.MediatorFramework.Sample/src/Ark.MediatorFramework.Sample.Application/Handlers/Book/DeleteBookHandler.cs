@@ -29,7 +29,8 @@ public sealed class DeleteBookHandler : IRequestHandler<Book_DeleteRequest.V1, b
     public async Task<bool> ExecuteAsync(Book_DeleteRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         if (!await context.DeleteBookAsync(request.Id, ctk).ConfigureAwait(false))
             throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
         await context.WriteAuditAsync(new AuditEntry

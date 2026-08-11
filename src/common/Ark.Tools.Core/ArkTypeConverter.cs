@@ -108,9 +108,9 @@ public static class ArkTypeConverter
     [RequiresUnreferencedCode("TypeDescriptor.GetConverter is not trim-safe. Ensure T and its TypeConverter are preserved.")]
     private static class ConverterCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
     {
-        private static readonly Func<string, T> _convert = Build();
+        private static readonly Func<string, T> _convert = _build();
 
-        private static Func<string, T> Build()
+        private static Func<string, T> _build()
         {
             var type = typeof(T);
             var underlying = Nullable.GetUnderlyingType(type) ?? type;
@@ -131,9 +131,9 @@ public static class ArkTypeConverter
 
     private static class ConverterCacheSafe<T>
     {
-        private static readonly Func<string, T> _convert = Build();
+        private static readonly Func<string, T> _convert = _build();
 
-        private static Func<string, T> Build()
+        private static Func<string, T> _build()
         {
             var type = typeof(T);
             var underlying = Nullable.GetUnderlyingType(type) ?? type;
@@ -144,7 +144,7 @@ public static class ArkTypeConverter
 #if NET9_0_OR_GREATER
             var converter = TypeDescriptor.GetConverterFromRegisteredType(underlying);
 #else
-            var converter = GetConverterNet8(underlying);
+            var converter = _getConverterNet8(underlying);
 #endif
             return input =>
             {
@@ -158,7 +158,7 @@ public static class ArkTypeConverter
             Justification = "Callers of TryConvertSafe ensure TypeConverter registrations are in place at startup. On .NET 9+ use GetConverterFromRegisteredType instead.")]
         [UnconditionalSuppressMessage("Trimming", "IL2067:DynamicallyAccessedMembers",
             Justification = "Callers of TryConvertSafe ensure TypeConverter registrations are in place at startup. On .NET 9+ use GetConverterFromRegisteredType instead.")]
-        private static TypeConverter GetConverterNet8(Type underlying) => TypeDescriptor.GetConverter(underlying);
+        private static TypeConverter _getConverterNet8(Type underlying) => TypeDescriptor.GetConverter(underlying);
 #endif
 
         public static T Convert(string input) => _convert(input);

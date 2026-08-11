@@ -48,7 +48,8 @@ public sealed class CreateGreetingHandler : IRequestHandler<Greeting_CreateReque
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         if ((await context.ReadAllAsync(ctk).ConfigureAwait(false)).Any(g => g.Message.Contains($"Hello, {request.Data.Name}!", StringComparison.Ordinal)))
             throw new BusinessRuleViolationException(new GreetingAlreadyExistsViolation(request.Data.Name));
 
@@ -74,14 +75,14 @@ public sealed class CreateGreetingHandler : IRequestHandler<Greeting_CreateReque
             Operation = $"{typeof(Greeting_CreateRequest).Name}.{typeof(Greeting_CreateRequest.V1).Name}",
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);
-        await context.SaveAsync(ToLegacy(response), ctk).ConfigureAwait(false);
+        await context.SaveAsync(_toLegacy(response), ctk).ConfigureAwait(false);
         var persisted = await context.ReadAsync(response.Id, ctk).ConfigureAwait(false)
             ?? throw new InvalidOperationException("The greeting was not persisted.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
-        return ToOutput(persisted);
+        return _toOutput(persisted);
     }
 
-    internal static GreetingResponse ToLegacy(Greeting.V1.Output greeting)
+    private static GreetingResponse _toLegacy(Greeting.V1.Output greeting)
     {
         return new GreetingResponse
         {
@@ -96,7 +97,7 @@ public sealed class CreateGreetingHandler : IRequestHandler<Greeting_CreateReque
         };
     }
 
-    internal static Greeting.V1.Output ToOutput(GreetingResponse greeting)
+    internal static Greeting.V1.Output _toOutput(GreetingResponse greeting)
     {
         return new Greeting.V1.Output
         {
@@ -131,7 +132,8 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<Greeting_Upda
     public async Task<Greeting.V1.Output> ExecuteAsync(Greeting_UpdateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var audit = new AuditEntry
         {
             Id = Guid.NewGuid(),
@@ -145,7 +147,7 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<Greeting_Upda
             ?? throw new Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
         await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
-        return CreateGreetingHandler.ToOutput(updated);
+        return CreateGreetingHandler._toOutput(updated);
     }
 }
 
@@ -222,7 +224,8 @@ public sealed class CompleteGreetingCompositionHandler : IRequestHandler<Complet
             ETag = Convert.ToBase64String(BitConverter.GetBytes(1L)),
         };
 
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         await context.WriteAuditAsync(new AuditEntry
         {
             Id = auditId,
@@ -279,7 +282,8 @@ public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult
     public async Task<PagedResult<AuditRecord>> ExecuteAsync(GetAuditsQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var result = await context.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return result;
@@ -301,7 +305,8 @@ public sealed class SearchGreetingsHandler : IQueryHandler<SearchGreetingsQuery,
     public async Task<GreetingPage> ExecuteAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var result = await context.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return result;
@@ -323,10 +328,10 @@ public sealed class GetGreetingsStreamHandler : IQueryHandler<GetGreetingsStream
             throw new ArgumentOutOfRangeException(nameof(query), query.DelayMilliseconds, "DelayMilliseconds must not be negative.");
 
         await Task.CompletedTask.ConfigureAwait(false);
-        return StreamAsync(query, ctk);
+        return _streamAsync(query, ctk);
     }
 
-    private static async IAsyncEnumerable<GreetingStreamItem> StreamAsync(
+    private static async IAsyncEnumerable<GreetingStreamItem> _streamAsync(
         GetGreetingsStreamQuery query,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
     {
@@ -360,7 +365,8 @@ public sealed class GetGreetingHandler : IQueryHandler<GetGreetingQuery, Greetin
     public async Task<GreetingResponse> ExecuteAsync(GetGreetingQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var greeting = await context.ReadAsync(query.Id, ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Greeting '{query.Id}' was not found.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
@@ -384,7 +390,8 @@ public sealed class GetGreetingV2Handler : IQueryHandler<GetGreetingV2Query, Gre
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var greeting = await context.ReadAsync(query.Id, ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Greeting '{query.Id}' was not found.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
@@ -469,7 +476,8 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
             var names = new List<string>();
             foreach (var attachment in request.Attachments)
             {
-                await using var stream = attachment.OpenRead();
+                var stream = attachment.OpenRead();
+                await using var __ctx = stream.ConfigureAwait(false);
                 await _documents.SaveAsync(Guid.NewGuid(), attachment.Name, attachment.ContentType, stream).ConfigureAwait(false);
                 names.Add(attachment.Name);
             }
@@ -483,7 +491,8 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
     {
         ArgumentNullException.ThrowIfNull(Request);
 
-        await using var stream = Request.Attachment.OpenRead();
+        var stream = Request.Attachment.OpenRead();
+        await using var __ctx = stream.ConfigureAwait(false);
         var length = await _documents.SaveAsync(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, stream).ConfigureAwait(false);
 
         return new UploadResponse

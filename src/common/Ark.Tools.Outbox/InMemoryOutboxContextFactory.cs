@@ -54,13 +54,13 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
 
         public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
         {
-            EnsureActive();
+            _ensureActive();
             ArgumentNullException.ThrowIfNull(messages);
             ctk.ThrowIfCancellationRequested();
             foreach (var message in messages)
             {
                 ArgumentNullException.ThrowIfNull(message);
-                _messages.Add(Clone(message));
+                _messages.Add(_clone(message));
             }
 
             await Task.CompletedTask.ConfigureAwait(false);
@@ -70,12 +70,12 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
             int messageCount = 10,
             CancellationToken ctk = default)
         {
-            EnsureActive();
+            _ensureActive();
             ArgumentOutOfRangeException.ThrowIfNegative(messageCount);
             ctk.ThrowIfCancellationRequested();
             var messages = _clearRequested
                 ? []
-                : _outbox.PeekLock(_owner, messageCount, _lockedMessageIds);
+                : _outbox._peekLock(_owner, messageCount, _lockedMessageIds);
 
             await Task.CompletedTask.ConfigureAwait(false);
             return messages;
@@ -83,9 +83,9 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
 
         public async Task<int> CountAsync(CancellationToken ctk = default)
         {
-            EnsureActive();
+            _ensureActive();
             ctk.ThrowIfCancellationRequested();
-            var count = _clearRequested ? _messages.Count : _outbox.Count() + _messages.Count;
+            var count = _clearRequested ? _messages.Count : _outbox._count() + _messages.Count;
 
             await Task.CompletedTask.ConfigureAwait(false);
             return count;
@@ -93,7 +93,7 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
 
         public async Task ClearAsync(CancellationToken ctk = default)
         {
-            EnsureActive();
+            _ensureActive();
             ctk.ThrowIfCancellationRequested();
             _messages.Clear();
             _clearRequested = true;
@@ -103,13 +103,13 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
 
         public void Commit()
         {
-            EnsureActive();
-            CommitCore();
+            _ensureActive();
+            _commitCore();
         }
 
-        private void CommitCore()
+        private void _commitCore()
         {
-            _outbox.Commit(_owner, _messages, _lockedMessageIds, _clearRequested);
+            _outbox._commit(_owner, _messages, _lockedMessageIds, _clearRequested);
             _messages.Clear();
             _lockedMessageIds.Clear();
             _clearRequested = false;
@@ -118,15 +118,15 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
 
         public async Task CommitAsync(CancellationToken ctk = default)
         {
-            EnsureActive();
+            _ensureActive();
             await CommitAsync(false, ctk).ConfigureAwait(false);
         }
 
         public async Task CommitAsync(bool reuse, CancellationToken ctk = default)
         {
-            EnsureActive();
+            _ensureActive();
             ctk.ThrowIfCancellationRequested();
-            CommitCore();
+            _commitCore();
             if (reuse)
                 _completed = false;
 
@@ -137,7 +137,7 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
         {
             if (!_disposed)
             {
-                _outbox.Release(_owner, _lockedMessageIds);
+                _outbox._release(_owner, _lockedMessageIds);
                 _disposed = true;
             }
 
@@ -149,18 +149,18 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
             if (_disposed)
                 return;
 
-            _outbox.Release(_owner, _lockedMessageIds);
+            _outbox._release(_owner, _lockedMessageIds);
             _disposed = true;
         }
 
-        private void EnsureActive()
+        private void _ensureActive()
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (_completed)
                 throw new InvalidOperationException("The outbox context has already been committed.");
         }
 
-        private static OutboxMessage Clone(OutboxMessage message)
+        private static OutboxMessage _clone(OutboxMessage message)
         {
             return new OutboxMessage
             {
@@ -184,7 +184,7 @@ public sealed class InMemoryOutbox
     private readonly List<Entry> _entries = [];
     private long _nextId;
 
-    internal IReadOnlyList<OutboxMessage> PeekLock(object owner, int messageCount, ICollection<long> lockedMessageIds)
+    internal IReadOnlyList<OutboxMessage> _peekLock(object owner, int messageCount, ICollection<long> lockedMessageIds)
     {
         lock (_sync)
         {
@@ -193,14 +193,14 @@ public sealed class InMemoryOutbox
             {
                 entry.Owner = owner;
                 lockedMessageIds.Add(entry.Id);
-                messages.Add(Clone(entry.Message));
+                messages.Add(_clone(entry.Message));
             }
 
             return messages;
         }
     }
 
-    internal int Count()
+    internal int _count()
     {
         lock (_sync)
         {
@@ -208,7 +208,7 @@ public sealed class InMemoryOutbox
         }
     }
 
-    internal void Commit(
+    internal void _commit(
         object owner,
         IEnumerable<OutboxMessage> messages,
         IEnumerable<long> lockedMessageIds,
@@ -223,12 +223,12 @@ public sealed class InMemoryOutbox
 
             foreach (var message in messages)
             {
-                _entries.Add(new Entry(++_nextId, Clone(message)));
+                _entries.Add(new Entry(++_nextId, _clone(message)));
             }
         }
     }
 
-    internal void Release(object owner, IEnumerable<long> lockedMessageIds)
+    internal void _release(object owner, IEnumerable<long> lockedMessageIds)
     {
         lock (_sync)
         {
@@ -241,7 +241,7 @@ public sealed class InMemoryOutbox
         }
     }
 
-    private static OutboxMessage Clone(OutboxMessage message)
+    private static OutboxMessage _clone(OutboxMessage message)
     {
         return new OutboxMessage
         {
@@ -254,14 +254,14 @@ public sealed class InMemoryOutbox
 
     private sealed class Entry
     {
-        internal Entry(long id, OutboxMessage message)
+        public Entry(long id, OutboxMessage message)
         {
             Id = id;
             Message = message;
         }
 
-        internal long Id { get; }
-        internal OutboxMessage Message { get; }
-        internal object? Owner { get; set; }
+        public long Id { get; }
+        public OutboxMessage Message { get; }
+        public object? Owner { get; set; }
     }
 }

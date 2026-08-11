@@ -27,7 +27,7 @@ public sealed class GrpcErrorsTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
         var action = async () => await client.ValidateHostingRequestAsync(
@@ -35,7 +35,7 @@ public sealed class GrpcErrorsTests
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
         var exception = await action.Should().ThrowAsync<RpcException>().ConfigureAwait(false);
-        var status = ReadRichStatus(exception.Which);
+        var status = _readRichStatus(exception.Which);
         exception.Which.StatusCode.Should().Be(StatusCode.InvalidArgument);
         status.Message.Should().Be("Validation failed");
         var badRequest = status.Details.Single(detail => detail.Is(BadRequest.Descriptor)).Unpack<BadRequest>();
@@ -50,7 +50,7 @@ public sealed class GrpcErrorsTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
         var action = async () => await client.TriggerHostingBusinessViolationAsync(
@@ -58,7 +58,7 @@ public sealed class GrpcErrorsTests
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
         var exception = await action.Should().ThrowAsync<RpcException>().ConfigureAwait(false);
-        var status = ReadRichStatus(exception.Which);
+        var status = _readRichStatus(exception.Which);
         exception.Which.StatusCode.Should().Be(StatusCode.FailedPrecondition);
         var violation = status.Details
             .Single(detail => detail.Is(ArkBusinessRuleViolation.Descriptor))
@@ -75,7 +75,7 @@ public sealed class GrpcErrorsTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
         var action = async () => await client.GetHostingNotFoundAsync(
@@ -83,7 +83,7 @@ public sealed class GrpcErrorsTests
             cancellationToken: app.Lifetime.ApplicationStopping).ResponseAsync.ConfigureAwait(false);
 
         var exception = await action.Should().ThrowAsync<RpcException>().ConfigureAwait(false);
-        var status = ReadRichStatus(exception.Which);
+        var status = _readRichStatus(exception.Which);
         exception.Which.StatusCode.Should().Be(StatusCode.NotFound);
         status.Code.Should().Be((int)StatusCode.NotFound);
         status.Message.Should().Be("The requested resource was not found.");
@@ -95,7 +95,7 @@ public sealed class GrpcErrorsTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
         var action = async () => await client.CheckHostingETagAsync(
@@ -113,7 +113,7 @@ public sealed class GrpcErrorsTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
 
         var action = async () => await client.CheckHostingConcurrencyAsync(
@@ -125,7 +125,7 @@ public sealed class GrpcErrorsTests
         exception.Which.Status.Detail.Should().Be("The synthetic entity was concurrently modified.");
     }
 
-    private static GrpcChannel CreateChannel(WebApplication app)
+    private static GrpcChannel _createChannel(WebApplication app)
     {
         return GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {
@@ -133,7 +133,7 @@ public sealed class GrpcErrorsTests
         });
     }
 
-    private static Google.Rpc.Status ReadRichStatus(RpcException exception)
+    private static Google.Rpc.Status _readRichStatus(RpcException exception)
     {
         var bytes = exception.Trailers.GetValueBytes("grpc-status-details-bin");
         bytes.Should().NotBeNull();

@@ -42,7 +42,8 @@ public sealed class CreateBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        await using var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         if (await context.ReadBookAsync(request.BookId, ctk).ConfigureAwait(false) is null)
             throw new EntityNotFoundException($"Book '{request.BookId}' was not found.");
 
@@ -55,7 +56,7 @@ public sealed class CreateBookPrintProcessHandler :
         };
         if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
-        await context.WriteAuditAsync(CreateAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
+        await context.WriteAuditAsync(_createAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
         using var scope = _bus.Enlist(context.OutboxContext);
         await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
         await scope.CompleteAsync().ConfigureAwait(false);
@@ -63,7 +64,7 @@ public sealed class CreateBookPrintProcessHandler :
         return process;
     }
 
-    private AuditEntry CreateAudit(Guid id, string operation)
+    private AuditEntry _createAudit(Guid id, string operation)
     {
         return new AuditEntry
         {

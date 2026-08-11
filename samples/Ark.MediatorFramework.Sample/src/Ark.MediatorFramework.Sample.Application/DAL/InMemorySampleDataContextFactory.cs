@@ -130,7 +130,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(query);
-            ValidateAuditSorts(query.Sort ?? []);
+            _validateAuditSorts(query.Sort ?? []);
             var filtered = _owner._audits.Where(record =>
                 (query.UserId is null || record.UserId == query.UserId)
                 && (query.EntityType is null || record.EntityType == query.EntityType)
@@ -292,7 +292,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return _outbox.DisposeAsync();
         }
 
-        private static void ValidateAuditSorts(IEnumerable<string> sorts)
+        private static void _validateAuditSorts(IEnumerable<string> sorts)
         {
             var properties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {

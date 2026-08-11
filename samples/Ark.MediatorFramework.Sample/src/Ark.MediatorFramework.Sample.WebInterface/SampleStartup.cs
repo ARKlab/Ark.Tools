@@ -157,8 +157,8 @@ public sealed class SampleStartup
 
         // OpenAPI: one document per API version. The generator tags expanded versioned routes
         // with their concrete group name ("v1"/"v2").
-        services.AddOpenApi("v1", ConfigureOpenApi);
-        services.AddOpenApi("v2", ConfigureOpenApi);
+        services.AddOpenApi("v1", _configureOpenApi);
+        services.AddOpenApi("v2", _configureOpenApi);
     }
 
     /// <summary>Builds the request pipeline and maps the exposed endpoints.</summary>
@@ -205,7 +205,7 @@ public sealed class SampleStartup
         });
     }
 
-    private void ConfigureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
+    private void _configureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
     {
         options
             .AddArkTypeConverterValueSchemas()

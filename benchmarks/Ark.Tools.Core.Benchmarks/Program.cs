@@ -36,10 +36,10 @@ var rowsAddRows = new List<BenchmarkRow>();
 foreach (var size in sizes)
 {
     var data = BenchmarkEntity.CreateMany(size);
-    baselineRows.Add(Measure(data, WarmupIterations, MeasuredIterations, HistoricalBaselineConverter<BenchmarkEntity>.Convert));
+    baselineRows.Add(Measure(data, WarmupIterations, MeasuredIterations, HistoricalBaselineConverter<BenchmarkEntity>._convert));
     fallbackRows.Add(Measure(data, WarmupIterations, MeasuredIterations, GenericFallbackConvert));
     interceptedRows.Add(Measure(data, WarmupIterations, MeasuredIterations, InterceptedConvert));
-    rowsAddRows.Add(Measure(data, WarmupIterations, MeasuredIterations, RowsAddConverter.Convert));
+    rowsAddRows.Add(Measure(data, WarmupIterations, MeasuredIterations, RowsAddConverter._convert));
 }
 
 PrintMarkdownTable(baselineRows, fallbackRows, interceptedRows, rowsAddRows);
