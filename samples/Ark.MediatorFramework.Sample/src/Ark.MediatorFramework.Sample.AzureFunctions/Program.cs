@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application;
-using Ark.MediatorFramework.AzureFunctions;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.NLog;
@@ -15,17 +14,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Extensions.Logging;
-
-[assembly: Ark.MediatorFramework.HttpHost(
-    typeof(ApplicationComposition),
-    "/api/v{version}",
-    // These contracts require MessagePack, which the isolated Functions binding
-    // does not provide; they remain covered by the HTTP host.
-    ExcludedContracts = new[]
-    {
-        typeof(Greeting_CreateRequest.V1),
-        typeof(DescribeShapeRequest),
-    })]
 
 namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
