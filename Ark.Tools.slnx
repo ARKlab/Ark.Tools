@@ -102,6 +102,7 @@
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj" />
@@ -151,6 +152,7 @@
     <Project Path="tests/Ark.Tools.Core.Interceptors.Tests/Ark.Tools.Core.Interceptors.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost.csproj" />
+    <Project Path="tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />

@@ -24,12 +24,6 @@
     <ProjectReference Include="..\..\common\Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
-    <!-- The generator is applied as an analyzer when this package is project-referenced in
-         development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/
-         inside this package (see IncludeGeneratorInPackage target below). -->
-    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.Grpc.Export\Ark.Tools.MediatorFramework.Grpc.Export.csproj"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>

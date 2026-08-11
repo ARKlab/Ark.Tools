@@ -20,7 +20,7 @@ No runtime `IArkEndpointResultMapper` service.
 
 ## Steps
 
-1. Extend `HttpEndpointAttribute` (`src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/HttpEndpointAttribute.cs`):
+1. Extend `HttpEndpointAttribute` (`src/mediator-framework/Ark.Tools.MediatorFramework/HttpEndpointAttribute.cs`):
    - `public int SuccessStatusCode { get; set; }` — 0 = kind-based default; e.g. `201` for a create endpoint.
    - `public int NullResultStatusCode { get; set; }` — 0 = kind-based default (404 query / 204 request); allows e.g. `200` to restore legacy behavior.
    - XML docs stating the defaults per handler kind.

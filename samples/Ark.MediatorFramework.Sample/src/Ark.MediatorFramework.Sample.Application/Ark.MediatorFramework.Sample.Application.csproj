@@ -11,7 +11,6 @@
     <PackageReference Include="Ark.Tools.Dapper" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.Solid" />
@@ -24,6 +23,7 @@
     <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
     <PackageReference Include="Ark.Tools.Sql" />
     <PackageReference Include="Ark.Tools.Sql.SqlServer" />
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="Polly" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
   </ItemGroup>

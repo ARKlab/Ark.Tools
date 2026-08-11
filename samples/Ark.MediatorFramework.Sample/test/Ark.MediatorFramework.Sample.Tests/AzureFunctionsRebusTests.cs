@@ -73,7 +73,7 @@ public sealed class AzureFunctionsRebusTests
         }).ConfigureAwait(false);
 
         var message = await received.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        Assert.AreEqual("outbound", message.Name);
+        Assert.AreEqual("outbound", message.Name, StringComparer.Ordinal);
     }
 
     private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>

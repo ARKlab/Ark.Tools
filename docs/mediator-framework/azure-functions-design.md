@@ -101,6 +101,15 @@ same selection model and prefix while its existing mapping API remains available
 for backward compatibility. No Azure Functions attribute is added to the
 Application assembly.
 
+When the host also uses Azure Functions Worker source generators, generated
+Mediator Functions can be isolated in a dedicated project. That project contains
+the contracts and `HttpHost` marker, references the Mediator Azure Functions
+generator, and is referenced by the executable host. The host sets
+`FunctionsInDependencies=true`; the Worker SDK then emits metadata for the
+generated methods in the dependency assembly while retaining its normal indexing
+and executor generators. The host must not also define a Mediator `HttpHost`
+marker, or both projects will generate competing function surfaces.
+
 ## Generation model
 
 The generator reuses the existing HTTP contract semantics but owns its emission:

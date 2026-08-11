@@ -15,17 +15,6 @@ using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Extensions.Logging;
 
-[assembly: Ark.MediatorFramework.HttpHost(
-    typeof(RefreshGreetingCommand),
-    "/api/v{version}",
-    // These contracts require MessagePack, which the isolated Functions binding
-    // does not provide; they remain covered by the HTTP host.
-    ExcludedContracts = new[]
-    {
-        typeof(Greeting_CreateRequest.V1),
-        typeof(DescribeShapeRequest),
-    })]
-
 namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
 public static class Program

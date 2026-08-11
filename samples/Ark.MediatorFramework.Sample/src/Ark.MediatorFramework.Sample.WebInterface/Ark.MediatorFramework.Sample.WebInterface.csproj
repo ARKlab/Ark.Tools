@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
+    <ArkToolsMediatorFrameworkGrpcHost>true</ArkToolsMediatorFrameworkGrpcHost>
   </PropertyGroup>
 
   <ItemGroup>
