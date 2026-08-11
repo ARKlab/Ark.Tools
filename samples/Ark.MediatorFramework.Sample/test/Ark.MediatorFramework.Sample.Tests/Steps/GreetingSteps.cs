@@ -31,7 +31,7 @@ public sealed class GreetingSteps
     private GreetingPage? _greetingPage;
     private string? _previousETag;
     private Exception? _exception;
-    private List<GreetingStreamItem> _streamItems = [];
+    private readonly List<GreetingStreamItem> _streamItems = [];
     private bool _streamWasCancelled;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
