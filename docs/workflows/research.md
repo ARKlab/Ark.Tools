@@ -1,6 +1,6 @@
 # Embedded workflow engines for ASP.NET Core
 
-**Research snapshot:** 2026-08-11  
+**Research snapshot:** 2026-08-11
 **Scope:** .NET 8/10, ASP.NET Core, Azure App Service, Azure Service Bus, Azure
 Storage, and Azure SQL
 
@@ -16,7 +16,7 @@ No candidate satisfies every requirement without a trade-off.
 | Candidate | In-process ASP.NET Core | Existing SQL state | External wait | Durable fork/join | Azure fit | Architecture decision |
 | --- | --- | --- | --- | --- | --- | --- |
 | **Elsa 3** | Yes | Yes, EF Core providers | Yes, bookmarks | Yes, `Fork`/`WaitAll` | Good; Service Bus extension | **First embedded POC** |
-| **Durable Task SDK** | Yes | No; Scheduler backend | Yes | Yes | Excellent, but adds Scheduler | **First Azure-native POC** |
+| **Durable Task SDK** | Yes | No; Scheduler backend | Yes | Yes | Excellent, but adds Scheduler | **First Azure-native POC; cost/HA gate** |
 | **Durable Functions isolated + MSSQL** | Separate Function App (can share an App Service plan) | Yes | Yes | Yes | Excellent | **Use when a Functions boundary is acceptable** |
 | **Temporal .NET** | Worker can be hosted in ASP.NET Core | No; Temporal service owns history | Yes, signals/updates | Yes | Good, but external platform | **Use for platform-grade durable execution** |
 | **Workflow Core** | Yes | Yes | Yes | Yes | Partial | **Only if maintenance risk is accepted** |
@@ -26,6 +26,7 @@ No candidate satisfies every requirement without a trade-off.
 | **Wolverine saga** | Yes | Yes | Messages/timeouts | Manual | Excellent | **Good if Wolverine/Marten is already standard** |
 | **Hangfire** | Yes | Yes | No native primitive | Pro batch only | Good | **Job scheduler, not the workflow engine** |
 | **Quartz.NET** | Yes | Yes | No native primitive | No | Good | **Scheduler only** |
+| **Orleans** | Yes | Grain state providers | Grain calls/streams | Custom grains | Good | **Use only with an existing Orleans platform** |
 | **Stateless** | Yes | Caller-owned | Caller-owned | No | Neutral | **State-machine primitive only** |
 | **Azure Logic Apps Standard** | No; separate resource | Platform-owned Storage | Yes | Yes | Excellent | **Low-code integration, not embedded code-first** |
 | **Service Bus + custom state machine** | Yes | Caller-owned | Caller-owned | Caller-owned | Excellent | **Maximum control; highest engineering cost** |
@@ -81,19 +82,19 @@ same as “same application”.
 
 ## Capability matrix
 
-| Capability | Durable Task / Functions | Elsa 3 | Temporal | Workflow Core | Dapr | Rebus/MassTransit/Wolverine | Hangfire | Quartz | Stateless |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Code-first C# | Yes | Yes | Yes | Yes | Yes | Yes | Lambdas/jobs | Jobs | Yes |
-| In-process worker | SDK: yes; Functions: no | Yes | Yes, hosted worker | Yes | No, sidecar | Yes | Yes | Yes | Yes |
-| Pluggable state store | Functions: several; SDK: Scheduler only | EF Core and extensions | Service-owned | Provider packages | Dapr components | Provider-specific | Storage providers | ADO.NET | Caller-owned |
-| Existing Azure SQL | MSSQL provider; not standalone SDK | EF Core | No | Yes | Component | Yes | Yes | Yes | Yes |
-| Searchable workflow state | MSSQL/SDK APIs; Storage is limited | REST APIs and SQL | Visibility API / Elasticsearch | Limited; optional Elasticsearch | Management API | Build a projection | Dashboard | Build it | Build it |
-| Durable external event | `WaitForExternalEventAsync` | Bookmarks/stimulus | Signals/updates | `WaitFor`/`PublishEvent` | `WaitForExternalEventAsync` | Correlated messages | No | No | No |
-| Durable timer | Yes | Yes | Yes | Yes | Yes | Deferred/scheduled messages | Scheduled jobs | Triggers | No |
-| Fan-out/fan-in | `WhenAll` | `Fork`/`WaitAll` | `WhenAll` | `Parallel`/`Join` | `WhenAll` | Manual/composite event | Pro batches | No | No |
-| Automatic retry | Activity retry policies | Resilience module | Activity retry policies | Per-step retry | Retry policy | Bus/saga retry | Yes | Misfire/retry | No |
-| Compensation | Manual/Saga | Not a first-class shipped primitive | Manual saga | Saga compensation | Manual | Manual | No | No | No |
-| Built-in workflow versioning | Yes | Definition versions | Patches/worker versions | `Id` + `Version` | Replay compatibility only | Manual | No | Job keys only | No |
+| Capability | Durable Task / Functions | Elsa 3 | Temporal | Workflow Core | Dapr | Rebus/MassTransit/Wolverine | Orleans | Hangfire | Quartz | Stateless |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Code-first C# | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Lambdas/jobs | Jobs | Yes |
+| In-process worker | SDK: yes; Functions: no | Yes | Yes, hosted worker | Yes | No, sidecar | Yes | Yes | Yes | Yes | Yes |
+| Pluggable state store | Functions: several; SDK: Scheduler only | EF Core and extensions | Service-owned | Provider packages | Dapr components | Provider-specific | Grain providers | Storage providers | ADO.NET | Caller-owned |
+| Existing Azure SQL | MSSQL provider; not standalone SDK | EF Core | No | Yes | Component | Yes | Yes | Yes | Yes | Yes |
+| Searchable workflow state | MSSQL/SDK APIs; Storage is limited | REST APIs and SQL | Visibility API / Elasticsearch | Limited; optional Elasticsearch | Management API | Build a projection | Build a projection | Dashboard | Build it | Build it |
+| Durable external event | `WaitForExternalEventAsync` | Bookmarks/stimulus | Signals/updates | `WaitFor`/`PublishEvent` | `WaitForExternalEventAsync` | Correlated messages | Grain calls/streams | No | No | No |
+| Durable timer | Yes | Yes | Yes | Yes | Yes | Deferred/scheduled messages | Reminders | Scheduled jobs | Triggers | No |
+| Fan-out/fan-in | `WhenAll` | `Fork`/`WaitAll` | `WhenAll` | `Parallel`/`Join` | `WhenAll` | Manual/composite event | Custom grains | Pro batches | No | No |
+| Automatic retry | Activity retry policies | Resilience module | Activity retry policies | Per-step retry | Retry policy | Bus/saga retry | Application-owned | Yes | Misfire/retry | No |
+| Compensation | Manual/Saga | Not a first-class shipped primitive | Manual saga | Saga compensation | Manual | Manual | Application-owned | No | No | No |
+| Built-in workflow versioning | Yes | Definition versions | Patches/worker versions | `Id` + `Version` | Replay compatibility only | Manual | Grain/interface evolution | No | Job keys only | No |
 
 “Yes” in this table means that the capability exists; it does not guarantee
 that the candidate provides the required query model, concurrency guarantees,
@@ -354,6 +355,53 @@ Sources:
 - [Durable Task MSSQL provider](https://microsoft.github.io/durabletask-mssql)
 - [Durable Task .NET SDK](https://github.com/microsoft/durabletask-dotnet)
 
+#### Durable Task Scheduler production and cost gate
+
+The Scheduler is a separate billable backend. Its price is in addition to the
+ASP.NET Core/App Service or Functions compute plan, storage, messaging, and
+observability costs. The official billing documentation currently describes two
+SKUs:
+
+| SKU | Billing and limits | Production reliability decision |
+| --- | --- | --- |
+| **Consumption** | Pay per dispatched action; up to 500 actions/second; up to 30 days of retention; no base capacity commitment | **Do not use as the production HA/multi-zone baseline.** HA is not available, and the official billing documentation labels this SKU as preview; verify status before procurement. |
+| **Dedicated** | Fixed monthly price per capacity unit (CU); up to 2,000 actions/second and 50 GB of orchestration data per CU; up to 90 days of retention | HA requires **three CUs**. One or two CUs provide throughput but not Scheduler redundancy. |
+
+For Dedicated, the minimum production HA topology is therefore three CUs. The
+user-provided planning assumption of approximately **€500 per CU per month**
+means approximately **€1,500/month for the Scheduler alone**. This is an
+indicative regional estimate, not a price guarantee: validate currency, region,
+taxes, retention, and negotiated discounts with the [Azure Functions pricing
+page](https://azure.microsoft.com/pricing/details/functions/) before approval.
+The application compute plan and any zone-redundant storage remain additional
+costs.
+
+Consumption is attractive for development, bursty non-critical workloads, and
+cost experiments because the scheduler charge is proportional to action count.
+It is not an acceptable substitute for multi-zone production reliability. A
+three-activity orchestration can consume approximately seven actions (start,
+activity dispatches/results, and completion), so the estimate must count
+dispatches rather than business-level workflow instances:
+
+```text
+monthly Scheduler Consumption cost
+    = (monthly dispatched actions / 1,000,000)
+      × regional price per million actions
+```
+
+The standalone SDK has no arbitrary Azure SQL or Azure Storage backend; it is
+coupled to the Scheduler. If the €1,500/month HA floor or the managed state
+boundary is unacceptable, use Durable Functions with a BYO provider, or an
+embedded SQL-backed engine such as Elsa, instead of weakening the reliability
+requirement by selecting a one-CU Scheduler.
+
+Sources:
+
+- [Durable Task Scheduler billing](https://learn.microsoft.com/en-us/azure/durable-task/scheduler/durable-task-scheduler-billing)
+- [Durable Task Scheduler](https://learn.microsoft.com/en-us/azure/durable-task/scheduler/durable-task-scheduler)
+- [Durable Functions billing](https://learn.microsoft.com/en-us/azure/durable-task/durable-functions/durable-functions-billing)
+- [Azure Functions pricing](https://azure.microsoft.com/pricing/details/functions/)
+
 ### 3. Temporal .NET SDK
 
 Temporal is durable execution delivered as a service. A .NET worker can run
@@ -546,7 +594,72 @@ Sources:
 - [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/)
 - [Dapr .NET SDK examples](https://github.com/dapr/dotnet-sdk/tree/master/examples/Workflow)
 
-### 6. Stateless
+### 6. Orleans
+
+Microsoft Orleans is an embeddable virtual-actor runtime, not a workflow
+engine. A silo can run in an ASP.NET Core host, and grains can persist state in
+Azure Storage, Azure SQL, Cosmos DB, or another provider. Calls, streams, and
+reminders provide useful building blocks for external events and delayed work.
+
+```csharp
+public interface IOrderWorkflowGrain : IGrainWithStringKey
+{
+    Task StartAsync(OrderRequest request);
+    Task ApproveAsync(string approvalId);
+}
+
+public sealed class OrderWorkflowGrain : Grain, IOrderWorkflowGrain
+{
+    private readonly IPersistentState<OrderState> _state;
+
+    public OrderWorkflowGrain(
+        [PersistentState("order", "workflowStore")]
+        IPersistentState<OrderState> state)
+    {
+        _state = state;
+    }
+
+    public async Task StartAsync(OrderRequest request)
+    {
+        _state.State = new OrderState(request.OrderId, "AwaitingApproval");
+        await _state.WriteStateAsync();
+    }
+
+    public async Task ApproveAsync(string approvalId)
+    {
+        if (_state.State.Status != "AwaitingApproval")
+        {
+            return;
+        }
+
+        _state.State = _state.State with { Status = "Approved" };
+        await _state.WriteStateAsync();
+    }
+}
+```
+
+Orleans does not provide a first-class durable workflow graph, replay-safe
+fork/join, human-task inbox, or workflow version protocol. Implementing a
+parallel join requires child grains, idempotent completion records, and a
+single-owner or optimistic-concurrency rule. Reminders are durable scheduling
+primitives, not a substitute for a workflow history or searchable projection.
+Version grain interfaces and persisted state explicitly; keep old serializers
+and migration code while active grains drain.
+
+**Cost and fit:** there is no workflow license fee, but the silo cluster,
+membership, monitoring, and chosen grain-state store are additional operational
+responsibilities. Orleans is a reasonable low-incremental-cost option only when
+the company already operates Orleans. Introducing it solely for workflows has
+more platform surface than Elsa and does not avoid custom orchestration work.
+
+Sources:
+
+- [Orleans overview](https://learn.microsoft.com/en-us/dotnet/orleans/overview)
+- [Orleans ASP.NET Core hosting](https://learn.microsoft.com/en-us/dotnet/orleans/host/configuration-guide/aspnet-host)
+- [Orleans grain persistence](https://learn.microsoft.com/en-us/dotnet/orleans/grains/grain-persistence/)
+- [Orleans reminders](https://learn.microsoft.com/en-us/dotnet/orleans/grains/timers-and-reminders)
+
+### 7. Stateless
 
 Stateless is an excellent in-process state-machine primitive, not a durable
 workflow engine. It has no storage, scheduler, retry policy, durable timer,
@@ -577,7 +690,7 @@ not remove the hard parts in this problem statement.
 
 Source: [Stateless](https://github.com/dotnet-state-machine/stateless)
 
-### 7. Hangfire
+### 8. Hangfire
 
 Hangfire is a persistent background-job system with SQL Server/Azure SQL
 storage, retries, continuations, delayed jobs, and a dashboard. It is a useful
@@ -621,7 +734,7 @@ Sources:
 - [SQL Server storage](https://docs.hangfire.io/en/latest/configuration/using-sql-server.html)
 - [Hangfire batches](https://docs.hangfire.io/en/latest/background-methods/using-batches.html)
 
-### 8. Quartz.NET
+### 9. Quartz.NET
 
 Quartz.NET is an embeddable clustered scheduler with persistent ADO.NET job
 stores, cron expressions, calendars, misfire policies, and job recovery. It
@@ -645,7 +758,7 @@ workflow aggregate or Elsa integration, not the aggregate itself.
 
 Source: [Quartz.NET documentation](https://www.quartz-scheduler.net/)
 
-### 9. Rebus sagas
+### 10. Rebus sagas
 
 Rebus is a message bus with sagas, SQL persistence, timeouts, and an outbox.
 It fits Azure Service Bus and Azure SQL particularly well:
@@ -694,7 +807,7 @@ Sources:
 - [Rebus SQL Server](https://github.com/rebus-org/Rebus.SqlServer)
 - [Rebus Azure Service Bus](https://github.com/rebus-org/Rebus.AzureServiceBus)
 
-### 10. MassTransit state machines
+### 11. MassTransit state machines
 
 MassTransit combines a bus, consumers, and saga state machines. It supports
 Azure Service Bus and SQL persistence through EF Core/Dapper and allows
@@ -745,7 +858,7 @@ Sources:
 - [MassTransit saga state machines](https://masstransit.io/documentation/patterns/sagas/state-machine)
 - [MassTransit Azure Service Bus](https://masstransit.io/documentation/transports/azure-service-bus)
 
-### 11. Wolverine
+### 12. Wolverine
 
 Wolverine is a message bus and durable saga framework with Azure Service Bus,
 SQL Server, PostgreSQL/Marten, inbox, outbox, retries, and scheduled messages.
@@ -780,7 +893,7 @@ adoption should pin the stable line and follow its migration guide.
 
 Source: [Wolverine](https://wolverinefx.net/)
 
-### 12. Azure Logic Apps Standard
+### 13. Azure Logic Apps Standard
 
 Logic Apps Standard is a separate Azure resource powered by the Functions
 runtime. It supports stateful workflows, many workflows per app, connectors,
@@ -802,7 +915,7 @@ Sources:
 - [Standard versus Consumption](https://learn.microsoft.com/en-us/azure/logic-apps/single-tenant-overview-compare)
 - [Logic Apps limits](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-limits-and-config)
 
-### 13. Azure messaging and storage primitives
+### 14. Azure messaging and storage primitives
 
 Azure Service Bus, Storage Queues, Tables, Blobs, and SQL are useful building
 blocks but are not workflow engines.
@@ -828,6 +941,75 @@ Sources:
 - [Storage Queues](https://learn.microsoft.com/en-us/azure/storage/queues/storage-queues-introduction)
 - [Table Storage](https://learn.microsoft.com/en-us/azure/storage/tables/table-storage-overview)
 - [Azure SQL overview](https://learn.microsoft.com/en-us/azure/azure-sql/database/sql-database-paas-overview)
+
+## Cost and production-reliability comparison
+
+Prices vary by Azure region, currency, commitment, tier, retention, and
+throughput. The table intentionally compares billing surfaces rather than
+inventing a universal monthly quote. Scheduler, compute, database, Service Bus,
+storage, monitoring, and support costs are additive.
+
+| Option | Scheduler/orchestration charge | Compute and state charge | Production reliability and operational cost |
+| --- | --- | --- | --- |
+| **Elsa 3 + existing ASP.NET Core** | No separate workflow license or scheduler service | Existing App Service plan; additional Azure SQL/Service Bus/Storage transactions and App Insights usage | Run multiple app instances, use HA SQL/Service Bus, and own clustered recovery, upgrades, and engine support |
+| **Workflow Core + existing ASP.NET Core** | No separate scheduler service | Existing plan plus selected SQL provider and message/storage costs | Similar HA design, with materially higher maintenance and security-patch ownership risk |
+| **Durable Task SDK + Scheduler Consumption** | Pay per dispatched action; 500 actions/sec ceiling; 30-day retention | Existing App Service compute; Scheduler state is managed | **Not a production multi-zone baseline:** no Scheduler HA and currently documented as preview; low idle cost does not compensate for the reliability gap |
+| **Durable Task SDK + Scheduler Dedicated** | Fixed per-CU price; HA requires three CUs | Existing App Service compute; managed Scheduler state | **Indicative minimum Scheduler HA cost: ~€1,500/month** at the requested ~€500/CU assumption, before compute, storage, messaging, monitoring, tax, and support |
+| **Durable Functions isolated + Azure Storage provider** | No Scheduler fee | Function App can share an existing Dedicated App Service plan; pay Storage queue/table/blob transactions | Separate Function App; use ZRS/GZRS for state and zone-redundant compute where required; 16-node orchestration scale-out ceiling and limited SQL search |
+| **Durable Functions isolated + MSSQL provider** | No Scheduler fee | Function App plus existing Azure SQL capacity/storage and query workload | Separate Function App; SQL HA and backups are strong; validate provider feature coverage, especially Durable Entities in isolated worker |
+| **Temporal Cloud** | Vendor usage/retention/service charges | Existing app/worker compute; no self-managed Temporal cluster | Lowest platform-operations burden but external vendor cost, data boundary, and visibility contract; obtain a current quote |
+| **Temporal self-hosted** | No vendor service fee | Temporal services plus PostgreSQL/MySQL/Cassandra and optional search, in addition to workers | Highest infrastructure and on-call cost; zone redundancy must be designed for every service |
+| **Dapr Workflow** | No workflow-specific service fee | App plus sidecar, state component, and pub/sub; AKS or Container Apps may add platform cost | Reasonable only when Dapr is already operated; otherwise sidecars and control-plane ownership erase the apparent savings |
+| **Orleans** | No workflow-specific service fee | Existing compute plus silo membership and grain-state provider | Low incremental bill only with an existing Orleans platform; custom fork/join, history, projections, and versioning create engineering cost |
+| **Logic Apps Standard** | Fixed Workflow Service Plan, plus connector and storage charges | Separate Logic App resource and associated Storage account | Managed run history and connectors, but not in-process or code-first; separate resource/plan and possible integration-account costs |
+| **Service Bus + custom SQL state machine** | No engine fee | Existing App Service, Azure SQL, and Service Bus tier/operations | Maximum cost control and reuse, but the company owns idempotency, timers, joins, inbox/outbox, migrations, dashboards, and 24x7 support |
+
+### Normalized planning examples
+
+Assume an existing Dedicated App Service plan, Azure SQL database, and Service
+Bus namespace. For **10,000 workflows/month** with approximately **seven
+Scheduler actions each**, the Scheduler Consumption estimate is:
+
+```text
+70,000 actions / 1,000,000 × regional price per million actions
+```
+
+That figure excludes the existing plan and all application dependencies, and it
+still does **not** provide Scheduler HA. The Dedicated alternative is not
+usage-priced: three CUs are the minimum HA topology. At the requested
+indicative €500/CU/month, the Scheduler portion is approximately €1,500/month
+even if the workload is idle. The one-CU alternative lowers the bill but is not
+an acceptable zone-resilient production topology.
+
+The lower-cost production paths are therefore:
+
+1. **Elsa 3** or **Workflow Core** in the existing ASP.NET Core process when the
+   team accepts application-owned clustered recovery and SQL projections.
+2. **Durable Functions + Azure Storage** when a separate Function App is
+   acceptable and limited relational search is sufficient.
+3. **Durable Functions + MSSQL** when the existing Azure SQL resource is the
+   most valuable asset and rich state queries outweigh in-process hosting.
+4. **A custom Service Bus/SQL thin orchestration layer** only when the platform
+   team budgets for the missing durable-execution features explicitly.
+
+Do not compare the €1,500 Scheduler estimate with only a library's NuGet cost.
+The correct comparison includes engineering ownership, incident response,
+database capacity, HA topology, data retention, and the cost of migrating
+long-running instances when a product or provider changes.
+
+Sources:
+
+- [Durable Task Scheduler billing](https://learn.microsoft.com/en-us/azure/durable-task/scheduler/durable-task-scheduler-billing)
+- [Azure Functions pricing](https://azure.microsoft.com/pricing/details/functions/)
+- [Azure App Service pricing](https://azure.microsoft.com/pricing/details/app-service/windows/)
+- [Azure Functions zone redundancy](https://learn.microsoft.com/en-us/azure/azure-functions/functions-zone-redundancy)
+- [Azure Functions reliability](https://learn.microsoft.com/en-us/azure/reliability/reliability-functions)
+- [Durable Task storage providers](https://learn.microsoft.com/en-us/azure/durable-task/common/durable-task-storage-providers)
+- [Durable Functions Azure Storage provider](https://learn.microsoft.com/en-us/azure/durable-task/durable-functions/durable-functions-azure-storage-provider)
+- [Durable Task MSSQL provider](https://microsoft.github.io/durabletask-mssql)
+- [Temporal Cloud pricing](https://temporal.io/pricing)
+- [Azure Service Bus pricing](https://azure.microsoft.com/pricing/details/service-bus/)
+- [Azure Logic Apps pricing](https://azure.microsoft.com/pricing/details/logic-apps/)
 
 ## Architecture patterns required regardless of engine
 
@@ -1000,10 +1182,13 @@ search/browsing are non-negotiable. Keep the application-facing API behind a
 small company abstraction so the engine’s persisted schema is not exposed to
 other services.
 
-In parallel, validate **Durable Task SDK + Durable Task Scheduler**. It is the
-best Azure-native durable-execution model and now supports direct ASP.NET Core
-hosting, but it trades arbitrary SQL state ownership for the managed Scheduler
-backend.
+In parallel, validate **Durable Task SDK + Durable Task Scheduler** only if the
+company accepts the managed state boundary and Scheduler cost. Consumption is
+not a production multi-zone baseline; the Dedicated HA topology requires three
+CUs and is approximately €1,500/month at the requested indicative
+€500/CU/month assumption before other Azure costs. The SDK supports direct
+ASP.NET Core hosting, but it trades arbitrary SQL state ownership for the
+managed Scheduler backend.
 
 If the company can accept a separate Function App, validate **Durable
 Functions isolated + MSSQL provider**. It combines the Durable programming
@@ -1012,9 +1197,11 @@ hosting boundary and provider-specific limitations.
 
 Choose **Temporal** only when the organization is willing to operate or buy a
 durable execution platform. Choose **Workflow Core** only with explicit
-ownership of maintenance risk. Choose **Rebus/MassTransit/Wolverine** when the
-messaging platform is already standard and the team accepts implementing the
-workflow projection, join protocol, and migration policy.
+ownership of maintenance risk. Choose **Orleans** only when its silo platform
+is already standard; it is not a workflow engine by itself. Choose
+**Rebus/MassTransit/Wolverine** when the messaging platform is already standard
+and the team accepts implementing the workflow projection, join protocol, and
+migration policy.
 
 Do not build a bespoke engine until these three POCs fail a requirement that
 cannot be solved with a small adapter or projection. If all three fail, build
