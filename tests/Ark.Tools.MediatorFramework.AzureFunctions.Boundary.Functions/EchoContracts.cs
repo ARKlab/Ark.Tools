@@ -86,10 +86,10 @@ public sealed class EchoQueryHandler : IQueryHandler<EchoQuery, EchoResponse>
 public sealed class EchoRequestHandler : IRequestHandler<EchoRequest, EchoResponse>
 {
     /// <inheritdoc />
-    public async Task<EchoResponse> ExecuteAsync(EchoRequest Request, CancellationToken ctk = default)
+    public async Task<EchoResponse> ExecuteAsync(EchoRequest request, CancellationToken ctk = default)
     {
-        ArgumentNullException.ThrowIfNull(Request);
-        return await Task.FromResult(new EchoResponse { Message = Request.Message }).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(request);
+        return await Task.FromResult(new EchoResponse { Message = request.Message }).ConfigureAwait(false);
     }
 }
 
