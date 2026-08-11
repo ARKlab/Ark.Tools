@@ -47,6 +47,7 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.4.83" />
+    <PackageVersion Include="MessagePack" Version="3.1.8" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Polly" Version="8.7.0" />
     <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />

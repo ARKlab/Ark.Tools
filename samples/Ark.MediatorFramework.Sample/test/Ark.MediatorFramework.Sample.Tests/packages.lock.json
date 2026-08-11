@@ -508,16 +508,6 @@
           "MimeKit": "4.17.0"
         }
       },
-      "MessagePack": {
-        "type": "Transitive",
-        "resolved": "3.1.8",
-        "contentHash": "Qk2q+9FVxnMSp+NQ9y3SLz3HqWe7Rg3KRMHhBX28FkKUoOeP9YIU86mA4pFOxDDjUIRA9e7Ssbxs/LwWUcAzPw==",
-        "dependencies": {
-          "MessagePack.Annotations": "3.1.8",
-          "MessagePackAnalyzer": "3.1.8",
-          "Microsoft.NET.StringTools": "17.11.4"
-        }
-      },
       "MessagePack.Annotations": {
         "type": "Transitive",
         "resolved": "3.1.8",
@@ -1878,7 +1868,6 @@
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Outbox": "[1.0.0, )",
@@ -1890,13 +1879,14 @@
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "MessagePack": "[3.1.8, )",
           "Polly": "[8.7.0, )"
         }
       },
       "ark.mediatorframework.sample.azurefunctions": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.Application": "[0.9.1, )",
+          "Ark.MediatorFramework.Sample.Functions": "[0.9.1, )",
           "Ark.MediatorFramework.Sample.RebusProcessor": "[0.9.1, )",
           "Ark.Tools.AspNetCore.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
@@ -1905,6 +1895,13 @@
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.10, )"
+        }
+      },
+      "ark.mediatorframework.sample.functions": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Application": "[0.9.1, )",
+          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )"
         }
       },
       "ark.mediatorframework.sample.rebusprocessor": {
@@ -2309,6 +2306,17 @@
         "dependencies": {
           "Grpc.Net.Common": "2.83.0",
           "Microsoft.Extensions.Logging.Abstractions": "8.0.0"
+        }
+      },
+      "MessagePack": {
+        "type": "CentralTransitive",
+        "requested": "[3.1.8, )",
+        "resolved": "3.1.8",
+        "contentHash": "Qk2q+9FVxnMSp+NQ9y3SLz3HqWe7Rg3KRMHhBX28FkKUoOeP9YIU86mA4pFOxDDjUIRA9e7Ssbxs/LwWUcAzPw==",
+        "dependencies": {
+          "MessagePack.Annotations": "3.1.8",
+          "MessagePackAnalyzer": "3.1.8",
+          "Microsoft.NET.StringTools": "17.11.4"
         }
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {

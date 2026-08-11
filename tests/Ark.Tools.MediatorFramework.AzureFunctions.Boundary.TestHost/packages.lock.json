@@ -610,6 +610,15 @@
           "SimpleInjector": "[5.6.0, )"
         }
       },
+      "ark.tools.mediatorframework.azurefunctions.boundary.functions": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )"
+        }
+      },
       "ark.tools.mediatorframework.minimalapi": {
         "type": "Project",
         "dependencies": {

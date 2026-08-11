@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.AzureFunctions;
+using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.Solid;
 
@@ -15,10 +16,6 @@ using Microsoft.IdentityModel.Tokens;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
-
-[assembly: Ark.MediatorFramework.HttpHost(
-    typeof(Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost.EchoQuery),
-    "/api/v{version}")]
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost;
 

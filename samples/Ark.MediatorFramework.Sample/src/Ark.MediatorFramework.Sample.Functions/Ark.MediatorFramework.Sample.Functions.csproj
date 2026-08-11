@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+  </ItemGroup>
+
+</Project>

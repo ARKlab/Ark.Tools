@@ -4,6 +4,7 @@
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <FunctionsInDependencies>true</FunctionsInDependencies>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
@@ -17,9 +18,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="FluentValidation" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/Ark.Tools.MediatorFramework.AzureFunctions.csproj" />
-    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions.Generators/Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj"
@@ -27,6 +25,7 @@
                       ReferenceOutputAssembly="false" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.FluentValidaton/Ark.Tools.Solid.FluentValidaton.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.HealthChecks/Ark.Tools.AspNetCore.HealthChecks.csproj" />
+    <ProjectReference Include="../Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

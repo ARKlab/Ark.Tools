@@ -11,6 +11,8 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 
+using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
+
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 
 [TestClass]
@@ -155,7 +157,7 @@ public sealed class AzureFunctionsBoundaryTests
     [TestCategory("AzureFunctionsBoundary")]
     public void TestHostEndpointsMatchTheParityMatrix()
     {
-        var hostMarker = typeof(Boundary.TestHost.Program).Assembly
+        var hostMarker = typeof(EchoQuery).Assembly
             .GetCustomAttributes<HttpHostAttribute>()
             .Single();
         var excluded = hostMarker.ExcludedContracts.ToHashSet(EqualityComparer<Type>.Default);

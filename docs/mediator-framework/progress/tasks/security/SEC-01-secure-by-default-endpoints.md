@@ -12,7 +12,7 @@ anonymous. There is also no way to attach a policy per endpoint (`HttpEndpointAt
 policy member, and no `RouteHandlerBuilder`/group hook is exposed).
 
 Files:
-- `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/HttpEndpointAttribute.cs`
+- `src/mediator-framework/Ark.Tools.MediatorFramework/HttpEndpointAttribute.cs`
 - `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/MinimalApiEndpointGenerator.cs`
 - `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs`
 
@@ -26,7 +26,7 @@ The sample must configure `RequireAuthenticatedUser` as the **default authorizat
 
 ## Steps
 
-1. Extend `HttpEndpointAttribute` (in `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/HttpEndpointAttribute.cs`) with:
+1. Extend `HttpEndpointAttribute` (in `src/mediator-framework/Ark.Tools.MediatorFramework/HttpEndpointAttribute.cs`) with:
    - `public string? Policy { get; set; }` — authorization policy name for this endpoint.
    - `public bool AllowAnonymous { get; set; }` — explicit opt-out; when `true` emit `.AllowAnonymous()`.
    - XML docs on both, stating the secure-by-default behavior.
