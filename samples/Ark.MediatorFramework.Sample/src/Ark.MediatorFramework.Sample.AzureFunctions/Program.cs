@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
+using Ark.MediatorFramework.AzureFunctions;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.NLog;

@@ -16,10 +16,6 @@ using Microsoft.IdentityModel.Tokens;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-[assembly: Ark.MediatorFramework.HttpHost(
-    typeof(Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost.EchoQuery),
-    "/api/v{version}")]
-
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost;
 
 /// <summary>

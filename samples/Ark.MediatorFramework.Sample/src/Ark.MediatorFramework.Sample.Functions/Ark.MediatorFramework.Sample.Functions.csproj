@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
-    <PackageReference Include="FluentValidation" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
   </ItemGroup>
 
