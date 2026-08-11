@@ -114,6 +114,7 @@ public abstract class ArkStartupWebApiCommon
         services.AddApiVersioning(o =>
         {
             o.ReportApiVersions = true;
+            o.ApiVersionReader = new UrlSegmentApiVersionReader();
             o.RouteConstraintName = "apiVersion";
             o.DefaultApiVersion = Versions.Last();
             o.AssumeDefaultVersionWhenUnspecified = true;

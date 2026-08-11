@@ -5,7 +5,7 @@ namespace Ark.MediatorFramework;
 
 /// <summary>
 /// Opt-in declaration that exposes a pure <c>Ark.Tools.Solid</c> request/query as an HTTP
-/// (Minimal API) endpoint.
+/// endpoint.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class HttpEndpointAttribute : Attribute

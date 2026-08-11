@@ -12,7 +12,7 @@ natural, because handlers and bus consumers need it — silently makes it **clie
 
 There is no way to mark a property as server-populated, and no warning.
 
-Files: `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/HttpEndpointAttribute.cs`
+Files: `src/mediator-framework/Ark.Tools.MediatorFramework/HttpEndpointAttribute.cs`
 (binding attributes live next to `HttpQueryAttribute`),
 `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/MinimalApiEndpointGenerator.cs`.
 
