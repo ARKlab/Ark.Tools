@@ -23,7 +23,7 @@ public enum ShapeKind
 
 /// <summary>
 /// Polymorphic base carried across the transport wire. Deserialization is driven by the
-/// <see cref="Kind"/> discriminator through <see cref="Ark.Tools.SystemTextJson.JsonPolymorphicConverter{TBase, TDiscriminatorEnum}"/>,
+/// <see cref="Kind"/> discriminator through <see cref="Tools.SystemTextJson.JsonPolymorphicConverter{TBase, TDiscriminatorEnum}"/>,
 /// mirroring the convention used by <c>WebApplicationDemo</c> and the reference project.
 /// Protobuf and MessagePack use matching numbered subtype envelopes; JSON keeps its named
 /// discriminator because the protobuf envelope is not its native wire representation.
@@ -130,7 +130,7 @@ public sealed record DescribeShapeRequest : IRequest<DescribeShapeRequest, Shape
 /// <see cref="Shape"/> subtype, built on the shared Ark polymorphic converter.
 /// </summary>
 /// <summary>Converts the shape hierarchy using its JSON discriminator.</summary>
-public sealed class ShapePolymorphicConverter : Ark.Tools.SystemTextJson.JsonPolymorphicConverter<Shape, ShapeKind>
+public sealed class ShapePolymorphicConverter : Tools.SystemTextJson.JsonPolymorphicConverter<Shape, ShapeKind>
 {
     public ShapePolymorphicConverter()
         : base(nameof(Shape.Kind))

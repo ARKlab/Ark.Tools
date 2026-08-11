@@ -69,7 +69,7 @@ public static class ArkAzureFunctionsHttp
     /// <param name="response">The current response.</param>
     /// <param name="items">The response sequence.</param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+    [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "The generated endpoint preserves the statically selected response element type.")]
@@ -82,7 +82,7 @@ public static class ArkAzureFunctionsHttp
         ArgumentNullException.ThrowIfNull(items);
 
         response.ContentType = "application/json; charset=utf-8";
-        await global::System.Text.Json.JsonSerializer.SerializeAsync(
+        await System.Text.Json.JsonSerializer.SerializeAsync(
             response.Body,
             items,
             cancellationToken: cancellationToken).ConfigureAwait(false);

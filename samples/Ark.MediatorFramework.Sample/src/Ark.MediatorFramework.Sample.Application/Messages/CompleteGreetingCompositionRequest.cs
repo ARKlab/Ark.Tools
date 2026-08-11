@@ -18,20 +18,3 @@ public sealed record CompleteGreetingCompositionRequest : IRequest<CompleteGreet
     /// <summary>Gets the number of transient processing failures to simulate before completing the workflow.</summary>
     public int FailuresBeforeSuccess { get; init; }
 }
-
-/// <summary>Notification emitted by the SQL transaction after a greeting is persisted.</summary>
-[RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record GreetingCreatedNotification : ICommand<GreetingCreatedNotification>
-{
-    /// <summary>Gets the persisted greeting.</summary>
-    public required GreetingResponse Greeting { get; init; }
-}
-
-/// <summary>Processes a queued book print request in the background.</summary>
-[RebusMessage(OwnerQueue = "ark.mediator.sample")]
-public sealed record ProcessBookPrintProcessRequest :
-    IRequest<ProcessBookPrintProcessRequest, BookPrintProcessResponse>
-{
-    /// <summary>Gets the print-process identifier.</summary>
-    public Guid Id { get; init; }
-}

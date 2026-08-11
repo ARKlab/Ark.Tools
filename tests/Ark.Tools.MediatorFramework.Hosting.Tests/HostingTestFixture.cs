@@ -743,12 +743,12 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
     public async Task<HostingResponse> ExecuteAsync(HostingBusinessViolationRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        var violation = new Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
+        var violation = new Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
             Status = 422,
         };
-        throw new Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
+        throw new Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
     }
 }
 
@@ -807,7 +807,7 @@ internal sealed class HostingETagMismatchHandler : IRequestHandler<HostingETagMi
     public async Task<HostingResponse> ExecuteAsync(HostingETagMismatchRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The synthetic ETag does not match.");
+        throw new Core.EntityTag.EntityTagMismatchException("The synthetic ETag does not match.");
     }
 }
 
@@ -818,7 +818,7 @@ internal sealed class HostingOptimisticConcurrencyHandler : IRequestHandler<Host
         CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        throw new Ark.Tools.Core.OptimisticConcurrencyException("The synthetic entity was concurrently modified.");
+        throw new Core.OptimisticConcurrencyException("The synthetic entity was concurrently modified.");
     }
 }
 
@@ -936,7 +936,7 @@ internal sealed class HostingOpenApiHandler : IQueryHandler<HostingOpenApiQuery,
         await Task.CompletedTask.ConfigureAwait(false);
         return new HostingOpenApiResponse
         {
-            Date = new NodaTime.LocalDate(2026, 8, 6),
+            Date = new LocalDate(2026, 8, 6),
             Shape = new HostingCircle { Radius = 3 },
             ServerStamp = "hosting-server",
         };

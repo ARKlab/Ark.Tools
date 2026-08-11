@@ -135,7 +135,7 @@ public static class ApplicationComposition
 
         if (dataContextFactory is not null)
         {
-            container.RegisterInstance<ISampleDataContextFactory>(dataContextFactory);
+            container.RegisterInstance(dataContextFactory);
             container.RegisterInstance<IOutboxAsyncContextFactory>(dataContextFactory);
         }
         else if (useSqlStore)
@@ -174,7 +174,7 @@ public static class ApplicationComposition
             container.RegisterInstance(printCompletedNotificationService);
         else
             container.RegisterSingleton<IPrintCompletedNotificationService, NoOpPrintCompletedNotificationService>();
-        container.RegisterSingleton<IClock>(() => clock ?? SystemClock.Instance);
+        container.RegisterSingleton(() => clock ?? SystemClock.Instance);
         container.RegisterSingleton<AuditCounter>();
         container.RegisterSingleton<GreetingCompositionRetryTracker>();
 

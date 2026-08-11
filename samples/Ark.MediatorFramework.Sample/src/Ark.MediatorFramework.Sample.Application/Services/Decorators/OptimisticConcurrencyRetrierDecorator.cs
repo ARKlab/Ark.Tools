@@ -43,7 +43,7 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResponse> :
     {
         while (exception is not null)
         {
-            if (exception is Ark.Tools.Core.OptimisticConcurrencyException)
+            if (exception is Tools.Core.OptimisticConcurrencyException)
                 return true;
             exception = exception.InnerException;
         }

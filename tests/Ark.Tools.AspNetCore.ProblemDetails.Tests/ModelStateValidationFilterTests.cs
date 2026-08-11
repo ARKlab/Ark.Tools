@@ -21,7 +21,7 @@ public sealed class ModelStateValidationFilterTests
     {
         var context = CreateContext(nameof(TestController.UnmarkedAction), isValid: false);
 
-        new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute().OnActionExecuting(context);
+        new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
         context.Result.Should().BeOfType<BadRequestObjectResult>();
     }
@@ -31,7 +31,7 @@ public sealed class ModelStateValidationFilterTests
     {
         var context = CreateContext(nameof(TestController.UnmarkedAction), isValid: true);
 
-        new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute().OnActionExecuting(context);
+        new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
         context.Result.Should().BeNull();
     }
@@ -41,7 +41,7 @@ public sealed class ModelStateValidationFilterTests
     {
         var context = CreateContext(nameof(TestController.MarkedAction), isValid: false);
 
-        new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute().OnActionExecuting(context);
+        new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
         context.Result.Should().BeNull();
     }
@@ -51,7 +51,7 @@ public sealed class ModelStateValidationFilterTests
     {
         var context = CreateContext(nameof(TestController.MarkedAction), isValid: true);
 
-        new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute().OnActionExecuting(context);
+        new ModelStateValidationFilterAttribute().OnActionExecuting(context);
 
         context.Result.Should().BeNull();
     }
@@ -59,7 +59,7 @@ public sealed class ModelStateValidationFilterTests
     [TestMethod]
     public void SupportsDistinctActionMethodsConcurrently()
     {
-        var filter = new Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute();
+        var filter = new ModelStateValidationFilterAttribute();
 
         Parallel.For(0, 100, index =>
         {
@@ -112,7 +112,7 @@ public sealed class ModelStateValidationFilterTests
             return Ok();
         }
 
-        [Ark.Tools.AspNetCore.SkipModelStateValidationFilter]
+        [SkipModelStateValidationFilter]
         public IActionResult MarkedAction()
         {
             return Ok();

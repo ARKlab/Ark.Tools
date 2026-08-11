@@ -55,7 +55,7 @@ public sealed class GeneratorSnapshotTests
                 .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
                 .BuildServiceProvider(),
         };
-        var method = typeof(Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx)
+        var method = typeof(ArkMessagePackEx)
             .GetMethod("GetDeserializationOptions", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
@@ -1815,7 +1815,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "GeneratorSnapshot",
@@ -1919,7 +1919,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "ApiSurfaceTest",

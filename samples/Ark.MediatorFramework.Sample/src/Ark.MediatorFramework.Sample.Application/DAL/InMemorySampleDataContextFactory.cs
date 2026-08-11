@@ -17,7 +17,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
-    private readonly System.Threading.Lock _sync = new();
+    private readonly Lock _sync = new();
     private readonly IOutboxAsyncContextFactory _outboxFactory;
 
     /// <summary>Initializes a new instance of the <see cref="InMemorySampleDataContextFactory"/> class.</summary>

@@ -19,11 +19,11 @@ public sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, IV
     }
 
     /// <inheritdoc />
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+    [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "Reqnroll resolves table property types dynamically at test runtime.")]
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+    [UnconditionalSuppressMessage(
         "Trimming",
         "IL2067",
         Justification = "Reqnroll resolves table property types dynamically at test runtime.")]

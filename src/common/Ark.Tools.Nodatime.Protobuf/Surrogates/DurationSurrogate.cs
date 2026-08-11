@@ -28,14 +28,14 @@ public struct DurationSurrogate
     public int Nanos { get; set; }
 
     /// <summary>Converts a duration into its protobuf representation.</summary>
-    public static implicit operator DurationSurrogate(NodaTime.Duration value)
+    public static implicit operator DurationSurrogate(Duration value)
     {
         var duration = value.ToProtobufDuration();
         return new DurationSurrogate { Seconds = duration.Seconds, Nanos = duration.Nanos };
     }
 
     /// <summary>Converts a protobuf representation into a duration.</summary>
-    public static implicit operator NodaTime.Duration(DurationSurrogate value)
+    public static implicit operator Duration(DurationSurrogate value)
     {
         return new Google.Protobuf.WellKnownTypes.Duration
         {

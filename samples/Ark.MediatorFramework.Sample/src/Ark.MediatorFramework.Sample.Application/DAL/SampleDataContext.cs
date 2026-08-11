@@ -77,7 +77,7 @@ public interface ISampleDataContextFactory : IOutboxAsyncContextFactory
 }
 
 /// <summary>SQL configuration used by the mediator sample.</summary>
-public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools.Sql.ISqlContextConfig
+public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Tools.Sql.ISqlContextConfig
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContextConfig"/> class.</summary>
     /// <param name="connectionString">The SQL Server connection string.</param>
@@ -103,7 +103,7 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Ark.Tools
 public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, ISampleDataContext
 {
     /// <inheritdoc />
-    public Ark.Tools.Outbox.IOutboxContextCore OutboxContext => this;
+    public IOutboxContextCore OutboxContext => this;
 
     /// <summary>Initializes a new instance of the <see cref="SampleDataContext"/> class.</summary>
     /// <param name="transaction">The transaction to use.</param>
@@ -495,9 +495,9 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         public Guid Id { get; set; }
         public string Message { get; set; } = string.Empty;
-        public NodaTime.LocalDate Date { get; set; }
-        public NodaTime.LocalDateTime DateTime { get; set; }
-        public NodaTime.OffsetDateTime OffsetDateTime { get; set; }
+        public LocalDate Date { get; set; }
+        public LocalDateTime DateTime { get; set; }
+        public OffsetDateTime OffsetDateTime { get; set; }
         public string Period { get; set; } = string.Empty;
         public Guid AuditId { get; set; }
         public byte[] ETag { get; set; } = [];
@@ -544,8 +544,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
 /// <summary>Creates transactional sample SQL contexts.</summary>
 public sealed class SampleDataContextFactory :
-    Ark.Tools.Sql.AbstractSqlAsyncContextFactory<SampleDataContext, SampleDataContext>,
-    Ark.Tools.Outbox.IOutboxAsyncContextFactory,
+    Tools.Sql.AbstractSqlAsyncContextFactory<SampleDataContext, SampleDataContext>,
+    IOutboxAsyncContextFactory,
     ISampleDataContextFactory
 {
     private readonly SampleDataContextConfig _config;
@@ -553,7 +553,7 @@ public sealed class SampleDataContextFactory :
     /// <summary>Initializes a new instance of the <see cref="SampleDataContextFactory"/> class.</summary>
     /// <param name="connectionManager">The SQL connection manager.</param>
     /// <param name="config">The sample database configuration.</param>
-    public SampleDataContextFactory(Ark.Tools.Sql.IDbConnectionManager connectionManager, SampleDataContextConfig config)
+    public SampleDataContextFactory(Tools.Sql.IDbConnectionManager connectionManager, SampleDataContextConfig config)
         : base(connectionManager, config)
     {
         _config = config;
@@ -570,7 +570,7 @@ public sealed class SampleDataContextFactory :
         return await CreateAsync(ctk).ConfigureAwait(false);
     }
 
-    async Task<Ark.Tools.Outbox.IOutboxAsyncContext> Ark.Tools.Outbox.IOutboxAsyncContextFactory.CreateAsync(CancellationToken ctk)
+    async Task<IOutboxAsyncContext> IOutboxAsyncContextFactory.CreateAsync(CancellationToken ctk)
     {
         return await CreateAsync(ctk).ConfigureAwait(false);
     }

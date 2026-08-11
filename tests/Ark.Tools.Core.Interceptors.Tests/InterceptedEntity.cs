@@ -71,7 +71,7 @@ public sealed class MixedMemberEntity
     public int Property { get; set; }
 
     /// <summary>The field value.</summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "Required to verify DataTable field ordering.")]
+    [SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "Required to verify DataTable field ordering.")]
     public int Field;
 }
 

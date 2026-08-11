@@ -27,7 +27,7 @@ public class EvolvableEnumJsonConverterTests
     private static JsonSerializerOptions CreateIntegerOptions()
     {
         var options = new JsonSerializerOptions();
-        options.Converters.Add(new Ark.Tools.SystemTextJson.EvolvableEnumIntegerJsonConverterFactory());
+        options.Converters.Add(new SystemTextJson.EvolvableEnumIntegerJsonConverterFactory());
         return options;
     }
 

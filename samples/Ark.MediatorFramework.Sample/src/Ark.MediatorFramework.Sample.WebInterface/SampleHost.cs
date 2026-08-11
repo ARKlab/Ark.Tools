@@ -30,7 +30,7 @@ public static class SampleHost
         bool useSqlStore = true,
         string? connectionString = null,
         bool configureFallbackPolicy = true,
-        Ark.MediatorFramework.Sample.Application.DAL.ISampleDataContextFactory? sharedDataContextFactory = null)
+        ISampleDataContextFactory? sharedDataContextFactory = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(container);

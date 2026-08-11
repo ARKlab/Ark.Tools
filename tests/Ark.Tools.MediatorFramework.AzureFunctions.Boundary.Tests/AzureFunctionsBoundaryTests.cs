@@ -155,7 +155,7 @@ public sealed class AzureFunctionsBoundaryTests
     [TestCategory("AzureFunctionsBoundary")]
     public void TestHostEndpointsMatchTheParityMatrix()
     {
-        var hostMarker = typeof(Boundary.TestHost.Program).Assembly
+        var hostMarker = typeof(TestHost.Program).Assembly
             .GetCustomAttributes<HttpHostAttribute>()
             .Single();
         var excluded = hostMarker.ExcludedContracts.ToHashSet(EqualityComparer<Type>.Default);
@@ -365,7 +365,7 @@ public sealed class AzureFunctionsBoundaryTests
         {
             using var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
             listener.Start();
-            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            return ((IPEndPoint)listener.LocalEndpoint).Port;
         }
     }
 }

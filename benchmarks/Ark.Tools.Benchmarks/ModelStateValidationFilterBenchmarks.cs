@@ -15,7 +15,7 @@ namespace Ark.Tools.Benchmarks;
 [Config(typeof(ExceptionProblemDetailsBenchmarks.BenchmarkConfig))]
 public class ModelStateValidationFilterBenchmarks
 {
-    private readonly Ark.Tools.AspNetCore.ModelStateValidationFilterAttribute _filter = new();
+    private readonly AspNetCore.ModelStateValidationFilterAttribute _filter = new();
     private ActionExecutingContext _markedContext = null!;
     private ActionExecutingContext _unmarkedContext = null!;
     private MethodInfo _markedMethod = null!;
@@ -60,7 +60,7 @@ public class ModelStateValidationFilterBenchmarks
 
     private static bool HasSkipAttribute(MethodInfo methodInfo)
     {
-        return methodInfo.GetCustomAttributes(typeof(Ark.Tools.AspNetCore.SkipModelStateValidationFilterAttribute), true).Length > 0;
+        return methodInfo.GetCustomAttributes(typeof(AspNetCore.SkipModelStateValidationFilterAttribute), true).Length > 0;
     }
 
     private static ActionExecutingContext CreateContext(MethodInfo methodInfo)
@@ -88,7 +88,7 @@ public class ModelStateValidationFilterBenchmarks
             return Ok();
         }
 
-        [Ark.Tools.AspNetCore.SkipModelStateValidationFilter]
+        [AspNetCore.SkipModelStateValidationFilter]
         public IActionResult MarkedAction()
         {
             return Ok();

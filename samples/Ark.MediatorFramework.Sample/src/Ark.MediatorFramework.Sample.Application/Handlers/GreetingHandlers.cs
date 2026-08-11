@@ -142,7 +142,7 @@ public sealed class UpdateGreetingMessageHandler : IRequestHandler<Greeting_Upda
             Timestamp = _clock.GetCurrentInstant(),
         };
         var updated = await context.UpdateAsync(request.Id, request.Data.Message, request.ETag ?? string.Empty, audit.Id, ctk).ConfigureAwait(false)
-            ?? throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
+            ?? throw new Tools.Core.EntityTag.EntityTagMismatchException("The greeting ETag did not match.");
         await context.WriteAuditAsync(audit, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return CreateGreetingHandler.ToOutput(updated);
