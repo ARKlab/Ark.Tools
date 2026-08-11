@@ -1896,7 +1896,7 @@
       "ark.mediatorframework.sample.azurefunctions": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.Application": "[0.9.1, )",
+          "Ark.MediatorFramework.Sample.Functions": "[0.9.1, )",
           "Ark.MediatorFramework.Sample.RebusProcessor": "[0.9.1, )",
           "Ark.Tools.AspNetCore.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
@@ -1905,6 +1905,13 @@
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.10, )"
+        }
+      },
+      "ark.mediatorframework.sample.functions": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Application": "[0.9.1, )",
+          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )"
         }
       },
       "ark.mediatorframework.sample.rebusprocessor": {
