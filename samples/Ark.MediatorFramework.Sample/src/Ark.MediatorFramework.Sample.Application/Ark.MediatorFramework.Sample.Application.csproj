@@ -22,6 +22,7 @@
     <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
     <PackageReference Include="Ark.Tools.Sql" />
     <PackageReference Include="Ark.Tools.Sql.SqlServer" />
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="Polly" />
   </ItemGroup>
 
