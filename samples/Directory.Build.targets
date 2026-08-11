@@ -48,11 +48,11 @@
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
-                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus'" />
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus' And '$(ArkToolsMediatorFrameworkRebusHost)' == 'true'" />
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
-                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc'" />
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc' And '$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.AzureFunctions.Generators\Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"

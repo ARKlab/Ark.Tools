@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ArkToolsMediatorFrameworkRebusHost>true</ArkToolsMediatorFrameworkRebusHost>
   </PropertyGroup>
 
   <ItemGroup>

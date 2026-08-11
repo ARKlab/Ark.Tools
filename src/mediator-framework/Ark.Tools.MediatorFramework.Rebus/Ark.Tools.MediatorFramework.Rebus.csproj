@@ -16,12 +16,6 @@
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <!-- Runtime dependencies used by the generated Rebus handlers. -->
     <ProjectReference Include="..\..\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
-    <!-- The generator is applied as an analyzer when this package is project-referenced in
-         development. When consumed via NuGet the generator DLL lives in analyzers/dotnet/cs/
-         inside this package (see IncludeGeneratorInPackage target below). -->
-    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.Rebus.props" Pack="true"
           PackagePath="buildTransitive" />
   </ItemGroup>
