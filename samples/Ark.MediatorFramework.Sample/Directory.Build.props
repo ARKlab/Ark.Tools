@@ -9,14 +9,6 @@
     <ArkAdditionalProto Include="$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto/Documents.proto" />
   </ItemGroup>
 
-  <!-- Remove this development-only import when ejecting the sample; the NuGet package supplies these targets transitively. -->
-  <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
-          Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets')" />
-  <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
-          Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props')" />
-  <Import Project="$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
-          Condition="Exists('$(MSBuildThisFileDirectory)..\..\src\mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets')" />
-
   <PropertyGroup Label="Continuous Integration Build Detection">
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
     <_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
@@ -32,6 +24,7 @@
 
   <PropertyGroup Label="Common Build Settings">
     <IsPackable>false</IsPackable>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -81,6 +74,11 @@
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
   </PropertyGroup>
+
+	<PropertyGroup Label="SQL Project Settings"  Condition="'$(UsingMicrosoftBuildSqlSdk)' == 'true'">
+		<TreatTSqlWarningsAsErrors>True</TreatTSqlWarningsAsErrors>
+		<RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
+	</PropertyGroup>
 
   <ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />

@@ -99,10 +99,16 @@
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
   </PropertyGroup>
 
+
+	<PropertyGroup Label="SQL Project Settings"  Condition="'$(UsingMicrosoftBuildSqlSdk)' == 'true'">
+		<TreatTSqlWarningsAsErrors>True</TreatTSqlWarningsAsErrors>
+		<RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
+	</PropertyGroup>
+
 	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
 		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
 	</ItemGroup>
-	
+
 		
 </Project>

@@ -18,7 +18,7 @@
          <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(CommonPath)')">
             <ProjectPath>%(CommonPath)</ProjectPath>
          </_ArkToolsToReplace>
-         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="$([System.String]::Copy('%(Identity)').StartsWith('Ark.Tools.MediatorFramework')) And Exists('%(MediatorFrameworkPath)')">
+         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(MediatorFrameworkPath)')">
             <ProjectPath>%(MediatorFrameworkPath)</ProjectPath>
          </_ArkToolsToReplace>
          <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(AspNetCorePath)')">
@@ -34,13 +34,21 @@
         <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')"
                           OutputItemType="%(_ArkToolsToReplace.OutputItemType)"
                           ReferenceOutputAssembly="%(_ArkToolsToReplace.ReferenceOutputAssembly)" />
+
         <!-- Package consumption gets these analyzers from analyzers/dotnet/cs. The sample's
              local PackageReference-to-ProjectReference replacement bypasses NuGet assets,
              and analyzer ProjectReferences are not transitive, so mirror those assets here. -->
+
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.Solid.Analyzers\Ark.Tools.Solid.Analyzers.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.Solid'" />
+
+         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.Solid.Analyzers.CodeFixes\Ark.Tools.Solid.Analyzers.CodeFixes.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.Solid'" />
+
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.MinimalApi.Generators\Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
@@ -61,6 +69,17 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
+        
+
+        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
+                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc' And '$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
+        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
+                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
+        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
+                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
+        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets"
+                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.Solid'" />
+
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
