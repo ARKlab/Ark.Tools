@@ -115,6 +115,7 @@ worker's topology or dead-letter demonstration types.
 ### Books
 
 - Create, update, retrieve, search, and delete books.
+- Upload and download book covers with metadata and content validation.
 - Use `EvolvableEnum<Book.V1.Genre>` for forward-compatible categories.
 - Start a background book-print process.
 - Read process status while the Rebus worker updates it.
