@@ -3,15 +3,14 @@
 
 using Ark.MediatorFramework.Sample.Tests.Drivers;
 
-using Ark.Tools.Reqnroll;
 using Ark.Tools.Authorization;
+using Ark.Tools.Core;
+using Ark.Tools.Reqnroll;
 
 using AwesomeAssertions;
 
 using Reqnroll;
 using Reqnroll.Assist;
-
-using System.Text;
 
 namespace Ark.MediatorFramework.Sample.Tests.Steps;
 
@@ -130,7 +129,7 @@ public sealed class BookSteps
     [When("I download the cover for the current book")]
     public async Task DownloadBookCover()
     {
-        _exception = await _captureAsync(_books.DownloadCoverAsync).ConfigureAwait(false);
+        _exception = await _captureAsync(() => _books.DownloadCoverAsync()).ConfigureAwait(false);
     }
 
     /// <summary>Asserts the metadata and byte count reported by a cover upload.</summary>
