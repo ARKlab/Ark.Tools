@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -38,8 +39,9 @@ namespace Ark.MediatorFramework.Generators
         {
             var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
-                        && invocation.Expression.ToString().Contains("MapArkGrpcServicesFromAssembly", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyName(syntaxContext, "MapArkGrpcServicesFromAssembly"))
+                        && IsInvocationNamed(invocation, "MapArkGrpcServicesFromAssembly"),
+                    static (syntaxContext, cancellationToken) =>
+                        GetAssemblyName(syntaxContext, "MapArkGrpcServicesFromAssembly", cancellationToken))
                 .Where(static assemblyName => assemblyName is not null)
                 .Select(static (assemblyName, _) => assemblyName!)
                 .Collect();
@@ -51,7 +53,8 @@ namespace Ark.MediatorFramework.Generators
                 .Select(static (endpoint, _) => endpoint!.Value);
             var referencedEndpoints = context.CompilationProvider
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
+                .SelectMany(static (pair, cancellationToken) =>
+                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
             var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect());
 
@@ -75,7 +78,24 @@ namespace Ark.MediatorFramework.Generators
                 context.SemanticModel.Compilation.GetTypeByMetadataName(AsyncEnumerable));
         }
 
-        private static string? GetAssemblyName(GeneratorSyntaxContext context, string methodName)
+        private static bool IsInvocationNamed(InvocationExpressionSyntax invocation, string methodName)
+        {
+            return invocation.Expression switch
+            {
+                MemberAccessExpressionSyntax memberAccess =>
+                    memberAccess.Name.Identifier.ValueText == methodName,
+                GenericNameSyntax genericName =>
+                    genericName.Identifier.ValueText == methodName,
+                IdentifierNameSyntax identifierName =>
+                    identifierName.Identifier.ValueText == methodName,
+                _ => false,
+            };
+        }
+
+        private static string? GetAssemblyName(
+            GeneratorSyntaxContext context,
+            string methodName,
+            CancellationToken cancellationToken)
         {
             var invocation = (InvocationExpressionSyntax)context.Node;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
@@ -84,12 +104,15 @@ namespace Ark.MediatorFramework.Generators
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
-            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            return context.SemanticModel
+                .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
+                .Type?.ContainingAssembly?.Name;
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
             Compilation compilation,
-            ImmutableArray<string> endpointAssemblies)
+            ImmutableArray<string> endpointAssemblies,
+            CancellationToken cancellationToken)
         {
             var grpcAttr = compilation.GetTypeByMetadataName(GrpcMethodAttribute);
             var grpcServiceAttr = compilation.GetTypeByMetadataName(GrpcServiceAttribute);
@@ -105,8 +128,10 @@ namespace Ark.MediatorFramework.Generators
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
                 .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var attrs = type.GetAttributes();
                     var grpc = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, grpcAttr));
                     if (grpc is null)

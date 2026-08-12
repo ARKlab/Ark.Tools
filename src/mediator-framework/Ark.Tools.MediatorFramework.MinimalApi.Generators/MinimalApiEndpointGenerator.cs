@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -88,8 +89,9 @@ namespace Ark.MediatorFramework.Generators
         {
             var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
-                        && invocation.Expression.ToString().Contains("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyMapping(syntaxContext, "MapArkEndpointsFromAssembly"))
+                        && IsInvocationNamed(invocation, "MapArkEndpointsFromAssembly"),
+                    static (syntaxContext, cancellationToken) =>
+                        GetAssemblyMapping(syntaxContext, "MapArkEndpointsFromAssembly", cancellationToken))
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
@@ -103,7 +105,8 @@ namespace Ark.MediatorFramework.Generators
                 .Select(static (endpoint, _) => endpoint!.Value);
             var referencedEndpoints = context.CompilationProvider
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
+                .SelectMany(static (pair, cancellationToken) =>
+                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
             var collected = sourceEndpoints.Collect()
                 .Combine(referencedEndpoints.Collect())
@@ -158,7 +161,24 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ReadOnlyCollection));
         }
 
-        private static EndpointAssemblyMapping? GetAssemblyMapping(GeneratorSyntaxContext context, string methodName)
+        private static bool IsInvocationNamed(InvocationExpressionSyntax invocation, string methodName)
+        {
+            return invocation.Expression switch
+            {
+                MemberAccessExpressionSyntax memberAccess =>
+                    memberAccess.Name.Identifier.ValueText == methodName,
+                GenericNameSyntax genericName =>
+                    genericName.Identifier.ValueText == methodName,
+                IdentifierNameSyntax identifierName =>
+                    identifierName.Identifier.ValueText == methodName,
+                _ => false,
+            };
+        }
+
+        private static EndpointAssemblyMapping? GetAssemblyMapping(
+            GeneratorSyntaxContext context,
+            string methodName,
+            CancellationToken cancellationToken)
         {
             var invocation = (InvocationExpressionSyntax)context.Node;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
@@ -167,7 +187,9 @@ namespace Ark.MediatorFramework.Generators
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
-            var assemblyName = context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            var assemblyName = context.SemanticModel
+                .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
+                .Type?.ContainingAssembly?.Name;
             if (assemblyName is null)
                 return null;
 
@@ -184,7 +206,8 @@ namespace Ark.MediatorFramework.Generators
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
             Compilation compilation,
-            ImmutableArray<string> endpointAssemblies)
+            ImmutableArray<string> endpointAssemblies,
+            CancellationToken cancellationToken)
         {
             var httpAttr = compilation.GetTypeByMetadataName(HttpEndpointAttribute);
             if (httpAttr is null)
@@ -209,8 +232,10 @@ namespace Ark.MediatorFramework.Generators
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
                 .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var attrs = type.GetAttributes();
                     var http = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, httpAttr));
                     if (http is null)

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -34,8 +35,9 @@ namespace Ark.MediatorFramework.Generators
         {
             var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax invocation
-                        && invocation.Expression.ToString().Contains("ArkRebus", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyName(syntaxContext))
+                        && IsRebusInvocation(invocation),
+                    static (syntaxContext, cancellationToken) =>
+                        GetAssemblyName(syntaxContext, cancellationToken))
                 .Where(static assemblyName => assemblyName is not null)
                 .Select(static (assemblyName, _) => assemblyName!)
                 .Collect();
@@ -47,13 +49,14 @@ namespace Ark.MediatorFramework.Generators
                 .Select(static (endpoint, _) => endpoint!.Value);
             var referencedEndpoints = context.CompilationProvider
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
+                .SelectMany(static (pair, cancellationToken) =>
+                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
             var sourceWithFailedHandlers = context.CompilationProvider
                 .Combine(sourceEndpoints.Collect())
-                .Select(static (pair, _) =>
+                .Select(static (pair, cancellationToken) =>
                 {
-                    var failedHandlers = FailedHandlers(pair.Left.Assembly);
+                    var failedHandlers = FailedHandlers(pair.Left.Assembly, cancellationToken);
                     return pair.Right
                         .Select(endpoint => endpoint.WithFailedHandlers(failedHandlers))
                         .ToImmutableArray();
@@ -70,7 +73,26 @@ namespace Ark.MediatorFramework.Generators
             return Extract((INamedTypeSymbol)context.TargetSymbol, context.Attributes[0]);
         }
 
-        private static string? GetAssemblyName(GeneratorSyntaxContext context)
+        private static bool IsRebusInvocation(InvocationExpressionSyntax invocation)
+        {
+            return invocation.Expression switch
+            {
+                MemberAccessExpressionSyntax memberAccess =>
+                    memberAccess.Name.Identifier.ValueText is
+                        "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting",
+                GenericNameSyntax genericName =>
+                    genericName.Identifier.ValueText is
+                        "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting",
+                IdentifierNameSyntax identifierName =>
+                    identifierName.Identifier.ValueText is
+                        "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting",
+                _ => false,
+            };
+        }
+
+        private static string? GetAssemblyName(
+            GeneratorSyntaxContext context,
+            CancellationToken cancellationToken)
         {
             var invocation = (InvocationExpressionSyntax)context.Node;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
@@ -79,12 +101,15 @@ namespace Ark.MediatorFramework.Generators
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
-            return context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
+            return context.SemanticModel
+                .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
+                .Type?.ContainingAssembly?.Name;
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
             Compilation compilation,
-            ImmutableArray<string> endpointAssemblies)
+            ImmutableArray<string> endpointAssemblies,
+            CancellationToken cancellationToken)
         {
             var rebusAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             if (rebusAttr is null)
@@ -96,9 +121,11 @@ namespace Ark.MediatorFramework.Generators
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
                 .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
             {
-                var failedHandlers = FailedHandlers(assembly);
+                cancellationToken.ThrowIfCancellationRequested();
+                var failedHandlers = FailedHandlers(assembly, cancellationToken);
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var attrs = type.GetAttributes();
                     var rebus = attrs.FirstOrDefault(
                         a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, rebusAttr));
@@ -114,11 +141,14 @@ namespace Ark.MediatorFramework.Generators
             return builder.ToImmutable();
         }
 
-        private static IReadOnlyList<FailedHandlerModel> FailedHandlers(IAssemblySymbol assembly)
+        private static IReadOnlyList<FailedHandlerModel> FailedHandlers(
+            IAssemblySymbol assembly,
+            CancellationToken cancellationToken)
         {
             var handlers = new List<FailedHandlerModel>();
             foreach (var type in _allTypes(assembly.GlobalNamespace))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (type.TypeKind != TypeKind.Class
                     || type.IsAbstract
                     || type.DeclaredAccessibility != Accessibility.Public)
