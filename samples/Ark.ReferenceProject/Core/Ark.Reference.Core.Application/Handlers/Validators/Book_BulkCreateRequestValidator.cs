@@ -1,5 +1,4 @@
 using Ark.Reference.Core.API.Requests;
-using Ark.Reference.Core.Common.Dto;
 
 using FluentValidation;
 
