@@ -122,7 +122,7 @@ public class ArkProblemDetailsOptionsSetup
             var props = t.GetProperties()
                 .Where(x => x.GetMethod is not null
                     && !x.GetMethod.IsStatic
-                    && x.GetCustomAttributes(typeof(ProblemDetailsExtensionAttribute), inherit: true).Length != 0)
+                    && x.DeclaringType != typeof(BusinessRuleViolation))
                 .GroupBy(x => x.Name, StringComparer.Ordinal)
                 .Select(x => x
                     .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)

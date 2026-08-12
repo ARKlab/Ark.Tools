@@ -108,7 +108,7 @@ public static class ExceptionProblemDetailsMapper
             .GetProperties()
             .Where(property => property.GetMethod is not null
                 && !property.GetMethod.IsStatic
-                && property.GetCustomAttributes<ProblemDetailsExtensionAttribute>(inherit: true).Any())
+                && property.DeclaringType != typeof(BusinessRuleViolation))
             .GroupBy(property => property.Name, StringComparer.Ordinal)
             .Select(group => group
                 .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)

@@ -143,14 +143,13 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
     [SuppressMessage(
         "Trimming",
         "IL2026",
-        Justification = "The BusinessRuleViolation base type preserves public properties for the explicit extension contract.")]
+        Justification = "The BusinessRuleViolation base type preserves public properties for the documented client-visible contract.")]
     private static Dictionary<string, string> _getExtensions(BusinessRuleViolation violation)
     {
         var properties = violation.GetType()
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(property => property.GetMethod is not null
                 && !property.GetMethod.IsStatic
-                && property.GetCustomAttributes<ProblemDetailsExtensionAttribute>(inherit: true).Any()
                 && property.Name is not nameof(BusinessRuleViolation.Status)
                 and not nameof(BusinessRuleViolation.Title)
                 and not nameof(BusinessRuleViolation.Detail)

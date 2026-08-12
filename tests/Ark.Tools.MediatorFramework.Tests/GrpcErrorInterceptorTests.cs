@@ -117,13 +117,13 @@ public sealed class GrpcErrorInterceptorTests
     }
 
     [TestMethod]
-    public async Task MapsOnlyOptedInBusinessRuleExtensions()
+    public async Task MapsPublicBusinessRuleExtensions()
     {
         var interceptor = new ArkGrpcErrorInterceptor();
         var violation = new TestBusinessRuleViolation
         {
             Exposed = "visible",
-            Secret = "hidden",
+            Additional = "additional",
         };
 
         Func<Task> action = () => interceptor.UnaryServerHandler(
@@ -138,7 +138,7 @@ public sealed class GrpcErrorInterceptorTests
             .Unpack<ArkBusinessRuleViolation>();
 
         detail.Extensions.Should().ContainKey(nameof(TestBusinessRuleViolation.Exposed));
-        detail.Extensions.Should().NotContainKey(nameof(TestBusinessRuleViolation.Secret));
+        detail.Extensions.Should().ContainKey(nameof(TestBusinessRuleViolation.Additional));
     }
 
     private sealed class TestHostEnvironment : IHostEnvironment
@@ -162,10 +162,9 @@ internal sealed class TestBusinessRuleViolation : BusinessRuleViolation
     {
     }
 
-    [ProblemDetailsExtension]
     public string? Exposed { get; set; }
 
-    public string? Secret { get; set; }
+    public string? Additional { get; set; }
 }
 
 internal static class GrpcErrorInterceptorTestExtensions

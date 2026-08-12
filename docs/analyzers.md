@@ -54,10 +54,9 @@ source is deterministic; unchanged compilations are expected to reuse incrementa
 results. Generated source inspection and full build/test validation are required
 when changing a generator.
 
-Business-rule violation extensions are opt-in: mark a property with
-`ProblemDetailsExtensionAttribute` before exposing it through HTTP or gRPC error
-details. Unmarked derived properties and unexpected exception details remain
-server-side.
+Business-rule violation public derived properties are part of the client-visible
+error contract through HTTP and gRPC. Keep those properties safe and structured:
+they must not contain PII, secrets, or unexpected exception details.
 
 ## Installed Analyzers
 
