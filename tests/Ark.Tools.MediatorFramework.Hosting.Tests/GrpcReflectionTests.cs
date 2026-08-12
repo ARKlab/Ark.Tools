@@ -33,8 +33,6 @@ public sealed class GrpcReflectionTests
         startInfo.ArgumentList.Add("run");
         startInfo.ArgumentList.Add("--rm");
         startInfo.ArgumentList.Add("--add-host=host.docker.internal:host-gateway");
-        startInfo.ArgumentList.Add("-p");
-        startInfo.ArgumentList.Add($"{_grpcPort}:{_grpcPort}");
         startInfo.ArgumentList.Add("fullstorydev/grpcurl:latest");
         startInfo.ArgumentList.Add("-plaintext");
         startInfo.ArgumentList.Add($"host.docker.internal:{_grpcPort}");
