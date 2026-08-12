@@ -156,7 +156,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
                 )
             .GroupBy(property => property.Name, StringComparer.Ordinal)
             .Select(group => group
-                .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)
+                .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
                 .First())
             .OrderBy(property => property.Name, StringComparer.Ordinal);
 
@@ -164,5 +164,13 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             property => property.Name,
             property => JsonSerializer.Serialize(property.GetValue(violation), property.PropertyType, ArkSerializerOptions.JsonOptions),
             StringComparer.Ordinal);
+    }
+
+    private static int _getInheritanceDepth(Type? type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null; current = current.BaseType)
+            depth++;
+        return depth;
     }
 }

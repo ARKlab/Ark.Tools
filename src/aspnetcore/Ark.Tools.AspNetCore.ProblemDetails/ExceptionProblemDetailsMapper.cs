@@ -111,11 +111,19 @@ public static class ExceptionProblemDetailsMapper
                 && property.DeclaringType != typeof(BusinessRuleViolation))
             .GroupBy(property => property.Name, StringComparer.Ordinal)
             .Select(group => group
-                .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)
+                .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
                 .First())
             .OrderBy(property => property.Name, StringComparer.Ordinal)
             .Select(property => new Accessor(property.Name, _createGetter(violationType, property)))
             .ToArray();
+    }
+
+    private static int _getInheritanceDepth(Type? type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null; current = current.BaseType)
+            depth++;
+        return depth;
     }
 
     private static Func<BusinessRuleViolation, object?> _createGetter(Type violationType, PropertyInfo property)

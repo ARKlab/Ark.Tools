@@ -125,7 +125,7 @@ public class ArkProblemDetailsOptionsSetup
                     && x.DeclaringType != typeof(BusinessRuleViolation))
                 .GroupBy(x => x.Name, StringComparer.Ordinal)
                 .Select(x => x
-                    .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)
+                    .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
                     .First())
                 .OrderBy(x => x.Name, StringComparer.Ordinal)
                 .Select(x => (x.Name, x.PropertyType))
@@ -137,6 +137,14 @@ public class ArkProblemDetailsOptionsSetup
         var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions)!;
         ret.Extensions["@BusinessRuleViolation"] = arg.BusinessRuleViolation;
         return ret;
+    }
+
+    private static int _getInheritanceDepth(Type? type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null; current = current.BaseType)
+            depth++;
+        return depth;
     }
 
     private static bool _isServerError(int? statusCode)
