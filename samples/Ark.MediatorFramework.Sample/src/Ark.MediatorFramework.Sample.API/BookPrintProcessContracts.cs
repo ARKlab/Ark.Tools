@@ -23,6 +23,9 @@ public enum BookPrintProcessStatus
 
     /// <summary>The process completed with an error.</summary>
     Error,
+
+    /// <summary>The process was cancelled before completion.</summary>
+    Cancelled,
 }
 
 /// <summary>Represents a background book print process.</summary>
@@ -61,6 +64,14 @@ public sealed record CreateBookPrintProcessRequest :
 /// <summary>Reads a book print process by identifier.</summary>
 public sealed record GetBookPrintProcessQuery :
     IQuery<GetBookPrintProcessQuery, BookPrintProcessResponse>
+{
+    /// <summary>Gets the print-process identifier.</summary>
+    public Guid Id { get; init; }
+}
+
+/// <summary>Cancels a pending or running book print process.</summary>
+public sealed record CancelBookPrintProcessRequest :
+    IRequest<CancelBookPrintProcessRequest, BookPrintProcessResponse>
 {
     /// <summary>Gets the print-process identifier.</summary>
     public Guid Id { get; init; }

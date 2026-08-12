@@ -10,6 +10,9 @@ public static class ApplicationScopes
 {
     /// <summary>Allows creating and updating greetings.</summary>
     public const string GreetingWrite = "greetings.write";
+
+    /// <summary>Allows reading and writing book covers.</summary>
+    public const string BookCover = "books.cover";
 }
 
 /// <summary>Requires a scope claim.</summary>

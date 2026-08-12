@@ -44,7 +44,7 @@ public sealed class CreateBookPrintProcessHandler :
         ArgumentNullException.ThrowIfNull(request);
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        if (await context.ReadBookAsync(request.BookId, ctk).ConfigureAwait(false) is null)
+        if (await context.ReadBookAsync(request.BookId, ctk: ctk).ConfigureAwait(false) is null)
             throw new EntityNotFoundException($"Book '{request.BookId}' was not found.");
 
         var process = new BookPrintProcessResponse

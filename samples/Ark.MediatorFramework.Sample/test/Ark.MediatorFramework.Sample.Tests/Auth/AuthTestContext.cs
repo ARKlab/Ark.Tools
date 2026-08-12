@@ -43,6 +43,20 @@ public sealed class AuthTestContext
         _context.Application.SetAuthenticatedUser("unauthorized-user", "other-scope");
     }
 
+    /// <summary>Sets an authenticated principal with the book-cover scope.</summary>
+    [Given("I am an authenticated user with the book cover scope")]
+    public void SetAuthenticatedUserWithBookCoverScope()
+    {
+        _context.Application.SetAuthenticatedUser("book-cover-user", ApplicationScopes.BookCover);
+    }
+
+    /// <summary>Sets an authenticated principal without the book-cover scope.</summary>
+    [Given("I am an authenticated user without the book cover scope")]
+    public void SetAuthenticatedUserWithoutBookCoverScope()
+    {
+        _context.Application.SetAuthenticatedUser("unauthorized-book-cover-user", "other-scope");
+    }
+
     /// <summary>Sets the application principal to an anonymous user.</summary>
     [Given("I am an anonymous user")]
     public void SetAnonymousUser()

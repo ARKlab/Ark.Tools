@@ -48,6 +48,26 @@ public sealed class SearchBooksQueryValidator : AbstractValidator<Book_SearchQue
     }
 }
 
+/// <summary>Validates book cover uploads.</summary>
+public sealed class UploadBookCoverRequestValidator : AbstractValidator<UploadBookCoverRequest>
+{
+    /// <summary>Initializes a new instance of the <see cref="UploadBookCoverRequestValidator"/> class.</summary>
+    public UploadBookCoverRequestValidator()
+    {
+        RuleFor(request => request.Id).NotEmpty();
+        RuleFor(request => request.Attachment)
+            .NotNull()
+            .DependentRules(() =>
+            {
+                RuleFor(request => request.Attachment.Name).NotEmpty().MaximumLength(255);
+                RuleFor(request => request.Attachment.ContentType)
+                    .Must(contentType => string.Equals(contentType, "image/jpeg", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(contentType, "image/png", StringComparison.OrdinalIgnoreCase))
+                    .WithMessage("Book covers must be JPEG or PNG images.");
+            });
+    }
+}
+
 /// <summary>Validates book print-process creation requests.</summary>
 public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<CreateBookPrintProcessRequest>
 {

@@ -93,6 +93,19 @@ public sealed class BookPrintingProcessSteps
             new ProcessBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
     }
 
+    /// <summary>Cancels the active print process through its application request.</summary>
+    [When("I cancel the current book print process")]
+    public async Task CancelCurrentBookPrintProcess()
+    {
+        Current.Should().NotBeNull();
+        _exception = await _captureAsync(async () =>
+        {
+            Current = await _context.DispatchRequestAsync<CancelBookPrintProcessRequest, BookPrintProcessResponse>(
+                new CancelBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
+            return Current;
+        }).ConfigureAwait(false);
+    }
+
     /// <summary>Asserts that the active print process matches the supplied table.</summary>
     /// <param name="table">The expected print process data.</param>
     [Then("the current book print process is")]
@@ -109,6 +122,23 @@ public sealed class BookPrintingProcessSteps
         Current.Should().NotBeNull();
         Current!.Status.Should().Be((EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Error);
         Current.ErrorMessage.Should().NotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>Asserts that the active print process was cancelled.</summary>
+    [Then("the current book print process was cancelled")]
+    public void CurrentBookPrintProcessWasCancelled()
+    {
+        _exception.Should().BeNull();
+        Current.Should().NotBeNull();
+        Current!.Status.Should().Be((EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Cancelled);
+    }
+
+    /// <summary>Asserts that cancellation was rejected for a terminal process.</summary>
+    [Then("cancellation fails because the current book print process is terminal")]
+    public void CancellationFailsBecauseCurrentBookPrintProcessIsTerminal()
+    {
+        _exception.Should().BeOfType<BusinessRuleViolationException>()
+            .Which.BusinessRuleViolation.Should().BeOfType<BookPrintProcessCannotBeCancelledViolation>();
     }
 
     /// <summary>Asserts that the external notification service was called for the active process.</summary>

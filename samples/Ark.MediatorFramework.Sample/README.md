@@ -115,9 +115,11 @@ worker's topology or dead-letter demonstration types.
 ### Books
 
 - Create, update, retrieve, search, and delete books.
+- Upload and download book covers with metadata and content validation.
 - Use `EvolvableEnum<Book.V1.Genre>` for forward-compatible categories.
 - Start a background book-print process.
 - Read process status while the Rebus worker updates it.
+- Cancel pending or running print processes and reject terminal-state cancellation.
 - Demonstrate a business-rule violation when a print process is already active.
 
 ### Auditing
@@ -188,6 +190,14 @@ ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
 The in-memory profile still exercises the application handlers, decorators,
 outbox, Rebus transport, and scenario-owned test composition. It does not silently
 replace the SQL profile; choose it explicitly.
+
+### Concurrency
+
+The sample uses pessimistic row locking for read-before-write workflows. SQL
+contexts request `UPDLOCK, HOLDLOCK` through `forUpdate: true` on
+`ReadBookAsync` and `ReadBookPrintProcessAsync`; mutating handlers use that
+option, and conditional state-transition updates remain atomic. The in-memory
+context keeps the same atomic transition rules under its shared lock.
 
 ## Rebus topology
 

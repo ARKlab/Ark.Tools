@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.ComponentModel;
+using System.Numerics;
 using System.Runtime.Serialization;
 
 namespace Ark.Tools.Core;
@@ -43,5 +44,30 @@ public static class EnumExtensions
         }
 
         return null;
+    }
+
+    /// <summary>Wraps an enum value in its evolvable representation.</summary>
+    /// <typeparam name="TEnum">The enum type.</typeparam>
+    /// <param name="value">The enum value to wrap.</param>
+    /// <returns>The evolvable enum value.</returns>
+    public static EvolvableEnum<TEnum> ToEvolvable<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(this TEnum value)
+        where TEnum : struct, Enum
+    {
+        return EvolvableEnum<TEnum>.FromValue(value);
+    }
+
+    /// <summary>Wraps an enum value in its evolvable representation using its exact backing type.</summary>
+    /// <typeparam name="TEnum">The enum type.</typeparam>
+    /// <typeparam name="TBacking">The enum's exact integral backing type.</typeparam>
+    /// <param name="value">The enum value to wrap.</param>
+    /// <returns>The evolvable enum value.</returns>
+    public static EvolvableEnum<TEnum, TBacking> ToEvolvable<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+        TBacking>(this TEnum value)
+        where TEnum : struct, Enum
+        where TBacking : struct, IBinaryInteger<TBacking>
+    {
+        return EvolvableEnum<TEnum, TBacking>.FromValue(value);
     }
 }

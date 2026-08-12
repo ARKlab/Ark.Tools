@@ -39,7 +39,9 @@ public sealed class BookPrintProcessFailureHandler : IHandleMessages<IFailed<Pro
         ArgumentNullException.ThrowIfNull(message);
         var context = await _factory.CreateAsync().ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        var process = await context.ReadBookPrintProcessAsync(message.Message.Id).ConfigureAwait(false);
+        var process = await context.ReadBookPrintProcessAsync(
+            message.Message.Id,
+            forUpdate: true).ConfigureAwait(false);
         if (process is null)
         {
             await context.CommitAsync().ConfigureAwait(false);

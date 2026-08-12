@@ -25,7 +25,7 @@ must be delivered as a working vertical slice, not as contract preparation.
 
 ## Acceptance
 
-- [ ] New cover contracts are implemented, documented, and handler-wired.
-- [ ] BDD and applicable HTTP/gRPC tests pass.
-- [ ] File validation, authorization, and missing-cover behavior is verified.
-- [ ] Sample build and affected tests pass.
+- [x] New cover contracts are implemented, documented, and handler-wired.
+- [x] BDD and applicable HTTP/gRPC tests pass.
+- [x] File validation, authorization, and missing-cover behavior is verified.
+- [x] Sample build and affected tests pass.

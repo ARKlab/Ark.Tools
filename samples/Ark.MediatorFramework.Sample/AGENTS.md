@@ -13,6 +13,10 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
   payloads into `Request`/`Query`/`Command` envelopes.
 - Handlers own transaction lifecycles, including locks, idempotency decisions,
   interleaved external calls, and commit/rollback.
+- Use pessimistic row locking for read-before-write workflows: mutating handlers
+  pass `forUpdate: true` to the context read operation, and SQL contexts use
+  `UPDLOCK, HOLDLOCK`. Keep conditional state transitions atomic for both SQL and
+  in-memory profiles.
 - Context factories and DAL contexts expose fine-grained, composable ORM
   operations. The in-memory profile must use an in-memory context factory with
   the same context interface as SQL, including the composable in-memory outbox.
