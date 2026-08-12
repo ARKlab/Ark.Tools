@@ -20,7 +20,9 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         "Backing type '{0}' must exactly match enum '{1}' backing type '{2}'",
         "Usage",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        description: "The EvolvableEnum backing type must match the enum's declared underlying type.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/docs/analyzers.md#arkcore001");
 
     private static readonly DiagnosticDescriptor _missingNotSet = new(
         "ARKCORE002",
@@ -28,7 +30,9 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         "Enum '{0}' must declare an explicit NOT_SET = 0 member",
         "Usage",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        description: "Evolvable enums require an explicit zero-valued NOT_SET member for forward-compatible defaults.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/docs/analyzers.md#arkcore002");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -39,17 +43,31 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(_analyzeGenericName, Microsoft.CodeAnalysis.CSharp.SyntaxKind.GenericName);
+        context.RegisterCompilationStartAction(static startContext =>
+        {
+            var evolvableEnum1 = startContext.Compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`1");
+            var evolvableEnum2 = startContext.Compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`2");
+            if (evolvableEnum1 is null && evolvableEnum2 is null)
+                return;
+
+            startContext.RegisterSyntaxNodeAction(
+                syntaxContext => _analyzeGenericName(syntaxContext, evolvableEnum1, evolvableEnum2),
+                Microsoft.CodeAnalysis.CSharp.SyntaxKind.GenericName);
+        });
     }
 
-    private static void _analyzeGenericName(SyntaxNodeAnalysisContext context)
+    private static void _analyzeGenericName(
+        SyntaxNodeAnalysisContext context,
+        INamedTypeSymbol? evolvableEnum1,
+        INamedTypeSymbol? evolvableEnum2)
     {
         var syntax = (GenericNameSyntax)context.Node;
         if (syntax.Identifier.ValueText != "EvolvableEnum")
             return;
 
         if (context.SemanticModel.GetTypeInfo(syntax, context.CancellationToken).Type is not INamedTypeSymbol wrapper
-            || wrapper.ContainingNamespace.ToDisplayString() != "Ark.Tools.Core"
+            || (!SymbolEqualityComparer.Default.Equals(wrapper.OriginalDefinition, evolvableEnum1)
+                && !SymbolEqualityComparer.Default.Equals(wrapper.OriginalDefinition, evolvableEnum2))
             || wrapper.TypeArguments.Length is < 1 or > 2
             || wrapper.TypeArguments[0] is not INamedTypeSymbol enumType
             || enumType.TypeKind != TypeKind.Enum
@@ -65,6 +83,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(Diagnostic.Create(
                 _backingTypeMismatch,
                 syntax.TypeArgumentList.Arguments[wrapper.TypeArguments.Length - 1].GetLocation(),
+                additionalLocations: [enumType.Locations.FirstOrDefault() ?? Location.None],
                 requestedBacking.ToDisplayString(),
                 enumType.ToDisplayString(),
                 enumType.EnumUnderlyingType.ToDisplayString()));
@@ -77,7 +96,8 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 _missingNotSet,
-                syntax.TypeArgumentList.Arguments[0].GetLocation(),
+                enumType.Locations.FirstOrDefault() ?? syntax.TypeArgumentList.Arguments[0].GetLocation(),
+                additionalLocations: [syntax.TypeArgumentList.Arguments[0].GetLocation()],
                 enumType.ToDisplayString()));
         }
     }

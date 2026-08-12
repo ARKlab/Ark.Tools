@@ -119,7 +119,17 @@ public class ArkProblemDetailsOptionsSetup
     {
         var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>
         {
-            var props = t.GetProperties().Where(x => x.DeclaringType != typeof(BusinessRuleViolation)).Select(x => (x.Name, x.PropertyType)).ToArray();
+            var props = t.GetProperties()
+                .Where(x => x.GetMethod is not null
+                    && !x.GetMethod.IsStatic
+                    && x.GetCustomAttributes(typeof(ProblemDetailsExtensionAttribute), inherit: true).Length != 0)
+                .GroupBy(x => x.Name, StringComparer.Ordinal)
+                .Select(x => x
+                    .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)
+                    .First())
+                .OrderBy(x => x.Name, StringComparer.Ordinal)
+                .Select(x => (x.Name, x.PropertyType))
+                .ToArray();
             return _dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
         });
 

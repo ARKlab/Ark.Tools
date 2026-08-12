@@ -106,7 +106,14 @@ public static class ExceptionProblemDetailsMapper
     {
         return violationType
             .GetProperties()
-            .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+            .Where(property => property.GetMethod is not null
+                && !property.GetMethod.IsStatic
+                && property.GetCustomAttributes<ProblemDetailsExtensionAttribute>(inherit: true).Any())
+            .GroupBy(property => property.Name, StringComparer.Ordinal)
+            .Select(group => group
+                .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)
+                .First())
+            .OrderBy(property => property.Name, StringComparer.Ordinal)
             .Select(property => new Accessor(property.Name, _createGetter(violationType, property)))
             .ToArray();
     }

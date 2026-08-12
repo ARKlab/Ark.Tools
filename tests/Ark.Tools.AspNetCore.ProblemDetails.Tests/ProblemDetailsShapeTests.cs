@@ -39,6 +39,7 @@ public sealed class ProblemDetailsShapeTests
             new EmptyViolation(),
             new SinglePropertyViolation { Property = "value" },
             new SeveralPropertiesViolation { Count = 7, Enabled = true, Name = "name" },
+            new MixedPropertiesViolation { Exposed = "visible", Secret = "hidden" },
         };
 
         foreach (var violation in violations)
@@ -47,7 +48,9 @@ public sealed class ProblemDetailsShapeTests
             var expected = violation
                 .GetType()
                 .GetProperties()
-                .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+                .Where(property => property.GetCustomAttributes(
+                    typeof(ProblemDetailsExtensionAttribute),
+                    inherit: true).Length != 0)
                 .ToDictionary(
                     property => property.Name,
                     property => property.GetValue(violation),
@@ -200,13 +203,25 @@ public sealed class ProblemDetailsShapeTests
 
     private sealed class SinglePropertyViolation() : BusinessRuleViolation("single")
     {
+        [ProblemDetailsExtension]
         public string? Property { get; set; }
     }
 
     private sealed class SeveralPropertiesViolation() : BusinessRuleViolation("several")
     {
+        [ProblemDetailsExtension]
         public int Count { get; set; }
+        [ProblemDetailsExtension]
         public bool Enabled { get; set; }
+        [ProblemDetailsExtension]
         public string? Name { get; set; }
+    }
+
+    private sealed class MixedPropertiesViolation() : BusinessRuleViolation("mixed")
+    {
+        [ProblemDetailsExtension]
+        public string? Exposed { get; set; }
+
+        public string? Secret { get; set; }
     }
 }

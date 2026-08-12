@@ -143,15 +143,23 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
     [SuppressMessage(
         "Trimming",
         "IL2026",
-        Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
+        Justification = "The BusinessRuleViolation base type preserves public properties for the explicit extension contract.")]
     private static Dictionary<string, string> _getExtensions(BusinessRuleViolation violation)
     {
         var properties = violation.GetType()
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property => property.Name is not nameof(BusinessRuleViolation.Status)
+            .Where(property => property.GetMethod is not null
+                && !property.GetMethod.IsStatic
+                && property.GetCustomAttributes<ProblemDetailsExtensionAttribute>(inherit: true).Any()
+                && property.Name is not nameof(BusinessRuleViolation.Status)
                 and not nameof(BusinessRuleViolation.Title)
                 and not nameof(BusinessRuleViolation.Detail)
-                && property.GetMethod is not null);
+                )
+            .GroupBy(property => property.Name, StringComparer.Ordinal)
+            .Select(group => group
+                .OrderBy(property => property.DeclaringType?.AssemblyQualifiedName, StringComparer.Ordinal)
+                .First())
+            .OrderBy(property => property.Name, StringComparer.Ordinal);
 
         return properties.ToDictionary(
             property => property.Name,

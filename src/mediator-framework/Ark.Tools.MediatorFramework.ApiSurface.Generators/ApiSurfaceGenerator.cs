@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 
 namespace Ark.MediatorFramework.ApiSurface;
@@ -39,11 +40,20 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor MultipleSnapshots = new(
+        "ARKAPI003",
+        "Multiple API surface snapshots",
+        "Only one ArkApiSurface.txt baseline is allowed, but {0} were found.",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var surfaceProvider = context.CompilationProvider
-            .Select(static (compilation, _) => BuildSurface(compilation));
+            .Select(static (compilation, cancellationToken) =>
+                BuildSurface(compilation, cancellationToken));
 
         // Emit the .g.cs snapshot file (unchanged behaviour)
         context.RegisterSourceOutput(surfaceProvider, static (spc, surface) =>
@@ -79,6 +89,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 if (!isEnabled)
                     return;
 
+                if (baselineFiles.Length > 1)
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(MultipleSnapshots, Location.None, baselineFiles.Length));
+                    return;
+                }
+
                 if (baselineFiles.IsEmpty)
                 {
                     // Only require a snapshot when there are actual contracts to track
@@ -105,13 +121,16 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     }
 
     // Builds the sorted, deduplicated surface lines and a contract-name → Location index.
-    private static (ImmutableArray<string> Lines, ImmutableDictionary<string, Location> Locations) BuildSurface(Compilation compilation)
+    private static (ImmutableArray<string> Lines, ImmutableDictionary<string, Location> Locations) BuildSurface(
+        Compilation compilation,
+        CancellationToken cancellationToken)
     {
         var lines = new List<string>();
         var locBuilder = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
 
         foreach (var type in AllTypes(compilation.Assembly.GlobalNamespace))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             // ponytail: MinimallyQualifiedFormat == Name for non-generic non-nested types; generic
             // response types are interfaces/collections and never get a CONTRACT header, so mismatch
             // is not reachable in practice. Upgrade path: use FullyQualifiedFormat + strip namespace.

@@ -203,7 +203,7 @@ public class InterceptorRuntimeTests
             "obj",
             outputDirectory.Parent!.Name,
             outputDirectory.Name,
-            "Generated"));
+            "generated"));
         var file = Directory.EnumerateFiles(generatedRoot, "ToDataTableArkInterceptors.g.cs", SearchOption.AllDirectories)
             .FirstOrDefault();
         file.Should().NotBeNull("the generator should have emitted ToDataTableArkInterceptors.g.cs under {0}", generatedRoot);

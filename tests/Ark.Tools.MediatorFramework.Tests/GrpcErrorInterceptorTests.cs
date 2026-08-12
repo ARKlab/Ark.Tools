@@ -4,6 +4,7 @@
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.Core;
 using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Core.BusinessRuleViolation;
 
 using AwesomeAssertions;
 
@@ -115,6 +116,31 @@ public sealed class GrpcErrorInterceptorTests
         exception.Which.StatusCode.Should().Be(StatusCode.Internal);
     }
 
+    [TestMethod]
+    public async Task MapsOnlyOptedInBusinessRuleExtensions()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        var violation = new TestBusinessRuleViolation
+        {
+            Exposed = "visible",
+            Secret = "hidden",
+        };
+
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(new BusinessRuleViolationException(violation)));
+
+        var exception = await action.Should().ThrowAsync<RpcException>();
+        var status = RpcStatus.Parser.ParseFrom(
+            exception.Which.Trailers.GetValueBytes("grpc-status-details-bin"));
+        var detail = status.Details.Single(item => item.Is(ArkBusinessRuleViolation.Descriptor))
+            .Unpack<ArkBusinessRuleViolation>();
+
+        detail.Extensions.Should().ContainKey(nameof(TestBusinessRuleViolation.Exposed));
+        detail.Extensions.Should().NotContainKey(nameof(TestBusinessRuleViolation.Secret));
+    }
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public TestHostEnvironment(string environmentName)
@@ -127,6 +153,19 @@ public sealed class GrpcErrorInterceptorTests
         public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
         public string EnvironmentName { get; set; }
     }
+}
+
+internal sealed class TestBusinessRuleViolation : BusinessRuleViolation
+{
+    public TestBusinessRuleViolation()
+        : base("test")
+    {
+    }
+
+    [ProblemDetailsExtension]
+    public string? Exposed { get; set; }
+
+    public string? Secret { get; set; }
 }
 
 internal static class GrpcErrorInterceptorTestExtensions
