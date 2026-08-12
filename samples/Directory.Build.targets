@@ -4,6 +4,14 @@
     <ArkToolsSourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\src\'))</ArkToolsSourceRoot>
   </PropertyGroup>
 
+   <PropertyGroup>
+      <_ArkToolsImportGrpc Condition="'$(ArkToolsMediatorFrameworkGrpcHost)' == 'true' And Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\Ark.Tools.MediatorFramework.Grpc.csproj')">true</_ArkToolsImportGrpc>
+      <_ArkToolsImportRebus Condition="'$(ArkToolsMediatorFrameworkRebusHost)' == 'true' And Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus\Ark.Tools.MediatorFramework.Rebus.csproj')">true</_ArkToolsImportRebus>
+      <_ArkToolsImportMediatorFramework Condition="Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj')">true</_ArkToolsImportMediatorFramework>
+      <_ArkToolsImportSolid Condition="Exists('$(ArkToolsSourceRoot)common\Ark.Tools.Solid\Ark.Tools.Solid.csproj')">true</_ArkToolsImportSolid>
+      <_ArkToolsImportCore Condition="Exists('$(ArkToolsSourceRoot)common\Ark.Tools.Core\Ark.Tools.Core.csproj')">true</_ArkToolsImportCore>
+   </PropertyGroup>
+
   <Target Name="_ReplaceArkToolsReferences">
       <ItemGroup>
          <_ArkToolsCandidates Include="@(PackageReference)" Condition="$([System.String]::Copy('%(Identity)').StartsWith('Ark.Tools'))">
@@ -76,22 +84,20 @@
                           Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
         
 
-        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc' And '$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
-        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
-        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
-        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.Solid'" />
-        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.props"
-                Condition="@(_ArkToolsToReplace->Count()) > 0" />
-        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.targets"
-                Condition="@(_ArkToolsToReplace->Count()) > 0" />
-
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
   </Target>
 
+   <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
+            Condition="'$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
+   <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus\buildTransitive\Ark.Tools.MediatorFramework.Rebus.props"
+            Condition="'$(ArkToolsMediatorFrameworkRebusHost)' == 'true'" />
+   <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
+            Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true'" />
+   <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
+            Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true'" />
+   <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets" />
+   <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.props" />
+   <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.targets" />
 </Project>
