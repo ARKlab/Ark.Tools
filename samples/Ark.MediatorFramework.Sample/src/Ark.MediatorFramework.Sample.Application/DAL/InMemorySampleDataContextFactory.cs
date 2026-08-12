@@ -340,16 +340,16 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                     && !parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
                     throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts));
             }
+        }
 
-            private static bool _canUpdate(
-                EvolvableEnum<BookPrintProcessStatus> current,
-                EvolvableEnum<BookPrintProcessStatus> next)
-            {
-                return (next == BookPrintProcessStatus.Running && current == BookPrintProcessStatus.Pending)
-                    || (next == BookPrintProcessStatus.Completed && current == BookPrintProcessStatus.Running)
-                    || (next == BookPrintProcessStatus.Error
-                        && (current == BookPrintProcessStatus.Running || current == BookPrintProcessStatus.Completed));
-            }
+        private static bool _canUpdate(
+            EvolvableEnum<BookPrintProcessStatus> current,
+            EvolvableEnum<BookPrintProcessStatus> next)
+        {
+            return (next == BookPrintProcessStatus.Running && current == BookPrintProcessStatus.Pending)
+                || (next == BookPrintProcessStatus.Completed && current == BookPrintProcessStatus.Running)
+                || (next == BookPrintProcessStatus.Error
+                    && (current == BookPrintProcessStatus.Running || current == BookPrintProcessStatus.Completed));
         }
     }
 }

@@ -18,7 +18,7 @@ public sealed class BookPrintProcessCannotBeCancelledViolation : BusinessRuleVio
         : base("The book print process cannot be cancelled.")
     {
         ProcessId = processId;
-        Status = status;
+        CurrentStatus = status;
         Detail = $"Book print process '{processId:D}' has status '{status}' and cannot be cancelled.";
     }
 
@@ -26,5 +26,5 @@ public sealed class BookPrintProcessCannotBeCancelledViolation : BusinessRuleVio
     public Guid ProcessId { get; }
 
     /// <summary>Gets the current print-process status.</summary>
-    public EvolvableEnum<BookPrintProcessStatus> Status { get; }
+    public EvolvableEnum<BookPrintProcessStatus> CurrentStatus { get; }
 }
