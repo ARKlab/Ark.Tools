@@ -5,6 +5,7 @@ dotnet_diagnostic.IDX00001.severity = error
 
 # C# files
 [*.cs]
+dotnet_diagnostic.IDE1006.severity = error
 
 #### Core EditorConfig Options ####
 
@@ -61,7 +62,7 @@ dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion
 
 # Field preferences
-dotnet_style_readonly_field = true:suggestion
+dotnet_style_readonly_field = true:error
 
 # Parameter preferences
 dotnet_code_quality_unused_parameters = all:suggestion
@@ -96,7 +97,7 @@ csharp_style_prefer_extended_property_pattern = true:suggestion
 
 # Null-checking preferences
 csharp_style_conditional_delegate_call = true:suggestion
-csharp_style_prefer_null_check_over_type_check = true:warning
+csharp_style_prefer_null_check_over_type_check = true:error
 
 # Modifier preferences
 csharp_prefer_static_local_function = true:suggestion
@@ -116,7 +117,7 @@ csharp_style_prefer_range_operator = true:suggestion
 csharp_style_throw_expression = true:suggestion
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
-csharp_style_prefer_local_over_anonymous_function = true:warning
+csharp_style_prefer_local_over_anonymous_function = true:error
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 csharp_style_prefer_tuple_swap = true:suggestion
 csharp_style_prefer_utf8_string_literals = true:suggestion
@@ -202,43 +203,43 @@ dotnet_naming_rule.private_method_should_be_begins_with__.severity = error
 dotnet_naming_rule.private_method_should_be_begins_with__.symbols = private_method
 dotnet_naming_rule.private_method_should_be_begins_with__.style = begins_with__
 
-dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.severity = error
-dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.symbols = private_or_internal_field
-dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.style = begins_with__
+dotnet_naming_rule.private_field_should_be_begins_with__.severity = error
+dotnet_naming_rule.private_field_should_be_begins_with__.symbols = private_field
+dotnet_naming_rule.private_field_should_be_begins_with__.style = begins_with__
 
 dotnet_naming_rule.private_properties_should_be_begins_with__.severity = error
 dotnet_naming_rule.private_properties_should_be_begins_with__.symbols = private_property
 dotnet_naming_rule.private_properties_should_be_begins_with__.style = begins_with__
 
-dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = error
-dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
-dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.protected_methods_should_be_pascal_case.severity = error
+dotnet_naming_rule.protected_methods_should_be_pascal_case.symbols = protected_members
+dotnet_naming_rule.protected_methods_should_be_pascal_case.style = pascal_case
 
 # Symbol specifications
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
-dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.interface.required_modifiers =
 
 dotnet_naming_symbols.private_method.applicable_kinds = method
-dotnet_naming_symbols.private_method.applicable_accessibilities = private
+dotnet_naming_symbols.private_method.applicable_accessibilities = private, internal, private_protected, local
 dotnet_naming_symbols.private_method.required_modifiers =
 
 dotnet_naming_symbols.private_property.applicable_kinds = property
-dotnet_naming_symbols.private_property.applicable_accessibilities = private
+dotnet_naming_symbols.private_property.applicable_accessibilities = private, internal, private_protected
 dotnet_naming_symbols.private_property.required_modifiers =
 
-dotnet_naming_symbols.private_or_internal_field.applicable_kinds = field
-dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private, protected, protected_internal
-dotnet_naming_symbols.private_or_internal_field.required_modifiers =
+dotnet_naming_symbols.private_field.applicable_kinds = field, event
+dotnet_naming_symbols.private_field.applicable_accessibilities = private, internal, private_protected
+dotnet_naming_symbols.private_field.required_modifiers =
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
-dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, private_protected
 dotnet_naming_symbols.types.required_modifiers =
 
-dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
-dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.non_field_members.required_modifiers =
+dotnet_naming_symbols.protected_members.applicable_kinds = event, method, property, field
+dotnet_naming_symbols.protected_members.applicable_accessibilities = protected, protected_internal
+dotnet_naming_symbols.protected_members.required_modifiers =
 
 # Naming styles
 
@@ -275,7 +276,7 @@ dotnet_style_prefer_auto_properties = true:silent
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
-dotnet_style_readonly_field = true:suggestion
+dotnet_style_readonly_field = true:error
 dotnet_style_prefer_conditional_expression_over_assignment = true:silent
 dotnet_style_explicit_tuple_names = true:suggestion
 dotnet_style_prefer_conditional_expression_over_return = true:silent

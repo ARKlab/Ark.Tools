@@ -57,6 +57,7 @@ public class RebusResourceNotifier : IResourceNotifier, IDisposable
         _logger.Debug(global::System.Globalization.CultureInfo.InvariantCulture, "Bus started");
     }
 
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected Task _notify(string resourceId, Slice slice)
     {
         var resource = new Resource { Provider = _providerName, Id = resourceId };

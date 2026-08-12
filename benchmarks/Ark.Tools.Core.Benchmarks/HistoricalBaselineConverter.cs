@@ -32,17 +32,17 @@ internal static class HistoricalBaselineConverter<T>
         typeof(LocalTime),
     }.ToFrozenSet();
 
-    internal static DataTable Convert(IEnumerable<T> source)
+    internal static DataTable _convert(IEnumerable<T> source)
     {
         var table = new DataTable(typeof(T).Name);
-        var ordinalMap = InitializeTable(table);
+        var ordinalMap = _initializeTable(table);
 
         table.BeginLoadData();
         try
         {
             foreach (var item in source)
             {
-                table.LoadDataRow(ShredObject(table, item, ordinalMap), true);
+                table.LoadDataRow(_shredObject(table, item, ordinalMap), true);
             }
         }
         finally
@@ -53,43 +53,43 @@ internal static class HistoricalBaselineConverter<T>
         return table;
     }
 
-    private static object?[] ShredObject(DataTable table, T? instance, FrozenDictionary<string, int> ordinalMap)
+    private static object?[] _shredObject(DataTable table, T? instance, FrozenDictionary<string, int> ordinalMap)
     {
         var values = new object?[table.Columns.Count];
 
         foreach (var field in _fields)
         {
-            values[ordinalMap[field.Name]] = ConvertColumnValue(field.GetValue(instance));
+            values[ordinalMap[field.Name]] = _convertColumnValue(field.GetValue(instance));
         }
 
         foreach (var property in _properties)
         {
-            values[ordinalMap[property.Name]] = ConvertColumnValue(property.GetValue(instance, null));
+            values[ordinalMap[property.Name]] = _convertColumnValue(property.GetValue(instance, null));
         }
 
         return values;
     }
 
-    private static FrozenDictionary<string, int> InitializeTable(DataTable table)
+    private static FrozenDictionary<string, int> _initializeTable(DataTable table)
     {
         var ordinalMap = new Dictionary<string, int>(StringComparer.Ordinal);
 
         foreach (var field in _fields)
         {
-            var column = table.Columns.Add(field.Name, DeriveColumnType(field.FieldType));
+            var column = table.Columns.Add(field.Name, _deriveColumnType(field.FieldType));
             ordinalMap.Add(field.Name, column.Ordinal);
         }
 
         foreach (var property in _properties)
         {
-            var column = table.Columns.Add(property.Name, DeriveColumnType(property.PropertyType));
+            var column = table.Columns.Add(property.Name, _deriveColumnType(property.PropertyType));
             ordinalMap.Add(property.Name, column.Ordinal);
         }
 
         return ordinalMap.ToFrozenDictionary();
     }
 
-    private static Type DeriveColumnType(Type elementType)
+    private static Type _deriveColumnType(Type elementType)
     {
         elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;
 
@@ -105,7 +105,7 @@ internal static class HistoricalBaselineConverter<T>
         return elementType.IsEnum ? typeof(string) : elementType;
     }
 
-    private static object? ConvertColumnValue(object? value)
+    private static object? _convertColumnValue(object? value)
     {
         if (value is null)
             return null;

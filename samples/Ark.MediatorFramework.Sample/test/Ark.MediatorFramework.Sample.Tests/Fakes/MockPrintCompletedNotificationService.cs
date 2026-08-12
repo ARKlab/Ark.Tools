@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Moq;
@@ -24,7 +23,7 @@ public sealed class MockPrintCompletedNotificationService
             .Setup(service => service.NotifyAsync(
                 It.IsAny<BookPrintProcessResponse>(),
                 It.IsAny<CancellationToken>()))
-            .Returns((BookPrintProcessResponse process, CancellationToken ctk) => NotifyAsync(process, ctk));
+            .Returns((BookPrintProcessResponse process, CancellationToken ctk) => _notifyAsync(process, ctk));
     }
 
     /// <summary>Gets the configured external-service mock.</summary>
@@ -64,7 +63,7 @@ public sealed class MockPrintCompletedNotificationService
         sampleContext.ApplicationIfInitialized?.DetachPrintCompletedNotificationService();
     }
 
-    private async Task NotifyAsync(BookPrintProcessResponse process, CancellationToken ctk)
+    private async Task _notifyAsync(BookPrintProcessResponse process, CancellationToken ctk)
     {
         ArgumentNullException.ThrowIfNull(process);
         ctk.ThrowIfCancellationRequested();

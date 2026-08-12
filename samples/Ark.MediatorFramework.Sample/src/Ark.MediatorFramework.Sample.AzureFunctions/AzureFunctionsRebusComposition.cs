@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
 using Ark.Tools.Solid.Authorization;
@@ -25,8 +24,13 @@ public static class AzureFunctionsRebusComposition
     /// <param name="serviceBusConnectionString">
     /// A Service Bus connection string or fully qualified namespace from external configuration.
     /// </param>
+    /// <param name="useSqlStore">Whether to use the shared SQL persistence profile.</param>
+    /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <returns>The configured application container.</returns>
-    public static Container BuildContainer(string? serviceBusConnectionString)
+    public static Container BuildContainer(
+        string? serviceBusConnectionString,
+        bool useSqlStore = false,
+        string? connectionString = null)
     {
         if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
             throw new InvalidOperationException(
@@ -34,17 +38,20 @@ public static class AzureFunctionsRebusComposition
 
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        ApplicationComposition.Register(container, useSqlStore: false);
+        ApplicationComposition.Register(
+            container,
+            useSqlStore,
+            connectionString);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         ApplicationComposition.RegisterOutboundRebus(
             container,
-            transport => ConfigureTransport(transport, serviceBusConnectionString),
+            transport => _configureTransport(transport, serviceBusConnectionString),
             SampleRebusEndpoints.ConfigureRouting);
         return container;
     }
 
-    private static void ConfigureTransport(
+    private static void _configureTransport(
         StandardConfigurer<ITransport> transport,
         string serviceBusConnectionString)
     {

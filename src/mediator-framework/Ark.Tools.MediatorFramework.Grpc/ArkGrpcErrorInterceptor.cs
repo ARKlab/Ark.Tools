@@ -28,7 +28,7 @@ namespace Ark.Tools.MediatorFramework.Grpc;
 /// <summary>Maps transport-agnostic failures to the gRPC rich error model.</summary>
 public sealed class ArkGrpcErrorInterceptor : Interceptor
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly bool _includeExceptionDetails;
 
     /// <summary>Initializes the gRPC error interceptor.</summary>
@@ -68,7 +68,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
                 Status = violation.Status,
                 Detail = violation.Detail ?? string.Empty,
             };
-            detail.Extensions.Add(GetExtensions(violation));
+            detail.Extensions.Add(_getExtensions(violation));
 
             var status = new Google.Rpc.Status
             {
@@ -121,7 +121,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         }
         catch (Exception exception) when (exception is not RpcException)
         {
-            Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
+            _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
             var status = new Google.Rpc.Status
             {
                 Code = (int)StatusCode.Internal,
@@ -144,7 +144,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         "Trimming",
         "IL2026",
         Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
-    private static Dictionary<string, string> GetExtensions(BusinessRuleViolation violation)
+    private static Dictionary<string, string> _getExtensions(BusinessRuleViolation violation)
     {
         var properties = violation.GetType()
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)

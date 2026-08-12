@@ -212,7 +212,7 @@ public readonly struct DateInterval
         return _start.CompareTo(other._start);
     }
 
-    private static int CompareTo(DateInterval x, DateInterval y)
+    private static int _compareTo(DateInterval x, DateInterval y)
     {
         return x.CompareTo(y);
     }
@@ -245,26 +245,26 @@ public readonly struct DateInterval
 
     public static bool operator <(DateInterval x, DateInterval y)
     {
-        return CompareTo(x, y) < 0;
+        return _compareTo(x, y) < 0;
     }
 
     public static bool operator >(DateInterval x, DateInterval y)
     {
 
-        return CompareTo(x, y) > 0;
+        return _compareTo(x, y) > 0;
 
     }
 
     public static bool operator <=(DateInterval x, DateInterval y)
     {
 
-        return CompareTo(x, y) <= 0;
+        return _compareTo(x, y) <= 0;
 
     }
 
     public static bool operator >=(DateInterval x, DateInterval y)
     {
-        return CompareTo(x, y) >= 0;
+        return _compareTo(x, y) >= 0;
     }
 
     public override readonly bool Equals(object? obj)

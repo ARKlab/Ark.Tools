@@ -45,12 +45,12 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
         context.RegisterCodeFix(
             CodeAction.Create(
                 "Use self-referencing generic interface for reflection-free dispatch",
-                ct => FixAsync(context.Document, declaration, ct),
+                ct => _fixAsync(context.Document, declaration, ct),
                 equivalenceKey: SelfGenericInterfaceAnalyzer.DiagnosticId),
             context.Diagnostics);
     }
 
-    private static async Task<Document> FixAsync(Document document, TypeDeclarationSyntax declaration, CancellationToken cancellationToken)
+    private static async Task<Document> _fixAsync(Document document, TypeDeclarationSyntax declaration, CancellationToken cancellationToken)
     {
         var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
         var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
@@ -67,17 +67,17 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
             if (symbol is null || symbol.ContainingNamespace.ToDisplayString() != "Ark.Tools.Solid")
                 continue;
 
-            var nameSyntax = GetRightmostName(baseType.Type);
+            var nameSyntax = _getRightmostName(baseType.Type);
             if (nameSyntax is null)
                 continue;
 
             switch (symbol.Name)
             {
                 case "IQuery" when symbol.Arity == 1 && nameSyntax is GenericNameSyntax queryName:
-                    replacements[nameSyntax] = PrependSelf(queryName, selfType);
+                    replacements[nameSyntax] = _prependSelf(queryName, selfType);
                     break;
                 case "IRequest" when symbol.Arity == 1 && nameSyntax is GenericNameSyntax requestName:
-                    replacements[nameSyntax] = PrependSelf(requestName, selfType);
+                    replacements[nameSyntax] = _prependSelf(requestName, selfType);
                     break;
                 case "ICommand" when symbol.Arity == 0:
                     replacements[nameSyntax] = SyntaxFactory.GenericName(
@@ -95,7 +95,7 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static TypeSyntax? GetRightmostName(TypeSyntax type)
+    private static TypeSyntax? _getRightmostName(TypeSyntax type)
         => type switch
         {
             QualifiedNameSyntax qualified => qualified.Right,
@@ -103,7 +103,7 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
             _ => null,
         };
 
-    private static GenericNameSyntax PrependSelf(GenericNameSyntax name, TypeSyntax selfType)
+    private static GenericNameSyntax _prependSelf(GenericNameSyntax name, TypeSyntax selfType)
     {
         var arguments = new List<TypeSyntax> { selfType };
         arguments.AddRange(name.TypeArgumentList.Arguments);

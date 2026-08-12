@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.Dapper" />
+    <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
@@ -24,6 +25,7 @@
     <PackageReference Include="Ark.Tools.Sql.SqlServer" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Polly" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
   </ItemGroup>
 
 </Project>

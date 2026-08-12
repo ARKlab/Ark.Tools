@@ -41,10 +41,10 @@ public class ArkEnvironmentVariablesConfigurationProvider : ConfigurationProvide
     /// </summary>
     public override void Load()
     {
-        Load(Environment.GetEnvironmentVariables());
+        _load(Environment.GetEnvironmentVariables());
     }
 
-    internal void Load(IDictionary envVariables)
+    internal void _load(IDictionary envVariables)
     {
         var data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 

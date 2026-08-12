@@ -28,7 +28,7 @@ public class PolicyAuthorizeOrLogicQueryDecorator<TQuery, TResult> : IQueryHandl
 
     private static class PolicyMetadata
     {
-        internal static readonly PolicyAuthorizeAttribute[] Policies =
+        public static readonly PolicyAuthorizeAttribute[] Policies =
             typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 

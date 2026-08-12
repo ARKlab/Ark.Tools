@@ -34,7 +34,11 @@ public static class Program
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
             var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
-            var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(serviceBusConnectionString);
+var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];
+var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(
+    serviceBusConnectionString,
+    useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
+    connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(rebusContainer);
             builder.Services.AddArkHealthChecks();

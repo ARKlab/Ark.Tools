@@ -65,7 +65,7 @@ public sealed class MinimalApiErrorsTests
             "/api/v1/hosting/validation",
             new HostingValidationRequest { Value = "invalid" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        var problem = await ReadProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var problem = await _readProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         problem.Title.Should().Be("Validation failed");
@@ -85,7 +85,7 @@ public sealed class MinimalApiErrorsTests
             "/api/v1/hosting/business-violation",
             new HostingBusinessViolationRequest { Value = "invalid" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        var problem = await ReadProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var problem = await _readProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be((HttpStatusCode)422);
         problem.Title.Should().Be("Synthetic rule");
@@ -106,13 +106,13 @@ public sealed class MinimalApiErrorsTests
             "/api/v1/hosting/unexpected",
             new HostingUnexpectedRequest { Value = "failure" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        var problem = await ReadProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var problem = await _readProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         problem.Status.Should().Be(500);
     }
 
-    private static async Task<ProblemDetails> ReadProblemAsync(
+    private static async Task<ProblemDetails> _readProblemAsync(
         HttpResponseMessage response,
         CancellationToken ctk)
     {

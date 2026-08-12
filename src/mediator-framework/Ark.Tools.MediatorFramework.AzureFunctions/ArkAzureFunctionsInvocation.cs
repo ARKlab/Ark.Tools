@@ -72,11 +72,11 @@ public static class ArkAzureFunctionsInvocation
         where TRequest : IRequest<TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
-        var binding = await BindAsync<TRequest>(request, cancellationToken).ConfigureAwait(false);
+        var binding = await _bindAsync<TRequest>(request, cancellationToken).ConfigureAwait(false);
         if (!binding.Succeeded)
             return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
-        var (container, scope) = BeginScope(request);
+        var (container, scope) = _beginScope(request);
         await using (scope.ConfigureAwait(false))
         {
             var handler = container.GetInstance<IRequestHandler<TRequest, TResponse>>();
@@ -99,11 +99,11 @@ public static class ArkAzureFunctionsInvocation
         where TQuery : IQuery<TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
-        var binding = await BindAsync<TQuery>(request, cancellationToken).ConfigureAwait(false);
+        var binding = await _bindAsync<TQuery>(request, cancellationToken).ConfigureAwait(false);
         if (!binding.Succeeded)
             return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
-        var (container, scope) = BeginScope(request);
+        var (container, scope) = _beginScope(request);
         await using (scope.ConfigureAwait(false))
         {
             var handler = container.GetInstance<IQueryHandler<TQuery, TResponse>>();
@@ -124,11 +124,11 @@ public static class ArkAzureFunctionsInvocation
         where TCommand : ICommand
     {
         ArgumentNullException.ThrowIfNull(request);
-        var binding = await BindAsync<TCommand>(request, cancellationToken).ConfigureAwait(false);
+        var binding = await _bindAsync<TCommand>(request, cancellationToken).ConfigureAwait(false);
         if (!binding.Succeeded)
             return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
-        var (container, scope) = BeginScope(request);
+        var (container, scope) = _beginScope(request);
         await using (scope.ConfigureAwait(false))
         {
             var handler = container.GetInstance<ICommandHandler<TCommand>>();
@@ -137,7 +137,7 @@ public static class ArkAzureFunctionsInvocation
         }
     }
 
-    private static (Container Container, Scope Scope) BeginScope(HttpRequest request)
+    private static (Container Container, Scope Scope) _beginScope(HttpRequest request)
     {
         var container = request.HttpContext.RequestServices.GetService<Container>()
             ?? throw new InvalidOperationException(
@@ -149,7 +149,7 @@ public static class ArkAzureFunctionsInvocation
     // upgrade path is the source generator which emits per-property code with zero runtime reflection.
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Generated contract types are preserved by the source generator.")]
     [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Generated contract types are preserved by the source generator.")]
-    private static async Task<BindingResult<T>> BindAsync<
+    private static async Task<BindingResult<T>> _bindAsync<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] T>(
         HttpRequest request,
         CancellationToken cancellationToken)
@@ -196,14 +196,14 @@ public static class ArkAzureFunctionsInvocation
             var bindingName = entry.BindingName;
             if (entry.IsRoute && request.RouteValues.TryGetValue(bindingName, out var route))
             {
-                if (!TryConvertObject(route?.ToString(), entry.Property.PropertyType, out var converted, out var convertError))
+                if (!_tryConvertObject(route?.ToString(), entry.Property.PropertyType, out var converted, out var convertError))
                     return BindingResult<T>.Fail("Route value '" + bindingName + "' could not be bound: " + convertError);
                 entry.Property.SetValue(value, converted);
             }
 
             if (entry.IsQuery && request.Query.TryGetValue(entry.Property.Name, out var query))
             {
-                if (!TryConvertObject(query, entry.Property.PropertyType, out var converted, out var convertError))
+                if (!_tryConvertObject(query, entry.Property.PropertyType, out var converted, out var convertError))
                     return BindingResult<T>.Fail("Query value '" + entry.Property.Name + "' could not be bound: " + convertError);
                 entry.Property.SetValue(value, converted);
             }
@@ -214,7 +214,7 @@ public static class ArkAzureFunctionsInvocation
 
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "HTTP scalar types are handled by cached TypeConverter lookups; generated code uses ArkTypeConverter.TryConvert<T> with known types.")]
     [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "HTTP scalar types are handled by cached TypeConverter lookups; generated code uses ArkTypeConverter.TryConvert<T> with known types.")]
-    private static bool TryConvertObject(
+    private static bool _tryConvertObject(
         string? input,
         Type type,
         out object? value,
@@ -262,11 +262,11 @@ public static class ArkAzureFunctionsInvocation
     // Static generic cache: typeof(T).GetProperties() runs exactly once per T.
     private static class PropertyCache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>
     {
-        public static readonly PropertyEntry[] Entries = Build();
+        public static readonly PropertyEntry[] Entries = _build();
 
         [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "PropertyCache<T> is only used for T types preserved by the source generator.")]
         [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "PropertyInfo.PropertyType refers to types preserved by the source generator.")]
-        private static PropertyEntry[] Build()
+        private static PropertyEntry[] _build()
         {
             return typeof(T)
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)

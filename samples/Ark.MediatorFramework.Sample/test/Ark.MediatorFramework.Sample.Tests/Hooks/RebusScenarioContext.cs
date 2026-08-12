@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
 using Ark.Tools.Rebus;
@@ -87,7 +86,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         {
             while (true)
             {
-                var counts = await GetWorkCountsAsync(cancellation.Token).ConfigureAwait(false);
+                var counts = await _getWorkCountsAsync(cancellation.Token).ConfigureAwait(false);
                 var pending = counts.InQueue + counts.InProcess + (ignoreDeferred ? 0 : counts.Deferred) + counts.Outbox;
                 if (pending == 0 && (allowErrors || counts.Error == 0))
                     return;
@@ -97,7 +96,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            var counts = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
+            var counts = await _getWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
             throw new TimeoutException(
                 $"Rebus did not become idle. queue={counts.InQueue}, in-process={counts.InProcess}, deferred={counts.Deferred}, outbox={counts.Outbox}, error={counts.Error}.");
         }
@@ -134,11 +133,11 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                 await _sampleContext.Application.ClearOutboxAsync(cleanupCancellation.Token).ConfigureAwait(false);
                 TestsInMemoryTimeoutManager.ClearPendingDue();
                 _sampleContext.Application.Network.Reset();
-                await WaitForInProcessMessagesAsync(cleanupCancellation.Token).ConfigureAwait(false);
+                await _waitForInProcessMessagesAsync(cleanupCancellation.Token).ConfigureAwait(false);
             }
             while (drainer.StillDraining);
 
-            var remaining = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
+            var remaining = await _getWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
             if (remaining != RebusWorkCounts.Empty)
             {
                 throw new InvalidOperationException(
@@ -154,7 +153,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         }
         catch (OperationCanceledException) when (cleanupCancellation.IsCancellationRequested)
         {
-            var counts = await GetWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
+            var counts = await _getWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
             throw new TimeoutException(
                 string.Format(
                     CultureInfo.InvariantCulture,
@@ -167,7 +166,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         }
     }
 
-    private async Task<RebusWorkCounts> GetWorkCountsAsync(CancellationToken ctk)
+    private async Task<RebusWorkCounts> _getWorkCountsAsync(CancellationToken ctk)
     {
         var network = _sampleContext.Application.Network;
         var queues = network.Queues.ToArray();
@@ -186,7 +185,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             errors);
     }
 
-    private static async Task WaitForInProcessMessagesAsync(CancellationToken ctk)
+    private static async Task _waitForInProcessMessagesAsync(CancellationToken ctk)
     {
         while (InProcessMessageInspectorStep.Count > 0)
             await Task.Delay(TimeSpan.FromMilliseconds(50), ctk).ConfigureAwait(false);

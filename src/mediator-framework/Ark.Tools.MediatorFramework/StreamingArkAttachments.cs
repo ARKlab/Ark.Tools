@@ -26,7 +26,7 @@ public static class StreamingArkAttachments
             if (chunk.Metadata is not null)
             {
                 if (metadata is not null && content is not null)
-                    attachments.Add(CreateAttachment(metadata, content));
+                    attachments.Add(_createAttachment(metadata, content));
                 metadata = chunk.Metadata;
                 content = [];
                 continue;
@@ -38,11 +38,11 @@ public static class StreamingArkAttachments
         }
 
         if (metadata is not null && content is not null)
-            attachments.Add(CreateAttachment(metadata, content));
+            attachments.Add(_createAttachment(metadata, content));
         return attachments;
     }
 
-    private static IArkAttachment CreateAttachment(
+    private static IArkAttachment _createAttachment(
         UploadDocumentMetadata metadata,
         List<ReadOnlyMemory<byte>> content)
     {

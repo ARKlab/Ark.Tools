@@ -28,7 +28,7 @@ public static class AuthenticationEx
                 .AddJwtBearer("IntegrationTests", options =>
                 {
                     options.Audience = AuthConstants.IntegrationTestsAudience;
-                    options.TokenValidationParameters = TokenValidator();
+                    options.TokenValidationParameters = _tokenValidator();
 #pragma warning disable CA5404
                     options.TokenValidationParameters.ValidateIssuer = false;
                     options.TokenValidationParameters.ValidateIssuerSigningKey = true;
@@ -71,7 +71,7 @@ public static class AuthenticationEx
                 var section = configuration.GetSection(AuthConstants.AzureB2CConfigSection);
                 var tenantId = section["TenantId"];
                 var audience = section["ClientId"];
-                options.TokenValidationParameters = TokenValidator();
+                options.TokenValidationParameters = _tokenValidator();
 
                 options.Audience = audience;
                 options.Authority = $"https://login.microsoftonline.com/{tenantId}/v2.0";
@@ -81,14 +81,14 @@ public static class AuthenticationEx
             .AddMicrosoftIdentityWebApi(options =>
             {
                 configuration.Bind(AuthConstants.AzureB2CConfigSection, options);
-                options.TokenValidationParameters = TokenValidator();
+                options.TokenValidationParameters = _tokenValidator();
                 options.TokenValidationParameters.NameClaimType = "name";
             },
             options => configuration.Bind(AuthConstants.AzureB2CConfigSection, options),
             AuthConstants.AzureAdB2CSchema);
     }
 
-    private static TokenValidationParameters TokenValidator()
+    private static TokenValidationParameters _tokenValidator()
     {
         return new TokenValidationParameters
         {

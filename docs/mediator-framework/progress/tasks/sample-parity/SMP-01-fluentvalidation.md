@@ -26,7 +26,7 @@ layer (covers HTTP, gRPC and Rebus uniformly — including the C5 bus path). Not
 
 ## Steps
 
-1. In `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/ApplicationComposition.cs`
+1. In `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs`
    add the registrations mirroring the reference pattern above (add the `Ark.Tools.Solid.FluentValidaton`
    project reference to the Application csproj; update lockfiles).
 2. Move the inline validation from `CreateGreetingHandler` into a `CreateGreetingValidator : AbstractValidator<CreateGreetingRequest>` in the Application project; handler no longer throws `ValidationException` directly.

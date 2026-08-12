@@ -29,12 +29,15 @@ public sealed class DatabaseHooks
     [BeforeTestRun(Order = HooksOrder.DatabaseSetup)]
     public static void EnsureDatabase()
     {
-        if (!SqlEnabled())
+        if (!_sqlEnabled())
             return;
 
         var builder = new SqlConnectionStringBuilder(ConnectionString);
         builder.Remove("Initial Catalog");
-        using var dacpac = DacPackage.Load("Ark.MediatorFramework.Sample.Database.dacpac");
+        var dacpacPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Ark.MediatorFramework.Sample.Database.dacpac");
+        using var dacpac = DacPackage.Load(dacpacPath);
         var instance = new DacServices(builder.ConnectionString);
         instance.Deploy(
             dacpac,
@@ -51,12 +54,14 @@ public sealed class DatabaseHooks
     [BeforeScenario(Order = HooksOrder.DatabaseReset)]
     public static async Task ResetDatabaseAsync()
     {
-        if (!SqlEnabled())
+        if (!_sqlEnabled())
             return;
 
-        await using var connection = new SqlConnection(ConnectionString);
+        var connection = new SqlConnection(ConnectionString);
+        await using var __ctx = connection.ConfigureAwait(false);
         await connection.OpenAsync().ConfigureAwait(false);
-        await using var command = connection.CreateCommand();
+        var command = connection.CreateCommand();
+        await using var __command = command.ConfigureAwait(false);
         command.CommandText = "[ops].[ResetFull_OnlyForTesting]";
         command.CommandType = System.Data.CommandType.StoredProcedure;
         var parameter = command.Parameters.Add("@areYouReallySure", System.Data.SqlDbType.Bit);
@@ -64,7 +69,7 @@ public sealed class DatabaseHooks
         await command.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 
-    private static bool SqlEnabled()
+    private static bool _sqlEnabled()
     {
         return !string.Equals(
             Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),

@@ -21,7 +21,7 @@ public sealed class ModelStateValidationFilterAttribute : ActionFilterAttribute
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         if (context.ActionDescriptor is ControllerActionDescriptor cad &&
-            ShouldSkipValidation(cad.MethodInfo))
+            _shouldSkipValidation(cad.MethodInfo))
             return;
 
         if (!context.ModelState.IsValid)
@@ -34,7 +34,7 @@ public sealed class ModelStateValidationFilterAttribute : ActionFilterAttribute
         base.OnActionExecuting(context);
     }
 
-    private static bool ShouldSkipValidation(MethodInfo methodInfo)
+    private static bool _shouldSkipValidation(MethodInfo methodInfo)
     {
         var decision = _skipValidationByMethod.GetOrAdd(
             methodInfo,

@@ -7,7 +7,8 @@ using Rebus.Transport.InMem;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
 var network = new InMemNetwork();
-await using var container = RebusProcessorComposition.BuildContainer(network, useSqlStore: false);
+var container = RebusProcessorComposition.BuildContainer(network, useSqlStore: false);
+await using var __ctx = container.ConfigureAwait(false);
 container.Verify();
 container.StartBus();
 await Task.Delay(Timeout.InfiniteTimeSpan).ConfigureAwait(false);

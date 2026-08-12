@@ -1,53 +1,126 @@
 # Azure Functions isolated worker
 
-The Azure Functions transport targets the .NET 10 isolated worker and uses the
-ASP.NET Core HTTP integration. Add
-`Ark.Tools.MediatorFramework.AzureFunctions` to the Function app and opt in at
-assembly level:
+Use the isolated worker when the same application contracts must run behind an
+Azure Functions HTTP boundary. The Functions host is a host adapter; it does
+not change the application composition or move Rebus receiving into the
+Function process.
 
-```csharp
-[assembly: HttpHost(typeof(ApplicationComposition), "/api/v{version}")]
+## 1. Add the package and marker
+
+```xml
+<PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
+                  OutputItemType="Analyzer"
+                  PrivateAssets="all" />
 ```
 
-The marker selects the contract assembly. `IncludedContracts` and
-`ExcludedContracts` can narrow the generated surface; the two lists cannot be
-combined. Every generated trigger uses `AuthorizationLevel.Anonymous`, while
-the registered ASP.NET Core authentication and authorization services enforce
-the application policy.
+Select the public API assembly at assembly level:
 
-## Local host
+```csharp
+[assembly: HttpHost(
+    typeof(Ark.MediatorFramework.Sample.API.RefreshGreetingCommand),
+    "/api/v{version}")]
+```
 
-Copy `local.settings.json.example` to `local.settings.json`, provide the
-outbound Service Bus configuration, and run `func start` from the built Function
-directory. The sample uses an empty Functions route prefix, so generated routes
-retain `/api/v1/...`. The generated anonymous `/healthCheck` endpoint verifies
-host startup.
+The marker is an assembly anchor. `IncludedContracts` and `ExcludedContracts`
+allow a host to narrow the generated set; do not configure both.
 
-The Function app is outbound-only for Rebus. It does not register receivers,
-workers, subscriptions, or request/reply semantics. Use
-`UseAzureServiceBusAsOneWayClient` and run the processor separately.
+## 2. Build the isolated worker
 
-## Authentication and limits
+```csharp
+var builder = FunctionsApplication.CreateBuilder(args);
 
-The bearer profile uses the registered ASP.NET Core `IAuthenticationService`.
-An opt-in Easy Auth profile reconstructs identity only from trusted platform
-metadata. Never accept a caller-supplied `X-MS-CLIENT-PRINCIPAL` header as
-identity by itself. Configure secrets through environment variables or managed
-identity, not committed settings files.
+NLogConfigurer.For("MyFunctionApp")
+    .WithDefaultTargetsAndRulesFromConfiguration(
+        builder.Configuration,
+        async: false)
+    .Apply();
 
-JSON, route/query binding, validation, ProblemDetails, uploads, downloads, ETags,
-paging, and generated version routes are supported. MessagePack endpoints are
-diagnosed and excluded when selected for a Functions host. OpenAPI generation is
-deferred by decision AZD-11. JSON streaming remains a platform gate: the
-boundary suite must prove first-item delivery and disconnect cancellation before
-it is treated as supported.
+builder.Logging.ClearProviders();
+builder.Logging.AddNLog();
+builder.ConfigureFunctionsWebApplication();
 
-## Boundary testing
+var container = AzureFunctionsRebusComposition.BuildContainer(
+    builder.Configuration["AzureServiceBus:ConnectionString"]);
+builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkHealthChecks();
+builder.Services.AddHostedService(
+    _ => new AzureFunctionsRebusHostedService(container));
 
-The framework boundary project under
-`tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests` launches the
-built sample with a dynamically allocated loopback port. It fails on missing
-Core Tools, early host exit, or readiness timeout; it never silently skips the
-host. CI installs Core Tools `4.12.1` and runs this project on every pull
-request. The parity inventory is recorded in
-[`AZF-10`](../progress/tasks/azure-functions/AZF-10-boundary-parity.md).
+await builder.Build().RunAsync().ConfigureAwait(false);
+```
+
+The sample uses the same `ApplicationComposition.RegisterOutboundRebus` path as
+other sender-only hosts. The Rebus setup includes source-generated application
+JSON and `logging.NLog()`.
+
+## 3. Configure local settings
+
+Copy, do not commit:
+
+```powershell
+Set-Location samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+Copy-Item local.settings.json.example local.settings.json
+func start
+```
+
+Use environment variables or managed identity for secrets. A local connection
+string is acceptable for a developer machine; it must never be checked in.
+
+Set an empty Functions route prefix when the generated route already includes
+`/api`:
+
+```json
+{
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "FUNCTIONS_EXTENSION_VERSION": "~4"
+  },
+  "Host": {
+    "localHttpPort": 7071,
+    "extensions": {
+      "http": {
+        "routePrefix": ""
+      }
+    }
+  }
+}
+```
+
+## 4. Understand the Rebus boundary
+
+The Functions process:
+
+- receives HTTP-triggered requests;
+- executes the application pipeline;
+- sends owned messages through one-way Service Bus;
+- does not register an input queue, workers, subscriptions, or request/reply.
+
+The standalone processor receives `CompleteGreetingCompositionRequest` and
+updates durable state. This separation lets Functions scale independently from
+background processing.
+
+## 5. Authentication and supported features
+
+Every generated trigger is `AuthorizationLevel.Anonymous`; ASP.NET Core
+authentication and authorization still enforce the application policy. Never
+trust a caller-supplied `X-MS-CLIENT-PRINCIPAL` header without validating its
+platform origin.
+
+The sample demonstrates JSON binding, validation, ProblemDetails, ETags,
+paging, uploads/downloads, and generated versioned routes. MessagePack contracts
+are excluded because the Functions binding does not provide the same formatter.
+Read [Serialization](serialization.md) before enabling a transport-specific
+format.
+
+## 6. Test the boundary
+
+Application tests should dispatch contracts directly. A Functions boundary test
+must launch the built host with a dynamically allocated loopback port, wait for
+`/healthCheck`, call the generated route, and fail on early process exit or
+readiness timeout. Do not silently skip when Core Tools is absent.
+
+The repository boundary project is
+`tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`; the sample
+also covers its sender composition in
+[`AzureFunctionsRebusTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).

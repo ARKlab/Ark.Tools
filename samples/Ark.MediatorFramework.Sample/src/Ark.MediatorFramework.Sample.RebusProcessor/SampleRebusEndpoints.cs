@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Generated;
-using Ark.MediatorFramework.Sample.Application;
-
 using Rebus.Config;
 using Rebus.Routing;
 
@@ -18,13 +16,13 @@ public static class SampleRebusEndpoints
     /// <param name="container">The processor container.</param>
     public static void RegisterHandlers(Container container)
     {
-        ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<RefreshGreetingCommand>(container);
+        ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<CompleteGreetingCompositionRequest>(container);
     }
 
     /// <summary>Configures generated owner routing.</summary>
     /// <param name="routing">The Rebus router configuration.</param>
     public static void ConfigureRouting(StandardConfigurer<IRouter> routing)
     {
-        ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>(routing);
+        ArkGeneratedEndpoints.ConfigureArkRebusRouting<CompleteGreetingCompositionRequest>(routing);
     }
 }

@@ -13,7 +13,7 @@ internal sealed class OutboxAsyncContextSql<Tag> : OutboxContextSqlCore
         _context = context;
     }
 
-    protected override IDbTransaction _transaction => _context.Transaction;
+    private protected override IDbTransaction _transaction => _context.Transaction;
 
-    protected override IDbConnection _connection => _context.Connection;
+    private protected override IDbConnection _connection => _context.Connection;
 }

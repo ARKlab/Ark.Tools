@@ -172,10 +172,10 @@ public sealed class AzureFunctionsBoundaryTests
             .OrderBy(row => row.TypeName, StringComparer.Ordinal)
             .ToArray();
 
-        actual.Should().Equal(ExpectedEndpoints.OrderBy(row => row.TypeName, StringComparer.Ordinal));
+        actual.Should().Equal(_expectedEndpoints.OrderBy(row => row.TypeName, StringComparer.Ordinal));
     }
 
-    private static readonly EndpointRow[] ExpectedEndpoints =
+    private static readonly EndpointRow[] _expectedEndpoints =
     [
         new("EchoQuery", "GET", "/api/v{version}/echo/{id}"),
         new("EchoRequest", "POST", "/api/v{version}/echo"),
@@ -186,8 +186,8 @@ public sealed class AzureFunctionsBoundaryTests
 
     private sealed class FunctionHost : IAsyncDisposable
     {
-        private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(60);
-        private static readonly Regex SecretPattern = new(
+        private static readonly TimeSpan _startupTimeout = TimeSpan.FromSeconds(60);
+        private static readonly Regex _secretPattern = new(
             "(?i)(authorization\\s*:\\s*|connectionstring\\s*[=:]\\s*)[^\\s,;]+",
             RegexOptions.Compiled
                 | RegexOptions.CultureInvariant
@@ -220,16 +220,18 @@ public sealed class AzureFunctionsBoundaryTests
         public static async Task<FunctionHost> StartAsync(CancellationToken cancellationToken)
         {
             var appDirectory = Environment.GetEnvironmentVariable("ARK_AZF_FUNCTION_APP_DIR")
-                ?? FindFunctionAppDirectory();
-            var port = GetAvailablePort();
+                ?? _findFunctionAppDirectory();
+            var port = _getAvailablePort();
             var logPath = Path.Combine(Path.GetTempPath(), $"ark-azf-{Guid.NewGuid():N}.log");
             var log = new StreamWriter(logPath) { AutoFlush = true };
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "func",
-                    Arguments = $"start --port {port} --dotnet-isolated --verbose",
+                    FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "func",
+                    Arguments = OperatingSystem.IsWindows()
+                        ? $"/d /c func.cmd start --port {port} --dotnet-isolated --verbose"
+                        : $"start --port {port} --dotnet-isolated --verbose",
                     WorkingDirectory = appDirectory,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -257,7 +259,7 @@ public sealed class AzureFunctionsBoundaryTests
 
             var logLines = Channel.CreateUnbounded<string>();
 #pragma warning disable CA2025
-            var logPumpTask = PumpLogsAsync(log, logLines.Reader, cancellationToken);
+            var logPumpTask = _pumpLogsAsync(log, logLines.Reader, cancellationToken);
 #pragma warning restore CA2025
             var host = new FunctionHost(
                 process,
@@ -280,7 +282,7 @@ public sealed class AzureFunctionsBoundaryTests
             process.BeginErrorReadLine();
             try
             {
-                await host.WaitForReadinessAsync(cancellationToken).ConfigureAwait(false);
+                await host._waitForReadinessAsync(cancellationToken).ConfigureAwait(false);
                 return host;
             }
             catch
@@ -308,19 +310,19 @@ public sealed class AzureFunctionsBoundaryTests
             _process.Dispose();
         }
 
-        private static async Task PumpLogsAsync(
+        private static async Task _pumpLogsAsync(
             StreamWriter log,
             ChannelReader<string> logLines,
             CancellationToken cancellationToken)
         {
             await foreach (var line in logLines.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-                await log.WriteLineAsync(SecretPattern.Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
+                await log.WriteLineAsync(_secretPattern.Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task WaitForReadinessAsync(CancellationToken cancellationToken)
+        private async Task _waitForReadinessAsync(CancellationToken cancellationToken)
         {
             using var client = new HttpClient { BaseAddress = BaseAddress };
-            var startupTimeoutTimestampDelta = (long)(StartupTimeout.TotalSeconds * Stopwatch.Frequency);
+            var startupTimeoutTimestampDelta = (long)(_startupTimeout.TotalSeconds * Stopwatch.Frequency);
             var deadline = Stopwatch.GetTimestamp() + startupTimeoutTimestampDelta;
             while (Stopwatch.GetTimestamp() < deadline)
             {
@@ -343,10 +345,10 @@ public sealed class AzureFunctionsBoundaryTests
                 await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
             }
 
-            throw new TimeoutException($"Azure Functions health endpoint was not ready within {StartupTimeout}.");
+            throw new TimeoutException($"Azure Functions health endpoint was not ready within {_startupTimeout}.");
         }
 
-        private static string FindFunctionAppDirectory()
+        private static string _findFunctionAppDirectory()
         {
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory is not null)
@@ -363,11 +365,11 @@ public sealed class AzureFunctionsBoundaryTests
                 "Set ARK_AZF_FUNCTION_APP_DIR to the built Azure Functions sample directory.");
         }
 
-        private static int GetAvailablePort()
+        private static int _getAvailablePort()
         {
             using var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
             listener.Start();
-            return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            return ((IPEndPoint)listener.LocalEndpoint).Port;
         }
     }
 }

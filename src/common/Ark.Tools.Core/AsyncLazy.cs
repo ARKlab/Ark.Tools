@@ -15,7 +15,7 @@ namespace Ark.Tools.Core;
 public sealed class AsyncLazy<T>
 {
     private readonly Lock _mutex = new();
-    private Lazy<Task<T>> _instance;
+    private readonly Lazy<Task<T>> _instance;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AsyncLazy{T}"/> class.

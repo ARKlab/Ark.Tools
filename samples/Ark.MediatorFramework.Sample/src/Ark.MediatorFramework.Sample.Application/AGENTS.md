@@ -13,9 +13,15 @@ Framework transports.
 - Do not add a `Store` interface or class. The Store pattern hides transaction
   boundaries and is explicitly rejected.
 
-Keep contracts transport-neutral. Namespace versioned models and operation
+Keep application-owned contracts transport-neutral. Public requests, queries,
+responses, and DTOs belong in the sibling API project; Rebus-only workflow
+messages belong under `Messages/`. Namespace versioned models and operation
 contracts with static classes, use `Input`/`Create`/`Update`/`Output`
 inheritance, and compose model payloads into request envelopes.
+
+Keep the project organized by responsibility: `Host/` for composition,
+`Handlers/` for handlers and validators, `DAL/` for persistence, and
+`Services/` for decorators and application services.
 
 Application tests dispatch contracts directly. They keep the current model in a
 driver, use scenario-scoped external mocks, and observe application-owned

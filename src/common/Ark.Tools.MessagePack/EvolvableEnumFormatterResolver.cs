@@ -30,9 +30,9 @@ public sealed class EvolvableEnumFormatterResolver : IFormatterResolver
     [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType", Justification = "enumType is a runtime Enum type extracted from a closed EvolvableEnum<TEnum>; its public fields (the enum members) are always available for a concrete enum type.")]
     private static class FormatterCache<T>
     {
-        public static readonly IMessagePackFormatter<T>? Formatter = Create();
+        public static readonly IMessagePackFormatter<T>? Formatter = _create();
 
-        private static IMessagePackFormatter<T>? Create()
+        private static IMessagePackFormatter<T>? _create()
         {
             var type = typeof(T);
             if (!type.IsGenericType)

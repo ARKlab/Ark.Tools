@@ -29,13 +29,13 @@ public static class ArkHealthCheckExtension
         endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
         {
             Predicate = _ => true,
-            ResponseWriter = WriteHealthCheckResponse,
+            ResponseWriter = _writeHealthCheckResponse,
         }).AllowAnonymous();
 
         return endpoints;
     }
 
-    private static async Task WriteHealthCheckResponse(HttpContext context, HealthReport report)
+    private static async Task _writeHealthCheckResponse(HttpContext context, HealthReport report)
     {
         var entries = report.Entries.ToDictionary(
             entry => entry.Key,

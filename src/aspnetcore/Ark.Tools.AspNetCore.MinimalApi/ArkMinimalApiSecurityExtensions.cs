@@ -23,8 +23,8 @@ public static class ArkMinimalApiSecurityExtensions
             .SetDefaultPolicy(policy => policy
                 .AddDefaultApiSecurityHeaders()
                 .RemoveServerHeader())
-            .AddPolicy("Scalar", policy => ConfigureDocumentationPolicy(policy))
-            .AddPolicy("Swagger", policy => ConfigureDocumentationPolicy(policy))
+            .AddPolicy("Scalar", policy => _configureDocumentationPolicy(policy))
+            .AddPolicy("Swagger", policy => _configureDocumentationPolicy(policy))
             .AddPolicy("GrpcReflection", policy => policy
                 .AddDefaultSecurityHeaders()
                 .RemoveServerHeader())
@@ -64,7 +64,7 @@ public static class ArkMinimalApiSecurityExtensions
         return app;
     }
 
-    private static void ConfigureDocumentationPolicy(HeaderPolicyCollection policy)
+    private static void _configureDocumentationPolicy(HeaderPolicyCollection policy)
     {
         policy
             .AddDefaultSecurityHeaders()

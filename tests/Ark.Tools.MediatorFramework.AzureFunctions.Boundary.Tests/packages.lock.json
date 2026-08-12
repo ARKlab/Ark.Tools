@@ -773,7 +773,6 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )"
         }
       },

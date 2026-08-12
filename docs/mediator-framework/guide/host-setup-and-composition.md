@@ -1,181 +1,128 @@
 # Host setup and composition
 
-The framework deliberately splits application composition from transport wiring.
-Your application assembly owns contracts, handlers, validators, policies, and
-business services. Your host assembly owns authentication, middleware order,
-OpenAPI, gRPC, transport serialization, and generated endpoint mapping.
+The framework has two deliberate seams:
 
-The sample shows this split in two files:
+- **Application composition** registers business behavior and shared services.
+- **Host composition** registers a transport and maps generated endpoints.
 
-- `ApplicationComposition.cs` — pure application graph.
-- `SampleStartup.cs` and `SampleComposition.cs` — ASP.NET Core and Rebus host wiring.
+Do not put ASP.NET Core, gRPC server, or Rebus transport objects in a handler.
+The sample keeps the first seam in
+[`ApplicationComposition.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs)
+and the web seam in
+[`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
 
-## Composition responsibilities
+## Layer responsibilities
 
-| Layer | Owns | Must not own |
+| Layer | Owns | Does not own |
 | --- | --- | --- |
-| Application assembly | Contracts, handlers, validators, policy types, context factories, decorators, clocks | `HttpContext`, `IApplicationBuilder`, gRPC server registration, Rebus transport setup |
-| ASP.NET Core host | Authentication, authorization fallback policy, JSON/MessagePack, ProblemDetails, OpenAPI, generated HTTP + gRPC mapping | Business rules or persistence decisions |
-| Rebus host | Transport, routing, generated message handlers, message serialization, worker retry behavior | HTTP request parsing or UI concerns |
+| API assembly | Public requests, queries, responses, DTOs, public auth metadata, API JSON context | Handlers, persistence, queue topology |
+| Application assembly | Handlers, validators, authorization handlers, services, DAL, internal messages, application JSON context | `HttpContext`, `ServerCallContext`, transport setup |
+| Web host | ASP.NET Core auth, JSON, MessagePack, OpenAPI, gRPC, endpoint mapping | Business transactions |
+| Rebus processor | Input queue, generated message handlers, retries, outbox processor | HTTP route binding |
+| Functions host | Isolated-worker HTTP boundary and outbound bus client | Rebus receiving |
 
-## Register the application graph first
+## Register the application graph
 
-The sample's `ApplicationComposition.Register(...)` method is the reference
-pattern to copy. It performs four jobs:
-
-1. Chooses the SQL or in-memory `ISampleDataContextFactory`.
-2. Registers shared singletons such as `IClock` and the document store.
-3. Registers validators and a null-validator fallback.
-4. Registers handlers and transport-agnostic decorators.
+The sample selects SQL or in-memory persistence, then registers handlers and
+decorators:
 
 ```csharp
-public static void Register(Container container, bool useSqlStore = true)
-{
-    if (useSqlStore)
-        container.RegisterSingleton<ISampleDataContextFactory, SampleDataContextFactory>();
-    else
-        container.RegisterSingleton<ISampleDataContextFactory, InMemorySampleDataContextFactory>();
+ApplicationComposition.Register(
+    container,
+    useSqlStore: true,
+    connectionString: configuration.GetConnectionString("Sample"));
 
-    container.RegisterSingleton<IClock>(() => SystemClock.Instance);
-
-    var applicationAssembly = typeof(ApplicationComposition).Assembly;
-    container.Register(
-        typeof(IValidator<>),
-        container.GetTypesToRegister(typeof(IValidator<>), new[] { applicationAssembly })
-            .Where(type => type.IsPublic),
-        Lifestyle.Singleton);
-    container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
-
-    container.Register<IRequestHandler<CreateGreetingRequest, GreetingResponse>, CreateGreetingHandler>();
-    container.Register<IQueryHandler<GetGreetingQuery, GreetingResponse>, GetGreetingHandler>();
-
-    container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidateDecorator<,>));
-    container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
-    container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(OptimisticConcurrencyRetrierDecorator<,>));
-}
-```
-
-### Decorator order matters
-
-The sample intentionally registers decorators in this order:
-
-| Registration order | Effective behavior |
-| --- | --- |
-| Validation decorators first | Invalid input is rejected before the core handler mutates anything |
-| Auditing decorators before retry | Each attempt still goes through the same transport-agnostic auditing behavior |
-| Retry decorator last | Retries wrap the complete application pipeline, not only the core handler |
-
-If you change the order, you change observable behavior. Treat decorator order
-as part of application design, not as cosmetic wiring.
-
-## Register transport-agnostic authorization
-
-Contract-level authorization lives with the contract, not with the HTTP route.
-The sample registers the authorization services directly in the container:
-
-```csharp
 container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 ```
 
-A custom policy type can live in the application assembly:
+The registration order is meaningful:
+
+1. data context and outbox factory;
+2. clocks, stores, and application services;
+3. validators and the null-validator fallback;
+4. concrete handlers;
+5. validation/audit decorators;
+6. optimistic-concurrency retry decorator last.
+
+The retry decorator must wrap the complete handler pipeline. Otherwise a retry
+can skip validation or auditing.
+
+## Configure the common Rebus behavior
+
+`ApplicationComposition.ConfigureRebusCommon` is shared by the web sender,
+processor, and Functions sender. It keeps routing, serialization, user context,
+and NLog behavior consistent:
 
 ```csharp
-public sealed class RequireScopePolicy : IAuthorizationPolicy
+config.Routing(configureRouting);
+config.Logging(logging => logging.NLog());
+config.Serialization(serializer =>
 {
-    public RequireScopePolicy(string scope)
-    {
-        Scope = scope;
-        var builder = new AuthorizationPolicyBuilder(nameof(RequireScopePolicy));
-        builder.AddRequirements(new ScopeAuthorizationRequirement(Scope));
-        var policy = builder.Build();
-        Name = policy.Name;
-        Requirements = policy.Requirements;
-    }
-
-    public string Scope { get; }
-    public string Name { get; }
-    public IReadOnlyList<IAuthorizationRequirement> Requirements { get; }
-}
-
-public sealed class RequireScopePolicyAttribute : PolicyAuthorizeAttribute
+    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
+    var rebusOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    rebusOptions.TypeInfoResolver = jsonContext;
+    serializer.UseSystemTextJson(rebusOptions);
+});
+config.Options(options =>
 {
-    public RequireScopePolicyAttribute(string scope)
-        : base(typeof(RequireScopePolicy), scope)
-    {
-    }
-}
+    options.AutomaticallyFlowUserContext(container);
+    configureOptions?.Invoke(options);
+});
 ```
 
-The contract then remains transport-neutral:
+The source-generated application context includes application-owned Rebus
+messages and the public payload types nested inside them. This avoids silently
+falling back to reflection-based JSON metadata in a worker.
+
+## Configure ASP.NET Core
+
+The web host performs these steps:
 
 ```csharp
-[HttpEndpoint("POST", "/api/v{version}/greetings")]
-[GrpcMethod("CreateGreeting")]
-[GrpcService("Greetings")]
-[RequireScopePolicy(ApplicationScopes.GreetingWrite)]
-public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
-```
+builder.UseArkMinimalApiStartupDiagnostics();
+builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.WebInterface");
 
-## Configure ASP.NET Core services
-
-`SampleStartup.ConfigureServices` is the reference host setup. Each step has a
-separate purpose:
-
-| Step | Why it exists | Sample code |
-| --- | --- | --- |
-| `services.ConfigureAuthentication(configuration)` | Chooses bearer authentication schemes | `AuthenticationEx.cs` |
-| `services.AddArkMinimalApiHost(container, ...)` | Sets the secure authorization baseline (default and fallback policies) and bridges Microsoft DI and SimpleInjector | `SampleStartup.cs` |
-| `builder.UseArkMinimalApiStartupDiagnostics()` | Captures startup failures and enables detailed hosting diagnostics | `SampleHost.cs` |
-| `services.AddArkMinimalApiSecurity()` | Adds Ark security-header policies for API, documentation and gRPC reflection responses | `SampleStartup.cs` |
-| `services.AddMessagePackFormatter(...)` | Enables HTTP MessagePack negotiation for contracts that opt in | `SampleStartup.cs` |
-| `services.ConfigureHttpJsonOptions(...)` | Applies Ark JSON defaults and source-generated metadata | `SampleStartup.cs` |
-| `services.AddArkProblemDetailsExceptionHandler()` | Maps domain exceptions to RFC 7807 | `SampleStartup.cs` |
-| `endpoints.MapArkMinimalApiHost()` | Maps the anonymous `/healthCheck` endpoint without enabling HealthChecks UI or history | `SampleStartup.cs` |
-| `RuntimeTypeModel.Default.AddNodaTimeSurrogates()` | Enables NodaTime protobuf mappings before gRPC use | `SampleStartup.cs` |
-| `services.AddCodeFirstGrpc(...)` | Hosts generated gRPC services and rich error interceptor | `SampleStartup.cs` |
-| `services.AddOpenApi("v1", ...)` per version | Publishes one OpenAPI document for each active HTTP API version | `SampleStartup.cs` |
-
-A condensed sample setup:
-
-```csharp
 services.AddArkMinimalApiHost(container, options =>
 {
-    options.UseForwardedPrefix = true;
-    options.CrossWireContainer = (container, serviceProvider) =>
-        container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
-    // Invoked after Verify(), while the host starts and before the server accepts requests.
-    options.OnContainerVerified = container => container.StartBus();
+    options.RequireAuthenticatedUser = true;
+    options.CrossWireContainer = (simpleInjector, serviceProvider) =>
+        simpleInjector.RegisterInstance(
+            serviceProvider.GetRequiredService<IHttpContextAccessor>());
 });
-builder.UseArkMinimalApiStartupDiagnostics();
 services.AddArkMinimalApiSecurity();
-
-services.AddMessagePackFormatter(messagePackResolver);
-services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.ConfigureArkDefaults();
-    options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
-        new SampleJsonSerializerContext(new JsonSerializerOptions().ConfigureArkDefaults()),
-        new DefaultJsonTypeInfoResolver());
-});
-
 services.AddArkProblemDetailsExceptionHandler();
-RuntimeTypeModel.Default.AddNodaTimeSurrogates();
-services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
-services.AddOpenApi("v1", ConfigureOpenApi);
-services.AddOpenApi("v2", ConfigureOpenApi);
+services.AddCodeFirstGrpc(options =>
+    options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+services.AddCodeFirstGrpcReflection();
 ```
 
-## Configure the middleware pipeline in the right order
+The sample also adds MessagePack, Application Insights, authentication, and
+versioned OpenAPI. Add only the capabilities the host intends to expose.
 
-Order is observable. The sample uses this sequence:
+## Configure source-generated JSON
 
-| Order | Middleware | Why |
-| --- | --- | --- |
-| 1 | `UseArkMinimalApiSecurity()` | Applies security headers and HSTS before anything else writes the response |
-| 2 | `UseArkProblemDetailsExceptionHandler()` | Converts unhandled domain exceptions |
-| 3 | `UseArkMinimalApiHost(container)` | Validates `X-Forwarded-Prefix`, selects endpoints, builds the caller principal, enforces host-level authorization, and makes the scoped application graph available to handlers |
-| 4 | `UseEndpoints(...)` | Maps generated HTTP, gRPC, OpenAPI, and any hand-written endpoints |
+The public API assembly owns
+`SampleApiJsonSerializerContext`. The host combines it with Ark defaults:
+
+```csharp
+services.ConfigureHttpJsonOptions(options =>
+{
+    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    var context = new SampleApiJsonSerializerContext(contextOptions);
+    options.SerializerOptions.ConfigureArkDefaults();
+    options.SerializerOptions.TypeInfoResolver =
+        JsonTypeInfoResolver.Combine(
+            context,
+            new DefaultJsonTypeInfoResolver());
+});
+```
+
+Use a new options instance for the context and for the host. The context
+constructor locks its options.
+
+## Middleware order
 
 ```csharp
 app.UseArkMinimalApiSecurity();
@@ -184,103 +131,55 @@ app.UseArkMinimalApiHost(container);
 
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapArkEndpointsFromAssembly<ApplicationAssemblyMarker>();
-    endpoints.MapArkGrpcServicesFromAssembly<ApplicationAssemblyMarker>();
+    endpoints.MapArkEndpointsFromAssembly<RefreshGreetingCommand>(
+        versionPrefix: "/api/v{version}");
+    endpoints.MapArkMinimalApiHost();
+    endpoints.MapArkGrpcServicesFromAssembly<RefreshGreetingCommand>();
+    endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
     endpoints.MapOpenApi().AllowAnonymous();
 });
 ```
 
-`UseArkMinimalApiHost` applies routing, authentication, authorization, and
-SimpleInjector middleware in that order. Keep it before endpoint mapping so
-generated endpoints see the authenticated caller and authorization runs before
-they execute. A valid `X-Forwarded-Prefix` is prepended to `PathBase`; malformed
-or ambiguous values are rejected with `400` before downstream middleware runs.
-The prefix is applied before generated OpenAPI endpoints execute, so prefixed
-deployments retain their generated document paths and links.
-Set `UseForwardedPrefix` to `false` when the deployment handles this header
-outside the application.
+Keep security headers outermost, exception mapping before the host middleware,
+and the host middleware before generated endpoints. The host middleware
+establishes the authenticated principal and SimpleInjector scope that the
+generated endpoint consumes.
 
-Startup error capture and detailed hosting diagnostics are enabled automatically
-when you call the `WebApplicationBuilder` overload of `AddArkMinimalApiHost`:
+## Choose the assembly marker
 
-```csharp
-builder.AddArkMinimalApiHost(container, options => { ... });
-```
+The marker selects the assembly scanned by the generator:
 
-Hosts that compose ASP.NET Core directly using the `IServiceCollection` overload
-can opt in explicitly by calling `builder.UseArkMinimalApiStartupDiagnostics()`
-before services are configured.
+- use a public API contract such as `RefreshGreetingCommand` for HTTP/gRPC;
+- use an internal Rebus message such as
+  `CompleteGreetingCompositionRequest` for processor routing/handlers.
 
-## Map generated endpoints from a marker type
+The marker does not itself register anything. It is only an assembly anchor.
 
-The framework scans the assembly containing the marker type you provide. The
-marker does not need special behavior; it only anchors assembly selection.
-The sample uses `RefreshGreetingCommand` because it is guaranteed to live in the
-application assembly.
+## Separate process composition
+
+The processor is a separate executable and container:
 
 ```csharp
-endpoints.MapArkEndpointsFromAssembly<RefreshGreetingCommand>();
-endpoints.MapArkGrpcServicesFromAssembly<RefreshGreetingCommand>();
-ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<RefreshGreetingCommand>(container);
-cfg.Routing(ArkGeneratedEndpoints.ConfigureArkRebusRouting<RefreshGreetingCommand>);
+var network = new InMemNetwork();
+await using var container =
+    RebusProcessorComposition.BuildContainer(network, useSqlStore: false);
+
+container.Verify();
+container.StartBus();
+await Task.Delay(Timeout.InfiniteTimeSpan).ConfigureAwait(false);
 ```
 
-Expected result:
+The web host can share an in-memory network in tests, but it must not share a
+SimpleInjector container or message scope with the processor. In production,
+replace the network with Azure Service Bus.
 
-- every `[HttpEndpoint]` contract in that assembly becomes an HTTP route;
-- every `[GrpcMethod]` contract becomes part of a generated gRPC service;
-- every `[RebusMessage]` contract gets generated Rebus glue.
+## Startup checklist
 
-## Configure OpenAPI once per version
-
-The sample applies the same per-document configuration to both `v1` and `v2`:
-
-```csharp
-private void ConfigureOpenApi(OpenApiOptions options)
-{
-    options
-        .AddArkTypeConverterValueSchemas()
-        .AddArkNodaTimeSchemas()
-        .AddArkServerSetProperties()
-        .AddArkXmlDocumentation()
-        .AddArkOAuthSecurity(openApiSecurity)
-        .AddArkPolymorphism<Shape, ShapeKind>("kind", (ShapeKind.Circle, typeof(Circle)));
-}
-```
-
-That setup ensures the published document matches the public HTTP contract:
-
-- XML comments become descriptions.
-- NodaTime values get stable schema shapes.
-- `[ServerSet]` fields stay out of request schemas.
-- OAuth requirements are visible in Swagger/Scalar.
-- registered polymorphic hierarchies show the discriminator users must send.
-
-## Rebus host setup
-
-`SampleComposition.BuildContainer(...)` owns Rebus transport setup. The key
-behaviors are:
-
-- one SimpleInjector scope per received message;
-- generated handler registration from the application assembly;
-- generated routing for every `[RebusMessage(OwnerQueue = ...)]` contract;
-- optional protobuf serialization; otherwise JSON serialization;
-- fail-fast dead-letter behavior via `ArkRetryStrategy(maxDeliveryAttempts: 1)`.
-
-This lets the same pure handler run under HTTP, gRPC, or Rebus with the same
-validators and authorization decorators.
-
-## Copy-from-sample checklist
-
-When building a new host, inspect these files in this order:
-
-1. `ApplicationComposition.cs`
-2. `GreetingAuthorizationPolicy.cs`
-3. `SampleStartup.cs`
-4. `SampleComposition.cs`
-5. `test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs`
-
-If your application must diverge from those patterns, document why: host setup
-is part of the framework's public operational behavior.
-
-Architecture rationale: [design.md](../design.md).
+- Verify the container before accepting requests.
+- Register every validator and a null-validator fallback.
+- Register an `IContextProvider<ClaimsPrincipal>` for each process role.
+- Configure source-generated JSON for both HTTP and Rebus.
+- Add `logging.NLog()` to every Rebus configuration.
+- Map only the public API assembly for public transports.
+- Register internal message handlers only in the processor.
+- Add a focused host-boundary test for startup and generated endpoints.

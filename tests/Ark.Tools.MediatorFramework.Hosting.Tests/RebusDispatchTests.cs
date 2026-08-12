@@ -20,7 +20,7 @@ public sealed class RebusDispatchTests
         var fixture = new HostingTestFixture();
         await using (fixture.ConfigureAwait(false))
         {
-            fixture.PrincipalProvider.SetCurrent(new ClaimsPrincipal(new ClaimsIdentity(
+            fixture._principalProvider.SetCurrent(new ClaimsPrincipal(new ClaimsIdentity(
                 [new Claim(ClaimTypes.NameIdentifier, "hosting-user")],
                 "test")));
             var bus = fixture.BuildRebusHost();

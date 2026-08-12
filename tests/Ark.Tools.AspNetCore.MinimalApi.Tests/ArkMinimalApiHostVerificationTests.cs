@@ -40,7 +40,7 @@ public sealed class ArkMinimalApiHostVerificationTests
     {
         await using var container = new Container();
 
-        using var host = await CreateHostAsync(
+        using var host = await _createHostAsync(
             container,
             start: false,
             options => options.RegisterContainer = c => c.Register<BrokenService>()).ConfigureAwait(false);
@@ -67,7 +67,7 @@ public sealed class ArkMinimalApiHostVerificationTests
         await using var container = new Container();
         var probe = new StartupProbe();
 
-        using var host = await CreateHostAsync(
+        using var host = await _createHostAsync(
             container,
             start: true,
             options =>
@@ -91,7 +91,7 @@ public sealed class ArkMinimalApiHostVerificationTests
     public async Task HealthChecksAreAnonymousWhenAuthenticationIsRequired()
     {
         await using var container = new Container();
-        using var host = await CreateHostAsync(
+        using var host = await _createHostAsync(
             container,
             start: true,
             requireAuthenticatedUser: true).ConfigureAwait(false);
@@ -107,7 +107,7 @@ public sealed class ArkMinimalApiHostVerificationTests
     public async Task HealthCheckReportsDependencyFailureWithoutExceptionDetails()
     {
         await using var container = new Container();
-        using var host = await CreateHostAsync(
+        using var host = await _createHostAsync(
             container,
             start: true,
             configureServices: services => services
@@ -131,7 +131,7 @@ public sealed class ArkMinimalApiHostVerificationTests
     public async Task DefaultHealthChecksDoNotRegisterUiOrHistoryServices()
     {
         await using var container = new Container();
-        using var host = await CreateHostAsync(
+        using var host = await _createHostAsync(
             container,
             start: true,
             configureServices: services =>
@@ -146,7 +146,7 @@ public sealed class ArkMinimalApiHostVerificationTests
         host.Should().NotBeNull();
     }
 
-    private static async Task<IHost> CreateHostAsync(
+    private static async Task<IHost> _createHostAsync(
         Container container,
         bool start,
         Action<ArkMinimalApiHostOptions>? configure = null,

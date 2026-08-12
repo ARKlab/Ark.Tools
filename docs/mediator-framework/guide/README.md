@@ -1,74 +1,62 @@
 # Mediator Framework guide
 
-This is the task-oriented entry point for teams adopting the source-generated,
-MVC-free mediator framework. It keeps one transport-agnostic contract and
-handler usable from Minimal API, code-first gRPC, and Rebus. Each page explains
-the workflow, shows application-level examples taken from the sample solution,
-and states the observable request, response, or generated output to expect.
+This guide teaches the framework by extending one small operation. You start
+with a `Ping` contract and a Minimal API host, then add validation,
+authorization, gRPC, Rebus, streaming, OpenAPI, Azure Functions, and Reqnroll.
+Each chapter explains:
 
-## Read this guide in order
+1. what the application author writes;
+2. what the source generator creates;
+3. what the host must configure;
+4. how to call and test the result;
+5. which boundary belongs in an application test versus a transport test.
 
-1. Start with [Getting started](getting-started.md) for the end-to-end workflow.
-2. Read [Host setup and composition](host-setup-and-composition.md) before wiring
-   a real application host.
-3. Read [Request and DTO best practices](request-and-dto-best-practices.md),
-   [Application architecture](application-architecture-best-practices.md), and
-   [Contracts and handlers](contracts-and-handlers.md) before exposing a
-   contract on any transport.
-4. Then go to the transport-specific guide for each public interface you expose.
+The working reference is
+[`samples/Ark.MediatorFramework.Sample`](../../../samples/Ark.MediatorFramework.Sample/README.md).
+It has more domain operations than the tutorial, but follows the same order.
 
-## Choose a starting point
+## Follow the learning path
 
-| Need | Read | Expected outcome |
+| Step | Capability | Read |
 | --- | --- | --- |
-| New service | [Getting started](getting-started.md) | One contract served over one or more transports with a verified public call |
-| Host wiring, DI, middleware, startup order | [Host setup and composition](host-setup-and-composition.md) | A reproducible `ConfigureServices`/`Configure` setup that matches the sample |
-| Contract and handler design | [Contracts and handlers](contracts-and-handlers.md) | Pure handlers with stable contracts and clear trust boundaries |
-| Request and DTO composition | [Request and DTO best practices](request-and-dto-best-practices.md) | Versioned models and composed operation envelopes |
-| Application layering | [Application architecture](application-architecture-best-practices.md) | Explicit handler transactions, contexts, domain services, and adapters |
-| HTTP exposure | [HTTP endpoints](http-endpoints.md) | Generated Minimal API routes, documented status codes, and predictable binding |
-| gRPC exposure | [gRPC](grpc.md) | Generated code-first services, exported `.proto`, and reusable test/client setup |
-| Rebus exposure | [Rebus](rebus.md) | Generated handlers and routing for asynchronous processing |
-| Existing MVC application | [Migration from MVC](../migration-from-mvc.md) | A staged migration plan without rewriting every controller at once |
+| 1 | A first `Ping` request, handler, and `Program.cs` | [Getting started](getting-started.md) |
+| 2 | Application/host split and SimpleInjector composition | [Host setup and composition](host-setup-and-composition.md) |
+| 3 | Contract shape, DTOs, versions, and server-owned fields | [Contracts and handlers](contracts-and-handlers.md), [Request and DTO best practices](request-and-dto-best-practices.md), [Versioning](versioning.md) |
+| 4 | Validation and transport-agnostic authorization | [Validation and authorization](validation-and-authorization.md) |
+| 5 | Generated HTTP binding and multipart inputs | [HTTP endpoints](http-endpoints.md), [Attachments](attachments.md) |
+| 6 | Code-first gRPC and `.proto` export | [gRPC](grpc.md) |
+| 7 | Queue a separate background operation with Rebus | [Rebus](rebus.md) |
+| 8 | Incremental results and cancellation | [Streaming](streaming.md) |
+| 9 | JSON, MessagePack, protobuf, and generated metadata | [Serialization](serialization.md) |
+| 10 | Versioned OpenAPI and Scalar | [OpenAPI](openapi.md) |
+| 11 | Isolated Azure Functions HTTP host | [Azure Functions](azure-functions.md) |
+| 12 | Reqnroll application and host-boundary testing | [Testing](testing.md), [DOC-01 testing guidance](../progress/tasks/testing/DOC-01-testing-guidance.md) |
+| 13 | API-surface review and custom transport adapters | [API-surface snapshots](api-surface-snapshots.md), [Escape hatches](escape-hatches.md) |
 
 ## Capability map
 
-| Capability | What you write | What the framework generates or enforces | Read | Sample source to inspect |
-| --- | --- | --- | --- | --- |
-| Versioning | `[Versioning(Introduced, Retired)]` | Versioned HTTP routes, OpenAPI documents, gRPC services, API-surface lifetime entries | [Versioning](versioning.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs` |
-| HTTP binding | `[HttpEndpoint]`, `[HttpQuery]`, `[ServerSet]` | Minimal API route/query/body binding, status codes, multipart handling | [HTTP endpoints](http-endpoints.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingContracts.cs`, `AttachmentContracts.cs` |
-| gRPC | `[GrpcMethod]`, `[GrpcService]`, `[ProtoContract]` | Code-first services, `.proto` export, rich error mapping | [gRPC](grpc.md) | `src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs`, `test/Ark.MediatorFramework.Sample.GrpcClient` |
-| Rebus | `[RebusMessage]` | Rebus handlers, type-based routing helpers, scoped message execution | [Rebus](rebus.md) | `src/Ark.MediatorFramework.Sample.WebInterface/SampleComposition.cs` |
-| Validation and authorization | Validators, `PolicyAuthorizeAttribute`, host auth | Decorator-enforced validation and transport-agnostic authorization | [Validation and authorization](validation-and-authorization.md) | `src/Ark.MediatorFramework.Sample.Application/GreetingAuthorizationPolicy.cs` |
-| Errors | Domain exceptions and violations | RFC 7807 for HTTP, `google.rpc.Status` for gRPC | [Errors](errors.md) | `test/Ark.MediatorFramework.Sample.Tests/AuthorizationTests.cs` |
-| Serialization | JSON defaults, MessagePack opt-in, protobuf metadata | Matching wire shapes per transport | [Serialization](serialization.md) | `PolymorphicContracts.cs`, `GreetingContracts.cs` |
-| Attachments | `IArkAttachment` members and `[HttpEndpoint]` limits | Multipart binding, generated downloads, gRPC transfer support | [Attachments](attachments.md) | `AttachmentContracts.cs`, `FileDownloadTests.cs` |
-| Streaming | `IAsyncEnumerable<T>` query result | Incremental HTTP JSON and gRPC server streams | [Streaming](streaming.md) | `GreetingContracts.cs`, `AsyncEnumerableStreamingTests.cs` |
-| OpenAPI | XML docs plus OpenAPI setup | Versioned documents, OAuth, NodaTime, polymorphism, server-set schema cleanup | [OpenAPI](openapi.md) | `SampleStartup.cs` |
-| API-surface review | `ArkApiSurface.txt` baseline | Build-time contract drift detection | [API-surface snapshots](api-surface-snapshots.md) | `src/Ark.MediatorFramework.Sample.Application/ArkApiSurface.txt` |
-| Boundary testing | Test host + generated clients | Verified public behavior, auth, errors, and serialization | [Testing](testing.md) | `test/Ark.MediatorFramework.Sample.Tests/Hooks/SampleTestContext.cs` |
-| Azure Functions | `[HttpHost]` and isolated worker | Generated Functions triggers, bearer auth, outbound Rebus, and Core Tools boundary tests | [Azure Functions](azure-functions.md) | `src/Ark.MediatorFramework.Sample.AzureFunctions/Program.cs` |
-| Escape hatches | Hand-written adapter where needed | Reuse of the same pure handler with custom transport glue | [Escape hatches](escape-hatches.md) | `migration-from-mvc.md` |
+| Capability | Contract metadata | Generated/runtime behavior |
+| --- | --- | --- |
+| HTTP | `[HttpEndpoint]`, `[HttpBody]`, `[HttpQuery]`, `[HttpRoute]` | Minimal API route, binding, status code, multipart support |
+| gRPC | `[GrpcMethod]`, `[GrpcService]`, `[ProtoContract]` | Code-first service, protobuf schema, reflection |
+| Rebus | `[RebusMessage(OwnerQueue = "...")]` | Message wrapper, scoped handler, type routing |
+| Validation | `IValidator<T>` | Validation decorator before the handler |
+| Authorization | `PolicyAuthorizeAttribute` | Shared policy evaluation for HTTP, gRPC, and messages |
+| Versioning | `[Versioning]`, `v{version}` route | Version-specific HTTP/OpenAPI/gRPC surfaces |
+| Streaming | `IAsyncEnumerable<T>` response | Incremental HTTP JSON and gRPC server stream |
+| OpenAPI | XML docs and host options | Versioned documents, schemas, OAuth metadata |
+| Serialization | source-generated `JsonSerializerContext` | Explicit JSON metadata and stable transport shapes |
 
-## Sample source map
+## What the framework does not hide
 
-These files are the fastest way to cross-check the guide against a working
-application:
+You still own:
 
-- `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/`
-  — contracts, handlers, validators, authorization policies, and application composition.
-- `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs`
-  — ASP.NET Core services, middleware, OpenAPI, generated endpoint mapping.
-- `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleComposition.cs`
-  — Rebus setup, generated handler registration, transport user-context flow.
-- `samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/`
-  — HTTP, gRPC, streaming, paging, attachment, auth, and concurrency tests.
-- `samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/`
-  — generated-client project consuming the exported `.proto` files.
+- dependency-injection registration and lifetimes;
+- persistence transactions and outbox boundaries;
+- authentication configuration;
+- queue topology, retries, and deployment settings;
+- application-level tests and cleanup;
+- public contract compatibility.
 
-Use this framework when one application operation should be exposed on
-multiple wires and generated consistently. Use `Ark.Tools.AspNetCore` MVC when
-you need MVC controllers, filters, model binders, or an intentionally
-controller-shaped application; both can coexist during migration.
-
-Rationale and architecture: [`../design.md`](../design.md).
+The generator removes repetitive transport plumbing. It does not decide business
+ownership or operational policy for you.

@@ -1,19 +1,32 @@
-# OpenAPI
+# OpenAPI and Scalar
 
-Generated HTTP contracts produce versioned OpenAPI operations. Contract XML
-documentation supplies the public operation, parameter, and schema prose so
-the reference document stays aligned with the application surface.
+OpenAPI is generated from the public HTTP contract metadata and host
+configuration. Treat the document as a consumer-facing compatibility artifact,
+not as a dump of implementation types.
 
-## Configure one document per API version
+## 1. Add XML documentation to the contract
 
-The sample host configures one document for `v1` and one for `v2` because the
-generator expands versioned routes into version-specific HTTP surfaces.
+```csharp
+/// <summary>Creates a greeting for the authenticated user.</summary>
+[ApiGroup("Greetings")]
+[HttpEndpoint("POST", "/api/v{version}/greetings", SuccessStatusCode = 201)]
+public sealed record CreateGreetingRequest : IRequest<CreateGreetingRequest, GreetingResponse>
+{
+    /// <summary>Gets the name to greet.</summary>
+    public required string Name { get; init; }
+}
+```
+
+Document public properties and response values. The XML comments become
+operation and schema descriptions.
+
+## 2. Configure one document per API version
 
 ```csharp
 services.AddOpenApi("v1", ConfigureOpenApi);
 services.AddOpenApi("v2", ConfigureOpenApi);
 
-private void ConfigureOpenApi(OpenApiOptions options)
+private static void ConfigureOpenApi(OpenApiOptions options)
 {
     options
         .AddArkTypeConverterValueSchemas()
@@ -28,29 +41,33 @@ private void ConfigureOpenApi(OpenApiOptions options)
 }
 ```
 
-## What each OpenAPI option does
+Why each option exists:
 
-| Option | Why it exists | What users see |
-| --- | --- | --- |
-| `AddArkTypeConverterValueSchemas()` | Documents values serialized through Ark type converters | Correct schema shape instead of opaque strings |
-| `AddArkNodaTimeSchemas()` | Adds NodaTime-specific schema metadata | `LocalDate`, `OffsetDateTime`, and friends show the expected format |
-| `AddArkServerSetProperties()` | Removes `[ServerSet]` request properties from input schemas | Clients do not see server-owned fields as writable input |
-| `AddArkXmlDocumentation()` | Reads XML comments from public contracts and properties | Summaries and property descriptions appear in the document |
-| `AddArkOAuthSecurity(...)` | Publishes OAuth metadata and scopes | Swagger/Scalar can authorize calls against the right scheme |
-| `AddArkPolymorphism<TBase, TDiscriminator>(...)` | Documents discriminator-based polymorphic payloads | Clients know which discriminator and concrete types are valid |
+| Option | Effect |
+| --- | --- |
+| `AddArkTypeConverterValueSchemas` | Documents custom converter values accurately |
+| `AddArkNodaTimeSchemas` | Publishes stable NodaTime formats |
+| `AddArkServerSetProperties` | Removes server-owned input members |
+| `AddArkXmlDocumentation` | Copies contract XML comments |
+| `AddArkOAuthSecurity` | Publishes OAuth flows and scopes |
+| `AddArkPolymorphism` | Documents discriminator and concrete types |
 
-## Map the documents and UI
+## 3. Map JSON, YAML, and Scalar
 
 ```csharp
-app.UseEndpoints(endpoints =>
+endpoints.MapOpenApi().AllowAnonymous();
+endpoints.MapOpenApi("/openapi/{documentName}.yaml").AllowAnonymous();
+endpoints.MapScalarApiReference(options =>
 {
-    endpoints.MapOpenApi().AllowAnonymous();
-    endpoints.MapOpenApi("/openapi/{documentName}.yaml").AllowAnonymous();
-    endpoints.MapScalarApiReference(...).AllowAnonymous();
-});
+    options.AddAuthorizationCodeFlow("oauth2", flow => flow
+        .WithClientId(openApiSecurity.ClientId)
+        .WithAuthorizationUrl(openApiSecurity.AuthorizationUrl.ToString())
+        .WithTokenUrl(openApiSecurity.TokenUrl.ToString())
+        .WithPkce(Pkce.Sha256));
+}).AllowAnonymous();
 ```
 
-Expected URLs in the sample:
+Expected sample URLs:
 
 - `/openapi/v1.json`
 - `/openapi/v1.yaml`
@@ -58,47 +75,28 @@ Expected URLs in the sample:
 - `/openapi/v2.yaml`
 - `/scalar/v1`
 
-**Outcome:** generated routes appear under their API group with consistent
-operation names; server-set fields are absent from client request schemas and
-supported NodaTime, polymorphic, and OAuth metadata is represented accurately.
+The documents can be anonymous while the operations remain protected. Scalar
+uses OAuth to authorize operation calls; it does not remove application
+authorization.
 
-## Document the contract, not the endpoint implementation
+## 4. Review the generated result
 
-Put a summary on the contract and summaries on its public properties:
+For the create contract, check that the document contains:
 
-```csharp
-/// <summary>Renames a greeting.</summary>
-[HttpEndpoint("PATCH", "/api/v{version}/greetings/{id}")]
-public sealed record RenameGreetingRequest : IRequest<GreetingResponse>
-{
-    /// <summary>Gets the greeting to rename.</summary>
-    public Guid Id { get; init; }
+- `POST /api/v1/greetings`;
+- a `201` success response;
+- OAuth requirements when the contract requires a scope;
+- only client-controlled input fields;
+- response fields and XML descriptions;
+- validation and standard error responses.
 
-    /// <summary>Gets the replacement text.</summary>
-    public string Message { get; init; } = string.Empty;
-}
-```
+Do not hand-edit generated OpenAPI. Change contract metadata or host options.
+Use a handwritten operation transformer only when metadata cannot express the
+required document detail.
 
-The same documentation is emitted to the generated gRPC proto where
-applicable. Treat descriptions, response codes, OAuth scopes, and schema shape
-as part of the consumer experience; review them with the contract change.
+## 5. Test the boundary
 
-## What users should expect in the document
-
-For a route such as:
-
-```csharp
-[ApiGroup("Greetings")]
-[HttpEndpoint("POST", "/api/v{version}/greetings", SuccessStatusCode = 201)]
-public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
-```
-
-users should expect the OpenAPI document to show:
-
-- a `POST /api/v1/greetings` operation under the `Greetings` tag;
-- a `201` success response and documented error responses;
-- request schema entries only for client-controlled fields;
-- OAuth requirements when the route is authenticated.
-
-Add a hand-written operation transformer only for document changes that cannot
-be described by contract metadata. Architecture rationale: [design.md](../design.md).
+Application tests verify returned values and typed exceptions. A focused
+OpenAPI test fetches `/openapi/v1.json` and asserts operation names, status
+codes, security requirements, and schema shape. Keep these assertions out of
+Reqnroll application scenarios.

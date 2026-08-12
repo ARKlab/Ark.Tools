@@ -10,7 +10,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
 public class LZ4MessagePackInputFormatter : InputFormatter
 {
-    const string ContentType = "application/x.msgpacklz4";
+    const string _contentType = "application/x.msgpacklz4";
 
     readonly MessagePackSerializerOptions _options;
 
@@ -26,7 +26,7 @@ public class LZ4MessagePackInputFormatter : InputFormatter
 
     public LZ4MessagePackInputFormatter(MessagePackSerializerOptions options)
     {
-        SupportedMediaTypes.Add(ContentType);
+        SupportedMediaTypes.Add(_contentType);
 
         _options = options.WithCompression(MessagePackCompression.Lz4Block);
     }

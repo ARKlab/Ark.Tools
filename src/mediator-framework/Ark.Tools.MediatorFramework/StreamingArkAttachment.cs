@@ -82,7 +82,7 @@ public sealed class StreamingArkAttachment : IArkAttachment
 
             while (_offset == _buffer.Length && !_completed)
             {
-                await ReadNextChunkAsync(cancellationToken).ConfigureAwait(false);
+                await _readNextChunkAsync(cancellationToken).ConfigureAwait(false);
             }
 
             var count = Math.Min(buffer.Length, _buffer.Length - _offset);
@@ -91,7 +91,7 @@ public sealed class StreamingArkAttachment : IArkAttachment
             return count;
         }
 
-        private async ValueTask ReadNextChunkAsync(CancellationToken cancellationToken)
+        private async ValueTask _readNextChunkAsync(CancellationToken cancellationToken)
         {
             if (!await _enumerator.MoveNextAsync().ConfigureAwait(false))
             {

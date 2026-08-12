@@ -10,7 +10,7 @@ namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
 public class MessagePackInputFormatter : InputFormatter
 {
-    const string ContentType = "application/x-msgpack";
+    const string _contentType = "application/x-msgpack";
 
     readonly MessagePackSerializerOptions _options;
 
@@ -26,7 +26,7 @@ public class MessagePackInputFormatter : InputFormatter
 
     public MessagePackInputFormatter(MessagePackSerializerOptions options)
     {
-        SupportedMediaTypes.Add(ContentType);
+        SupportedMediaTypes.Add(_contentType);
 
         _options = options;
     }

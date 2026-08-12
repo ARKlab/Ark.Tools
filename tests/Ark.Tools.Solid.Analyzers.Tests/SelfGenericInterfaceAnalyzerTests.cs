@@ -35,7 +35,7 @@ public class SelfGenericInterfaceAnalyzerTests
     [TestMethod]
     public async Task LegacyInterfaces_ShouldReportWarnings()
     {
-        var diagnostics = await AnalyzeAsync(
+        var diagnostics = await _analyzeAsync(
             _solidStubs +
             """
 
@@ -62,7 +62,7 @@ public class SelfGenericInterfaceAnalyzerTests
     [TestMethod]
     public async Task SelfGenericInterfaces_ShouldNotReportWarnings()
     {
-        var diagnostics = await AnalyzeAsync(
+        var diagnostics = await _analyzeAsync(
             _solidStubs +
             """
 
@@ -95,14 +95,14 @@ public class SelfGenericInterfaceAnalyzerTests
             }
             """;
 
-        var fixedQuery = await ApplyCodeFixAsync(source, "MyQuery").ConfigureAwait(false);
+        var fixedQuery = await _applyCodeFixAsync(source, "MyQuery").ConfigureAwait(false);
         fixedQuery.Should().Contain("class MyQuery : IQuery<MyQuery, int> { }");
 
-        var fixedCommand = await ApplyCodeFixAsync(source, "MyCommand").ConfigureAwait(false);
+        var fixedCommand = await _applyCodeFixAsync(source, "MyCommand").ConfigureAwait(false);
         fixedCommand.Should().Contain("class MyCommand : ICommand<MyCommand> { }");
     }
 
-    private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
+    private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
             "AnalyzerTests",
@@ -115,7 +115,7 @@ public class SelfGenericInterfaceAnalyzerTests
             .ConfigureAwait(false);
     }
 
-    private static async Task<string> ApplyCodeFixAsync(string source, string typeName)
+    private static async Task<string> _applyCodeFixAsync(string source, string typeName)
     {
         using var workspace = new AdhocWorkspace();
         var project = workspace.AddProject("CodeFixTests", LanguageNames.CSharp)

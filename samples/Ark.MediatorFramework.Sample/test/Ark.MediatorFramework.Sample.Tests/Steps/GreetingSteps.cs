@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Ark.Tools.Authorization;
@@ -32,7 +31,7 @@ public sealed class GreetingSteps
     private GreetingPage? _greetingPage;
     private string? _previousETag;
     private Exception? _exception;
-    private List<GreetingStreamItem> _streamItems = [];
+    private readonly List<GreetingStreamItem> _streamItems = [];
     private bool _streamWasCancelled;
 
     /// <summary>Initializes a new instance of the <see cref="GreetingSteps"/> class.</summary>
@@ -61,7 +60,7 @@ public sealed class GreetingSteps
     public async Task CreateGreeting(Table table)
     {
         var request = table.CreateInstance<Greeting.V1.Create>();
-        await CreateGreetingAsync(request).ConfigureAwait(false);
+        await _createGreetingAsync(request).ConfigureAwait(false);
     }
 
     /// <summary>Creates greetings from table rows and activates the last result.</summary>
@@ -78,7 +77,7 @@ public sealed class GreetingSteps
     public async Task CreateGreetings(Table table)
     {
         foreach (var request in table.CreateSet<Greeting.V1.Create>())
-            await CreateGreetingAsync(request).ConfigureAwait(false);
+            await _createGreetingAsync(request).ConfigureAwait(false);
     }
 
     /// <summary>Loads the active greeting through its public query contract.</summary>
@@ -86,12 +85,12 @@ public sealed class GreetingSteps
     public async Task RetrieveCurrentGreeting()
     {
         _greeting.Should().NotBeNull();
-        _exception = await CaptureAsync(async () =>
+        _exception = await _captureAsync(async () =>
         {
-            var queried = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+            var queried = await _context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
                 new GetGreetingQuery { Id = _greeting!.Id }).ConfigureAwait(false);
             _queriedGreeting = queried;
-            _greeting = ToOutput(queried);
+            _greeting = _toOutput(queried);
             return _queriedGreeting;
         }).ConfigureAwait(false);
     }
@@ -107,7 +106,7 @@ public sealed class GreetingSteps
             table.CreateInstance<Greeting.V1.Input>(),
             _greeting.Id,
             _greeting.ETag);
-        _greeting = await Context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(request)
+        _greeting = await _context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(request)
             .ConfigureAwait(false);
     }
 
@@ -122,8 +121,8 @@ public sealed class GreetingSteps
             table.CreateInstance<Greeting.V1.Input>(),
             _greeting!.Id,
             _previousETag);
-        _exception = await CaptureAsync(() =>
-            Context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(request)).ConfigureAwait(false);
+        _exception = await _captureAsync(() =>
+            _context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(request)).ConfigureAwait(false);
     }
 
     /// <summary>Searches greetings using a table-defined query.</summary>
@@ -132,7 +131,7 @@ public sealed class GreetingSteps
     public async Task SearchGreetings(Table table)
     {
         var query = table.CreateInstance<SearchGreetingsQuery>();
-        _greetingPage = await Context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(query)
+        _greetingPage = await _context.DispatchQueryAsync<SearchGreetingsQuery, GreetingPage>(query)
             .ConfigureAwait(false);
     }
 
@@ -160,7 +159,7 @@ public sealed class GreetingSteps
     public async Task CurrentGreetingHasDeterministicAudit(string operation)
     {
         _greeting.Should().NotBeNull();
-        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+        var audits = await _context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
             {
                 Identifier = _greeting!.Id.ToString("D"),
@@ -169,7 +168,7 @@ public sealed class GreetingSteps
         var audit = audits.Data.Single(record => record.Operation == operation);
         audit.UserId.Should().Be("test-user");
         audit.EntityType.Should().Be(nameof(GreetingResponse));
-        audit.Timestamp.Should().Be(Context.Clock.GetCurrentInstant());
+        audit.Timestamp.Should().Be(_context.Clock.GetCurrentInstant());
     }
 
     /// <summary>Asserts the typed stale-ETag failure.</summary>
@@ -185,7 +184,7 @@ public sealed class GreetingSteps
     public async Task CurrentGreetingAuditIs(Table table)
     {
         _greeting.Should().NotBeNull();
-        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+        var audits = await _context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
             {
                 Identifier = _greeting!.Id.ToString("D"),
@@ -227,9 +226,9 @@ public sealed class GreetingSteps
     public async Task CreateGreeting(string name)
     {
         _greeting = null;
-        _exception = await CaptureAsync(async () =>
+        _exception = await _captureAsync(async () =>
         {
-            _greeting = await Context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            _greeting = await _context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
                 new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = name })).ConfigureAwait(false);
             return _greeting;
         }).ConfigureAwait(false);
@@ -240,15 +239,15 @@ public sealed class GreetingSteps
     public async Task QueryGreeting()
     {
         _greeting.Should().NotBeNull();
-        _exception = await CaptureAsync(async () =>
+        _exception = await _captureAsync(async () =>
         {
-            var queried = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+            var queried = await _context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
                 new GetGreetingQuery
                 {
                     Id = _greeting!.Id,
                 }).ConfigureAwait(false);
             _queriedGreeting = queried;
-            _greeting = ToOutput(queried);
+            _greeting = _toOutput(queried);
             return queried;
         }).ConfigureAwait(false);
     }
@@ -258,7 +257,7 @@ public sealed class GreetingSteps
     [When("I compose a greeting with")]
     public async Task ComposeGreeting(Table table)
     {
-        _composition = await Context.DispatchRequestAsync<ComposeGreetingRequest, ComposeGreetingResponse>(
+        _composition = await _context.DispatchRequestAsync<ComposeGreetingRequest, ComposeGreetingResponse>(
             table.CreateInstance<ComposeGreetingRequest>()).ConfigureAwait(false);
         _composition.Status.Should().Be("queued");
     }
@@ -269,7 +268,7 @@ public sealed class GreetingSteps
     {
         _composition.Should().NotBeNull();
         await _rebusContext.WaitForIdleAsync().ConfigureAwait(false);
-        _queriedGreeting = await Context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
+        _queriedGreeting = await _context.DispatchQueryAsync<GetGreetingQuery, GreetingResponse>(
             new GetGreetingQuery { Id = _composition!.Id }).ConfigureAwait(false);
         _queriedGreeting.Id.Should().Be(_composition.Id);
     }
@@ -280,7 +279,7 @@ public sealed class GreetingSteps
     public async Task BackgroundGreetingAuditIsAttributedTo(string userId)
     {
         _queriedGreeting.Should().NotBeNull();
-        var audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+        var audits = await _context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
             {
                 Identifier = _queriedGreeting!.Id.ToString("D"),
@@ -296,7 +295,7 @@ public sealed class GreetingSteps
     public async Task QueryGreetingVersionTwo()
     {
         _greeting.Should().NotBeNull();
-        _versionTwoGreeting = await Context.DispatchQueryAsync<GetGreetingV2Query, GreetingResponseV2>(
+        _versionTwoGreeting = await _context.DispatchQueryAsync<GetGreetingV2Query, GreetingResponseV2>(
             new GetGreetingV2Query
             {
                 Id = _greeting!.Id,
@@ -308,7 +307,7 @@ public sealed class GreetingSteps
     public async Task ConsumeGreetingStream()
     {
         using var cancellation = new CancellationTokenSource();
-        var stream = await Context.DispatchQueryAsync<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>(
+        var stream = await _context.DispatchQueryAsync<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>(
             new GetGreetingsStreamQuery
             {
                 Count = 10,
@@ -335,7 +334,7 @@ public sealed class GreetingSteps
     [Then(@"the audit query contains a (.*) operation for ""(.*)""")]
     public async Task QueryAudit(string operation, string userId)
     {
-        _audits = await Context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
+        _audits = await _context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
             new GetAuditsQuery
             {
                 UserId = userId,
@@ -346,7 +345,7 @@ public sealed class GreetingSteps
         audit.UserId.Should().Be(userId);
         audit.EntityType.Should().Be(nameof(GreetingResponse));
         audit.Identifier.Should().NotBeNullOrWhiteSpace();
-        audit.Timestamp.Should().Be(Context.Clock.GetCurrentInstant());
+        audit.Timestamp.Should().Be(_context.Clock.GetCurrentInstant());
     }
 
     /// <summary>Asserts that the greeting was returned by its query contract.</summary>
@@ -411,7 +410,7 @@ public sealed class GreetingSteps
         _streamWasCancelled.Should().BeTrue();
     }
 
-    private static async Task<Exception?> CaptureAsync<T>(Func<Task<T>> action)
+    private static async Task<Exception?> _captureAsync<T>(Func<Task<T>> action)
     {
         try
         {
@@ -426,21 +425,21 @@ public sealed class GreetingSteps
         }
     }
 
-    private async Task CreateGreetingAsync(Greeting.V1.Create request)
+    private async Task _createGreetingAsync(Greeting.V1.Create request)
     {
         _greeting = null;
-        _exception = await CaptureAsync(async () =>
+        _exception = await _captureAsync(async () =>
         {
-            _greeting = await Context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
+            _greeting = await _context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
                     new Greeting_CreateRequest.V1(request))
                 .ConfigureAwait(false);
             return _greeting;
         }).ConfigureAwait(false);
     }
 
-    private ApplicationTestContext Context => _sampleContext.Application;
+    private ApplicationTestContext _context => _sampleContext.Application;
 
-    private static Greeting.V1.Output ToOutput(GreetingResponse greeting)
+    private static Greeting.V1.Output _toOutput(GreetingResponse greeting)
     {
         return new Greeting.V1.Output
         {

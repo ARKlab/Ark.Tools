@@ -28,21 +28,21 @@ public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAgg
 
     private void _createFromState(TAggregateState state)
     {
-        Aggregate.SetState(state);
+        Aggregate._setState(state);
     }
 
     private void _createFromHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history, TAggregateState? snapshot = null)
     {
         if (snapshot != null)
-            Aggregate.SetState(snapshot);
+            Aggregate._setState(snapshot);
         else
-            Aggregate.SetState(new TAggregateState
+            Aggregate._setState(new TAggregateState
             {
                 Identifier = Identifier,
                 Version = 0
             });
 
-        Aggregate.ApplyHistory(history);
+        Aggregate._applyHistory(history);
     }
 
     public async Task LoadAsync(long maxVersion, CancellationToken ctk = default)
@@ -139,7 +139,7 @@ public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAcces
             .ToFrozenDictionary();
     }
 
-    internal void SetState(TAggregateState state)
+    internal void _setState(TAggregateState state)
     {
         if (State != null)
             throw new InvalidOperationException("An used aggregate cannot change state");
@@ -148,7 +148,7 @@ public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAcces
         State._isRootManaged = true;
     }
 
-    internal void ApplyHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history)
+    internal void _applyHistory(IEnumerable<AggregateEventEnvelope<TAggregate>> history)
     {
         foreach (var e in history)
             _apply(e);

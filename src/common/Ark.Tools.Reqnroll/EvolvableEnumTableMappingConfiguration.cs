@@ -15,15 +15,15 @@ public sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, IV
     /// <inheritdoc />
     public bool CanRetrieve(KeyValuePair<string, string> keyValuePair, Type targetType, Type propertyType)
     {
-        return IsEvolvableEnum(propertyType);
+        return _isEvolvableEnum(propertyType);
     }
 
     /// <inheritdoc />
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+    [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "Reqnroll resolves table property types dynamically at test runtime.")]
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+    [UnconditionalSuppressMessage(
         "Trimming",
         "IL2067",
         Justification = "Reqnroll resolves table property types dynamically at test runtime.")]
@@ -39,7 +39,7 @@ public sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, IV
     /// <inheritdoc />
     public bool CanCompare(object actualValue)
     {
-        return IsEvolvableEnum(actualValue.GetType());
+        return _isEvolvableEnum(actualValue.GetType());
     }
 
     /// <inheritdoc />
@@ -48,7 +48,7 @@ public sealed class EvolvableEnumValueRetrieverAndComparer : IValueRetriever, IV
         return string.Equals(expectedValue, actualValue.ToString(), StringComparison.Ordinal);
     }
 
-    private static bool IsEvolvableEnum(Type type)
+    private static bool _isEvolvableEnum(Type type)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
         return type.IsGenericType

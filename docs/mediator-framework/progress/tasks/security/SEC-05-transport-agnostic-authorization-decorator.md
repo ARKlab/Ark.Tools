@@ -31,7 +31,7 @@ a first-class framework story.
 2. Provide a SimpleInjector registration helper (one call) that registers the authorization
    decorators around all handlers, mirroring how ReferenceProject wires them in `ApiHost.cs`.
 3. Sample: register the decorators in
-   `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/ApplicationComposition.cs`
+   `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs`
    and declare a policy on at least one contract that is dual-exposed (`[HttpEndpoint]` + `[RebusMessage]`).
 4. Docs: `design.md` cross-cutting section — document that edge auth is transport-local and the
    decorator is the transport-agnostic enforcement layer; contracts dual-exposed to Rebus **must**
@@ -53,4 +53,4 @@ a first-class framework story.
 - [ ] No new package introduced; extensions live in `Ark.Tools.Solid.Authorization`/`Ark.Tools.Authorization`.
 - [ ] Docs updated; full solution build + tests green.
 
-**Cross-reference**: depends on SMP-01 registration structure (same decorator wiring section of `ApplicationComposition.cs`); coordinate with FW-01 for `ICommandHandler<>` coverage.
+**Cross-reference**: depends on SMP-01 registration structure (same decorator wiring section of `Host/ApplicationComposition.cs`); coordinate with FW-01 for `ICommandHandler<>` coverage.

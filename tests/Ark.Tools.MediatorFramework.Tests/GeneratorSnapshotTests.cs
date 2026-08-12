@@ -55,8 +55,8 @@ public sealed class GeneratorSnapshotTests
                 .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
                 .BuildServiceProvider(),
         };
-        var method = typeof(Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx)
-            .GetMethod("GetDeserializationOptions", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var method = typeof(ArkMessagePackEx)
+            .GetMethod("_getDeserializationOptions", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
 
@@ -90,12 +90,12 @@ public sealed class GeneratorSnapshotTests
         context.Request.Headers.Accept = "application/x-msgpack";
 
         var result = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
-            .WriteStreamingResponseAsync(context, Values(), 2, CancellationToken.None);
+            .WriteStreamingResponseAsync(context, _values(), 2, CancellationToken.None);
 
         result.GetType().Name.Should().Contain("MessagePackResult");
 
         var limited = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
-            .WriteStreamingResponseAsync(context, Values(), 1, CancellationToken.None);
+            .WriteStreamingResponseAsync(context, _values(), 1, CancellationToken.None);
         limited.GetType().Name.Should().Contain("Problem");
         ((Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult)limited).ProblemDetails.Detail
             .Should().Be("The streaming response exceeded the configured item limit of 1.");
@@ -104,7 +104,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GeneratorsRecognizeAsyncEnumerableResponses()
     {
-        var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using System.Collections.Generic;
             using Ark.MediatorFramework;
@@ -118,7 +118,7 @@ public sealed class GeneratorSnapshotTests
         minimal.Should().Contain("WriteStreamingResponseAsync");
         minimal.Should().NotContain("DisableResponseCompression");
 
-        var grpc = RunGenerator<ArkGrpcEndpointGenerator>(
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using System.Collections.Generic;
             using Ark.MediatorFramework;
@@ -133,7 +133,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsVersionedHttpTrigger()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -161,7 +161,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsAnonymousHealthCheck()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
@@ -178,7 +178,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -200,7 +200,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorSkipsConverterForStringBinding()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -222,7 +222,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorHonorsAnonymousEndpointMetadata()
     {
-        var anonymous = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var anonymous = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -243,7 +243,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsExceptionMappingWithCancellationRethrow()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -262,7 +262,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorEmitsStatusOverridesForQueryAndRequest()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -294,10 +294,10 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
             """;
 
-        var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(source);
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(source);
         minimal.Should().Contain("new global::Update(body, Id)");
 
-        var azure = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var azure = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -334,11 +334,11 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
             """;
 
-        var minimal = RunGenerator<ArkMinimalApiEndpointGenerator>(source);
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(source);
         minimal.Should().Contain("Audit");
         minimal.Should().Contain("new global::Update(body, Id)");
 
-        var azure = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var azure = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -364,7 +364,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorBindsETagPreconditionAndEmitsResponseETag()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -506,7 +506,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorReportsMessagePackEndpoints()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -522,7 +522,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorReportsDuplicateRoutes()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -540,7 +540,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorReportsDuplicateNames()
     {
-        var result = RunGeneratorResult<AzureFunctionsEndpointGenerator>(
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -564,7 +564,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void RebusGeneratorRejectsStreamingResponses()
     {
-        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
             using System.Collections.Generic;
             using Ark.MediatorFramework;
@@ -596,8 +596,8 @@ public sealed class GeneratorSnapshotTests
             }
             """;
 
-        var first = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
-        var second = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var first = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var second = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
@@ -622,7 +622,7 @@ public sealed class GeneratorSnapshotTests
             }
             """;
 
-        var generated = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var generated = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
         generated.Should().Contain("ENUM Status.NOT_SET=0");
         generated.Should().Contain("ENUM Status.Active=1");
@@ -647,7 +647,7 @@ public sealed class GeneratorSnapshotTests
             }
             """;
 
-        var generated = RunGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var generated = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
         generated.Should().Contain("EVOLVABLE-ENUM Status.NOT_SET=0");
         generated.Should().Contain("EVOLVABLE-ENUM Status.Active=1");
@@ -658,7 +658,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -670,7 +670,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ApplyResponseETag");
         generated.Should().Contain("result.Token");
 
-        var withoutETag = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var withoutETag = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -701,7 +701,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorExpandsVersionedRoutes()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -726,7 +726,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorConfiguresVersionPrefixAtMappingTime()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -741,7 +741,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 1)");
         result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/items\", true, 2)");
 
-        var explicitTemplate = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var explicitTemplate = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -756,7 +756,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorRejectsVersionPrefixWithoutToken()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             MapArkEndpointsFromAssembly<Marker>(versionPrefix: "/api/v1");
             public sealed class Marker;
@@ -768,7 +768,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorPropagatesXmlDocumentation()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -787,7 +787,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ArkDocumentationMetadata");
         generated.Should().Contain("[\"Id\"] = \"The route identifier.\"");
 
-        var undocumented = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var undocumented = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -801,7 +801,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
     {
-        var minimalApi = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -828,7 +828,7 @@ public sealed class GeneratorSnapshotTests
         minimalApi.Should().Contain("WithDescription(\"A multiline explanation with an entity > 0.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"The documented identifier.\"");
 
-        var grpc = RunGenerator<ArkGrpcEndpointGenerator>(
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -863,7 +863,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -877,7 +877,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Generated.Should().Contain("WithTags(\"Public\")");
 
-        var result2 = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result2 = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -941,7 +941,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorSecuresEndpointsAndSupportsAnonymousOptOut()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -971,7 +971,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorAdvertisesStandardProblemResponsesWithoutDuplicates()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -996,7 +996,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorEmitsCommandStatusSemantics()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1015,7 +1015,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorBindsETagPreconditions()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1036,7 +1036,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsInvalidETagDeclarations()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1071,7 +1071,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorEmitsNullAndCustomSuccessStatusSemantics()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1094,7 +1094,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorEmitsCommandReturningEmpty()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1113,7 +1113,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void RebusGeneratorEmitsOwnerQueueRouting()
     {
-        var generated = RunGenerator<ArkRebusEndpointGenerator>(
+        var generated = _runGenerator<ArkRebusEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1133,7 +1133,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void RebusGeneratorEmitsCommandHandlerWrapper()
     {
-        var generated = RunGenerator<ArkRebusEndpointGenerator>(
+        var generated = _runGenerator<ArkRebusEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1176,7 +1176,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void RebusGeneratorReportsInvalidOwnerQueue()
     {
-        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1192,7 +1192,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorEmitsVersionedServiceMethodSets()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1222,7 +1222,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorUsesApiGroupWhenGrpcServiceIsAbsent()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1239,7 +1239,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorCombinesRouteQueryAndBody()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1262,7 +1262,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorBindsStringCollectionTypes()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1282,7 +1282,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorWrapsTypeConverterRouteAndQueryValues()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1307,7 +1307,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorDoesNotWrapBasicTypes()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1336,7 +1336,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorBindsEnumsAsStringsWithoutWrappers()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1362,7 +1362,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorProtectsServerSetProperties()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1382,7 +1382,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorWarnsOnSuspiciousProperties()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1399,7 +1399,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1419,7 +1419,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorEmitsMultipartBinding()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1444,7 +1444,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorEmitsCollectionMultipartSchemaMetadata()
     {
-        var generated = RunGenerator<ArkMinimalApiEndpointGenerator>(
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1472,7 +1472,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsMultipleAttachments()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1491,7 +1491,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsUnsupportedAttachmentCollection()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1508,7 +1508,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorEmitsImportedProtoAsset()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1540,7 +1540,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorExcludesServerSetRequestMembers()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1570,7 +1570,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorEmitsStreamingAttachmentCollectionUpload()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1600,7 +1600,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorMapsEvolvableEnumsToBackingTypeProtoScalars()
     {
-        var generated = RunGenerator<ArkGrpcEndpointGenerator>(
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             namespace Test;
             using Ark.MediatorFramework;
@@ -1642,7 +1642,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorDoesNotCrashForInvalidEvolvableEnumBackingType()
     {
-        var result = RunGeneratorResult<ArkGrpcEndpointGenerator>(
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
             """
             namespace Test;
             using Ark.MediatorFramework;
@@ -1668,7 +1668,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsUnknownVerb()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1683,7 +1683,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsUnsupportedHandler()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             [HttpEndpoint("GET", "/invalid")]
@@ -1696,7 +1696,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsMissingRouteProperty()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1710,7 +1710,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorReportsInvalidBodyContract()
     {
-        var result = RunGeneratorResult<ArkMinimalApiEndpointGenerator>(
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1727,7 +1727,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void GrpcGeneratorReportsUnsupportedHandler()
     {
-        var result = RunGeneratorResult<ArkGrpcEndpointGenerator>(
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             [GrpcMethod]
@@ -1740,7 +1740,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void RebusGeneratorReportsUnsupportedHandler()
     {
-        var result = RunGeneratorResult<ArkRebusEndpointGenerator>(
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
             using Ark.MediatorFramework;
             [RebusMessage]
@@ -1793,17 +1793,17 @@ public sealed class GeneratorSnapshotTests
 
     private sealed record UnformattableMessage;
 
-    private static async IAsyncEnumerable<int> Values()
+    private static async IAsyncEnumerable<int> _values()
     {
         yield return 1;
         yield return 2;
     }
 
-    private static string RunGenerator<TGenerator>(string source)
+    private static string _runGenerator<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()
-        => RunGeneratorResult<TGenerator>(source).Generated;
+        => _runGeneratorResult<TGenerator>(source).Generated;
 
-    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) RunGeneratorResult<TGenerator>(string source)
+    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runGeneratorResult<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
@@ -1815,7 +1815,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "GeneratorSnapshot",
@@ -1836,7 +1836,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void ApiSurfaceGeneratorEmitsMissingSnapshotDiagnosticWhenEnabled()
     {
-        var result = RunApiSurfaceGeneratorResult(
+        var result = _runApiSurfaceGeneratorResult(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1863,7 +1863,7 @@ public sealed class GeneratorSnapshotTests
         // A stale baseline with a different field on GetItem
         const string staleBaseline = "/*\nCONTRACT GetItem -> string [group=Ark] [http=GET /items/{id}] [version=1+]\nCONTRACT GetItem.OldField : int\n*/\n";
 
-        var result = RunApiSurfaceGeneratorResult(source, baseline: staleBaseline, enabled: true);
+        var result = _runApiSurfaceGeneratorResult(source, baseline: staleBaseline, enabled: true);
 
         result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002" && d.GetMessage().Contains("GetItem"));
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
@@ -1880,9 +1880,9 @@ public sealed class GeneratorSnapshotTests
             """;
 
         // Get the actual current snapshot from the generator
-        var snapshot = RunApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+        var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
 
-        var result = RunApiSurfaceGeneratorResult(source, baseline: snapshot, enabled: true);
+        var result = _runApiSurfaceGeneratorResult(source, baseline: snapshot, enabled: true);
 
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
@@ -1891,7 +1891,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void ApiSurfaceGeneratorSkipsComparisonWhenDisabled()
     {
-        var result = RunApiSurfaceGeneratorResult(
+        var result = _runApiSurfaceGeneratorResult(
             """
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
@@ -1905,7 +1905,7 @@ public sealed class GeneratorSnapshotTests
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
     }
 
-    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) RunApiSurfaceGeneratorResult(
+    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runApiSurfaceGeneratorResult(
         string source,
         string? baseline,
         bool enabled)
@@ -1919,7 +1919,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Ark.Tools.Core.EvolvableEnum<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "ApiSurfaceTest",

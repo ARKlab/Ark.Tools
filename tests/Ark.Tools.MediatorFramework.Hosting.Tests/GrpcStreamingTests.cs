@@ -22,7 +22,7 @@ public sealed class GrpcStreamingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         using var call = client.StreamHosting(
             new HostingStreamQuery { Count = 3 },
@@ -41,7 +41,7 @@ public sealed class GrpcStreamingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         using var call = client.StreamHosting(
             new HostingStreamQuery { Count = 0 },
@@ -58,7 +58,7 @@ public sealed class GrpcStreamingTests
         await using var fixture = new HostingTestFixture();
         fixture.State.HoldStreamAfterFirst = true;
         await using var app = await fixture.StartGrpcHostAsync().ConfigureAwait(false);
-        using var channel = CreateChannel(app);
+        using var channel = _createChannel(app);
         var client = new HostingV1.HostingV1Client(channel);
         using var cts = new CancellationTokenSource();
         using var call = client.StreamHosting(new HostingStreamQuery { Count = 2 }, cancellationToken: cts.Token);
@@ -75,7 +75,7 @@ public sealed class GrpcStreamingTests
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
     }
 
-    private static GrpcChannel CreateChannel(WebApplication app)
+    private static GrpcChannel _createChannel(WebApplication app)
     {
         return GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {

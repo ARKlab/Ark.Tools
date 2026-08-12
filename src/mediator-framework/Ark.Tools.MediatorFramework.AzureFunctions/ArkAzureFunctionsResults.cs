@@ -18,7 +18,7 @@ public static class ArkAzureFunctionsResults
         ArgumentNullException.ThrowIfNull(context);
         var ifMatch = context.Request.Headers.IfMatch.ToString();
         if (!string.IsNullOrWhiteSpace(ifMatch))
-            return Unquote(ifMatch.Split(',')[0].Trim());
+            return _unquote(ifMatch.Split(',')[0].Trim());
         return context.Request.Headers.IfNoneMatch.ToString().Trim() == "*" ? "*" : null;
     }
 
@@ -64,7 +64,7 @@ public static class ArkAzureFunctionsResults
             .ToString()
             .Split(',', StringSplitOptions.TrimEntries)
             .Select(value => value.StartsWith("W/", StringComparison.Ordinal) ? value[2..] : value)
-            .Select(Unquote)
+            .Select(_unquote)
             .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));
         return matches ? TypedResults.StatusCode(StatusCodes.Status304NotModified) : null;
     }
@@ -79,6 +79,6 @@ public static class ArkAzureFunctionsResults
             && character >= '\u0020' && character != '\u007f');
     }
 
-    private static string Unquote(string value)
+    private static string _unquote(string value)
         => value.Length >= 2 && value[0] == '"' && value[^1] == '"' ? value[1..^1] : value;
 }

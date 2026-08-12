@@ -63,7 +63,7 @@ public sealed class MinimalApiStreamingTests
 
             fixture.State.StreamFirstItemProduced.IsCompleted.Should().BeTrue();
             fixture.State.StreamCancellationObserved.IsCompleted.Should().BeFalse();
-            fixture.State.ReleaseStream();
+            fixture.State._releaseStream();
             output.Append(await reader.ReadToEndAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false));
         }
 

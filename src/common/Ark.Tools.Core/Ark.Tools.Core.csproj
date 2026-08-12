@@ -42,6 +42,9 @@
     <None Include="buildTransitive\Ark.Tools.Core.props"
           Pack="true"
           PackagePath="buildTransitive" />
+    <None Include="buildTransitive\Ark.Tools.Core.targets"
+          Pack="true"
+          PackagePath="buildTransitive" />
   </ItemGroup>
 
 	</Project>

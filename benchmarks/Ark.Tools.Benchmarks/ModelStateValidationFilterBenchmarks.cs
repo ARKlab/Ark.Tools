@@ -26,8 +26,8 @@ public class ModelStateValidationFilterBenchmarks
     {
         _markedMethod = typeof(TestController).GetMethod(nameof(TestController.MarkedAction))!;
         _unmarkedMethod = typeof(TestController).GetMethod(nameof(TestController.UnmarkedAction))!;
-        _markedContext = CreateContext(_markedMethod);
-        _unmarkedContext = CreateContext(_unmarkedMethod);
+        _markedContext = _createContext(_markedMethod);
+        _unmarkedContext = _createContext(_unmarkedMethod);
         _filter.OnActionExecuting(_markedContext);
         _filter.OnActionExecuting(_unmarkedContext);
     }
@@ -35,7 +35,7 @@ public class ModelStateValidationFilterBenchmarks
     [Benchmark(Baseline = true)]
     public bool ReflectionMarked()
     {
-        return HasSkipAttribute(_markedMethod);
+        return _hasSkipAttribute(_markedMethod);
     }
 
     [Benchmark]
@@ -48,7 +48,7 @@ public class ModelStateValidationFilterBenchmarks
     [Benchmark]
     public bool ReflectionUnmarked()
     {
-        return HasSkipAttribute(_unmarkedMethod);
+        return _hasSkipAttribute(_unmarkedMethod);
     }
 
     [Benchmark]
@@ -58,12 +58,12 @@ public class ModelStateValidationFilterBenchmarks
         return _unmarkedContext.Result is null;
     }
 
-    private static bool HasSkipAttribute(MethodInfo methodInfo)
+    private static bool _hasSkipAttribute(MethodInfo methodInfo)
     {
         return methodInfo.GetCustomAttributes(typeof(Ark.Tools.AspNetCore.SkipModelStateValidationFilterAttribute), true).Length > 0;
     }
 
-    private static ActionExecutingContext CreateContext(MethodInfo methodInfo)
+    private static ActionExecutingContext _createContext(MethodInfo methodInfo)
     {
         var actionContext = new ActionContext(
             new DefaultHttpContext(),

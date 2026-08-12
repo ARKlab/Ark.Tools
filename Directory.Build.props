@@ -118,6 +118,7 @@
 
   <PropertyGroup Label="Test Settings" Condition="'$(IsTestProject)' == 'true'">
     <IsPackable>false</IsPackable>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
     
     <OutputType>Exe</OutputType>
 

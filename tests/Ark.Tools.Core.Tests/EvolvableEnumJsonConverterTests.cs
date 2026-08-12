@@ -22,12 +22,12 @@ public class EvolvableEnumJsonConverterTests
         Archived = 2,
     }
 
-    private static JsonSerializerOptions CreateDefaultOptions() => new JsonSerializerOptions().ConfigureArkDefaults();
+    private static JsonSerializerOptions _createDefaultOptions() => new JsonSerializerOptions().ConfigureArkDefaults();
 
-    private static JsonSerializerOptions CreateIntegerOptions()
+    private static JsonSerializerOptions _createIntegerOptions()
     {
         var options = new JsonSerializerOptions();
-        options.Converters.Add(new Ark.Tools.SystemTextJson.EvolvableEnumIntegerJsonConverterFactory());
+        options.Converters.Add(new SystemTextJson.EvolvableEnumIntegerJsonConverterFactory());
         return options;
     }
 
@@ -36,7 +36,7 @@ public class EvolvableEnumJsonConverterTests
     public void DefaultFormat_ShouldSerializeDefinedValueAsName()
     {
         // Arrange
-        var options = CreateDefaultOptions();
+        var options = _createDefaultOptions();
         EvolvableEnum<Status> value = Status.Active;
 
         // Act
@@ -51,7 +51,7 @@ public class EvolvableEnumJsonConverterTests
     public void DefaultFormat_ShouldRoundtripDefinedValue()
     {
         // Arrange
-        var options = CreateDefaultOptions();
+        var options = _createDefaultOptions();
         EvolvableEnum<Status> value = Status.Archived;
 
         // Act
@@ -67,7 +67,7 @@ public class EvolvableEnumJsonConverterTests
     public void DefaultFormat_ShouldRoundtripUnknownName()
     {
         // Arrange
-        var options = CreateDefaultOptions();
+        var options = _createDefaultOptions();
 
         // Act
         var result = JsonSerializer.Deserialize<EvolvableEnum<Status>>("\"FutureMember\"", options);
@@ -84,7 +84,7 @@ public class EvolvableEnumJsonConverterTests
     public void DefaultFormat_ShouldAcceptNumericToken()
     {
         // Arrange
-        var options = CreateDefaultOptions();
+        var options = _createDefaultOptions();
 
         // Act
         var result = JsonSerializer.Deserialize<EvolvableEnum<Status>>("1", options);
@@ -101,7 +101,7 @@ public class EvolvableEnumJsonConverterTests
     public void DefaultFormat_SerializingUnknownNumber_ShouldThrowExplicitly()
     {
         // Arrange
-        var options = CreateDefaultOptions();
+        var options = _createDefaultOptions();
         var value = EvolvableEnum<Status>.FromNumber(999);
 
         // Act
@@ -116,7 +116,7 @@ public class EvolvableEnumJsonConverterTests
     public void IntegerFormat_ShouldSerializeDefinedValueAsNumber()
     {
         // Arrange
-        var options = CreateIntegerOptions();
+        var options = _createIntegerOptions();
         EvolvableEnum<Status> value = Status.Archived;
 
         // Act
@@ -131,7 +131,7 @@ public class EvolvableEnumJsonConverterTests
     public void IntegerFormat_ShouldRoundtripDefinedValue()
     {
         // Arrange
-        var options = CreateIntegerOptions();
+        var options = _createIntegerOptions();
         EvolvableEnum<Status> value = Status.Active;
 
         // Act
@@ -147,7 +147,7 @@ public class EvolvableEnumJsonConverterTests
     public void IntegerFormat_ShouldRoundtripUnknownNumber()
     {
         // Arrange
-        var options = CreateIntegerOptions();
+        var options = _createIntegerOptions();
 
         // Act
         var result = JsonSerializer.Deserialize<EvolvableEnum<Status>>("999", options);
@@ -167,7 +167,7 @@ public class EvolvableEnumJsonConverterTests
     public void IntegerFormat_SerializingUnknownName_ShouldThrowExplicitly()
     {
         // Arrange
-        var options = CreateIntegerOptions();
+        var options = _createIntegerOptions();
         var value = EvolvableEnum<Status>.FromName("FutureMember");
 
         // Act
@@ -182,7 +182,7 @@ public class EvolvableEnumJsonConverterTests
     public void DefaultFormat_ShouldSerializeNotSetAsName()
     {
         // Arrange
-        var options = CreateDefaultOptions();
+        var options = _createDefaultOptions();
         var value = default(EvolvableEnum<Status>);
 
         // Act

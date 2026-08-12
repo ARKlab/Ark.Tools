@@ -1,62 +1,58 @@
-# DOC-01 — Publish the revised testing guidance
+# DOC-01 — Reqnroll testing guidance
 
-**Depends on:** TST-03, TST-04, TST-05, APP-06
-**Scope:** Mediator Framework reference and sample documentation
+## Goal
 
-Use the [execution rules](../../mediator-testing-plan.md#5-execution-rules-for-every-task)
-for every implementation task.
+A contributor can create a Reqnroll project, compose the application without a
+transport, write a scenario-owned driver, and then add focused HTTP/gRPC/Rebus
+boundary tests without guessing which layer owns an assertion.
 
-## Implementation details
+## Complete workflow
 
-1. Rewrite `docs/mediator-framework/guide/testing.md` around two workflows:
-   - framework maintainers use `tests/Ark.Tools.MediatorFramework.Tests` and the
-     hosting test project for generated host/wire behavior;
-   - application teams use their composition root, a scenario-owned
-     SimpleInjector scope, direct contract dispatch, the SQL default or
-     explicit in-memory store profile, and Rebus idle/outbox waiting.
-2. Add a “what not to assert” section explicitly excluding URLs, status codes,
-   ProblemDetails format, serialization, and OpenAPI from application tests.
-3. Add a complete direct-dispatch example using the sample's
-   `ApplicationComposition.Register` pattern, with no transport types.
-4. Document the default SQL profile, Docker startup, DACPAC reset, explicit
-   `ARK_SAMPLE_INMEMORY_TESTS=1` profile, deterministic clock/user setup, and
-   bounded background-bus wait.
-5. Update the testing section of
-   `docs/mediator-framework/design.md` so it no longer says sample scenarios
-   exercise HTTP/gRPC public interfaces.
-6. Update `docs/mediator-framework/guide/README.md`,
-   `samples/Ark.MediatorFramework.Sample/README.md`, and the progress task
-   board with the new ownership and source map.
-7. Replace references to the old `SampleTestContext` boundary workflow with the
-   direct context and the framework hosting test project.
+1. Create an MSTest project and add `Reqnroll.MsTest`,
+   `Reqnroll.Tools.MsBuild.Generation`, and `Ark.Tools.Reqnroll`.
+2. Add `reqnroll.json` and the repository table-mapping configuration.
+3. Reference the API and Application projects; do not reference a web host for
+   direct application scenarios.
+4. Create one `ApplicationTestContext` per scenario.
+5. Choose SQL by default or set `ARK_SAMPLE_INMEMORY_TESTS=1` explicitly.
+6. Set a deterministic clock and authenticated test principal.
+7. Dispatch request/query/command contracts through a driver.
+8. Keep active entities/results in the driver, not static fields.
+9. Add a `Then` assertion to every scenario.
+10. For Rebus, use independent sender/receiver containers, bounded waits,
+    cleanup, and durable business assertions.
+11. Add HTTP/gRPC/Functions tests only for wire behavior.
 
-## Outcome
+## Ownership table
 
-- A new contributor can reproduce both testing layers from repository
-  documentation without inferring hidden host setup.
+| Assertion | Test layer |
+| --- | --- |
+| Handler returns `Greeting.V1.Output` | Application |
+| Duplicate greeting raises business violation | Application |
+| Greeting is eventually completed by a worker | Application + Rebus integration |
+| `POST /api/v1/greetings` returns `201` | HTTP boundary |
+| JSON uses camelCase and source-generated metadata | HTTP/serialization |
+| gRPC maps validation to `InvalidArgument` | gRPC boundary |
+| OpenAPI contains an OAuth scheme | OpenAPI boundary |
+| Functions host becomes ready | Functions boundary |
 
-## Acceptance
+## What not to do
 
-- [ ] All documentation uses the same ownership terms as this plan.
-- [ ] Every code path in the direct-dispatch example exists in compiled sample
-  code or is explicitly marked pseudocode-free guidance.
-- [ ] The guide documents failure assertions, SQL and in-memory profile setup,
-  Rebus waits, cleanup, and cancellation.
-- [ ] Broken links and stale references to HTTP/gRPC sample BDD steps are
-  removed.
+- Do not assert generated wrappers in application features.
+- Do not share an `AsyncLocal` current entity between scenarios.
+- Do not mock application-owned SQL or message-bus infrastructure.
+- Do not replace an application-owned `IFailed<T>` handler with a test handler.
+- Do not use an unbounded `Task.Delay` as a Rebus wait.
+- Do not swallow exceptions in a `When` step.
+- Do not make the last step a `When`.
 
-## Tests
+## Acceptance checks
 
-- Repository-wide search for `SampleTestContext`, transport wording in the
-  application testing section, and stale T9.8 claims.
-- Validate Markdown links by checking each target path.
-- Run `git diff --check`.
-- Required scenarios/cases:
-  - a contributor can follow the direct-dispatch example with the application
-    composition root and one scope per top-level contract call;
-  - the guide distinguishes framework host/wire tests from sample application
-    tests and documents SQL default plus in-memory alternate profiles;
-  - failure assertions, bounded Rebus waits, cancellation, cleanup, and all
-    referenced paths are documented without credentials.
-- Run the full-solution build/test gates; documentation itself needs no
-  separate compiler.
+- `dotnet build samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.slnx`
+  succeeds.
+- The sample test project can run with SQL and with the explicit in-memory
+  profile.
+- Markdown links in this document and
+  [`guide/testing.md`](../../../guide/testing.md) resolve.
+- No credential, connection string, or token appears in examples.
+- `git diff --check` is clean.

@@ -158,7 +158,7 @@ public class InterceptorRuntimeTests
     [TestMethod]
     public async Task GeneratedSource_ContainsDedupedInterceptorForInterceptedEntity()
     {
-        var generated = await ReadGeneratedInterceptorSourceAsync().ConfigureAwait(false);
+        var generated = await _readGeneratedInterceptorSourceAsync().ConfigureAwait(false);
 
         generated.Should().Contain("InterceptsLocationAttribute");
         generated.Should().Contain("InterceptedEntity");
@@ -186,13 +186,13 @@ public class InterceptorRuntimeTests
     [TestMethod]
     public async Task GeneratedSource_DoesNotContainInterceptorsForIneligibleCallSites()
     {
-        var generated = await ReadGeneratedInterceptorSourceAsync().ConfigureAwait(false);
+        var generated = await _readGeneratedInterceptorSourceAsync().ConfigureAwait(false);
 
         generated.Should().NotContain("InterceptedEntityDerived");
         generated.Should().NotContain("GenericFallbackHelper");
     }
 
-    private static async Task<string> ReadGeneratedInterceptorSourceAsync()
+    private static async Task<string> _readGeneratedInterceptorSourceAsync()
     {
         var outputDirectory = new DirectoryInfo(AppContext.BaseDirectory);
         var generatedRoot = Path.GetFullPath(Path.Join(

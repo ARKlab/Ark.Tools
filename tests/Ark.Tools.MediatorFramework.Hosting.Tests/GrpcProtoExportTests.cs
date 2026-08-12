@@ -17,7 +17,7 @@ public sealed class GrpcProtoExportTests
     [TestMethod]
     public void ExportsDeterministicProtoServices()
     {
-        var protoPath = FindExportedProto();
+        var protoPath = _findExportedProto();
         var proto = File.ReadAllText(protoPath);
 
         proto.Should().Contain("service HostingV1");
@@ -45,7 +45,7 @@ public sealed class GrpcProtoExportTests
             .Methods.Should().Contain(method => method.Name == "HostingRequest");
     }
 
-    private static string FindExportedProto()
+    private static string _findExportedProto()
     {
         var repositoryRoot = new DirectoryInfo(AppContext.BaseDirectory);
         while (repositoryRoot is not null

@@ -84,12 +84,14 @@ public abstract class OutboxConsumerBase : IOutboxConsumer, IDisposable
         }
     }
 
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected virtual async Task _processMessages(IEnumerable<OutboxMessage> messages, CancellationToken ctk)
     {
         foreach (var m in messages)
             await _processMessage(m, ctk).ConfigureAwait(false);
     }
 
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract Task _processMessage(OutboxMessage m, CancellationToken ctk);
 
     public async Task StopAsync(CancellationToken ctk = default)

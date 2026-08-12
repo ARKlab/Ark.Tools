@@ -15,7 +15,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails;
 /// <summary>Writes mapped exceptions as RFC 7807 responses for Minimal API hosts.</summary>
 public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly bool _includeExceptionDetails;
 
     /// <summary>Initializes the exception handler.</summary>
@@ -35,7 +35,7 @@ public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        Logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
+        _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
         if (_includeExceptionDetails)
         {

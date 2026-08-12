@@ -3,15 +3,37 @@
   <Sdk Name="Microsoft.Build.Sql" Version="2.2.0" />
   <PropertyGroup>
     <Name>Ark.MediatorFramework.Sample.Database</Name>
-    <TargetFramework>net10.0</TargetFramework>
+    <ProjectGuid>{A3F7C251-8E14-4B9D-BE62-5D1F2C830947}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+	  <TargetFramework>net10.0</TargetFramework>
     <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <ModelCollation>1033, CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
     <DefaultCollation>Latin1_General_CI_AS_KS</DefaultCollation>
-    <CompatibilityMode>160</CompatibilityMode>
+    <CompatibilityMode>170</CompatibilityMode>
+    <AutoShrink>True</AutoShrink>
+    <DbScopedConfigOptimizerHotfixes>On</DbScopedConfigOptimizerHotfixes>
+    <Parameterization>FORCED</Parameterization>
+    <AutoUpdateStatisticsAsynchronously>True</AutoUpdateStatisticsAsynchronously>
+    <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
+    <ReadCommittedSnapshot>True</ReadCommittedSnapshot>
+    <QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
+    <QueryStoreMaxStorageSize>1000</QueryStoreMaxStorageSize>
+    <AutoCreateStatisticsIncremental>True</AutoCreateStatisticsIncremental>
+    <!--
+      The property EnableDefaultSqlItems is necessary because while DotNET automatically includes all files in project,
+      VS's build process requires explicit inclusion. Without this element, the DotNET build fails.
+    -->
     <EnableDefaultSqlItems>false</EnableDefaultSqlItems>
-    <IsPackable>false</IsPackable>
-    <ProjectGuid>{A3F7C251-8E14-4B9D-BE62-5D1F2C830947}</ProjectGuid>
+
+    <TreatTSqlWarningsAsErrors>True</TreatTSqlWarningsAsErrors>
+		<RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
     <Build Include="**/*.sql" />
@@ -20,5 +42,10 @@
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment.sql" />
+    
+    <None Include="*.publish.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+  
 </Project>

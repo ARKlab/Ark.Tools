@@ -11,7 +11,7 @@ namespace Ark.Tools.MediatorFramework.MinimalApi;
 [SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix is part of the public Ark extension API naming convention.")]
 public static class ArkMessagePackEx
 {
-    private const string MessagePackMediaType = "application/x-msgpack";
+    private const string _messagePackMediaType = "application/x-msgpack";
 
     /// <summary>Reads a request using MessagePack or JSON content negotiation.</summary>
     /// <typeparam name="TRequest">The request type accepted by the handler.</typeparam>
@@ -29,10 +29,10 @@ public static class ArkMessagePackEx
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        return IsMessagePack(context.Request.ContentType)
+        return _isMessagePack(context.Request.ContentType)
             ? await MessagePackSerializer.DeserializeAsync<TRequest>(
                 context.Request.Body,
-                GetDeserializationOptions(context),
+                _getDeserializationOptions(context),
                 cancellationToken).ConfigureAwait(false)
             : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
     }
@@ -103,10 +103,10 @@ public static class ArkMessagePackEx
         if (response is null)
             return Results.StatusCode(nullResultStatusCode);
 
-        if (!PrefersMessagePack(context.Request.Headers.Accept))
+        if (!_prefersMessagePack(context.Request.Headers.Accept))
             return Results.Json(response, statusCode: successStatusCode);
 
-        return new MessagePackResult<TResponse>(response, GetOptions(context), successStatusCode, cancellationToken);
+        return new MessagePackResult<TResponse>(response, _getOptions(context), successStatusCode, cancellationToken);
     }
 
     /// <summary>Buffers and writes a streaming response as one MessagePack array.</summary>
@@ -144,35 +144,35 @@ public static class ArkMessagePackEx
             items.Add(item);
         }
 
-        return new MessagePackResult<List<T>>(items, GetOptions(context), successStatusCode, cancellationToken);
+        return new MessagePackResult<List<T>>(items, _getOptions(context), successStatusCode, cancellationToken);
     }
 
     /// <summary>Checks whether a generated endpoint should use MessagePack.</summary>
     /// <param name="accept">The HTTP Accept header.</param>
     /// <returns><see langword="true"/> when MessagePack is preferred.</returns>
     public static bool PrefersMessagePackForGeneratedEndpoint(string? accept)
-        => PrefersMessagePack(accept);
+        => _prefersMessagePack(accept);
 
-    private static MessagePackSerializerOptions GetOptions(HttpContext context)
+    private static MessagePackSerializerOptions _getOptions(HttpContext context)
     {
         var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();
         return MessagePackSerializerOptions.Standard.WithResolver(resolver);
     }
 
-    private static MessagePackSerializerOptions GetDeserializationOptions(HttpContext context)
-        => GetOptions(context).WithSecurity(MessagePackSecurity.UntrustedData);
+    private static MessagePackSerializerOptions _getDeserializationOptions(HttpContext context)
+        => _getOptions(context).WithSecurity(MessagePackSecurity.UntrustedData);
 
-    private static bool IsMessagePack(string? contentType)
-        => contentType?.StartsWith(MessagePackMediaType, StringComparison.OrdinalIgnoreCase) == true;
+    private static bool _isMessagePack(string? contentType)
+        => contentType?.StartsWith(_messagePackMediaType, StringComparison.OrdinalIgnoreCase) == true;
 
-    private static bool PrefersMessagePack(string? accept)
+    private static bool _prefersMessagePack(string? accept)
     {
         if (string.IsNullOrWhiteSpace(accept))
             return false;
 
         return accept.Split(',', StringSplitOptions.TrimEntries)
             .Select(static value => value.Split(';', StringSplitOptions.TrimEntries))
-            .Any(static parts => string.Equals(parts[0], MessagePackMediaType, StringComparison.OrdinalIgnoreCase)
+            .Any(static parts => string.Equals(parts[0], _messagePackMediaType, StringComparison.OrdinalIgnoreCase)
                 && !parts.Skip(1).Any(static parameter => parameter.StartsWith("q=0", StringComparison.OrdinalIgnoreCase)));
     }
 
@@ -194,7 +194,7 @@ public static class ArkMessagePackEx
         public async Task ExecuteAsync(HttpContext httpContext)
         {
             httpContext.Response.StatusCode = _statusCode;
-            httpContext.Response.ContentType = MessagePackMediaType;
+            httpContext.Response.ContentType = _messagePackMediaType;
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, httpContext.RequestAborted);
             await MessagePackSerializer.SerializeAsync(
                 httpContext.Response.Body,

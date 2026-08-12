@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 using Ark.MediatorFramework.Sample.Tests.Fakes;
 
@@ -111,14 +110,14 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <summary>Gets the optional SQL Server connection-string override for this scenario.</summary>
     public string? ConnectionString => _connectionString;
 
-    internal IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationProxy;
+    public IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationProxy;
 
-    internal void AttachPrintCompletedNotificationService(IPrintCompletedNotificationService service)
+    public void AttachPrintCompletedNotificationService(IPrintCompletedNotificationService service)
     {
         _printCompletedNotificationBinding.Attach(service);
     }
 
-    internal void DetachPrintCompletedNotificationService()
+    public void DetachPrintCompletedNotificationService()
     {
         _printCompletedNotificationBinding.Detach();
     }
@@ -128,7 +127,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     {
         get
         {
-            Verify();
+            _verify();
             return _container.GetInstance<ISampleDataContextFactory>();
         }
     }
@@ -138,7 +137,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     {
         get
         {
-            Verify();
+            _verify();
             return _container.GetInstance<ISampleDataContextFactory>()
                 as InMemorySampleDataContextFactory
                 ?? throw new InvalidOperationException("The scenario does not use in-memory persistence.");
@@ -150,7 +149,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     {
         get
         {
-            Verify();
+            _verify();
             return _container.GetInstance<AuditCounter>().Count;
         }
     }
@@ -160,7 +159,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     {
         get
         {
-            Verify();
+            _verify();
             return _container.GetInstance<ScopedDisposalTracker>().Disposed;
         }
     }
@@ -215,7 +214,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         where TRequest : IRequest<TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
-        return await DispatchAsync(
+        return await _dispatchAsync(
             () => _container.GetInstance<IRequestHandler<TRequest, TResponse>>().ExecuteAsync(request, ctk))
             .ConfigureAwait(false);
     }
@@ -232,7 +231,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         where TQuery : IQuery<TResponse>
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await DispatchAsync(
+        return await _dispatchAsync(
             () => _container.GetInstance<IQueryHandler<TQuery, TResponse>>().ExecuteAsync(query, ctk))
             .ConfigureAwait(false);
     }
@@ -247,7 +246,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         where TCommand : ICommand
     {
         ArgumentNullException.ThrowIfNull(command);
-        await DispatchAsync(
+        await _dispatchAsync(
             async () =>
             {
                 await _container.GetInstance<ICommandHandler<TCommand>>()
@@ -261,7 +260,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     public void StartOutboundBus()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        Verify();
+        _verify();
         if (_busStarted)
             return;
 
@@ -285,17 +284,18 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="ctk">The cancellation token.</param>
     public async Task<int> GetOutboxCountAsync(CancellationToken ctk = default)
     {
-        Verify();
-        await using var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
+        _verify();
+        var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
             .CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         var count = await context.CountAsync(ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return count;
     }
 
-    internal async Task<ISampleDataContext> CreateDataContextAsync(CancellationToken ctk = default)
+    public async Task<ISampleDataContext> CreateDataContextAsync(CancellationToken ctk = default)
     {
-        Verify();
+        _verify();
         return await _container.GetInstance<ISampleDataContextFactory>()
             .CreateAsync(ctk).ConfigureAwait(false);
     }
@@ -304,9 +304,10 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="ctk">The cancellation token.</param>
     public async Task ClearOutboxAsync(CancellationToken ctk = default)
     {
-        Verify();
-        await using var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
+        _verify();
+        var context = await _container.GetInstance<IOutboxAsyncContextFactory>()
             .CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
         await context.ClearAsync(ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
     }
@@ -323,10 +324,10 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    private async Task<TResponse> DispatchAsync<TResponse>(Func<Task<TResponse>> execute)
+    private async Task<TResponse> _dispatchAsync<TResponse>(Func<Task<TResponse>> execute)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        Verify();
+        _verify();
 
         var scope = _currentScope.Value;
         var ownsScope = scope is null;
@@ -350,7 +351,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         }
     }
 
-    private void Verify()
+    private void _verify()
     {
         if (_verified)
             return;
@@ -374,7 +375,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
 
 internal sealed class DispatchScopeMarker
 {
-    internal Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; } = Guid.NewGuid();
 }
 
 internal sealed record ScopeProbeRequest : IRequest<ScopeProbeRequest, Guid>;
@@ -423,7 +424,7 @@ internal sealed class NestedScopeHandler : IRequestHandler<NestedScopeRequest, S
 
 internal sealed class ScopedDisposalTracker
 {
-    internal bool Disposed { get; set; }
+    public bool Disposed { get; set; }
 }
 
 internal sealed class ScopedDisposalResource : IDisposable

@@ -12,14 +12,14 @@ namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 [TestClass]
 public sealed class GrpcReflectionTests
 {
-    private const int GrpcPort = 50051;
+    private const int _grpcPort = 50051;
 
     /// <summary>Verifies grpcurl discovers every generated versioned service via the reflection endpoint.</summary>
     [TestMethod]
     public async Task DiscoversVersionedServicesThroughReflection()
     {
         await using var fixture = new HostingTestFixture();
-        await using var app = await fixture.StartGrpcKestrelHostAsync(GrpcPort).ConfigureAwait(false);
+        await using var app = await fixture.StartGrpcKestrelHostAsync(_grpcPort).ConfigureAwait(false);
 
         // Use the Docker image so there is no local grpcurl install requirement.
         // --network="host" lets the container reach the host loopback on the same port.
@@ -32,10 +32,10 @@ public sealed class GrpcReflectionTests
         };
         startInfo.ArgumentList.Add("run");
         startInfo.ArgumentList.Add("--rm");
-        startInfo.ArgumentList.Add("--network=host");
+        startInfo.ArgumentList.Add("--add-host=host.docker.internal:host-gateway");
         startInfo.ArgumentList.Add("fullstorydev/grpcurl:latest");
         startInfo.ArgumentList.Add("-plaintext");
-        startInfo.ArgumentList.Add($"localhost:{GrpcPort}");
+        startInfo.ArgumentList.Add($"host.docker.internal:{_grpcPort}");
         startInfo.ArgumentList.Add("list");
 
         Process process;

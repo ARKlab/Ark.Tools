@@ -63,9 +63,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container = new Container();
         Container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         State = new HostingTestState();
-        PrincipalProvider = new TestPrincipalProvider();
+        _principalProvider = new TestPrincipalProvider();
 
-        RegisterHandlers(Container);
+        _registerHandlers(Container);
 
         Container.RegisterAuthorization();
         Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
@@ -85,9 +85,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
 
         public async Task ExecuteAsync(HostingDeferredCommand command, CancellationToken ctk = default)
         {
-            await (_state.Bus ?? throw new InvalidOperationException("The Rebus bus was not initialized."))
+            await (_state._bus ?? throw new InvalidOperationException("The Rebus bus was not initialized."))
                 .Advanced.TransportMessage.Defer(TimeSpan.FromHours(1)).ConfigureAwait(false);
-            _state.RecordDeferredMessage();
+            _state._recordDeferredMessage();
         }
     }
 
@@ -98,7 +98,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public HostingTestState State { get; }
 
     /// <summary>Gets the mutable test-only principal provider used by the HTTP host.</summary>
-    internal TestPrincipalProvider PrincipalProvider { get; }
+    internal TestPrincipalProvider _principalProvider { get; }
 
     /// <summary>Gets whether the fixture has disposed its hosts and container.</summary>
     public bool IsDisposed => _disposed;
@@ -163,15 +163,15 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// <returns>The unstarted Minimal API application.</returns>
     public WebApplication BuildMinimalApiHost()
     {
-        ThrowIfDisposed();
+        _throwIfDisposed();
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddSingleton(Container);
-        builder.Services.AddSingleton(PrincipalProvider);
+        builder.Services.AddSingleton(_principalProvider);
         builder.Services
-            .AddAuthentication(TestAuthenticationHandler.SchemeName)
+            .AddAuthentication(TestAuthenticationHandler._schemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.SchemeName,
+                TestAuthenticationHandler._schemeName,
                 static _ => { });
         builder.Services.AddArkMinimalApiHost(Container, options =>
         {
@@ -181,8 +181,8 @@ public sealed class HostingTestFixture : IAsyncDisposable
         });
         builder.Services.AddArkProblemDetailsExceptionHandler();
         builder.Services.AddMessagePackFormatter(StandardResolver.Instance);
-        builder.Services.AddOpenApi("v1", ConfigureOpenApi);
-        builder.Services.AddOpenApi("v2", ConfigureOpenApi);
+        builder.Services.AddOpenApi("v1", _configureOpenApi);
+        builder.Services.AddOpenApi("v2", _configureOpenApi);
         var app = builder.Build();
         app.UseArkProblemDetailsExceptionHandler();
         app.UseArkMinimalApiHost(Container);
@@ -217,29 +217,29 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// <returns>The unstarted gRPC application.</returns>
     public WebApplication BuildGrpcHost(Uri? listenAddress = null)
     {
-        ThrowIfDisposed();
+        _throwIfDisposed();
         var builder = WebApplication.CreateBuilder();
         if (listenAddress is null)
             builder.WebHost.UseTestServer();
         else
             builder.WebHost.UseKestrel(options =>
                 options.Listen(
-                    System.Net.IPAddress.Loopback,
+                    System.Net.IPAddress.Any,
                     listenAddress.Port,
                     listenOptions => listenOptions.Protocols = HttpProtocols.Http2));
         builder.Services
-            .AddAuthentication(TestAuthenticationHandler.SchemeName)
+            .AddAuthentication(TestAuthenticationHandler._schemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.SchemeName,
+                TestAuthenticationHandler._schemeName,
                 static _ => { });
         builder.Services.AddAuthorization();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
         builder.Services.AddCodeFirstGrpcReflection();
-        var container = CreateHostContainer();
+        var container = _createHostContainer();
         _hostContainers.Add(container);
         builder.Services.AddSingleton(container);
-        builder.Services.AddSingleton(PrincipalProvider);
+        builder.Services.AddSingleton(_principalProvider);
         builder.Services.AddSimpleInjector(container, simpleInjector => simpleInjector.AddAspNetCore());
         var app = builder.Build();
         app.UseAuthentication();
@@ -276,14 +276,14 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// <returns>The started Rebus bus.</returns>
     public IBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
     {
-        ThrowIfDisposed();
+        _throwIfDisposed();
         if (_rebusConfigured)
         {
             if (_secondLevelRetriesEnabled != secondLevelRetriesEnabled)
                 throw new InvalidOperationException("The Rebus host was already configured with a different second-level retry setting.");
 
             var existingBus = Container.GetInstance<IBus>();
-            State.Bus = existingBus;
+            State._bus = existingBus;
             return existingBus;
         }
 
@@ -306,7 +306,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         _rebusConfigured = true;
 
         var bus = Container.GetInstance<IBus>();
-        State.Bus = bus;
+        State._bus = bus;
         return bus;
     }
 
@@ -326,12 +326,12 @@ public sealed class HostingTestFixture : IAsyncDisposable
         _network.Reset();
     }
 
-    private void ThrowIfDisposed()
+    private void _throwIfDisposed()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
-    private Container CreateHostContainer()
+    private Container _createHostContainer()
     {
         var container = new Container
         {
@@ -340,16 +340,16 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 DefaultScopedLifestyle = new AsyncScopedLifestyle(),
             },
         };
-        RegisterHandlers(container, includeRebusHandlers: false);
+        _registerHandlers(container, includeRebusHandlers: false);
         container.RegisterAuthorization();
         container.RegisterAuthorizationPolicy<HostingScopePolicy>();
         return container;
     }
 
-    private void RegisterHandlers(Container container, bool includeRebusHandlers = true)
+    private void _registerHandlers(Container container, bool includeRebusHandlers = true)
     {
         container.RegisterInstance(State);
-        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(PrincipalProvider);
+        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
@@ -380,7 +380,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
     }
 
-    private static void ConfigureOpenApi(OpenApiOptions options)
+    private static void _configureOpenApi(OpenApiOptions options)
     {
         options
             .AddArkServerSetProperties()
@@ -447,12 +447,12 @@ public sealed class HostingTestState
     /// <summary>Gets the number of deferred messages scheduled by handlers.</summary>
     public int DeferredMessages => Volatile.Read(ref _deferredMessages);
 
-    internal IBus? Bus { get; set; }
+    internal IBus? _bus { get; set; }
 
     /// <summary>Gets the scope identifiers observed by Rebus handlers.</summary>
     public ConcurrentBag<Guid> RebusScopeIds { get; } = [];
 
-    internal void RecordRetryAttempt()
+    internal void _recordRetryAttempt()
     {
         Interlocked.Increment(ref _retryAttempts);
     }
@@ -466,29 +466,29 @@ public sealed class HostingTestState
     private int _deferredMessages;
     private bool _failSecondLevelRetryHandler;
 
-    internal void RecordSecondLevelRetryAttempt()
+    internal void _recordSecondLevelRetryAttempt()
     {
         Interlocked.Increment(ref _secondLevelRetryAttempts);
     }
 
-    internal void RecordFailedMessage(IFailed<HostingSecondLevelRetryCommand> message)
+    internal void _recordFailedMessage(IFailed<HostingSecondLevelRetryCommand> message)
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
         Interlocked.Exchange(ref _failedMessageException, message.Exceptions?.FirstOrDefault()?.Message);
     }
 
-    internal void RecordDeferredMessage()
+    internal void _recordDeferredMessage()
     {
         Interlocked.Increment(ref _deferredMessages);
     }
 
-    internal void RecordRebusUserId(string? userId)
+    internal void _recordRebusUserId(string? userId)
     {
         Interlocked.Exchange(ref _rebusUserId, userId);
     }
 
-    internal void RecordRebusCancellationToken(bool canBeCanceled)
+    internal void _recordRebusCancellationToken(bool canBeCanceled)
     {
         Volatile.Write(ref _rebusCancellationTokenWasCancelable, canBeCanceled);
     }
@@ -519,7 +519,7 @@ public sealed class HostingTestState
     private readonly TaskCompletionSource _streamCancellation = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private int _commandExecutions;
 
-    internal void RecordCommandExecution()
+    internal void _recordCommandExecution()
     {
         var executions = Interlocked.Increment(ref _commandExecutions);
         _commandExecution.TrySetResult();
@@ -527,22 +527,22 @@ public sealed class HostingTestState
             _secondCommandExecution.TrySetResult();
     }
 
-    internal void RecordFirstStreamItem()
+    internal void _recordFirstStreamItem()
     {
         _streamFirstItem.TrySetResult();
     }
 
-    internal void RecordStreamCancellation()
+    internal void _recordStreamCancellation()
     {
         _streamCancellation.TrySetResult();
     }
 
-    internal void ReleaseStream()
+    internal void _releaseStream()
     {
         _streamRelease.TrySetResult();
     }
 
-    internal Task WaitForStreamReleaseAsync(CancellationToken ctk)
+    internal Task _waitForStreamReleaseAsync(CancellationToken ctk)
     {
         return _streamRelease.Task.WaitAsync(ctk);
     }
@@ -550,9 +550,9 @@ public sealed class HostingTestState
 
 internal static class HostingWireTypeValues
 {
-    internal static readonly LocalDate Date = new(2026, 8, 6);
-    internal static readonly LocalDateTime DateTime = new(2026, 8, 6, 15, 44);
-    internal const int CircleRadius = 7;
+    public static readonly LocalDate Date = new(2026, 8, 6);
+    public static readonly LocalDateTime DateTime = new(2026, 8, 6, 15, 44);
+    public const int CircleRadius = 7;
 }
 
 internal sealed class HostingRequestHandler : IRequestHandler<HostingRequest, HostingResponse>
@@ -625,7 +625,7 @@ internal sealed class HostingCommandHandler : ICommandHandler<HostingCommand>
     public async Task ExecuteAsync(HostingCommand command, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.RecordCommandExecution();
+        _state._recordCommandExecution();
     }
 }
 
@@ -646,16 +646,16 @@ internal sealed class HostingRebusCommandHandler : ICommandHandler<HostingRebusC
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RebusScopeIds.Add(_scope.Id);
-        _state.RecordRebusUserId(MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
+        _state._recordRebusUserId(MessageContext.Current?.IncomingStepContext?.Load<ClaimsPrincipal>()
             ?.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-        _state.RecordRebusCancellationToken(ctk.CanBeCanceled);
-        _state.RecordCommandExecution();
+        _state._recordRebusCancellationToken(ctk.CanBeCanceled);
+        _state._recordCommandExecution();
     }
 }
 
 internal sealed class HostingRebusScope
 {
-    internal Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; } = Guid.NewGuid();
 }
 
 internal sealed class HostingRetryCommandHandler : ICommandHandler<HostingRetryCommand>
@@ -670,7 +670,7 @@ internal sealed class HostingRetryCommandHandler : ICommandHandler<HostingRetryC
     public async Task ExecuteAsync(HostingRetryCommand command, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.RecordRetryAttempt();
+        _state._recordRetryAttempt();
         throw new InvalidOperationException("Synthetic retry failure.");
     }
 }
@@ -687,7 +687,7 @@ internal sealed class HostingSecondLevelRetryCommandHandler : ICommandHandler<Ho
     public async Task ExecuteAsync(HostingSecondLevelRetryCommand command, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.RecordSecondLevelRetryAttempt();
+        _state._recordSecondLevelRetryAttempt();
         throw new InvalidOperationException("Synthetic second-level retry failure.");
     }
 }
@@ -704,7 +704,7 @@ internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFa
     public async Task Handle(IFailed<HostingSecondLevelRetryCommand> message)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        _state.RecordFailedMessage(message);
+        _state._recordFailedMessage(message);
         if (_state.FailSecondLevelRetryHandler)
             throw new InvalidOperationException("Synthetic second-level retry handler failure.");
     }
@@ -721,7 +721,7 @@ internal sealed class HostingCancellationCommandHandler : ICommandHandler<Hostin
 
     public async Task ExecuteAsync(HostingCancellationCommand command, CancellationToken ctk = default)
     {
-        _state.RecordRebusCancellationToken(ctk.CanBeCanceled);
+        _state._recordRebusCancellationToken(ctk.CanBeCanceled);
         await Task.CompletedTask.ConfigureAwait(false);
     }
 }
@@ -743,12 +743,12 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
     public async Task<HostingResponse> ExecuteAsync(HostingBusinessViolationRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        var violation = new Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
+        var violation = new Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
             Status = 422,
         };
-        throw new Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
+        throw new Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
     }
 }
 
@@ -807,7 +807,7 @@ internal sealed class HostingETagMismatchHandler : IRequestHandler<HostingETagMi
     public async Task<HostingResponse> ExecuteAsync(HostingETagMismatchRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        throw new Ark.Tools.Core.EntityTag.EntityTagMismatchException("The synthetic ETag does not match.");
+        throw new Core.EntityTag.EntityTagMismatchException("The synthetic ETag does not match.");
     }
 }
 
@@ -818,7 +818,7 @@ internal sealed class HostingOptimisticConcurrencyHandler : IRequestHandler<Host
         CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        throw new Ark.Tools.Core.OptimisticConcurrencyException("The synthetic entity was concurrently modified.");
+        throw new Core.OptimisticConcurrencyException("The synthetic entity was concurrently modified.");
     }
 }
 
@@ -834,10 +834,10 @@ internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, I
     public async Task<IAsyncEnumerable<HostingStreamItem>> ExecuteAsync(HostingStreamQuery query, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        return Enumerate(query.Count, _state, ctk);
+        return _enumerate(query.Count, _state, ctk);
     }
 
-    private static async IAsyncEnumerable<HostingStreamItem> Enumerate(
+    private static async IAsyncEnumerable<HostingStreamItem> _enumerate(
         int count,
         HostingTestState state,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
@@ -846,17 +846,17 @@ internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, I
         {
             ctk.ThrowIfCancellationRequested();
             if (number == 1)
-                state.RecordFirstStreamItem();
+                state._recordFirstStreamItem();
             yield return new HostingStreamItem { Number = number };
             if (number == 1 && state.HoldStreamAfterFirst)
             {
                 try
                 {
-                    await state.WaitForStreamReleaseAsync(ctk).ConfigureAwait(false);
+                    await state._waitForStreamReleaseAsync(ctk).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
-                    state.RecordStreamCancellation();
+                    state._recordStreamCancellation();
                     throw;
                 }
             }
@@ -936,7 +936,7 @@ internal sealed class HostingOpenApiHandler : IQueryHandler<HostingOpenApiQuery,
         await Task.CompletedTask.ConfigureAwait(false);
         return new HostingOpenApiResponse
         {
-            Date = new NodaTime.LocalDate(2026, 8, 6),
+            Date = new LocalDate(2026, 8, 6),
             Shape = new HostingCircle { Radius = 3 },
             ServerStamp = "hosting-server",
         };

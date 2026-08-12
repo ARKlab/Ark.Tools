@@ -28,7 +28,7 @@ public class PolicyAuthorizeOrLogicRequestDecorator<TRequest, TResult> : IReques
 
     private static class PolicyMetadata
     {
-        internal static readonly PolicyAuthorizeAttribute[] Policies =
+        public static readonly PolicyAuthorizeAttribute[] Policies =
             typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).Cast<PolicyAuthorizeAttribute>().ToArray();
     }
 

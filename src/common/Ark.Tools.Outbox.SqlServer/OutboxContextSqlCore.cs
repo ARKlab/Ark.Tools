@@ -13,14 +13,14 @@ internal abstract class OutboxContextSqlCore
 
     private static readonly HeaderSerializer _headerSerializer = new();
 
-    protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
+    private protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
     {
         _config = config;
         _statements = new Statements(config);
     }
 
-    protected abstract IDbTransaction _transaction { get; }
-    protected abstract IDbConnection _connection { get; }
+    private protected abstract IDbTransaction _transaction { get; }
+    private protected abstract IDbConnection _connection { get; }
 
     sealed class Statements
     {

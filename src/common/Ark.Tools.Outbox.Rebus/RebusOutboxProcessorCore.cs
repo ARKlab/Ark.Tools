@@ -43,7 +43,7 @@ internal abstract class RebusOutboxProcessorCore : IRebusOutboxProcessor, IDispo
 #pragma warning restore VSTHRD002
     }
 
-    protected async Task<bool> _tryProcessMessages(IOutboxContextCore ctx, CancellationToken ctk)
+    private protected async Task<bool> _tryProcessMessages(IOutboxContextCore ctx, CancellationToken ctk)
     {
         bool waitForMessages = true;
         var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk).ConfigureAwait(false);
@@ -106,7 +106,7 @@ internal abstract class RebusOutboxProcessorCore : IRebusOutboxProcessor, IDispo
         _log.Debug("Outbox messages processor stopped");
     }
 
-    protected abstract Task<bool> _loop(CancellationToken ctk);
+    private protected abstract Task<bool> _loop(CancellationToken ctk);
 
 
     protected virtual void Dispose(bool disposing)

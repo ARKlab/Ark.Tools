@@ -9,7 +9,7 @@ for every implementation task.
 ## Implementation details
 
 1. Keep
-   `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/ApplicationComposition.cs`
+   `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs`
    as the only registration source for handlers, validators, stores, clocks,
    auditing, validation decorators, authorization-independent decorators, and
    concurrency decorators.

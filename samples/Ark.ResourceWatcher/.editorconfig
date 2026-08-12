@@ -5,6 +5,7 @@ dotnet_diagnostic.IDX00001.severity = error
 
 # C# files
 [*.cs]
+dotnet_diagnostic.IDE1006.severity = error
 
 #### Core EditorConfig Options ####
 
@@ -202,43 +203,43 @@ dotnet_naming_rule.private_method_should_be_begins_with__.severity = error
 dotnet_naming_rule.private_method_should_be_begins_with__.symbols = private_method
 dotnet_naming_rule.private_method_should_be_begins_with__.style = begins_with__
 
-dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.severity = error
-dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.symbols = private_or_internal_field
-dotnet_naming_rule.private_or_internal_field_should_be_begins_with__.style = begins_with__
+dotnet_naming_rule.private_field_should_be_begins_with__.severity = error
+dotnet_naming_rule.private_field_should_be_begins_with__.symbols = private_field
+dotnet_naming_rule.private_field_should_be_begins_with__.style = begins_with__
 
 dotnet_naming_rule.private_properties_should_be_begins_with__.severity = error
 dotnet_naming_rule.private_properties_should_be_begins_with__.symbols = private_property
 dotnet_naming_rule.private_properties_should_be_begins_with__.style = begins_with__
 
-dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = error
-dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
-dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
+dotnet_naming_rule.protected_methods_should_be_pascal_case.severity = error
+dotnet_naming_rule.protected_methods_should_be_pascal_case.symbols = protected_members
+dotnet_naming_rule.protected_methods_should_be_pascal_case.style = pascal_case
 
 # Symbol specifications
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
-dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.interface.required_modifiers =
 
 dotnet_naming_symbols.private_method.applicable_kinds = method
-dotnet_naming_symbols.private_method.applicable_accessibilities = private
+dotnet_naming_symbols.private_method.applicable_accessibilities = private, internal, private_protected, protected_internal, local
 dotnet_naming_symbols.private_method.required_modifiers =
 
 dotnet_naming_symbols.private_property.applicable_kinds = property
-dotnet_naming_symbols.private_property.applicable_accessibilities = private
+dotnet_naming_symbols.private_property.applicable_accessibilities = private, internal, private_protected, protected_internal
 dotnet_naming_symbols.private_property.required_modifiers =
 
-dotnet_naming_symbols.private_or_internal_field.applicable_kinds = field
-dotnet_naming_symbols.private_or_internal_field.applicable_accessibilities = internal, private, protected, protected_internal
-dotnet_naming_symbols.private_or_internal_field.required_modifiers =
+dotnet_naming_symbols.private_field.applicable_kinds = field, event
+dotnet_naming_symbols.private_field.applicable_accessibilities = private, internal, private_protected, protected_internal
+dotnet_naming_symbols.private_field.required_modifiers =
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
-dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal
+dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.types.required_modifiers =
 
-dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
-dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal
-dotnet_naming_symbols.non_field_members.required_modifiers =
+dotnet_naming_symbols.protected_members.applicable_kinds = event, method, property, field
+dotnet_naming_symbols.protected_members.applicable_accessibilities = protected
+dotnet_naming_symbols.protected_members.required_modifiers =
 
 # Naming styles
 

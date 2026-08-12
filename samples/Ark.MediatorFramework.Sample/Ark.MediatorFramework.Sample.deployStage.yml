@@ -1,0 +1,58 @@
+parameters:
+  - name: name
+    type: string
+  - name: dependsOn
+    type: string
+  - name: vmImageName
+    type: string
+  - name: environmentName
+    type: string
+  - name: azureServiceConnection
+    type: string
+  - name: webAppName
+    type: string
+  - name: functionAppName
+    type: string
+
+stages:
+  - stage: ${{ parameters.name }}
+    displayName: ${{ parameters.name }}
+    dependsOn: ${{ parameters.dependsOn }}
+    condition: succeeded()
+    jobs:
+      - deployment: DeployHosts
+        displayName: Deploy sample hosts
+        environment: ${{ parameters.environmentName }}
+        pool:
+          vmImage: ${{ parameters.vmImageName }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: mediator-framework-sample
+
+                # The processor is published as an independent artifact because
+                # its hosting target is environment-specific (WebJob, Container
+                # Apps, VM, or another worker host). Deploy it with that target's
+                # approved task before enabling this stage in a real environment.
+                - script: |
+                    echo "Processor artifact: $(Pipeline.Workspace)/mediator-framework-sample/processor"
+                    echo "Database DACPAC: $(Pipeline.Workspace)/mediator-framework-sample/database"
+                  displayName: Inspect processor and database artifacts
+
+                - task: AzureWebApp@1
+                  displayName: Deploy ASP.NET Core host
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    appType: webAppLinux
+                    appName: ${{ parameters.webAppName }}
+                    package: '$(Pipeline.Workspace)/mediator-framework-sample/web'
+
+                - task: AzureFunctionApp@2
+                  displayName: Deploy Functions host
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    appType: functionAppLinux
+                    appName: ${{ parameters.functionAppName }}
+                    package: '$(Pipeline.Workspace)/mediator-framework-sample/functions'

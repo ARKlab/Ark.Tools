@@ -907,10 +907,10 @@ REBUS RefreshGreetingCommand -> queue:greetings
 
 - `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
   an application built on the framework is tested**: behavioral (BDD) tests
-  written with **Reqnroll** (Gherkin feature files), exercising **only the
-  public interfaces** — scenarios mutate and query state through the HTTP or
-  gRPC endpoints (in-process `TestServer`/gRPC channel), never by reaching into
-  handlers or stores — the pattern an adopting team copies.
+  written with **Reqnroll** (Gherkin feature files), dispatching application
+  contracts through a scenario-owned composition and asserting business state.
+  HTTP, gRPC, serialization, OpenAPI, and generated wrapper behavior belongs in
+  focused host-boundary tests.
 - `tests/Ark.Tools.MediatorFramework.Tests` (repository `tests/` folder) tests
   the **framework capabilities themselves**: generator snapshot tests, attribute
   semantics (opt-in, versioning expansion), error-model mapping, attachment

@@ -21,12 +21,12 @@ public class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TComman
         _authSvc = authSvc;
         _currentUser = currentUser;
         _container = container;
-        _policies = PolicyMetadata.Policies;
+        _policies = PolicyMetadata._policies;
     }
 
     private static class PolicyMetadata
     {
-        internal static readonly PolicyAuthorizeAttribute[] Policies =
+        internal static readonly PolicyAuthorizeAttribute[] _policies =
             typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 

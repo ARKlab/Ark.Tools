@@ -82,7 +82,7 @@ The sample uses Ark defaults plus a source-generated JSON context:
 services.ConfigureHttpJsonOptions(options =>
 {
     var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    var context = new SampleJsonSerializerContext(contextOptions);
+    var context = new SampleApiJsonSerializerContext(contextOptions);
     options.SerializerOptions.ConfigureArkDefaults();
     options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
         context,
