@@ -119,6 +119,7 @@ worker's topology or dead-letter demonstration types.
 - Use `EvolvableEnum<Book.V1.Genre>` for forward-compatible categories.
 - Start a background book-print process.
 - Read process status while the Rebus worker updates it.
+- Cancel pending or running print processes and reject terminal-state cancellation.
 - Demonstrate a business-rule violation when a print process is already active.
 
 ### Auditing

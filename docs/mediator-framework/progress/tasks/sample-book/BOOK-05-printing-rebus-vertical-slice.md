@@ -35,12 +35,12 @@ printing-job model or parallel Rebus workflow.
 
 ## Acceptance
 
-- [ ] Existing BookPrintProcess contracts and handlers remain the sole printing
+- [x] Existing BookPrintProcess contracts and handlers remain the sole printing
   workflow.
-- [ ] A new cancellation contract is implemented and handler-wired, or the
+- [x] A new cancellation contract is implemented and handler-wired, or the
   task records why the existing state model makes cancellation inappropriate.
-- [ ] BDD covers completion, failure, concurrency, resume, and cancellation
+- [x] BDD covers completion, failure, concurrency, resume, and cancellation
   when implemented.
-- [ ] Sender/processor, retry, outbox, dead-letter, and cleanup behavior is
+- [x] Sender/processor, retry, outbox, dead-letter, and cleanup behavior is
   verified.
-- [ ] Sample build and affected tests pass.
+- [x] Sample build and affected tests pass.

@@ -254,10 +254,37 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(process);
-            var updated = _owner._printProcesses.ContainsKey(process.Id);
-            if (updated)
-                _owner._printProcesses[process.Id] = process;
+            var updated = false;
+            lock (_owner._sync)
+            {
+                if (_owner._printProcesses.TryGetValue(process.Id, out var current)
+                    && _canUpdate(current.Status, process.Status))
+                {
+                    _owner._printProcesses[process.Id] = process;
+                    updated = true;
+                }
+            }
+
             return await Task.FromResult(updated).ConfigureAwait(false);
+        }
+
+        public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(
+            Guid id,
+            CancellationToken ctk = default)
+        {
+            BookPrintProcessResponse? cancelled = null;
+            lock (_owner._sync)
+            {
+                if (_owner._printProcesses.TryGetValue(id, out var current)
+                    && (current.Status == BookPrintProcessStatus.Pending
+                        || current.Status == BookPrintProcessStatus.Running))
+                {
+                    cancelled = current with { Status = BookPrintProcessStatus.Cancelled };
+                    _owner._printProcesses[id] = cancelled;
+                }
+            }
+
+            return await Task.FromResult(cancelled).ConfigureAwait(false);
         }
 
         public async Task CommitAsync(bool reuse, CancellationToken ctk = default)
@@ -312,6 +339,16 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                     && !parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
                     && !parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
                     throw new ArgumentException($"Invalid audit sort direction '{parts[1]}'.", nameof(sorts));
+            }
+
+            private static bool _canUpdate(
+                EvolvableEnum<BookPrintProcessStatus> current,
+                EvolvableEnum<BookPrintProcessStatus> next)
+            {
+                return (next == BookPrintProcessStatus.Running && current == BookPrintProcessStatus.Pending)
+                    || (next == BookPrintProcessStatus.Completed && current == BookPrintProcessStatus.Running)
+                    || (next == BookPrintProcessStatus.Error
+                        && (current == BookPrintProcessStatus.Running || current == BookPrintProcessStatus.Completed));
             }
         }
     }

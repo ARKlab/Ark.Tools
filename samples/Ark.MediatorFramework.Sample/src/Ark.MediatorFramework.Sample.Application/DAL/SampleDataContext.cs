@@ -67,6 +67,9 @@ public interface ISampleDataContext : IOutboxAsyncContext
 
     /// <summary>Updates a book print process.</summary>
     Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
+
+    /// <summary>Cancels a pending or running book print process.</summary>
+    Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(Guid id, CancellationToken ctk = default);
 }
 
 /// <summary>Creates application contexts for handler-owned transactions.</summary>
@@ -438,7 +441,13 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [IsActive] = CASE WHEN @Status IN (@Pending, @Running) THEN 1 ELSE 0 END,
                 [ErrorMessage] = @ErrorMessage,
                 [ShouldFail] = @ShouldFail
-            WHERE [Id] = @Id;
+            WHERE [Id] = @Id
+              AND
+              (
+                  (@Status = @Running AND [Status] = @Pending)
+                  OR (@Status = @Completed AND [Status] = @Running)
+                  OR (@Status = @Error AND [Status] IN (@Running, @Completed))
+              );
             """;
         var command = new CommandDefinition(sql, new
         {
@@ -449,8 +458,32 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             process.ShouldFail,
             Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
             Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+            Completed = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Completed,
+            Error = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Error,
         }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
+    }
+
+    /// <summary>Cancels a pending or running book print process in the current transaction.</summary>
+    public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            UPDATE [dbo].[BookPrintProcess]
+            SET [Status] = @Cancelled,
+                [IsActive] = 0
+            OUTPUT inserted.[Id], inserted.[BookId], inserted.[Progress], inserted.[Status],
+                   inserted.[ErrorMessage], inserted.[ShouldFail]
+            WHERE [Id] = @Id
+              AND [Status] IN (@Pending, @Running);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            Id = id,
+            Cancelled = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Cancelled,
+            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
+            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+        }, Transaction, cancellationToken: ctk);
+        return await Connection.QuerySingleOrDefaultAsync<BookPrintProcessResponse>(command).ConfigureAwait(false);
     }
 
     private static string _escapeLikePattern(string value)

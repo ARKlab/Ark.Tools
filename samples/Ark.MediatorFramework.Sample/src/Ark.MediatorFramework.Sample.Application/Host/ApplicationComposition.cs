@@ -193,6 +193,7 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<Book_UpdateRequest.V1, Book.V1.Output>, UpdateBookHandler>();
         container.Register<IRequestHandler<Book_DeleteRequest.V1, bool>, DeleteBookHandler>();
         container.Register<IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>, CreateBookPrintProcessHandler>();
+        container.Register<IRequestHandler<CancelBookPrintProcessRequest, BookPrintProcessResponse>, CancelBookPrintProcessHandler>();
         container.Register<IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
         container.Register<IRequestHandler<ComposeGreetingRequest, ComposeGreetingResponse>, ComposeGreetingHandler>();
         container.Register<IRequestHandler<CompleteGreetingCompositionRequest, GreetingResponse>, CompleteGreetingCompositionHandler>();

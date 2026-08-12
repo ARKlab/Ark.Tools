@@ -171,6 +171,13 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             return await _inner.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
         }
 
+        public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(
+            Guid id,
+            CancellationToken ctk = default)
+        {
+            return await _inner.CancelBookPrintProcessAsync(id, ctk).ConfigureAwait(false);
+        }
+
         public async Task CommitAsync(bool reuse, CancellationToken ctk = default)
         {
             await _inner.CommitAsync(reuse, ctk).ConfigureAwait(false);

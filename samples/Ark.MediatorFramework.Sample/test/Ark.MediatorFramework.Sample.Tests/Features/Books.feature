@@ -143,6 +143,26 @@ Feature: Books
                 | Status    | Progress |
                 | Completed | 1        |
 
+        Scenario: Cancel a running book print process
+            Given I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I have a running book print process for the current book
+            When I cancel the current book print process
+            Then the current book print process was cancelled
+
+        Scenario: Reject cancellation of a completed book print process
+            Given I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I start a book print process for the current book with
+                | ShouldFail |
+                | false      |
+            And I wait for the background bus to be idle and the outbox to be empty
+            And I retrieve the current book print process
+            When I cancel the current book print process
+            Then cancellation fails because the current book print process is terminal
+
         Scenario: Surface a failed external print-completion notification
             Given the print-completion notification service fails
             And I create a book with
