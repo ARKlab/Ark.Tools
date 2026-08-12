@@ -228,8 +228,10 @@ public sealed class AzureFunctionsBoundaryTests
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "func",
-                    Arguments = $"start --port {port} --dotnet-isolated --verbose",
+                    FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "func",
+                    Arguments = OperatingSystem.IsWindows()
+                        ? $"/d /c func.cmd start --port {port} --dotnet-isolated --verbose"
+                        : $"start --port {port} --dotnet-isolated --verbose",
                     WorkingDirectory = appDirectory,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,

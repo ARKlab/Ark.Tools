@@ -56,7 +56,7 @@ public sealed class GeneratorSnapshotTests
                 .BuildServiceProvider(),
         };
         var method = typeof(ArkMessagePackEx)
-            .GetMethod("GetDeserializationOptions", BindingFlags.NonPublic | BindingFlags.Static)!;
+            .GetMethod("_getDeserializationOptions", BindingFlags.NonPublic | BindingFlags.Static)!;
 
         var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
 

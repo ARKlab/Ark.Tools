@@ -130,6 +130,9 @@
     <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
     <Project Path="samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
   </Folder>
+  <Folder Name="/samples/Ark.Reference/Profiling/">
+    <Project Path="samples/Ark.ReferenceProject/Profiling/Ark.Reference.Profiling.csproj" />
+  </Folder>
   <Folder Name="/samples/Ark.ResourceWatcher/">
     <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj" />
     <Project Path="samples/Ark.ResourceWatcher/Ark.ResourceWatcher.Sample.Tests/Ark.ResourceWatcher.Sample.Tests.csproj" />

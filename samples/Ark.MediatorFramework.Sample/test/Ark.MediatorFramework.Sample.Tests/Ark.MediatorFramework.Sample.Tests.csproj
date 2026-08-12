@@ -30,6 +30,9 @@
       <OutputItemType>Content</OutputItemType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </ProjectReference>
+    <None Include="..\..\src\Ark.MediatorFramework.Sample.Database\bin\$(Configuration)\Ark.MediatorFramework.Sample.Database.dacpac"
+          Link="Ark.MediatorFramework.Sample.Database.dacpac"
+          CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AzureFunctions\Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />

@@ -224,7 +224,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         else
             builder.WebHost.UseKestrel(options =>
                 options.Listen(
-                    System.Net.IPAddress.Loopback,
+                    System.Net.IPAddress.Any,
                     listenAddress.Port,
                     listenOptions => listenOptions.Protocols = HttpProtocols.Http2));
         builder.Services

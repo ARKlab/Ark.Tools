@@ -38,10 +38,10 @@ internal static class Program
 [EventPipeProfiler(EventPipeProfile.CpuSampling)]
 public class ReferenceEndpointBenchmarks
 {
-    private const int RequestsPerBenchmark = 10;
-    private static readonly TimeSpan RebusIdleTimeout = TimeSpan.FromMinutes(15);
-    private static readonly ManualResetEventSlim IterationCleanupDelay = new();
-    private const string SqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
+    private const int _requestsPerBenchmark = 10;
+    private static readonly TimeSpan _rebusIdleTimeout = TimeSpan.FromMinutes(15);
+    private static readonly ManualResetEventSlim _iterationCleanupDelay = new();
+    private const string _sqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
 
     private readonly AuthTestContext _auth = new();
     private IFlurlClient? _client;
@@ -55,8 +55,8 @@ public class ReferenceEndpointBenchmarks
     public async Task Setup()
     {
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-        ConfigureSqlClientSwitch();
-        DeployDatabase();
+        _configureSqlClientSwitch();
+        _deployDatabase();
         await DatabaseUtils.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
         Environment.SetEnvironmentVariable(
             "ConnectionStrings__Core.Database",
@@ -65,9 +65,9 @@ public class ReferenceEndpointBenchmarks
         TestHost.BeforeTests();
 
         _client = TestHost.Factory.Get(new Uri("https://localhost:5001"));
-        _books = new Book.V1.Output[RequestsPerBenchmark];
+        _books = new Book.V1.Output[_requestsPerBenchmark];
         for (var index = 0; index < _books.Length; index++)
-            _books[index] = await CreateBook().ConfigureAwait(false);
+            _books[index] = await _createBook().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -97,8 +97,8 @@ public class ReferenceEndpointBenchmarks
     [Benchmark]
     public async Task PostBook()
     {
-        for (var index = 0; index < RequestsPerBenchmark; index++)
-            _ = await CreateBook().ConfigureAwait(false);
+        for (var index = 0; index < _requestsPerBenchmark; index++)
+            _ = await _createBook().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -107,10 +107,10 @@ public class ReferenceEndpointBenchmarks
     [Benchmark]
     public async Task GetBook()
     {
-        var client = GetClient();
-        for (var index = 0; index < RequestsPerBenchmark; index++)
+        var client = _getClient();
+        for (var index = 0; index < _requestsPerBenchmark; index++)
         {
-            _ = await Send(client, $"v1/book/{_books[index].Id}")
+            _ = await _send(client, $"v1/book/{_books[index].Id}")
                 .GetJsonAsync<Book.V1.Output>()
                 .ConfigureAwait(false);
         }
@@ -122,10 +122,10 @@ public class ReferenceEndpointBenchmarks
     [Benchmark]
     public async Task PostPingMessage()
     {
-        var client = GetClient();
-        for (var index = 0; index < RequestsPerBenchmark; index++)
+        var client = _getClient();
+        for (var index = 0; index < _requestsPerBenchmark; index++)
         {
-            _ = await Send(client, "v1/ping/message")
+            _ = await _send(client, "v1/ping/message")
                 .PostJsonAsync(new Ping.V1.Create
                 {
                     Name = $"Profiling ping {index}",
@@ -142,10 +142,10 @@ public class ReferenceEndpointBenchmarks
     [Benchmark]
     public async Task PostBookPrintProcess()
     {
-        var client = GetClient();
-        for (var index = 0; index < RequestsPerBenchmark; index++)
+        var client = _getClient();
+        for (var index = 0; index < _requestsPerBenchmark; index++)
         {
-            _ = await Send(client, "v1/bookPrintProcess")
+            _ = await _send(client, "v1/bookPrintProcess")
                 .PostJsonAsync(new BookPrintProcess.V1.Create
                 {
                     BookId = _books[index].Id,
@@ -164,9 +164,9 @@ public class ReferenceEndpointBenchmarks
     {
         var timeout = Stopwatch.StartNew();
         var consecutiveIdleChecks = 0;
-        while (timeout.Elapsed < RebusIdleTimeout)
+        while (timeout.Elapsed < _rebusIdleTimeout)
         {
-            IterationCleanupDelay.Wait(TimeSpan.FromMilliseconds(100));
+            _iterationCleanupDelay.Wait(TimeSpan.FromMilliseconds(100));
             if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
@@ -179,7 +179,7 @@ public class ReferenceEndpointBenchmarks
             }
         }
 
-        throw new TimeoutException($"Timed out waiting for Rebus to become idle after {RebusIdleTimeout.TotalMinutes} minutes.");
+        throw new TimeoutException($"Timed out waiting for Rebus to become idle after {_rebusIdleTimeout.TotalMinutes} minutes.");
     }
 
     /// <summary>
@@ -193,9 +193,9 @@ public class ReferenceEndpointBenchmarks
         TestHost.AfterTests();
     }
 
-    private static void ConfigureSqlClientSwitch()
+    private static void _configureSqlClientSwitch()
     {
-        switch (Environment.GetEnvironmentVariable(SqlClientSwitchEnvironmentVariable))
+        switch (Environment.GetEnvironmentVariable(_sqlClientSwitchEnvironmentVariable))
         {
             case null:
             case "":
@@ -213,14 +213,14 @@ public class ReferenceEndpointBenchmarks
                     string.Format(
                         CultureInfo.InvariantCulture,
                         "Unsupported {0} value. Use baseline, make-read-async-blocking, or experimental-async.",
-                        SqlClientSwitchEnvironmentVariable));
+                        _sqlClientSwitchEnvironmentVariable));
         }
     }
 
-    private async Task<Book.V1.Output> CreateBook()
+    private async Task<Book.V1.Output> _createBook()
     {
         var sequence = _bookSequence++;
-        return await Send(GetClient(), "v1/book")
+        return await _send(_getClient(), "v1/book")
             .PostJsonAsync(new Book.V1.Create
             {
                 Title = $"Profiling book {sequence}",
@@ -232,17 +232,17 @@ public class ReferenceEndpointBenchmarks
             .ConfigureAwait(false);
     }
 
-    private IFlurlClient GetClient()
+    private IFlurlClient _getClient()
     {
         return _client ?? throw new InvalidOperationException("The benchmark host has not been started.");
     }
 
-    private IFlurlRequest Send(IFlurlClient client, string path)
+    private IFlurlRequest _send(IFlurlClient client, string path)
     {
         return _auth.SetAuth(client.Request(path));
     }
 
-    private static void DeployDatabase()
+    private static void _deployDatabase()
     {
         var dacpacPath = Path.Combine(AppContext.BaseDirectory, "Ark.Reference.Core.Database.dacpac");
         using var dacpac = DacPackage.Load(dacpacPath);
