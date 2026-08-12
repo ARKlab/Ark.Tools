@@ -4,6 +4,9 @@ This project demonstrates the application layer consumed by the Mediator
 Framework transports.
 
 - Handlers own transaction, lock, idempotency, outbox, and commit lifecycles.
+- Read-before-write workflows use pessimistic row locking. Mutating handlers
+  pass `forUpdate: true` to context reads; SQL uses `UPDLOCK, HOLDLOCK`, while
+  in-memory transitions remain atomic under the shared lock.
 - Contexts/DALs expose fine-grained composable ORM operations only.
 - Singleton domain services contain reusable business rules and side-effects.
 - Domain services publish messages and call external systems through adapters.

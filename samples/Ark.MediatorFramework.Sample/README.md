@@ -191,6 +191,14 @@ The in-memory profile still exercises the application handlers, decorators,
 outbox, Rebus transport, and scenario-owned test composition. It does not silently
 replace the SQL profile; choose it explicitly.
 
+### Concurrency
+
+The sample uses pessimistic row locking for read-before-write workflows. SQL
+contexts request `UPDLOCK, HOLDLOCK` through `forUpdate: true` on
+`ReadBookAsync` and `ReadBookPrintProcessAsync`; mutating handlers use that
+option, and conditional state-transition updates remain atomic. The in-memory
+context keeps the same atomic transition rules under its shared lock.
+
 ## Rebus topology
 
 The sample has two process roles:

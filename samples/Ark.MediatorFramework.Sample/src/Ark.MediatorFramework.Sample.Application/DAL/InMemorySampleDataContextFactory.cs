@@ -183,7 +183,10 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public async Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<Book.V1.Output?> ReadBookAsync(
+            Guid id,
+            bool forUpdate = false,
+            CancellationToken ctk = default)
         {
             _owner._books.TryGetValue(id, out var book);
             return await Task.FromResult(book).ConfigureAwait(false);
@@ -243,6 +246,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
             Guid id,
+            bool forUpdate = false,
             CancellationToken ctk = default)
         {
             _owner._printProcesses.TryGetValue(id, out var process);

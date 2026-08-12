@@ -40,7 +40,7 @@ public sealed class ProcessBookPrintProcessHandler :
         ArgumentNullException.ThrowIfNull(request);
         var readContext = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = readContext.ConfigureAwait(false);
-        var process = await readContext.ReadBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false)
+        var process = await readContext.ReadBookPrintProcessAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
         await readContext.CommitAsync(ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
@@ -88,7 +88,7 @@ public sealed class ProcessBookPrintProcessHandler :
         await using var __ctx = context.ConfigureAwait(false);
         if (!await context.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
         {
-            var current = await context.ReadBookPrintProcessAsync(process.Id, ctk).ConfigureAwait(false);
+            var current = await context.ReadBookPrintProcessAsync(process.Id, ctk: ctk).ConfigureAwait(false);
             if (current is null)
                 throw new EntityNotFoundException($"Book print process '{process.Id}' was not found.");
 

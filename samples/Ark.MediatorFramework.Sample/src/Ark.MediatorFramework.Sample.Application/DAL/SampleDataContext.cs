@@ -48,7 +48,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
-    Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
+    Task<Book.V1.Output?> ReadBookAsync(Guid id, bool forUpdate = false, CancellationToken ctk = default);
 
     /// <summary>Updates a book.</summary>
     Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default);
@@ -63,7 +63,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
 
     /// <summary>Reads a book print process.</summary>
-    Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default);
+    Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, bool forUpdate = false, CancellationToken ctk = default);
 
     /// <summary>Updates a book print process.</summary>
     Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
@@ -306,11 +306,15 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
-    public async Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+    public async Task<Book.V1.Output?> ReadBookAsync(
+        Guid id,
+        bool forUpdate = false,
+        CancellationToken ctk = default)
     {
-        const string sql = """
+        var lockHint = forUpdate ? "WITH (UPDLOCK, HOLDLOCK)" : string.Empty;
+        var sql = $"""
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
-            FROM [dbo].[Book]
+            FROM [dbo].[Book] {lockHint}
             WHERE [Id] = @Id;
             """;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
@@ -413,18 +417,22 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             process.Status,
             process.ErrorMessage,
             process.ShouldFail,
-            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
-            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+            Pending = BookPrintProcessStatus.Pending.ToEvolvable(),
+            Running = BookPrintProcessStatus.Running.ToEvolvable(),
         }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
 
     /// <summary>Reads a book print process in the current transaction.</summary>
-    public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+    public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
+        Guid id,
+        bool forUpdate = false,
+        CancellationToken ctk = default)
     {
-        const string sql = """
+        var lockHint = forUpdate ? "WITH (UPDLOCK, HOLDLOCK)" : string.Empty;
+        var sql = $"""
             SELECT [Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail]
-            FROM [dbo].[BookPrintProcess]
+            FROM [dbo].[BookPrintProcess] {lockHint}
             WHERE [Id] = @Id;
             """;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
@@ -456,10 +464,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             process.Status,
             process.ErrorMessage,
             process.ShouldFail,
-            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
-            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
-            Completed = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Completed,
-            Error = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Error,
+            Pending = BookPrintProcessStatus.Pending.ToEvolvable(),
+            Running = BookPrintProcessStatus.Running.ToEvolvable(),
+            Completed = BookPrintProcessStatus.Completed.ToEvolvable(),
+            Error = BookPrintProcessStatus.Error.ToEvolvable(),
         }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
@@ -479,9 +487,9 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         var command = new CommandDefinition(sql, new
         {
             Id = id,
-            Cancelled = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Cancelled,
-            Pending = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Pending,
-            Running = (EvolvableEnum<BookPrintProcessStatus>)BookPrintProcessStatus.Running,
+            Cancelled = BookPrintProcessStatus.Cancelled.ToEvolvable(),
+            Pending = BookPrintProcessStatus.Pending.ToEvolvable(),
+            Running = BookPrintProcessStatus.Running.ToEvolvable(),
         }, Transaction, cancellationToken: ctk);
         return await Connection.QuerySingleOrDefaultAsync<BookPrintProcessResponse>(command).ConfigureAwait(false);
     }

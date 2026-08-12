@@ -38,12 +38,14 @@ public sealed class CancelBookPrintProcessHandler :
         ArgumentNullException.ThrowIfNull(request);
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        var current = await context.ReadBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false)
-            ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
-        _ensureCancellable(current);
-        var cancelled = await context.CancelBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false)
-            ?? throw new BusinessRuleViolationException(
+        var cancelled = await context.CancelBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false);
+        if (cancelled is null)
+        {
+            var current = await context.ReadBookPrintProcessAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
+                ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
+            throw new BusinessRuleViolationException(
                 new BookPrintProcessCannotBeCancelledViolation(request.Id, current.Status));
+        }
         await context.WriteAuditAsync(new AuditEntry
         {
             Id = Guid.NewGuid(),
@@ -55,13 +57,5 @@ public sealed class CancelBookPrintProcessHandler :
         }, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return cancelled;
-    }
-
-    private static void _ensureCancellable(BookPrintProcessResponse process)
-    {
-        if (process.Status != BookPrintProcessStatus.Pending
-            && process.Status != BookPrintProcessStatus.Running)
-            throw new BusinessRuleViolationException(
-                new BookPrintProcessCannotBeCancelledViolation(process.Id, process.Status));
     }
 }

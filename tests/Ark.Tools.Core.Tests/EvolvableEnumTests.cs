@@ -135,6 +135,17 @@ public class EvolvableEnumTests
         ((Status)wrapped).Should().Be(Status.Active);
     }
 
+    /// <summary>Verifies that the enum extension wraps a defined value.</summary>
+    [TestMethod]
+    public void ToEvolvable_ShouldWrapValue()
+    {
+        // Act
+        var value = Status.Active.ToEvolvable();
+
+        // Assert
+        value.Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
+    }
+
     /// <summary>Verifies that an unrecognized numeric value is retained rather than rejected.</summary>
     [TestMethod]
     public void UnknownNumber_ShouldBeRetainedWithoutName()

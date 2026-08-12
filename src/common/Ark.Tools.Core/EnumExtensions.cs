@@ -44,4 +44,15 @@ public static class EnumExtensions
 
         return null;
     }
+
+    /// <summary>Wraps an enum value in its evolvable representation.</summary>
+    /// <typeparam name="TEnum">The enum type.</typeparam>
+    /// <param name="value">The enum value to wrap.</param>
+    /// <returns>The evolvable enum value.</returns>
+    public static EvolvableEnum<TEnum> ToEvolvable<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(this TEnum value)
+        where TEnum : struct, Enum
+    {
+        return EvolvableEnum<TEnum>.FromValue(value);
+    }
 }

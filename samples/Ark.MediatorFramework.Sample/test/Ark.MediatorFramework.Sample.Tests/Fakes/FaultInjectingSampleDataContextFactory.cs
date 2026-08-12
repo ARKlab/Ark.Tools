@@ -128,9 +128,12 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             await _inner.SaveBookAsync(book, ctk).ConfigureAwait(false);
         }
 
-        public async Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<Book.V1.Output?> ReadBookAsync(
+            Guid id,
+            bool forUpdate = false,
+            CancellationToken ctk = default)
         {
-            return await _inner.ReadBookAsync(id, ctk).ConfigureAwait(false);
+            return await _inner.ReadBookAsync(id, forUpdate, ctk).ConfigureAwait(false);
         }
 
         public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
@@ -159,9 +162,10 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
 
         public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
             Guid id,
+            bool forUpdate = false,
             CancellationToken ctk = default)
         {
-            return await _inner.ReadBookPrintProcessAsync(id, ctk).ConfigureAwait(false);
+            return await _inner.ReadBookPrintProcessAsync(id, forUpdate, ctk).ConfigureAwait(false);
         }
 
         public async Task<bool> UpdateBookPrintProcessAsync(
