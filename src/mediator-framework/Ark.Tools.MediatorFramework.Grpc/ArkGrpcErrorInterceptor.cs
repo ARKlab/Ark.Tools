@@ -166,7 +166,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             StringComparer.Ordinal);
     }
 
-    private static int _getInheritanceDepth(Type? type)
+    private static int _getInheritanceDepth(System.Type? type)
     {
         var depth = 0;
         for (var current = type; current is not null; current = current.BaseType)
