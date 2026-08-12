@@ -208,6 +208,8 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
         container.Register<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>, UploadGreetingCardHandler.UploadGreetingCardsHandler>();
+        container.Register<IRequestHandler<UploadBookCoverRequest, UploadResponse>, UploadBookCoverHandler>();
+        container.Register<IQueryHandler<DownloadBookCoverQuery, IArkAttachment>, DownloadBookCoverHandler>();
         container.Register<IQueryHandler<GetDocumentQuery, IArkAttachment>, GetDocumentHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
         container.Register<ICommandHandler<GreetingCreatedNotification>, GreetingCreatedHandler>();

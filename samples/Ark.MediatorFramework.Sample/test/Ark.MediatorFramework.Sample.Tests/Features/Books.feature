@@ -49,6 +49,52 @@ Feature: Books
                 | UserId    | EntityType   | Operation         |
                 | application-test-user | Output | Book_CreateRequest.V1 |
 
+    Rule: Book covers retain metadata and bytes
+
+        Scenario: Upload and download a book cover
+            Given I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user with the book cover scope
+            When I upload a cover for the current book with
+                | Name      | ContentType | Content       |
+                | cover.png | image/png   | Cover bytes!  |
+            Then the book cover upload is
+                | Name      | ContentType | Length |
+                | cover.png | image/png   | 12     |
+            When I download the cover for the current book
+            Then the current book cover is
+                | Name      | ContentType | Content      |
+                | cover.png | image/png   | Cover bytes! |
+
+        Scenario: Reject a book cover without its scope
+            Given I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user without the book cover scope
+            When I upload a cover for the current book with
+                | Name      | ContentType | Content |
+                | cover.png | image/png   | bytes   |
+            Then the book cover request fails with an authorization exception
+
+        Scenario: Reject an invalid book cover
+            Given I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user with the book cover scope
+            When I upload a cover for the current book with
+                | Name      | ContentType | Content |
+                | cover.txt | text/plain  | bytes   |
+            Then the book cover request fails validation
+
+        Scenario: Report a missing book cover
+            Given I create a book with
+                | Title | Author | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user with the book cover scope
+            When I download the cover for the current book
+            Then the book cover request fails because the cover is missing
+
     Rule: Book printing runs asynchronously
 
         Scenario: Complete a book print process
