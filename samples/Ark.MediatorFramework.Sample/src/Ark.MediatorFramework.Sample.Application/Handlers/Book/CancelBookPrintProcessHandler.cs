@@ -41,7 +41,7 @@ public sealed class CancelBookPrintProcessHandler :
         var cancelled = await context.CancelBookPrintProcessAsync(request.Id, ctk).ConfigureAwait(false);
         if (cancelled is null)
         {
-            var current = await context.ReadBookPrintProcessAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
+            var current = await context.ReadBookPrintProcessAsync(request.Id, ctk: ctk).ConfigureAwait(false)
                 ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
             throw new BusinessRuleViolationException(
                 new BookPrintProcessCannotBeCancelledViolation(request.Id, current.Status));
