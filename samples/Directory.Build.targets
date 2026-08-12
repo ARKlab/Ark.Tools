@@ -71,18 +71,18 @@
                           Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
         
 
-        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Grpc' And '$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
-        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
-        <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
-        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets"
-                Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.Solid'" />
-
       </ItemGroup>
 
       <Message Condition="@(_ArkToolsToReplace->Count()) > 0" Text="[Ark.Tools] Replaced PackageReference with ProjectReference for: @(_ArkToolsToReplace)" Importance="High" />
   </Target>
+
+  <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
+          Condition="'$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
+  <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
+          Condition="Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props')" />
+  <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
+          Condition="Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets')" />
+  <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets"
+          Condition="Exists('$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets')" />
 
 </Project>
