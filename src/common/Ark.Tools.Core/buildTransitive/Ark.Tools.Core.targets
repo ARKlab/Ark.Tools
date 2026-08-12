@@ -1,0 +1,12 @@
+<Project>
+  <!--
+  NuGet package consumers get the ARKSOLID001 analyzer applied to their compilation through
+  the standard analyzers/dotnet/cs layout. This buildTransitive targets file extends that
+  propagation to transitive consumers (projects that depend on a project that directly
+  references Ark.Tools.Solid) so that the analyzer fires everywhere in the dependency graph.
+  -->
+  <ItemGroup>
+    <Analyzer Include="$(MSBuildThisFileDirectory)../analyzers/dotnet/cs/Ark.Tools.Core.Analyzers.dll"
+              Condition="Exists('$(MSBuildThisFileDirectory)../analyzers/dotnet/cs/Ark.Tools.Core.Analyzers.dll')" />
+  </ItemGroup>
+</Project>

@@ -39,6 +39,11 @@
              local PackageReference-to-ProjectReference replacement bypasses NuGet assets,
              and analyzer ProjectReferences are not transitive, so mirror those assets here. -->
 
+        <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.Core.Analyzers\Ark.Tools.Core.Analyzers.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="@(_ArkToolsToReplace->Count()) > 0" />
+
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.Solid.Analyzers\Ark.Tools.Solid.Analyzers.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
@@ -79,6 +84,10 @@
                 Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
         <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets"
                 Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.Solid'" />
+        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.props"
+                Condition="@(_ArkToolsToReplace->Count()) > 0" />
+        <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.targets"
+                Condition="@(_ArkToolsToReplace->Count()) > 0" />
 
       </ItemGroup>
 
