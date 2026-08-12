@@ -51,11 +51,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
             compilation is CSharpCompilation csharpCompilation
-            && LanguageVersionFacts.MapSpecifiedToEffectiveVersion(csharpCompilation.LanguageVersion)
-                is LanguageVersion.CSharp13
-                or LanguageVersion.Preview
-                or LanguageVersion.LatestMajor
-                or LanguageVersion.Latest);
+            && (int)LanguageVersionFacts.MapSpecifiedToEffectiveVersion(csharpCompilation.LanguageVersion) >= 1400);
 
         var interceptorsEnabled = context.AnalyzerConfigOptionsProvider
             .Select(static (options, _) =>
