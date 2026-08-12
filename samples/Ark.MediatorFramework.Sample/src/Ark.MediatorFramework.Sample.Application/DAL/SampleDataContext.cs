@@ -311,12 +311,17 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         bool forUpdate = false,
         CancellationToken ctk = default)
     {
-        var lockHint = forUpdate ? "WITH (UPDLOCK, HOLDLOCK)" : string.Empty;
-        var sql = $"""
+        const string sqlWithoutLock = """
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
-            FROM [dbo].[Book] {lockHint}
+            FROM [dbo].[Book]
             WHERE [Id] = @Id;
             """;
+        const string sqlWithLock = """
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            FROM [dbo].[Book] WITH (UPDLOCK, HOLDLOCK)
+            WHERE [Id] = @Id;
+            """;
+        var sql = forUpdate ? sqlWithLock : sqlWithoutLock;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<BookRow>(command).ConfigureAwait(false);
         return row?.ToResponse();
@@ -429,12 +434,17 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         bool forUpdate = false,
         CancellationToken ctk = default)
     {
-        var lockHint = forUpdate ? "WITH (UPDLOCK, HOLDLOCK)" : string.Empty;
-        var sql = $"""
+        const string sqlWithoutLock = """
             SELECT [Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail]
-            FROM [dbo].[BookPrintProcess] {lockHint}
+            FROM [dbo].[BookPrintProcess]
             WHERE [Id] = @Id;
             """;
+        const string sqlWithLock = """
+            SELECT [Id], [BookId], [Progress], [Status], [ErrorMessage], [ShouldFail]
+            FROM [dbo].[BookPrintProcess] WITH (UPDLOCK, HOLDLOCK)
+            WHERE [Id] = @Id;
+            """;
+        var sql = forUpdate ? sqlWithLock : sqlWithoutLock;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         return await Connection.QuerySingleOrDefaultAsync<BookPrintProcessResponse>(command).ConfigureAwait(false);
     }
