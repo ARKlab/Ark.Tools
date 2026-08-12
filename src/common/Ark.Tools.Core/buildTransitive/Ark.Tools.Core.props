@@ -10,6 +10,15 @@
   interceptors), listing it here has no effect.
   -->
   <PropertyGroup>
+    <!-- Set ArkCoreInterceptorsEnabled=false to use the reflection-based fallback. -->
+    <ArkCoreInterceptorsEnabled Condition="'$(ArkCoreInterceptorsEnabled)' == ''">true</ArkCoreInterceptorsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="ArkCoreInterceptorsEnabled" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(ArkCoreInterceptorsEnabled)' != 'false'">
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
   </PropertyGroup>
 </Project>

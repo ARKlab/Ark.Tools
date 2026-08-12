@@ -53,12 +53,21 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             compilation is CSharpCompilation csharpCompilation
             && (int)csharpCompilation.LanguageVersion >= 1400);
 
-        var combined = callSites.Combine(languageVersionSupported);
+        var interceptorsEnabled = context.AnalyzerConfigOptionsProvider
+            .Select(static (options, _) =>
+            {
+                if (!options.GlobalOptions.TryGetValue("build_property.ArkCoreInterceptorsEnabled", out var value))
+                    return true;
+
+                return !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
+            });
+
+        var combined = callSites.Combine(languageVersionSupported).Combine(interceptorsEnabled);
 
         context.RegisterSourceOutput(combined, static (spc, data) =>
         {
-            var (sites, languageOk) = data;
-            if (!languageOk || sites.IsDefaultOrEmpty)
+            var ((sites, languageOk), interceptorsEnabled) = data;
+            if (!interceptorsEnabled || !languageOk || sites.IsDefaultOrEmpty)
                 return;
 
             var source = _emit(sites);
