@@ -3,6 +3,8 @@
 
 using Ark.Tools.Solid;
 
+using Ark.MediatorFramework.Sample.API.Authorization;
+
 using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.API;
