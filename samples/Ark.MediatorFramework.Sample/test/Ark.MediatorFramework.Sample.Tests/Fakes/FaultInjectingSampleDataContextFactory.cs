@@ -95,6 +95,13 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             return await _inner.SaveBookAsync(book, ctk).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
+            IEnumerable<Book.V1.Output> books,
+            CancellationToken ctk = default)
+        {
+            return await _inner.BulkInsertBooksAsync(books, ctk).ConfigureAwait(false);
+        }
+
         public async Task<Book.V1.Output?> ReadBookAsync(
             Guid id,
             CancellationToken ctk = default)

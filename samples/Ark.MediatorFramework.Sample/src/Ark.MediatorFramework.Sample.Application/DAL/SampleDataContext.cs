@@ -7,6 +7,7 @@ using Ark.Tools.Core;
 
 using Dapper;
 
+using System.Data;
 using System.Data.Common;
 
 namespace Ark.MediatorFramework.Sample.Application.DAL;
@@ -28,6 +29,11 @@ public interface ISampleDataContext : IOutboxAsyncContext
 
     /// <summary>Saves a book and returns the persisted entity.</summary>
     Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
+
+    /// <summary>Saves multiple books and returns the persisted entities.</summary>
+    Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
+        IEnumerable<Book.V1.Output> books,
+        CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
     Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
@@ -197,6 +203,33 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleAsync<BookRow>(command).ConfigureAwait(false);
         return row.ToResponse();
+    }
+
+    /// <summary>Saves multiple books in the current transaction using a table-valued parameter.</summary>
+    public async Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
+        IEnumerable<Book.V1.Output> books,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(books);
+        var rows = books.Select(static book => new BookBulkInsertRow(
+            book.Id,
+            book.Title,
+            book.Author,
+            book.Genre.ToString(),
+            book.ISBN,
+            book.Description));
+        var parameters = new
+        {
+            Books = rows.ToDataTableArk().AsTableValuedParameter("dbo.BookBulkInsertType"),
+        };
+        var command = new CommandDefinition(
+            "dbo.Book_BulkInsert",
+            parameters,
+            Transaction,
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: ctk);
+        var data = await Connection.QueryAsync<BookRow>(command).ConfigureAwait(false);
+        return data.Select(static row => row.ToResponse()).ToArray();
     }
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
@@ -534,6 +567,14 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             .ToArray();
         return orderBy.Length == 0 ? "[Id]" : string.Join(", ", orderBy);
     }
+
+    private sealed record BookBulkInsertRow(
+        Guid Id,
+        string Title,
+        string Author,
+        string Genre,
+        string? ISBN,
+        string Description);
 
     private sealed class BookRow
     {

@@ -34,6 +34,36 @@ public sealed class ApplicationTestContextTests
         context.AuditCount.Should().Be(1);
     }
 
+    /// <summary>Dispatches a bulk Book request through validation and audit decorators.</summary>
+    [TestMethod]
+    public async Task BulkCreateDispatchesApplicationRequest()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var response = await context.DispatchRequestAsync<
+            Book_BulkCreateRequest.V1,
+            IReadOnlyList<Book.V1.Output>>(
+            new Book_BulkCreateRequest.V1(
+            [
+                new Book.V1.Create
+                {
+                    Title = "Clean Code",
+                    Author = "Martin",
+                    Genre = Book.V1.Genre.Technology,
+                },
+                new Book.V1.Create
+                {
+                    Title = "Dune",
+                    Author = "Herbert",
+                    Genre = Book.V1.Genre.Fiction,
+                },
+            ])).ConfigureAwait(false);
+
+        response.Should().HaveCount(2);
+        response.Select(book => book.Title).Should().Equal("Clean Code", "Dune");
+        context.AuditCount.Should().Be(2);
+    }
+
     /// <summary>Reports validation failures from the decorated handler pipeline.</summary>
     [TestMethod]
     public async Task InvalidRequestThrowsValidationException()

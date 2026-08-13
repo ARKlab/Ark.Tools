@@ -187,6 +187,7 @@ public static class ApplicationComposition
         container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
 
         container.Register<IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>, CreateBookHandler>();
+        container.Register<IRequestHandler<Book_BulkCreateRequest.V1, IReadOnlyList<Book.V1.Output>>, BulkCreateBookHandler>();
         container.Register<IRequestHandler<Book_UpdateRequest.V1, Book.V1.Output>, UpdateBookHandler>();
         container.Register<IRequestHandler<Book_DeleteRequest.V1, bool>, DeleteBookHandler>();
         container.Register<IRequestHandler<CreateBookReviewRequest, BookReview>, CreateBookReviewHandler>();

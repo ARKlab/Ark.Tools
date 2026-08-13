@@ -100,6 +100,16 @@ public static class Book_CreateRequest
         IRequest<V1, Book.V1.Output>;
 }
 
+/// <summary>Creates multiple books.</summary>
+public static class Book_BulkCreateRequest
+{
+    /// <summary>Version one of the bulk book creation request.</summary>
+    [RequireScopePolicy(ApplicationScopes.BookWrite)]
+    public sealed record V1(
+        [property: HttpBody] IReadOnlyList<Book.V1.Create> Data) :
+        IRequest<V1, IReadOnlyList<Book.V1.Output>>;
+}
+
 /// <summary>Updates a book.</summary>
 public static class Book_UpdateRequest
 {

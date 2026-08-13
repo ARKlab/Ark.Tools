@@ -126,6 +126,28 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return await Task.FromResult(stored).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
+            IEnumerable<Book.V1.Output> books,
+            CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(books);
+            var stored = books
+                .Select(static book => book with { ETag = "0x0000000000000001" })
+                .ToArray();
+            lock (_owner._sync)
+            {
+                if (stored.GroupBy(book => book.Id).Any(group => group.Count() > 1)
+                    || stored.Any(book => _owner._books.ContainsKey(book.Id)))
+                    throw new InvalidOperationException("A book in the bulk request already exists.");
+                foreach (var book in stored)
+                {
+                    _owner._books[book.Id] = book;
+                    _owner._bookVersions[book.Id] = 1;
+                }
+            }
+            return await Task.FromResult<IEnumerable<Book.V1.Output>>(stored).ConfigureAwait(false);
+        }
+
         public async Task<Book.V1.Output?> ReadBookAsync(
             Guid id,
             CancellationToken ctk = default)
