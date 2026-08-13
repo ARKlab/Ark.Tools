@@ -26,6 +26,7 @@ CONTRACT GreetingResponse.OffsetDateTime : OffsetDateTime
 CONTRACT GreetingResponse.Period : Period
 CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
 CONTRACT ProcessBookPrintProcessRequest.Id : Guid
+EVOLVABLE-ENUM BookPrintProcessStatus.Cancelled=5
 EVOLVABLE-ENUM BookPrintProcessStatus.Completed=3
 EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
 EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0

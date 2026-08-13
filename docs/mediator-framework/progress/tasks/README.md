@@ -69,13 +69,13 @@ not stop at a contract, schema, host, or documentation change.
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [BOOK-01](sample-book/BOOK-01-catalog-vertical-slice.md) | Book catalog create and retrieve vertical slice | Pending |
-| [BOOK-02](sample-book/BOOK-02-catalog-search-persistence.md) | Book catalog search and persistence vertical slice | Pending |
-| [BOOK-03](sample-book/BOOK-03-catalog-mutations-concurrency.md) | Book catalog mutations, concurrency, and audit vertical slice | Pending |
+| [BOOK-01](sample-book/BOOK-01-catalog-vertical-slice.md) | Book catalog create and retrieve vertical slice | Complete |
+| [BOOK-02](sample-book/BOOK-02-catalog-search-persistence.md) | Book catalog search and persistence vertical slice | Complete |
+| [BOOK-03](sample-book/BOOK-03-catalog-mutations-concurrency.md) | Book catalog mutations, concurrency, and audit vertical slice | Complete |
 | [BOOK-04](sample-book/BOOK-04-cover-attachment-vertical-slice.md) | Book cover upload and download vertical slice | Complete |
 | [BOOK-05](sample-book/BOOK-05-printing-rebus-vertical-slice.md) | Book printing process completion vertical slice | Complete |
-| [BOOK-06](sample-book/BOOK-06-reviews-reading-activity-vertical-slice.md) | Book reviews and reading activity vertical slice | Pending |
-| [BOOK-07](sample-book/BOOK-07-streaming-editions-transport.md) | Book streaming, editions, and transport parity vertical slice | Pending |
+| [BOOK-06](sample-book/BOOK-06-reviews-reading-activity-vertical-slice.md) | Book reviews and reading activity vertical slice | Complete |
+| [BOOK-07](sample-book/BOOK-07-streaming-editions-transport.md) | Book streaming, editions, and transport parity vertical slice | In progress |
 | [BOOK-08](sample-book/BOOK-08-complete-book-migration.md) | Complete Book migration and Greeting removal | Pending |
 
 ### ASP.NET Core

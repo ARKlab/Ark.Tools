@@ -33,7 +33,7 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
         await context.WriteAuditAsync(_createAudit(book.Id, typeof(Book_CreateRequest).Name + "." + typeof(Book_CreateRequest.V1).Name), ctk).ConfigureAwait(false);
-        await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
+        book = await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return book;
     }

@@ -224,6 +224,10 @@ public sealed class SampleStartup
             .AddArkPolymorphism<Shape, ShapeKind>(
                 "kind",
                 (ShapeKind.Circle, typeof(Circle)),
-                (ShapeKind.Square, typeof(Square)));
+                (ShapeKind.Square, typeof(Square)))
+            .AddArkPolymorphism<BookEdition, BookEditionKind>(
+                "kind",
+                (BookEditionKind.Print, typeof(PrintBookEdition)),
+                (BookEditionKind.Digital, typeof(DigitalBookEdition)));
     }
 }

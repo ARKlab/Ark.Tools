@@ -62,6 +62,19 @@ namespace Ark.MediatorFramework.Sample.API.JsonContext;
 [JsonSerializable(typeof(GreetingPage))]
 [JsonSerializable(typeof(GetGreetingsStreamQuery))]
 [JsonSerializable(typeof(GreetingStreamItem))]
+[JsonSerializable(typeof(StreamBooksQuery))]
+[JsonSerializable(typeof(BookStreamItem))]
+[JsonSerializable(typeof(DescribeBookEditionRequest))]
+[JsonSerializable(typeof(BookEditionDescription))]
+[JsonSerializable(typeof(BookEdition))]
+[JsonSerializable(typeof(PrintBookEdition))]
+[JsonSerializable(typeof(DigitalBookEdition))]
+[JsonSerializable(typeof(BookReview))]
+[JsonSerializable(typeof(CreateBookReviewRequest))]
+[JsonSerializable(typeof(ListBookReviewsQuery))]
+[JsonSerializable(typeof(ReadingActivity))]
+[JsonSerializable(typeof(RecordReadingActivityRequest))]
+[JsonSerializable(typeof(GetReadingActivityQuery))]
 public sealed partial class SampleApiJsonSerializerContext : JsonSerializerContext
 {
 }

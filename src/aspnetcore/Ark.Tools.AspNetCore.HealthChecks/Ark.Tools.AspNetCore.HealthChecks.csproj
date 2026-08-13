@@ -38,6 +38,7 @@
 		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" />
 		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
 		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+		<PackageReference Include="SSH.NET" />
 		<PackageReference Include="Azure.Messaging.ServiceBus" />
 		<PackageReference Include="Azure.Identity" />
 		<PackageReference Include="Microsoft.ApplicationInsights" />

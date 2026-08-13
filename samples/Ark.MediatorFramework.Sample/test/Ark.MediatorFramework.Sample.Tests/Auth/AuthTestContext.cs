@@ -36,6 +36,13 @@ public sealed class AuthTestContext
         _context.Application.SetAuthenticatedUser(subject, ApplicationScopes.GreetingWrite);
     }
 
+    /// <summary>Sets an authenticated principal with the book-read scope.</summary>
+    [Given("I am an authenticated user with the book read scope")]
+    public void SetAuthenticatedUserWithBookReadScope()
+    {
+        _context.Application.SetAuthenticatedUser("book-read-user", ApplicationScopes.BookRead);
+    }
+
     /// <summary>Sets an authenticated principal without the greeting-write scope.</summary>
     [Given("I am an authenticated user without the greeting write scope")]
     public void SetAuthenticatedUserWithoutGreetingWriteScope()
@@ -50,11 +57,32 @@ public sealed class AuthTestContext
         _context.Application.SetAuthenticatedUser("book-cover-user", ApplicationScopes.BookCover);
     }
 
+    /// <summary>Sets an authenticated principal without the book-write scope.</summary>
+    [Given("I am an authenticated user without the book write scope")]
+    public void SetAuthenticatedUserWithoutBookWriteScope()
+    {
+        _context.Application.SetAuthenticatedUser("unauthorized-book-user", ApplicationScopes.BookRead);
+    }
+
     /// <summary>Sets an authenticated principal without the book-cover scope.</summary>
     [Given("I am an authenticated user without the book cover scope")]
     public void SetAuthenticatedUserWithoutBookCoverScope()
     {
         _context.Application.SetAuthenticatedUser("unauthorized-book-cover-user", "other-scope");
+    }
+
+    /// <summary>Sets an authenticated principal without the book-review write scope.</summary>
+    [Given("I am an authenticated user without the book review write scope")]
+    public void SetAuthenticatedUserWithoutBookReviewWriteScope()
+    {
+        _context.Application.SetAuthenticatedUser("unauthorized-book-review-user", ApplicationScopes.BookReviewsRead);
+    }
+
+    /// <summary>Sets an authenticated principal without the book-activity write scope.</summary>
+    [Given("I am an authenticated user without the book activity write scope")]
+    public void SetAuthenticatedUserWithoutBookActivityWriteScope()
+    {
+        _context.Application.SetAuthenticatedUser("unauthorized-book-activity-user", ApplicationScopes.BookActivityRead);
     }
 
     /// <summary>Sets the application principal to an anonymous user.</summary>

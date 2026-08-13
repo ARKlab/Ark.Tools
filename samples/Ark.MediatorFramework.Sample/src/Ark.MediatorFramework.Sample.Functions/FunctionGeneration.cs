@@ -10,4 +10,6 @@ using Ark.MediatorFramework.Sample.API;
     {
         typeof(Greeting_CreateRequest.V1),
         typeof(DescribeShapeRequest),
+        typeof(StreamBooksQuery),
+        typeof(DescribeBookEditionRequest),
     })]

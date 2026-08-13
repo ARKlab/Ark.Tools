@@ -144,6 +144,7 @@ public static class ApplicationComposition
             NodaTimeDapperSqlServer.Setup();
             EvolvableEnumDapper.Register<Book.V1.Genre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
+            EvolvableEnumDapper.Register<ReadingActivityKind>();
             var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
             {
                 DataSource = "localhost,1433",
@@ -192,6 +193,8 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>, CreateBookHandler>();
         container.Register<IRequestHandler<Book_UpdateRequest.V1, Book.V1.Output>, UpdateBookHandler>();
         container.Register<IRequestHandler<Book_DeleteRequest.V1, bool>, DeleteBookHandler>();
+        container.Register<IRequestHandler<CreateBookReviewRequest, BookReview>, CreateBookReviewHandler>();
+        container.Register<IRequestHandler<RecordReadingActivityRequest, ReadingActivity>, RecordReadingActivityHandler>();
         container.Register<IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>, CreateBookPrintProcessHandler>();
         container.Register<IRequestHandler<CancelBookPrintProcessRequest, BookPrintProcessResponse>, CancelBookPrintProcessHandler>();
         container.Register<IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
@@ -202,11 +205,15 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<Book_GetQuery.V1, Book.V1.Output>, GetBookHandler>();
         container.Register<IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>, GetBookPrintProcessHandler>();
         container.Register<IQueryHandler<Book_SearchQuery.V1, Book.V1.Page>, SearchBooksHandler>();
+        container.Register<IQueryHandler<ListBookReviewsQuery, IReadOnlyList<BookReview>>, ListBookReviewsHandler>();
+        container.Register<IQueryHandler<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>, GetReadingActivityHandler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();
+        container.Register<IQueryHandler<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>, StreamBooksHandler>();
         container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingEnvelopeHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
+        container.Register<IRequestHandler<DescribeBookEditionRequest, BookEditionDescription>, DescribeBookEditionHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
         container.Register<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>, UploadGreetingCardHandler.UploadGreetingCardsHandler>();
         container.Register<IRequestHandler<UploadBookCoverRequest, UploadResponse>, UploadBookCoverHandler>();

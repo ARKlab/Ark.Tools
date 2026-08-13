@@ -6,5 +6,6 @@ CREATE TABLE [dbo].[Book]
     [Genre] NVARCHAR(30) NOT NULL,
     [ISBN] NVARCHAR(20) NULL,
     [Description] NVARCHAR(400) NOT NULL,
+    [RowVersion] ROWVERSION NOT NULL,
     CONSTRAINT [PK_Book] PRIMARY KEY CLUSTERED ([Id])
 );

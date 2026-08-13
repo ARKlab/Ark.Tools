@@ -123,17 +123,16 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             await _inner.CommitAsync(ctk).ConfigureAwait(false);
         }
 
-        public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
+        public async Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
-            await _inner.SaveBookAsync(book, ctk).ConfigureAwait(false);
+            return await _inner.SaveBookAsync(book, ctk).ConfigureAwait(false);
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
             Guid id,
-            bool forUpdate = false,
             CancellationToken ctk = default)
         {
-            return await _inner.ReadBookAsync(id, forUpdate, ctk).ConfigureAwait(false);
+            return await _inner.ReadBookAsync(id, ctk).ConfigureAwait(false);
         }
 
         public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
@@ -151,6 +150,34 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             CancellationToken ctk = default)
         {
             return await _inner.ReadBooksAsync(query, ctk).ConfigureAwait(false);
+        }
+
+        public async Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default)
+        {
+            await _inner.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
+            Guid bookId,
+            int skip,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            return await _inner.ReadBookReviewsAsync(bookId, skip, limit, ctk).ConfigureAwait(false);
+        }
+
+        public async Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default)
+        {
+            await _inner.SaveReadingActivityAsync(activity, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+            Guid bookId,
+            string userId,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            return await _inner.ReadReadingActivityAsync(bookId, userId, limit, ctk).ConfigureAwait(false);
         }
 
         public async Task<bool> TrySaveBookPrintProcessAsync(

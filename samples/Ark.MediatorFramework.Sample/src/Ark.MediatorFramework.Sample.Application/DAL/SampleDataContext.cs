@@ -44,11 +44,11 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Commits the transaction.</summary>
     new Task CommitAsync(CancellationToken ctk = default);
 
-    /// <summary>Saves a book.</summary>
-    Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
+    /// <summary>Saves a book and returns the persisted entity.</summary>
+    Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
-    Task<Book.V1.Output?> ReadBookAsync(Guid id, bool forUpdate = false, CancellationToken ctk = default);
+    Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Updates a book.</summary>
     Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default);
@@ -58,6 +58,22 @@ public interface ISampleDataContext : IOutboxAsyncContext
 
     /// <summary>Reads a page of books.</summary>
     Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
+
+    /// <summary>Saves a book review.</summary>
+    Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default);
+
+    /// <summary>Reads bounded reviews for a book.</summary>
+    Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(Guid bookId, int skip, int limit, CancellationToken ctk = default);
+
+    /// <summary>Saves reading activity.</summary>
+    Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default);
+
+    /// <summary>Reads bounded activity for a book and reader.</summary>
+    Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+        Guid bookId,
+        string userId,
+        int limit,
+        CancellationToken ctk = default);
 
     /// <summary>Saves a book print process when no active process exists for the book.</summary>
     Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
@@ -287,10 +303,12 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Saves a book in the current transaction.</summary>
-    public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
     {
         const string sql = """
             INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description])
+            OUTPUT INSERTED.[Id], INSERTED.[Title], INSERTED.[Author], INSERTED.[Genre],
+                   INSERTED.[ISBN], INSERTED.[Description], INSERTED.[RowVersion] AS [ETag]
             VALUES (@Id, @Title, @Author, @Genre, @ISBN, @Description);
             """;
         var command = new CommandDefinition(sql, new
@@ -302,26 +320,20 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.ISBN,
             book.Description,
         }, Transaction, cancellationToken: ctk);
-        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+        var row = await Connection.QuerySingleAsync<BookRow>(command).ConfigureAwait(false);
+        return row.ToResponse();
     }
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
     public async Task<Book.V1.Output?> ReadBookAsync(
         Guid id,
-        bool forUpdate = false,
         CancellationToken ctk = default)
     {
-        const string sqlWithoutLock = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+        const string sql = """
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE [Id] = @Id;
             """;
-        const string sqlWithLock = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
-            FROM [dbo].[Book] WITH (UPDLOCK, HOLDLOCK)
-            WHERE [Id] = @Id;
-            """;
-        var sql = forUpdate ? sqlWithLock : sqlWithoutLock;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<BookRow>(command).ConfigureAwait(false);
         return row?.ToResponse();
@@ -337,7 +349,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [Genre] = @Genre,
                 [ISBN] = @ISBN,
                 [Description] = @Description
-            WHERE [Id] = @Id;
+            WHERE [Id] = @Id
+              AND [RowVersion] = TRY_CONVERT(VARBINARY(8), @ETag, 1);
             """;
         var command = new CommandDefinition(sql, new
         {
@@ -347,6 +360,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Genre,
             book.ISBN,
             book.Description,
+            book.ETag,
         }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
@@ -365,13 +379,14 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads a page of books in the current transaction.</summary>
     public async Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
-        const string sql = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+        var orderBy = _buildBookOrderBy(query.Sort ?? []);
+        var sql = $"""
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE (@Title IS NULL OR [Title] = @Title)
               AND (@Author IS NULL OR [Author] = @Author)
               AND (@Genre IS NULL OR [Genre] = @Genre)
-            ORDER BY [Id]
+            ORDER BY {orderBy}
             OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
             SELECT COUNT_BIG(*)
             FROM [dbo].[Book]
@@ -398,6 +413,74 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Limit = query.Limit,
             Data = rows.Select(row => row.ToResponse()).ToArray(),
         };
+    }
+
+    /// <summary>Saves a book review in the current transaction.</summary>
+    public async Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[BookReview] ([Id], [BookId], [UserId], [Rating], [Text], [CreatedAt])
+            VALUES (@Id, @BookId, @UserId, @Rating, @Text, @CreatedAt);
+            """;
+        var command = new CommandDefinition(sql, review, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads bounded reviews for a book in the current transaction.</summary>
+    public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
+        Guid bookId,
+        int skip,
+        int limit,
+        CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [UserId], [Rating], [Text], [CreatedAt]
+            FROM [dbo].[BookReview]
+            WHERE [BookId] = @BookId
+            ORDER BY [CreatedAt] DESC, [Id] DESC
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            """;
+        var command = new CommandDefinition(sql, new { BookId = bookId, Skip = skip, Limit = limit }, Transaction, cancellationToken: ctk);
+        var reviews = await Connection.QueryAsync<BookReview>(command).ConfigureAwait(false);
+        return reviews.ToArray();
+    }
+
+    /// <summary>Saves reading activity in the current transaction.</summary>
+    public async Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[ReadingActivity] ([Id], [BookId], [UserId], [Kind], [Progress], [OccurredAt])
+            VALUES (@Id, @BookId, @UserId, @Kind, @Progress, @OccurredAt);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            activity.Id,
+            activity.BookId,
+            activity.UserId,
+            activity.Kind,
+            activity.Progress,
+            activity.OccurredAt,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
+    public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+        Guid bookId,
+        string userId,
+        int limit,
+        CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [UserId], [Kind], [Progress], [OccurredAt]
+            FROM [dbo].[ReadingActivity]
+            WHERE [BookId] = @BookId AND [UserId] = @UserId
+            ORDER BY [OccurredAt] DESC, [Id] DESC
+            OFFSET 0 ROWS FETCH NEXT @Limit ROWS ONLY;
+            """;
+        var command = new CommandDefinition(sql, new { BookId = bookId, UserId = userId, Limit = limit }, Transaction, cancellationToken: ctk);
+        var activities = await Connection.QueryAsync<ReadingActivity>(command).ConfigureAwait(false);
+        return activities.ToArray();
     }
 
     /// <summary>Saves a book print process when no pending or running process exists for the book.</summary>
@@ -545,6 +628,38 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         return orderBy.Length == 0 ? "[Timestamp] DESC" : string.Join(", ", orderBy);
     }
 
+    private static string _buildBookOrderBy(IEnumerable<string> sorts)
+    {
+        var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [nameof(Book.V1.Output.Id)] = "[Id]",
+            [nameof(Book.V1.Output.Title)] = "[Title]",
+            [nameof(Book.V1.Output.Author)] = "[Author]",
+            [nameof(Book.V1.Output.Genre)] = "[Genre]",
+            [nameof(Book.V1.Output.ISBN)] = "[ISBN]",
+            [nameof(Book.V1.Output.Description)] = "[Description]",
+        };
+        var orderBy = sorts
+            .Where(sort => !string.IsNullOrWhiteSpace(sort))
+            .Select(sort =>
+            {
+                var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 2 || !columns.TryGetValue(parts[0], out var column))
+                    throw new ArgumentException($"Invalid book sort '{sort}'.", nameof(sorts));
+                var direction = parts.Length == 2
+                    ? parts[1].ToUpperInvariant() switch
+                    {
+                        "ASC" => " ASC",
+                        "DESC" => " DESC",
+                        _ => throw new ArgumentException($"Invalid book sort direction '{parts[1]}'.", nameof(sorts)),
+                    }
+                    : string.Empty;
+                return column + direction;
+            })
+            .ToArray();
+        return orderBy.Length == 0 ? "[Id]" : string.Join(", ", orderBy);
+    }
+
     private sealed class GreetingRow
     {
         public Guid Id { get; set; }
@@ -580,6 +695,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public EvolvableEnum<Book.V1.Genre> Genre { get; set; }
         public string? ISBN { get; set; }
         public string Description { get; set; } = string.Empty;
+        public byte[] ETag { get; set; } = [];
 
         public Book.V1.Output ToResponse()
         {
@@ -591,6 +707,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 Genre = Genre,
                 ISBN = ISBN,
                 Description = Description,
+                ETag = "0x" + Convert.ToHexString(ETag),
             };
         }
     }

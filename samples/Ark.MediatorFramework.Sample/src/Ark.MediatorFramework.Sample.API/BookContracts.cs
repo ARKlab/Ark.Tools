@@ -4,6 +4,8 @@
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
+using Ark.MediatorFramework.Sample.API.Authorization;
+
 namespace Ark.MediatorFramework.Sample.API;
 
 /// <summary>Defines the versioned book model.</summary>
@@ -65,6 +67,10 @@ public static class Book
             /// <summary>Gets the generated book description.</summary>
             [ServerSet]
             public string Description { get; init; } = string.Empty;
+
+            /// <summary>Gets the opaque concurrency token.</summary>
+            [ETag]
+            public string? ETag { get; init; }
         }
 
         /// <summary>Represents a page of books.</summary>
@@ -89,6 +95,7 @@ public static class Book
 public static class Book_CreateRequest
 {
     /// <summary>Version one of the book creation request.</summary>
+    [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1([property: HttpBody] Book.V1.Create Data) :
         IRequest<V1, Book.V1.Output>;
 }
@@ -97,15 +104,18 @@ public static class Book_CreateRequest
 public static class Book_UpdateRequest
 {
     /// <summary>Version one of the book update request.</summary>
+    [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1(
         [property: HttpBody] Book.V1.Input Data,
-        [property: HttpRoute] Guid Id) : IRequest<V1, Book.V1.Output>;
+        [property: HttpRoute] Guid Id,
+        [property: ETag] string? ETag = null) : IRequest<V1, Book.V1.Output>;
 }
 
 /// <summary>Deletes a book.</summary>
 public static class Book_DeleteRequest
 {
     /// <summary>Version one of the book deletion request.</summary>
+    [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1(Guid Id) : IRequest<V1, bool>;
 }
 
@@ -113,6 +123,7 @@ public static class Book_DeleteRequest
 public static class Book_GetQuery
 {
     /// <summary>Version one of the book query.</summary>
+    [RequireScopePolicy(ApplicationScopes.BookRead)]
     public sealed record V1(Guid Id) : IQuery<V1, Book.V1.Output>;
 }
 
@@ -120,7 +131,8 @@ public static class Book_GetQuery
 public static class Book_SearchQuery
 {
     /// <summary>Version one of the book search query.</summary>
-    public sealed record V1 : IQuery<V1, Book.V1.Page>
+    [RequireScopePolicy(ApplicationScopes.BookRead)]
+    public sealed record V1 : IQuery<V1, Book.V1.Page>, IQueryPaged
     {
         /// <summary>Gets the optional exact title filter.</summary>
         public string? Title { get; init; }
@@ -132,9 +144,12 @@ public static class Book_SearchQuery
         public EvolvableEnum<Book.V1.Genre>? Genre { get; init; }
 
         /// <summary>Gets the number of rows to skip.</summary>
-        public int Skip { get; init; }
+        public int Skip { get; set; }
 
         /// <summary>Gets the maximum number of rows to return.</summary>
         public int Limit { get; init; } = 25;
+
+        /// <summary>Gets the sort expressions applied to matching books.</summary>
+        public IEnumerable<string> Sort { get; init; } = [];
     }
 }
