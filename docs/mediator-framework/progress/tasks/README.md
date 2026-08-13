@@ -76,7 +76,7 @@ not stop at a contract, schema, host, or documentation change.
 | [BOOK-05](sample-book/BOOK-05-printing-rebus-vertical-slice.md) | Book printing process completion vertical slice | Complete |
 | [BOOK-06](sample-book/BOOK-06-reviews-reading-activity-vertical-slice.md) | Book reviews and reading activity vertical slice | Complete |
 | [BOOK-07](sample-book/BOOK-07-streaming-editions-transport.md) | Book streaming, editions, and transport parity vertical slice | Complete |
-| [BOOK-08](sample-book/BOOK-08-complete-book-migration.md) | Complete Book migration and Greeting removal | Pending |
+| [BOOK-08](sample-book/BOOK-08-complete-book-migration.md) | Complete Book migration and Greeting removal | Complete |
 
 ### ASP.NET Core
 
