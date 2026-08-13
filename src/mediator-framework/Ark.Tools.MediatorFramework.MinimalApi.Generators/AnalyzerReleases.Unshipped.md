@@ -8,6 +8,7 @@ Rule ID | Category | Severity | Notes
 ARKMF001 | Ark.MediatorFramework | Error | Multiple attachment properties
 ARKMF002 | Ark.MediatorFramework | Error | Server-set property cannot be reset
 ARKMF003 | Ark.MediatorFramework | Warning | Possible mass assignment
+ARKMF005 | Ark.MediatorFramework | Error | Unsupported attachment collection
 ARKMF010 | Ark.MediatorFramework | Error | Unsupported HTTP verb
 ARKMF011 | Ark.MediatorFramework | Error | Unsupported handler kind
 ARKMF012 | Ark.MediatorFramework | Error | Missing route property

@@ -16,6 +16,7 @@ attribute location:
 | ARKMF001 | Error | HTTP endpoint declares multiple attachments |
 | ARKMF002 | Error | HTTP server-set property cannot be reset |
 | ARKMF003 | Warning | HTTP property may allow mass assignment |
+| ARKMF005 | Error | HTTP attachment collection has an unsupported shape |
 | ARKMF004 | Error | Rebus owner queue is invalid |
 | ARKMF010 | Error | HTTP endpoint uses an unsupported verb |
 | ARKMF011 | Error | Attributed type does not implement a supported handler interface |
@@ -23,6 +24,7 @@ attribute location:
 | ARKMF013 | Error | HTTP body or multipart contract is not a record with settable properties |
 | ARKMF014 | Error | Rebus contract is registered more than once |
 | ARKMF015 | Error | Rebus contract has conflicting owner queues |
+| ARKMF016 | Error | HTTP endpoints have duplicate operation names |
 | ARKMF017 | Error | HTTP endpoint has an invalid ETag property |
 | ARKMF018 | Error | HTTP endpoint declares duplicate ETag properties |
 | ARKMF019 | Error | Rebus response uses unsupported streaming |
@@ -33,6 +35,7 @@ attribute location:
 | ARKAPI001 | Error | API surface baseline is missing |
 | ARKAPI002 | Error | API surface contract changed |
 | ARKAPI003 | Error | Multiple API surface baselines were found |
+| ARKAPI004 | Error | API surface baseline contains a malformed line |
 
 ### Custom Ark.Tools analyzers
 

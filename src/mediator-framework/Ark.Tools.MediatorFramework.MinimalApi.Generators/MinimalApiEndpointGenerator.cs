@@ -49,7 +49,7 @@ namespace Ark.MediatorFramework.Generators
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor UnsupportedAttachmentCollection = new DiagnosticDescriptor(
-            "ARKMF017",
+            "ARKMF005",
             "Unsupported attachment collection",
             "HTTP endpoint '{0}' has attachment collection property '{1}' with an unsupported shape",
             "Ark.MediatorFramework",

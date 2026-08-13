@@ -51,7 +51,8 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
             compilation is CSharpCompilation csharpCompilation
-            && (int)LanguageVersionFacts.MapSpecifiedToEffectiveVersion(csharpCompilation.LanguageVersion) >= 1400);
+            && LanguageVersionFacts.MapSpecifiedToEffectiveVersion(csharpCompilation.LanguageVersion)
+                >= LanguageVersionFacts.CSharpNext);
 
         var interceptorsEnabled = context.AnalyzerConfigOptionsProvider
             .Select(static (options, _) =>
@@ -288,7 +289,14 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
     private static void _emitInterceptorMethod(StringBuilder sb, TypeModel type, CallSiteModel[] sites, int methodIndex)
     {
-        foreach (var site in sites)
+        var uniqueSites = sites
+            .GroupBy(static site => (site.Location.Version, site.Location.Data))
+            .Select(static group => group.First())
+            .OrderBy(static site => site.Location.Version)
+            .ThenBy(static site => site.Location.Data, StringComparer.Ordinal)
+            .ToArray();
+
+        foreach (var site in uniqueSites)
         {
             sb.Append("        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(")
               .Append(site.Location.Version)

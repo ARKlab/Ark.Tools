@@ -48,12 +48,40 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    private static readonly DiagnosticDescriptor MalformedSnapshot = new(
+        "ARKAPI004",
+        "Malformed API surface snapshot",
+        "ArkApiSurface.txt contains an invalid snapshot line: '{0}'.",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var surfaceProvider = context.CompilationProvider
-            .Select(static (compilation, cancellationToken) =>
-                BuildSurface(compilation, cancellationToken));
+        var httpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Http,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var grpcTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Grpc,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var rebusTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Rebus,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
+            .Select(static (pair, _) =>
+            {
+                var ((http, grpc), rebus) = pair;
+                return http.AddRange(grpc).AddRange(rebus);
+            });
+        var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
+            BuildSurface(types, cancellationToken));
 
         // Emit the .g.cs snapshot file (unchanged behaviour)
         context.RegisterSourceOutput(surfaceProvider, static (spc, surface) =>
@@ -104,7 +132,17 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 }
 
                 var baselineText = baselineFiles[0].GetText(spc.CancellationToken)?.ToString() ?? string.Empty;
-                var baselineSet = ParseSnapshotLines(baselineText);
+                var parsedBaseline = ParseSnapshotLines(baselineText);
+                if (!parsedBaseline.IsValid)
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        MalformedSnapshot,
+                        Location.None,
+                        parsedBaseline.InvalidLine));
+                    return;
+                }
+
+                var baselineSet = parsedBaseline.Lines;
                 var currentSet = new HashSet<string>(currentLines, StringComparer.Ordinal);
 
                 var changedOwners = new SortedSet<string>(StringComparer.Ordinal);
@@ -122,13 +160,16 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     // Builds the sorted, deduplicated surface lines and a contract-name → Location index.
     private static (ImmutableArray<string> Lines, ImmutableDictionary<string, Location> Locations) BuildSurface(
-        Compilation compilation,
+        ImmutableArray<INamedTypeSymbol> contractTypes,
         CancellationToken cancellationToken)
     {
         var lines = new List<string>();
         var locBuilder = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
 
-        foreach (var type in AllTypes(compilation.Assembly.GlobalNamespace))
+        foreach (var type in contractTypes
+            .GroupBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
+            .Select(static group => group.First())
+            .OrderBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
             // ponytail: MinimallyQualifiedFormat == Name for non-generic non-nested types; generic
@@ -146,13 +187,22 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         return (ordered, locBuilder.ToImmutable());
     }
 
-    private static HashSet<string> ParseSnapshotLines(string text) =>
-        new(
-            text.TrimStart('\ufeff')
-                .Split('\n')
-                .Select(static l => l.TrimEnd('\r'))
-                .Where(static l => l.Length > 0 && l != "/*" && l != "*/"),
-            StringComparer.Ordinal);
+    private static SnapshotParseResult ParseSnapshotLines(string text)
+    {
+        var lines = text.TrimStart('\ufeff')
+            .Split('\n')
+            .Select(static l => l.TrimEnd('\r'))
+            .Where(static l => l.Length > 0 && l != "/*" && l != "*/")
+            .ToImmutableArray();
+        var invalidLine = lines.FirstOrDefault(static line =>
+            !line.StartsWith("CONTRACT ", StringComparison.Ordinal)
+            && !line.StartsWith("REBUS ", StringComparison.Ordinal)
+            && !line.StartsWith("ENUM ", StringComparison.Ordinal)
+            && !line.StartsWith("EVOLVABLE-ENUM ", StringComparison.Ordinal));
+        return invalidLine is null
+            ? new SnapshotParseResult(new HashSet<string>(lines, StringComparer.Ordinal), true, string.Empty)
+            : new SnapshotParseResult(new HashSet<string>(StringComparer.Ordinal), false, invalidLine);
+    }
 
     // Extracts the contract owner name from a snapshot line.
     // "CONTRACT Foo -> ..."   → "Foo"
@@ -383,6 +433,15 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             || declaration.Initializer is null)
             return string.Empty;
 
-        return $" default={declaration.Initializer.Value}";
+        var value = declaration.Initializer.Value.NormalizeWhitespace().ToFullString()
+            .Replace("\r", "\\r")
+            .Replace("\n", "\\n")
+            .Replace("*/", "* /");
+        return $" default={value}";
     }
+
+    private readonly record struct SnapshotParseResult(
+        HashSet<string> Lines,
+        bool IsValid,
+        string InvalidLine);
 }
