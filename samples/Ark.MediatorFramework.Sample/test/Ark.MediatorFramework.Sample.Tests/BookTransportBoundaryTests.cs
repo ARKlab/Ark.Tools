@@ -8,13 +8,17 @@ using Ark.Tools.Outbox;
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 using Rebus.Transport.InMem;
 
+using SimpleInjector.Lifestyles;
+
 using System.Reflection;
+using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
@@ -32,10 +36,21 @@ public sealed class BookTransportBoundaryTests
             network,
             useSqlStore: false,
             dataContextFactory: dataContextFactory);
+        var httpContextAccessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                    [new Claim("scope", ApplicationScopes.BookRead)],
+                    "boundary-test")),
+            },
+        };
+        container.RegisterInstance<IHttpContextAccessor>(httpContextAccessor);
 
         try
         {
             container.Verify();
+            await using var scope = AsyncScopedLifestyle.BeginScope(container);
             var generatedEndpointsType = typeof(SampleHost).Assembly.GetType(
                 "Ark.MediatorFramework.Generated.ArkGeneratedEndpoints")
                 ?? throw new InvalidOperationException("Generated gRPC endpoint type was not found.");
@@ -115,7 +130,9 @@ public sealed class BookTransportBoundaryTests
             .Select(endpoint => endpoint.RoutePattern.RawText)
             .ToArray();
 
-        routes.Should().Contain("/api/v{version}/books/stream");
-        routes.Should().Contain("/api/v{version}/books/editions/describe");
+        routes.Should().Contain("/api/v1/books/stream");
+        routes.Should().Contain("/api/v2/books/stream");
+        routes.Should().Contain("/api/v1/books/editions/describe");
+        routes.Should().Contain("/api/v2/books/editions/describe");
     }
 }

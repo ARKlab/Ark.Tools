@@ -289,22 +289,22 @@ Feature: Books
     Rule: Book streaming and editions use transport-neutral contracts
 
         Scenario: Stream bounded Book items with cancellation
-            Given I am an authenticated user
+            Given I am an authenticated user with the book read scope
             When I consume a Book stream and cancel after two items
             Then the Book stream contains 2 items
             And the Book stream was cancelled
 
         Scenario: Reject a Book stream above its bound
-            Given I am an authenticated user
+            Given I am an authenticated user with the book read scope
             When I request a Book stream above the bound
             Then the Book stream request fails because its count is out of range
 
         Scenario: Describe a printed Book edition
-            Given I am an authenticated user
+            Given I am an authenticated user with the book read scope
             When I describe a printed Book edition
             Then the Book edition description is "Paperback print edition with 320 pages"
 
         Scenario: Describe a digital Book edition
-            Given I am an authenticated user
+            Given I am an authenticated user with the book read scope
             When I describe a digital Book edition
             Then the Book edition description is "EPUB digital edition with 1048576 bytes"
