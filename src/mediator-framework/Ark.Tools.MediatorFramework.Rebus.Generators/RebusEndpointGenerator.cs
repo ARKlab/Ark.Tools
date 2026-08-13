@@ -450,20 +450,23 @@ namespace Ark.MediatorFramework.Generators
                 foreach (var e in items)
                 {
                     spc.CancellationToken.ThrowIfCancellationRequested();
-                    var handlerService = e.IsCommand
-                        ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
-                        : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                    var processorService = e.IsCommand
+                        ? "global::Ark.Tools.Solid.ICommandProcessor"
+                        : "global::Ark.Tools.Solid.IRequestProcessor";
                     sb.AppendLine();
                     sb.AppendLine("        /// <summary>Generated Rebus wrapper dispatching to the pure handler for <c>" + e.TypeName + "</c>.</summary>");
                     sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.Rebus.Generators\", \"1.0.0\")]");
                     sb.AppendLine("        public sealed class " + e.TypeName + "RebusHandler : global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">");
                     sb.AppendLine("        {");
-                    sb.AppendLine("            private readonly " + handlerService + " _handler;");
+                    sb.AppendLine("            private readonly " + processorService + " _processor;");
                     sb.AppendLine("            /// <summary>Initializes a new instance.</summary>");
-                    sb.AppendLine("            public " + e.TypeName + "RebusHandler(" + handlerService + " handler) { _handler = handler; }");
+                    sb.AppendLine("            public " + e.TypeName + "RebusHandler(" + processorService + " processor) { _processor = processor; }");
                     sb.AppendLine("            /// <inheritdoc />");
                     sb.AppendLine("            public async global::System.Threading.Tasks.Task Handle(" + e.TypeFullName + " message)");
-                    sb.AppendLine("                => await _handler.ExecuteAsync(message, global::Rebus.Extensions.MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)).ConfigureAwait(false);");
+                    var dispatch = e.IsCommand
+                        ? "_processor.ExecuteAsync<" + e.TypeFullName + ">(message, "
+                        : "_processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(message, ";
+                    sb.AppendLine("                => await " + dispatch + "global::Rebus.Extensions.MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)).ConfigureAwait(false);");
                     sb.AppendLine("        }");
                 }
             }

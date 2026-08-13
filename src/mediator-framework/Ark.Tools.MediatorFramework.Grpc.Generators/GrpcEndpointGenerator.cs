@@ -490,6 +490,11 @@ namespace Ark.MediatorFramework.Generators
                                 : e.Kind == HandlerKind.Command
                                     ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
                                     : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                            var processorService = e.Kind == HandlerKind.Query
+                                ? "global::Ark.Tools.Solid.IQueryProcessor"
+                                : e.Kind == HandlerKind.Command
+                                    ? "global::Ark.Tools.Solid.ICommandProcessor"
+                                    : "global::Ark.Tools.Solid.IRequestProcessor";
                             sb.AppendLine("            /// <inheritdoc />");
                             if (e.AttachmentRequest != AttachmentRequestKind.None)
                             {
@@ -502,20 +507,20 @@ namespace Ark.MediatorFramework.Generators
                             else
                                 sb.AppendLine("            public async global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
                             sb.AppendLine("            {");
-                            sb.AppendLine("                var handler = _container.GetInstance<" + handlerService + ">();");
+                            sb.AppendLine("                var processor = _container.GetInstance<" + processorService + ">();");
                             if (e.AttachmentRequest != AttachmentRequestKind.None)
                             {
                                 var attachmentValue = e.AttachmentRequest == AttachmentRequestKind.Collection
                                     ? "await global::Ark.MediatorFramework.StreamingArkAttachments.ReadAllAsync(chunks, context.CancellationToken).ConfigureAwait(false)"
                                     : "new global::Ark.MediatorFramework.StreamingArkAttachment(chunks)";
                                 sb.AppendLine("                var request = new " + e.TypeFullName + " { " + e.AttachmentPropertyName + " = " + attachmentValue + " };");
-                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, context.CancellationToken).ConfigureAwait(false);");
                                 AppendNotFoundGuard(sb);
                                 sb.AppendLine("                return result;");
                             }
                             else if (e.AttachmentResponse)
                             {
-                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, context.CancellationToken).ConfigureAwait(false);");
                                 sb.AppendLine("                if (result is null)");
                                 sb.AppendLine("                    yield break;");
                                 sb.AppendLine("                yield return new global::Ark.MediatorFramework.DownloadDocumentChunk { Metadata = new global::Ark.MediatorFramework.DownloadDocumentMetadata { Name = global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name), ContentType = result.ContentType } };");
@@ -527,18 +532,18 @@ namespace Ark.MediatorFramework.Generators
                             }
                             else if (e.IsStreaming)
                             {
-                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, context.CancellationToken).ConfigureAwait(false);");
                                 sb.AppendLine("                await foreach (var item in result.WithCancellation(context.CancellationToken).ConfigureAwait(false))");
                                 sb.AppendLine("                    yield return item;");
                             }
                             else if (e.Kind == HandlerKind.Command)
                             {
-                                sb.AppendLine("                await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                await processor.ExecuteAsync<" + e.TypeFullName + ">(request, context.CancellationToken).ConfigureAwait(false);");
                                 sb.AppendLine("                return new global::Google.Protobuf.WellKnownTypes.Empty();");
                             }
                             else
                             {
-                                sb.AppendLine("                var result = await handler.ExecuteAsync(request, context.CancellationToken).ConfigureAwait(false);");
+                                sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, context.CancellationToken).ConfigureAwait(false);");
                                 AppendNotFoundGuard(sb);
                                 sb.AppendLine("                return result;");
                             }
