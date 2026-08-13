@@ -15,8 +15,6 @@ CONTRACT CreateBookReviewRequest.Rating : int
 CONTRACT CreateBookReviewRequest.Text : string default=string.Empty
 CONTRACT DescribeBookEditionRequest -> BookEditionDescription [group=Ark] [grpc-group=Books] [http=POST /api/v{version}/books/editions/describe] [version=1+] [grpc=DescribeBookEdition] [grpc-version=1+]
 CONTRACT DescribeBookEditionRequest.Edition.Kind : BookEditionKind
-CONTRACT DescribeShapeRequest -> ShapeDescription [group=Ark] [grpc-group=Shapes] [http=POST /api/v{version}/shapes/describe] [version=1+] [grpc=DescribeShape] [grpc-version=1+]
-CONTRACT DescribeShapeRequest.Shape.Kind : ShapeKind
 CONTRACT DownloadBookCoverQuery -> IArkAttachment [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/{id}/cover] [version=1+] [grpc=DownloadBookCover] [grpc-version=1+]
 CONTRACT DownloadBookCoverQuery.Id : Guid
 CONTRACT GetAuditsQuery -> PagedResult<AuditRecord> [group=Ark] [http=GET /api/v{version}/audits] [version=1+]
@@ -52,11 +50,6 @@ CONTRACT RecordReadingActivityRequest -> ReadingActivity [group=Ark] [http=POST 
 CONTRACT RecordReadingActivityRequest.BookId : Guid
 CONTRACT RecordReadingActivityRequest.Kind : EvolvableEnum<ReadingActivityKind>
 CONTRACT RecordReadingActivityRequest.Progress : int
-CONTRACT ShapeDescription
-CONTRACT ShapeDescription.Area : double
-CONTRACT ShapeDescription.Metadata.FeaturedShape.Kind : ShapeKind
-CONTRACT ShapeDescription.Metadata.Label : string
-CONTRACT ShapeDescription.Shape.Kind : ShapeKind
 CONTRACT StreamBooksQuery -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
 CONTRACT StreamBooksQuery.Count : int
 CONTRACT StreamBooksQuery.DelayMilliseconds : int
@@ -70,8 +63,6 @@ CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
 ENUM BookEditionKind.Digital=1
 ENUM BookEditionKind.Print=0
-ENUM ShapeKind.Circle=0
-ENUM ShapeKind.Square=1
 EVOLVABLE-ENUM ReadingActivityKind.Finished=3
 EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
 EVOLVABLE-ENUM ReadingActivityKind.Progressed=2

@@ -30,34 +30,3 @@ public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult
         return result;
     }
 }
-
-/// <summary>Describes a polymorphic shape without transport-specific logic.</summary>
-public sealed class DescribeShapeHandler : IRequestHandler<DescribeShapeRequest, ShapeDescription>
-{
-    /// <inheritdoc />
-    public async Task<ShapeDescription> ExecuteAsync(
-        DescribeShapeRequest request,
-        CancellationToken ctk = default)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        await Task.CompletedTask.ConfigureAwait(false);
-
-        var area = request.Shape switch
-        {
-            Circle circle => Math.PI * circle.Radius * circle.Radius,
-            Square square => square.Side * square.Side,
-            _ => throw new NotSupportedException($"Unknown shape '{request.Shape.GetType().Name}'."),
-        };
-
-        return new ShapeDescription
-        {
-            Shape = request.Shape,
-            Area = area,
-            Metadata = new ShapeEnvelope
-            {
-                Label = "nested",
-                FeaturedShape = request.Shape,
-            },
-        };
-    }
-}

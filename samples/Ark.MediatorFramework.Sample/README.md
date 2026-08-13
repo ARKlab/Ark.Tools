@@ -92,7 +92,7 @@ Ark.MediatorFramework.Sample/
 
 `Ark.MediatorFramework.Sample.API` is the only assembly intended for API
 consumers. It contains public contracts such as `Book_CreateRequest`, `GetAuditsQuery`,
-and `DescribeShapeRequest`.
+and `DescribeBookEditionRequest`.
 
 `Ark.MediatorFramework.Sample.Application` contains behavior and internal
 workflow messages such as `ProcessBookPrintProcessRequest` and
@@ -118,12 +118,6 @@ worker's topology or dead-letter demonstration types.
 Every decorated request writes an audit record in the same application-owned
 transaction as the business change. `GetAuditsQuery` supports filters, paging,
 and a safe sort allow-list.
-
-### Shapes and serialization
-
-`DescribeShapeRequest` sends a polymorphic `Shape` and returns its computed area.
-The same hierarchy demonstrates JSON discriminators, protobuf includes, and
-MessagePack unions.
 
 ## Run the sample
 

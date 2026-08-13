@@ -212,10 +212,6 @@ public sealed class SampleStartup
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)
-            .AddArkPolymorphism<Shape, ShapeKind>(
-                "kind",
-                (ShapeKind.Circle, typeof(Circle)),
-                (ShapeKind.Square, typeof(Square)))
             .AddArkPolymorphism<BookEdition, BookEditionKind>(
                 "kind",
                 (BookEditionKind.Print, typeof(PrintBookEdition)),

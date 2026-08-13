@@ -201,7 +201,6 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>, GetReadingActivityHandler>();
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>, StreamBooksHandler>();
-        container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
         container.Register<IRequestHandler<DescribeBookEditionRequest, BookEditionDescription>, DescribeBookEditionHandler>();
         container.Register<IRequestHandler<UploadBookCoverRequest, UploadResponse>, UploadBookCoverHandler>();
         container.Register<IQueryHandler<DownloadBookCoverQuery, IArkAttachment>, DownloadBookCoverHandler>();

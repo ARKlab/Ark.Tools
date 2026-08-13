@@ -36,12 +36,6 @@ namespace Ark.MediatorFramework.Sample.API.JsonContext;
         typeof(ZonedDateTimeRangeConverter),
     })]
 [JsonSerializable(typeof(UploadResponse))]
-[JsonSerializable(typeof(DescribeShapeRequest))]
-[JsonSerializable(typeof(ShapeDescription))]
-[JsonSerializable(typeof(ShapeEnvelope))]
-[JsonSerializable(typeof(Shape))]
-[JsonSerializable(typeof(Circle))]
-[JsonSerializable(typeof(Square))]
 [JsonSerializable(typeof(GetAuditsQuery))]
 [JsonSerializable(typeof(AuditRecord))]
 [JsonSerializable(typeof(PagedResult<AuditRecord>))]
