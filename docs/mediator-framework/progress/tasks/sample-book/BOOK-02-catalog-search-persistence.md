@@ -25,8 +25,8 @@ feature.
 
 ## Acceptance
 
-- [ ] Search contract is implemented, documented, and wired to a handler.
-- [ ] BDD covers search success and bounded paging behavior.
-- [ ] SQL and in-memory persistence tests pass.
-- [ ] Reset/cleanup leaves subsequent scenarios isolated.
-- [ ] Sample build and affected tests pass.
+- [x] Search contract is implemented, documented, and wired to a handler.
+- [x] BDD covers search success and bounded paging behavior.
+- [x] SQL and in-memory persistence tests pass.
+- [x] Reset/cleanup leaves subsequent scenarios isolated.
+- [x] Sample build and affected tests pass.
