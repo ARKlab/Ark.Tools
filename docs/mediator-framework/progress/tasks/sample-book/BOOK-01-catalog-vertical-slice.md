@@ -29,8 +29,8 @@ persistence seam. Do not add future child entities in this increment.
 
 ## Acceptance
 
-- [ ] At least one new public Book contract is implemented and documented.
-- [ ] Each new contract is wired to an Application handler.
-- [ ] Reqnroll dispatches the contract and asserts the result.
-- [ ] Sample build and affected tests pass.
-- [ ] No unimplemented public contract is added.
+- [x] At least one new public Book contract is implemented and documented.
+- [x] Each new contract is wired to an Application handler.
+- [x] Reqnroll dispatches the contract and asserts the result.
+- [x] Sample build and affected tests pass.
+- [x] No unimplemented public contract is added.

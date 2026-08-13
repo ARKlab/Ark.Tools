@@ -2,9 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Tests.Drivers;
+using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Ark.Tools.Authorization;
 using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Reqnroll;
 
 using AwesomeAssertions;
@@ -32,13 +34,17 @@ public sealed record BookCoverTable
 public sealed class BookSteps
 {
     private readonly BookDriver _books;
+    private readonly SampleTestContext _sampleContext;
     private Exception? _exception;
+    private string? _previousETag;
 
     /// <summary>Initializes a new instance of the <see cref="BookSteps"/> class.</summary>
     /// <param name="books">The scenario-owned book driver.</param>
-    public BookSteps(BookDriver books)
+    /// <param name="sampleContext">The scenario-owned application context.</param>
+    public BookSteps(BookDriver books, SampleTestContext sampleContext)
     {
         _books = books;
+        _sampleContext = sampleContext;
     }
 
     /// <summary>Creates and activates a book from one table row.</summary>
@@ -47,13 +53,15 @@ public sealed class BookSteps
     public async Task GivenCreateBook(Table table)
     {
         await CreateBook(table).ConfigureAwait(false);
+        _exception.Should().BeNull();
         _books.Current.Should().NotBeNull();
     }
 
     [When("I create a book with")]
     public async Task CreateBook(Table table)
     {
-        await _books.CreateAsync(table.CreateInstance<Book.V1.Create>()).ConfigureAwait(false);
+        _exception = await _captureAsync(() => _books.CreateAsync(table.CreateInstance<Book.V1.Create>()))
+            .ConfigureAwait(false);
     }
 
     /// <summary>Creates books from a table and activates the last created book.</summary>
@@ -85,26 +93,82 @@ public sealed class BookSteps
     public async Task UpdateCurrentBook(Table table)
     {
         var merged = table.MergeInstance(_books.Current);
-        await _books.UpdateCurrentAsync(new Book.V1.Input
+        _previousETag = _books.Current.ETag;
+        _exception = await _captureAsync(() => _books.UpdateCurrentAsync(new Book.V1.Input
         {
             Title = merged.Title,
             Author = merged.Author,
             Genre = merged.Genre,
-        }).ConfigureAwait(false);
+        })).ConfigureAwait(false);
+    }
+
+    /// <summary>Attempts to update the active book using its previous ETag.</summary>
+    /// <param name="table">The replacement book data.</param>
+    [When("I update the current book with a stale ETag and")]
+    public async Task UpdateCurrentBookWithStaleETag(Table table)
+    {
+        var merged = table.MergeInstance(_books.Current);
+        _exception = await _captureAsync(() => _books.UpdateCurrentAsync(new Book.V1.Input
+        {
+            Title = merged.Title,
+            Author = merged.Author,
+            Genre = merged.Genre,
+        }, _previousETag)).ConfigureAwait(false);
     }
 
     /// <summary>Deletes the active book.</summary>
     [When("I delete the current book")]
     public async Task DeleteCurrentBook()
     {
-        await _books.DeleteCurrentAsync().ConfigureAwait(false);
+        _exception = await _captureAsync(() => _books.DeleteCurrentAsync()).ConfigureAwait(false);
     }
 
     /// <summary>Asserts that the active book was deleted successfully.</summary>
     [Then("the current book was deleted")]
     public void CurrentBookWasDeleted()
     {
+        _exception.Should().BeNull();
         _books.HasCurrent.Should().BeFalse();
+    }
+
+    /// <summary>Asserts that the active book has a refreshed opaque ETag.</summary>
+    [Then("the current book has a refreshed opaque ETag")]
+    public void CurrentBookHasRefreshedOpaqueETag()
+    {
+        _books.Current.ETag.Should().NotBeNullOrWhiteSpace();
+        _books.Current.ETag.Should().NotBe(_previousETag);
+    }
+
+    /// <summary>Asserts that a book request failed validation.</summary>
+    [Then("the book request fails validation")]
+    public void BookRequestFailsValidation()
+    {
+        _exception.Should().BeOfType<FluentValidation.ValidationException>();
+    }
+
+    /// <summary>Asserts that a book request failed because its ETag was stale.</summary>
+    [Then("the book request fails because the book ETag is stale")]
+    public void BookRequestFailsBecauseETagIsStale()
+    {
+        _exception.Should().BeOfType<EntityTagMismatchException>();
+    }
+
+    /// <summary>Asserts that a book request failed because authorization was denied.</summary>
+    [Then("the book request fails with an authorization exception")]
+    public void BookRequestFailsWithAuthorizationException()
+    {
+        _exception.Should().BeOfType<PolicyAuthorizationException>();
+    }
+
+    /// <summary>Asserts that a mutation wrote a deterministic book audit record.</summary>
+    /// <param name="operation">The expected operation name.</param>
+    [Then(@"the current book has a deterministic audit for ""(.*)""")]
+    public async Task CurrentBookHasDeterministicAudit(string operation)
+    {
+        var audits = await _books.ReadCurrentAuditsAsync().ConfigureAwait(false);
+        var audit = audits.Data.Single(record => record.Operation == operation);
+        audit.UserId.Should().Be("application-test-user");
+        audit.EntityType.Should().Be(nameof(Book.V1.Output));
     }
 
     /// <summary>Searches books using the supplied table filters.</summary>
@@ -113,6 +177,18 @@ public sealed class BookSteps
     public async Task SearchBooks(Table table)
     {
         await _books.SearchAsync(table.CreateInstance<Book_SearchQuery.V1>()).ConfigureAwait(false);
+    }
+
+    /// <summary>Searches books by title in ascending order using the supplied page.</summary>
+    /// <param name="table">The search page data.</param>
+    [When("I search books by title ascending with")]
+    public async Task SearchBooksByTitleAscending(Table table)
+    {
+        var query = table.CreateInstance<Book_SearchQuery.V1>() with
+        {
+            Sort = [nameof(Book.V1.Output.Title) + " ASC"],
+        };
+        await _books.SearchAsync(query).ConfigureAwait(false);
     }
 
     /// <summary>Uploads a cover for the active book.</summary>
@@ -207,6 +283,19 @@ public sealed class BookSteps
         table.CompareToSet(_books.SearchResults!.Data);
     }
 
+    /// <summary>Asserts the returned book page boundaries.</summary>
+    /// <param name="skip">The expected offset.</param>
+    /// <param name="limit">The expected page size.</param>
+    /// <param name="count">The expected number of returned books.</param>
+    [Then(@"the book search page has skip (.*), limit (.*), and (.*) results")]
+    public void BookSearchPageHas(int skip, int limit, int count)
+    {
+        _books.SearchResults.Should().NotBeNull();
+        _books.SearchResults!.Skip.Should().Be(skip);
+        _books.SearchResults.Limit.Should().Be(limit);
+        _books.SearchResults.Data.Should().HaveCount(count);
+    }
+
     /// <summary>Asserts that the active book's audit matches the supplied table.</summary>
     /// <param name="table">The expected audit data.</param>
     [Then("the current book audit is")]
@@ -214,6 +303,84 @@ public sealed class BookSteps
     {
         var audits = await _books.ReadCurrentAuditsAsync().ConfigureAwait(false);
         table.CompareToInstance(audits.Data.Single());
+    }
+
+    /// <summary>Creates a review for the active book.</summary>
+    [When("I create a book review with")]
+    public async Task CreateBookReview(Table table)
+    {
+        var values = table.Rows.Single();
+        var rating = int.Parse(values["Rating"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.CreateReviewAsync(rating, values["Text"]))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that a review was created.</summary>
+    [Then("the book review was created")]
+    public void BookReviewWasCreated()
+    {
+        _exception.Should().BeNull();
+        _books.CurrentReview.Should().NotBeNull();
+    }
+
+    /// <summary>Lists reviews for the active book.</summary>
+    [When("I list book reviews with")]
+    public async Task ListBookReviews(Table table)
+    {
+        var values = table.Rows.Single();
+        var skip = int.Parse(values["Skip"], CultureInfo.InvariantCulture);
+        var limit = int.Parse(values["Limit"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.ListReviewsAsync(skip, limit))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts the number of listed reviews.</summary>
+    [Then(@"the book review list has (.*) results")]
+    public void BookReviewListHasResults(int count)
+    {
+        _exception.Should().BeNull();
+        _books.Reviews.Should().NotBeNull();
+        _books.Reviews.Should().HaveCount(count);
+    }
+
+    /// <summary>Records reading activity for the active book.</summary>
+    [When("I record reading activity with")]
+    public async Task RecordReadingActivity(Table table)
+    {
+        var values = table.Rows.Single();
+        var kind = Enum.Parse<ReadingActivityKind>(values["Kind"], ignoreCase: true);
+        var progress = int.Parse(values["Progress"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.RecordActivityAsync(kind, progress))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that activity was recorded using the scenario clock.</summary>
+    [Then("the reading activity was recorded at the repository time")]
+    public void ReadingActivityWasRecordedAtRepositoryTime()
+    {
+        _exception.Should().BeNull();
+        _books.CurrentActivity.Should().NotBeNull();
+        _books.CurrentActivity!.OccurredAt.Should().Be(
+            _sampleContext.Application.Clock.GetCurrentInstant());
+    }
+
+    /// <summary>Reads recent activity for the active book.</summary>
+    [When("I list reading activity with")]
+    public async Task ListReadingActivity(Table table)
+    {
+        var values = table.Rows.Single();
+        var limit = int.Parse(values["Limit"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.ReadActivitiesAsync(limit))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts the bounded activity result.</summary>
+    [Then(@"the reading activity list has at most (.*) results")]
+    public void ReadingActivityListHasAtMostResults(int count)
+    {
+        _exception.Should().BeNull();
+        _books.Activities.Should().NotBeNull();
+        _books.Activities!.Count.Should().BeLessThanOrEqualTo(count);
     }
 
     private static ArkAttachment _createAttachment(BookCoverTable cover)

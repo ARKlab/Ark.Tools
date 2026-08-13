@@ -11,8 +11,26 @@ public static class ApplicationScopes
     /// <summary>Allows creating and updating greetings.</summary>
     public const string GreetingWrite = "greetings.write";
 
+    /// <summary>Allows reading books.</summary>
+    public const string BookRead = "books.read";
+
+    /// <summary>Allows creating, updating, and deleting books.</summary>
+    public const string BookWrite = "books.write";
+
     /// <summary>Allows reading and writing book covers.</summary>
     public const string BookCover = "books.cover";
+
+    /// <summary>Allows reading book reviews and reading activity.</summary>
+    public const string BookReviewsRead = "books.reviews.read";
+
+    /// <summary>Allows writing book reviews.</summary>
+    public const string BookReviewsWrite = "books.reviews.write";
+
+    /// <summary>Allows reading book reading activity.</summary>
+    public const string BookActivityRead = "books.activity.read";
+
+    /// <summary>Allows recording book reading activity.</summary>
+    public const string BookActivityWrite = "books.activity.write";
 }
 
 /// <summary>Requires a scope claim.</summary>

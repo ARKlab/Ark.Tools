@@ -31,6 +31,18 @@ public sealed class BookDriver
     /// <summary>Gets the downloaded cover.</summary>
     public IArkAttachment? Cover { get; private set; }
 
+    /// <summary>Gets the latest created review.</summary>
+    public BookReview? CurrentReview { get; private set; }
+
+    /// <summary>Gets the latest review list.</summary>
+    public IReadOnlyList<BookReview>? Reviews { get; private set; }
+
+    /// <summary>Gets the latest recorded reading activity.</summary>
+    public ReadingActivity? CurrentActivity { get; private set; }
+
+    /// <summary>Gets the latest reading activity list.</summary>
+    public IReadOnlyList<ReadingActivity>? Activities { get; private set; }
+
     /// <summary>Gets whether the scenario has an active book.</summary>
     public bool HasCurrent => _current is not null;
 
@@ -56,11 +68,12 @@ public sealed class BookDriver
 
     /// <summary>Updates the active book.</summary>
     /// <param name="input">The replacement book details.</param>
+    /// <param name="eTag">The optional ETag precondition.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task UpdateCurrentAsync(Book.V1.Input input, CancellationToken ctk = default)
+    public async Task UpdateCurrentAsync(Book.V1.Input input, string? eTag = null, CancellationToken ctk = default)
     {
         _current = await _context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
-            new Book_UpdateRequest.V1(input, Current.Id),
+            new Book_UpdateRequest.V1(input, Current.Id, eTag ?? Current.ETag),
             ctk).ConfigureAwait(false);
     }
 
@@ -103,6 +116,60 @@ public sealed class BookDriver
     {
         Cover = await _context.DispatchQueryAsync<DownloadBookCoverQuery, IArkAttachment>(
             new DownloadBookCoverQuery { Id = Current.Id },
+            ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Creates a review for the active book.</summary>
+    public async Task CreateReviewAsync(int rating, string text, CancellationToken ctk = default)
+    {
+        CurrentReview = await _context.DispatchRequestAsync<CreateBookReviewRequest, BookReview>(
+            new CreateBookReviewRequest
+            {
+                BookId = Current.Id,
+                Rating = rating,
+                Text = text,
+            },
+            ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Lists reviews for the active book.</summary>
+    public async Task ListReviewsAsync(int skip = 0, int limit = 25, CancellationToken ctk = default)
+    {
+        Reviews = await _context.DispatchQueryAsync<ListBookReviewsQuery, IReadOnlyList<BookReview>>(
+            new ListBookReviewsQuery
+            {
+                BookId = Current.Id,
+                Skip = skip,
+                Limit = limit,
+            },
+            ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Records reading activity for the active book.</summary>
+    public async Task RecordActivityAsync(
+        ReadingActivityKind kind,
+        int progress,
+        CancellationToken ctk = default)
+    {
+        CurrentActivity = await _context.DispatchRequestAsync<RecordReadingActivityRequest, ReadingActivity>(
+            new RecordReadingActivityRequest
+            {
+                BookId = Current.Id,
+                Kind = kind,
+                Progress = progress,
+            },
+            ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads recent activity for the active book.</summary>
+    public async Task ReadActivitiesAsync(int limit = 25, CancellationToken ctk = default)
+    {
+        Activities = await _context.DispatchQueryAsync<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>(
+            new GetReadingActivityQuery
+            {
+                BookId = Current.Id,
+                Limit = limit,
+            },
             ctk).ConfigureAwait(false);
     }
 

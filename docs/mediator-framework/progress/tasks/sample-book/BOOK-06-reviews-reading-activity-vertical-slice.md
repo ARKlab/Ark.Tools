@@ -26,8 +26,8 @@ without becoming a full library product.
 
 ## Acceptance
 
-- [ ] New review/activity contracts are implemented, documented, and wired.
-- [ ] BDD covers valid and invalid review/activity operations.
-- [ ] Persistence cleanup isolates scenarios.
-- [ ] Time values follow repository conventions.
-- [ ] Sample build and affected tests pass.
+- [x] New review/activity contracts are implemented, documented, and wired.
+- [x] BDD covers valid and invalid review/activity operations.
+- [x] Persistence cleanup isolates scenarios.
+- [x] Time values follow repository conventions.
+- [x] Sample build and affected tests pass.

@@ -25,7 +25,7 @@ complete, testable slice.
 
 ## Acceptance
 
-- [ ] New mutation contracts are implemented, documented, and handler-wired.
-- [ ] BDD covers success and failure paths with final assertions.
-- [ ] ETag, validation, authorization, and audit behavior is verified.
-- [ ] Sample build and affected tests pass.
+- [x] New mutation contracts are implemented, documented, and handler-wired.
+- [x] BDD covers success and failure paths with final assertions.
+- [x] ETag, validation, authorization, and audit behavior is verified.
+- [x] Sample build and affected tests pass.

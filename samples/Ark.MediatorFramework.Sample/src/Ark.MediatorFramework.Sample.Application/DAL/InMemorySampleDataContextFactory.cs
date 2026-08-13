@@ -16,6 +16,9 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     private readonly ConcurrentDictionary<Guid, long> _greetingVersions = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
+    private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
+    private readonly ConcurrentDictionary<Guid, BookReview> _bookReviews = new();
+    private readonly ConcurrentDictionary<Guid, ReadingActivity> _readingActivities = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
     private readonly Lock _sync = new();
     private readonly IOutboxAsyncContextFactory _outboxFactory;
@@ -36,6 +39,9 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             _greetingVersions.Clear();
             _audits.Clear();
             _books.Clear();
+            _bookVersions.Clear();
+            _bookReviews.Clear();
+            _readingActivities.Clear();
             _printProcesses.Clear();
         }
     }
@@ -175,17 +181,21 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await _outbox.CommitAsync(ctk).ConfigureAwait(false);
         }
 
-        public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
+        public async Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(book);
-            if (!_owner._books.TryAdd(book.Id, book))
-                throw new InvalidOperationException($"Book '{book.Id}' already exists.");
-            await Task.CompletedTask.ConfigureAwait(false);
+            var stored = book with { ETag = "0x0000000000000001" };
+            lock (_owner._sync)
+            {
+                if (!_owner._books.TryAdd(book.Id, stored))
+                    throw new InvalidOperationException($"Book '{book.Id}' already exists.");
+                _owner._bookVersions[book.Id] = 1;
+            }
+            return await Task.FromResult(stored).ConfigureAwait(false);
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
             Guid id,
-            bool forUpdate = false,
             CancellationToken ctk = default)
         {
             _owner._books.TryGetValue(id, out var book);
@@ -195,9 +205,18 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(book);
-            var updated = _owner._books.ContainsKey(book.Id);
-            if (updated)
-                _owner._books[book.Id] = book;
+            var updated = false;
+            lock (_owner._sync)
+            {
+                if (_owner._books.TryGetValue(book.Id, out var current)
+                    && string.Equals(current.ETag, book.ETag, StringComparison.Ordinal))
+                {
+                    var version = _owner._bookVersions[book.Id] + 1;
+                    _owner._bookVersions[book.Id] = version;
+                    _owner._books[book.Id] = book with { ETag = $"0x{version:X16}" };
+                    updated = true;
+                }
+            }
             return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
@@ -215,16 +234,66 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 .Where(book =>
                     (query.Title is null || string.Equals(book.Title, query.Title, StringComparison.Ordinal))
                     && (query.Author is null || string.Equals(book.Author, query.Author, StringComparison.Ordinal))
-                    && (query.Genre is null || book.Genre == query.Genre))
-                .OrderBy(book => book.Id)
-                .ToArray();
+                    && (query.Genre is null || book.Genre == query.Genre));
+            var sorts = query.Sort?.Where(sort => !string.IsNullOrWhiteSpace(sort)).ToArray() ?? [];
+            var ordered = sorts.Length == 0
+                ? matching.OrderBy(book => book.Id)
+                : matching.OrderBy(string.Join(", ", sorts));
+            var results = ordered.ToArray();
             return await Task.FromResult(new Book.V1.Page
             {
-                Count = matching.LongLength,
+                Count = results.LongLength,
                 Skip = query.Skip,
                 Limit = query.Limit,
-                Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
+                Data = results.Skip(query.Skip).Take(query.Limit).ToArray(),
             }).ConfigureAwait(false);
+        }
+
+        public async Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(review);
+            if (!_owner._bookReviews.TryAdd(review.Id, review))
+                throw new InvalidOperationException($"Book review '{review.Id}' already exists.");
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
+            Guid bookId,
+            int skip,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            var reviews = _owner._bookReviews.Values
+                .Where(review => review.BookId == bookId)
+                .OrderByDescending(review => review.CreatedAt)
+                .ThenByDescending(review => review.Id)
+                .Skip(skip)
+                .Take(limit)
+                .ToArray();
+            return await Task.FromResult<IReadOnlyList<BookReview>>(reviews).ConfigureAwait(false);
+        }
+
+        public async Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(activity);
+            if (!_owner._readingActivities.TryAdd(activity.Id, activity))
+                throw new InvalidOperationException($"Reading activity '{activity.Id}' already exists.");
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+            Guid bookId,
+            string userId,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            var activities = _owner._readingActivities.Values
+                .Where(activity => activity.BookId == bookId && activity.UserId == userId)
+                .OrderByDescending(activity => activity.OccurredAt)
+                .ThenByDescending(activity => activity.Id)
+                .Take(limit)
+                .ToArray();
+            return await Task.FromResult<IReadOnlyList<ReadingActivity>>(activities).ConfigureAwait(false);
         }
 
         public async Task<bool> TrySaveBookPrintProcessAsync(
