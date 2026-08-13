@@ -679,14 +679,11 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var handler in items
                 .Where(static item => item.IsValid)
-                .Select(HandlerService)
-                .Distinct(StringComparer.Ordinal))
+                .GroupBy(HandlerService, StringComparer.Ordinal)
+                .Select(static group => (Handler: group.Key, Contract: group.First().TypeFullName)))
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
-                var contract = items
-                    .First(item => item.IsValid && HandlerService(item) == handler)
-                    .TypeFullName;
-                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
+                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler.Handler + "), " + Literal(handler.Contract) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
@@ -710,18 +707,40 @@ namespace Ark.MediatorFramework.Generators
                 }
 
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
+                var operationGroups = new Dictionary<int, Dictionary<string, List<EndpointModel>>>();
+                foreach (var endpoint in items.Where(static item => item.IsValid))
+                {
+                    spc.CancellationToken.ThrowIfCancellationRequested();
+                    foreach (var version in ActiveVersions(endpoint, maxVersion))
+                    {
+                        if (!operationGroups.TryGetValue(version, out var groups))
+                        {
+                            groups = new Dictionary<string, List<EndpointModel>>(StringComparer.Ordinal);
+                            operationGroups.Add(version, groups);
+                        }
+
+                        var operationName = OperationName(endpoint, version, maxVersion);
+                        if (!groups.TryGetValue(operationName, out var endpoints))
+                        {
+                            endpoints = new List<EndpointModel>();
+                            groups.Add(operationName, endpoints);
+                        }
+
+                        endpoints.Add(endpoint);
+                    }
+                }
                 for (var version = 1; version <= maxVersion; version++)
                 {
                     spc.CancellationToken.ThrowIfCancellationRequested();
-                    foreach (var duplicate in items
-                        .Where(endpoint => endpoint.IsValid && ActiveVersions(endpoint, maxVersion).Contains(version))
-                        .GroupBy(endpoint => OperationName(endpoint, version, maxVersion))
-                        .Where(group => group.Count() > 1))
+                    if (!operationGroups.TryGetValue(version, out var groups))
+                        continue;
+
+                    foreach (var duplicate in groups.Where(static group => group.Value.Count > 1))
                     {
-                        var endpoints = duplicate.ToArray();
-                        for (var index = 0; index < endpoints.Length; index++)
+                        var endpoints = duplicate.Value;
+                        for (var index = 0; index < endpoints.Count; index++)
                         {
-                            var other = endpoints[(index + 1) % endpoints.Length];
+                            var other = endpoints[(index + 1) % endpoints.Count];
                             spc.ReportDiagnostic(Diagnostic.Create(
                                 DuplicateOperationName,
                                 endpoints[index].Location,

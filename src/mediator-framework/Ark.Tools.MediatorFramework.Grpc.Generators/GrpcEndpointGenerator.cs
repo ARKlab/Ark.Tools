@@ -387,7 +387,7 @@ namespace Ark.MediatorFramework.Generators
             // Code-first gRPC service contracts (opt-in via [GrpcMethod]).
             if (!items.IsDefaultOrEmpty)
             {
-                foreach (var group in items.GroupBy(static x => x.ServiceGroup))
+                foreach (var group in items.GroupBy(static x => x.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
                 {
                     for (var version = 1; version <= maxVersion; version++)
                     {
@@ -514,7 +514,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
             if (!items.IsDefaultOrEmpty)
             {
-                foreach (var group in items.GroupBy(static x => x.ServiceGroup))
+                foreach (var group in items.GroupBy(static x => x.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
                     for (var version = 1; version <= maxVersion; version++)
                         if (group.Any(e => IsGrpcActive(e, version)))
                             sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "V" + version + "GrpcService>(app);");
@@ -576,7 +576,7 @@ namespace Ark.MediatorFramework.Generators
                 var requestNames = active
                     .Select(item => ProtoTypeName(item.TypeFullName, contracts))
                     .ToHashSet(StringComparer.Ordinal);
-                var reachable = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                var reachable = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var endpoint in active)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -595,7 +595,7 @@ namespace Ark.MediatorFramework.Generators
                 content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"google/protobuf/empty.proto\";");
                 if (reachable.Any(type => contracts
-                    .FirstOrDefault(contract => SymbolEqualityComparer.Default.Equals(contract.Type, type))?
+                    .FirstOrDefault(contract => string.Equals(contract.TypeFullName, type, StringComparison.Ordinal))?
                     .Members.Any(member => IsArkNodaTimePeriod(member.Type)) == true))
                 {
                     content.AppendLine("import \"ark/nodatime.proto\";");
@@ -620,7 +620,7 @@ namespace Ark.MediatorFramework.Generators
                     content.AppendLine();
                 }
                 foreach (var contract in contracts
-                    .Where(contract => reachable.Contains(contract.Type))
+                    .Where(contract => reachable.Contains(contract.TypeFullName))
                     .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
                     EmitProtoMessage(content, contract, contracts, requestNames.Contains(contract.Name));
 
@@ -702,11 +702,11 @@ namespace Ark.MediatorFramework.Generators
 
             foreach (var member in contract.Members
                 .Where(member => !isRequest || (!member.IsServerSet
-                    && !member.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Contains("IArkAttachment", StringComparison.Ordinal)))
+                    && !member.Type.Contains("IArkAttachment", StringComparison.Ordinal)))
                 .OrderBy(static member => member.Number))
             {
                 WriteComment(sb, member.Description);
-                var type = ProtoTypeName(member.Type, contracts);
+                var type = member.PrecomputedProtoType ?? ProtoTypeName(member.Type, contracts);
                 sb.Append("  ");
                 if (member.IsRepeated)
                     sb.Append("repeated ");
@@ -742,7 +742,7 @@ namespace Ark.MediatorFramework.Generators
                         .Where(item => item.Attribute is not null)
                         .Select(item => new ProtoMemberModel(
                             item.Property.Name,
-                            item.Property.Type,
+                            item.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                             XmlDocumentation.Summary(item.Property),
                             item.Attribute!.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
                             item.Property.Type is IArrayTypeSymbol
@@ -750,7 +750,10 @@ namespace Ark.MediatorFramework.Generators
                                     && named.IsGenericType
                                 && named.Name == "IReadOnlyList",
                         item.Property.GetAttributes().Any(attribute =>
-                            attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute)))
+                            attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute),
+                        item.Property.Type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum)
+                            ? EvolvableEnumProtoType(evolvableEnum)
+                            : null))
                         .Where(member => member.Number > 0)
                         .ToArray();
 
@@ -762,14 +765,16 @@ namespace Ark.MediatorFramework.Generators
                             Number = attribute.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
                         })
                         .Where(include => include.Type is not null && include.Number > 0)
-                        .Select(include => new ProtoIncludeModel(include.Type!, include.Number))
+                        .Select(include => new ProtoIncludeModel(
+                            include.Type!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                            include.Number))
                         .ToArray();
 
                     var name = protoContract.NamedArguments
                         .FirstOrDefault(argument => argument.Key == "Name")
                         .Value.Value as string;
                     result.Add(new ProtoContractModel(
-                        type,
+                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
                         XmlDocumentation.Summary(type),
                         members,
@@ -782,13 +787,13 @@ namespace Ark.MediatorFramework.Generators
         private static void AddReachable(
             string displayName,
             IReadOnlyList<ProtoContractModel> contracts,
-            ISet<INamedTypeSymbol> reachable)
+            ISet<string> reachable)
         {
             var name = SimpleName(displayName);
             var contract = contracts.FirstOrDefault(item =>
-                item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == displayName)
+                string.Equals(item.TypeFullName, displayName, StringComparison.Ordinal))
                 ?? contracts.FirstOrDefault(item => item.Name == name);
-            if (contract is null || !reachable.Add(contract.Type))
+            if (contract is null || !reachable.Add(contract.TypeFullName))
                 return;
 
             foreach (var member in contract.Members)
@@ -797,53 +802,33 @@ namespace Ark.MediatorFramework.Generators
                 AddReachable(include.TypeName, contracts, reachable);
         }
 
-        private static void AddReachable(
-            ITypeSymbol type,
-            IReadOnlyList<ProtoContractModel> contracts,
-            ISet<INamedTypeSymbol> reachable)
-            => AddReachable(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), contracts, reachable);
-
-        private static string ProtoTypeName(ITypeSymbol type, IReadOnlyList<ProtoContractModel> contracts)
+        private static string ProtoTypeName(string typeName, IReadOnlyList<ProtoContractModel> contracts)
         {
-            if (type is IArrayTypeSymbol array)
-                return ProtoTypeName(array.ElementType, contracts);
-            if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
-                return ProtoTypeName(named.TypeArguments[0], contracts);
-            if (type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum))
-                return EvolvableEnumProtoType(evolvableEnum);
+            if (typeName.EndsWith("[]", StringComparison.Ordinal))
+                return ProtoTypeName(typeName[..^2], contracts);
 
-            var contract = contracts.FirstOrDefault(item => SymbolEqualityComparer.Default.Equals(item.Type, type));
-            if (contract is not null)
-                return contract.Name;
+            if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
+                && typeName.EndsWith(">", StringComparison.Ordinal))
+                return ProtoTypeName(typeName["global::System.Nullable<".Length..^1], contracts);
 
-            switch (type.SpecialType)
+            if (typeName.StartsWith("global::Ark.Tools.Core.EvolvableEnum<", StringComparison.Ordinal))
             {
-                case SpecialType.System_String:
-                    return "string";
-                case SpecialType.System_Boolean:
-                    return "bool";
-                case SpecialType.System_Int64:
-                    return "int64";
-                case SpecialType.System_UInt64:
-                    return "uint64";
-                case SpecialType.System_Int32:
-                case SpecialType.System_Int16:
-                case SpecialType.System_Byte:
-                    return "int32";
-                case SpecialType.System_UInt32:
-                case SpecialType.System_UInt16:
-                    return "uint32";
-                case SpecialType.System_Single:
-                    return "float";
-                case SpecialType.System_Double:
-                    return "double";
+                var arguments = typeName["global::Ark.Tools.Core.EvolvableEnum<".Length..^1]
+                    .Split(',');
+                var backing = arguments.Length == 1 ? "int" : arguments[1].Trim();
+                return backing switch
+                {
+                    "sbyte" or "short" or "int" or "System.SByte" or "System.Int16" or "System.Int32" => "int32",
+                    "byte" or "ushort" or "uint" or "System.Byte" or "System.UInt16" or "System.UInt32" => "uint32",
+                    "long" or "System.Int64" => "int64",
+                    "ulong" or "System.UInt64" => "uint64",
+                    _ => "int32",
+                };
             }
 
-            var name = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            return name switch
+            var name = typeName switch
             {
                 "global::System.String" => "string",
-                "global::System.Guid" => "bytes",
                 "global::System.Boolean" => "bool",
                 "global::System.Int64" => "int64",
                 "global::System.UInt64" => "uint64",
@@ -851,21 +836,7 @@ namespace Ark.MediatorFramework.Generators
                 "global::System.UInt32" or "global::System.UInt16" => "uint32",
                 "global::System.Single" => "float",
                 "global::System.Double" => "double",
-                "global::NodaTime.LocalDate" => "google.type.Date",
-                "global::NodaTime.LocalDateTime" => "google.type.DateTime",
-                "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
-                "global::NodaTime.ZonedDateTime" => "google.type.DateTime",
-                "global::NodaTime.Period" => "ark.nodatime.Period",
-                "global::Google.Protobuf.WellKnownTypes.Empty" => "google.protobuf.Empty",
-                _ when type.TypeKind == TypeKind.Enum => type.Name,
-                _ => "bytes",
-            };
-        }
-
-        private static string ProtoTypeName(string typeName, IReadOnlyList<ProtoContractModel> contracts)
-        {
-            var name = typeName switch
-            {
+                "global::System.Guid" => "bytes",
                 "global::NodaTime.LocalDate" => "google.type.Date",
                 "global::NodaTime.LocalDateTime" => "google.type.DateTime",
                 "global::NodaTime.OffsetDateTime" => "google.type.DateTime",
@@ -877,25 +848,25 @@ namespace Ark.MediatorFramework.Generators
             if (name is not null)
                 return name;
 
-            var contract = contracts.FirstOrDefault(item => item.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == typeName);
+            var contract = contracts.FirstOrDefault(item =>
+                string.Equals(item.TypeFullName, typeName, StringComparison.Ordinal));
             return contract?.Name ?? SimpleName(typeName);
-        }
-
-        private static bool IsArkNodaTimePeriod(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol array)
-                return IsArkNodaTimePeriod(array.ElementType);
-
-            if (type is INamedTypeSymbol named && named.IsGenericType && named.Name == "Nullable")
-                return IsArkNodaTimePeriod(named.TypeArguments[0]);
-
-            return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == "global::NodaTime.Period";
         }
 
         private static string SimpleName(string value)
         {
             var separator = value.LastIndexOf('.');
             return separator < 0 ? value : value[(separator + 1)..];
+        }
+
+        private static bool IsArkNodaTimePeriod(string typeName)
+        {
+            if (typeName.EndsWith("[]", StringComparison.Ordinal))
+                return IsArkNodaTimePeriod(typeName[..^2]);
+            if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
+                && typeName.EndsWith(">", StringComparison.Ordinal))
+                return IsArkNodaTimePeriod(typeName["global::System.Nullable<".Length..^1]);
+            return string.Equals(typeName, "global::NodaTime.Period", StringComparison.Ordinal);
         }
 
         // Detects Ark.Tools.Core.EvolvableEnum by name/arity/namespace (no compile-time
@@ -1088,60 +1059,25 @@ namespace Ark.MediatorFramework.Generators
             return string.Join("_", names);
         }
 
-        private sealed class ProtoContractModel
+        private sealed record ProtoContractModel(
+            string TypeFullName,
+            string Name,
+            string? Summary,
+            IReadOnlyList<ProtoMemberModel> Members,
+            IReadOnlyList<ProtoIncludeModel> Includes);
+
+        private readonly record struct ProtoMemberModel(
+            string Name,
+            string Type,
+            string? Description,
+            int Number,
+            bool IsRepeated,
+            bool IsServerSet,
+            string? PrecomputedProtoType);
+
+        private readonly record struct ProtoIncludeModel(string TypeFullName, int Number)
         {
-            public ProtoContractModel(
-                INamedTypeSymbol type,
-                string name,
-                string? summary,
-                IReadOnlyList<ProtoMemberModel> members,
-                IReadOnlyList<ProtoIncludeModel> includes)
-            {
-                Type = type;
-                Name = name;
-                Summary = summary;
-                Members = members;
-                Includes = includes;
-            }
-
-            public INamedTypeSymbol Type { get; }
-            public string Name { get; }
-            public string? Summary { get; }
-            public IReadOnlyList<ProtoMemberModel> Members { get; }
-            public IReadOnlyList<ProtoIncludeModel> Includes { get; }
-        }
-
-        private readonly struct ProtoMemberModel
-        {
-            public ProtoMemberModel(string name, ITypeSymbol type, string? description, int number, bool isRepeated, bool isServerSet)
-            {
-                Name = name;
-                Type = type;
-                Description = description;
-                Number = number;
-                IsRepeated = isRepeated;
-                IsServerSet = isServerSet;
-            }
-
-            public string Name { get; }
-            public ITypeSymbol Type { get; }
-            public string? Description { get; }
-            public int Number { get; }
-            public bool IsRepeated { get; }
-            public bool IsServerSet { get; }
-        }
-
-        private readonly struct ProtoIncludeModel
-        {
-            public ProtoIncludeModel(INamedTypeSymbol type, int number)
-            {
-                Type = type;
-                Number = number;
-            }
-
-            public INamedTypeSymbol Type { get; }
-            public int Number { get; }
-            public string TypeName => Type.Name;
+            public string TypeName => SimpleName(TypeFullName);
         }
     }
 }
