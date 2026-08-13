@@ -31,7 +31,7 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
         ArgumentNullException.ThrowIfNull(request);
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        var current = await context.ReadBookAsync(request.Id, ctk).ConfigureAwait(false)
+        var current = await context.ReadBookAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
         var book = current with
         {

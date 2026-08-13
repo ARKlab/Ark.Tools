@@ -23,7 +23,7 @@ public sealed class GetBookHandler : IQueryHandler<Book_GetQuery.V1, Book.V1.Out
         ArgumentNullException.ThrowIfNull(query);
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        var book = await context.ReadBookAsync(query.Id, ctk).ConfigureAwait(false)
+        var book = await context.ReadBookAsync(query.Id, ctk: ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book '{query.Id}' was not found.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return book;

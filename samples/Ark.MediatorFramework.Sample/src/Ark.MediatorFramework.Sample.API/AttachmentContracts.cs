@@ -3,6 +3,8 @@
 
 using Ark.Tools.Solid;
 
+using Ark.MediatorFramework.Sample.API.Authorization;
+
 using ProtoBuf;
 
 namespace Ark.MediatorFramework.Sample.API;
@@ -45,6 +47,23 @@ public sealed record UploadGreetingCardRequest : IRequest<UploadGreetingCardRequ
     public required IArkAttachment Attachment { get; init; }
 }
 
+/// <summary>Uploads a cover for a book.</summary>
+[HttpEndpoint(
+    "POST",
+    "/api/v{version}/books/{id}/cover",
+    MaxFileCount = 1,
+    AllowedContentTypes = new[] { "image/jpeg", "image/png" })]
+[RequireScopePolicy(ApplicationScopes.BookCover)]
+public sealed record UploadBookCoverRequest : IRequest<UploadBookCoverRequest, UploadResponse>
+{
+    /// <summary>Gets the book identifier.</summary>
+    [HttpRoute]
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the uploaded cover attachment.</summary>
+    public required IArkAttachment Attachment { get; init; }
+}
+
 /// <summary>Pure request carrying an ordered collection of attachments.</summary>
 [HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}/batch", MaxFileCount = 4)]
 public sealed record UploadGreetingCardsRequest : IRequest<UploadGreetingCardsRequest, UploadBatchResponse>
@@ -76,5 +95,17 @@ public sealed record UploadBatchResponse
 public sealed record GetDocumentQuery : IQuery<GetDocumentQuery, IArkAttachment>
 {
     /// <summary>Gets the upload correlation identifier.</summary>
+    public Guid Id { get; init; }
+}
+
+/// <summary>Downloads the cover for a book.</summary>
+[HttpEndpoint("GET", "/api/v{version}/books/{id}/cover")]
+[GrpcMethod("DownloadBookCover")]
+[GrpcService("Books")]
+[RequireScopePolicy(ApplicationScopes.BookCover)]
+public sealed record DownloadBookCoverQuery : IQuery<DownloadBookCoverQuery, IArkAttachment>
+{
+    /// <summary>Gets the book identifier.</summary>
+    [HttpRoute]
     public Guid Id { get; init; }
 }

@@ -25,6 +25,12 @@ public sealed class BookDriver
     /// <summary>Gets the latest book search page.</summary>
     public Book.V1.Page? SearchResults { get; private set; }
 
+    /// <summary>Gets the latest cover upload response.</summary>
+    public UploadResponse? CoverUpload { get; private set; }
+
+    /// <summary>Gets the downloaded cover.</summary>
+    public IArkAttachment? Cover { get; private set; }
+
     /// <summary>Gets whether the scenario has an active book.</summary>
     public bool HasCurrent => _current is not null;
 
@@ -74,6 +80,30 @@ public sealed class BookDriver
     public async Task SearchAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
         SearchResults = await _context.DispatchQueryAsync<Book_SearchQuery.V1, Book.V1.Page>(query, ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Uploads a cover for the active book.</summary>
+    /// <param name="attachment">The cover attachment.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task UploadCoverAsync(IArkAttachment attachment, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(attachment);
+        CoverUpload = await _context.DispatchRequestAsync<UploadBookCoverRequest, UploadResponse>(
+            new UploadBookCoverRequest
+            {
+                Id = Current.Id,
+                Attachment = attachment,
+            },
+            ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Downloads the cover for the active book.</summary>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task DownloadCoverAsync(CancellationToken ctk = default)
+    {
+        Cover = await _context.DispatchQueryAsync<DownloadBookCoverQuery, IArkAttachment>(
+            new DownloadBookCoverQuery { Id = Current.Id },
+            ctk).ConfigureAwait(false);
     }
 
     /// <summary>Reads audit records for the active book.</summary>
