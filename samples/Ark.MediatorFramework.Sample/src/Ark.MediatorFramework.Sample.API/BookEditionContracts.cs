@@ -92,7 +92,7 @@ public sealed record BookEditionDescription
 }
 
 /// <summary>Describes a polymorphic Book edition.</summary>
-[HttpEndpoint("POST", "/api/v{version}/books/editions/describe", AcceptsMessagePack = true)]
+[HttpEndpoint("POST", "/api/v{version}/books/editions/describe")]
 [GrpcMethod("DescribeBookEdition")]
 [GrpcService("Books")]
 [RequireScopePolicy(ApplicationScopes.BookRead)]

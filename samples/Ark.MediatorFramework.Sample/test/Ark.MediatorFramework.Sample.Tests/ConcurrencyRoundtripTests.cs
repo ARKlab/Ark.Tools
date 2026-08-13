@@ -22,18 +22,33 @@ public sealed class ConcurrencyRoundtripTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("concurrency-user");
 
-        var created = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
-            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "etag" })).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
-            new Greeting_UpdateRequest.V1(
-                new Greeting.V1.Input { Message = "updated once" },
+        var created = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
+            {
+                Title = "ETag",
+                Author = "Author",
+                Genre = Book.V1.Genre.Fiction,
+            })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+            new Book_UpdateRequest.V1(
+                new Book.V1.Input
+                {
+                    Title = "Updated once",
+                    Author = "Author",
+                    Genre = Book.V1.Genre.Fiction,
+                },
                 created.Id,
                 created.ETag)).ConfigureAwait(false);
 
         updated.ETag.Should().NotBe(created.ETag);
-        var stale = () => context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
-            new Greeting_UpdateRequest.V1(
-                new Greeting.V1.Input { Message = "stale" },
+        var stale = () => context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+            new Book_UpdateRequest.V1(
+                new Book.V1.Input
+                {
+                    Title = "Stale",
+                    Author = "Author",
+                    Genre = Book.V1.Genre.Fiction,
+                },
                 created.Id,
                 created.ETag));
 
@@ -52,15 +67,25 @@ public sealed class ConcurrencyRoundtripTests
             useSqlStore: false,
             dataContextFactory: decoratedFactory);
 
-        var created = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
-            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "retry" })).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
-            new Greeting_UpdateRequest.V1(
-                new Greeting.V1.Input { Message = "retried" },
+        var created = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
+            {
+                Title = "Retry",
+                Author = "Author",
+                Genre = Book.V1.Genre.Fiction,
+            })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+            new Book_UpdateRequest.V1(
+                new Book.V1.Input
+                {
+                    Title = "Retried",
+                    Author = "Author",
+                    Genre = Book.V1.Genre.Fiction,
+                },
                 created.Id,
                 created.ETag)).ConfigureAwait(false);
 
-        updated.Message.Should().Be("retried");
+        updated.Title.Should().Be("Retried");
         faults.PendingFailures.Should().Be(0);
     }
 }

@@ -143,7 +143,7 @@ public sealed record GreetingResponse
 public static class Greeting_CreateRequest
 {
     /// <summary>Version one of the greeting creation request.</summary>
-    [HttpEndpoint("POST", "/api/v{version}/greetings", AcceptsMessagePack = true, SuccessStatusCode = 201)]
+    [HttpEndpoint("POST", "/api/v{version}/greetings", SuccessStatusCode = 201)]
     [GrpcMethod("CreateGreeting")]
     [GrpcService("Greetings")]
     [RequireScopePolicy(ApplicationScopes.GreetingWrite)]

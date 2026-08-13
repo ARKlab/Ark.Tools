@@ -8,9 +8,6 @@ namespace Ark.MediatorFramework.Sample.API.Authorization;
 /// <summary>Names the scopes used by the sample API.</summary>
 public static class ApplicationScopes
 {
-    /// <summary>Allows creating and updating greetings.</summary>
-    public const string GreetingWrite = "greetings.write";
-
     /// <summary>Allows reading books.</summary>
     public const string BookRead = "books.read";
 
@@ -31,6 +28,12 @@ public static class ApplicationScopes
 
     /// <summary>Allows recording book reading activity.</summary>
     public const string BookActivityWrite = "books.activity.write";
+
+    /// <summary>Allows reading greetings.</summary>
+    public const string GreetingRead = "greetings.read";
+
+    /// <summary>Allows creating and updating greetings.</summary>
+    public const string GreetingWrite = "greetings.write";
 }
 
 /// <summary>Requires a scope claim.</summary>

@@ -30,23 +30,6 @@ public sealed record UploadResponse
     public required long Length { get; init; }
 }
 
-/// <summary>
-/// Pure transport-agnostic request carrying an <see cref="IArkAttachment"/>.
-/// </summary>
-[HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}")]
-public sealed record UploadGreetingCardRequest : IRequest<UploadGreetingCardRequest, UploadResponse>
-{
-    /// <summary>Gets the upload correlation identifier.</summary>
-    public Guid Id { get; init; }
-
-    /// <summary>Gets the upload label supplied in the query string.</summary>
-    [HttpQuery]
-    public string Label { get; init; } = string.Empty;
-
-    /// <summary>Gets the uploaded attachment.</summary>
-    public required IArkAttachment Attachment { get; init; }
-}
-
 /// <summary>Uploads a cover for a book.</summary>
 [HttpEndpoint(
     "POST",
@@ -64,40 +47,6 @@ public sealed record UploadBookCoverRequest : IRequest<UploadBookCoverRequest, U
     public required IArkAttachment Attachment { get; init; }
 }
 
-/// <summary>Pure request carrying an ordered collection of attachments.</summary>
-[HttpEndpoint("POST", "/api/v{version}/greeting-cards/{id}/batch", MaxFileCount = 4)]
-public sealed record UploadGreetingCardsRequest : IRequest<UploadGreetingCardsRequest, UploadBatchResponse>
-{
-    /// <summary>Gets the upload correlation identifier.</summary>
-    public Guid Id { get; init; }
-
-    /// <summary>Gets the uploaded attachments in form order.</summary>
-    public IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
-}
-
-/// <summary>Response returned after storing a batch of attachments.</summary>
-[ProtoContract]
-public sealed record UploadBatchResponse
-{
-    /// <summary>Gets the upload correlation identifier.</summary>
-    [ProtoMember(1)]
-    public required Guid Id { get; init; }
-
-    /// <summary>Gets the uploaded file names in order.</summary>
-    [ProtoMember(2)]
-    public required IReadOnlyList<string> Names { get; init; }
-}
-
-/// <summary>Queries a previously uploaded greeting-card attachment.</summary>
-[HttpEndpoint("GET", "/api/v{version}/greeting-cards/{id}/download")]
-[GrpcMethod("Download")]
-[GrpcService("GeneratedDocuments")]
-public sealed record GetDocumentQuery : IQuery<GetDocumentQuery, IArkAttachment>
-{
-    /// <summary>Gets the upload correlation identifier.</summary>
-    public Guid Id { get; init; }
-}
-
 /// <summary>Downloads the cover for a book.</summary>
 [HttpEndpoint("GET", "/api/v{version}/books/{id}/cover")]
 [GrpcMethod("DownloadBookCover")]
@@ -106,6 +55,71 @@ public sealed record GetDocumentQuery : IQuery<GetDocumentQuery, IArkAttachment>
 public sealed record DownloadBookCoverQuery : IQuery<DownloadBookCoverQuery, IArkAttachment>
 {
     /// <summary>Gets the book identifier.</summary>
+    [HttpRoute]
+    public Guid Id { get; init; }
+}
+
+/// <summary>Response returned after storing a single uploaded greeting card.</summary>
+[ProtoContract]
+public sealed record UploadBatchResponse
+{
+    /// <summary>Gets the upload correlation identifier.</summary>
+    [ProtoMember(1)]
+    public required Guid Id { get; init; }
+
+    /// <summary>Gets the uploaded file names.</summary>
+    [ProtoMember(2)]
+    public IReadOnlyList<string> Names { get; init; } = [];
+}
+
+/// <summary>Uploads a single greeting card attachment.</summary>
+[HttpEndpoint(
+    "POST",
+    "/api/v{version}/greeting-cards/{id}",
+    MaxRequestBodySizeBytes = 10_000_000,
+    MaxFileCount = 4,
+    AllowedContentTypes = ["image/png", "image/jpeg"])]
+[GrpcMethod("UploadGreetingCard")]
+[GrpcService("Documents")]
+public sealed record UploadGreetingCardRequest : IRequest<UploadGreetingCardRequest, UploadResponse>
+{
+    /// <summary>Gets the greeting card identifier.</summary>
+    [HttpRoute]
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the friendly label used for the saved greeting card file.</summary>
+    public string Label { get; init; } = string.Empty;
+
+    /// <summary>Gets the uploaded greeting card file.</summary>
+    public required IArkAttachment Attachment { get; init; }
+}
+
+/// <summary>Uploads multiple greeting card attachments.</summary>
+[HttpEndpoint(
+    "POST",
+    "/api/v{version}/greeting-cards/{id}/batch",
+    MaxRequestBodySizeBytes = 10_000_000,
+    MaxFileCount = 4,
+    AllowedContentTypes = ["image/png", "image/jpeg"])]
+[GrpcMethod("UploadGreetingCards")]
+[GrpcService("Documents")]
+public sealed record UploadGreetingCardsRequest : IRequest<UploadGreetingCardsRequest, UploadBatchResponse>
+{
+    /// <summary>Gets the upload batch identifier.</summary>
+    [HttpRoute]
+    public Guid Id { get; init; }
+
+    /// <summary>Gets the uploaded greeting card files.</summary>
+    public IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
+}
+
+/// <summary>Downloads a previously uploaded greeting card.</summary>
+[HttpEndpoint("GET", "/api/v{version}/greeting-cards/{id}/download")]
+[GrpcMethod("GetDocument")]
+[GrpcService("Documents")]
+public sealed record GetDocumentQuery : IQuery<GetDocumentQuery, IArkAttachment>
+{
+    /// <summary>Gets the greeting card identifier.</summary>
     [HttpRoute]
     public Guid Id { get; init; }
 }

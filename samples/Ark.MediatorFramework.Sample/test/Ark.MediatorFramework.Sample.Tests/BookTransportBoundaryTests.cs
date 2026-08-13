@@ -131,8 +131,7 @@ public sealed class BookTransportBoundaryTests
             .ToArray();
 
         routes.Should().Contain("/api/v1/books/stream");
-        routes.Should().Contain("/api/v2/books/stream");
         routes.Should().Contain("/api/v1/books/editions/describe");
-        routes.Should().Contain("/api/v2/books/editions/describe");
+        routes.Should().Contain("/api/v1/books/bulk");
     }
 }

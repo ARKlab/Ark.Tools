@@ -32,7 +32,7 @@ public sealed record BookStreamItem
 }
 
 /// <summary>Streams Book items without buffering the complete result.</summary>
-[HttpEndpoint("GET", "/api/v{version}/books/stream", AcceptsMessagePack = true)]
+[HttpEndpoint("GET", "/api/v{version}/books/stream")]
 [GrpcMethod("StreamBooks")]
 [GrpcService("Books")]
 [RequireScopePolicy(ApplicationScopes.BookRead)]

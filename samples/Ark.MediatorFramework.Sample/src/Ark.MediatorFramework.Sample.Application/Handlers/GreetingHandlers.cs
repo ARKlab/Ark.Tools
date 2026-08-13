@@ -448,6 +448,7 @@ public sealed class DescribeShapeHandler : IRequestHandler<DescribeShapeRequest,
         });
     }
 }
+/// <summary>Stores a single uploaded greeting card.</summary>
 public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCardRequest, UploadResponse>
 {
     private readonly DocumentStore _documents;
@@ -458,50 +459,51 @@ public sealed class UploadGreetingCardHandler : IRequestHandler<UploadGreetingCa
         _documents = documents;
     }
 
-    /// <summary>Stores a batch of uploaded attachments.</summary>
-    public sealed class UploadGreetingCardsHandler : IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>
-    {
-        private readonly DocumentStore _documents;
-
-        /// <summary>Initializes a new instance.</summary>
-        public UploadGreetingCardsHandler(DocumentStore documents)
-        {
-            _documents = documents;
-        }
-
-        /// <inheritdoc />
-        public async Task<UploadBatchResponse> ExecuteAsync(UploadGreetingCardsRequest request, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(request);
-            var names = new List<string>();
-            foreach (var attachment in request.Attachments)
-            {
-                var stream = attachment.OpenRead();
-                await using var __ctx = stream.ConfigureAwait(false);
-                await _documents.SaveAsync(Guid.NewGuid(), attachment.Name, attachment.ContentType, stream).ConfigureAwait(false);
-                names.Add(attachment.Name);
-            }
-
-            return new UploadBatchResponse { Id = request.Id, Names = names };
-        }
-    }
-
     /// <inheritdoc />
     public async Task<UploadResponse> ExecuteAsync(UploadGreetingCardRequest Request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(Request);
 
+        var fileName = string.IsNullOrWhiteSpace(Request.Label) ? Request.Attachment.Name : Request.Label;
         var stream = Request.Attachment.OpenRead();
         await using var __ctx = stream.ConfigureAwait(false);
-        var length = await _documents.SaveAsync(Request.Id, Request.Attachment.Name, Request.Attachment.ContentType, stream).ConfigureAwait(false);
+        var length = await _documents.SaveAsync(Request.Id, fileName, Request.Attachment.ContentType, stream).ConfigureAwait(false);
 
         return new UploadResponse
         {
             Id = Request.Id,
-            Name = Request.Attachment.Name,
+            Name = fileName,
             ContentType = Request.Attachment.ContentType,
             Length = length,
         };
+    }
+}
+
+/// <summary>Stores a batch of uploaded greeting cards.</summary>
+public sealed class UploadGreetingCardsHandler : IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>
+{
+    private readonly DocumentStore _documents;
+
+    /// <summary>Initializes a new instance.</summary>
+    public UploadGreetingCardsHandler(DocumentStore documents)
+    {
+        _documents = documents;
+    }
+
+    /// <inheritdoc />
+    public async Task<UploadBatchResponse> ExecuteAsync(UploadGreetingCardsRequest request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var names = new List<string>();
+        foreach (var attachment in request.Attachments)
+        {
+            var stream = attachment.OpenRead();
+            await using var __ctx = stream.ConfigureAwait(false);
+            await _documents.SaveAsync(Guid.NewGuid(), attachment.Name, attachment.ContentType, stream).ConfigureAwait(false);
+            names.Add(attachment.Name);
+        }
+
+        return new UploadBatchResponse { Id = request.Id, Names = names };
     }
 }
 
