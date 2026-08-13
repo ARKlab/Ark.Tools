@@ -963,6 +963,18 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorCachesUnchangedInputs()
+    {
+        _assertGeneratorCaches<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/cached-api")]
+            public sealed class CachedApi : IQuery<string> { }
+            """);
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorSecuresEndpointsAndSupportsAnonymousOptOut()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(

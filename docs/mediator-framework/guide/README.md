@@ -32,6 +32,7 @@ It has more domain operations than the tutorial, but follows the same order.
 | 11 | Isolated Azure Functions HTTP host | [Azure Functions](azure-functions.md) |
 | 12 | Reqnroll application and host-boundary testing | [Testing](testing.md), [DOC-01 testing guidance](../progress/tasks/testing/DOC-01-testing-guidance.md) |
 | 13 | API-surface review and custom transport adapters | [API-surface snapshots](api-surface-snapshots.md), [Escape hatches](escape-hatches.md) |
+| 14 | Generator diagnostics, fallback behavior, and troubleshooting | [Diagnostics and troubleshooting](diagnostics-and-troubleshooting.md) |
 
 ## Capability map
 
