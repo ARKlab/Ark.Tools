@@ -660,7 +660,8 @@
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
-          "Microsoft.ApplicationInsights": "[2.23.0, )"
+          "Microsoft.ApplicationInsights": "[2.23.0, )",
+          "SSH.NET": "[2026.0.0, )"
         }
       },
       "ark.tools.aspnetcore.messagepack": {
