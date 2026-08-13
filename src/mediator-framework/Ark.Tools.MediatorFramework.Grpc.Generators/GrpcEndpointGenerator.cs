@@ -924,7 +924,7 @@ namespace Ark.MediatorFramework.Generators
 
             var contract = contracts.FirstOrDefault(item =>
                 string.Equals(item.TypeFullName, typeName, StringComparison.Ordinal));
-            return contract?.Name ?? SimpleName(typeName);
+            return contract?.Name ?? "bytes";
         }
 
         private static bool IsRepeatedProtoType(ITypeSymbol type)

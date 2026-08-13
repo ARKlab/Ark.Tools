@@ -22,7 +22,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "The EvolvableEnum backing type must match the enum's declared underlying type.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/docs/analyzers.md#arkcore001");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
 
     private static readonly DiagnosticDescriptor _missingNotSet = new(
         "ARKCORE002",
@@ -32,7 +32,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Evolvable enums require an explicit zero-valued NOT_SET member for forward-compatible defaults.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/docs/analyzers.md#arkcore002");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
