@@ -131,7 +131,7 @@ app.UseArkMinimalApiHost(container);
 
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapArkEndpointsFromAssembly<RefreshGreetingCommand>(
+    endpoints.MapArkEndpoints<SampleEndpointContext>(
         versionPrefix: "/api/v{version}");
     endpoints.MapArkMinimalApiHost();
     endpoints.MapArkGrpcServicesFromAssembly<RefreshGreetingCommand>();
@@ -140,19 +140,13 @@ app.UseEndpoints(endpoints =>
 });
 ```
 
-For Minimal API endpoint discovery, prefer an explicit partial context:
+For Minimal API endpoint discovery, declare an explicit partial context:
 
 ```csharp
 [ArkEndpointAssembly(typeof(RefreshGreetingCommand))]
 public partial class SampleEndpointContext
 {
 }
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapArkEndpoints<SampleEndpointContext>(
-        versionPrefix: "/api/v{version}");
-});
 ```
 
 `ArkEndpointAssemblyAttribute` selects one or more contract assemblies at

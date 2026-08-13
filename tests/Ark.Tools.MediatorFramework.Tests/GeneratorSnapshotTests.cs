@@ -1072,7 +1072,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF017");
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF018");
     }
 
@@ -1526,7 +1526,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF017");
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
     }
 
     [TestMethod]

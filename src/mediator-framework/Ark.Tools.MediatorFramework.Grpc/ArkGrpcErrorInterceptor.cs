@@ -119,6 +119,8 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         if (exception is RpcException
             || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
             return exception;
+        if (exception is ArkAttachmentProtocolException)
+            return _createRpcException(StatusCode.Unknown, exception.Message);
 
         if (exception is BusinessRuleViolationException businessRuleException)
         {
