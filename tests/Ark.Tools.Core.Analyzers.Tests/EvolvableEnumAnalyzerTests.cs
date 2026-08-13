@@ -21,6 +21,7 @@ public class EvolvableEnumAnalyzerTests
     {
         var diagnostics = await _analyzeAsync(
             """
+            using CoreStatus = Ark.Tools.Core.EvolvableEnum<Status>;
             namespace Ark.Tools.Core
             {
                 public struct EvolvableEnum<T> { }
@@ -58,6 +59,32 @@ public class EvolvableEnumAnalyzerTests
 
         diagnostics.Select(item => item.Id).Should().BeEquivalentTo(["ARKCORE001", "ARKCORE002"]);
         diagnostics.Should().OnlyContain(item => item.Severity == DiagnosticSeverity.Error);
+    }
+
+    /// <summary>Verifies aliases and lookalike generic types are matched by symbol identity.</summary>
+    [TestMethod]
+    public async Task AliasesAndLookalikes_ShouldNotProduceFalsePositives()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Ark.Tools.Core
+            {
+                public struct EvolvableEnum<T> { }
+                public struct EvolvableEnum<T, TBacking> { }
+            }
+            namespace Other
+            {
+                public struct EvolvableEnum<T> { }
+            }
+            enum Status { NOT_SET = 0, Active = 1 }
+            class Contract
+            {
+                CoreStatus Value;
+                Other.EvolvableEnum<Status> OtherValue;
+            }
+            """);
+
+        diagnostics.Should().BeEmpty();
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)

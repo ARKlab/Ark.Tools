@@ -8,7 +8,15 @@
 	<Version Condition="'$(Version)' == ''">999.9.9</Version>
   </PropertyGroup>
 
-	<PropertyGroup Label="C# 14 Interceptors">
+	<PropertyGroup>
+		<ArkCoreInterceptorsEnabled Condition="'$(ArkCoreInterceptorsEnabled)' == ''">true</ArkCoreInterceptorsEnabled>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<CompilerVisibleProperty Include="ArkCoreInterceptorsEnabled" />
+	</ItemGroup>
+
+	<PropertyGroup Label="C# 14 Interceptors" Condition="'$(ArkCoreInterceptorsEnabled)' != 'false'">
 		<!--
 		Ark.Tools.Core ships a C# 14 interceptor generator (Ark.Tools.Core.Analyzers,
 		ToDataTableArkInterceptorGenerator) that replaces compile-time-known

@@ -33,7 +33,7 @@ metadata is tracked in
 [FW-10](../progress/tasks/framework/FW-10-remove-http-auth-metadata.md).
 
 For an HTTP-only policy, configure the route group returned by
-`MapArkEndpointsFromAssembly` in the host. Do not add policy names to application
+`MapArkEndpoints<TContext>` in the host. Do not add policy names to application
 contracts.
 
 ## Binding workflow

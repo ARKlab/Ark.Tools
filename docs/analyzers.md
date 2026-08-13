@@ -13,12 +13,53 @@ attribute location:
 
 | ID | Severity | Meaning |
 |---|---|---|
+| ARKMF001 | Error | HTTP endpoint declares multiple attachments |
+| ARKMF002 | Error | HTTP server-set property cannot be reset |
+| ARKMF003 | Warning | HTTP property may allow mass assignment |
+| ARKMF005 | Error | HTTP attachment collection has an unsupported shape |
+| ARKMF004 | Error | Rebus owner queue is invalid |
 | ARKMF010 | Error | HTTP endpoint uses an unsupported verb |
 | ARKMF011 | Error | Attributed type does not implement a supported handler interface |
 | ARKMF012 | Error | HTTP route placeholder has no matching contract property |
 | ARKMF013 | Error | HTTP body or multipart contract is not a record with settable properties |
 | ARKMF014 | Error | Rebus contract is registered more than once |
 | ARKMF015 | Error | Rebus contract has conflicting owner queues |
+| ARKMF016 | Error | HTTP endpoints have duplicate operation names |
+| ARKMF017 | Error | HTTP endpoint has an invalid ETag property |
+| ARKMF018 | Error | HTTP endpoint declares duplicate ETag properties |
+| ARKMF019 | Error | Rebus response uses unsupported streaming |
+| ARKMF020 | Error | Version prefix does not contain the `{version}` token |
+| ARKMF030 | Error | Azure Functions endpoint uses unsupported MessagePack |
+| ARKMF031 | Error | Azure Functions route is duplicated |
+| ARKMF032 | Error | Azure Functions name is duplicated |
+| ARKAPI001 | Error | API surface baseline is missing |
+| ARKAPI002 | Error | API surface contract changed |
+| ARKAPI003 | Error | Multiple API surface baselines were found |
+| ARKAPI004 | Error | API surface baseline contains a malformed line |
+
+### Custom Ark.Tools analyzers
+
+| ID | Severity | Meaning |
+|---|---|---|
+| ARKCORE001 | Error | Evolvable enum backing type does not match |
+| ARKCORE002 | Error | Evolvable enum is missing `NOT_SET = 0` |
+| ARKSOLID001 | Warning | Use the self-referencing generic interface for dispatch |
+
+Generator diagnostics are reported at the relevant contract or attribute location.
+All generator pipelines are opt-in through their transport package; contracts in
+referenced assemblies are discovered when the generated mapping method is called.
+When interception is disabled, unsupported, or compiled with a language version
+without interceptors, `ToDataTableArk` uses its reflection fallback.
+
+The interceptor generator requires a Roslyn compiler supporting C# 14 interceptors
+and the generated namespace must be listed in `InterceptorsNamespaces`. Generated
+source is deterministic; unchanged compilations are expected to reuse incremental
+results. Generated source inspection and full build/test validation are required
+when changing a generator.
+
+Business-rule violation public derived properties are part of the client-visible
+error contract through HTTP and gRPC. Keep those properties safe and structured:
+they must not contain PII, secrets, or unexpected exception details.
 
 ## Installed Analyzers
 

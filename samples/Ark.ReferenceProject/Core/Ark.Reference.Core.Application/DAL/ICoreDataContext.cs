@@ -62,6 +62,11 @@ public interface ICoreDataContext : IOutboxAsyncContext, IAsyncContext, IAuditDa
         , CancellationToken ctk = default
     );
 
+    Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
+          IEnumerable<Book.V1.Output> entities
+        , CancellationToken ctk = default
+    );
+
     Task PutBookAsync(
         Book.V1.Output entity
         , CancellationToken ctk = default

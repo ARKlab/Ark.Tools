@@ -33,7 +33,7 @@ public static class StreamingArkAttachments
             }
 
             if (metadata is null || chunk.Data is null)
-                throw new InvalidOperationException("Upload chunks must start with metadata and contain data.");
+                throw new ArkAttachmentProtocolException("Upload chunks must start with metadata and contain data.");
             content!.Add(chunk.Data);
         }
 

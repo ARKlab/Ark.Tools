@@ -39,7 +39,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 | C4 | High | Mass-assignment by design: contract = body envelope; server-owned properties are client-writable; GET/DELETE bind every property from query string. | `[ServerSet]`/`[NeverBind]` attribute honored by generator + OpenAPI schema. |
 | C5 | Med-High | Dual `[HttpEndpoint]`+`[RebusMessage]` contracts run the same handler from the bus with a header-supplied principal, no policy check. | Transport-agnostic authorization decorator. |
 | C6 | Med | Multipart: bypasses antiforgery metadata, no size/content-type limits, attacker-controlled `FileName` flows raw into `ArkAttachment.Name`. | Deliberate antiforgery handling, limits, filename sanitization. |
-| C7 | Med | Error mapping reflects and serializes all public props of `BusinessRuleViolation` subtypes; `DocumentsGrpcService` echoes raw exception messages. | Opt-in extension serialization; never echo generic exception messages. |
+| C7 | Med | Error mapping exposes the documented public props of `BusinessRuleViolation` subtypes; `DocumentsGrpcService` must not echo raw exception messages. | Keep public violation properties safe and structured; never echo generic exception messages. |
 | C8 | Med | `IntegrationTests` env-var swaps prod pipeline to a JWT scheme with a hardcoded symmetric key in source; malformed bearer → unhandled exception, not 401. | Try/catch token parse now; `WebApplicationFactory` substitution recorded as future improvement. |
 
 ## Part 2 — ReferenceProject vs MediatorFramework.Sample feature gaps

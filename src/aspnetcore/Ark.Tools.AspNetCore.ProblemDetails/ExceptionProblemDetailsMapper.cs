@@ -106,9 +106,24 @@ public static class ExceptionProblemDetailsMapper
     {
         return violationType
             .GetProperties()
-            .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+            .Where(property => property.GetMethod is not null
+                && !property.GetMethod.IsStatic
+                && property.DeclaringType != typeof(BusinessRuleViolation))
+            .GroupBy(property => property.Name, StringComparer.Ordinal)
+            .Select(group => group
+                .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
+                .First())
+            .OrderBy(property => property.Name, StringComparer.Ordinal)
             .Select(property => new Accessor(property.Name, _createGetter(violationType, property)))
             .ToArray();
+    }
+
+    private static int _getInheritanceDepth(Type? type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null; current = current.BaseType)
+            depth++;
+        return depth;
     }
 
     private static Func<BusinessRuleViolation, object?> _createGetter(Type violationType, PropertyInfo property)

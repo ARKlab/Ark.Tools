@@ -79,6 +79,13 @@ public sealed class BookSteps
         }
     }
 
+    [When(@"I create bulk Books with")]
+    public void WhenICreateBulkBooksWith(Table table)
+    {
+        var entities = table.CreateSet<Book.V1.Create>();
+        _client.PostAsJson($"{_controllerName}/bulk", entities);
+    }
+
     [When(@"I create multiple Book with")]
     public void WhenICreateMultipleBookWith(Table table)
     {
@@ -187,6 +194,14 @@ public sealed class BookSteps
         var res = _client.ReadAs<PagedResult<Book.V1.Output>>();
         res.Should().NotBeNull();
         res!.Count.Should().Be(expectedCount);
+    }
+
+    [Then(@"the bulk Book response should contain (.*) books")]
+    public void ThenTheBulkBookResponseShouldContainBooks(int expectedCount)
+    {
+        var res = _client.ReadAs<IEnumerable<Book.V1.Output>>();
+        res.Should().NotBeNull();
+        res!.Should().HaveCount(expectedCount);
     }
 
     private static void _bookMatched(Book.V1.Output? output, Table table)

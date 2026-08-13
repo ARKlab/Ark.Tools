@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -26,6 +27,7 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
+        private const string ArkGenerateMinimalApiForAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkGenerateMinimalApiForAssemblyAttribute";
         private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
         private const string HttpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
         private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
@@ -48,7 +50,7 @@ namespace Ark.MediatorFramework.Generators
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor UnsupportedAttachmentCollection = new DiagnosticDescriptor(
-            "ARKMF017",
+            "ARKMF005",
             "Unsupported attachment collection",
             "HTTP endpoint '{0}' has attachment collection property '{1}' with an unsupported shape",
             "Ark.MediatorFramework",
@@ -87,13 +89,13 @@ namespace Ark.MediatorFramework.Generators
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
-                    static (node, _) => node is InvocationExpressionSyntax invocation
-                        && invocation.Expression.ToString().Contains("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
-                    static (syntaxContext, _) => GetAssemblyMapping(syntaxContext, "MapArkEndpointsFromAssembly"))
+                    static (node, _) => node is InvocationExpressionSyntax,
+                    static (syntaxContext, cancellationToken) =>
+                        GetAssemblyMapping(syntaxContext, cancellationToken))
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
-                .Select(static (mapping, _) => mapping.AssemblyName)
+                .SelectMany(static (mapping, _) => mapping.AssemblyNames)
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
@@ -103,7 +105,8 @@ namespace Ark.MediatorFramework.Generators
                 .Select(static (endpoint, _) => endpoint!.Value);
             var referencedEndpoints = context.CompilationProvider
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, _) => GetReferencedEndpoints(pair.Left, pair.Right));
+                .SelectMany(static (pair, cancellationToken) =>
+                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
             var collected = sourceEndpoints.Collect()
                 .Combine(referencedEndpoints.Collect())
@@ -158,17 +161,29 @@ namespace Ark.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ReadOnlyCollection));
         }
 
-        private static EndpointAssemblyMapping? GetAssemblyMapping(GeneratorSyntaxContext context, string methodName)
+        private static EndpointAssemblyMapping? GetAssemblyMapping(
+            GeneratorSyntaxContext context,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
+            var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
                 .OfType<GenericNameSyntax>()
-                .FirstOrDefault(name => name.Identifier.ValueText == methodName);
+                .FirstOrDefault(name =>
+                    name.Identifier.ValueText is "MapArkEndpointsFromAssembly" or "MapArkEndpoints");
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
 
-            var assemblyName = context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0]).Type?.ContainingAssembly?.Name;
-            if (assemblyName is null)
+            var methodName = genericName.Identifier.ValueText;
+            if ((method is null || !string.Equals(method.MetadataName, methodName, StringComparison.Ordinal))
+                && !IsGeneratedEndpointInvocation(invocation, methodName, context.SemanticModel, cancellationToken))
+                return null;
+
+            var assemblyNames = methodName == "MapArkEndpoints"
+                ? GetContextAssemblyNames(context, genericName, cancellationToken)
+                : GetAssemblyMarkerName(context, genericName, cancellationToken);
+            if (assemblyNames.IsDefaultOrEmpty)
                 return null;
 
             var versionPrefix = invocation.ArgumentList.Arguments
@@ -179,12 +194,68 @@ namespace Ark.MediatorFramework.Generators
                 && !prefix.Contains("{version}", StringComparison.OrdinalIgnoreCase)
                     ? versionPrefix.Expression.GetLocation()
                     : null;
-            return new EndpointAssemblyMapping(assemblyName, invalidVersionPrefixLocation);
+            return new EndpointAssemblyMapping(assemblyNames, invalidVersionPrefixLocation);
+        }
+
+        private static ImmutableArray<string> GetAssemblyMarkerName(
+            GeneratorSyntaxContext context,
+            GenericNameSyntax genericName,
+            CancellationToken cancellationToken)
+        {
+            return context.SemanticModel
+                .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
+                .Type?.ContainingAssembly?.Name is { } assemblyName
+                ? ImmutableArray.Create(assemblyName)
+                : ImmutableArray<string>.Empty;
+        }
+
+        private static ImmutableArray<string> GetContextAssemblyNames(
+            GeneratorSyntaxContext context,
+            GenericNameSyntax genericName,
+            CancellationToken cancellationToken)
+        {
+            if (context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken).Type
+                is not INamedTypeSymbol contextType)
+                return ImmutableArray<string>.Empty;
+
+            return contextType.GetAttributes()
+                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateMinimalApiForAssemblyAttribute)
+                .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
+                .Where(static marker => marker?.ContainingAssembly?.Name is not null)
+                .Select(static marker => marker!.ContainingAssembly!.Name)
+                .Distinct(StringComparer.Ordinal)
+                .ToImmutableArray();
+        }
+
+        private static bool IsGeneratedEndpointInvocation(
+            InvocationExpressionSyntax invocation,
+            string methodName,
+            SemanticModel semanticModel,
+            CancellationToken cancellationToken)
+        {
+            if (invocation.Expression is GenericNameSyntax directName)
+                return string.Equals(directName.Identifier.ValueText, methodName, StringComparison.Ordinal);
+            if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess
+                || memberAccess.Name is not GenericNameSyntax genericName
+                || !string.Equals(genericName.Identifier.ValueText, methodName, StringComparison.Ordinal))
+                return false;
+
+            if (memberAccess.Expression.DescendantNodesAndSelf()
+                .OfType<SimpleNameSyntax>()
+                .Any(name => string.Equals(name.Identifier.ValueText, "ArkGeneratedEndpoints", StringComparison.Ordinal)))
+                return true;
+
+            var receiverType = semanticModel.GetTypeInfo(memberAccess.Expression, cancellationToken).Type as INamedTypeSymbol;
+            return receiverType is not null
+                && (IsType(receiverType, "IEndpointRouteBuilder", "Microsoft.AspNetCore.Routing")
+                    || receiverType.AllInterfaces.Any(item =>
+                        IsType(item, "IEndpointRouteBuilder", "Microsoft.AspNetCore.Routing")));
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
             Compilation compilation,
-            ImmutableArray<string> endpointAssemblies)
+            ImmutableArray<string> endpointAssemblies,
+            CancellationToken cancellationToken)
         {
             var httpAttr = compilation.GetTypeByMetadataName(HttpEndpointAttribute);
             if (httpAttr is null)
@@ -205,12 +276,15 @@ namespace Ark.MediatorFramework.Generators
             var readOnlyListType = compilation.GetTypeByMetadataName(ReadOnlyList);
             var readOnlyCollectionType = compilation.GetTypeByMetadataName(ReadOnlyCollection);
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
+            var requestedAssemblies = endpointAssemblies.ToHashSet(StringComparer.Ordinal);
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
-                .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
+                .Where(assembly => requestedAssemblies.Contains(assembly.Name)))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var attrs = type.GetAttributes();
                     var http = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, httpAttr));
                     if (http is null)
@@ -307,8 +381,8 @@ namespace Ark.MediatorFramework.Generators
 
             foreach (var iface in type.AllInterfaces)
             {
-                var def = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (def == "global::Ark.Tools.Solid.IRequest<TResponse>")
+                var def = iface.OriginalDefinition;
+                if (IsType(def, "IRequest`1", "Ark.Tools.Solid"))
                 {
                     kind = HandlerKind.Request;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -318,7 +392,7 @@ namespace Ark.MediatorFramework.Generators
                     break;
                 }
 
-                if (def == "global::Ark.Tools.Solid.IQuery<TResult>")
+                if (IsType(def, "IQuery`1", "Ark.Tools.Solid"))
                 {
                     kind = HandlerKind.Query;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -328,7 +402,7 @@ namespace Ark.MediatorFramework.Generators
                     break;
                 }
 
-                if (def == "global::Ark.Tools.Solid.ICommand")
+                if (IsType(def, "ICommand", "Ark.Tools.Solid"))
                 {
                     kind = HandlerKind.Command;
                     break;
@@ -354,7 +428,7 @@ namespace Ark.MediatorFramework.Generators
             if (verb is not ("GET" or "POST" or "PUT" or "DELETE" or "PATCH"))
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.UnknownHttpVerb, type.Name, GetLocation(http), verb));
             var versioning = type.GetAttributes().FirstOrDefault(
-                candidate => candidate.AttributeClass?.ToDisplayString() == VersioningAttribute);
+                candidate => IsAttribute(candidate, VersioningAttribute));
             var httpIntroducedIn = Version(type, "Introduced", 1);
             var httpRetiredIn = Version(type, "Retired", 0);
             var successStatusCode = NamedInt(http, "SuccessStatusCode", 0);
@@ -510,6 +584,17 @@ namespace Ark.MediatorFramework.Generators
             => property.GetAttributes().Any(attribute =>
                 attributeType is not null && SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeType));
 
+        private static bool IsType(INamedTypeSymbol type, string metadataName, string namespaceName)
+            => string.Equals(type.MetadataName, metadataName, StringComparison.Ordinal)
+                && string.Equals(type.ContainingNamespace.ToDisplayString(), namespaceName, StringComparison.Ordinal);
+
+        private static bool IsAttribute(AttributeData attribute, string metadataName)
+            => attribute.AttributeClass is not null
+                && string.Equals(attribute.AttributeClass.MetadataName, metadataName.Substring(metadataName.LastIndexOf('.') + 1), StringComparison.Ordinal)
+                && string.Equals(
+                    attribute.AttributeClass.ContainingNamespace.ToDisplayString(),
+                    metadataName[..metadataName.LastIndexOf('.')], StringComparison.Ordinal);
+
         private static ImmutableArray<string> ConstructorParameters(
             INamedTypeSymbol type,
             ImmutableArray<PropertyModel> properties)
@@ -535,7 +620,7 @@ namespace Ark.MediatorFramework.Generators
         private static int Version(INamedTypeSymbol type, string propertyName, int defaultValue)
         {
             var attribute = type.GetAttributes().FirstOrDefault(
-                candidate => candidate.AttributeClass?.ToDisplayString() == VersioningAttribute);
+                candidate => IsAttribute(candidate, VersioningAttribute));
             return attribute is null ? defaultValue : NamedInt(attribute, propertyName, defaultValue);
         }
 
@@ -617,6 +702,7 @@ namespace Ark.MediatorFramework.Generators
             if (items.IsDefaultOrEmpty)
                 return;
 
+            items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
             var sb = new StringBuilder();
             sb.AppendLine("// <auto-generated/>");
             sb.AppendLine("#nullable enable");
@@ -635,13 +721,11 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var handler in items
                 .Where(static item => item.IsValid)
-                .Select(HandlerService)
-                .Distinct(StringComparer.Ordinal))
+                .GroupBy(HandlerService, StringComparer.Ordinal)
+                .Select(static group => (Handler: group.Key, Contract: group.First().TypeFullName)))
             {
-                var contract = items
-                    .First(item => item.IsValid && HandlerService(item) == handler)
-                    .TypeFullName;
-                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
+                spc.CancellationToken.ThrowIfCancellationRequested();
+                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler.Handler + "), " + Literal(handler.Contract) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
@@ -665,17 +749,40 @@ namespace Ark.MediatorFramework.Generators
                 }
 
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
+                var operationGroups = new Dictionary<int, Dictionary<string, List<EndpointModel>>>();
+                foreach (var endpoint in items.Where(static item => item.IsValid))
+                {
+                    spc.CancellationToken.ThrowIfCancellationRequested();
+                    foreach (var version in ActiveVersions(endpoint, maxVersion))
+                    {
+                        if (!operationGroups.TryGetValue(version, out var groups))
+                        {
+                            groups = new Dictionary<string, List<EndpointModel>>(StringComparer.Ordinal);
+                            operationGroups.Add(version, groups);
+                        }
+
+                        var operationName = OperationName(endpoint, version, maxVersion);
+                        if (!groups.TryGetValue(operationName, out var endpoints))
+                        {
+                            endpoints = new List<EndpointModel>();
+                            groups.Add(operationName, endpoints);
+                        }
+
+                        endpoints.Add(endpoint);
+                    }
+                }
                 for (var version = 1; version <= maxVersion; version++)
                 {
-                    foreach (var duplicate in items
-                        .Where(endpoint => endpoint.IsValid && ActiveVersions(endpoint, maxVersion).Contains(version))
-                        .GroupBy(endpoint => OperationName(endpoint, version, maxVersion))
-                        .Where(group => group.Count() > 1))
+                    spc.CancellationToken.ThrowIfCancellationRequested();
+                    if (!operationGroups.TryGetValue(version, out var groups))
+                        continue;
+
+                    foreach (var duplicate in groups.Where(static group => group.Value.Count > 1))
                     {
-                        var endpoints = duplicate.ToArray();
-                        for (var index = 0; index < endpoints.Length; index++)
+                        var endpoints = duplicate.Value;
+                        for (var index = 0; index < endpoints.Count; index++)
                         {
-                            var other = endpoints[(index + 1) % endpoints.Length];
+                            var other = endpoints[(index + 1) % endpoints.Count];
                             spc.ReportDiagnostic(Diagnostic.Create(
                                 DuplicateOperationName,
                                 endpoints[index].Location,
@@ -689,6 +796,7 @@ namespace Ark.MediatorFramework.Generators
                 var endpointIndex = 0;
                 foreach (var e in items)
                 {
+                    spc.CancellationToken.ThrowIfCancellationRequested();
                     var currentEndpointIndex = endpointIndex++;
                     foreach (var diagnostic in e.Diagnostics)
                         spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
@@ -883,6 +991,12 @@ namespace Ark.MediatorFramework.Generators
 
             sb.AppendLine("            configure?.Invoke(group);");
             sb.AppendLine("            return group;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Maps contracts selected by ArkGenerateMinimalApiForAssemblyAttribute on TContext.</summary>");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TContext>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return MapArkEndpointsFromAssembly<TContext>(endpoints, configure, versionPrefix);");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        private static string VersionedRoute(string? versionPrefix, string template, bool isVersioned, int version)");
@@ -1372,7 +1486,7 @@ namespace Ark.MediatorFramework.Generators
             Command = 3,
         }
 
-        private readonly record struct EndpointAssemblyMapping(string AssemblyName, Location? InvalidVersionPrefixLocation);
+        private readonly record struct EndpointAssemblyMapping(ImmutableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation);
 
         private readonly record struct EndpointModel
         {

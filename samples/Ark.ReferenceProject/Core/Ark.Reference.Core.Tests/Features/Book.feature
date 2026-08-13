@@ -18,6 +18,15 @@ Feature: Book
         | Title                    | Author          | Genre      | ISBN           |
         | The Pragmatic Programmer | Hunt and Thomas | Technology | 978-0135957059 |
 
+    Scenario: Endpoint Book Bulk Create
+      When I create bulk Books with
+        | Title  | Author  | Genre      | ISBN           |
+        | Book A | Author1 | Technology | 111-1111111111 |
+        | Book B | Author2 | Fiction    | 222-2222222222 |
+        | Book C | Author3 | Science    | 333-3333333333 |
+      Then the request succeded
+      Then the bulk Book response should contain 3 books
+
     Scenario Outline: Endpoint Book Get by filters - <FilterName>
       Given I have created the test books for filter testing
       When I request the Book by

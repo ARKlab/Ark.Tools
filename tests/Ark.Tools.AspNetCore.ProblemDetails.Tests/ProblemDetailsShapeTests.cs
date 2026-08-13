@@ -39,6 +39,7 @@ public sealed class ProblemDetailsShapeTests
             new EmptyViolation(),
             new SinglePropertyViolation { Property = "value" },
             new SeveralPropertiesViolation { Count = 7, Enabled = true, Name = "name" },
+            new MixedPropertiesViolation { Exposed = "visible", Additional = "additional" },
         };
 
         foreach (var violation in violations)
@@ -208,5 +209,12 @@ public sealed class ProblemDetailsShapeTests
         public int Count { get; set; }
         public bool Enabled { get; set; }
         public string? Name { get; set; }
+    }
+
+    private sealed class MixedPropertiesViolation() : BusinessRuleViolation("mixed")
+    {
+        public string? Exposed { get; set; }
+
+        public string? Additional { get; set; }
     }
 }
