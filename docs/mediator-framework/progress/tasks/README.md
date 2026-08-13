@@ -69,7 +69,7 @@ not stop at a contract, schema, host, or documentation change.
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [BOOK-01](sample-book/BOOK-01-catalog-vertical-slice.md) | Book catalog create and retrieve vertical slice | Pending |
+| [BOOK-01](sample-book/BOOK-01-catalog-vertical-slice.md) | Book catalog create and retrieve vertical slice | Complete |
 | [BOOK-02](sample-book/BOOK-02-catalog-search-persistence.md) | Book catalog search and persistence vertical slice | Pending |
 | [BOOK-03](sample-book/BOOK-03-catalog-mutations-concurrency.md) | Book catalog mutations, concurrency, and audit vertical slice | Pending |
 | [BOOK-04](sample-book/BOOK-04-cover-attachment-vertical-slice.md) | Book cover upload and download vertical slice | Complete |
