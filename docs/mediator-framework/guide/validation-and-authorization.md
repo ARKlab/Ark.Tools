@@ -140,7 +140,7 @@ This means every generated HTTP endpoint is authenticated by default even when
 the contract carries no extra permission attribute. `AllowAnonymous = true` is
 the explicit opt-out for a route that should stay public. Configure any
 HTTP-only named policy on the route group returned by
-`MapArkEndpointsFromAssembly`; keep application permissions on
+`MapArkEndpoints<TContext>`; keep application permissions on
 `PolicyAuthorizeAttribute` decorators.
 
 ## What callers see on denial

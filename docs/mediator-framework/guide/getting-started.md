@@ -83,6 +83,11 @@ using SimpleInjector.Lifestyles;
 
 using HelloMediator;
 
+[ArkGenerateMinimalApiForAssembly(typeof(Ping))]
+public partial class HelloEndpointContext
+{
+}
+
 var builder = WebApplication.CreateBuilder(args);
 builder.UseArkMinimalApiStartupDiagnostics();
 
@@ -96,16 +101,18 @@ var app = builder.Build();
 app.UseArkMinimalApiHost(container);
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapArkEndpointsFromAssembly<Ping>();
+    endpoints.MapArkEndpoints<HelloEndpointContext>();
 });
 
 await app.RunAsync().ConfigureAwait(false);
 ```
 
-`MapArkEndpointsFromAssembly<Ping>()` tells the generator which assembly to
-scan. The marker type is not special; every selected contract in that assembly
-is considered. `AddArkMinimalApiHost` bridges ASP.NET Core and SimpleInjector
-and supplies the host middleware used by generated endpoints.
+`ArkGenerateMinimalApiForAssembly` explicitly declares the contract assembly scanned by the
+generator. The context must be a partial class so additional generated context
+members can be added without modifying application contracts. Repeat the
+attribute to scan more than one assembly. `AddArkMinimalApiHost` bridges
+ASP.NET Core and SimpleInjector and supplies the host middleware used by
+generated endpoints.
 
 Production hosts should also add the security headers, authentication,
 ProblemDetails, JSON source generation, and OpenAPI configuration described in

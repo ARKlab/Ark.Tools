@@ -165,7 +165,7 @@ Feature: Books
             Given I create a book with
                 | Title | Author  | Genre   |
                 | Dune  | Herbert | Fiction |
-            And I am an authenticated user without the book activity write scope
+            And I am an authenticated user without the book review write scope
             When I create a book review with
                 | Rating | Text |
                 | 5      | Good |

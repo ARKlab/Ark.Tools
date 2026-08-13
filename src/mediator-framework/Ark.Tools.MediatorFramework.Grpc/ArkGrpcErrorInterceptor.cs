@@ -5,6 +5,7 @@ using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Core;
 using Ark.Tools.Authorization;
+using Ark.MediatorFramework;
 
 using FluentValidation;
 
@@ -58,9 +59,90 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         {
             return await continuation(request, context).ConfigureAwait(false);
         }
-        catch (BusinessRuleViolationException exception)
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
         {
-            var violation = exception.BusinessRuleViolation;
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw _mapException(exception, context);
+        }
+    }
+
+    /// <summary>Executes a client-streaming call and maps known application failures.</summary>
+    public override async Task<TResponse> ClientStreamingServerHandler<TRequest, TResponse>(
+        IAsyncStreamReader<TRequest> requestStream,
+        ServerCallContext context,
+        ClientStreamingServerMethod<TRequest, TResponse> continuation)
+    {
+        try
+        {
+            return await continuation(requestStream, context).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw _mapException(exception, context);
+        }
+    }
+
+    /// <summary>Executes a server-streaming call and maps known application failures.</summary>
+    public override async Task ServerStreamingServerHandler<TRequest, TResponse>(
+        TRequest request,
+        IServerStreamWriter<TResponse> responseStream,
+        ServerCallContext context,
+        ServerStreamingServerMethod<TRequest, TResponse> continuation)
+    {
+        try
+        {
+            await continuation(request, responseStream, context).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw _mapException(exception, context);
+        }
+    }
+
+    /// <summary>Executes a duplex-streaming call and maps known application failures.</summary>
+    public override async Task DuplexStreamingServerHandler<TRequest, TResponse>(
+        IAsyncStreamReader<TRequest> requestStream,
+        IServerStreamWriter<TResponse> responseStream,
+        ServerCallContext context,
+        DuplexStreamingServerMethod<TRequest, TResponse> continuation)
+    {
+        try
+        {
+            await continuation(requestStream, responseStream, context).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw _mapException(exception, context);
+        }
+    }
+
+    private Exception _mapException(Exception exception, ServerCallContext context)
+    {
+        if (exception is ArkAttachmentProtocolException)
+            return _createRpcException(StatusCode.Unknown, exception.Message);
+
+        if (exception is BusinessRuleViolationException businessRuleException)
+        {
+            var violation = businessRuleException.BusinessRuleViolation;
             var detail = new ArkBusinessRuleViolation
             {
                 Type = violation.GetType().Name,
@@ -80,18 +162,18 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
                 TypeUrl = "type.googleapis.com/ark.mediator.ArkBusinessRuleViolation",
                 Value = detail.ToByteString(),
             });
-            throw status.ToRpcException();
+            return status.ToRpcException();
         }
-        catch (ValidationException exception)
+
+        if (exception is ValidationException validationException)
         {
             var status = new Google.Rpc.Status
             {
                 Code = (int)Code.InvalidArgument,
                 Message = "Validation failed",
             };
-
             var badRequest = new BadRequest();
-            foreach (var failure in exception.Errors)
+            foreach (var failure in validationException.Errors)
             {
                 badRequest.FieldViolations.Add(new BadRequest.Types.FieldViolation
                 {
@@ -99,63 +181,73 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
                     Description = failure.ErrorMessage,
                 });
             }
-
             status.Details.Add(Any.Pack(badRequest));
-            throw status.ToRpcException();
+            return status.ToRpcException();
         }
-        catch (PolicyAuthorizationException exception)
+
+        if (exception is PolicyAuthorizationException authorizationException)
+            return _createRpcException(StatusCode.PermissionDenied, authorizationException.Message);
+        if (exception is EntityTagMismatchException entityTagException)
+            return _createRpcException(StatusCode.FailedPrecondition, entityTagException.Message);
+        if (exception is OptimisticConcurrencyException concurrencyException)
+            return _createRpcException(StatusCode.Aborted, concurrencyException.Message);
+
+        _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
+        var unexpectedStatus = new Google.Rpc.Status
         {
-            throw new RpcException(new global::Grpc.Core.Status(StatusCode.PermissionDenied, exception.Message));
-        }
-        catch (EntityTagMismatchException exception)
+            Code = (int)StatusCode.Internal,
+            Message = _includeExceptionDetails
+                ? exception.Message
+                : "An unexpected error occurred.",
+        };
+        if (_includeExceptionDetails)
         {
-            throw new RpcException(new global::Grpc.Core.Status(StatusCode.FailedPrecondition, exception.Message));
-        }
-        catch (OptimisticConcurrencyException exception)
-        {
-            throw new RpcException(new global::Grpc.Core.Status(StatusCode.Aborted, exception.Message));
-        }
-        catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception) when (exception is not RpcException)
-        {
-            _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
-            var status = new Google.Rpc.Status
+            unexpectedStatus.Details.Add(Any.Pack(new DebugInfo
             {
-                Code = (int)StatusCode.Internal,
-                Message = _includeExceptionDetails
-                    ? exception.Message
-                    : "An unexpected error occurred.",
-            };
-            if (_includeExceptionDetails)
-            {
-                status.Details.Add(Any.Pack(new DebugInfo
-                {
-                    Detail = exception.StackTrace ?? string.Empty,
-                }));
-            }
-            throw status.ToRpcException();
+                Detail = exception.StackTrace ?? string.Empty,
+            }));
         }
+        return unexpectedStatus.ToRpcException();
     }
+
+    private static RpcException _createRpcException(StatusCode statusCode, string message) =>
+        new(new global::Grpc.Core.Status(statusCode, message));
 
     [SuppressMessage(
         "Trimming",
         "IL2026",
-        Justification = "Business rule payloads are application-defined and intentionally serialized using the shared Ark JSON options.")]
+        Justification = "The BusinessRuleViolation base type preserves public properties for the documented client-visible contract.")]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2072",
+        Justification = "Business-rule violation properties are part of the preserved client-visible contract.")]
     private static Dictionary<string, string> _getExtensions(BusinessRuleViolation violation)
     {
         var properties = violation.GetType()
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property => property.Name is not nameof(BusinessRuleViolation.Status)
+            .Where(property => property.GetMethod is not null
+                && !property.GetMethod.IsStatic
+                && property.Name is not nameof(BusinessRuleViolation.Status)
                 and not nameof(BusinessRuleViolation.Title)
                 and not nameof(BusinessRuleViolation.Detail)
-                && property.GetMethod is not null);
+                )
+            .GroupBy(property => property.Name, StringComparer.Ordinal)
+            .Select(group => group
+                .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
+                .First())
+            .OrderBy(property => property.Name, StringComparer.Ordinal);
 
         return properties.ToDictionary(
             property => property.Name,
             property => JsonSerializer.Serialize(property.GetValue(violation), property.PropertyType, ArkSerializerOptions.JsonOptions),
             StringComparer.Ordinal);
+    }
+
+    private static int _getInheritanceDepth(System.Type? type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null; current = current.BaseType)
+            depth++;
+        return depth;
     }
 }

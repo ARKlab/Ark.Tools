@@ -8,29 +8,29 @@
 1. The ProblemDetails exception mapping
    (`samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/ProblemDetailsExceptionHandler.cs`,
    and the gRPC equivalent `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/ArkGrpcErrorInterceptor.cs`)
-   reflects and serializes **all public properties** of `BusinessRuleViolation` subtypes into the
-   HTTP ProblemDetails extensions / gRPC error details. Any internal state a developer adds to a
-   violation type (connection strings, internal IDs, PII) leaks to clients by default.
+   exposes the documented public properties of `BusinessRuleViolation` subtypes
+   through HTTP ProblemDetails extensions and gRPC error details. Violation types
+   must contain only safe, structured data.
 2. `DocumentsGrpcService.cs` echoes raw exception `Message` strings to gRPC clients.
 
 ## Steps
 
-1. Make violation-extension serialization **opt-in**: introduce a property-level attribute (e.g.
-   `[ProblemDetailsExtension]`) or an explicit `IDictionary<string, object?> GetExtensions()` hook on
-   the violation base type; only opted-in members are serialized. Where the base type lives, keep
-   compatibility with `Ark.Tools.Core` `BusinessRuleViolation` usage in `Ark.Tools.AspNetCore` (see FW-03).
-2. Apply the same opt-in rule in `ArkGrpcErrorInterceptor` for Google.Rpc rich error details.
+1. Preserve serialization of all public derived violation properties; do not add
+   an opt-in marker. Keep the public contract free of PII, secrets, and exception
+   details.
+2. Keep the same public-property contract in `ArkGrpcErrorInterceptor` for
+   Google.Rpc rich error details.
 3. In `DocumentsGrpcService.cs` (and any other sample service), replace raw `ex.Message` echo with a
    generic message + NLog structured log of the real exception (`_logger.Error(ex, CultureInfo.InvariantCulture, "...", ...)`).
 4. Never serialize exception messages of non-`BusinessRuleViolation` exceptions to clients in
    non-Development environments (500 → generic ProblemDetails; details logged server-side).
 5. Tests:
-   - Violation type with one opted-in and one non-opted-in property → HTTP ProblemDetails and gRPC details contain only the opted-in one.
+   - Violation type with multiple public properties → HTTP ProblemDetails and gRPC details contain all documented public properties.
    - Unhandled generic exception → 500 body contains no exception message text.
 
 ## Outcomes
 
-- Client-visible error payloads contain only explicitly opted-in data across HTTP and gRPC.
+- Client-visible business-rule payloads contain only documented public data across HTTP and gRPC.
 
 ## Acceptance
 

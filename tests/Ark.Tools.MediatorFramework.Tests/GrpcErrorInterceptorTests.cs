@@ -4,6 +4,7 @@
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.Core;
 using Ark.Tools.Core.EntityTag;
+using Ark.Tools.Core.BusinessRuleViolation;
 
 using AwesomeAssertions;
 
@@ -99,6 +100,29 @@ public sealed class GrpcErrorInterceptorTests
     }
 
     [TestMethod]
+    public async Task RethrowsRpcExceptionWithoutChangingStackTrace()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        Exception sourceException;
+        try
+        {
+            throw new RpcException(new Status(StatusCode.Aborted, "aborted"));
+        }
+        catch (Exception exception)
+        {
+            sourceException = exception;
+        }
+
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(sourceException));
+
+        var caught = await action.Should().ThrowAsync<RpcException>();
+        caught.Which.StackTrace.Should().Be(sourceException.StackTrace);
+    }
+
+    [TestMethod]
     public async Task MapsInternalTimeoutOperationCanceledExceptionToInternalError()
     {
         var interceptor = new ArkGrpcErrorInterceptor(
@@ -115,6 +139,31 @@ public sealed class GrpcErrorInterceptorTests
         exception.Which.StatusCode.Should().Be(StatusCode.Internal);
     }
 
+    [TestMethod]
+    public async Task MapsPublicBusinessRuleExtensions()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        var violation = new TestBusinessRuleViolation
+        {
+            Exposed = "visible",
+            Additional = "additional",
+        };
+
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(new BusinessRuleViolationException(violation)));
+
+        var exception = await action.Should().ThrowAsync<RpcException>();
+        var status = RpcStatus.Parser.ParseFrom(
+            exception.Which.Trailers.GetValueBytes("grpc-status-details-bin"));
+        var detail = status.Details.Single(item => item.Is(ArkBusinessRuleViolation.Descriptor))
+            .Unpack<ArkBusinessRuleViolation>();
+
+        detail.Extensions.Should().ContainKey(nameof(TestBusinessRuleViolation.Exposed));
+        detail.Extensions.Should().ContainKey(nameof(TestBusinessRuleViolation.Additional));
+    }
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public TestHostEnvironment(string environmentName)
@@ -127,6 +176,18 @@ public sealed class GrpcErrorInterceptorTests
         public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
         public string EnvironmentName { get; set; }
     }
+}
+
+internal sealed class TestBusinessRuleViolation : BusinessRuleViolation
+{
+    public TestBusinessRuleViolation()
+        : base("test")
+    {
+    }
+
+    public string? Exposed { get; set; }
+
+    public string? Additional { get; set; }
 }
 
 internal static class GrpcErrorInterceptorTestExtensions

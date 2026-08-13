@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -57,34 +58,39 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
         if (semanticModel is null || root is null || declaration.BaseList is null)
             return document;
 
-        var selfType = SyntaxFactory.ParseTypeName(
-            declaration.Identifier.ValueText + (declaration.TypeParameterList?.ToString() ?? string.Empty));
+        var selfType = _createSelfType(declaration);
+        var query1 = semanticModel.Compilation.GetTypeByMetadataName("Ark.Tools.Solid.IQuery`1");
+        var request1 = semanticModel.Compilation.GetTypeByMetadataName("Ark.Tools.Solid.IRequest`1");
+        var command0 = semanticModel.Compilation.GetTypeByMetadataName("Ark.Tools.Solid.ICommand");
 
         var replacements = new Dictionary<TypeSyntax, TypeSyntax>();
         foreach (var baseType in declaration.BaseList.Types)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var symbol = semanticModel.GetSymbolInfo(baseType.Type, cancellationToken).Symbol as INamedTypeSymbol;
-            if (symbol is null || symbol.ContainingNamespace.ToDisplayString() != "Ark.Tools.Solid")
+            if (symbol is null)
                 continue;
 
             var nameSyntax = _getRightmostName(baseType.Type);
             if (nameSyntax is null)
                 continue;
 
-            switch (symbol.Name)
+            if (SymbolEqualityComparer.Default.Equals(symbol.OriginalDefinition, query1)
+                && nameSyntax is GenericNameSyntax queryName)
             {
-                case "IQuery" when symbol.Arity == 1 && nameSyntax is GenericNameSyntax queryName:
-                    replacements[nameSyntax] = _prependSelf(queryName, selfType);
-                    break;
-                case "IRequest" when symbol.Arity == 1 && nameSyntax is GenericNameSyntax requestName:
-                    replacements[nameSyntax] = _prependSelf(requestName, selfType);
-                    break;
-                case "ICommand" when symbol.Arity == 0:
-                    replacements[nameSyntax] = SyntaxFactory.GenericName(
-                        SyntaxFactory.Identifier("ICommand"),
-                        SyntaxFactory.TypeArgumentList(SyntaxFactory.SingletonSeparatedList(selfType)))
-                        .WithTriviaFrom(nameSyntax);
-                    break;
+                replacements[nameSyntax] = _prependSelf(queryName, selfType);
+            }
+            else if (SymbolEqualityComparer.Default.Equals(symbol.OriginalDefinition, request1)
+                && nameSyntax is GenericNameSyntax requestName)
+            {
+                replacements[nameSyntax] = _prependSelf(requestName, selfType);
+            }
+            else if (SymbolEqualityComparer.Default.Equals(symbol.OriginalDefinition, command0))
+            {
+                replacements[nameSyntax] = SyntaxFactory.GenericName(
+                    SyntaxFactory.Identifier("ICommand"),
+                    SyntaxFactory.TypeArgumentList(SyntaxFactory.SingletonSeparatedList(selfType)))
+                    .WithTriviaFrom(nameSyntax);
             }
         }
 
@@ -105,10 +111,22 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
 
     private static GenericNameSyntax _prependSelf(GenericNameSyntax name, TypeSyntax selfType)
     {
-        var arguments = new List<TypeSyntax> { selfType };
-        arguments.AddRange(name.TypeArgumentList.Arguments);
+        var arguments = name.TypeArgumentList.Arguments.Insert(0, selfType);
         return name.WithTypeArgumentList(
-            SyntaxFactory.TypeArgumentList(SyntaxFactory.SeparatedList(arguments)))
+            SyntaxFactory.TypeArgumentList(arguments))
             .WithTriviaFrom(name);
+    }
+
+    private static TypeSyntax _createSelfType(TypeDeclarationSyntax declaration)
+    {
+        if (declaration.TypeParameterList is null)
+            return SyntaxFactory.IdentifierName(declaration.Identifier);
+
+        return SyntaxFactory.GenericName(
+            declaration.Identifier,
+            SyntaxFactory.TypeArgumentList(
+                SyntaxFactory.SeparatedList<TypeSyntax>(
+                    declaration.TypeParameterList.Parameters
+                        .Select(parameter => (TypeSyntax)SyntaxFactory.IdentifierName(parameter.Identifier)))));
     }
 }

@@ -31,6 +31,14 @@ using System.Collections.ObjectModel;
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>
+/// Selects the sample API assembly for generated Minimal API endpoint discovery.
+/// </summary>
+[ArkGenerateMinimalApiForAssembly(typeof(RefreshGreetingCommand))]
+public partial class SampleEndpointContext
+{
+}
+
+/// <summary>
 /// Shared ASP.NET Core pipeline configuration used both by <c>Program</c> and the self-tests,
 /// so the exact same wiring is exercised under test. This hosting layer is where the selected
 /// requests/queries are exposed as endpoints.
@@ -183,7 +191,7 @@ public sealed class SampleStartup
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
-            endpoints.MapArkEndpointsFromAssembly<RefreshGreetingCommand>(
+            endpoints.MapArkEndpoints<SampleEndpointContext>(
                 versionPrefix: "/api/v{version}");
             endpoints.MapArkMinimalApiHost();
             endpoints.MapArkGrpcServicesFromAssembly<RefreshGreetingCommand>();

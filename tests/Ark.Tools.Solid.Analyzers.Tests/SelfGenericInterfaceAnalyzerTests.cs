@@ -79,6 +79,94 @@ public class SelfGenericInterfaceAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>Verifies inherited legacy interfaces are analyzed through the complete interface closure.</summary>
+    [TestMethod]
+    public async Task InheritedLegacyInterface_ShouldReportWarning()
+    {
+        var diagnostics = await _analyzeAsync(
+            _solidStubs +
+            """
+
+            namespace Tests
+            {
+                using Ark.Tools.Solid;
+                interface LegacyQuery<T> : IQuery<T> { }
+                sealed class MyQuery : LegacyQuery<int> { }
+            }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle();
+        diagnostics[0].GetMessage(null).Should().Be(
+            "Type 'MyQuery' should implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch");
+    }
+
+    /// <summary>Verifies generic records keep their type parameters in the suggested self interface.</summary>
+    [TestMethod]
+    public async Task GenericRecord_ShouldReportAndFixWithQualification()
+    {
+        var source =
+            _solidStubs +
+            """
+
+            namespace Tests
+            {
+                public sealed record MyQuery<T>(T Value) : global::Ark.Tools.Solid.IQuery<T>;
+            }
+            """;
+
+        var diagnostics = await _analyzeAsync(source).ConfigureAwait(false);
+        diagnostics.Should().ContainSingle();
+        diagnostics[0].GetMessage(null).Should().Contain("IQuery<MyQuery<T>, T>");
+
+        var fixedSource = await _applyCodeFixAsync(source, "MyQuery").ConfigureAwait(false);
+        fixedSource.Should().Contain(
+            "global::Ark.Tools.Solid.IQuery<MyQuery<T>, T>");
+    }
+
+    /// <summary>Verifies applying the code fix makes the analyzer idempotent.</summary>
+    [TestMethod]
+    public async Task CodeFix_IsIdempotent()
+    {
+        var source =
+            _solidStubs +
+            """
+
+            namespace Tests
+            {
+                using Ark.Tools.Solid;
+                class MyQuery : IQuery<int> { }
+            }
+            """;
+
+        var fixedSource = await _applyCodeFixAsync(source, "MyQuery").ConfigureAwait(false);
+        (await _analyzeAsync(fixedSource).ConfigureAwait(false)).Should().BeEmpty();
+    }
+
+    /// <summary>Verifies one type can report each distinct legacy interface without duplicate diagnostics.</summary>
+    [TestMethod]
+    public async Task MultipleLegacyInterfaces_ShouldReportOneWarningPerInterface()
+    {
+        var diagnostics = await _analyzeAsync(
+            _solidStubs +
+            """
+
+            namespace Tests
+            {
+                using Ark.Tools.Solid;
+                sealed class MyHandler : IQuery<int>, IRequest<string>, ICommand { }
+            }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().HaveCount(3);
+        diagnostics.Select(diagnostic => diagnostic.GetMessage(null))
+            .Should().BeEquivalentTo(
+            [
+                "Type 'MyHandler' should implement 'IQuery<MyHandler, int>' to enable reflection-free processor dispatch",
+                "Type 'MyHandler' should implement 'IRequest<MyHandler, string>' to enable reflection-free processor dispatch",
+                "Type 'MyHandler' should implement 'ICommand<MyHandler>' to enable reflection-free processor dispatch",
+            ]);
+    }
+
     /// <summary>Verifies the code fix rewrites the base list to the self-referencing interfaces.</summary>
     [TestMethod]
     public async Task CodeFix_ShouldRewriteBaseTypes()
