@@ -165,8 +165,10 @@ The context attributes select assemblies scanned by the generator:
 
 - use `[ArkGenerateMinimalApiForAssembly(typeof(RefreshGreetingCommand))]` for Minimal API
   and HTTP contract discovery;
-- keep the existing assembly-marker APIs for gRPC and Rebus until their context
-  variants are introduced.
+- use `[ArkGenerateGrpcForAssembly(typeof(RefreshGreetingCommand))]` with
+  `MapArkGrpcServices<TContext>` for gRPC;
+- use `[ArkGenerateRebusForAssembly(typeof(RefreshGreetingCommand))]` with
+  `RegisterArkRebusHandlers<TContext>` for Rebus.
 
 The attribute argument does not itself register anything. It is only a compile-
 time assembly anchor.
