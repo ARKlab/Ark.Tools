@@ -9,6 +9,8 @@ BEGIN
         DELETE FROM [dbo].[Audit];
         DELETE FROM [dbo].[Greeting];
         DELETE FROM [dbo].[BookPrintProcess];
+        DELETE FROM [dbo].[ReadingActivity];
+        DELETE FROM [dbo].[BookReview];
         DELETE FROM [dbo].[Book];
     END
 END

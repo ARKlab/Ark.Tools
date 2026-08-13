@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Tests.Drivers;
+using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Ark.Tools.Authorization;
 using Ark.Tools.Core;
@@ -33,14 +34,17 @@ public sealed record BookCoverTable
 public sealed class BookSteps
 {
     private readonly BookDriver _books;
+    private readonly SampleTestContext _sampleContext;
     private Exception? _exception;
     private string? _previousETag;
 
     /// <summary>Initializes a new instance of the <see cref="BookSteps"/> class.</summary>
     /// <param name="books">The scenario-owned book driver.</param>
-    public BookSteps(BookDriver books)
+    /// <param name="sampleContext">The scenario-owned application context.</param>
+    public BookSteps(BookDriver books, SampleTestContext sampleContext)
     {
         _books = books;
+        _sampleContext = sampleContext;
     }
 
     /// <summary>Creates and activates a book from one table row.</summary>
@@ -299,6 +303,84 @@ public sealed class BookSteps
     {
         var audits = await _books.ReadCurrentAuditsAsync().ConfigureAwait(false);
         table.CompareToInstance(audits.Data.Single());
+    }
+
+    /// <summary>Creates a review for the active book.</summary>
+    [When("I create a book review with")]
+    public async Task CreateBookReview(Table table)
+    {
+        var values = table.Rows.Single();
+        var rating = int.Parse(values["Rating"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.CreateReviewAsync(rating, values["Text"]))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that a review was created.</summary>
+    [Then("the book review was created")]
+    public void BookReviewWasCreated()
+    {
+        _exception.Should().BeNull();
+        _books.CurrentReview.Should().NotBeNull();
+    }
+
+    /// <summary>Lists reviews for the active book.</summary>
+    [When("I list book reviews with")]
+    public async Task ListBookReviews(Table table)
+    {
+        var values = table.Rows.Single();
+        var skip = int.Parse(values["Skip"], CultureInfo.InvariantCulture);
+        var limit = int.Parse(values["Limit"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.ListReviewsAsync(skip, limit))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts the number of listed reviews.</summary>
+    [Then(@"the book review list has (.*) results")]
+    public void BookReviewListHasResults(int count)
+    {
+        _exception.Should().BeNull();
+        _books.Reviews.Should().NotBeNull();
+        _books.Reviews.Should().HaveCount(count);
+    }
+
+    /// <summary>Records reading activity for the active book.</summary>
+    [When("I record reading activity with")]
+    public async Task RecordReadingActivity(Table table)
+    {
+        var values = table.Rows.Single();
+        var kind = Enum.Parse<ReadingActivityKind>(values["Kind"], ignoreCase: true);
+        var progress = int.Parse(values["Progress"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.RecordActivityAsync(kind, progress))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that activity was recorded using the scenario clock.</summary>
+    [Then("the reading activity was recorded at the repository time")]
+    public void ReadingActivityWasRecordedAtRepositoryTime()
+    {
+        _exception.Should().BeNull();
+        _books.CurrentActivity.Should().NotBeNull();
+        _books.CurrentActivity!.OccurredAt.Should().Be(
+            _sampleContext.Application.Clock.GetCurrentInstant());
+    }
+
+    /// <summary>Reads recent activity for the active book.</summary>
+    [When("I list reading activity with")]
+    public async Task ListReadingActivity(Table table)
+    {
+        var values = table.Rows.Single();
+        var limit = int.Parse(values["Limit"], CultureInfo.InvariantCulture);
+        _exception = await _captureAsync(() => _books.ReadActivitiesAsync(limit))
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts the bounded activity result.</summary>
+    [Then(@"the reading activity list has at most (.*) results")]
+    public void ReadingActivityListHasAtMostResults(int count)
+    {
+        _exception.Should().BeNull();
+        _books.Activities.Should().NotBeNull();
+        _books.Activities!.Count.Should().BeLessThanOrEqualTo(count);
     }
 
     private static ArkAttachment _createAttachment(BookCoverTable cover)

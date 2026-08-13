@@ -17,6 +17,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
     private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
+    private readonly ConcurrentDictionary<Guid, BookReview> _bookReviews = new();
+    private readonly ConcurrentDictionary<Guid, ReadingActivity> _readingActivities = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
     private readonly Lock _sync = new();
     private readonly IOutboxAsyncContextFactory _outboxFactory;
@@ -38,6 +40,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             _audits.Clear();
             _books.Clear();
             _bookVersions.Clear();
+            _bookReviews.Clear();
+            _readingActivities.Clear();
             _printProcesses.Clear();
         }
     }
@@ -243,6 +247,53 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 Limit = query.Limit,
                 Data = results.Skip(query.Skip).Take(query.Limit).ToArray(),
             }).ConfigureAwait(false);
+        }
+
+        public async Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(review);
+            if (!_owner._bookReviews.TryAdd(review.Id, review))
+                throw new InvalidOperationException($"Book review '{review.Id}' already exists.");
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
+            Guid bookId,
+            int skip,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            var reviews = _owner._bookReviews.Values
+                .Where(review => review.BookId == bookId)
+                .OrderByDescending(review => review.CreatedAt)
+                .ThenByDescending(review => review.Id)
+                .Skip(skip)
+                .Take(limit)
+                .ToArray();
+            return await Task.FromResult<IReadOnlyList<BookReview>>(reviews).ConfigureAwait(false);
+        }
+
+        public async Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(activity);
+            if (!_owner._readingActivities.TryAdd(activity.Id, activity))
+                throw new InvalidOperationException($"Reading activity '{activity.Id}' already exists.");
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+            Guid bookId,
+            string userId,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            var activities = _owner._readingActivities.Values
+                .Where(activity => activity.BookId == bookId && activity.UserId == userId)
+                .OrderByDescending(activity => activity.OccurredAt)
+                .ThenByDescending(activity => activity.Id)
+                .Take(limit)
+                .ToArray();
+            return await Task.FromResult<IReadOnlyList<ReadingActivity>>(activities).ConfigureAwait(false);
         }
 
         public async Task<bool> TrySaveBookPrintProcessAsync(

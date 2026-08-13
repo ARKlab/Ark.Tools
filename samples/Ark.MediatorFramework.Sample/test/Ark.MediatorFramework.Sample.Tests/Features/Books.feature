@@ -137,6 +137,74 @@ Feature: Books
             When I download the cover for the current book
             Then the book cover request fails because the cover is missing
 
+    Rule: Book reviews demonstrate child-resource behavior
+
+        Scenario: Create and list book reviews
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I create a book review with
+                | Rating | Text             |
+                | 5      | Excellent book!  |
+            Then the book review was created
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 1 results
+
+        Scenario: Reject an invalid book review
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I create a book review with
+                | Rating | Text |
+                | 6      | Bad  |
+            Then the book request fails validation
+
+        Scenario: Reject a book review without its write scope
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user without the book review write scope
+            When I create a book review with
+                | Rating | Text |
+                | 5      | Good |
+            Then the book request fails with an authorization exception
+
+    Rule: Reading activity uses repository time and bounded retrieval
+
+        Scenario: Record and retrieve reading activity
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I record reading activity with
+                | Kind    | Progress |
+                | Started | 0        |
+            Then the reading activity was recorded at the repository time
+            When I list reading activity with
+                | Limit |
+                | 1     |
+            Then the reading activity list has at most 1 results
+
+        Scenario: Reject invalid reading activity
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I record reading activity with
+                | Kind     | Progress |
+                | Finished | 50       |
+            Then the book request fails validation
+
+        Scenario: Reject reading activity without its write scope
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user without the book review write scope
+            When I record reading activity with
+                | Kind    | Progress |
+                | Started | 0        |
+            Then the book request fails with an authorization exception
+
     Rule: Book printing runs asynchronously
 
         Scenario: Complete a book print process

@@ -59,6 +59,22 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Reads a page of books.</summary>
     Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
 
+    /// <summary>Saves a book review.</summary>
+    Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default);
+
+    /// <summary>Reads bounded reviews for a book.</summary>
+    Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(Guid bookId, int skip, int limit, CancellationToken ctk = default);
+
+    /// <summary>Saves reading activity.</summary>
+    Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default);
+
+    /// <summary>Reads bounded activity for a book and reader.</summary>
+    Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+        Guid bookId,
+        string userId,
+        int limit,
+        CancellationToken ctk = default);
+
     /// <summary>Saves a book print process when no active process exists for the book.</summary>
     Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
 
@@ -401,6 +417,74 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Limit = query.Limit,
             Data = rows.Select(row => row.ToResponse()).ToArray(),
         };
+    }
+
+    /// <summary>Saves a book review in the current transaction.</summary>
+    public async Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[BookReview] ([Id], [BookId], [UserId], [Rating], [Text], [CreatedAt])
+            VALUES (@Id, @BookId, @UserId, @Rating, @Text, @CreatedAt);
+            """;
+        var command = new CommandDefinition(sql, review, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads bounded reviews for a book in the current transaction.</summary>
+    public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
+        Guid bookId,
+        int skip,
+        int limit,
+        CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [UserId], [Rating], [Text], [CreatedAt]
+            FROM [dbo].[BookReview]
+            WHERE [BookId] = @BookId
+            ORDER BY [CreatedAt] DESC, [Id] DESC
+            OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
+            """;
+        var command = new CommandDefinition(sql, new { BookId = bookId, Skip = skip, Limit = limit }, Transaction, cancellationToken: ctk);
+        var reviews = await Connection.QueryAsync<BookReview>(command).ConfigureAwait(false);
+        return reviews.ToArray();
+    }
+
+    /// <summary>Saves reading activity in the current transaction.</summary>
+    public async Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default)
+    {
+        const string sql = """
+            INSERT INTO [dbo].[ReadingActivity] ([Id], [BookId], [UserId], [Kind], [Progress], [OccurredAt])
+            VALUES (@Id, @BookId, @UserId, @Kind, @Progress, @OccurredAt);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            activity.Id,
+            activity.BookId,
+            activity.UserId,
+            activity.Kind,
+            activity.Progress,
+            activity.OccurredAt,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
+    public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+        Guid bookId,
+        string userId,
+        int limit,
+        CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [UserId], [Kind], [Progress], [OccurredAt]
+            FROM [dbo].[ReadingActivity]
+            WHERE [BookId] = @BookId AND [UserId] = @UserId
+            ORDER BY [OccurredAt] DESC, [Id] DESC
+            OFFSET 0 ROWS FETCH NEXT @Limit ROWS ONLY;
+            """;
+        var command = new CommandDefinition(sql, new { BookId = bookId, UserId = userId, Limit = limit }, Transaction, cancellationToken: ctk);
+        var activities = await Connection.QueryAsync<ReadingActivity>(command).ConfigureAwait(false);
+        return activities.ToArray();
     }
 
     /// <summary>Saves a book print process when no pending or running process exists for the book.</summary>

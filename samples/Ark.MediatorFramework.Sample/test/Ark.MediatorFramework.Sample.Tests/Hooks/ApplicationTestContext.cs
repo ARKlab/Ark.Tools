@@ -180,7 +180,13 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(subject);
         ArgumentNullException.ThrowIfNull(scopes);
         scopes = scopes.Length == 0
-            ? [ApplicationScopes.GreetingWrite, ApplicationScopes.BookRead, ApplicationScopes.BookWrite]
+            ? [
+                ApplicationScopes.GreetingWrite,
+                ApplicationScopes.BookRead,
+                ApplicationScopes.BookWrite,
+                ApplicationScopes.BookReviewsRead,
+                ApplicationScopes.BookReviewsWrite,
+            ]
             : scopes;
         SetPrincipal(new ClaimsPrincipal(new ClaimsIdentity(
             [

@@ -153,6 +153,34 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             return await _inner.ReadBooksAsync(query, ctk).ConfigureAwait(false);
         }
 
+        public async Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default)
+        {
+            await _inner.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
+            Guid bookId,
+            int skip,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            return await _inner.ReadBookReviewsAsync(bookId, skip, limit, ctk).ConfigureAwait(false);
+        }
+
+        public async Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default)
+        {
+            await _inner.SaveReadingActivityAsync(activity, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
+            Guid bookId,
+            string userId,
+            int limit,
+            CancellationToken ctk = default)
+        {
+            return await _inner.ReadReadingActivityAsync(bookId, userId, limit, ctk).ConfigureAwait(false);
+        }
+
         public async Task<bool> TrySaveBookPrintProcessAsync(
             BookPrintProcessResponse process,
             CancellationToken ctk = default)

@@ -111,3 +111,56 @@ public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<C
         RuleFor(request => request.BookId).NotEmpty();
     }
 }
+
+/// <summary>Validates book review creation requests.</summary>
+public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateBookReviewRequest>
+{
+    /// <summary>Initializes a new instance of the <see cref="CreateBookReviewRequestValidator"/> class.</summary>
+    public CreateBookReviewRequestValidator()
+    {
+        RuleFor(request => request.BookId).NotEmpty();
+        RuleFor(request => request.Rating).InclusiveBetween(1, 5);
+        RuleFor(request => request.Text).NotEmpty().MaximumLength(2000);
+    }
+}
+
+/// <summary>Validates book review list queries.</summary>
+public sealed class ListBookReviewsQueryValidator : AbstractValidator<ListBookReviewsQuery>
+{
+    /// <summary>Initializes a new instance of the <see cref="ListBookReviewsQueryValidator"/> class.</summary>
+    public ListBookReviewsQueryValidator()
+    {
+        RuleFor(query => query.BookId).NotEmpty();
+        RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
+        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+    }
+}
+
+/// <summary>Validates reading activity requests.</summary>
+public sealed class RecordReadingActivityRequestValidator : AbstractValidator<RecordReadingActivityRequest>
+{
+    /// <summary>Initializes a new instance of the <see cref="RecordReadingActivityRequestValidator"/> class.</summary>
+    public RecordReadingActivityRequestValidator()
+    {
+        RuleFor(request => request.BookId).NotEmpty();
+        RuleFor(request => request.Kind).NotEqual(Ark.Tools.Core.EvolvableEnum<ReadingActivityKind>.NotSet);
+        RuleFor(request => request.Progress).InclusiveBetween(0, 100);
+        RuleFor(request => request)
+            .Must(request => request.Kind != ReadingActivityKind.Started || request.Progress == 0)
+            .WithMessage("Started activity must have zero progress.");
+        RuleFor(request => request)
+            .Must(request => request.Kind != ReadingActivityKind.Finished || request.Progress == 100)
+            .WithMessage("Finished activity must have complete progress.");
+    }
+}
+
+/// <summary>Validates reading activity queries.</summary>
+public sealed class GetReadingActivityQueryValidator : AbstractValidator<GetReadingActivityQuery>
+{
+    /// <summary>Initializes a new instance of the <see cref="GetReadingActivityQueryValidator"/> class.</summary>
+    public GetReadingActivityQueryValidator()
+    {
+        RuleFor(query => query.BookId).NotEmpty();
+        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+    }
+}
