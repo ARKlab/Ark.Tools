@@ -841,10 +841,10 @@ namespace Ark.MediatorFramework.Generators
                 var backing = arguments.Length == 1 ? "int" : arguments[1].Trim();
                 return backing switch
                 {
-                    "sbyte" or "short" or "int" or "System.SByte" or "System.Int16" or "System.Int32" => "int32",
-                    "byte" or "ushort" or "uint" or "System.Byte" or "System.UInt16" or "System.UInt32" => "uint32",
-                    "long" or "System.Int64" => "int64",
-                    "ulong" or "System.UInt64" => "uint64",
+                    "sbyte" or "short" or "int" or "global::System.SByte" or "global::System.Int16" or "global::System.Int32" => "int32",
+                    "byte" or "ushort" or "uint" or "global::System.Byte" or "global::System.UInt16" or "global::System.UInt32" => "uint32",
+                    "long" or "global::System.Int64" => "int64",
+                    "ulong" or "global::System.UInt64" => "uint64",
                     _ => "int32",
                 };
             }
