@@ -11,6 +11,12 @@ public static class ApplicationScopes
     /// <summary>Allows creating and updating greetings.</summary>
     public const string GreetingWrite = "greetings.write";
 
+    /// <summary>Allows reading books.</summary>
+    public const string BookRead = "books.read";
+
+    /// <summary>Allows creating, updating, and deleting books.</summary>
+    public const string BookWrite = "books.write";
+
     /// <summary>Allows reading and writing book covers.</summary>
     public const string BookCover = "books.cover";
 }

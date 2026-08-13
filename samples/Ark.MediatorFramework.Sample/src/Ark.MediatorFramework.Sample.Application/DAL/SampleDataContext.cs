@@ -312,12 +312,12 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         CancellationToken ctk = default)
     {
         const string sqlWithoutLock = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE [Id] = @Id;
             """;
         const string sqlWithLock = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
             FROM [dbo].[Book] WITH (UPDLOCK, HOLDLOCK)
             WHERE [Id] = @Id;
             """;
@@ -337,7 +337,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [Genre] = @Genre,
                 [ISBN] = @ISBN,
                 [Description] = @Description
-            WHERE [Id] = @Id;
+            WHERE [Id] = @Id
+              AND [RowVersion] = TRY_CONVERT(VARBINARY(8), @ETag, 1);
             """;
         var command = new CommandDefinition(sql, new
         {
@@ -347,6 +348,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Genre,
             book.ISBN,
             book.Description,
+            book.ETag,
         }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
     }
@@ -367,7 +369,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         var orderBy = _buildBookOrderBy(query.Sort ?? []);
         var sql = $"""
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE (@Title IS NULL OR [Title] = @Title)
               AND (@Author IS NULL OR [Author] = @Author)
@@ -613,6 +615,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public EvolvableEnum<Book.V1.Genre> Genre { get; set; }
         public string? ISBN { get; set; }
         public string Description { get; set; } = string.Empty;
+        public byte[] ETag { get; set; } = [];
 
         public Book.V1.Output ToResponse()
         {
@@ -624,6 +627,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 Genre = Genre,
                 ISBN = ISBN,
                 Description = Description,
+                ETag = "0x" + Convert.ToHexString(ETag),
             };
         }
     }

@@ -16,6 +16,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     private readonly ConcurrentDictionary<Guid, long> _greetingVersions = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
+    private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
     private readonly Lock _sync = new();
     private readonly IOutboxAsyncContextFactory _outboxFactory;
@@ -36,6 +37,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             _greetingVersions.Clear();
             _audits.Clear();
             _books.Clear();
+            _bookVersions.Clear();
             _printProcesses.Clear();
         }
     }
@@ -178,8 +180,12 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(book);
-            if (!_owner._books.TryAdd(book.Id, book))
-                throw new InvalidOperationException($"Book '{book.Id}' already exists.");
+            lock (_owner._sync)
+            {
+                if (!_owner._books.TryAdd(book.Id, book with { ETag = "0x0000000000000001" }))
+                    throw new InvalidOperationException($"Book '{book.Id}' already exists.");
+                _owner._bookVersions[book.Id] = 1;
+            }
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
@@ -195,9 +201,18 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         public async Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(book);
-            var updated = _owner._books.ContainsKey(book.Id);
-            if (updated)
-                _owner._books[book.Id] = book;
+            var updated = false;
+            lock (_owner._sync)
+            {
+                if (_owner._books.TryGetValue(book.Id, out var current)
+                    && string.Equals(current.ETag, book.ETag, StringComparison.Ordinal))
+                {
+                    var version = _owner._bookVersions[book.Id] + 1;
+                    _owner._bookVersions[book.Id] = version;
+                    _owner._books[book.Id] = book with { ETag = $"0x{version:X16}" };
+                    updated = true;
+                }
+            }
             return await Task.FromResult(updated).ConfigureAwait(false);
         }
 

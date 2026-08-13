@@ -16,12 +16,35 @@ Feature: Books
             Then the current book is
                 | Title                 | Author          | Genre      | ISBN           |
                 | The Pragmatic Coder 2 | Hunt and Thomas | Technology | 978-0135957059 |
+            And the current book has a refreshed opaque ETag
+            And the current book has a deterministic audit for "Book_UpdateRequest.V1"
             When I retrieve the current book
             Then the current book is
                 | Title                 | Author          | Genre      | ISBN           |
                 | The Pragmatic Coder 2 | Hunt and Thomas | Technology | 978-0135957059 |
             When I delete the current book
             Then the current book was deleted
+
+        Scenario: Reject an invalid book update
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I update the current book with
+                | Title |
+                |       |
+            Then the book request fails validation
+
+        Scenario: Reject a stale book ETag
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I update the current book with
+                | Title |
+                | Dune  |
+            And I update the current book with a stale ETag and
+                | Title |
+                | Dune 2 |
+            Then the book request fails because the book ETag is stale
 
     Rule: Book searches use table-defined entities and filters
 

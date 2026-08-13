@@ -5,6 +5,7 @@ using Ark.MediatorFramework.Sample.Tests.Drivers;
 
 using Ark.Tools.Authorization;
 using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Reqnroll;
 
 using AwesomeAssertions;
@@ -33,6 +34,7 @@ public sealed class BookSteps
 {
     private readonly BookDriver _books;
     private Exception? _exception;
+    private string? _previousETag;
 
     /// <summary>Initializes a new instance of the <see cref="BookSteps"/> class.</summary>
     /// <param name="books">The scenario-owned book driver.</param>
@@ -47,13 +49,15 @@ public sealed class BookSteps
     public async Task GivenCreateBook(Table table)
     {
         await CreateBook(table).ConfigureAwait(false);
+        _exception.Should().BeNull();
         _books.Current.Should().NotBeNull();
     }
 
     [When("I create a book with")]
     public async Task CreateBook(Table table)
     {
-        await _books.CreateAsync(table.CreateInstance<Book.V1.Create>()).ConfigureAwait(false);
+        _exception = await _captureAsync(() => _books.CreateAsync(table.CreateInstance<Book.V1.Create>()))
+            .ConfigureAwait(false);
     }
 
     /// <summary>Creates books from a table and activates the last created book.</summary>
@@ -85,26 +89,75 @@ public sealed class BookSteps
     public async Task UpdateCurrentBook(Table table)
     {
         var merged = table.MergeInstance(_books.Current);
-        await _books.UpdateCurrentAsync(new Book.V1.Input
+        _previousETag = _books.Current.ETag;
+        _exception = await _captureAsync(() => _books.UpdateCurrentAsync(new Book.V1.Input
         {
             Title = merged.Title,
             Author = merged.Author,
             Genre = merged.Genre,
-        }).ConfigureAwait(false);
+        })).ConfigureAwait(false);
+    }
+
+    /// <summary>Attempts to update the active book using its previous ETag.</summary>
+    /// <param name="table">The replacement book data.</param>
+    [When("I update the current book with a stale ETag and")]
+    public async Task UpdateCurrentBookWithStaleETag(Table table)
+    {
+        var merged = table.MergeInstance(_books.Current);
+        _exception = await _captureAsync(() => _books.UpdateCurrentAsync(new Book.V1.Input
+        {
+            Title = merged.Title,
+            Author = merged.Author,
+            Genre = merged.Genre,
+        }, _previousETag)).ConfigureAwait(false);
     }
 
     /// <summary>Deletes the active book.</summary>
     [When("I delete the current book")]
     public async Task DeleteCurrentBook()
     {
-        await _books.DeleteCurrentAsync().ConfigureAwait(false);
+        _exception = await _captureAsync(() => _books.DeleteCurrentAsync()).ConfigureAwait(false);
     }
 
     /// <summary>Asserts that the active book was deleted successfully.</summary>
     [Then("the current book was deleted")]
     public void CurrentBookWasDeleted()
     {
+        _exception.Should().BeNull();
         _books.HasCurrent.Should().BeFalse();
+    }
+
+    /// <summary>Asserts that the active book has a refreshed opaque ETag.</summary>
+    [Then("the current book has a refreshed opaque ETag")]
+    public void CurrentBookHasRefreshedOpaqueETag()
+    {
+        _books.Current.ETag.Should().NotBeNullOrWhiteSpace();
+        _books.Current.ETag.Should().NotBe(_previousETag);
+    }
+
+    /// <summary>Asserts that a book request failed validation.</summary>
+    [Then("the book request fails validation")]
+    public void BookRequestFailsValidation()
+    {
+        _exception.Should().BeOfType<FluentValidation.ValidationException>();
+    }
+
+    /// <summary>Asserts that a book request failed because its ETag was stale.</summary>
+    [Then("the book request fails because the book ETag is stale")]
+    public void BookRequestFailsBecauseETagIsStale()
+    {
+        _exception.Should().BeOfType<EntityTagMismatchException>();
+    }
+
+    /// <summary>Asserts that a mutation wrote a deterministic book audit record.</summary>
+    /// <param name="operation">The expected operation name.</param>
+    [Then(@"the current book has a deterministic audit for ""(.*)""")]
+    public async Task CurrentBookHasDeterministicAudit(string operation)
+    {
+        var audits = await _books.ReadCurrentAuditsAsync().ConfigureAwait(false);
+        var audit = audits.Data.Single(record => record.Operation == operation);
+        audit.UserId.Should().Be("application-test-user");
+        audit.EntityType.Should().Be(nameof(Book.V1.Output));
     }
 
     /// <summary>Searches books using the supplied table filters.</summary>

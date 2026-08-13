@@ -57,10 +57,10 @@ public sealed class BookDriver
     /// <summary>Updates the active book.</summary>
     /// <param name="input">The replacement book details.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task UpdateCurrentAsync(Book.V1.Input input, CancellationToken ctk = default)
+    public async Task UpdateCurrentAsync(Book.V1.Input input, string? eTag = null, CancellationToken ctk = default)
     {
         _current = await _context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
-            new Book_UpdateRequest.V1(input, Current.Id),
+            new Book_UpdateRequest.V1(input, Current.Id, eTag ?? Current.ETag),
             ctk).ConfigureAwait(false);
     }
 

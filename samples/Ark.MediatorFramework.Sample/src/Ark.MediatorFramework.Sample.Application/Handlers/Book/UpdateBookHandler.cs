@@ -33,6 +33,8 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
         await using var __ctx = context.ConfigureAwait(false);
         var current = await context.ReadBookAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
+        if (!string.Equals(request.ETag, current.ETag, StringComparison.Ordinal))
+            throw new EntityTagMismatchException($"The ETag for book '{request.Id}' did not match.");
         var book = current with
         {
             Title = request.Data.Title,
@@ -41,7 +43,9 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             Description = $"Book updated: {request.Data.Title} by {request.Data.Author}",
         };
         if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
-            throw new EntityNotFoundException($"Book '{book.Id}' was not found.");
+            throw new EntityTagMismatchException($"The ETag for book '{request.Id}' did not match.");
+        book = await context.ReadBookAsync(request.Id, ctk: ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found after update.");
         await context.WriteAuditAsync(new AuditEntry
         {
             Id = Guid.NewGuid(),

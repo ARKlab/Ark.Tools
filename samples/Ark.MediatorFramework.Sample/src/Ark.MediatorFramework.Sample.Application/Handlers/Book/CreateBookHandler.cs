@@ -34,6 +34,8 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
         await using var __ctx = context.ConfigureAwait(false);
         await context.WriteAuditAsync(_createAudit(book.Id, typeof(Book_CreateRequest).Name + "." + typeof(Book_CreateRequest.V1).Name), ctk).ConfigureAwait(false);
         await context.SaveBookAsync(book, ctk).ConfigureAwait(false);
+        book = await context.ReadBookAsync(book.Id, ctk: ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book '{book.Id}' was not found after creation.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return book;
     }
