@@ -3,6 +3,7 @@
 
 using Ark.Tools.Solid;
 using Ark.Tools.Core;
+using Ark.Tools.Core.EntityTag;
 
 using NodaTime;
 
