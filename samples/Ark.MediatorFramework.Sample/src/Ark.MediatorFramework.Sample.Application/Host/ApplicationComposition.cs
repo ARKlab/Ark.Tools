@@ -132,10 +132,10 @@ public static class ApplicationComposition
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null)
     {
+        ArgumentNullException.ThrowIfNull(container);
         container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
         container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
-        ArgumentNullException.ThrowIfNull(container);
 
         if (dataContextFactory is not null)
         {
