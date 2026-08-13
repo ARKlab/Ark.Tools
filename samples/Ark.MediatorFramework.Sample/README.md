@@ -121,6 +121,8 @@ worker's topology or dead-letter demonstration types.
 - Read process status while the Rebus worker updates it.
 - Cancel pending or running print processes and reject terminal-state cancellation.
 - Demonstrate a business-rule violation when a print process is already active.
+- Stream bounded Book items with cancellation-aware HTTP JSON and gRPC endpoints.
+- Describe printed and digital Book editions through JSON, protobuf, and MessagePack.
 
 ### Auditing
 
