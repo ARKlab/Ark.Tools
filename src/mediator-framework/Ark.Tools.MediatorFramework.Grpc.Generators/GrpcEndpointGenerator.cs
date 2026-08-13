@@ -33,6 +33,16 @@ namespace Ark.MediatorFramework.Generators
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
+        private static readonly string[] _collectionPrefixes =
+        [
+            "global::System.Collections.Generic.IEnumerable<",
+            "global::System.Collections.Generic.IReadOnlyCollection<",
+            "global::System.Collections.Generic.IReadOnlyList<",
+            "global::System.Collections.Generic.ICollection<",
+            "global::System.Collections.Generic.IList<",
+            "global::System.Collections.Generic.List<",
+            "global::System.Collections.Immutable.ImmutableArray<",
+        ];
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -814,16 +824,7 @@ namespace Ark.MediatorFramework.Generators
             if (typeName.EndsWith("[]", StringComparison.Ordinal))
                 return ProtoTypeName(typeName[..^2], contracts);
 
-            foreach (var collectionPrefix in new[]
-            {
-                "global::System.Collections.Generic.IEnumerable<",
-                "global::System.Collections.Generic.IReadOnlyCollection<",
-                "global::System.Collections.Generic.IReadOnlyList<",
-                "global::System.Collections.Generic.ICollection<",
-                "global::System.Collections.Generic.IList<",
-                "global::System.Collections.Generic.List<",
-                "global::System.Collections.Immutable.ImmutableArray<",
-            })
+            foreach (var collectionPrefix in _collectionPrefixes)
             {
                 if (typeName.StartsWith(collectionPrefix, StringComparison.Ordinal)
                     && typeName.EndsWith(">", StringComparison.Ordinal))
