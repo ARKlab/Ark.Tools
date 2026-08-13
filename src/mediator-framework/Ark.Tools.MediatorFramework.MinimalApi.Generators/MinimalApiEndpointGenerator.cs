@@ -820,9 +820,6 @@ namespace Ark.MediatorFramework.Generators
                     if (e.UnsupportedAttachmentCollections.Length > 0)
                         continue;
 
-                    var handlerService = e.Kind == HandlerKind.Query
-                        ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
-                        : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
                     var processorService = e.Kind == HandlerKind.Query
                         ? "global::Ark.Tools.Solid.IQueryProcessor"
                         : "global::Ark.Tools.Solid.IRequestProcessor";
