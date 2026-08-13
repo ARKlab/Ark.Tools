@@ -34,7 +34,7 @@ public static class ArkMultipartEx
         this IEndpointRouteBuilder endpoints,
         string pattern,
         Func<IArkAttachment, TRequest> factory)
-        where TRequest : IRequest<TResponse>
+        where TRequest : class, IRequest<TRequest, TResponse>
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentException.ThrowIfNullOrWhiteSpace(pattern);

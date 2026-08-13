@@ -69,7 +69,7 @@ public static class ArkAzureFunctionsInvocation
         TResponse>(
         HttpRequest request,
         CancellationToken cancellationToken)
-        where TRequest : IRequest<TResponse>
+        where TRequest : class, IRequest<TRequest, TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
         var binding = await _bindAsync<TRequest>(request, cancellationToken).ConfigureAwait(false);
@@ -96,7 +96,7 @@ public static class ArkAzureFunctionsInvocation
         TResponse>(
         HttpRequest request,
         CancellationToken cancellationToken)
-        where TQuery : IQuery<TResponse>
+        where TQuery : class, IQuery<TQuery, TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
         var binding = await _bindAsync<TQuery>(request, cancellationToken).ConfigureAwait(false);
@@ -121,7 +121,7 @@ public static class ArkAzureFunctionsInvocation
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(
         HttpRequest request,
         CancellationToken cancellationToken)
-        where TCommand : ICommand
+        where TCommand : class, ICommand<TCommand>
     {
         ArgumentNullException.ThrowIfNull(request);
         var binding = await _bindAsync<TCommand>(request, cancellationToken).ConfigureAwait(false);
