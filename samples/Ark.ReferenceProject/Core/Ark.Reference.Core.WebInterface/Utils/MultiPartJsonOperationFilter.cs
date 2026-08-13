@@ -126,7 +126,10 @@ public class MultiPartJsonOperationFilter : IOperationFilter
             return;
 
         var json = JsonSerializer.SerializeToNode(example, _jsonOptions.Value.JsonSerializerOptions);
-        openApiSchema.Example = json;
+        if (json is null)
+            return;
+
+        openApiSchema.Examples = [json];
     }
 
     private object? _getExampleFor(Type parameterType)

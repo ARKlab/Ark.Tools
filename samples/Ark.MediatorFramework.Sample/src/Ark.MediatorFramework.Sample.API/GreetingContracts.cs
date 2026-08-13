@@ -52,7 +52,7 @@ public static class Greeting
             public OffsetDateTime OffsetDateTime { get; init; }
 
             /// <summary>Gets the representative period.</summary>
-            [ProtoMember(5)]
+            [ProtoMember(5, IsRequired = true)]
             public Period Period { get; init; } = Period.Zero;
         }
 
@@ -84,7 +84,7 @@ public static class Greeting
             public OffsetDateTime OffsetDateTime { get; init; }
 
             /// <summary>Gets the representative period.</summary>
-            [ProtoMember(6)]
+            [ProtoMember(6, IsRequired = true)]
             public Period Period { get; init; } = Period.Zero;
 
             /// <summary>Gets the audit identifier associated with this entity version.</summary>
@@ -126,7 +126,7 @@ public sealed record GreetingResponse
     public OffsetDateTime OffsetDateTime { get; init; }
 
     /// <summary>Gets the representative period.</summary>
-    [ProtoMember(6)]
+    [ProtoMember(6, IsRequired = true)]
     public Period Period { get; init; } = Period.Zero;
 
     /// <summary>Gets the audit identifier associated with this entity version.</summary>
@@ -147,7 +147,7 @@ public static class Greeting_CreateRequest
     [GrpcMethod("CreateGreeting")]
     [GrpcService("Greetings")]
     [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
-    [ProtoContract]
+    [ProtoContract(SkipConstructor = true)]
     [MessagePackObject(true)]
     public sealed record V1(
         [property: HttpBody, ProtoMember(1)] Greeting.V1.Create Data,
@@ -162,7 +162,7 @@ public static class Greeting_UpdateRequest
     [GrpcMethod("UpdateGreetingMessage")]
     [GrpcService("Greetings")]
     [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
-    [ProtoContract]
+    [ProtoContract(SkipConstructor = true)]
     [MessagePackObject(true)]
     public sealed record V1(
         [property: HttpBody, ProtoMember(1)] Greeting.V1.Input Data,
@@ -272,6 +272,7 @@ public sealed record SearchGreetingsQuery : IQuery<SearchGreetingsQuery, Greetin
 
     /// <inheritdoc />
     [HttpQuery]
+    [System.ComponentModel.DefaultValue(25)]
     [ProtoMember(3)]
     public int Limit { get; init; } = 25;
 
