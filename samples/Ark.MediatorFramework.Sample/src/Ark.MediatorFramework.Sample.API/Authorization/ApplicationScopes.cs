@@ -23,8 +23,14 @@ public static class ApplicationScopes
     /// <summary>Allows reading book reviews and reading activity.</summary>
     public const string BookReviewsRead = "books.reviews.read";
 
-    /// <summary>Allows writing book reviews and reading activity.</summary>
+    /// <summary>Allows writing book reviews.</summary>
     public const string BookReviewsWrite = "books.reviews.write";
+
+    /// <summary>Allows reading book reading activity.</summary>
+    public const string BookActivityRead = "books.activity.read";
+
+    /// <summary>Allows recording book reading activity.</summary>
+    public const string BookActivityWrite = "books.activity.write";
 }
 
 /// <summary>Requires a scope claim.</summary>

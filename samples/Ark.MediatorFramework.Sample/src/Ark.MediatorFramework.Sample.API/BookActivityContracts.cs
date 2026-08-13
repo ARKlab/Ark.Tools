@@ -108,7 +108,7 @@ public sealed record ReadingActivity
 
 /// <summary>Records reading activity for a book.</summary>
 [HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reading-activity")]
-[RequireScopePolicy(ApplicationScopes.BookReviewsWrite)]
+[RequireScopePolicy(ApplicationScopes.BookActivityWrite)]
 public sealed record RecordReadingActivityRequest :
     IRequest<RecordReadingActivityRequest, ReadingActivity>
 {
@@ -125,7 +125,7 @@ public sealed record RecordReadingActivityRequest :
 
 /// <summary>Reads recent activity for a book and the current reader.</summary>
 [HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reading-activity")]
-[RequireScopePolicy(ApplicationScopes.BookReviewsRead)]
+[RequireScopePolicy(ApplicationScopes.BookActivityRead)]
 public sealed record GetReadingActivityQuery :
     IQuery<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>
 {

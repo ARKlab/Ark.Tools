@@ -186,6 +186,8 @@ public sealed class ApplicationTestContext : IAsyncDisposable
                 ApplicationScopes.BookWrite,
                 ApplicationScopes.BookReviewsRead,
                 ApplicationScopes.BookReviewsWrite,
+                ApplicationScopes.BookActivityRead,
+                ApplicationScopes.BookActivityWrite,
             ]
             : scopes;
         SetPrincipal(new ClaimsPrincipal(new ClaimsIdentity(
