@@ -61,7 +61,7 @@ public sealed class ApplicationTestContextTests
 
         response.Should().HaveCount(2);
         response.Select(book => book.Title).Should().Equal("Clean Code", "Dune");
-        context.AuditCount.Should().Be(2);
+        context.AuditCount.Should().Be(1);
     }
 
     /// <summary>Reports validation failures from the decorated handler pipeline.</summary>
