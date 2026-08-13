@@ -7,7 +7,6 @@ using Ark.Tools.Core;
 
 using Dapper;
 
-using System.Data;
 using System.Data.Common;
 
 namespace Ark.MediatorFramework.Sample.Application.DAL;
@@ -215,18 +214,44 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Id,
             book.Title,
             book.Author,
-            book.Genre.ToString(),
+            book.Genre,
             book.ISBN,
             book.Description));
         var parameters = new
         {
             Books = rows.ToDataTableArk().AsTableValuedParameter("dbo.BookBulkInsertType"),
         };
+        const string sql = """
+            INSERT INTO [dbo].[Book]
+            (
+                [Id],
+                [Title],
+                [Author],
+                [Genre],
+                [ISBN],
+                [Description]
+            )
+            OUTPUT
+                INSERTED.[Id],
+                INSERTED.[Title],
+                INSERTED.[Author],
+                INSERTED.[Genre],
+                INSERTED.[ISBN],
+                INSERTED.[Description],
+                INSERTED.[RowVersion] AS [ETag]
+            SELECT
+                [Id],
+                [Title],
+                [Author],
+                [Genre],
+                [ISBN],
+                [Description]
+            FROM @Books;
+            """;
         var command = new CommandDefinition(
-            "dbo.Book_BulkInsert",
+            sql,
             parameters,
             Transaction,
-            commandType: CommandType.StoredProcedure,
             cancellationToken: ctk);
         var data = await Connection.QueryAsync<BookRow>(command).ConfigureAwait(false);
         return data.Select(static row => row.ToResponse()).ToArray();
@@ -572,7 +597,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         Guid Id,
         string Title,
         string Author,
-        string Genre,
+        EvolvableEnum<Book.V1.Genre> Genre,
         string? ISBN,
         string Description);
 

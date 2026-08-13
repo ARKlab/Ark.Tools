@@ -29,6 +29,18 @@ public class DataTableExtensionsTests
         Completed = 2,
     }
 
+    private enum EvolvableStatus
+    {
+        NOT_SET = 0,
+        Active = 1,
+    }
+
+    private enum ByteEvolvableStatus : byte
+    {
+        NOT_SET = 0,
+        Active = 1,
+    }
+
     // Exactly 10 mixed-type public properties, matching the shape used by the performance benchmarks.
     private sealed class Entity
     {
@@ -90,6 +102,12 @@ public class DataTableExtensionsTests
     private sealed class RuntimeTypedEntity
     {
         public object? Value { get; set; }
+    }
+
+    private sealed class EvolvableEntity
+    {
+        public EvolvableEnum<EvolvableStatus> Status { get; set; }
+        public EvolvableEnum<ByteEvolvableStatus, byte>? CompactStatus { get; set; }
     }
 
     /// <summary>All 10 mixed-type columns are created with the expected .NET column types.</summary>
@@ -195,12 +213,38 @@ public class DataTableExtensionsTests
         {
             new RuntimeTypedEntity { Value = Status.Active },
             new RuntimeTypedEntity { Value = new LocalDate(2024, 5, 1) },
+            new RuntimeTypedEntity { Value = EvolvableEnum<EvolvableStatus>.FromName("Future") },
         };
 
         using var table = entities.ToDataTableArk();
 
         table.Rows[0]["Value"].Should().Be("Active");
         table.Rows[1]["Value"].Should().Be(new DateTime(2024, 5, 1));
+        table.Rows[2]["Value"].Should().Be("Future");
+    }
+
+    /// <summary>EvolvableEnum properties are converted to their string representation.</summary>
+    [TestMethod]
+    public void ToDataTableArk_WithEvolvableEnumProperties_ConvertsValues()
+    {
+        var entities = new[]
+        {
+            new EvolvableEntity
+            {
+                Status = EvolvableEnum<EvolvableStatus>.FromName("Future"),
+                CompactStatus = EvolvableEnum<ByteEvolvableStatus, byte>.FromNumber(7),
+            },
+            new EvolvableEntity { Status = EvolvableEnum<EvolvableStatus>.FromValue(EvolvableStatus.Active) },
+        };
+
+        using var table = entities.ToDataTableArk();
+
+        table.Columns["Status"]!.DataType.Should().Be<string>();
+        table.Columns["CompactStatus"]!.DataType.Should().Be<string>();
+        table.Rows[0]["Status"].Should().Be("Future");
+        table.Rows[0]["CompactStatus"].Should().Be("7");
+        table.Rows[1]["Status"].Should().Be("Active");
+        table.Rows[1].IsNull("CompactStatus").Should().BeTrue();
     }
 
     /// <summary>Plain nullable value types (not enums, not NodaTime) round-trip both null and non-null values.</summary>
