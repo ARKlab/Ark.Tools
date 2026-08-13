@@ -51,8 +51,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
             compilation is CSharpCompilation csharpCompilation
-            && LanguageVersionFacts.MapSpecifiedToEffectiveVersion(csharpCompilation.LanguageVersion)
-                >= LanguageVersionFacts.CSharpNext);
+            && _supportsInterceptors(csharpCompilation.LanguageVersion));
 
         var interceptorsEnabled = context.AnalyzerConfigOptionsProvider
             .Select(static (options, _) =>
@@ -84,6 +83,17 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         var name = _getSimpleName(invocation.Expression);
         return name is not null && name.Identifier.ValueText == _targetMethodName;
+    }
+
+    private static bool _supportsInterceptors(LanguageVersion languageVersion)
+    {
+        if (languageVersion == LanguageVersion.Preview)
+            return true;
+
+        var effectiveVersion = LanguageVersionFacts.MapSpecifiedToEffectiveVersion(languageVersion);
+        var displayName = LanguageVersionFacts.ToDisplayString(effectiveVersion);
+        return string.Equals(displayName, "C# 14.0", StringComparison.Ordinal)
+            || string.Equals(displayName, "C# next", StringComparison.OrdinalIgnoreCase);
     }
 
     private static SimpleNameSyntax? _getSimpleName(ExpressionSyntax expression) => expression switch
