@@ -114,7 +114,7 @@ public sealed record ShapeEnvelope
 /// </summary>
 [HttpEndpoint("POST", "/api/v{version}/shapes/describe", AcceptsMessagePack = true)]
 [GrpcMethod("DescribeShape")]
-[GrpcService("Greetings")]
+[GrpcService("Shapes")]
 [ProtoContract]
 [MessagePackObject]
 public sealed record DescribeShapeRequest : IRequest<DescribeShapeRequest, ShapeDescription>

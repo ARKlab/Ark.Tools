@@ -7,7 +7,7 @@ using AwesomeAssertions;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
-/// <summary>Verifies streaming and cancellation through application contracts.</summary>
+/// <summary>Verifies Book streaming and cancellation through application contracts.</summary>
 [TestClass]
 public sealed class AsyncEnumerableStreamingTests
 {
@@ -18,10 +18,10 @@ public sealed class AsyncEnumerableStreamingTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("stream-user");
         using var cancellation = new CancellationTokenSource();
-        var stream = await context.DispatchQueryAsync<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>(
-            new GetGreetingsStreamQuery { Count = 100, DelayMilliseconds = 0 },
+        var stream = await context.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery { Count = 100, DelayMilliseconds = 0 },
             cancellation.Token).ConfigureAwait(false);
-        var items = new List<GreetingStreamItem>();
+        var items = new List<BookStreamItem>();
 
         var action = async () =>
         {
@@ -35,7 +35,7 @@ public sealed class AsyncEnumerableStreamingTests
 
         await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
         items.Select(item => item.Index).Should().Equal(0, 1);
-        items[0].Message.Should().Be("Hello, stream item 0!");
+        items[0].Title.Should().Be("Book 0");
     }
 
     /// <summary>Returns no items when the application query requests an empty stream.</summary>
@@ -44,8 +44,8 @@ public sealed class AsyncEnumerableStreamingTests
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("stream-user");
-        var stream = await context.DispatchQueryAsync<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>(
-            new GetGreetingsStreamQuery { Count = 0 }).ConfigureAwait(false);
+        var stream = await context.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery { Count = 0 }).ConfigureAwait(false);
 
         var items = await stream.ToListAsync().ConfigureAwait(false);
 

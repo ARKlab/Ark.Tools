@@ -12,8 +12,6 @@ namespace Ark.MediatorFramework.Sample.Application.DAL;
 /// <summary>Creates shared in-memory contexts for handler-owned transactions.</summary>
 public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 {
-    private readonly ConcurrentDictionary<Guid, GreetingResponse> _greetings = new();
-    private readonly ConcurrentDictionary<Guid, long> _greetingVersions = new();
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
     private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
@@ -35,8 +33,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     {
         lock (_sync)
         {
-            _greetings.Clear();
-            _greetingVersions.Clear();
             _audits.Clear();
             _books.Clear();
             _bookVersions.Clear();
@@ -71,14 +67,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public IOutboxContextCore OutboxContext => _outbox;
 
-        public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(greeting);
-            var version = _owner._greetingVersions.GetOrAdd(greeting.Id, 1);
-            _owner._greetings[greeting.Id] = greeting with { ETag = $"0x{version:X16}" };
-            await Task.CompletedTask.ConfigureAwait(false);
-        }
-
         public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(audit);
@@ -92,43 +80,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 Timestamp = audit.Timestamp,
             });
             await Task.CompletedTask.ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
-        {
-            _owner._greetings.TryGetValue(id, out var greeting);
-            return await Task.FromResult(greeting).ConfigureAwait(false);
-        }
-
-        public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
-        {
-            return await Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_owner._greetings.Values.ToArray())
-                .ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> UpdateAsync(
-            Guid id,
-            string message,
-            string eTag,
-            Guid auditId,
-            CancellationToken ctk = default)
-        {
-            GreetingResponse? updated = null;
-            lock (_owner._sync)
-            {
-                if (_owner._greetings.TryGetValue(id, out var current))
-                {
-                    var version = _owner._greetingVersions.GetOrAdd(id, 1);
-                    if (string.Equals(eTag, $"0x{version:X16}", StringComparison.Ordinal))
-                    {
-                        updated = current with { Message = message, ETag = $"0x{version + 1:X16}", AuditId = auditId };
-                        _owner._greetings[id] = updated;
-                        _owner._greetingVersions[id] = version + 1;
-                    }
-                }
-            }
-
-            return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
         public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(
@@ -154,25 +105,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 Skip = query.Skip,
                 Limit = query.Limit,
                 Data = records.Skip(query.Skip).Take(query.Limit).ToArray(),
-            }).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingPage> ReadGreetingsAsync(
-            SearchGreetingsQuery query,
-            CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(query);
-            var matching = _owner._greetings.Values
-                .Where(greeting => query.MessageContains is null
-                    || greeting.Message.Contains(query.MessageContains, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(greeting => greeting.Id)
-                .ToArray();
-            return await Task.FromResult(new GreetingPage
-            {
-                Count = matching.Length,
-                Skip = query.Skip,
-                Limit = query.Limit,
-                Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
             }).ConfigureAwait(false);
         }
 

@@ -8,9 +8,6 @@ namespace Ark.MediatorFramework.Sample.API.Authorization;
 /// <summary>Names the scopes used by the sample API.</summary>
 public static class ApplicationScopes
 {
-    /// <summary>Allows creating and updating greetings.</summary>
-    public const string GreetingWrite = "greetings.write";
-
     /// <summary>Allows reading books.</summary>
     public const string BookRead = "books.read";
 

@@ -183,11 +183,10 @@ public sealed class SampleStartup
         app.UseEndpoints(endpoints =>
         {
             // Source-generated endpoints for the selected [HttpEndpoint] contracts.
-            endpoints.MapArkEndpointsFromAssembly<RefreshGreetingCommand>(
+            endpoints.MapArkEndpointsFromAssembly<Book_CreateRequest.V1>(
                 versionPrefix: "/api/v{version}");
             endpoints.MapArkMinimalApiHost();
-            endpoints.MapArkGrpcServicesFromAssembly<RefreshGreetingCommand>();
-            endpoints.MapGrpcService<DocumentsGrpcService>();
+            endpoints.MapArkGrpcServicesFromAssembly<Book_CreateRequest.V1>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();
 
