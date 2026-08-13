@@ -82,6 +82,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
     public async Task WaitForIdleAsync(bool ignoreDeferred = false, bool allowErrors = false)
     {
         using var cancellation = new CancellationTokenSource(_idleTimeout);
+        var idleSamples = 0;
         try
         {
             while (true)
@@ -89,7 +90,14 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                 var counts = await _getWorkCountsAsync(cancellation.Token).ConfigureAwait(false);
                 var pending = counts.InQueue + counts.InProcess + (ignoreDeferred ? 0 : counts.Deferred) + counts.Outbox;
                 if (pending == 0 && (allowErrors || counts.Error == 0))
-                    return;
+                {
+                    if (++idleSamples >= 5)
+                        return;
+                }
+                else
+                {
+                    idleSamples = 0;
+                }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(50), cancellation.Token).ConfigureAwait(false);
             }
