@@ -7,6 +7,7 @@ global using Microsoft.AspNetCore.Http;
 using Ark.MediatorFramework;
 using Ark.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
+using Ark.Tools.MediatorFramework.MinimalApi;
 
 using MessagePack;
 using NodaTime;
@@ -28,6 +29,14 @@ public sealed class HostingMarker
 }
 
 /// <summary>
+/// Explicit source-generation context for the synthetic hosting contracts.
+/// </summary>
+[ArkEndpointAssembly(typeof(HostingMarker))]
+public partial class HostingEndpointContext
+{
+}
+
+/// <summary>
 /// Invokes the source-generated Minimal API, gRPC, and Rebus mappings for the synthetic contracts.
 /// </summary>
 public static class HostingEndpointMappings
@@ -37,7 +46,7 @@ public static class HostingEndpointMappings
     public static void MapMinimalApi(IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
-        ArkGeneratedEndpoints.MapArkEndpointsFromAssembly<HostingMarker>(
+        ArkGeneratedEndpoints.MapArkEndpoints<HostingEndpointContext>(
             endpoints,
             versionPrefix: "/api/v{version}");
     }

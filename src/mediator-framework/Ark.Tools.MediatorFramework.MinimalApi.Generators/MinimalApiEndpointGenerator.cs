@@ -27,6 +27,7 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
+        private const string ArkEndpointAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkEndpointAssemblyAttribute";
         private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
         private const string HttpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
         private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
@@ -90,11 +91,11 @@ namespace Ark.MediatorFramework.Generators
             var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax,
                     static (syntaxContext, cancellationToken) =>
-                        GetAssemblyMapping(syntaxContext, "MapArkEndpointsFromAssembly", cancellationToken))
+                        GetAssemblyMapping(syntaxContext, cancellationToken))
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
-                .Select(static (mapping, _) => mapping.AssemblyName)
+                .SelectMany(static (mapping, _) => mapping.AssemblyNames)
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
@@ -162,26 +163,27 @@ namespace Ark.MediatorFramework.Generators
 
         private static EndpointAssemblyMapping? GetAssemblyMapping(
             GeneratorSyntaxContext context,
-            string methodName,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
             var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
+            var genericName = invocation.Expression.DescendantNodesAndSelf()
+                .OfType<GenericNameSyntax>()
+                .FirstOrDefault(name =>
+                    name.Identifier.ValueText is "MapArkEndpointsFromAssembly" or "MapArkEndpoints");
+            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+                return null;
+
+            var methodName = genericName.Identifier.ValueText;
             if ((method is null || !string.Equals(method.MetadataName, methodName, StringComparison.Ordinal))
                 && !IsGeneratedEndpointInvocation(invocation, methodName, context.SemanticModel, cancellationToken))
                 return null;
 
-            var genericName = invocation.Expression.DescendantNodesAndSelf()
-                .OfType<GenericNameSyntax>()
-                .FirstOrDefault(name => name.Identifier.ValueText == methodName);
-            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
-                return null;
-
-            var assemblyName = context.SemanticModel
-                .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
-                .Type?.ContainingAssembly?.Name;
-            if (assemblyName is null)
+            var assemblyNames = methodName == "MapArkEndpoints"
+                ? GetContextAssemblyNames(context, genericName, cancellationToken)
+                : GetAssemblyMarkerName(context, genericName, cancellationToken);
+            if (assemblyNames.IsDefaultOrEmpty)
                 return null;
 
             var versionPrefix = invocation.ArgumentList.Arguments
@@ -192,7 +194,37 @@ namespace Ark.MediatorFramework.Generators
                 && !prefix.Contains("{version}", StringComparison.OrdinalIgnoreCase)
                     ? versionPrefix.Expression.GetLocation()
                     : null;
-            return new EndpointAssemblyMapping(assemblyName, invalidVersionPrefixLocation);
+            return new EndpointAssemblyMapping(assemblyNames, invalidVersionPrefixLocation);
+        }
+
+        private static ImmutableArray<string> GetAssemblyMarkerName(
+            GeneratorSyntaxContext context,
+            GenericNameSyntax genericName,
+            CancellationToken cancellationToken)
+        {
+            return context.SemanticModel
+                .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
+                .Type?.ContainingAssembly?.Name is { } assemblyName
+                ? ImmutableArray.Create(assemblyName)
+                : ImmutableArray<string>.Empty;
+        }
+
+        private static ImmutableArray<string> GetContextAssemblyNames(
+            GeneratorSyntaxContext context,
+            GenericNameSyntax genericName,
+            CancellationToken cancellationToken)
+        {
+            if (context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken).Type
+                is not INamedTypeSymbol contextType)
+                return ImmutableArray<string>.Empty;
+
+            return contextType.GetAttributes()
+                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkEndpointAssemblyAttribute)
+                .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
+                .Where(static marker => marker?.ContainingAssembly?.Name is not null)
+                .Select(static marker => marker!.ContainingAssembly!.Name)
+                .Distinct(StringComparer.Ordinal)
+                .ToImmutableArray();
         }
 
         private static bool IsGeneratedEndpointInvocation(
@@ -961,6 +993,12 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            return group;");
             sb.AppendLine("        }");
             sb.AppendLine();
+            sb.AppendLine("        /// <summary>Maps contracts selected by <see cref=\"ArkEndpointAssemblyAttribute\"/> on TContext.</summary>");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TContext>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return MapArkEndpointsFromAssembly<TContext>(endpoints, configure, versionPrefix);");
+            sb.AppendLine("        }");
+            sb.AppendLine();
             sb.AppendLine("        private static string VersionedRoute(string? versionPrefix, string template, bool isVersioned, int version)");
             sb.AppendLine("        {");
             sb.AppendLine("            if (template.Contains(\"{version}\", global::System.StringComparison.OrdinalIgnoreCase))");
@@ -1448,7 +1486,7 @@ namespace Ark.MediatorFramework.Generators
             Command = 3,
         }
 
-        private readonly record struct EndpointAssemblyMapping(string AssemblyName, Location? InvalidVersionPrefixLocation);
+        private readonly record struct EndpointAssemblyMapping(ImmutableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation);
 
         private readonly record struct EndpointModel
         {
