@@ -16,6 +16,8 @@ namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 [Binding]
 public sealed class RebusScenarioContext : IAsyncDisposable
 {
+    // Rebus can briefly report no work between outbox dequeue and message dispatch.
+    private const int _requiredConsecutiveIdleSamples = 5;
     private static readonly TimeSpan _idleTimeout = TimeSpan.FromSeconds(5);
     private readonly SampleTestContext _sampleContext;
     private Container? _receiver;
@@ -91,7 +93,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                 var pending = counts.InQueue + counts.InProcess + (ignoreDeferred ? 0 : counts.Deferred) + counts.Outbox;
                 if (pending == 0 && (allowErrors || counts.Error == 0))
                 {
-                    if (++idleSamples >= 5)
+                    if (++idleSamples >= _requiredConsecutiveIdleSamples)
                         return;
                 }
                 else
