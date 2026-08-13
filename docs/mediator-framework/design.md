@@ -74,7 +74,8 @@ request type. Each transport is opt-in and declared independently:
 
 - `[HttpEndpoint("POST", "/orders")]` — expose over Minimal API for each active version; the host
   configures the common prefix once with
-  `MapArkEndpointsFromAssembly<T>(versionPrefix: "/api/v{version}")`.
+  `MapArkEndpoints<TContext>(versionPrefix: "/api/v{version}")` with
+  `[ArkEndpointAssembly(typeof(ContractMarker))]` on a partial context.
   Existing templates containing `{version}` remain authoritative for migration.
 - `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
   code-first gRPC method; defaults to the contract type name. `[GrpcService("Orders")]` groups the service.
@@ -86,8 +87,8 @@ request type. Each transport is opt-in and declared independently:
 
 Generated HTTP endpoints require authorization by default. Set `AllowAnonymous = true`
 only for an intentionally public endpoint. HTTP-only policies belong on the route group
-returned by `MapArkEndpointsFromAssembly`; transport-independent application permissions
-belong on authorization decorators. `MapArkEndpointsFromAssembly` maps the generated routes
+returned by `MapArkEndpoints`; transport-independent application permissions
+belong on authorization decorators. `MapArkEndpoints` maps the generated routes
 into one `RouteGroupBuilder`, invokes its optional configuration callback, and
 returns the group so hosts can apply shared metadata such as authorization,
 filters, rate limiting, CORS, or output caching.

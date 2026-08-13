@@ -71,7 +71,7 @@ contains both the success and null-result responses.
 Generated HTTP endpoints require authorization by default. Keep application
 permissions in transport-independent `PolicyAuthorizeAttribute` decorators, or
 configure an HTTP-only policy on the `RouteGroupBuilder` returned by
-`MapArkEndpointsFromAssembly`. Set `AllowAnonymous = true` only for intentionally
+`MapArkEndpoints<TContext>`. Set `AllowAnonymous = true` only for intentionally
 public endpoints. The group configuration callback also accepts shared endpoint
 metadata such as filters, rate limiting, CORS, or output caching.
 

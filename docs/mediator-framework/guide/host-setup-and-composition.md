@@ -140,20 +140,42 @@ app.UseEndpoints(endpoints =>
 });
 ```
 
+For Minimal API endpoint discovery, prefer an explicit partial context:
+
+```csharp
+[ArkEndpointAssembly(typeof(RefreshGreetingCommand))]
+public partial class SampleEndpointContext
+{
+}
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapArkEndpoints<SampleEndpointContext>(
+        versionPrefix: "/api/v{version}");
+});
+```
+
+`ArkEndpointAssemblyAttribute` selects one or more contract assemblies at
+compile time. The generator does not scan unrelated references, and generated
+output remains deterministic. `MapArkEndpointsFromAssembly<TAssemblyMarker>`
+remains available for compatibility; new hosts should use the context form.
+
 Keep security headers outermost, exception mapping before the host middleware,
 and the host middleware before generated endpoints. The host middleware
 establishes the authenticated principal and SimpleInjector scope that the
 generated endpoint consumes.
 
-## Choose the assembly marker
+## Choose the assembly context
 
-The marker selects the assembly scanned by the generator:
+The context attributes select assemblies scanned by the generator:
 
-- use a public API contract such as `RefreshGreetingCommand` for HTTP/gRPC;
-- use an internal Rebus message such as
-  `CompleteGreetingCompositionRequest` for processor routing/handlers.
+- use `[ArkEndpointAssembly(typeof(RefreshGreetingCommand))]` for Minimal API
+  and HTTP contract discovery;
+- keep the existing assembly-marker APIs for gRPC and Rebus until their context
+  variants are introduced.
 
-The marker does not itself register anything. It is only an assembly anchor.
+The attribute argument does not itself register anything. It is only a compile-
+time assembly anchor.
 
 ## Separate process composition
 

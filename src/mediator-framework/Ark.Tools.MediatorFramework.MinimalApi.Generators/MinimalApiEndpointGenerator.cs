@@ -993,7 +993,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            return group;");
             sb.AppendLine("        }");
             sb.AppendLine();
-            sb.AppendLine("        /// <summary>Maps contracts selected by <see cref=\"ArkEndpointAssemblyAttribute\"/> on TContext.</summary>");
+            sb.AppendLine("        /// <summary>Maps contracts selected by ArkEndpointAssemblyAttribute on TContext.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TContext>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            return MapArkEndpointsFromAssembly<TContext>(endpoints, configure, versionPrefix);");
