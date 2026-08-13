@@ -149,6 +149,13 @@ public sealed class BookSteps
         _exception.Should().BeOfType<EntityTagMismatchException>();
     }
 
+    /// <summary>Asserts that a book request failed because authorization was denied.</summary>
+    [Then("the book request fails with an authorization exception")]
+    public void BookRequestFailsWithAuthorizationException()
+    {
+        _exception.Should().BeOfType<PolicyAuthorizationException>();
+    }
+
     /// <summary>Asserts that a mutation wrote a deterministic book audit record.</summary>
     /// <param name="operation">The expected operation name.</param>
     [Then(@"the current book has a deterministic audit for ""(.*)""")]

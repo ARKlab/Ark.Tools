@@ -34,6 +34,13 @@ Feature: Books
                 |       |
             Then the book request fails validation
 
+        Scenario: Reject a book mutation without its write scope
+            Given I am an authenticated user without the book write scope
+            When I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            Then the book request fails with an authorization exception
+
         Scenario: Reject a stale book ETag
             Given I create a book with
                 | Title | Author  | Genre   |
