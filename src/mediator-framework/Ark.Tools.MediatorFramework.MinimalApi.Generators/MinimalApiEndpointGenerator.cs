@@ -168,9 +168,8 @@ namespace Ark.MediatorFramework.Generators
             cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
             var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
-            if (method is not null
-                ? !string.Equals(method.MetadataName, methodName, StringComparison.Ordinal)
-                : !IsGeneratedEndpointInvocation(invocation, methodName))
+            if ((method is null || !string.Equals(method.MetadataName, methodName, StringComparison.Ordinal))
+                && !IsGeneratedEndpointInvocation(invocation, methodName, context.SemanticModel, cancellationToken))
                 return null;
 
             var genericName = invocation.Expression.DescendantNodesAndSelf()
@@ -196,7 +195,11 @@ namespace Ark.MediatorFramework.Generators
             return new EndpointAssemblyMapping(assemblyName, invalidVersionPrefixLocation);
         }
 
-        private static bool IsGeneratedEndpointInvocation(InvocationExpressionSyntax invocation, string methodName)
+        private static bool IsGeneratedEndpointInvocation(
+            InvocationExpressionSyntax invocation,
+            string methodName,
+            SemanticModel semanticModel,
+            CancellationToken cancellationToken)
         {
             if (invocation.Expression is GenericNameSyntax directName)
                 return string.Equals(directName.Identifier.ValueText, methodName, StringComparison.Ordinal);
@@ -205,9 +208,16 @@ namespace Ark.MediatorFramework.Generators
                 || !string.Equals(genericName.Identifier.ValueText, methodName, StringComparison.Ordinal))
                 return false;
 
-            return memberAccess.Expression.DescendantNodesAndSelf()
+            if (memberAccess.Expression.DescendantNodesAndSelf()
                 .OfType<SimpleNameSyntax>()
-                .Any(name => string.Equals(name.Identifier.ValueText, "ArkGeneratedEndpoints", StringComparison.Ordinal));
+                .Any(name => string.Equals(name.Identifier.ValueText, "ArkGeneratedEndpoints", StringComparison.Ordinal)))
+                return true;
+
+            var receiverType = semanticModel.GetTypeInfo(memberAccess.Expression, cancellationToken).Type as INamedTypeSymbol;
+            return receiverType is not null
+                && (IsType(receiverType, "IEndpointRouteBuilder", "Microsoft.AspNetCore.Routing")
+                    || receiverType.AllInterfaces.Any(item =>
+                        IsType(item, "IEndpointRouteBuilder", "Microsoft.AspNetCore.Routing")));
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
