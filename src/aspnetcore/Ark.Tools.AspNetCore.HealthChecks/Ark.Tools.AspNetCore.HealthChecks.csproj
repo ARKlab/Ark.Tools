@@ -42,7 +42,6 @@
 		<PackageReference Include="Azure.Messaging.ServiceBus" />
 		<PackageReference Include="Azure.Identity" />
 		<PackageReference Include="Microsoft.ApplicationInsights" />
-		<PackageReference Include="SSH.NET" />
 	</ItemGroup>
 
 	<ItemGroup>
