@@ -33,7 +33,7 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 /// <summary>
 /// Selects the sample API assembly for generated Minimal API endpoint discovery.
 /// </summary>
-[ArkEndpointAssembly(typeof(RefreshGreetingCommand))]
+[ArkGenerateMinimalApiForAssembly(typeof(RefreshGreetingCommand))]
 public partial class SampleEndpointContext
 {
 }
