@@ -786,6 +786,7 @@
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.FluentValidaton": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.10, )"
         }
@@ -859,6 +860,13 @@
         "dependencies": {
           "Ark.Tools.Solid": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )"
+        }
+      },
+      "ark.tools.solid.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.SimpleInjector": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )"
         }
       },
       "ark.tools.sql": {
