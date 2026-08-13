@@ -181,21 +181,21 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await _outbox.CommitAsync(ctk).ConfigureAwait(false);
         }
 
-        public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
+        public async Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(book);
+            var stored = book with { ETag = "0x0000000000000001" };
             lock (_owner._sync)
             {
-                if (!_owner._books.TryAdd(book.Id, book with { ETag = "0x0000000000000001" }))
+                if (!_owner._books.TryAdd(book.Id, stored))
                     throw new InvalidOperationException($"Book '{book.Id}' already exists.");
                 _owner._bookVersions[book.Id] = 1;
             }
-            await Task.CompletedTask.ConfigureAwait(false);
+            return await Task.FromResult(stored).ConfigureAwait(false);
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
             Guid id,
-            bool forUpdate = false,
             CancellationToken ctk = default)
         {
             _owner._books.TryGetValue(id, out var book);

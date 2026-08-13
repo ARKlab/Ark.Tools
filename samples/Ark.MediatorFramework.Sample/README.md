@@ -193,11 +193,12 @@ replace the SQL profile; choose it explicitly.
 
 ### Concurrency
 
-The sample uses pessimistic row locking for read-before-write workflows. SQL
-contexts request `UPDLOCK, HOLDLOCK` through `forUpdate: true` on
-`ReadBookAsync` and `ReadBookPrintProcessAsync`; mutating handlers use that
-option, and conditional state-transition updates remain atomic. The in-memory
-context keeps the same atomic transition rules under its shared lock.
+Book updates use optimistic concurrency: the API exposes the database
+`ROWVERSION` as an opaque ETag, and `UpdateBookAsync` updates only when the
+submitted ETag still matches. Book print-process transitions use pessimistic
+row locking instead: SQL reads request `UPDLOCK, HOLDLOCK` through
+`forUpdate: true` on `ReadBookPrintProcessAsync`, while the in-memory context
+keeps the same atomic transition rules under its shared lock.
 
 ## Rebus topology
 

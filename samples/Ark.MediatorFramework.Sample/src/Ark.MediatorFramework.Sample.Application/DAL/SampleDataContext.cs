@@ -44,11 +44,11 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Commits the transaction.</summary>
     new Task CommitAsync(CancellationToken ctk = default);
 
-    /// <summary>Saves a book.</summary>
-    Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
+    /// <summary>Saves a book and returns the persisted entity.</summary>
+    Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
-    Task<Book.V1.Output?> ReadBookAsync(Guid id, bool forUpdate = false, CancellationToken ctk = default);
+    Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Updates a book.</summary>
     Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default);
@@ -303,10 +303,12 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Saves a book in the current transaction.</summary>
-    public async Task SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
+    public async Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
     {
         const string sql = """
             INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description])
+            OUTPUT INSERTED.[Id], INSERTED.[Title], INSERTED.[Author], INSERTED.[Genre],
+                   INSERTED.[ISBN], INSERTED.[Description], INSERTED.[RowVersion] AS [ETag]
             VALUES (@Id, @Title, @Author, @Genre, @ISBN, @Description);
             """;
         var command = new CommandDefinition(sql, new
@@ -318,26 +320,20 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.ISBN,
             book.Description,
         }, Transaction, cancellationToken: ctk);
-        await Connection.ExecuteAsync(command).ConfigureAwait(false);
+        var row = await Connection.QuerySingleAsync<BookRow>(command).ConfigureAwait(false);
+        return row.ToResponse();
     }
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
     public async Task<Book.V1.Output?> ReadBookAsync(
         Guid id,
-        bool forUpdate = false,
         CancellationToken ctk = default)
     {
-        const string sqlWithoutLock = """
+        const string sql = """
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE [Id] = @Id;
             """;
-        const string sqlWithLock = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
-            FROM [dbo].[Book] WITH (UPDLOCK, HOLDLOCK)
-            WHERE [Id] = @Id;
-            """;
-        var sql = forUpdate ? sqlWithLock : sqlWithoutLock;
         var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleOrDefaultAsync<BookRow>(command).ConfigureAwait(false);
         return row?.ToResponse();
