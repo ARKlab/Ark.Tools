@@ -485,11 +485,6 @@ namespace Ark.MediatorFramework.Generators
                         foreach (var e in active)
                         {
                             spc.CancellationToken.ThrowIfCancellationRequested();
-                            var handlerService = e.Kind == HandlerKind.Query
-                                ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
-                                : e.Kind == HandlerKind.Command
-                                    ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
-                                    : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
                             var processorService = e.Kind == HandlerKind.Query
                                 ? "global::Ark.Tools.Solid.IQueryProcessor"
                                 : e.Kind == HandlerKind.Command
