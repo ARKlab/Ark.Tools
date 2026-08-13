@@ -755,10 +755,7 @@ namespace Ark.MediatorFramework.Generators
                             item.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                             XmlDocumentation.Summary(item.Property),
                             item.Attribute!.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
-                            item.Property.Type is IArrayTypeSymbol
-                                || item.Property.Type is INamedTypeSymbol named
-                                    && named.IsGenericType
-                                && named.Name == "IReadOnlyList",
+                            IsRepeatedProtoType(item.Property.Type),
                         item.Property.GetAttributes().Any(attribute =>
                             attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute),
                         item.Property.Type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum)
@@ -817,6 +814,22 @@ namespace Ark.MediatorFramework.Generators
             if (typeName.EndsWith("[]", StringComparison.Ordinal))
                 return ProtoTypeName(typeName[..^2], contracts);
 
+            foreach (var collectionPrefix in new[]
+            {
+                "global::System.Collections.Generic.IEnumerable<",
+                "global::System.Collections.Generic.IReadOnlyCollection<",
+                "global::System.Collections.Generic.IReadOnlyList<",
+                "global::System.Collections.Generic.ICollection<",
+                "global::System.Collections.Generic.IList<",
+                "global::System.Collections.Generic.List<",
+                "global::System.Collections.Immutable.ImmutableArray<",
+            })
+            {
+                if (typeName.StartsWith(collectionPrefix, StringComparison.Ordinal)
+                    && typeName.EndsWith(">", StringComparison.Ordinal))
+                    return ProtoTypeName(typeName[collectionPrefix.Length..^1], contracts);
+            }
+
             if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
                 && typeName.EndsWith(">", StringComparison.Ordinal))
                 return ProtoTypeName(typeName["global::System.Nullable<".Length..^1], contracts);
@@ -870,6 +883,16 @@ namespace Ark.MediatorFramework.Generators
             var contract = contracts.FirstOrDefault(item =>
                 string.Equals(item.TypeFullName, typeName, StringComparison.Ordinal));
             return contract?.Name ?? SimpleName(typeName);
+        }
+
+        private static bool IsRepeatedProtoType(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol)
+                return true;
+            if (type is not INamedTypeSymbol named || !named.IsGenericType)
+                return false;
+            return named.Name is "IEnumerable" or "IReadOnlyCollection" or "IReadOnlyList"
+                or "ICollection" or "IList" or "List" or "ImmutableArray";
         }
 
         private static string SimpleName(string value)
