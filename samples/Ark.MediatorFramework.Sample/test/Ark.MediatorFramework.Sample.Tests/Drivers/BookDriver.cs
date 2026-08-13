@@ -56,6 +56,7 @@ public sealed class BookDriver
 
     /// <summary>Updates the active book.</summary>
     /// <param name="input">The replacement book details.</param>
+    /// <param name="eTag">The optional ETag precondition.</param>
     /// <param name="ctk">The cancellation token.</param>
     public async Task UpdateCurrentAsync(Book.V1.Input input, string? eTag = null, CancellationToken ctk = default)
     {
