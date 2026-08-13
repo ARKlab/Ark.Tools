@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.API.Authorization;
+using Ark.Tools.Solid;
 
 using MessagePack;
 
@@ -47,7 +48,7 @@ public sealed record PrintBookEdition : BookEdition
     /// <summary>Gets the print format.</summary>
     [ProtoMember(1)]
     [Key(0)]
-    public string Format { get; init; } = string.Empty;
+    public required string Format { get; init; }
 
     /// <summary>Gets the number of pages.</summary>
     [ProtoMember(2)]
@@ -66,7 +67,7 @@ public sealed record DigitalBookEdition : BookEdition
     /// <summary>Gets the digital file format.</summary>
     [ProtoMember(1)]
     [Key(0)]
-    public string Format { get; init; } = string.Empty;
+    public required string Format { get; init; }
 
     /// <summary>Gets the file size in bytes.</summary>
     [ProtoMember(2)]

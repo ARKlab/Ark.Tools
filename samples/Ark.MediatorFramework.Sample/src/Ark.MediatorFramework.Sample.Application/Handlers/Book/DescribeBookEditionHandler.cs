@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-namespace Ark.MediatorFramework.Sample.Application.Handlers.Book;
+using Ark.Tools.Solid;
+
+namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Describes a polymorphic Book edition without transport dependencies.</summary>
 public sealed class DescribeBookEditionHandler : IRequestHandler<DescribeBookEditionRequest, BookEditionDescription>

@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-namespace Ark.MediatorFramework.Sample.Application.Handlers.Book;
+using Ark.Tools.Solid;
+
+namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Produces Book items incrementally for HTTP JSON and gRPC streaming.</summary>
 public sealed class StreamBooksHandler : IQueryHandler<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>
@@ -16,9 +18,9 @@ public sealed class StreamBooksHandler : IQueryHandler<StreamBooksQuery, IAsyncE
     {
         ArgumentNullException.ThrowIfNull(query);
         if (query.Count is < 0 or > _maximumCount)
-            throw new ArgumentOutOfRangeException(nameof(query.Count), query.Count, $"Count must be between 0 and {_maximumCount}.");
+            throw new ArgumentOutOfRangeException(nameof(query), query.Count, $"Count must be between 0 and {_maximumCount}.");
         if (query.DelayMilliseconds is < 0 or > _maximumDelayMilliseconds)
-            throw new ArgumentOutOfRangeException(nameof(query.DelayMilliseconds), query.DelayMilliseconds, $"DelayMilliseconds must be between 0 and {_maximumDelayMilliseconds}.");
+            throw new ArgumentOutOfRangeException(nameof(query), query.DelayMilliseconds, $"DelayMilliseconds must be between 0 and {_maximumDelayMilliseconds}.");
 
         await Task.CompletedTask.ConfigureAwait(false);
         return _streamAsync(query, ctk);
