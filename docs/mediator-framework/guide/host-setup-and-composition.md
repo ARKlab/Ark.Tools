@@ -143,13 +143,13 @@ app.UseEndpoints(endpoints =>
 For Minimal API endpoint discovery, declare an explicit partial context:
 
 ```csharp
-[ArkEndpointAssembly(typeof(RefreshGreetingCommand))]
+[ArkGenerateMinimalApiForAssembly(typeof(RefreshGreetingCommand))]
 public partial class SampleEndpointContext
 {
 }
 ```
 
-`ArkEndpointAssemblyAttribute` selects one or more contract assemblies at
+`ArkGenerateMinimalApiForAssemblyAttribute` selects one or more contract assemblies at
 compile time. The generator does not scan unrelated references, and generated
 output remains deterministic. `MapArkEndpointsFromAssembly<TAssemblyMarker>`
 remains available for compatibility; new hosts should use the context form.
@@ -163,7 +163,7 @@ generated endpoint consumes.
 
 The context attributes select assemblies scanned by the generator:
 
-- use `[ArkEndpointAssembly(typeof(RefreshGreetingCommand))]` for Minimal API
+- use `[ArkGenerateMinimalApiForAssembly(typeof(RefreshGreetingCommand))]` for Minimal API
   and HTTP contract discovery;
 - keep the existing assembly-marker APIs for gRPC and Rebus until their context
   variants are introduced.

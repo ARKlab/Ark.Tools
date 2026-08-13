@@ -59,6 +59,11 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         {
             return await continuation(request, context).ConfigureAwait(false);
         }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             throw _mapException(exception, context);
@@ -74,6 +79,11 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         try
         {
             return await continuation(requestStream, context).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception exception)
         {
@@ -92,6 +102,11 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         {
             await continuation(request, responseStream, context).ConfigureAwait(false);
         }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             throw _mapException(exception, context);
@@ -109,6 +124,11 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         {
             await continuation(requestStream, responseStream, context).ConfigureAwait(false);
         }
+        catch (Exception exception) when (exception is RpcException
+            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             throw _mapException(exception, context);
@@ -117,9 +137,6 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
 
     private Exception _mapException(Exception exception, ServerCallContext context)
     {
-        if (exception is RpcException
-            || exception is OperationCanceledException && context.CancellationToken.IsCancellationRequested)
-            return exception;
         if (exception is ArkAttachmentProtocolException)
             return _createRpcException(StatusCode.Unknown, exception.Message);
 

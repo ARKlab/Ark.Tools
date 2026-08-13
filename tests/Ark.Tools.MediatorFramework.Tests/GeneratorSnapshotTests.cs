@@ -1142,6 +1142,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("Google.Protobuf.WellKnownTypes.Empty");
         generated.Should().Contain("google.protobuf.Empty");
+        generated.Should().Contain("MapArkGrpcServices<TContext>");
         generated.Should().Contain("await handler.ExecuteAsync");
         generated.Should().Contain("Missing mediator handler registrations");
     }
@@ -1161,6 +1162,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("ConfigureArkRebusRouting");
         generated.Should().Contain("RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>");
+        generated.Should().Contain("RegisterArkRebusHandlers<TContext>");
         generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
         generated.Should().Contain("GetRegistration(handlerType)");
         generated.Should().Contain("Missing mediator handler registrations");

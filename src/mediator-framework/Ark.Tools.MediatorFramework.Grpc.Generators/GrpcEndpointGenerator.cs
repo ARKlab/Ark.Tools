@@ -32,6 +32,7 @@ namespace Ark.MediatorFramework.Generators
         private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
         private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+        private const string ArkGenerateGrpcForAssemblyAttribute = "Ark.Tools.MediatorFramework.Grpc.ArkGenerateGrpcForAssemblyAttribute";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
         private static readonly string[] _collectionPrefixes =
         [
@@ -47,12 +48,14 @@ namespace Ark.MediatorFramework.Generators
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
+            var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
                     static (node, _) => node is InvocationExpressionSyntax,
                     static (syntaxContext, cancellationToken) =>
-                        GetAssemblyName(syntaxContext, "MapArkGrpcServicesFromAssembly", cancellationToken))
-                .Where(static assemblyName => assemblyName is not null)
-                .Select(static (assemblyName, _) => assemblyName!)
+                        GetAssemblyMapping(syntaxContext, cancellationToken))
+                .Where(static mapping => mapping is not null)
+                .Select(static (mapping, _) => mapping!.Value);
+            var endpointAssemblies = endpointMappings
+                .SelectMany(static (mapping, _) => mapping.AssemblyNames)
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     GrpcMethodAttribute,
@@ -87,27 +90,59 @@ namespace Ark.MediatorFramework.Generators
                 context.SemanticModel.Compilation.GetTypeByMetadataName(AsyncEnumerable));
         }
 
-        private static string? GetAssemblyName(
+        private static AssemblyMapping? GetAssemblyMapping(
             GeneratorSyntaxContext context,
-            string methodName,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
             var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
+            var genericName = invocation.Expression.DescendantNodesAndSelf()
+                .OfType<GenericNameSyntax>()
+                .FirstOrDefault(name =>
+                    name.Identifier.ValueText is "MapArkGrpcServicesFromAssembly" or "MapArkGrpcServices");
+            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+                return null;
+
+            var methodName = genericName.Identifier.ValueText;
             if ((method is null || !string.Equals(method.MetadataName, methodName, StringComparison.Ordinal))
                 && !IsGeneratedEndpointInvocation(invocation, methodName, context.SemanticModel, cancellationToken))
                 return null;
 
-            var genericName = invocation.Expression.DescendantNodesAndSelf()
-                .OfType<GenericNameSyntax>()
-                .FirstOrDefault(name => name.Identifier.ValueText == methodName);
-            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
-                return null;
+            var assemblyNames = methodName == "MapArkGrpcServices"
+                ? GetContextAssemblyNames(context, genericName, cancellationToken)
+                : GetAssemblyMarkerName(context, genericName, cancellationToken);
+            return assemblyNames.IsDefaultOrEmpty ? null : new AssemblyMapping(assemblyNames);
+        }
 
+        private static ImmutableArray<string> GetAssemblyMarkerName(
+            GeneratorSyntaxContext context,
+            GenericNameSyntax genericName,
+            CancellationToken cancellationToken)
+        {
             return context.SemanticModel
                 .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
-                .Type?.ContainingAssembly?.Name;
+                .Type?.ContainingAssembly?.Name is { } assemblyName
+                ? ImmutableArray.Create(assemblyName)
+                : ImmutableArray<string>.Empty;
+        }
+
+        private static ImmutableArray<string> GetContextAssemblyNames(
+            GeneratorSyntaxContext context,
+            GenericNameSyntax genericName,
+            CancellationToken cancellationToken)
+        {
+            if (context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken).Type
+                is not INamedTypeSymbol contextType)
+                return ImmutableArray<string>.Empty;
+
+            return contextType.GetAttributes()
+                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateGrpcForAssemblyAttribute)
+                .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
+                .Where(static marker => marker?.ContainingAssembly?.Name is not null)
+                .Select(static marker => marker!.ContainingAssembly!.Name)
+                .Distinct(StringComparer.Ordinal)
+                .ToImmutableArray();
         }
 
         private static bool IsGeneratedEndpointInvocation(
@@ -540,6 +575,12 @@ namespace Ark.MediatorFramework.Generators
                             sb.AppendLine("            global::Microsoft.AspNetCore.Builder.GrpcEndpointRouteBuilderExtensions.MapGrpcService<" + Identifier(group.Key) + "V" + version + "GrpcService>(app);");
             }
             sb.AppendLine("            return app;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Maps services selected by ArkGenerateGrpcForAssemblyAttribute on TContext.</summary>");
+            sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServices<TContext>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return MapArkGrpcServicesFromAssembly<TContext>(app);");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        private static void VerifyGrpcHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
@@ -1015,6 +1056,8 @@ namespace Ark.MediatorFramework.Generators
             Single = 1,
             Collection = 2,
         }
+
+        private readonly record struct AssemblyMapping(ImmutableArray<string> AssemblyNames);
 
         private readonly record struct EndpointModel
         {

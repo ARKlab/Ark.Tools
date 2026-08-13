@@ -75,7 +75,7 @@ request type. Each transport is opt-in and declared independently:
 - `[HttpEndpoint("POST", "/orders")]` — expose over Minimal API for each active version; the host
   configures the common prefix once with
   `MapArkEndpoints<TContext>(versionPrefix: "/api/v{version}")` with
-  `[ArkEndpointAssembly(typeof(ContractMarker))]` on a partial context.
+  `[ArkGenerateMinimalApiForAssembly(typeof(ContractMarker))]` on a partial context.
   Existing templates containing `{version}` remain authoritative for migration.
 - `[GrpcMethod]` (optionally `[GrpcMethod("CreateOrder")]`) — expose as a
   code-first gRPC method; defaults to the contract type name. `[GrpcService("Orders")]` groups the service.

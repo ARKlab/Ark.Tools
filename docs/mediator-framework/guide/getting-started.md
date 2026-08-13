@@ -83,7 +83,7 @@ using SimpleInjector.Lifestyles;
 
 using HelloMediator;
 
-[ArkEndpointAssembly(typeof(Ping))]
+[ArkGenerateMinimalApiForAssembly(typeof(Ping))]
 public partial class HelloEndpointContext
 {
 }
@@ -107,7 +107,7 @@ app.UseEndpoints(endpoints =>
 await app.RunAsync().ConfigureAwait(false);
 ```
 
-`ArkEndpointAssembly` explicitly declares the contract assembly scanned by the
+`ArkGenerateMinimalApiForAssembly` explicitly declares the contract assembly scanned by the
 generator. The context must be a partial class so additional generated context
 members can be added without modifying application contracts. Repeat the
 attribute to scan more than one assembly. `AddArkMinimalApiHost` bridges

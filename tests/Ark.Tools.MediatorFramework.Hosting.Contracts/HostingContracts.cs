@@ -7,7 +7,9 @@ global using Microsoft.AspNetCore.Http;
 using Ark.MediatorFramework;
 using Ark.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
+using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.MediatorFramework.Rebus;
 
 using MessagePack;
 using NodaTime;
@@ -31,8 +33,24 @@ public sealed class HostingMarker
 /// <summary>
 /// Explicit source-generation context for the synthetic hosting contracts.
 /// </summary>
-[ArkEndpointAssembly(typeof(HostingMarker))]
-public partial class HostingEndpointContext
+[ArkGenerateMinimalApiForAssembly(typeof(HostingMarker))]
+public partial class HostingMinimalApiContext
+{
+}
+
+/// <summary>
+/// Explicit gRPC source-generation context for the synthetic hosting contracts.
+/// </summary>
+[ArkGenerateGrpcForAssembly(typeof(HostingMarker))]
+public partial class HostingGrpcContext
+{
+}
+
+/// <summary>
+/// Explicit Rebus source-generation context for the synthetic hosting contracts.
+/// </summary>
+[ArkGenerateRebusForAssembly(typeof(HostingMarker))]
+public partial class HostingRebusContext
 {
 }
 
@@ -46,7 +64,7 @@ public static class HostingEndpointMappings
     public static void MapMinimalApi(IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
-        ArkGeneratedEndpoints.MapArkEndpoints<HostingEndpointContext>(
+        ArkGeneratedEndpoints.MapArkEndpoints<HostingMinimalApiContext>(
             endpoints,
             versionPrefix: "/api/v{version}");
     }
@@ -56,7 +74,7 @@ public static class HostingEndpointMappings
     public static void MapGrpc(IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
-        ArkGeneratedEndpoints.MapArkGrpcServicesFromAssembly<HostingMarker>(endpoints);
+        ArkGeneratedEndpoints.MapArkGrpcServices<HostingGrpcContext>(endpoints);
     }
 
     /// <summary>Registers the generated Rebus handlers for the synthetic contracts.</summary>
@@ -64,7 +82,7 @@ public static class HostingEndpointMappings
     public static void RegisterRebusHandlers(Container container)
     {
         ArgumentNullException.ThrowIfNull(container);
-        ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<HostingMarker>(container);
+        ArkGeneratedEndpoints.RegisterArkRebusHandlers<HostingRebusContext>(container);
     }
 
     /// <summary>Configures generated owner-queue routing for the synthetic Rebus messages.</summary>
@@ -72,7 +90,7 @@ public static class HostingEndpointMappings
     public static void ConfigureRebusRouting(StandardConfigurer<global::Rebus.Routing.IRouter> routing)
     {
         ArgumentNullException.ThrowIfNull(routing);
-        ArkGeneratedEndpoints.ConfigureArkRebusRouting<HostingMarker>(routing);
+        ArkGeneratedEndpoints.ConfigureArkRebusRouting<HostingRebusContext>(routing);
     }
 }
 

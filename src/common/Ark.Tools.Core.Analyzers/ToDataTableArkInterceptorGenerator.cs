@@ -87,13 +87,8 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
     private static bool _supportsInterceptors(LanguageVersion languageVersion)
     {
-        if (languageVersion == LanguageVersion.Preview)
-            return true;
-
         var effectiveVersion = LanguageVersionFacts.MapSpecifiedToEffectiveVersion(languageVersion);
-        var displayName = LanguageVersionFacts.ToDisplayString(effectiveVersion);
-        return string.Equals(displayName, "C# 14.0", StringComparison.Ordinal)
-            || string.Equals(displayName, "C# next", StringComparison.OrdinalIgnoreCase);
+        return (int)effectiveVersion >= 1400;
     }
 
     private static SimpleNameSyntax? _getSimpleName(ExpressionSyntax expression) => expression switch

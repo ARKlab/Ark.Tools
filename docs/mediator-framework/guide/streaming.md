@@ -80,7 +80,7 @@ loop or before each upstream read.
 ```csharp
 services.AddCodeFirstGrpc();
 
-[ArkEndpointAssembly(typeof(StreamGreetingsQuery))]
+[ArkGenerateMinimalApiForAssembly(typeof(StreamGreetingsQuery))]
 public partial class StreamingEndpointContext
 {
 }

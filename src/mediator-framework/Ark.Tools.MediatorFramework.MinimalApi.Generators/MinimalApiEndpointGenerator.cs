@@ -27,7 +27,7 @@ namespace Ark.MediatorFramework.Generators
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
         private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
-        private const string ArkEndpointAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkEndpointAssemblyAttribute";
+        private const string ArkGenerateMinimalApiForAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkGenerateMinimalApiForAssemblyAttribute";
         private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
         private const string HttpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
         private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
@@ -219,7 +219,7 @@ namespace Ark.MediatorFramework.Generators
                 return ImmutableArray<string>.Empty;
 
             return contextType.GetAttributes()
-                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkEndpointAssemblyAttribute)
+                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateMinimalApiForAssemblyAttribute)
                 .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
                 .Where(static marker => marker?.ContainingAssembly?.Name is not null)
                 .Select(static marker => marker!.ContainingAssembly!.Name)
@@ -993,7 +993,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            return group;");
             sb.AppendLine("        }");
             sb.AppendLine();
-            sb.AppendLine("        /// <summary>Maps contracts selected by ArkEndpointAssemblyAttribute on TContext.</summary>");
+            sb.AppendLine("        /// <summary>Maps contracts selected by ArkGenerateMinimalApiForAssemblyAttribute on TContext.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpoints<TContext>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
             sb.AppendLine("        {");
             sb.AppendLine("            return MapArkEndpointsFromAssembly<TContext>(endpoints, configure, versionPrefix);");

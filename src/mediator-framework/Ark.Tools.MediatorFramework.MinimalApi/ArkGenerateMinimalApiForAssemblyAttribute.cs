@@ -4,16 +4,16 @@
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>
-/// Selects an assembly containing mediator contracts for a generated endpoint context.
+/// Selects an assembly containing mediator contracts for Minimal API generation.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-public sealed class ArkEndpointAssemblyAttribute : Attribute
+public sealed class ArkGenerateMinimalApiForAssemblyAttribute : Attribute
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ArkEndpointAssemblyAttribute"/> class.
+    /// Initializes a new instance of the <see cref="ArkGenerateMinimalApiForAssemblyAttribute"/> class.
     /// </summary>
     /// <param name="assemblyMarker">A type declared by the assembly to scan.</param>
-    public ArkEndpointAssemblyAttribute(Type assemblyMarker)
+    public ArkGenerateMinimalApiForAssemblyAttribute(Type assemblyMarker)
     {
         AssemblyMarker = assemblyMarker ?? throw new ArgumentNullException(nameof(assemblyMarker));
     }

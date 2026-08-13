@@ -3,7 +3,7 @@
 Mediator generators are opt-in. Add the transport package and call its generated
 mapping or registration method; unrelated referenced assemblies are not scanned.
 Minimal API hosts should use a partial context with
-`[ArkEndpointAssembly(typeof(ContractMarker))]` and
+`[ArkGenerateMinimalApiForAssembly(typeof(ContractMarker))]` and
 `MapArkEndpoints<TContext>()`. The older `FromAssembly` methods remain available
 for compatibility.
 

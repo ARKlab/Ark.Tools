@@ -100,6 +100,29 @@ public sealed class GrpcErrorInterceptorTests
     }
 
     [TestMethod]
+    public async Task RethrowsRpcExceptionWithoutChangingStackTrace()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        Exception sourceException;
+        try
+        {
+            throw new RpcException(new Status(StatusCode.Aborted, "aborted"));
+        }
+        catch (Exception exception)
+        {
+            sourceException = exception;
+        }
+
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            (_, _) => Task.FromException<Empty>(sourceException));
+
+        var caught = await action.Should().ThrowAsync<RpcException>();
+        caught.Which.StackTrace.Should().Be(sourceException.StackTrace);
+    }
+
+    [TestMethod]
     public async Task MapsInternalTimeoutOperationCanceledExceptionToInternalError()
     {
         var interceptor = new ArkGrpcErrorInterceptor(
