@@ -210,8 +210,10 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>, GetAuditsHandler>();
         container.Register<IQueryHandler<SearchGreetingsQuery, GreetingPage>, SearchGreetingsHandler>();
         container.Register<IQueryHandler<GetGreetingsStreamQuery, IAsyncEnumerable<GreetingStreamItem>>, GetGreetingsStreamHandler>();
+        container.Register<IQueryHandler<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>, StreamBooksHandler>();
         container.Register<IRequestHandler<UpdateGreetingRequest, EnvelopeBindingResponse>, UpdateGreetingEnvelopeHandler>();
         container.Register<IRequestHandler<DescribeShapeRequest, ShapeDescription>, DescribeShapeHandler>();
+        container.Register<IRequestHandler<DescribeBookEditionRequest, BookEditionDescription>, DescribeBookEditionHandler>();
         container.Register<IRequestHandler<UploadGreetingCardRequest, UploadResponse>, UploadGreetingCardHandler>();
         container.Register<IRequestHandler<UploadGreetingCardsRequest, UploadBatchResponse>, UploadGreetingCardHandler.UploadGreetingCardsHandler>();
         container.Register<IRequestHandler<UploadBookCoverRequest, UploadResponse>, UploadBookCoverHandler>();

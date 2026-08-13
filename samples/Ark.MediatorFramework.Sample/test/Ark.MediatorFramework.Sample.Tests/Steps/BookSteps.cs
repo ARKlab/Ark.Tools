@@ -37,6 +37,9 @@ public sealed class BookSteps
     private readonly SampleTestContext _sampleContext;
     private Exception? _exception;
     private string? _previousETag;
+    private readonly List<BookStreamItem> _streamItems = [];
+    private bool _streamWasCancelled;
+    private BookEditionDescription? _editionDescription;
 
     /// <summary>Initializes a new instance of the <see cref="BookSteps"/> class.</summary>
     /// <param name="books">The scenario-owned book driver.</param>
@@ -381,6 +384,104 @@ public sealed class BookSteps
         _exception.Should().BeNull();
         _books.Activities.Should().NotBeNull();
         _books.Activities!.Count.Should().BeLessThanOrEqualTo(count);
+    }
+
+    /// <summary>Consumes a bounded Book stream and cancels after two items.</summary>
+    [When("I consume a Book stream and cancel after two items")]
+    public async Task ConsumeBookStream()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var stream = await _sampleContext.Application.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery
+            {
+                Count = 10,
+                DelayMilliseconds = 0,
+            },
+            cancellation.Token).ConfigureAwait(false);
+
+        try
+        {
+            await foreach (var item in stream.WithCancellation(cancellation.Token).ConfigureAwait(false))
+            {
+                _streamItems.Add(item);
+                if (_streamItems.Count == 2)
+                    await cancellation.CancelAsync().ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            _streamWasCancelled = true;
+        }
+    }
+
+    /// <summary>Asserts the number of items yielded by the Book stream.</summary>
+    /// <param name="count">The expected number of items.</param>
+    [Then(@"the Book stream contains (.*) items")]
+    public void BookStreamContains(int count)
+    {
+        _streamItems.Should().HaveCount(count);
+        _streamItems.Select(item => item.Index).Should().Equal(Enumerable.Range(0, count));
+    }
+
+    /// <summary>Asserts that the Book stream observed cancellation.</summary>
+    [Then("the Book stream was cancelled")]
+    public void BookStreamWasCancelled()
+    {
+        _streamWasCancelled.Should().BeTrue();
+    }
+
+    /// <summary>Requests more Book stream items than the application allows.</summary>
+    [When("I request a Book stream above the bound")]
+    public async Task RequestBookStreamAboveBound()
+    {
+        _exception = await _captureAsync(() => _sampleContext.Application.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery { Count = 101 })).ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that an oversized Book stream was rejected.</summary>
+    [Then("the Book stream request fails because its count is out of range")]
+    public void BookStreamRequestFailsBecauseCountIsOutOfRange()
+    {
+        _exception.Should().BeOfType<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>Describes a printed Book edition.</summary>
+    [When("I describe a printed Book edition")]
+    public async Task DescribePrintedBookEdition()
+    {
+        _editionDescription = await _sampleContext.Application.DispatchRequestAsync<DescribeBookEditionRequest, BookEditionDescription>(
+            new DescribeBookEditionRequest
+            {
+                Edition = new PrintBookEdition
+                {
+                    Format = "Paperback",
+                    PageCount = 320,
+                },
+            }).ConfigureAwait(false);
+    }
+
+    /// <summary>Describes a digital Book edition.</summary>
+    [When("I describe a digital Book edition")]
+    public async Task DescribeDigitalBookEdition()
+    {
+        _editionDescription = await _sampleContext.Application.DispatchRequestAsync<DescribeBookEditionRequest, BookEditionDescription>(
+            new DescribeBookEditionRequest
+            {
+                Edition = new DigitalBookEdition
+                {
+                    Format = "EPUB",
+                    SizeBytes = 1_048_576,
+                },
+            }).ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts the computed Book edition description.</summary>
+    /// <param name="description">The expected description.</param>
+    [Then(@"the Book edition description is ""(.*)""")]
+    public void BookEditionDescriptionIs(string description)
+    {
+        _editionDescription.Should().NotBeNull();
+        _editionDescription!.Description.Should().Be(description);
     }
 
     private static ArkAttachment _createAttachment(BookCoverTable cover)

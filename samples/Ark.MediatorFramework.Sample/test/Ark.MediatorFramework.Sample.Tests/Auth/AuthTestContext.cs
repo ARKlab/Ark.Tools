@@ -36,6 +36,13 @@ public sealed class AuthTestContext
         _context.Application.SetAuthenticatedUser(subject, ApplicationScopes.GreetingWrite);
     }
 
+    /// <summary>Sets an authenticated principal with the book-read scope.</summary>
+    [Given("I am an authenticated user with the book read scope")]
+    public void SetAuthenticatedUserWithBookReadScope()
+    {
+        _context.Application.SetAuthenticatedUser("book-read-user", ApplicationScopes.BookRead);
+    }
+
     /// <summary>Sets an authenticated principal without the greeting-write scope.</summary>
     [Given("I am an authenticated user without the greeting write scope")]
     public void SetAuthenticatedUserWithoutGreetingWriteScope()
