@@ -80,11 +80,16 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
         if (legacy is null)
             return;
 
+        if (legacy.TypeArguments.Length != 1
+            || legacy.TypeArguments[0].Kind == SymbolKind.ErrorType)
+            return;
+
         if (_implementsSelf(type, selfDefinition))
             return;
 
         var resultType = legacy.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        _report(context, type, $"{interfaceName}<{type.Name}, {resultType}>");
+        var selfType = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        _report(context, type, $"{interfaceName}<{selfType}, {resultType}>");
     }
 
     private static void _checkCommand(

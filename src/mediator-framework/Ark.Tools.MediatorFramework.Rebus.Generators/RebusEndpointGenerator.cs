@@ -34,8 +34,7 @@ namespace Ark.MediatorFramework.Generators
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var endpointAssemblies = context.SyntaxProvider.CreateSyntaxProvider(
-                    static (node, _) => node is InvocationExpressionSyntax invocation
-                        && IsRebusInvocation(invocation),
+                    static (node, _) => node is InvocationExpressionSyntax,
                     static (syntaxContext, cancellationToken) =>
                         GetAssemblyName(syntaxContext, cancellationToken))
                 .Where(static assemblyName => assemblyName is not null)
@@ -73,37 +72,38 @@ namespace Ark.MediatorFramework.Generators
             return Extract((INamedTypeSymbol)context.TargetSymbol, context.Attributes[0]);
         }
 
-        private static bool IsRebusInvocation(InvocationExpressionSyntax invocation)
-        {
-            return invocation.Expression switch
-            {
-                MemberAccessExpressionSyntax memberAccess =>
-                    memberAccess.Name.Identifier.ValueText is
-                        "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting",
-                GenericNameSyntax genericName =>
-                    genericName.Identifier.ValueText is
-                        "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting",
-                IdentifierNameSyntax identifierName =>
-                    identifierName.Identifier.ValueText is
-                        "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting",
-                _ => false,
-            };
-        }
-
         private static string? GetAssemblyName(
             GeneratorSyntaxContext context,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
+            var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
             var genericName = invocation.Expression.DescendantNodesAndSelf()
                 .OfType<GenericNameSyntax>()
                 .FirstOrDefault(name => name.Identifier.ValueText is "RegisterArkRebusHandlersFromAssembly" or "ConfigureArkRebusRouting");
             if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
                 return null;
+            if (method is not null
+                ? !string.Equals(method.MetadataName, genericName.Identifier.ValueText, StringComparison.Ordinal)
+                : !IsGeneratedEndpointInvocation(invocation, genericName.Identifier.ValueText))
+                return null;
 
             return context.SemanticModel
                 .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
                 .Type?.ContainingAssembly?.Name;
+        }
+
+        private static bool IsGeneratedEndpointInvocation(InvocationExpressionSyntax invocation, string methodName)
+        {
+            if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess
+                || memberAccess.Name is not GenericNameSyntax genericName
+                || !string.Equals(genericName.Identifier.ValueText, methodName, StringComparison.Ordinal))
+                return false;
+
+            return memberAccess.Expression.DescendantNodesAndSelf()
+                .OfType<SimpleNameSyntax>()
+                .Any(name => string.Equals(name.Identifier.ValueText, "ArkGeneratedEndpoints", StringComparison.Ordinal));
         }
 
         private static ImmutableArray<EndpointModel> GetReferencedEndpoints(
@@ -117,9 +117,10 @@ namespace Ark.MediatorFramework.Generators
 
             var runtimeAssembly = rebusAttr.ContainingAssembly;
             var builder = ImmutableArray.CreateBuilder<EndpointModel>();
+            var requestedAssemblies = endpointAssemblies.ToHashSet(StringComparer.Ordinal);
 
             foreach (var assembly in _referencedAssemblies(compilation, runtimeAssembly)
-                .Where(assembly => endpointAssemblies.Contains(assembly.Name, StringComparer.Ordinal)))
+                .Where(assembly => requestedAssemblies.Contains(assembly.Name)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var failedHandlers = FailedHandlers(assembly, cancellationToken);
@@ -156,12 +157,12 @@ namespace Ark.MediatorFramework.Generators
 
                 foreach (var iface in type.AllInterfaces)
                 {
-                    if (!IsType(iface.OriginalDefinition, "IHandleMessages", "Rebus.Handlers")
+                    if (!IsType(iface.OriginalDefinition, "IHandleMessages`1", "Rebus.Handlers")
                         || iface.TypeArguments.Length != 1)
                         continue;
 
                     if (iface.TypeArguments[0] is not INamedTypeSymbol failed
-                        || !IsType(failed.OriginalDefinition, "IFailed", "Rebus.Retry.Simple")
+                        || !IsType(failed.OriginalDefinition, "IFailed`1", "Rebus.Retry.Simple")
                         || failed.TypeArguments.Length != 1)
                         continue;
 
@@ -175,7 +176,7 @@ namespace Ark.MediatorFramework.Generators
         }
 
         private static bool IsType(INamedTypeSymbol type, string name, string @namespace)
-            => type.Name == name
+            => type.MetadataName == name
                 && type.ContainingNamespace.ToDisplayString() == @namespace;
 
         private static IEnumerable<IAssemblySymbol> _referencedAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
@@ -226,8 +227,7 @@ namespace Ark.MediatorFramework.Generators
             // meaningful as bus messages.
             foreach (var iface in type.AllInterfaces)
             {
-                var def = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                if (def == "global::Ark.Tools.Solid.ICommand")
+                if (IsType(iface.OriginalDefinition, "ICommand", "Ark.Tools.Solid"))
                 {
                     var diagnostics = new List<DiagnosticInfo>();
                     var ownerQueue = GetOwnerQueue(rebusAttribute);
@@ -249,7 +249,7 @@ namespace Ark.MediatorFramework.Generators
                         location: GetLocation(rebusAttribute));
                 }
 
-                if (def == "global::Ark.Tools.Solid.IRequest<TResponse>")
+                if (IsType(iface.OriginalDefinition, "IRequest`1", "Ark.Tools.Solid"))
                 {
                     var response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     var diagnostics = new List<DiagnosticInfo>();
@@ -310,8 +310,10 @@ namespace Ark.MediatorFramework.Generators
             if (items.IsDefaultOrEmpty)
                 return;
 
+            items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
             foreach (var item in items)
             {
+                spc.CancellationToken.ThrowIfCancellationRequested();
                 foreach (var diagnostic in item.Diagnostics)
                     spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
             }
@@ -364,6 +366,7 @@ namespace Ark.MediatorFramework.Generators
                 .Distinct()
                 .OrderBy(static handler => handler.HandlerTypeFullName, StringComparer.Ordinal))
             {
+                spc.CancellationToken.ThrowIfCancellationRequested();
                 sb.AppendLine("            container.Collection.Append(typeof(" + handler.InterfaceTypeFullName + "), typeof(" + handler.HandlerTypeFullName + "));");
             }
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
@@ -392,6 +395,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("            var typeBased = global::Rebus.Routing.TypeBased.TypeBasedRouterConfigurationExtensions.TypeBased(routing);");
             foreach (var e in items.Where(item => item.OwnerQueue is not null))
             {
+                spc.CancellationToken.ThrowIfCancellationRequested();
                 sb.AppendLine("            typeBased.Map<" + e.TypeFullName + ">(" + StringLiteral(e.OwnerQueue!) + ");");
             }
             sb.AppendLine("        }");
@@ -401,6 +405,7 @@ namespace Ark.MediatorFramework.Generators
             {
                 foreach (var e in items)
                 {
+                    spc.CancellationToken.ThrowIfCancellationRequested();
                     var handlerService = e.IsCommand
                         ? "global::Ark.Tools.Solid.ICommandHandler<" + e.TypeFullName + ">"
                         : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";

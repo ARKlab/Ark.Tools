@@ -66,6 +66,7 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
         var replacements = new Dictionary<TypeSyntax, TypeSyntax>();
         foreach (var baseType in declaration.BaseList.Types)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var symbol = semanticModel.GetSymbolInfo(baseType.Type, cancellationToken).Symbol as INamedTypeSymbol;
             if (symbol is null)
                 continue;
@@ -110,10 +111,9 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
 
     private static GenericNameSyntax _prependSelf(GenericNameSyntax name, TypeSyntax selfType)
     {
-        var arguments = new List<TypeSyntax> { selfType };
-        arguments.AddRange(name.TypeArgumentList.Arguments);
+        var arguments = name.TypeArgumentList.Arguments.Insert(0, selfType);
         return name.WithTypeArgumentList(
-            SyntaxFactory.TypeArgumentList(SyntaxFactory.SeparatedList(arguments)))
+            SyntaxFactory.TypeArgumentList(arguments))
             .WithTriviaFrom(name);
     }
 

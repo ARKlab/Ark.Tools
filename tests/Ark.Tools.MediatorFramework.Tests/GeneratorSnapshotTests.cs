@@ -939,6 +939,30 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorCachesUnchangedInputs()
+    {
+        _assertGeneratorCaches<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [GrpcMethod("Cached")]
+            public sealed class CachedGrpc : IQuery<string> { }
+            """);
+    }
+
+    [TestMethod]
+    public void RebusGeneratorCachesUnchangedInputs()
+    {
+        _assertGeneratorCaches<ArkRebusEndpointGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage]
+            public sealed class CachedRebus : ICommand { }
+            """);
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorSecuresEndpointsAndSupportsAnonymousOptOut()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
@@ -1831,6 +1855,42 @@ public sealed class GeneratorSnapshotTests
             Environment.NewLine,
             result.Results.SelectMany(generator => generator.GeneratedSources).Select(generator => generator.SourceText.ToString())),
             result.Diagnostics);
+    }
+
+    private static void _assertGeneratorCaches<TGenerator>(string source)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(path => MetadataReference.CreateFromFile(path))
+            .Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(GrpcMethodAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]);
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [CSharpSyntaxTree.ParseText(source)],
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var options = new GeneratorDriverOptions(
+            IncrementalGeneratorOutputKind.None,
+            trackIncrementalGeneratorSteps: true);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new TGenerator().AsSourceGenerator()],
+            driverOptions: options);
+
+        driver = driver.RunGenerators(compilation);
+        driver = driver.RunGenerators(compilation);
+
+        var reasons = driver.GetRunResult().Results
+            .SelectMany(result => result.TrackedSteps.Values)
+            .SelectMany(stepRuns => stepRuns)
+            .SelectMany(stepRun => stepRun.Outputs)
+            .Select(output => output.Reason);
+        reasons.Should().Contain(IncrementalStepRunReason.Cached);
     }
 
     [TestMethod]
