@@ -62,10 +62,10 @@ public static class Program
     private static Container _buildContainer()
     {
         var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
         container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         container.Register<IQueryHandler<EchoQuery, EchoResponse>, EchoQueryHandler>();
         container.Register<IQueryHandler<PingQuery, EchoResponse>, PingQueryHandler>();
         container.Register<IRequestHandler<EchoRequest, EchoResponse>, EchoRequestHandler>();
