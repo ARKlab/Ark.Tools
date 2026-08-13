@@ -45,6 +45,40 @@ public sealed class SearchBooksQueryValidator : AbstractValidator<Book_SearchQue
     {
         RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
         RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+
+        When(query => query.Sort is not null, () =>
+        {
+            RuleForEach(query => query.Sort)
+                .Must(_isValidSort)
+                .WithMessage("Invalid book sort '{PropertyValue}'.");
+        });
+    }
+
+    private static readonly HashSet<string> _sortProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        nameof(Book.V1.Output.Id),
+        nameof(Book.V1.Output.Title),
+        nameof(Book.V1.Output.Author),
+        nameof(Book.V1.Output.Genre),
+        nameof(Book.V1.Output.ISBN),
+        nameof(Book.V1.Output.Description),
+    };
+
+    private static bool _isValidSort(string? sort)
+    {
+        if (string.IsNullOrWhiteSpace(sort))
+            return true;
+
+        var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length is < 1 or > 2)
+            return false;
+
+        if (!_sortProperties.Contains(parts[0]))
+            return false;
+
+        return parts.Length == 1
+            || parts[1].Equals("ASC", StringComparison.OrdinalIgnoreCase)
+            || parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase);
     }
 }
 

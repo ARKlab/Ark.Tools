@@ -120,7 +120,7 @@ public static class Book_GetQuery
 public static class Book_SearchQuery
 {
     /// <summary>Version one of the book search query.</summary>
-    public sealed record V1 : IQuery<V1, Book.V1.Page>
+    public sealed record V1 : IQuery<V1, Book.V1.Page>, IQueryPaged
     {
         /// <summary>Gets the optional exact title filter.</summary>
         public string? Title { get; init; }
@@ -132,9 +132,12 @@ public static class Book_SearchQuery
         public EvolvableEnum<Book.V1.Genre>? Genre { get; init; }
 
         /// <summary>Gets the number of rows to skip.</summary>
-        public int Skip { get; init; }
+        public int Skip { get; set; }
 
         /// <summary>Gets the maximum number of rows to return.</summary>
         public int Limit { get; init; } = 25;
+
+        /// <summary>Gets the sort expressions applied to matching books.</summary>
+        public IEnumerable<string> Sort { get; init; } = [];
     }
 }

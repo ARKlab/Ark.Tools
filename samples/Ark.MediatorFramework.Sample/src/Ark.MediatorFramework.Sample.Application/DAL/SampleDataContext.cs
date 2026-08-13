@@ -365,13 +365,14 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads a page of books in the current transaction.</summary>
     public async Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default)
     {
-        const string sql = """
+        var orderBy = _buildBookOrderBy(query.Sort ?? []);
+        var sql = $"""
             SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description]
             FROM [dbo].[Book]
             WHERE (@Title IS NULL OR [Title] = @Title)
               AND (@Author IS NULL OR [Author] = @Author)
               AND (@Genre IS NULL OR [Genre] = @Genre)
-            ORDER BY [Id]
+            ORDER BY {orderBy}
             OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
             SELECT COUNT_BIG(*)
             FROM [dbo].[Book]
@@ -543,6 +544,38 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             })
             .ToArray();
         return orderBy.Length == 0 ? "[Timestamp] DESC" : string.Join(", ", orderBy);
+    }
+
+    private static string _buildBookOrderBy(IEnumerable<string> sorts)
+    {
+        var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [nameof(Book.V1.Output.Id)] = "[Id]",
+            [nameof(Book.V1.Output.Title)] = "[Title]",
+            [nameof(Book.V1.Output.Author)] = "[Author]",
+            [nameof(Book.V1.Output.Genre)] = "[Genre]",
+            [nameof(Book.V1.Output.ISBN)] = "[ISBN]",
+            [nameof(Book.V1.Output.Description)] = "[Description]",
+        };
+        var orderBy = sorts
+            .Where(sort => !string.IsNullOrWhiteSpace(sort))
+            .Select(sort =>
+            {
+                var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 2 || !columns.TryGetValue(parts[0], out var column))
+                    throw new ArgumentException($"Invalid book sort '{sort}'.", nameof(sorts));
+                var direction = parts.Length == 2
+                    ? parts[1].ToUpperInvariant() switch
+                    {
+                        "ASC" => " ASC",
+                        "DESC" => " DESC",
+                        _ => throw new ArgumentException($"Invalid book sort direction '{parts[1]}'.", nameof(sorts)),
+                    }
+                    : string.Empty;
+                return column + direction;
+            })
+            .ToArray();
+        return orderBy.Length == 0 ? "[Id]" : string.Join(", ", orderBy);
     }
 
     private sealed class GreetingRow

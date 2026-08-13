@@ -115,6 +115,18 @@ public sealed class BookSteps
         await _books.SearchAsync(table.CreateInstance<Book_SearchQuery.V1>()).ConfigureAwait(false);
     }
 
+    /// <summary>Searches books by title in ascending order using the supplied page.</summary>
+    /// <param name="table">The search page data.</param>
+    [When("I search books by title ascending with")]
+    public async Task SearchBooksByTitleAscending(Table table)
+    {
+        var query = table.CreateInstance<Book_SearchQuery.V1>() with
+        {
+            Sort = [nameof(Book.V1.Output.Title) + " ASC"],
+        };
+        await _books.SearchAsync(query).ConfigureAwait(false);
+    }
+
     /// <summary>Uploads a cover for the active book.</summary>
     /// <param name="table">The cover attachment data.</param>
     [When("I upload a cover for the current book with")]
@@ -205,6 +217,19 @@ public sealed class BookSteps
     {
         _books.SearchResults.Should().NotBeNull();
         table.CompareToSet(_books.SearchResults!.Data);
+    }
+
+    /// <summary>Asserts the returned book page boundaries.</summary>
+    /// <param name="skip">The expected offset.</param>
+    /// <param name="limit">The expected page size.</param>
+    /// <param name="count">The expected number of returned books.</param>
+    [Then(@"the book search page has skip (.*), limit (.*), and (.*) results")]
+    public void BookSearchPageHas(int skip, int limit, int count)
+    {
+        _books.SearchResults.Should().NotBeNull();
+        _books.SearchResults!.Skip.Should().Be(skip);
+        _books.SearchResults.Limit.Should().Be(limit);
+        _books.SearchResults.Data.Should().HaveCount(count);
     }
 
     /// <summary>Asserts that the active book's audit matches the supplied table.</summary>

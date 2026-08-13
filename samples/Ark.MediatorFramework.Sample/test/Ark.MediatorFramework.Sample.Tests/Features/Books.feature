@@ -39,6 +39,18 @@ Feature: Books
                 | Title      | Author | Genre      | ISBN           |
                 | Clean Code | Martin | Technology | 978-0132350884 |
 
+        Scenario: Page books in a stable sort order
+            Given I create books with
+                | Title           | Author  | Genre      |
+                | Clean Code      | Martin  | Technology |
+                | Design Patterns | GoF     | Technology |
+                | The Hobbit      | Tolkien | Fiction    |
+            When I search books by title ascending with
+                | Skip | Limit |
+                | 1    | 1     |
+            Then the book search has 3 results
+            And the book search page has skip 1, limit 1, and 1 results
+
     Rule: Book changes are audited
 
         Scenario: Create a book audit

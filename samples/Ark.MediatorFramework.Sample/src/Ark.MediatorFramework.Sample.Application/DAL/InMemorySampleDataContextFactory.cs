@@ -215,15 +215,18 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 .Where(book =>
                     (query.Title is null || string.Equals(book.Title, query.Title, StringComparison.Ordinal))
                     && (query.Author is null || string.Equals(book.Author, query.Author, StringComparison.Ordinal))
-                    && (query.Genre is null || book.Genre == query.Genre))
-                .OrderBy(book => book.Id)
-                .ToArray();
+                    && (query.Genre is null || book.Genre == query.Genre));
+            var sorts = query.Sort?.Where(sort => !string.IsNullOrWhiteSpace(sort)).ToArray() ?? [];
+            var ordered = sorts.Length == 0
+                ? matching.OrderBy(book => book.Id)
+                : matching.OrderBy(string.Join(", ", sorts));
+            var results = ordered.ToArray();
             return await Task.FromResult(new Book.V1.Page
             {
-                Count = matching.LongLength,
+                Count = results.LongLength,
                 Skip = query.Skip,
                 Limit = query.Limit,
-                Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
+                Data = results.Skip(query.Skip).Take(query.Limit).ToArray(),
             }).ConfigureAwait(false);
         }
 
