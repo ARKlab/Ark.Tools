@@ -24,6 +24,11 @@
   </PropertyGroup>
   <!-- =============================================================================== -->
 
+  <PropertyGroup>
+    <!-- due to transitive microsoft.aspnetcore.odata preview for .net10 -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
