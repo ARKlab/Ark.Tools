@@ -820,9 +820,9 @@ namespace Ark.MediatorFramework.Generators
                     if (e.UnsupportedAttachmentCollections.Length > 0)
                         continue;
 
-                    var handlerService = e.Kind == HandlerKind.Query
-                        ? "global::Ark.Tools.Solid.IQueryHandler<" + e.TypeFullName + ", " + e.Response + ">"
-                        : "global::Ark.Tools.Solid.IRequestHandler<" + e.TypeFullName + ", " + e.Response + ">";
+                    var processorService = e.Kind == HandlerKind.Query
+                        ? "global::Ark.Tools.Solid.IQueryProcessor"
+                        : "global::Ark.Tools.Solid.IRequestProcessor";
                     var bind = (e.Verb == "GET" || e.Verb == "DELETE")
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
@@ -844,13 +844,13 @@ namespace Ark.MediatorFramework.Generators
                         }
                         if (e.AttachmentCount == 1)
                         {
-                            EmitMultipartEndpoint(sb, e, handlerService, map, templateVariable, version, maxVersion);
+                            EmitMultipartEndpoint(sb, e, processorService, map, templateVariable, version, maxVersion);
                             continue;
                         }
 
                         if (e.AttachmentResponse)
                         {
-                            EmitDownloadEndpoint(sb, e, handlerService, map, templateVariable, version, maxVersion);
+                            EmitDownloadEndpoint(sb, e, processorService, map, templateVariable, version, maxVersion);
                             continue;
                         }
 
@@ -908,8 +908,8 @@ namespace Ark.MediatorFramework.Generators
                             EmitServerSetAssignments(sb, e, "request");
                             EmitETagAssignment(sb, e);
                             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                            sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
-                            sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                            sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+                            sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
                             if (e.IsStreaming)
                             {
                                 sb.AppendLine("                if (global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(httpContext.Request.Headers.Accept))");
@@ -970,8 +970,8 @@ namespace Ark.MediatorFramework.Generators
                         EmitServerSetAssignments(sb, e, "request");
                         EmitETagAssignment(sb, e);
                         sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                        sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
-                        sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                        sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+                        sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
                         if (e.IsStreaming)
                         {
                             sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken);");
@@ -1162,7 +1162,7 @@ namespace Ark.MediatorFramework.Generators
         private static void EmitMultipartEndpoint(
             StringBuilder sb,
             EndpointModel endpoint,
-            string handlerService,
+            string processorService,
             string map,
             string templateExpression,
             int version,
@@ -1218,8 +1218,8 @@ namespace Ark.MediatorFramework.Generators
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-            sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
-            sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+            sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
             EmitResponseETagAssignment(sb, endpoint);
@@ -1242,7 +1242,7 @@ namespace Ark.MediatorFramework.Generators
         private static void EmitDownloadEndpoint(
             StringBuilder sb,
             EndpointModel endpoint,
-            string handlerService,
+            string processorService,
             string map,
             string templateExpression,
             int version,
@@ -1272,8 +1272,8 @@ namespace Ark.MediatorFramework.Generators
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
             sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-            sb.AppendLine("                var handler = container.GetInstance<" + handlerService + ">();");
-            sb.AppendLine("                var result = await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+            sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
@@ -1335,8 +1335,8 @@ namespace Ark.MediatorFramework.Generators
             else
             {
                 sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                sb.AppendLine("                var handler = container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<" + endpoint.TypeFullName + ">>();");
-                sb.AppendLine("                await handler.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+                sb.AppendLine("                var processor = container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
+                sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
                 sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
             }
             sb.Append("            })").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion));
