@@ -16,13 +16,13 @@ public static class SampleRebusEndpoints
     /// <param name="container">The processor container.</param>
     public static void RegisterHandlers(Container container)
     {
-        ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<CompleteGreetingCompositionRequest>(container);
+        ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<ProcessBookPrintProcessRequest>(container);
     }
 
     /// <summary>Configures generated owner routing.</summary>
     /// <param name="routing">The Rebus router configuration.</param>
     public static void ConfigureRouting(StandardConfigurer<IRouter> routing)
     {
-        ArkGeneratedEndpoints.ConfigureArkRebusRouting<CompleteGreetingCompositionRequest>(routing);
+        ArkGeneratedEndpoints.ConfigureArkRebusRouting<ProcessBookPrintProcessRequest>(routing);
     }
 }

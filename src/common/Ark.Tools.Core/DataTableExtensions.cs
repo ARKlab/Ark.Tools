@@ -329,8 +329,16 @@ public static class DataTableExtensions
             if (elementType.IsEnum)
                 return typeof(string);
 
+            if (_isEvolvableEnum(elementType))
+                return typeof(string);
+
             return elementType;
         }
+
+        private static bool _isEvolvableEnum(Type type) =>
+            type.IsGenericType
+            && (type.GetGenericTypeDefinition() == typeof(EvolvableEnum<>)
+                || type.GetGenericTypeDefinition() == typeof(EvolvableEnum<,>));
 
         // Builds the cached column plan (name + DataColumn type + compiled accessor) for every public
         // instance field and readable, non-indexed instance property of T (fields-then-properties
@@ -410,6 +418,9 @@ public static class DataTableExtensions
             if (memberType.IsEnum)
                 return Expression.Call(access, _objectToString);
 
+            if (_isEvolvableEnum(memberType))
+                return Expression.Call(access, _objectToString);
+
             if (memberType == typeof(LocalDate))
                 return Expression.Call(access, _localDateToDateTimeUnspecified);
 
@@ -445,6 +456,9 @@ public static class DataTableExtensions
                 return null;
 
             if (value.GetType().IsEnum)
+                return value.ToString();
+
+            if (_isEvolvableEnum(value.GetType()))
                 return value.ToString();
 
             return value switch

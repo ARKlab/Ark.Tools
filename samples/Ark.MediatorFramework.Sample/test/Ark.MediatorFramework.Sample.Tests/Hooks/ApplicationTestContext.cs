@@ -181,7 +181,6 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(scopes);
         scopes = scopes.Length == 0
             ? [
-                ApplicationScopes.GreetingWrite,
                 ApplicationScopes.BookRead,
                 ApplicationScopes.BookWrite,
                 ApplicationScopes.BookReviewsRead,

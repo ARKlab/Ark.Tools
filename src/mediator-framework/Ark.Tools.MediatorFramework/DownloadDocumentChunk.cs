@@ -3,12 +3,9 @@
 
 using ProtoBuf;
 
-#pragma warning disable PBN9001 // ProtoModel is preview-only and required for IsTrimmable AOT model generation.
-
 namespace Ark.MediatorFramework;
 
 /// <summary>Identifies an attachment for a streamed download.</summary>
-[ProtoModel]
 [ProtoContract]
 public sealed class DownloadDocumentQuery
 {
@@ -18,7 +15,6 @@ public sealed class DownloadDocumentQuery
 }
 
 /// <summary>Metadata sent as the first message of a streamed document download.</summary>
-[ProtoModel]
 [ProtoContract]
 public sealed class DownloadDocumentMetadata
 {
@@ -36,7 +32,6 @@ public sealed class DownloadDocumentMetadata
 }
 
 /// <summary>A metadata-first or data chunk in a streamed document download.</summary>
-[ProtoModel]
 [ProtoContract]
 public sealed class DownloadDocumentChunk
 {
@@ -48,5 +43,3 @@ public sealed class DownloadDocumentChunk
     [ProtoMember(2)]
     public byte[]? Data { get; set; }
 }
-
-#pragma warning restore PBN9001

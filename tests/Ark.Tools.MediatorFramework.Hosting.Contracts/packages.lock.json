@@ -21,9 +21,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.151, )",
-        "resolved": "3.0.151",
-        "contentHash": "huD37828eRfh6jFoVI7Oq9x7yMhG6JLodE7hTJp+N8T38w7ncxmXeEzAKG8KOGggtLJZ8Dr57bq9HfuN0/ZMCg=="
+        "requested": "[3.0.141, )",
+        "resolved": "3.0.141",
+        "contentHash": "p0mtUYG/36FEnU6P5GovB82mVH4DoWGdHYjePkLnIeTNI0LQfmvjGj2twQEBTosw6/YTTnk8Fknu2VvaFybECA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -33,9 +33,9 @@
       },
       "Microsoft.CodeAnalysis.NetAnalyzers": {
         "type": "Direct",
-        "requested": "[10.0.400, )",
-        "resolved": "10.0.400",
-        "contentHash": "Uogs/xCuSxYuEYAU7oUPddK3MFcT3A+FkrBcx/wVse6P4joptMAfh/H9jtIhl9IkHARCvJHFjL3jhKFs9YMktA=="
+        "requested": "[10.0.302, )",
+        "resolved": "10.0.302",
+        "contentHash": "mbJSf5EOYkgnPQ0jO0qo4AByQYDGbBZDs0+23xdkK2ckuvYJGlPT1nPR0WCSnzwXdiVypOTZ4ArcT4H/X/f1mQ=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -57,17 +57,17 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[11.2.0, )",
-        "resolved": "11.2.0",
-        "contentHash": "3dDzS+dsKI9Qlb0lm0svPk/hFx1CuX2RHM0jHenTGuNI0jTw8fsXi3u4r/PI8sTf5PGKZKS4TaWQVybuiKSbVQ=="
+        "requested": "[11.0.2, )",
+        "resolved": "11.0.2",
+        "contentHash": "exAGxO6+Qfx6+Th5RHatdsGKyZ117AYzIhnS/RKNpm5Ip9h8LbPQnPrq7xHkaIFb8dmF19BBVeaANFLw0ZxX2w=="
       },
       "protobuf-net": {
         "type": "Direct",
-        "requested": "[3.3.8, )",
-        "resolved": "3.3.8",
-        "contentHash": "s/yyVaVhKPgon55cBA80p5kE+m6eH4TnbvGbr1f0I6Ad6MqGFSKWfhRF2Rv/z02DrjWzsHSlJ5JNc5WnI9FtjQ==",
+        "requested": "[3.2.56, )",
+        "resolved": "3.2.56",
+        "contentHash": "4IPJeTYAMNewlN8MDaFkcmR/9hLhJeo9eARnTh104zh7mf+vXT2gu5MUfUnkSQU+CH578Q6vcdU7LQDQPG6eaw==",
         "dependencies": {
-          "protobuf-net.Core": "3.3.8"
+          "protobuf-net.Core": "3.2.56"
         }
       },
       "SimpleInjector": {
@@ -226,8 +226,8 @@
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.3.8",
-        "contentHash": "NDt+dj0dgCiwwu4M22TGrvZBSby0O7rLXn73MDPYVgdg/5pCtwIgs/k8RYJPuj7nhTRIjoEsdo8wE/T3JszH5g=="
+        "resolved": "3.2.56",
+        "contentHash": "d6QOukTpDzs7zZv9tPnBZMtvHDNeHJQXUhMx54g4urUQsXK3oo9U70H9HvklYq7hlQ4A7AHJl7EVEqyCXXIl8Q=="
       },
       "protobuf-net.Grpc": {
         "type": "Transitive",
@@ -295,8 +295,8 @@
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
-        "resolved": "10.0.11",
-        "contentHash": "PNoxCTPb+Tlux+GJyq4c89ddYdpioVSqfGx8pqOF6shCSKwUNNctXhQtRkCICjbJmGrJJsW8NY52kVYO/b8mlQ=="
+        "resolved": "10.0.10",
+        "contentHash": "BKt0SQgq2lq3ESE68jkeLwv95ypANrPDtkTOIFGcnhg2aRUeUUBDrQlkVDZctrg1WenVcvn5P5XZnuYI7q6rFQ=="
       },
       "ark.tools.applicationinsights": {
         "type": "Project",
@@ -331,7 +331,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
-          "protobuf-net": "[3.3.8, )"
+          "protobuf-net": "[3.2.56, )"
         }
       },
       "ark.tools.mediatorframework.grpc": {
@@ -357,8 +357,8 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "MessagePack": "[3.1.8, )",
-          "MessagePack.NodaTime": "[3.5.7, )",
-          "Microsoft.AspNetCore.OpenApi": "[10.0.11, )",
+          "MessagePack.NodaTime": "[3.5.6, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.10, )",
           "SimpleInjector": "[5.6.0, )",
           "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
         }
@@ -408,7 +408,7 @@
           "Google.Protobuf": "[3.35.1, )",
           "NodaTime": "[3.3.3, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
-          "protobuf-net": "[3.3.8, )"
+          "protobuf-net": "[3.2.56, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
@@ -555,9 +555,9 @@
       },
       "MessagePack.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.5.7, )",
-        "resolved": "3.5.7",
-        "contentHash": "rypaU8FkO2N79c1ntbSurNtTiitPXOMzC5/CTjw4RCLSqVPotNWVHKd0bMpfT9NgM7W/FSiLoPl8Gsxr1MAfeQ==",
+        "requested": "[3.5.6, )",
+        "resolved": "3.5.6",
+        "contentHash": "GC1+mIoeC5XE2gQy6EkU/Z2O7SkXzWB/g6KkgD0uoAc/Iq/ztjdmhLiS7Hq3tZtl7PgysG/UAxqZdfnjsA2ZYg==",
         "dependencies": {
           "MessagePack": "3.1.8",
           "NodaTime": "3.3.3"
@@ -601,11 +601,11 @@
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "R/1EATnPLU+gRfB6lwVkMcymmyAY5ppBBdRN/5lhNEiT3xP1sWccuSFkU/f1lQvN/WgRq5Vn8AhCdE3fqgsL/w==",
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "d4Atx9IHq7JgX0F/h7Db+m9zAUzC+cKdI9k+OWnnyQIOUQtfvjIEuhvbjPigVMkAmPUgCbJ8Yp6M9ghUqHtJSQ==",
         "dependencies": {
-          "Microsoft.OpenApi": "[2.7.5, 3.0.0)"
+          "Microsoft.OpenApi": "2.0.0"
         }
       },
       "Microsoft.Data.SqlClient": {
@@ -674,9 +674,9 @@
       },
       "Microsoft.OpenApi": {
         "type": "CentralTransitive",
-        "requested": "[2.12.0, )",
-        "resolved": "2.12.0",
-        "contentHash": "0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ=="
+        "requested": "[2.11.0, )",
+        "resolved": "2.11.0",
+        "contentHash": "/ignjfdeKT2SGLIR7QEv19KnI0rvoxRG/TYDOZdK9EsWLjKK9IK8i1Mo5NRm9PRV3i64DzlTqnIflWvoyfljLg=="
       },
       "Newtonsoft.Json": {
         "type": "CentralTransitive",
@@ -828,11 +828,11 @@
       },
       "System.Configuration.ConfigurationManager": {
         "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "vFA8K0xj520MnLp+zkpTmLc3LOGUhkIDxHvhfm8Cr4b+ZVVeAXnfe1+2oixuITbsZfr4ALcU2NrAqQKhooX9yw==",
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "64jtHt9yLYi6VHMF5AwDj6BGM/MZrygv55SXl0MOIkFsFjGwRuxV3/QgEm7NTp3TQIx+YNX4S6dNpY08fJ3+3g==",
         "dependencies": {
-          "System.Security.Cryptography.ProtectedData": "10.0.11"
+          "System.Security.Cryptography.ProtectedData": "10.0.10"
         }
       },
       "System.IdentityModel.Tokens.Jwt": {
