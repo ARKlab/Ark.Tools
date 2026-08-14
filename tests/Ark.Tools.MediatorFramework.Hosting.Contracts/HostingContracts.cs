@@ -399,7 +399,7 @@ public sealed record HostingWireTypesResponse
     public LocalDateTime DateTime { get; init; }
 
     /// <summary>Gets the representative shape.</summary>
-    [ProtoBuf.ProtoMember(3)]
+    [ProtoBuf.ProtoMember(3, IsRequired = true)]
     public HostingShape Shape { get; init; } = new HostingCircle();
 }
 
@@ -422,6 +422,7 @@ public abstract record HostingShape;
 public sealed record HostingCircle : HostingShape
 {
     /// <summary>Gets or sets the circle radius.</summary>
+    [System.ComponentModel.DefaultValue(1)]
     [ProtoBuf.ProtoMember(1)]
     public int Radius { get; init; } = 1;
 }

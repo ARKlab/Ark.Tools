@@ -8,15 +8,17 @@ does not decide whether that change is compatible.
 
 ## Enable, disable, and locate the generated file
 
-The package enables snapshot generation by default. Set the MSBuild property in
-the application project to control it:
+The package enables API-surface comparison by default, but does not emit
+compiler-generated source files by default. Set the MSBuild properties in the
+application project or pass them transiently on the command line:
 
 | Setting | Default | Effect | Use it when |
 | --- | --- | --- | --- |
 | `ArkApiSurfaceEnabled` | `true` | Generates the current surface and compares it with a baseline when one exists. | Normal application builds. |
 | `ArkApiSurfaceEnabled=false` | — | Does not generate or compare snapshots. | A temporary local experiment before a public API exists. Do not use it to accept a released API change. |
+| `EmitCompilerGeneratedFiles=true` | `false` | Emits compiler-generated `.g.cs` files; the package target supplies `$(BaseIntermediateOutputPath)generated` when no path is provided and enables the `ArkApiSurface.current.txt` convenience copy target. | Transiently inspect or bootstrap a snapshot. |
 | `ArkApiSurface.txt` | absent | The accepted, committed baseline in the application project directory. | The project is ready to track a public surface. |
-| `obj/<tfm>/ArkApiSurface.current.txt` | generated | The current surface emitted during the build. Exact `obj` path depends on the target framework and configuration. | Review and copy this file after accepting a deliberate change. |
+| `obj/<Configuration>/<TargetFramework>/ArkApiSurface.current.txt` | generated only when `EmitCompilerGeneratedFiles=true` | The current surface copied during the build. Its path follows the SDK intermediate-output path. | Review and copy this file after accepting a deliberate change. |
 
 Start tracking after the initial surface is ready:
 
@@ -28,7 +30,8 @@ Start tracking after the initial surface is ready:
 ```
 
 ```bash
-dotnet build src/MyApplication/MyApplication.csproj
+dotnet build src/MyApplication/MyApplication.csproj \
+  -p:EmitCompilerGeneratedFiles=true
 cp src/MyApplication/obj/Debug/net10.0/ArkApiSurface.current.txt \
    src/MyApplication/ArkApiSurface.txt
 git add src/MyApplication/ArkApiSurface.txt
@@ -79,19 +82,23 @@ describes the generated queue route. The baseline covers:
 
 | Diagnostic | Meaning | Resolution |
 | --- | --- | --- |
-| `ARKAPI001` | Tracking is enabled but `ArkApiSurface.txt` is missing. | Build, copy `obj/.../ArkApiSurface.current.txt` to the project directory, review it, then commit it. |
-| `ARKAPI002` | The committed baseline differs from the generated surface. | Inspect the diff. Make a compatibility/versioning decision. Copy the generated file over the baseline only after approval. |
+| `ARKAPI001` | Tracking is enabled but `ArkApiSurface.txt` is missing. | Run `dotnet build -p:EmitCompilerGeneratedFiles=true`, copy `obj/.../ArkApiSurface.current.txt` to the project directory, review it, then commit it. |
+| `ARKAPI002` | The committed baseline differs from the generated surface. | Run `dotnet build -p:EmitCompilerGeneratedFiles=true`, inspect the generated file, and copy it over the baseline only after approval. |
 
 Example failure:
 
 ```text
 error ARKAPI002: Contract 'CreateGreetingRequest' has changed since the last
-accepted snapshot. Update ArkApiSurface.txt to accept this change.
+accepted snapshot. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to
+inspect ArkApiSurface.current.txt, then update ArkApiSurface.txt to accept this
+change.
 ```
 
 An intentional addition is accepted only after review:
 
 ```bash
+dotnet build src/MyApplication/MyApplication.csproj \
+  -p:EmitCompilerGeneratedFiles=true
 diff -u src/MyApplication/ArkApiSurface.txt \
   src/MyApplication/obj/Debug/net10.0/ArkApiSurface.current.txt
 cp src/MyApplication/obj/Debug/net10.0/ArkApiSurface.current.txt \

@@ -1,6 +1,5 @@
 <Project>
 
-
 	<ItemGroup>
 		<PackageReference Include="Polyfill" PrivateAssets="All" />
 	</ItemGroup>

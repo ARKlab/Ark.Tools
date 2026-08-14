@@ -1920,7 +1920,7 @@ public sealed class GeneratorSnapshotTests
             baseline: null,
             enabled: true);
 
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI001" && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
     }
 
@@ -1939,7 +1939,9 @@ public sealed class GeneratorSnapshotTests
 
         var result = _runApiSurfaceGeneratorResult(source, baseline: staleBaseline, enabled: true);
 
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002" && d.GetMessage().Contains("GetItem"));
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002"
+            && d.GetMessage().Contains("GetItem")
+            && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
     }
 

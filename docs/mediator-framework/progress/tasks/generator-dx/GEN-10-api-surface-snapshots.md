@@ -22,9 +22,11 @@ shipped/unshipped split.
 
 1. A Roslyn `IIncrementalGenerator` traverses the compilation, computes the full sorted contract
    surface (including response contracts, transport metadata and Rebus queues), and emits it as a
-   well-known source hint file so the content is available to the build pipeline.
-2. A `buildTransitive` MSBuild target (running after `CoreCompile`) extracts the surface content
-   from the generated output and writes `$(IntermediateOutputPath)/ArkApiSurface.current.txt`.
+   source hint internally. The `.g.cs` file is written to disk only when
+   `EmitCompilerGeneratedFiles=true`; the package target supplies the output path.
+2. When `EmitCompilerGeneratedFiles=true` is supplied transiently, a `buildTransitive` MSBuild
+   target (running after `CoreCompile`) extracts the surface content from the generated output
+   and writes `$(IntermediateOutputPath)/ArkApiSurface.current.txt`.
 3. A comparison target diffs `ArkApiSurface.current.txt` against the committed `ArkApiSurface.txt`
    in `$(MSBuildProjectDirectory)`:
    - If `ArkApiSurface.txt` does **not exist** → `ARKAPI001` (error).
@@ -35,13 +37,15 @@ shipped/unshipped split.
 
 ```sh
 # After any API-changing build failure:
-cp obj/<tfm>/ArkApiSurface.current.txt ArkApiSurface.txt
+dotnet build -p:EmitCompilerGeneratedFiles=true
+cp obj/<Configuration>/<TargetFramework>/ArkApiSurface.current.txt ArkApiSurface.txt
 git add ArkApiSurface.txt
 ```
 
 The committed diff is the full, sorted, human-readable wire surface — reviewers see exactly what
 changed without reading generator output. CI fails automatically on any uncommitted surface change,
-at every stage (PR builds, release builds), with no separate flag needed.
+at every stage (PR builds, release builds). The emission flag is only needed transiently when the
+generated file must be inspected or copied.
 
 **Entry format** (ordinal-sorted, deterministic, one entry per line):
 
@@ -59,10 +63,12 @@ the graph produces a visible diff.
 
 **Diagnostics:**
 
-- `ARKAPI001` (error) — `ArkApiSurface.txt` does not exist; create it by copying from
-  `obj/.../ArkApiSurface.current.txt`.
-- `ARKAPI002` (error) — `ArkApiSurface.txt` differs from the current surface; copy
-  `obj/.../ArkApiSurface.current.txt` over it to accept.
+- `ARKAPI001` (error) — `ArkApiSurface.txt` does not exist; run
+  `dotnet build -p:EmitCompilerGeneratedFiles=true`, then create it by copying from
+  `obj/<Configuration>/<TargetFramework>/ArkApiSurface.current.txt`.
+- `ARKAPI002` (error) — `ArkApiSurface.txt` differs from the current surface; run
+  `dotnet build -p:EmitCompilerGeneratedFiles=true`, then copy
+  `obj/<Configuration>/<TargetFramework>/ArkApiSurface.current.txt` over it to accept.
 
 ## Steps
 
@@ -83,8 +89,8 @@ the graph produces a visible diff.
      notation (e.g. `CONTRACT Outer.Items[].Field : type`).
    - Lines are self-contained; no references between lines.
 4. `buildTransitive` targets: the generator writes the current surface to a hint file during
-   `CoreCompile`; a post-compile target extracts it to
-   `$(IntermediateOutputPath)/ArkApiSurface.current.txt`; a comparison target emits
+   `CoreCompile`; when `EmitCompilerGeneratedFiles=true` is set, a post-compile target extracts
+   it to `$(IntermediateOutputPath)/ArkApiSurface.current.txt`; a comparison target emits
    `ARKAPI001`/`ARKAPI002` and aborts the build on mismatch or missing committed file.
 5. Opt-in: the comparison target is a no-op unless `ArkApiSurface.txt` is present **or**
    `$(ArkApiSurfaceEnabled)` is `true`. A project starts tracking by running the build once

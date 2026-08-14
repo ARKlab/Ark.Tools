@@ -861,14 +861,18 @@ snapshot differs from what is committed.
 
 **Workflow:**
 
-1. During every build the generator computes the full sorted surface and writes
-   it to `$(IntermediateOutputPath)/ArkApiSurface.current.txt` (the `obj/`
-   folder — never committed).
-2. An MSBuild target compares that file byte-for-byte with the committed
-   `ArkApiSurface.txt` in the project directory.
+1. During every build the generator computes the full sorted surface. The
+   analyzer compares it with the committed `ArkApiSurface.txt` when
+   `ArkApiSurfaceEnabled` is true.
+2. When `EmitCompilerGeneratedFiles=true` is supplied transiently, an MSBuild
+   target also copies the generated source-backed snapshot to
+   `$(IntermediateOutputPath)/ArkApiSurface.current.txt` (the `obj/` folder —
+   never committed).
 3. If the files differ, or if `ArkApiSurface.txt` does not exist, the build
-   fails with diagnostics `ARKAPI001` / `ARKAPI002` and a message pointing to
-   the generated file.
+   fails with diagnostics `ARKAPI001` / `ARKAPI002`. The diagnostics include
+   the transient `dotnet build -p:EmitCompilerGeneratedFiles=true` command when
+   the generated snapshot needs to be inspected; the package target
+   supplies `$(BaseIntermediateOutputPath)generated`.
 4. The developer **accepts** the change by replacing the committed file with the
    generated one:
    ```
@@ -880,10 +884,12 @@ snapshot differs from what is committed.
 
 **Diagnostics:**
 
-- `ARKAPI001` (error) — `ArkApiSurface.txt` is missing; create it by copying
-  from `obj/ArkApiSurface.current.txt`.
+- `ARKAPI001` (error) — `ArkApiSurface.txt` is missing; run
+  `dotnet build -p:EmitCompilerGeneratedFiles=true`, then create it by copying
+  from `obj/<Configuration>/<TargetFramework>/ArkApiSurface.current.txt`.
 - `ARKAPI002` (error) — `ArkApiSurface.txt` differs from the current surface;
-  accept by copying `obj/ArkApiSurface.current.txt` over it.
+  run `dotnet build -p:EmitCompilerGeneratedFiles=true`, then accept by copying the
+  generated file over it.
 
 **CI/CD gate.** Because `ArkApiSurface.txt` must exactly match the current
 surface to pass the build, CI fails automatically on any API change that has

@@ -556,7 +556,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var bodyProperty = properties.FirstOrDefault(property => property.IsBody);
 
         return new Endpoint(
-            type.Name,
+            _typeName(type),
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             verb.ToUpperInvariant(),
             string.Empty,
@@ -684,6 +684,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private static string _combine(string prefix, string template)
     {
         return prefix.TrimEnd('/') + "/" + template.TrimStart('/');
+    }
+
+    private static string _typeName(INamedTypeSymbol type)
+    {
+        var names = new Stack<string>();
+        for (var current = type; current is not null; current = current.ContainingType)
+            names.Push(current.Name);
+        return string.Join("_", names);
     }
 
     private static string _sanitize(string value)
