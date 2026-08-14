@@ -1,6 +1,5 @@
 <Project>
-  <PropertyGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false'">
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/generated</CompilerGeneratedFilesOutputPath>
+  <PropertyGroup>
+    <_ArkToolsCompilerGeneratedFilesOutputPathSpecified Condition="'$(CompilerGeneratedFilesOutputPath)' != ''">true</_ArkToolsCompilerGeneratedFilesOutputPathSpecified>
   </PropertyGroup>
 </Project>

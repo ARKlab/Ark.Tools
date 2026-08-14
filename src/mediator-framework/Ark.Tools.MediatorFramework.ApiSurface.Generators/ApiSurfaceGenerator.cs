@@ -27,7 +27,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
         "API surface snapshot missing",
-        "ArkApiSurface.txt is missing. Copy the generated snapshot to $(MSBuildProjectDirectory)/ArkApiSurface.txt and commit it.",
+        "ArkApiSurface.txt is missing. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to generate ArkApiSurface.current.txt, copy it to $(MSBuildProjectDirectory)/ArkApiSurface.txt, and commit it.",
         "Ark.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -35,7 +35,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor ContractChanged = new(
         "ARKAPI002",
         "API surface contract changed",
-        "Contract '{0}' has changed since the last accepted snapshot. Update ArkApiSurface.txt to accept this change.",
+        "Contract '{0}' has changed since the last accepted snapshot. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to inspect ArkApiSurface.current.txt, then update ArkApiSurface.txt to accept this change.",
         "Ark.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

@@ -42,10 +42,8 @@
     <LangVersion>latest</LangVersion>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateSBOM>true</GenerateSBOM>
-    <PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
-		<CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)/generated</CompilerGeneratedFilesOutputPath>  
+    <PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet Audit">

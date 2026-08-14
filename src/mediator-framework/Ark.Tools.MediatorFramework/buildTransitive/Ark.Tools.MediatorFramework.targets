@@ -3,6 +3,18 @@
     <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == ''">true</ArkApiSurfaceEnabled>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false' AND '$(EmitCompilerGeneratedFiles)' == 'true'">
+    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <Target Name="ArkApiSurfaceSetCompilerGeneratedFilesOutputPath"
+          BeforeTargets="CoreCompile"
+          Condition="'$(ArkApiSurfaceEnabled)' != 'false' AND '$(EmitCompilerGeneratedFiles)' == 'true' AND '$(_ArkToolsCompilerGeneratedFilesOutputPathSpecified)' != 'true'">
+    <PropertyGroup>
+      <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+    </PropertyGroup>
+  </Target>
+
   <!-- Make the property visible to the Roslyn analyzer -->
   <ItemGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false'">
     <CompilerVisibleProperty Include="ArkApiSurfaceEnabled" />
@@ -13,7 +25,7 @@
     <AdditionalFiles Include="$(MSBuildProjectDirectory)/ArkApiSurface.txt" />
   </ItemGroup>
 
-  <!-- Copy the generated snapshot to obj/ as a dev convenience only; diagnostics come from the analyzer -->
+  <!-- Copy the generated snapshot to obj/ when compiler-generated files are enabled; diagnostics come from the analyzer -->
   <Target Name="ArkApiSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
           Condition="'$(ArkApiSurfaceEnabled)' == 'true'">

@@ -71,10 +71,8 @@
     -->
 	<GenerateSBOM>true</GenerateSBOM>
 
-	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
 
-		<CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)/generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
 	<PropertyGroup Label="NuGet Audit">

@@ -94,8 +94,6 @@
 		<GenerateSBOM>true</GenerateSBOM>
 
 		<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
-		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-		<CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)/generated</CompilerGeneratedFilesOutputPath>
 
 	</PropertyGroup>
 
