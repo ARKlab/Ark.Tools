@@ -5,6 +5,7 @@ using Ark.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.Solid;
+using Ark.Tools.Solid.SimpleInjector;
 
 using FluentValidation;
 
@@ -62,6 +63,9 @@ public static class Program
     {
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+        container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+        container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
         container.Register<IQueryHandler<EchoQuery, EchoResponse>, EchoQueryHandler>();
         container.Register<IQueryHandler<PingQuery, EchoResponse>, PingQueryHandler>();
         container.Register<IRequestHandler<EchoRequest, EchoResponse>, EchoRequestHandler>();

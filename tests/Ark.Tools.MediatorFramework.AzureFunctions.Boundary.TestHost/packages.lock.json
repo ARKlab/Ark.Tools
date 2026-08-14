@@ -690,6 +690,13 @@
           "FluentValidation": "[12.1.1, )"
         }
       },
+      "ark.tools.solid.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.SimpleInjector": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )"
+        }
+      },
       "ark.tools.sql": {
         "type": "Project",
         "dependencies": {

@@ -34,7 +34,7 @@ public static class ArkMultipartEx
         this IEndpointRouteBuilder endpoints,
         string pattern,
         Func<IArkAttachment, TRequest> factory)
-        where TRequest : IRequest<TResponse>
+        where TRequest : class, IRequest<TRequest, TResponse>
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
@@ -49,9 +49,9 @@ public static class ArkMultipartEx
 
             var attachment = new ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream);
             var container = context.RequestServices.GetRequiredService<Container>();
-            var handler = container.GetInstance<IRequestHandler<TRequest, TResponse>>();
-            var response = await handler
-                .ExecuteAsync(factory(attachment), cancellationToken)
+            var processor = container.GetInstance<IRequestProcessor>();
+            var response = await processor
+                .ExecuteAsync<TRequest, TResponse>(factory(attachment), cancellationToken)
                 .ConfigureAwait(false);
 
             return (IResult)TypedResults.Ok(response);

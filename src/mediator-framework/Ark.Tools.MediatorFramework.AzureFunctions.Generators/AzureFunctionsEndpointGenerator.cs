@@ -341,16 +341,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
         if (endpoint.Kind == HandlerKind.Command)
         {
-            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<").Append(endpoint.FullyQualifiedType).AppendLine(">>();");
-            source.AppendLine("        await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
+            source.Append("        await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.SuccessStatusCode == 200 ? "204" : endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
         }
         else if (endpoint.Kind == HandlerKind.Query)
         {
-            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IQueryHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
-            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.IQueryProcessor>();");
+            source.Append("        var _result = await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "404" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
@@ -359,8 +359,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else
         {
-            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IRequestHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
-            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
+            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.IRequestProcessor>();");
+            source.Append("        var _result = await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "204" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");

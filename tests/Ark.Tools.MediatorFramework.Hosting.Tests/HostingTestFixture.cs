@@ -13,6 +13,7 @@ using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
+using Ark.Tools.Solid.SimpleInjector;
 
 using MessagePack.Resolvers;
 
@@ -348,6 +349,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
 
     private void _registerHandlers(Container container, bool includeRebusHandlers = true)
     {
+        container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+        container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+        container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
         container.RegisterInstance(State);
         container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();

@@ -20,6 +20,7 @@
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/Ark.Tools.MediatorFramework.AzureFunctions.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
