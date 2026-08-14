@@ -248,7 +248,7 @@ public sealed class MinimalApiHostingExtensionsTests
         else
             schema.GetProperty("format").GetString().Should().Be(format);
 
-        schema.GetProperty("example").GetString().Should().Be(example);
+        schema.GetProperty("examples")[0].GetString().Should().Be(example);
     }
 
     private static JsonElement _resolveSchema(JsonElement document, JsonElement schema)

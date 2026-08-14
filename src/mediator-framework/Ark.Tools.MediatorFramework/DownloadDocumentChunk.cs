@@ -6,6 +6,10 @@ using ProtoBuf;
 namespace Ark.MediatorFramework;
 
 /// <summary>Identifies an attachment for a streamed download.</summary>
+// ProtoModel is currently evaluation-only in protobuf-net; this contract opts into its AOT model generation.
+#pragma warning disable PBN9001
+[ProtoModel]
+#pragma warning restore PBN9001
 [ProtoContract]
 public sealed class DownloadDocumentQuery
 {

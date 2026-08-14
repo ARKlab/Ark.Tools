@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
 
+using System.Text.Json.Nodes;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
@@ -19,54 +20,54 @@ public static class SupportNodaTimeExtensions
         {
             Type = JsonSchemaType.String,
             Format = "date",
-            Example = "2016-01-21"
+            Examples = [JsonValue.Create("2016-01-21")]
         });
 
         c.MapType<LocalDateTime>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String,
             Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999")]
         });
 
         c.MapType<Instant>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String,
             Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999Z"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999Z")]
         });
 
         c.MapType<OffsetDateTime>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String,
             Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999+02:00"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999+02:00")]
         });
 
         c.MapType<ZonedDateTime>(() => new OpenApiSchema
         {
             Type = JsonSchemaType.String,
-            Example = "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999+02:00 Europe/Rome")]
         });
 
         c.MapType<LocalTime>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String,
             Format = "time",
-            Example = "14:01:00.999999999"
+            Examples = [JsonValue.Create("14:01:00.999999999")]
         });
 
         c.MapType<DateTimeZone>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String,
-            Example = "Europe/Rome"
+            Examples = [JsonValue.Create("Europe/Rome")]
         });
 
         c.MapType<Period>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String,
             Format = "duration",
-            Example = "P1Y2M-3DT4H"
+            Examples = [JsonValue.Create("P1Y2M-3DT4H")]
         });
 
         //** NULLABLE ********************************//
@@ -74,41 +75,41 @@ public static class SupportNodaTimeExtensions
         {
             Type = JsonSchemaType.String | JsonSchemaType.Null,
             Format = "date",
-            Example = "2016-01-21"
+            Examples = [JsonValue.Create("2016-01-21")]
         });
 
         c.MapType<LocalDateTime?>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String | JsonSchemaType.Null,
             Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999")]
         });
 
         c.MapType<Instant?>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String | JsonSchemaType.Null,
             Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999Z"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999Z")]
         });
 
         c.MapType<OffsetDateTime?>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String | JsonSchemaType.Null,
             Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999+02:00"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999+02:00")]
         });
 
         c.MapType<ZonedDateTime?>(() => new OpenApiSchema
         {
             Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Example = "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"
+            Examples = [JsonValue.Create("2016-01-21T15:01:01.999999999+02:00 Europe/Rome")]
         });
 
         c.MapType<LocalTime?>(() => new OpenApiSchema()
         {
             Type = JsonSchemaType.String | JsonSchemaType.Null,
             Format = "time",
-            Example = "14:01:00.999999999"
+            Examples = [JsonValue.Create("14:01:00.999999999")]
         });
     }
 }
