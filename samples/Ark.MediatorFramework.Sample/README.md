@@ -91,26 +91,15 @@ Ark.MediatorFramework.Sample/
 ### Assembly boundary
 
 `Ark.MediatorFramework.Sample.API` is the only assembly intended for API
-consumers. It contains public contracts such as `Greeting_CreateRequest`,
-`Book_CreateRequest`, `GetAuditsQuery`, and `DescribeShapeRequest`.
+consumers. It contains public contracts such as `Book_CreateRequest`, `GetAuditsQuery`,
+and `DescribeBookEditionRequest`.
 
 `Ark.MediatorFramework.Sample.Application` contains behavior and internal
-workflow messages such as `CompleteGreetingCompositionRequest`,
-`ProcessBookPrintProcessRequest`, `GreetingCreatedNotification`, and
+workflow messages such as `ProcessBookPrintProcessRequest` and
 `FailingRebusRequest`. A client can depend on the API without receiving the
 worker's topology or dead-letter demonstration types.
 
 ## Domain entities and operations
-
-### Greetings
-
-- Create a greeting with NodaTime values.
-- Retrieve a greeting through versioned HTTP and gRPC queries.
-- Update a greeting with an opaque ETag precondition.
-- Search with validated paging and sorting.
-- Stream generated greeting items as HTTP JSON or a gRPC server stream.
-- Queue a composition workflow and observe its eventual completion.
-- Demonstrate authorization, duplicate detection, auditing, and typed errors.
 
 ### Books
 
@@ -129,19 +118,6 @@ worker's topology or dead-letter demonstration types.
 Every decorated request writes an audit record in the same application-owned
 transaction as the business change. `GetAuditsQuery` supports filters, paging,
 and a safe sort allow-list.
-
-### Greeting cards and attachments
-
-- Upload one attachment or a bounded batch.
-- Download a stored attachment.
-- Exercise multipart HTTP and code-first gRPC streaming.
-- Keep the sample store in memory so the sample does not require Azurite.
-
-### Shapes and serialization
-
-`DescribeShapeRequest` sends a polymorphic `Shape` and returns its computed area.
-The same hierarchy demonstrates JSON discriminators, protobuf includes, and
-MessagePack unions.
 
 ## Run the sample
 
@@ -256,8 +232,7 @@ Read the complete hosting walkthrough in
 
 `Ark.MediatorFramework.Sample.Tests` contains:
 
-- Reqnroll application scenarios for greetings, books, attachments, workflows,
-  and synchronous commands;
+- Reqnroll application scenarios for books and synchronous commands;
 - direct contract dispatch through scenario-owned application contexts;
 - SQL and in-memory persistence coverage;
 - Rebus retry, outbox, and dead-letter tests;

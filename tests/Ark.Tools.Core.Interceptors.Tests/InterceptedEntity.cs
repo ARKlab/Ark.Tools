@@ -15,6 +15,27 @@ public enum InterceptedStatus
     Active = 1,
 }
 
+/// <summary>Status used to exercise EvolvableEnum conversion in generated interceptors.</summary>
+public enum InterceptedEvolvableStatus
+{
+    /// <summary>Unset status.</summary>
+    NOT_SET = 0,
+
+    /// <summary>Active status.</summary>
+    Active = 1,
+}
+
+/// <summary>Byte-backed status used to exercise the two-parameter EvolvableEnum shape.</summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1028:Enum Storage should be Int32", Justification = "Exact byte backing is required for this EvolvableEnum test.")]
+public enum InterceptedByteEvolvableStatus : byte
+{
+    /// <summary>Unset status.</summary>
+    NOT_SET = 0,
+
+    /// <summary>Active status.</summary>
+    Active = 1,
+}
+
 /// <summary>
 /// A "flat" (no custom base type), globally-accessible, 10-mixed-type-property POCO used to prove
 /// that <c>ToDataTableArk()</c> calls with this compile-time-known type are intercepted by
@@ -51,6 +72,16 @@ public sealed class InterceptedEntity
 
     /// <summary>Gets or sets a NodaTime local date.</summary>
     public LocalDate EffectiveDate { get; set; }
+}
+
+/// <summary>A flat entity with both supported EvolvableEnum shapes.</summary>
+public sealed class InterceptedEvolvableEntity
+{
+    /// <summary>Gets or sets the default-backed status.</summary>
+    public EvolvableEnum<InterceptedEvolvableStatus> Status { get; set; }
+
+    /// <summary>Gets or sets the byte-backed status.</summary>
+    public EvolvableEnum<InterceptedByteEvolvableStatus, byte>? CompactStatus { get; set; }
 }
 
 /// <summary>A public struct T, to prove the interceptor also handles non-primitive value types.</summary>

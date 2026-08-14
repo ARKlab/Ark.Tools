@@ -16,19 +16,51 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class ApplicationTestContextTests
 {
-    /// <summary>Dispatches a request through validation and audit decorators.</summary>
+    /// <summary>Dispatches a Book request through validation and audit decorators.</summary>
     [TestMethod]
     public async Task DirectDispatchRunsApplicationDecorators()
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
 
-        var response = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
-            new Greeting_CreateRequest.V1(new Greeting.V1.Create
+        var response = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
             {
-                Name = "Ada",
+                Title = "Clean Code",
+                Author = "Martin",
+                Genre = Book.V1.Genre.Technology,
             })).ConfigureAwait(false);
 
-        response.Message.Should().Contain("Hello, Ada!");
+        response.Title.Should().Be("Clean Code");
+        context.AuditCount.Should().Be(1);
+    }
+
+    /// <summary>Dispatches a bulk Book request through validation and audit decorators.</summary>
+    [TestMethod]
+    public async Task BulkCreateDispatchesApplicationRequest()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var response = await context.DispatchRequestAsync<
+            Book_BulkCreateRequest.V1,
+            IReadOnlyList<Book.V1.Output>>(
+            new Book_BulkCreateRequest.V1(
+            [
+                new Book.V1.Create
+                {
+                    Title = "Clean Code",
+                    Author = "Martin",
+                    Genre = Book.V1.Genre.Technology,
+                },
+                new Book.V1.Create
+                {
+                    Title = "Dune",
+                    Author = "Herbert",
+                    Genre = Book.V1.Genre.Fiction,
+                },
+            ])).ConfigureAwait(false);
+
+        response.Should().HaveCount(2);
+        response.Select(book => book.Title).Should().Equal("Clean Code", "Dune");
         context.AuditCount.Should().Be(1);
     }
 
@@ -37,11 +69,11 @@ public sealed class ApplicationTestContextTests
     public async Task InvalidRequestThrowsValidationException()
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
-        var action = () => context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
-            new Greeting_CreateRequest.V1(new Greeting.V1.Create()));
+        var action = () => context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create()));
 
         var exception = await action.Should().ThrowAsync<ValidationException>().ConfigureAwait(false);
-        exception.Which.Errors.Should().Contain(error => error.PropertyName == "Data.Name");
+        exception.Which.Errors.Should().Contain(error => error.PropertyName == "Data.Title");
     }
 
     /// <summary>Uses a new scoped graph for each top-level dispatch.</summary>
@@ -94,7 +126,7 @@ public sealed class ApplicationTestContextTests
         await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
     }
 
-    /// <summary>Retries deterministic optimistic-concurrency failures before updating a greeting.</summary>
+    /// <summary>Retries deterministic optimistic-concurrency failures before updating a Book.</summary>
     [TestMethod]
     public async Task OptimisticConcurrencyDecoratorRetriesTransientFailures()
     {
@@ -105,15 +137,25 @@ public sealed class ApplicationTestContextTests
             useSqlStore: false,
             dataContextFactory: decoratedFactory);
 
-        var greeting = await context.DispatchRequestAsync<Greeting_CreateRequest.V1, Greeting.V1.Output>(
-            new Greeting_CreateRequest.V1(new Greeting.V1.Create { Name = "Retry me" })).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<Greeting_UpdateRequest.V1, Greeting.V1.Output>(
-            new Greeting_UpdateRequest.V1(
-                new Greeting.V1.Input { Message = "Retried successfully" },
-                greeting.Id,
-                greeting.ETag)).ConfigureAwait(false);
+        var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
+            {
+                Title = "Retry me",
+                Author = "Author",
+                Genre = Book.V1.Genre.Fiction,
+            })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+            new Book_UpdateRequest.V1(
+                new Book.V1.Input
+                {
+                    Title = "Retried successfully",
+                    Author = "Author",
+                    Genre = Book.V1.Genre.Fiction,
+                },
+                book.Id,
+                book.ETag)).ConfigureAwait(false);
 
-        updated.Message.Should().Be("Retried successfully");
+        updated.Title.Should().Be("Retried successfully");
         faults.PendingFailures.Should().Be(0);
     }
 

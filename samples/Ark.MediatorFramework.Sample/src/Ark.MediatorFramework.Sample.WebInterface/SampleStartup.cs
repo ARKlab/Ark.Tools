@@ -33,7 +33,7 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 /// <summary>
 /// Selects the sample API assembly for generated Minimal API endpoint discovery.
 /// </summary>
-[ArkGenerateMinimalApiForAssembly(typeof(RefreshGreetingCommand))]
+[ArkGenerateMinimalApiForAssembly(typeof(Book_CreateRequest.V1))]
 public partial class SampleEndpointContext
 {
 }
@@ -194,8 +194,7 @@ public sealed class SampleStartup
             endpoints.MapArkEndpoints<SampleEndpointContext>(
                 versionPrefix: "/api/v{version}");
             endpoints.MapArkMinimalApiHost();
-            endpoints.MapArkGrpcServicesFromAssembly<RefreshGreetingCommand>();
-            endpoints.MapGrpcService<DocumentsGrpcService>();
+            endpoints.MapArkGrpcServicesFromAssembly<Book_CreateRequest.V1>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();
 
@@ -221,10 +220,6 @@ public sealed class SampleStartup
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)
-            .AddArkPolymorphism<Shape, ShapeKind>(
-                "kind",
-                (ShapeKind.Circle, typeof(Circle)),
-                (ShapeKind.Square, typeof(Square)))
             .AddArkPolymorphism<BookEdition, BookEditionKind>(
                 "kind",
                 (BookEditionKind.Print, typeof(PrintBookEdition)),

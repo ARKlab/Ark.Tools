@@ -30,8 +30,10 @@ acceptable because every task must remain testable.
 
 ## Acceptance
 
-- [ ] Final Book smoke contract is implemented and handler-wired if required.
-- [ ] Contract-level BDD and host-boundary parity tests pass.
-- [ ] No stale Greeting reference remains in active sample code or docs.
-- [ ] README and guide explain the Book workflows end to end.
-- [ ] Full sample build and tests pass.
+- [x] Existing Book catalog, streaming, edition, review, activity, cover, and
+      print-process contracts provide the final smoke coverage; no additional
+      summary contract is required.
+- [x] Contract-level BDD and host-boundary parity tests pass.
+- [x] No stale Greeting reference remains in active sample code or docs.
+- [x] README and guide explain the Book workflows end to end.
+- [x] Full sample build and tests pass.

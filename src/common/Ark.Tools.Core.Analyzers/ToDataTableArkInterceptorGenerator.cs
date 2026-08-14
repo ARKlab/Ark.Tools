@@ -200,7 +200,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         var conversion = _determineConversion(underlying);
         var columnType = conversion switch
         {
-            ConversionKind.EnumToString => "global::System.String",
+            ConversionKind.EnumToString or ConversionKind.EvolvableEnumToString => "global::System.String",
             ConversionKind.LocalDateToDateTime or ConversionKind.LocalDateTimeToDateTime or ConversionKind.InstantToDateTime => "global::System.DateTime",
             ConversionKind.OffsetDateTimeToDateTimeOffset or ConversionKind.OffsetDateToDateTimeOffset => "global::System.DateTimeOffset",
             ConversionKind.LocalTimeToTimeSpan => "global::System.TimeSpan",
@@ -226,6 +226,13 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     {
         if (type.TypeKind == TypeKind.Enum)
             return ConversionKind.EnumToString;
+
+        if (type is INamedTypeSymbol named
+            && named.OriginalDefinition.MetadataName is "EvolvableEnum`1" or "EvolvableEnum`2"
+            && named.ContainingNamespace.ToDisplayString() == "Ark.Tools.Core")
+        {
+            return ConversionKind.EvolvableEnumToString;
+        }
 
         return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) switch
         {
@@ -422,7 +429,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
     private static string _applyConversion(string accessor, ConversionKind conversion) => conversion switch
     {
-        ConversionKind.EnumToString => accessor + ".ToString()",
+        ConversionKind.EnumToString or ConversionKind.EvolvableEnumToString => accessor + ".ToString()",
         ConversionKind.LocalDateToDateTime => accessor + ".ToDateTimeUnspecified()",
         ConversionKind.LocalDateTimeToDateTime => accessor + ".ToDateTimeUnspecified()",
         ConversionKind.InstantToDateTime => accessor + ".ToDateTimeUtc()",

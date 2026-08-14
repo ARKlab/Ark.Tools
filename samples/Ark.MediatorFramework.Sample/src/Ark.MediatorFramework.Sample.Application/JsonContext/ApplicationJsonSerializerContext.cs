@@ -22,12 +22,9 @@ namespace Ark.MediatorFramework.Sample.Application.JsonContext;
         typeof(ExtendedIsoOffsetDateTimeConverter),
         typeof(RoundtripPeriodConverter),
     })]
-[JsonSerializable(typeof(CompleteGreetingCompositionRequest))]
-[JsonSerializable(typeof(GreetingCreatedNotification))]
 [JsonSerializable(typeof(ProcessBookPrintProcessRequest))]
 [JsonSerializable(typeof(FailingRebusRequest))]
 [JsonSerializable(typeof(DeadLetterAck))]
-[JsonSerializable(typeof(GreetingResponse))]
 [JsonSerializable(typeof(BookPrintProcessResponse))]
 [JsonSerializable(typeof(CancelBookPrintProcessRequest))]
 [JsonSerializable(typeof(BookReview))]
