@@ -341,16 +341,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
         if (endpoint.Kind == HandlerKind.Command)
         {
-            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
-            source.Append("        await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
+            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.ICommandHandler<").Append(endpoint.FullyQualifiedType).AppendLine(">>();");
+            source.AppendLine("        await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.SuccessStatusCode == 200 ? "204" : endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
         }
         else if (endpoint.Kind == HandlerKind.Query)
         {
-            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.IQueryProcessor>();");
-            source.Append("        var _result = await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
+            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IQueryHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
+            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "404" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
@@ -359,8 +359,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else
         {
-            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.IRequestProcessor>();");
-            source.Append("        var _result = await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
+            source.Append("        var _handler = _container.GetInstance<global::Ark.Tools.Solid.IRequestHandler<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">>();");
+            source.AppendLine("        var _result = await _handler.ExecuteAsync(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "204" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
                 .AppendLine(");");
@@ -556,7 +556,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var bodyProperty = properties.FirstOrDefault(property => property.IsBody);
 
         return new Endpoint(
-            type.Name,
+            _typeName(type),
             type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             verb.ToUpperInvariant(),
             string.Empty,
@@ -684,6 +684,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private static string _combine(string prefix, string template)
     {
         return prefix.TrimEnd('/') + "/" + template.TrimStart('/');
+    }
+
+    private static string _typeName(INamedTypeSymbol type)
+    {
+        var names = new Stack<string>();
+        for (var current = type; current is not null; current = current.ContainingType)
+            names.Push(current.Name);
+        return string.Join("_", names);
     }
 
     private static string _sanitize(string value)
