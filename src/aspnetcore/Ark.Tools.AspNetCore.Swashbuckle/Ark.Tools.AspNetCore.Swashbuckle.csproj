@@ -25,6 +25,11 @@
   </PropertyGroup>
   <!--===============================================================================-->
 
+  <PropertyGroup>
+    <!-- due to transitive microsoft.aspnetcore.odata preview for .net10 -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup Label="Project-Specific Usings">
     <Using Include="Swashbuckle.AspNetCore.SwaggerGen" />
     <Using Include="Microsoft.OpenApi" />
@@ -36,7 +41,6 @@
       
   <ItemGroup>
 	  <PackageReference Include="Asp.Versioning.OData.ApiExplorer" />
-	  <PackageReference Include="Microsoft.AspNetCore.OData" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
 	  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />

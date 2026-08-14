@@ -24,18 +24,6 @@
         "resolved": "3.0.141",
         "contentHash": "p0mtUYG/36FEnU6P5GovB82mVH4DoWGdHYjePkLnIeTNI0LQfmvjGj2twQEBTosw6/YTTnk8Fknu2VvaFybECA=="
       },
-      "Microsoft.AspNetCore.OData": {
-        "type": "Direct",
-        "requested": "[10.0.0-preview.2, )",
-        "resolved": "10.0.0-preview.2",
-        "contentHash": "ePiGmIvVTPPkhBvst6//5odNpJIf5DL8e3lQjr+ktv+8PcbWLtaS2keANADgPXW3T7XocOkNhYOp1CDTZplIVQ==",
-        "dependencies": {
-          "Microsoft.OData.Core": "[9.0.0-preview.4, 10.0.0)",
-          "Microsoft.OData.Edm": "[9.0.0-preview.4, 10.0.0)",
-          "Microsoft.OData.ModelBuilder": "[3.0.0-preview.1, 4.0.0)",
-          "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
-        }
-      },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
         "requested": "[4.14.0, )",
@@ -278,6 +266,18 @@
         "requested": "[3.0.0, )",
         "resolved": "3.0.0",
         "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
+      },
+      "Microsoft.AspNetCore.OData": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.0-preview.2, )",
+        "resolved": "10.0.0-preview.2",
+        "contentHash": "ePiGmIvVTPPkhBvst6//5odNpJIf5DL8e3lQjr+ktv+8PcbWLtaS2keANADgPXW3T7XocOkNhYOp1CDTZplIVQ==",
+        "dependencies": {
+          "Microsoft.OData.Core": "[9.0.0-preview.4, 10.0.0)",
+          "Microsoft.OData.Edm": "[9.0.0-preview.4, 10.0.0)",
+          "Microsoft.OData.ModelBuilder": "[3.0.0-preview.1, 4.0.0)",
+          "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
+        }
       },
       "Microsoft.OpenApi": {
         "type": "CentralTransitive",
