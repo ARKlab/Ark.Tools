@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
+using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
 using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
@@ -132,6 +133,9 @@ public static class ApplicationComposition
         IPrintCompletedNotificationService? printCompletedNotificationService = null)
     {
         ArgumentNullException.ThrowIfNull(container);
+        container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+        container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+        container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
 
         if (dataContextFactory is not null)
         {

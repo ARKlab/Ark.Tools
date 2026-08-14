@@ -102,7 +102,7 @@ public static class HostingEndpointMappings
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract(Name = "HostingRequestMessage")]
 [MessagePackObject(true)]
-public sealed record HostingRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingRequest : Solid.IRequest<HostingRequest, HostingResponse>
 {
     /// <summary>Gets or sets the route identifier.</summary>
     [HttpRoute]
@@ -143,7 +143,7 @@ public sealed record HostingResponse
 [GrpcMethod("ExecuteHostingQuery")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingQuery : Solid.IQuery<HostingResponse>
+public sealed record HostingQuery : Solid.IQuery<HostingQuery, HostingResponse>
 {
     /// <summary>Gets or sets the route identifier.</summary>
     [HttpRoute]
@@ -161,7 +161,7 @@ public sealed record HostingQuery : Solid.IQuery<HostingResponse>
 [GrpcMethod("ExecuteHostingCommand")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingCommand : Solid.ICommand
+public sealed record HostingCommand : Solid.ICommand<HostingCommand>
 {
     /// <summary>Gets or sets the command value.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -171,7 +171,7 @@ public sealed record HostingCommand : Solid.ICommand
 /// <summary>Rebus-only command contract.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingRebusCommand : Solid.ICommand
+public sealed record HostingRebusCommand : Solid.ICommand<HostingRebusCommand>
 {
     /// <summary>Gets or sets the command value.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -180,26 +180,26 @@ public sealed record HostingRebusCommand : Solid.ICommand
 
 /// <summary>Command whose handler fails so the hosting tests can verify retry exhaustion.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
-public sealed record HostingRetryCommand : Solid.ICommand;
+public sealed record HostingRetryCommand : Solid.ICommand<HostingRetryCommand>;
 
 /// <summary>Command whose handler fails so the hosting tests can verify second-level retry handling.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
-public sealed record HostingSecondLevelRetryCommand : Solid.ICommand;
+public sealed record HostingSecondLevelRetryCommand : Solid.ICommand<HostingSecondLevelRetryCommand>;
 
 /// <summary>Command whose handler records the cancellation token supplied by Rebus.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
-public sealed record HostingCancellationCommand : Solid.ICommand;
+public sealed record HostingCancellationCommand : Solid.ICommand<HostingCancellationCommand>;
 
 /// <summary>Command whose handler schedules a deferred delivery.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
-public sealed record HostingDeferredCommand : Solid.ICommand;
+public sealed record HostingDeferredCommand : Solid.ICommand<HostingDeferredCommand>;
 
 /// <summary>Request whose handler produces a validation failure.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/validation", AllowAnonymous = true)]
 [GrpcMethod("ValidateHostingRequest")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingValidationRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingValidationRequest : Solid.IRequest<HostingValidationRequest, HostingResponse>
 {
     /// <summary>Gets or sets the value to validate.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -208,7 +208,7 @@ public sealed record HostingValidationRequest : Solid.IRequest<HostingResponse>
 
 /// <summary>Request whose handler returns a configured success status.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/status", AllowAnonymous = true, SuccessStatusCode = 201)]
-public sealed record HostingStatusRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingStatusRequest : Solid.IRequest<HostingStatusRequest, HostingResponse>
 {
     /// <summary>Gets or sets the request value.</summary>
     public string Value { get; set; } = string.Empty;
@@ -219,14 +219,14 @@ public sealed record HostingStatusRequest : Solid.IRequest<HostingResponse>
 [GrpcMethod("GetHostingNotFound")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingNotFoundQuery : Solid.IQuery<HostingResponse>;
+public sealed record HostingNotFoundQuery : Solid.IQuery<HostingNotFoundQuery, HostingResponse>;
 
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
 [GrpcMethod("TriggerHostingBusinessViolation")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingBusinessViolationRequest, HostingResponse>
 {
     /// <summary>Gets or sets the value that violates the business rule.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -235,7 +235,7 @@ public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingRes
 
 /// <summary>Request whose handler produces an unexpected exception.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/unexpected", AllowAnonymous = true)]
-public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingUnexpectedRequest, HostingResponse>
 {
     /// <summary>Gets or sets the request value.</summary>
     public string Value { get; set; } = string.Empty;
@@ -247,19 +247,19 @@ public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingResponse>
 [GrpcService("Hosting")]
 [PolicyAuthorize(typeof(HostingScopePolicy))]
 [ProtoBuf.ProtoContract]
-public sealed record HostingAuthorizedQuery : Solid.IQuery<HostingResponse>;
+public sealed record HostingAuthorizedQuery : Solid.IQuery<HostingAuthorizedQuery, HostingResponse>;
 
 /// <summary>Query returning the authenticated synthetic caller.</summary>
 [GrpcMethod("GetHostingUserContext")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingUserContextQuery : Solid.IQuery<HostingResponse>;
+public sealed record HostingUserContextQuery : Solid.IQuery<HostingUserContextQuery, HostingResponse>;
 
 /// <summary>Request whose handler reports an opaque ETag mismatch.</summary>
 [GrpcMethod("CheckHostingETag")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingETagMismatchRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingETagMismatchRequest : Solid.IRequest<HostingETagMismatchRequest, HostingResponse>
 {
     /// <summary>Gets the opaque ETag supplied by the caller.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -271,7 +271,7 @@ public sealed record HostingETagMismatchRequest : Solid.IRequest<HostingResponse
 [GrpcMethod("CheckHostingConcurrency")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingOptimisticConcurrencyRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingOptimisticConcurrencyRequest : Solid.IRequest<HostingOptimisticConcurrencyRequest, HostingResponse>
 {
     /// <summary>Gets the opaque concurrency token supplied by the caller.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -304,7 +304,7 @@ public sealed class HostingScopePolicy : IAuthorizationPolicy
 [GrpcMethod("StreamHosting")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingStreamQuery : Solid.IQuery<IAsyncEnumerable<HostingStreamItem>>
+public sealed record HostingStreamQuery : Solid.IQuery<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>
 {
     /// <summary>Gets or sets the number of items to produce.</summary>
     [HttpQuery]
@@ -332,7 +332,7 @@ public sealed record HostingStreamItem
 [GrpcMethod("UploadHostingAttachment")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingAttachmentUploadRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingAttachmentUploadRequest : Solid.IRequest<HostingAttachmentUploadRequest, HostingResponse>
 {
     /// <summary>Gets or sets the uploaded attachment.</summary>
     [ProtoBuf.ProtoMember(1)]
@@ -347,7 +347,7 @@ public sealed record HostingAttachmentUploadRequest : Solid.IRequest<HostingResp
     MaxRequestBodySizeBytes = 1024,
     MaxFileCount = 2,
     AllowedContentTypes = ["text/plain"])]
-public sealed record HostingAttachmentCollectionUploadRequest : Solid.IRequest<HostingResponse>
+public sealed record HostingAttachmentCollectionUploadRequest : Solid.IRequest<HostingAttachmentCollectionUploadRequest, HostingResponse>
 {
     /// <summary>Gets or sets the uploaded attachments.</summary>
     public IReadOnlyList<IArkAttachment> Attachments { get; set; } = [];
@@ -355,7 +355,7 @@ public sealed record HostingAttachmentCollectionUploadRequest : Solid.IRequest<H
 
 /// <summary>Query returning a downloadable synthetic attachment.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/attachments/{name}", AllowAnonymous = true)]
-public sealed record HostingAttachmentDownloadQuery : Solid.IQuery<IArkAttachment>
+public sealed record HostingAttachmentDownloadQuery : Solid.IQuery<HostingAttachmentDownloadQuery, IArkAttachment>
 {
     /// <summary>Gets or sets the attachment name.</summary>
     [HttpRoute]
@@ -378,13 +378,13 @@ public sealed record HostingOpenApiResponse
 
 /// <summary>Query used to expose the generated OpenAPI response schema.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/openapi", AllowAnonymous = true)]
-public sealed record HostingOpenApiQuery : Solid.IQuery<HostingOpenApiResponse>;
+public sealed record HostingOpenApiQuery : Solid.IQuery<HostingOpenApiQuery, HostingOpenApiResponse>;
 
 /// <summary>Query used to verify NodaTime and polymorphic protobuf fields.</summary>
 [GrpcMethod("GetHostingWireTypes")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
-public sealed record HostingWireTypesQuery : Solid.IQuery<HostingWireTypesResponse>;
+public sealed record HostingWireTypesQuery : Solid.IQuery<HostingWireTypesQuery, HostingWireTypesResponse>;
 
 /// <summary>Response carrying NodaTime and polymorphic protobuf fields.</summary>
 [ProtoBuf.ProtoContract]
@@ -399,7 +399,7 @@ public sealed record HostingWireTypesResponse
     public LocalDateTime DateTime { get; init; }
 
     /// <summary>Gets the representative shape.</summary>
-    [ProtoBuf.ProtoMember(3)]
+    [ProtoBuf.ProtoMember(3, IsRequired = true)]
     public HostingShape Shape { get; init; } = new HostingCircle();
 }
 
@@ -422,6 +422,7 @@ public abstract record HostingShape;
 public sealed record HostingCircle : HostingShape
 {
     /// <summary>Gets or sets the circle radius.</summary>
+    [System.ComponentModel.DefaultValue(1)]
     [ProtoBuf.ProtoMember(1)]
     public int Radius { get; init; } = 1;
 }
@@ -432,7 +433,7 @@ public sealed record HostingCircle : HostingShape
 [GrpcService("Hosting")]
 [Versioning(Introduced = 2, Retired = 4)]
 [ProtoBuf.ProtoContract]
-public sealed record HostingVersionedQuery : Solid.IQuery<HostingResponse>
+public sealed record HostingVersionedQuery : Solid.IQuery<HostingVersionedQuery, HostingResponse>
 {
     /// <summary>Gets or sets the route identifier.</summary>
     [HttpRoute]

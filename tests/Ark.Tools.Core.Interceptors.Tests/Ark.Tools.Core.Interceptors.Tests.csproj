@@ -12,7 +12,6 @@
     calls with a compile-time-known, eligible T are actually intercepted here.
     -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)$(Configuration)/$(TargetFramework)/Generated</CompilerGeneratedFilesOutputPath>
     <!-- ErrorProne.NET does not support intercepted call sites, so opt out only in this generator integration project. -->
     <DisableErrorProneAnalyzers>true</DisableErrorProneAnalyzers>
   </PropertyGroup>

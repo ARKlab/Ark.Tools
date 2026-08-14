@@ -85,37 +85,6 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             return await _inner.ReadAuditsAsync(query, ctk).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
-        {
-            return await _inner.ReadAllAsync(ctk).ConfigureAwait(false);
-        }
-
-        public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
-        {
-            await _inner.SaveAsync(greeting, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
-        {
-            return await _inner.ReadAsync(id, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> UpdateAsync(
-            Guid id,
-            string message,
-            string expectedETag,
-            Guid auditId,
-            CancellationToken ctk = default)
-        {
-            _faults.ThrowIfPending();
-            return await _inner.UpdateAsync(id, message, expectedETag, auditId, ctk).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
-        {
-            return await _inner.ReadGreetingsAsync(query, ctk).ConfigureAwait(false);
-        }
-
         public async Task CommitAsync(CancellationToken ctk = default)
         {
             await _inner.CommitAsync(ctk).ConfigureAwait(false);

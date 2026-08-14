@@ -13,8 +13,6 @@ namespace Ark.MediatorFramework.Sample.Application.DAL;
 public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 {
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
-    private readonly ConcurrentDictionary<Guid, GreetingResponse> _greetings = new();
-    private readonly ConcurrentDictionary<Guid, long> _greetingVersions = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
     private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
     private readonly ConcurrentDictionary<Guid, BookReview> _bookReviews = new();
@@ -36,8 +34,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         lock (_sync)
         {
             _audits.Clear();
-            _greetings.Clear();
-            _greetingVersions.Clear();
             _books.Clear();
             _bookVersions.Clear();
             _bookReviews.Clear();
@@ -109,83 +105,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 Skip = query.Skip,
                 Limit = query.Limit,
                 Data = records.Skip(query.Skip).Take(query.Limit).ToArray(),
-            }).ConfigureAwait(false);
-        }
-
-        public async Task<IEnumerable<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
-        {
-            var greetings = _owner._greetings.Values
-                .OrderBy(item => item.Id)
-                .ToArray();
-            return await Task.FromResult<IEnumerable<GreetingResponse>>(greetings).ConfigureAwait(false);
-        }
-
-        public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(greeting);
-            lock (_owner._sync)
-            {
-                if (_owner._greetings.ContainsKey(greeting.Id))
-                    throw new InvalidOperationException($"Greeting '{greeting.Id}' already exists.");
-
-                _owner._greetings[greeting.Id] = greeting with { ETag = "0x0000000000000001" };
-                _owner._greetingVersions[greeting.Id] = 1;
-            }
-            await Task.CompletedTask.ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
-        {
-            _owner._greetings.TryGetValue(id, out var greeting);
-            return await Task.FromResult(greeting).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> UpdateAsync(
-            Guid id,
-            string message,
-            string expectedETag,
-            Guid auditId,
-            CancellationToken ctk = default)
-        {
-            GreetingResponse? updated = null;
-            lock (_owner._sync)
-            {
-                if (_owner._greetings.TryGetValue(id, out var current)
-                    && string.Equals(current.ETag, expectedETag, StringComparison.Ordinal))
-                {
-                    var version = _owner._greetingVersions[id] + 1;
-                    updated = current with
-                    {
-                        Message = message,
-                        AuditId = auditId,
-                        ETag = $"0x{version:X16}",
-                    };
-                    _owner._greetingVersions[id] = version;
-                    _owner._greetings[id] = updated;
-                }
-            }
-            return await Task.FromResult(updated).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(query);
-            var filtered = _owner._greetings.Values.AsEnumerable();
-            if (!string.IsNullOrWhiteSpace(query.MessageContains))
-            {
-                filtered = filtered.Where(item =>
-                    item.Message.Contains(query.MessageContains, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var results = filtered
-                .OrderBy(item => item.Id)
-                .ToArray();
-            return await Task.FromResult(new GreetingPage
-            {
-                Count = results.LongLength,
-                Skip = query.Skip,
-                Limit = query.Limit,
-                Data = results.Skip(query.Skip).Take(query.Limit).ToArray(),
             }).ConfigureAwait(false);
         }
 

@@ -69,7 +69,7 @@ public static class ArkAzureFunctionsInvocation
         TResponse>(
         HttpRequest request,
         CancellationToken cancellationToken)
-        where TRequest : IRequest<TResponse>
+        where TRequest : class, IRequest<TRequest, TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
         var binding = await _bindAsync<TRequest>(request, cancellationToken).ConfigureAwait(false);
@@ -79,8 +79,8 @@ public static class ArkAzureFunctionsInvocation
         var (container, scope) = _beginScope(request);
         await using (scope.ConfigureAwait(false))
         {
-            var handler = container.GetInstance<IRequestHandler<TRequest, TResponse>>();
-            var result = await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
+            var processor = container.GetInstance<IRequestProcessor>();
+            var result = await processor.ExecuteAsync<TRequest, TResponse>(binding.Value!, cancellationToken).ConfigureAwait(false);
             return result is null ? Results.NoContent() : Results.Ok(result);
         }
     }
@@ -96,7 +96,7 @@ public static class ArkAzureFunctionsInvocation
         TResponse>(
         HttpRequest request,
         CancellationToken cancellationToken)
-        where TQuery : IQuery<TResponse>
+        where TQuery : class, IQuery<TQuery, TResponse>
     {
         ArgumentNullException.ThrowIfNull(request);
         var binding = await _bindAsync<TQuery>(request, cancellationToken).ConfigureAwait(false);
@@ -106,8 +106,8 @@ public static class ArkAzureFunctionsInvocation
         var (container, scope) = _beginScope(request);
         await using (scope.ConfigureAwait(false))
         {
-            var handler = container.GetInstance<IQueryHandler<TQuery, TResponse>>();
-            var result = await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
+            var processor = container.GetInstance<IQueryProcessor>();
+            var result = await processor.ExecuteAsync<TQuery, TResponse>(binding.Value!, cancellationToken).ConfigureAwait(false);
             return result is null ? Results.NotFound() : Results.Ok(result);
         }
     }
@@ -121,7 +121,7 @@ public static class ArkAzureFunctionsInvocation
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)] TCommand>(
         HttpRequest request,
         CancellationToken cancellationToken)
-        where TCommand : ICommand
+        where TCommand : class, ICommand<TCommand>
     {
         ArgumentNullException.ThrowIfNull(request);
         var binding = await _bindAsync<TCommand>(request, cancellationToken).ConfigureAwait(false);
@@ -131,8 +131,8 @@ public static class ArkAzureFunctionsInvocation
         var (container, scope) = _beginScope(request);
         await using (scope.ConfigureAwait(false))
         {
-            var handler = container.GetInstance<ICommandHandler<TCommand>>();
-            await handler.ExecuteAsync(binding.Value!, cancellationToken).ConfigureAwait(false);
+            var processor = container.GetInstance<ICommandProcessor>();
+            await processor.ExecuteAsync<TCommand>(binding.Value!, cancellationToken).ConfigureAwait(false);
             return Results.NoContent();
         }
     }

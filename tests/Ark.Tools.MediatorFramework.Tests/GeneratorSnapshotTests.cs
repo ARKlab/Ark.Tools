@@ -141,7 +141,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/greetings/{id}")]
             [Versioning(Introduced = 1, Retired = 3)]
-            public sealed class GetGreeting : IQuery<string> { }
+            public sealed class GetGreeting : IQuery<GetGreeting, string> { }
             """);
 
         result.Generated.Should().Contain("Function(\"GetGreeting_v1\")");
@@ -149,7 +149,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("Function(\"GetGreeting_v2\")");
         result.Generated.Should().Contain("Route = \"api/v2/greetings/{id}\"");
         result.Generated.Should().Contain("AuthorizationLevel.Anonymous");
-        result.Generated.Should().Contain("IQueryHandler<global::GetGreeting");
+        result.Generated.Should().Contain("IQueryProcessor");
         result.Generated.Should().Contain("new global::GetGreeting()");
         result.Generated.Should().NotContain("InvokeQueryAsync");
         result.Diagnostics.Should().NotContain(
@@ -1037,13 +1037,13 @@ public sealed class GeneratorSnapshotTests
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/commands/delete")]
-            public sealed record DeleteCommand : ICommand
+            public sealed record DeleteCommand : ICommand<DeleteCommand>
             {
                 public string Id { get; init; } = string.Empty;
             }
             """);
 
-        generated.Should().Contain("ICommandHandler<global::DeleteCommand>");
+        generated.Should().Contain("ICommandProcessor");
         generated.Should().Contain("TypedResults.NoContent()");
         generated.Should().Contain(".Produces(204)");
     }
@@ -1135,7 +1135,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcMethod("Delete")]
-            public sealed class DeleteCommand : ICommand
+            public sealed class DeleteCommand : ICommand<DeleteCommand>
             {
             }
             """);
@@ -1143,7 +1143,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("Google.Protobuf.WellKnownTypes.Empty");
         generated.Should().Contain("google.protobuf.Empty");
         generated.Should().Contain("MapArkGrpcServices<TContext>");
-        generated.Should().Contain("await handler.ExecuteAsync");
+        generated.Should().Contain("await processor.ExecuteAsync<global::DeleteCommand>");
         generated.Should().Contain("Missing mediator handler registrations");
     }
 
@@ -1920,7 +1920,7 @@ public sealed class GeneratorSnapshotTests
             baseline: null,
             enabled: true);
 
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI001" && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
     }
 
@@ -1939,7 +1939,9 @@ public sealed class GeneratorSnapshotTests
 
         var result = _runApiSurfaceGeneratorResult(source, baseline: staleBaseline, enabled: true);
 
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002" && d.GetMessage().Contains("GetItem"));
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002"
+            && d.GetMessage().Contains("GetItem")
+            && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
     }
 

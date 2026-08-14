@@ -1,7 +1,7 @@
 <Project>
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
-		<Version>0.9.1</Version>
+		<Version>6.6.6</Version>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Continuous Integration Build Detection">
@@ -71,9 +71,7 @@
     -->
 	<GenerateSBOM>true</GenerateSBOM>
 
-	<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/generated</CompilerGeneratedFilesOutputPath>
+    <PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
 
   </PropertyGroup>
 
@@ -96,7 +94,24 @@
     <EnableMSTestRunner>true</EnableMSTestRunner>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+    
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)'==''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+
   </PropertyGroup>
+
+
+	<PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != ''">
+		<!-- Copilot coding agent sandboxes do not expose repository metadata to SourceLink. -->
+		<EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+		<EnableSourceLink>false</EnableSourceLink>
+	</PropertyGroup>  
+
+	<PropertyGroup Label="SQL Project Settings"  Condition="'$(UsingMicrosoftBuildSqlSdk)' == 'true'">
+		<TreatTSqlWarningsAsErrors>True</TreatTSqlWarningsAsErrors>
+		<RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
+	</PropertyGroup>
+
 
 	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
