@@ -8,6 +8,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+  checks: write
+
 jobs:
   build:
     name: 'Build'
@@ -71,6 +76,15 @@ jobs:
       with:
         name: test-results
         path: "**/*.trx"
+
+    - name: Publish test report for same-repository pull requests
+      if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      uses: dorny/test-reporter@v3
+      with:
+        name: DotNET Tests
+        path: "**/*.trx"
+        reporter: dotnet-trx
+        use-actions-summary: 'false'
 
     - name: Install dotnet-coverage
       run: dotnet tool install -g dotnet-coverage

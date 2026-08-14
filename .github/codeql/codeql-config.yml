@@ -1,0 +1,8 @@
+paths-ignore:
+  - 'docs/**'
+  - 'tests/**'
+
+threat-models: local
+
+queries:
+  - uses: security-and-quality
