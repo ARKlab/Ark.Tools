@@ -8,6 +8,8 @@ using NodaTime;
 
 using ProtoBuf;
 
+using System.ComponentModel;
+
 namespace Ark.MediatorFramework.Sample.API;
 
 /// <summary>Persisted generic audit record returned by the audit query.</summary>
@@ -19,6 +21,7 @@ public sealed record AuditRecord
     public required Guid Id { get; init; }
 
     /// <summary>Gets the authenticated user identifier.</summary>
+    [DefaultValue("anonymous")]
     [ProtoMember(2)]
     public string UserId { get; init; } = "anonymous";
 
