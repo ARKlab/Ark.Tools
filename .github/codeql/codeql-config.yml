@@ -1,6 +1,6 @@
 paths-ignore:
-  - docs/**
-  - tests/**
+  - 'docs/**'
+  - 'tests/**'
 
 threat-models: local
 
