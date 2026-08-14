@@ -5,6 +5,10 @@
     <ArkExportProtoDir>$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto</ArkExportProtoDir>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ArkAdditionalProto Include="$(MSBuildThisFileDirectory)src/Ark.MediatorFramework.Sample.WebInterface/proto/Documents.proto" />
+  </ItemGroup>
+
   <PropertyGroup Label="Continuous Integration Build Detection">
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
     <_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>

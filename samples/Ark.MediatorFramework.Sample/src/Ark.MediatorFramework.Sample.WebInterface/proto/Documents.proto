@@ -2,15 +2,23 @@ syntax = "proto3";
 
 option csharp_namespace = "Ark.MediatorFramework.Sample.GrpcClient";
 
-import "google/type/date.proto";
-import "google/type/datetime.proto";
-import "google/protobuf/empty.proto";
 import "ark/mediator.proto";
+
+message UploadResponse {
+  bytes id = 1;
+  string name = 2;
+  string content_type = 3;
+  int64 length = 4;
+}
+
+message DownloadDocumentQuery {
+  bytes id = 1;
+}
 
 message DownloadDocumentMetadata {
   string name = 1;
   string content_type = 2;
-  optional int64 length = 3;
+  int64 length = 3;
 }
 
 message DownloadDocumentChunk {
@@ -20,21 +28,7 @@ message DownloadDocumentChunk {
   }
 }
 
-message UploadBatchResponse {
-  bytes id = 1;
-  repeated string names = 2;
+service Documents {
+  rpc Upload(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);
+  rpc Download(DownloadDocumentQuery) returns (stream DownloadDocumentChunk);
 }
-
-message UploadResponse {
-  bytes id = 1;
-  string name = 2;
-  string content_type = 3;
-  int64 length = 4;
-}
-
-service DocumentsV1 {
-  rpc GetDocument(bytes) returns (stream DownloadDocumentChunk);
-  rpc UploadGreetingCard(stream ark.mediator.UploadDocumentChunk) returns (UploadResponse);
-  rpc UploadGreetingCards(stream ark.mediator.UploadDocumentChunk) returns (UploadBatchResponse);
-}
-

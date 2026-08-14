@@ -4,111 +4,43 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
 
+using System.Text.Json.Nodes;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
 public static class SupportNodaTimeExtensions
 {
     /// <summary>
-    /// Register support for NodaTime types. For Json 
+    /// Register support for NodaTime types.
     /// </summary>
-    /// <param name="c"></param>
+    /// <param name="c">The Swagger generator options.</param>
     public static void MapNodaTimeTypes(this SwaggerGenOptions c)
     {
-        c.MapType<LocalDate>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Format = "date",
-            Example = "2016-01-21"
-        });
-
-        c.MapType<LocalDateTime>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999"
-        });
-
-        c.MapType<Instant>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999Z"
-        });
-
-        c.MapType<OffsetDateTime>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999+02:00"
-        });
-
-        c.MapType<ZonedDateTime>(() => new OpenApiSchema
-        {
-            Type = JsonSchemaType.String,
-            Example = "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"
-        });
-
-        c.MapType<LocalTime>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Format = "time",
-            Example = "14:01:00.999999999"
-        });
-
-        c.MapType<DateTimeZone>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Example = "Europe/Rome"
-        });
-
-        c.MapType<Period>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String,
-            Format = "duration",
-            Example = "P1Y2M-3DT4H"
-        });
+        c.MapType<LocalDate>(() => _schema("date", "2016-01-21"));
+        c.MapType<LocalDateTime>(() => _schema("date-time", "2016-01-21T15:01:01.999999999"));
+        c.MapType<Instant>(() => _schema("date-time", "2016-01-21T15:01:01.999999999Z"));
+        c.MapType<OffsetDateTime>(() => _schema("date-time", "2016-01-21T15:01:01.999999999+02:00"));
+        c.MapType<ZonedDateTime>(() => _schema(null, "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"));
+        c.MapType<LocalTime>(() => _schema("time", "14:01:00.999999999"));
+        c.MapType<DateTimeZone>(() => _schema(null, "Europe/Rome"));
+        c.MapType<Period>(() => _schema("duration", "P1Y2M-3DT4H"));
 
         //** NULLABLE ********************************//
-        c.MapType<LocalDate?>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Format = "date",
-            Example = "2016-01-21"
-        });
+        c.MapType<LocalDate?>(() => _schema("date", "2016-01-21", nullable: true));
+        c.MapType<LocalDateTime?>(() => _schema("date-time", "2016-01-21T15:01:01.999999999", nullable: true));
+        c.MapType<Instant?>(() => _schema("date-time", "2016-01-21T15:01:01.999999999Z", nullable: true));
+        c.MapType<OffsetDateTime?>(() => _schema("date-time", "2016-01-21T15:01:01.999999999+02:00", nullable: true));
+        c.MapType<ZonedDateTime?>(() => _schema(null, "2016-01-21T15:01:01.999999999+02:00 Europe/Rome", nullable: true));
+        c.MapType<LocalTime?>(() => _schema("time", "14:01:00.999999999", nullable: true));
+    }
 
-        c.MapType<LocalDateTime?>(() => new OpenApiSchema()
+    private static OpenApiSchema _schema(string? format, string example, bool nullable = false)
+    {
+        return new OpenApiSchema
         {
-            Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999"
-        });
-
-        c.MapType<Instant?>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999Z"
-        });
-
-        c.MapType<OffsetDateTime?>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Format = "date-time",
-            Example = "2016-01-21T15:01:01.999999999+02:00"
-        });
-
-        c.MapType<ZonedDateTime?>(() => new OpenApiSchema
-        {
-            Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Example = "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"
-        });
-
-        c.MapType<LocalTime?>(() => new OpenApiSchema()
-        {
-            Type = JsonSchemaType.String | JsonSchemaType.Null,
-            Format = "time",
-            Example = "14:01:00.999999999"
-        });
+            Type = nullable ? JsonSchemaType.String | JsonSchemaType.Null : JsonSchemaType.String,
+            Format = format,
+            Examples = [JsonValue.Create(example)]
+        };
     }
 }

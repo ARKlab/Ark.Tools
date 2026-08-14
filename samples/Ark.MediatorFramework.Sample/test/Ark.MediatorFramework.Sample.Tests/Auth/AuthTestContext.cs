@@ -25,7 +25,7 @@ public sealed class AuthTestContext
     [Given("I am an authenticated user")]
     public void SetAuthenticatedUser()
     {
-        _context.Application.SetAuthenticatedUser("test-user");
+        _context.Application.SetAuthenticatedUser("test-user", ApplicationScopes.GreetingWrite);
     }
 
     /// <summary>Sets the application principal to the requested authenticated subject.</summary>
@@ -33,7 +33,7 @@ public sealed class AuthTestContext
     [Given(@"I am an authenticated user named ""(.*)""")]
     public void SetAuthenticatedUser(string subject)
     {
-        _context.Application.SetAuthenticatedUser(subject);
+        _context.Application.SetAuthenticatedUser(subject, ApplicationScopes.GreetingWrite);
     }
 
     /// <summary>Sets an authenticated principal with the book-read scope.</summary>
@@ -41,6 +41,13 @@ public sealed class AuthTestContext
     public void SetAuthenticatedUserWithBookReadScope()
     {
         _context.Application.SetAuthenticatedUser("book-read-user", ApplicationScopes.BookRead);
+    }
+
+    /// <summary>Sets an authenticated principal without the greeting-write scope.</summary>
+    [Given("I am an authenticated user without the greeting write scope")]
+    public void SetAuthenticatedUserWithoutGreetingWriteScope()
+    {
+        _context.Application.SetAuthenticatedUser("unauthorized-user", "other-scope");
     }
 
     /// <summary>Sets an authenticated principal with the book-cover scope.</summary>

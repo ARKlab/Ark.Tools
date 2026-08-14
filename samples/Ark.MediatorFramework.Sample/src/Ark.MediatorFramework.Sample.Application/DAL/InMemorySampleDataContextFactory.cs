@@ -12,9 +12,9 @@ namespace Ark.MediatorFramework.Sample.Application.DAL;
 /// <summary>Creates shared in-memory contexts for handler-owned transactions.</summary>
 public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 {
-    private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, GreetingResponse> _greetings = new();
     private readonly ConcurrentDictionary<Guid, long> _greetingVersions = new();
+    private readonly ConcurrentQueue<AuditRecord> _audits = new();
     private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
     private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
     private readonly ConcurrentDictionary<Guid, BookReview> _bookReviews = new();
@@ -35,9 +35,9 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
     {
         lock (_sync)
         {
-            _audits.Clear();
             _greetings.Clear();
             _greetingVersions.Clear();
+            _audits.Clear();
             _books.Clear();
             _bookVersions.Clear();
             _bookReviews.Clear();
@@ -71,6 +71,14 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public IOutboxContextCore OutboxContext => _outbox;
 
+        public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+        {
+            ArgumentNullException.ThrowIfNull(greeting);
+            var version = _owner._greetingVersions.GetOrAdd(greeting.Id, 1);
+            _owner._greetings[greeting.Id] = greeting with { ETag = $"0x{version:X16}" };
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
         public async Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(audit);
@@ -84,6 +92,43 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 Timestamp = audit.Timestamp,
             });
             await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
+        {
+            _owner._greetings.TryGetValue(id, out var greeting);
+            return await Task.FromResult(greeting).ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
+        {
+            return await Task.FromResult<IReadOnlyCollection<GreetingResponse>>(_owner._greetings.Values.ToArray())
+                .ConfigureAwait(false);
+        }
+
+        public async Task<GreetingResponse?> UpdateAsync(
+            Guid id,
+            string message,
+            string eTag,
+            Guid auditId,
+            CancellationToken ctk = default)
+        {
+            GreetingResponse? updated = null;
+            lock (_owner._sync)
+            {
+                if (_owner._greetings.TryGetValue(id, out var current))
+                {
+                    var version = _owner._greetingVersions.GetOrAdd(id, 1);
+                    if (string.Equals(eTag, $"0x{version:X16}", StringComparison.Ordinal))
+                    {
+                        updated = current with { Message = message, ETag = $"0x{version + 1:X16}", AuditId = auditId };
+                        _owner._greetings[id] = updated;
+                        _owner._greetingVersions[id] = version + 1;
+                    }
+                }
+            }
+
+            return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
         public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(
@@ -112,80 +157,22 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             }).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
-        {
-            var greetings = _owner._greetings.Values
-                .OrderBy(item => item.Id)
-                .ToArray();
-            return await Task.FromResult<IEnumerable<GreetingResponse>>(greetings).ConfigureAwait(false);
-        }
-
-        public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(greeting);
-            lock (_owner._sync)
-            {
-                if (_owner._greetings.ContainsKey(greeting.Id))
-                    throw new InvalidOperationException($"Greeting '{greeting.Id}' already exists.");
-
-                _owner._greetings[greeting.Id] = greeting with { ETag = "0x0000000000000001" };
-                _owner._greetingVersions[greeting.Id] = 1;
-            }
-            await Task.CompletedTask.ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
-        {
-            _owner._greetings.TryGetValue(id, out var greeting);
-            return await Task.FromResult(greeting).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingResponse?> UpdateAsync(
-            Guid id,
-            string message,
-            string expectedETag,
-            Guid auditId,
+        public async Task<GreetingPage> ReadGreetingsAsync(
+            SearchGreetingsQuery query,
             CancellationToken ctk = default)
         {
-            GreetingResponse? updated = null;
-            lock (_owner._sync)
-            {
-                if (_owner._greetings.TryGetValue(id, out var current)
-                    && string.Equals(current.ETag, expectedETag, StringComparison.Ordinal))
-                {
-                    var version = _owner._greetingVersions[id] + 1;
-                    updated = current with
-                    {
-                        Message = message,
-                        AuditId = auditId,
-                        ETag = $"0x{version:X16}",
-                    };
-                    _owner._greetingVersions[id] = version;
-                    _owner._greetings[id] = updated;
-                }
-            }
-            return await Task.FromResult(updated).ConfigureAwait(false);
-        }
-
-        public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
-        {
             ArgumentNullException.ThrowIfNull(query);
-            var filtered = _owner._greetings.Values.AsEnumerable();
-            if (!string.IsNullOrWhiteSpace(query.MessageContains))
-            {
-                filtered = filtered.Where(item =>
-                    item.Message.Contains(query.MessageContains, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var results = filtered
-                .OrderBy(item => item.Id)
+            var matching = _owner._greetings.Values
+                .Where(greeting => query.MessageContains is null
+                    || greeting.Message.Contains(query.MessageContains, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(greeting => greeting.Id)
                 .ToArray();
             return await Task.FromResult(new GreetingPage
             {
-                Count = results.LongLength,
+                Count = matching.Length,
                 Skip = query.Skip,
                 Limit = query.Limit,
-                Data = results.Skip(query.Skip).Take(query.Limit).ToArray(),
+                Data = matching.Skip(query.Skip).Take(query.Limit).ToArray(),
             }).ConfigureAwait(false);
         }
 
@@ -205,28 +192,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 _owner._bookVersions[book.Id] = 1;
             }
             return await Task.FromResult(stored).ConfigureAwait(false);
-        }
-
-        public async Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
-            IEnumerable<Book.V1.Output> books,
-            CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(books);
-            var stored = books
-                .Select(static book => book with { ETag = "0x0000000000000001" })
-                .ToArray();
-            lock (_owner._sync)
-            {
-                if (stored.GroupBy(book => book.Id).Any(group => group.Count() > 1)
-                    || stored.Any(book => _owner._books.ContainsKey(book.Id)))
-                    throw new InvalidOperationException("A book in the bulk request already exists.");
-                foreach (var book in stored)
-                {
-                    _owner._books[book.Id] = book;
-                    _owner._bookVersions[book.Id] = 1;
-                }
-            }
-            return await Task.FromResult<IEnumerable<Book.V1.Output>>(stored).ConfigureAwait(false);
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(

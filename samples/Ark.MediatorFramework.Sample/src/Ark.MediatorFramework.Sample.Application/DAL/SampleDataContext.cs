@@ -8,36 +8,37 @@ using Ark.Tools.Core;
 using Dapper;
 
 using NodaTime;
+using NodaTime.Text;
 
 using System.Data.Common;
 
 namespace Ark.MediatorFramework.Sample.Application.DAL;
 
-/// <summary>Composes fine-grained Book and audit operations in one application transaction.</summary>
+/// <summary>Composes fine-grained greeting and audit operations in one application transaction.</summary>
 public interface ISampleDataContext : IOutboxAsyncContext
 {
     /// <summary>Gets the transactional outbox context for the current data transaction.</summary>
     IOutboxContextCore OutboxContext { get; }
 
-    /// <summary>Writes an audit entry.</summary>
-    Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default);
-
-    /// <summary>Reads audit records.</summary>
-    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
-
-    /// <summary>Reads all greetings.</summary>
-    Task<IEnumerable<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default);
-
     /// <summary>Saves a greeting.</summary>
     Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default);
+
+    /// <summary>Writes an audit entry.</summary>
+    Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default);
 
     /// <summary>Reads a greeting.</summary>
     Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default);
 
-    /// <summary>Updates a greeting after verifying the opaque concurrency token.</summary>
-    Task<GreetingResponse?> UpdateAsync(Guid id, string message, string expectedETag, Guid auditId, CancellationToken ctk = default);
+    /// <summary>Reads all greetings.</summary>
+    Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default);
 
-    /// <summary>Reads a page of greetings.</summary>
+    /// <summary>Updates a greeting using its expected ETag.</summary>
+    Task<GreetingResponse?> UpdateAsync(Guid id, string message, string eTag, Guid auditId, CancellationToken ctk = default);
+
+    /// <summary>Reads audit records.</summary>
+    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
+
+    /// <summary>Reads greetings.</summary>
     Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default);
 
     /// <summary>Commits the transaction.</summary>
@@ -45,11 +46,6 @@ public interface ISampleDataContext : IOutboxAsyncContext
 
     /// <summary>Saves a book and returns the persisted entity.</summary>
     Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default);
-
-    /// <summary>Saves multiple books and returns the persisted entities.</summary>
-    Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
-        IEnumerable<Book.V1.Output> books,
-        CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
     Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
@@ -122,7 +118,7 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Tools.Sql
     public System.Data.IsolationLevel? IsolationLevel => System.Data.IsolationLevel.ReadCommitted;
 }
 
-/// <summary>Transactional SQL context for Books and Rebus outbox messages.</summary>
+/// <summary>Transactional SQL context for greetings and Rebus outbox messages.</summary>
 public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, ISampleDataContext
 {
     /// <inheritdoc />
@@ -134,6 +130,31 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     public SampleDataContext(DbTransaction transaction, IOutboxContextSqlConfig config)
         : base(transaction, config)
     {
+    }
+
+    /// <summary>Saves a greeting in the current transaction.</summary>
+    public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
+    {
+        const string sql = """
+            MERGE [dbo].[Greeting] AS target
+            USING (SELECT @Id AS [Id]) AS source ON target.[Id] = source.[Id]
+            WHEN MATCHED THEN UPDATE SET [Message] = @Message, [Date] = @Date,
+                [DateTime] = @DateTime, [OffsetDateTime] = @OffsetDateTime, [Period] = @Period,
+                [AuditId] = @AuditId
+            WHEN NOT MATCHED THEN INSERT ([Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId])
+                VALUES (@Id, @Message, @Date, @DateTime, @OffsetDateTime, @Period, @AuditId);
+            """;
+        var command = new CommandDefinition(sql, new
+        {
+            greeting.Id,
+            greeting.Message,
+            greeting.Date,
+            greeting.DateTime,
+            greeting.OffsetDateTime,
+            Period = PeriodPattern.NormalizingIso.Format(greeting.Period ?? Period.Zero),
+            greeting.AuditId,
+        }, Transaction, cancellationToken: ctk);
+        await Connection.ExecuteAsync(command).ConfigureAwait(false);
     }
 
     /// <summary>Saves an audit record in the current transaction.</summary>
@@ -153,6 +174,55 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             audit.Timestamp,
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads a greeting in the current transaction.</summary>
+    public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
+                   [RowVersion] AS [ETag]
+            FROM [dbo].[Greeting]
+            WHERE [Id] = @Id
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
+        return row?.ToResponse();
+    }
+
+    /// <summary>Reads all greetings in the current transaction.</summary>
+    public async Task<IReadOnlyCollection<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
+                   [RowVersion] AS [ETag]
+            FROM [dbo].[Greeting]
+            """;
+        var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
+        var rows = await Connection.QueryAsync<GreetingRow>(command).ConfigureAwait(false);
+        return rows.Select(row => row.ToResponse()).ToArray();
+    }
+
+    /// <summary>Updates a greeting conditionally and returns its new opaque ETag.</summary>
+    public async Task<GreetingResponse?> UpdateAsync(
+        Guid id,
+        string message,
+        string eTag,
+        Guid auditId,
+        CancellationToken ctk = default)
+    {
+        const string sql = """
+            MERGE [dbo].[Greeting] AS target
+            USING (SELECT @Id AS [Id]) AS source ON target.[Id] = source.[Id]
+            WHEN MATCHED AND target.[RowVersion] = TRY_CONVERT(VARBINARY(8), @ETag, 1) THEN
+                UPDATE SET [Message] = @Message, [AuditId] = @AuditId
+            OUTPUT inserted.[Id], inserted.[Message], inserted.[Date], inserted.[DateTime],
+                   inserted.[OffsetDateTime], inserted.[Period], inserted.[AuditId],
+                   inserted.[RowVersion] AS [ETag];
+            """;
+        var command = new CommandDefinition(sql, new { Id = id, Message = message, AuditId = auditId, ETag = eTag }, Transaction, cancellationToken: ctk);
+        var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
+        return row?.ToResponse();
     }
 
     /// <summary>Reads a page of audit records in the current transaction.</summary>
@@ -199,106 +269,23 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         };
     }
 
-    /// <summary>Reads all greetings in the current transaction.</summary>
-    public async Task<IEnumerable<GreetingResponse>> ReadAllAsync(CancellationToken ctk = default)
-    {
-        const string sql = """
-            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId], [RowVersion] AS [ETag]
-            FROM [dbo].[Greeting]
-            ORDER BY [Id];
-            """;
-        var command = new CommandDefinition(sql, transaction: Transaction, cancellationToken: ctk);
-        var rows = await Connection.QueryAsync<GreetingRow>(command).ConfigureAwait(false);
-        return rows.Select(static row => row.ToResponse()).ToArray();
-    }
-
-    /// <summary>Saves a greeting in the current transaction.</summary>
-    public async Task SaveAsync(GreetingResponse greeting, CancellationToken ctk = default)
-    {
-        ArgumentNullException.ThrowIfNull(greeting);
-        const string sql = """
-            INSERT INTO [dbo].[Greeting] ([Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId])
-            VALUES (@Id, @Message, @Date, @DateTime, @OffsetDateTime, @Period, @AuditId);
-            """;
-        var command = new CommandDefinition(sql, new
-        {
-            greeting.Id,
-            greeting.Message,
-            greeting.Date,
-            greeting.DateTime,
-            greeting.OffsetDateTime,
-            greeting.Period,
-            greeting.AuditId,
-        }, Transaction, cancellationToken: ctk);
-        await Connection.ExecuteAsync(command).ConfigureAwait(false);
-    }
-
-    /// <summary>Reads a greeting by identifier in the current transaction.</summary>
-    public async Task<GreetingResponse?> ReadAsync(Guid id, CancellationToken ctk = default)
-    {
-        const string sql = """
-            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId], [RowVersion] AS [ETag]
-            FROM [dbo].[Greeting]
-            WHERE [Id] = @Id;
-            """;
-        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
-        var row = await Connection.QuerySingleOrDefaultAsync<GreetingRow>(command).ConfigureAwait(false);
-        return row?.ToResponse();
-    }
-
-    /// <summary>Updates a greeting in the current transaction after verifying the precondition token.</summary>
-    public async Task<GreetingResponse?> UpdateAsync(
-        Guid id,
-        string message,
-        string expectedETag,
-        Guid auditId,
-        CancellationToken ctk = default)
-    {
-        var current = await ReadAsync(id, ctk).ConfigureAwait(false);
-        if (current is null || !string.Equals(current.ETag, expectedETag, StringComparison.Ordinal))
-            return null;
-
-        const string sql = """
-            UPDATE [dbo].[Greeting]
-            SET [Message] = @Message,
-                [AuditId] = @AuditId
-            OUTPUT INSERTED.[Id], INSERTED.[Message], INSERTED.[Date], INSERTED.[DateTime],
-                   INSERTED.[OffsetDateTime], INSERTED.[Period], INSERTED.[AuditId], INSERTED.[RowVersion] AS [ETag]
-            WHERE [Id] = @Id;
-            """;
-        var command = new CommandDefinition(sql, new
-        {
-            Id = id,
-            Message = message,
-            AuditId = auditId,
-        }, Transaction, cancellationToken: ctk);
-        var row = await Connection.QuerySingleAsync<GreetingRow>(command).ConfigureAwait(false);
-        return row.ToResponse();
-    }
-
-    /// <summary>Reads a paged result of greetings in the current transaction.</summary>
+    /// <summary>Reads a page of greetings in the current transaction.</summary>
     public async Task<GreetingPage> ReadGreetingsAsync(SearchGreetingsQuery query, CancellationToken ctk = default)
     {
-        ArgumentNullException.ThrowIfNull(query);
-        var pattern = string.IsNullOrWhiteSpace(query.MessageContains)
-            ? null
-            : "%" + _escapeLikePattern(query.MessageContains) + "%";
-        var where = """
-            WHERE (@MessageContains IS NULL OR [Message] LIKE @MessageContains ESCAPE '\\')
-            """;
-        var sql = $"""
-            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId], [RowVersion] AS [ETag]
+        const string sql = """
+            SELECT [Id], [Message], [Date], [DateTime], [OffsetDateTime], [Period], [AuditId],
+                   [RowVersion] AS [ETag]
             FROM [dbo].[Greeting]
-            {where}
+            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\')
             ORDER BY [Id]
             OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY;
             SELECT COUNT_BIG(*)
             FROM [dbo].[Greeting]
-            {where};
+            WHERE (@MessageContains IS NULL OR [Message] LIKE '%' + @MessageContains + '%' ESCAPE '\');
             """;
         var command = new CommandDefinition(sql, new
         {
-            MessageContains = pattern,
+            MessageContains = query.MessageContains is null ? null : _escapeLikePattern(query.MessageContains),
             query.Skip,
             query.Limit,
         }, Transaction, cancellationToken: ctk);
@@ -335,59 +322,6 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleAsync<BookRow>(command).ConfigureAwait(false);
         return row.ToResponse();
-    }
-
-    /// <summary>Saves multiple books in the current transaction using a table-valued parameter.</summary>
-    public async Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
-        IEnumerable<Book.V1.Output> books,
-        CancellationToken ctk = default)
-    {
-        ArgumentNullException.ThrowIfNull(books);
-        var rows = books.Select(static book => new BookBulkInsertRow(
-            book.Id,
-            book.Title,
-            book.Author,
-            book.Genre,
-            book.ISBN,
-            book.Description));
-        var parameters = new
-        {
-            Books = rows.ToDataTableArk().AsTableValuedParameter("dbo.BookBulkInsertType"),
-        };
-        const string sql = """
-            INSERT INTO [dbo].[Book]
-            (
-                [Id],
-                [Title],
-                [Author],
-                [Genre],
-                [ISBN],
-                [Description]
-            )
-            OUTPUT
-                INSERTED.[Id],
-                INSERTED.[Title],
-                INSERTED.[Author],
-                INSERTED.[Genre],
-                INSERTED.[ISBN],
-                INSERTED.[Description],
-                INSERTED.[RowVersion] AS [ETag]
-            SELECT
-                [Id],
-                [Title],
-                [Author],
-                [Genre],
-                [ISBN],
-                [Description]
-            FROM @Books;
-            """;
-        var command = new CommandDefinition(
-            sql,
-            parameters,
-            Transaction,
-            cancellationToken: ctk);
-        var data = await Connection.QueryAsync<BookRow>(command).ConfigureAwait(false);
-        return data.Select(static row => row.ToResponse()).ToArray();
     }
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
@@ -733,7 +667,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public LocalDate Date { get; set; }
         public LocalDateTime DateTime { get; set; }
         public OffsetDateTime OffsetDateTime { get; set; }
-        public Period Period { get; set; } = Period.Zero;
+        public string Period { get; set; } = string.Empty;
         public Guid AuditId { get; set; }
         public byte[] ETag { get; set; } = [];
 
@@ -746,20 +680,12 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 Date = Date,
                 DateTime = DateTime,
                 OffsetDateTime = OffsetDateTime,
-                Period = Period,
+                Period = PeriodPattern.NormalizingIso.Parse(Period).Value,
                 AuditId = AuditId,
                 ETag = "0x" + Convert.ToHexString(ETag),
             };
         }
     }
-
-    private sealed record BookBulkInsertRow(
-        Guid Id,
-        string Title,
-        string Author,
-        EvolvableEnum<Book.V1.Genre> Genre,
-        string? ISBN,
-        string Description);
 
     private sealed class BookRow
     {

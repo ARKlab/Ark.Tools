@@ -11,10 +11,9 @@ Each chapter explains:
 4. how to call and test the result;
 5. which boundary belongs in an application test versus a transport test.
 
-The working reference is the Book-focused
+The working reference is
 [`samples/Ark.MediatorFramework.Sample`](../../../samples/Ark.MediatorFramework.Sample/README.md).
-It has more domain operations than the tutorial, including catalog, reviews,
-reading activity, covers, streaming, editions, and Rebus printing.
+It has more domain operations than the tutorial, but follows the same order.
 
 ## Follow the learning path
 

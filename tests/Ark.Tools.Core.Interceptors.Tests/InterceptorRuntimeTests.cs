@@ -67,29 +67,6 @@ public class InterceptorRuntimeTests
         table.Rows[0]["Name"].Should().Be("Gadget");
     }
 
-    /// <summary>Generated interceptors convert both supported EvolvableEnum shapes to strings.</summary>
-    [TestMethod]
-    public void ToDataTableArk_WithEvolvableEnumProperties_ConvertsValues()
-    {
-        var entities = new[]
-        {
-            new InterceptedEvolvableEntity
-            {
-                Status = Ark.Tools.Core.EvolvableEnum<InterceptedEvolvableStatus>.FromName("Future"),
-                CompactStatus = Ark.Tools.Core.EvolvableEnum<InterceptedByteEvolvableStatus, byte>.FromNumber(7),
-            },
-            new InterceptedEvolvableEntity(),
-        };
-
-        using var table = entities.ToDataTableArk();
-
-        table.Columns["Status"]!.DataType.Should().Be<string>();
-        table.Columns["CompactStatus"]!.DataType.Should().Be<string>();
-        table.Rows[0]["Status"].Should().Be("Future");
-        table.Rows[0]["CompactStatus"].Should().Be("7");
-        table.Rows[1].IsNull("CompactStatus").Should().BeTrue();
-    }
-
     /// <summary>The interceptor also handles a public struct T (non-primitive value type).</summary>
     [TestMethod]
     public void ToDataTableArk_WithStructType_ProducesCorrectDataTable()
@@ -186,7 +163,6 @@ public class InterceptorRuntimeTests
         generated.Should().Contain("InterceptsLocationAttribute");
         generated.Should().Contain("InterceptedEntity");
         generated.Should().Contain("\"Status\", typeof(global::System.String)");
-        generated.Should().Contain("\"CompactStatus\", typeof(global::System.String)");
         generated.Should().Contain("\"EffectiveDate\", typeof(global::System.DateTime)");
         generated.Should().Contain("finally");
         generated.Should().Contain("table.EndLoadData();");

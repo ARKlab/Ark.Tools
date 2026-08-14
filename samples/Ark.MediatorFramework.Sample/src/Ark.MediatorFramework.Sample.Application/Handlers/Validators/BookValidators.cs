@@ -11,38 +11,16 @@ public sealed class CreateBookRequestValidator : AbstractValidator<Book_CreateRe
     /// <summary>Initializes a new instance of the <see cref="CreateBookRequestValidator"/> class.</summary>
     public CreateBookRequestValidator()
     {
-        RuleFor(request => request.Data)
-            .SetValidator(new BookCreateValidator());
-    }
-}
-
-/// <summary>Validates book creation data.</summary>
-public sealed class BookCreateValidator : AbstractValidator<Book.V1.Create>
-{
-    /// <summary>Initializes a new instance of the <see cref="BookCreateValidator"/> class.</summary>
-    public BookCreateValidator()
-    {
-        RuleFor(book => book.Title)
+        RuleFor(request => request.Data.Title)
             .NotEmpty()
             .MaximumLength(200);
-        RuleFor(book => book.Author)
+        RuleFor(request => request.Data.Author)
             .NotEmpty()
             .MaximumLength(100);
-        RuleFor(book => book.Genre)
+        RuleFor(request => request.Data.Genre)
             .NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
-        RuleFor(book => book.ISBN)
+        RuleFor(request => request.Data.ISBN)
             .MaximumLength(20);
-    }
-}
-
-/// <summary>Validates bulk book creation requests.</summary>
-public sealed class BulkCreateBookRequestValidator : AbstractValidator<Book_BulkCreateRequest.V1>
-{
-    /// <summary>Initializes a new instance of the <see cref="BulkCreateBookRequestValidator"/> class.</summary>
-    public BulkCreateBookRequestValidator()
-    {
-        RuleFor(request => request.Data).NotEmpty();
-        RuleForEach(request => request.Data).SetValidator(new BookCreateValidator());
     }
 }
 

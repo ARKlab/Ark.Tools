@@ -6,9 +6,24 @@ CONTRACT BookPrintProcessResponse.Id : Guid
 CONTRACT BookPrintProcessResponse.Progress : double
 CONTRACT BookPrintProcessResponse.ShouldFail : bool
 CONTRACT BookPrintProcessResponse.Status : EvolvableEnum<BookPrintProcessStatus>
+CONTRACT CompleteGreetingCompositionRequest -> GreetingResponse [group=Ark]
+CONTRACT CompleteGreetingCompositionRequest.FailuresBeforeSuccess : int
+CONTRACT CompleteGreetingCompositionRequest.Id : Guid
+CONTRACT CompleteGreetingCompositionRequest.Name : string default=string.Empty
 CONTRACT DeadLetterAck
 CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark]
 CONTRACT FailingRebusRequest.Reason : string default="boom"
+CONTRACT GreetingCreatedNotification -> GreetingCreatedNotification [group=Ark]
+CONTRACT GreetingCreatedNotification.Greeting : GreetingResponse
+CONTRACT GreetingResponse
+CONTRACT GreetingResponse.AuditId : Guid
+CONTRACT GreetingResponse.Date : LocalDate
+CONTRACT GreetingResponse.DateTime : LocalDateTime
+CONTRACT GreetingResponse.ETag : string?
+CONTRACT GreetingResponse.Id : Guid
+CONTRACT GreetingResponse.Message : string
+CONTRACT GreetingResponse.OffsetDateTime : OffsetDateTime
+CONTRACT GreetingResponse.Period : Period
 CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
 CONTRACT ProcessBookPrintProcessRequest.Id : Guid
 EVOLVABLE-ENUM BookPrintProcessStatus.Cancelled=5
@@ -17,6 +32,8 @@ EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
 EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
 EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
 EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
+REBUS CompleteGreetingCompositionRequest -> queue:ark.mediator.sample
 REBUS FailingRebusRequest -> queue:ark.mediator.sample
+REBUS GreetingCreatedNotification -> queue:ark.mediator.sample
 REBUS ProcessBookPrintProcessRequest -> queue:ark.mediator.sample
 */

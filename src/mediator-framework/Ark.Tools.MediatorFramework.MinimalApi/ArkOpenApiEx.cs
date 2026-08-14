@@ -144,7 +144,8 @@ public static class ArkOpenApiEx
             {
                 schema.Type = JsonSchemaType.String | (schema.Type & JsonSchemaType.Null);
                 schema.Format = metadata.Value.Format.Length == 0 ? null : metadata.Value.Format;
-                schema.Example = JsonValue.Create(metadata.Value.Example);
+                if (metadata.Value.Example is not null)
+                    schema.Examples = [JsonValue.Create(metadata.Value.Example)];
             }
 
             return Task.CompletedTask;

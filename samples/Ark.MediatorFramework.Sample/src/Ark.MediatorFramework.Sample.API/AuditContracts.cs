@@ -19,6 +19,7 @@ public sealed record AuditRecord
     public required Guid Id { get; init; }
 
     /// <summary>Gets the authenticated user identifier.</summary>
+    [System.ComponentModel.DefaultValue("anonymous")]
     [ProtoMember(2)]
     public string UserId { get; init; } = "anonymous";
 

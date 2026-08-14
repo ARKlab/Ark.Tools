@@ -190,7 +190,7 @@ Do not replace `Ping`. Add one capability at a time:
 
 ## Compare with the sample
 
-The sample applies the same flow with a Book domain and multiple transports:
+The sample applies the same flow with a real domain:
 
 - public contracts:
   [`src/Ark.MediatorFramework.Sample.API`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API);

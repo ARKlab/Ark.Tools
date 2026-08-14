@@ -21,9 +21,6 @@ internal enum ConversionKind
     /// <summary>Enum members are converted via their ToString() member name.</summary>
     EnumToString,
 
-    /// <summary>EvolvableEnum values are converted via their ToString() representation.</summary>
-    EvolvableEnumToString,
-
     /// <summary>NodaTime LocalDate/LocalDateTime converted via ToDateTimeUnspecified().</summary>
     LocalDateToDateTime,
 

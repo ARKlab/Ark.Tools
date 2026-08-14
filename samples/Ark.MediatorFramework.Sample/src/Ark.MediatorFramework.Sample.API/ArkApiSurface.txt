@@ -9,14 +9,26 @@ CONTRACT BookReview.Id : Guid
 CONTRACT BookReview.Rating : int
 CONTRACT BookReview.Text : string
 CONTRACT BookReview.UserId : string
+CONTRACT ComposeGreetingRequest -> ComposeGreetingResponse [group=Greetings] [http=POST /api/v{version}/greetings/compose] [version=1+]
+CONTRACT ComposeGreetingRequest.FailuresBeforeSuccess : int
+CONTRACT ComposeGreetingRequest.Name : string default=string.Empty
+CONTRACT ComposeGreetingResponse
+CONTRACT ComposeGreetingResponse.Id : Guid
+CONTRACT ComposeGreetingResponse.Status : string default=string.Empty
 CONTRACT CreateBookReviewRequest -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]
 CONTRACT CreateBookReviewRequest.BookId : Guid
 CONTRACT CreateBookReviewRequest.Rating : int
 CONTRACT CreateBookReviewRequest.Text : string default=string.Empty
 CONTRACT DescribeBookEditionRequest -> BookEditionDescription [group=Ark] [grpc-group=Books] [http=POST /api/v{version}/books/editions/describe] [version=1+] [grpc=DescribeBookEdition] [grpc-version=1+]
 CONTRACT DescribeBookEditionRequest.Edition.Kind : BookEditionKind
+CONTRACT DescribeShapeRequest -> ShapeDescription [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/shapes/describe] [version=1+] [grpc=DescribeShape] [grpc-version=1+]
+CONTRACT DescribeShapeRequest.Shape.Kind : ShapeKind
 CONTRACT DownloadBookCoverQuery -> IArkAttachment [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/{id}/cover] [version=1+] [grpc=DownloadBookCover] [grpc-version=1+]
 CONTRACT DownloadBookCoverQuery.Id : Guid
+CONTRACT EnvelopeBindingResponse
+CONTRACT EnvelopeBindingResponse.Audit : string
+CONTRACT EnvelopeBindingResponse.Id : Guid
+CONTRACT EnvelopeBindingResponse.Message : string
 CONTRACT GetAuditsQuery -> PagedResult<AuditRecord> [group=Ark] [http=GET /api/v{version}/audits] [version=1+]
 CONTRACT GetAuditsQuery.EntityType : string?
 CONTRACT GetAuditsQuery.FromTimestamp : Instant?
@@ -26,13 +38,56 @@ CONTRACT GetAuditsQuery.Skip : int
 CONTRACT GetAuditsQuery.Sort : IEnumerable<string> default=[]
 CONTRACT GetAuditsQuery.ToTimestamp : Instant?
 CONTRACT GetAuditsQuery.UserId : string?
+CONTRACT GetDocumentQuery -> IArkAttachment [group=Ark] [grpc-group=GeneratedDocuments] [http=GET /api/v{version}/greeting-cards/{id}/download] [version=1+] [grpc=Download] [grpc-version=1+]
+CONTRACT GetDocumentQuery.Id : Guid
+CONTRACT GetGreetingQuery -> GreetingResponse [group=Ark] [grpc-group=Greetings] [http=GET /greetings/{id}] [version=1-1] [grpc=GetGreeting] [grpc-version=1-1]
+CONTRACT GetGreetingQuery.Id : Guid
+CONTRACT GetGreetingV2Query -> GreetingResponseV2 [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings-v2/{id}] [version=2+] [grpc=GetGreeting] [grpc-version=2+]
+CONTRACT GetGreetingV2Query.Id : Guid
+CONTRACT GetGreetingsStreamQuery -> IAsyncEnumerable<GreetingStreamItem> [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/stream] [version=1+] [grpc=GetGreetingsStream] [grpc-version=1+]
+CONTRACT GetGreetingsStreamQuery.Count : int
+CONTRACT GetGreetingsStreamQuery.DelayMilliseconds : int
 CONTRACT GetReadingActivityQuery -> IReadOnlyList<ReadingActivity> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reading-activity] [version=1+]
 CONTRACT GetReadingActivityQuery.BookId : Guid
 CONTRACT GetReadingActivityQuery.Limit : int default=25
+CONTRACT GreetingPage
+CONTRACT GreetingPage.Count : long
+CONTRACT GreetingPage.Data[].AuditId : Guid
+CONTRACT GreetingPage.Data[].Date : LocalDate
+CONTRACT GreetingPage.Data[].DateTime : LocalDateTime
+CONTRACT GreetingPage.Data[].ETag : string?
+CONTRACT GreetingPage.Data[].Id : Guid
+CONTRACT GreetingPage.Data[].Message : string
+CONTRACT GreetingPage.Data[].OffsetDateTime : OffsetDateTime
+CONTRACT GreetingPage.Data[].Period : Period default=Period.Zero
+CONTRACT GreetingPage.Limit : int
+CONTRACT GreetingPage.Skip : int
+CONTRACT GreetingResponse
+CONTRACT GreetingResponse.AuditId : Guid
+CONTRACT GreetingResponse.Date : LocalDate
+CONTRACT GreetingResponse.DateTime : LocalDateTime
+CONTRACT GreetingResponse.ETag : string?
+CONTRACT GreetingResponse.Id : Guid
+CONTRACT GreetingResponse.Message : string
+CONTRACT GreetingResponse.OffsetDateTime : OffsetDateTime
+CONTRACT GreetingResponse.Period : Period default=Period.Zero
+CONTRACT GreetingResponseV2
+CONTRACT GreetingResponseV2.Id : Guid
+CONTRACT GreetingResponseV2.Message : string
+CONTRACT GreetingResponseV2.MessageLength : int
 CONTRACT ListBookReviewsQuery -> IReadOnlyList<BookReview> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reviews] [version=1+]
 CONTRACT ListBookReviewsQuery.BookId : Guid
 CONTRACT ListBookReviewsQuery.Limit : int default=25
 CONTRACT ListBookReviewsQuery.Skip : int
+CONTRACT Output
+CONTRACT Output.AuditId : Guid server-set=true
+CONTRACT Output.Date : LocalDate
+CONTRACT Output.DateTime : LocalDateTime
+CONTRACT Output.ETag : string?
+CONTRACT Output.Id : Guid server-set=true
+CONTRACT Output.Message : string server-set=true default=string.Empty
+CONTRACT Output.OffsetDateTime : OffsetDateTime
+CONTRACT Output.Period : Period default=Period.Zero
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
 CONTRACT PagedResult.Data : IEnumerable<AuditRecord>
@@ -50,19 +105,58 @@ CONTRACT RecordReadingActivityRequest -> ReadingActivity [group=Ark] [http=POST 
 CONTRACT RecordReadingActivityRequest.BookId : Guid
 CONTRACT RecordReadingActivityRequest.Kind : EvolvableEnum<ReadingActivityKind>
 CONTRACT RecordReadingActivityRequest.Progress : int
+CONTRACT RefreshGreetingCommand -> RefreshGreetingCommand [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings/refresh] [version=1+] [grpc=RefreshGreeting] [grpc-version=1+]
+CONTRACT RefreshGreetingCommand.Id : Guid
+CONTRACT SearchGreetingsQuery -> GreetingPage [group=Ark] [grpc-group=Greetings] [http=GET /api/v{version}/greetings] [version=1+] [grpc=SearchGreetings] [grpc-version=1+]
+CONTRACT SearchGreetingsQuery.Limit : int default=25
+CONTRACT SearchGreetingsQuery.MessageContains : string?
+CONTRACT SearchGreetingsQuery.Skip : int
+CONTRACT SearchGreetingsQuery.Sort : IEnumerable<string> default=[]
+CONTRACT ShapeDescription
+CONTRACT ShapeDescription.Area : double
+CONTRACT ShapeDescription.Metadata.FeaturedShape.Kind : ShapeKind
+CONTRACT ShapeDescription.Metadata.Label : string
+CONTRACT ShapeDescription.Shape.Kind : ShapeKind
 CONTRACT StreamBooksQuery -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
 CONTRACT StreamBooksQuery.Count : int
 CONTRACT StreamBooksQuery.DelayMilliseconds : int
+CONTRACT UpdateGreetingRequest -> EnvelopeBindingResponse [group=Ark] [http=POST /api/v{version}/greetings/{id}/envelope] [version=1+]
+CONTRACT UpdateGreetingRequest.Audit : string default=string.Empty
+CONTRACT UpdateGreetingRequest.Body.Message : string default=string.Empty
+CONTRACT UpdateGreetingRequest.Id : Guid
+CONTRACT UploadBatchResponse
+CONTRACT UploadBatchResponse.Id : Guid
+CONTRACT UploadBatchResponse.Names : IReadOnlyList<string>
 CONTRACT UploadBookCoverRequest -> UploadResponse [group=Ark] [http=POST /api/v{version}/books/{id}/cover] [version=1+]
 CONTRACT UploadBookCoverRequest.Attachment : IArkAttachment
 CONTRACT UploadBookCoverRequest.Id : Guid
+CONTRACT UploadGreetingCardRequest -> UploadResponse [group=Ark] [http=POST /api/v{version}/greeting-cards/{id}] [version=1+]
+CONTRACT UploadGreetingCardRequest.Attachment : IArkAttachment
+CONTRACT UploadGreetingCardRequest.Id : Guid
+CONTRACT UploadGreetingCardRequest.Label : string default=string.Empty
+CONTRACT UploadGreetingCardsRequest -> UploadBatchResponse [group=Ark] [http=POST /api/v{version}/greeting-cards/{id}/batch] [version=1+]
+CONTRACT UploadGreetingCardsRequest.Attachments : IReadOnlyList<IArkAttachment> default=[]
+CONTRACT UploadGreetingCardsRequest.Id : Guid
 CONTRACT UploadResponse
 CONTRACT UploadResponse.ContentType : string
 CONTRACT UploadResponse.Id : Guid
 CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
+CONTRACT V1 -> Output [group=Ark] [grpc-group=Greetings] [http=POST /api/v{version}/greetings] [version=1+] [grpc=CreateGreeting] [grpc-version=1+]
+CONTRACT V1 -> Output [group=Ark] [grpc-group=Greetings] [http=PUT /api/v{version}/greetings/{id}] [version=1+] [grpc=UpdateGreetingMessage] [grpc-version=1+]
+CONTRACT V1.Data.Date : LocalDate
+CONTRACT V1.Data.DateTime : LocalDateTime
+CONTRACT V1.Data.Message : string default=string.Empty
+CONTRACT V1.Data.Name : string default=string.Empty
+CONTRACT V1.Data.OffsetDateTime : OffsetDateTime
+CONTRACT V1.Data.Period : Period default=Period.Zero
+CONTRACT V1.ETag : string?
+CONTRACT V1.Id : Guid
+CONTRACT V1.UserId : string? server-set=true
 ENUM BookEditionKind.Digital=1
 ENUM BookEditionKind.Print=0
+ENUM ShapeKind.Circle=0
+ENUM ShapeKind.Square=1
 EVOLVABLE-ENUM ReadingActivityKind.Finished=3
 EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
 EVOLVABLE-ENUM ReadingActivityKind.Progressed=2

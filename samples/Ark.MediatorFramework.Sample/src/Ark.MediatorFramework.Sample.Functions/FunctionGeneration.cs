@@ -8,6 +8,8 @@ using Ark.MediatorFramework.Sample.API;
     "/api/v{version}",
     ExcludedContracts = new[]
     {
+        typeof(Greeting_CreateRequest.V1),
+        typeof(DescribeShapeRequest),
         typeof(StreamBooksQuery),
         typeof(DescribeBookEditionRequest),
     })]

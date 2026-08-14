@@ -26,8 +26,8 @@ boundaries.
 
 ## Acceptance
 
-- [x] New streaming and edition contracts are implemented and handler-wired.
-- [x] BDD covers stream results, cancellation/bounds, and edition variants.
-- [x] Applicable HTTP/gRPC/serialization tests pass.
-- [x] Generated API/protobuf artifacts remain consistent.
-- [x] Sample build and affected tests pass.
+- [ ] New streaming and edition contracts are implemented and handler-wired.
+- [ ] BDD covers stream results, cancellation/bounds, and edition variants.
+- [ ] Applicable HTTP/gRPC/serialization tests pass.
+- [ ] Generated API/protobuf artifacts remain consistent.
+- [ ] Sample build and affected tests pass.

@@ -50,10 +50,10 @@ public sealed class AzureFunctionsRebusTests
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
             SampleRebusEndpoints.ConfigureRouting);
 
-        var received = new TaskCompletionSource<ProcessBookPrintProcessRequest>(
+        var received = new TaskCompletionSource<CompleteGreetingCompositionRequest>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         using var activator = new BuiltinHandlerActivator();
-        activator.Handle<ProcessBookPrintProcessRequest>(message =>
+        activator.Handle<CompleteGreetingCompositionRequest>(message =>
         {
             received.SetResult(message);
             return Task.CompletedTask;
@@ -66,13 +66,14 @@ public sealed class AzureFunctionsRebusTests
 
         sender.Verify();
         sender.StartBus();
-        await sender.GetInstance<Rebus.Bus.IBus>().Send(new ProcessBookPrintProcessRequest
+        await sender.GetInstance<Rebus.Bus.IBus>().Send(new CompleteGreetingCompositionRequest
         {
             Id = Guid.NewGuid(),
+            Name = "outbound",
         }).ConfigureAwait(false);
 
         var message = await received.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        Assert.AreNotEqual(Guid.Empty, message.Id);
+        Assert.AreEqual("outbound", message.Name, StringComparer.Ordinal);
     }
 
     private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>
