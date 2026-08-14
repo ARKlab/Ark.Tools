@@ -43,11 +43,6 @@
 		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
-	<PropertyGroup Label="SourceLink">
-		<!-- Copilot coding agent sandboxes do not expose repository metadata to SourceLink. -->
-		<EnableSourceControlManagerQueries Condition="'$(COPILOT_AGENT_ACTION)' != ''">false</EnableSourceControlManagerQueries>
-		<EnableSourceLink Condition="'$(COPILOT_AGENT_ACTION)' != ''">false</EnableSourceLink>
-	</PropertyGroup>
 
 	<PropertyGroup Label="Common Build Settings">
 		<IsPackable>true</IsPackable>
@@ -100,10 +95,9 @@
 
 		<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
 		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-		<CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/generated</CompilerGeneratedFilesOutputPath>
+		<CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)/generated</CompilerGeneratedFilesOutputPath>
 
 	</PropertyGroup>
-
 
 	<PropertyGroup Label="NuGet Audit">
 		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
@@ -113,11 +107,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup Label="Temporary NuGet Pack Workaround">
-		<!--
-		TODO: Remove NU5104 once Asp.Versioning.OData.ApiExplorer and Microsoft.AspNetCore.OData
-		no longer require prerelease package versions.
-		-->
-		<NoWarn>$(NoWarn);NU5104</NoWarn>
+		<!-- use this section for TEMPORARY workaround for Nuget Errors (prereleases or vulnerabilities with no fix) -->
+		<NoWarn>$(NoWarn)</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
@@ -133,13 +124,17 @@
     <EnableMSTestRunner>true</EnableMSTestRunner>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+
+	<ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
+	<ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)'==''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+
   </PropertyGroup>
+  
 
 	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
 		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
 	</ItemGroup>
-
 
 	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
 
@@ -158,6 +153,12 @@
 
 	</PropertyGroup>
   
+	<PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != ''">
+		<!-- Copilot coding agent sandboxes do not expose repository metadata to SourceLink. -->
+		<EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+		<EnableSourceLink>false</EnableSourceLink>
+	</PropertyGroup>
+
 	<ItemGroup Condition="$(IsPackable) != 'false'">
 		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
