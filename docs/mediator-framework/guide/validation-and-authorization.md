@@ -92,9 +92,8 @@ The authorization handler evaluates the requirement against the current user:
 public sealed class ScopeAuthorizationHandler : AuthorizationHandler<ScopeAuthorizationRequirement>
 {
     protected override Task HandleRequirementAsync(
-        AuthorizationContext context,
-        ScopeAuthorizationRequirement requirement,
-        CancellationToken ctk = default)
+        AuthorizationHandlerContext context,
+        ScopeAuthorizationRequirement requirement)
     {
         if (context.User.Claims.Any(claim =>
             string.Equals(claim.Type, "scope", StringComparison.OrdinalIgnoreCase)
