@@ -40,9 +40,10 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
     {
         var metrics = new CapturingMetrics();
         using var transaction = new TestTransactionContext();
-        var message = CreateMessage(DateTimeOffset.UtcNow - TimeSpan.FromSeconds(2));
+        var now = DateTimeOffset.UtcNow;
+        var message = CreateMessage(now - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
-        var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(DateTimeOffset.UtcNow));
+        var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
         Func<Task> process = () => step.Process(
             context,
