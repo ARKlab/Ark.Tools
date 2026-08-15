@@ -96,8 +96,8 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 
         internal ApplicationInsightsMetrics(TelemetryClient client)
         {
-            _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "Message TimeInQueue (Success)", "MessageType"));
-            _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "Message ProcessingTime", "MessageType", "OperationResult"));
+            _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "MessageTimeInQueueSuccess", "MessageType"));
+            _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "MessageProcessingTime", "MessageType", "OperationResult"));
         }
 
         public void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)

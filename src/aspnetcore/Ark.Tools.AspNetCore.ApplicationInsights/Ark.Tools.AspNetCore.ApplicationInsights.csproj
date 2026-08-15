@@ -38,6 +38,7 @@
     <ProjectReference Include="..\..\common\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
   </ItemGroup>
   
 </Project>

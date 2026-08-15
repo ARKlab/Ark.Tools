@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Microsoft.AspNetCore.Http;
+using Ark.Tools.Solid;
 
 using OpenTelemetry;
 
@@ -11,41 +11,47 @@ using System.Security.Claims;
 namespace Ark.Tools.AspNetCore.ApplicationInsights;
 
 /// <summary>
-/// An OpenTelemetry <see cref="BaseProcessor{T}"/> that enriches HTTP request spans with the
-/// authenticated user's identity.
+/// An OpenTelemetry <see cref="BaseProcessor{T}"/> that enriches ASP.NET Core HTTP request spans
+/// with the authenticated user's stable identifier.
 /// </summary>
 public sealed class WebApiUserProcessor : BaseProcessor<Activity>
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IContextProvider<ClaimsPrincipal> _userContext;
 
     /// <summary>
     /// Initializes a new instance of <see cref="WebApiUserProcessor"/>.
     /// </summary>
-    public WebApiUserProcessor(IHttpContextAccessor httpContextAccessor)
+    /// <param name="userContext">The current user context.</param>
+    public WebApiUserProcessor(IContextProvider<ClaimsPrincipal> userContext)
     {
-        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+        _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
     }
 
     /// <inheritdoc/>
     public override void OnEnd(Activity data)
     {
-        var httpCtx = _httpContextAccessor.HttpContext;
-        if (httpCtx == null) return;
+        if (data.Kind != ActivityKind.Server)
+            return;
 
-        var identity = httpCtx.User?.Identity;
-        if (identity?.IsAuthenticated != true) return;
-
-        if (data.GetTagItem("enduser.id") != null) return;
-
-        string? userId = null;
-        if (!string.IsNullOrWhiteSpace(identity.Name))
+        ClaimsPrincipal principal;
+        try
         {
-            userId = identity.Name;
+            principal = _userContext.Current;
         }
-        else if (identity is ClaimsIdentity ci)
+        catch (InvalidOperationException)
         {
-            userId = ci.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return;
         }
+
+        if (principal.Identity?.IsAuthenticated != true)
+            return;
+
+        if (data.GetTagItem("enduser.id") is not null)
+            return;
+
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? principal.FindFirst("oid")?.Value
+            ?? principal.FindFirst("sub")?.Value;
 
         if (!string.IsNullOrWhiteSpace(userId))
             data.SetTag("enduser.id", userId);

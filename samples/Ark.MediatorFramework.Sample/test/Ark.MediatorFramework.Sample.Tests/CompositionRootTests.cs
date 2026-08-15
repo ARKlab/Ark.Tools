@@ -4,12 +4,10 @@
 
 using Ark.Tools.Outbox;
 using Ark.MediatorFramework.Sample.WebInterface;
-using Ark.Tools.AspNetCore.ApplicationInsights;
 using Ark.Tools.AspNetCore.MinimalApi;
 
 using AwesomeAssertions;
 
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,8 +53,6 @@ public sealed class CompositionRootTests
 
         app.Services.GetService<ArkMinimalApiHostOptions>().Should().NotBeNull();
         app.Services.GetService<HealthCheckService>().Should().NotBeNull();
-        app.Services.GetServices<ITelemetryInitializer>()
-            .Should().Contain(item => item is WebApiUserTelemetryInitializer);
         container.IsLocked.Should().BeTrue();
         LogManager.Configuration.Should().NotBeNull();
 
