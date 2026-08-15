@@ -15,6 +15,15 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
 public static partial class Ex
 {
+    /// <summary>Registers the web request telemetry initializers used by Minimal API hosts.</summary>
+    /// <param name="services">The application service collection.</param>
+    /// <returns>The original service collection.</returns>
+    public static IServiceCollection ArkMinimalApiApplicationInsightsTelemetry(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        return services;
+    }
+
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection. Configuration types and their properties may be trimmed.")]
     public static IServiceCollection ArkApplicationInsightsTelemetry(this IServiceCollection services, IConfiguration configuration)
     {

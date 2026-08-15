@@ -31,14 +31,14 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
     /// <inheritdoc/>
     public override void OnStart(Activity data)
     {
-        if (ShouldFilter(data))
+        if (_shouldFilter(data))
         {
             data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             data.IsAllDataRequested = false;
         }
     }
 
-    private static bool ShouldFilter(Activity activity)
+    private static bool _shouldFilter(Activity activity)
     {
         var displayName = activity.DisplayName;
 

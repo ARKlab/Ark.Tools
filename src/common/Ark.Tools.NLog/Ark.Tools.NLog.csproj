@@ -43,6 +43,10 @@
 	  <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />

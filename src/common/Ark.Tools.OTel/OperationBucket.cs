@@ -28,7 +28,7 @@ internal sealed class OperationBucket
     {
         lock (_lock)
         {
-            Refill();
+            _refill();
 
             if (_tokens >= 1.0)
             {
@@ -51,7 +51,7 @@ internal sealed class OperationBucket
         }
     }
 
-    private void Refill()
+    private void _refill()
     {
         var now = DateTime.UtcNow;
         var elapsed = (now - _lastRefill).TotalSeconds;

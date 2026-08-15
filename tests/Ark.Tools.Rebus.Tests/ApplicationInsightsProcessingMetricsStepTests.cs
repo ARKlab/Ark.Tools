@@ -21,7 +21,7 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         var metrics = new CapturingMetrics();
         using var transaction = new TestTransactionContext();
         var now = DateTimeOffset.UtcNow;
-        var message = CreateMessage(now - TimeSpan.FromSeconds(2));
+        var message = _createMessage(now - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
         var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
@@ -41,7 +41,7 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         var metrics = new CapturingMetrics();
         using var transaction = new TestTransactionContext();
         var now = DateTimeOffset.UtcNow;
-        var message = CreateMessage(now - TimeSpan.FromSeconds(2));
+        var message = _createMessage(now - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
         var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
@@ -55,7 +55,7 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         metrics.TimeInQueue.Should().BeEmpty();
     }
 
-    private static TransportMessage CreateMessage(DateTimeOffset sentTime)
+    private static TransportMessage _createMessage(DateTimeOffset sentTime)
     {
         return new TransportMessage(
             new Dictionary<string, string>(StringComparer.Ordinal)

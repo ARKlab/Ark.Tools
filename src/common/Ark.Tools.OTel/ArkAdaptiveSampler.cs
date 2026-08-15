@@ -69,7 +69,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         Description = $"ArkAdaptiveSampler{{rate={_options.TracesPerSecond}/s,bucketed={_options.EnablePerOperationBucketing}}}";
 
         // Start background rate adjustment timer
-        _ = Task.Run(RunAdaptiveControllerAsync);
+        _ = Task.Run(_runAdaptiveControllerAsync);
     }
 
     /// <inheritdoc/>
@@ -103,7 +103,7 @@ public sealed class ArkAdaptiveSampler : Sampler
 
         // Get the operation bucket.
         var operationName = samplingParameters.Name ?? "unknown";
-        var bucket = GetOrCreateBucket(operationName);
+        var bucket = _getOrCreateBucket(operationName);
 
         Interlocked.Increment(ref _totalSeen);
 
@@ -121,7 +121,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
     public static string FilteredTagName => _filteredTag;
 
-    private OperationBucket GetOrCreateBucket(string operationName)
+    private OperationBucket _getOrCreateBucket(string operationName)
     {
         if (!_options.EnablePerOperationBucketing)
             return _buckets.GetOrAdd("__global__", _ => new OperationBucket(_currentRate));
@@ -133,14 +133,14 @@ public sealed class ArkAdaptiveSampler : Sampler
         return _buckets.GetOrAdd(operationName, _ => new OperationBucket(_currentRate));
     }
 
-    private async Task RunAdaptiveControllerAsync()
+    private async Task _runAdaptiveControllerAsync()
     {
         while (true)
         {
             await Task.Delay(_options.SamplingPercentageDecreaseTimeout).ConfigureAwait(false);
             try
             {
-                AdjustRate();
+                _adjustRate();
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
@@ -150,7 +150,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         }
     }
 
-    private void AdjustRate()
+    private void _adjustRate()
     {
         lock (_adjustLock)
         {

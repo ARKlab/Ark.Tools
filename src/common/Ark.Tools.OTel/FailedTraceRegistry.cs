@@ -45,7 +45,7 @@ public sealed class FailedTraceRegistry
     public void Register(ActivityTraceId traceId)
     {
         _failedTraces[traceId] = Environment.TickCount64;
-        MaybeCleanup();
+        _maybeCleanup();
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public sealed class FailedTraceRegistry
     public bool IsFailed(ActivityTraceId traceId)
         => _failedTraces.ContainsKey(traceId);
 
-    private void MaybeCleanup()
+    private void _maybeCleanup()
     {
         var now = Environment.TickCount64;
         var last = Interlocked.Read(ref _lastCleanupTick);

@@ -69,20 +69,20 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
         // Still register a failure so in-flight siblings and future children are promoted.
         if (data.Recorded)
         {
-            if (IsFailure(data))
+            if (_isFailure(data))
                 _registry.Register(data.TraceId);
             return;
         }
 
         // This span was rate-limited (RecordOnly). Decide whether to promote.
 
-        if (IsFailure(data))
+        if (_isFailure(data))
         {
             // Register the entire trace as failed.
             _registry.Register(data.TraceId);
 
             // Promote the failing span itself.
-            PromoteSpan(data);
+            _promoteSpan(data);
 
             // Walk the in-process parent chain and promote all ancestors.
             // Parent spans have not yet ended at this point (children always end before parents
@@ -92,7 +92,7 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
             while (parent != null)
             {
                 if (!parent.Recorded)
-                    PromoteSpan(parent);
+                    _promoteSpan(parent);
                 parent = parent.Parent;
             }
 
@@ -102,16 +102,16 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
         // Not a failure, but the trace was already identified as failed by an earlier span.
         // Promote this span so the full operation is captured.
         if (_registry.IsFailed(data.TraceId))
-            PromoteSpan(data);
+            _promoteSpan(data);
     }
 
-    private static void PromoteSpan(Activity activity)
+    private static void _promoteSpan(Activity activity)
     {
         activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
         activity.IsAllDataRequested = true;
     }
 
-    private static bool IsFailure(Activity activity)
+    private static bool _isFailure(Activity activity)
     {
         // Error status set explicitly.
         if (activity.Status == ActivityStatusCode.Error)

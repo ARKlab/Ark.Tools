@@ -103,7 +103,7 @@ internal sealed class TestPipeline : IDisposable
 [TestClass]
 public class ArkAdaptiveSamplerTests
 {
-    private static ArkAdaptiveSamplerOptions HighRateOptions() => new()
+    private static ArkAdaptiveSamplerOptions _highRateOptions() => new()
     {
         TracesPerSecond = 10_000,
         EnablePerOperationBucketing = false,
@@ -111,7 +111,7 @@ public class ArkAdaptiveSamplerTests
         SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
     };
 
-    private static ArkAdaptiveSamplerOptions NearZeroRateOptions() => new()
+    private static ArkAdaptiveSamplerOptions _nearZeroRateOptions() => new()
     {
         TracesPerSecond = 0.0001,
         EnablePerOperationBucketing = false,
@@ -129,7 +129,7 @@ public class ArkAdaptiveSamplerTests
     {
         using var pipeline = new TestPipeline(
             nameof(ShouldSample_WhenBucketHasCapacity_ReturnsRecordAndSample),
-            new ArkAdaptiveSampler(HighRateOptions()));
+            new ArkAdaptiveSampler(_highRateOptions()));
 
         using var root = pipeline.StartRoot("GET /api/orders");
 
@@ -148,7 +148,7 @@ public class ArkAdaptiveSamplerTests
     {
         using var pipeline = new TestPipeline(
             nameof(ShouldSample_WhenParentIsRecorded_ChildIsAlwaysSampled),
-            new ArkAdaptiveSampler(HighRateOptions()));
+            new ArkAdaptiveSampler(_highRateOptions()));
 
         using var root = pipeline.StartRoot("ROOT");
         root.Should().NotBeNull();
@@ -165,7 +165,7 @@ public class ArkAdaptiveSamplerTests
     [TestMethod]
     public void ShouldSample_WhenLocalParentIsNotRecorded_ChildIsRecordOnly()
     {
-        var sampler = new ArkAdaptiveSampler(HighRateOptions());
+        var sampler = new ArkAdaptiveSampler(_highRateOptions());
         var parent = new ActivityContext(
             ActivityTraceId.CreateRandom(),
             ActivitySpanId.CreateRandom(),
@@ -189,7 +189,7 @@ public class ArkAdaptiveSamplerTests
     [TestMethod]
     public void ShouldSample_WhenRemoteParentIsRecorded_ReturnsRecordAndSample()
     {
-        var sampler = new ArkAdaptiveSampler(NearZeroRateOptions());
+        var sampler = new ArkAdaptiveSampler(_nearZeroRateOptions());
         var parent = new ActivityContext(
             ActivityTraceId.CreateRandom(),
             ActivitySpanId.CreateRandom(),
@@ -216,7 +216,7 @@ public class ArkAdaptiveSamplerTests
     [TestMethod]
     public void ShouldSample_WhenArkFilteredTagTrue_DropsSpan()
     {
-        var sampler = new ArkAdaptiveSampler(HighRateOptions());
+        var sampler = new ArkAdaptiveSampler(_highRateOptions());
 
         var tags = new List<KeyValuePair<string, object?>>
         {
@@ -245,7 +245,7 @@ public class ArkAdaptiveSamplerTests
     public void ShouldSample_WhenTraceMarkedFailed_ReturnsRecordAndSample()
     {
         var registry = new FailedTraceRegistry();
-        var sampler = new ArkAdaptiveSampler(NearZeroRateOptions(), registry);
+        var sampler = new ArkAdaptiveSampler(_nearZeroRateOptions(), registry);
 
         var traceId = ActivityTraceId.CreateRandom();
         registry.Register(traceId);
@@ -272,7 +272,7 @@ public class ArkAdaptiveSamplerTests
     [TestMethod]
     public void ShouldSample_WhenBucketExhausted_ReturnsRecordOnly()
     {
-        var sampler = new ArkAdaptiveSampler(NearZeroRateOptions());
+        var sampler = new ArkAdaptiveSampler(_nearZeroRateOptions());
         SamplingDecision? firstRecordOnly = null;
 
         for (var i = 0; i < 100; i++)
@@ -354,10 +354,10 @@ public class ArkAdaptiveSamplerTests
 [TestClass]
 public class ArkPreFilterProcessorTests
 {
-    private static IEnumerable<KeyValuePair<string, object?>> Tags(string key, string value)
+    private static IEnumerable<KeyValuePair<string, object?>> _tags(string key, string value)
         => [new KeyValuePair<string, object?>(key, value)];
 
-    private static IEnumerable<KeyValuePair<string, object?>> Tags(
+    private static IEnumerable<KeyValuePair<string, object?>> _tags(
         string key1, string value1,
         string key2, string value2)
         => [
@@ -365,7 +365,7 @@ public class ArkPreFilterProcessorTests
             new KeyValuePair<string, object?>(key2, value2),
         ];
 
-    private static TestPipeline BuildPipeline(string name)
+    private static TestPipeline _buildPipeline(string name)
     {
         var opts = new ArkAdaptiveSamplerOptions { TracesPerSecond = 10_000 };
         return new TestPipeline(name, new ArkAdaptiveSampler(opts), new ArkPreFilterProcessor());
@@ -380,12 +380,12 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void PreFilter_OptionsRequest_IsDropped()
     {
-        using var pipeline = BuildPipeline(nameof(PreFilter_OptionsRequest_IsDropped));
+        using var pipeline = _buildPipeline(nameof(PreFilter_OptionsRequest_IsDropped));
 
         using var act = pipeline.StartWithTags(
             "OPTIONS /api/resource",
             ActivityKind.Server,
-            Tags("http.request.method", "OPTIONS"));
+            _tags("http.request.method", "OPTIONS"));
         act?.Stop();
 
         pipeline.Exported.Should().BeEmpty("OPTIONS requests must be pre-filtered");
@@ -397,12 +397,12 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void PreFilter_GetRequest_IsNotFiltered()
     {
-        using var pipeline = BuildPipeline(nameof(PreFilter_GetRequest_IsNotFiltered));
+        using var pipeline = _buildPipeline(nameof(PreFilter_GetRequest_IsNotFiltered));
 
         using var act = pipeline.StartWithTags(
             "GET /api/resource",
             ActivityKind.Server,
-            Tags("http.request.method", "GET"));
+            _tags("http.request.method", "GET"));
         act?.Stop();
 
         pipeline.Exported.Should().ContainSingle("GET requests must not be filtered");
@@ -416,12 +416,12 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void PreFilter_ServiceBusReceive_IsFiltered()
     {
-        using var pipeline = BuildPipeline(nameof(PreFilter_ServiceBusReceive_IsFiltered));
+        using var pipeline = _buildPipeline(nameof(PreFilter_ServiceBusReceive_IsFiltered));
 
         using var act = pipeline.StartWithTags(
             "Receive",
             ActivityKind.Consumer,
-            Tags("messaging.system", "servicebus", "messaging.operation", "receive"));
+            _tags("messaging.system", "servicebus", "messaging.operation", "receive"));
         act?.Stop();
 
         pipeline.Exported.Should().BeEmpty("Service Bus Receive spans must be pre-filtered");
@@ -433,12 +433,12 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void PreFilter_ServiceBusSend_IsNotFiltered()
     {
-        using var pipeline = BuildPipeline(nameof(PreFilter_ServiceBusSend_IsNotFiltered));
+        using var pipeline = _buildPipeline(nameof(PreFilter_ServiceBusSend_IsNotFiltered));
 
         using var act = pipeline.StartWithTags(
             "Send",
             ActivityKind.Producer,
-            Tags("messaging.system", "servicebus", "messaging.operation", "send"));
+            _tags("messaging.system", "servicebus", "messaging.operation", "send"));
         act?.Stop();
 
         pipeline.Exported.Should().ContainSingle("Service Bus Send spans must not be filtered");
@@ -452,12 +452,12 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void PreFilter_SqlCommit_IsFiltered()
     {
-        using var pipeline = BuildPipeline(nameof(PreFilter_SqlCommit_IsFiltered));
+        using var pipeline = _buildPipeline(nameof(PreFilter_SqlCommit_IsFiltered));
 
         using var act = pipeline.StartWithTags(
             "Commit",
             ActivityKind.Client,
-            Tags("db.operation", "Commit"));
+            _tags("db.operation", "Commit"));
         act?.Stop();
 
         pipeline.Exported.Should().BeEmpty("SQL Commit spans must be pre-filtered");
@@ -469,12 +469,12 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void PreFilter_SqlSelect_IsNotFiltered()
     {
-        using var pipeline = BuildPipeline(nameof(PreFilter_SqlSelect_IsNotFiltered));
+        using var pipeline = _buildPipeline(nameof(PreFilter_SqlSelect_IsNotFiltered));
 
         using var act = pipeline.StartWithTags(
             "SELECT",
             ActivityKind.Client,
-            Tags("db.operation", "SELECT"));
+            _tags("db.operation", "SELECT"));
         act?.Stop();
 
         pipeline.Exported.Should().ContainSingle("SQL SELECT spans must not be filtered");
@@ -490,7 +490,7 @@ public class ArkPreFilterProcessorTests
 public class ArkFailurePromotionProcessorTests
 {
     /// <summary>Builds a pipeline with near-zero rate so all spans start as RecordOnly.</summary>
-    private static TestPipeline NearZeroPipeline(string name, FailedTraceRegistry registry)
+    private static TestPipeline _nearZeroPipeline(string name, FailedTraceRegistry registry)
     {
         var opts = new ArkAdaptiveSamplerOptions
         {
@@ -515,7 +515,7 @@ public class ArkFailurePromotionProcessorTests
     public void FailurePromotion_ErrorStatus_SpanIsPromotedAndExported()
     {
         var registry = new FailedTraceRegistry();
-        using var pipeline = NearZeroPipeline(
+        using var pipeline = _nearZeroPipeline(
             nameof(FailurePromotion_ErrorStatus_SpanIsPromotedAndExported), registry);
 
         using var act = pipeline.StartRoot("OP");
@@ -536,7 +536,7 @@ public class ArkFailurePromotionProcessorTests
     public void FailurePromotion_ExceptionEvent_SpanIsPromotedAndExported()
     {
         var registry = new FailedTraceRegistry();
-        using var pipeline = NearZeroPipeline(
+        using var pipeline = _nearZeroPipeline(
             nameof(FailurePromotion_ExceptionEvent_SpanIsPromotedAndExported), registry);
 
         using var act = pipeline.StartRoot("OP_EXCEPTION");
@@ -558,7 +558,7 @@ public class ArkFailurePromotionProcessorTests
     public void FailurePromotion_Http500Tag_SpanIsPromotedAndExported()
     {
         var registry = new FailedTraceRegistry();
-        using var pipeline = NearZeroPipeline(
+        using var pipeline = _nearZeroPipeline(
             nameof(FailurePromotion_Http500Tag_SpanIsPromotedAndExported), registry);
 
         using var act = pipeline.StartRoot("GET /api/fail");
@@ -581,7 +581,7 @@ public class ArkFailurePromotionProcessorTests
     public void FailurePromotion_ParentChainIsPromoted()
     {
         var registry = new FailedTraceRegistry();
-        using var pipeline = NearZeroPipeline(nameof(FailurePromotion_ParentChainIsPromoted), registry);
+        using var pipeline = _nearZeroPipeline(nameof(FailurePromotion_ParentChainIsPromoted), registry);
 
         var root = pipeline.StartRoot("ROOT");
         root.Should().NotBeNull();
@@ -613,7 +613,7 @@ public class ArkFailurePromotionProcessorTests
     public void FailurePromotion_SiblingAfterFailure_IsPromoted()
     {
         var registry = new FailedTraceRegistry();
-        using var pipeline = NearZeroPipeline(
+        using var pipeline = _nearZeroPipeline(
             nameof(FailurePromotion_SiblingAfterFailure_IsPromoted), registry);
 
         var root = pipeline.StartRoot("ROOT");
@@ -648,7 +648,7 @@ public class ArkFailurePromotionProcessorTests
     public void FailurePromotion_SuccessfulSpan_IsNotPromoted()
     {
         var registry = new FailedTraceRegistry();
-        using var pipeline = NearZeroPipeline(
+        using var pipeline = _nearZeroPipeline(
             nameof(FailurePromotion_SuccessfulSpan_IsNotPromoted), registry);
 
         // Start many spans to exhaust the bucket fully, then verify no errors were promoted.
