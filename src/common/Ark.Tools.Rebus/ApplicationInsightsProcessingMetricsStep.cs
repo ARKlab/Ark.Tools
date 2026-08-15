@@ -10,6 +10,9 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Rebus;
 
+/// <summary>
+/// Collects Rebus queue and handler processing metrics.
+/// </summary>
 [StepDocumentation("ApplicationInsights Metric tracking: TimeInQueue (success-only) and ProcessingTime")]
 public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 {
@@ -27,6 +30,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
     }
 
 
+    /// <inheritdoc/>
     public async Task Process(IncomingStepContext context, Func<Task> next)
     {
         var transportMessage = context.Load<TransportMessage>();
@@ -44,9 +48,9 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 
             try
             {
-                var enqueuedTime = DateTimeOffset.Parse(MessageContext.Current.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
+                var enqueuedTime = DateTimeOffset.Parse(transportMessage.Headers[Headers.SentTime], CultureInfo.InvariantCulture);
                 var totalTime = now - enqueuedTime;
-                var timeInQueue = totalTime - TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+                var timeInQueue = totalTime - sw.Elapsed;
 
                 _metrics.Value.TrackTimeInQueue(timeInQueue, messageType);
             }

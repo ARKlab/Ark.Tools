@@ -168,8 +168,8 @@ HTTP Request / Message / SQL / etc.
   [ArkAdaptiveSampler.ShouldSample]
   • Check: is parent already sampled? → propagate
   • Check: is it pre-filtered? (span tag set by processor) → Drop
-  • Check: error/exception? → RecordAndSample (always)
-  • Check: per-op token bucket → RecordAndSample or Drop
+  • Check: does an unsampled parent exist? → RecordOnly
+  • Check: root per-op token bucket → RecordAndSample or RecordOnly
           │
           ▼
   [ArkTelemetryEnrichmentProcessor.OnStart]
@@ -179,8 +179,8 @@ HTTP Request / Message / SQL / etc.
   [... activity executes ...]
           │
           ▼
-  [ArkAdaptiveSampler: OnEnd via ParentBased wrapper]
-  Force RecordAndSample on completed failures even if sampler said Drop
+  [ArkFailurePromotionProcessor.OnEnd]
+  Promote completed failures even if sampler said RecordOnly
           │
           ▼
   [Azure Monitor Exporter → Application Insights]
