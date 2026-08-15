@@ -31,6 +31,7 @@
 	
   <ItemGroup>  
       <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
+      <PackageReference Include="Azure.Monitor.OpenTelemetry.Profiler" />
   </ItemGroup>
   
   <ItemGroup>

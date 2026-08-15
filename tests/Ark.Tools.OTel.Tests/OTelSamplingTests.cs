@@ -159,6 +159,54 @@ public class ArkAdaptiveSamplerTests
         child!.Recorded.Should().BeTrue("child of a sampled parent must always be sampled");
     }
 
+    /// <summary>
+    /// An unsampled local parent must not be contradicted by sampling a child.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_WhenLocalParentIsNotRecorded_ChildIsRecordOnly()
+    {
+        var sampler = new ArkAdaptiveSampler(HighRateOptions());
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.None,
+            traceState: null,
+            isRemote: false);
+        var parameters = new SamplingParameters(
+            parent,
+            parent.TraceId,
+            "CHILD",
+            ActivityKind.Internal,
+            null,
+            null);
+
+        sampler.ShouldSample(in parameters).Decision.Should().Be(SamplingDecision.RecordOnly);
+    }
+
+    /// <summary>
+    /// A sampled remote parent keeps the distributed trace chain intact.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_WhenRemoteParentIsRecorded_ReturnsRecordAndSample()
+    {
+        var sampler = new ArkAdaptiveSampler(NearZeroRateOptions());
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.Recorded,
+            traceState: null,
+            isRemote: true);
+        var parameters = new SamplingParameters(
+            parent,
+            parent.TraceId,
+            "CHILD",
+            ActivityKind.Internal,
+            null,
+            null);
+
+        sampler.ShouldSample(in parameters).Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
     // ── behaviour: pre-filter tag → Drop ──────────────────────────────────
 
     /// <summary>

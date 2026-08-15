@@ -86,10 +86,15 @@ public sealed class ArkAdaptiveSampler : Sampler
             }
         }
 
-        // Propagate parent sampling decision (if parent was sampled, sample child too).
+        // Parent decisions are authoritative for local traces. A sampled parent keeps
+        // the chain intact; an unsampled parent must not be contradicted by sampling
+        // an arbitrary child. RecordOnly still permits failure promotion at OnEnd.
         var parentContext = samplingParameters.ParentContext;
         if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
             return new SamplingResult(SamplingDecision.RecordAndSample);
+
+        if (parentContext.TraceId != default)
+            return new SamplingResult(SamplingDecision.RecordOnly);
 
         // If any span in this trace has already been identified as a failure, always sample.
         // This ensures that siblings starting after the failure is detected are fully captured.

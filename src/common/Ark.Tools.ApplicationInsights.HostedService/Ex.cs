@@ -1,5 +1,7 @@
 using Ark.Tools.NLog;
 
+using Azure.Monitor.OpenTelemetry.Profiler;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -40,6 +42,7 @@ public static partial class Ex
 
                 o.EnableDependencyTrackingTelemetryModule = true;
             });
+            services.AddAzureMonitorProfiler();
 
             // Register the Ark adaptive sampler and custom processors on the OTel tracing pipeline.
             // This MUST be after AddApplicationInsightsTelemetryWorkerService.

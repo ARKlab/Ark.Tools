@@ -21,6 +21,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Profiler" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" />
   </ItemGroup>
 

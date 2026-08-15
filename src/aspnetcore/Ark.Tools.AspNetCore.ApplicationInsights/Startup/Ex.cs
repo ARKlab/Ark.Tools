@@ -3,6 +3,8 @@
 using Ark.Tools.ApplicationInsights;
 using Ark.Tools.NLog;
 
+using Azure.Monitor.OpenTelemetry.Profiler;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -40,6 +42,7 @@ public static partial class Ex
 
             o.ApplicationVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion;
         });
+        services.AddAzureMonitorProfiler();
 
         // Register the Ark adaptive sampler and custom processors on the OTel tracing pipeline.
         // This MUST be after AddApplicationInsightsTelemetry to ensure ordering of IConfigureOptions.

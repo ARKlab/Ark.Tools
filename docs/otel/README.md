@@ -12,6 +12,7 @@ Ark.Tools uses **OpenTelemetry** (via Application Insights v3.x) for distributed
 - [Configuration Reference](#configuration-reference)
 - [Sampling Strategy](#sampling-strategy) → see [sampling.md](sampling.md)
 - [Migration from Application Insights v2.x](#migration) → see [applicationinsights-migration/](applicationinsights-migration/)
+- [Upgrade guide](upgrade-guide.md)
 
 ---
 
@@ -133,10 +134,11 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=h
 See [sampling.md](sampling.md) for a detailed explanation of the adaptive sampling algorithm.
 
 **Short version:**
-1. Spans for errors/exceptions → **always exported** (RecordAndSample)
-2. Spans matching noise filters → **dropped immediately** (processor returns before sampler)
-3. Successful spans → token bucket per operation; if bucket has capacity → export; else → drop
-4. Token buckets refill at `TracesPerSecond` rate and adjust adaptively to observed traffic
+1. A sampled local or remote parent → **sampled** (the chain stays intact)
+2. An unsampled local parent → **RecordOnly** (children cannot contradict the parent)
+3. Spans matching noise filters → **dropped immediately**
+4. A completed failure → promoted, with its local ancestors and subsequent siblings retained
+5. A local root with no parent → adaptive token-bucket decision
 
 ---
 
