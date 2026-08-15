@@ -15,14 +15,6 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
         _container = container;
     }
 
-    private object _getHandlerInstance<TResult>(IQuery<TResult> query)
-    {
-        var queryType = query.GetType();
-        var handlerType = typeof(IQueryHandler<,>).MakeGenericType(queryType, typeof(TResult));
-
-        return _container.GetInstance(handlerType);
-    }
-
     [DebuggerStepThrough]
 #pragma warning disable CS0618 // Type or member is obsolete
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
@@ -36,8 +28,17 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
-        dynamic queryHandler = _getHandlerInstance(query);
-        TResult res = await queryHandler.ExecuteAsync((dynamic)query, ctk);
-        return res;
+        return await QueryHandlerInvokerCache<TResult>.ExecuteAsync(_container, query, ctk).ConfigureAwait(false);
+    }
+
+    [DebuggerStepThrough]
+    public async Task<TResult> ExecuteAsync<TQuery, TResult>(IQuery<TQuery, TResult> query, CancellationToken ctk = default)
+        where TQuery : class, IQuery<TQuery, TResult>
+    {
+        if (query is not TQuery typedQuery)
+            throw new ArgumentException($"Query of type '{query.GetType()}' must be a '{typeof(TQuery)}'.", nameof(query));
+
+        var handler = _container.GetInstance<IQueryHandler<TQuery, TResult>>();
+        return await handler.ExecuteAsync(typedQuery, ctk).ConfigureAwait(false);
     }
 }

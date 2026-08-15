@@ -26,11 +26,3 @@ public interface IStateProvider<TExtensions>
     /// <param name="ctk">Cancellation token</param>
     Task SaveStateAsync(IEnumerable<ResourceState<TExtensions>> states, CancellationToken ctk = default);
 }
-
-/// <summary>
-/// Non-generic state provider interface for backward compatibility.
-/// Inherits from <see cref="IStateProvider{TExtensions}"/> with <see cref="VoidExtensions"/>.
-/// </summary>
-public interface IStateProvider : IStateProvider<VoidExtensions>
-{
-}

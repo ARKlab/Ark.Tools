@@ -23,6 +23,11 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <!--===============================================================================-->
+  
+  <PropertyGroup>
+    <!-- due to transitive microsoft.aspnetcore.odata preview for .net10 -->
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -31,6 +36,8 @@
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Http" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
     <PackageReference Include="Asp.Versioning.OData.ApiExplorer" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
@@ -40,6 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.ProblemDetails\Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.ApplicationInsights\Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.Auth0\Ark.Tools.AspNetCore.Auth0.csproj" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.CommaSeparatedParameters\Ark.Tools.AspNetCore.CommaSeparatedParameters.csproj" />
@@ -55,6 +63,12 @@
     <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Sql.SqlServer\Ark.Tools.Sql.SqlServer.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="UIHealthChecks.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

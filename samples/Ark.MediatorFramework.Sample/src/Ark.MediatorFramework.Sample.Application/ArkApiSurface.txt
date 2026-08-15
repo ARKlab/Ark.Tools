@@ -1,0 +1,22 @@
+﻿/*
+CONTRACT BookPrintProcessResponse
+CONTRACT BookPrintProcessResponse.BookId : Guid
+CONTRACT BookPrintProcessResponse.ErrorMessage : string?
+CONTRACT BookPrintProcessResponse.Id : Guid
+CONTRACT BookPrintProcessResponse.Progress : double
+CONTRACT BookPrintProcessResponse.ShouldFail : bool
+CONTRACT BookPrintProcessResponse.Status : EvolvableEnum<BookPrintProcessStatus>
+CONTRACT DeadLetterAck
+CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark]
+CONTRACT FailingRebusRequest.Reason : string default="boom"
+CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
+CONTRACT ProcessBookPrintProcessRequest.Id : Guid
+EVOLVABLE-ENUM BookPrintProcessStatus.Cancelled=5
+EVOLVABLE-ENUM BookPrintProcessStatus.Completed=3
+EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
+EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
+EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
+EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
+REBUS FailingRebusRequest -> queue:ark.mediator.sample
+REBUS ProcessBookPrintProcessRequest -> queue:ark.mediator.sample
+*/

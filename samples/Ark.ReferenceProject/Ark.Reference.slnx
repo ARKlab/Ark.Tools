@@ -10,6 +10,7 @@
     <Project Path="Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj" />
     <Project Path="Core/Ark.Reference.Core.WebInterface/Ark.Reference.Core.WebInterface.csproj" />
   </Folder>
+  <Project Path="Profiling/Ark.Reference.Profiling.csproj" />
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path=".gitignore" />

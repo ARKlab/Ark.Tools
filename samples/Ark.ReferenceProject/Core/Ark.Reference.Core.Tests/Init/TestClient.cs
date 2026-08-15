@@ -228,7 +228,7 @@ public sealed class TestClient
         var contentType = LastResponse.ResponseMessage
             .Content.Headers.GetValues("Content-Type").First();
 
-        Assert.AreEqual(expectedContentType, contentType.Split(' ')[0]);
+        Assert.AreEqual(expectedContentType, contentType.Split(' ')[0], StringComparer.Ordinal);
     }
 
     [When(@"I get url (.*)")]

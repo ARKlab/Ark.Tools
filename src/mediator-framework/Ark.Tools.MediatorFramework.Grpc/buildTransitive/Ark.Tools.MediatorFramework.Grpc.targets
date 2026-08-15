@@ -1,0 +1,27 @@
+<Project>
+  <PropertyGroup>
+    <ArkExportProto Condition="'$(ArkExportProto)' == ''">true</ArkExportProto>
+    <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
+  </PropertyGroup>
+
+  <Target Name="ArkExportProto"
+          AfterTargets="Build"
+          Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')">
+    <PropertyGroup>
+      <_ArkProtoExportRunner Condition="'$(TargetFramework)' == 'net8.0' And Exists('$(MSBuildThisFileDirectory)..\tools\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And Exists('$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And '$(TargetFramework)' == 'net8.0'">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+    </PropertyGroup>
+    <Exec Command="dotnet &quot;$(_ArkProtoExportRunner)&quot; &quot;$(TargetPath)&quot; &quot;$(ArkExportProtoDir)&quot;" />
+  </Target>
+
+  <Target Name="ArkCopyAdditionalProto"
+          AfterTargets="ArkExportProto"
+          Condition="'$(ArkExportProto)' == 'true' And Exists('$(ArkExportProtoDir)/.ark-export-active')">
+    <Copy SourceFiles="@(ArkAdditionalProto)"
+          DestinationFiles="@(ArkAdditionalProto->'$(ArkExportProtoDir)/%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Delete Files="$(ArkExportProtoDir)/.ark-export-active" />
+  </Target>
+</Project>

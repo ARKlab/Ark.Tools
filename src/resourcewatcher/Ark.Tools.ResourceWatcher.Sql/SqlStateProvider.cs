@@ -66,7 +66,7 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
     /// When ExtensionsJsonContext is provided, uses trim-safe serialization.
     /// Otherwise falls back to reflection-based serialization for backward compatibility.
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Serializing arbitrary objects without JsonSerializerContext requires types that cannot be statically analyzed. Provide ExtensionsJsonContext in config for trim-safe code.")]
+    [RequiresUnreferencedCode("Serializing arbitrary objects without JsonSerializerContext requires types that cannot be statically analyzed. Provide ExtensionsJsonContext in config for trim-safe code.")]
     private string? _serializeExtensions(object? extensions)
     {
         if (extensions == null)

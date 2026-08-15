@@ -8,7 +8,7 @@ namespace Ark.Reference.Core.API.Queries;
 /// </summary>
 public static class BookPrintProcess_GetByIdQuery
 {
-    public record V1 : IQuery<BookPrintProcess.V1.Output?>
+    public record V1 : IQuery<V1, BookPrintProcess.V1.Output?>
     {
         public int BookPrintProcessId { get; init; }
     }

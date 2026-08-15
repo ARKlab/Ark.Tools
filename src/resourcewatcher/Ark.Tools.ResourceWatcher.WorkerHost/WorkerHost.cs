@@ -214,6 +214,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> : Worke
     /// <summary>
     /// Called only once, before the first run
     /// </summary>
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected virtual void _onInit()
     {
         if (_container.IsLocked) return;

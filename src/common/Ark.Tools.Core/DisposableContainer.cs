@@ -9,13 +9,13 @@ namespace Ark.Tools.Core;
 public sealed class DisposableContainer : IDisposable
 {
     private readonly List<IDisposable> _disposables;
-    private const int DefaultCapacity = 16;
+    private const int _defaultCapacity = 16;
     private readonly Lock _gate = new();
     private bool _disposed;
 
     public DisposableContainer()
     {
-        _disposables = new(DefaultCapacity);
+        _disposables = new(_defaultCapacity);
     }
 
     public DisposableContainer(params IDisposable[] disposables)

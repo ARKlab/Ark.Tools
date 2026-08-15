@@ -9,6 +9,7 @@ pr:
     include:
     - develop
     - master
+  drafts: false
 
 variables:
   workingDirectory: '$(Build.SourcesDirectory)/samples/Ark.ReferenceProject'

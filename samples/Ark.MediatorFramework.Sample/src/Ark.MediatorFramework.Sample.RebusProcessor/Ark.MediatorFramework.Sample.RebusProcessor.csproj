@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ArkToolsMediatorFrameworkRebusHost>true</ArkToolsMediatorFrameworkRebusHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
+    <PackageReference Include="Ark.Tools.Outbox" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.Solid.Authorization" />
+    <PackageReference Include="Ark.Tools.SystemTextJson" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+  </ItemGroup>
+
+</Project>

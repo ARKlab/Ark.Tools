@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package ark.mediator;
+
+option csharp_namespace = "Ark.Tools.MediatorFramework.Grpc";
+
+message ArkBusinessRuleViolation {
+  string type = 1;
+  string title = 2;
+  int32 status = 3;
+  string detail = 4;
+  string instance = 5;
+  map<string, string> extensions = 6;
+}
+
+message UploadDocumentMetadata {
+  string name = 1;
+  string content_type = 2;
+}
+
+message UploadDocumentChunk {
+  oneof content {
+    UploadDocumentMetadata metadata = 1;
+    bytes data = 2;
+  }
+
+  message DownloadDocumentMetadata {
+    string name = 1;
+    string content_type = 2;
+    optional int64 length = 3;
+  }
+
+  message DownloadDocumentChunk {
+    oneof content {
+      DownloadDocumentMetadata metadata = 1;
+      bytes data = 2;
+    }
+  }
+
+  message DownloadDocumentQuery {
+    bytes id = 1;
+  }
+}

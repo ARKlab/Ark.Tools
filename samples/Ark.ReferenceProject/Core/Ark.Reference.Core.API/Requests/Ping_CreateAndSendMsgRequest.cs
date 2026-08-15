@@ -5,7 +5,7 @@ namespace Ark.Reference.Core.API.Requests;
 
 public static class Ping_CreateAndSendMsgRequest
 {
-    public record V1 : IRequest<Ping.V1.Output>
+    public record V1 : IRequest<V1, Ping.V1.Output>
     {
         public Ping.V1.Create? Data { get; init; }
     }

@@ -7,7 +7,7 @@ namespace Ark.Tools.Nodatime.SystemTextJson.Converters;
 
 internal static class NodaConverterValidators
 {
-    internal static Action<T> CreateIsoValidator<T>(Func<T, CalendarSystem> calendarProjection)
+    internal static Action<T> _createIsoValidator<T>(Func<T, CalendarSystem> calendarProjection)
     {
         return value =>
         {

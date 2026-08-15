@@ -56,10 +56,10 @@ public sealed class TestHost
         };
 
         // Initialize database schema once for all tests
-        InitializeDatabaseSchema();
+        _initializeDatabaseSchema();
     }
 
-    private static void InitializeDatabaseSchema()
+    private static void _initializeDatabaseSchema()
     {
         if (_dbSchemaInitialized)
             return;

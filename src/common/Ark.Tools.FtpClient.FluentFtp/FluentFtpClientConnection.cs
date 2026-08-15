@@ -12,12 +12,30 @@ namespace Ark.Tools.FtpClient.FluentFtp;
 public sealed class FluentFtpClientConnection : FtpClientConnectionBase
 {
     private readonly IAsyncFtpClient _client;
+    private readonly Action<string, FluentFTP.FtpConfig>? _configureClient;
 
     private bool _isDisposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FluentFtpClientConnection"/> class.
+    /// </summary>
+    /// <param name="ftpConfig">The FTP connection settings.</param>
     public FluentFtpClientConnection(FtpConfig ftpConfig)
+        : this(ftpConfig, null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FluentFtpClientConnection"/> class.
+    /// </summary>
+    /// <param name="ftpConfig">The FTP connection settings.</param>
+    /// <param name="configureClient">
+    /// Callback used to customize the FluentFTP client configuration for the requested host before the client is created.
+    /// </param>
+    public FluentFtpClientConnection(FtpConfig ftpConfig, Action<string, FluentFTP.FtpConfig>? configureClient)
         : base(ftpConfig)
     {
+        _configureClient = configureClient;
         _client = _getClient();
     }
 
@@ -89,13 +107,13 @@ public sealed class FluentFtpClientConnection : FtpClientConnectionBase
 
     private IAsyncFtpClient _getClient()
     {
-        AsyncFtpClient client;
-
-        client = new AsyncFtpClient(Uri.Host, Credentials, Uri.Port, new FluentFTP.FtpConfig
+        var clientConfig = new FluentFTP.FtpConfig
         {
             SocketKeepAlive = true,
-        });
+        };
 
-        return client;
+        _configureClient?.Invoke(Uri.Host, clientConfig);
+
+        return new AsyncFtpClient(Uri.Host, Credentials, Uri.Port, clientConfig);
     }
 }

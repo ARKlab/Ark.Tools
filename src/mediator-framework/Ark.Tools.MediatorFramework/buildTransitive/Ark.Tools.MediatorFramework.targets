@@ -1,0 +1,36 @@
+<Project>
+  <PropertyGroup>
+    <ArkApiSurfaceEnabled Condition="'$(ArkApiSurfaceEnabled)' == ''">true</ArkApiSurfaceEnabled>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false' AND '$(EmitCompilerGeneratedFiles)' == 'true'">
+    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <Target Name="ArkApiSurfaceSetCompilerGeneratedFilesOutputPath"
+          BeforeTargets="CoreCompile"
+          Condition="'$(ArkApiSurfaceEnabled)' != 'false' AND '$(EmitCompilerGeneratedFiles)' == 'true' AND '$(_ArkToolsCompilerGeneratedFilesOutputPathSpecified)' != 'true'">
+    <PropertyGroup>
+      <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+    </PropertyGroup>
+  </Target>
+
+  <!-- Make the property visible to the Roslyn analyzer -->
+  <ItemGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false'">
+    <CompilerVisibleProperty Include="ArkApiSurfaceEnabled" />
+  </ItemGroup>
+
+  <!-- Pass the baseline snapshot to the analyzer when it exists -->
+  <ItemGroup Condition="'$(ArkApiSurfaceEnabled)' == 'true' And Exists('$(MSBuildProjectDirectory)/ArkApiSurface.txt')">
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)/ArkApiSurface.txt" />
+  </ItemGroup>
+
+  <!-- Copy the generated snapshot to obj/ when compiler-generated files are enabled; diagnostics come from the analyzer -->
+  <Target Name="ArkApiSurfaceWriteCurrent"
+          AfterTargets="CoreCompile"
+          Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
+    <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
+          DestinationFiles="$(IntermediateOutputPath)ArkApiSurface.current.txt"
+          Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
+  </Target>
+</Project>

@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <ArkExportProto Condition="'$(ArkExportProto)' == ''">true</ArkExportProto>
+    <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Analyzer Include="$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Grpc.Generators.dll"
+              Condition="Exists('$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Grpc.Generators.dll')" />
+  </ItemGroup>
+</Project>

@@ -30,7 +30,7 @@ public partial class CoreDataContext_Sql
                 WHERE E.[BookPrintProcessId] = @BookPrintProcessId
             ";
 
-        var result = await Connection.QueryAsync<_BookPrintProcessDto>(cmdText, new { BookPrintProcessId = bookPrintProcessId }, Transaction).ConfigureAwait(false);
+        var result = await Connection.QueryAsync<BookPrintProcessDto>(cmdText, new { BookPrintProcessId = bookPrintProcessId }, Transaction).ConfigureAwait(false);
 
         _logger.Trace(CultureInfo.InvariantCulture, "ReadBookPrintProcessByIdAsync ended");
 
@@ -79,7 +79,7 @@ public partial class CoreDataContext_Sql
 
         var cmd = new CommandDefinition(cmdText, parameters, transaction: Transaction, cancellationToken: ctk);
 
-        var (data, count) = await Connection.ReadPagedAsync<_BookPrintProcessDto>(cmd).ConfigureAwait(false);
+        var (data, count) = await Connection.ReadPagedAsync<BookPrintProcessDto>(cmd).ConfigureAwait(false);
 
         var d = data.Select(s => s.ToOutput());
 
@@ -108,7 +108,7 @@ public partial class CoreDataContext_Sql
                 ORDER BY E.[BookPrintProcessId] DESC
             ";
 
-        var result = await Connection.QueryAsync<_BookPrintProcessDto>(cmdText, new
+        var result = await Connection.QueryAsync<BookPrintProcessDto>(cmdText, new
         {
             BookId = bookId,
             Pending = BookPrintProcessStatus.Pending.ToString(),
@@ -191,7 +191,7 @@ public partial class CoreDataContext_Sql
         _logger.Trace(CultureInfo.InvariantCulture, "PutBookPrintProcessAsync ended");
     }
 
-    private sealed class _BookPrintProcessDto
+    private sealed class BookPrintProcessDto
     {
         public int BookPrintProcessId { get; set; }
         public int BookId { get; set; }

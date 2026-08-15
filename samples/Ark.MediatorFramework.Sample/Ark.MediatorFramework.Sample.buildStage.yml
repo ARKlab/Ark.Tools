@@ -1,0 +1,99 @@
+parameters:
+  - name: name
+    type: string
+  - name: dependsOn
+    type: string
+    default: ''
+  - name: workingDirectory
+    type: string
+  - name: vmImageName
+    type: string
+  - name: buildConfiguration
+    type: string
+
+stages:
+  - stage: ${{ parameters.name }}
+    displayName: ${{ parameters.name }}
+    dependsOn: ${{ parameters.dependsOn }}
+    variables:
+      solutionPath: '${{ parameters.workingDirectory }}/Ark.MediatorFramework.Sample.slnx'
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+    jobs:
+      - job: BuildAndTest
+        displayName: Build and test mediator sample
+        timeoutInMinutes: 60
+        pool:
+          vmImage: ${{ parameters.vmImageName }}
+        services:
+          sqlserver:
+            image: mcr.microsoft.com/mssql/server:2022-latest
+            env:
+              SA_PASSWORD: IntegrationTestsDbPassword85!
+              ACCEPT_EULA: Y
+            ports:
+              - 1433:1433
+        steps:
+          - task: UseDotNet@2
+            displayName: Use repository SDK
+            inputs:
+              useGlobalJson: true
+
+          - task: DotNetCoreCLI@2
+            displayName: Restore sample
+            inputs:
+              command: restore
+              projects: $(solutionPath)
+              restoreArguments: --locked-mode
+
+          - task: DotNetCoreCLI@2
+            displayName: Build sample
+            inputs:
+              command: build
+              projects: $(solutionPath)
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: Test sample
+            inputs:
+              command: test
+              projects: $(solutionPath)
+              arguments: '--configuration $(buildConfiguration) --no-build --no-restore --report-trx'
+              publishTestResults: true
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish web host
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/web'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Functions host
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/functions'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Rebus processor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/processor'
+
+          - task: CopyFiles@2
+            displayName: Stage database package
+            inputs:
+              SourceFolder: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.Database/bin/$(buildConfiguration)'
+              Contents: '**/*.dacpac'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/database'
+              flattenFolders: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish deployable hosts
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)
+              artifact: mediator-framework-sample

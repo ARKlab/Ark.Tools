@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <_ArkToolsCompilerGeneratedFilesOutputPathSpecified Condition="'$(CompilerGeneratedFilesOutputPath)' != ''">true</_ArkToolsCompilerGeneratedFilesOutputPathSpecified>
+  </PropertyGroup>
+</Project>

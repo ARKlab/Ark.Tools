@@ -1,0 +1,42 @@
+name: $(SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+
+trigger:
+  branches:
+    include:
+      - develop
+      - master
+
+pr:
+  branches:
+    include:
+      - develop
+      - master
+  drafts: false
+
+variables:
+  workingDirectory: '$(Build.SourcesDirectory)/samples/Ark.MediatorFramework.Sample'
+  vmImageName: 'ubuntu-22.04'
+  projectName: 'Ark.MediatorFramework.Sample'
+  buildConfiguration: 'Release'
+  enableDeployment: 'false'
+
+stages:
+  - template: Ark.MediatorFramework.Sample.buildStage.yml
+    parameters:
+      name: Build_Stage
+      workingDirectory: ${{ variables.workingDirectory }}
+      vmImageName: ${{ variables.vmImageName }}
+      buildConfiguration: ${{ variables.buildConfiguration }}
+
+  # Enable only after configuring the Azure service connection, environment,
+  # web app, and Function App names in this pipeline.
+  - ${{ if eq(variables.enableDeployment, 'true') }}:
+      - template: Ark.MediatorFramework.Sample.deployStage.yml
+        parameters:
+          name: Deploy_Stage
+          dependsOn: Build_Stage
+          vmImageName: ${{ variables.vmImageName }}
+          environmentName: Ark-MediatorFramework-Sample
+          azureServiceConnection: Ark-MediatorFramework-Sample
+          webAppName: replace-with-web-app-name
+          functionAppName: replace-with-function-app-name

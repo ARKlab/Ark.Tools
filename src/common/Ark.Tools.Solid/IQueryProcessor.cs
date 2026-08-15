@@ -10,4 +10,16 @@ public interface IQueryProcessor
 
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default);
+
+    /// <summary>
+    /// Executes a query implementing <see cref="IQuery{TSelf, TResult}"/> resolving the handler
+    /// at compile time, without reflection or runtime caches.
+    /// </summary>
+    /// <typeparam name="TQuery">The concrete query type.</typeparam>
+    /// <typeparam name="TResult">The query result type.</typeparam>
+    /// <param name="query">The query to execute.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The query result.</returns>
+    Task<TResult> ExecuteAsync<TQuery, TResult>(IQuery<TQuery, TResult> query, CancellationToken ctk = default)
+        where TQuery : class, IQuery<TQuery, TResult>;
 }

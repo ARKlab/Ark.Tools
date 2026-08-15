@@ -1,0 +1,7 @@
+CREATE TABLE [dbo].[Outbox]
+(
+    [Id] BIGINT IDENTITY(1,1) NOT NULL,
+    [Headers] NVARCHAR(MAX) NOT NULL,
+    [Body] VARBINARY(MAX) NOT NULL,
+    CONSTRAINT [PK_Outbox] PRIMARY KEY CLUSTERED ([Id])
+)

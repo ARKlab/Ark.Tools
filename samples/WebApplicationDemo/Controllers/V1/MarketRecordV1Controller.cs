@@ -10,6 +10,7 @@ using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Controllers.V1;
 
+#pragma warning disable AV0014 // OData controllers use conventional routing.
 [ApiVersion(1.0)]
 public class MarketRecordV1Controller : ODataController
 {
@@ -32,7 +33,6 @@ public class MarketRecordV1Controller : ODataController
             offset = offset.AddSeconds(1);
         }
     }
-
     [EnableQuery]
     public IQueryable<MarketRecordV1> Get()
     {
@@ -52,3 +52,4 @@ public class MarketRecordV1Controller : ODataController
         return SingleResult.Create(record.AsQueryable());
     }
 }
+#pragma warning restore AV0014

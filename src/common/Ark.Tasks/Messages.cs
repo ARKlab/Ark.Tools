@@ -12,7 +12,7 @@ using System.Diagnostics;
 
 namespace Ark.Tasks;
 
-[DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
+[DebuggerDisplay($"{{{nameof(_getDebuggerDisplay)}(),nq}}")]
 public struct Resource : IEquatable<Resource>
 {
     public Resource(string provider, string id)
@@ -69,7 +69,7 @@ public struct Resource : IEquatable<Resource>
         return string.Format(CultureInfo.InvariantCulture, "{0}.{1}", Provider, Id);
     }
 
-    private readonly string GetDebuggerDisplay()
+    private readonly string _getDebuggerDisplay()
     {
         return ToString();
     }

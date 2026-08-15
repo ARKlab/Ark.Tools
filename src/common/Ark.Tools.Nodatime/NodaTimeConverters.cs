@@ -26,3 +26,13 @@ public static class NodeTimeConverter
         // Register once done using static ctor. this is here just to unsure NodeTimeConverter gets "contructed"
     }
 }
+
+/// <summary>Registers Ark.Tools type converters for NodaTime values.</summary>
+public static class NodaTimeConverter
+{
+    /// <summary>Registers the NodaTime type converters.</summary>
+    public static void Register()
+    {
+        NodeTimeConverter.Register();
+    }
+}

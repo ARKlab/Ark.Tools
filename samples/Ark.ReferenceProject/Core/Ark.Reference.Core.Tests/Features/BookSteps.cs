@@ -79,6 +79,13 @@ public sealed class BookSteps
         }
     }
 
+    [When(@"I create bulk Books with")]
+    public void WhenICreateBulkBooksWith(Table table)
+    {
+        var entities = table.CreateSet<Book.V1.Create>();
+        _client.PostAsJson($"{_controllerName}/bulk", entities);
+    }
+
     [When(@"I create multiple Book with")]
     public void WhenICreateMultipleBookWith(Table table)
     {
@@ -172,13 +179,13 @@ public sealed class BookSteps
     [Then(@"the stored Book response should be")]
     public void ThenTheStoredBookResponseShouldBe(Table table)
     {
-        BookMatched(_output, table);
+        _bookMatched(_output, table);
     }
 
     [Then(@"the Book response should match")]
     public void ThenTheBookResponseShouldMatch(Table table)
     {
-        BookMatched(_output, table);
+        _bookMatched(_output, table);
     }
 
     [Then(@"the Book response count should be (.*)")]
@@ -189,7 +196,15 @@ public sealed class BookSteps
         res!.Count.Should().Be(expectedCount);
     }
 
-    private static void BookMatched(Book.V1.Output? output, Table table)
+    [Then(@"the bulk Book response should contain (.*) books")]
+    public void ThenTheBulkBookResponseShouldContainBooks(int expectedCount)
+    {
+        var res = _client.ReadAs<IEnumerable<Book.V1.Output>>();
+        res.Should().NotBeNull();
+        res!.Should().HaveCount(expectedCount);
+    }
+
+    private static void _bookMatched(Book.V1.Output? output, Table table)
     {
         output.Should().NotBeNull();
         var expected = table.CreateInstance<Book.V1.Output>();

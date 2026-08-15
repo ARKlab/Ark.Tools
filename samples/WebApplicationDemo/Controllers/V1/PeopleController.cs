@@ -12,6 +12,7 @@ using static Microsoft.AspNetCore.OData.Query.AllowedQueryOptions;
 
 namespace WebApplicationDemo.Controllers.V1;
 
+#pragma warning disable AV0014 // OData controllers use conventional routing.
 [ApiVersion(1.0)]
 public class PeopleController : ODataController
 {
@@ -54,3 +55,4 @@ public class PeopleController : ODataController
         return SingleResult.Create(_people.Where(p => p.Id == key).AsQueryable());
     }
 }
+#pragma warning restore AV0014

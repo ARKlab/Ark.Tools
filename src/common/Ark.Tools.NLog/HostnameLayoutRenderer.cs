@@ -13,7 +13,7 @@ namespace Ark.Tools.NLog;
 [ThreadAgnostic]
 public class HostNameLayoutRenderer : LayoutRenderer
 {
-    internal string? HostName { get; private set; }
+    internal string? _hostName { get; private set; }
 
     /// <summary>
     /// Initializes the layout renderer.
@@ -23,7 +23,7 @@ public class HostNameLayoutRenderer : LayoutRenderer
         base.InitializeLayoutRenderer();
         try
         {
-            this.HostName = Environment.MachineName;
+            this._hostName = Environment.MachineName;
             try
             {
 
@@ -33,7 +33,7 @@ public class HostNameLayoutRenderer : LayoutRenderer
                     ;
 
                 if (dns is not null)
-                    this.HostName = dns + "@" + this.HostName;
+                    this._hostName = dns + "@" + this._hostName;
 
             }
 #pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional
@@ -42,13 +42,13 @@ public class HostNameLayoutRenderer : LayoutRenderer
         }
         catch (Exception exception)
         {
-            if (MustBeRethrown(exception))
+            if (_mustBeRethrown(exception))
             {
                 throw;
             }
 
             InternalLogger.Error("Error getting machine name {0}", exception);
-            this.HostName = string.Empty;
+            this._hostName = string.Empty;
         }
     }
 
@@ -59,10 +59,10 @@ public class HostNameLayoutRenderer : LayoutRenderer
     /// <param name="logEvent">Logging event.</param>
     protected override void Append(StringBuilder builder, LogEventInfo logEvent)
     {
-        builder.Append(this.HostName);
+        builder.Append(this._hostName);
     }
 
-    private static bool MustBeRethrown(Exception exception)
+    private static bool _mustBeRethrown(Exception exception)
     {
         if (exception is StackOverflowException)
         {

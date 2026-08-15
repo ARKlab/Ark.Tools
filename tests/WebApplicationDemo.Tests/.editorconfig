@@ -1,6 +1,8 @@
 # EditorConfig for test project - override ERP022 severity
 root = false
 
+dotnet_diagnostic.IDX00001.severity = error
+
 [*.cs]
 # ERP022: Exit point swallows an unobserved exception - downgrade to warning for test project
 dotnet_diagnostic.ERP022.severity = warning

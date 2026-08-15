@@ -37,7 +37,7 @@ public sealed class ODataSteps : IDisposable
         _lastResponse = await _client.Request(url).GetAsync().ConfigureAwait(false);
     }
 
-    private async Task<JsonDocument> GetDocumentAsync()
+    private async Task<JsonDocument> _getDocumentAsync()
     {
         if (_lastDocument != null) return _lastDocument;
         if (_lastResponse == null) throw new InvalidOperationException("Make a request first");
@@ -57,7 +57,7 @@ public sealed class ODataSteps : IDisposable
     [Then(@"the OData response has value array")]
     public async Task ThenODataResponseHasValueArray()
     {
-        var doc = await GetDocumentAsync().ConfigureAwait(false);
+        var doc = await _getDocumentAsync().ConfigureAwait(false);
         doc.RootElement.TryGetProperty("value", out var value).Should().BeTrue("OData response must have a 'value' property");
         value.ValueKind.Should().Be(JsonValueKind.Array, "OData value must be an array");
     }
@@ -65,7 +65,7 @@ public sealed class ODataSteps : IDisposable
     [Then(@"the OData response value count is (\d+)")]
     public async Task ThenODataResponseValueCountIs(int count)
     {
-        var doc = await GetDocumentAsync().ConfigureAwait(false);
+        var doc = await _getDocumentAsync().ConfigureAwait(false);
         doc.RootElement.TryGetProperty("value", out var value).Should().BeTrue();
         value.GetArrayLength().Should().Be(count, $"OData value array should have {count} items");
     }
@@ -73,7 +73,7 @@ public sealed class ODataSteps : IDisposable
     [Then(@"the OData response first item has field (.*)")]
     public async Task ThenODataResponseFirstItemHasField(string fieldName)
     {
-        var doc = await GetDocumentAsync().ConfigureAwait(false);
+        var doc = await _getDocumentAsync().ConfigureAwait(false);
         var arr = doc.RootElement.GetProperty("value");
         arr.GetArrayLength().Should().BeGreaterThan(0, "Array must not be empty");
         var first = arr[0];
@@ -83,7 +83,7 @@ public sealed class ODataSteps : IDisposable
     [Then(@"the OData response first item does not have field (.*)")]
     public async Task ThenODataResponseFirstItemDoesNotHaveField(string fieldName)
     {
-        var doc = await GetDocumentAsync().ConfigureAwait(false);
+        var doc = await _getDocumentAsync().ConfigureAwait(false);
         var arr = doc.RootElement.GetProperty("value");
         arr.GetArrayLength().Should().BeGreaterThan(0, "Array must not be empty");
         var first = arr[0];
@@ -93,7 +93,7 @@ public sealed class ODataSteps : IDisposable
     [Then(@"the OData single result has id equal to (\d+)")]
     public async Task ThenODataSingleResultHasId(int expectedId)
     {
-        var doc = await GetDocumentAsync().ConfigureAwait(false);
+        var doc = await _getDocumentAsync().ConfigureAwait(false);
         // OData single result for an entity is a direct object (not wrapped in value array)
         // Property names are camelCase in JSON
         int actualId;

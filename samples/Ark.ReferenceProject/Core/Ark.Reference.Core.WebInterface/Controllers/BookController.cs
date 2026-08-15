@@ -51,6 +51,27 @@ public class BookController : ApiController
     }
 
     /// <summary>
+    /// Creates multiple books in one operation.
+    /// </summary>
+    /// <param name="creates">The books to create.</param>
+    /// <param name="ctk">Cancellation token.</param>
+    /// <returns>The created books.</returns>
+    /// <response code="200">Success</response>
+    [HttpPost("bulk")]
+    [ProducesResponseType(typeof(IEnumerable<Book.V1.Output>), 200)]
+    public async Task<IActionResult> BulkCreateBooks(
+        [FromBody] IEnumerable<Book.V1.Create> creates,
+        CancellationToken ctk = default)
+    {
+        var res = await _requestProcessor.ExecuteAsync(new Book_BulkCreateRequest.V1
+        {
+            Data = creates
+        }, ctk).ConfigureAwait(false);
+
+        return Ok(res);
+    }
+
+    /// <summary>
     /// Get an existing Book by Id
     /// </summary>
     /// <param name="id">The Id of the Book</param>

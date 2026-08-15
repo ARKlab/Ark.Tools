@@ -1,0 +1,162 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.MediatorFramework.Sample.Tests.Fakes;
+using Ark.MediatorFramework.Sample.Tests.Hooks;
+
+using Ark.Tools.Outbox;
+
+using AwesomeAssertions;
+
+using FluentValidation;
+
+namespace Ark.MediatorFramework.Sample.Tests;
+
+/// <summary>Verifies direct application composition and scope ownership.</summary>
+[TestClass]
+public sealed class ApplicationTestContextTests
+{
+    /// <summary>Dispatches a Book request through validation and audit decorators.</summary>
+    [TestMethod]
+    public async Task DirectDispatchRunsApplicationDecorators()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var response = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
+            {
+                Title = "Clean Code",
+                Author = "Martin",
+                Genre = Book.V1.Genre.Technology,
+            })).ConfigureAwait(false);
+
+        response.Title.Should().Be("Clean Code");
+        context.AuditCount.Should().Be(1);
+    }
+
+    /// <summary>Dispatches a bulk Book request through validation and audit decorators.</summary>
+    [TestMethod]
+    public async Task BulkCreateDispatchesApplicationRequest()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var response = await context.DispatchRequestAsync<
+            Book_BulkCreateRequest.V1,
+            IReadOnlyList<Book.V1.Output>>(
+            new Book_BulkCreateRequest.V1(
+            [
+                new Book.V1.Create
+                {
+                    Title = "Clean Code",
+                    Author = "Martin",
+                    Genre = Book.V1.Genre.Technology,
+                },
+                new Book.V1.Create
+                {
+                    Title = "Dune",
+                    Author = "Herbert",
+                    Genre = Book.V1.Genre.Fiction,
+                },
+            ])).ConfigureAwait(false);
+
+        response.Should().HaveCount(2);
+        response.Select(book => book.Title).Should().Equal("Clean Code", "Dune");
+        context.AuditCount.Should().Be(1);
+    }
+
+    /// <summary>Reports validation failures from the decorated handler pipeline.</summary>
+    [TestMethod]
+    public async Task InvalidRequestThrowsValidationException()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+        var action = () => context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create()));
+
+        var exception = await action.Should().ThrowAsync<ValidationException>().ConfigureAwait(false);
+        exception.Which.Errors.Should().Contain(error => error.PropertyName == "Data.Title");
+    }
+
+    /// <summary>Uses a new scoped graph for each top-level dispatch.</summary>
+    [TestMethod]
+    public async Task SequentialDispatchesUseDistinctScopes()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var first = await context.DispatchRequestAsync<ScopeProbeRequest, Guid>(
+            new ScopeProbeRequest()).ConfigureAwait(false);
+        var second = await context.DispatchRequestAsync<ScopeProbeRequest, Guid>(
+            new ScopeProbeRequest()).ConfigureAwait(false);
+
+        first.Should().NotBe(second);
+    }
+
+    /// <summary>Reuses the current scope when a handler dispatches another contract.</summary>
+    [TestMethod]
+    public async Task NestedDispatchUsesCurrentScope()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+
+        var observation = await context.DispatchRequestAsync<NestedScopeRequest, ScopeObservation>(
+            new NestedScopeRequest()).ConfigureAwait(false);
+
+        observation.OuterScopeId.Should().Be(observation.NestedScopeId);
+    }
+
+    /// <summary>Disposes scoped resources after a failed contract dispatch.</summary>
+    [TestMethod]
+    public async Task FailedDispatchDisposesItsScope()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+        var action = () => context.DispatchRequestAsync<FailingScopeRequest, bool>(
+            new FailingScopeRequest());
+
+        await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
+        context.FailedDispatchResourceDisposed.Should().BeTrue();
+    }
+
+    /// <summary>Rejects external calls after the scenario binding is detached.</summary>
+    [TestMethod]
+    public async Task ExternalServiceProxyFailsOutsideScenario()
+    {
+        var context = new ApplicationTestContext(useSqlStore: false);
+        var proxy = context.PrintCompletedNotificationService;
+        await context.DisposeAsync().ConfigureAwait(false);
+
+        var action = () => proxy.NotifyAsync(new BookPrintProcessResponse());
+        await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
+    }
+
+    /// <summary>Retries deterministic optimistic-concurrency failures before updating a Book.</summary>
+    [TestMethod]
+    public async Task OptimisticConcurrencyDecoratorRetriesTransientFailures()
+    {
+        var faults = new ConcurrencyFaultInjector { PendingFailures = 2 };
+        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        var decoratedFactory = new FaultInjectingSampleDataContextFactory(factory, faults);
+        await using var context = new ApplicationTestContext(
+            useSqlStore: false,
+            dataContextFactory: decoratedFactory);
+
+        var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
+            {
+                Title = "Retry me",
+                Author = "Author",
+                Genre = Book.V1.Genre.Fiction,
+            })).ConfigureAwait(false);
+        var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
+            new Book_UpdateRequest.V1(
+                new Book.V1.Input
+                {
+                    Title = "Retried successfully",
+                    Author = "Author",
+                    Genre = Book.V1.Genre.Fiction,
+                },
+                book.Id,
+                book.ETag)).ConfigureAwait(false);
+
+        updated.Title.Should().Be("Retried successfully");
+        faults.PendingFailures.Should().Be(0);
+    }
+
+}

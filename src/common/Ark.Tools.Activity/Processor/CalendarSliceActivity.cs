@@ -41,5 +41,6 @@ public abstract class CalendarSliceActivity : ISliceActivity
     }
 
     public abstract Task Process(Slice activitySlice);
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract IEnumerable<Slice> _generateCalendar();
 }

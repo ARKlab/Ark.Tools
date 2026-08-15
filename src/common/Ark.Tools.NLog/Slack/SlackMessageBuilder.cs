@@ -7,7 +7,7 @@ public class SlackMessageBuilder
 {
     private readonly SlackMessage _slackMessage;
 #pragma warning disable MA0046 // Use EventHandler<T> to declare events
-    private event Action<Exception>? Error;
+    private event Action<Exception>? _error;
 #pragma warning restore MA0046 // Use EventHandler<T> to declare events
     private bool _existError;
 
@@ -81,7 +81,7 @@ public class SlackMessageBuilder
 
     public SlackMessageBuilder OnError(Action<Exception> error)
     {
-        this.Error += error;
+        this._error += error;
         _existError = true;
 
         return this;
@@ -96,7 +96,7 @@ public class SlackMessageBuilder
         catch (Exception e)
         {
             if (_existError)
-                Error?.Invoke(e);
+                _error?.Invoke(e);
             else
                 throw;
         }

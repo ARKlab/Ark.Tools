@@ -34,10 +34,15 @@ public static class NLogConfigurer
 
     static NLogConfigurer()
     {
+        _configureUnhandledExceptionLogging();
+
         LogManager.Setup()
             .SetupExtensions(b => b
-                .RegisterAssembly(typeof(Configurer).Assembly)
-                .RegisterAssembly(typeof(ActivityTraceLayoutRenderer).Assembly))
+                .RegisterTarget<SlackTarget>()
+                .RegisterLayoutRenderer<ActivityIdLayoutRenderer>()
+                .RegisterLayoutRenderer<HostNameLayoutRenderer>()
+                .RegisterLayoutRenderer<ActivityTraceLayoutRenderer>()
+                .RegisterTarget<DiagnosticListenerTarget>())
             ;
 
         // This has been added support NLog loggers output to Console during application initialization,
@@ -52,6 +57,18 @@ public static class NLogConfigurer
             .WithConsoleRule("*", global::NLog.LogLevel.Info)
             .Apply()
             ;
+    }
+
+    private static void _configureUnhandledExceptionLogging()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            global::NLog.LogManager.GetLogger("Main").Fatal(
+                e.ExceptionObject as Exception,
+                global::System.Globalization.CultureInfo.InvariantCulture,
+                "UnhandledException");
+            global::NLog.LogManager.Flush(global::System.TimeSpan.FromSeconds(5));
+        };
     }
 
     public static Configurer For(string appName)

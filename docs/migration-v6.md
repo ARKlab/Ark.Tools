@@ -44,7 +44,7 @@ These changes **require code modifications** to upgrade from v5 to v6:
 * [Newtonsoft.Json Support Removed from AspNetCore](#newtonsoftjson-support-removed-from-aspnetcore)
 * [ResourceWatcher Type-Safe Extensions](#resourcewatcher-type-safe-extensions)
 * [Oracle CommandTimeout Default Changed](#oracle-commandtimeout-default-changed)
-* [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbukle-10x)
+* [Upgrade to Swashbuckle 10.x](#upgrade-to-swashbuckle-10x)
 * [Replace FluentAssertions with AwesomeAssertions](#replace-fluentassertions-with-awesomeassertions)
 * [Replace Specflow with Reqnroll](#replace-specflow-with-reqnroll)
 * [Ark.Tools.Core.Reflection Split (Trimming Support)](#arktoolscorereflection-split-trimming-support)

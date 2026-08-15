@@ -1,0 +1,70 @@
+﻿/*
+CONTRACT BookEditionDescription
+CONTRACT BookEditionDescription.Description : string
+CONTRACT BookEditionDescription.Edition.Kind : BookEditionKind
+CONTRACT BookReview
+CONTRACT BookReview.BookId : Guid
+CONTRACT BookReview.CreatedAt : Instant
+CONTRACT BookReview.Id : Guid
+CONTRACT BookReview.Rating : int
+CONTRACT BookReview.Text : string
+CONTRACT BookReview.UserId : string
+CONTRACT CreateBookReviewRequest -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]
+CONTRACT CreateBookReviewRequest.BookId : Guid
+CONTRACT CreateBookReviewRequest.Rating : int
+CONTRACT CreateBookReviewRequest.Text : string default=string.Empty
+CONTRACT DescribeBookEditionRequest -> BookEditionDescription [group=Ark] [grpc-group=Books] [http=POST /api/v{version}/books/editions/describe] [version=1+] [grpc=DescribeBookEdition] [grpc-version=1+]
+CONTRACT DescribeBookEditionRequest.Edition.Kind : BookEditionKind
+CONTRACT DownloadBookCoverQuery -> IArkAttachment [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/{id}/cover] [version=1+] [grpc=DownloadBookCover] [grpc-version=1+]
+CONTRACT DownloadBookCoverQuery.Id : Guid
+CONTRACT GetAuditsQuery -> PagedResult<AuditRecord> [group=Ark] [http=GET /api/v{version}/audits] [version=1+]
+CONTRACT GetAuditsQuery.EntityType : string?
+CONTRACT GetAuditsQuery.FromTimestamp : Instant?
+CONTRACT GetAuditsQuery.Identifier : string?
+CONTRACT GetAuditsQuery.Limit : int default=25
+CONTRACT GetAuditsQuery.Skip : int
+CONTRACT GetAuditsQuery.Sort : IEnumerable<string> default=[]
+CONTRACT GetAuditsQuery.ToTimestamp : Instant?
+CONTRACT GetAuditsQuery.UserId : string?
+CONTRACT GetReadingActivityQuery -> IReadOnlyList<ReadingActivity> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reading-activity] [version=1+]
+CONTRACT GetReadingActivityQuery.BookId : Guid
+CONTRACT GetReadingActivityQuery.Limit : int default=25
+CONTRACT ListBookReviewsQuery -> IReadOnlyList<BookReview> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reviews] [version=1+]
+CONTRACT ListBookReviewsQuery.BookId : Guid
+CONTRACT ListBookReviewsQuery.Limit : int default=25
+CONTRACT ListBookReviewsQuery.Skip : int
+CONTRACT PagedResult
+CONTRACT PagedResult.Count : long
+CONTRACT PagedResult.Data : IEnumerable<AuditRecord>
+CONTRACT PagedResult.IsCountPartial : bool
+CONTRACT PagedResult.Limit : int
+CONTRACT PagedResult.Skip : int
+CONTRACT ReadingActivity
+CONTRACT ReadingActivity.BookId : Guid
+CONTRACT ReadingActivity.Id : Guid
+CONTRACT ReadingActivity.Kind : EvolvableEnum<ReadingActivityKind>
+CONTRACT ReadingActivity.OccurredAt : Instant
+CONTRACT ReadingActivity.Progress : int
+CONTRACT ReadingActivity.UserId : string
+CONTRACT RecordReadingActivityRequest -> ReadingActivity [group=Ark] [http=POST /api/v{version}/books/{bookId}/reading-activity] [version=1+]
+CONTRACT RecordReadingActivityRequest.BookId : Guid
+CONTRACT RecordReadingActivityRequest.Kind : EvolvableEnum<ReadingActivityKind>
+CONTRACT RecordReadingActivityRequest.Progress : int
+CONTRACT StreamBooksQuery -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
+CONTRACT StreamBooksQuery.Count : int
+CONTRACT StreamBooksQuery.DelayMilliseconds : int
+CONTRACT UploadBookCoverRequest -> UploadResponse [group=Ark] [http=POST /api/v{version}/books/{id}/cover] [version=1+]
+CONTRACT UploadBookCoverRequest.Attachment : IArkAttachment
+CONTRACT UploadBookCoverRequest.Id : Guid
+CONTRACT UploadResponse
+CONTRACT UploadResponse.ContentType : string
+CONTRACT UploadResponse.Id : Guid
+CONTRACT UploadResponse.Length : long
+CONTRACT UploadResponse.Name : string
+ENUM BookEditionKind.Digital=1
+ENUM BookEditionKind.Print=0
+EVOLVABLE-ENUM ReadingActivityKind.Finished=3
+EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
+EVOLVABLE-ENUM ReadingActivityKind.Progressed=2
+EVOLVABLE-ENUM ReadingActivityKind.Started=1
+*/

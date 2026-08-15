@@ -1,18 +1,17 @@
 using HealthChecks.Network;
 using HealthChecks.Network.Core;
 using HealthChecks.UI.Client;
-using HealthChecks.UI.Configuration;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using SimpleInjector;
 
-
 namespace Ark.Tools.AspNetCore.HealthChecks;
+
 
 public static class ArkHealthCheckExtension
 {
@@ -25,54 +24,32 @@ public static class ArkHealthCheckExtension
         return services;
     }
 
-    public static IServiceCollection AddArkHealthChecksUI(this IServiceCollection services)
-    {
-        services.AddHealthChecksUI(setupSettings: setup =>
-        {
-            setup.SetEvaluationTimeInSeconds(60);
-            setup.MaximumHistoryEntriesPerEndpoint(50);
-            setup.AddHealthCheckEndpoint("Health Checks", "/healthCheck");
-        }
-        ).AddInMemoryStorage();
-
-        services.AddArkHealthChecksUIOptions(o =>
-        {
-            if (File.Exists(Path.Combine(Environment.CurrentDirectory, "UIHealthChecks.css")))
-                o.AddCustomStylesheet("UIHealthChecks.css");
-            var binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css");
-            if (File.Exists(binPath))
-                o.AddCustomStylesheet(binPath);
-        });
-
-        return services;
-    }
-
-    public static IServiceCollection AddArkHealthChecksUIOptions(this IServiceCollection services, Action<Options> setup)
-    {
-        return services.AddSingleton(setup);
-    }
-
     public static IEndpointRouteBuilder MapArkHealthChecks(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapHealthChecks("/healthCheck", new HealthCheckOptions
         {
             Predicate = _ => true,
-            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-        });
+            ResponseWriter = _writeHealthCheckResponse,
+        }).AllowAnonymous();
 
         return endpoints;
     }
 
-    public static IEndpointRouteBuilder MapArkHealthChecksUI(this IEndpointRouteBuilder endpoints)
+    private static async Task _writeHealthCheckResponse(HttpContext context, HealthReport report)
     {
-        endpoints.MapHealthChecksUI(setup =>
-        {
-            var configurers = endpoints.ServiceProvider.GetServices<Action<Options>>();
-            foreach (var c in configurers)
-                c?.Invoke(setup);
-        });
-
-        return endpoints;
+        var entries = report.Entries.ToDictionary(
+            entry => entry.Key,
+            entry => new HealthReportEntry(
+                entry.Value.Status,
+                null,
+                entry.Value.Duration,
+                entry.Value.Exception,
+                entry.Value.Data,
+                entry.Value.Tags),
+            StringComparer.Ordinal);
+        var sanitizedReport = new HealthReport(entries, report.Status, report.TotalDuration);
+        await UIResponseWriter.WriteHealthCheckUIResponseNoExceptionDetails(context, sanitizedReport)
+            .ConfigureAwait(false);
     }
 
     public static IHealthChecksBuilder AddSimpleInjectorCheck<T>(this IHealthChecksBuilder builder, string name, HealthStatus? failureStatus = null, IEnumerable<string>? tags = null, TimeSpan? timeout = null) where T : class, IHealthCheck

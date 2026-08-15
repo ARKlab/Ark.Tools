@@ -46,8 +46,8 @@ public class ArkProblemDetailsOptionsSetup
     [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "IConfigureOptions<T>.Configure interface constraint prevents RequiresUnreferencedCode. BusinessRuleViolation base class has DynamicallyAccessedMembers for PublicProperties. Applications must preserve all BusinessRuleViolation-derived types.")]
     public void Configure(ProblemDetailsOptions options)
     {
-        // This is the default behavior; only include exception details in a development environment.
-        options.IncludeExceptionDetails = (ctx, ex) => true; // !Environment.IsProduction();
+        // Keep exception details to development by default. A configured delegate opts in explicitly.
+        options.IncludeExceptionDetails ??= (ctx, ex) => !_environment.IsProduction();
 
         options.ShouldLogUnhandledException = (ctx, e, d) => _isServerError(d.Status);
 
@@ -119,7 +119,17 @@ public class ArkProblemDetailsOptionsSetup
     {
         var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>
         {
-            var props = t.GetProperties().Where(x => x.DeclaringType != typeof(BusinessRuleViolation)).Select(x => (x.Name, x.PropertyType)).ToArray();
+            var props = t.GetProperties()
+                .Where(x => x.GetMethod is not null
+                    && !x.GetMethod.IsStatic
+                    && x.DeclaringType != typeof(BusinessRuleViolation))
+                .GroupBy(x => x.Name, StringComparer.Ordinal)
+                .Select(x => x
+                    .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
+                    .First())
+                .OrderBy(x => x.Name, StringComparer.Ordinal)
+                .Select(x => (x.Name, x.PropertyType))
+                .ToArray();
             return _dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
         });
 
@@ -127,6 +137,14 @@ public class ArkProblemDetailsOptionsSetup
         var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions)!;
         ret.Extensions["@BusinessRuleViolation"] = arg.BusinessRuleViolation;
         return ret;
+    }
+
+    private static int _getInheritanceDepth(Type? type)
+    {
+        var depth = 0;
+        for (var current = type; current is not null; current = current.BaseType)
+            depth++;
+        return depth;
     }
 
     private static bool _isServerError(int? statusCode)

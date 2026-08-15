@@ -10,7 +10,7 @@ namespace Ark.Reference.Core.API.Queries;
 /// </summary>
 public static class BookPrintProcess_GetByFiltersQuery
 {
-    public record V1 : IQuery<PagedResult<BookPrintProcess.V1.Output>>
+    public record V1 : IQuery<V1, PagedResult<BookPrintProcess.V1.Output>>
     {
         public int[]? BookPrintProcessId { get; init; }
         public int[]? BookId { get; init; }

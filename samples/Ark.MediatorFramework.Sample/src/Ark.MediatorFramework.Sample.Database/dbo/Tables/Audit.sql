@@ -1,0 +1,10 @@
+CREATE TABLE [dbo].[Audit]
+(
+    [Id] UNIQUEIDENTIFIER NOT NULL,
+    [UserId] NVARCHAR(255) NOT NULL,
+    [EntityType] NVARCHAR(255) NOT NULL,
+    [Identifier] NVARCHAR(255) NOT NULL,
+    [Operation] NVARCHAR(255) NOT NULL,
+    [Timestamp] DATETIME2(7) NOT NULL,
+    CONSTRAINT [PK_Audit] PRIMARY KEY CLUSTERED ([Id])
+)

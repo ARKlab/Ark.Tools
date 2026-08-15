@@ -76,7 +76,8 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         }
         , _cts.Token).FailFastOnException();
     }
-
+    
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected virtual void _onBeforeStart()
     {
     }
@@ -130,6 +131,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         }
     }
 
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected virtual async Task _runOnce(RunType runType, CancellationToken ctk = default)
     {
         var now = DateTime.UtcNow;
@@ -288,6 +290,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     /// </summary>
     /// <param name="ctk">Cancellation token</param>
     /// <returns>Collection of resource metadata</returns>
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract Task<IEnumerable<IResourceMetadata<TExtensions>>> _getResourcesInfo(CancellationToken ctk = default);
     
     /// <summary>
@@ -297,6 +300,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     /// <param name="lastState">Last tracked state of the resource</param>
     /// <param name="ctk">Cancellation token</param>
     /// <returns>The resource payload, or null if not available</returns>
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract Task<T?> _retrievePayload(IResourceMetadata<TExtensions> info, IResourceTrackedState<TExtensions>? lastState, CancellationToken ctk = default);
     
     /// <summary>
@@ -304,6 +308,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     /// </summary>
     /// <param name="context">The context containing resource state information</param>
     /// <param name="ctk">Cancellation token</param>
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract Task _processResource(ChangedStateContext<T, TExtensions> context, CancellationToken ctk = default);
 
     private async Task<T?> _fetchResource(ProcessContext<TExtensions> pc, CancellationToken ctk = default)

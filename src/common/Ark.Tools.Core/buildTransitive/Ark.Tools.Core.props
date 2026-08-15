@@ -1,0 +1,24 @@
+<Project>
+  <!--
+  Consumers of the Ark.Tools.Core NuGet package automatically get the
+  ToDataTableArkInterceptorGenerator (packed as an analyzer inside this package) applied
+  to their own compilation. That generator emits C# 14 interceptors into the
+  Ark.Tools.Core.Generated namespace, which the consuming project must opt into via
+  InterceptorsNamespaces (see https://github.com/dotnet/roslyn/blob/main/docs/features/interceptors.md).
+  This property is additive/inert: if the generator does not emit anything into this
+  namespace (e.g. because the project's C# language version does not support
+  interceptors), listing it here has no effect.
+  -->
+  <PropertyGroup>
+    <!-- Set ArkCoreInterceptorsEnabled=false to use the reflection-based fallback. -->
+    <ArkCoreInterceptorsEnabled Condition="'$(ArkCoreInterceptorsEnabled)' == ''">true</ArkCoreInterceptorsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="ArkCoreInterceptorsEnabled" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(ArkCoreInterceptorsEnabled)' != 'false'">
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+</Project>

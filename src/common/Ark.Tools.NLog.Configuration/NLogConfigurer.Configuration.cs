@@ -72,12 +72,6 @@ public static class NLogConfigurerConfiguration
     {
         appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
 
-        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
-        {
-            global::NLog.LogManager.GetLogger("Main").Fatal(e.ExceptionObject as Exception, global::System.Globalization.CultureInfo.InvariantCulture, "UnhandledException");
-            global::NLog.LogManager.Flush();
-        };
-
         return builder.ConfigureLogging((ctx, logging) =>
         {
             var c = NLogConfigurer.For(appName)

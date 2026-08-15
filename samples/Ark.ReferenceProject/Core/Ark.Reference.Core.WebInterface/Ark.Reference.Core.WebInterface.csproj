@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
     <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
     <AspNetCoreHostingModel>inprocess</AspNetCoreHostingModel>
   </PropertyGroup>

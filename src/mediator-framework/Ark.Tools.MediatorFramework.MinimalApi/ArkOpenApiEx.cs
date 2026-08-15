@@ -1,0 +1,314 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Microsoft.AspNetCore.OpenApi;
+
+using Microsoft.OpenApi;
+
+using Ark.MediatorFramework;
+
+using System.Text.Json.Nodes;
+
+namespace Ark.Tools.MediatorFramework.MinimalApi;
+
+/// <summary>OpenAPI conventions used by Ark Minimal API hosts.</summary>
+[SuppressMessage("Naming", "CA1711", Justification = "The Ex suffix is part of the public Ark extension API naming convention.")]
+public static class ArkOpenApiEx
+{
+    /// <summary>Adds XML documentation from generated mediator contracts to OpenAPI.</summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkXmlDocumentation(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddOperationTransformer((operation, context, _) =>
+        {
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<ArkDocumentationMetadata>()
+                .FirstOrDefault();
+            if (metadata is null)
+                return Task.CompletedTask;
+
+            if (string.IsNullOrWhiteSpace(operation.Summary))
+                operation.Summary = metadata.Summary;
+            if (string.IsNullOrWhiteSpace(operation.Description))
+                operation.Description = metadata.Remarks;
+
+            if (operation.Parameters is not null)
+            {
+                foreach (var parameter in operation.Parameters.OfType<OpenApiParameter>())
+                {
+                    if (parameter.Name is { } parameterName
+                        && metadata.PropertyDescriptions.TryGetValue(parameterName, out var description)
+                        && string.IsNullOrWhiteSpace(parameter.Description))
+                        parameter.Description = description;
+                }
+            }
+
+            _applySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(content => content.Schema), metadata);
+            foreach (var response in operation.Responses?.Values.OfType<OpenApiResponse>() ?? [])
+                _applySchemaDescriptions(response.Content?.Values.Select(content => content.Schema), metadata);
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
+    private static void _applySchemaDescriptions(
+        IEnumerable<IOpenApiSchema?>? schemas,
+        ArkDocumentationMetadata metadata)
+    {
+        if (schemas is null)
+            return;
+
+        foreach (var schema in schemas.Select(_resolveSchema).OfType<OpenApiSchema>())
+        {
+            foreach (var property in schema.Properties ?? new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal))
+            {
+                if (metadata.PropertyDescriptions.TryGetValue(property.Key, out var description)
+                    && property.Value is OpenApiSchema mutable
+                    && string.IsNullOrWhiteSpace(mutable.Description))
+                    mutable.Description = description;
+            }
+        }
+
+    }
+
+    private static IOpenApiSchema? _resolveSchema(IOpenApiSchema? schema)
+        => schema is OpenApiSchemaReference reference ? reference.Target : schema;
+
+    /// <summary>
+    /// Excludes properties marked with <see cref="ServerSetAttribute"/> from generated schemas.
+    /// </summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkServerSetProperties(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddSchemaTransformer((schema, context, _) =>
+        {
+            var properties = context.JsonTypeInfo.Properties
+                .Where(property => property.AttributeProvider?.IsDefined(typeof(ServerSetAttribute), inherit: false) == true)
+                .Select(property => property.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (schema.Properties is not null)
+            {
+                foreach (var property in schema.Properties.Keys
+                    .Where(property => properties.Contains(property))
+                    .ToArray())
+                    schema.Properties.Remove(property);
+            }
+
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
+    /// <summary>Adds Ark schema formats for supported NodaTime types.</summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkNodaTimeSchemas(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddSchemaTransformer((schema, context, _) =>
+        {
+            var type = Nullable.GetUnderlyingType(context.JsonTypeInfo.Type)
+                ?? context.JsonTypeInfo.Type;
+            var metadata = type switch
+            {
+                var value when value == typeof(NodaTime.LocalDate)
+                    => ("date", "2016-01-21"),
+                var value when value == typeof(NodaTime.LocalDateTime)
+                    => ("date-time", "2016-01-21T15:01:01.999999999"),
+                var value when value == typeof(NodaTime.Instant)
+                    => ("date-time", "2016-01-21T15:01:01.999999999Z"),
+                var value when value == typeof(NodaTime.OffsetDateTime)
+                    => ("date-time", "2016-01-21T15:01:01.999999999+02:00"),
+                var value when value == typeof(NodaTime.ZonedDateTime)
+                    => ((string Format, string Example)?)("",
+                        "2016-01-21T15:01:01.999999999+02:00 Europe/Rome"),
+                var value when value == typeof(NodaTime.LocalTime)
+                    => ("time", "14:01:00.999999999"),
+                var value when value == typeof(NodaTime.DateTimeZone)
+                    => ((string Format, string Example)?)("", "Europe/Rome"),
+                var value when value == typeof(NodaTime.Period)
+                    => ("duration", "P1Y2M-3DT4H"),
+                _ => null,
+            };
+
+            if (metadata is not null)
+            {
+                schema.Type = JsonSchemaType.String | (schema.Type & JsonSchemaType.Null);
+                schema.Format = metadata.Value.Format.Length == 0 ? null : metadata.Value.Format;
+                schema.Examples = [JsonValue.Create(metadata.Value.Example)];
+            }
+
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
+    /// <summary>Uses the wrapped CLR type for OpenAPI route and query parameter schemas.</summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkTypeConverterValueSchemas(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddOperationTransformer(async (operation, context, cancellationToken) =>
+        {
+            if (operation.Parameters is null)
+                return;
+
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<ArkTypeConverterParameterMetadata>();
+            foreach (var item in metadata)
+            {
+                var parameter = operation.Parameters.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, item.Name, StringComparison.OrdinalIgnoreCase));
+                if (parameter is not OpenApiParameter mutableParameter)
+                    continue;
+
+                var description = context.Description.ParameterDescriptions.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, item.Name, StringComparison.OrdinalIgnoreCase));
+                mutableParameter.Schema = await context.GetOrCreateSchemaAsync(
+                    item.Type,
+                    description,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        });
+
+        return options;
+    }
+
+    /// <summary>
+    /// Adds ETag request and response headers, conditional GET support, and <c>304 Not Modified</c>
+    /// responses to ETag-enabled operations.
+    /// </summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkETagParameters(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddOperationTransformer((operation, context, _) =>
+        {
+            var metadata = context.Description.ActionDescriptor.EndpointMetadata
+                .OfType<ArkETagParameterMetadata>()
+                .FirstOrDefault();
+            if (metadata is null)
+                return Task.CompletedTask;
+
+            operation.Parameters ??= [];
+            if (metadata.RequestETag && !operation.Parameters.Any(parameter =>
+                string.Equals(parameter.Name, "If-Match", StringComparison.OrdinalIgnoreCase)))
+            {
+                operation.Parameters.Add(new OpenApiParameter
+                {
+                    Name = "If-Match",
+                    In = ParameterLocation.Header,
+                    Required = false,
+                    Description = "Opaque concurrency token override.",
+                    Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                });
+            }
+
+            if (metadata.ResponseETag)
+            {
+                operation.Responses ??= new OpenApiResponses();
+                var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith('2')).Value;
+                if (success is OpenApiResponse successResponse)
+                {
+                    successResponse.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
+                    successResponse.Headers.TryAdd("ETag", new OpenApiHeader
+                    {
+                        Description = "Opaque concurrency token.",
+                        Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                    });
+                }
+
+                if (string.Equals(context.Description.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+                {
+                    operation.Responses.TryAdd("304", new OpenApiResponse { Description = "Not Modified" });
+                    if (!operation.Parameters.Any(parameter =>
+                        string.Equals(parameter.Name, "If-None-Match", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        operation.Parameters.Add(new OpenApiParameter
+                        {
+                            Name = "If-None-Match",
+                            In = ParameterLocation.Header,
+                            Required = false,
+                            Description = "Return 304 when the opaque token matches.",
+                            Schema = new OpenApiSchema { Type = JsonSchemaType.String },
+                        });
+                    }
+                }
+            }
+
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
+    /// <summary>
+    /// Adds an OpenAPI <c>oneOf</c> schema and discriminator for a polymorphic hierarchy.
+    /// </summary>
+    /// <typeparam name="TBase">The polymorphic base type.</typeparam>
+    /// <typeparam name="TDiscriminator">The discriminator value type.</typeparam>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <param name="discriminatorProperty">The discriminator property name.</param>
+    /// <param name="mapping">The discriminator values and derived types.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkPolymorphism<TBase, TDiscriminator>(
+        this OpenApiOptions options,
+        string discriminatorProperty,
+        params (TDiscriminator Value, Type DerivedType)[] mapping)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrWhiteSpace(discriminatorProperty);
+        ArgumentNullException.ThrowIfNull(mapping);
+
+        options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
+        {
+            if (context.JsonTypeInfo.Type != typeof(TBase))
+                return;
+
+            var document = context.Document
+                ?? throw new InvalidOperationException("OpenAPI schema transformer requires a document.");
+            var references = new List<(string Value, OpenApiSchemaReference Reference)>();
+            foreach (var (value, derivedType) in mapping)
+            {
+                ArgumentNullException.ThrowIfNull(derivedType);
+
+                var componentName = derivedType.Name;
+                var derivedSchema = await context.GetOrCreateSchemaAsync(
+                    derivedType,
+                    null,
+                    cancellationToken).ConfigureAwait(false);
+                document.AddComponent(componentName, derivedSchema);
+                references.Add((
+                    Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)
+                        ?? throw new InvalidOperationException("A discriminator value must have a string representation."),
+                    new OpenApiSchemaReference(componentName, document)));
+            }
+
+            schema.OneOf = new List<IOpenApiSchema>(references.Select(item => (IOpenApiSchema)item.Reference));
+            schema.Discriminator = new OpenApiDiscriminator
+            {
+                PropertyName = discriminatorProperty,
+                Mapping = references.ToDictionary(
+                    item => item.Value,
+                    item => item.Reference,
+                    StringComparer.Ordinal),
+            };
+        });
+
+        return options;
+    }
+}

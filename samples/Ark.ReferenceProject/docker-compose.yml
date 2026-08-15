@@ -6,6 +6,8 @@ services:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: IntegrationTestsDbPassword85!
       MSSQL_COLLATION: Latin1_General_CI_AS_KS
+      # Azure Sql is Enterprise - match it
+      MSSQL_PID: EnterpriseDeveloper
     ports:
       - "1433:1433"
 

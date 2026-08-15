@@ -38,6 +38,7 @@
     <PackageReference Include="NLog.DiagnosticSource" />
     <PackageReference Include="NLog.MailKit" />
     <PackageReference Include="Slack.Webhooks" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" ExcludeAssets="compile;runtime" PrivateAssets="all" />
 
 	  <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>

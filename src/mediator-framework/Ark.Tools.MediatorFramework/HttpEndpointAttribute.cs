@@ -1,0 +1,128 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+namespace Ark.MediatorFramework;
+
+/// <summary>
+/// Opt-in declaration that exposes a pure <c>Ark.Tools.Solid</c> request/query as an HTTP
+/// endpoint.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class HttpEndpointAttribute : Attribute
+{
+    /// <summary>Initializes a new instance of the <see cref="HttpEndpointAttribute"/> class.</summary>
+    /// <param name="verb">The HTTP verb, for example <c>GET</c> or <c>POST</c>.</param>
+    /// <param name="template">The route template, for example <c>/greetings</c> or <c>/api/v{version}/greetings</c>.</param>
+    public HttpEndpointAttribute(string verb, string template)
+    {
+        Verb = verb;
+        Template = template;
+    }
+
+    /// <summary>Gets the HTTP verb.</summary>
+    public string Verb { get; }
+
+    /// <summary>Gets the route template.</summary>
+    public string Template { get; }
+
+    /// <summary>
+    /// Gets or sets the success status code. Zero selects the handler-kind default:
+    /// <c>200 OK</c> for requests and queries.
+    /// </summary>
+    public int SuccessStatusCode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the status code used when a request or query returns
+    /// <see langword="null"/>. Zero selects <c>404 Not Found</c> for queries and
+    /// <c>204 No Content</c> for requests.
+    /// </summary>
+    public int NullResultStatusCode { get; set; }
+
+    /// <summary>Gets or sets whether the endpoint negotiates MessagePack in addition to JSON.</summary>
+    public bool AcceptsMessagePack { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this endpoint explicitly permits anonymous access.
+    /// The host's default <c>RequireAuthenticatedUser()</c> policy applies when this is
+    /// <see langword="false"/>.
+    /// </summary>
+    public bool AllowAnonymous { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether multipart form binding requires antiforgery validation.
+    /// The default is <see langword="false"/> because generated uploads target bearer-token APIs.
+    /// </summary>
+    public bool RequireAntiforgery { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum multipart request body size in bytes, or zero to use the host default.
+    /// </summary>
+    public long MaxRequestBodySizeBytes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of files accepted by a multipart upload.
+    /// Zero means unlimited.
+    /// </summary>
+    public int MaxFileCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of items buffered when a streaming response is
+    /// negotiated as MessagePack. Zero means unlimited.
+    /// </summary>
+    public int MaxMessagePackStreamedItems { get; set; }
+
+    /// <summary>
+    /// Gets or sets the allowed multipart file content types, or an empty array to allow all types.
+    /// </summary>
+    public string[] AllowedContentTypes { get; set; } = [];
+}
+
+/// <summary>
+/// Marks a request property that must be read from the HTTP query string when
+/// the endpoint also has a request body.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class HttpQueryAttribute : Attribute
+{
+}
+
+/// <summary>
+/// Marks the request property that receives the deserialized HTTP body when route or query
+/// properties are also present on the request envelope.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class HttpBodyAttribute : Attribute
+{
+}
+
+/// <summary>
+/// Marks a request property as an HTTP route value. The optional name overrides
+/// the property name used in the route template.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class HttpRouteAttribute : Attribute
+{
+    /// <summary>Initializes a new instance of the <see cref="HttpRouteAttribute"/> class.</summary>
+    public HttpRouteAttribute()
+    {
+    }
+
+    /// <summary>Initializes a new instance with a route parameter name.</summary>
+    /// <param name="name">The route parameter name.</param>
+    public HttpRouteAttribute(string name)
+    {
+        Name = name;
+    }
+
+    /// <summary>Gets the route parameter name override.</summary>
+    public string? Name { get; }
+}
+
+/// <summary>
+/// Marks a property as populated by the server rather than by client input.
+/// The property is excluded from HTTP route, query, body, and OpenAPI request binding.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class ServerSetAttribute : Attribute
+{
+}

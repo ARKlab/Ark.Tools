@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
+    <ArkToolsMediatorFrameworkGrpcHost>true</ArkToolsMediatorFrameworkGrpcHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.AspNetCore.MessagePack" />
+    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
+    <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
+    <PackageReference Include="Ark.Tools.AspNetCore.MinimalApi" />
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore.Reflection" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="Microsoft.Identity.Web" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.RebusProcessor\Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- CompositionRootTests validates the sample host startup with TestServer. -->
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Microsoft.SqlServer.DacFx" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Reqnroll.MsTest" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
+    <PackageReference Include="NodaTime.Testing" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
+    <PackageReference Include="Ark.Tools.Reqnroll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\appsettings.json"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="appsettings.json" />
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.Database\Ark.MediatorFramework.Sample.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
+    <None Include="..\..\src\Ark.MediatorFramework.Sample.Database\bin\$(Configuration)\Ark.MediatorFramework.Sample.Database.dacpac"
+          Link="Ark.MediatorFramework.Sample.Database.dacpac"
+          CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AzureFunctions\Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -8,6 +8,29 @@
 	<Version Condition="'$(Version)' == ''">999.9.9</Version>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<ArkCoreInterceptorsEnabled Condition="'$(ArkCoreInterceptorsEnabled)' == ''">true</ArkCoreInterceptorsEnabled>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<CompilerVisibleProperty Include="ArkCoreInterceptorsEnabled" />
+	</ItemGroup>
+
+	<PropertyGroup Label="C# 14 Interceptors" Condition="'$(ArkCoreInterceptorsEnabled)' != 'false'">
+		<!--
+		Ark.Tools.Core ships a C# 14 interceptor generator (Ark.Tools.Core.Analyzers,
+		ToDataTableArkInterceptorGenerator) that replaces compile-time-known
+		ToDataTableArk<T>() calls with a direct, reflection-free DataTable construction.
+		Published consumers get this automatically via the buildTransitive props packed
+		into the Ark.Tools.Core NuGet package; monorepo projects that reference
+		Ark.Tools.Core via ProjectReference (which does not flow NuGet build assets) need
+		the namespace allow-listed here instead. Listing the namespace is inert unless a
+		generator actually emits interceptors into it - see the interceptors.md spec at
+		https://github.com/dotnet/roslyn/blob/main/docs/features/interceptors.md.
+		-->
+		<InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
+	</PropertyGroup>
+
 	<PropertyGroup Label="Continuous Integration Build Detection">
 		<!-- Azure Pipelines / DevOpsServer -->
 		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
@@ -20,11 +43,13 @@
 		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
+
 	<PropertyGroup Label="Common Build Settings">
 		<IsPackable>true</IsPackable>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
 		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
@@ -69,7 +94,6 @@
 		<GenerateSBOM>true</GenerateSBOM>
 
 		<PolyUseEmbeddedAttribute>true</PolyUseEmbeddedAttribute>
-		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
 	</PropertyGroup>
 
@@ -80,25 +104,35 @@
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
+	<PropertyGroup Label="Temporary NuGet Pack Workaround">
+		<!-- use this section for TEMPORARY workaround for Nuget Errors (prereleases or vulnerabilities with no fix) -->
+		<NoWarn>$(NoWarn)</NoWarn>
+	</PropertyGroup>
+
 	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
     	<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 
   <PropertyGroup Label="Test Settings" Condition="'$(IsTestProject)' == 'true'">
     <IsPackable>false</IsPackable>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
     
     <OutputType>Exe</OutputType>
 
     <EnableMSTestRunner>true</EnableMSTestRunner>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+
+	<ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
+	<ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)'==''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+
   </PropertyGroup>
+  
 
 	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
 		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
 		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
 	</ItemGroup>
-
 
 	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
 
@@ -117,6 +151,12 @@
 
 	</PropertyGroup>
   
+	<PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != ''">
+		<!-- Copilot coding agent sandboxes do not expose repository metadata to SourceLink. -->
+		<EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+		<EnableSourceLink>false</EnableSourceLink>
+	</PropertyGroup>
+
 	<ItemGroup Condition="$(IsPackable) != 'false'">
 		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />

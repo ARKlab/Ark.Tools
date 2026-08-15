@@ -15,14 +15,6 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
         _container = container;
     }
 
-    private object _getHandlerInstance(object command)
-    {
-        var commandType = command.GetType();
-        var handlerType = typeof(ICommandHandler<>).MakeGenericType(commandType);
-
-        return _container.GetInstance(handlerType);
-    }
-
     [DebuggerStepThrough]
 #pragma warning disable CS0618 // Type or member is obsolete
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
@@ -36,9 +28,17 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
-        dynamic commandHandler = _getHandlerInstance(command);
-        await commandHandler.ExecuteAsync((dynamic)command, ctk);
+        await CommandHandlerInvokerCache.ExecuteAsync(_container, command, ctk).ConfigureAwait(false);
     }
 
+    [DebuggerStepThrough]
+    public async Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
+        where TCommand : class, ICommand<TCommand>
+    {
+        if (command is not TCommand typedCommand)
+            throw new ArgumentException($"Command of type '{command.GetType()}' must be a '{typeof(TCommand)}'.", nameof(command));
 
+        var handler = _container.GetInstance<ICommandHandler<TCommand>>();
+        await handler.ExecuteAsync(typedCommand, ctk).ConfigureAwait(false);
+    }
 }

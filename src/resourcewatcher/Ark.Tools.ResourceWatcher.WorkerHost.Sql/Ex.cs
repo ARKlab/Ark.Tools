@@ -56,7 +56,7 @@ public static class Ex
             r.Container.RegisterInstance(config);
             if (!skipInit)
             {
-                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider>() as SqlStateProvider)!.EnsureTableAreCreated();
+                r.OnBeforeStart += () => (r.Container.GetInstance<IStateProvider<VoidExtensions>>() as SqlStateProvider)!.EnsureTableAreCreated();
             }
         });
     }

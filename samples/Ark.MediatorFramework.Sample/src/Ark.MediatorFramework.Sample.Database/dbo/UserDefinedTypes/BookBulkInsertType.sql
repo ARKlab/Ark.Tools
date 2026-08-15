@@ -1,0 +1,9 @@
+CREATE TYPE [dbo].[BookBulkInsertType] AS TABLE
+(
+    [Id] UNIQUEIDENTIFIER NOT NULL,
+    [Title] NVARCHAR(200) NOT NULL,
+    [Author] NVARCHAR(100) NOT NULL,
+    [Genre] NVARCHAR(30) NOT NULL,
+    [ISBN] NVARCHAR(20) NULL,
+    [Description] NVARCHAR(400) NOT NULL
+)

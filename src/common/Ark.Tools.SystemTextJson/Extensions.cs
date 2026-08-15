@@ -22,6 +22,7 @@ public static class Extensions
         @this.Converters.Add(new JsonStringEnumMemberConverter()); // from macross
         @this.Converters.Add(new GenericDictionaryWithConvertibleKey());
         @this.Converters.Add(new ValueCollectionJsonConverterFactory());
+        @this.Converters.Add(new EvolvableEnumJsonConverterFactory()); // default: symbolic name; opt into EvolvableEnumIntegerJsonConverterFactory per-property for numbers
 
         @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
         @this.ConfigureForNodaTimeRanges();

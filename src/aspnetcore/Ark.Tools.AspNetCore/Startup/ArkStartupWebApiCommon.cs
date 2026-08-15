@@ -114,6 +114,7 @@ public abstract class ArkStartupWebApiCommon
         services.AddApiVersioning(o =>
         {
             o.ReportApiVersions = true;
+            o.ApiVersionReader = new UrlSegmentApiVersionReader();
             o.RouteConstraintName = "apiVersion";
             o.DefaultApiVersion = Versions.Last();
             o.AssumeDefaultVersionWhenUnspecified = true;
@@ -169,7 +170,7 @@ public abstract class ArkStartupWebApiCommon
             c.EnableAnnotations();
         });
 
-        services.ArkConfigureSwaggerVersions(Versions, MakeInfo);
+        services._arkConfigureSwaggerVersions(Versions, MakeInfo);
 
         services.ArkConfigureSwagger(c =>
         {
@@ -288,6 +289,7 @@ public abstract class ArkStartupWebApiCommon
         //app.UseMvc(_mvcRoute); //Not Usable without setting 	MVC opt.EnableEndpointRouting = false;
     }
 
+    [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected virtual void _mvcRoute(IRouteBuilder routeBuilder)
     {
     }

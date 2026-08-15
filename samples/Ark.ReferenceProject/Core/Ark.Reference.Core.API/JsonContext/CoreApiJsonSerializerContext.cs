@@ -73,6 +73,7 @@ namespace Ark.Reference.Core.API.JsonContext;
 [JsonSerializable(typeof(BookPrintProcess.V1.Create), TypeInfoPropertyName = "BookPrintProcessV1Create")]
 [JsonSerializable(typeof(BookPrintProcess.V1.Output), TypeInfoPropertyName = "BookPrintProcessV1Output")]
 [JsonSerializable(typeof(IEnumerable<Ping.V1.Output>), TypeInfoPropertyName = "IEnumerablePingV1Output")]
+[JsonSerializable(typeof(IEnumerable<Book.V1.Create>), TypeInfoPropertyName = "IEnumerableBookV1Create")]
 [JsonSerializable(typeof(IEnumerable<Book.V1.Output>), TypeInfoPropertyName = "IEnumerableBookV1Output")]
 [JsonSerializable(typeof(PagedResult<Ping.V1.Output>), TypeInfoPropertyName = "PagedResultPingV1Output")]
 [JsonSerializable(typeof(PagedResult<Book.V1.Output>), TypeInfoPropertyName = "PagedResultBookV1Output")]

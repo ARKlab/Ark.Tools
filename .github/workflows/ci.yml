@@ -8,6 +8,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: write
+  checks: write
+
 jobs:
   build:
     name: 'Build'
@@ -21,6 +26,8 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+          # Azure Sql is Enterprise - match it
+          MSSQL_PID: EnterpriseDeveloper
         options: >-
           --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
           --health-interval=10s
@@ -30,7 +37,7 @@ jobs:
 
     steps:
     - name: 'Checkout'
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
     # See: https://github.com/Azure/Azurite/issues/2623
@@ -44,15 +51,21 @@ jobs:
           azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
     - name: 'Install dotnet'
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         global-json-file: global.json
-      
+
+    - name: 'Install Azure Functions Core Tools'
+      run: npm install --global azure-functions-core-tools@4.12.1
+
     - name: 'Restore packages'
       run: dotnet restore --locked-mode
 
     - name: 'Build project'
       run: dotnet build --no-restore --configuration Debug
+
+    - name: 'Pack projects (package validation and SBOM)'
+      run: dotnet pack Ark.Tools.slnx --no-restore --configuration Debug --output "${{ runner.temp }}/ark-tools-packages"
 
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
@@ -63,6 +76,15 @@ jobs:
       with:
         name: test-results
         path: "**/*.trx"
+
+    - name: Publish test report for same-repository pull requests
+      if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+      uses: dorny/test-reporter@v3
+      with:
+        name: DotNET Tests
+        path: "**/*.trx"
+        reporter: dotnet-trx
+        use-actions-summary: 'false'
 
     - name: Install dotnet-coverage
       run: dotnet tool install -g dotnet-coverage
@@ -77,4 +99,12 @@ jobs:
 
     - name: Write to Job Summary
       run: cat CodeCoverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+    - name: 'Upload sanitized Function host logs'
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: azure-functions-boundary-logs
+        path: '/tmp/ark-azf-*.log'
+        if-no-files-found: ignore
     

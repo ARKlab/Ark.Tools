@@ -21,7 +21,13 @@ public class PolicyAuthorizeRequestDecorator<TRequest, TResult> : IRequestHandle
         _authSvc = authSvc;
         _currentUser = currentUser;
         _container = container;
-        _policies = typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
+        _policies = PolicyMetadata._policies;
+    }
+
+    private static class PolicyMetadata
+    {
+        internal static readonly PolicyAuthorizeAttribute[] _policies =
+            typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
     [RequiresUnreferencedCode("Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
@@ -39,7 +45,7 @@ public class PolicyAuthorizeRequestDecorator<TRequest, TResult> : IRequestHandle
                 {
                     (var authorized, var messages) = await _authSvc.AuthorizeAsync(_currentUser.Current, resource, policy, ctk).ConfigureAwait(false);
                     if (!authorized)
-                        throw new UnauthorizedAccessException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
+                        throw new PolicyAuthorizationException($"Security policy {policy.Name} not satisfied, messages: {string.Join(Environment.NewLine, messages)}");
                 }
             }
         }

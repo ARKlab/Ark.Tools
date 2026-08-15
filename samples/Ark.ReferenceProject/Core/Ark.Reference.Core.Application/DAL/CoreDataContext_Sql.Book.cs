@@ -2,11 +2,14 @@ using Ark.Reference.Common;
 using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Core;
 using Ark.Tools.Sql.SqlServer;
 
 using Dapper;
 
 using NodaTime;
+
+using System.Data;
 
 using static Dapper.SqlMapper;
 
@@ -132,6 +135,40 @@ public partial class CoreDataContext_Sql
         return id;
     }
 
+    public async Task<IEnumerable<Book.V1.Output>> BulkInsertBooksAsync(
+        IEnumerable<Book.V1.Output> entities,
+        CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "BulkInsertBooksAsync called");
+
+        var rows = entities.Select(entity => new BookBulkInsertRow(
+            entity.Title,
+            entity.Author,
+            entity.Genre?.ToString(),
+            entity.ISBN,
+            entity.Description,
+            CurrentAudit?.AuditId ?? throw new InvalidOperationException("An audit must be created before inserting books.")));
+
+        var parameters = new
+        {
+            Books = rows.ToDataTableArk().AsTableValuedParameter("dbo.BookBulkInsertType")
+        };
+
+        var cmd = new CommandDefinition(
+            "dbo.Book_BulkInsert",
+            parameters,
+            transaction: Transaction,
+            commandType: CommandType.StoredProcedure,
+            cancellationToken: ctk);
+
+        var data = await Connection.QueryAsync<BookView>(cmd).ConfigureAwait(false);
+        var result = data.Select(static item => item.ToOutput());
+
+        _logger.Trace(CultureInfo.InvariantCulture, "BulkInsertBooksAsync ended");
+
+        return result;
+    }
+
     public async Task PutBookAsync(Book.V1.Output entity, CancellationToken ctk = default)
     {
         _logger.Trace(CultureInfo.InvariantCulture, "PutBookAsync called");
@@ -253,6 +290,14 @@ public partial class CoreDataContext_Sql
     }
 
     #region Private view
+    private sealed record BookBulkInsertRow(
+        string? Title,
+        string? Author,
+        string? Genre,
+        string? ISBN,
+        string? Description,
+        Guid AuditId);
+
     private sealed record BookView
     {
         public int Id { get; set; }

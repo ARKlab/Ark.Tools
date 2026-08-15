@@ -1,0 +1,75 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Ark.Tools.AspNetCore.MinimalApi;
+
+/// <summary>Provides the optional Ark Minimal API security profile.</summary>
+public static class ArkMinimalApiSecurityExtensions
+{
+    /// <summary>
+    /// Adds the Ark security-header policies used by Minimal API hosts.
+    /// </summary>
+    /// <param name="services">The application service collection.</param>
+    /// <returns>The original service collection.</returns>
+    public static IServiceCollection AddArkMinimalApiSecurity(
+        this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddSecurityHeaderPolicies()
+            .SetDefaultPolicy(policy => policy
+                .AddDefaultApiSecurityHeaders()
+                .RemoveServerHeader())
+            .AddPolicy("Scalar", policy => _configureDocumentationPolicy(policy))
+            .AddPolicy("Swagger", policy => _configureDocumentationPolicy(policy))
+            .AddPolicy("GrpcReflection", policy => policy
+                .AddDefaultSecurityHeaders()
+                .RemoveServerHeader())
+            .SetPolicySelector(context =>
+            {
+                var path = context.HttpContext.Request.Path;
+
+                if (path.StartsWithSegments("/scalar", StringComparison.OrdinalIgnoreCase)
+                    || path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase)
+                    || path.StartsWithSegments("/openapi", StringComparison.OrdinalIgnoreCase))
+                {
+                    return context.ConfiguredPolicies["Scalar"];
+                }
+
+                if (path.StartsWithSegments("/grpc.reflection", StringComparison.OrdinalIgnoreCase))
+                {
+                    return context.ConfiguredPolicies["GrpcReflection"];
+                }
+
+                return context.DefaultPolicy;
+            });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Adds the Ark security-header middleware and HSTS middleware to the request pipeline.
+    /// </summary>
+    /// <param name="app">The application builder.</param>
+    /// <returns>The original application builder.</returns>
+    public static IApplicationBuilder UseArkMinimalApiSecurity(this IApplicationBuilder app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+
+        app.UseSecurityHeaders();
+        app.UseHsts();
+        return app;
+    }
+
+    private static void _configureDocumentationPolicy(HeaderPolicyCollection policy)
+    {
+        policy
+            .AddDefaultSecurityHeaders()
+            .RemoveServerHeader();
+        policy.Remove("Cross-Origin-Opener-Policy");
+        policy.AddCrossOriginOpenerPolicy(options => options.UnsafeNone());
+    }
+}
