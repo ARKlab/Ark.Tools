@@ -86,9 +86,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "IBf7lbovvjGWVWXZX5cJ/cO0WXbId0Zq4BuSeT94mGZuOAP66oMeH9PTBZ9Jpp3Jb6jtK0qm/NyUbPRo1gC/wQ=="
+        "requested": "[10.0.10, )",
+        "resolved": "10.0.10",
+        "contentHash": "f5VCIE7AJpd5YvzNTeMGVzQIgyE9tX+AreTYwQF+REbu+DZo/2Ae+jNSwhPEYrVz6RRkd7y8ubXjk6Nn6Ka+Cg=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -133,6 +133,16 @@
           "System.Memory.Data": "10.0.3"
         }
       },
+      "Azure.Monitor.OpenTelemetry.Exporter": {
+        "type": "Transitive",
+        "resolved": "1.8.0",
+        "contentHash": "JbNUQIK7uZ7Mg2fZzdsjqC/eso3Ag/tMwCqYvGvedyE1fObe6JAwCaCSMZDMrhrAaFn8x8+ZaKJelfcEK5MCcg==",
+        "dependencies": {
+          "Azure.Core": "1.54.0",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "OpenTelemetry.PersistentStorage.FileSystem": "1.0.3"
+        }
+      },
       "Azure.Security.KeyVault.Secrets": {
         "type": "Transitive",
         "resolved": "4.10.0",
@@ -146,43 +156,6 @@
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
       },
-      "Microsoft.ApplicationInsights.DependencyCollector": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "9YRdl9SNbTxd4AafJckyoJLr5gJdnvqFivjo+PY0lQTPEncPB+z3ZABG4iDfxN9HI1aLqyRINr1/7de9Wg8ZuQ==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.EventCounterCollector": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "gGt0JPw2dcSeIAIefyORJBdeMz8KgAFIktu8HV/NwkiGmLyw+YtifLm6B5gvGxO15AeMsGPbmvWEIvLfq88XPw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.PerfCounterCollector": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "q9ApjZfBS9O8m3aQM2oVjsGBmlE8BCFywT7UR+8aqdNuz7HpoIxw4jHy0XOBergiFX/olrJF4OyPkGxc3H5JHg==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.Extensions.Caching.Memory": "1.0.0",
-          "System.Diagnostics.PerformanceCounter": "6.0.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.WindowsServer": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "2B8CGfnB/tribkQAqRBhMvJYJK5TkEPMG/BB0QrlxdwVGEufayNLMveXjkQCqld9arXd6wKR1ve2XmkA0+xXKQ==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.DependencyCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0"
-        }
-      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -192,6 +165,11 @@
         "type": "Transitive",
         "resolved": "10.0.2",
         "contentHash": "LG9Yll3B5aNpxv0+D47g6LiOiKBIlodhcHdQwcYzo8VeexFLGqx5ymetmA2aBRyo9cCcWsQWrFsdbsr8LvmWDw=="
+      },
+      "Microsoft.Bcl.Memory": {
+        "type": "Transitive",
+        "resolved": "10.0.4",
+        "contentHash": "ayoY21xuhuY6cYZkG92bdYsulmJlLS558b3Ez1rWFkBZ+QIUSeAlALzT1UK+ZZeEmhzFWjemG4bBcMRhdiHntA=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
@@ -218,6 +196,14 @@
         "type": "Transitive",
         "resolved": "6.0.2",
         "contentHash": "f+pRODTWX7Y67jXO3T5S2dIPZ9qMJNySjlZT/TKmWVNWe19N8jcWmHaqHnnchaq3gxEKv1SWVY5EFzOD06l41w=="
+      },
+      "Microsoft.Diagnostics.NETCore.Client": {
+        "type": "Transitive",
+        "resolved": "0.2.621003",
+        "contentHash": "22YdSeB53xk4Pd1Xz92HigUy8ySJMzd8hpEZHlFWeaefzYox4VJnW+gJEzGrxbSvl3oGCpiIFKqh8the0xhzSA==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "6.0.4"
+        }
       },
       "Microsoft.Extensions.Caching.Memory": {
         "type": "Transitive",
@@ -328,15 +314,6 @@
           "Microsoft.Extensions.Options": "10.0.11"
         }
       },
-      "Microsoft.Extensions.Logging.ApplicationInsights": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "JLEabPz445i1yRB0hKZVzJJE35QatRIzWlrMOiBQXr9kBJod0jkpkrBf94ln6kXu+jlEGohnXtuXacPPhybJDw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.Extensions.Logging": "2.1.1"
-        }
-      },
       "Microsoft.Extensions.Logging.Configuration": {
         "type": "Transitive",
         "resolved": "10.0.11",
@@ -433,6 +410,48 @@
           "System.Security.Cryptography.Pkcs": "10.0.0"
         }
       },
+      "OpenTelemetry.Api.ProviderBuilderExtensions": {
+        "type": "Transitive",
+        "resolved": "1.17.0",
+        "contentHash": "Xgc3Qf9B9TFMFpx6exTdGqMWuYIT2miNzkdMPutVvT9YuMFaEovXWke1Gb6z8NxYaQbbGF38vYLuSg1JCeui5Q==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "OpenTelemetry.Api": "1.17.0"
+        }
+      },
+      "OpenTelemetry.Instrumentation.Http": {
+        "type": "Transitive",
+        "resolved": "1.15.1",
+        "contentHash": "vFO4Fj/dXkoVNGo/nhoGpO2zYQmZwr4jTID7oRGo+XlQ8LqksyZjUXQ4p39RfUvTID7IzzL8Qe71tW7CcAFymA==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "10.0.0",
+          "Microsoft.Extensions.Options": "10.0.0",
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.Instrumentation.SqlClient": {
+        "type": "Transitive",
+        "resolved": "1.15.2",
+        "contentHash": "pRB84YJEXD121kygc6CtcF46dtLuTKIjphA2SJye32G4g2Xl3epkCrOcPCOAg4WDagCdMGa16Ge6PPVzFJZsAQ==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "10.0.0",
+          "Microsoft.Extensions.Options": "10.0.0",
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.PersistentStorage.Abstractions": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "7nSE1uLY0KOHRssg1xQydDZJ/s9zECOzFT/gSDIp1KTxbgd1yziuMTsdBKZ/N1BbpUxfH6Pjq5OMd7lYogwReA=="
+      },
+      "OpenTelemetry.PersistentStorage.FileSystem": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "3k+yCroJcGBtZIia+0LgzMlBuD0U95BzcWNEGWedusBaRAD8EmkaCPAUwaCtFbb/Mg7HywbIG2zuenANPYFJ0g==",
+        "dependencies": {
+          "OpenTelemetry.PersistentStorage.Abstractions": "1.0.3"
+        }
+      },
       "System.ClientModel": {
         "type": "Transitive",
         "resolved": "1.10.0",
@@ -451,16 +470,16 @@
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "gbeE5tNp/oB7O8kTTLh3wPPJCxpNOphXPTWVs1BsYuFOYapFijWuh0LYw1qnDo4gwDUYPXOmpTIhvtxisGsYOQ==",
+        "resolved": "7.0.0",
+        "contentHash": "L+zIMEaXp1vA4wZk1KLMpk6tvU0xy94R0IfmhkmTWeC4KwShsmAfbg5I19LgjsCTYp6GVdXZ2aHluVWL0QqBdA==",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "6.0.0"
+          "System.Configuration.ConfigurationManager": "7.0.0"
         }
       },
       "System.IO.FileSystem.AccessControl": {
         "type": "Transitive",
-        "resolved": "4.7.0",
-        "contentHash": "vMToiarpU81LR1/KZtnT7VDPvqAZfw9oOS5nY6pPP78nGYz3COLsQH3OfzbR+SjTgltd31R6KmKklz/zDpTmzw=="
+        "resolved": "5.0.0",
+        "contentHash": "SxHB3nuNrpptVk+vZ/F+7OHEpoHUIKKMl02bUmYHQr1r+glbZQxs7pRtsf4ENO29TVm2TH3AEeep2fJcy92oYw=="
       },
       "System.IO.Hashing": {
         "type": "Transitive",
@@ -485,11 +504,10 @@
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "[2.23.0, )",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )"
+          "Ark.Tools.OTel": "[1.0.0, )",
+          "Microsoft.ApplicationInsights": "[3.1.2, )",
+          "Microsoft.Extensions.Options": "[10.0.11, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
         }
       },
       "ark.tools.applicationinsights.hostedservice": {
@@ -499,7 +517,8 @@
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
-          "Microsoft.ApplicationInsights.WorkerService": "[2.23.0, )"
+          "Azure.Monitor.OpenTelemetry.Profiler": "[1.0.1-beta.7, )",
+          "Microsoft.ApplicationInsights.WorkerService": "[3.1.2, )"
         }
       },
       "ark.tools.core": {
@@ -536,7 +555,7 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
-          "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
+          "Microsoft.ApplicationInsights.NLogTarget": "[3.1.2-beta1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.1.4, )",
           "NLog.Database": "[6.0.3, )",
@@ -575,6 +594,14 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
+        }
+      },
+      "ark.tools.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Data.SqlClient": "[7.0.2, )",
+          "Microsoft.Extensions.Options": "[10.0.11, )",
+          "OpenTelemetry": "[1.17.0, )"
         }
       },
       "ark.tools.resourcewatcher": {
@@ -635,6 +662,39 @@
           "Azure.Core": "1.53.0"
         }
       },
+      "Azure.Monitor.OpenTelemetry.Profiler": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.1-beta.7, )",
+        "resolved": "1.0.1-beta.7",
+        "contentHash": "E33KO2trPYn4FH2D/yxvWXKqjka/iaTce4ysJBzIgCSRlfFkXcER+95SmGBdGO0q3/X+CaS+EbN5kjf5SCmmNQ==",
+        "dependencies": {
+          "Azure.Core": "1.50.0",
+          "Azure.Identity": "1.14.0",
+          "Azure.Monitor.OpenTelemetry.Exporter": "1.4.0",
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.1",
+          "Microsoft.Bcl.Memory": "10.0.4",
+          "Microsoft.Diagnostics.NETCore.Client": "0.2.621003",
+          "Microsoft.Extensions.Configuration": "10.0.0",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Configuration.Binder": "10.0.0",
+          "Microsoft.Extensions.DependencyInjection": "10.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Logging": "10.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Options": "10.0.0",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
+          "Microsoft.Extensions.Primitives": "10.0.0",
+          "OpenTelemetry": "1.15.3",
+          "OpenTelemetry.Api": "1.15.3",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "System.Diagnostics.PerformanceCounter": "7.0.0",
+          "System.IO.FileSystem.AccessControl": "5.0.0",
+          "System.IO.Hashing": "10.0.0",
+          "System.Memory.Data": "10.0.0",
+          "System.Security.Cryptography.ProtectedData": "10.0.0"
+        }
+      },
       "Ben.Demystifier": {
         "type": "CentralTransitive",
         "requested": "[0.4.1, )",
@@ -664,55 +724,33 @@
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw=="
+        "requested": "[3.1.2, )",
+        "resolved": "3.1.2",
+        "contentHash": "E+8N7Q6GS/AcyJ0xuYA48nVL4eQGGOSJZvNz/R7qQtMGCUwjLzQe9Ttpgh/7eQktngsUuNGaEzBhM7IUU0t4xA==",
+        "dependencies": {
+          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.0"
+        }
       },
       "Microsoft.ApplicationInsights.NLogTarget": {
         "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "rjUqSw8SLCB7timNT/Brz92mumWv4audq2diIj67xKibdcK93kh+QaMj/G+OiNrsqfi2K+0CxmIZCALTi19Obg==",
+        "requested": "[3.1.2-beta1, )",
+        "resolved": "3.1.2-beta1",
+        "contentHash": "3OUPs7wkoH0uYhB7KYFCOO9/ly5K5rWkRlg0wJQi8zWYtjDkjlkDCMkrB00pPeRyKn4Kb0ILHrEpddZ0J6nucw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
+          "Microsoft.ApplicationInsights": "3.1.2",
           "NLog": "4.5.11"
-        }
-      },
-      "Microsoft.ApplicationInsights.SnapshotCollector": {
-        "type": "CentralTransitive",
-        "requested": "[1.4.6, )",
-        "resolved": "1.4.6",
-        "contentHash": "UGXpUjW3YFSFq+u4CXwJrU3Rf7Hc3dMrMVTBJ8E3LB0eV2MF8lOHnXc+kHEmLKO4gxHhvulaVIld7U5aDzLZ8A==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.15.0",
-          "Microsoft.Extensions.Options": "2.1.1",
-          "System.IO.FileSystem.AccessControl": "4.7.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": {
-        "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "798Dudr4tkujslk1w+XcXOcCErmVsk+nhp+QCHLa3lcgi25vkAxBmzPUeQlRJVCNL/1f4x/YF+vQZ8RSuTXWCw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "System.IO.FileSystem.AccessControl": "4.7.0"
         }
       },
       "Microsoft.ApplicationInsights.WorkerService": {
         "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "3+EJOAIkgbU5rQMFowiB1s04/gf56kuwwGjcFyoeL2iyweHirjJpGu7XoigjvtWGkxue6CAAjUPwuuGMHE97Yg==",
+        "requested": "[3.1.2, )",
+        "resolved": "3.1.2",
+        "contentHash": "jFyIBi1/ZPFEZHeiSINsY2nj/UJIP9geLZ+1fjYWlDvX0NXiafPCbu5AyIH7inDGtgjAK81hLBmII7F4cgNbug==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.DependencyCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.EventCounterCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.WindowsServer": "2.23.0",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Extensions.DependencyInjection": "2.1.1",
-          "Microsoft.Extensions.Logging.ApplicationInsights": "2.23.0"
+          "Microsoft.ApplicationInsights": "3.1.2",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "OpenTelemetry.Instrumentation.Http": "1.15.1",
+          "OpenTelemetry.Instrumentation.SqlClient": "1.15.2"
         }
       },
       "Microsoft.Data.SqlClient": {
@@ -965,6 +1003,34 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
+      "OpenTelemetry": {
+        "type": "CentralTransitive",
+        "requested": "[1.17.0, )",
+        "resolved": "1.17.0",
+        "contentHash": "rMLOTftlMlTm7+MSrvXDHnJRjVkROFNKXHZrYjOsX+LankaFG7QSflx7qRRGjoqZoirohnxmJQ7GEb9occO4Gg==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.0",
+          "Microsoft.Extensions.Diagnostics.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Logging.Configuration": "10.0.0",
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.17.0"
+        }
+      },
+      "OpenTelemetry.Api": {
+        "type": "CentralTransitive",
+        "requested": "[1.17.0, )",
+        "resolved": "1.17.0",
+        "contentHash": "mSBxzomZgHIJu9CyVNqyDu/n2JHEtqVgfcCD1Br0cV5iLYogjZOMqhlVLt99PEp+0KGBNUR3GXgeOdN2GR3F9g=="
+      },
+      "OpenTelemetry.Extensions.Hosting": {
+        "type": "CentralTransitive",
+        "requested": "[1.17.0, )",
+        "resolved": "1.17.0",
+        "contentHash": "t1OwL/4qgboGMobYVT+UV5zgWnFqCp4Pw8lcsmzh8m2K8PQsTKkyxrC32tqYTMYny3GOW4q5cltE3dTVzLmRew==",
+        "dependencies": {
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
+          "OpenTelemetry": "1.17.0"
+        }
+      },
       "SimpleInjector": {
         "type": "CentralTransitive",
         "requested": "[5.6.0, )",
@@ -1088,9 +1154,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[8.0.30, )",
-        "resolved": "8.0.30",
-        "contentHash": "SfmwuZjUPBTEoBMAsXZ/hWkaEK9oL+Y/UtAx7N6RyWHfcMt9J0ExrNPuOgTyPbCXIyiTBFsxFNrPLEZNPmJcvA=="
+        "requested": "[8.0.29, )",
+        "resolved": "8.0.29",
+        "contentHash": "HSBTfrkIZijz8z3ybLRKB7E8rHk4QQufFwpHa9fc5CMIgRhRzdn4mBGmlyXZqaueiMPtuJcnjresGvSTfaW8Mg=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -1138,6 +1204,16 @@
           "System.Text.Json": "10.0.3"
         }
       },
+      "Azure.Monitor.OpenTelemetry.Exporter": {
+        "type": "Transitive",
+        "resolved": "1.8.0",
+        "contentHash": "JbNUQIK7uZ7Mg2fZzdsjqC/eso3Ag/tMwCqYvGvedyE1fObe6JAwCaCSMZDMrhrAaFn8x8+ZaKJelfcEK5MCcg==",
+        "dependencies": {
+          "Azure.Core": "1.54.0",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "OpenTelemetry.PersistentStorage.FileSystem": "1.0.3"
+        }
+      },
       "Azure.Security.KeyVault.Secrets": {
         "type": "Transitive",
         "resolved": "4.10.0",
@@ -1151,43 +1227,6 @@
         "resolved": "2.6.2",
         "contentHash": "7oWOcvnntmMKNzDLsdxAYqApt+AjpRpP2CShjMfIa3umZ42UQMvH0tl1qAliYPNYO6vTdcGMqnRrCPmsfzTI1w=="
       },
-      "Microsoft.ApplicationInsights.DependencyCollector": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "9YRdl9SNbTxd4AafJckyoJLr5gJdnvqFivjo+PY0lQTPEncPB+z3ZABG4iDfxN9HI1aLqyRINr1/7de9Wg8ZuQ==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.EventCounterCollector": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "gGt0JPw2dcSeIAIefyORJBdeMz8KgAFIktu8HV/NwkiGmLyw+YtifLm6B5gvGxO15AeMsGPbmvWEIvLfq88XPw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.PerfCounterCollector": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "q9ApjZfBS9O8m3aQM2oVjsGBmlE8BCFywT7UR+8aqdNuz7HpoIxw4jHy0XOBergiFX/olrJF4OyPkGxc3H5JHg==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.Extensions.Caching.Memory": "1.0.0",
-          "System.Diagnostics.PerformanceCounter": "6.0.0"
-        }
-      },
-      "Microsoft.ApplicationInsights.WindowsServer": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "2B8CGfnB/tribkQAqRBhMvJYJK5TkEPMG/BB0QrlxdwVGEufayNLMveXjkQCqld9arXd6wKR1ve2XmkA0+xXKQ==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.DependencyCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0"
-        }
-      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -1200,6 +1239,11 @@
         "dependencies": {
           "System.Formats.Asn1": "10.0.2"
         }
+      },
+      "Microsoft.Bcl.Memory": {
+        "type": "Transitive",
+        "resolved": "10.0.4",
+        "contentHash": "ayoY21xuhuY6cYZkG92bdYsulmJlLS558b3Ez1rWFkBZ+QIUSeAlALzT1UK+ZZeEmhzFWjemG4bBcMRhdiHntA=="
       },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
@@ -1226,6 +1270,14 @@
         "type": "Transitive",
         "resolved": "6.0.2",
         "contentHash": "f+pRODTWX7Y67jXO3T5S2dIPZ9qMJNySjlZT/TKmWVNWe19N8jcWmHaqHnnchaq3gxEKv1SWVY5EFzOD06l41w=="
+      },
+      "Microsoft.Diagnostics.NETCore.Client": {
+        "type": "Transitive",
+        "resolved": "0.2.621003",
+        "contentHash": "22YdSeB53xk4Pd1Xz92HigUy8ySJMzd8hpEZHlFWeaefzYox4VJnW+gJEzGrxbSvl3oGCpiIFKqh8the0xhzSA==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "6.0.4"
+        }
       },
       "Microsoft.Extensions.Caching.Memory": {
         "type": "Transitive",
@@ -1337,15 +1389,6 @@
           "Microsoft.Extensions.Options": "10.0.11"
         }
       },
-      "Microsoft.Extensions.Logging.ApplicationInsights": {
-        "type": "Transitive",
-        "resolved": "2.23.0",
-        "contentHash": "JLEabPz445i1yRB0hKZVzJJE35QatRIzWlrMOiBQXr9kBJod0jkpkrBf94ln6kXu+jlEGohnXtuXacPPhybJDw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.Extensions.Logging": "2.1.1"
-        }
-      },
       "Microsoft.Extensions.Logging.Configuration": {
         "type": "Transitive",
         "resolved": "10.0.11",
@@ -1443,6 +1486,48 @@
           "System.Security.Cryptography.Pkcs": "8.0.1"
         }
       },
+      "OpenTelemetry.Api.ProviderBuilderExtensions": {
+        "type": "Transitive",
+        "resolved": "1.17.0",
+        "contentHash": "Xgc3Qf9B9TFMFpx6exTdGqMWuYIT2miNzkdMPutVvT9YuMFaEovXWke1Gb6z8NxYaQbbGF38vYLuSg1JCeui5Q==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
+          "OpenTelemetry.Api": "1.17.0"
+        }
+      },
+      "OpenTelemetry.Instrumentation.Http": {
+        "type": "Transitive",
+        "resolved": "1.15.1",
+        "contentHash": "vFO4Fj/dXkoVNGo/nhoGpO2zYQmZwr4jTID7oRGo+XlQ8LqksyZjUXQ4p39RfUvTID7IzzL8Qe71tW7CcAFymA==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "8.0.0",
+          "Microsoft.Extensions.Options": "8.0.0",
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.Instrumentation.SqlClient": {
+        "type": "Transitive",
+        "resolved": "1.15.2",
+        "contentHash": "pRB84YJEXD121kygc6CtcF46dtLuTKIjphA2SJye32G4g2Xl3epkCrOcPCOAg4WDagCdMGa16Ge6PPVzFJZsAQ==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "8.0.0",
+          "Microsoft.Extensions.Options": "8.0.0",
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.PersistentStorage.Abstractions": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "7nSE1uLY0KOHRssg1xQydDZJ/s9zECOzFT/gSDIp1KTxbgd1yziuMTsdBKZ/N1BbpUxfH6Pjq5OMd7lYogwReA=="
+      },
+      "OpenTelemetry.PersistentStorage.FileSystem": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "3k+yCroJcGBtZIia+0LgzMlBuD0U95BzcWNEGWedusBaRAD8EmkaCPAUwaCtFbb/Mg7HywbIG2zuenANPYFJ0g==",
+        "dependencies": {
+          "OpenTelemetry.PersistentStorage.Abstractions": "1.0.3"
+        }
+      },
       "System.ClientModel": {
         "type": "Transitive",
         "resolved": "1.10.0",
@@ -1463,10 +1548,10 @@
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "gbeE5tNp/oB7O8kTTLh3wPPJCxpNOphXPTWVs1BsYuFOYapFijWuh0LYw1qnDo4gwDUYPXOmpTIhvtxisGsYOQ==",
+        "resolved": "7.0.0",
+        "contentHash": "L+zIMEaXp1vA4wZk1KLMpk6tvU0xy94R0IfmhkmTWeC4KwShsmAfbg5I19LgjsCTYp6GVdXZ2aHluVWL0QqBdA==",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "6.0.0"
+          "System.Configuration.ConfigurationManager": "7.0.0"
         }
       },
       "System.Formats.Asn1": {
@@ -1532,11 +1617,10 @@
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "[2.23.0, )",
-          "Microsoft.ApplicationInsights.SnapshotCollector": "[1.4.6, )",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "[2.23.0, )",
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )"
+          "Ark.Tools.OTel": "[1.0.0, )",
+          "Microsoft.ApplicationInsights": "[3.1.2, )",
+          "Microsoft.Extensions.Options": "[10.0.11, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
         }
       },
       "ark.tools.applicationinsights.hostedservice": {
@@ -1546,7 +1630,8 @@
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
-          "Microsoft.ApplicationInsights.WorkerService": "[2.23.0, )"
+          "Azure.Monitor.OpenTelemetry.Profiler": "[1.0.1-beta.7, )",
+          "Microsoft.ApplicationInsights.WorkerService": "[3.1.2, )"
         }
       },
       "ark.tools.core": {
@@ -1584,7 +1669,7 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
-          "Microsoft.ApplicationInsights.NLogTarget": "[2.23.0, )",
+          "Microsoft.ApplicationInsights.NLogTarget": "[3.1.2-beta1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.1.4, )",
           "NLog.Database": "[6.0.3, )",
@@ -1623,6 +1708,14 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
+        }
+      },
+      "ark.tools.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Data.SqlClient": "[7.0.2, )",
+          "Microsoft.Extensions.Options": "[10.0.11, )",
+          "OpenTelemetry": "[1.17.0, )"
         }
       },
       "ark.tools.resourcewatcher": {
@@ -1683,6 +1776,42 @@
           "Azure.Core": "1.53.0"
         }
       },
+      "Azure.Monitor.OpenTelemetry.Profiler": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.1-beta.7, )",
+        "resolved": "1.0.1-beta.7",
+        "contentHash": "E33KO2trPYn4FH2D/yxvWXKqjka/iaTce4ysJBzIgCSRlfFkXcER+95SmGBdGO0q3/X+CaS+EbN5kjf5SCmmNQ==",
+        "dependencies": {
+          "Azure.Core": "1.50.0",
+          "Azure.Identity": "1.14.0",
+          "Azure.Monitor.OpenTelemetry.Exporter": "1.4.0",
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.1",
+          "Microsoft.Bcl.Memory": "10.0.4",
+          "Microsoft.Diagnostics.NETCore.Client": "0.2.621003",
+          "Microsoft.Extensions.Configuration": "10.0.0",
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Configuration.Binder": "10.0.0",
+          "Microsoft.Extensions.DependencyInjection": "10.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Logging": "10.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Options": "10.0.0",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
+          "Microsoft.Extensions.Primitives": "10.0.0",
+          "OpenTelemetry": "1.15.3",
+          "OpenTelemetry.Api": "1.15.3",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "System.Diagnostics.DiagnosticSource": "10.0.0",
+          "System.Diagnostics.PerformanceCounter": "7.0.0",
+          "System.IO.Hashing": "10.0.0",
+          "System.Linq.AsyncEnumerable": "10.0.1",
+          "System.Memory.Data": "10.0.0",
+          "System.Security.Cryptography.ProtectedData": "10.0.0",
+          "System.Text.Encodings.Web": "10.0.0",
+          "System.Text.Json": "10.0.0"
+        }
+      },
       "Ben.Demystifier": {
         "type": "CentralTransitive",
         "requested": "[0.4.1, )",
@@ -1712,53 +1841,33 @@
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "nWArUZTdU7iqZLycLKWe0TDms48KKGE6pONH2terYNa8REXiqixrMOkf1sk5DHGMaUTqONU2YkS4SAXBhLStgw=="
+        "requested": "[3.1.2, )",
+        "resolved": "3.1.2",
+        "contentHash": "E+8N7Q6GS/AcyJ0xuYA48nVL4eQGGOSJZvNz/R7qQtMGCUwjLzQe9Ttpgh/7eQktngsUuNGaEzBhM7IUU0t4xA==",
+        "dependencies": {
+          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.0"
+        }
       },
       "Microsoft.ApplicationInsights.NLogTarget": {
         "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "rjUqSw8SLCB7timNT/Brz92mumWv4audq2diIj67xKibdcK93kh+QaMj/G+OiNrsqfi2K+0CxmIZCALTi19Obg==",
+        "requested": "[3.1.2-beta1, )",
+        "resolved": "3.1.2-beta1",
+        "contentHash": "3OUPs7wkoH0uYhB7KYFCOO9/ly5K5rWkRlg0wJQi8zWYtjDkjlkDCMkrB00pPeRyKn4Kb0ILHrEpddZ0J6nucw==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
+          "Microsoft.ApplicationInsights": "3.1.2",
           "NLog": "4.5.11"
-        }
-      },
-      "Microsoft.ApplicationInsights.SnapshotCollector": {
-        "type": "CentralTransitive",
-        "requested": "[1.4.6, )",
-        "resolved": "1.4.6",
-        "contentHash": "UGXpUjW3YFSFq+u4CXwJrU3Rf7Hc3dMrMVTBJ8E3LB0eV2MF8lOHnXc+kHEmLKO4gxHhvulaVIld7U5aDzLZ8A==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.15.0",
-          "Microsoft.Extensions.Options": "2.1.1"
-        }
-      },
-      "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": {
-        "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "798Dudr4tkujslk1w+XcXOcCErmVsk+nhp+QCHLa3lcgi25vkAxBmzPUeQlRJVCNL/1f4x/YF+vQZ8RSuTXWCw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0"
         }
       },
       "Microsoft.ApplicationInsights.WorkerService": {
         "type": "CentralTransitive",
-        "requested": "[2.23.0, )",
-        "resolved": "2.23.0",
-        "contentHash": "3+EJOAIkgbU5rQMFowiB1s04/gf56kuwwGjcFyoeL2iyweHirjJpGu7XoigjvtWGkxue6CAAjUPwuuGMHE97Yg==",
+        "requested": "[3.1.2, )",
+        "resolved": "3.1.2",
+        "contentHash": "jFyIBi1/ZPFEZHeiSINsY2nj/UJIP9geLZ+1fjYWlDvX0NXiafPCbu5AyIH7inDGtgjAK81hLBmII7F4cgNbug==",
         "dependencies": {
-          "Microsoft.ApplicationInsights": "2.23.0",
-          "Microsoft.ApplicationInsights.DependencyCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.EventCounterCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.PerfCounterCollector": "2.23.0",
-          "Microsoft.ApplicationInsights.WindowsServer": "2.23.0",
-          "Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel": "2.23.0",
-          "Microsoft.Extensions.DependencyInjection": "2.1.1",
-          "Microsoft.Extensions.Logging.ApplicationInsights": "2.23.0"
+          "Microsoft.ApplicationInsights": "3.1.2",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "OpenTelemetry.Instrumentation.Http": "1.15.1",
+          "OpenTelemetry.Instrumentation.SqlClient": "1.15.2"
         }
       },
       "Microsoft.Data.SqlClient": {
@@ -2010,6 +2119,37 @@
         "contentHash": "jGe0WLNAoRb3efOgsa5iecmMuzP+LNdtw2Rs4N9+2pS4YN+kg8e9Z48Jk47WWebcpqF81YdWT2KNInbXZXTS7w==",
         "dependencies": {
           "NodaTime": "[3.0.0, 4.0.0)"
+        }
+      },
+      "OpenTelemetry": {
+        "type": "CentralTransitive",
+        "requested": "[1.17.0, )",
+        "resolved": "1.17.0",
+        "contentHash": "rMLOTftlMlTm7+MSrvXDHnJRjVkROFNKXHZrYjOsX+LankaFG7QSflx7qRRGjoqZoirohnxmJQ7GEb9occO4Gg==",
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.EnvironmentVariables": "8.0.0",
+          "Microsoft.Extensions.Diagnostics.Abstractions": "8.0.0",
+          "Microsoft.Extensions.Logging.Configuration": "8.0.0",
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.17.0"
+        }
+      },
+      "OpenTelemetry.Api": {
+        "type": "CentralTransitive",
+        "requested": "[1.17.0, )",
+        "resolved": "1.17.0",
+        "contentHash": "mSBxzomZgHIJu9CyVNqyDu/n2JHEtqVgfcCD1Br0cV5iLYogjZOMqhlVLt99PEp+0KGBNUR3GXgeOdN2GR3F9g==",
+        "dependencies": {
+          "System.Diagnostics.DiagnosticSource": "10.0.0"
+        }
+      },
+      "OpenTelemetry.Extensions.Hosting": {
+        "type": "CentralTransitive",
+        "requested": "[1.17.0, )",
+        "resolved": "1.17.0",
+        "contentHash": "t1OwL/4qgboGMobYVT+UV5zgWnFqCp4Pw8lcsmzh8m2K8PQsTKkyxrC32tqYTMYny3GOW4q5cltE3dTVzLmRew==",
+        "dependencies": {
+          "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
+          "OpenTelemetry": "1.17.0"
         }
       },
       "SimpleInjector": {
