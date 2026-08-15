@@ -48,9 +48,10 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         var context = new IncomingStepContext(message, transaction);
         var step = new ApplicationInsightsProcessingMetricsStep(container, new FixedRebusTime(DateTimeOffset.UtcNow));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => step.Process(
+        Func<Task> process = () => step.Process(
             context,
-            () => throw new InvalidOperationException("handler failed")));
+            () => throw new InvalidOperationException("handler failed"));
+        await process.Should().ThrowAsync<InvalidOperationException>();
         telemetry.Client.GetMetric("Message ProcessingTime", "MessageType", "OperationResult").Should().NotBeNull();
     }
 
