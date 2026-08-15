@@ -3,6 +3,9 @@
 	<PropertyGroup>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+	<ItemGroup>
+	  <InternalsVisibleTo Include="Ark.Tools.Rebus.Tests" />
+	</ItemGroup>
 
 	<!-- the other props are defined in Directory.Build.props -->
 	<!--===================Configuration for Nuget Package=========================-->

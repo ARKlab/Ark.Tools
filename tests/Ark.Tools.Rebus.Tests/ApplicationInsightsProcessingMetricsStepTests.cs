@@ -3,15 +3,10 @@
 
 using AwesomeAssertions;
 
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
-
 using Rebus.Messages;
 using Rebus.Pipeline;
 using Rebus.Time;
 using Rebus.Transport;
-
-using SimpleInjector;
 
 using System.Collections.Concurrent;
 
@@ -23,36 +18,40 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
     [TestMethod]
     public async Task Process_Success_TracksQueueAndProcessingMetrics()
     {
-        await using var telemetry = new CapturingTelemetry();
-        await using var container = new Container();
-        container.RegisterInstance(telemetry.Client);
+        var metrics = new CapturingMetrics();
         using var transaction = new TestTransactionContext();
         var now = DateTimeOffset.UtcNow;
         var message = CreateMessage(now - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
-        var step = new ApplicationInsightsProcessingMetricsStep(container, new FixedRebusTime(now));
+        var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
         await step.Process(context, () => Task.CompletedTask);
-        telemetry.Client.GetMetric("Message TimeInQueue (Success)", "MessageType").Should().NotBeNull();
-        telemetry.Client.GetMetric("Message ProcessingTime", "MessageType", "OperationResult").Should().NotBeNull();
+        metrics.TimeInQueue.Should().ContainSingle();
+        metrics.TimeInQueue[0].MessageType.Should().Be("tests.Message");
+        metrics.TimeInQueue[0].Value.Should().BeGreaterThan(1900);
+        metrics.TimeInQueue[0].Value.Should().BeLessThan(2100);
+        metrics.Processing.Should().ContainSingle();
+        metrics.Processing[0].MessageType.Should().Be("tests.Message");
+        metrics.Processing[0].OperationResult.Should().Be("success");
     }
 
     [TestMethod]
     public async Task Process_Failure_TracksProcessingMetricButNotQueueMetric()
     {
-        await using var telemetry = new CapturingTelemetry();
-        await using var container = new Container();
-        container.RegisterInstance(telemetry.Client);
+        var metrics = new CapturingMetrics();
         using var transaction = new TestTransactionContext();
         var message = CreateMessage(DateTimeOffset.UtcNow - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
-        var step = new ApplicationInsightsProcessingMetricsStep(container, new FixedRebusTime(DateTimeOffset.UtcNow));
+        var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(DateTimeOffset.UtcNow));
 
         Func<Task> process = () => step.Process(
             context,
             () => throw new InvalidOperationException("handler failed"));
         await process.Should().ThrowAsync<InvalidOperationException>();
-        telemetry.Client.GetMetric("Message ProcessingTime", "MessageType", "OperationResult").Should().NotBeNull();
+        metrics.Processing.Should().ContainSingle();
+        metrics.Processing[0].MessageType.Should().Be("tests.Message");
+        metrics.Processing[0].OperationResult.Should().Be("failure");
+        metrics.TimeInQueue.Should().BeEmpty();
     }
 
     private static TransportMessage CreateMessage(DateTimeOffset sentTime)
@@ -104,21 +103,20 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         }
     }
 
-    private sealed class CapturingTelemetry : IAsyncDisposable
+    private sealed class CapturingMetrics : ApplicationInsightsProcessingMetricsStep.IProcessingMetrics
     {
-        private readonly TelemetryConfiguration _configuration = TelemetryConfiguration.CreateDefault();
+        public List<(double Value, string MessageType)> TimeInQueue { get; } = [];
 
-        public CapturingTelemetry()
+        public List<(double Value, string MessageType, string OperationResult)> Processing { get; } = [];
+
+        public void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
         {
-            Client = new TelemetryClient(_configuration);
+            TimeInQueue.Add((timeInQueue.TotalMilliseconds, messageType));
         }
 
-        public TelemetryClient Client { get; }
-
-        public async ValueTask DisposeAsync()
+        public void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult)
         {
-            await Client.FlushAsync(CancellationToken.None).ConfigureAwait(false);
-            _configuration.Dispose();
+            Processing.Add((messageProcessing.TotalMilliseconds, messageType, operationResult));
         }
     }
 }

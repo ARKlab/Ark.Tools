@@ -18,7 +18,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 {
     private readonly Container _container;
     private readonly IRebusTime _time;
-    private readonly Lazy<Metrics> _metrics;
+    private readonly IProcessingMetrics _metrics;
 
 
     public ApplicationInsightsProcessingMetricsStep(Container container, IRebusTime time)
@@ -26,9 +26,15 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
         _container = container;
         _time = time;
 
-        _metrics = new Lazy<Metrics>(() => new Metrics(_container.GetInstance<TelemetryClient>()), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+        _metrics = new ApplicationInsightsMetrics(_container.GetInstance<TelemetryClient>());
     }
 
+    internal ApplicationInsightsProcessingMetricsStep(IProcessingMetrics metrics, IRebusTime time)
+    {
+        _container = null!;
+        _time = time;
+        _metrics = metrics;
+    }
 
     /// <inheritdoc/>
     public async Task Process(IncomingStepContext context, Func<Task> next)
@@ -52,7 +58,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
                 var totalTime = now - enqueuedTime;
                 var timeInQueue = totalTime - sw.Elapsed;
 
-                _metrics.Value.TrackTimeInQueue(timeInQueue, messageType);
+                _metrics.TrackTimeInQueue(timeInQueue, messageType);
             }
 #pragma warning disable ERP022
             catch
@@ -65,7 +71,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
         {
             try
             {
-                _metrics.Value.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
+                _metrics.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
             }
 #pragma warning disable ERP022
             catch
@@ -76,23 +82,30 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
         }
 
     }
-    sealed class Metrics
+    internal interface IProcessingMetrics
+    {
+        void TrackTimeInQueue(TimeSpan timeInQueue, string messageType);
+
+        void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult);
+    }
+
+    private sealed class ApplicationInsightsMetrics : IProcessingMetrics
     {
         private readonly Metric _timeInQueue;
         private readonly Metric _messageProcessing;
 
-        internal Metrics(TelemetryClient client)
+        internal ApplicationInsightsMetrics(TelemetryClient client)
         {
             _timeInQueue = client.GetMetric(new MetricIdentifier("Rebus", "Message TimeInQueue (Success)", "MessageType"));
             _messageProcessing = client.GetMetric(new MetricIdentifier("Rebus", "Message ProcessingTime", "MessageType", "OperationResult"));
         }
 
-        internal void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
+        public void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
         {
             _timeInQueue.TrackValue(_sanitize(timeInQueue), messageType);
         }
 
-        internal void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult)
+        public void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult)
         {
             _messageProcessing.TrackValue(_sanitize(messageProcessing), messageType, operationResult);
         }
