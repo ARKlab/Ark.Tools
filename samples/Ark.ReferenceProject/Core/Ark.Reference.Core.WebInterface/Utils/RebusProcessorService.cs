@@ -1,8 +1,6 @@
 using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Host;
 
-using Microsoft.ApplicationInsights;
-
 using NodaTime;
 
 using Rebus.Bus;
@@ -23,9 +21,6 @@ public sealed class RebusProcessorService : IHostedService, IDisposable
     {
         _container = new Container();
         _container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        var telemetryClient = services.GetService<TelemetryClient>();
-        if (telemetryClient is not null)
-            _container.RegisterInstance(telemetryClient);
 
         var cfg = config.BuildApiHostConfig();
 

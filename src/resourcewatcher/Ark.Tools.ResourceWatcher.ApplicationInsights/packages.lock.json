@@ -506,7 +506,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -1577,7 +1576,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",

@@ -732,13 +732,12 @@
       },
       "OpenTelemetry": {
         "type": "Transitive",
-        "resolved": "1.17.0",
-        "contentHash": "rMLOTftlMlTm7+MSrvXDHnJRjVkROFNKXHZrYjOsX+LankaFG7QSflx7qRRGjoqZoirohnxmJQ7GEb9occO4Gg==",
+        "resolved": "1.15.3",
+        "contentHash": "N0i6WjPoHPbZyms1ugbDIFAJFuGlpeExJMU/+XSL0lQRUkg/D0utFkDoLXf8Z1km5B+xVZ2GyMXXiX8qdeNmPg==",
         "dependencies": {
-          "Microsoft.Extensions.Configuration.EnvironmentVariables": "10.0.0",
           "Microsoft.Extensions.Diagnostics.Abstractions": "10.0.0",
           "Microsoft.Extensions.Logging.Configuration": "10.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.17.0"
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.15.3"
         }
       },
       "OpenTelemetry.Api": {
@@ -748,20 +747,20 @@
       },
       "OpenTelemetry.Api.ProviderBuilderExtensions": {
         "type": "Transitive",
-        "resolved": "1.17.0",
-        "contentHash": "Xgc3Qf9B9TFMFpx6exTdGqMWuYIT2miNzkdMPutVvT9YuMFaEovXWke1Gb6z8NxYaQbbGF38vYLuSg1JCeui5Q==",
+        "resolved": "1.15.3",
+        "contentHash": "SYn0lqYDwLMWhv/zlNGsQcl2yX++yTumanX46bmOZE/ZDOd1WjPBO2kZaZgKLEZTZk48pavIFGJ6vOvxXgWVFQ==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "OpenTelemetry.Api": "1.17.0"
+          "OpenTelemetry.Api": "1.15.3"
         }
       },
       "OpenTelemetry.Extensions.Hosting": {
         "type": "Transitive",
-        "resolved": "1.17.0",
-        "contentHash": "t1OwL/4qgboGMobYVT+UV5zgWnFqCp4Pw8lcsmzh8m2K8PQsTKkyxrC32tqYTMYny3GOW4q5cltE3dTVzLmRew==",
+        "resolved": "1.15.3",
+        "contentHash": "u8n/W8yIlqv0BXZmvId1iVaeWXG42tGKdTkuLYg5g57Y/r9CeUNzqtrSHNdG5IoO8iPX79w3v+WsbAHgUQbfeg==",
         "dependencies": {
           "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
-          "OpenTelemetry": "1.17.0"
+          "OpenTelemetry": "1.15.3"
         }
       },
       "OpenTelemetry.PersistentStorage.Abstractions": {
@@ -914,15 +913,6 @@
           "Ark.Reference.Common": "[6.6.6, )"
         }
       },
-      "ark.tools.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
-        }
-      },
       "ark.tools.authorization": {
         "type": "Project",
         "dependencies": {
@@ -956,7 +946,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -1008,14 +997,6 @@
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
         }
       },
-      "ark.tools.otel": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )",
-          "OpenTelemetry": "[1.17.0, )"
-        }
-      },
       "ark.tools.outbox": {
         "type": "Project",
         "dependencies": {
@@ -1054,13 +1035,6 @@
           "Rebus.AzureServiceBus": "[10.7.0, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.4.1, )"
-        }
-      },
-      "ark.tools.rebus.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Rebus": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )"
         }
       },
       "ark.tools.simpleinjector": {

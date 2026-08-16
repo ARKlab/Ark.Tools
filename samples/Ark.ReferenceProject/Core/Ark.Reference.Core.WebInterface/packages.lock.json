@@ -250,12 +250,24 @@
           "Microsoft.Azure.Amqp": "2.7.0"
         }
       },
+      "Azure.Monitor.OpenTelemetry.AspNetCore": {
+        "type": "Transitive",
+        "resolved": "1.6.0",
+        "contentHash": "9H0JgEl5yVdpOz+GqPBL5Qtfw0k/gAQ9iD8L+W9ucrxwMG/CMwdAg4mWdLWKUvW56iDCQ8PAHVVCxC4Hg5l1AA==",
+        "dependencies": {
+          "Azure.Core": "1.60.0",
+          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.3",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "OpenTelemetry.Instrumentation.AspNetCore": "1.15.2",
+          "OpenTelemetry.Instrumentation.Http": "1.15.1"
+        }
+      },
       "Azure.Monitor.OpenTelemetry.Exporter": {
         "type": "Transitive",
-        "resolved": "1.8.0",
-        "contentHash": "JbNUQIK7uZ7Mg2fZzdsjqC/eso3Ag/tMwCqYvGvedyE1fObe6JAwCaCSMZDMrhrAaFn8x8+ZaKJelfcEK5MCcg==",
+        "resolved": "1.8.3",
+        "contentHash": "hZ35hXxiRuJcT67u970iqqJ+z2ol3Sg23/m1wwNNh8uzK/48uB9iJ3va9PQ7gXn6kij6wzowUe5olPPfObkEug==",
         "dependencies": {
-          "Azure.Core": "1.54.0",
+          "Azure.Core": "1.60.0",
           "OpenTelemetry.Extensions.Hosting": "1.15.3",
           "OpenTelemetry.PersistentStorage.FileSystem": "1.0.3"
         }
@@ -886,6 +898,22 @@
           "OpenTelemetry": "1.17.0"
         }
       },
+      "OpenTelemetry.Instrumentation.AspNetCore": {
+        "type": "Transitive",
+        "resolved": "1.15.2",
+        "contentHash": "2nPd7r0ug/gd6/CNFL6Rlu+RSQ9WYGSGHAYQ1ssbSqyzKJpqTunfx2I/1O0WB5k+L0cyXbG4XVZpoSoUc3M7wg==",
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.Instrumentation.Http": {
+        "type": "Transitive",
+        "resolved": "1.15.1",
+        "contentHash": "vFO4Fj/dXkoVNGo/nhoGpO2zYQmZwr4jTID7oRGo+XlQ8LqksyZjUXQ4p39RfUvTID7IzzL8Qe71tW7CcAFymA==",
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+        }
+      },
       "OpenTelemetry.PersistentStorage.Abstractions": {
         "type": "Transitive",
         "resolved": "1.0.3",
@@ -1251,7 +1279,6 @@
           "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
           "Ark.Tools.Outbox.SqlServer": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
-          "Ark.Tools.Rebus.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )"
@@ -1261,14 +1288,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Reference.Common": "[6.6.6, )"
-        }
-      },
-      "ark.tools.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
         }
       },
       "ark.tools.aspnetcore": {
@@ -1341,6 +1360,15 @@
       "ark.tools.aspnetcore.nestedstartup": {
         "type": "Project"
       },
+      "ark.tools.aspnetcore.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.OTel": "[1.0.0, )",
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
+        }
+      },
       "ark.tools.aspnetcore.problemdetails": {
         "type": "Project",
         "dependencies": {
@@ -1404,7 +1432,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -1498,13 +1525,6 @@
           "Rebus.AzureServiceBus": "[10.7.0, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.4.1, )"
-        }
-      },
-      "ark.tools.rebus.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Rebus": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )"
         }
       },
       "ark.tools.simpleinjector": {

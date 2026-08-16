@@ -618,14 +618,6 @@
         "resolved": "16.3.0",
         "contentHash": "SgMOdxbz8X65z8hraIs6hOEdnkH6hESTAIUa7viEngHOYaH+6q5XJmwr1+yb9vJpNQ19hCQY69xbFsLtXpobQA=="
       },
-      "ark.tools.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
-        }
-      },
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
@@ -711,7 +703,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -758,13 +749,6 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
-        }
-      },
-      "ark.tools.otel": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "OpenTelemetry": "[1.17.0, )"
         }
       },
       "ark.tools.simpleinjector": {

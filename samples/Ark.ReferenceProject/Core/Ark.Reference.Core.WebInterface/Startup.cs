@@ -4,6 +4,7 @@ using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Common.Auth;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.AspNetCore.Startup;
+using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
@@ -45,6 +46,7 @@ public class Startup : ArkStartupWebApi
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
+        services.AddArkAzureMonitorOpenTelemetry(Configuration);
 
         // Configure System.Text.Json source generation with Ark defaults
         // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts

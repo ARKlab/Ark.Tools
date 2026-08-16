@@ -9,8 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-using System.Diagnostics;
-
 using Ark.Tools.Rebus;
 using Ark.Tools.OTel;
 
@@ -40,7 +38,7 @@ public static class Ex
     }
 
     /// <summary>
-    /// Adds the Azure Monitor OpenTelemetry Distro and Ark instrumentation sources.
+    /// Adds Ark instrumentation sources and Azure Monitor when a connection string is configured.
     /// </summary>
     /// <param name="services">The application service collection.</param>
     /// <param name="configuration">Optional application configuration.</param>
@@ -62,25 +60,5 @@ public static class Ex
         builder.AddArkAspNetCoreOpenTelemetry();
 
         return services;
-    }
-
-    private sealed class WebApi4xxAsSuccessProcessor : BaseProcessor<Activity>
-    {
-        public override void OnEnd(Activity data)
-        {
-            if (data.Kind != ActivityKind.Server)
-                return;
-
-            var statusCode = data.GetTagItem("http.response.status_code") switch
-            {
-                int value => value,
-                long value => (int)value,
-                string value when int.TryParse(value, CultureInfo.InvariantCulture, out var parsed) => parsed,
-                _ => 0
-            };
-
-            if (statusCode is >= 400 and < 500)
-                data.SetStatus(ActivityStatusCode.Unset);
-        }
     }
 }

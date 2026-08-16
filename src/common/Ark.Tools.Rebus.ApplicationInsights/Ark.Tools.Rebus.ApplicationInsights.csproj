@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <!-- the other props are defined in Directory.Build.props -->
     <Description>Optional Application Insights v3 adapter for Rebus instrumentation.</Description>
     <PackageTags>Ark;C#;.NET;Rebus;ApplicationInsights;OpenTelemetry</PackageTags>

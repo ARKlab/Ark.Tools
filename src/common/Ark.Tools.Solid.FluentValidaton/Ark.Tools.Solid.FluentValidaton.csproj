@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     
     <Description>Extension to integrate Ark.Tools.Solid framework with FluentValidation</Description>
     <PackageTags>Ark;C#;.NET;Framework;SOLID;Handler;FluentValidation</PackageTags>

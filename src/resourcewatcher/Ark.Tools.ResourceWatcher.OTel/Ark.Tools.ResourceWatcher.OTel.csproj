@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <!-- the other props are defined in Directory.Build.props -->
     <TargetFrameworks>net10.0</TargetFrameworks>
     <Description>OpenTelemetry setup for Ark ResourceWatcher worker hosts.</Description>

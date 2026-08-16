@@ -11,6 +11,11 @@ namespace Ark.Tools.ApplicationInsights.HostedService;
 
 public static partial class Ex
 {
+    /// <summary>
+    /// Adds the Application Insights worker service, profiler, and Ark OpenTelemetry customizations.
+    /// </summary>
+    /// <param name="builder">The host builder.</param>
+    /// <returns>The configured host builder.</returns>
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection.")]
     public static IHostBuilder AddApplicationInsightsForHostedService(this IHostBuilder builder)
     {

@@ -5,7 +5,6 @@
 	 <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
 	 <PackageReference Include="Ark.Tools.Outbox" />
 	 <PackageReference Include="Ark.Tools.Rebus" />
-	 <PackageReference Include="Ark.Tools.Rebus.ApplicationInsights" />
 	 <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
 	 <PackageReference Include="Ark.Tools.Sql" />
 	 <PackageReference Include="Ark.Tools.Sql.SqlServer" />

@@ -327,15 +327,6 @@
         "resolved": "10.0.11",
         "contentHash": "PNoxCTPb+Tlux+GJyq4c89ddYdpioVSqfGx8pqOF6shCSKwUNNctXhQtRkCICjbJmGrJJsW8NY52kVYO/b8mlQ=="
       },
-      "ark.tools.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
-        }
-      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
@@ -345,7 +336,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -370,14 +360,6 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
-        }
-      },
-      "ark.tools.otel": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )",
-          "OpenTelemetry": "[1.17.0, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -1064,15 +1046,6 @@
           "System.Text.Encodings.Web": "10.0.3"
         }
       },
-      "ark.tools.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
-        }
-      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
@@ -1083,7 +1056,6 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -1108,14 +1080,6 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
-        }
-      },
-      "ark.tools.otel": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )",
-          "OpenTelemetry": "[1.17.0, )"
         }
       },
       "ark.tools.systemtextjson": {

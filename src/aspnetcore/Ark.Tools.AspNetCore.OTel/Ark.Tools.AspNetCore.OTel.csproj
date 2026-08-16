@@ -8,6 +8,7 @@
     <Version>$(AspNetCoreGroupVersion)</Version>
     <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,5 @@
   <ItemGroup>
     <ProjectReference Include="..\..\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.OTel\Ark.Tools.OTel.csproj" />
-    <ProjectReference Include="..\Ark.Tools.AspNetCore\Ark.Tools.AspNetCore.csproj" />
   </ItemGroup>
 </Project>

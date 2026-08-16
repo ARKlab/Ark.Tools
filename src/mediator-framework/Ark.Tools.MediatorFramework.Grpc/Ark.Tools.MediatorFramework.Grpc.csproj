@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <Description>Code-first gRPC transport runtime package for Ark.Tools MediatorFramework. Bundles source generation and automatic build-time export of generated service contracts, shared assets, and MapArkGrpcServicesFromAssembly for [GrpcMethod]-annotated contracts.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;gRPC;Source Generator</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>

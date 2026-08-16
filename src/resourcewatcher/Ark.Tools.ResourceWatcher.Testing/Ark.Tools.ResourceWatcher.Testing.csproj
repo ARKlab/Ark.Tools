@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <Description>Testing utilities for Ark.Tools.ResourceWatcher including TestableStateProvider, TestingDiagnosticListener, and test host infrastructure.</Description>
     <PackageTags>Ark;C#;.NET;Framework;ResourceWatcher;Testing;ETL</PackageTags>

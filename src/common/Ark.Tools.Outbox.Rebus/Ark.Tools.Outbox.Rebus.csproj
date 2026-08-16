@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <Description>Outbox pattern implementation</Description>
     <PackageTags>Ark;C#;.NET;Framework;OutboxPattern;Outbox;Rebus</PackageTags>
