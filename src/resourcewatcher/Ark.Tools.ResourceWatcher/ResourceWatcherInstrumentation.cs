@@ -26,5 +26,5 @@ public static class ResourceWatcherInstrumentation
     /// <summary>
     /// Gets the name used for ResourceWatcher exception events.
     /// </summary>
-    public const string ExceptionEventName = ActivityNamePrefix + "Exception";
+    public const string ExceptionEventName = ActivityNamePrefix + ".Exception";
 }
