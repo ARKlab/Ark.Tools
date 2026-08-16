@@ -4,6 +4,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using OpenTelemetry;
+
 namespace Ark.Tools.ResourceWatcher.OTel;
 
 /// <summary>
@@ -11,6 +13,20 @@ namespace Ark.Tools.ResourceWatcher.OTel;
 /// </summary>
 public static class Ex
 {
+    /// <summary>
+    /// Adds ResourceWatcher tracing and metrics to an exporter-agnostic OpenTelemetry builder.
+    /// </summary>
+    /// <param name="builder">The OpenTelemetry builder.</param>
+    /// <returns>The original OpenTelemetry builder.</returns>
+    public static OpenTelemetryBuilder AddArkResourceWatcherOpenTelemetry(this OpenTelemetryBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        return builder
+            .WithTracing(tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
+            .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
+    }
+
     /// <summary>
     /// Enables ResourceWatcher activities in the host OpenTelemetry providers.
     /// </summary>
@@ -22,9 +38,7 @@ public static class Ex
 
         return builder.ConfigureServices((_, services) =>
         {
-            services.AddOpenTelemetry()
-                .WithTracing(tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
-                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherInstrumentation.ActivitySourceName));
+            services.AddOpenTelemetry().AddArkResourceWatcherOpenTelemetry();
         });
     }
 }

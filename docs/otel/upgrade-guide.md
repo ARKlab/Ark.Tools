@@ -22,8 +22,11 @@ uses the AI object model.
 ## New application: Azure Monitor OTel Distro
 
 1. Reference `Ark.Tools.AspNetCore.OTel` for an ASP.NET Core host.
-2. Call `builder.Services.AddArkAzureMonitorOpenTelemetry()` before `Build()`.
-3. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` in the deployment environment.
+2. Call `builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration)` before
+   `Build()`. The extension accepts either
+   `ApplicationInsights:ConnectionString` or
+   `APPLICATIONINSIGHTS_CONNECTION_STRING`.
+3. Set the connection string in application configuration or the deployment environment.
 4. Register Rebus instrumentation explicitly:
 
    ```csharp
@@ -32,9 +35,12 @@ uses the AI object model.
    ```
 
 5. Reference `Ark.Tools.ResourceWatcher.OTel` for a ResourceWatcher worker and call
-   `builder.AddArkOpenTelemetryForWorkerHost()`.
-6. Add the exporter required by the host. The Ark instrumentation packages do not
-   select an exporter or read a connection string.
+   `builder.AddArkOpenTelemetryForWorkerHost()`, or call
+   `services.AddOpenTelemetry().AddArkResourceWatcherOpenTelemetry()` when composing
+   an existing provider.
+6. Add the exporter required by the host. The exporter-agnostic Ark instrumentation
+   extensions do not select an exporter; the Azure Monitor setup reads the connection
+   string from the documented configuration keys.
 
 The sample web host follows this route in
 `samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface`.
@@ -61,25 +67,25 @@ Existing applications must add the compatibility registration intentionally.
 ## Breaking telemetry changes
 
 The following mappings are the complete Ark Rebus and ResourceWatcher migration surface.
-Operation names, payload key names, message type values, result values, and queue-time
-success-only behavior are retained where possible.
+Message type values, result values, and queue-time success-only behavior remain stable.
+ResourceWatcher operation names and attributes use OTel naming conventions.
 
 | Area | Before | After | Monitoring adaptation |
 |---|---|---|---|
-| Rebus processing | AI `RequestTelemetry` | OTel consumer span named `Rebus.Process \| <MessageType>` | Query spans and `messaging.*`/`rebus.*` attributes instead of request items |
-| Rebus queue time | AI metric `Rebus / MessageTimeInQueueSuccess` | OTel histogram `Rebus.MessageTimeInQueueSuccess` | Change metric provider syntax; keep `MessageType` |
-| Rebus processing time | AI metric `Rebus / MessageProcessingTime` | OTel histogram `Rebus.MessageProcessingTime` | Change metric provider syntax; keep `MessageType` and `OperationResult` |
-| Rebus success/failure | `OperationResult=success/failure` | Same attribute values | No value change |
+| Rebus processing | AI `RequestTelemetry` | OTel consumer span named `ark.tools.rebus.process \| <message type>` | Query spans and `messaging.*`/`rebus.*` attributes instead of request items |
+| Rebus queue time | AI metric `Rebus / MessageTimeInQueueSuccess` | OTel histogram `ark.tools.rebus.message_time_in_queue_success` | Change metric provider syntax; keep `message.type` |
+| Rebus processing time | AI metric `Rebus / MessageProcessingTime` | OTel histogram `ark.tools.rebus.message_processing_time` | Change metric provider syntax; keep `message.type` and `operation.result` |
+| Rebus success/failure | `OperationResult=success/failure` | `operation.result=success/failure` | Update the attribute name only |
 | Rebus trace propagation | `Diagnostic-Id` header | Same header, parsed as W3C trace context | No rule change; verify W3C parent correlation |
-| ResourceWatcher run/process spans | AI request telemetry | OTel internal spans using existing operation names | Remove telemetry-type filters; retain operation-name and attribute filters |
-| ResourceWatcher fetch/state spans | AI dependency telemetry with `Type=ProcessStep` | OTel internal spans using existing operation names | Replace dependency-type filters with span-name filters |
+| ResourceWatcher run/process spans | AI request telemetry | OTel internal spans with lowercase dot-separated names | Remove telemetry-type filters; update span-name and attribute filters |
+| ResourceWatcher fetch/state spans | AI dependency telemetry with `Type=ProcessStep` | OTel internal spans with lowercase dot-separated names | Replace dependency-type filters with span-name filters |
 | ResourceWatcher exceptions | AI `ExceptionTelemetry` | OTel exception event plus error status on the operation span | Query exception events/status instead of exception item type |
 | ResourceWatcher event warnings | AI event telemetry | OTel span/event attributes | Update event-type filters; retain tenant/resource attributes |
 | HTTP 4xx | AI processor clears failure | OTel processor clears server span error status | Keep 4xx-as-success alert rules at the span-status level |
 | Registration | Hosting package implicitly added AI | No automatic registration | Add one explicit OTel or AI setup call |
 
-The main unavoidable dashboard change is the telemetry item type. The operation
-names, dimensions, values, and failure semantics are intentionally stable.
+The main unavoidable dashboard changes are the telemetry item type and OTel naming.
+Values and failure semantics are intentionally stable.
 
 ## `ITelemetryClient` decision
 

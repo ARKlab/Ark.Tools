@@ -90,11 +90,13 @@ on a general Ark hosting package to register it.
 
 ### Worker Service / Hosted Service
 
-Use `Ark.Tools.ResourceWatcher.OTel` for ResourceWatcher source registration, then add
-the exporter selected by the application. The legacy `Ark.Tools.ResourceWatcher.ApplicationInsights`
-package remains available for applications that still use the SDK.
+Use `Ark.Tools.ResourceWatcher.OTel` for ResourceWatcher source and meter registration,
+then add the exporter selected by the application. The legacy
+`Ark.Tools.ResourceWatcher.ApplicationInsights` package remains available for
+applications that still use the SDK.
 
-ResourceWatcher keeps the `Ark.Tools.ResourceWatcher` activity source and operation names.
+ResourceWatcher uses the `ark.tools.resourcewatcher` activity source and lowercase,
+dot-separated operation names.
 The public `ResourceWatcherInstrumentation` constants can be used when configuring a
 custom OpenTelemetry provider. Operation payload fields are emitted as span attributes;
 exceptions are recorded as exception events and set the span status to error.
@@ -105,6 +107,9 @@ The recommended environment variable is:
 ```
 APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=https://...
 ```
+
+`AddArkAzureMonitorOpenTelemetry` also reads
+`ApplicationInsights:ConnectionString` from application configuration.
 
 ---
 

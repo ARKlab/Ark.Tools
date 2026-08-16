@@ -3,6 +3,7 @@
 
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using OpenTelemetry;
@@ -20,21 +21,44 @@ namespace Ark.Tools.AspNetCore.OTel;
 public static class Ex
 {
     /// <summary>
+    /// Adds Ark ASP.NET Core instrumentation to an exporter-agnostic OpenTelemetry builder.
+    /// </summary>
+    /// <param name="builder">The OpenTelemetry builder.</param>
+    /// <returns>The original OpenTelemetry builder.</returns>
+    public static OpenTelemetryBuilder AddArkAspNetCoreOpenTelemetry(this OpenTelemetryBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        return builder
+            .WithTracing(tracing => tracing
+                .AddSource(OpenTelemetryStep.ActivitySourceName)
+                .AddProcessor(new WebApi4xxAsSuccessProcessor()))
+            .WithMetrics(metrics => metrics
+                .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
+    }
+
+    /// <summary>
     /// Adds the Azure Monitor OpenTelemetry Distro and Ark instrumentation sources.
     /// </summary>
     /// <param name="services">The application service collection.</param>
+    /// <param name="configuration">Optional application configuration.</param>
     /// <returns>The original service collection.</returns>
-    public static IServiceCollection AddArkAzureMonitorOpenTelemetry(this IServiceCollection services)
+    public static IServiceCollection AddArkAzureMonitorOpenTelemetry(
+        this IServiceCollection services,
+        IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddOpenTelemetry()
-            .UseAzureMonitor()
-            .WithTracing(tracing => tracing
-                .AddSource(OpenTelemetryStep.ActivitySourceName)
-                .AddSource("Ark.Tools.ResourceWatcher")
-                .AddProcessor(new WebApi4xxAsSuccessProcessor()))
-            .WithMetrics(metrics => metrics.AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
+        var builder = services.AddOpenTelemetry();
+        var connectionString = configuration?["ApplicationInsights:ConnectionString"]
+            ?? configuration?["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            builder.UseAzureMonitor();
+        else
+            builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
+
+        builder.AddArkAspNetCoreOpenTelemetry();
 
         return services;
     }

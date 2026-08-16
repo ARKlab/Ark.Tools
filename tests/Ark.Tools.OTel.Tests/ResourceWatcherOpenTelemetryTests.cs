@@ -11,6 +11,7 @@ using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace Ark.Tools.OTel.Tests;
 
@@ -31,16 +32,16 @@ public sealed class ResourceWatcherOpenTelemetryTests
 
         await watcher.RunOnce().ConfigureAwait(false);
 
-        collector.Spans.Should().Contain(x => x.OperationName == "Ark.Tools.ResourceWatcher.Run");
-        collector.Spans.Should().Contain(x => x.OperationName == "Ark.Tools.ResourceWatcher.GetResources");
-        collector.Spans.Should().Contain(x => x.OperationName == "Ark.Tools.ResourceWatcher.CheckState");
+        collector.Spans.Should().Contain(x => x.OperationName == "ark.tools.resourcewatcher.run");
+        collector.Spans.Should().Contain(x => x.OperationName == "ark.tools.resourcewatcher.get_resources");
+        collector.Spans.Should().Contain(x => x.OperationName == "ark.tools.resourcewatcher.check_state");
         collector.Spans.Should().Contain(x =>
-            x.OperationName == "Ark.Tools.ResourceWatcher.ProcessResource"
-            && _hasTag(x, "ResourceId", "resource-1")
-            && _hasTag(x, "ResultType", nameof(ResultType.Normal)));
+            x.OperationName == "ark.tools.resourcewatcher.process_resource"
+            && _hasTag(x, "resource_id", "resource-1")
+            && _hasTag(x, "result_type", nameof(ResultType.Normal)));
         collector.Spans.Should().Contain(x =>
-            x.OperationName == "Ark.Tools.ResourceWatcher.Run"
-            && _hasTag(x, "Tenant", "tenant"));
+            x.OperationName == "ark.tools.resourcewatcher.run"
+            && _hasTag(x, "tenant", "tenant"));
     }
 
     [TestMethod]
@@ -56,9 +57,50 @@ public sealed class ResourceWatcherOpenTelemetryTests
 
         await watcher.RunOnce().ConfigureAwait(false);
 
-        var activity = collector.Spans.Single(x => x.OperationName == "Ark.Tools.ResourceWatcher.ProcessResource");
+        var activity = collector.Spans.Single(x => x.OperationName == "ark.tools.resourcewatcher.process_resource");
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    [TestMethod]
+    public async Task RunOnce_RecordsRunAndResourceMetrics()
+    {
+        var measurements = new List<(string Name, long Value, string? Outcome)>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == ResourceWatcherInstrumentation.MeterName)
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
+        {
+            string? outcome = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "outcome")
+                    outcome = tag.Value?.ToString();
+            }
+
+            measurements.Add((
+                instrument.Name,
+                value,
+                outcome));
+        });
+        listener.Start();
+        using var watcher = new TestWatcher();
+
+        await watcher.RunOnce().ConfigureAwait(false);
+        listener.RecordObservableInstruments();
+
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.resourcewatcher.runs"
+            && x.Value == 1
+            && x.Outcome == "success");
+        measurements.Should().Contain(x => x.Name == "ark.tools.resourcewatcher.resources.listed" && x.Value == 1);
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.resourcewatcher.resources.processed"
+            && x.Value == 1
+            && x.Outcome == "success");
     }
 
     private static bool _hasTag(Activity activity, string name, string expectedValue)

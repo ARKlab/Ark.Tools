@@ -16,15 +16,20 @@ public static class ResourceWatcherInstrumentation
     /// <summary>
     /// Gets the activity source name.
     /// </summary>
-    public const string ActivitySourceName = "Ark.Tools.ResourceWatcher";
+    public const string ActivitySourceName = "ark.tools.resourcewatcher";
 
     /// <summary>
     /// Gets the prefix used by ResourceWatcher activity names.
     /// </summary>
-    public const string ActivityNamePrefix = "Ark.Tools.ResourceWatcher";
+    public const string ActivityNamePrefix = "ark.tools.resourcewatcher";
+
+    /// <summary>
+    /// Gets the meter name.
+    /// </summary>
+    public const string MeterName = ActivitySourceName;
 
     /// <summary>
     /// Gets the name used for ResourceWatcher exception events.
     /// </summary>
-    public const string ExceptionEventName = ActivityNamePrefix + ".Exception";
+    public const string ExceptionEventName = ActivityNamePrefix + ".exception";
 }

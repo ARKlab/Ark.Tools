@@ -12,7 +12,7 @@ selected by an application through a dedicated package and explicit setup call.
 The Azure Monitor OpenTelemetry Distro is the recommended new-application path:
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry();
+builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
 ```
 
 The extension is opt-in. It configures the Microsoft distro and registers Ark
@@ -45,8 +45,8 @@ extension.
 
 ### Rebus
 
-`Ark.Tools.Rebus` creates an `ActivitySource` named `Ark.Tools.Rebus` and a `Meter`
-named `Ark.Tools.Rebus`. The incoming processing span carries message and correlation
+`Ark.Tools.Rebus` creates an `ActivitySource` and `Meter` named
+`ark.tools.rebus`. The incoming processing span carries message and correlation
 context, and the outgoing step propagates the current trace identifier through the
 existing outbox header.
 
@@ -54,8 +54,8 @@ The metrics retain the current logical measurements and dimensions:
 
 | OTel instrument | Attributes |
 |---|---|
-| `Rebus.MessageTimeInQueueSuccess` | `MessageType` |
-| `Rebus.MessageProcessingTime` | `MessageType`, `OperationResult` |
+| `ark.tools.rebus.message_time_in_queue_success` | `message.type` |
+| `ark.tools.rebus.message_processing_time` | `message.type`, `operation.result` |
 
 Queue time is emitted only after successful processing. Processing time is emitted for
 success and failure. Missing or invalid sent-time headers do not affect message
@@ -63,10 +63,11 @@ processing.
 
 ### ResourceWatcher
 
-`Ark.Tools.ResourceWatcher` keeps its existing activity names and diagnostic event
-names. `Ark.Tools.ResourceWatcher.OTel` enables the `Ark.Tools.ResourceWatcher`
-source for an OTel pipeline. Existing diagnostic listeners remain available for
-non-OTel consumers and for the AI compatibility adapter.
+`Ark.Tools.ResourceWatcher` emits lowercase, dot-separated OpenTelemetry scope and
+activity names. `Ark.Tools.ResourceWatcher.OTel` enables its source and meter for
+an exporter-agnostic OTel pipeline. Existing diagnostic listeners remain available
+for non-OTel consumers; the AI v3 worker adapter enables the same ActivitySource
+and Meter directly instead of creating duplicate legacy telemetry.
 
 The OTel path maps the existing operation payload to span attributes and exception
 events. No application code changes are required to resource providers or processors.
@@ -92,14 +93,15 @@ alerts:
 
 | Existing behavior | OTel behavior | Required action |
 |---|---|---|
-| AI `RequestTelemetry` for Rebus processing | `Ark.Tools.Rebus` span | Update queries from AI request fields to span attributes |
+| AI `RequestTelemetry` for Rebus processing | `ark.tools.rebus` span | Update queries from AI request fields to span attributes |
 | AI custom metrics with component/name/dimensions | OTel histogram with the same logical names and attributes | Update metric namespace/query syntax |
-| AI ResourceWatcher request/dependency telemetry | OTel internal spans with existing operation names | Update telemetry-type filters; retain operation-name filters |
+| AI ResourceWatcher request/dependency telemetry | OTel internal spans with lowercase dot-separated operation names | Update telemetry-type and operation-name filters |
 | AI `ExceptionTelemetry` items | OTel exception events and error status | Update exception queries to span events/status |
 | Implicit AI registration from a hosting package | No telemetry registration | Add an explicit OTel or AI setup call |
 
-Operation names, message type, result values, ResourceWatcher payload keys, and
-success-only queue-time semantics are retained to minimize monitoring changes.
+Message type and result values remain stable. ResourceWatcher operation names and
+attributes now follow OTel lowercase/dot-separated and snake_case conventions.
+Success-only queue-time semantics are retained.
 
 ## Sampling and exporters
 

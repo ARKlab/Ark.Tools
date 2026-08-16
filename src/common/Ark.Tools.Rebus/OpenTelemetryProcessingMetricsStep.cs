@@ -20,7 +20,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IIncomingStep
     /// <summary>
     /// The meter used by Rebus instrumentation.
     /// </summary>
-    public const string MeterName = "Ark.Tools.Rebus";
+    public const string MeterName = "ark.tools.rebus";
 
     private readonly IRebusTime _time;
     private readonly IProcessingMetrics _metrics;
@@ -95,20 +95,20 @@ public sealed class OpenTelemetryProcessingMetricsStep : IIncomingStep
     private sealed class OpenTelemetryMetrics : IProcessingMetrics
     {
         private static readonly Meter _meter = new(MeterName);
-        private static readonly Histogram<double> _timeInQueue = _meter.CreateHistogram<double>("Rebus.MessageTimeInQueueSuccess", "ms");
-        private static readonly Histogram<double> _messageProcessing = _meter.CreateHistogram<double>("Rebus.MessageProcessingTime", "ms");
+        private static readonly Histogram<double> _timeInQueue = _meter.CreateHistogram<double>("ark.tools.rebus.message_time_in_queue_success", "ms");
+        private static readonly Histogram<double> _messageProcessing = _meter.CreateHistogram<double>("ark.tools.rebus.message_processing_time", "ms");
 
         public void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
         {
-            _timeInQueue.Record(_sanitize(timeInQueue), new KeyValuePair<string, object?>("MessageType", messageType));
+            _timeInQueue.Record(_sanitize(timeInQueue), new KeyValuePair<string, object?>("message.type", messageType));
         }
 
         public void TrackMessageProcessing(TimeSpan messageProcessing, string messageType, string operationResult)
         {
             _messageProcessing.Record(
                 _sanitize(messageProcessing),
-                new KeyValuePair<string, object?>("MessageType", messageType),
-                new KeyValuePair<string, object?>("OperationResult", operationResult));
+                new KeyValuePair<string, object?>("message.type", messageType),
+                new KeyValuePair<string, object?>("operation.result", operationResult));
         }
 
         private static double _sanitize(TimeSpan span)

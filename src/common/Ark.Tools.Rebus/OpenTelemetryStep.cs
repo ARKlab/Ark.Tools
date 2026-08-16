@@ -18,9 +18,9 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
     /// <summary>
     /// The activity source used by Rebus instrumentation.
     /// </summary>
-    public const string ActivitySourceName = "Ark.Tools.Rebus";
+    public const string ActivitySourceName = "ark.tools.rebus";
 
-    private const string _activityName = "Rebus.Process";
+    private const string _activityName = "ark.tools.rebus.process";
     private static readonly ActivitySource _activitySource = new(ActivitySourceName);
 
     /// <summary>

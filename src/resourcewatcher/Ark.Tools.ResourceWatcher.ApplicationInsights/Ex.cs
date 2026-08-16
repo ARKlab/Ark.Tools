@@ -1,25 +1,50 @@
 using Ark.Tools.ApplicationInsights.HostedService;
 
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights;
 
+/// <summary>
+/// Application Insights compatibility setup for ResourceWatcher OpenTelemetry signals.
+/// </summary>
 public static partial class Ex
 {
     /// <summary>
-    /// Registers Application Insights for a worker host, including the
-    /// <see cref="ResourceWatcherTelemetryModule"/> DiagnosticSource listener.
+    /// Registers Application Insights for a worker host and enables the
+    /// ResourceWatcher OpenTelemetry source in the Application Insights v3 pipeline.
     /// </summary>
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection.")]
     public static IHostBuilder AddApplicationInsightsForWorkerHost(this IHostBuilder builder)
     {
         return builder
             .AddApplicationInsightsForHostedService()
-            .ConfigureServices((ctx, services) =>
+            .ConfigureServices((_, services) =>
             {
-                services.AddHostedService<ResourceWatcherTelemetryModule>();
+                services.AddSingleton<IConfigureOptions<TelemetryConfiguration>>(_ =>
+                    new ConfigureNamedOptions<TelemetryConfiguration>(
+                        Options.DefaultName,
+                        configuration =>
+                        {
+                            try
+                            {
+                                configuration.ConfigureOpenTelemetryBuilder(otelBuilder =>
+                                {
+                                    otelBuilder.Services.ConfigureOpenTelemetryTracerProvider(
+                                        tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName));
+                                    otelBuilder.Services.ConfigureOpenTelemetryMeterProvider(
+                                        metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
+                                });
+                            }
+                            catch (InvalidOperationException)
+                            {
+                            }
+                        }));
             });
     }
 }

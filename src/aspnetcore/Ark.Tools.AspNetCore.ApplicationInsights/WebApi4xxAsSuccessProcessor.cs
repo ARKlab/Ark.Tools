@@ -14,6 +14,9 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights;
 /// In REST APIs, client errors (400-499) are typically expected business outcomes rather than
 /// server-side failures. This processor clears the error status on 4xx spans so they are
 /// not counted as errors in Application Insights and are not promoted by the failure promotion processor.
+/// <see cref="ActivityStatusCode.Unset"/> is intentional: ASP.NET Core OpenTelemetry instrumentation
+/// uses <c>Error</c> for server 4xx responses and <c>Unset</c> for non-error responses. <c>Ok</c>
+/// would assert a stronger success signal than the instrumentation's default.
 /// </remarks>
 public sealed class WebApi4xxAsSuccessProcessor : BaseProcessor<Activity>
 {
