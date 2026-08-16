@@ -61,7 +61,7 @@ public static class Ex
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
         services.AddLogging(logging =>
-            logging.AddFilter<OpenTelemetryLoggerProvider>(LogLevel.Error));
+            logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
         builder.AddArkAspNetCoreOpenTelemetry();
 

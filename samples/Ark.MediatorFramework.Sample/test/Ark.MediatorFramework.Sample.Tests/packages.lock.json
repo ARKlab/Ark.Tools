@@ -601,15 +601,6 @@
           "OpenTelemetry.Instrumentation.SqlClient": "1.15.2"
         }
       },
-      "Microsoft.ApplicationInsights.NLogTarget": {
-        "type": "Transitive",
-        "resolved": "3.1.2-beta1",
-        "contentHash": "3OUPs7wkoH0uYhB7KYFCOO9/ly5K5rWkRlg0wJQi8zWYtjDkjlkDCMkrB00pPeRyKn4Kb0ILHrEpddZ0J6nucw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "3.1.2",
-          "NLog": "4.5.11"
-        }
-      },
       "Microsoft.AspNet.WebApi.Client": {
         "type": "Transitive",
         "resolved": "5.2.9",
@@ -2110,7 +2101,6 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
-          "Microsoft.ApplicationInsights.NLogTarget": "[3.1.2-beta1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.1.4, )",
           "NLog.Database": "[6.0.3, )",
