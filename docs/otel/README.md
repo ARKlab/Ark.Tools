@@ -94,6 +94,11 @@ Use `Ark.Tools.ResourceWatcher.OTel` for ResourceWatcher source registration, th
 the exporter selected by the application. The legacy `Ark.Tools.ResourceWatcher.ApplicationInsights`
 package remains available for applications that still use the SDK.
 
+ResourceWatcher keeps the `Ark.Tools.ResourceWatcher` activity source and operation names.
+The public `ResourceWatcherInstrumentation` constants can be used when configuring a
+custom OpenTelemetry provider. Operation payload fields are emitted as span attributes;
+exceptions are recorded as exception events and set the span status to error.
+
 ### Azure Monitor configuration
 
 The recommended environment variable is:
