@@ -11,10 +11,10 @@ namespace Ark.Tools.ResourceWatcher;
 
 internal sealed class ResourceWatcherDiagnosticSource
 {
-    public const string DiagnosticListenerName = "Ark.Tools.ResourceWatcher";
-    public const string ActivitySourceName = "Ark.Tools.ResourceWatcher";
-    public const string BaseActivityName = "Ark.Tools.ResourceWatcher";
-    public const string ExceptionEventName = BaseActivityName + "Exception";
+    public const string DiagnosticListenerName = ResourceWatcherInstrumentation.DiagnosticListenerName;
+    public const string ActivitySourceName = ResourceWatcherInstrumentation.ActivitySourceName;
+    public const string BaseActivityName = ResourceWatcherInstrumentation.ActivityNamePrefix;
+    public const string ExceptionEventName = ResourceWatcherInstrumentation.ExceptionEventName;
 
     private readonly string _tenant;
     private readonly Logger _logger;
@@ -401,12 +401,13 @@ internal sealed class ResourceWatcherDiagnosticSource
     private static Activity _start<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string operationName, Func<T> getPayload, bool unlinkFromParent = false)
     {
         string activityName = BaseActivityName + "." + operationName;
+        var payload = getPayload();
 
         Activity? activity;
         if (_source.IsEnabled(activityName + ".Start"))
         {
             activity = new Activity(activityName);
-            _source.StartActivity(activity, getPayload());
+            _source.StartActivity(activity, payload);
         }
         else
         {
@@ -414,6 +415,7 @@ internal sealed class ResourceWatcherDiagnosticSource
                 ?? new Activity(activityName).Start();
         }
 
+        _setPayloadTags(activity, payload);
         return activity;
     }
 
@@ -423,7 +425,9 @@ internal sealed class ResourceWatcherDiagnosticSource
     {
         if (activity != null)
         {
-            _source.StopActivity(activity, getPayload());
+            var payload = getPayload();
+            _setPayloadTags(activity, payload);
+            _source.StopActivity(activity, payload);
         }
     }
 
@@ -432,11 +436,14 @@ internal sealed class ResourceWatcherDiagnosticSource
     private static void _reportEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string eventName, Func<T> getPayload)
     {
         var name = BaseActivityName + "." + eventName;
+        var payload = getPayload();
 
         if (_source.IsEnabled(name))
         {
-            _source.Write(name, getPayload());
+            _source.Write(name, payload);
         }
+
+        _addActivityEvent(name, payload);
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
@@ -454,5 +461,60 @@ internal sealed class ResourceWatcherDiagnosticSource
                     Tenant = tenant
                 });
         }
+
+        Activity.Current?.RecordException(ex);
+        Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
+    }
+
+    private static void _setPayloadTags<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(Activity? activity, T payload)
+    {
+        if (activity is null || payload is null)
+            return;
+
+        foreach (var property in typeof(T).GetProperties())
+        {
+            var value = property.GetValue(payload);
+            if (value is null || value is Activity)
+                continue;
+
+            if (value is Exception exception)
+            {
+                activity.RecordException(exception);
+                activity.SetStatus(ActivityStatusCode.Error, exception.Message);
+                continue;
+            }
+
+            activity.SetTag(property.Name, _toTagValue(value));
+        }
+    }
+
+    private static void _addActivityEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string name, T payload)
+    {
+        var activity = Activity.Current;
+        if (activity is null || payload is null)
+            return;
+
+        var tags = new ActivityTagsCollection();
+        foreach (var property in typeof(T).GetProperties())
+        {
+            var value = property.GetValue(payload);
+            if (value is null || value is Activity or Exception)
+                continue;
+
+            tags[property.Name] = _toTagValue(value);
+        }
+
+        activity.AddEvent(new ActivityEvent(name, tags: tags));
+    }
+
+    private static object _toTagValue(object value)
+    {
+        return value switch
+        {
+            TimeSpan duration => duration.TotalMilliseconds,
+            Enum enumValue => enumValue.ToString(),
+            IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? string.Empty
+        };
     }
 }

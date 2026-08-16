@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.ResourceWatcher.WorkerHost.Hosting" />
+    <PackageReference Include="Ark.Tools.ResourceWatcher.OTel" />
     <PackageReference Include="Ark.Tools.Http" />
     <PackageReference Include="Ark.Tools.NLog" />
   </ItemGroup>

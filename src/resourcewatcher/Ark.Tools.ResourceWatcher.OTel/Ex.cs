@@ -28,10 +28,8 @@ public static class Ex
         return builder.ConfigureServices(services =>
         {
             services.AddOpenTelemetry()
-                .WithTracing(tracing => tracing.AddSource(ResourceWatcherDiagnosticSourceName))
-                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherDiagnosticSourceName));
+                .WithTracing(tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
+                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherInstrumentation.ActivitySourceName));
         });
     }
-
-    private const string ResourceWatcherDiagnosticSourceName = "Ark.Tools.ResourceWatcher";
 }

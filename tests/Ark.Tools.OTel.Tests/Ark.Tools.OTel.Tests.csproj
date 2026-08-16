@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
+    <ProjectReference Include="../../src/resourcewatcher/Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
   </ItemGroup>
 
   <ItemGroup>
