@@ -53,11 +53,10 @@ public static class Ex
 
         var builder = services.AddOpenTelemetry();
         var connectionString = configuration?["ApplicationInsights:ConnectionString"]
-            ?? configuration?["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+            ?? configuration?["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+            ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
 
-        if (string.IsNullOrWhiteSpace(connectionString))
-            builder.UseAzureMonitor();
-        else
+        if (!string.IsNullOrWhiteSpace(connectionString))
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
         builder.AddArkAspNetCoreOpenTelemetry();

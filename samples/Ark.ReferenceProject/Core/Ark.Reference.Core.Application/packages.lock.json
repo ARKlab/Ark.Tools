@@ -1056,6 +1056,13 @@
           "Rebus.SqlServer": "[8.4.1, )"
         }
       },
+      "ark.tools.rebus.applicationinsights": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Microsoft.ApplicationInsights": "[3.1.2, )"
+        }
+      },
       "ark.tools.simpleinjector": {
         "type": "Project",
         "dependencies": {

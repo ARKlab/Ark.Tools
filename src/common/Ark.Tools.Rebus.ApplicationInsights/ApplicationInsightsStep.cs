@@ -3,6 +3,8 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
 using Rebus.Extensions;
+using Rebus.Messages;
+using Rebus.Pipeline;
 
 using SimpleInjector;
 

@@ -6,9 +6,7 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
 
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;

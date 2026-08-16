@@ -2,6 +2,8 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Metrics;
 
 using Rebus.Extensions;
+using Rebus.Messages;
+using Rebus.Pipeline;
 using Rebus.Time;
 
 using SimpleInjector;
@@ -18,7 +20,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 {
     private readonly Container _container;
     private readonly IRebusTime _time;
-    private readonly IProcessingMetrics _metrics;
+    private readonly Lazy<IProcessingMetrics?> _metrics;
 
 
     public ApplicationInsightsProcessingMetricsStep(Container container, IRebusTime time)
@@ -26,14 +28,26 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
         _container = container;
         _time = time;
 
-        _metrics = new ApplicationInsightsMetrics(_container.GetInstance<TelemetryClient>());
+        _metrics = new Lazy<IProcessingMetrics?>(() =>
+        {
+            try
+            {
+                return new ApplicationInsightsMetrics(_container.GetInstance<TelemetryClient>());
+            }
+            #pragma warning disable ERP022
+            catch
+            {
+                return null;
+            }
+            #pragma warning restore ERP022
+        });
     }
 
     internal ApplicationInsightsProcessingMetricsStep(IProcessingMetrics metrics, IRebusTime time)
     {
         _container = null!;
         _time = time;
-        _metrics = metrics;
+        _metrics = new Lazy<IProcessingMetrics?>(() => metrics);
     }
 
     /// <inheritdoc/>
@@ -44,6 +58,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
         var messageType = transportMessage.Headers.GetValueOrNull(Headers.Type);
         var sw = Stopwatch.StartNew();
         var operationResult = "failure";
+        var metrics = _metrics.Value;
 
         try
         {
@@ -58,7 +73,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
                 var totalTime = now - enqueuedTime;
                 var timeInQueue = totalTime - sw.Elapsed;
 
-                _metrics.TrackTimeInQueue(timeInQueue, messageType);
+                metrics?.TrackTimeInQueue(timeInQueue, messageType);
             }
 #pragma warning disable ERP022
             catch
@@ -71,7 +86,7 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
         {
             try
             {
-                _metrics.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
+                metrics?.TrackMessageProcessing(TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds), messageType, operationResult);
             }
 #pragma warning disable ERP022
             catch

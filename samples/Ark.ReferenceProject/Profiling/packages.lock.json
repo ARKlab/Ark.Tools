@@ -1916,6 +1916,7 @@
           "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
           "Ark.Tools.Outbox.SqlServer": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
+          "Ark.Tools.Rebus.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )"
@@ -2214,6 +2215,13 @@
           "Rebus.AzureServiceBus": "[10.7.0, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.4.1, )"
+        }
+      },
+      "ark.tools.rebus.applicationinsights": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Microsoft.ApplicationInsights": "[3.1.2, )"
         }
       },
       "ark.tools.reqnroll": {

@@ -1273,6 +1273,7 @@
       "ark.tools.resourcewatcher.otel": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.OTel": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
         }

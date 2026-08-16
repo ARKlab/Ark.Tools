@@ -23,7 +23,9 @@ public sealed class RebusProcessorService : IHostedService, IDisposable
     {
         _container = new Container();
         _container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        _container.Register(() => services.GetRequiredService<TelemetryClient>());
+        var telemetryClient = services.GetService<TelemetryClient>();
+        if (telemetryClient is not null)
+            _container.RegisterInstance(telemetryClient);
 
         var cfg = config.BuildApiHostConfig();
 
