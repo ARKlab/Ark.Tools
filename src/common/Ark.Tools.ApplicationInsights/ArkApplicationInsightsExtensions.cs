@@ -30,7 +30,7 @@ public static class ArkApplicationInsightsExtensions
     /// <item><description><see cref="ArkPreFilterProcessor"/> – drops known-noisy, low-value spans early.</description></item>
     /// <item><description><see cref="ArkAdaptiveSampler"/> – adaptive, per-operation rate-limited sampler with failure preservation.</description></item>
     /// <item><description><see cref="ArkFailurePromotionProcessor"/> – promotes rate-limited spans to exported if they end as failures.</description></item>
-    /// <item><description><see cref="ArkTelemetryResourceExtensions"/> – adds the entry assembly as the OpenTelemetry service name.</description></item>
+    /// <item><description><see cref="ArkTelemetryResourceExtensions.AddArkTelemetryResource"/> – adds the entry assembly as the OpenTelemetry service name.</description></item>
     /// </list>
     /// <para>
     /// Call this method <b>after</b> <c>AddApplicationInsightsTelemetry</c> /
