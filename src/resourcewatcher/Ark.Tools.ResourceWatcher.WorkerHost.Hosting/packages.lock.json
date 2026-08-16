@@ -166,11 +166,6 @@
         "resolved": "10.0.2",
         "contentHash": "LG9Yll3B5aNpxv0+D47g6LiOiKBIlodhcHdQwcYzo8VeexFLGqx5ymetmA2aBRyo9cCcWsQWrFsdbsr8LvmWDw=="
       },
-      "Microsoft.Bcl.Memory": {
-        "type": "Transitive",
-        "resolved": "10.0.4",
-        "contentHash": "ayoY21xuhuY6cYZkG92bdYsulmJlLS558b3Ez1rWFkBZ+QIUSeAlALzT1UK+ZZeEmhzFWjemG4bBcMRhdiHntA=="
-      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.400",
@@ -196,14 +191,6 @@
         "type": "Transitive",
         "resolved": "6.0.2",
         "contentHash": "f+pRODTWX7Y67jXO3T5S2dIPZ9qMJNySjlZT/TKmWVNWe19N8jcWmHaqHnnchaq3gxEKv1SWVY5EFzOD06l41w=="
-      },
-      "Microsoft.Diagnostics.NETCore.Client": {
-        "type": "Transitive",
-        "resolved": "0.2.621003",
-        "contentHash": "22YdSeB53xk4Pd1Xz92HigUy8ySJMzd8hpEZHlFWeaefzYox4VJnW+gJEzGrxbSvl3oGCpiIFKqh8the0xhzSA==",
-        "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "6.0.4"
-        }
       },
       "Microsoft.Extensions.Caching.Memory": {
         "type": "Transitive",
@@ -419,26 +406,6 @@
           "OpenTelemetry.Api": "1.17.0"
         }
       },
-      "OpenTelemetry.Instrumentation.Http": {
-        "type": "Transitive",
-        "resolved": "1.15.1",
-        "contentHash": "vFO4Fj/dXkoVNGo/nhoGpO2zYQmZwr4jTID7oRGo+XlQ8LqksyZjUXQ4p39RfUvTID7IzzL8Qe71tW7CcAFymA==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
-        }
-      },
-      "OpenTelemetry.Instrumentation.SqlClient": {
-        "type": "Transitive",
-        "resolved": "1.15.2",
-        "contentHash": "pRB84YJEXD121kygc6CtcF46dtLuTKIjphA2SJye32G4g2Xl3epkCrOcPCOAg4WDagCdMGa16Ge6PPVzFJZsAQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
-        }
-      },
       "OpenTelemetry.PersistentStorage.Abstractions": {
         "type": "Transitive",
         "resolved": "1.0.3",
@@ -467,19 +434,6 @@
         "type": "Transitive",
         "resolved": "10.0.11",
         "contentHash": "QTXEoQBzz00SFWbo7nAg1Ogd4f99lwqcO9uAJ7MYSLEUR28f6As32QktrqG2Fr9cfAfd1GjLyGYspE7Ipj7P6w=="
-      },
-      "System.Diagnostics.PerformanceCounter": {
-        "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "L+zIMEaXp1vA4wZk1KLMpk6tvU0xy94R0IfmhkmTWeC4KwShsmAfbg5I19LgjsCTYp6GVdXZ2aHluVWL0QqBdA==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "7.0.0"
-        }
-      },
-      "System.IO.FileSystem.AccessControl": {
-        "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "SxHB3nuNrpptVk+vZ/F+7OHEpoHUIKKMl02bUmYHQr1r+glbZQxs7pRtsf4ENO29TVm2TH3AEeep2fJcy92oYw=="
       },
       "System.IO.Hashing": {
         "type": "Transitive",
@@ -510,17 +464,6 @@
           "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
         }
       },
-      "ark.tools.applicationinsights.hostedservice": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
-          "Ark.Tools.Hosting": "[1.0.0, )",
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Profiler": "[1.0.1-beta.7, )",
-          "Microsoft.ApplicationInsights.WorkerService": "[3.1.2, )"
-        }
-      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
@@ -541,13 +484,6 @@
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.11, )"
         }
       },
-      "ark.tools.newtonsoftjson": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Nodatime.Json": "[1.0.0, )",
-          "Newtonsoft.Json": "[13.0.4, )"
-        }
-      },
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
@@ -565,28 +501,10 @@
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
-      "ark.tools.nlog.configuration": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
-          "Microsoft.Extensions.Hosting": "[10.0.11, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
-          "NLog.Extensions.Logging": "[6.1.4, )"
-        }
-      },
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )"
-        }
-      },
-      "ark.tools.nodatime.json": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Newtonsoft.Json": "[13.0.4, )",
-          "NodaTime.Serialization.JsonNet": "[3.3.0, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
@@ -610,15 +528,6 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Microsoft.Extensions.DiagnosticAdapter": "[3.1.32, )"
-        }
-      },
-      "ark.tools.resourcewatcher.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.ApplicationInsights.HostedService": "[1.0.0, )",
-          "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
-          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
-          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.11, )"
         }
       },
       "ark.tools.resourcewatcher.workerhost": {
@@ -660,39 +569,6 @@
         "contentHash": "GeFv8sGwRKvDKwI2WFy8r0mhmlxEVZg24Sit2NogTjiSO8RVjllWM65OT6e1sKjOvG8V74y7hAbaELUUPjZQSw==",
         "dependencies": {
           "Azure.Core": "1.53.0"
-        }
-      },
-      "Azure.Monitor.OpenTelemetry.Profiler": {
-        "type": "CentralTransitive",
-        "requested": "[1.0.1-beta.7, )",
-        "resolved": "1.0.1-beta.7",
-        "contentHash": "E33KO2trPYn4FH2D/yxvWXKqjka/iaTce4ysJBzIgCSRlfFkXcER+95SmGBdGO0q3/X+CaS+EbN5kjf5SCmmNQ==",
-        "dependencies": {
-          "Azure.Core": "1.50.0",
-          "Azure.Identity": "1.14.0",
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.4.0",
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.1",
-          "Microsoft.Bcl.Memory": "10.0.4",
-          "Microsoft.Diagnostics.NETCore.Client": "0.2.621003",
-          "Microsoft.Extensions.Configuration": "10.0.0",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Configuration.Binder": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
-          "Microsoft.Extensions.Primitives": "10.0.0",
-          "OpenTelemetry": "1.15.3",
-          "OpenTelemetry.Api": "1.15.3",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "System.Diagnostics.PerformanceCounter": "7.0.0",
-          "System.IO.FileSystem.AccessControl": "5.0.0",
-          "System.IO.Hashing": "10.0.0",
-          "System.Memory.Data": "10.0.0",
-          "System.Security.Cryptography.ProtectedData": "10.0.0"
         }
       },
       "Ben.Demystifier": {
@@ -739,18 +615,6 @@
         "dependencies": {
           "Microsoft.ApplicationInsights": "3.1.2",
           "NLog": "4.5.11"
-        }
-      },
-      "Microsoft.ApplicationInsights.WorkerService": {
-        "type": "CentralTransitive",
-        "requested": "[3.1.2, )",
-        "resolved": "3.1.2",
-        "contentHash": "jFyIBi1/ZPFEZHeiSINsY2nj/UJIP9geLZ+1fjYWlDvX0NXiafPCbu5AyIH7inDGtgjAK81hLBmII7F4cgNbug==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "3.1.2",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.Instrumentation.Http": "1.15.1",
-          "OpenTelemetry.Instrumentation.SqlClient": "1.15.2"
         }
       },
       "Microsoft.Data.SqlClient": {
@@ -957,17 +821,6 @@
           "NLog": "6.1.4"
         }
       },
-      "NLog.Extensions.Logging": {
-        "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "gDJjgF9LjG1Zsy3o/3BVUk5gFcCozYzrzKTZjcnE43FghchoQ9Xi4ra2dGEU+ftJf9oM0Kzs06y1r2SjfhDBGQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging": "10.0.0",
-          "NLog": "6.1.4"
-        }
-      },
       "NLog.MailKit": {
         "type": "CentralTransitive",
         "requested": "[6.1.5, )",
@@ -983,16 +836,6 @@
         "requested": "[3.3.3, )",
         "resolved": "3.3.3",
         "contentHash": "EwouHZv99j5hraq34yQqvCQGDR59dynxPHlxFm2vY/sw2N2aR8cFel29ZxPqohjBWp9Qsnld7QCY+7uZ2PESGg=="
-      },
-      "NodaTime.Serialization.JsonNet": {
-        "type": "CentralTransitive",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "uhBuAjeUp12xkJyDTUDTMoea3FCqjY9jkRzCvtoIcETDXxPPqdCCMM/MlrNUHe4LmbZSQyOXY9JS2vPlgvljWA==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "[3.0.0, 4.0.0)"
-        }
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "CentralTransitive",
@@ -1240,11 +1083,6 @@
           "System.Formats.Asn1": "10.0.2"
         }
       },
-      "Microsoft.Bcl.Memory": {
-        "type": "Transitive",
-        "resolved": "10.0.4",
-        "contentHash": "ayoY21xuhuY6cYZkG92bdYsulmJlLS558b3Ez1rWFkBZ+QIUSeAlALzT1UK+ZZeEmhzFWjemG4bBcMRhdiHntA=="
-      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.400",
@@ -1270,14 +1108,6 @@
         "type": "Transitive",
         "resolved": "6.0.2",
         "contentHash": "f+pRODTWX7Y67jXO3T5S2dIPZ9qMJNySjlZT/TKmWVNWe19N8jcWmHaqHnnchaq3gxEKv1SWVY5EFzOD06l41w=="
-      },
-      "Microsoft.Diagnostics.NETCore.Client": {
-        "type": "Transitive",
-        "resolved": "0.2.621003",
-        "contentHash": "22YdSeB53xk4Pd1Xz92HigUy8ySJMzd8hpEZHlFWeaefzYox4VJnW+gJEzGrxbSvl3oGCpiIFKqh8the0xhzSA==",
-        "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "6.0.4"
-        }
       },
       "Microsoft.Extensions.Caching.Memory": {
         "type": "Transitive",
@@ -1495,26 +1325,6 @@
           "OpenTelemetry.Api": "1.17.0"
         }
       },
-      "OpenTelemetry.Instrumentation.Http": {
-        "type": "Transitive",
-        "resolved": "1.15.1",
-        "contentHash": "vFO4Fj/dXkoVNGo/nhoGpO2zYQmZwr4jTID7oRGo+XlQ8LqksyZjUXQ4p39RfUvTID7IzzL8Qe71tW7CcAFymA==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration": "8.0.0",
-          "Microsoft.Extensions.Options": "8.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
-        }
-      },
-      "OpenTelemetry.Instrumentation.SqlClient": {
-        "type": "Transitive",
-        "resolved": "1.15.2",
-        "contentHash": "pRB84YJEXD121kygc6CtcF46dtLuTKIjphA2SJye32G4g2Xl3epkCrOcPCOAg4WDagCdMGa16Ge6PPVzFJZsAQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration": "8.0.0",
-          "Microsoft.Extensions.Options": "8.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
-        }
-      },
       "OpenTelemetry.PersistentStorage.Abstractions": {
         "type": "Transitive",
         "resolved": "1.0.3",
@@ -1545,14 +1355,6 @@
         "type": "Transitive",
         "resolved": "10.0.11",
         "contentHash": "QTXEoQBzz00SFWbo7nAg1Ogd4f99lwqcO9uAJ7MYSLEUR28f6As32QktrqG2Fr9cfAfd1GjLyGYspE7Ipj7P6w=="
-      },
-      "System.Diagnostics.PerformanceCounter": {
-        "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "L+zIMEaXp1vA4wZk1KLMpk6tvU0xy94R0IfmhkmTWeC4KwShsmAfbg5I19LgjsCTYp6GVdXZ2aHluVWL0QqBdA==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "7.0.0"
-        }
       },
       "System.Formats.Asn1": {
         "type": "Transitive",
@@ -1623,17 +1425,6 @@
           "OpenTelemetry.Extensions.Hosting": "[1.17.0, )"
         }
       },
-      "ark.tools.applicationinsights.hostedservice": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.ApplicationInsights": "[1.0.0, )",
-          "Ark.Tools.Hosting": "[1.0.0, )",
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Profiler": "[1.0.1-beta.7, )",
-          "Microsoft.ApplicationInsights.WorkerService": "[3.1.2, )"
-        }
-      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
@@ -1655,13 +1446,6 @@
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.11, )"
         }
       },
-      "ark.tools.newtonsoftjson": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Nodatime.Json": "[1.0.0, )",
-          "Newtonsoft.Json": "[13.0.4, )"
-        }
-      },
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
@@ -1679,28 +1463,10 @@
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
-      "ark.tools.nlog.configuration": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
-          "Microsoft.Extensions.Hosting": "[10.0.11, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
-          "NLog.Extensions.Logging": "[6.1.4, )"
-        }
-      },
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )"
-        }
-      },
-      "ark.tools.nodatime.json": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Newtonsoft.Json": "[13.0.4, )",
-          "NodaTime.Serialization.JsonNet": "[3.3.0, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
@@ -1724,15 +1490,6 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Microsoft.Extensions.DiagnosticAdapter": "[3.1.32, )"
-        }
-      },
-      "ark.tools.resourcewatcher.applicationinsights": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.ApplicationInsights.HostedService": "[1.0.0, )",
-          "Ark.Tools.NewtonsoftJson": "[1.0.0, )",
-          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
-          "Microsoft.Extensions.Hosting.Abstractions": "[10.0.11, )"
         }
       },
       "ark.tools.resourcewatcher.workerhost": {
@@ -1774,42 +1531,6 @@
         "contentHash": "GeFv8sGwRKvDKwI2WFy8r0mhmlxEVZg24Sit2NogTjiSO8RVjllWM65OT6e1sKjOvG8V74y7hAbaELUUPjZQSw==",
         "dependencies": {
           "Azure.Core": "1.53.0"
-        }
-      },
-      "Azure.Monitor.OpenTelemetry.Profiler": {
-        "type": "CentralTransitive",
-        "requested": "[1.0.1-beta.7, )",
-        "resolved": "1.0.1-beta.7",
-        "contentHash": "E33KO2trPYn4FH2D/yxvWXKqjka/iaTce4ysJBzIgCSRlfFkXcER+95SmGBdGO0q3/X+CaS+EbN5kjf5SCmmNQ==",
-        "dependencies": {
-          "Azure.Core": "1.50.0",
-          "Azure.Identity": "1.14.0",
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.4.0",
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.1",
-          "Microsoft.Bcl.Memory": "10.0.4",
-          "Microsoft.Diagnostics.NETCore.Client": "0.2.621003",
-          "Microsoft.Extensions.Configuration": "10.0.0",
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Configuration.Binder": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection": "10.0.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Logging": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0",
-          "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.0",
-          "Microsoft.Extensions.Primitives": "10.0.0",
-          "OpenTelemetry": "1.15.3",
-          "OpenTelemetry.Api": "1.15.3",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "System.Diagnostics.DiagnosticSource": "10.0.0",
-          "System.Diagnostics.PerformanceCounter": "7.0.0",
-          "System.IO.Hashing": "10.0.0",
-          "System.Linq.AsyncEnumerable": "10.0.1",
-          "System.Memory.Data": "10.0.0",
-          "System.Security.Cryptography.ProtectedData": "10.0.0",
-          "System.Text.Encodings.Web": "10.0.0",
-          "System.Text.Json": "10.0.0"
         }
       },
       "Ben.Demystifier": {
@@ -1856,18 +1577,6 @@
         "dependencies": {
           "Microsoft.ApplicationInsights": "3.1.2",
           "NLog": "4.5.11"
-        }
-      },
-      "Microsoft.ApplicationInsights.WorkerService": {
-        "type": "CentralTransitive",
-        "requested": "[3.1.2, )",
-        "resolved": "3.1.2",
-        "contentHash": "jFyIBi1/ZPFEZHeiSINsY2nj/UJIP9geLZ+1fjYWlDvX0NXiafPCbu5AyIH7inDGtgjAK81hLBmII7F4cgNbug==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "3.1.2",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.Instrumentation.Http": "1.15.1",
-          "OpenTelemetry.Instrumentation.SqlClient": "1.15.2"
         }
       },
       "Microsoft.Data.SqlClient": {
@@ -2075,17 +1784,6 @@
           "NLog": "6.1.4"
         }
       },
-      "NLog.Extensions.Logging": {
-        "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "gDJjgF9LjG1Zsy3o/3BVUk5gFcCozYzrzKTZjcnE43FghchoQ9Xi4ra2dGEU+ftJf9oM0Kzs06y1r2SjfhDBGQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Configuration.Abstractions": "8.0.0",
-          "Microsoft.Extensions.Logging": "8.0.0",
-          "NLog": "6.1.4"
-        }
-      },
       "NLog.MailKit": {
         "type": "CentralTransitive",
         "requested": "[6.1.5, )",
@@ -2101,16 +1799,6 @@
         "requested": "[3.3.3, )",
         "resolved": "3.3.3",
         "contentHash": "EwouHZv99j5hraq34yQqvCQGDR59dynxPHlxFm2vY/sw2N2aR8cFel29ZxPqohjBWp9Qsnld7QCY+7uZ2PESGg=="
-      },
-      "NodaTime.Serialization.JsonNet": {
-        "type": "CentralTransitive",
-        "requested": "[3.3.0, )",
-        "resolved": "3.3.0",
-        "contentHash": "uhBuAjeUp12xkJyDTUDTMoea3FCqjY9jkRzCvtoIcETDXxPPqdCCMM/MlrNUHe4LmbZSQyOXY9JS2vPlgvljWA==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.4",
-          "NodaTime": "[3.0.0, 4.0.0)"
-        }
       },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "CentralTransitive",

@@ -5,7 +5,10 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using OpenTelemetry;
 using OpenTelemetry.Trace;
+
+using System.Diagnostics;
 
 using Ark.Tools.Rebus;
 

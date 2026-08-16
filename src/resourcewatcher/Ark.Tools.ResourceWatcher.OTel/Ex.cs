@@ -4,11 +4,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
-
-using Ark.Tools.ResourceWatcher;
-
 namespace Ark.Tools.ResourceWatcher.OTel;
 
 /// <summary>
@@ -25,7 +20,7 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.ConfigureServices(services =>
+        return builder.ConfigureServices((_, services) =>
         {
             services.AddOpenTelemetry()
                 .WithTracing(tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))

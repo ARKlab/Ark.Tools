@@ -15,12 +15,13 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Tests;
 
 [TestClass]
+[DoNotParallelize]
 public sealed class ResourceWatcherOpenTelemetryTests
 {
     [TestMethod]
     public async Task RunOnce_ExportsStableOperationsAndPayloadAttributes()
     {
-        var collector = new CollectingProcessor();
+        using var collector = new CollectingProcessor();
         using var provider = Sdk.CreateTracerProviderBuilder()
             .AddSource(ResourceWatcherInstrumentation.ActivitySourceName)
             .SetSampler(new AlwaysOnSampler())
@@ -35,22 +36,47 @@ public sealed class ResourceWatcherOpenTelemetryTests
         collector.Spans.Should().Contain(x => x.OperationName == "Ark.Tools.ResourceWatcher.CheckState");
         collector.Spans.Should().Contain(x =>
             x.OperationName == "Ark.Tools.ResourceWatcher.ProcessResource"
-            && x.GetTagItem("ResourceId")?.ToString() == "resource-1"
-            && x.GetTagItem("ResultType")?.ToString() == nameof(ResultType.Normal));
+            && _hasTag(x, "ResourceId", "resource-1")
+            && _hasTag(x, "ResultType", nameof(ResultType.Normal)));
         collector.Spans.Should().Contain(x =>
             x.OperationName == "Ark.Tools.ResourceWatcher.Run"
-            && x.GetTagItem("Tenant")?.ToString() == "tenant");
+            && _hasTag(x, "Tenant", "tenant"));
+    }
+
+    [TestMethod]
+    public async Task ProcessFailure_RecordsExceptionAndErrorStatus()
+    {
+        using var collector = new CollectingProcessor();
+        using var provider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(ResourceWatcherInstrumentation.ActivitySourceName)
+            .SetSampler(new AlwaysOnSampler())
+            .AddProcessor(collector)
+            .Build();
+        using var watcher = new TestWatcher(failProcessing: true);
+
+        await watcher.RunOnce().ConfigureAwait(false);
+
+        var activity = collector.Spans.Single(x => x.OperationName == "Ark.Tools.ResourceWatcher.ProcessResource");
+        activity.Status.Should().Be(ActivityStatusCode.Error);
+        activity.Events.Should().Contain(x => x.Name == "exception");
+    }
+
+    private static bool _hasTag(Activity activity, string name, string expectedValue)
+    {
+        return activity.GetTagItem(name)?.ToString() == expectedValue;
     }
 
     private sealed class TestWatcher : ResourceWatcher<TestResource, VoidExtensions>
     {
         private static readonly LocalDateTime _modified = new(2026, 8, 16, 0, 0);
+        private readonly bool _failProcessing;
 
-        public TestWatcher()
+        public TestWatcher(bool failProcessing = false)
             : base(
                 new TestConfig(),
                 new InMemStateProvider<VoidExtensions>())
         {
+            _failProcessing = failProcessing;
         }
 
         protected override Task<IEnumerable<IResourceMetadata<VoidExtensions>>> _getResourcesInfo(CancellationToken ctk = default)
@@ -77,6 +103,9 @@ public sealed class ResourceWatcherOpenTelemetryTests
             ChangedStateContext<TestResource, VoidExtensions> context,
             CancellationToken ctk = default)
         {
+            if (_failProcessing)
+                throw new InvalidOperationException("test failure");
+
             _ = await context.Payload.ConfigureAwait(false);
         }
     }

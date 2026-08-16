@@ -411,8 +411,10 @@ internal sealed class ResourceWatcherDiagnosticSource
         }
         else
         {
+#pragma warning disable CA2000 // The caller owns and disposes the returned activity.
             activity = _activitySource.StartActivity(activityName, ActivityKind.Internal)
                 ?? new Activity(activityName).Start();
+#pragma warning restore CA2000
         }
 
         _setPayloadTags(activity, payload);
@@ -462,7 +464,7 @@ internal sealed class ResourceWatcherDiagnosticSource
                 });
         }
 
-        Activity.Current?.RecordException(ex);
+        _recordException(Activity.Current, ex);
         Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
     }
 
@@ -479,7 +481,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
             if (value is Exception exception)
             {
-                activity.RecordException(exception);
+                _recordException(activity, exception);
                 activity.SetStatus(ActivityStatusCode.Error, exception.Message);
                 continue;
             }
@@ -516,5 +518,20 @@ internal sealed class ResourceWatcherDiagnosticSource
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString() ?? string.Empty
         };
+    }
+
+    private static void _recordException(Activity? activity, Exception exception)
+    {
+        if (activity is null)
+            return;
+
+        activity.AddEvent(new ActivityEvent(
+            "exception",
+            tags: new ActivityTagsCollection
+            {
+                ["exception.type"] = exception.GetType().FullName,
+                ["exception.message"] = exception.Message,
+                ["exception.stacktrace"] = exception.ToString()
+            }));
     }
 }

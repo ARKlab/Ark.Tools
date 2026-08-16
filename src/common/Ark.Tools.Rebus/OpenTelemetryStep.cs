@@ -21,7 +21,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
     public const string ActivitySourceName = "Ark.Tools.Rebus";
 
     private const string _activityName = "Rebus.Process";
-    private readonly ActivitySource _activitySource = new(ActivitySourceName);
+    private static readonly ActivitySource _activitySource = new(ActivitySourceName);
 
     /// <summary>
     /// Initializes a new instance of <see cref="OpenTelemetryStep"/>.
@@ -60,7 +60,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         catch (Exception exception)
         {
             activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
-            activity?.RecordException(exception);
+            _recordException(activity, exception);
             throw;
         }
     }
@@ -86,5 +86,20 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         }
 
         return context;
+    }
+
+    private static void _recordException(Activity? activity, Exception exception)
+    {
+        if (activity is null)
+            return;
+
+        activity.AddEvent(new ActivityEvent(
+            "exception",
+            tags: new ActivityTagsCollection
+            {
+                ["exception.type"] = exception.GetType().FullName,
+                ["exception.message"] = exception.Message,
+                ["exception.stacktrace"] = exception.ToString()
+            }));
     }
 }

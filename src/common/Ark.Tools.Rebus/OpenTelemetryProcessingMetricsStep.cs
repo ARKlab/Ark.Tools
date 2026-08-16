@@ -94,15 +94,9 @@ public sealed class OpenTelemetryProcessingMetricsStep : IIncomingStep
 
     private sealed class OpenTelemetryMetrics : IProcessingMetrics
     {
-        private readonly Meter _meter = new(MeterName);
-        private readonly Histogram<double> _timeInQueue;
-        private readonly Histogram<double> _messageProcessing;
-
-        public OpenTelemetryMetrics()
-        {
-            _timeInQueue = _meter.CreateHistogram<double>("Rebus.MessageTimeInQueueSuccess", "ms");
-            _messageProcessing = _meter.CreateHistogram<double>("Rebus.MessageProcessingTime", "ms");
-        }
+        private static readonly Meter _meter = new(MeterName);
+        private static readonly Histogram<double> _timeInQueue = _meter.CreateHistogram<double>("Rebus.MessageTimeInQueueSuccess", "ms");
+        private static readonly Histogram<double> _messageProcessing = _meter.CreateHistogram<double>("Rebus.MessageProcessingTime", "ms");
 
         public void TrackTimeInQueue(TimeSpan timeInQueue, string messageType)
         {
