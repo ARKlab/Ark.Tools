@@ -39,6 +39,7 @@ The NLog auto-configurer expects the following settings:
   * `NLog:NotificationList` for the recipient address.
   * **NEW** The sender address is taken from Smtp connection string `;From=noreply@example.com` or from `.ConfigureNLog(mailfrom:"me@myapp.com")` (defaults to `noreply@ark-energy.eu`)
 * `NLog:SlackWebHook` for the Slack target. By default only `Fatal` and `LoggerName=Slack.*` are sent.
+* `APPINSIGHTS_INSTRUMENTATIONKEY` or `ApplicationInsights:InstrumentationKey` for the ApplicationInsights target. By default only `>=Error` are sent.
 
 ## NLog Structured Logging
 
@@ -46,7 +47,7 @@ Logging represents a non-trivial part of the CPU consumption of a running Assemb
 Log Messages are also generally structured to present some context variables which are of interest.
 
 `NLog@v4.5` introduced [StructuredLogging](https://github.com/NLog/NLog/wiki/How-to-use-structured-logging) template support.
-`Ark.Tools@v4.5` (same version, just a coincidence...) supports writing these captured properties in Database Targets.
+`Ark.Tools@v4.5` (same version, just a coincidence...) supports writing these captured properties in ApplicationInsights and Database Targets.
 
 StructuredLogging is also more performant than string interpolation: string interpolation (`$"Message {variable}"`) **SHALL NOT be used for Logging!**
 String interpolation is always performed even for usually disabled levels like `Trace` or `Debug` causing a performance loss.
@@ -71,18 +72,10 @@ The default Rules are either:
 * LoggerName="Slack.*" (created via `_slackLogger = LogManager.CreateLogger("Slack.MyStuff");`)
 * Level==Fatal
 
-## Azure Monitor OpenTelemetry logs
+## NLog ApplicationInsights
 
-The `Ark.Tools.AspNetCore.OTel` setup uses the Azure Monitor OpenTelemetry Distro
-for `ILogger` records. The Distro exports logs as the OpenTelemetry logs signal
-(Azure Monitor stores them in its trace-style log experience); they are not span
-telemetry. Ark filters the Distro logger provider in code so only `Error` and
-`Critical` records are exported.
+Starting `Ark.Tools@v4.5` there is support for Logging to ApplicationInsights.
 
-```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
-```
+The Configuration auto-loaders like `WithDefaultTargetsAndRulesFromConfiguration()` looks for the Microsoft's default settings like `APPINSIGHTS_INSTRUMENTATIONKEY` and `ApplicationInsights:InstrumentationKey`.
 
-NLog remains available for local and application-specific targets. The removed
-NLog Application Insights target and its instrumentation-key settings are no
-longer used.
+The default Rules log any `Error` or `Fatal` to ApplicationInsights, including any `Exception` and StructuredLogging properties.
