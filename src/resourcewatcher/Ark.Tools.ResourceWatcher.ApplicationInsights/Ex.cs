@@ -41,7 +41,10 @@ public static partial class Ex
                                         metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
                                 });
                             }
-                            catch (InvalidOperationException)
+                            catch (InvalidOperationException ex)
+                                when (ex.Message.StartsWith(
+                                    "Configuration cannot be modified after it has been built.",
+                                    StringComparison.Ordinal))
                             {
                             }
                         }));
