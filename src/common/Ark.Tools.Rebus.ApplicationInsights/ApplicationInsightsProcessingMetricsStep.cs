@@ -30,14 +30,10 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 
         _metrics = new Lazy<IProcessingMetrics?>(() =>
         {
-            try
-            {
-                return new ApplicationInsightsMetrics(_container.GetInstance<TelemetryClient>());
-            }
-            catch (ActivationException)
-            {
+            if (_container.GetRegistration<TelemetryClient>() is null)
                 return null;
-            }
+
+            return new ApplicationInsightsMetrics(_container.GetInstance<TelemetryClient>());
         });
     }
 
