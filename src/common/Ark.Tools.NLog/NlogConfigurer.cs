@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.NLog.Slack;
 
-using Microsoft.ApplicationInsights.NLogTarget;
 using Microsoft.Data.SqlClient;
 
 using NLog.Common;
@@ -16,14 +15,11 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 
-using TargetPropertyWithContext = Microsoft.ApplicationInsights.NLogTarget.TargetPropertyWithContext;
-
 namespace Ark.Tools.NLog;
 
 public static class NLogConfigurer
 {
     public const string SlackTarget = "Ark.Slack";
-    public const string ApplicationInsightsTarget = "Ark.ApplicationInsights";
     public const string ConsoleTarget = "Ark.Console";
     public const string FileTarget = "Ark.File";
     public const string DatabaseTarget = "Ark.Database";
@@ -83,11 +79,6 @@ public static class NLogConfigurer
                     ;
     }
 
-    public static Configurer WithApplicationInsightsDefaultRules(this Configurer @this)
-    {
-        return @this.WithApplicationInsightsRule("*", LogLevel.Error);
-    }
-
     [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public record Config(
         string? SQLConnectionString = null,
@@ -96,7 +87,6 @@ public static class NLogConfigurer
         string? MailTo = null,
         string? MailFrom = null,
         string? SlackWebhook = null,
-        string? ApplicationInsightsInstrumentationKey = null,
         bool? EnableConsole = null,
         bool Async = true);
 
@@ -130,11 +120,6 @@ public static class NLogConfigurer
             @this.WithSlackDefaultTargetsAndRules(config.SlackWebhook!, config.Async);
         }
 
-        if (!string.IsNullOrWhiteSpace(config.ApplicationInsightsInstrumentationKey))
-        {
-            @this.WithApplicationInsightsTargetsAndRules(config.ApplicationInsightsInstrumentationKey!, config.Async);
-        }
-
         if (Debugger.IsAttached)
         {
             @this
@@ -150,13 +135,6 @@ public static class NLogConfigurer
     {
         @this.WithSlackTarget(slackwebhook, async)
              .WithSlackDefaultRules();
-        return @this;
-    }
-
-    public static Configurer WithApplicationInsightsTargetsAndRules(this Configurer @this, string connectionString, bool async = true)
-    {
-        @this.WithApplicationInsightsTarget(connectionString, async)
-             .WithApplicationInsightsDefaultRules();
         return @this;
     }
 
@@ -229,26 +207,6 @@ public static class NLogConfigurer
             _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);
             return this;
         }
-        public Configurer WithApplicationInsightsTarget(string connectionString, bool async = true)
-        {
-            var target = new ApplicationInsightsTarget()
-            {
-                ConnectionString = connectionString,
-                ContextProperties = {
-                    new TargetPropertyWithContext("Properties", new JsonLayout() {
-                        ExcludeEmptyProperties = true,
-                        IncludeGdc = true,
-                        IncludeScopeProperties = true,
-                        RenderEmptyObject = true,
-                        IncludeEventProperties = true,
-                        ExcludeProperties = {"Message","Exception"}
-                    })
-                }
-            };
-            _config.AddTarget(ApplicationInsightsTarget, async ? _wrapWithAsyncTargetWrapper(target) : target);
-            return this;
-        }
-
         public Configurer WithConsoleTarget(bool async = true)
         {
             var consoleTarget = new ConsoleTarget();
@@ -435,25 +393,6 @@ VALUES
         {
             var target = _config.FindTargetByName(SlackTarget) ?? throw new InvalidOperationException($"Target '{SlackTarget}' not found. Please add it first using {nameof(WithSlackTarget)} method.");
             var ruleName = $"{SlackTarget}-{loggerPattern}";
-            _config.RemoveRuleByName(ruleName);
-            _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
-
-            return this;
-        }
-
-        public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel level, bool final = false)
-        {
-            var target = _config.FindTargetByName(ApplicationInsightsTarget) ?? throw new InvalidOperationException($"Target '{ApplicationInsightsTarget}' not found. Please add it first using {nameof(WithApplicationInsightsTarget)} method.");
-            var ruleName = $"{ApplicationInsightsTarget}-{loggerPattern}";
-            _config.RemoveRuleByName(ruleName);
-            _config.AddRule(new LoggingRule(loggerPattern, level, target) { RuleName = ruleName, Final = final });
-
-            return this;
-        }
-        public Configurer WithApplicationInsightsRule(string loggerPattern, LogLevel minLevel, LogLevel maxLevel, bool final = false)
-        {
-            var target = _config.FindTargetByName(ApplicationInsightsTarget) ?? throw new InvalidOperationException($"Target '{ApplicationInsightsTarget}' not found. Please add it first using {nameof(WithApplicationInsightsTarget)} method.");
-            var ruleName = $"{ApplicationInsightsTarget}-{loggerPattern}";
             _config.RemoveRuleByName(ruleName);
             _config.AddRule(new LoggingRule(loggerPattern, minLevel, maxLevel, target) { RuleName = ruleName, Final = final });
 

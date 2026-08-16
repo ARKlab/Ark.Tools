@@ -9,7 +9,6 @@ Versions were checked against NuGet on the update date:
 | Microsoft.ApplicationInsights | 3.1.2 | Current stable 3.x SDK |
 | Microsoft.ApplicationInsights.AspNetCore | 3.1.2 | Current ASP.NET Core integration |
 | Microsoft.ApplicationInsights.WorkerService | 3.1.2 | Current worker integration |
-| Microsoft.ApplicationInsights.NLogTarget | 3.1.2-beta1 | Current NLog target line |
 | OpenTelemetry | 1.17.0 | Current stable SDK |
 | OpenTelemetry.Api | 1.17.0 | SDK alignment |
 | OpenTelemetry.Extensions.Hosting | 1.17.0 | SDK alignment |

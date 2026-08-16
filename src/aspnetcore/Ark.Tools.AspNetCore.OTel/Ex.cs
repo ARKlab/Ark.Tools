@@ -5,8 +5,10 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 
 using Ark.Tools.Rebus;
@@ -39,6 +41,7 @@ public static class Ex
 
     /// <summary>
     /// Adds Ark instrumentation sources and Azure Monitor when a connection string is configured.
+    /// OpenTelemetry log export is restricted to errors and critical failures.
     /// </summary>
     /// <param name="services">The application service collection.</param>
     /// <param name="configuration">Optional application configuration.</param>
@@ -56,6 +59,9 @@ public static class Ex
 
         if (!string.IsNullOrWhiteSpace(connectionString))
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
+
+        services.AddLogging(logging =>
+            logging.AddFilter<OpenTelemetryLoggerProvider>(LogLevel.Error));
 
         builder.AddArkAspNetCoreOpenTelemetry();
 

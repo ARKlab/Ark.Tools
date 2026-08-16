@@ -72,6 +72,11 @@ The extension is provided by `Ark.Tools.AspNetCore.OTel` and uses the Azure Moni
 OpenTelemetry Distro. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` or configure an
 alternative exporter in the application.
 
+The Distro also registers an OpenTelemetry logger provider. Ark configures that
+provider in code to export only `Error` and `Critical` records; NLog remains
+available as a separate logging provider for console, database, mail, and Slack
+targets.
+
 ### Rebus
 
 ```csharp
