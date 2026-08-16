@@ -1,7 +1,5 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -21,12 +19,9 @@ internal sealed class ArkStartupBase
         Configuration = configuration;
     }
     
-    [RequiresUnreferencedCode("ConfigureServices uses configuration binding for Application Insights setup.")]
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddHttpContextAccessor();
-
-        services.ArkApplicationInsightsTelemetry(Configuration);
 
         services.AddSecurityHeaderPolicies()
             .SetDefaultPolicy(p => p.AddDefaultApiSecurityHeaders().RemoveServerHeader())

@@ -55,12 +55,19 @@ public static class Ex
         });
     }
 
-    public static void UseApplicationInsight(this OptionsConfigurer configurer, Container container)
+    /// <summary>
+    /// Adds OpenTelemetry Rebus tracing to the pipeline.
+    /// </summary>
+    /// <param name="configurer">The Rebus options configurator.</param>
+    /// <param name="container">The application SimpleInjector container.</param>
+    public static void UseOpenTelemetry(this OptionsConfigurer configurer, Container container)
     {
+        ArgumentNullException.ThrowIfNull(configurer);
+        ArgumentNullException.ThrowIfNull(container);
         configurer.Decorate<IPipeline>(c =>
         {
             var pipeline = c.Get<IPipeline>();
-            var step = new ApplicationInsightsStep(container);
+            var step = new OpenTelemetryStep(container);
             return new PipelineStepConcatenator(
                 new PipelineStepInjector(pipeline)
                     .OnSend(step, PipelineRelativePosition.Before, typeof(SerializeOutgoingMessageStep)))
@@ -69,13 +76,20 @@ public static class Ex
         });
     }
 
-    public static void UseApplicationInsightMetrics(this OptionsConfigurer configurer, Container container)
+    /// <summary>
+    /// Adds OpenTelemetry Rebus metrics to the pipeline.
+    /// </summary>
+    /// <param name="configurer">The Rebus options configurator.</param>
+    /// <param name="container">The application SimpleInjector container.</param>
+    public static void UseOpenTelemetryMetrics(this OptionsConfigurer configurer, Container container)
     {
+        ArgumentNullException.ThrowIfNull(configurer);
+        ArgumentNullException.ThrowIfNull(container);
         configurer.Decorate<IPipeline>(c =>
         {
             var pipeline = c.Get<IPipeline>();
             var time = c.Get<IRebusTime>();
-            var step = new ApplicationInsightsProcessingMetricsStep(container, time);
+            var step = new OpenTelemetryProcessingMetricsStep(container, time);
 
             return new PipelineStepInjector(pipeline)
                 .OnReceive(step, PipelineRelativePosition.Before, typeof(DispatchIncomingMessageStep))

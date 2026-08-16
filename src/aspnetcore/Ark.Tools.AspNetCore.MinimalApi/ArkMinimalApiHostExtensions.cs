@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 
-using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 
 using SimpleInjector;
@@ -65,7 +64,6 @@ public static class ArkMinimalApiHostExtensions
         configure?.Invoke(options);
 
         services.AddHttpContextAccessor();
-        services.ArkMinimalApiApplicationInsightsTelemetry();
         services.AddAuthentication();
         services.AddArkHealthChecks();
         services.AddResponseCompression(options =>

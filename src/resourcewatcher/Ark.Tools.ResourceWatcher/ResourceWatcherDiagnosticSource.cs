@@ -12,6 +12,7 @@ namespace Ark.Tools.ResourceWatcher;
 internal sealed class ResourceWatcherDiagnosticSource
 {
     public const string DiagnosticListenerName = "Ark.Tools.ResourceWatcher";
+    public const string ActivitySourceName = "Ark.Tools.ResourceWatcher";
     public const string BaseActivityName = "Ark.Tools.ResourceWatcher";
     public const string ExceptionEventName = BaseActivityName + "Exception";
 
@@ -19,6 +20,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     private readonly Logger _logger;
 
     private static readonly DiagnosticListener _source = new(DiagnosticListenerName);
+    private static readonly ActivitySource _activitySource = new(ActivitySourceName);
 
     public ResourceWatcherDiagnosticSource(string tenant, Logger logger)
     {
@@ -400,15 +402,16 @@ internal sealed class ResourceWatcherDiagnosticSource
     {
         string activityName = BaseActivityName + "." + operationName;
 
-        var activity = new Activity(activityName);
-
+        Activity? activity;
         if (_source.IsEnabled(activityName + ".Start"))
         {
+            activity = new Activity(activityName);
             _source.StartActivity(activity, getPayload());
         }
         else
         {
-            activity.Start();
+            activity = _activitySource.StartActivity(activityName, ActivityKind.Internal)
+                ?? new Activity(activityName).Start();
         }
 
         return activity;

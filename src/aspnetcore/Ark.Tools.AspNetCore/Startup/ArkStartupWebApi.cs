@@ -17,7 +17,6 @@ public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
         _anotherBase = new ArkStartupBase(configuration);
     }
 
-    [RequiresUnreferencedCode("ConfigureServices uses configuration binding for Application Insights setup.")]
     public override void ConfigureServices(IServiceCollection services)
     {
         _anotherBase.ConfigureServices(services);

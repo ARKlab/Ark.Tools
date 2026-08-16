@@ -97,6 +97,7 @@
 	  <PackageVersion Include="OpenTelemetry.Api" Version="1.17.0" />
 	  <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
 	  <PackageVersion Include="OpenTelemetry.Extensions.Propagators" Version="1.17.0" />
+	  <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
 	  <PackageVersion Include="Azure.Monitor.OpenTelemetry.Profiler" Version="1.0.1-beta.7" />
 	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
 	  <PackageVersion Include="NLog" Version="6.1.4" />

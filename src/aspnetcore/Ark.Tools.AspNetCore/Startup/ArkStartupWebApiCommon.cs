@@ -207,10 +207,6 @@ public abstract class ArkStartupWebApiCommon
         services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
         _integrateSimpleInjectorContainer(services);
 
-        services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
-            ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. " +
-                "Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService."));
-
         services.AddCors(c =>
         {
             c.AddDefaultPolicy(p => p

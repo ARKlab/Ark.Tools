@@ -38,6 +38,7 @@
     <Project Path="src/common/Ark.Tools.RavenDb.Auditing/Ark.Tools.RavenDb.Auditing.csproj" />
     <Project Path="src/common/Ark.Tools.RavenDb/Ark.Tools.RavenDb.csproj" />
     <Project Path="src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
+    <Project Path="src/common/Ark.Tools.Rebus.ApplicationInsights/Ark.Tools.Rebus.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
     <Project Path="src/common/Ark.Tools.SimpleInjector/Ark.Tools.SimpleInjector.csproj" />
     <Project Path="src/common/Ark.Tools.Solid.Analyzers.CodeFixes/Ark.Tools.Solid.Analyzers.CodeFixes.csproj" />
@@ -54,6 +55,7 @@
   <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
+    <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ark.Tools.AspNetCore.OTel.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Auth0/Ark.Tools.AspNetCore.Auth0.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy.csproj" />
@@ -68,6 +70,7 @@
   </Folder>
   <Folder Name="/src/resourcewatcher/">
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.ApplicationInsights/Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
+    <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.OTel/Ark.Tools.ResourceWatcher.OTel.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.Sql/Ark.Tools.ResourceWatcher.Sql.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Ftp/Ark.Tools.ResourceWatcher.WorkerHost.Ftp.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Hosting/Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />

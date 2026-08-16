@@ -18,7 +18,9 @@ Ark.Tools uses **OpenTelemetry** (via Application Insights v3.x) for distributed
 
 ## Overview
 
-Ark.Tools provides an opinionated, cost-efficient telemetry setup built on top of Application Insights SDK v3 (OpenTelemetry-based). The main goals are:
+Ark.Tools provides an opinionated, cost-efficient telemetry setup built on OpenTelemetry.
+Azure Monitor Application Insights is an exporter and compatibility path, not a dependency
+of Ark instrumentation. The main goals are:
 
 - **Cost efficiency**: Adaptive sampling keeps telemetry costs predictable
 - **Complete error visibility**: Failures are always captured, never dropped
@@ -56,23 +58,24 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
 ## Getting Started
 
-### ASP.NET Core
+### ASP.NET Core (recommended)
 
 ```csharp
-// Program.cs or Startup.cs
-builder.Host.AddApplicationInsithsTelemetryForWebHostArk();
-
-// Or via services:
-services.ArkApplicationInsightsTelemetry(configuration);
+builder.Services.AddArkAzureMonitorOpenTelemetry();
 ```
 
-### Worker Service / Hosted Service
+The extension is provided by `Ark.Tools.AspNetCore.OTel` and uses the Azure Monitor
+OpenTelemetry Distro. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` or configure an
+alternative exporter in the application.
+
+### Rebus
 
 ```csharp
-builder.AddApplicationInsightsForHostedService();
+options.UseOpenTelemetry(container);
+options.UseOpenTelemetryMetrics(container);
 ```
 
-### Required Configuration
+### Existing Application Insights application
 
 ```json
 {
@@ -82,7 +85,18 @@ builder.AddApplicationInsightsForHostedService();
 }
 ```
 
-Or via environment variable:
+Register the v3 SDK and the dedicated Ark compatibility package explicitly. Do not rely
+on a general Ark hosting package to register it.
+
+### Worker Service / Hosted Service
+
+Use `Ark.Tools.ResourceWatcher.OTel` for ResourceWatcher source registration, then add
+the exporter selected by the application. The legacy `Ark.Tools.ResourceWatcher.ApplicationInsights`
+package remains available for applications that still use the SDK.
+
+### Azure Monitor configuration
+
+The recommended environment variable is:
 ```
 APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=https://...
 ```

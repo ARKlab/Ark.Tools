@@ -90,6 +90,8 @@ public static class ApplicationComposition
         config.Options(options =>
         {
             options.AutomaticallyFlowUserContext(container);
+            options.UseOpenTelemetry(container);
+            options.UseOpenTelemetryMetrics(container);
             configureOptions?.Invoke(options);
         });
     }

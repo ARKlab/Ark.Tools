@@ -1,85 +1,100 @@
-# Ark.Tools OTel interface upgrade guide
+# Telemetry migration guide
 
-This guide covers the current Ark.Tools extension interfaces in `master`. It intentionally
-does not describe removed Application Insights v2 APIs or internal implementation details.
+Updated: 2026-08-16
 
-## 1. Inventory the current integration
+Ark.Tools now treats OpenTelemetry as the instrumentation contract. Microsoft
+recommends the Azure Monitor OpenTelemetry Distro for new .NET applications. Choose
+the route that matches the application.
 
-Identify every application that calls one of these extensions:
+## Choose a route
 
-- `ArkApplicationInsightsTelemetry(IServiceCollection, IConfiguration)`
-- `AddApplicationInsightsForHostedService(IHostBuilder)`
-- `AddApplicationInsightsCustomizations(IServiceCollection, IConfiguration, string?)`
+| Application state | Route |
+|---|---|
+| No custom `ITelemetryClient` or `TelemetryClient.Track*` calls | Migrate to OTel and the Azure Monitor Distro |
+| Custom `Track*` calls or direct AI telemetry processors | Keep AI v3 explicitly, then migrate custom calls separately |
+| Only Ark Rebus or ResourceWatcher telemetry | Remove AI integration and enable Ark OTel extensions |
 
-Keep the extension call after the matching Application Insights registration. The extension
-installs the Ark sampler and processors through the Application Insights OpenTelemetry
-pipeline.
+The existing instrumentation does not need to be retained solely because an
+application exports to Application Insights. AI v3 consumes OpenTelemetry data through
+the Azure Monitor exporter. Keep the compatibility adapters only for code that directly
+uses the AI object model.
 
-## 2. Update package versions
+## New application: Azure Monitor OTel Distro
 
-Update the centrally managed versions in `Directory.Packages.props`, then restore. The
-supported baseline is:
+1. Reference `Ark.Tools.AspNetCore.OTel` for an ASP.NET Core host.
+2. Call `builder.Services.AddArkAzureMonitorOpenTelemetry()` before `Build()`.
+3. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` in the deployment environment.
+4. Register Rebus instrumentation explicitly:
 
-- `Microsoft.ApplicationInsights`, `Microsoft.ApplicationInsights.AspNetCore`, and
-  `Microsoft.ApplicationInsights.WorkerService` 3.1.2
-- `OpenTelemetry`, `OpenTelemetry.Api`, and `OpenTelemetry.Extensions.Hosting` 1.17.0
-- `Azure.Monitor.OpenTelemetry.Profiler` 1.0.1-beta.7
+   ```csharp
+   options.UseOpenTelemetry(container);
+   options.UseOpenTelemetryMetrics(container);
+   ```
 
-Do not add direct package versions to consuming projects. Regenerate every affected
-`packages.lock.json` and verify locked-mode restore.
+5. Reference `Ark.Tools.ResourceWatcher.OTel` for a ResourceWatcher worker and call
+   `builder.AddArkOpenTelemetryForWorkerHost()`.
+6. Add the exporter required by the host. The Ark instrumentation packages do not
+   select an exporter or read a connection string.
 
-## 3. Apply the ASP.NET Core setup
+The sample web host follows this route in
+`samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface`.
 
-1. Keep the existing `services.AddApplicationInsightsTelemetry(...)` call.
-2. Keep the existing connection-string or instrumentation-key configuration.
-3. Call `services.AddAzureMonitorProfiler()` immediately after Application Insights setup.
-4. Keep `services.AddArkApplicationInsightsCustomizations(...)` after both registrations.
-5. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` in the deployment environment.
-6. Deploy and check startup logs for profiler initialization.
+## Existing application: Application Insights v3
 
-The profiler package is prerelease and the integration is experimental. Treat profiler
-startup failure as non-fatal and validate the application without profiler data first.
+1. Keep explicit references to `Microsoft.ApplicationInsights.AspNetCore` or
+   `Microsoft.ApplicationInsights.WorkerService` version 3.x.
+2. Keep the matching Ark host package:
+   `Ark.Tools.AspNetCore.ApplicationInsights` or
+   `Ark.Tools.ApplicationInsights.HostedService`.
+3. For ResourceWatcher, add
+   `Ark.Tools.ResourceWatcher.ApplicationInsights`.
+4. For legacy Rebus request and metric items, add
+   `Ark.Tools.Rebus.ApplicationInsights`.
+5. Register the Microsoft SDK first, then the Ark compatibility extension.
+6. Keep custom `TelemetryClient.Track*` calls until their replacement telemetry has
+   been reviewed.
 
-## 4. Apply the hosted-service setup
+Application Insights is no longer registered by `Ark.Tools.AspNetCore`,
+`Ark.Tools.AspNetCore.MinimalApi`, or `Ark.Tools.ResourceWatcher.WorkerHost.Hosting`.
+Existing applications must add the compatibility registration intentionally.
 
-1. Keep `services.AddApplicationInsightsTelemetryWorkerService(...)`.
-2. Call `services.AddAzureMonitorProfiler()` after that registration.
-3. Keep `services.AddArkApplicationInsightsCustomizations(...)` last.
-4. Configure the same connection-string environment variable.
-5. Confirm the worker starts even when profiler activation is unavailable.
+## Breaking telemetry changes
 
-## 5. Review sampling behavior
+The following mappings are the complete Ark Rebus and ResourceWatcher migration surface.
+Operation names, payload key names, message type values, result values, and queue-time
+success-only behavior are retained where possible.
 
-The adaptive sampler is an enhancement of parent-based sampling:
+| Area | Before | After | Monitoring adaptation |
+|---|---|---|---|
+| Rebus processing | AI `RequestTelemetry` | OTel consumer span named `Rebus.Process \| <MessageType>` | Query spans and `messaging.*`/`rebus.*` attributes instead of request items |
+| Rebus queue time | AI metric `Rebus / MessageTimeInQueueSuccess` | OTel histogram `Rebus.MessageTimeInQueueSuccess` | Change metric provider syntax; keep `MessageType` |
+| Rebus processing time | AI metric `Rebus / MessageProcessingTime` | OTel histogram `Rebus.MessageProcessingTime` | Change metric provider syntax; keep `MessageType` and `OperationResult` |
+| Rebus success/failure | `OperationResult=success/failure` | Same attribute values | No value change |
+| Rebus trace propagation | `Diagnostic-Id` header | Same header, parsed as W3C trace context | No rule change; verify W3C parent correlation |
+| ResourceWatcher run/process spans | AI request telemetry | OTel internal spans using existing operation names | Remove telemetry-type filters; retain operation-name and attribute filters |
+| ResourceWatcher fetch/state spans | AI dependency telemetry with `Type=ProcessStep` | OTel internal spans using existing operation names | Replace dependency-type filters with span-name filters |
+| ResourceWatcher exceptions | AI `ExceptionTelemetry` | OTel exception event plus error status on the operation span | Query exception events/status instead of exception item type |
+| ResourceWatcher event warnings | AI event telemetry | OTel span/event attributes | Update event-type filters; retain tenant/resource attributes |
+| HTTP 4xx | AI processor clears failure | OTel processor clears server span error status | Keep 4xx-as-success alert rules at the span-status level |
+| Registration | Hosting package implicitly added AI | No automatic registration | Add one explicit OTel or AI setup call |
 
-- A recorded parent records every child.
-- A local parent that was not recorded makes children `RecordOnly`; a child is not sampled
-  independently.
-- A failure promotes the failing span, local parent chain, and spans that finish afterward.
-- HTTP 4xx responses are expected successful outcomes and must be normalized by
-  `WebApi4xxAsSuccessProcessor` before failure promotion.
-- A root without a parent uses the adaptive per-operation budget.
+The main unavoidable dashboard change is the telemetry item type. The operation
+names, dimensions, values, and failure semantics are intentionally stable.
 
-Test one sampled root, one unsampled root, a remote sampled parent, a 4xx response, and a
-5xx/exception response before rollout.
+## `ITelemetryClient` decision
 
-## 6. Validate Rebus metrics
+`ITelemetryClient` and `TelemetryClient.Track*` are Application Insights SDK APIs, not
+OpenTelemetry APIs. Ark.Tools will not emulate them in OTel instrumentation.
 
-Install the Rebus metrics step through `UseApplicationInsightMetrics`. Send a message with
-`Headers.SentTime`, then verify:
+Applications using them should remain on the explicit AI v3 compatibility route until
+each custom telemetry call is ported to an `Activity`, `Meter`, or OTel log/event.
+Applications without those calls should use the OTel route immediately; Ark Rebus and
+ResourceWatcher instrumentation no longer require the AI SDK.
 
-1. `Rebus / Message TimeInQueue (Success)` is emitted only after successful processing.
-2. `Rebus / Message ProcessingTime` is emitted for both success and failure.
-3. `MessageType` is stable and non-empty.
-4. `OperationResult` is `success` or `failure`.
-5. Queue time is total elapsed time minus processing time and is never negative.
+## Rollout checklist
 
-Run the Rebus integration tests with the repository's Docker dependencies when validating
-transport-specific behavior.
-
-## 7. Rollout and rollback
-
-Deploy to one instance first. Compare request counts, failure counts, sampled trace
-continuity, profiler startup, and Rebus metrics. Roll back by removing the profiler package
-and `AddAzureMonitorProfiler()` call; the existing Application Insights and Ark OTel
-extensions remain independently usable.
+- Compare span counts and parent/child continuity.
+- Compare Rebus queue and processing histograms by message type.
+- Compare ResourceWatcher operation names, tenant/resource attributes, and failures.
+- Update alert queries for OTel span and metric types.
+- Roll out one instance before removing AI compatibility packages.

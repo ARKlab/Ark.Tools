@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- the other props are defined in Directory.Build.props -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <Description>OpenTelemetry setup for Ark ResourceWatcher worker hosts.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;ResourceWatcher;OpenTelemetry</PackageTags>
+    <Version>$(ResourceWatcherGroupVersion)</Version>
+    <VersionSuffix>$(ResourceWatcherGroupVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+  </ItemGroup>
+</Project>

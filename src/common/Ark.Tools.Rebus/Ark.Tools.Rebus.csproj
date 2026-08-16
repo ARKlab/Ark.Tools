@@ -33,6 +33,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="OpenTelemetry.Api" />
 		<PackageReference Include="Rebus" />
 		<PackageReference Include="Rebus.NLog" />
 		<PackageReference Include="Rebus.AzureServiceBus" />
@@ -42,7 +43,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
 		<ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />

@@ -13,7 +13,7 @@ using System.Collections.Concurrent;
 namespace Ark.Tools.Rebus.Tests;
 
 [TestClass]
-public sealed class ApplicationInsightsProcessingMetricsStepTests
+public sealed class OpenTelemetryProcessingMetricsStepTests
 {
     [TestMethod]
     public async Task Process_Success_TracksQueueAndProcessingMetrics()
@@ -23,7 +23,7 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         var now = DateTimeOffset.UtcNow;
         var message = _createMessage(now - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
-        var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(now));
+        var step = new OpenTelemetryProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
         await step.Process(context, () => Task.CompletedTask);
         metrics.TimeInQueue.Should().ContainSingle();
@@ -43,7 +43,7 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         var now = DateTimeOffset.UtcNow;
         var message = _createMessage(now - TimeSpan.FromSeconds(2));
         var context = new IncomingStepContext(message, transaction);
-        var step = new ApplicationInsightsProcessingMetricsStep(metrics, new FixedRebusTime(now));
+        var step = new OpenTelemetryProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
         Func<Task> process = () => step.Process(
             context,
@@ -104,7 +104,7 @@ public sealed class ApplicationInsightsProcessingMetricsStepTests
         }
     }
 
-    private sealed class CapturingMetrics : ApplicationInsightsProcessingMetricsStep.IProcessingMetrics
+    private sealed class CapturingMetrics : OpenTelemetryProcessingMetricsStep.IProcessingMetrics
     {
         public List<(double Value, string MessageType)> TimeInQueue { get; } = [];
 
