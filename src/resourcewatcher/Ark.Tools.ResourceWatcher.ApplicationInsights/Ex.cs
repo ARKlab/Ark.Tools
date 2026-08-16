@@ -22,6 +22,8 @@ public static partial class Ex
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection.")]
     public static IHostBuilder AddApplicationInsightsForWorkerHost(this IHostBuilder builder)
     {
+        var registrationAttempted = 0;
+
         return builder
             .AddApplicationInsightsForHostedService()
             .ConfigureServices((_, services) =>
@@ -31,6 +33,11 @@ public static partial class Ex
                         Options.DefaultName,
                         configuration =>
                         {
+                            if (Interlocked.Exchange(ref registrationAttempted, 1) != 0)
+                            {
+                                return;
+                            }
+
                             try
                             {
                                 configuration.ConfigureOpenTelemetryBuilder(otelBuilder =>
