@@ -70,7 +70,9 @@ for non-OTel consumers; the AI v3 worker adapter enables the same ActivitySource
 and Meter directly instead of creating duplicate legacy telemetry.
 
 The OTel path maps the existing operation payload to span attributes and exception
-events. No application code changes are required to resource providers or processors.
+events. Process-wide identity is configured on the OTel Resource rather than copied
+onto every span by a processor. No application code changes are required to resource
+providers or processors.
 
 ## Application Insights v3 compatibility
 

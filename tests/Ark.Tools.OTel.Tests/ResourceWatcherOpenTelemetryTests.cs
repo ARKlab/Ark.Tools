@@ -103,6 +103,46 @@ public sealed class ResourceWatcherOpenTelemetryTests
             && x.Outcome == "success");
     }
 
+    [TestMethod]
+    public async Task RunOnce_RecordsDistinctNoNewDataAndNoActionOutcomes()
+    {
+        var measurements = new List<(string Name, long Value, string? Outcome)>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == ResourceWatcherInstrumentation.MeterName)
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
+        {
+            string? outcome = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "outcome")
+                    outcome = tag.Value?.ToString();
+            }
+
+            measurements.Add((instrument.Name, value, outcome));
+        });
+        listener.Start();
+
+        using var noNewDataWatcher = new TestWatcher(ResourceOutcome.NoNewData);
+        using var noActionWatcher = new TestWatcher(ResourceOutcome.NoAction);
+
+        await noNewDataWatcher.RunOnce().ConfigureAwait(false);
+        await noActionWatcher.RunOnce().ConfigureAwait(false);
+        listener.RecordObservableInstruments();
+
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.resourcewatcher.resources.processed"
+            && x.Value == 1
+            && x.Outcome == "no_new_data");
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.resourcewatcher.resources.processed"
+            && x.Value == 1
+            && x.Outcome == "no_action");
+    }
+
     private static bool _hasTag(Activity activity, string name, string expectedValue)
     {
         return activity.GetTagItem(name)?.ToString() == expectedValue;
@@ -112,12 +152,14 @@ public sealed class ResourceWatcherOpenTelemetryTests
     {
         private static readonly LocalDateTime _modified = new(2026, 8, 16, 0, 0);
         private readonly bool _failProcessing;
+        private readonly ResourceOutcome _outcome;
 
-        public TestWatcher(bool failProcessing = false)
+        public TestWatcher(ResourceOutcome outcome = ResourceOutcome.Normal, bool failProcessing = false)
             : base(
                 new TestConfig(),
                 new InMemStateProvider<VoidExtensions>())
         {
+            _outcome = outcome;
             _failProcessing = failProcessing;
         }
 
@@ -138,7 +180,8 @@ public sealed class ResourceWatcherOpenTelemetryTests
             IResourceTrackedState<VoidExtensions>? lastState,
             CancellationToken ctk = default)
         {
-            return Task.FromResult<TestResource?>(new TestResource());
+            return Task.FromResult<TestResource?>(
+                _outcome == ResourceOutcome.NoNewData ? null : new TestResource());
         }
 
         protected override async Task _processResource(
@@ -148,8 +191,16 @@ public sealed class ResourceWatcherOpenTelemetryTests
             if (_failProcessing)
                 throw new InvalidOperationException("test failure");
 
-            _ = await context.Payload.ConfigureAwait(false);
+            if (_outcome != ResourceOutcome.NoAction)
+                _ = await context.Payload.ConfigureAwait(false);
         }
+    }
+
+    private enum ResourceOutcome
+    {
+        Normal,
+        NoNewData,
+        NoAction
     }
 
     private sealed class TestResource : IResourceState

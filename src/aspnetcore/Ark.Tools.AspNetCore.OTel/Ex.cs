@@ -12,6 +12,7 @@ using OpenTelemetry.Trace;
 using System.Diagnostics;
 
 using Ark.Tools.Rebus;
+using Ark.Tools.OTel;
 
 namespace Ark.Tools.AspNetCore.OTel;
 
@@ -30,6 +31,7 @@ public static class Ex
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
+            .ConfigureResource(resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))

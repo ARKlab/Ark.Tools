@@ -108,7 +108,9 @@ internal sealed class ResourceWatcherDiagnosticSource
         var failed = resultCounts.GetValueOrDefault(ResultType.Error, 0);
 
         _runs.Add(1, new KeyValuePair<string, object?>("outcome", "success"));
-        _processedResources.Add(normal + noNewData + noAction, new KeyValuePair<string, object?>("outcome", "success"));
+        _processedResources.Add(normal, new KeyValuePair<string, object?>("outcome", "success"));
+        _processedResources.Add(noNewData, new KeyValuePair<string, object?>("outcome", "no_new_data"));
+        _processedResources.Add(noAction, new KeyValuePair<string, object?>("outcome", "no_action"));
         _processedResources.Add(skipped, new KeyValuePair<string, object?>("outcome", "skip"));
         _processedResources.Add(bannedCount, new KeyValuePair<string, object?>("outcome", "banned"));
         _processedResources.Add(failed, new KeyValuePair<string, object?>("outcome", "failed"));

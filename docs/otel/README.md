@@ -50,9 +50,13 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
 ### Telemetry Enrichment
 
-`ArkTelemetryEnrichmentProcessor` adds context to every span:
+The OTel resource configuration adds process-wide context to every signal:
 
-- `ProcessName`: The entry assembly name (for multi-process environments)
+- `service.name`: The entry assembly name (for multi-process environments)
+
+Application Insights compatibility setup applies this automatically. Exporter-agnostic
+applications can compose `ResourceBuilder.AddArkTelemetryResource()` with their
+OpenTelemetry resource configuration.
 
 ---
 
@@ -196,8 +200,8 @@ HTTP Request / Message / SQL / etc.
   • Check: root per-op token bucket → RecordAndSample or RecordOnly
           │
           ▼
-  [ArkTelemetryEnrichmentProcessor.OnStart]
-  Add ProcessName, etc.
+  [ResourceBuilder.AddArkTelemetryResource]
+  Add service.name, etc.
           │
           ▼
   [... activity executes ...]

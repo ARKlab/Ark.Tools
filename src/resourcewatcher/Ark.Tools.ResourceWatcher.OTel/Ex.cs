@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting;
 
 using OpenTelemetry;
 
+using Ark.Tools.OTel;
+
 namespace Ark.Tools.ResourceWatcher.OTel;
 
 /// <summary>
@@ -23,6 +25,7 @@ public static class Ex
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
+            .ConfigureResource(resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
             .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
     }

@@ -16,5 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher\Ark.Tools.ResourceWatcher.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.OTel\Ark.Tools.OTel.csproj" />
   </ItemGroup>
 </Project>

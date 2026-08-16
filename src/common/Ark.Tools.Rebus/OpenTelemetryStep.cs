@@ -49,7 +49,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         activity?.SetTag("messaging.system", "rebus");
         activity?.SetTag("messaging.operation.type", "process");
         activity?.SetTag("messaging.message.id", messageId);
-        activity?.SetTag("messaging.destination.name", messageType);
+        activity?.SetTag("messaging.message.type", messageType);
         activity?.SetTag("rebus.correlation_id", correlationId);
 
         try
