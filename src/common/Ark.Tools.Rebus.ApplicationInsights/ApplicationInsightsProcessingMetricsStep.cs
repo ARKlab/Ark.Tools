@@ -34,12 +34,10 @@ public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
             {
                 return new ApplicationInsightsMetrics(_container.GetInstance<TelemetryClient>());
             }
-            #pragma warning disable ERP022
-            catch
+            catch (ActivationException)
             {
                 return null;
             }
-            #pragma warning restore ERP022
         });
     }
 
