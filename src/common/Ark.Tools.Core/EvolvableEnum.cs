@@ -349,6 +349,7 @@ public readonly struct EvolvableEnum<
             if (number < _numberToNameArrayMinimum || number > _numberToNameArrayMaximum)
                 return null;
 
+            // Use unsigned wrapping to avoid signed overflow before bounded int conversion.
             var index = int.CreateTruncating(unchecked(
                 uint.CreateTruncating(number) - uint.CreateTruncating(_numberToNameArrayMinimum)));
             return _numberToNameArray[index];
