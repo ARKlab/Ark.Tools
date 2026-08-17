@@ -74,8 +74,8 @@ public class ArkTypeConverterValueBenchmarks
         {
             AddJob(Job.InProcess
                 .WithLaunchCount(1)
-                .WithWarmupCount(3)
-                .WithIterationCount(10));
+                .WithWarmupCount(5)
+                .WithIterationCount(15));
             AddDiagnoser(MemoryDiagnoser.Default);
         }
     }
