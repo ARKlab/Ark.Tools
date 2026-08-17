@@ -166,7 +166,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         var values = new HashSet<object>();
         foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
         {
-            if (field.HasConstantValue && field.ConstantValue is object value)
+            if (field.IsConst && field.HasConstantValue && field.ConstantValue is object value)
                 values.Add(value);
         }
 
