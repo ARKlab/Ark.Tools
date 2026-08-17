@@ -149,14 +149,16 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         yield return field.Name;
         foreach (var attribute in field.GetAttributes())
         {
-            var typeName = attribute.AttributeClass?.Name;
-            if (typeName == "EnumMemberAttribute"
+            var attributeType = attribute.AttributeClass;
+            var typeName = attributeType?.Name;
+            var namespaceName = attributeType?.ContainingNamespace.ToDisplayString();
+            if (typeName == "EnumMemberAttribute" && namespaceName == "System.Runtime.Serialization"
                 && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Value").Value.Value is string enumMember)
                 yield return enumMember;
-            else if (typeName == "DisplayAttribute"
+            else if (typeName == "DisplayAttribute" && namespaceName == "System.ComponentModel.DataAnnotations"
                 && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Name").Value.Value is string display)
                 yield return display;
-            else if (typeName == "DisplayNameAttribute"
+            else if (typeName == "DisplayNameAttribute" && namespaceName == "System.ComponentModel"
                 && attribute.ConstructorArguments.FirstOrDefault().Value is string displayName)
                 yield return displayName;
         }
