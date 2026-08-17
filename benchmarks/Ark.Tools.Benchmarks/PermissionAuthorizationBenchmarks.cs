@@ -7,10 +7,13 @@ using Ark.Tools.Authorization;
 using Ark.Tools.Authorization.Requirement;
 
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
 
 namespace Ark.Tools.Benchmarks;
 
 /// <summary>Compares cached and uncached permission authorization checks across resource types.</summary>
+[Config(typeof(BenchmarkConfig))]
 [MemoryDiagnoser]
 public class PermissionAuthorizationBenchmarks
 {
@@ -119,6 +122,20 @@ public class PermissionAuthorizationBenchmarks
         public Task<IEnumerable<Permission>> GetPermissions(AuthorizationContext context)
         {
             return Task.FromResult<IEnumerable<Permission>>([Permission.Read]);
+        }
+    }
+
+    /// <summary>Configures a short in-process .NET 10 benchmark run.</summary>
+    public sealed class BenchmarkConfig : ManualConfig
+    {
+        /// <summary>Initializes the benchmark configuration.</summary>
+        public BenchmarkConfig()
+        {
+            AddJob(Job.InProcess
+                .WithLaunchCount(1)
+                .WithWarmupCount(5)
+                .WithIterationCount(15));
+            AddDiagnoser(BenchmarkDotNet.Diagnosers.MemoryDiagnoser.Default);
         }
     }
 }
