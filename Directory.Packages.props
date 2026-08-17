@@ -36,10 +36,10 @@
 	  <PackageVersion Include="NodaTime.Serialization.Protobuf" Version="2.0.2" />
 	  <PackageVersion Include="NodaTime.Serialization.SystemTextJson" Version="1.4.0" />
 	  <PackageVersion Include="NodaTime.Testing" Version="3.3.3" />
-	  <PackageVersion Include="protobuf-net" Version="3.3.8" />
+	  <PackageVersion Include="protobuf-net" Version="3.3.21" />
 	  <PackageVersion Include="Rebus.Protobuf" Version="5.0.0" />
-	  <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
-	  <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.2.2" />
+	  <PackageVersion Include="protobuf-net.Grpc.AspNetCore" Version="1.3.6" />
+	  <PackageVersion Include="protobuf-net.Grpc.AspNetCore.Reflection" Version="1.3.6" />
 	  <PackageVersion Include="Grpc.Net.Client" Version="2.83.0" />
 	  <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
 	  <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
@@ -99,10 +99,10 @@
 	  <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
 	  <PackageVersion Include="Azure.Monitor.OpenTelemetry.Profiler" Version="1.0.1-beta.7" />
 	  <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
-	  <PackageVersion Include="NLog" Version="6.1.4" />
+	  <PackageVersion Include="NLog" Version="6.2.0" />
 	  <PackageVersion Include="NLog.Database" Version="6.0.3" />
 	  <PackageVersion Include="NLog.DiagnosticSource" Version="6.1.4" />
-	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.1.4" />
+	  <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.0" />
 	  <PackageVersion Include="NLog.MailKit" Version="6.1.5" />
 	  <PackageVersion Include="MailKit" Version="4.17.0" />
 	  <PackageVersion Include="Slack.Webhooks" Version="1.1.6" />
@@ -168,7 +168,7 @@
 	  <!-- REBUS -->
 	  <PackageVersion Include="Rebus" Version="8.9.2" />
 	  <PackageVersion Include="Rebus.NLog" Version="6.0.0" />
-	  <PackageVersion Include="Rebus.AzureServiceBus" Version="10.7.0" />
+	  <PackageVersion Include="Rebus.AzureServiceBus" Version="10.7.1" />
 	  <PackageVersion Include="Rebus.SqlServer" Version="8.4.1" />
 	  <PackageVersion Include="Rebus.AzureBlobs" Version="1.1.0" />
 	  <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
@@ -185,7 +185,7 @@
 	  <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.14.0" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.400" />
 	  <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.152" />
+	  <PackageVersion Include="Meziantou.Analyzer" Version="3.0.160" />
 	  <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
 	  <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
 	  <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />

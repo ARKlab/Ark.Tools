@@ -22,9 +22,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.152, )",
-        "resolved": "3.0.152",
-        "contentHash": "5rAiIlg0V9XThpBU7MdECBMdqS25QjqQRPx3r8+JFp+ImW/z2W/kVX4Xt98/p2nxMQQ1GTfnD1cVxdHXRAH97w=="
+        "requested": "[3.0.160, )",
+        "resolved": "3.0.160",
+        "contentHash": "CtK/wbHVsFsb/mc3ijuu7yGmgWpfZ8L7CwSms+5vd81eTo8+66LNFdASb8fO0PJjoaI9fgMnVSNmNqyTTVUZPA=="
       },
       "Microsoft.AspNetCore.OpenApi": {
         "type": "Direct",
@@ -177,12 +177,12 @@
       },
       "protobuf-net.Grpc.AspNetCore.Reflection": {
         "type": "Direct",
-        "requested": "[1.2.2, )",
-        "resolved": "1.2.2",
-        "contentHash": "3tRHt3YOimHGoAzC+cGO5suPv5eSlvXNWDFFbMTmK+ecwpnZITG3XxE7m5qKF5TP0h3VKOXipah5cQuPLmk8DQ==",
+        "requested": "[1.3.6, )",
+        "resolved": "1.3.6",
+        "contentHash": "84HaPF0d9LXhVeeYkEEhn4ivp3P08lsTuZhJpr0mh0yWUHB0GDgXeScZvtoqhI9jXxNxaxLVIqqu9W9rX/p39Q==",
         "dependencies": {
-          "Grpc.AspNetCore.Server": "2.66.0",
-          "protobuf-net.Grpc.Reflection": "1.2.2"
+          "Grpc.AspNetCore.Server": "2.80.0",
+          "protobuf-net.Grpc.Reflection": "1.3.6"
         }
       },
       "AspNetCore.HealthChecks.UI.Core": {
@@ -245,10 +245,10 @@
       },
       "Grpc.AspNetCore.Server": {
         "type": "Transitive",
-        "resolved": "2.66.0",
-        "contentHash": "SogFEs8bLvcRtEWMdueOJeMxiaLryvyivWtmBwz/vLtS5xlN4Zrfv+npMbn1PS4iT99AqBY+R+bRxdIFfvfeIA==",
+        "resolved": "2.80.0",
+        "contentHash": "lbK7z1sZP5imPdQ035f/CZ61iIaBWouY6A580E9JNo7vzXYX/Qo+GQtSjOzhP9VFbxk7mtLoMhn/v1fT2U7kTw==",
         "dependencies": {
-          "Grpc.Net.Common": "2.66.0"
+          "Grpc.Net.Common": "2.80.0"
         }
       },
       "Grpc.Core.Api": {
@@ -440,35 +440,35 @@
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.3.8",
-        "contentHash": "NDt+dj0dgCiwwu4M22TGrvZBSby0O7rLXn73MDPYVgdg/5pCtwIgs/k8RYJPuj7nhTRIjoEsdo8wE/T3JszH5g=="
+        "resolved": "3.3.21",
+        "contentHash": "qARODs9k5/mw44Il2tIJaDV6s3Tm8qGVgG9RI07c1PxFYiFyMOqPkaFjbgNPBLWRtop57ktDPaMDzf+6TYpdcg=="
       },
       "protobuf-net.Grpc": {
         "type": "Transitive",
-        "resolved": "1.2.2",
-        "contentHash": "ywpDWMKewrojQQyAKicELuTuaH+heEQfcuB+aJdENN9OfNOIuWLnwLdnHOzJ1162hD/1trzYDFMV5g8vmTxJTQ==",
+        "resolved": "1.3.6",
+        "contentHash": "UyfmuIvAqO5Pm0XrQSX1wtzDg2bbBAM4/DshWP26cXXEvVGIWE0XvvJEg8YceJWjRr2LMSb35mRTOhQbsjDTmA==",
         "dependencies": {
-          "Grpc.Core.Api": "2.66.0",
+          "Grpc.Core.Api": "2.80.0",
           "protobuf-net": "2.4.8"
         }
       },
       "protobuf-net.Grpc.Reflection": {
         "type": "Transitive",
-        "resolved": "1.2.2",
-        "contentHash": "rI6npMBrGHCbeWL8OZdW71+7h+27A950Omz2HwBicWYFlSs9WtNjPVDgmC/LPRrxfP8wZQEfu2z6C+0cZBEqmw==",
+        "resolved": "1.3.6",
+        "contentHash": "pUOT8gWoNMYIDGcv0Ue4byymp3U1LhtPn9YVzIPKgJARpwaSCmA3EIAGVUrLaZuIzoW2yzsMMk4VmFmnkc7PQQ==",
         "dependencies": {
-          "protobuf-net": "3.2.30",
-          "protobuf-net.Core": "3.2.30",
-          "protobuf-net.Grpc": "1.2.2",
-          "protobuf-net.Reflection": "3.2.12"
+          "protobuf-net": "3.2.56",
+          "protobuf-net.Core": "3.2.56",
+          "protobuf-net.Grpc": "1.3.6",
+          "protobuf-net.Reflection": "3.2.52"
         }
       },
       "protobuf-net.Reflection": {
         "type": "Transitive",
-        "resolved": "3.2.12",
-        "contentHash": "bpNTENWPqP2mx1sJJ5C6qZ2xP+f/E3dQF9MYY+xZ+RHxe3sLg+sPyBSCcJDTCY0e4dVIwQ/02gS8m4tVClDoKQ==",
+        "resolved": "3.2.52",
+        "contentHash": "nlpEtpGP37Jz2ORt17hshpM/WvLxsOQ7LwWqlNbFYHvAwE53VOfoJtAWaD/Go8pNglsUGcKup6ETJ6E9a9gYgg==",
         "dependencies": {
-          "protobuf-net.Core": "3.2.12"
+          "protobuf-net.Core": "3.2.52"
         }
       },
       "SimpleInjector.Integration.AspNetCore": {
@@ -597,7 +597,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
-          "protobuf-net": "[3.3.8, )"
+          "protobuf-net": "[3.3.21, )"
         }
       },
       "ark.tools.mediatorframework.grpc": {
@@ -612,7 +612,7 @@
           "Google.Protobuf": "[3.35.1, )",
           "Grpc.StatusProto": "[2.83.0, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
-          "protobuf-net.Grpc.AspNetCore": "[1.2.2, )"
+          "protobuf-net.Grpc.AspNetCore": "[1.3.6, )"
         }
       },
       "ark.tools.mediatorframework.hosting.contracts": {
@@ -630,7 +630,7 @@
           "MessagePack": "[3.1.8, )",
           "NodaTime": "[3.3.3, )",
           "SimpleInjector": "[5.6.0, )",
-          "protobuf-net": "[3.3.8, )"
+          "protobuf-net": "[3.3.21, )"
         }
       },
       "ark.tools.mediatorframework.hosting.grpcclient": {
@@ -672,7 +672,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "NLog": "[6.1.4, )",
+          "NLog": "[6.2.0, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
@@ -700,7 +700,7 @@
           "Google.Protobuf": "[3.35.1, )",
           "NodaTime": "[3.3.3, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
-          "protobuf-net": "[3.3.8, )"
+          "protobuf-net": "[3.3.21, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
@@ -720,7 +720,7 @@
           "OpenTelemetry.Api": "[1.17.0, )",
           "Rebus": "[8.9.2, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
-          "Rebus.AzureServiceBus": "[10.7.0, )",
+          "Rebus.AzureServiceBus": "[10.7.1, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.4.1, )"
         }
@@ -1036,9 +1036,9 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "ft6Lv17uoFuHTGWiY47FEXH7VA5HMHp973zodaOZAJyFg6mHL9RdXjqdNkRJXFo5plQJR+LPt5e6aAZU8KSDog=="
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "CxK6AjM1Wy3hM8YeBpLJJuB/JdoeIVvX0/fMTWeIXD917UozCtzv6cZDamevugeEaBBF0TIatfcNX2iJHI0Cew=="
       },
       "NLog.Database": {
         "type": "CentralTransitive",
@@ -1130,21 +1130,21 @@
       },
       "protobuf-net": {
         "type": "CentralTransitive",
-        "requested": "[3.3.8, )",
-        "resolved": "3.3.8",
-        "contentHash": "s/yyVaVhKPgon55cBA80p5kE+m6eH4TnbvGbr1f0I6Ad6MqGFSKWfhRF2Rv/z02DrjWzsHSlJ5JNc5WnI9FtjQ==",
+        "requested": "[3.3.21, )",
+        "resolved": "3.3.21",
+        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
         "dependencies": {
-          "protobuf-net.Core": "3.3.8"
+          "protobuf-net.Core": "3.3.21"
         }
       },
       "protobuf-net.Grpc.AspNetCore": {
         "type": "CentralTransitive",
-        "requested": "[1.2.2, )",
-        "resolved": "1.2.2",
-        "contentHash": "pgWnFOD6FwazC5OQaKWv93eMaoKfGGcdRRwaVg8m52+KAJobjDFbYpPwVCQ68Lw8am6hAcM8UvPRL9XiIA9wiQ==",
+        "requested": "[1.3.6, )",
+        "resolved": "1.3.6",
+        "contentHash": "AWDSTxPDMAsmnL41w88ccDsSFxnTUFSNVVuteU66bwjWKrvZP4a4aIb+idsJg2/iggrI7JWSDORARsQYcipzpw==",
         "dependencies": {
-          "Grpc.AspNetCore.Server": "2.66.0",
-          "protobuf-net.Grpc": "1.2.2"
+          "Grpc.AspNetCore.Server": "2.80.0",
+          "protobuf-net.Grpc": "1.3.6"
         }
       },
       "Rebus": {
@@ -1168,9 +1168,9 @@
       },
       "Rebus.AzureServiceBus": {
         "type": "CentralTransitive",
-        "requested": "[10.7.0, )",
-        "resolved": "10.7.0",
-        "contentHash": "NU0vLtgUWFHuB2kT9j5fY4hS1rBtkEMbIoj3VXdmzaxZkjCTR8B8oW3/uO2JgSr5OFSPz5WVnzLMRC/lpN80RA==",
+        "requested": "[10.7.1, )",
+        "resolved": "10.7.1",
+        "contentHash": "YOi3rkSIf7AgqgLJVpX2tLpnXyFMFfBCtzoW3uuIDPgMOar7EsjKV7L+sbNlmI9NrTv+VqZg7Ajsgv4SeyC5Jw==",
         "dependencies": {
           "Azure.Messaging.ServiceBus": "7.20.1",
           "Rebus": "8.9.2",

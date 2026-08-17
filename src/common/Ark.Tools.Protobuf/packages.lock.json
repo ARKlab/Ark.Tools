@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.152, )",
-        "resolved": "3.0.152",
-        "contentHash": "5rAiIlg0V9XThpBU7MdECBMdqS25QjqQRPx3r8+JFp+ImW/z2W/kVX4Xt98/p2nxMQQ1GTfnD1cVxdHXRAH97w=="
+        "requested": "[3.0.160, )",
+        "resolved": "3.0.160",
+        "contentHash": "CtK/wbHVsFsb/mc3ijuu7yGmgWpfZ8L7CwSms+5vd81eTo8+66LNFdASb8fO0PJjoaI9fgMnVSNmNqyTTVUZPA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -57,11 +57,11 @@
       },
       "protobuf-net": {
         "type": "Direct",
-        "requested": "[3.3.8, )",
-        "resolved": "3.3.8",
-        "contentHash": "s/yyVaVhKPgon55cBA80p5kE+m6eH4TnbvGbr1f0I6Ad6MqGFSKWfhRF2Rv/z02DrjWzsHSlJ5JNc5WnI9FtjQ==",
+        "requested": "[3.3.21, )",
+        "resolved": "3.3.21",
+        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
         "dependencies": {
-          "protobuf-net.Core": "3.3.8"
+          "protobuf-net.Core": "3.3.21"
         }
       },
       "Microsoft.Build.Tasks.Git": {
@@ -79,8 +79,8 @@
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.3.8",
-        "contentHash": "NDt+dj0dgCiwwu4M22TGrvZBSby0O7rLXn73MDPYVgdg/5pCtwIgs/k8RYJPuj7nhTRIjoEsdo8wE/T3JszH5g=="
+        "resolved": "3.3.21",
+        "contentHash": "qARODs9k5/mw44Il2tIJaDV6s3Tm8qGVgG9RI07c1PxFYiFyMOqPkaFjbgNPBLWRtop57ktDPaMDzf+6TYpdcg=="
       },
       "System.IO.Hashing": {
         "type": "Transitive",
@@ -109,9 +109,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.152, )",
-        "resolved": "3.0.152",
-        "contentHash": "5rAiIlg0V9XThpBU7MdECBMdqS25QjqQRPx3r8+JFp+ImW/z2W/kVX4Xt98/p2nxMQQ1GTfnD1cVxdHXRAH97w=="
+        "requested": "[3.0.160, )",
+        "resolved": "3.0.160",
+        "contentHash": "CtK/wbHVsFsb/mc3ijuu7yGmgWpfZ8L7CwSms+5vd81eTo8+66LNFdASb8fO0PJjoaI9fgMnVSNmNqyTTVUZPA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -156,11 +156,11 @@
       },
       "protobuf-net": {
         "type": "Direct",
-        "requested": "[3.3.8, )",
-        "resolved": "3.3.8",
-        "contentHash": "s/yyVaVhKPgon55cBA80p5kE+m6eH4TnbvGbr1f0I6Ad6MqGFSKWfhRF2Rv/z02DrjWzsHSlJ5JNc5WnI9FtjQ==",
+        "requested": "[3.3.21, )",
+        "resolved": "3.3.21",
+        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
         "dependencies": {
-          "protobuf-net.Core": "3.3.8"
+          "protobuf-net.Core": "3.3.21"
         }
       },
       "Microsoft.Build.Tasks.Git": {
@@ -178,8 +178,8 @@
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.3.8",
-        "contentHash": "NDt+dj0dgCiwwu4M22TGrvZBSby0O7rLXn73MDPYVgdg/5pCtwIgs/k8RYJPuj7nhTRIjoEsdo8wE/T3JszH5g=="
+        "resolved": "3.3.21",
+        "contentHash": "qARODs9k5/mw44Il2tIJaDV6s3Tm8qGVgG9RI07c1PxFYiFyMOqPkaFjbgNPBLWRtop57ktDPaMDzf+6TYpdcg=="
       },
       "System.Interactive.Async": {
         "type": "Transitive",
