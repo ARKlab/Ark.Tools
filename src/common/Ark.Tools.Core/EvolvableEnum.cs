@@ -168,11 +168,12 @@ public readonly struct EvolvableEnum<
             var number = (TBacking)Convert.ChangeType(values[i], typeof(TBacking), CultureInfo.InvariantCulture);
             numericValues[i] = number;
             var field = enumType.GetField(names[i])!;
-            var displayName = _getDisplayName(field);
+            var annotatedNames = _getAnnotatedNames(field);
+            var displayName = annotatedNames.DisplayName;
             _numberToName.TryAdd(number, displayName);
             displayNames[i] = displayName;
             _addName(allNames, names[i], number, enumType);
-            foreach (var attributeName in _getAttributeNames(field))
+            foreach (var attributeName in annotatedNames.Names)
             {
                 if (!string.Equals(names[i], attributeName, StringComparison.Ordinal))
                     _addName(allNames, attributeName, number, enumType);
@@ -188,7 +189,7 @@ public readonly struct EvolvableEnum<
         var minimum = numericValues.Select(static value => BigInteger.CreateChecked(value)).Min();
         var maximum = numericValues.Select(static value => BigInteger.CreateChecked(value)).Max();
         var range = maximum - minimum + BigInteger.One;
-        if (range <= 4096 && range <= numericValues.Length * 100 / 90)
+        if (range <= 4096 && range * 90 <= numericValues.Length * 100)
         {
             _numberToNameArrayMinimum = minimum;
             _numberToNameArray = new string?[checked((int)range)];
@@ -353,32 +354,18 @@ public readonly struct EvolvableEnum<
         return _numberToName.TryGetValue(number, out var name) ? name : null;
     }
 
-    private static string _getDisplayName(FieldInfo field)
+    private static (string DisplayName, string[] Names) _getAnnotatedNames(FieldInfo field)
     {
-        var enumMember = field.GetCustomAttribute<EnumMemberAttribute>()?.Value;
-        if (!string.IsNullOrWhiteSpace(enumMember))
-            return enumMember;
+        var attributes = field.GetCustomAttributes(inherit: false);
+        var enumMember = attributes.OfType<EnumMemberAttribute>().FirstOrDefault()?.Value;
+        var display = attributes.OfType<DisplayAttribute>().FirstOrDefault()?.GetName();
+        var displayName = attributes.OfType<DisplayNameAttribute>().FirstOrDefault()?.DisplayName;
+        var names = new[] { enumMember, display, displayName }
+            .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .ToArray();
 
-        var display = field.GetCustomAttribute<DisplayAttribute>()?.GetName();
-        if (!string.IsNullOrWhiteSpace(display))
-            return display;
-
-        return field.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? field.Name;
-    }
-
-    private static IEnumerable<string> _getAttributeNames(FieldInfo field)
-    {
-        var enumMember = field.GetCustomAttribute<EnumMemberAttribute>()?.Value;
-        if (!string.IsNullOrWhiteSpace(enumMember))
-            yield return enumMember;
-
-        var display = field.GetCustomAttribute<DisplayAttribute>()?.GetName();
-        if (!string.IsNullOrWhiteSpace(display))
-            yield return display;
-
-        var displayName = field.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName;
-        if (!string.IsNullOrWhiteSpace(displayName))
-            yield return displayName;
+        return (enumMember ?? display ?? displayName ?? field.Name, names);
     }
 
     private static void _addName(
