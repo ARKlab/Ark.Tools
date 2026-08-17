@@ -14,7 +14,7 @@ public class EnumExtensionsTests
     private enum Status
     {
         Plain = 0,
-        [Description("Description value")]
+        [System.ComponentModel.Description("Description value")]
         Described = 1,
         [EnumMember(Value = "Enum member value")]
         Serialized = 2,
