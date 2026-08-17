@@ -134,7 +134,6 @@ public readonly struct EvolvableEnum<
 {
     private readonly TBacking _number;
     private readonly string? _unknownName;
-    private readonly bool _isNameOnly;
 
     private static readonly FrozenDictionary<TBacking, string> _numberToName;
     private static readonly FrozenDictionary<string, TBacking> _nameToNumber;
@@ -209,30 +208,28 @@ public readonly struct EvolvableEnum<
     {
         _number = number;
         _unknownName = null;
-        _isNameOnly = false;
     }
 
     private EvolvableEnum(string unknownName)
     {
         _number = TBacking.Zero;
         _unknownName = unknownName;
-        _isNameOnly = true;
     }
 
     /// <summary>Gets the defined <c>NOT_SET</c> value.</summary>
     public static EvolvableEnum<TEnum, TBacking> NotSet => default;
 
     /// <summary>Gets whether this value maps to a declared enum member.</summary>
-    public bool IsDefined => !_isNameOnly && _getName(_number) is not null;
+    public bool IsDefined => _unknownName is null && _getName(_number) is not null;
 
     /// <summary>Gets whether this value has a numeric representation.</summary>
-    public bool HasNumericValue => !_isNameOnly;
+    public bool HasNumericValue => _unknownName is null;
 
     /// <summary>Gets the declared enum value, or <see langword="null"/> for an unknown value.</summary>
     public TEnum? Value => IsDefined ? (TEnum)Enum.ToObject(typeof(TEnum), _number) : null;
 
     /// <summary>Gets the known or preserved unknown symbolic name.</summary>
-    public string? Name => _isNameOnly ? _unknownName : _getName(_number);
+    public string? Name => _unknownName ?? _getName(_number);
 
     /// <summary>Wraps a strict enum value.</summary>
     public static implicit operator EvolvableEnum<TEnum, TBacking>(TEnum value) => FromValue(value);
@@ -259,7 +256,7 @@ public readonly struct EvolvableEnum<
     }
 
     /// <summary>Gets the numeric value using the enum's exact backing type.</summary>
-    public TBacking ToNumber() => HasNumericValue
+    public TBacking ToNumber() => _unknownName is null
         ? _number
         : throw new EvolvableEnumConversionException(
             $"Cannot convert '{this}' to {typeof(TBacking).Name}: the value has no numeric representation.");
@@ -319,10 +316,10 @@ public readonly struct EvolvableEnum<
         => TryParse(s, CultureInfo.InvariantCulture, out result);
 
     /// <inheritdoc />
-    public bool Equals(EvolvableEnum<TEnum, TBacking> other) => _isNameOnly == other._isNameOnly
-        && (_isNameOnly
-            ? string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal)
-            : _number == other._number);
+    public bool Equals(EvolvableEnum<TEnum, TBacking> other)
+        => _unknownName is null
+            ? other._unknownName is null && _number == other._number
+            : string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal);
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
@@ -330,7 +327,7 @@ public readonly struct EvolvableEnum<
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => _isNameOnly ? HashCode.Combine(true, _unknownName) : HashCode.Combine(false, _number);
+        => _unknownName is null ? HashCode.Combine(false, _number) : HashCode.Combine(true, _unknownName);
 
     /// <summary>Determines whether two values are equal.</summary>
     public static bool operator ==(
@@ -352,7 +349,7 @@ public readonly struct EvolvableEnum<
             if (number < _numberToNameArrayMinimum || number > _numberToNameArrayMaximum)
                 return null;
 
-            var index = int.CreateChecked(number - _numberToNameArrayMinimum);
+            var index = int.CreateTruncating(number - _numberToNameArrayMinimum);
             return _numberToNameArray[index];
         }
 

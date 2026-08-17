@@ -125,6 +125,31 @@ public class EvolvableEnumAnalyzerTests
         diagnostics.Single(item => item.Id == "ARKCORE003").Severity.Should().Be(DiagnosticSeverity.Error);
     }
 
+    /// <summary>Verifies a full small backing type produces an evolvability warning.</summary>
+    [TestMethod]
+    public async Task FullEnum_ShouldReportWarning()
+    {
+        var members = string.Join(", ", Enumerable.Range(1, 255).Select(item => $"Value{item} = {item}"));
+        var diagnostics = await _analyzeAsync($$"""
+            namespace Ark.Tools.Core
+            {
+                public struct EvolvableEnum<T> { }
+            }
+            enum FullStatus : byte
+            {
+                NOT_SET = 0,
+                {{members}}
+            }
+            class Contract
+            {
+                Ark.Tools.Core.EvolvableEnum<FullStatus> Value;
+            }
+            """);
+
+        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE004");
+        diagnostics.Single(item => item.Id == "ARKCORE004").Severity.Should().Be(DiagnosticSeverity.Warning);
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
