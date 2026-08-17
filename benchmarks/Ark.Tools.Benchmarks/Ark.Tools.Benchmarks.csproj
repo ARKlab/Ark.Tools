@@ -13,6 +13,7 @@
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
     <PackageReference Include="BenchmarkDotNet" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="../../samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
   </ItemGroup>

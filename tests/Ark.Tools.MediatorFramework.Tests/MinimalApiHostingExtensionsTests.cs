@@ -67,6 +67,9 @@ public sealed class MinimalApiHostingExtensionsTests
 
         ArkTypeConverterValue<ProviderValue>.TryParse("value", culture, out var result).Should().BeTrue();
         result.Value.CultureName.Should().Be(culture.Name);
+
+        ArkTypeConverterValue<ProviderValue>.TryParse("value", null, out result).Should().BeTrue();
+        result.Value.CultureName.Should().Be(CultureInfo.InvariantCulture.Name);
     }
 
     [TestMethod]
