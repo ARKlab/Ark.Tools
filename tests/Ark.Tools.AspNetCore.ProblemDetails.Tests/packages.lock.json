@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.152, )",
-        "resolved": "3.0.152",
-        "contentHash": "5rAiIlg0V9XThpBU7MdECBMdqS25QjqQRPx3r8+JFp+ImW/z2W/kVX4Xt98/p2nxMQQ1GTfnD1cVxdHXRAH97w=="
+        "requested": "[3.0.160, )",
+        "resolved": "3.0.160",
+        "contentHash": "CtK/wbHVsFsb/mc3ijuu7yGmgWpfZ8L7CwSms+5vd81eTo8+66LNFdASb8fO0PJjoaI9fgMnVSNmNqyTTVUZPA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -1023,7 +1023,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "NLog": "[6.1.4, )",
+          "NLog": "[6.2.0, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
@@ -1038,7 +1038,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
           "Microsoft.Extensions.Hosting": "[10.0.11, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
-          "NLog.Extensions.Logging": "[6.1.4, )"
+          "NLog.Extensions.Logging": "[6.2.0, )"
         }
       },
       "ark.tools.nodatime": {
@@ -1653,9 +1653,9 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "ft6Lv17uoFuHTGWiY47FEXH7VA5HMHp973zodaOZAJyFg6mHL9RdXjqdNkRJXFo5plQJR+LPt5e6aAZU8KSDog=="
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "CxK6AjM1Wy3hM8YeBpLJJuB/JdoeIVvX0/fMTWeIXD917UozCtzv6cZDamevugeEaBBF0TIatfcNX2iJHI0Cew=="
       },
       "NLog.Database": {
         "type": "CentralTransitive",
@@ -1677,13 +1677,13 @@
       },
       "NLog.Extensions.Logging": {
         "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "gDJjgF9LjG1Zsy3o/3BVUk5gFcCozYzrzKTZjcnE43FghchoQ9Xi4ra2dGEU+ftJf9oM0Kzs06y1r2SjfhDBGQ==",
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "ZNitUMsNUir+P4A87OhfItgeIiodwSG3Iq15LuNk/Wqjjm2ho3OptjykpWJmFs/Zlgr41XmUB3XbNvhBoCBUrg==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
           "Microsoft.Extensions.Logging": "10.0.0",
-          "NLog": "6.1.4"
+          "NLog": "6.2.0"
         }
       },
       "NLog.MailKit": {

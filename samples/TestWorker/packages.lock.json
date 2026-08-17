@@ -465,7 +465,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
-          "NLog": "[6.1.4, )",
+          "NLog": "[6.2.0, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
@@ -480,7 +480,7 @@
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
           "Microsoft.Extensions.Hosting": "[10.0.11, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
-          "NLog.Extensions.Logging": "[6.1.4, )"
+          "NLog.Extensions.Logging": "[6.2.0, )"
         }
       },
       "ark.tools.nodatime": {
@@ -529,7 +529,7 @@
           "OpenTelemetry.Api": "[1.17.0, )",
           "Rebus": "[8.9.2, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
-          "Rebus.AzureServiceBus": "[10.7.0, )",
+          "Rebus.AzureServiceBus": "[10.7.1, )",
           "Rebus.NLog": "[6.0.0, )",
           "Rebus.SqlServer": "[8.4.1, )"
         }
@@ -981,9 +981,9 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "ft6Lv17uoFuHTGWiY47FEXH7VA5HMHp973zodaOZAJyFg6mHL9RdXjqdNkRJXFo5plQJR+LPt5e6aAZU8KSDog=="
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "CxK6AjM1Wy3hM8YeBpLJJuB/JdoeIVvX0/fMTWeIXD917UozCtzv6cZDamevugeEaBBF0TIatfcNX2iJHI0Cew=="
       },
       "NLog.Database": {
         "type": "CentralTransitive",
@@ -1005,13 +1005,13 @@
       },
       "NLog.Extensions.Logging": {
         "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "gDJjgF9LjG1Zsy3o/3BVUk5gFcCozYzrzKTZjcnE43FghchoQ9Xi4ra2dGEU+ftJf9oM0Kzs06y1r2SjfhDBGQ==",
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "ZNitUMsNUir+P4A87OhfItgeIiodwSG3Iq15LuNk/Wqjjm2ho3OptjykpWJmFs/Zlgr41XmUB3XbNvhBoCBUrg==",
         "dependencies": {
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.0",
           "Microsoft.Extensions.Logging": "10.0.0",
-          "NLog": "6.1.4"
+          "NLog": "6.2.0"
         }
       },
       "NLog.MailKit": {
@@ -1098,9 +1098,9 @@
       },
       "Rebus.AzureServiceBus": {
         "type": "CentralTransitive",
-        "requested": "[10.7.0, )",
-        "resolved": "10.7.0",
-        "contentHash": "NU0vLtgUWFHuB2kT9j5fY4hS1rBtkEMbIoj3VXdmzaxZkjCTR8B8oW3/uO2JgSr5OFSPz5WVnzLMRC/lpN80RA==",
+        "requested": "[10.7.1, )",
+        "resolved": "10.7.1",
+        "contentHash": "YOi3rkSIf7AgqgLJVpX2tLpnXyFMFfBCtzoW3uuIDPgMOar7EsjKV7L+sbNlmI9NrTv+VqZg7Ajsgv4SeyC5Jw==",
         "dependencies": {
           "Azure.Messaging.ServiceBus": "7.20.1",
           "Rebus": "8.9.2",
