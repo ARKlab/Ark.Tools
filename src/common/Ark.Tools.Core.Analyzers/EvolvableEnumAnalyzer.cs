@@ -126,10 +126,8 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                         additionalLocations: [previous.Locations.FirstOrDefault() ?? Location.None],
                         messageArgs: [name]));
                 }
-                else
-                {
-                    names.Add(name, field);
-                }
+
+                names[name] = field;
             }
         }
     }

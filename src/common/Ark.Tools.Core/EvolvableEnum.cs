@@ -363,6 +363,7 @@ public readonly struct EvolvableEnum<
         var names = new[] { enumMember, display, displayName }
             .Where(static name => !string.IsNullOrWhiteSpace(name))
             .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
 
         return (enumMember ?? display ?? displayName ?? field.Name, names);
