@@ -68,6 +68,68 @@ drift. `GrpcEndpointGenerator` maps the exact backing category to
   behavior.
 - Existing strict enum contracts retain their current behavior.
 
+## Benchmark results
+
+`benchmarks/Ark.Tools.Benchmarks/EvolvableEnumBenchmarks.cs` compares strict and
+evolvable enum parsing/formatting and serializes and deserializes arrays of 100
+records containing the enum field. The JSON serialization comparison uses one
+converter per options instance so converter cost is isolated from the full
+`ConfigureArkDefaults()` converter list. Run it with:
+
+```bash
+dotnet run --project benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj \
+  --configuration Release -- --filter '*EvolvableEnumBenchmarks*'
+```
+
+The Release in-process .NET 10 run used BenchmarkDotNet 0.15.8's adaptive
+measurement algorithm on the repository's AMD EPYC 7763 CI host. BenchmarkDotNet
+recommends leaving warmup and iteration counts automatic: its defaults target at
+least 15 measurement iterations and continue until the configured error
+threshold is met, instead of fixing a small count. Mean is CPU time per
+operation; allocations are managed bytes per operation.
+
+| Operation | Mean | Allocated |
+| --- | ---: | ---: |
+| `Enum.TryParse` (defined) | 17.192 ns | 0 B |
+| `EvolvableEnum.TryParse` (defined) | 4.144 ns | 0 B |
+| `Enum.TryParse` (unknown) | 19.046 ns | 0 B |
+| `EvolvableEnum.TryParse` (unknown) | 15.996 ns | 0 B |
+| `Enum.ToString` (defined) | 10.528 ns | 24 B |
+| `Enum.AsString` (defined) | 244.338 ns | 72 B |
+| `EvolvableEnum.ToString` (defined) | 4.376 ns | 0 B |
+| `Enum.ToString` (undefined) | 20.110 ns | 56 B |
+| `Enum.AsString` (undefined) | 92.711 ns | 168 B |
+| `EvolvableEnum.ToString` (undefined) | 11.283 ns | 32 B |
+| STJ serialize `Enum[]` records | 10,113 ns | 6,720 B |
+| STJ serialize `EvolvableEnum[]` records | 11,557 ns | 9,920 B |
+| STJ deserialize `Enum[]` records | 27,432 ns | 15,488 B |
+| STJ deserialize `EvolvableEnum[]` records | 29,971 ns | 22,688 B |
+
+The converter does not call `Enum.ToString()` or `EvolvableEnum.ToString()`.
+On reads, JSON strings use `FromName` so known names become numeric values while
+unknown names are preserved. `TryParse` is intentionally not used because it
+also interprets numeric strings, which would change the semantics of a JSON
+string. On writes, declared names are pre-encoded once with the serializer's
+configured encoder and written as `JsonEncodedText`; unknown names still use the
+dynamic string path. This removes most of the original serialization gap, but
+the evolvable wrapper still has its name lookup and custom-converter overhead.
+
+The separate `EvolvableEnumBackingTypeBenchmarks` comparison measures the
+default wrapper against `EvolvableEnum<TEnum, int>` directly:
+
+| Operation | `EvolvableEnum<TEnum>` | `EvolvableEnum<TEnum, int>` |
+| --- | ---: | ---: |
+| Defined `TryParse` | 4.1441 ns, 0 B | 4.1237 ns, 0 B |
+| Unknown-name `TryParse` | 16.3715 ns, 0 B | 16.0180 ns, 0 B |
+| Defined `ToString` | 0.9912 ns, 0 B | 1.2140 ns, 0 B |
+| Unknown-number `ToString` | 11.3273 ns, 32 B | 11.1807 ns, 32 B |
+
+The default form uses composition because C# structs cannot inherit from
+another struct, and the forwarding wrapper preserves the shorter public API
+while the two-parameter form retains exact backing-type fidelity. On the
+measured .NET 10 hot paths, the JIT eliminates the forwarding cost; targeted
+`AggressiveInlining` attributes are not needed.
+
 ## Acceptance
 
 - [x] Define the opt-in contract/API and its serialization semantics.

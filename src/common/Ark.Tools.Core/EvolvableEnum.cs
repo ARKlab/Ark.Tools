@@ -2,7 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Collections.Frozen;
 using System.Numerics;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Ark.Tools.Core;
 
@@ -130,10 +134,12 @@ public readonly struct EvolvableEnum<
 {
     private readonly TBacking _number;
     private readonly string? _unknownName;
-    private readonly bool _isNameOnly;
 
-    private static readonly Dictionary<TBacking, string> _numberToName;
-    private static readonly Dictionary<string, TBacking> _nameToNumber;
+    private static readonly FrozenDictionary<TBacking, string> _numberToName;
+    private static readonly FrozenDictionary<string, TBacking> _nameToNumber;
+    private static readonly string?[]? _numberToNameArray;
+    private static readonly TBacking _numberToNameArrayMinimum;
+    private static readonly TBacking _numberToNameArrayMaximum;
 
     [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "Runtime validation remains required when analyzers are disabled.")]
     [SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline", Justification = "Lookup creation follows generic argument validation.")]
@@ -153,51 +159,77 @@ public readonly struct EvolvableEnum<
 
         var names = Enum.GetNames(enumType);
         var values = (TEnum[])Enum.GetValues(enumType);
-        _numberToName = new Dictionary<TBacking, string>(names.Length);
-        _nameToNumber = new Dictionary<string, TBacking>(names.Length, StringComparer.Ordinal);
+        var numberToName = new Dictionary<TBacking, string>(names.Length);
+        var numericValues = new TBacking[names.Length];
+        var displayNames = new string[names.Length];
+        var allNames = new Dictionary<string, TBacking>(StringComparer.Ordinal);
 
         for (var i = 0; i < names.Length; i++)
         {
             var number = (TBacking)Convert.ChangeType(values[i], typeof(TBacking), CultureInfo.InvariantCulture);
-            _numberToName.TryAdd(number, names[i]);
-            _nameToNumber[names[i]] = number;
+            numericValues[i] = number;
+            var field = enumType.GetField(names[i])!;
+            var annotatedNames = _getAnnotatedNames(field);
+            var displayName = annotatedNames.DisplayName;
+            numberToName.TryAdd(number, displayName);
+            displayNames[i] = displayName;
+            _addName(allNames, names[i], number, enumType);
+            foreach (var attributeName in annotatedNames.Names)
+            {
+                if (!string.Equals(names[i], attributeName, StringComparison.Ordinal))
+                    _addName(allNames, attributeName, number, enumType);
+            }
         }
+
+        _numberToName = numberToName.ToFrozenDictionary();
+        _nameToNumber = allNames.ToFrozenDictionary(StringComparer.Ordinal);
 
         if (!_nameToNumber.TryGetValue("NOT_SET", out var notSet) || notSet != TBacking.Zero)
             throw new InvalidOperationException(
                 $"EvolvableEnum<{enumType.Name}, {typeof(TBacking).Name}> requires an explicit zero-valued member named 'NOT_SET'.");
+
+        var minimum = numericValues.Select(static value => BigInteger.CreateChecked(value)).Min();
+        var maximum = numericValues.Select(static value => BigInteger.CreateChecked(value)).Max();
+        var range = maximum - minimum + BigInteger.One;
+        if (range <= 4096 && range * 90 <= numericValues.Length * 100)
+        {
+            _numberToNameArrayMinimum = TBacking.CreateChecked(minimum);
+            _numberToNameArrayMaximum = TBacking.CreateChecked(maximum);
+            _numberToNameArray = new string?[checked((int)range)];
+            for (var i = 0; i < numericValues.Length; i++)
+            {
+                var index = checked((int)(BigInteger.CreateChecked(numericValues[i]) - minimum));
+                _numberToNameArray[index] ??= displayNames[i];
+            }
+        }
     }
 
     private EvolvableEnum(TBacking number)
     {
         _number = number;
         _unknownName = null;
-        _isNameOnly = false;
     }
 
     private EvolvableEnum(string unknownName)
     {
         _number = TBacking.Zero;
         _unknownName = unknownName;
-        _isNameOnly = true;
     }
 
     /// <summary>Gets the defined <c>NOT_SET</c> value.</summary>
     public static EvolvableEnum<TEnum, TBacking> NotSet => default;
 
     /// <summary>Gets whether this value maps to a declared enum member.</summary>
-    public bool IsDefined => !_isNameOnly && _numberToName.ContainsKey(_number);
+    public bool IsDefined => _unknownName is null && _getName(_number) is not null;
 
     /// <summary>Gets whether this value has a numeric representation.</summary>
-    public bool HasNumericValue => !_isNameOnly;
+    public bool HasNumericValue => _unknownName is null;
 
     /// <summary>Gets the declared enum value, or <see langword="null"/> for an unknown value.</summary>
     public TEnum? Value => IsDefined ? (TEnum)Enum.ToObject(typeof(TEnum), _number) : null;
 
     /// <summary>Gets the known or preserved unknown symbolic name.</summary>
-    public string? Name => _isNameOnly
-        ? _unknownName
-        : (_numberToName.TryGetValue(_number, out var name) ? name : null);
+    public string? Name => _unknownName ?? _getName(_number);
 
     /// <summary>Wraps a strict enum value.</summary>
     public static implicit operator EvolvableEnum<TEnum, TBacking>(TEnum value) => FromValue(value);
@@ -224,7 +256,7 @@ public readonly struct EvolvableEnum<
     }
 
     /// <summary>Gets the numeric value using the enum's exact backing type.</summary>
-    public TBacking ToNumber() => HasNumericValue
+    public TBacking ToNumber() => _unknownName is null
         ? _number
         : throw new EvolvableEnumConversionException(
             $"Cannot convert '{this}' to {typeof(TBacking).Name}: the value has no numeric representation.");
@@ -284,10 +316,10 @@ public readonly struct EvolvableEnum<
         => TryParse(s, CultureInfo.InvariantCulture, out result);
 
     /// <inheritdoc />
-    public bool Equals(EvolvableEnum<TEnum, TBacking> other) => _isNameOnly == other._isNameOnly
-        && (_isNameOnly
-            ? string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal)
-            : _number == other._number);
+    public bool Equals(EvolvableEnum<TEnum, TBacking> other)
+        => _unknownName is null
+            ? other._unknownName is null && _number == other._number
+            : string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal);
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
@@ -295,7 +327,7 @@ public readonly struct EvolvableEnum<
 
     /// <inheritdoc />
     public override int GetHashCode()
-        => _isNameOnly ? HashCode.Combine(true, _unknownName) : HashCode.Combine(false, _number);
+        => _unknownName is null ? HashCode.Combine(false, _number) : HashCode.Combine(true, _unknownName);
 
     /// <summary>Determines whether two values are equal.</summary>
     public static bool operator ==(
@@ -309,4 +341,45 @@ public readonly struct EvolvableEnum<
 
     /// <inheritdoc />
     public override string ToString() => Name ?? ToNumber().ToString(null, CultureInfo.InvariantCulture);
+
+    private static string? _getName(TBacking number)
+    {
+        if (_numberToNameArray is not null)
+        {
+            if (number < _numberToNameArrayMinimum || number > _numberToNameArrayMaximum)
+                return null;
+
+            var index = int.CreateTruncating(number - _numberToNameArrayMinimum);
+            return _numberToNameArray[index];
+        }
+
+        return _numberToName.TryGetValue(number, out var name) ? name : null;
+    }
+
+    private static (string DisplayName, string[] Names) _getAnnotatedNames(FieldInfo field)
+    {
+        var attributes = field.GetCustomAttributes(inherit: false);
+        var enumMember = attributes.OfType<EnumMemberAttribute>().FirstOrDefault()?.Value;
+        var display = attributes.OfType<DisplayAttribute>().FirstOrDefault()?.GetName();
+        var displayName = attributes.OfType<DisplayNameAttribute>().FirstOrDefault()?.DisplayName;
+        var names = new[] { enumMember, display, displayName }
+            .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        return (enumMember ?? display ?? displayName ?? field.Name, names);
+    }
+
+    private static void _addName(
+        Dictionary<string, TBacking> names,
+        string name,
+        TBacking number,
+        Type enumType)
+    {
+        if (names.TryGetValue(name, out var existing) && existing != number)
+            throw new InvalidOperationException($"Enum '{enumType.Name}' contains duplicate evolvable name '{name}'.");
+
+        names.TryAdd(name, number);
+    }
 }

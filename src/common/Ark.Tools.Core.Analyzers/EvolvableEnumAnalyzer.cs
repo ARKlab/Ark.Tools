@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Linq;
+using System;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -34,9 +36,29 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         description: "Evolvable enums require an explicit zero-valued NOT_SET member for forward-compatible defaults.",
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
 
+    private static readonly DiagnosticDescriptor _duplicateName = new(
+        "ARKCORE003",
+        "Evolvable enum names must be unique",
+        "Evolvable enum name '{0}' is used by multiple enum members",
+        "Usage",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Names from enum members and supported naming attributes must be unique.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+
+    private static readonly DiagnosticDescriptor _fullEnum = new(
+        "ARKCORE004",
+        "Evolvable enum cannot evolve",
+        "Enum '{0}' uses every value available in backing type '{1}'",
+        "Usage",
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "An evolvable enum with no unused backing values cannot accept future members.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-        => ImmutableArray.Create(_backingTypeMismatch, _missingNotSet);
+        => ImmutableArray.Create(_backingTypeMismatch, _missingNotSet, _duplicateName, _fullEnum);
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
@@ -100,6 +122,33 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 additionalLocations: [syntax.TypeArgumentList.Arguments[0].GetLocation()],
                 enumType.ToDisplayString()));
         }
+
+        if (_isFull(enumType))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                _fullEnum,
+                enumType.Locations.FirstOrDefault() ?? syntax.TypeArgumentList.Arguments[0].GetLocation(),
+                enumType.ToDisplayString(),
+                enumType.EnumUnderlyingType.ToDisplayString()));
+        }
+
+        var names = new Dictionary<string, IFieldSymbol>(StringComparer.Ordinal);
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        {
+            foreach (var name in _getNames(field))
+            {
+                if (names.TryGetValue(name, out var previous))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        _duplicateName,
+                        field.Locations.FirstOrDefault() ?? syntax.GetLocation(),
+                        additionalLocations: [previous.Locations.FirstOrDefault() ?? Location.None],
+                        messageArgs: [name]));
+                }
+
+                names[name] = field;
+            }
+        }
     }
 
     private static bool _isZero(object? value)
@@ -111,4 +160,41 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         || value is uint ui && ui == 0
         || value is long l && l == 0
         || value is ulong ul && ul == 0;
+
+    private static bool _isFull(INamedTypeSymbol enumType)
+    {
+        var values = new HashSet<object>();
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        {
+            if (field.IsConst && field.HasConstantValue && field.ConstantValue is object value)
+                values.Add(value);
+        }
+
+        return enumType.EnumUnderlyingType?.SpecialType switch
+        {
+            SpecialType.System_SByte or SpecialType.System_Byte => values.Count == 256,
+            SpecialType.System_Int16 or SpecialType.System_UInt16 => values.Count == 65_536,
+            _ => false,
+        };
+    }
+
+    private static IEnumerable<string> _getNames(IFieldSymbol field)
+    {
+        yield return field.Name;
+        foreach (var attribute in field.GetAttributes())
+        {
+            var attributeType = attribute.AttributeClass;
+            var typeName = attributeType?.Name;
+            var namespaceName = attributeType?.ContainingNamespace.ToDisplayString();
+            if (typeName == "EnumMemberAttribute" && namespaceName == "System.Runtime.Serialization"
+                && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Value").Value.Value is string enumMember)
+                yield return enumMember;
+            else if (typeName == "DisplayAttribute" && namespaceName == "System.ComponentModel.DataAnnotations"
+                && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Name").Value.Value is string display)
+                yield return display;
+            else if (typeName == "DisplayNameAttribute" && namespaceName == "System.ComponentModel"
+                && attribute.ConstructorArguments.FirstOrDefault().Value is string displayName)
+                yield return displayName;
+        }
+    }
 }
