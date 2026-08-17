@@ -72,7 +72,9 @@ drift. `GrpcEndpointGenerator` maps the exact backing category to
 
 `benchmarks/Ark.Tools.Benchmarks/EvolvableEnumBenchmarks.cs` compares strict and
 evolvable enum parsing/formatting and serializes and deserializes arrays of 100
-records containing the enum field. Run it with:
+records containing the enum field. The JSON serialization comparison uses one
+converter per options instance so converter cost is isolated from the full
+`ConfigureArkDefaults()` converter list. Run it with:
 
 ```bash
 dotnet run --project benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj \
@@ -98,10 +100,19 @@ operation; allocations are managed bytes per operation.
 | `Enum.ToString` (undefined) | 20.110 ns | 56 B |
 | `Enum.AsString` (undefined) | 92.711 ns | 168 B |
 | `EvolvableEnum.ToString` (undefined) | 11.283 ns | 32 B |
-| STJ serialize `Enum[]` records | 10,085.571 ns | 6,720 B |
-| STJ serialize `EvolvableEnum[]` records | 11,974.237 ns | 9,920 B |
-| STJ deserialize `Enum[]` records | 27,344.262 ns | 15,488 B |
-| STJ deserialize `EvolvableEnum[]` records | 29,402.476 ns | 22,688 B |
+| STJ serialize `Enum[]` records | 10,113 ns | 6,720 B |
+| STJ serialize `EvolvableEnum[]` records | 11,557 ns | 9,920 B |
+| STJ deserialize `Enum[]` records | 27,432 ns | 15,488 B |
+| STJ deserialize `EvolvableEnum[]` records | 29,971 ns | 22,688 B |
+
+The converter does not call `Enum.ToString()` or `EvolvableEnum.ToString()`.
+On reads, JSON strings use `FromName` so known names become numeric values while
+unknown names are preserved. `TryParse` is intentionally not used because it
+also interprets numeric strings, which would change the semantics of a JSON
+string. On writes, declared names are pre-encoded once with the serializer's
+configured encoder and written as `JsonEncodedText`; unknown names still use the
+dynamic string path. This removes most of the original serialization gap, but
+the evolvable wrapper still has its name lookup and custom-converter overhead.
 
 The separate `EvolvableEnumBackingTypeBenchmarks` comparison measures the
 default wrapper against `EvolvableEnum<TEnum, int>` directly:

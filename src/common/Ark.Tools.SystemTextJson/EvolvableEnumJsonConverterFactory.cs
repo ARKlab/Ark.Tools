@@ -7,6 +7,7 @@ using System.Collections.Frozen;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Encodings.Web;
 using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
@@ -19,7 +20,10 @@ public class EvolvableEnumJsonConverterFactory : JsonConverterFactory
 
     /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-        => EvolvableEnumJsonConverter.Create(typeToConvert, EvolvableEnumWireFormat.Name);
+        => EvolvableEnumJsonConverter.Create(
+            typeToConvert,
+            EvolvableEnumWireFormat.Name,
+            options.Encoder ?? JavaScriptEncoder.Default);
 }
 
 /// <summary>Serializes evolvable enums using their exact numeric backing type.</summary>
@@ -30,7 +34,10 @@ public class EvolvableEnumIntegerJsonConverterFactory : JsonConverterFactory
 
     /// <inheritdoc />
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-        => EvolvableEnumJsonConverter.Create(typeToConvert, EvolvableEnumWireFormat.Number);
+        => EvolvableEnumJsonConverter.Create(
+            typeToConvert,
+            EvolvableEnumWireFormat.Number,
+            options.Encoder ?? JavaScriptEncoder.Default);
 }
 
 internal static class EvolvableEnumJsonConverter
@@ -45,7 +52,7 @@ internal static class EvolvableEnumJsonConverter
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType", Justification = "Arguments come from a closed EvolvableEnum type.")]
-    public static JsonConverter Create(Type type, EvolvableEnumWireFormat format)
+    public static JsonConverter Create(Type type, EvolvableEnumWireFormat format, JavaScriptEncoder encoder)
     {
         var arguments = type.GetGenericArguments();
         var converterDefinition = arguments.Length == 1 ? typeof(DefaultConverter<>) : typeof(Converter<,>);
@@ -54,7 +61,7 @@ internal static class EvolvableEnumJsonConverter
             converterType,
             BindingFlags.Instance | BindingFlags.Public,
             binder: null,
-            args: [format],
+            args: [format, encoder],
             culture: null)!;
     }
 
@@ -66,10 +73,10 @@ internal static class EvolvableEnumJsonConverter
         private readonly EvolvableEnumWireFormat _format;
         private readonly FrozenDictionary<string, JsonEncodedText> _encodedNames;
 
-        public DefaultConverter(EvolvableEnumWireFormat format)
+        public DefaultConverter(EvolvableEnumWireFormat format, JavaScriptEncoder encoder)
         {
             _format = format;
-            _encodedNames = _createEncodedNames<TEnum, int>();
+            _encodedNames = _createEncodedNames<TEnum, int>(encoder);
         }
 
         public override EvolvableEnum<TEnum> Read(
@@ -107,10 +114,10 @@ internal static class EvolvableEnumJsonConverter
         private readonly EvolvableEnumWireFormat _format;
         private readonly FrozenDictionary<string, JsonEncodedText> _encodedNames;
 
-        public Converter(EvolvableEnumWireFormat format)
+        public Converter(EvolvableEnumWireFormat format, JavaScriptEncoder encoder)
         {
             _format = format;
-            _encodedNames = _createEncodedNames<TEnum, TBacking>();
+            _encodedNames = _createEncodedNames<TEnum, TBacking>(encoder);
         }
 
         public override EvolvableEnum<TEnum, TBacking> Read(
@@ -143,7 +150,7 @@ internal static class EvolvableEnumJsonConverter
 
     private static FrozenDictionary<string, JsonEncodedText> _createEncodedNames<
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
-        TBacking>()
+        TBacking>(JavaScriptEncoder encoder)
         where TEnum : struct, Enum
         where TBacking : struct, IBinaryInteger<TBacking>
     {
@@ -152,7 +159,7 @@ internal static class EvolvableEnumJsonConverter
         {
             var name = EvolvableEnum<TEnum, TBacking>.FromValue(enumValue).Name;
             if (name is not null)
-                names.TryAdd(name, JsonEncodedText.Encode(name));
+                names.TryAdd(name, JsonEncodedText.Encode(name, encoder));
         }
 
         return names.ToFrozenDictionary(StringComparer.Ordinal);
