@@ -349,7 +349,8 @@ public readonly struct EvolvableEnum<
             if (number < _numberToNameArrayMinimum || number > _numberToNameArrayMaximum)
                 return null;
 
-            var index = int.CreateTruncating(number - _numberToNameArrayMinimum);
+            var index = int.CreateTruncating(unchecked(
+                uint.CreateTruncating(number) - uint.CreateTruncating(_numberToNameArrayMinimum)));
             return _numberToNameArray[index];
         }
 

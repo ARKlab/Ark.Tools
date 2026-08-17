@@ -35,6 +35,8 @@ public class EvolvableEnumBenchmarks
     private static readonly EvolvableRecord[] _evolvableRecords = Enumerable.Range(0, 100)
         .Select(index => new EvolvableRecord(EvolvableEnum<Status>.FromNumber(index % 3), index))
         .ToArray();
+    private static readonly string _strictJson = JsonSerializer.Serialize(_strictRecords, _strictJsonOptions);
+    private static readonly string _evolvableJson = JsonSerializer.Serialize(_evolvableRecords, _evolvableJsonOptions);
 
     /// <summary>Measures parsing a declared enum name with <c>Enum.TryParse</c>.</summary>
     [Benchmark(Baseline = true)]
@@ -118,6 +120,20 @@ public class EvolvableEnumBenchmarks
     public string JsonSerializeEvolvableEnumArray()
     {
         return JsonSerializer.Serialize(_evolvableRecords, _evolvableJsonOptions);
+    }
+
+    /// <summary>Measures string JSON deserialization of records containing a strict enum.</summary>
+    [Benchmark]
+    public int JsonDeserializeEnumArray()
+    {
+        return JsonSerializer.Deserialize<StrictRecord[]>(_strictJson, _strictJsonOptions)!.Length;
+    }
+
+    /// <summary>Measures string JSON deserialization of records containing an evolvable enum.</summary>
+    [Benchmark]
+    public int JsonDeserializeEvolvableEnumArray()
+    {
+        return JsonSerializer.Deserialize<EvolvableRecord[]>(_evolvableJson, _evolvableJsonOptions)!.Length;
     }
 
     private enum Status
