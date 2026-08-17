@@ -414,7 +414,7 @@ public sealed class MinimalApiHostingExtensionsTests
             CultureInfo? culture,
             object value)
         {
-            return new ProviderValue(culture?.Name ?? string.Empty);
+            return new ProviderValue((culture ?? CultureInfo.InvariantCulture).Name);
         }
     }
 

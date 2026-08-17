@@ -49,9 +49,9 @@ result. Conversion still supplies the request's culture when it is a
 - Added tests for supported values, null input, unsupported conversion,
   explicit culture propagation, conversion failures, and concurrent first use.
 - Added an in-process .NET 10 BenchmarkDotNet comparison. The observed mean was
-  63.62 ns for the per-call TypeDescriptor lookup and 15.36 ns for the cached
+  59.33 ns for the per-call TypeDescriptor lookup and 15.84 ns for the cached
   path. Both paths allocated 48 B for the returned wrapper; the cached path
-  reduced mean time by 75.9%.
+  reduced mean time by 73.3%.
 
 ## Verification
 
