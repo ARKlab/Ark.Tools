@@ -68,6 +68,36 @@ drift. `GrpcEndpointGenerator` maps the exact backing category to
   behavior.
 - Existing strict enum contracts retain their current behavior.
 
+## Benchmark results
+
+`benchmarks/Ark.Tools.Benchmarks/EvolvableEnumBenchmarks.cs` compares strict and
+evolvable enum parsing/formatting and serializes arrays of 100 records containing
+the enum field. Run it with:
+
+```bash
+dotnet run --project benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj \
+  --configuration Release -- --filter '*EvolvableEnumBenchmarks*'
+```
+
+The Release in-process .NET 10 run used BenchmarkDotNet 0.15.8, three warmups,
+and five measured iterations on the repository's AMD EPYC 7763 CI host. Mean is
+CPU time per operation; allocations are managed bytes per operation.
+
+| Operation | Mean | Allocated |
+| --- | ---: | ---: |
+| `Enum.TryParse` (defined) | 17.149 ns | 0 B |
+| `EvolvableEnum.TryParse` (defined) | 4.388 ns | 0 B |
+| `Enum.TryParse` (unknown) | 18.768 ns | 0 B |
+| `EvolvableEnum.TryParse` (unknown) | 16.334 ns | 0 B |
+| `Enum.ToString` (defined) | 10.693 ns | 24 B |
+| `Enum.AsString` (defined) | 244.478 ns | 72 B |
+| `EvolvableEnum.ToString` (defined) | 4.378 ns | 0 B |
+| `Enum.ToString` (undefined) | 19.784 ns | 56 B |
+| `Enum.AsString` (undefined) | 91.707 ns | 168 B |
+| `EvolvableEnum.ToString` (undefined) | 11.248 ns | 32 B |
+| STJ `Enum[]` records | 9,357.916 ns | 6,720 B |
+| STJ `EvolvableEnum[]` records | 11,539.651 ns | 9,920 B |
+
 ## Acceptance
 
 - [x] Define the opt-in contract/API and its serialization semantics.
