@@ -34,9 +34,19 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         description: "Evolvable enums require an explicit zero-valued NOT_SET member for forward-compatible defaults.",
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
 
+    private static readonly DiagnosticDescriptor _duplicateName = new(
+        "ARKCORE003",
+        "Evolvable enum names must be unique",
+        "Evolvable enum name '{0}' is used by multiple enum members",
+        "Usage",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Names from enum members and supported naming attributes must be unique.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-        => ImmutableArray.Create(_backingTypeMismatch, _missingNotSet);
+        => ImmutableArray.Create(_backingTypeMismatch, _missingNotSet, _duplicateName);
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
@@ -100,6 +110,26 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 additionalLocations: [syntax.TypeArgumentList.Arguments[0].GetLocation()],
                 enumType.ToDisplayString()));
         }
+
+        var names = new Dictionary<string, IFieldSymbol>(StringComparer.Ordinal);
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>().Where(static field => field.HasConstantValue))
+        {
+            foreach (var name in _getNames(field))
+            {
+                if (names.TryGetValue(name, out var previous))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        _duplicateName,
+                        field.Locations.FirstOrDefault() ?? syntax.GetLocation(),
+                        name,
+                        additionalLocations: [previous.Locations.FirstOrDefault() ?? Location.None]));
+                }
+                else
+                {
+                    names.Add(name, field);
+                }
+            }
+        }
     }
 
     private static bool _isZero(object? value)
@@ -111,4 +141,22 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         || value is uint ui && ui == 0
         || value is long l && l == 0
         || value is ulong ul && ul == 0;
+
+    private static IEnumerable<string> _getNames(IFieldSymbol field)
+    {
+        yield return field.Name;
+        foreach (var attribute in field.GetAttributes())
+        {
+            var typeName = attribute.AttributeClass?.ToDisplayString();
+            if (typeName == "System.Runtime.Serialization.EnumMemberAttribute"
+                && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Value").Value.Value is string enumMember)
+                yield return enumMember;
+            else if (typeName == "System.ComponentModel.DataAnnotations.DisplayAttribute"
+                && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Name").Value.Value is string display)
+                yield return display;
+            else if (typeName == "System.ComponentModel.DisplayNameAttribute"
+                && attribute.ConstructorArguments.FirstOrDefault().Value is string displayName)
+                yield return displayName;
+        }
+    }
 }
