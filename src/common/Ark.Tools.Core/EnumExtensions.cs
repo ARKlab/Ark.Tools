@@ -27,7 +27,7 @@ public static class EnumExtensions
                 var enumMember = field.GetCustomAttribute<EnumMemberAttribute>(inherit: false);
                 var stringValue = enumMember?.Value ?? description?.Description ?? name;
 
-                values[String.Intern(name)] = String.Intern(stringValue);
+                values[string.Intern(name)] = string.Intern(stringValue);
             }
 
             return values.ToFrozenDictionary(StringComparer.Ordinal);
