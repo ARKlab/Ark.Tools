@@ -2,7 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Linq;
+using System;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -112,7 +114,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         }
 
         var names = new Dictionary<string, IFieldSymbol>(StringComparer.Ordinal);
-        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>().Where(static field => field.HasConstantValue))
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
         {
             foreach (var name in _getNames(field))
             {
@@ -121,8 +123,8 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                     context.ReportDiagnostic(Diagnostic.Create(
                         _duplicateName,
                         field.Locations.FirstOrDefault() ?? syntax.GetLocation(),
-                        name,
-                        additionalLocations: [previous.Locations.FirstOrDefault() ?? Location.None]));
+                        additionalLocations: [previous.Locations.FirstOrDefault() ?? Location.None],
+                        messageArgs: [name]));
                 }
                 else
                 {
@@ -147,14 +149,14 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         yield return field.Name;
         foreach (var attribute in field.GetAttributes())
         {
-            var typeName = attribute.AttributeClass?.ToDisplayString();
-            if (typeName == "System.Runtime.Serialization.EnumMemberAttribute"
+            var typeName = attribute.AttributeClass?.Name;
+            if (typeName == "EnumMemberAttribute"
                 && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Value").Value.Value is string enumMember)
                 yield return enumMember;
-            else if (typeName == "System.ComponentModel.DataAnnotations.DisplayAttribute"
+            else if (typeName == "DisplayAttribute"
                 && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Name").Value.Value is string display)
                 yield return display;
-            else if (typeName == "System.ComponentModel.DisplayNameAttribute"
+            else if (typeName == "DisplayNameAttribute"
                 && attribute.ConstructorArguments.FirstOrDefault().Value is string displayName)
                 yield return displayName;
         }

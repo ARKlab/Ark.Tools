@@ -3,6 +3,9 @@
 
 using AwesomeAssertions;
 
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+
 namespace Ark.Tools.Core.Tests;
 
 /// <summary>
@@ -66,6 +69,15 @@ public class EvolvableEnumTests
     {
         NOT_SET = 1,
         A = 0,
+    }
+
+    private enum AnnotatedStatus
+    {
+        [Display(Name = "Not set")]
+        NOT_SET = 0,
+        [Display(Name = "Enabled")]
+        [EnumMember(Value = "on")]
+        Active = 1,
     }
 
     /// <summary>Verifies that a [Flags] enum is rejected at first use.</summary>
@@ -333,5 +345,20 @@ public class EvolvableEnumTests
 
         // Assert
         value.ToString().Should().Be("Archived");
+    }
+
+    /// <summary>Verifies attribute priority and parsing of every supported annotation.</summary>
+    [TestMethod]
+    public void AnnotatedValue_ShouldUseEnumMemberAndParseAllNames()
+    {
+        var value = EvolvableEnum<AnnotatedStatus>.FromValue(AnnotatedStatus.Active);
+
+        value.Name.Should().Be("on");
+        value.ToString().Should().Be("on");
+        EvolvableEnum<AnnotatedStatus>.Parse("Active").Value.Should().Be(AnnotatedStatus.Active);
+        EvolvableEnum<AnnotatedStatus>.Parse("Enabled").Value.Should().Be(AnnotatedStatus.Active);
+        EvolvableEnum<AnnotatedStatus>.Parse("Active").ToString().Should().Be("on");
+        EvolvableEnum<AnnotatedStatus>.Parse("on").Value.Should().Be(AnnotatedStatus.Active);
+        EvolvableEnum<AnnotatedStatus>.FromName("Not set").ToString().Should().Be("Not set");
     }
 }

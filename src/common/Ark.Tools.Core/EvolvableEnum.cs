@@ -172,8 +172,11 @@ public readonly struct EvolvableEnum<
             _numberToName.TryAdd(number, displayName);
             displayNames[i] = displayName;
             _addName(allNames, names[i], number, enumType);
-            if (!string.Equals(names[i], displayName, StringComparison.Ordinal))
-                _addName(allNames, displayName, number, enumType);
+            foreach (var attributeName in _getAttributeNames(field))
+            {
+                if (!string.Equals(names[i], attributeName, StringComparison.Ordinal))
+                    _addName(allNames, attributeName, number, enumType);
+            }
         }
 
         _nameToNumber = allNames;
@@ -361,6 +364,21 @@ public readonly struct EvolvableEnum<
             return display;
 
         return field.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? field.Name;
+    }
+
+    private static IEnumerable<string> _getAttributeNames(FieldInfo field)
+    {
+        var enumMember = field.GetCustomAttribute<EnumMemberAttribute>()?.Value;
+        if (!string.IsNullOrWhiteSpace(enumMember))
+            yield return enumMember;
+
+        var display = field.GetCustomAttribute<DisplayAttribute>()?.GetName();
+        if (!string.IsNullOrWhiteSpace(display))
+            yield return display;
+
+        var displayName = field.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName;
+        if (!string.IsNullOrWhiteSpace(displayName))
+            yield return displayName;
     }
 
     private static void _addName(
