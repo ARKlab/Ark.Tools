@@ -390,6 +390,6 @@ public readonly struct EvolvableEnum<
         if (names.TryGetValue(name, out var existing) && existing != number)
             throw new InvalidOperationException($"Enum '{enumType.Name}' contains duplicate evolvable name '{name}'.");
 
-        names.Add(name, number);
+        names.TryAdd(name, number);
     }
 }
