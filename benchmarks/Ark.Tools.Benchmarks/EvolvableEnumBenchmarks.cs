@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core;
+using Ark.Tools.SystemTextJson;
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -28,7 +29,10 @@ public class EvolvableEnumBenchmarks
     {
         Converters = { new JsonStringEnumConverter() },
     };
-    private static readonly JsonSerializerOptions _evolvableJsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    private static readonly JsonSerializerOptions _evolvableJsonOptions = new()
+    {
+        Converters = { new EvolvableEnumJsonConverterFactory() },
+    };
     private static readonly StrictRecord[] _strictRecords = Enumerable.Range(0, 100)
         .Select(index => new StrictRecord((Status)(index % 3), index))
         .ToArray();
