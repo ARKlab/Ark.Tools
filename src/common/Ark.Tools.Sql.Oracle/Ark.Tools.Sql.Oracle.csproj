@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     
     <Description>Extensions and helpers of Ark.Tools.Sql for Oracle</Description>
     <PackageTags>Ark;C#;.NET;Framework;Sql;Oracle</PackageTags>

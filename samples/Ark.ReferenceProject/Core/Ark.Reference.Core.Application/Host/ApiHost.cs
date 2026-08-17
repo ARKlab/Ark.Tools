@@ -224,8 +224,8 @@ public class ApiHost
 
                 o.EnableCompression();
                 o.AutomaticallyFlowUserContext(Container);
-                o.UseApplicationInsight(Container);
-                o.UseApplicationInsightMetrics(Container);
+                o.UseOpenTelemetry(Container);
+                o.UseOpenTelemetryMetrics(Container);
                 o.FailFastOn<Exception>(ex => ex.IsFinal());
                 if (isInMemory)
                     o.AddInProcessMessageInspector();

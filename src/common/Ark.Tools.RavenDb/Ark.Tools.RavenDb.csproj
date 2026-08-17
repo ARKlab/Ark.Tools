@@ -2,6 +2,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <Description>Generic tools for RavenDb</Description>
     <PackageTags>Ark;C#;.NET;RavenDb;</PackageTags>
     <!--Update these information when releasing a new version of the NugetPackage-->

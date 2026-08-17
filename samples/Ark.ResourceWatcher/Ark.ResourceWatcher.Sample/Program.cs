@@ -4,6 +4,7 @@ using Ark.ResourceWatcher.Sample.Config;
 using Ark.ResourceWatcher.Sample.Host;
 
 using Ark.Tools.NLog;
+using Ark.Tools.ResourceWatcher.OTel;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,7 @@ sealed class Program
     {
         var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
             .AddWorkerHostInfrastracture()
+            .AddArkOpenTelemetryForWorkerHost()
             .ConfigureNLog("BlobWorkerSample")
             .AddWorkerHost(sp =>
             {

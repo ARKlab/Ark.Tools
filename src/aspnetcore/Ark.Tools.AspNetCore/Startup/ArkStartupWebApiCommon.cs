@@ -6,9 +6,7 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 
 using Asp.Versioning;
 
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -206,10 +204,6 @@ public abstract class ArkStartupWebApiCommon
 
         services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
         _integrateSimpleInjectorContainer(services);
-
-        services.AddTransient(s => s.GetRequiredService<IHttpContextAccessor>().HttpContext?.Features?.Get<RequestTelemetry>()
-            ?? throw new InvalidOperationException("Failed to obtain the RequestTelemetry from the current HttpContext. " +
-                "Make sure trying to access RequestTelemetry within a Request context, and not a BackgroundService."));
 
         services.AddCors(c =>
         {

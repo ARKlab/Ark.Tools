@@ -21,6 +21,7 @@
 
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
   <!--===============================================================================-->
 
@@ -31,7 +32,6 @@
 
   <ItemGroup>
     <PackageReference Include="Ben.Demystifier" />
-    <PackageReference Include="Microsoft.ApplicationInsights.NLogTarget" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="NLog" />
     <PackageReference Include="NLog.Database" />
@@ -43,8 +43,11 @@
 	  <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
 

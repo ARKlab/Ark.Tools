@@ -17,7 +17,7 @@ public abstract class ArkStartupWebApi : ArkStartupWebApiCommon
         _anotherBase = new ArkStartupBase(configuration);
     }
 
-    [RequiresUnreferencedCode("ConfigureServices uses configuration binding for Application Insights setup.")]
+    [RequiresUnreferencedCode("ConfigureServices uses MVC, JSON serialization, and Swagger which require reflection.")]
     public override void ConfigureServices(IServiceCollection services)
     {
         _anotherBase.ConfigureServices(services);

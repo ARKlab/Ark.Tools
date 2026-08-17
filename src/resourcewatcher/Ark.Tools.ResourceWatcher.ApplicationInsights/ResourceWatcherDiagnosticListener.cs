@@ -44,15 +44,12 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Name = activity.OperationName,
         };
 
-        // properly fill dependency telemetry operation context
-        telemetry.Context.Operation.Id = activity.RootId;
-        telemetry.Context.Operation.ParentId = activity.ParentId;
         telemetry.Timestamp = new DateTimeOffset(activity.StartTimeUtc, TimeSpan.Zero);
 
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
-        telemetry.Metrics.Add("ElapsedSeconds", activity.Duration.TotalSeconds);
-        telemetry.Metrics.Add("ElapsedMinutes", activity.Duration.Minutes);
+        telemetry.Properties.Add("ElapsedSeconds", activity.Duration.TotalSeconds.ToString("G", CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("ElapsedMinutes", activity.Duration.Minutes.ToString(CultureInfo.InvariantCulture));
 
         this._client.TrackEvent(telemetry);
     }
@@ -65,16 +62,13 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Name = activity.OperationName,
         };
 
-        // properly fill dependency telemetry operation context
-        telemetry.Context.Operation.Id = activity.RootId;
-        telemetry.Context.Operation.ParentId = activity.ParentId;
         telemetry.Timestamp = new DateTimeOffset(activity.StartTimeUtc, TimeSpan.Zero);
 
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
         telemetry.Properties.Add("ResourceId", resourceId);
-        telemetry.Metrics.Add("ElapsedSeconds", activity.Duration.TotalSeconds);
-        telemetry.Metrics.Add("ElapsedMinutes", activity.Duration.Minutes);
+        telemetry.Properties.Add("ElapsedSeconds", activity.Duration.TotalSeconds.ToString("G", CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("ElapsedMinutes", activity.Duration.Minutes.ToString(CultureInfo.InvariantCulture));
 
         this._client.TrackEvent(telemetry);
     }
@@ -84,8 +78,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
     [DiagnosticName("Ark.Tools.ResourceWatcher.ThrowDuplicateResourceIdRetrived")]
     public override void OnDuplicateResourceIdRetrived(string tenant, Exception exception)
     {
-        var currentActivity = Activity.Current;
-
         var telemetryException = new ExceptionTelemetry
         {
             Exception = exception,
@@ -93,10 +85,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
         };
 
         telemetryException.Properties.Add("Tenant", tenant);
-
-        //Telemetry operation context
-        telemetryException.Context.Operation.Id = currentActivity?.RootId;
-        telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
 
         this._client.TrackException(telemetryException);
     }
@@ -104,8 +92,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
     [DiagnosticName("Ark.Tools.ResourceWatcher.ReportRunConsecutiveFailureLimitReached")]
     public override void OnReportRunConsecutiveFailureLimitReached(string tenant, Exception exception)
     {
-        var currentActivity = Activity.Current;
-
         var telemetryException = new ExceptionTelemetry
         {
             Exception = exception,
@@ -113,10 +99,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
         };
 
         telemetryException.Properties.Add("Tenant", tenant);
-
-        //Telemetry operation context
-        telemetryException.Context.Operation.Id = currentActivity?.RootId;
-        telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
 
         this._client.TrackException(telemetryException);
     }
@@ -124,8 +106,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
     [DiagnosticName("Ark.Tools.ResourceWatcher.ProcessResourceSaveFailed")]
     public override void OnProcessResourceSaveFailed(string resourceId, string tenant, Exception exception)
     {
-        var currentActivity = Activity.Current;
-
         var telemetryException = new ExceptionTelemetry
         {
             Exception = exception,
@@ -133,10 +113,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
         };
 
         telemetryException.Properties.Add("Tenant", tenant);
-
-        //Telemetry operation context
-        telemetryException.Context.Operation.Id = currentActivity?.RootId;
-        telemetryException.Context.Operation.ParentId = currentActivity?.ParentId;
 
         this._client.TrackException(telemetryException);
     }
@@ -166,18 +142,14 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
         };
 
-        //Telemetry operation context
-        telemetry.Context.Operation.Id = currentActivity.RootId;
-        telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
-        telemetry.Metrics.Add("ResourcesFound", resourcesFound);
-        telemetry.Metrics.Add("Result_Normal", normal);
-        telemetry.Metrics.Add("Result_NoNewData", noPayload);
-        telemetry.Metrics.Add("Result_NoAction", noAction);
-        telemetry.Metrics.Add("Result_Error", error);
-        telemetry.Metrics.Add("Result_Skipped", skipped);
+        telemetry.Properties.Add("ResourcesFound", resourcesFound.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Result_Normal", normal.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Result_NoNewData", noPayload.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Result_NoAction", noAction.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Result_Error", error.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Result_Skipped", skipped.ToString(CultureInfo.InvariantCulture));
 
         //Exception
         if (exception != null)
@@ -188,18 +160,14 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
                 Message = exception.Message
             };
 
-            //Telemetry operation context
-            telemetryException.Context.Operation.Id = currentActivity.RootId;
-            telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
-
             //Properties and metrics
             telemetryException.Properties.Add("Tenant", tenant);
-            telemetryException.Metrics.Add("ResourcesFound", resourcesFound);
-            telemetryException.Metrics.Add("Result_Normal", normal);
-            telemetryException.Metrics.Add("Result_NoNewData", noPayload);
-            telemetryException.Metrics.Add("Result_NoAction", noAction);
-            telemetryException.Metrics.Add("Result_Error", error);
-            telemetryException.Metrics.Add("Result_Skipped", skipped);
+            telemetryException.Properties.Add("ResourcesFound", resourcesFound.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Result_Normal", normal.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Result_NoNewData", noPayload.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Result_NoAction", noAction.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Result_Error", error.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Result_Skipped", skipped.ToString(CultureInfo.InvariantCulture));
 
             this._client.TrackException(telemetryException);
         }
@@ -225,14 +193,10 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Type = _type
         };
 
-        //Telemetry operation context
-        telemetry.Context.Operation.Id = currentActivity.RootId;
-        telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
         telemetry.Properties.Add("Elapsed", elapsed.ToString());
-        telemetry.Metrics.Add("ResourcesFound", resourcesFound);
+        telemetry.Properties.Add("ResourcesFound", resourcesFound.ToString(CultureInfo.InvariantCulture));
 
         //Exception
         if (exception != null)
@@ -244,7 +208,7 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             };
 
             telemetryException.Properties.Add("Tenant", tenant);
-            telemetryException.Metrics.Add("ResourcesFound", resourcesFound);
+            telemetryException.Properties.Add("ResourcesFound", resourcesFound.ToString(CultureInfo.InvariantCulture));
 
             this._client.TrackException(telemetryException);
         }
@@ -278,18 +242,14 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Type = _type
         };
 
-        //Telemetry operation context
-        telemetry.Context.Operation.Id = currentActivity.RootId;
-        telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
-        telemetry.Metrics.Add("Resources_New", resourcesNew);
-        telemetry.Metrics.Add("Resources_Updated", resourcesUpdated);
-        telemetry.Metrics.Add("Resources_Retried", resourcesRetried);
-        telemetry.Metrics.Add("Resources_RetriedAfterBan", resourcesRetriedAfterBan);
-        telemetry.Metrics.Add("Resources_Banned", resourcesBanned);
-        telemetry.Metrics.Add("Resources_NothingToDo", resourcesNothingToDo);
+        telemetry.Properties.Add("Resources_New", resourcesNew.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Resources_Updated", resourcesUpdated.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Resources_Retried", resourcesRetried.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Resources_RetriedAfterBan", resourcesRetriedAfterBan.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Resources_Banned", resourcesBanned.ToString(CultureInfo.InvariantCulture));
+        telemetry.Properties.Add("Resources_NothingToDo", resourcesNothingToDo.ToString(CultureInfo.InvariantCulture));
 
         //Exception
         if (exception != null)
@@ -302,18 +262,13 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
 
             telemetryException.Properties.Add("Tenant", tenant);
 
-            //Telemetry operation context
-            telemetryException.Context.Operation.Id = currentActivity.RootId;
-            telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
-
             //Properties and metrics
-            telemetryException.Properties.Add("Tenant", tenant);
-            telemetryException.Metrics.Add("Resources_New", resourcesNew);
-            telemetryException.Metrics.Add("Resources_Updated", resourcesUpdated);
-            telemetryException.Metrics.Add("Resources_Retried", resourcesRetried);
-            telemetryException.Metrics.Add("Resources_RetriedAfterBan", resourcesRetriedAfterBan);
-            telemetryException.Metrics.Add("Resources_Banned", resourcesBanned);
-            telemetryException.Metrics.Add("Resources_NothingToDo", resourcesNothingToDo);
+            telemetryException.Properties.Add("Resources_New", resourcesNew.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Resources_Updated", resourcesUpdated.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Resources_Retried", resourcesRetried.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Resources_RetriedAfterBan", resourcesRetriedAfterBan.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Resources_Banned", resourcesBanned.ToString(CultureInfo.InvariantCulture));
+            telemetryException.Properties.Add("Resources_NothingToDo", resourcesNothingToDo.ToString(CultureInfo.InvariantCulture));
 
             this._client.TrackException(telemetryException);
         }
@@ -338,10 +293,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Timestamp = new DateTimeOffset(currentActivity.StartTimeUtc, TimeSpan.Zero),
         };
 
-        //Telemetry operation context
-        telemetry.Context.Operation.Id = currentActivity.RootId;
-        telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
         telemetry.Properties.Add("ResourceId", resourceId);
@@ -358,10 +309,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
                 Exception = exception,
                 Message = exception.Message
             };
-
-            //Telemetry operation context
-            telemetryException.Context.Operation.Id = currentActivity.RootId;
-            telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
 
             //Properties and metrics
             telemetryException.Properties.Add("Tenant", tenant);
@@ -396,10 +343,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
             Type = _type
         };
 
-        //Telemetry operation context
-        telemetry.Context.Operation.Id = currentActivity.RootId;
-        telemetry.Context.Operation.ParentId = currentActivity.ParentId;
-
         //Properties and metrics
         telemetry.Properties.Add("Tenant", tenant);
         telemetry.Properties.Add("ResourceId", resourceId);
@@ -414,10 +357,6 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
                 Exception = exception,
                 Message = exception.Message
             };
-
-            //Telemetry operation context
-            telemetryException.Context.Operation.Id = currentActivity.RootId;
-            telemetryException.Context.Operation.ParentId = currentActivity.ParentId;
 
             //Properties and metrics
             telemetryException.Properties.Add("Tenant", tenant);

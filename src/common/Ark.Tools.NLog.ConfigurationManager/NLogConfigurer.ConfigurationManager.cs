@@ -30,8 +30,6 @@ public static class NLogConfigurerConfigurationManager
             MailTo = mailTo ?? ConfigurationManager.AppSettings[NLogDefaultConfigKeys.MailNotificationAddresses],
             MailFrom = mailFrom,
             SlackWebhook = ConfigurationManager.AppSettings[NLogDefaultConfigKeys.SlackWebHook],
-            ApplicationInsightsInstrumentationKey = ConfigurationManager.AppSettings["APPINSIGHTS_INSTRUMENTATIONKEY"]
-                ?? ConfigurationManager.AppSettings["ApplicationInsights:InstrumentationKey"],
             Async = async
         };
 

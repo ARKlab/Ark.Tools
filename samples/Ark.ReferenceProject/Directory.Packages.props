@@ -9,6 +9,7 @@
     <!-- Ark.Tools packages - using local development version 999.9.9 -->
     <!-- When ejecting this sample to a new project, change these versions to the actual Ark.Tools version from nuget.org -->
     <PackageVersion Include="Ark.Tools.AspNetCore" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.AspNetCore.OTel" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Http" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.NLog.Configuration" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Nodatime" Version="999.9.9" />

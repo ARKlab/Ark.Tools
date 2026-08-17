@@ -15,7 +15,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.MessagePack" />
-    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
+    <PackageReference Include="Ark.Tools.AspNetCore.OTel" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.AspNetCore.MinimalApi" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />

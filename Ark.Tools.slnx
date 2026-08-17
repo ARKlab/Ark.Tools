@@ -3,6 +3,7 @@
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
+    <Project Path="src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
     <Project Path="src/common/Ark.Tools.Auth0/Ark.Tools.Auth0.csproj" />
     <Project Path="src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <Project Path="src/common/Ark.Tasks/Ark.Tasks.csproj" />
@@ -37,6 +38,7 @@
     <Project Path="src/common/Ark.Tools.RavenDb.Auditing/Ark.Tools.RavenDb.Auditing.csproj" />
     <Project Path="src/common/Ark.Tools.RavenDb/Ark.Tools.RavenDb.csproj" />
     <Project Path="src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
+    <Project Path="src/common/Ark.Tools.Rebus.ApplicationInsights/Ark.Tools.Rebus.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.Reqnroll/Ark.Tools.Reqnroll.csproj" />
     <Project Path="src/common/Ark.Tools.SimpleInjector/Ark.Tools.SimpleInjector.csproj" />
     <Project Path="src/common/Ark.Tools.Solid.Analyzers.CodeFixes/Ark.Tools.Solid.Analyzers.CodeFixes.csproj" />
@@ -53,6 +55,7 @@
   <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
+    <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ark.Tools.AspNetCore.OTel.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Auth0/Ark.Tools.AspNetCore.Auth0.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy.csproj" />
@@ -67,6 +70,7 @@
   </Folder>
   <Folder Name="/src/resourcewatcher/">
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.ApplicationInsights/Ark.Tools.ResourceWatcher.ApplicationInsights.csproj" />
+    <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.OTel/Ark.Tools.ResourceWatcher.OTel.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.Sql/Ark.Tools.ResourceWatcher.Sql.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Ftp/Ark.Tools.ResourceWatcher.WorkerHost.Ftp.csproj" />
     <Project Path="src/resourcewatcher/Ark.Tools.ResourceWatcher.WorkerHost.Hosting/Ark.Tools.ResourceWatcher.WorkerHost.Hosting.csproj" />
@@ -162,6 +166,8 @@
     <Project Path="tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Protobuf.Tests/Ark.Tools.Nodatime.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Nodatime.Tests/Ark.Tools.Nodatime.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.OTel.Tests/Ark.Tools.OTel.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Rebus.Tests/Ark.Tools.Rebus.Tests.csproj" />
     <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Sql.Oracle.Tests/Ark.Tools.Sql.Oracle.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Solid.Analyzers.Tests/Ark.Tools.Solid.Analyzers.Tests.csproj" />

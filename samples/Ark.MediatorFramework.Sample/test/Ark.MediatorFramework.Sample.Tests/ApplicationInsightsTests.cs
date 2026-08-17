@@ -3,78 +3,108 @@
 
 using Ark.Tools.AspNetCore.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
+using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Extensions.Options;
+
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Tests;
 
-/// <summary>Verifies the sample's classic Application Insights defaults.</summary>
+/// <summary>Verifies the sample's OpenTelemetry Application Insights defaults.</summary>
 [TestClass]
 public sealed class ApplicationInsightsTests
 {
-    /// <summary>Registers the Ark initializers once and keeps the Snapshot Debugger disabled.</summary>
+    /// <summary>Registers the Ark OpenTelemetry customization without the Snapshot Debugger.</summary>
     [TestMethod]
-    public void RegistersClassicDefaultsWithoutSnapshotDebugger()
+    public void RegistersOpenTelemetryDefaultsWithoutSnapshotDebugger()
     {
         var services = new ServiceCollection();
         services.ArkApplicationInsightsTelemetry(new ConfigurationBuilder().Build());
 
-        services.Count(descriptor => descriptor.ImplementationType == typeof(WebApiUserTelemetryInitializer))
-            .Should().Be(1);
-        services.Count(descriptor => descriptor.ImplementationType == typeof(WebApi4xxAsSuccessTelemetryInitializer))
-            .Should().Be(1);
+        services.Any(descriptor => descriptor.ServiceType == typeof(IConfigureOptions<TelemetryConfiguration>))
+            .Should().BeTrue();
         services.Any(descriptor =>
             descriptor.ServiceType.FullName is { } fullName
             && fullName.Contains("SnapshotCollector", StringComparison.Ordinal))
             .Should().BeFalse();
     }
 
-    /// <summary>Marks client errors successful while retaining server-error failures.</summary>
+    /// <summary>Marks client errors successful only on server request spans.</summary>
     [TestMethod]
-    public void ClassifiesClientAndServerResponses()
+    public void ClassifiesClientAndServerSpans()
     {
-        var accessor = new HttpContextAccessor();
-        var initializer = new WebApi4xxAsSuccessTelemetryInitializer(accessor);
+        using var processor = new WebApi4xxAsSuccessProcessor();
+        using var source = new ActivitySource(Guid.NewGuid().ToString());
+        using var listener = _createListener(source);
+        using var request = _createActivity(source, ActivityKind.Server, 404);
+        request.SetStatus(ActivityStatusCode.Error);
+        processor.OnEnd(request);
+        request.Status.Should().Be(ActivityStatusCode.Unset);
 
-        accessor.HttpContext = new DefaultHttpContext();
-        accessor.HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-        var clientError = new RequestTelemetry();
-        accessor.HttpContext.Features.Set(clientError);
-        initializer.Initialize(clientError);
-        clientError.Success.Should().BeTrue();
+        using var stringRequest = _createActivity(source, ActivityKind.Server, "404");
+        stringRequest.SetStatus(ActivityStatusCode.Error);
+        processor.OnEnd(stringRequest);
+        stringRequest.Status.Should().Be(ActivityStatusCode.Unset);
 
-        accessor.HttpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        var serverError = new RequestTelemetry();
-        accessor.HttpContext.Features.Set(serverError);
-        initializer.Initialize(serverError);
-        serverError.Success.Should().NotBeTrue();
+        using var dependency = _createActivity(source, ActivityKind.Client, 404);
+        dependency.SetStatus(ActivityStatusCode.Error);
+        processor.OnEnd(dependency);
+        dependency.Status.Should().Be(ActivityStatusCode.Error);
     }
 
-    /// <summary>Copies the authenticated request identity to dependent telemetry.</summary>
+    /// <summary>Adds the stable authenticated identifier only to server request spans.</summary>
     [TestMethod]
-    public void PropagatesAuthenticatedIdentity()
+    public void EnrichesServerSpanWithAuthenticatedIdentity()
     {
-        var accessor = new HttpContextAccessor();
-        var initializer = new WebApiUserTelemetryInitializer(accessor);
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.Name, "private-name"),
+                new Claim(ClaimTypes.NameIdentifier, "user-42")
+            ],
+            authenticationType: "test"));
+        using var processor = new WebApiUserProcessor(new FixedUserContext(principal));
+        using var source = new ActivitySource(Guid.NewGuid().ToString());
+        using var listener = _createListener(source);
+        using var request = _createActivity(source, ActivityKind.Server);
 
-        accessor.HttpContext = new DefaultHttpContext();
-        accessor.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
-            new System.Security.Claims.ClaimsIdentity(
-                [new System.Security.Claims.Claim(
-                    System.Security.Claims.ClaimTypes.NameIdentifier,
-                    "user-42")],
-                authenticationType: "test"));
-        var request = new RequestTelemetry();
-        accessor.HttpContext.Features.Set(request);
-        initializer.Initialize(request);
+        processor.OnEnd(request);
 
-        var dependency = new DependencyTelemetry();
-        initializer.Initialize(dependency);
-        dependency.Context.User.AuthenticatedUserId.Should().Be("user-42");
+        request.GetTagItem("enduser.id").Should().Be("user-42");
+
+        using var dependency = _createActivity(source, ActivityKind.Client);
+        processor.OnEnd(dependency);
+        dependency.GetTagItem("enduser.id").Should().BeNull();
+    }
+
+    private static ActivityListener _createListener(ActivitySource source)
+    {
+        var listener = new ActivityListener
+        {
+            ShouldListenTo = activitySource => activitySource == source,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData
+        };
+        ActivitySource.AddActivityListener(listener);
+        return listener;
+    }
+
+    private static Activity _createActivity(ActivitySource source, ActivityKind kind, object? statusCode = null)
+    {
+        var activity = source.StartActivity("test", kind)!;
+        if (statusCode is not null)
+            activity.SetTag("http.response.status_code", statusCode);
+
+        return activity;
+    }
+
+    private sealed class FixedUserContext(ClaimsPrincipal principal) : IContextProvider<ClaimsPrincipal>
+    {
+        public ClaimsPrincipal Current { get; } = principal;
     }
 }

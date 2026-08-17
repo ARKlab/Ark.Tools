@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <Description>Core utilities for ApplicationInsights.</Description>
     <PackageTags>Ark;C#;.NET;Framework;ApplicationInsights</PackageTags>
@@ -21,6 +22,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Profiler" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" />
   </ItemGroup>
 

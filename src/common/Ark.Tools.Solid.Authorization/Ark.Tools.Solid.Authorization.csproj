@@ -4,6 +4,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <Description>Integration of Ark.Tools.Authorization with Ark.Tools.Solid.SimpleInjector</Description>
     <PackageTags>Ark;C#;.NET;Authorization</PackageTags>
     <!--Update these information when releasing a new version of the NugetPackage-->
