@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Frozen;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -135,10 +136,11 @@ public readonly struct EvolvableEnum<
     private readonly string? _unknownName;
     private readonly bool _isNameOnly;
 
-    private static readonly Dictionary<TBacking, string> _numberToName;
-    private static readonly Dictionary<string, TBacking> _nameToNumber;
+    private static readonly FrozenDictionary<TBacking, string> _numberToName;
+    private static readonly FrozenDictionary<string, TBacking> _nameToNumber;
     private static readonly string?[]? _numberToNameArray;
-    private static readonly BigInteger _numberToNameArrayMinimum;
+    private static readonly TBacking _numberToNameArrayMinimum;
+    private static readonly TBacking _numberToNameArrayMaximum;
 
     [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "Runtime validation remains required when analyzers are disabled.")]
     [SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline", Justification = "Lookup creation follows generic argument validation.")]
@@ -158,7 +160,7 @@ public readonly struct EvolvableEnum<
 
         var names = Enum.GetNames(enumType);
         var values = (TEnum[])Enum.GetValues(enumType);
-        _numberToName = new Dictionary<TBacking, string>(names.Length);
+        var numberToName = new Dictionary<TBacking, string>(names.Length);
         var numericValues = new TBacking[names.Length];
         var displayNames = new string[names.Length];
         var allNames = new Dictionary<string, TBacking>(StringComparer.Ordinal);
@@ -170,7 +172,7 @@ public readonly struct EvolvableEnum<
             var field = enumType.GetField(names[i])!;
             var annotatedNames = _getAnnotatedNames(field);
             var displayName = annotatedNames.DisplayName;
-            _numberToName.TryAdd(number, displayName);
+            numberToName.TryAdd(number, displayName);
             displayNames[i] = displayName;
             _addName(allNames, names[i], number, enumType);
             foreach (var attributeName in annotatedNames.Names)
@@ -180,7 +182,8 @@ public readonly struct EvolvableEnum<
             }
         }
 
-        _nameToNumber = allNames;
+        _numberToName = numberToName.ToFrozenDictionary();
+        _nameToNumber = allNames.ToFrozenDictionary(StringComparer.Ordinal);
 
         if (!_nameToNumber.TryGetValue("NOT_SET", out var notSet) || notSet != TBacking.Zero)
             throw new InvalidOperationException(
@@ -191,7 +194,8 @@ public readonly struct EvolvableEnum<
         var range = maximum - minimum + BigInteger.One;
         if (range <= 4096 && range * 90 <= numericValues.Length * 100)
         {
-            _numberToNameArrayMinimum = minimum;
+            _numberToNameArrayMinimum = TBacking.CreateChecked(minimum);
+            _numberToNameArrayMaximum = TBacking.CreateChecked(maximum);
             _numberToNameArray = new string?[checked((int)range)];
             for (var i = 0; i < numericValues.Length; i++)
             {
@@ -345,10 +349,11 @@ public readonly struct EvolvableEnum<
     {
         if (_numberToNameArray is not null)
         {
-            var index = BigInteger.CreateChecked(number) - _numberToNameArrayMinimum;
-            return index >= 0 && index < _numberToNameArray.Length
-                ? _numberToNameArray[(int)index]
-                : null;
+            if (number < _numberToNameArrayMinimum || number > _numberToNameArrayMaximum)
+                return null;
+
+            var index = int.CreateChecked(number - _numberToNameArrayMinimum);
+            return _numberToNameArray[index];
         }
 
         return _numberToName.TryGetValue(number, out var name) ? name : null;
