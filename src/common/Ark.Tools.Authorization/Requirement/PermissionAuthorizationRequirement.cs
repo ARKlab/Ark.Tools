@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Concurrent;
-using System.Threading;
 
 namespace Ark.Tools.Authorization.Requirement;
 
@@ -101,7 +100,12 @@ public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHan
         if (context.Resource != null)
             permissionType = ResourceRequirementTypeCache.Get(context.Resource.GetType());
 
-        var requirements = context.Policy.Requirements.Where(t => permissionType.IsAssignableFrom(t.GetType())).Cast<PermissionAuthorizationRequirement<TPermissionEnum>>().ToArray();
+        var requirements = context.Policy.Requirements
+            .Where(t => permissionType == typeof(PermissionAuthorizationRequirement<TPermissionEnum>)
+                ? t.GetType() == permissionType
+                : permissionType.IsAssignableFrom(t.GetType()))
+            .Cast<PermissionAuthorizationRequirement<TPermissionEnum>>()
+            .ToArray();
         if (requirements.Length == 0) return;
 
         var permissions = await _provider.GetPermissions(context).ConfigureAwait(false);

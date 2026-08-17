@@ -24,7 +24,7 @@ public sealed class PermissionAuthorizationTests
         var policy = new AuthorizationPolicyBuilder(nameof(NullResourceMatchesOnlyNonResourceRequirement))
             .AddRequirements(nonResourceRequirement, resourceRequirement)
             .Build();
-        var context = CreateContext(policy, resource: null);
+        var context = _createContext(policy, resource: null);
 
         await handler.HandleAsync(context).ConfigureAwait(false);
 
@@ -44,7 +44,7 @@ public sealed class PermissionAuthorizationTests
         var policy = new AuthorizationPolicyBuilder(nameof(ResourceTypeMatchesOnlyItsRequirement))
             .AddRequirements(resourceARequirement, resourceBRequirement, unrelatedRequirement)
             .Build();
-        var context = CreateContext(policy, new ResourceA());
+        var context = _createContext(policy, new ResourceA());
 
         await handler.HandleAsync(context).ConfigureAwait(false);
 
@@ -60,7 +60,7 @@ public sealed class PermissionAuthorizationTests
         var provider = new TestPermissionsProvider();
         var handler = new PermissionAuthorizationHandler<TestPermission>(provider);
         var requirement = new PermissionAuthorizationRequirement<TestPermission, ResourceA>(TestPermission.Read);
-        var context = CreateContext(
+        var context = _createContext(
             new AuthorizationPolicyBuilder(nameof(MissingPermissionLeavesRequirementPending))
                 .AddRequirements(requirement)
                 .Build(),
@@ -80,7 +80,7 @@ public sealed class PermissionAuthorizationTests
         var provider = new TestPermissionsProvider(TestPermission.Read);
         var handler = new PermissionAuthorizationHandler<TestPermission>(provider);
         var requirement = new DenyAnonymousAuthorizationRequirement();
-        var context = CreateContext(
+        var context = _createContext(
             new AuthorizationPolicyBuilder(nameof(UnrelatedPolicyDoesNotInvokeProvider))
                 .AddRequirements(requirement)
                 .Build(),
@@ -98,7 +98,7 @@ public sealed class PermissionAuthorizationTests
         var provider = new TestPermissionsProvider(TestPermission.Read);
         var handler = new PermissionAuthorizationHandler<TestPermission>(provider);
         var contexts = Enumerable.Range(0, 32)
-            .Select(index => CreateContext(
+            .Select(index => _createContext(
                 new AuthorizationPolicyBuilder($"Concurrent-{index}")
                     .AddRequirements(index % 2 == 0
                         ? new PermissionAuthorizationRequirement<TestPermission, ResourceA>(TestPermission.Read)
@@ -113,7 +113,7 @@ public sealed class PermissionAuthorizationTests
         provider.CallCount.Should().Be(contexts.Length);
     }
 
-    private static AuthorizationContext CreateContext(IAuthorizationPolicy policy, object? resource)
+    private static AuthorizationContext _createContext(IAuthorizationPolicy policy, object? resource)
     {
         return new AuthorizationContext(policy, new ClaimsPrincipal(new ClaimsIdentity()), resource);
     }
