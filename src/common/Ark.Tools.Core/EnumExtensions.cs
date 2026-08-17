@@ -35,7 +35,8 @@ public static class EnumExtensions
     }
 
     /// <summary>
-    /// Converts an enum value to its string representation, checking for DescriptionAttribute and EnumMemberAttribute.
+    /// Converts an enum value to its string representation, preferring EnumMemberAttribute,
+    /// then DescriptionAttribute, then the enum member name.
     /// </summary>
     /// <typeparam name="T">The enum type.</typeparam>
     /// <param name="value">The enum value to convert.</param>
