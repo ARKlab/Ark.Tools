@@ -143,10 +143,10 @@ public sealed class PermissionAuthorizationTests
 
         public int CallCount => _callCount;
 
-        public Task<IEnumerable<TestPermission>> GetPermissions(AuthorizationContext context)
+        public async Task<IEnumerable<TestPermission>> GetPermissions(AuthorizationContext context)
         {
             Interlocked.Increment(ref _callCount);
-            return Task.FromResult<IEnumerable<TestPermission>>(_permissions);
+            return await Task.FromResult<IEnumerable<TestPermission>>(_permissions).ConfigureAwait(false);
         }
     }
 }

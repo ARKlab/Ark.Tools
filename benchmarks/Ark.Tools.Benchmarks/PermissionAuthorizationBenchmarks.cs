@@ -119,9 +119,9 @@ public class PermissionAuthorizationBenchmarks
 
     private sealed class BenchmarkPermissionsProvider : IUserPermissionsProvider<Permission>
     {
-        public Task<IEnumerable<Permission>> GetPermissions(AuthorizationContext context)
+        public async Task<IEnumerable<Permission>> GetPermissions(AuthorizationContext context)
         {
-            return Task.FromResult<IEnumerable<Permission>>([Permission.Read]);
+            return await Task.FromResult<IEnumerable<Permission>>([Permission.Read]).ConfigureAwait(false);
         }
     }
 
