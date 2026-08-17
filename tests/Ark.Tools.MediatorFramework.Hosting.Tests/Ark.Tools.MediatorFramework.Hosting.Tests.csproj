@@ -27,6 +27,7 @@
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MessagePack/Ark.Tools.AspNetCore.MessagePack.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MinimalApi/Ark.Tools.AspNetCore.MinimalApi.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
