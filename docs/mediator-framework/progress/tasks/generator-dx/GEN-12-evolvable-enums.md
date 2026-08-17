@@ -98,6 +98,22 @@ CPU time per operation; allocations are managed bytes per operation.
 | STJ `Enum[]` records | 9,357.916 ns | 6,720 B |
 | STJ `EvolvableEnum[]` records | 11,539.651 ns | 9,920 B |
 
+The separate `EvolvableEnumBackingTypeBenchmarks` comparison measures the
+default wrapper against `EvolvableEnum<TEnum, int>` directly:
+
+| Operation | `EvolvableEnum<TEnum>` | `EvolvableEnum<TEnum, int>` |
+| --- | ---: | ---: |
+| Defined `TryParse` | 4.1441 ns, 0 B | 4.1237 ns, 0 B |
+| Unknown-name `TryParse` | 16.3715 ns, 0 B | 16.0180 ns, 0 B |
+| Defined `ToString` | 0.9912 ns, 0 B | 1.2140 ns, 0 B |
+| Unknown-number `ToString` | 11.3273 ns, 32 B | 11.1807 ns, 32 B |
+
+The default form uses composition because C# structs cannot inherit from
+another struct, and the forwarding wrapper preserves the shorter public API
+while the two-parameter form retains exact backing-type fidelity. On the
+measured .NET 10 hot paths, the JIT eliminates the forwarding cost; targeted
+`AggressiveInlining` attributes are not needed.
+
 ## Acceptance
 
 - [x] Define the opt-in contract/API and its serialization semantics.
