@@ -20,24 +20,31 @@ public class ArkTypeConverterValueBenchmarks
     private const string _input = "42";
 
     /// <summary>Measures conversion with a type-converter lookup on every call.</summary>
-    /// <returns>Whether conversion succeeded.</returns>
+    /// <returns>The converted wrapper.</returns>
     [Benchmark(Baseline = true)]
-    public bool TypeDescriptorLookup()
+    public object? TypeDescriptorLookup()
     {
         var converter = TypeDescriptor.GetConverter(typeof(BenchmarkValue));
         if (!converter.CanConvertFrom(typeof(string)))
-            return false;
+            return null;
 
         var converted = converter.ConvertFrom(null, CultureInfo.InvariantCulture, _input);
-        return converted is BenchmarkValue;
+        return converted is BenchmarkValue typedValue
+            ? new ArkTypeConverterValue<BenchmarkValue>(typedValue)
+            : null;
     }
 
     /// <summary>Measures conversion through the cached generic converter path.</summary>
-    /// <returns>Whether conversion succeeded.</returns>
+    /// <returns>The converted wrapper.</returns>
     [Benchmark]
-    public bool CachedConverter()
+    public object? CachedConverter()
     {
-        return ArkTypeConverterValue<BenchmarkValue>.TryParse(_input, CultureInfo.InvariantCulture, out _);
+        return ArkTypeConverterValue<BenchmarkValue>.TryParse(
+            _input,
+            CultureInfo.InvariantCulture,
+            out var result)
+            ? result
+            : null;
     }
 
     [TypeConverter(typeof(BenchmarkValueConverter))]
