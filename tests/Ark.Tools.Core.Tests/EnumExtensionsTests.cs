@@ -3,12 +3,12 @@
 
 using AwesomeAssertions;
 
-using System.ComponentModel;
 using System.Runtime.Serialization;
 
 namespace Ark.Tools.Core.Tests;
 
 /// <summary>Tests enum string conversion and its cached attribute metadata.</summary>
+[TestClass]
 public class EnumExtensionsTests
 {
     private enum Status
