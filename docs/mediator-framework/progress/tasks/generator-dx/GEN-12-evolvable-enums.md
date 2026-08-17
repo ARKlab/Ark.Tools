@@ -71,32 +71,37 @@ drift. `GrpcEndpointGenerator` maps the exact backing category to
 ## Benchmark results
 
 `benchmarks/Ark.Tools.Benchmarks/EvolvableEnumBenchmarks.cs` compares strict and
-evolvable enum parsing/formatting and serializes arrays of 100 records containing
-the enum field. Run it with:
+evolvable enum parsing/formatting and serializes and deserializes arrays of 100
+records containing the enum field. Run it with:
 
 ```bash
 dotnet run --project benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj \
   --configuration Release -- --filter '*EvolvableEnumBenchmarks*'
 ```
 
-The Release in-process .NET 10 run used BenchmarkDotNet 0.15.8, three warmups,
-and five measured iterations on the repository's AMD EPYC 7763 CI host. Mean is
-CPU time per operation; allocations are managed bytes per operation.
+The Release in-process .NET 10 run used BenchmarkDotNet 0.15.8's adaptive
+measurement algorithm on the repository's AMD EPYC 7763 CI host. BenchmarkDotNet
+recommends leaving warmup and iteration counts automatic: its defaults target at
+least 15 measurement iterations and continue until the configured error
+threshold is met, instead of fixing a small count. Mean is CPU time per
+operation; allocations are managed bytes per operation.
 
 | Operation | Mean | Allocated |
 | --- | ---: | ---: |
-| `Enum.TryParse` (defined) | 17.149 ns | 0 B |
-| `EvolvableEnum.TryParse` (defined) | 4.388 ns | 0 B |
-| `Enum.TryParse` (unknown) | 18.768 ns | 0 B |
-| `EvolvableEnum.TryParse` (unknown) | 16.334 ns | 0 B |
-| `Enum.ToString` (defined) | 10.693 ns | 24 B |
-| `Enum.AsString` (defined) | 244.478 ns | 72 B |
-| `EvolvableEnum.ToString` (defined) | 4.378 ns | 0 B |
-| `Enum.ToString` (undefined) | 19.784 ns | 56 B |
-| `Enum.AsString` (undefined) | 91.707 ns | 168 B |
-| `EvolvableEnum.ToString` (undefined) | 11.248 ns | 32 B |
-| STJ `Enum[]` records | 9,357.916 ns | 6,720 B |
-| STJ `EvolvableEnum[]` records | 11,539.651 ns | 9,920 B |
+| `Enum.TryParse` (defined) | 17.192 ns | 0 B |
+| `EvolvableEnum.TryParse` (defined) | 4.144 ns | 0 B |
+| `Enum.TryParse` (unknown) | 19.046 ns | 0 B |
+| `EvolvableEnum.TryParse` (unknown) | 15.996 ns | 0 B |
+| `Enum.ToString` (defined) | 10.528 ns | 24 B |
+| `Enum.AsString` (defined) | 244.338 ns | 72 B |
+| `EvolvableEnum.ToString` (defined) | 4.376 ns | 0 B |
+| `Enum.ToString` (undefined) | 20.110 ns | 56 B |
+| `Enum.AsString` (undefined) | 92.711 ns | 168 B |
+| `EvolvableEnum.ToString` (undefined) | 11.283 ns | 32 B |
+| STJ serialize `Enum[]` records | 10,085.571 ns | 6,720 B |
+| STJ serialize `EvolvableEnum[]` records | 11,974.237 ns | 9,920 B |
+| STJ deserialize `Enum[]` records | 27,344.262 ns | 15,488 B |
+| STJ deserialize `EvolvableEnum[]` records | 29,402.476 ns | 22,688 B |
 
 The separate `EvolvableEnumBackingTypeBenchmarks` comparison measures the
 default wrapper against `EvolvableEnum<TEnum, int>` directly:

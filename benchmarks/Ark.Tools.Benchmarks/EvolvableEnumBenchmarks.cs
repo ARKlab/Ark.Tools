@@ -147,13 +147,13 @@ public class EvolvableEnumBenchmarks
 
     private sealed record EvolvableRecord(EvolvableEnum<Status> Status, int Index);
 
-    /// <summary>Uses short repeatable runs and reports managed allocations.</summary>
+    /// <summary>Uses BenchmarkDotNet's adaptive measurement runs and reports managed allocations.</summary>
     public sealed class EvolvableEnumBenchmarkConfig : ManualConfig
     {
         /// <summary>Initializes the benchmark job and memory diagnoser.</summary>
         public EvolvableEnumBenchmarkConfig()
         {
-            AddJob(Job.InProcess.WithLaunchCount(1).WithWarmupCount(3).WithIterationCount(5));
+            AddJob(Job.InProcess);
             AddDiagnoser(MemoryDiagnoser.Default);
         }
     }
