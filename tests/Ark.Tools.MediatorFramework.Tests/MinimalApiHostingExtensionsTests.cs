@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.ComponentModel;
+
 using Ark.MediatorFramework;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
@@ -37,6 +39,56 @@ public sealed class MinimalApiHostingExtensionsTests
                 (TestShapeKind.Circle, typeof(TestCircle)));
 
         configured.Should().BeSameAs(options);
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperConvertsSupportedValues()
+    {
+        ArkTypeConverterValue<int>.TryParse("42", null, out var result).Should().BeTrue();
+        result.Value.Should().Be(42);
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperRejectsNullInput()
+    {
+        ArkTypeConverterValue<int>.TryParse(null, null, out _).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperRejectsUnsupportedStringConversion()
+    {
+        ArkTypeConverterValue<UnsupportedValue>.TryParse("42", null, out _).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperPassesExplicitCultureToConverter()
+    {
+        var culture = CultureInfo.GetCultureInfo("fr-FR");
+
+        ArkTypeConverterValue<ProviderValue>.TryParse("value", culture, out var result).Should().BeTrue();
+        result.Value.CultureName.Should().Be(culture.Name);
+
+        ArkTypeConverterValue<ProviderValue>.TryParse("value", null, out result).Should().BeTrue();
+        result.Value.CultureName.Should().Be(CultureInfo.InvariantCulture.Name);
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperRejectsConversionFailures()
+    {
+        ArkTypeConverterValue<FailingValue>.TryParse("bad", null, out _).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperSupportsConcurrentFirstUse()
+    {
+        var results = new bool[32];
+        Parallel.For(0, results.Length, index =>
+        {
+            results[index] = ArkTypeConverterValue<ConcurrentValue>.TryParse(index.ToString(CultureInfo.InvariantCulture), null, out var result)
+                && result.Value.Value == index;
+        });
+
+        results.Should().OnlyContain(value => value);
     }
 
 #if NET10_0_OR_GREATER
@@ -338,5 +390,69 @@ public sealed class MinimalApiHostingExtensionsTests
         public NodaTime.DateTimeZone DateTimeZone { get; init; } = NodaTime.DateTimeZone.Utc;
         public NodaTime.Period Period { get; init; } = NodaTime.Period.Zero;
         public NodaTime.LocalDate? NullableLocalDate { get; init; }
+    }
+
+    [TypeConverter(typeof(UnsupportedValueConverter))]
+    private sealed record UnsupportedValue;
+
+    private sealed class UnsupportedValueConverter : TypeConverter
+    {
+    }
+
+    [TypeConverter(typeof(ProviderValueConverter))]
+    private sealed record ProviderValue(string CultureName);
+
+    private sealed class ProviderValueConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+        {
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object ConvertFrom(
+            ITypeDescriptorContext? context,
+            CultureInfo? culture,
+            object value)
+        {
+            return new ProviderValue((culture ?? CultureInfo.InvariantCulture).Name);
+        }
+    }
+
+    [TypeConverter(typeof(FailingValueConverter))]
+    private sealed record FailingValue;
+
+    private sealed class FailingValueConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+        {
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object ConvertFrom(
+            ITypeDescriptorContext? context,
+            CultureInfo? culture,
+            object value)
+        {
+            throw new FormatException("Invalid value.");
+        }
+    }
+
+    [TypeConverter(typeof(ConcurrentValueConverter))]
+    private sealed record ConcurrentValue(int Value);
+
+    private sealed class ConcurrentValueConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
+        {
+            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+        }
+
+        public override object ConvertFrom(
+            ITypeDescriptorContext? context,
+            CultureInfo? culture,
+            object value)
+        {
+            return new ConcurrentValue(int.Parse((string)value, CultureInfo.InvariantCulture));
+        }
     }
 }

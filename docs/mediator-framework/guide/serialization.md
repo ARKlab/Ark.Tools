@@ -112,7 +112,8 @@ Wrap a contract member in `EvolvableEnum<TEnum>` when the enum may gain members
 after clients have shipped. This form defaults to an `int` backing type. For
 any other enum backing type, specify it explicitly:
 `EvolvableEnum<TEnum, TBacking>`. The analyzer reports a mismatch and a missing
-`NOT_SET = 0` at compile time. `[Flags]` enums are not supported.
+`NOT_SET = 0` at compile time and warns when every backing value is already
+occupied. `[Flags]` enums are not supported.
 
 ```csharp
 public enum GreetingStatus

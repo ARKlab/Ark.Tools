@@ -707,6 +707,11 @@
         "resolved": "3.2.4",
         "contentHash": "I5qFifWw/gaTQT52MhzjZpkm/JPlfjSeO/DTZJjO7+hTKI+0aGRgOgZ3NN6D96dDuuqbIAZSeA5RimtHjqrA2A=="
       },
+      "protobuf-net.Core": {
+        "type": "Transitive",
+        "resolved": "3.3.8",
+        "contentHash": "NDt+dj0dgCiwwu4M22TGrvZBSby0O7rLXn73MDPYVgdg/5pCtwIgs/k8RYJPuj7nhTRIjoEsdo8wE/T3JszH5g=="
+      },
       "Scrutor": {
         "type": "Transitive",
         "resolved": "3.3.0",
@@ -1026,6 +1031,26 @@
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
           "MessagePack.NodaTime": "[3.5.7, )"
+        }
+      },
+      "ark.tools.mediatorframework": {
+        "type": "Project",
+        "dependencies": {
+          "protobuf-net": "[3.3.8, )"
+        }
+      },
+      "ark.tools.mediatorframework.minimalapi": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
+          "MessagePack": "[3.1.8, )",
+          "MessagePack.NodaTime": "[3.5.7, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.11, )",
+          "SimpleInjector": "[5.6.0, )",
+          "SimpleInjector.Integration.AspNetCore.Mvc.Core": "[5.5.0, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -1459,6 +1484,15 @@
           "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
         }
       },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "R/1EATnPLU+gRfB6lwVkMcymmyAY5ppBBdRN/5lhNEiT3xP1sWccuSFkU/f1lQvN/WgRq5Vn8AhCdE3fqgsL/w==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.7.5, 3.0.0)"
+        }
+      },
       "Microsoft.CodeAnalysis.Common": {
         "type": "CentralTransitive",
         "requested": "[4.14.0, )",
@@ -1857,6 +1891,15 @@
         "contentHash": "0qR4f0OR8FeCAfLWcfwzAM7w6EmpUgwa22PgxKjcL25dEAto7sKpQQXbtxp38vVvK+V3RFkh/TeI7g/iUdoYIQ==",
         "dependencies": {
           "Polly.Core": "8.7.0"
+        }
+      },
+      "protobuf-net": {
+        "type": "CentralTransitive",
+        "requested": "[3.3.8, )",
+        "resolved": "3.3.8",
+        "contentHash": "s/yyVaVhKPgon55cBA80p5kE+m6eH4TnbvGbr1f0I6Ad6MqGFSKWfhRF2Rv/z02DrjWzsHSlJ5JNc5WnI9FtjQ==",
+        "dependencies": {
+          "protobuf-net.Core": "3.3.8"
         }
       },
       "Rebus": {

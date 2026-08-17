@@ -802,7 +802,9 @@ reject unrecognized values. `Ark.Tools.Core.EvolvableEnum` is an opt-in
   protobuf-net adapters retain its signedness and width. Runtime checks remain
   for analyzer-disabled builds.
 - The `Ark.Tools.Core` analyzer reports backing mismatches (`ARKCORE001`) and a
-  missing or non-zero `NOT_SET` (`ARKCORE002`) as compile-time errors.
+  missing or non-zero `NOT_SET` (`ARKCORE002`) as compile-time errors. It warns
+  when an enum uses every value available in its backing type (`ARKCORE004`),
+  because that enum cannot evolve.
 - Both forms reject `[Flags]` and require an explicit `NOT_SET = 0`, making an
   omitted non-nullable value a safe defined default.
 - **Unknown values are retained, not rejected.** A JSON string or numeric

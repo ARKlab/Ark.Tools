@@ -3,6 +3,9 @@
 
 using AwesomeAssertions;
 
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -87,12 +90,74 @@ public class EvolvableEnumAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>Verifies supported attribute names cannot collide across enum members.</summary>
+    [TestMethod]
+    public async Task DuplicateAnnotatedNames_ShouldReportError()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace System.ComponentModel.DataAnnotations
+            {
+                public class DisplayAttribute : System.Attribute
+                {
+                    public string Name { get; set; }
+                }
+            }
+            namespace Ark.Tools.Core
+            {
+                public struct EvolvableEnum<T> { }
+            }
+            enum Status
+            {
+                NOT_SET = 0,
+                [System.ComponentModel.DataAnnotations.Display(Name = "same")]
+                Active = 1,
+                [System.ComponentModel.DataAnnotations.Display(Name = "same")]
+                Archived = 2
+            }
+            class Contract
+            {
+                Ark.Tools.Core.EvolvableEnum<Status> Value;
+            }
+            """);
+
+        diagnostics.Select(item => item.Id).Should().Contain("ARKCORE003");
+        diagnostics.Single(item => item.Id == "ARKCORE003").Severity.Should().Be(DiagnosticSeverity.Error);
+    }
+
+    /// <summary>Verifies a full small backing type produces an evolvability warning.</summary>
+    [TestMethod]
+    public async Task FullEnum_ShouldReportWarning()
+    {
+        var members = string.Join(", ", Enumerable.Range(1, 255).Select(item => $"Value{item} = {item}"));
+        var diagnostics = await _analyzeAsync($$"""
+            namespace Ark.Tools.Core
+            {
+                public struct EvolvableEnum<T> { }
+            }
+            enum FullStatus : byte
+            {
+                NOT_SET = 0,
+                {{members}}
+            }
+            class Contract
+            {
+                Ark.Tools.Core.EvolvableEnum<FullStatus> Value;
+            }
+            """);
+
+        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE004");
+        diagnostics.Single(item => item.Id == "ARKCORE004").Severity.Should().Be(DiagnosticSeverity.Warning);
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
             "AnalyzerTests",
             [CSharpSyntaxTree.ParseText(source)],
-            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]);
+            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+             MetadataReference.CreateFromFile(typeof(DisplayAttribute).Assembly.Location),
+             MetadataReference.CreateFromFile(typeof(EnumMemberAttribute).Assembly.Location)]);
 
         return await compilation
             .WithAnalyzers([new EvolvableEnumAnalyzer()])

@@ -52,8 +52,8 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
         if (value is null)
             return false;
 
-        var converter = TypeDescriptor.GetConverter(typeof(T));
-        if (!converter.CanConvertFrom(typeof(string)))
+        var converter = TypeConverterCache.Converter;
+        if (!TypeConverterCache.CanConvertFromString)
             return false;
 
         try
@@ -71,6 +71,19 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
         }
 
         return false;
+    }
+
+    private static class TypeConverterCache
+    {
+        public static readonly TypeConverter Converter = _getConverter();
+        public static readonly bool CanConvertFromString = Converter.CanConvertFrom(typeof(string));
+
+        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Converters are explicitly registered by the host for the closed generated contract types.")]
+        [UnconditionalSuppressMessage("Trimming", "IL2087", Justification = "Converters are explicitly registered by the host for the closed generated contract types.")]
+        private static TypeConverter _getConverter()
+        {
+            return TypeDescriptor.GetConverter(typeof(T));
+        }
     }
 }
 
