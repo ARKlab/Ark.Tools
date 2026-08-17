@@ -38,6 +38,20 @@ public class EvolvableEnumTests
         Positive = 5,
     }
 
+    private enum NegativeStatus : sbyte
+    {
+        NOT_SET = 0,
+        NegativeOne = -1,
+        NegativeTwo = -2,
+    }
+
+    private enum MixedStatus : long
+    {
+        Negative = -1,
+        NOT_SET = 0,
+        Positive = 1,
+    }
+
     private enum ULongStatus : ulong
     {
         NOT_SET = 0,
@@ -292,7 +306,33 @@ public class EvolvableEnumTests
         value.ToNumber().Should().Be((sbyte)-5);
     }
 
-    /// <summary>Verifies that a ulong-backed enum round-trips its maximum value without sign corruption.</summary>
+    /// <summary>Verifies dense lookup for an enum whose non-default values are all negative.</summary>
+    [TestMethod]
+    public void NegativeBackedValues_ShouldResolveFromDenseLookup()
+    {
+        var negative = EvolvableEnum<NegativeStatus, sbyte>.FromNumber(-2);
+        var outside = EvolvableEnum<NegativeStatus, sbyte>.FromNumber(-3);
+
+        negative.Name.Should().Be("NegativeTwo");
+        negative.Value.Should().Be(NegativeStatus.NegativeTwo);
+        outside.Name.Should().BeNull();
+        outside.Value.Should().BeNull();
+    }
+
+    /// <summary>Verifies dense lookup for values spanning negative, zero, and positive numbers.</summary>
+    [TestMethod]
+    public void MixedNegativeAndPositiveValues_ShouldResolveFromDenseLookup()
+    {
+        var negative = EvolvableEnum<MixedStatus, long>.FromNumber(-1);
+        var zero = EvolvableEnum<MixedStatus, long>.FromNumber(0);
+        var positive = EvolvableEnum<MixedStatus, long>.FromNumber(1);
+
+        negative.Name.Should().Be("Negative");
+        zero.Name.Should().Be("NOT_SET");
+        positive.Name.Should().Be("Positive");
+    }
+
+    /// <summary>Verifies that a ulong-backed enum resolves and round-trips its maximum value.</summary>
     [TestMethod]
     public void ULongBackedEnum_ShouldRoundtripMaxValueWithoutSignCorruption()
     {
@@ -307,9 +347,10 @@ public class EvolvableEnumTests
         var fromNumber = EvolvableEnum<ULongStatus, ulong>.FromNumber(ulong.MaxValue);
         fromNumber.Should().Be(value);
         fromNumber.Value.Should().Be(ULongStatus.Huge);
+        fromNumber.Name.Should().Be("Huge");
     }
 
-    /// <summary>Verifies that a long-backed enum round-trips both extremes of the 64-bit signed range.</summary>
+    /// <summary>Verifies that a long-backed enum resolves and round-trips both 64-bit signed extremes.</summary>
     [TestMethod]
     public void LongBackedEnum_ShouldRoundtripMinAndMaxValue()
     {
@@ -322,6 +363,8 @@ public class EvolvableEnumTests
         max.ToNumber().Should().Be(long.MaxValue);
         min.Value.Should().Be(LongStatus.Min);
         max.Value.Should().Be(LongStatus.Max);
+        min.Name.Should().Be("Min");
+        max.Name.Should().Be("Max");
     }
 
     /// <summary>Verifies that FromNumber(ulong) applied to a signed enum does not corrupt values that fit signed range.</summary>
