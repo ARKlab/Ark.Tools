@@ -3,6 +3,7 @@
 
 using Ark.Tools.Core;
 
+using System.Collections.Frozen;
 using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
@@ -63,10 +64,12 @@ internal static class EvolvableEnumJsonConverter
         where TEnum : struct, Enum
     {
         private readonly EvolvableEnumWireFormat _format;
+        private readonly FrozenDictionary<string, JsonEncodedText> _encodedNames;
 
         public DefaultConverter(EvolvableEnumWireFormat format)
         {
             _format = format;
+            _encodedNames = _createEncodedNames<TEnum, int>();
         }
 
         public override EvolvableEnum<TEnum> Read(
@@ -90,7 +93,7 @@ internal static class EvolvableEnumJsonConverter
                 return;
             }
 
-            _writeName(writer, value.Name, value);
+            _writeName(writer, value.Name, value, _encodedNames);
         }
     }
 
@@ -102,10 +105,12 @@ internal static class EvolvableEnumJsonConverter
         where TBacking : struct, IBinaryInteger<TBacking>
     {
         private readonly EvolvableEnumWireFormat _format;
+        private readonly FrozenDictionary<string, JsonEncodedText> _encodedNames;
 
         public Converter(EvolvableEnumWireFormat format)
         {
             _format = format;
+            _encodedNames = _createEncodedNames<TEnum, TBacking>();
         }
 
         public override EvolvableEnum<TEnum, TBacking> Read(
@@ -129,18 +134,45 @@ internal static class EvolvableEnumJsonConverter
                 return;
             }
 
-            _writeName(writer, value.Name, value);
+            _writeName(writer, value.Name, value, _encodedNames);
         }
     }
 
     private static JsonException _unexpectedToken<TEnum>(JsonTokenType token)
         => new($"Cannot deserialize EvolvableEnum<{typeof(TEnum).Name}> from {token}.");
 
-    private static void _writeName(Utf8JsonWriter writer, string? name, object value)
+    private static FrozenDictionary<string, JsonEncodedText> _createEncodedNames<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+        TBacking>()
+        where TEnum : struct, Enum
+        where TBacking : struct, IBinaryInteger<TBacking>
+    {
+        var names = new Dictionary<string, JsonEncodedText>(StringComparer.Ordinal);
+        foreach (var enumValue in Enum.GetValues<TEnum>())
+        {
+            var name = EvolvableEnum<TEnum, TBacking>.FromValue(enumValue).Name;
+            if (name is not null)
+                names.TryAdd(name, JsonEncodedText.Encode(name));
+        }
+
+        return names.ToFrozenDictionary(StringComparer.Ordinal);
+    }
+
+    private static void _writeName(
+        Utf8JsonWriter writer,
+        string? name,
+        object value,
+        FrozenDictionary<string, JsonEncodedText> encodedNames)
     {
         if (name is null)
             throw new EvolvableEnumConversionException(
                 $"Cannot serialize '{value}' as a JSON string because it has no symbolic name.");
+
+        if (encodedNames.TryGetValue(name, out var encodedName))
+        {
+            writer.WriteStringValue(encodedName);
+            return;
+        }
 
         writer.WriteStringValue(name);
     }
