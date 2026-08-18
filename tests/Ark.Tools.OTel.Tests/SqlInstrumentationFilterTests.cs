@@ -185,7 +185,7 @@ public sealed class SqlClientSpanProcessorTests
     public void Extract_SanitizesQueryLabel()
     {
         var label = ArkSqlQueryLabel.Extract(
-            "-- otel-query-label:  my \tquery name \u0001 ");
+            "SELECT 1 -- otel-query-label:  my \tquery name \u0001 ");
 
         label.Should().Be("my query name");
     }

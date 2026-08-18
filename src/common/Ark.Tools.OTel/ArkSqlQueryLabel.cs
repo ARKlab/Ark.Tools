@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Diagnostics;
-using System.Text;
 
 namespace Ark.Tools.OTel;
 
@@ -37,10 +36,11 @@ public static class ArkSqlQueryLabel
             if (lineEnd < 0)
                 lineEnd = queryText.Length;
 
-            var line = queryText.AsSpan(lineStart, lineEnd - lineStart).TrimStart();
-            if (line.StartsWith(_commentMarker, StringComparison.Ordinal))
+            var line = queryText.AsSpan(lineStart, lineEnd - lineStart);
+            var commentStart = _findCommentStart(line);
+            if (commentStart >= 0)
             {
-                var value = line[_commentMarker.Length..].TrimStart();
+                var value = line[(commentStart + _commentMarker.Length)..].TrimStart();
                 if (value.StartsWith(_labelPrefix, StringComparison.OrdinalIgnoreCase))
                     return _sanitize(value[_labelPrefix.Length..]);
             }
@@ -51,6 +51,35 @@ public static class ArkSqlQueryLabel
         }
 
         return null;
+    }
+
+    private static int _findCommentStart(ReadOnlySpan<char> line)
+    {
+        var inStringLiteral = false;
+        for (var index = 0; index < line.Length; index++)
+        {
+            if (line[index] == '\'')
+            {
+                if (inStringLiteral && index + 1 < line.Length && line[index + 1] == '\'')
+                {
+                    index++;
+                    continue;
+                }
+
+                inStringLiteral = !inStringLiteral;
+                continue;
+            }
+
+            if (!inStringLiteral
+                && line[index] == '-'
+                && index + 1 < line.Length
+                && line[index + 1] == '-')
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     /// <summary>
@@ -93,6 +122,7 @@ public static class ArkSqlQueryLabel
                 break;
         }
 
-        return builder.ToString().Trim();
+        var sanitized = builder.ToString().Trim();
+        return sanitized.Length == 0 ? null : sanitized;
     }
 }
