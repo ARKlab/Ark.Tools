@@ -539,6 +539,12 @@
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
         }
       },
+      "ark.tools.outbox": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )"
+        }
+      },
       "ark.tools.rebus": {
         "type": "Project",
         "dependencies": {
@@ -1532,6 +1538,12 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
+        }
+      },
+      "ark.tools.outbox": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "ark.tools.rebus": {
