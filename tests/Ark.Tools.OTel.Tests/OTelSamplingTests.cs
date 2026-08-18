@@ -52,6 +52,15 @@ internal sealed class TestPipeline : IDisposable
         string sourceName,
         Sampler sampler,
         params BaseProcessor<Activity>[] processors)
+        : this(sourceName, sampler, processors, null)
+    {
+    }
+
+    public TestPipeline(
+        string sourceName,
+        Sampler sampler,
+        BaseProcessor<Activity>[] processors,
+        Action<TracerProviderBuilder>? configureBuilder = null)
     {
         _source = new ActivitySource(sourceName);
         _collector = new CollectingProcessor();
@@ -63,6 +72,7 @@ internal sealed class TestPipeline : IDisposable
         foreach (var p in processors)
             builder = builder.AddProcessor(p);
 
+        configureBuilder?.Invoke(builder);
         builder = builder.AddProcessor(_collector);
 
         _provider = builder.Build()!;
