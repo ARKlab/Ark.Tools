@@ -261,3 +261,55 @@ HTTP Request / Message / SQL / etc.
           ▼
   [Azure Monitor Exporter → Application Insights]
 ```
+
+## Local sample diagnostics
+
+The samples use the optional `ARK_OTEL_FILE_DIRECTORY` collector to inspect
+telemetry without sending it to Azure Monitor. The collector is exporter-free:
+it starts only when the variable is non-empty, listens to every process-local
+`ActivitySource` and `Meter`, and appends JSON Lines to:
+
+- `otel-spans.jsonl` — completed activities with source, operation, kind,
+  trace/span/parent IDs, status, duration, tags, and events.
+- `otel-metrics.jsonl` — `long` and `double` measurements with meter,
+  instrument, unit, value, and tags.
+
+Azure Monitor remains isolated because `AddArkAzureMonitorOpenTelemetry` calls
+`UseAzureMonitor` only when `ApplicationInsights:ConnectionString` or
+`APPLICATIONINSIGHTS_CONNECTION_STRING` is non-empty. Keep those values unset
+for local diagnostics and tests. Empty Application Insights settings in the
+sample integration-test configuration are safe.
+
+### Signal inventory
+
+| Sample | Custom source/meter | Custom spans | Custom metrics |
+|---|---|---|---|
+| Ark.ReferenceProject | `ark.reference.core.application` | `ark.reference.book_print_process` (`Consumer`), process ID and final status tags | `ark.reference.book_print_process.completed` counter; `ark.reference.book_print_process.progress` ratio histogram tagged by status |
+| Ark.ResourceWatcher | `ark.resourcewatcher.sample` | `ark.resourcewatcher.sample.process` (`Internal`), resource ID and record count tags | `ark.resourcewatcher.sample.records_processed` counter; `ark.resourcewatcher.sample.processing_duration` millisecond histogram |
+| Ark.MediatorFramework | `ark.mediator.sample.application` | `ark.mediator.sample.book_print_process` (`Consumer`), process ID and final status tags | `ark.mediator.sample.book_print_process.completed` counter; `ark.mediator.sample.book_print_process.progress` ratio histogram tagged by status |
+
+All three samples also collect Ark framework signals. Rebus uses source/meter
+`ark.tools.rebus`; the reference feature specifically asserts
+`ark.tools.rebus.message_processing_time` with `operation.result=success`.
+ResourceWatcher uses `ark.tools.resourcewatcher` for framework lifecycle
+signals. ASP.NET Core samples additionally collect HTTP and SQL client spans
+when those instrumentations are used.
+
+### Reference background-processing evidence
+
+Run the single successful Rebus background scenario from
+`samples/Ark.ReferenceProject`:
+
+```bash
+rm -rf /tmp/ark-reference-otel
+ARK_OTEL_FILE_DIRECTORY=/tmp/ark-reference-otel \
+ASPNETCORE_ENVIRONMENT=IntegrationTests \
+dotnet test Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj \
+  --filter "DisplayName~Print process completes successfully in background"
+```
+
+The feature waits for the bus and outbox to be idle before asserting the custom
+span, completion counter, and successful Rebus processing measurement. A
+sanitized committed run is in `docs/otel/reference-background-processing/`:
+`otel-spans.jsonl` and `otel-metrics.jsonl`. These files are intentionally
+JSONL so they can be searched with `jq`, `grep`, or imported into a notebook.

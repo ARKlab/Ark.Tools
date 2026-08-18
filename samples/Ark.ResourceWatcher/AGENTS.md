@@ -412,4 +412,33 @@ refactor(Transform): simplify CSV parsing logic
 - Don't capitalize first letter
 - No period at end
 - Keep description under 50 characters
+
+## OpenTelemetry diagnostics
+
+The worker host calls `AddArkOpenTelemetryForWorkerHost`, which registers the
+ResourceWatcher sources and the optional exporter-free file collector. Azure
+Monitor is not configured by this sample. A local run therefore cannot pollute
+Azure Monitor unless an application adds an exporter and credentials explicitly.
+
+Set `ARK_OTEL_FILE_DIRECTORY` before starting the sample:
+
+```bash
+rm -rf /tmp/ark-resourcewatcher-otel
+ARK_OTEL_FILE_DIRECTORY=/tmp/ark-resourcewatcher-otel \
+dotnet run --project Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj
+```
+
+The collector writes `otel-spans.jsonl` and `otel-metrics.jsonl`. It captures all
+process-local activities and `long`/`double` measurements, not only
+ResourceWatcher signals. Each record contains JSON fields for source or meter,
+operation or instrument, IDs/status or value/unit, tags, and timestamps.
+
+Built-in ResourceWatcher signals use source and meter `ark.tools.resourcewatcher`
+and include provider/processor lifecycle spans. The sample also registers
+`ark.resourcewatcher.sample`: `ark.resourcewatcher.sample.process` is a custom
+processing span tagged with `resource.id` and `records.count`;
+`ark.resourcewatcher.sample.records_processed` counts transformed records; and
+`ark.resourcewatcher.sample.processing_duration` records milliseconds. These
+signals make the transform and sink call visible without changing the worker
+contract. Inspect the JSONL files while the worker is running or after shutdown.
 - Use body to explain "why" vs "what" (when necessary)

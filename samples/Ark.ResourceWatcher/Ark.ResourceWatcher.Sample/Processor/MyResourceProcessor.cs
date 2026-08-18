@@ -35,7 +35,7 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
     /// <inheritdoc/>
     public async Task Process(MyResource file, CancellationToken ctk = default)
     {
-        using var activity = ResourceWatcherSampleTelemetry.ActivitySource.StartActivity(
+        using var activity = ResourceWatcherSampleTelemetry._activitySource.StartActivity(
             "ark.resourcewatcher.sample.process",
             ActivityKind.Internal);
         activity?.SetTag("resource.id", file.Metadata.ResourceId);
@@ -57,8 +57,8 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
             .PostJsonAsync(sinkData, cancellationToken: ctk)
             .ConfigureAwait(false);
 
-        ResourceWatcherSampleTelemetry.ProcessedRecords.Add(sinkData.Records.Count);
-        ResourceWatcherSampleTelemetry.ProcessingDuration.Record(stopwatch.Elapsed.TotalMilliseconds);
+        ResourceWatcherSampleTelemetry._processedRecords.Add(sinkData.Records.Count);
+        ResourceWatcherSampleTelemetry._processingDuration.Record(stopwatch.Elapsed.TotalMilliseconds);
         activity?.SetTag("records.count", sinkData.Records.Count);
         activity?.SetStatus(ActivityStatusCode.Ok);
         _logger.Info(System.Globalization.CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",

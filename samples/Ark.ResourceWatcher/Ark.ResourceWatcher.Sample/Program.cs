@@ -24,8 +24,8 @@ sealed class Program
             .AddWorkerHostInfrastracture()
             .AddArkOpenTelemetryForWorkerHost()
             .ConfigureServices(services => services.AddOpenTelemetry()
-                .WithTracing(tracing => tracing.AddSource(ResourceWatcherSampleTelemetry.ActivitySourceName))
-                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherSampleTelemetry.MeterName)))
+                .WithTracing(tracing => tracing.AddSource(ResourceWatcherSampleTelemetry._activitySourceName))
+                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherSampleTelemetry._meterName)))
             .ConfigureNLog("BlobWorkerSample")
             .AddWorkerHost(sp =>
             {

@@ -10,7 +10,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     var network = new InMemNetwork();
-    var container = SampleComposition.BuildContainer(network);
+    using var container = SampleComposition.BuildContainer(network);
     var startup = SampleHost.Configure(builder, container, network);
 
     var app = builder.Build();

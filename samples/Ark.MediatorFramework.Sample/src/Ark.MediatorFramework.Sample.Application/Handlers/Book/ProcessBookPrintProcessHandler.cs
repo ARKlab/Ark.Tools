@@ -39,7 +39,7 @@ public sealed class ProcessBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        using var activity = SampleTelemetry.ActivitySource.StartActivity(
+        using var activity = SampleTelemetry._activitySource.StartActivity(
             "ark.mediator.sample.book_print_process",
             ActivityKind.Consumer);
         activity?.SetTag("book_print_process.id", request.Id);

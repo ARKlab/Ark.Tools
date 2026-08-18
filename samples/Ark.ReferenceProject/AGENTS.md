@@ -416,3 +416,42 @@ Host.CreateDefaultBuilder(args)
 - NuGet Audit enabled (mode: all, level: low)
 - Deterministic builds enabled
 - Code coverage reporting enabled
+
+## OpenTelemetry diagnostics
+
+`AddArkAzureMonitorOpenTelemetry` exports to Azure Monitor only when
+`ApplicationInsights:ConnectionString`, `APPLICATIONINSIGHTS_CONNECTION_STRING`,
+or the environment variable is non-empty. Integration-test settings intentionally
+leave that value empty, so local test runs do not send telemetry to Azure Monitor.
+Do not set the connection-string environment variable when running diagnostics.
+
+Set `ARK_OTEL_FILE_DIRECTORY` to enable the exporter-free process-local collector:
+
+```bash
+rm -rf /tmp/ark-reference-otel
+ARK_OTEL_FILE_DIRECTORY=/tmp/ark-reference-otel \
+ASPNETCORE_ENVIRONMENT=IntegrationTests \
+dotnet test Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj \
+  --filter "DisplayName~Print process completes successfully in background"
+```
+
+The collector writes append-only JSON Lines files:
+
+- `otel-spans.jsonl`: every started `Activity`, including source, operation,
+  kind, trace/span/parent IDs, status, tags, events, and duration.
+- `otel-metrics.jsonl`: every published `long` or `double` measurement, including
+  meter, instrument, unit, value, and tags.
+
+The collector listens globally only when the variable is set; it does not add an
+Azure exporter. The reference application registers `ark.reference.core.application`
+for custom application signals. The background print-process handler emits
+`ark.reference.book_print_process` with `book_print_process.id` and final status,
+`ark.reference.book_print_process.completed` (counter), and
+`ark.reference.book_print_process.progress` (ratio histogram). Rebus contributes
+the `ark.tools.rebus` spans and `ark.tools.rebus.message_processing_time`
+measurements. The feature scenario asserts the custom span, completion counter,
+and successful Rebus processing measurement after waiting for both the bus and
+outbox to become idle.
+
+Use `jq` or any JSON Lines viewer to inspect the files. The committed example
+under `docs/otel/` is evidence from the successful background-processing test.

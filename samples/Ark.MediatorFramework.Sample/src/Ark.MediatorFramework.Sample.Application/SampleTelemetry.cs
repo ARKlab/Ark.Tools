@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.API;
-
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
@@ -23,12 +21,12 @@ public static class SampleTelemetry
     /// </summary>
     public const string MeterName = ActivitySourceName;
 
-    internal static readonly ActivitySource ActivitySource = new(ActivitySourceName);
-    internal static readonly Meter Meter = new(MeterName);
-    internal static readonly Counter<long> CompletedProcesses =
-        Meter.CreateCounter<long>("ark.mediator.sample.book_print_process.completed");
-    internal static readonly Histogram<double> Progress =
-        Meter.CreateHistogram<double>("ark.mediator.sample.book_print_process.progress", unit: "ratio");
+    internal static readonly ActivitySource _activitySource = new(ActivitySourceName);
+    internal static readonly Meter _meter = new(MeterName);
+    internal static readonly Counter<long> _completedProcesses =
+        _meter.CreateCounter<long>("ark.mediator.sample.book_print_process.completed");
+    internal static readonly Histogram<double> _progress =
+        _meter.CreateHistogram<double>("ark.mediator.sample.book_print_process.progress", unit: "ratio");
 
     /// <summary>
     /// Records the final state of a book print process.
@@ -39,8 +37,8 @@ public static class SampleTelemetry
         ArgumentNullException.ThrowIfNull(process);
 
         var status = process.Status.ToString();
-        Progress.Record(process.Progress, new KeyValuePair<string, object?>("process.status", status));
+        _progress.Record(process.Progress, new KeyValuePair<string, object?>("process.status", status));
         if (status.Equals("Completed", StringComparison.Ordinal))
-            CompletedProcesses.Add(1);
+            _completedProcesses.Add(1);
     }
 }

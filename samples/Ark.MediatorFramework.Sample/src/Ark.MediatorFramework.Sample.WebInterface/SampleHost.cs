@@ -1,14 +1,12 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
-
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
