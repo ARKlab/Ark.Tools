@@ -416,22 +416,9 @@ refactor(Transform): simplify CSV parsing logic
 ## OpenTelemetry diagnostics
 
 The worker host calls `AddArkOpenTelemetryForWorkerHost`, which registers the
-ResourceWatcher sources and the optional exporter-free file collector. Azure
-Monitor is not configured by this sample. A local run therefore cannot pollute
-Azure Monitor unless an application adds an exporter and credentials explicitly.
-
-Set `ARK_OTEL_FILE_DIRECTORY` before starting the sample:
-
-```bash
-rm -rf /tmp/ark-resourcewatcher-otel
-ARK_OTEL_FILE_DIRECTORY=/tmp/ark-resourcewatcher-otel \
-dotnet run --project Ark.ResourceWatcher.Sample/Ark.ResourceWatcher.Sample.csproj
-```
-
-The collector writes `otel-spans.jsonl` and `otel-metrics.jsonl`. It captures all
-process-local activities and `long`/`double` measurements, not only
-ResourceWatcher signals. Each record contains JSON fields for source or meter,
-operation or instrument, IDs/status or value/unit, tags, and timestamps.
+ResourceWatcher sources and meters. Azure Monitor is not configured by this
+sample. A local run therefore cannot pollute Azure Monitor unless an application
+adds an exporter and credentials explicitly.
 
 Built-in ResourceWatcher signals use source and meter `ark.tools.resourcewatcher`
 and include provider/processor lifecycle spans. The sample also registers

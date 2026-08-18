@@ -264,10 +264,11 @@ HTTP Request / Message / SQL / etc.
 
 ## Local sample diagnostics
 
-The samples use the optional `ARK_OTEL_FILE_DIRECTORY` collector to inspect
-telemetry without sending it to Azure Monitor. The collector is exporter-free:
-it starts only when the variable is non-empty, listens to every process-local
-`ActivitySource` and `Meter`, and appends JSON Lines to:
+The reference integration tests use the optional `ARK_OTEL_FILE_DIRECTORY`
+collector to inspect telemetry without sending it to Azure Monitor. The
+collector is exporter-free: it starts only when the variable is non-empty,
+listens to every process-local `ActivitySource` and `Meter`, and appends JSON
+Lines to:
 
 - `otel-spans.jsonl` — completed activities with source, operation, kind,
   trace/span/parent IDs, status, duration, tags, and events.
@@ -284,9 +285,9 @@ sample integration-test configuration are safe.
 
 | Sample | Custom source/meter | Custom spans | Custom metrics |
 |---|---|---|---|
-| Ark.ReferenceProject | `ark.reference.core.application` | `ark.reference.book_print_process` (`Consumer`), process ID and final status tags | `ark.reference.book_print_process.completed` counter; `ark.reference.book_print_process.progress` ratio histogram tagged by status |
+| Ark.ReferenceProject | `ark.reference.core.application` | `ark.reference.book_print_process` (`Consumer`), process ID and final status tags | — |
 | Ark.ResourceWatcher | `ark.resourcewatcher.sample` | `ark.resourcewatcher.sample.process` (`Internal`), resource ID and record count tags | `ark.resourcewatcher.sample.records_processed` counter; `ark.resourcewatcher.sample.processing_duration` millisecond histogram |
-| Ark.MediatorFramework | `ark.mediator.sample.application` | `ark.mediator.sample.book_print_process` (`Consumer`), process ID and final status tags | `ark.mediator.sample.book_print_process.completed` counter; `ark.mediator.sample.book_print_process.progress` ratio histogram tagged by status |
+| Ark.MediatorFramework | `ark.mediator.sample.application` | `ark.mediator.sample.book_print_process` (`Consumer`), process ID and final status tags | — |
 
 All three samples also collect Ark framework signals. Rebus uses source/meter
 `ark.tools.rebus`; the reference feature specifically asserts
@@ -309,7 +310,7 @@ dotnet test Core/Ark.Reference.Core.Tests/Ark.Reference.Core.Tests.csproj \
 ```
 
 The feature waits for the bus and outbox to be idle before asserting the custom
-span, completion counter, and successful Rebus processing measurement. A
+span and successful Rebus processing measurement. A
 sanitized committed run is in `docs/otel/reference-background-processing/`:
 `otel-spans.jsonl` and `otel-metrics.jsonl`. These files are intentionally
 JSONL so they can be searched with `jq`, `grep`, or imported into a notebook.

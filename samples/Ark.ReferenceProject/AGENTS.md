@@ -445,11 +445,10 @@ The collector writes append-only JSON Lines files:
 The collector listens globally only when the variable is set; it does not add an
 Azure exporter. The reference application registers `ark.reference.core.application`
 for custom application signals. The background print-process handler emits
-`ark.reference.book_print_process` with `book_print_process.id` and final status,
-`ark.reference.book_print_process.completed` (counter), and
-`ark.reference.book_print_process.progress` (ratio histogram). Rebus contributes
+`ark.reference.book_print_process` with `book_print_process.id` and final status.
+Rebus contributes
 the `ark.tools.rebus` spans and `ark.tools.rebus.message_processing_time`
-measurements. The feature scenario asserts the custom span, completion counter,
+measurements. The feature scenario asserts the custom span,
 and successful Rebus processing measurement after waiting for both the bus and
 outbox to become idle.
 

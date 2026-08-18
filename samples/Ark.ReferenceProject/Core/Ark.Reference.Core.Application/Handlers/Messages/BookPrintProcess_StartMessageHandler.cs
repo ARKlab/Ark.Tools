@@ -90,7 +90,6 @@ public class BookPrintProcess_StartMessageHandler
             process = currentProcess;
         }
 
-        ReferenceTelemetry.RecordProcess(process);
         activity?.SetTag("book_print_process.status", process.Status.ToString());
         activity?.SetStatus(ActivityStatusCode.Ok);
     }

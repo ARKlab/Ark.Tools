@@ -1,10 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Reference.Core.Common.Dto;
-
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
 
 namespace Ark.Reference.Core.Application;
 
@@ -19,36 +16,7 @@ public static class ReferenceTelemetry
     public const string ActivitySourceName = "ark.reference.core.application";
 
     /// <summary>
-    /// The meter name for application-level measurements.
-    /// </summary>
-    public const string MeterName = ActivitySourceName;
-
-    /// <summary>
     /// Gets the activity source for reference application operations.
     /// </summary>
     public static ActivitySource ActivitySource { get; } = new(ActivitySourceName);
-
-    /// <summary>
-    /// Gets the meter for reference application measurements.
-    /// </summary>
-    public static Meter Meter { get; } = new(MeterName);
-
-    private static readonly Counter<long> _completedProcesses =
-        Meter.CreateCounter<long>("ark.reference.book_print_process.completed");
-    private static readonly Histogram<double> _progress =
-        Meter.CreateHistogram<double>("ark.reference.book_print_process.progress", unit: "ratio");
-
-    /// <summary>
-    /// Records the final state of a book print process.
-    /// </summary>
-    /// <param name="process">The process state to record.</param>
-    public static void RecordProcess(BookPrintProcess.V1.Output process)
-    {
-        ArgumentNullException.ThrowIfNull(process);
-
-        var status = process.Status.ToString();
-        _progress.Record(process.Progress, new KeyValuePair<string, object?>("process.status", status));
-        if (status.Equals("Completed", StringComparison.Ordinal))
-            _completedProcesses.Add(1);
-    }
 }

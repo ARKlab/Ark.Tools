@@ -132,10 +132,6 @@ public sealed class BookPrintProcessSteps
         applicationSpan.Tags["book_print_process.status"].Should().Be("Completed");
 
         TestHost._telemetry._getMetrics()
-            .Where(metric => metric.Name == "ark.reference.book_print_process.completed")
-            .Sum(metric => metric.Value)
-            .Should().Be(1);
-        TestHost._telemetry._getMetrics()
             .Should().Contain(metric =>
                 metric.MeterName == Ark.Tools.Rebus.OpenTelemetryProcessingMetricsStep.MeterName
                 && metric.Name == "ark.tools.rebus.message_processing_time"

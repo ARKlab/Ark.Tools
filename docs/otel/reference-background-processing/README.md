@@ -16,7 +16,7 @@ outbox to become idle, then asserted the application span and metrics.
 ## Files
 
 - `otel-spans.jsonl`: 119 completed spans.
-- `otel-metrics.jsonl`: 56 measurements.
+- `otel-metrics.jsonl`: 51 measurements.
 
 The collector deliberately captured every process-local signal. The majority
 of spans are SQL client operations (100), with additional ASP.NET Core,
@@ -28,9 +28,6 @@ The application-specific records demonstrate the expected result:
 - `ark.reference.book_print_process` is a `Consumer` span with
   `book_print_process.id=1`, `book_print_process.status=Completed`, and
   `status=Ok`.
-- `ark.reference.book_print_process.progress` records `1` with
-  `process.status=Completed`.
-- `ark.reference.book_print_process.completed` records `1`.
 - `ark.tools.rebus.message_processing_time` records the message duration with
   `operation.result=success`.
 

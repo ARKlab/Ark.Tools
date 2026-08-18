@@ -83,7 +83,6 @@ public sealed class ProcessBookPrintProcessHandler :
         process = await _persistAsync(process, ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
-        SampleTelemetry.RecordProcess(process);
         activity?.SetTag("book_print_process.status", process.Status.ToString());
         activity?.SetStatus(ActivityStatusCode.Ok);
         return process;

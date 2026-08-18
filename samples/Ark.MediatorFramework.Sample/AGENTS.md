@@ -51,19 +51,19 @@ Conventional Commits, and `async`/`await` in asynchronous methods.
 
 ## OpenTelemetry diagnostics
 
-`SampleHost` registers the custom application source and meter in addition to
+`SampleHost` registers the custom application source in addition to
 the Ark ASP.NET Core/Rebus instrumentation. Azure Monitor is conditional: the
 shared setup calls `UseAzureMonitor` only when an Application Insights
 connection string is configured. Leave that setting empty for local runs.
 
 Set `ARK_OTEL_FILE_DIRECTORY` to capture all process-local spans and numeric
-measurements without configuring an exporter:
+measurements during integration tests without configuring an exporter:
 
 ```bash
 rm -rf /tmp/ark-mediator-otel
 ARK_OTEL_FILE_DIRECTORY=/tmp/ark-mediator-otel \
 ARK_SAMPLE_INMEMORY_TESTS=1 \
-dotnet run --project src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj
+dotnet test test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj
 ```
 
 The collector appends JSON Lines to `otel-spans.jsonl` and
@@ -73,9 +73,6 @@ value, and tags. It is intentionally process-local and exporter-free.
 
 The sample application source is `ark.mediator.sample.application`.
 `ark.mediator.sample.book_print_process` is a custom Consumer span tagged with
-the process ID and final status. `ark.mediator.sample.book_print_process.completed`
-counts completed processes and
-`ark.mediator.sample.book_print_process.progress` records the progress ratio
-with `process.status`. Rebus and HTTP/SQL instrumentation remain available
-alongside these custom signals, so the JSONL output can be used to diagnose
-handler execution and persistence boundaries.
+the process ID and final status. Rebus and HTTP/SQL instrumentation remain available alongside this custom
+signal, so the JSONL output can be used to diagnose handler execution and
+persistence boundaries.
