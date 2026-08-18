@@ -10,6 +10,7 @@ Ark.Tools uses **OpenTelemetry** (via Application Insights v3.x) for distributed
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [Configuration Reference](#configuration-reference)
+- [Instrumentation Reference](instrumentation-reference.md)
 - [Sampling Strategy](#sampling-strategy) → see [sampling.md](sampling.md)
 - [Migration from Application Insights v2.x](#migration) → see [applicationinsights-migration/](applicationinsights-migration/)
 - [Upgrade guide](upgrade-guide.md)
