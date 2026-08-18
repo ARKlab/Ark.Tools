@@ -10,7 +10,8 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     var network = new InMemNetwork();
-    using var container = SampleComposition.BuildContainer(network);
+    var container = SampleComposition.BuildContainer(network);
+    await using var __ctx = container.ConfigureAwait(false);
     var startup = SampleHost.Configure(builder, container, network);
 
     var app = builder.Build();
