@@ -132,25 +132,25 @@ public sealed record MessagingNetworkOptions
     private void _validateSettings()
     {
         if (Serializers.Count == 0 || !Serializers.Contains(DefaultSerializer))
-            throw new ArgumentException("The default serializer must be one of the accepted serializers.", nameof(Serializers));
+            throw new ArgumentException("The default serializer must be one of the accepted serializers.", "serializers");
         if (CompressionMinimumSizeBytes < 0)
-            throw new ArgumentOutOfRangeException(nameof(CompressionMinimumSizeBytes));
+            throw new ArgumentOutOfRangeException("compressionMinimumSizeBytes");
         if (MaximumTransportPayloadBytes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(MaximumTransportPayloadBytes));
+            throw new ArgumentOutOfRangeException("maximumTransportPayloadBytes");
         if (MaximumDecompressedPayloadBytes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(MaximumDecompressedPayloadBytes));
+            throw new ArgumentOutOfRangeException("maximumDecompressedPayloadBytes");
         if (DataBusOffloadThresholdBytes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(DataBusOffloadThresholdBytes));
+            throw new ArgumentOutOfRangeException("dataBusOffloadThresholdBytes");
         if (MaximumDataBusAttachmentBytes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(MaximumDataBusAttachmentBytes));
+            throw new ArgumentOutOfRangeException("maximumDataBusAttachmentBytes");
         if (LockRenewalBuffer < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(LockRenewalBuffer));
+            throw new ArgumentOutOfRangeException("lockRenewalBuffer");
         if (MaximumSchedulingDelay < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(MaximumSchedulingDelay));
+            throw new ArgumentOutOfRangeException("maximumSchedulingDelay");
         if (RetryPolicy.MaximumDeliveryCount < 1
             || (RetryPolicy.SecondLevelRetriesEnabled && RetryPolicy.MaximumDeliveryCount < 2))
-            throw new ArgumentOutOfRangeException(nameof(RetryPolicy), "MaximumDeliveryCount must be at least 1, or at least 2 with second-level retries.");
+            throw new ArgumentOutOfRangeException("retryPolicy", "MaximumDeliveryCount must be at least 1, or at least 2 with second-level retries.");
         if (RetryPolicy.MaximumHandlerDuration < TimeSpan.Zero || RetryPolicy.RetryDelay < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(RetryPolicy), "Retry durations cannot be negative.");
+            throw new ArgumentOutOfRangeException("retryPolicy", "Retry durations cannot be negative.");
     }
 }

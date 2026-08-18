@@ -163,11 +163,9 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
                     SymbolEqualityComparer.Default.Equals(item.Type, contractType));
                 if (contract is null)
                     continue;
-                if (!registered.Add(contract.Type))
-                {
-                    // A contract may be shared by profiles; duplicate entries within one
-                    // profile are still diagnosed below.
-                }
+                // A contract may be shared by profiles; duplicate entries within one
+                // profile are still diagnosed below.
+                registered.Add(contract.Type);
 
                 if (!names.TryAdd(contract.Name, contract))
                     context.ReportDiagnostic(Diagnostic.Create(

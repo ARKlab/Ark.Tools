@@ -106,7 +106,7 @@ public sealed class MessagingNetworkTests
             "identity");
 
         action.Should().Throw<ArgumentOutOfRangeException>()
-            .Which.ParamName.Should().Be("MaximumSchedulingDelay");
+            .Which.ParamName.Should().Be("maximumSchedulingDelay");
     }
 
     [MessagingNetwork(MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
