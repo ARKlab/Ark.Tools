@@ -129,10 +129,17 @@ captured automatically; no Flurl-specific hook is required.
 
 Azure Service Bus uses the tracing `ActivitySource` emitted by the
 `Azure.Messaging.ServiceBus` SDK. Ark registers that source
-(`Azure.Messaging.ServiceBus`) and enables the SDK's ActivitySource support so
-sender and receiver spans flow through the same provider. Applications should
-use the current Azure Service Bus SDK rather than adding a separate, unsupported
-Service Bus instrumentation package.
+(`Azure.Messaging.ServiceBus`) so sender and receiver spans flow through the
+same provider. Because Azure SDK ActivitySource support is experimental,
+applications that use Service Bus must enable it before constructing clients:
+
+```csharp
+AppContext.SetSwitch("Azure.Experimental.EnableActivitySource", true);
+builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+```
+
+Applications should use the current Azure Service Bus SDK rather than adding a
+separate, unsupported Service Bus instrumentation package.
 
 The Azure Monitor distro can also register some of these instrumentations.
 Applications should verify their exporter setup does not register the same
