@@ -47,6 +47,7 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 - Azure Service Bus `Receive` operations – successful only  
 - SQL `Commit` operations – successful only
 - Empty outbox polling cycles do not create spans
+- Outbox SQL polling commands are filtered by default
 - Optional: specific SQL server/database combinations (for NLog database)
 
 ### Telemetry Enrichment

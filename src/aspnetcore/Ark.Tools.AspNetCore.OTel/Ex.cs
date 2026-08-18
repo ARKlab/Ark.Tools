@@ -13,6 +13,8 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
+using System.Data.Common;
+
 using Ark.Tools.Rebus;
 using Ark.Tools.OTel;
 
@@ -49,7 +51,12 @@ public static class Ex
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = true;
+                    options.Filter = _includeSqlClientSpan;
                     configureSqlClient?.Invoke(options);
+                    var applicationFilter = options.Filter;
+                    options.Filter = command =>
+                        _includeSqlClientSpan(command)
+                        && (applicationFilter is null || applicationFilter(command));
                 })
                 .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(includeSqlQueryText))
@@ -94,5 +101,17 @@ public static class Ex
         builder.AddArkAspNetCoreOpenTelemetry(configureSqlClient, includeSqlQueryText);
 
         return services;
+    }
+
+    private static bool _includeSqlClientSpan(object command)
+    {
+        if (command is not DbCommand dbCommand)
+            return true;
+
+        var text = dbCommand.CommandText;
+        return !text.Contains("READPAST", StringComparison.OrdinalIgnoreCase)
+            || !text.Contains("ROWLOCK", StringComparison.OrdinalIgnoreCase)
+            || !text.Contains("READCOMMITTEDLOCK", StringComparison.OrdinalIgnoreCase)
+            || !text.Contains("DELETE FROM batch", StringComparison.OrdinalIgnoreCase);
     }
 }
