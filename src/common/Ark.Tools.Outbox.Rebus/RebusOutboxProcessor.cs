@@ -22,13 +22,19 @@ internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
 
     protected override ValueTask CommitContextAsync(IOutboxContextCore context, CancellationToken ctk)
     {
-        ((IContext)context).Commit();
+        if (context is not IContext syncContext)
+            throw new InvalidOperationException("The outbox context must implement IContext.");
+
+        syncContext.Commit();
         return ValueTask.CompletedTask;
     }
 
     protected override ValueTask DisposeContextAsync(IOutboxContextCore context)
     {
-        ((IContext)context).Dispose();
+        if (context is not IContext syncContext)
+            throw new InvalidOperationException("The outbox context must implement IContext.");
+
+        syncContext.Dispose();
         return ValueTask.CompletedTask;
     }
 }

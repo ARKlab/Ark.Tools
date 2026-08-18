@@ -21,11 +21,17 @@ internal sealed class RebusAsyncOutboxProcessor : RebusOutboxProcessorCore
 
     protected override async ValueTask CommitContextAsync(IOutboxContextCore context, CancellationToken ctk)
     {
-        await ((IAsyncContext)context).CommitAsync(ctk).ConfigureAwait(false);
+        if (context is not IAsyncContext asyncContext)
+            throw new InvalidOperationException("The outbox context must implement IAsyncContext.");
+
+        await asyncContext.CommitAsync(ctk).ConfigureAwait(false);
     }
 
     protected override async ValueTask DisposeContextAsync(IOutboxContextCore context)
     {
-        await ((IAsyncContext)context).DisposeAsync().ConfigureAwait(false);
+        if (context is not IAsyncContext asyncContext)
+            throw new InvalidOperationException("The outbox context must implement IAsyncContext.");
+
+        await asyncContext.DisposeAsync().ConfigureAwait(false);
     }
 }
