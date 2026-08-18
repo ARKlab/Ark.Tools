@@ -91,9 +91,14 @@ public sealed record MessagingNetworkOptions
             throw new ArgumentException("The default serializer must be one of the accepted serializers.", nameof(Serializers));
         if (CompressionMinimumSizeBytes < 0)
             throw new ArgumentOutOfRangeException(nameof(CompressionMinimumSizeBytes));
-        if (MaximumTransportPayloadBytes <= 0 || MaximumDecompressedPayloadBytes <= 0
-            || DataBusOffloadThresholdBytes <= 0 || MaximumDataBusAttachmentBytes <= 0)
+        if (MaximumTransportPayloadBytes <= 0)
             throw new ArgumentOutOfRangeException(nameof(MaximumTransportPayloadBytes));
+        if (MaximumDecompressedPayloadBytes <= 0)
+            throw new ArgumentOutOfRangeException(nameof(MaximumDecompressedPayloadBytes));
+        if (DataBusOffloadThresholdBytes <= 0)
+            throw new ArgumentOutOfRangeException(nameof(DataBusOffloadThresholdBytes));
+        if (MaximumDataBusAttachmentBytes <= 0)
+            throw new ArgumentOutOfRangeException(nameof(MaximumDataBusAttachmentBytes));
         if (LockRenewalBuffer < TimeSpan.Zero || MaximumSchedulingDelay < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(LockRenewalBuffer));
         if (RetryPolicy.MaximumDeliveryCount < 1
