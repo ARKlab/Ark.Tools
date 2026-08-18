@@ -829,6 +829,12 @@
       "ark.tools.mediatorframework.grpc.generators": {
         "type": "Project"
       },
+      "ark.tools.mediatorframework.messaging": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+        }
+      },
       "ark.tools.mediatorframework.minimalapi": {
         "type": "Project",
         "dependencies": {

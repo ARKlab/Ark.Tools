@@ -10,9 +10,9 @@ public sealed record MessagingNetworkOptions
     public MessagingNetworkOptions(
         Type networkType,
         MessagingCapabilities requires,
-        IReadOnlyList<MessagingSerializationProtocol> serializers,
-        MessagingSerializationProtocol defaultSerializer,
-        MessagingCompressionAlgorithm compression,
+        IReadOnlyList<SerializationProtocol> serializers,
+        SerializationProtocol defaultSerializer,
+        CompressionAlgorithm compression,
         int compressionMinimumSizeBytes,
         int maximumTransportPayloadBytes,
         int maximumDecompressedPayloadBytes,
@@ -27,7 +27,7 @@ public sealed record MessagingNetworkOptions
     {
         NetworkType = networkType ?? throw new ArgumentNullException(nameof(networkType));
         Requires = requires;
-        Serializers = serializers ?? throw new ArgumentNullException(nameof(serializers));
+        Serializers = (serializers ?? throw new ArgumentNullException(nameof(serializers))).ToArray();
         DefaultSerializer = defaultSerializer;
         Compression = compression;
         CompressionMinimumSizeBytes = compressionMinimumSizeBytes;
@@ -41,7 +41,7 @@ public sealed record MessagingNetworkOptions
         ResourceLifecycle = resourceLifecycle;
         ConnectionConfigurationKey = connectionConfigurationKey ?? throw new ArgumentNullException(nameof(connectionConfigurationKey));
         ManagedIdentityConfigurationKey = managedIdentityConfigurationKey ?? throw new ArgumentNullException(nameof(managedIdentityConfigurationKey));
-        Validate();
+        _validateSettings();
     }
 
     /// <summary>Profile type that identifies the network.</summary>
@@ -49,11 +49,11 @@ public sealed record MessagingNetworkOptions
     /// <summary>Required capabilities.</summary>
     public MessagingCapabilities Requires { get; }
     /// <summary>Accepted receive protocols.</summary>
-    public IReadOnlyList<MessagingSerializationProtocol> Serializers { get; }
+    public IReadOnlyList<SerializationProtocol> Serializers { get; }
     /// <summary>Default send protocol.</summary>
-    public MessagingSerializationProtocol DefaultSerializer { get; }
+    public SerializationProtocol DefaultSerializer { get; }
     /// <summary>Compression algorithm.</summary>
-    public MessagingCompressionAlgorithm Compression { get; }
+    public CompressionAlgorithm Compression { get; }
     /// <summary>Minimum size for compression.</summary>
     public int CompressionMinimumSizeBytes { get; }
     /// <summary>Maximum transport payload size.</summary>
@@ -85,7 +85,7 @@ public sealed record MessagingNetworkOptions
             throw new InvalidOperationException($"Transport is missing messaging capability '{missing}'.");
     }
 
-    private void Validate()
+    private void _validateSettings()
     {
         if (Serializers.Count == 0 || !Serializers.Contains(DefaultSerializer))
             throw new ArgumentException("The default serializer must be one of the accepted serializers.", nameof(Serializers));
@@ -99,5 +99,7 @@ public sealed record MessagingNetworkOptions
         if (RetryPolicy.MaximumDeliveryCount < 1
             || (RetryPolicy.SecondLevelRetriesEnabled && RetryPolicy.MaximumDeliveryCount < 2))
             throw new ArgumentOutOfRangeException(nameof(RetryPolicy), "MaximumDeliveryCount must be at least 1, or at least 2 with second-level retries.");
+        if (RetryPolicy.MaximumHandlerDuration < TimeSpan.Zero || RetryPolicy.RetryDelay < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(RetryPolicy), "Retry durations cannot be negative.");
     }
 }

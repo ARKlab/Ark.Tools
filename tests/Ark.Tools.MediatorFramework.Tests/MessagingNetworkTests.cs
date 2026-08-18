@@ -17,10 +17,10 @@ public sealed class MessagingNetworkTests
     {
         var options = MessagingNetworkDescriptor.Resolve(typeof(TestNetwork));
 
-        options.NetworkType.Should().Be(typeof(TestNetwork));
+        options.NetworkType.Should().Be<TestNetwork>();
         options.Requires.Should().Be(MessagingCapabilities.Receive | MessagingCapabilities.PubSub);
         options.MaximumTransportPayloadBytes.Should().Be(240_000);
-        options.Serializers.Should().ContainSingle().Which.Should().Be(MessagingSerializationProtocol.Json);
+        options.Serializers.Should().ContainSingle().Which.Should().Be(SerializationProtocol.Json);
     }
 
     [TestMethod]
@@ -45,12 +45,12 @@ public sealed class MessagingNetworkTests
     [TestMethod]
     public void RejectsSecondLevelPolicyWithOneDelivery()
     {
-        Action action = () => new MessagingNetworkOptions(
+        Action action = () => _ = new MessagingNetworkOptions(
             typeof(TestNetwork),
             MessagingCapabilities.None,
-            new[] { MessagingSerializationProtocol.Json },
-            MessagingSerializationProtocol.Json,
-            MessagingCompressionAlgorithm.None,
+            new[] { SerializationProtocol.Json },
+            SerializationProtocol.Json,
+            CompressionAlgorithm.None,
             0,
             240_000,
             1_000_000,

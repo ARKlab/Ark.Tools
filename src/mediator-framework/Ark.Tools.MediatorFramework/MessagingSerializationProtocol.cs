@@ -4,7 +4,7 @@
 namespace Ark.MediatorFramework;
 
 /// <summary>Serialization protocols supported by the messaging wire format.</summary>
-public enum MessagingSerializationProtocol
+public enum SerializationProtocol
 {
     /// <summary>System.Text.Json payloads.</summary>
     Json,

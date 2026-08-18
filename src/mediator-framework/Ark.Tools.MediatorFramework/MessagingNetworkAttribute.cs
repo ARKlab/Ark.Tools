@@ -18,13 +18,13 @@ public sealed class MessagingNetworkAttribute : Attribute
     public MessagingCapabilities Requires { get; }
 
     /// <summary>Protocols accepted when receiving payloads.</summary>
-    public MessagingSerializationProtocol[] Serializers { get; set; } = new[] { MessagingSerializationProtocol.Json };
+    public SerializationProtocol[] Serializers { get; set; } = new[] { SerializationProtocol.Json };
 
     /// <summary>Protocol used for newly sent payloads.</summary>
-    public MessagingSerializationProtocol DefaultSerializer { get; set; } = MessagingSerializationProtocol.Json;
+    public SerializationProtocol DefaultSerializer { get; set; } = SerializationProtocol.Json;
 
     /// <summary>Compression algorithm applied to payloads.</summary>
-    public MessagingCompressionAlgorithm Compression { get; set; } = MessagingCompressionAlgorithm.None;
+    public CompressionAlgorithm Compression { get; set; } = CompressionAlgorithm.None;
 
     /// <summary>Minimum payload size in bytes before compression is applied.</summary>
     public int CompressionMinimumSizeBytes { get; set; }

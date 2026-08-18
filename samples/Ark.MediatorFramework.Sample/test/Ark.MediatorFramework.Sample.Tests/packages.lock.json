@@ -1860,6 +1860,7 @@
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
@@ -2066,6 +2067,12 @@
           "Grpc.StatusProto": "[2.83.0, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
           "protobuf-net.Grpc.AspNetCore": "[1.3.6, )"
+        }
+      },
+      "ark.tools.mediatorframework.messaging": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {

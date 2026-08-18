@@ -15,8 +15,8 @@ The profile declares capabilities; the host selects the concrete transport.
     MessagingCapabilities.Receive |
     MessagingCapabilities.PubSub |
     MessagingCapabilities.ScheduledSend,
-    DefaultSerializer = MessagingSerializationProtocol.Json,
-    Compression = MessagingCompressionAlgorithm.Brotli,
+    DefaultSerializer = SerializationProtocol.Json,
+    Compression = CompressionAlgorithm.Brotli,
     RetryPolicy = typeof(BookMessagingRetryPolicy))]
 public sealed class BookMessagingNetwork;
 ```

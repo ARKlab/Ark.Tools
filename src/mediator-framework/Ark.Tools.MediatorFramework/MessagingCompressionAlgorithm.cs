@@ -4,7 +4,7 @@
 namespace Ark.MediatorFramework;
 
 /// <summary>Compression algorithms available to a messaging network.</summary>
-public enum MessagingCompressionAlgorithm
+public enum CompressionAlgorithm
 {
     /// <summary>No compression.</summary>
     None,
