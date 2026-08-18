@@ -28,7 +28,7 @@ public abstract class OutboxProcessorBase
     private static readonly Histogram<long> _batchSize =
         _meter.CreateHistogram<long>(InstrumentationName + ".batch.size", "{message}");
     private static readonly Histogram<double> _processingDuration =
-        _meter.CreateHistogram<double>(InstrumentationName + ".processing.duration", "ms");
+        _meter.CreateHistogram<double>(InstrumentationName + ".processing.duration", "s");
 
     /// <summary>
     /// Starts a span for a non-empty outbox batch.
@@ -57,7 +57,7 @@ public abstract class OutboxProcessorBase
 
         _processedMessages.Add(messageCount, tags);
         _batchSize.Record(messageCount, tags);
-        _processingDuration.Record(Math.Max(0, duration.TotalMilliseconds), tags);
+        _processingDuration.Record(Math.Max(0, duration.TotalSeconds), tags);
     }
 
     /// <summary>

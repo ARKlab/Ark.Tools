@@ -49,13 +49,7 @@ public sealed class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
 
     private static string? _createSummary(string queryText)
     {
-        var normalized = string.Join(
-            ' ',
-            queryText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        if (normalized.Length == 0)
-            return null;
-
-        var tokens = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var tokens = queryText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         if (tokens.Length < 2 || !tokens[0].Equals("INSERT", StringComparison.OrdinalIgnoreCase))
             return null;
 
