@@ -17,6 +17,10 @@ public static class MessagingNetworkDescriptor
         var attribute = networkType.GetCustomAttribute<MessagingNetworkAttribute>()
             ?? throw new InvalidOperationException($"Type '{networkType.FullName}' is not a messaging network profile.");
         var retryPolicy = _createRetryPolicy(attribute.RetryPolicy);
+        var contracts = attribute.Contracts
+            .Select(MessagingContractDescriptor.Resolve)
+            .OrderBy(contract => contract.Name, StringComparer.Ordinal)
+            .ToArray();
         return new MessagingNetworkOptions(
             networkType,
             attribute.Requires,
@@ -33,7 +37,8 @@ public static class MessagingNetworkDescriptor
             TimeSpan.FromSeconds(attribute.MaximumSchedulingDelaySeconds),
             attribute.ResourceLifecycle,
             attribute.ConnectionConfigurationKey,
-            attribute.ManagedIdentityConfigurationKey);
+            attribute.ManagedIdentityConfigurationKey,
+            contracts);
     }
 
     private static IMessagingRetryPolicy _createRetryPolicy(Type? retryPolicyType)

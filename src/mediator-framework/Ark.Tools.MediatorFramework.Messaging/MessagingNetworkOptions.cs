@@ -24,6 +24,46 @@ public sealed record MessagingNetworkOptions
         MessagingResourceLifecycle resourceLifecycle,
         string connectionConfigurationKey,
         string managedIdentityConfigurationKey)
+        : this(
+            networkType,
+            requires,
+            serializers,
+            defaultSerializer,
+            compression,
+            compressionMinimumSizeBytes,
+            maximumTransportPayloadBytes,
+            maximumDecompressedPayloadBytes,
+            dataBusOffloadThresholdBytes,
+            maximumDataBusAttachmentBytes,
+            retryPolicy,
+            lockRenewalBuffer,
+            maximumSchedulingDelay,
+            resourceLifecycle,
+            connectionConfigurationKey,
+            managedIdentityConfigurationKey,
+            Array.Empty<MessagingContractDescriptor>())
+    {
+    }
+
+    /// <summary>Creates resolved network settings with its immutable contract registry.</summary>
+    public MessagingNetworkOptions(
+        Type networkType,
+        MessagingCapabilities requires,
+        IReadOnlyList<SerializationProtocol> serializers,
+        SerializationProtocol defaultSerializer,
+        CompressionAlgorithm compression,
+        int compressionMinimumSizeBytes,
+        int maximumTransportPayloadBytes,
+        int maximumDecompressedPayloadBytes,
+        int dataBusOffloadThresholdBytes,
+        int maximumDataBusAttachmentBytes,
+        IMessagingRetryPolicy retryPolicy,
+        TimeSpan lockRenewalBuffer,
+        TimeSpan maximumSchedulingDelay,
+        MessagingResourceLifecycle resourceLifecycle,
+        string connectionConfigurationKey,
+        string managedIdentityConfigurationKey,
+        IReadOnlyList<MessagingContractDescriptor> contracts)
     {
         NetworkType = networkType ?? throw new ArgumentNullException(nameof(networkType));
         Requires = requires;
@@ -41,6 +81,7 @@ public sealed record MessagingNetworkOptions
         ResourceLifecycle = resourceLifecycle;
         ConnectionConfigurationKey = connectionConfigurationKey ?? throw new ArgumentNullException(nameof(connectionConfigurationKey));
         ManagedIdentityConfigurationKey = managedIdentityConfigurationKey ?? throw new ArgumentNullException(nameof(managedIdentityConfigurationKey));
+        Contracts = (contracts ?? throw new ArgumentNullException(nameof(contracts))).ToArray();
         _validateSettings();
     }
 
@@ -76,6 +117,9 @@ public sealed record MessagingNetworkOptions
     public string ConnectionConfigurationKey { get; }
     /// <summary>Managed identity configuration key.</summary>
     public string ManagedIdentityConfigurationKey { get; }
+
+    /// <summary>Registered message and event contracts.</summary>
+    public IReadOnlyList<MessagingContractDescriptor> Contracts { get; }
 
     /// <summary>Validates the composed transport capabilities.</summary>
     public void Validate(MessagingCapabilities transportCapabilities)

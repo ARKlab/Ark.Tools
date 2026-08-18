@@ -17,6 +17,9 @@ public sealed class MessagingNetworkAttribute : Attribute
     /// <summary>Capabilities required by the network.</summary>
     public MessagingCapabilities Requires { get; }
 
+    /// <summary>Contracts registered in this shared messaging network.</summary>
+    public Type[] Contracts { get; set; } = [];
+
     /// <summary>Protocols accepted when receiving payloads.</summary>
     public SerializationProtocol[] Serializers { get; set; } = new[] { SerializationProtocol.Json };
 

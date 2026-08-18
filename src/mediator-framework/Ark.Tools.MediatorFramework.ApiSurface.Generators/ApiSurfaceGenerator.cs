@@ -23,6 +23,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string ApiGroup = "Ark.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.MediatorFramework.ServerSetAttribute";
     private const string Versioning = "Ark.MediatorFramework.VersioningAttribute";
+    private const string Message = "Ark.MediatorFramework.MessageAttribute";
+    private const string Event = "Ark.MediatorFramework.EventAttribute";
 
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
@@ -74,11 +76,21 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 static (_, _) => true,
                 static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
             .Collect();
-        var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
+        var messageTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Message,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var eventTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Event,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes).Combine(messageTypes).Combine(eventTypes)
             .Select(static (pair, _) =>
             {
-                var ((http, grpc), rebus) = pair;
-                return http.AddRange(grpc).AddRange(rebus);
+                var ((((http, grpc), rebus), message), @event) = pair;
+                return http.AddRange(grpc).AddRange(rebus).AddRange(message).AddRange(@event);
             });
         var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
             BuildSurface(types, cancellationToken));
@@ -224,7 +236,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var http = Attribute(type, Http);
         var grpc = Attribute(type, Grpc);
         var rebus = Attribute(type, Rebus);
-        if (http is null && grpc is null && rebus is null)
+        var message = Attribute(type, Message);
+        var @event = Attribute(type, Event);
+        if (http is null && grpc is null && rebus is null && message is null && @event is null)
             return;
 
         var request = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
@@ -248,6 +262,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             metadata.Add($"grpc={StringArgument(grpc, 0) ?? type.Name}");
             metadata.Add($"grpc-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
+
+        if (message is not null)
+            metadata.Add($"message={StringArgument(message, "OwnerQueue") ?? "<missing>"} name={StringArgument(message, "Name") ?? "<default>"}");
+        if (@event is not null)
+            metadata.Add($"event={StringArgument(@event, "OwnerPublisher") ?? "<missing>"} name={StringArgument(@event, "Name") ?? "<default>"}");
 
         lines.Add($"CONTRACT {request} -> {TypeName(result)} [group={group}]"
             + (metadata.Count == 0 ? string.Empty : " [" + string.Join("] [", metadata) + "]"));

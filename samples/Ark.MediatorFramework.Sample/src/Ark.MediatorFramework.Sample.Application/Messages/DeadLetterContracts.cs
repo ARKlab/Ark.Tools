@@ -13,9 +13,18 @@ public sealed record DeadLetterAck;
 /// demonstrating the Rebus dead-letter behavior: after the delivery attempts are exhausted the message is
 /// forwarded to the error queue with the exception serialized into its headers.
 /// </summary>
+[Message(OwnerQueue = "ark.mediator.sample")]
 [RebusMessage(OwnerQueue = "ark.mediator.sample")]
 public sealed record FailingRebusRequest : IRequest<FailingRebusRequest, DeadLetterAck>
 {
     /// <summary>Gets the reason surfaced in the thrown exception.</summary>
     public string Reason { get; init; } = "boom";
+}
+
+/// <summary>Event raised when a book print process completes.</summary>
+[Event(OwnerPublisher = "ark.mediator.sample")]
+public sealed record BookPrintCompleted : ICommand<BookPrintCompleted>
+{
+    /// <summary>Gets the completed print-process identifier.</summary>
+    public Guid ProcessId { get; init; }
 }

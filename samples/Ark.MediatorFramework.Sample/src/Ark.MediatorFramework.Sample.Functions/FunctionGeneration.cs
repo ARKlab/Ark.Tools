@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.API;
+using Ark.MediatorFramework.Sample.Application.Messaging;
 
 [assembly: Ark.MediatorFramework.HttpHost(
     typeof(Book_CreateRequest.V1),
@@ -11,3 +12,7 @@ using Ark.MediatorFramework.Sample.API;
         typeof(StreamBooksQuery),
         typeof(DescribeBookEditionRequest),
     })]
+
+[assembly: Ark.MediatorFramework.MessagingParticipant(
+    Identity = "ark-mediator-functions",
+    Network = typeof(BookMessagingNetwork))]
