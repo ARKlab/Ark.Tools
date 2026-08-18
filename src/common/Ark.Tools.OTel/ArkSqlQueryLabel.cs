@@ -112,14 +112,14 @@ public static class ArkSqlQueryLabel
                 continue;
             }
 
+            if (builder.Length + (pendingSpace ? 2 : 1) > _maxLabelLength)
+                break;
+
             if (pendingSpace)
                 builder.Append(' ');
 
             builder.Append(character);
             pendingSpace = false;
-
-            if (builder.Length == _maxLabelLength)
-                break;
         }
 
         var sanitized = builder.ToString().Trim();

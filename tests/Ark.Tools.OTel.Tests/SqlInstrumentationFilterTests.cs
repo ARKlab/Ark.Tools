@@ -144,10 +144,10 @@ public sealed class SqlInstrumentationFilterTests
 public sealed class SqlClientSpanProcessorTests
 {
     /// <summary>
-    /// SQL text is removed by default while a query linting comment is retained as a label.
+    /// SQL text is removed by default.
     /// </summary>
     [TestMethod]
-    public void OnEnd_RedactsTextAndExtractsQueryLabel()
+    public void OnEnd_RedactsText()
     {
         using var processor = new ArkSqlClientSpanProcessor();
         using var listener = new ActivityListener
@@ -166,15 +166,12 @@ public sealed class SqlClientSpanProcessorTests
             default(ActivityContext),
             [
                 new KeyValuePair<string, object?>("db.system.name", "mssql"),
-                new KeyValuePair<string, object?>(
-                    "db.query.text",
-                    "-- otel-query-label:  outbox.insert  \nINSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body)")
+                new KeyValuePair<string, object?>("db.query.text", "INSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body)")
             ]);
 
         activity.Should().NotBeNull();
         activity!.Stop();
 
-        activity.GetTagItem(ArkSqlQueryLabel.TagName).Should().Be("outbox.insert");
         activity.GetTagItem("db.query.text").Should().BeNull();
     }
 
@@ -188,6 +185,9 @@ public sealed class SqlClientSpanProcessorTests
             "SELECT 1 -- otel-query-label:  my \tquery name \u0001 ");
 
         label.Should().Be("my query name");
+
+        ArkSqlQueryLabel.Extract($"-- otel-query-label: {new string('x', 255)}")
+            .Should().HaveLength(255);
     }
 
     /// <summary>
