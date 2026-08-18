@@ -143,8 +143,10 @@ public sealed record MessagingNetworkOptions
             throw new ArgumentOutOfRangeException(nameof(DataBusOffloadThresholdBytes));
         if (MaximumDataBusAttachmentBytes <= 0)
             throw new ArgumentOutOfRangeException(nameof(MaximumDataBusAttachmentBytes));
-        if (LockRenewalBuffer < TimeSpan.Zero || MaximumSchedulingDelay < TimeSpan.Zero)
+        if (LockRenewalBuffer < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(LockRenewalBuffer));
+        if (MaximumSchedulingDelay < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(MaximumSchedulingDelay));
         if (RetryPolicy.MaximumDeliveryCount < 1
             || (RetryPolicy.SecondLevelRetriesEnabled && RetryPolicy.MaximumDeliveryCount < 2))
             throw new ArgumentOutOfRangeException(nameof(RetryPolicy), "MaximumDeliveryCount must be at least 1, or at least 2 with second-level retries.");

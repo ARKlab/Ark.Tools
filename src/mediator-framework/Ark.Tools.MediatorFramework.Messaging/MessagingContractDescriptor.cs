@@ -65,6 +65,9 @@ public sealed record MessagingContractDescriptor
 
     private static string _normalizeSegment(string segment)
     {
+        var genericArity = segment.IndexOf('`', StringComparison.Ordinal);
+        if (genericArity >= 0)
+            segment = segment[..genericArity];
         var builder = new StringBuilder(segment.Length + 4);
         for (var i = 0; i < segment.Length; i++)
         {

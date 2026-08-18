@@ -57,16 +57,48 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterSourceOutput(context.CompilationProvider, static (productionContext, compilation) =>
-            _emit(productionContext, compilation));
+        var messageTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                _message,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var eventTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                _event,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var networkTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                _network,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var participantAssemblies = context.SyntaxProvider.ForAttributeWithMetadataName(
+                _participant,
+                static (_, _) => true,
+                static (attributeContext, _) => attributeContext.SemanticModel.Compilation.Assembly)
+            .Collect();
+        var sourceTypes = messageTypes.Combine(eventTypes).Combine(networkTypes)
+            .Select(static (pair, _) =>
+            {
+                var ((messages, events), networks) = pair;
+                return messages.AddRange(events).AddRange(networks)
+                    .Distinct(SymbolEqualityComparer.Default)
+                    .OfType<INamedTypeSymbol>()
+                    .ToImmutableArray();
+            });
+        context.RegisterSourceOutput(sourceTypes.Combine(participantAssemblies),
+            static (productionContext, input) => _emit(productionContext, input.Left, input.Right));
     }
 
-    private static void _emit(SourceProductionContext context, Compilation compilation)
+    private static void _emit(
+        SourceProductionContext context,
+        ImmutableArray<INamedTypeSymbol> sourceTypes,
+        ImmutableArray<IAssemblySymbol> participantAssemblies)
     {
-        var sourceTypes = _allTypes(compilation.Assembly.GlobalNamespace).ToArray();
-        var participantAttributes = compilation.Assembly.GetAttributes()
+        var participantAttributes = participantAssemblies.FirstOrDefault()?.GetAttributes()
             .Where(attribute => _is(attribute, _participant))
             .ToArray();
+        participantAttributes ??= Array.Empty<AttributeData>();
         INamedTypeSymbol? participantNetwork = participantAttributes
             .Select(attribute => _typeArgument(attribute, "Network"))
             .FirstOrDefault(type => type is not null);
@@ -477,7 +509,8 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
     {
         var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
         return value.Kind == TypedConstantKind.Array
-            ? value.Values.Where(item => item.Value is INamedTypeSymbol).Select(item => (INamedTypeSymbol)item.Value!).ToImmutableArray()
+            ? value.Values.Where(item => item.Kind == TypedConstantKind.Type && item.Value is INamedTypeSymbol)
+                .Select(item => (INamedTypeSymbol)item.Value!).ToImmutableArray()
             : ImmutableArray<INamedTypeSymbol>.Empty;
     }
 

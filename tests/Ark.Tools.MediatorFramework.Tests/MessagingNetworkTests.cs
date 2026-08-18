@@ -77,6 +77,38 @@ public sealed class MessagingNetworkTests
         options.Contracts[0].FormerNames.Should().ContainSingle().Which.Should().Be("old_contract_message");
     }
 
+    [TestMethod]
+    public void NormalizesGenericContractNamesWithoutAritySuffix()
+    {
+        MessagingContractDescriptor.Normalize(typeof(GenericContract<>))
+            .Should().Be("ark.tools.mediator_framework.tests.messaging_network_tests.generic_contract");
+    }
+
+    [TestMethod]
+    public void RejectsNegativeSchedulingDelayWithCorrectParameterName()
+    {
+        Action action = () => _ = new MessagingNetworkOptions(
+            typeof(TestNetwork),
+            MessagingCapabilities.None,
+            new[] { SerializationProtocol.Json },
+            SerializationProtocol.Json,
+            CompressionAlgorithm.None,
+            0,
+            240_000,
+            1_000_000,
+            240_000,
+            1_000_000,
+            new ValidRetryPolicy(),
+            TimeSpan.Zero,
+            TimeSpan.FromSeconds(-1),
+            MessagingResourceLifecycle.External,
+            "connection",
+            "identity");
+
+        action.Should().Throw<ArgumentOutOfRangeException>()
+            .Which.ParamName.Should().Be("MaximumSchedulingDelay");
+    }
+
     [MessagingNetwork(MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
     private sealed class TestNetwork
     {
@@ -90,11 +122,23 @@ public sealed class MessagingNetworkTests
         public TimeSpan RetryDelay => TimeSpan.Zero;
     }
 
+    private sealed class ValidRetryPolicy : IMessagingRetryPolicy
+    {
+        public int MaximumDeliveryCount => 2;
+        public bool SecondLevelRetriesEnabled => true;
+        public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+        public TimeSpan RetryDelay => TimeSpan.Zero;
+    }
+
     [Message(
         OwnerQueue = "contracts",
         Name = "contract_message",
         FormerNames = new[] { "old_contract_message" })]
     private sealed record ContractMessage;
+
+    private sealed class GenericContract<T>
+    {
+    }
 
     [MessagingNetwork(MessagingCapabilities.Receive,
         Contracts = new[] { typeof(ContractMessage) })]
