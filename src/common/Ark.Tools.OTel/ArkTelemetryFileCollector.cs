@@ -35,8 +35,8 @@ public sealed class ArkTelemetryFileCollector : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
 
         Directory.CreateDirectory(directory);
-        _spans = _createWriter(Path.Combine(directory, "otel-spans.jsonl"));
-        _metrics = _createWriter(Path.Combine(directory, "otel-metrics.jsonl"));
+        _spans = _createWriter(Path.Join(directory, "otel-spans.jsonl"));
+        _metrics = _createWriter(Path.Join(directory, "otel-metrics.jsonl"));
 
         _activityListener = new ActivityListener
         {

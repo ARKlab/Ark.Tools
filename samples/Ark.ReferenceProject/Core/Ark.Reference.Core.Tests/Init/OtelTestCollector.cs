@@ -42,12 +42,14 @@ internal sealed class OtelTestCollector : IDisposable
 
     internal void _reset()
     {
-        while (_spans.TryDequeue(out _))
+        while (_spans.TryDequeue(out var discardedSpan))
         {
+            continue;
         }
 
-        while (_metrics.TryDequeue(out _))
+        while (_metrics.TryDequeue(out var discardedMetric))
         {
+            continue;
         }
     }
 
