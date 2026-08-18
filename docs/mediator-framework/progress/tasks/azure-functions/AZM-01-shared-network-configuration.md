@@ -49,7 +49,8 @@ requires.
    `Requires` (a `MessagingCapabilities` value) plus serialization,
    compression, payload, DataBus offload/integrity thresholds, retry,
    lock-renewal, scheduling-limit,
-   resource-lifecycle, and pipeline-step members. `IMessagingRetryPolicy`
+   and resource-lifecycle members. Pipeline steps are deliberately not network
+   settings; AZM-06 registers them per host. `IMessagingRetryPolicy`
    includes `MaximumDeliveryCount` (N), `SecondLevelRetriesEnabled`,
    `MaximumHandlerDuration`, and `RetryDelay`. Document that entity/host max
    delivery is `2N` when second-level retries are enabled and `N` otherwise,
@@ -73,9 +74,8 @@ requires.
 7. Include the resolved network identity in generated manifests, diagnostics,
    resource ownership calculations, and the `amf1-network` wire header
    written on send and verified on receive (implemented by AZM-04).
-8. Register custom incoming/outgoing pipeline steps at network level.
-9. Add XML documentation and API-surface entries for every public member.
-10. Define startup validation inputs for a concrete DataBus provider's declared
+8. Add XML documentation and API-surface entries for every public member.
+9. Define startup validation inputs for a concrete DataBus provider's declared
     minimum attachment lifetime. The network does not own retention; AZM-07
     validates the provider declaration against bounded scheduling/retry values.
 
@@ -88,8 +88,10 @@ host reference, shared-settings table, and secret configuration rules.
 Document that identities and subscriptions remain host-local while transport
 behavior is network-shared, and that all hosts on one network share the same
 runtime transport and physical resources as a documented deployment
-assumption. Document that receive accepts every installed supported codec
-declared by the message headers.
+assumption. Document that pipeline implementations are host-local because
+their dependencies and environment-specific choices may differ. Document that
+receive accepts every installed supported codec declared by the message
+headers.
 
 ## Sample extension
 
@@ -110,6 +112,7 @@ and is validated even though nothing consumes it yet.
 - Retry policy and second-level enablement validation.
 - Delivery-count validation covers the second-level `N >= 2` invariant.
 - The network API contains no provider-specific DataBus retention member.
+- The network API contains no incoming/outgoing step registration member.
 
 ## Outcomes
 

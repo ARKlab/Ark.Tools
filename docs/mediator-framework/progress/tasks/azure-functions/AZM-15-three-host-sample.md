@@ -1,7 +1,7 @@
 # AZM-15 — Three-host publish/subscribe sample
 
 **Category**: azure-functions-messaging · **Priority**: demonstration
-**Depends on**: AZM-08, AZM-09, AZM-10, AZM-12, AZM-13, AZM-14
+**Depends on**: AZM-08, AZM-09, AZM-10, AZM-12, AZM-13, AZM-14, AZM-14A
 **Scope**: SAMPLE + INTEGRATION
 **Design**: [Sample proof](../../azure-functions-messaging-design.md#12-sample-proof)
 
@@ -23,11 +23,14 @@ contract assembly while using different handlers and independent queues.
   one identity queue and one forwarding subscription.
 - **Two modes**: Book printing scenarios run separately through Rebus and
   Mediator Framework. Tests create messages through the matching sender stack.
+  The Rebus producer-only (`Role = Producer`) and Consumer hosts use the same
+  network/host declarations and AZM-14 generated setup.
 - **Transport**: automated three-host tests compose the InMemory transport;
   the Service Bus composition is demonstrated through configuration, generated
   triggers, and optional explicit live runs.
 - **Operations**: provide local settings examples, IaC entity list, startup
-  commands, bounded readiness/idle waits, and cleanup commands.
+  commands, bounded readiness/idle waits, and cleanup commands. Include the
+  separate always-running native outbox processor host.
 
 ## Implementation steps
 
@@ -43,11 +46,15 @@ contract assembly while using different handlers and independent queues.
    propagation, compression, DataBus claim-check, and typed handler binding.
 5. Demonstrate retry exhaustion, direct fail-fast DLQ, and inline second-level
    handling with a separate scope.
-6. Keep all three hosts free of Rebus receive workers and outbox processors.
-7. Add bounded tests proving one topic publication reaches both subscriber
+6. Keep all three messaging participants free of Rebus receive workers and
+   outbox processors. Add the AZM-14A custom always-running
+   `outbox-processor` host as a separate process.
+7. Demonstrate transactional native `Send` and `Publish` enqueue and dispatch
+   through that processor without starting it in either Functions subscriber.
+8. Add bounded tests proving one topic publication reaches both subscriber
    identity queues and both handlers observe the same contract with distinct
    effects.
-8. Document local configuration, IaC expectations, and the absence of a local
+9. Document local configuration, IaC expectations, and the absence of a local
    emulator when applicable.
 
 ## Guide contribution
@@ -62,11 +69,14 @@ Extend the existing Book sample, not a parallel demo, with a publisher and two
 subscriber Functions hosts. Demonstrate the Book printing/background event
 flow through Azure Functions and retain the standalone Rebus processor as an
 alternative receiver in a separate non-interoperable topology mode. Use the
-framework `IBus` and `IFailed<T>` in application code, Rebus adapters in Rebus
-mode, and the commit-then-send passthrough outbox only in native Mediator
-Framework mode. The existing WebInterface and RebusProcessor hosts must retain
-their real Rebus outbox registrations, with the processor disabled and enabled
-respectively.
+framework `IBus` and `IFailed<T>` in application code and Rebus adapters in
+Rebus mode. Native Mediator Framework mode uses the SQL outbox and the
+dedicated `outbox-processor` custom host from AZM-14A. The existing WebInterface
+and RebusProcessor hosts must retain their real Rebus outbox registrations,
+with the processor disabled and enabled respectively. Their routing, filtered
+dispatch adapters, retry assistance, and event subscriptions come from the
+AZM-14 generated Rebus host API. Application handlers remain explicitly
+registered by each application composition root.
 
 ## Required test coverage
 
@@ -80,9 +90,13 @@ respectively.
 - Hosts can start concurrently without subscription corruption.
 - Rebus and Mediator Framework modes run the same application behavior from
   separately produced transport messages.
-- WebInterface and RebusProcessor still exercise the real Rebus outbox; none
-  of their scenarios resolve the passthrough implementation.
-- Passthrough send failure after commit is visible and documented.
+- Rebus producer-only/Consumer compositions use generated network/host setup;
+  Consumer subscriptions are awaited after bus start.
+- Rebus generation sees contracts only; application handlers remain
+  developer-registered and are reached through the processors.
+- WebInterface and RebusProcessor still exercise the real Rebus outbox.
+- Native SQL outbox enqueue is atomic, and the separate processor preserves
+  the original sender identity while dispatching both messages and events.
 
 ## Outcomes
 
@@ -92,11 +106,13 @@ respectively.
 
 ## Acceptance
 
-- [ ] Three separate host projects share the same contract definition.
+- [ ] Three messaging participant projects share the same contract definition.
 - [ ] One publish reaches two independently managed subscriber queues.
 - [ ] Subscriber handlers are distinct and verified.
 - [ ] Sending, scheduling, retry, DLQ, and second-level flows are covered.
 - [ ] No Rebus processor or outbox worker runs in any Functions host.
+- [ ] The native SQL outbox is drained by the separate `outbox-processor`
+  custom host.
 - [ ] The [task board](../README.md) status for AZM-15 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -10,13 +10,16 @@
 Handlers need to send messages and publish events without knowing transport
 types, while the bus must not expose request/reply or receive semantics. The
 bus targets the AZM-05 transport contract, so its behavior is identical over
-InMemory, Service Bus, and Storage Queue.
+InMemory, Service Bus, and Storage Queue. It is a shim because it preserves the
+small Rebus-like one-way surface application handlers need, allowing an easy
+composition switch, while intentionally reducing the framework API surface.
 
 ## Execution map
 
 - **Public API**: define the restricted framework `IBus` in
-  `Ark.Tools.MediatorFramework`; include cancellation tokens and additional
-  read-only string headers on every operation.
+  `Ark.Tools.MediatorFramework`; include cancellation tokens and an optional
+  `Dictionary<string, string>` of additional application headers on every
+  operation.
 - **Native implementation**: implement one transport-neutral bus in
   `Ark.Tools.MediatorFramework.Messaging` composed from the envelope,
   pipeline, DataBus, and transport seams of AZM-04/05/06/07. There is no
@@ -49,8 +52,9 @@ InMemory, Service Bus, and Storage Queue.
    has no such members.
 6. Delegate all envelope construction, content encoding, compression, and
    DataBus claim-checking to AZM-04/AZM-07.
-7. Propagate message, correlation, causation, sent-time, and allowed context
-   headers using centralized constants.
+7. Propagate message, correlation, causation, sent-time, sender-identity, and
+   allowed context headers using centralized constants. Write
+   `amf1-sender-identity` for both `Send` and `Publish`.
 8. Run outgoing pipeline steps before serialization and transport send.
 9. Ensure the bus is disposable, safe for concurrent invocations, and does not
    start a receive worker.
@@ -85,6 +89,8 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
   capability.
 - JSON, MessagePack, and protobuf sends.
 - Additional headers are accepted and reserved headers are rejected.
+- Every overload accepts optional additional headers and writes the original
+  sending host identity.
 - Scheduled send via the transport contract with a controlled clock.
 - Compression and DataBus offload are applied before send.
 - Missing owner/publisher rejection.

@@ -15,7 +15,7 @@ SimpleInjector registrations.
 
 - **Projects**: finalize the package split:
   `Ark.Tools.MediatorFramework.Messaging` (transport-neutral runtime:
-  network options, envelope, codecs, pipeline, DataBus, transports, bus,
+  network options, envelope, codecs, pipeline contracts, DataBus, transports, bus,
   dispatcher, lifecycle) and `Ark.Tools.MediatorFramework.AzureFunctions`
   (trigger generation and Functions hosting adapters, depending on the
   messaging package), plus
@@ -23,9 +23,11 @@ SimpleInjector registrations.
   versions, and lock files.
 - **Producer composition**: expose a producer-only registration usable from
   any process (Minimal API, console client, Functions) that composes only the
-  network options, transport, outgoing pipeline, DataBus, the restricted
-  `IBus`, and topic `Ensure` for events it owns; it must not pull Functions
-  dependencies or register dispatch, triggers, queues, or subscriptions.
+  network options, transport, host-local outgoing pipeline, DataBus, the
+  restricted `IBus`, a stable host application identity for
+  `amf1-sender-identity`, and topic `Ensure` for events it owns; it must not
+  pull Functions dependencies or register dispatch, triggers, queues, or
+  subscriptions.
 - **Composition**: expose one startup extension that accepts/resolves the
   generated network/host descriptor, selects the runtime transport
   (`UseInMemory`/`UseAzureServiceBus`/`UseAzureStorageQueue`-style), validates
@@ -48,7 +50,7 @@ SimpleInjector registrations.
 3. Add startup extensions for optional host identity and role, runtime
    transport selection with capability validation, resource lifecycle,
    serializers, retry settings, scoped dispatch, restricted bus registration,
-   network-level pipeline steps, and shared DataBus configuration. Include the
+   host-level pipeline steps, and shared DataBus configuration. Include the
    producer-only registration path for non-Functions processes. Startup must
    also fail when the composed runtime transport does not match the trigger
    binding recorded in the generated manifest of a receive-capable Functions
@@ -58,19 +60,20 @@ SimpleInjector registrations.
 4. Provide explicit, mutually exclusive composition paths for Rebus versus a
    Mediator Framework messaging network. Do not register both bus
    implementations for one logical topology.
-5. Ensure no Rebus worker, durable outbox processor, or competing Rebus
-   consumer starts in Functions composition. Generated Functions triggers are
-   the intended receivers.
+5. Ensure no Rebus worker, Rebus outbox processor, or native SQL outbox
+   processor starts in Functions composition. Generated Functions triggers are
+   the intended receivers. Functions may register the AZM-14A native outbox
+   producer/enlistment seam, but polling is hosted elsewhere.
 6. Add configuration validation for missing connections, credentials, entity
-   settings, and conflicting host declarations.
+   settings, sender application identity, and conflicting host declarations.
 7. Add package-content and trim/analyzer checks.
 
 ## Guide contribution
 
 Update [`guide/host-setup-and-composition.md`](../../../guide/host-setup-and-composition.md)
 and [`guide/azure-functions.md`](../../../guide/azure-functions.md) with package
-registration, shared network resolution, and the prohibition on starting Rebus
-workers or outbox processors in Functions.
+registration, shared network resolution, host-local pipeline registration, and
+the prohibition on starting Rebus workers or outbox processors in Functions.
 
 ## Sample extension
 
@@ -94,8 +97,8 @@ handlers while selecting their own receiver host.
   secrets in source.
 - Rebus and Mediator Framework bus compositions are independent and mutually
   exclusive per logical topology.
-- Pipeline and DataBus registration are opt-in and shared by all generated
-  message triggers.
+- Pipeline registration is host-local and deterministic; DataBus composition
+  remains shared by the network.
 - Azure Blob DataBus composition resolves with data-plane credentials and does
   not require lifecycle-policy management permissions.
 
@@ -109,7 +112,7 @@ handlers while selecting their own receiver host.
 
 - [ ] Package and analyzer assets are correct and locked.
 - [ ] Startup composition is documented and validates configuration.
-- [ ] No Rebus receiver or durable outbox worker starts in the Functions process.
+- [ ] No Rebus receiver or outbox processor starts in the Functions process.
 - [ ] Existing HTTP and outbound Rebus behavior remains compatible in Rebus
   mode.
 - [ ] The [task board](../README.md) status for AZM-13 is updated to this task's acceptance state.

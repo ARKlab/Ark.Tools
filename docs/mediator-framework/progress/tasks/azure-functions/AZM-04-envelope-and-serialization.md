@@ -37,8 +37,9 @@ so every transport adapter can map it to its native message shape.
    delivery, protocol, and failure header constants.
 2. Define `amf1-*` header constants, including Rebus-compatible
    `amf1-content-type`, optional `amf1-content-encoding`,
-   `amf1-payload-attachment-id`, and `amf1-network` carrying the resolved
-   producer network identity.
+   `amf1-payload-attachment-id`, `amf1-network` carrying the resolved producer
+   network identity, and `amf1-sender-identity` carrying the host that invoked
+   `Send` or `Publish`.
 3. Define a transport-neutral envelope abstraction with a binary payload and
    string metadata. Do not emit a delivery-count header; expose native
    delivery count only through runtime context.
@@ -57,7 +58,8 @@ so every transport adapter can map it to its native message shape.
    this task. Receive must not depend on the network default or retry settings;
    an unknown/unsupported protocol or type must produce a typed, fail-fast
    error. Senders always write the resolved network identity in
-   `amf1-network`; a received `amf1-network` value that differs from the local
+   `amf1-network` and `amf1-sender-identity` on both `Send` and `Publish`; a
+   received `amf1-network` value that differs from the local
    network identity fails fast the same way, because it indicates a different
    network type sharing the receive entity, not a same-type wrong namespace.
 8. Resolve writes from a contract-level protocol or shared network default.
@@ -91,6 +93,8 @@ exists yet.
 - Missing, unknown, uninstalled, and conflicting protocol headers.
 - Unknown contract type and malformed payload.
 - Correlation/message IDs and sent time use invariant formats.
+- Sender identity round-trips for both send and publish, including an
+  identity-less host's composition-supplied application identity.
 - Optional content-encoding and DataBus attachment headers survive envelope
   round trips without being interpreted.
 - Type-confusion attempts cannot resolve contracts outside the generated

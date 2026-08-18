@@ -17,7 +17,7 @@ files; current status lives only in [`tasks/README.md`](tasks/README.md).
 | 7 | Preview follow-ups | Rebus routing, source-generated JSON metadata, authenticated OpenAPI UIs, and gRPCui operations |
 | 8 | Release-scope extension | OpenAPI taxonomy, standard responses, streaming, multi-file uploads, XML docs, API snapshots, and user guide |
 | 9 | Azure Functions isolated-worker hosting | New host workstream governed by the Azure decisions and task board |
-| 10 | Azure Functions messaging | Ordered AZM-01–AZM-16 delivery plus AZM-07A: capability-based shared network, message-name API-surface enforcement, transport abstraction with first-class InMemory, Azure Blob DataBus, generated Service Bus integration, Storage Queue send/receive, Rebus application adapters, scoped failure handling, and Book sample proof |
+| 10 | Azure Functions messaging | Ordered AZM-01–AZM-16 delivery plus AZM-07A and AZM-14A: capability-based shared network, message-name API-surface enforcement, transport abstraction with first-class InMemory, Azure Blob DataBus, generated Service Bus integration, Storage Queue send/receive, generated Rebus host setup and adapters, native SQL outbox with separately hosted processor, scoped failure handling, and Book sample proof |
 | 11 | Testing redesign | Direct application-contract testing and framework-owned hosting coverage |
 
 The historical details for phases 1–8 are preserved in

@@ -29,16 +29,20 @@ The result of this work is a generated Azure Functions message surface that:
 - preserves fail-fast, retry exhaustion, and second-level dispatch semantics;
 - provides a one-way `IBus` shim for sending commands/messages, publishing
   events, and scheduled delivery;
+- supports transactional SQL outbox enqueue for native `Send` and `Publish`,
+  with processing hosted by a separate always-running network participant;
 - demonstrates one publisher and two independent subscriber Function hosts
   sharing contracts while using different handlers.
 
-Azure Functions is the only supported Processor/Consumer host and the only
-host with trigger source generation. Producer-only participants are first
-class: any process — a Minimal API host, a console client, another service —
-can join a network as a one-way producer by composing only the configured
-`IBus` from the transport-neutral messaging runtime. Storage Queue supports
-sending, scheduled sending, and at-least-once receive through generated
-QueueTriggers; it never supports event publishing (no topics).
+Azure Functions is the only supported native-network Processor/Consumer host
+and the only host with trigger source generation. Existing Rebus processors
+remain supported through their separate wire stack and generated setup
+assistance. Producer-only participants are first class: any process — a
+Minimal API host, a console client, another service — can join a network as a
+one-way producer by composing only the configured `IBus` from the
+transport-neutral messaging runtime. Storage Queue supports sending, scheduled
+sending, and at-least-once receive through generated QueueTriggers; it never
+supports event publishing (no topics).
 
 ## 2. Explicit boundaries
 
@@ -60,6 +64,9 @@ QueueTriggers; it never supports event publishing (no topics).
   with `DequeueCount` and a framework-managed poison-queue DLQ.
 - Producer-only hosts in any process (Functions, Minimal API, client apps)
   composing only the configured `IBus`.
+- Source-generated Rebus host assistance from the same network and host
+  declarations: owner routing, host-filtered dispatch adapters, event
+  subscriptions, exact retry mapping, and a runtime requirements descriptor.
 - A transport-neutral messaging runtime package consumable outside Azure
   Functions; the Functions package adds trigger generation and hosting
   adapters.
@@ -74,13 +81,13 @@ QueueTriggers; it never supports event publishing (no topics).
 - A first-class, shipped InMemory transport implementing every capability. It
   is a real transport usable for tests and local development, not a mock. The
   same transport-contract conformance suite runs against every transport.
+- Native Mediator Framework SQL outbox enqueue for `Send` and `Publish`, plus
+  an `IHostedService` processor hosted outside Azure Functions with the
+  reserved network identity `outbox-processor`.
 - A three-host sample demonstration.
 
 ### Out of scope
 
-- Durable outbox support for Mediator Framework networks. A non-durable
-  passthrough commit dispatcher is allowed only to keep the sample application
-  composition transport-neutral.
 - Request/reply, replies, `SendLocal`, or any receive operation in the bus shim.
 - Storage Queue subscriptions or publish fan-out emulation. Storage Queue has
   no topics; `PubSub` networks cannot run on it.
@@ -88,7 +95,8 @@ QueueTriggers; it never supports event publishing (no topics).
   new envelope and generated host are not required to exchange messages with
   existing Rebus endpoints. Interoperability is neither required nor expected,
   so no test asserts its absence; the boundary is documentation-only.
-- A long-running worker hosted inside a Functions app.
+- A long-running receive worker or outbox processor hosted inside a Functions
+  app. The SQL outbox processor requires a separate always-running custom host.
 - Delayed event publication. `Publish` is immediate-only; only `Send` supports
   delayed delivery.
 
@@ -107,10 +115,12 @@ the message and is also the default route used by the Functions `IBus` shim.
 
 Messages may be request-shaped, command-shaped, or one-way application
 messages. Receiving a message requires exactly one handler registration for
-the queue/contract combination in a host. A named host receives only from the
-queue whose name equals its `Identity`; every contract listed in that host's
-`ReceivedContracts` must therefore declare an owner queue equal to the host
-identity. Handler registration is validated separately during startup.
+the queue/contract combination in a host. Every message and event contract is
+registered once in the shared network profile. A named consumer host receives
+every registered **message** whose owner queue equals the host `Identity`;
+there is no host-level `ReceivedContracts` list. Events never match a host by
+publisher identity: they reach a host only through its explicit
+`Subscriptions`. Handler registration is validated separately during startup.
 Scale-out instances of the same host identity compete normally on that one
 queue.
 
@@ -144,11 +154,12 @@ merge or rename topics.
 
 The event is published once to the topic and is cloned by Service Bus into
 subscriber queues. A host declares its identity and the event contracts it
-subscribes to. Each subscription forwards its copy into the subscriber host's
-identity queue. The host has one generated queue trigger that can therefore
-receive directly addressed messages and subscribed event copies of multiple
-types. Two hosts may subscribe to the same topic independently because they
-have distinct subscriptions and identity queues.
+subscribes to; every subscribed event must be registered in the same network.
+Each subscription forwards its copy into the subscriber host's identity queue.
+The host has one generated queue trigger that can therefore receive directly
+addressed messages and subscribed event copies of multiple types. Two hosts
+may subscribe to the same topic independently because they have distinct
+subscriptions and identity queues.
 
 The generator must reject an event declared with a missing publisher owner and
 must reject event usage on a network that does not declare the `PubSub`
@@ -158,8 +169,9 @@ capability.
 
 Host identity is not the configuration boundary for transport behavior. A
 Mediator Framework messaging network is the shared operational boundary for
-all participating non-Rebus hosts. Every host references exactly one network
-configuration, and all hosts communicating on that network use the same:
+native hosts and the shared declaration boundary used to assist Rebus hosts.
+Every host references exactly one network configuration. All native hosts
+communicating on that network use the same:
 
 - required transport capabilities (see the capability model below);
 - active serialization protocols and default protocol;
@@ -175,16 +187,21 @@ configuration, and all hosts communicating on that network use the same:
 - resource-management and subscription-lifecycle policy; and
 - connection/configuration key names, without placing secrets in attributes.
 
+Rebus generation consumes only the portable or exactly mapped subset described
+below. Native serializer/compression/DataBus/pipeline settings do not silently
+become Rebus runtime settings.
+
 The network configuration is a public transport-neutral type or declarative
 attribute that can be referenced by a host attribute. The class name of the
 type carrying the attribute is the network identity; the attribute has no
 independent `Name` property. It is resolved into one immutable runtime options
-object and validated once at startup. Host attributes contain an optional
-identity, explicitly received message contracts, and event subscriptions; they
-never select or register handlers and must not redefine network settings.
-Handler registration remains a SimpleInjector composition concern. A host
-referencing a different network profile is a different messaging network,
-even when it uses the same Azure namespace.
+object and validated once at startup. The network registers every message and
+event contract participating in it. Host attributes contain an optional
+identity, event subscriptions, and host-local incoming/outgoing steps; they
+never list received messages, select handlers, or redefine network settings.
+Handler registration and step implementation dependencies remain host
+composition concerns. A host referencing a different network profile is a
+different messaging network, even when it uses the same Azure namespace.
 
 ### Capability model and runtime transport selection
 
@@ -239,19 +256,90 @@ operational fact and a documented deployment assumption. Each host validates
 only its own composed transport against the shared network declaration; no
 cross-host runtime check is performed.
 
-Rebus hosts do not participate in a Mediator Framework messaging network.
-Rebus and Mediator Framework transports have different headers and runtime
-semantics and are not wire-interoperable. Every deployment topology must choose
-one receiver stack for a logical bus: either Rebus hosts or Mediator Framework
-network hosts. They may reuse the same transport-neutral contract ownership
-metadata and application handlers, but not exchange persisted messages. This
-boundary is informative documentation; because interoperability is neither
-required nor expected, no test asserts its absence.
+Rebus hosts may reference the same transport-neutral network and host
+declarations as source-generation input, but they do not join the native
+Mediator Framework wire network. Rebus and Mediator Framework transports have
+different headers and runtime semantics and are not wire-interoperable. Every
+deployment topology must choose one receiver stack for a logical bus: either
+Rebus hosts or native Mediator Framework network hosts. They may reuse the same
+contract registry, ownership metadata, host identity/subscriptions, and
+application handlers, but not exchange persisted messages. This boundary is
+informative documentation; because interoperability is neither required nor
+expected, no test asserts its absence.
+
+### Generated Rebus host assistance
+
+The Rebus generator consumes one network and one host declaration from each
+Rebus host assembly. It generates assistance rather than a complete Rebus
+composition so applications retain control of infrastructure and
+provider-specific behavior.
+
+| Definition | Generated Rebus assistance | Remains runtime-owned |
+| --- | --- | --- |
+| Network message registry and message owner queues | Existing type-based owner routing for every registered message | Transport implementation, connection, credentials |
+| Consumer host identity | Host-filtered Rebus dispatch adapters for every network message whose owner queue equals the identity; generated descriptor exposes the input queue name | Application-handler registration, input transport selection, queue creation policy, workers/concurrency |
+| Host event subscriptions | Host-filtered event dispatch adapters plus an async generated method that calls `Subscribe<TEvent>` after the bus starts | Application-handler registration, subscription storage, broker administration |
+| Producer-only host (`Role = Producer`) | Routing and bus adapter only; no input queue, handlers, or subscriptions | One-way transport and lifecycle |
+| `MaximumDeliveryCount` and `SecondLevelRetriesEnabled` | Generated options extension maps them to `ArkRetryStrategy` | Error queue name, diagnostic bounds, cooldowns, and Rebus-only options that do not alter the mapped attempt counts |
+| `MaximumHandlerDuration` | Generated requirements descriptor records the value for startup validation/documentation | Transport lock duration/automatic renewal configuration |
+| `RetryDelay` | No automatic mapping because Rebus retry/defer semantics differ from native Storage Queue visibility delay | Explicit Rebus retry/defer configuration |
+| Serialization protocols | No automatic mapping: Rebus selects one serializer while native reads are header-driven and multi-protocol | Rebus serializer and source-generated JSON context |
+| Compression | Requirements descriptor records that compression is requested; no automatic mapping until the selected Rebus algorithm/threshold is proven equivalent | Rebus compression extension and thresholds |
+| DataBus | Requirements descriptor records that DataBus is required and startup validates that a Rebus DataBus callback/registration was supplied | Rebus DataBus provider, store, credentials, lifecycle, and attachment semantics |
+| Host-local pipeline steps | No mapping because Rebus pipeline implementations and ordering anchors are different | User context, telemetry, and custom Rebus pipeline configuration |
+| Outbox | No inferred processor ownership; generated metadata exposes host role only | Outbox context factory and whether this process starts the processor |
+| Logging and timeouts | None | Full runtime composition |
+
+The conceptual generated API is:
+
+```csharp
+ArkGeneratedEndpoints.ConfigureArkRebusRouting<TAssemblyMarker>(routing);
+ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForHost<TAssemblyMarker>(
+    container);
+ArkGeneratedEndpoints.ConfigureArkRebusOptionsForHost<TAssemblyMarker>(options);
+await ArkGeneratedEndpoints
+    .SubscribeArkRebusEventsForHostAsync<TAssemblyMarker>(bus, cancellationToken)
+    .ConfigureAwait(false);
+
+var requirements =
+    ArkGeneratedEndpoints.GetArkRebusHostRequirements<TAssemblyMarker>();
+```
+
+The generator sees only contracts plus network/host declarations. It never
+discovers, references, verifies, or registers application handler
+implementations. Generated Rebus dispatch adapters implement the transport
+handler interface for the selected contracts, depend only on
+`IRequestProcessor`/`ICommandProcessor`, and delegate application dispatch to
+those processors. The developer registers every application handler in the
+application container.
+
+The final names may change, but routing and framework-owned dispatch-adapter
+registration are configuration-time operations, subscriptions are an explicit
+post-start async operation, and requirements are immutable generated metadata.
+A generated method must never silently choose a transport, connection,
+serializer, DataBus provider, subscription store, worker count, outbox
+processor, or application handler.
+
+### Glossary
+
+| Term | Meaning |
+| --- | --- |
+| **Network** | The shared messaging boundary that registers all participating message/event contracts, owns native transport behavior, and supplies portable setup metadata to Rebus generation. |
+| **Host** | One deployable participant referencing a network. A host may produce only, consume through generated Azure Functions triggers, or consume through an assisted Rebus composition. |
+| **Identity** | The optional portable logical name of a host. For a consumer it is also the name of its single receive queue. For publishing it grants ownership only when it equals the event's publisher owner. |
+| **Queue** | A point-to-point inbox. A message's owner queue is its destination; every network message whose owner queue equals a consumer identity is received by that host. Event publisher ownership never implies queue delivery. |
+| **Subscription** | An explicit host selection of a network event. Service Bus forwards that event into the subscriber host's identity queue. |
+| **Sender identity** | The stable identity written to `amf1-sender-identity` for the host that invoked `Send` or `Publish`. It is routing-neutral and remains the original sender when an outbox processor later dispatches the envelope. |
 
 Conceptual shape:
 
 ```csharp
 [MessagingNetwork(
+    Contracts = new[]
+    {
+        typeof(PrintBook),
+        typeof(BookPrintCompleted)
+    },
     Requires = MessagingCapabilities.Receive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
@@ -259,9 +347,7 @@ Conceptual shape:
     Compression = CompressionAlgorithm.Brotli,
     CompressionMinimumSizeBytes = 4096,
     MaximumTransportPayloadBytes = 240000,
-    Retry = typeof(BookRetryPolicy),
-    IncomingSteps = new[] { typeof(BookUserContextIncomingStep) },
-    OutgoingSteps = new[] { typeof(BookUserContextOutgoingStep) })]
+    Retry = typeof(BookRetryPolicy))]
 public sealed class BookMessagingNetwork;
 
 /// <summary>Retry/delivery policy shared by every host on the network.</summary>
@@ -288,11 +374,14 @@ public sealed class BookRetryPolicy : IMessagingRetryPolicy
 }
 
 // Consumer host (Azure Functions): owns the identity queue and a trigger.
+// It receives every network message whose OwnerQueue is
+// "printing-functions", plus its explicit event subscriptions.
 [assembly: MessagingHost(
     Identity = "printing-functions",
     Network = typeof(BookMessagingNetwork),
-    ReceivedContracts = new[] { typeof(PrintBook) },
-    Subscriptions = new[] { typeof(BookPrintCompleted) })]
+    Subscriptions = new[] { typeof(BookPrintCompleted) },
+    IncomingSteps = new[] { typeof(BookUserContextIncomingStep) },
+    OutgoingSteps = new[] { typeof(BookUserContextOutgoingStep) })]
 
 // Producer-only host (any process: Minimal API, client app, Functions):
 // the identity grants event-publish ownership only; no queue, no trigger,
@@ -300,7 +389,8 @@ public sealed class BookRetryPolicy : IMessagingRetryPolicy
 [assembly: MessagingHost(
     Identity = "web-frontend",
     Role = MessagingHostRole.Producer,
-    Network = typeof(BookMessagingNetwork))]
+    Network = typeof(BookMessagingNetwork),
+    OutgoingSteps = new[] { typeof(BookUserContextOutgoingStep) })]
 ```
 
 The exact `IMessagingRetryPolicy` member set is finalized by the implementation
@@ -317,27 +407,30 @@ rejects divergent effective options and capability-insufficient transports.
 
 ### Host roles
 
-Azure Functions is the only supported Processor/Consumer host and the only
-host with generated triggers. Producing is universal: any process that
-composes the transport-neutral messaging runtime — a Minimal API project, a
-console/client application, or a Functions app — participates as a producer
-through the configured `IBus` alone.
+Azure Functions is the only supported native-network Processor/Consumer host
+and the only host with generated triggers. Rebus consumers use the same
+host/contract metadata through the separate generated Rebus assistance above.
+Producing is universal: any process that composes the transport-neutral
+messaging runtime — a Minimal API project, a console/client application, or a
+Functions app — participates as a producer through the configured `IBus`
+alone.
 
 `Identity` on `MessagingHost` is optional and its meaning depends on the host
 role:
 
 - **Consumer (default role, named identity)**: the host processes the queue
-  named by its identity, declares the message contracts it receives, may
-  declare event subscriptions, and may publish events whose canonical owner
-  is that identity. Every received message contract must declare that same
-  identity as its owner queue. It gets at most one generated trigger.
+  named by its identity, automatically receives every network message whose
+  owner queue is that identity, may declare event subscriptions, and may
+  publish events whose canonical owner is that identity. Event publisher
+  ownership never causes automatic event receipt. It gets at most one
+  generated trigger.
 - **Producer (explicit `Role = Producer`, named identity)**: the identity
   grants event-publish ownership only. The host owns no queue, gets no
-  trigger, declares no received contracts or subscriptions, and selects no
-  handlers; declaring received contracts or subscriptions is a compile-time
-  diagnostic. The resource lifecycle creates only the topics for events owned
-  by that identity. Typical hosts: the Minimal API web frontend or a client
-  application that sends commands and publishes its own events.
+  trigger, declares no subscriptions, and selects no handlers; declaring
+  subscriptions is a compile-time diagnostic. The resource lifecycle creates
+  only the topics for events owned by that identity. Typical hosts: the
+  Minimal API web frontend or a client application that sends commands and
+  publishes its own events.
 - **Sender-only (no identity)**: no queue, no trigger, no subscription, and no
   publish; the host may still send messages to their declared owner queues.
 
@@ -359,31 +452,37 @@ public sealed record RecalculateOrder : ICommand<RecalculateOrder>;
 [Event(OwnerPublisher = "orders")]
 public sealed record OrderRecalculated : ICommand<OrderRecalculated>;
 
+[MessagingNetwork(
+    Contracts = new[] { typeof(RecalculateOrder), typeof(OrderRecalculated) })]
+public sealed class BillingMessagingNetwork;
+
 [assembly: MessagingHost(
     Identity = "billing",
     Network = typeof(BillingMessagingNetwork),
-    ReceivedContracts = new[] { typeof(RecalculateOrder) },
     Subscriptions = new[] { typeof(OrderRecalculated) })]
 ```
 
 The message/event attributes must not reference Azure SDK types or Rebus types.
-The assembly-level host attribute is host-specific and contains an optional
-identity, an optional role, received message contracts, subscriptions, and a
-reference to the shared network configuration. It must not contain independent serialization,
-compression, DataBus, transport, or retry values — and it never names an
-Azure technology: the Functions trigger binding is selected in the Functions
-host project setup instead (see §6). A host with no identity is
-valid only as a sender-only host and cannot declare received contracts or
-subscriptions.
+The network attribute registers all message/event contracts. The assembly-level
+host attribute is host-specific and contains an optional identity, an optional
+role, subscriptions, host-local incoming/outgoing steps, and a reference to the
+shared network configuration. It must not contain independent serialization,
+compression, DataBus, transport, or retry values — and it never names an Azure
+technology: the Functions trigger binding is selected in the Functions host
+project setup instead (see §6). A host with no identity is valid only as a
+sender-only host and cannot declare subscriptions.
 
 Message owner queues and named host identities use one portable queue-name
 contract so runtime transport selection never silently changes an address:
 3–63 lowercase ASCII letters, digits, or hyphens; the first and last character
 must be alphanumeric; consecutive hyphens are invalid. Event publisher
 identities use the same convention. The generator diagnoses violations and
-requires `ReceivedContracts` ownership to match `MessagingHost.Identity`
-ordinally. Event topic derivation remains Service Bus-specific and separately
-normalizes the logical contract-name segment with collision diagnostics.
+derives a consumer's message set from network contracts whose owner queue
+matches `MessagingHost.Identity` ordinally. It diagnoses unregistered
+contracts, duplicate network registrations, and subscriptions to events that
+are not in the network. Event topic derivation remains Service Bus-specific
+and separately normalizes the logical contract-name segment with collision
+diagnostics.
 
 ## 4. Envelope and compatibility model
 
@@ -402,6 +501,7 @@ Required metadata:
 | `amf1-corr-id` | Correlation identifier when present |
 | `amf1-senttime` | Invariant UTC send time |
 | `amf1-network` | Resolved identity of the producing network |
+| `amf1-sender-identity` | Resolved identity of the host that invoked `Send` or `Publish` |
 | `amf1-payload-attachment-id` | Shared DataBus attachment ID when claim-check applies |
 | `amf1-payload-attachment-length` | Expected stored byte length |
 | `amf1-payload-attachment-sha256` | Expected SHA-256 digest of stored bytes |
@@ -437,6 +537,12 @@ DataBus store: those hosts write the same identity. Wrong-store attachments
 still fail on length/hash checks. Wrong-namespace same-type topology is a
 documented operational assumption, not a wire check.
 Senders always write the resolved network identity.
+They also write `amf1-sender-identity` for both `Send` and `Publish`. A named
+host uses `MessagingHost.Identity`; an identity-less sender uses the stable
+host application identity required by runtime composition. The sender header
+is diagnostic/audit metadata only: it does not select a queue, grant publish
+ownership, or replace the original sender when a later outbox processor
+dispatches the persisted envelope.
 
 Failure details are not required envelope headers on successful or retried
 messages. When the receiving transport can attach reason/description or
@@ -775,14 +881,36 @@ use versioned host identities/contracts when zero-overlap rollout is required.
 
 ## 9. Restricted bus shim
 
-The Functions composition registers a restricted `IBus` implementation. Its
-public operations are one-way:
+The Functions composition registers a restricted `IBus` implementation. It is
+called a shim because it deliberately offers the familiar Rebus-like one-way
+surface needed by application handlers while omitting the larger Rebus API.
+That keeps the framework surface small and makes switching between a Rebus
+adapter and the native network bus a composition decision. Its public
+operations are one-way, and every operation accepts optional application
+headers:
 
-```text
-Send<T>(T message)
-Send<T>(T message, TimeSpan delay)
-Send<T>(T message, DateTimeOffset dueTime)
-Publish<T>(T event)
+```csharp
+Task Send<T>(
+    T message,
+    Dictionary<string, string>? additionalHeaders = null,
+    CancellationToken cancellationToken = default);
+
+Task Send<T>(
+    T message,
+    TimeSpan delay,
+    Dictionary<string, string>? additionalHeaders = null,
+    CancellationToken cancellationToken = default);
+
+Task Send<T>(
+    T message,
+    DateTimeOffset dueTime,
+    Dictionary<string, string>? additionalHeaders = null,
+    CancellationToken cancellationToken = default);
+
+Task Publish<T>(
+    T @event,
+    Dictionary<string, string>? additionalHeaders = null,
+    CancellationToken cancellationToken = default);
 ```
 
 The shim:
@@ -793,7 +921,7 @@ The shim:
   named host identity equals the event's owner publisher;
 - permits delayed `Send` only when the network declares `ScheduledSend`;
 - selects and applies the write protocol;
-- creates `amf1-*` type/correlation/message headers;
+- creates `amf1-*` type/correlation/message/sender-identity headers;
 - accepts additional caller headers while rejecting reserved-header overrides;
 - delegates delivery, scheduling, and publishing to the composed transport
   (Service Bus native scheduling, Storage Queue visibility delay, InMemory
@@ -829,8 +957,10 @@ Named positions place custom steps before or after deserialization, dispatch,
 serialization, send, and settlement. The built-in user-context step mirrors
 the existing `ark-user-*` behavior. The built-in OpenTelemetry step propagates
 W3C trace context and baggage and creates or continues an activity around
-processing. Both are opt-in per network and are resolved from the shared
-network pipeline registration.
+processing. Steps are registered per host, not per network: implementations
+can carry heavy host-only dependencies and hosts/environments may intentionally
+select different step sets or ordering. The network defines the stable stage
+contract only. Each host resolves its own steps through its composition root.
 
 Additional headers supplied to `Send` or `Publish` flow through outgoing steps.
 Reserved routing, content, compression, attachment, and identity headers
@@ -905,27 +1035,43 @@ non-interoperable topology modes:
 
 Both modes reuse the new transport-neutral `IBus`, `IFailed<T>`, contract
 ownership metadata, and application handlers. Rebus registers adapters to its
-native bus and failed-message API. Outbox selection follows the registered bus
-backend, not merely the presence of the framework `IBus` abstraction:
+native bus and failed-message API. The Rebus producer-only (`Role = Producer`)
+and Consumer hosts also reference the same network/host declarations so generated routing,
+host-filtered dispatch adapters, subscriptions, retry options, and requirements
+assist their composition. Both backends support durable SQL outbox enqueue; the
+registered bus backend selects the transport-specific producer and processor:
 
 | Registered `IBus` backend | Outbox composition |
 | --- | --- |
 | Rebus adapter | Existing `Ark.Tools.Outbox.Rebus` durable outbox |
-| Native Mediator Framework network bus | Non-durable passthrough outbox |
+| Native Mediator Framework network bus | Native envelope producer over `Ark.Tools.Outbox`/`Ark.Tools.Outbox.SqlServer`, drained by the network outbox processor |
 
 The existing sample `WebInterface` remains a Rebus-backed sender and keeps the
 real Rebus outbox with its processor disabled. The existing
 `RebusProcessor` remains Rebus-backed and keeps the real Rebus outbox with its
 processor enabled. Their registrations and behavior must not be replaced by
-the passthrough implementation.
+the native implementation.
 
-Only a host that registers the native Mediator Framework network bus registers
-the passthrough outbox. It buffers application sends until database commit and
-then sends directly through that bus. This passthrough is not durable outbox
-support: commit happens before send, so a send failure can leave committed
-state without a dispatched message and must be documented and tested.
+When the native bus is enlisted in `IOutboxContextCore`, `Send` and `Publish`
+serialize the complete AMF envelope and destination metadata into the SQL
+outbox in the same database transaction as application state. The persisted
+envelope includes `amf1-sender-identity`, so later dispatch preserves the
+original application host rather than reporting the processor as the sender.
+Calls made without an enlisted outbox context send directly.
 
-No durable outbox is introduced by the Functions messaging feature. No Rebus
+The native processor is framework-supported as an `IHostedService` registered
+as a participant in the same network with the reserved, hardcoded identity
+`outbox-processor`. It owns no receive queue or event subscriptions. It
+peek-locks durable outbox batches, sends their already validated raw envelopes
+through the configured network transport, and commits deletion only after the
+transport send succeeds. The reserved identity identifies the running
+processor operationally; it does not overwrite envelope sender identity or
+bypass public `Publish` ownership checks at enqueue time.
+
+The processor must run in a separate custom always-running host, such as a
+Worker Service or existing processor process. Azure Functions hosts may
+enqueue SQL outbox messages but must never start the processor because polling
+does not scale to zero cleanly. No Rebus receive worker or Rebus outbox
 processor is started inside a Functions host.
 
 ## 13. Test strategy and release gates
@@ -940,6 +1086,13 @@ processor is started inside a Functions host.
   compression, and DataBus claim-check.
 - Pipeline tests cover ordering, custom header propagation, user context,
   OpenTelemetry context, cancellation, and failure behavior.
+- Rebus generator tests cover Producer-only versus Consumer host output,
+  owner routing, identity-filtered contract adapters, awaited subscriptions,
+  exact retry mapping, absence of handler-symbol discovery, and the
+  non-generated runtime requirements boundary.
+- Native outbox tests cover atomic SQL enqueue for `Send`/`Publish`, original
+  sender preservation, processor locking/backoff, and rejection of processor
+  hosting inside Azure Functions.
 - A shared transport-contract conformance suite covers send, scheduled send,
   publish/forwarding, PeekLock settlement, delivery count, DLQ, and lock
   expiry. It runs fully against the InMemory transport and, where
@@ -981,13 +1134,14 @@ dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-t
 | Header/property size limits | Centralize bounded metadata and failure-detail truncation |
 | Compression changes payload bytes | Carry standard content-encoding and claim-check final compressed bytes |
 | DataBus attachment deleted during retry | Use provider lifecycle cleanup, never consumer deletion |
-| Custom propagation diverges between hosts | Use one opt-in transport pipeline and shared step contracts |
+| Custom propagation diverges between hosts | Keep stable pipeline stage contracts, make host-local step choices explicit, and cover each composition |
 | Unsupported protocol in an old message | Direct fail-fast DLQ with explicit diagnostics |
 | Second-level handler fails at exhaustion | Fail-fast → DLQ; otherwise abandon. Next deliveries are normal `T` until `2N` |
 | Service Bus cannot delay abandon | Immediate `AbandonMessageAsync`; retry storm accepted. `RetryDelay` applies only to Storage Queue `visibilityTimeout` |
 | QueueTrigger success-delete after SDK poison | AZM-11 verifies host delete-miss is benign; otherwise change only the immediate-DLQ path |
 | Storage Queue poison move is non-transactional | Duplicate poison copies are accepted; preserve the original message ID and document consumer-side deduplication when required |
-| Database commit succeeds but passthrough send fails | Document the non-durable gap; surface the send error and keep durable outbox support out of scope |
+| Functions scale-to-zero conflicts with outbox polling | Functions enqueue only; host the reserved `outbox-processor` `IHostedService` in a separate always-running process |
+| Outbox dispatch loses original publisher identity | Persist the complete validated envelope, including `amf1-sender-identity`, and dispatch through an internal raw-envelope seam |
 | Rolling subscription additions/removals | Accepted deployment risk: both adding and deleting subscriptions can be incompatible with old processors; stop/drain or version identities for incompatible rollouts |
 | Duplicate processing during settlement | Complete only after handler success; document at-least-once semantics |
 | InMemory semantics drift from Azure transports | One shared transport-contract conformance suite runs against every transport |

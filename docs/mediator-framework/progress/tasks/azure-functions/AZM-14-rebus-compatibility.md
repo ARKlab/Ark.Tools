@@ -1,0 +1,214 @@
+# AZM-14 — Rebus compatibility and generated host setup
+
+**Category**: azure-functions-messaging · **Priority**: compatibility
+**Depends on**: AZM-02, AZM-08, AZM-09, AZM-13
+**Scope**: FRAMEWORK API + REBUS GENERATOR + REBUS ADAPTER + SAMPLE COMPOSITION
+**Design**: [Sample proof](../../azure-functions-messaging-design.md#12-sample-proof), [Restricted bus shim](../../azure-functions-messaging-design.md#9-restricted-bus-shim)
+
+## Problem
+
+The Book application currently depends directly on Rebus `IBus` and Rebus
+`IFailed<T>`. The same application handlers cannot run on a Mediator Framework
+network until those APIs are transport-neutral. Rebus and Mediator Framework
+persisted messages remain wire-incompatible and must never share one logical
+bus. The sample also manually stitches generated routing into two Rebus hosts
+and has no generated event-subscription setup. The shared network and host
+definitions must assist both Rebus compositions without taking ownership of
+their infrastructure.
+
+## Execution map
+
+- **Rebus projects**: update `Ark.Tools.MediatorFramework.Rebus` and
+  `Ark.Tools.MediatorFramework.Rebus.Generators`; preserve
+  `RebusMessageAttribute` as a supported legacy surface.
+- **Application project**: replace `Rebus.Bus.IBus` and
+  `Rebus.Retry.Simple.IFailed<T>` dependencies in
+  `Ark.MediatorFramework.Sample.Application` with framework abstractions.
+- **Rebus host metadata**: both sample hosts reference the same messaging
+  network and declare distinct host roles:
+  `WebInterface` is producer-only (`Role = Producer`); `RebusProcessor` is the
+  named `Consumer`.
+- **Generated API**: generate host-specific routing, framework-owned Rebus
+  dispatch adapters, post-start event subscriptions, exact retry options, and
+  an immutable requirements descriptor. Follow the existing
+  `ConfigureArkRebusRouting<TAssemblyMarker>` pattern and keep every public
+  generated member XML-documented.
+- **Handler boundary**: generators inspect contracts and network/host metadata
+  only. They never discover, reference, validate, or register application
+  handler implementations. Developers register handlers in the application
+  container; generated adapters dispatch through
+  `IRequestProcessor`/`ICommandProcessor`.
+- **Runtime-owned composition**: transport/credentials, subscription storage,
+  serializer, concrete DataBus, compression implementation, logging,
+  worker/concurrency settings, timeouts, and outbox processor ownership remain
+  explicit host code.
+- **Rebus outbox**: preserve the existing
+  `ApplicationComposition.ConfigureRebusOutbox` calls in
+  `Ark.MediatorFramework.Sample.WebInterface/SampleComposition.cs` and
+  `Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs`;
+  host role alone must not infer whether an outbox processor starts.
+- **Stop condition**: no AMF/Rebus header translation and no attempt to consume
+  a persisted message produced by the other stack. Do not generate a complete
+  Rebus configuration or silently select infrastructure.
+
+## Implementation steps
+
+1. Move the restricted `IBus` and `IFailed<T>` contracts to a
+   transport-neutral Mediator Framework package.
+2. Make the Rebus generator consume the referenced network contract registry
+   and the current assembly's host declaration while preserving legacy
+   `[RebusMessage]` behavior. Diagnose conflicting dual declarations, missing
+   network/host references, multiple host declarations, and subscriptions to
+   events outside the network. Remove handler-symbol discovery and generated
+   missing-handler verification from this path.
+3. Generate owner routing for every registered message. Preserve
+   `ConfigureArkRebusRouting<TAssemblyMarker>` as the compatibility entry point
+   and make it derive routes from `[Message]` metadata.
+4. Generate host-filtered Rebus dispatch adapters solely from contract
+   metadata:
+   - producer-only (`Role = Producer`) emits/registers no receive adapters;
+   - the named `Consumer` emits contract adapters for every network message
+     whose owner queue equals its identity;
+   - the Consumer also emits contract adapters for its explicit event
+     subscriptions.
+   Each adapter depends only on `IRequestProcessor` or `ICommandProcessor` and
+   dispatches the received contract through that processor. A generated
+   registration method may register only these framework-owned adapters with
+   Rebus/SimpleInjector; it must not register or verify application handlers.
+   Developers keep application-handler registration in their composition root.
+5. Generate an async post-start subscription method that invokes Rebus
+   `Subscribe<TEvent>` once for every event in the Consumer host's
+   `Subscriptions`. Producer-only hosts emit a no-op method. Subscription
+   storage remains a required runtime configuration.
+6. Generate an options extension that maps only
+   `MaximumDeliveryCount` and `SecondLevelRetriesEnabled` to
+   `ArkRetryStrategy`. Preserve explicit runtime configuration for error queue
+   name, error-detail bounds, cooldown, and Rebus-only options that do not
+   alter the mapped attempt counts.
+7. Generate an immutable Rebus host requirements descriptor containing host
+   role/identity, input queue name when applicable, subscribed event types,
+   `MaximumHandlerDuration`, and whether compression/DataBus are required.
+   Runtime composition uses it for validation and diagnostics.
+8. Do not automatically map:
+   - `RetryDelay`, because Rebus retry/defer semantics differ from Storage
+     Queue visibility delay;
+   - serialization, because Rebus selects one serializer while the native
+     envelope supports header-driven multi-protocol reads;
+   - compression algorithm/threshold until an exact Rebus mapping is proven;
+   - DataBus provider/store/credentials or attachment semantics;
+   - host-local incoming/outgoing steps, because Rebus pipeline anchors differ.
+   For compression and DataBus, require explicit runtime callbacks/registration
+   acknowledgements when the generated requirements descriptor says they are
+   needed, and fail composition with a targeted diagnostic when they are
+   absent. Do not attempt to infer provider registration from Rebus internals.
+9. Register a Rebus `IBus` adapter that proxies `Send`, delayed `Send`,
+   `Publish`, optional `Dictionary<string, string>` additional headers, and
+   cancellation to the supported Rebus APIs. Rebus composition supplies its
+   host identity to enforce the same owner-matched publish rule; an
+   identity-less Rebus sender cannot publish.
+10. Map Rebus `IFailed<T>` to the framework `IFailed<T>` so application failure
+   handlers contain no Rebus types.
+11. Keep Rebus headers, wire serialization, pipeline implementations,
+    transport, worker, DataBus provider, and outbox runtime independent from
+    the native Mediator Framework transport. Document that the stacks are not
+    wire-interoperable; do not test for the absence of interoperability,
+    because it is neither required nor expected.
+12. Keep `WebInterface` registered as a Rebus one-way producer-only
+    (`Role = Producer`) sender with
+    `ConfigureRebusOutbox(..., startProcessor: false)`.
+13. Keep `RebusProcessor` registered as the Consumer with
+   `ConfigureRebusOutbox(..., startProcessor: true)` so it continues to run
+   the durable Rebus outbox processor. Preserve existing SQL and in-memory
+   outbox profiles and their cleanup/processing behavior.
+14. Make native Mediator Framework and Rebus bus compositions mutually
+   exclusive for one logical topology.
+
+## Guide contribution
+
+Update [`guide/rebus.md`](../../../guide/rebus.md),
+[`guide/azure-functions.md`](../../../guide/azure-functions.md), and
+[`guide/host-setup-and-composition.md`](../../../guide/host-setup-and-composition.md)
+with the common application APIs, separate topology modes, and
+non-interoperability. Document the generated-assistance matrix and show that
+subscriptions run after bus start while infrastructure remains explicit.
+
+## Sample extension
+
+Update the Book application handlers to depend only on the framework `IBus`
+and `IFailed<T>`. Keep the existing WebInterface and RebusProcessor durable
+Rebus outbox registrations as-is behind the Rebus adapter. Add the shared
+network definition to both Rebus host assemblies:
+
+- `WebInterface`: producer-only (`Role = Producer`); generated
+  routing/options/requirements, no Rebus receive adapters, input queue, or
+  subscriptions.
+- `RebusProcessor`: Consumer; generated identity-filtered message/event
+  dispatch adapters, routing, retry options, and post-start subscriptions.
+
+Replace the hand-written `SampleRebusEndpoints` forwarding helper with the
+generated host APIs. Keep application-handler registration, serializer,
+transport, outbox, user-context pipeline, worker count, subscription storage,
+and provider callbacks visible in the composition roots. In native Mediator
+Framework mode the WebInterface composes the configured framework `IBus`.
+Native SQL outbox integration is owned by AZM-14A.
+
+## Required test coverage
+
+- Legacy `[RebusMessage]` routing remains compatible.
+- New network message ownership metadata drives Rebus routing without Azure
+  types.
+- Conflicting legacy/new routing metadata is diagnosed.
+- Generator inputs contain contracts/network/host metadata and no application
+  handler symbols.
+- Producer-only generates routes but no receive adapters or subscriptions.
+- Consumer message dispatch adapters are exactly the network messages whose
+  owner queue equals its identity.
+- Consumer event dispatch adapters/subscriptions are exactly its declared
+  network event subscriptions.
+- Generated adapters resolve only `IRequestProcessor`/`ICommandProcessor`;
+  application handlers are developer-registered and never emitted or
+  registered by the generator.
+- Generated subscriptions are awaited after bus start and are no-ops for
+  producer-only hosts.
+- Generated retry options map maximum attempts and second-level enablement
+  exactly to `ArkRetryStrategy`.
+- Requirements expose handler duration and compression/DataBus needs; missing
+  required runtime callbacks fail startup explicitly.
+- Serializer, `RetryDelay`, transport, workers, pipeline, outbox processor,
+  subscription storage, and provider credentials are not silently generated.
+- Rebus adapter preserves supported send, publish, delay, additional headers,
+  sender identity, and cancellation.
+- Rebus and Mediator Framework `IFailed<T>` reach the same application failure
+  handler.
+- WebInterface keeps the real Rebus outbox with no local outbox processor.
+- RebusProcessor keeps the real Rebus outbox with its processor enabled.
+- Rebus and native Mediator Framework bus registrations conflict explicitly
+  for one logical topology.
+
+## Outcomes
+
+- Book application handlers are transport-neutral.
+- Both Rebus hosts are assisted by the shared network/host definitions without
+  hiding infrastructure composition.
+- Application handler discovery and registration remain developer-owned.
+- Rebus retains its durable outbox and richer feature set.
+- Mediator Framework networks remain separate, non-interoperable topologies.
+
+## Acceptance
+
+- [ ] Application code contains no Rebus `IBus` or Rebus `IFailed<T>` dependency.
+- [ ] Rebus adapters preserve existing behavior and legacy metadata.
+- [ ] Producer-only and Consumer Rebus setup is generated from network/host
+  definitions, including routing, filtered dispatch adapters, subscriptions,
+  and exact retry mapping.
+- [ ] Generators see only contracts and dispatch through processors; application
+  handlers are registered explicitly by developers.
+- [ ] Non-equivalent/provider-specific settings remain explicit and are
+  validated through generated requirements.
+- [ ] Existing WebInterface and RebusProcessor Rebus outbox registrations and
+  processing behavior remain unchanged.
+- [ ] Tests prove the two topology modes separately; non-interoperability is
+  documented, not tested.
+- [ ] The [task board](../README.md) status for AZM-14 is updated to this task's acceptance state.
+- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

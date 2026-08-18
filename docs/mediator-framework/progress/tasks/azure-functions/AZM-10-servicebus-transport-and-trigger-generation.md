@@ -64,10 +64,11 @@ dispatcher-less trigger code.
    inputs, honoring the Functions host assembly trigger-selection attribute
    (the transport-neutral `[MessagingHost]` attribute from AZM-02 has no
    trigger member).
-4. Emit one stable trigger for the named host identity queue when it declares
-   at least one received message contract or event subscription and the
-   assembly declares the Service Bus trigger selection. Do not discover
-   handler registrations in the generator.
+4. Emit one stable trigger for the named host identity queue when the network
+   contains at least one message whose owner queue equals that identity or the
+   host declares an event subscription, and the assembly declares the Service
+   Bus trigger selection. Do not discover handler registrations in the
+   generator; dispatch always goes through the processors.
 5. Emit subscription manifest entries that forward each subscribed event into
    the host identity queue. Do not emit direct subscription triggers.
 6. Emit a deterministic resource/subscription manifest for startup management

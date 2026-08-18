@@ -10,8 +10,8 @@ needed by the next task, and each task must extend the existing
 hosting, or transport behavior. Do not create a parallel messaging sample.
 Book background activities must remain runnable through either the standalone
 Rebus processor or the generated Azure Functions receiver.
-AZM task numbers, including the supplemental AZM-07A provider task, are the
-recommended implementation order. Each file's
+AZM task numbers, including the supplemental AZM-07A provider and AZM-14A
+native outbox tasks, are the recommended implementation order. Each file's
 Execution map is mandatory: an implementation must produce every listed
 artifact and must not defer task-owned guide/sample work to AZM-16.
 Every AZM task must leave the repository runnable: the full-solution build and
@@ -175,7 +175,7 @@ The architecture and accepted decisions are in
 The design baseline is
 [`../azure-functions-messaging-design.md`](../azure-functions-messaging-design.md).
 These tasks extend the Functions host without replacing the existing Rebus
-transport or starting a Rebus worker in a Function app.
+transport or starting a Rebus worker/outbox processor in a Function app.
 
 | Task | Title | Status |
 | --- | --- | --- |
@@ -193,7 +193,8 @@ transport or starting a Rebus worker in a Function app.
 | [AZM-11](azure-functions/AZM-11-storage-queue-transport.md) | Azure Storage Queue transport and trigger generation | Pending |
 | [AZM-12](azure-functions/AZM-12-resource-lifecycle.md) | Concurrency-safe Service Bus resource lifecycle | Pending |
 | [AZM-13](azure-functions/AZM-13-package-and-composition.md) | Functions messaging package and composition | Pending |
-| [AZM-14](azure-functions/AZM-14-rebus-compatibility-and-passthrough-outbox.md) | Rebus compatibility and passthrough outbox | Pending |
+| [AZM-14](azure-functions/AZM-14-rebus-compatibility.md) | Rebus compatibility and generated host setup | Pending |
+| [AZM-14A](azure-functions/AZM-14A-native-sql-outbox.md) | Native SQL outbox and hosted processor | Pending |
 | [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-host publish/subscribe sample | Pending |
 | [AZM-16](azure-functions/AZM-16-documentation-and-api-baseline.md) | User documentation, migration guidance, and API baseline | Pending |
 
