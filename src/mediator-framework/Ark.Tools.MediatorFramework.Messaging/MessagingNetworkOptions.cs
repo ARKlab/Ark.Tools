@@ -6,6 +6,16 @@ namespace Ark.MediatorFramework.Messaging;
 /// <summary>Immutable resolved settings for one messaging network.</summary>
 public sealed record MessagingNetworkOptions
 {
+    private const string _serializersParameterName = "serializers";
+    private const string _compressionMinimumSizeBytesParameterName = "compressionMinimumSizeBytes";
+    private const string _maximumTransportPayloadBytesParameterName = "maximumTransportPayloadBytes";
+    private const string _maximumDecompressedPayloadBytesParameterName = "maximumDecompressedPayloadBytes";
+    private const string _dataBusOffloadThresholdBytesParameterName = "dataBusOffloadThresholdBytes";
+    private const string _maximumDataBusAttachmentBytesParameterName = "maximumDataBusAttachmentBytes";
+    private const string _lockRenewalBufferParameterName = "lockRenewalBuffer";
+    private const string _maximumSchedulingDelayParameterName = "maximumSchedulingDelay";
+    private const string _retryPolicyParameterName = "retryPolicy";
+
     /// <summary>Creates resolved network settings.</summary>
     public MessagingNetworkOptions(
         Type networkType,
@@ -132,25 +142,25 @@ public sealed record MessagingNetworkOptions
     private void _validateSettings()
     {
         if (Serializers.Count == 0 || !Serializers.Contains(DefaultSerializer))
-            throw new ArgumentException("The default serializer must be one of the accepted serializers.", "serializers");
+            throw new ArgumentException("The default serializer must be one of the accepted serializers.", _serializersParameterName);
         if (CompressionMinimumSizeBytes < 0)
-            throw new ArgumentOutOfRangeException("compressionMinimumSizeBytes");
+            throw new ArgumentOutOfRangeException(_compressionMinimumSizeBytesParameterName);
         if (MaximumTransportPayloadBytes <= 0)
-            throw new ArgumentOutOfRangeException("maximumTransportPayloadBytes");
+            throw new ArgumentOutOfRangeException(_maximumTransportPayloadBytesParameterName);
         if (MaximumDecompressedPayloadBytes <= 0)
-            throw new ArgumentOutOfRangeException("maximumDecompressedPayloadBytes");
+            throw new ArgumentOutOfRangeException(_maximumDecompressedPayloadBytesParameterName);
         if (DataBusOffloadThresholdBytes <= 0)
-            throw new ArgumentOutOfRangeException("dataBusOffloadThresholdBytes");
+            throw new ArgumentOutOfRangeException(_dataBusOffloadThresholdBytesParameterName);
         if (MaximumDataBusAttachmentBytes <= 0)
-            throw new ArgumentOutOfRangeException("maximumDataBusAttachmentBytes");
+            throw new ArgumentOutOfRangeException(_maximumDataBusAttachmentBytesParameterName);
         if (LockRenewalBuffer < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException("lockRenewalBuffer");
+            throw new ArgumentOutOfRangeException(_lockRenewalBufferParameterName);
         if (MaximumSchedulingDelay < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException("maximumSchedulingDelay");
+            throw new ArgumentOutOfRangeException(_maximumSchedulingDelayParameterName);
         if (RetryPolicy.MaximumDeliveryCount < 1
             || (RetryPolicy.SecondLevelRetriesEnabled && RetryPolicy.MaximumDeliveryCount < 2))
-            throw new ArgumentOutOfRangeException("retryPolicy", "MaximumDeliveryCount must be at least 1, or at least 2 with second-level retries.");
+            throw new ArgumentOutOfRangeException(_retryPolicyParameterName, "MaximumDeliveryCount must be at least 1, or at least 2 with second-level retries.");
         if (RetryPolicy.MaximumHandlerDuration < TimeSpan.Zero || RetryPolicy.RetryDelay < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException("retryPolicy", "Retry durations cannot be negative.");
+            throw new ArgumentOutOfRangeException(_retryPolicyParameterName, "Retry durations cannot be negative.");
     }
 }
