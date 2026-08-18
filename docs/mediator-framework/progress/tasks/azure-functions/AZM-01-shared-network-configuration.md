@@ -131,12 +131,12 @@ compiles and is validated even though nothing consumes it yet.
 
 ## Acceptance
 
-- [ ] Network configuration API, `MessagingCapabilities`, and runtime options
+- [x] Network configuration API, `MessagingCapabilities`, and runtime options
   are public, documented, and covered by API-surface tests.
-- [ ] Every host references exactly one validated network profile.
-- [ ] Shared settings and capability declarations are enforced; no technology
+- [x] Every host references exactly one validated network profile.
+- [x] Shared settings and capability declarations are enforced; no technology
   member exists.
-- [ ] Book sample contains the compiling network profile.
-- [ ] The [task board](../README.md) status for AZM-01 is updated to this task's acceptance state.
+- [x] Book sample contains the compiling network profile.
+- [x] The [task board](../README.md) status for AZM-01 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

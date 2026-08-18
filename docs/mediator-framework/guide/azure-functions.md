@@ -5,6 +5,35 @@ Azure Functions HTTP boundary. The Functions host is a host adapter; it does
 not change the application composition or move Rebus receiving into the
 Function process.
 
+## 1.1 Shared messaging network
+
+Native messaging participants reference one transport-neutral network profile.
+The profile declares capabilities; the host selects the concrete transport.
+
+```csharp
+[MessagingNetwork(
+    MessagingCapabilities.Receive |
+    MessagingCapabilities.PubSub |
+    MessagingCapabilities.ScheduledSend,
+    DefaultSerializer = MessagingSerializationProtocol.Json,
+    Compression = MessagingCompressionAlgorithm.Brotli,
+    RetryPolicy = typeof(BookMessagingRetryPolicy))]
+public sealed class BookMessagingNetwork;
+```
+
+`Send` is implicit. `Receive`, `PubSub`, and `ScheduledSend` are the optional
+capabilities. Service Bus supports all three; Storage Queue supports
+`Receive` and `ScheduledSend`, but not `PubSub`; InMemory supports all three.
+Startup validation rejects a transport that does not provide every declared
+capability.
+
+Network settings are shared: serializers, compression, payload limits, retry
+policy, scheduling limits, and resource lifecycle must not be overridden by a
+participant. Participant identities and subscriptions remain participant-local.
+Connection names and managed-identity keys may be declared, but secrets belong
+in host configuration or managed identity, never in attributes. All participants
+on a network must use the same transport resources and DataBus provider.
+
 ## 1. Add the package and marker
 
 ```xml

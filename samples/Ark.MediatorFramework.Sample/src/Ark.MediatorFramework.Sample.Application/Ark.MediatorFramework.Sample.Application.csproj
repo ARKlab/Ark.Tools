@@ -26,6 +26,7 @@
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Polly" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
+    <ProjectReference Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Messaging\Ark.Tools.MediatorFramework.Messaging.csproj" />
   </ItemGroup>
 
 </Project>
