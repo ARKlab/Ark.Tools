@@ -6,7 +6,7 @@
 
 ## Problem
 
-Transport settings currently appear as host-local defaults. Hosts that
+Transport settings currently appear as host-local defaults. Participants that
 communicate on one network must instead share one explicit configuration for
 required capabilities, serialization, compression, DataBus offload, retries,
 and resource lifecycle while retaining independent identities and
@@ -25,7 +25,8 @@ requires.
 - **Runtime project**: create the transport-neutral
   `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging` project
   following existing project conventions; resolve the network descriptor and
-  immutable options there. Producer-only hosts (Minimal API, client apps)
+  immutable options there. Producer-only participants (Minimal API, client
+  apps)
   reference this package without any Functions dependency.
 - **Generator model**: add symbol discovery and diagnostics under
   `Ark.Tools.MediatorFramework.AzureFunctions.Generators`; keep Roslyn types
@@ -50,7 +51,7 @@ requires.
    compression, payload, DataBus offload/integrity thresholds, retry,
    lock-renewal, scheduling-limit,
    and resource-lifecycle members. Pipeline steps are deliberately not network
-   settings; AZM-06 registers them per host. `IMessagingRetryPolicy`
+   settings; AZM-06 registers them per participant. `IMessagingRetryPolicy`
    includes `MaximumDeliveryCount` (N), `SecondLevelRetriesEnabled`,
    `MaximumHandlerDuration`, and `RetryDelay`. Document that entity/host max
    delivery is `2N` when second-level retries are enabled and `N` otherwise,
@@ -59,11 +60,17 @@ requires.
    member; concrete provider composition owns its minimum attachment lifetime.
    Validate `MaximumDeliveryCount >= 1`, and require `>= 2` when second-level
    retries are enabled so the normal handler always receives delivery 1.
-3. Support one or more network profiles, with each host referencing exactly
+   Default the maximum transport payload threshold to 240 000 bytes (safe for
+   Service Bus standard tier, leaving header headroom); document that the
+   effective offload limit is the smaller of this value and the composed
+   transport's hard ceiling (AZM-05), and that a network intended for Storage
+   Queue should set the threshold at or below 48 KiB.
+3. Support one or more network profiles, with each participant referencing
+   exactly
    one profile by type.
 4. Keep secrets out of attributes; allow connection/configuration key names
    and managed-identity resolution through host configuration.
-5. Reject at compile time: missing or duplicate profiles and host-local
+5. Reject at compile time: missing or duplicate profiles and participant-local
    overrides of shared settings. Reject at startup: divergent effective
    options and a composed transport that does not support every declared
    capability (the transport seam arrives in AZM-05; specify the startup
@@ -84,11 +91,13 @@ requires.
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
 network declaration, the capability model (declare capabilities at definition
 time, select the transport at runtime), the capability/transport matrix, the
-host reference, shared-settings table, and secret configuration rules.
-Document that identities and subscriptions remain host-local while transport
-behavior is network-shared, and that all hosts on one network share the same
+participant reference, shared-settings table, and secret configuration rules.
+Document that identities and subscriptions remain participant-local while
+transport behavior is network-shared, and that all participants on one network
+share the same
 runtime transport and physical resources as a documented deployment
-assumption. Document that pipeline implementations are host-local because
+assumption. Document that pipeline implementations are participant-local
+because
 their dependencies and environment-specific choices may differ. Document that
 receive accepts every installed supported codec declared by the message
 headers.
@@ -97,15 +106,15 @@ headers.
 
 Extend `samples/Ark.MediatorFramework.Sample` with one Book background network
 profile declaring `Receive | PubSub | ScheduledSend`, referenced by every
-Mediator Framework messaging host added by later tasks. The profile compiles
-and is validated even though nothing consumes it yet.
+Mediator Framework messaging participant added by later tasks. The profile
+compiles and is validated even though nothing consumes it yet.
 
 ## Required test coverage
 
 - Network profile discovery and deterministic identity.
-- Host reference to a valid profile.
+- Participant reference to a valid profile.
 - Missing, duplicate, and divergent profile diagnostics.
-- Shared settings cannot be overridden by a host attribute.
+- Shared settings cannot be overridden by a participant attribute.
 - `Validate` accepts a transport capability set that is a superset of
   `Requires` and rejects any missing declared capability with a diagnostic
   naming the capability.
@@ -118,7 +127,7 @@ and is validated even though nothing consumes it yet.
 
 - Network-wide transport behavior has one explicit source of truth.
 - Networks declare required capabilities; transports are runtime decisions.
-- Host identities can scale independently without configuration drift.
+- Participant identities can scale independently without configuration drift.
 
 ## Acceptance
 

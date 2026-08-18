@@ -34,16 +34,24 @@ bytes to a shared DataBus when they still exceed the configured limit.
 1. Define a transport-neutral DataBus abstraction equivalent to Rebus
    `IDataBus`, `DataBusAttachment`, and storage-management operations.
 2. Support one runtime-composed provider used by every sender and consumer on
-   the network regardless of the composed transport. All hosts composing the
+   the network regardless of the composed transport. All participants
+   composing the
    same network must compose the same provider, store, and compatible options;
-   this is a documented deployment assumption validated per host.
-3. Add network-configured maximum payload and minimum compression-size settings,
-   with defaults derived from current Azure transport limitations.
+   this is a documented deployment assumption validated per participant.
+3. Add network-configured maximum payload and minimum compression-size
+   settings.
+   Default the maximum payload threshold to 240 000 bytes (safe for Service
+   Bus standard tier). The effective offload limit is the smaller of the
+   configured threshold and the composed transport's hard ceiling (AZM-05);
+   Storage Queue's ceiling is 49 152 bytes of binary envelope before base64
+   encoding. Startup warns when the configured threshold exceeds the composed
+   transport's ceiling.
 4. Implement gzip and Brotli content encodings selected by network configuration.
 5. Omit `amf1-content-encoding` for uncompressed payloads; emit `gzip` or `br`
    for compressed payloads.
-6. Serialize, compress when eligible, compare final bytes with the transport
-   threshold, and store those exact compressed bytes in DataBus when needed.
+6. Serialize, compress when eligible, compare final bytes with the effective
+   payload limit (smaller of network threshold and transport ceiling), and
+   store those exact compressed bytes in DataBus when needed.
 7. Emit `amf1-payload-attachment-id`, stored byte length, and SHA-256 metadata
    for transparent consumer retrieval and integrity validation.
 8. Fetch attachments before decompression and deserialization. Missing,
@@ -56,8 +64,11 @@ bytes to a shared DataBus when they still exceed the configured limit.
 11. Put `MinimumAttachmentLifetime` on concrete provider composition, not the
     network. Validate it against bounded known windows (maximum scheduled
     delay plus retry/lock settings). Document that operators must additionally
-    cover entity TTL, backlog, host outages, and deployment delays, which the
-    framework cannot prove.
+    cover entity TTL, backlog, host outages, deployment delays, and outbox
+    dwell time when the native SQL outbox is enlisted (AZM-14A), which the
+    framework cannot prove. Document that a rolled-back enqueue transaction
+    can leave an orphaned attachment that provider lifecycle cleanup
+    eventually removes.
 
 ## Guide contribution
 
@@ -83,8 +94,8 @@ transport coverage lands with AZM-10/AZM-11.
 - Shared attachment remains readable across retry and two subscribers.
 - Retention cleanup is external to consumer settlement.
 - Provider minimum lifetime validation covers bounded scheduling/retry values.
-- Documentation includes entity TTL, backlog, outage, and deployment-delay
-  lifetime considerations.
+- Documentation includes entity TTL, backlog, outage, deployment-delay, and
+  outbox dwell-time lifetime considerations, plus rollback orphan cleanup.
 
 ## Outcomes
 
@@ -95,7 +106,9 @@ transport coverage lands with AZM-10/AZM-11.
 ## Acceptance
 
 - [ ] Gzip and Brotli are implemented behind network configuration.
-- [ ] Final compressed bytes, not original bytes, determine DataBus offload.
+- [ ] Final compressed bytes, not original bytes, determine DataBus offload,
+  using the effective limit (smaller of network threshold and transport
+  ceiling).
 - [ ] Claim-check is transport-neutral and proven over InMemory.
 - [ ] Consumers retrieve, validate, decompress, and deserialize transparently.
 - [ ] Provider lifecycle cleanup, not consumers, owns deletion.

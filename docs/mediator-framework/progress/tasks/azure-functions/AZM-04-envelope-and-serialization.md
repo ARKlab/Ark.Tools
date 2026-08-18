@@ -38,8 +38,8 @@ so every transport adapter can map it to its native message shape.
 2. Define `amf1-*` header constants, including Rebus-compatible
    `amf1-content-type`, optional `amf1-content-encoding`,
    `amf1-payload-attachment-id`, `amf1-network` carrying the resolved producer
-   network identity, and `amf1-sender-identity` carrying the host that invoked
-   `Send` or `Publish`.
+   network identity, and `amf1-sender-identity` carrying the participant that
+   invoked `Send` or `Publish`.
 3. Define a transport-neutral envelope abstraction with a binary payload and
    string metadata. Do not emit a delivery-count header; expose native
    delivery count only through runtime context.
@@ -94,7 +94,7 @@ exists yet.
 - Unknown contract type and malformed payload.
 - Correlation/message IDs and sent time use invariant formats.
 - Sender identity round-trips for both send and publish, including an
-  identity-less host's composition-supplied application identity.
+  identity-less participant's composition-supplied application identity.
 - Optional content-encoding and DataBus attachment headers survive envelope
   round trips without being interpreted.
 - Type-confusion attempts cannot resolve contracts outside the generated

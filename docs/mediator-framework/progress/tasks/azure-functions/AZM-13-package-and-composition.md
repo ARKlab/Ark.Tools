@@ -23,13 +23,14 @@ SimpleInjector registrations.
   versions, and lock files.
 - **Producer composition**: expose a producer-only registration usable from
   any process (Minimal API, console client, Functions) that composes only the
-  network options, transport, host-local outgoing pipeline, DataBus, the
+  network options, transport, participant-local outgoing pipeline, DataBus,
+  the
   restricted `IBus`, a stable host application identity for
   `amf1-sender-identity`, and topic `Ensure` for events it owns; it must not
   pull Functions dependencies or register dispatch, triggers, queues, or
   subscriptions.
 - **Composition**: expose one startup extension that accepts/resolves the
-  generated network/host descriptor, selects the runtime transport
+  generated network/participant descriptor, selects the runtime transport
   (`UseInMemory`/`UseAzureServiceBus`/`UseAzureStorageQueue`-style), validates
   transport capabilities against the network declaration, and registers the
   native bus, codecs, pipeline, DataBus, dispatcher, settlement, and lifecycle
@@ -47,16 +48,21 @@ SimpleInjector registrations.
    following the existing HTTP package shape.
 2. Reference only the approved Azure Functions Worker and Service Bus/Storage
    Queue dependencies, centralizing versions and lock files.
-3. Add startup extensions for optional host identity and role, runtime
+3. Add startup extensions for optional participant identity and role, runtime
    transport selection with capability validation, resource lifecycle,
    serializers, retry settings, scoped dispatch, restricted bus registration,
-   host-level pipeline steps, and shared DataBus configuration. Include the
+   participant-level pipeline steps, and shared DataBus configuration. Include
+   the
    producer-only registration path for non-Functions processes. Startup must
    also fail when the composed runtime transport does not match the trigger
    binding recorded in the generated manifest of a receive-capable Functions
-   host, naming both; producer-only and InMemory-pump hosts are exempt,
+   host, naming both; producer-only participants and InMemory-composed
+   participants are exempt,
    because the generator-side assembly attribute and the runtime transport
-   selection are different files that can drift.
+   selection are different files that can drift. Functions composition rejects
+   the InMemory receive transport outright: the InMemory pump is a
+   long-running receive worker, so InMemory consumer participants are hosted
+   in test or custom hosts, never in a Functions app.
 4. Provide explicit, mutually exclusive composition paths for Rebus versus a
    Mediator Framework messaging network. Do not register both bus
    implementations for one logical topology.
@@ -65,14 +71,19 @@ SimpleInjector registrations.
    the intended receivers. Functions may register the AZM-14A native outbox
    producer/enlistment seam, but polling is hosted elsewhere.
 6. Add configuration validation for missing connections, credentials, entity
-   settings, sender application identity, and conflicting host declarations.
+   settings, sender application identity, and conflicting participant
+   declarations.
+   Composition-supplied identities must not use reserved names:
+   `outbox-processor` is rejected for participant identities, and queue names
+   ending in `-poison` are rejected.
 7. Add package-content and trim/analyzer checks.
 
 ## Guide contribution
 
 Update [`guide/host-setup-and-composition.md`](../../../guide/host-setup-and-composition.md)
 and [`guide/azure-functions.md`](../../../guide/azure-functions.md) with package
-registration, shared network resolution, host-local pipeline registration, and
+registration, shared network resolution, participant-local pipeline
+registration, and
 the prohibition on starting Rebus workers or outbox processors in Functions.
 
 ## Sample extension
@@ -93,11 +104,16 @@ handlers while selecting their own receiver host.
   trigger binding fails startup naming both.
 - A producer-only composition resolves a working `IBus` in a plain host
   (no Functions references) and cannot resolve dispatch or trigger services.
+- Composition-supplied identities using reserved names (`outbox-processor`,
+  `-poison` queue suffix) fail startup with an explicit diagnostic.
+- Functions composition of the InMemory receive transport fails startup with
+  an explicit diagnostic.
 - Managed identity and external connection configuration are supported without
   secrets in source.
 - Rebus and Mediator Framework bus compositions are independent and mutually
   exclusive per logical topology.
-- Pipeline registration is host-local and deterministic; DataBus composition
+- Pipeline registration is participant-local and deterministic; DataBus
+  composition
   remains shared by the network.
 - Azure Blob DataBus composition resolves with data-plane credentials and does
   not require lifecycle-policy management permissions.

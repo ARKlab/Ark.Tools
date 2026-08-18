@@ -1,4 +1,4 @@
-# AZM-15 — Three-host publish/subscribe sample
+# AZM-15 — Three-participant publish/subscribe sample
 
 **Category**: azure-functions-messaging · **Priority**: demonstration
 **Depends on**: AZM-08, AZM-09, AZM-10, AZM-12, AZM-13, AZM-14, AZM-14A
@@ -13,8 +13,9 @@ contract assembly while using different handlers and independent queues.
 ## Execution map
 
 - **Projects**: extend the existing sample solution with explicitly named
-  publisher (producer-only, non-Functions process), subscriber-A, and
-  subscriber-B Functions host projects or
+  publisher (producer-only participant in a non-Functions process) and
+  subscriber-A/subscriber-B Functions host projects, each hosting a distinct
+  consumer participant, or
   equivalent launchable host compositions; do not create another sample root.
 - **Contracts/handlers**: reuse Book application contracts and business
   services. Publisher and subscribers reference the same contract assembly;
@@ -23,11 +24,14 @@ contract assembly while using different handlers and independent queues.
   one identity queue and one forwarding subscription.
 - **Two modes**: Book printing scenarios run separately through Rebus and
   Mediator Framework. Tests create messages through the matching sender stack.
-  The Rebus producer-only (`Role = Producer`) and Consumer hosts use the same
-  network/host declarations and AZM-14 generated setup.
-- **Transport**: automated three-host tests compose the InMemory transport;
+  The Rebus producer-only (`Role = Producer`) and Consumer participants use
+  the same
+  network/participant declarations and AZM-14 generated setup.
+- **Transport**: automated three-participant tests compose the InMemory
+  transport in
+  test hosts;
   the Service Bus composition is demonstrated through configuration, generated
-  triggers, and optional explicit live runs.
+  triggers, and optional explicit live/emulator runs.
 - **Operations**: provide local settings examples, IaC entity list, startup
   commands, bounded readiness/idle waits, and cleanup commands. Include the
   separate always-running native outbox processor host.
@@ -36,11 +40,14 @@ contract assembly while using different handlers and independent queues.
 
 1. Add transport-neutral message and event contracts to the sample's
    appropriate contract/application boundary.
-2. Add a publisher host with its identity, `Role = Producer`, and no event
-   handler. Host it as a non-Functions process (for example the Minimal API
+2. Add a publisher participant with its identity, `Role = Producer`, and no
+   event
+   handler. Run it in a non-Functions host (for example the Minimal API
    web host or a console producer) composing only the configured `IBus`, to
    prove producer-only participation outside Azure Functions.
-3. Add two subscriber Functions hosts with distinct identity queues, generated
+3. Add two subscriber participants, each hosted in its own Functions host,
+   with
+   distinct identity queues, generated
    forwarding subscriptions, and different handlers for the same event.
 4. Demonstrate direct queue send, Service Bus publish, scheduled send, context
    propagation, compression, DataBus claim-check, and typed handler binding.
@@ -54,8 +61,8 @@ contract assembly while using different handlers and independent queues.
 8. Add bounded tests proving one topic publication reaches both subscriber
    identity queues and both handlers observe the same contract with distinct
    effects.
-9. Document local configuration, IaC expectations, and the absence of a local
-   emulator when applicable.
+9. Document local configuration, IaC expectations, and the Azurite / Azure
+   Service Bus emulator (Docker) setup for local runs.
 
 ## Guide contribution
 
@@ -87,10 +94,12 @@ registered by each application composition root.
 - Queue send reaches the declared owner.
 - Scheduling is observable without arbitrary sleeps.
 - Failure and second-level behavior is visible in assertions.
-- Hosts can start concurrently without subscription corruption.
+- Hosts can start concurrently without subscription corruption: concurrent
+  instances of one participant and of different participants reconcile safely.
 - Rebus and Mediator Framework modes run the same application behavior from
   separately produced transport messages.
-- Rebus producer-only/Consumer compositions use generated network/host setup;
+- Rebus producer-only/Consumer compositions use generated network/participant
+  setup;
   Consumer subscriptions are awaited after bus start.
 - Rebus generation sees contracts only; application handlers remain
   developer-registered and are reached through the processors.

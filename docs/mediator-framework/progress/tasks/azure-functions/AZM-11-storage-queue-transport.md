@@ -17,7 +17,9 @@ generated Azure Functions QueueTrigger.
 ## Execution map
 
 - **Transport**: implement the Storage Queue transport
-  (`Capabilities = Receive | ScheduledSend`; `Send` implicit; no `PubSub`) in
+  (`Capabilities = Receive | ScheduledSend`; `Send` implicit; no `PubSub`;
+  hard payload ceiling 49 152 bytes of binary envelope before base64 — 64 KiB
+  encoded) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract.
 - **Encoding**: the queue message body is a text-safe encoded envelope
   carrying the binary payload and the full `amf1-*` header set. The encoder
@@ -42,15 +44,18 @@ generated Azure Functions QueueTrigger.
   duplicate poison copies are acceptable and retain the original message ID.
 - **Trigger generation**: extend
   `Ark.Tools.MediatorFramework.AzureFunctions.Generators` to emit a
-  QueueTrigger for consumer hosts whose Functions host assembly declares
-  `MessagingFunctionsTriggerBinding.StorageQueue`, reusing the AZM-10
+  QueueTrigger for consumer participants whose Functions host assembly
+  declares
+  `[MessagingFunctionsHost(MessagingFunctionsTriggerBinding.StorageQueue)]`,
+  reusing the AZM-10
   generation pipeline and the AZM-09 dispatcher. Verify the exact installed
   `Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues` API before
   emitting attributes.
 - **Conformance**: run the send, scheduled-send, and receive/settlement groups
   of the AZM-05 transport conformance suite against Azurite (already used by
   repository tests). `PubSub` groups do not apply.
-- **Runnable state**: at task end a consumer host can receive Book messages
+- **Runnable state**: at task end a consumer participant can receive Book
+  messages
   from Azurite through the transport pump, and the generated QueueTrigger
   compiles and dispatches; full solution builds and tests green.
 - **Stop condition**: no topics, no subscriptions, no publish. `PubSub`
@@ -60,9 +65,11 @@ generated Azure Functions QueueTrigger.
 ## Implementation steps
 
 1. Implement the transport send path: encode the envelope (headers + binary
-   payload) into a single text-safe body within Storage Queue size limits;
-   account for encoding overhead when comparing against the network maximum
-   payload threshold.
+   payload) into a single text-safe body within Storage Queue size limits
+   (hard ceiling: 49 152 bytes of binary envelope before base64 — 64 KiB
+   encoded);
+   the bus offloads to DataBus above the effective limit (smaller of the
+   network threshold and this ceiling) before encoding.
 2. Implement scheduled send using the initial visibility delay, validating
    duration and due-time variants against transport and network limits.
 3. Implement the Functions receive adapter: bind `QueueMessage`, pass
@@ -70,8 +77,11 @@ generated Azure Functions QueueTrigger.
    honor the Execution-map settlement table. Do not call `UpdateMessage` to
    emulate PeekLock abandon; throw instead. During function execution the
    host already extends visibility; do not fight that.
-4. Implement the poison-queue DLQ: deterministic `<queue>-poison` name,
-   created through the management seam. Immediate DLQ uses `QueueClient`
+4. Implement queue provisioning and the poison-queue DLQ: startup ensures the
+   participant identity queue and the deterministic `<queue>-poison` companion
+   queue through the management seam when resource creation is enabled;
+   both may be IaC-precreated, ensure is idempotent, and queues are never
+   auto-deleted. Immediate DLQ uses `QueueClient`
    send + delete + return as specified above.
 5. Wire the retry policy: AZM-09 runs `IFailed<T>` at `DequeueCount == N`
    only when the network enables second-level retries. `host.json`
@@ -80,11 +90,12 @@ generated Azure Functions QueueTrigger.
 6. Declare `Capabilities = Receive | ScheduledSend`; verify AZM-01 startup
    validation rejects this transport for networks declaring `PubSub`, naming
    the capability.
-7. Emit the generated QueueTrigger for `AzureStorageQueue`-bound consumer
-   hosts: one trigger per identity queue, thin async methods passing the
+7. Emit the generated QueueTrigger for `StorageQueue`-bound consumer
+   participants:
+   one trigger per identity queue, thin async methods passing the
    binding object and cancellation token to the settlement adapter in
    `Ark.Tools.MediatorFramework.AzureFunctions`, no per-contract logic.
-8. Diagnose subscriptions or event usage on hosts whose network lacks
+8. Diagnose subscriptions or event usage on participants whose network lacks
    `PubSub` (already covered by AZM-02 capability validation; add fixtures for
    the Storage Queue binding).
 9. Reuse the shared DataBus claim-check unchanged: oversized compressed
@@ -116,7 +127,8 @@ QueueTriggers, and Azurite-based testing.
 
 ## Sample extension
 
-Add a Book sample fixture composing a consumer host with the Storage Queue
+Add a Book sample fixture composing a consumer participant with the Storage
+Queue
 transport against Azurite: send, scheduled send, receive, retry exhaustion,
 and poison-queue dead-letter of a Book background message on a `Send`-only
 network profile.
@@ -142,6 +154,9 @@ network profile.
 - One portable identity/owner queue is used unchanged by Service Bus and
   Storage Queue trigger manifests.
 - Conformance send/receive groups pass against Azurite.
+- Startup ensures the participant identity queue and the `<queue>-poison`
+  companion queue when resource creation is enabled, coexists with
+  IaC-precreated queues, and never auto-deletes queues.
 - Fail-fast and malformed envelopes are SDK-moved to `<queue>-poison` with
   metadata, then the function returns successfully; the original is gone.
 - Abandon is a thrown exception; the next visible time honors

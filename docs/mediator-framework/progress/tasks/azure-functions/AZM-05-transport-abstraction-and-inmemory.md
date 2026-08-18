@@ -36,6 +36,9 @@ infrastructure.
 
 1. Define the transport contract consuming the AZM-04 envelope:
    - `MessagingCapabilities Capabilities { get; }`;
+   - a hard maximum payload ceiling in bytes, already net of
+     transport-specific encoding overhead, used with the network threshold to
+     compute the effective payload limit (AZM-07);
    - `SendAsync(queueName, envelope, ctk)`;
    - `SendAsync(queueName, envelope, scheduledFor, ctk)` valid only when
      `ScheduledSend` is declared;
@@ -63,10 +66,15 @@ infrastructure.
      delivery are testable without real waits;
    - scheduled envelopes become visible at their due time;
    - thread-safe under concurrent senders, competing consumers, and
-     settlement races.
+     settlement races;
+   - no hard payload ceiling (`long.MaxValue`-style unbounded): the network
+     threshold applies alone.
 4. Implement a runtime message pump for receive-capable transports: a
    start/stop async loop that takes locked deliveries and invokes a supplied
-   callback. AZM-09 plugs the dispatcher into this pump; in this task the pump
+   callback. The pump is a long-running receive worker hosted only by test or
+   custom hosts, never inside an Azure Functions app; AZM-13 rejects InMemory
+   receive in Functions composition. AZM-09 plugs the dispatcher into this
+   pump; in this task the pump
    is exercised with test callbacks only.
 5. Add startup composition: registering a transport validates its
    `Capabilities` against the network `Requires` using the AZM-01 `Validate`
