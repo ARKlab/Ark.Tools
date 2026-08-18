@@ -1,0 +1,102 @@
+# AZM-15 — Three-host publish/subscribe sample
+
+**Category**: azure-functions-messaging · **Priority**: demonstration
+**Depends on**: AZM-08, AZM-09, AZM-10, AZM-12, AZM-13, AZM-14
+**Scope**: SAMPLE + INTEGRATION
+**Design**: [Sample proof](../../azure-functions-messaging-design.md#12-sample-proof)
+
+## Problem
+
+The feature must prove that one publisher and multiple subscribers can share a
+contract assembly while using different handlers and independent queues.
+
+## Execution map
+
+- **Projects**: extend the existing sample solution with explicitly named
+  publisher (producer-only, non-Functions process), subscriber-A, and
+  subscriber-B Functions host projects or
+  equivalent launchable host compositions; do not create another sample root.
+- **Contracts/handlers**: reuse Book application contracts and business
+  services. Publisher and subscribers reference the same contract assembly;
+  subscriber effects must be observably different.
+- **Topology**: publisher identity owns the event topic; each subscriber has
+  one identity queue and one forwarding subscription.
+- **Two modes**: Book printing scenarios run separately through Rebus and
+  Mediator Framework. Tests create messages through the matching sender stack.
+- **Transport**: automated three-host tests compose the InMemory transport;
+  the Service Bus composition is demonstrated through configuration, generated
+  triggers, and optional explicit live runs.
+- **Operations**: provide local settings examples, IaC entity list, startup
+  commands, bounded readiness/idle waits, and cleanup commands.
+
+## Implementation steps
+
+1. Add transport-neutral message and event contracts to the sample's
+   appropriate contract/application boundary.
+2. Add a publisher host with its identity, `Role = Producer`, and no event
+   handler. Host it as a non-Functions process (for example the Minimal API
+   web host or a console producer) composing only the configured `IBus`, to
+   prove producer-only participation outside Azure Functions.
+3. Add two subscriber Functions hosts with distinct identity queues, generated
+   forwarding subscriptions, and different handlers for the same event.
+4. Demonstrate direct queue send, Service Bus publish, scheduled send, context
+   propagation, compression, DataBus claim-check, and typed handler binding.
+5. Demonstrate retry exhaustion, direct fail-fast DLQ, and inline second-level
+   handling with a separate scope.
+6. Keep all three hosts free of Rebus receive workers and outbox processors.
+7. Add bounded tests proving one topic publication reaches both subscriber
+   identity queues and both handlers observe the same contract with distinct
+   effects.
+8. Document local configuration, IaC expectations, and the absence of a local
+   emulator when applicable.
+
+## Guide contribution
+
+Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
+three-host topology, shared network profile, independent subscriptions, and
+the choice between Rebus and Azure Functions for Book background activities.
+
+## Sample extension
+
+Extend the existing Book sample, not a parallel demo, with a publisher and two
+subscriber Functions hosts. Demonstrate the Book printing/background event
+flow through Azure Functions and retain the standalone Rebus processor as an
+alternative receiver in a separate non-interoperable topology mode. Use the
+framework `IBus` and `IFailed<T>` in application code, Rebus adapters in Rebus
+mode, and the commit-then-send passthrough outbox only in native Mediator
+Framework mode. The existing WebInterface and RebusProcessor hosts must retain
+their real Rebus outbox registrations, with the processor disabled and enabled
+respectively.
+
+## Required test coverage
+
+- Publisher has no handler for the published event and runs producer-only in
+  a non-Functions process.
+- Subscriber A and B receive one independent copy each.
+- Subscriber handlers are different and both run.
+- Queue send reaches the declared owner.
+- Scheduling is observable without arbitrary sleeps.
+- Failure and second-level behavior is visible in assertions.
+- Hosts can start concurrently without subscription corruption.
+- Rebus and Mediator Framework modes run the same application behavior from
+  separately produced transport messages.
+- WebInterface and RebusProcessor still exercise the real Rebus outbox; none
+  of their scenarios resolve the passthrough implementation.
+- Passthrough send failure after commit is visible and documented.
+
+## Outcomes
+
+- The sample is a concrete operational proof of the ownership and subscription
+  model.
+- Users can compare the Function message host with the existing Rebus worker.
+
+## Acceptance
+
+- [ ] Three separate host projects share the same contract definition.
+- [ ] One publish reaches two independently managed subscriber queues.
+- [ ] Subscriber handlers are distinct and verified.
+- [ ] Sending, scheduling, retry, DLQ, and second-level flows are covered.
+- [ ] No Rebus processor or outbox worker runs in any Functions host.
+- [ ] The [task board](../README.md) status for AZM-15 is updated to this task's acceptance state.
+- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

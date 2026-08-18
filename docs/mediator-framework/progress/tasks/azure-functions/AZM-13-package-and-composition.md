@@ -1,0 +1,117 @@
+# AZM-13 — Functions messaging package and composition
+
+**Category**: azure-functions-messaging · **Priority**: foundation
+**Depends on**: AZM-05, AZM-06, AZM-07, AZM-07A, AZM-08, AZM-09, AZM-10, AZM-11, AZM-12
+**Scope**: PACKAGE + HOSTING
+**Design**: [Packaging](../../azure-functions-messaging-design.md#packaging), [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport)
+
+## Problem
+
+The runtime and generator must be consumable as a package and compose with the
+existing Functions HTTP host without starting a Rebus worker or duplicating
+SimpleInjector registrations.
+
+## Execution map
+
+- **Projects**: finalize the package split:
+  `Ark.Tools.MediatorFramework.Messaging` (transport-neutral runtime:
+  network options, envelope, codecs, pipeline, DataBus, transports, bus,
+  dispatcher, lifecycle) and `Ark.Tools.MediatorFramework.AzureFunctions`
+  (trigger generation and Functions hosting adapters, depending on the
+  messaging package), plus
+  `Ark.Tools.MediatorFramework.AzureFunctions.Generators`, central package
+  versions, and lock files.
+- **Producer composition**: expose a producer-only registration usable from
+  any process (Minimal API, console client, Functions) that composes only the
+  network options, transport, outgoing pipeline, DataBus, the restricted
+  `IBus`, and topic `Ensure` for events it owns; it must not pull Functions
+  dependencies or register dispatch, triggers, queues, or subscriptions.
+- **Composition**: expose one startup extension that accepts/resolves the
+  generated network/host descriptor, selects the runtime transport
+  (`UseInMemory`/`UseAzureServiceBus`/`UseAzureStorageQueue`-style), validates
+  transport capabilities against the network declaration, and registers the
+  native bus, codecs, pipeline, DataBus, dispatcher, settlement, and lifecycle
+  services.
+- **DI**: follow the existing Azure Functions HTTP/SimpleInjector composition;
+  do not create a second container or duplicate application registrations.
+- **Mode selection**: fail startup if both Rebus and Mediator Framework buses
+  are registered for one logical topology.
+- **Package gate**: verify analyzer placement, runtime assets, trimming, API
+  surface, and generated source in a consuming fixture.
+
+## Implementation steps
+
+1. Add or extend the Azure Functions runtime package and analyzer packaging
+   following the existing HTTP package shape.
+2. Reference only the approved Azure Functions Worker and Service Bus/Storage
+   Queue dependencies, centralizing versions and lock files.
+3. Add startup extensions for optional host identity and role, runtime
+   transport selection with capability validation, resource lifecycle,
+   serializers, retry settings, scoped dispatch, restricted bus registration,
+   network-level pipeline steps, and shared DataBus configuration. Include the
+   producer-only registration path for non-Functions processes. Startup must
+   also fail when the composed runtime transport does not match the trigger
+   binding recorded in the generated manifest of a receive-capable Functions
+   host, naming both; producer-only and InMemory-pump hosts are exempt,
+   because the generator-side assembly attribute and the runtime transport
+   selection are different files that can drift.
+4. Provide explicit, mutually exclusive composition paths for Rebus versus a
+   Mediator Framework messaging network. Do not register both bus
+   implementations for one logical topology.
+5. Ensure no Rebus worker, durable outbox processor, or competing Rebus
+   consumer starts in Functions composition. Generated Functions triggers are
+   the intended receivers.
+6. Add configuration validation for missing connections, credentials, entity
+   settings, and conflicting host declarations.
+7. Add package-content and trim/analyzer checks.
+
+## Guide contribution
+
+Update [`guide/host-setup-and-composition.md`](../../../guide/host-setup-and-composition.md)
+and [`guide/azure-functions.md`](../../../guide/azure-functions.md) with package
+registration, shared network resolution, and the prohibition on starting Rebus
+workers or outbox processors in Functions.
+
+## Sample extension
+
+Add the Book sample's Azure Functions messaging composition beside the existing
+Rebus processor composition. Both must reuse application registration and
+handlers while selecting their own receiver host.
+
+## Required test coverage
+
+- Package contains the generator under `analyzers/dotnet/cs`.
+- Runtime resolves the restricted bus and dispatch services.
+- Existing HTTP generated Functions remain unaffected.
+- Missing configuration fails with explicit diagnostics.
+- Transport capability mismatch against the network declaration fails startup
+  naming the missing capability.
+- A composed runtime transport that does not match the generated manifest's
+  trigger binding fails startup naming both.
+- A producer-only composition resolves a working `IBus` in a plain host
+  (no Functions references) and cannot resolve dispatch or trigger services.
+- Managed identity and external connection configuration are supported without
+  secrets in source.
+- Rebus and Mediator Framework bus compositions are independent and mutually
+  exclusive per logical topology.
+- Pipeline and DataBus registration are opt-in and shared by all generated
+  message triggers.
+- Azure Blob DataBus composition resolves with data-plane credentials and does
+  not require lifecycle-policy management permissions.
+
+## Outcomes
+
+- A consuming Functions app can opt into messaging with the package.
+- HTTP and messaging generation coexist deterministically.
+- Functions remains scale-to-zero friendly and does not become a worker host.
+
+## Acceptance
+
+- [ ] Package and analyzer assets are correct and locked.
+- [ ] Startup composition is documented and validates configuration.
+- [ ] No Rebus receiver or durable outbox worker starts in the Functions process.
+- [ ] Existing HTTP and outbound Rebus behavior remains compatible in Rebus
+  mode.
+- [ ] The [task board](../README.md) status for AZM-13 is updated to this task's acceptance state.
+- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

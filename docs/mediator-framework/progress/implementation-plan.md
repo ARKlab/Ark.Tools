@@ -17,7 +17,8 @@ files; current status lives only in [`tasks/README.md`](tasks/README.md).
 | 7 | Preview follow-ups | Rebus routing, source-generated JSON metadata, authenticated OpenAPI UIs, and gRPCui operations |
 | 8 | Release-scope extension | OpenAPI taxonomy, standard responses, streaming, multi-file uploads, XML docs, API snapshots, and user guide |
 | 9 | Azure Functions isolated-worker hosting | New host workstream governed by the Azure decisions and task board |
-| 10 | Testing redesign | Direct application-contract testing and framework-owned hosting coverage |
+| 10 | Azure Functions messaging | Ordered AZM-01–AZM-16 delivery plus AZM-07A: capability-based shared network, message-name API-surface enforcement, transport abstraction with first-class InMemory, Azure Blob DataBus, generated Service Bus integration, Storage Queue send/receive, Rebus application adapters, scoped failure handling, and Book sample proof |
+| 11 | Testing redesign | Direct application-contract testing and framework-owned hosting coverage |
 
 The historical details for phases 1–8 are preserved in
 [`tasks.md`](tasks.md). They are intentionally not duplicated here.
@@ -29,6 +30,7 @@ The historical details for phases 1–8 are preserved in
 | Review and release scope | [`pre-release-review.md`](pre-release-review.md) | [`tasks/README.md`](tasks/README.md) |
 | Minimal API hosting defaults | [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) | [`tasks/README.md`](tasks/README.md), `tasks/aspnetcore/HST-*.md` |
 | Azure Functions hosting | [`azure-functions-decision-log.md`](azure-functions-decision-log.md), [`../azure-functions-design.md`](../azure-functions-design.md) | `tasks/azure-functions/AZF-*.md` |
+| Azure Functions messaging | [`azure-functions-messaging-design.md`](azure-functions-messaging-design.md) | `tasks/azure-functions/AZM-*.md` |
 | Testing redesign | [`mediator-testing-decisions.md`](mediator-testing-decisions.md), [`mediator-testing-plan.md`](mediator-testing-plan.md) | `tasks/testing/TST-*.md`, `tasks/testing/APP-*.md` |
 | Deferred improvements | [`future-improvements.md`](future-improvements.md) | Future and post-release sections of [`tasks/README.md`](tasks/README.md) |
 
@@ -48,4 +50,5 @@ The historical details for phases 1–8 are preserved in
 2. Follow the dependency order in the task board.
 3. Implement and validate one self-contained task.
 4. Update the task board status from the task file's acceptance state.
-5. Add user documentation after the shipped behavior is stable.
+5. Update the guide section assigned by the task with compiling implementation
+   context; AZM-16 performs the final cross-task documentation/API review.

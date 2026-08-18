@@ -3,6 +3,21 @@
 Each task document is self-contained. Its Outcomes and Acceptance section is
 authoritative; this board only records category, current status, and a link.
 
+Azure Functions messaging tasks have two additional completion requirements:
+each task must update its named guide section with the implementation context
+needed by the next task, and each task must extend the existing
+`Ark.MediatorFramework.Sample` plus its tests where the task affects runtime,
+hosting, or transport behavior. Do not create a parallel messaging sample.
+Book background activities must remain runnable through either the standalone
+Rebus processor or the generated Azure Functions receiver.
+AZM task numbers, including the supplemental AZM-07A provider task, are the
+recommended implementation order. Each file's
+Execution map is mandatory: an implementation must produce every listed
+artifact and must not defer task-owned guide/sample work to AZM-16.
+Every AZM task must leave the repository runnable: the full-solution build and
+test gates pass at task end. Incomplete feature coverage is fine; broken or
+dispatcher-less generated code is not.
+
 ## Status legend
 
 | Status | Meaning |
@@ -154,6 +169,33 @@ The architecture and accepted decisions are in
 | [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | Pending |
 | [AZF-09](azure-functions/AZF-09-openapi.md) | OpenAPI | Deferred |
 | [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | Pending |
+
+## Azure Functions messaging
+
+The design baseline is
+[`../azure-functions-messaging-design.md`](../azure-functions-messaging-design.md).
+These tasks extend the Functions host without replacing the existing Rebus
+transport or starting a Rebus worker in a Function app.
+
+| Task | Title | Status |
+| --- | --- | --- |
+| [AZM-01](azure-functions/AZM-01-shared-network-configuration.md) | Shared messaging network configuration and capability model | Pending |
+| [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and host metadata | Pending |
+| [AZM-03](azure-functions/AZM-03-message-contract-api-surface.md) | Message contract API-surface enforcement | Pending |
+| [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Multi-type envelope and serialization protocols | Pending |
+| [AZM-05](azure-functions/AZM-05-transport-abstraction-and-inmemory.md) | Transport abstraction and first-class InMemory transport | Pending |
+| [AZM-06](azure-functions/AZM-06-pipeline-and-context-propagation.md) | Incoming/outgoing pipeline and context propagation | Pending |
+| [AZM-07](azure-functions/AZM-07-compression-and-databus.md) | Compression and shared DataBus claim-check | Pending |
+| [AZM-07A](azure-functions/AZM-07A-azure-blob-databus.md) | Azure Blob DataBus provider and IaC lifecycle contract | Pending |
+| [AZM-08](azure-functions/AZM-08-restricted-bus.md) | Restricted `IBus` shim | Pending |
+| [AZM-09](azure-functions/AZM-09-dispatch-retry-and-failure.md) | Scoped dispatch, settlement, retries, and second-level failure | Pending |
+| [AZM-10](azure-functions/AZM-10-servicebus-transport-and-trigger-generation.md) | Azure Service Bus transport and trigger source generation | Pending |
+| [AZM-11](azure-functions/AZM-11-storage-queue-transport.md) | Azure Storage Queue transport and trigger generation | Pending |
+| [AZM-12](azure-functions/AZM-12-resource-lifecycle.md) | Concurrency-safe Service Bus resource lifecycle | Pending |
+| [AZM-13](azure-functions/AZM-13-package-and-composition.md) | Functions messaging package and composition | Pending |
+| [AZM-14](azure-functions/AZM-14-rebus-compatibility-and-passthrough-outbox.md) | Rebus compatibility and passthrough outbox | Pending |
+| [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-host publish/subscribe sample | Pending |
+| [AZM-16](azure-functions/AZM-16-documentation-and-api-baseline.md) | User documentation, migration guidance, and API baseline | Pending |
 
 ## Testing redesign
 

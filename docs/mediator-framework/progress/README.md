@@ -12,7 +12,7 @@ one level up:
 | 1 | Initial implementation and productization: pure handlers, Minimal API, Rebus, gRPC, cross-cutting behavior, OpenAPI, attachments, and packages | [`tasks.md`](tasks.md) |
 | 2 | Review-driven gap analysis and release scope | [`pre-release-review.md`](pre-release-review.md) |
 | 3 | Minimal API hosting parity and startup defaults | [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) and [`tasks/README.md`](tasks/README.md) |
-| 4 | Azure Functions isolated-worker hosting | [`azure-functions-decision-log.md`](azure-functions-decision-log.md) and [`tasks/README.md`](tasks/README.md) |
+| 4 | Azure Functions isolated-worker hosting | [`azure-functions-decision-log.md`](azure-functions-decision-log.md), [`azure-functions-messaging-design.md`](azure-functions-messaging-design.md), and [`tasks/README.md`](tasks/README.md) |
 | 5 | Framework hosting tests and direct application tests | [`mediator-testing-decisions.md`](mediator-testing-decisions.md), [`mediator-testing-plan.md`](mediator-testing-plan.md), and [`tasks/README.md`](tasks/README.md) |
 | 6 | Deferred and post-release work | [`future-improvements.md`](future-improvements.md) and [`tasks/README.md`](tasks/README.md) |
 
@@ -26,6 +26,7 @@ one level up:
 | [`pre-release-review.md`](pre-release-review.md) | Adversarial review, feature gaps, and decisions D1–D9. |
 | [`aspnetcore-hosting-gap-analysis.md`](aspnetcore-hosting-gap-analysis.md) | Accepted Minimal API hosting gap analysis and HSD decisions. |
 | [`azure-functions-decision-log.md`](azure-functions-decision-log.md) | Accepted Azure Functions hosting decisions. |
+| [`azure-functions-messaging-design.md`](azure-functions-messaging-design.md) | Azure Functions Service Bus/Storage Queue messaging design baseline. |
 | [`mediator-testing-decisions.md`](mediator-testing-decisions.md) | Accepted testing architecture decisions. |
 | [`mediator-testing-plan.md`](mediator-testing-plan.md) | Testing architecture and implementation boundaries. |
 | [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 work. |
@@ -49,3 +50,6 @@ one level up:
   `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`.
 - A task that changes behavior described in [`../design.md`](../design.md)
   updates that document in the same PR.
+- Every AZM task updates its assigned guide section and the existing Book sample
+  surface described by its Execution map; AZM-16 performs only final
+  integration/review.
