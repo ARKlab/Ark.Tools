@@ -166,13 +166,16 @@ public sealed class SqlClientSpanProcessorTests
             default(ActivityContext),
             [
                 new KeyValuePair<string, object?>("db.system.name", "mssql"),
-                new KeyValuePair<string, object?>("db.query.text", "INSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body)")
+                new KeyValuePair<string, object?>(
+                "db.query.text",
+                "INSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body) -- otel-query-label: outbox.insert")
             ]);
 
         activity.Should().NotBeNull();
         activity!.Stop();
 
         activity.GetTagItem("db.query.text").Should().BeNull();
+        activity.GetTagItem(ArkSqlQueryLabel.TagName).Should().Be("outbox.insert");
     }
 
     /// <summary>

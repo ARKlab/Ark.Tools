@@ -59,6 +59,11 @@ public sealed class OutboxProcessorBaseTests
 
     private sealed class TestInstrumentation : OutboxProcessorBase
     {
+        private TestInstrumentation()
+            : base(1)
+        {
+        }
+
         public static Activity? Start(int messageCount)
         {
             return StartProcessingActivity(messageCount);
@@ -67,6 +72,28 @@ public sealed class OutboxProcessorBaseTests
         public static void Record(int messageCount, TimeSpan duration, bool succeeded)
         {
             RecordProcessing(messageCount, duration, succeeded);
+        }
+
+        protected override ValueTask<IOutboxContextCore> CreateContextAsync(CancellationToken ctk)
+        {
+            throw new NotSupportedException();
+        }
+
+        protected override ValueTask CommitContextAsync(IOutboxContextCore context, CancellationToken ctk)
+        {
+            throw new NotSupportedException();
+        }
+
+        protected override ValueTask DisposeContextAsync(IOutboxContextCore context)
+        {
+            throw new NotSupportedException();
+        }
+
+        protected override Task ProcessMessagesAsync(
+            IReadOnlyList<OutboxMessage> messages,
+            CancellationToken ctk)
+        {
+            throw new NotSupportedException();
         }
     }
 }

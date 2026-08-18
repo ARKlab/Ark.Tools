@@ -31,6 +31,8 @@ public sealed class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
         if (data.GetTagItem("db.query.text") is not string queryText)
             return;
 
+        ArkSqlQueryLabel.SetTag(data, queryText);
+
         var dbSystem = data.GetTagItem("db.system.name") as string
                      ?? data.GetTagItem("db.system") as string;
         if (dbSystem is not null

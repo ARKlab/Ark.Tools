@@ -1,7 +1,6 @@
-using Rebus.Logging;
 using Rebus.Transport;
-using Rebus.Workers.ThreadPoolBased;
 
+using Ark.Tools.Core;
 
 namespace Ark.Tools.Outbox.Rebus;
 
@@ -10,21 +9,26 @@ internal sealed class RebusOutboxProcessor : RebusOutboxProcessorCore
 {
     private readonly IOutboxContextFactory _outboxContextFactory;
 
-    public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IBackoffStrategy backoffStrategy, IRebusLoggerFactory rebusLoggerFactory, IOutboxContextFactory outboxContextFactory)
-        : base(topMessagesToRetrieve, transport, backoffStrategy, rebusLoggerFactory)
+    public RebusOutboxProcessor(int topMessagesToRetrieve, ITransport transport, IOutboxContextFactory outboxContextFactory)
+        : base(topMessagesToRetrieve, transport)
     {
         _outboxContextFactory = outboxContextFactory;
     }
 
-    private protected override async Task<bool> _loop(CancellationToken ctk)
+    protected override ValueTask<IOutboxContextCore> CreateContextAsync(CancellationToken ctk)
     {
-        bool waitForMessages = true;
-        using (var ctx = _outboxContextFactory.Create())
-        {
-            waitForMessages = await _tryProcessMessages(ctx, ctk).ConfigureAwait(false);
-            ctx.Commit();
-        }
+        return ValueTask.FromResult<IOutboxContextCore>(_outboxContextFactory.Create());
+    }
 
-        return waitForMessages;
+    protected override ValueTask CommitContextAsync(IOutboxContextCore context, CancellationToken ctk)
+    {
+        ((IContext)context).Commit();
+        return ValueTask.CompletedTask;
+    }
+
+    protected override ValueTask DisposeContextAsync(IOutboxContextCore context)
+    {
+        ((IContext)context).Dispose();
+        return ValueTask.CompletedTask;
     }
 }

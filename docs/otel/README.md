@@ -131,15 +131,17 @@ captured automatically; no Flurl-specific hook is required.
 
 SQL spans redact the large `db.query.text` attribute by default. A command can
 carry a `-- otel-query-label: ...` linting comment; its trimmed, sanitized value
-is emitted as `otel.query.label`. The SQL client duration meter is enabled by
-default. Applications can extend the Ark defaults and opt into query text only
-for controlled diagnostics:
+is emitted as `otel.query.label`. Commands with the `outbox.peek-lock` label
+are skipped by default; applications can add more labels to skip. The SQL
+client duration meter is enabled by default. Applications can extend the Ark
+defaults and opt into query text only for controlled diagnostics:
 
 ```csharp
 builder.Services.AddArkAzureMonitorOpenTelemetry(
     builder.Configuration,
     sql => sql.Filter = command => true,
-    includeSqlQueryText: true);
+    includeSqlQueryText: true,
+    sqlQueryLabelsToSkip: ["health-check"]);
 ```
 
 The SQL Server outbox polling command uses this label instead of matching SQL
