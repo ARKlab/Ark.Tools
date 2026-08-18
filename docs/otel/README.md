@@ -141,8 +141,11 @@ defaults and opt into query text only for controlled diagnostics:
 builder.Services.AddArkAzureMonitorOpenTelemetry(
     builder.Configuration,
     sql => sql.Filter = command => true,
-    includeSqlQueryText: true,
-    sqlQueryLabelsToSkip: ["health-check"]);
+    configureArkOtel: otel =>
+    {
+        otel.IncludeSqlQueryText = true;
+        otel.SqlQueryLabelsToSkip = ["health-check"];
+    });
 ```
 
 The SQL Server outbox polling command uses this label instead of matching SQL

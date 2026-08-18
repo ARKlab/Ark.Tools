@@ -97,9 +97,9 @@ Ark.Tools adds the following span behavior:
 | Behavior | Default |
 |---|---|
 | Exception recording | Enabled (`RecordException = true`). |
-| `db.query.text` | Removed on span completion. Set `includeSqlQueryText: true` only for controlled diagnostics. |
+| `db.query.text` | Removed on span completion. Set `IncludeSqlQueryText = true` in `configureArkOtel` only for controlled diagnostics. |
 | Query label | A `-- otel-query-label: <label>` SQL comment adds the sanitized label as `db.query.label`. |
-| Skipped labels | `outbox.peek-lock` is skipped by default. Additional labels can be supplied through `sqlQueryLabelsToSkip`. |
+| Skipped labels | `outbox.peek-lock` is skipped by default. Additional labels can be supplied through `SqlQueryLabelsToSkip` in `configureArkOtel`. |
 | Application filter | Composed with the Ark filter; both filters must accept a command for its span to be created. |
 
 `ArkSqlClientSpanProcessor` performs query-label extraction and query-text

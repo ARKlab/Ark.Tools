@@ -6,6 +6,7 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using OpenTelemetry;
 using OpenTelemetry.Instrumentation.SqlClient;
@@ -32,45 +33,50 @@ public static class Ex
     /// <param name="configureSqlClient">
     /// Optional application configuration applied after Ark SQL defaults.
     /// </param>
-    /// <param name="includeSqlQueryText">
-    /// Whether to retain SQL query text on exported spans. Defaults to <see langword="false"/>.
+    /// <param name="configureArkOtel">
+    /// Optional application configuration for Ark OpenTelemetry instrumentation.
     /// </param>
-    /// <param name="sqlQueryLabelsToSkip">
-    /// Optional labels for SQL commands that should not produce spans. The outbox polling label
-    /// is skipped by default.
+    /// <param name="configureAdaptiveSampler">
+    /// Optional application configuration for the adaptive sampler.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkAspNetCoreOpenTelemetry(
         this OpenTelemetryBuilder builder,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
-        bool includeSqlQueryText = false,
-        IEnumerable<string>? sqlQueryLabelsToSkip = null)
+        Action<ArkOtelConfig>? configureArkOtel = null,
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         return _addArkAspNetCoreOpenTelemetry(
             builder,
             configureSqlClient,
-            includeSqlQueryText,
-            sqlQueryLabelsToSkip,
-            new ArkAdaptiveSamplerOptions());
+            configureArkOtel,
+            configureAdaptiveSampler,
+            configuration: null);
     }
 
     private static OpenTelemetryBuilder _addArkAspNetCoreOpenTelemetry(
         OpenTelemetryBuilder builder,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient,
-        bool includeSqlQueryText,
-        IEnumerable<string>? sqlQueryLabelsToSkip,
-        ArkAdaptiveSamplerOptions adaptiveSamplerOptions)
+        Action<ArkOtelConfig>? configureArkOtel,
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler,
+        IConfiguration? configuration)
     {
-        var skippedSqlQueryLabels = _getSkippedSqlQueryLabels(sqlQueryLabelsToSkip);
+        var arkOtelConfig = new ArkOtelConfig();
+        configureArkOtel?.Invoke(arkOtelConfig);
+        var skippedSqlQueryLabels = _getSkippedSqlQueryLabels(arkOtelConfig.SqlQueryLabelsToSkip);
         var failedTraceRegistry = new FailedTraceRegistry();
 
         return builder
             .ConfigureResource(resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
+                .ConfigureServices(services =>
+                    _configureAdaptiveSampler(services, configuration, configureAdaptiveSampler))
                 .AddProcessor(new ArkPreFilterProcessor())
-                .SetSampler(new ArkAdaptiveSampler(adaptiveSamplerOptions, failedTraceRegistry))
+                .SetSampler(services => new ArkAdaptiveSampler(
+                    services.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
+                    failedTraceRegistry))
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
                 .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation(options =>
@@ -90,7 +96,7 @@ public static class Ex
                     };
                 })
                 .AddSource("Azure.Messaging.ServiceBus")
-                .AddProcessor(new ArkSqlClientSpanProcessor(includeSqlQueryText))
+                .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
             .WithMetrics(metrics => metrics
@@ -107,20 +113,19 @@ public static class Ex
     /// <param name="configureSqlClient">
     /// Optional application configuration applied after Ark SQL defaults.
     /// </param>
-    /// <param name="includeSqlQueryText">
-    /// Whether to retain SQL query text on exported spans. Defaults to <see langword="false"/>.
+    /// <param name="configureArkOtel">
+    /// Optional application configuration for Ark OpenTelemetry instrumentation.
     /// </param>
-    /// <param name="sqlQueryLabelsToSkip">
-    /// Optional labels for SQL commands that should not produce spans. The outbox polling label
-    /// is skipped by default.
+    /// <param name="configureAdaptiveSampler">
+    /// Optional application configuration for the adaptive sampler.
     /// </param>
     /// <returns>The original service collection.</returns>
     public static IServiceCollection AddArkAzureMonitorOpenTelemetry(
         this IServiceCollection services,
         IConfiguration? configuration = null,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
-        bool includeSqlQueryText = false,
-        IEnumerable<string>? sqlQueryLabelsToSkip = null)
+        Action<ArkOtelConfig>? configureArkOtel = null,
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -132,20 +137,29 @@ public static class Ex
         if (!string.IsNullOrWhiteSpace(connectionString))
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
-        var adaptiveSamplerOptions = new ArkAdaptiveSamplerOptions();
-        configuration?.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(adaptiveSamplerOptions);
-
         services.AddLogging(logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
         _addArkAspNetCoreOpenTelemetry(
             builder,
             configureSqlClient,
-            includeSqlQueryText,
-            sqlQueryLabelsToSkip,
-            adaptiveSamplerOptions);
+            configureArkOtel,
+            configureAdaptiveSampler,
+            configuration);
 
         return services;
+    }
+
+    private static void _configureAdaptiveSampler(
+        IServiceCollection services,
+        IConfiguration? configuration,
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler)
+    {
+        services.Configure<ArkAdaptiveSamplerOptions>(options =>
+        {
+            configuration?.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options);
+            configureAdaptiveSampler?.Invoke(options);
+        });
     }
 
     private static bool _includeSqlClientSpan(
