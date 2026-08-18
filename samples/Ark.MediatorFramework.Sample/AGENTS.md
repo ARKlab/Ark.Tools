@@ -41,8 +41,8 @@ context factory and fine-grained context methods.
   drivers, never by resolving a persistence context from a Reqnroll step.
 - Keep HTTP, gRPC, OpenAPI, serialization, and generated-wrapper assertions in
   framework hosting tests.
-- Use SQL by default and `ARK_SAMPLE_INMEMORY_TESTS=1` for the explicit
-  in-memory context-factory profile.
+- Use in-memory by default, `ARK_SAMPLE_SQL_TESTS=1` for SQL integration runs,
+  and `ARK_SAMPLE_INMEMORY_TESTS=1` to explicitly force the in-memory profile.
 - Use `AwesomeAssertions`, deterministic clocks and bounded waits. Never use
   arbitrary sleeps.
 

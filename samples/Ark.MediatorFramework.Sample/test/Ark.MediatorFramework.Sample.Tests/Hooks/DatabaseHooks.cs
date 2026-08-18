@@ -71,9 +71,13 @@ public sealed class DatabaseHooks
 
     private static bool _sqlEnabled()
     {
-        return !string.Equals(
-            Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
+        return string.Equals(
+            Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"),
             "1",
-            StringComparison.Ordinal);
+            StringComparison.Ordinal)
+            && !string.Equals(
+                Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
+                "1",
+                StringComparison.Ordinal);
     }
 }

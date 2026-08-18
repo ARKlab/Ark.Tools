@@ -69,10 +69,14 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             },
         };
 
-        _usesSqlStore = useSqlStore ?? !string.Equals(
-            Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
+        _usesSqlStore = useSqlStore ?? string.Equals(
+            Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_TESTS"),
             "1",
-            StringComparison.Ordinal);
+            StringComparison.Ordinal)
+            && !string.Equals(
+                Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
+                "1",
+                StringComparison.Ordinal);
         _connectionString = connectionString ?? Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION");
         ApplicationComposition.Register(
             _container,
