@@ -27,7 +27,8 @@ composition switch, while intentionally reducing the framework API surface.
 - **Routing source**: use only generated ownership metadata; callers never pass
   queue/topic names.
 - **Capability guards**: delayed `Send` requires the network to declare
-  `ScheduledSend`; `Publish` requires `PubSub` plus a named host identity
+  `ScheduledSend`; `Publish` requires `PubSub` plus a named participant
+  identity
   matching the event owner. Violations throw with the capability or identity
   named in the message.
 - **Runnable state**: at task end the bus sends, schedules, and publishes over
@@ -61,8 +62,10 @@ composition switch, while intentionally reducing the framework API surface.
 10. Bound caller header count/key/value sizes and reserve framework routing,
     serialization, DataBus, trace, and user-context headers.
 
-`Publish<TEvent>` requires a named host identity matching the event canonical
-publisher owner. An identity-less sender host may still use `Send<TMessage>`
+`Publish<TEvent>` requires a named participant identity matching the event
+canonical
+publisher owner. An identity-less sender participant may still use
+`Send<TMessage>`
 to declared owner queues.
 
 ## Guide contribution
@@ -81,18 +84,20 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
 
 - Owned queue routing for messages.
 - Per-owner/per-contract topic routing for events.
-- Publish from a named host whose identity matches the event owner, including
-  a `Producer`-role host with no receive registration.
-- Identity-less sender hosts reject `Publish` but allow `Send`.
+- Publish from a named participant whose identity matches the event owner,
+  including
+  a `Producer`-role participant with no receive registration.
+- Identity-less sender participants reject `Publish` but allow `Send`.
 - Delayed `Send` on a network without `ScheduledSend` throws naming the
   capability; `Publish` on a network without `PubSub` throws naming the
   capability.
 - JSON, MessagePack, and protobuf sends.
 - Additional headers are accepted and reserved headers are rejected.
 - Every overload accepts optional additional headers and writes the original
-  sending host identity.
+  sending participant identity.
 - Scheduled send via the transport contract with a controlled clock.
-- Compression and DataBus offload are applied before send.
+- Compression and DataBus offload are applied before send using the effective
+  limit (smaller of network threshold and transport ceiling).
 - Missing owner/publisher rejection.
 - No request/reply, local send, or receive API is available.
 - Disposal and cancellation do not leave partial sends.

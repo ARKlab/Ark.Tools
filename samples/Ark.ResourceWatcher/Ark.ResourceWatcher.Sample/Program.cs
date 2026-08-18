@@ -4,11 +4,15 @@ using Ark.ResourceWatcher.Sample.Config;
 using Ark.ResourceWatcher.Sample.Host;
 
 using Ark.Tools.NLog;
+using Ark.Tools.ResourceWatcher.OTel;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace Ark.ResourceWatcher.Sample;
 
@@ -18,6 +22,10 @@ sealed class Program
     {
         var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
             .AddWorkerHostInfrastracture()
+            .AddArkOpenTelemetryForWorkerHost()
+            .ConfigureServices(services => services.AddOpenTelemetry()
+                .WithTracing(tracing => tracing.AddSource(ResourceWatcherSampleTelemetry._activitySourceName))
+                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherSampleTelemetry._meterName)))
             .ConfigureNLog("BlobWorkerSample")
             .AddWorkerHost(sp =>
             {

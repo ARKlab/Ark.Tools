@@ -1,15 +1,42 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using System.ComponentModel;
+using System.Collections.Frozen;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace Ark.Tools.Core;
 
 public static class EnumExtensions
 {
+    private static class EnumStringCache<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>
+        where T : Enum
+    {
+        public static readonly FrozenDictionary<string, string> Values = _create();
+
+        private static FrozenDictionary<string, string> _create()
+        {
+            var values = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (var name in Enum.GetNames(typeof(T)))
+            {
+                var field = typeof(T).GetField(name)!;
+                var description = field.GetCustomAttribute<DescriptionAttribute>(inherit: false);
+                var enumMember = field.GetCustomAttribute<EnumMemberAttribute>(inherit: false);
+                var stringValue = enumMember?.Value ?? description?.Description ?? name;
+
+                values[string.Intern(name)] = string.Intern(stringValue);
+            }
+
+            return values.ToFrozenDictionary(StringComparer.Ordinal);
+        }
+    }
+
     /// <summary>
-    /// Converts an enum value to its string representation, checking for DescriptionAttribute and EnumMemberAttribute.
+    /// Converts an enum value to its string representation, preferring EnumMemberAttribute,
+    /// then DescriptionAttribute, then the enum member name.
     /// </summary>
     /// <typeparam name="T">The enum type.</typeparam>
     /// <param name="value">The enum value to convert.</param>
@@ -21,17 +48,9 @@ public static class EnumExtensions
     public static string AsString<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T>(this T value)
             where T : Enum
     {
-        DescriptionAttribute? desc = typeof(T)
-            .GetField(value.ToString())?
-            .GetCustomAttributes(typeof(DescriptionAttribute), false)
-            .SingleOrDefault() as DescriptionAttribute;
+        var name = value.ToString();
 
-        EnumMemberAttribute? em = typeof(T)
-            .GetField(value.ToString())?
-            .GetCustomAttributes(typeof(EnumMemberAttribute), false)
-            .SingleOrDefault() as EnumMemberAttribute;
-
-        return em?.Value ?? desc?.Description ?? value.ToString();
+        return EnumStringCache<T>.Values.TryGetValue(name, out var stringValue) ? stringValue : name;
     }
 
     public static TEnum? ParseEnum<TEnum>(this string inputString, bool ignoreCase = false) where TEnum : struct, Enum

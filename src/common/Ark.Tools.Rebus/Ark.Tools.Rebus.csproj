@@ -1,8 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
+	  <NoWarn>$(NoWarn);NU5104</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+	<ItemGroup>
+	  <InternalsVisibleTo Include="Ark.Tools.Rebus.Tests" />
+	</ItemGroup>
 
 	<!-- the other props are defined in Directory.Build.props -->
 	<!--===================Configuration for Nuget Package=========================-->
@@ -30,6 +34,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="OpenTelemetry.Api" />
 		<PackageReference Include="Rebus" />
 		<PackageReference Include="Rebus.NLog" />
 		<PackageReference Include="Rebus.AzureServiceBus" />
@@ -39,7 +44,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
 		<ProjectReference Include="..\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
 		<ProjectReference Include="..\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />

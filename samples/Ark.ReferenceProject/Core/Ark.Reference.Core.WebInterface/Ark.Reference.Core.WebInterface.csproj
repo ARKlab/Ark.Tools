@@ -13,6 +13,7 @@
 
   <ItemGroup>
 	  <PackageReference Include="Ark.Tools.AspNetCore" />
+	  <PackageReference Include="Ark.Tools.AspNetCore.OTel" />
 	  <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
   </ItemGroup>
 

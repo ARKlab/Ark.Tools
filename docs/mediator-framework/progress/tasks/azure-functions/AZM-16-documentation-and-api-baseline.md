@@ -25,15 +25,24 @@ explicit guidance and the public API must be reviewable before release.
   hand-invent trigger signatures.
 - **Release gate**: search for stale old task names, direct-subscription claims,
   Rebus interoperability claims, technology-typed network claims,
-  network-level pipeline settings, passthrough-outbox claims, and claims that
-  an outbox processor runs inside Functions.
+  network-level pipeline settings, passthrough-outbox claims, claims that
+  an outbox processor runs inside Functions, and stale host/participant
+  terminology (`MessagingHost`, `MessagingFunctionsTrigger`,
+  "host identity" meaning a participant).
 
 ## Implementation steps
 
-1. Update the Mediator Framework guide with network contract registration, host
-   identity/identity-less sender hosts, subscriptions, shared network
+1. Update the Mediator Framework guide with network contract registration,
+   participant
+   identity/identity-less sender participants, subscriptions, shared network
    configuration, the capability model with runtime transport selection
    (InMemory, Service Bus, Storage Queue), and the restricted bus API.
+   Document the participant/host distinction: a participant is a logical
+   network member; a host is the process and hosting technology (Azure
+   Functions with generated triggers, a Rebus worker, or a test/custom host
+   running the InMemory pump or the outbox processor). InMemory consumer
+   participants are never hosted in a Functions app; Azure Functions
+   end-to-end testing uses Azurite or the Azure Service Bus emulator.
 2. Document ownership: messages have one destination queue; events have one
    publisher and many subscriber queues.
 3. Document header-driven protocol reads, protocol retirement behavior, and
@@ -43,7 +52,7 @@ explicit guidance and the public API must be reviewable before release.
    dispatch, no persisted `IFailed<T>` message, and separate scopes.
 5. Document resource lifecycle, IaC coexistence, ownership-safe subscription
    removal, and local testing limitations.
-6. Document the host-local incoming/outgoing pipeline, opt-in user/OTel
+6. Document the participant-local incoming/outgoing pipeline, opt-in user/OTel
    propagation, additional headers, compression, DataBus claim-check,
    provider-specific minimum lifetime, and the Azure Blob IaC lifecycle
    prerequisite.
@@ -55,8 +64,9 @@ explicit guidance and the public API must be reviewable before release.
 9. Add migration guidance from Rebus-only receive hosts to Functions hosts,
    explicitly stating that Rebus remains supported, the new ownership metadata
    is shared, and persisted-message interoperability is unsupported.
-10. Document generated Rebus host assistance from shared network/host
-    definitions: owner routing, host-filtered dispatch adapters, post-start
+10. Document generated Rebus host assistance from shared network/participant
+    definitions: owner routing, participant-filtered dispatch adapters,
+    post-start
     subscriptions, exact retry mapping, and the requirements descriptor.
     State that generators see contracts only, adapters dispatch through
     `IRequestProcessor`/`ICommandProcessor`, and developers register all

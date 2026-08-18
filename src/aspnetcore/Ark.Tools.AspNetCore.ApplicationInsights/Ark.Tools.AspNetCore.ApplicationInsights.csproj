@@ -5,6 +5,7 @@
 
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <TargetFrameworks>net10.0</TargetFrameworks>
 
@@ -31,12 +32,14 @@
 	
   <ItemGroup>  
       <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
+      <PackageReference Include="Azure.Monitor.OpenTelemetry.Profiler" />
   </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\..\common\Ark.Tools.ApplicationInsights\Ark.Tools.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NLog.Configuration\Ark.Tools.NLog.Configuration.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
   </ItemGroup>
   
 </Project>

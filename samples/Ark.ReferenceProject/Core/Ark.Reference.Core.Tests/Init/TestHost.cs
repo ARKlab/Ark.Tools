@@ -4,6 +4,7 @@ using Ark.Reference.Core.Application.Config;
 using Ark.Reference.Core.WebInterface;
 using Ark.Tools.Http;
 using Ark.Tools.Outbox;
+using Ark.Tools.OTel;
 using Ark.Tools.Rebus.Tests;
 
 using AwesomeAssertions;
@@ -43,8 +44,10 @@ public sealed class TestHost : IDisposable
 
     public static IHost Server { get => _server ?? throw new InvalidOperationException("_server is null"); set => _server = value; }
     public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
+    internal static readonly OtelTestCollector _telemetry = new();
 
     private static ArkFlurlClientFactory? _factory;
+    private static ArkTelemetryFileCollector? _fileTelemetry;
     public static readonly TestEnv Env = new();
 
     private static ScenarioContext? _scenarioContext;
@@ -55,6 +58,7 @@ public sealed class TestHost : IDisposable
     public void Set(ScenarioContext ctx)
     {
         _scenarioContext = ctx;
+        _telemetry._reset();
     }
 
     [AfterScenario(Order = int.MinValue)]
@@ -182,6 +186,7 @@ public sealed class TestHost : IDisposable
 
         //ApplicationConstants.ComputeIdleDetectWindow = TimeSpan.FromSeconds(1);
 
+        _fileTelemetry = ArkTelemetryFileCollector.StartFromEnvironment();
         var builder = Program.GetHostBuilder([])
             .ConfigureWebHost(wh =>
             {
@@ -236,6 +241,8 @@ public sealed class TestHost : IDisposable
     public static void AfterTests()
     {
         _server?.Dispose();
+        _fileTelemetry?.Dispose();
+        _telemetry.Dispose();
     }
 
     public void Dispose()

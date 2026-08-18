@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <Description>Transport-neutral exception to RFC 7807 ProblemDetails mapping for Ark.Tools applications</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;ProblemDetails</PackageTags>
@@ -9,6 +10,8 @@
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- net8.0 consumes a net10.0 Ark.Tools telemetry reference through the shared project graph. -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

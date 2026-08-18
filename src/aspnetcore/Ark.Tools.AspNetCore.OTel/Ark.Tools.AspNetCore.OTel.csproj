@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- the other props are defined in Directory.Build.props -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <Description>OpenTelemetry and Azure Monitor Distro setup for Ark ASP.NET Core hosts.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;AspNetCore;OpenTelemetry;AzureMonitor</PackageTags>
+    <Version>$(AspNetCoreGroupVersion)</Version>
+    <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.OTel\Ark.Tools.OTel.csproj" />
+  </ItemGroup>
+</Project>

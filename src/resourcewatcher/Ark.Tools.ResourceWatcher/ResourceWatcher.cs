@@ -174,7 +174,10 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
             var resultCounts = evaluated
                 .GroupBy(x => x.ResultType ?? ResultType.Skipped)
                 .ToDictionary(g => g.Key, g => g.Count());
-            _diagnosticSource.RunSuccessful(activityRun, resultCounts);
+            _diagnosticSource.RunSuccessful(
+                activityRun,
+                resultCounts,
+                evaluated.Count(x => x.ProcessType == ProcessType.Banned));
 
             if (activityRun.Duration > _config.RunDurationNotificationLimit)
                 _diagnosticSource.RunTookTooLong(activityRun);

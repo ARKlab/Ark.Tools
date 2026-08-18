@@ -21,7 +21,6 @@ public static class NLogConfigurerConfiguration
             SQLConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SqlConnStringName),
             SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
             MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
-            ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
             SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
             Async = async
         };
@@ -58,7 +57,6 @@ public static class NLogConfigurerConfiguration
             SmtpConnectionString = cfg.GetNLogSetting("ConnectionStrings:" + NLogDefaultConfigKeys.SmtpConnStringName),
             MailTo = cfg.GetNLogSetting(NLogDefaultConfigKeys.MailNotificationAddresses),
             MailFrom = mailFrom,
-            ApplicationInsightsInstrumentationKey = cfg["APPINSIGHTS_INSTRUMENTATIONKEY"] ?? cfg["ApplicationInsights:InstrumentationKey"],
             SlackWebhook = cfg.GetNLogSetting(NLogDefaultConfigKeys.SlackWebHook),
             Async = async
         };

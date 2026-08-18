@@ -8,7 +8,8 @@
 ## Problem
 
 AZM-07 proves claim-check behavior with the InMemory provider, but production
-Service Bus and Storage Queue hosts need a shared Azure Blob implementation.
+Service Bus and Storage Queue participants need a shared Azure Blob
+implementation.
 Attachment cleanup must coexist safely with storage accounts managed by IaC.
 
 ## Execution map

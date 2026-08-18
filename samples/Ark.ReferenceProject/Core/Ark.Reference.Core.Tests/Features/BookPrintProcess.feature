@@ -34,6 +34,7 @@ Feature: BookPrintProcess
       Then the print process is
         | Status    | Progress |
         | Completed |      1.0 |
+      And OpenTelemetry recorded the book print processing telemetry
 
     Scenario: IFailed handler sets error status correctly
       Given I have created a book with

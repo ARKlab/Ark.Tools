@@ -5,6 +5,7 @@ using Ark.Tools.Solid;
 
 using Rebus.Retry.Simple;
 
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace Ark.Reference.Core.Application.Handlers.Messages;
@@ -29,6 +30,11 @@ public class BookPrintProcess_StartMessageHandler
 
     public async Task Handle(BookPrintProcess_StartMessage.V1 message)
     {
+        using var activity = ReferenceTelemetry.ActivitySource.StartActivity(
+            "ark.reference.book_print_process",
+            ActivityKind.Consumer);
+        activity?.SetTag("book_print_process.id", message.BookPrintProcessId);
+
         var ctx = await _dataContextFactory.CreateAsync().ConfigureAwait(false);
         await using var _ = ctx.ConfigureAwait(false);
 
@@ -81,7 +87,11 @@ public class BookPrintProcess_StartMessageHandler
 
             await updateCtx.PutBookPrintProcessAsync(currentProcess).ConfigureAwait(false);
             await updateCtx.CommitAsync().ConfigureAwait(false);
+            process = currentProcess;
         }
+
+        activity?.SetTag("book_print_process.status", process.Status.ToString());
+        activity?.SetStatus(ActivityStatusCode.Ok);
     }
 
     public async Task Handle(IFailed<BookPrintProcess_StartMessage.V1> message)

@@ -37,15 +37,16 @@ introduced by AZM-02.
 Emit one deterministic line for each transport-neutral message or event:
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:Books.RecalculatePrint owner-queue:printing former:-
-EVENT Books.PrintCompleted -> name:books.print-completed owner-publisher:printing former:Books.PrintFinished|Legacy.PrintCompleted
+MESSAGE Books.RecalculatePrint -> name:books.recalculate_print owner-queue:printing former:-
+EVENT Books.PrintCompleted -> name:books.print_completed owner-publisher:printing former:books.print_finished|legacy.print_completed
 ```
 
 The rules are fixed:
 
 - The type before `->` is the namespace-qualified CLR type name without
   assembly qualification.
-- `name` is the resolved canonical wire name, including the AZM-02 default
+- `name` is the resolved canonical wire name in the normalized lowercase
+  snake_case form defined by AZM-02, including the AZM-02 default
   when no explicit `Name` is set.
 - The owner field is `owner-queue` for `[Message]` and `owner-publisher` for
   `[Event]`.
@@ -102,7 +103,8 @@ surface lines without implying wire interoperability.
 
 ## Required test coverage
 
-- Default canonical names include the namespace and exclude assembly identity.
+- Default canonical names include the namespace, exclude assembly identity,
+  and are normalized to lowercase snake_case.
 - Explicit `Name` appears exactly in the generated line.
 - Message queue owner and event publisher owner use their distinct field names.
 - Empty aliases emit `former:-`.

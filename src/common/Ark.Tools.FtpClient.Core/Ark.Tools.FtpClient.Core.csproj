@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <Description>Core abstractions for FtpClient</Description>
     <PackageTags>Ark;C#;.NET;Framework;Ftp;FtpClient</PackageTags>

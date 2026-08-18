@@ -23,7 +23,10 @@ must have separate composition paths.
 - **Processor hosting**: expose an opt-in `IHostedService` registration for a
   custom always-running process. It joins the configured network with the
   reserved hardcoded identity `outbox-processor`, owns no receive queue or
-  subscriptions, and must be rejected by Azure Functions composition.
+  subscriptions, and must be rejected by Azure Functions composition. The
+  identity is reserved: AZM-02 rejects `[MessagingParticipant]` declarations
+  using it, and startup validation rejects composition-supplied identities
+  using it.
 - **Dispatch seam**: drain persisted raw envelopes through an internal
   transport sender. Do not reconstruct application contracts, rerun outgoing
   steps, or overwrite `amf1-sender-identity`.
@@ -90,6 +93,8 @@ WebInterface and RebusProcessor outbox registrations unchanged.
 - Concurrent processor attempts do not double-lock one row; duplicate broker
   delivery remains covered by normal at-least-once semantics.
 - Functions composition cannot resolve or start the processor.
+- A participant declaration or composition-supplied identity using the
+  reserved `outbox-processor` identity is rejected.
 - The custom host resolves one `IHostedService` under identity
   `outbox-processor` and shuts down cooperatively.
 - Rebus and native outbox adapters remain mutually exclusive per topology.
@@ -105,7 +110,8 @@ WebInterface and RebusProcessor outbox registrations unchanged.
 
 - [ ] Native `Send` and `Publish` support transactional SQL outbox enqueue.
 - [ ] The processor is an `IHostedService` with reserved identity
-  `outbox-processor`.
+  `outbox-processor`; participant declarations and compositions using that
+  identity are rejected.
 - [ ] No outbox processor starts in Azure Functions composition.
 - [ ] Original sender identity and envelope bytes survive durable dispatch.
 - [ ] SQL locking, retry, cancellation, and failure behavior are tested.

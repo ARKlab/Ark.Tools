@@ -32,8 +32,10 @@ Rebus provides this through `IPipeline` and direction-specific steps.
    continuation-based async processing.
 2. Define named relative positions around deserialize, dispatch, serialize,
    send, and settlement.
-3. Provide host-level registration for custom steps and deterministic ordering.
-   Hosts referencing one network may intentionally use different steps because
+3. Provide participant-level registration for custom steps and deterministic
+   ordering.
+   Participants referencing one network may intentionally use different steps
+   because
    implementations can add heavy dependencies and environment-specific
    behavior. The network owns only stable stage identifiers and contracts.
 4. Implement the existing `ark-user-*` propagation behavior as an opt-in
@@ -59,7 +61,8 @@ propagation, OpenTelemetry propagation, and reserved-header protection.
 ## Sample extension
 
 Register the opt-in user-context and OpenTelemetry steps on the applicable Book
-sample host declarations/composition. Pipeline behavior is proven in framework
+sample participant declarations/composition. Pipeline behavior is proven in
+framework
 tests over the InMemory transport in this task; end-to-end Book assertions
 through dispatch land with AZM-09.
 
@@ -73,8 +76,9 @@ through dispatch land with AZM-09.
 - Step failure, handler failure, and cancellation preserve settlement rules,
   exercised over the InMemory transport pump.
 - Multiple concurrent invocations do not share step state or context.
-- Two hosts referencing one network may resolve different step sets while each
-  host's ordering remains deterministic.
+- Two participants referencing one network may resolve different step sets
+  while each
+  participant's ordering remains deterministic.
 
 ## Outcomes
 

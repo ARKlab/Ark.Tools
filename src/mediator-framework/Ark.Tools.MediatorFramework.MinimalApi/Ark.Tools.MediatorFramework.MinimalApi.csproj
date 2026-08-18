@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
     <Description>Minimal API (ASP.NET Core) transport runtime package for Ark.Tools MediatorFramework. Bundles the source generator that emits MapArkEndpointsFromAssembly for [HttpEndpoint]-annotated contracts.</Description>

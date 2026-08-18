@@ -7,9 +7,11 @@
 
 ## Problem
 
-Production hosts need the Azure Service Bus transport plus generated Azure
-Functions triggers. Trigger attributes are compile-time facts, so a
-receive-capable Functions host selects its trigger binding at compile time
+Production participants need the Azure Service Bus transport plus generated
+Azure
+Functions triggers. Trigger attributes are compile-time facts, so a Functions
+host running a receive-capable participant selects its trigger binding at
+compile time
 through a dedicated assembly-level attribute in the Azure Functions package,
 while the send side and non-Functions test hosts keep selecting
 the transport at runtime composition. Because the AZM-09 dispatcher
@@ -20,24 +22,27 @@ dispatcher-less trigger code.
 ## Execution map
 
 - **Transport**: implement the Service Bus transport
-  (`Capabilities = Receive | PubSub | ScheduledSend`) in
+  (`Capabilities = Receive | PubSub | ScheduledSend`, hard payload ceiling
+  256 KB total standard-tier message including application properties) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract:
   envelope-to-message mapping via application properties and binary body,
   native scheduling, topic publish, and PeekLock settlement mapped to
   complete/abandon/dead-letter with the native `DeliveryCount`. Producer-only
-  hosts reference only this messaging package.
+  participants reference only this messaging package.
 - **Generator project**:
   `Ark.Tools.MediatorFramework.AzureFunctions.Generators`. Generated methods
   call the existing AZM-09 runtime dispatcher; generated source contains no
   codec, pipeline, retry, or DI logic. The Functions-binding settlement
   adapter lives in `Ark.Tools.MediatorFramework.AzureFunctions`, which
   references the messaging package.
-- **Trigger selection**: emit the Service Bus trigger only for consumer hosts
+- **Trigger selection**: emit the Service Bus trigger only for consumer
+  participants
   whose Functions host assembly declares it through the
-  `[assembly: MessagingFunctionsTrigger(MessagingFunctionsTriggerBinding.ServiceBus)]`
+  `[assembly: MessagingFunctionsHost(MessagingFunctionsTriggerBinding.ServiceBus)]`
   attribute defined in `Ark.Tools.MediatorFramework.AzureFunctions`; the
   Storage Queue selection is handled by AZM-11. A Functions host assembly
-  with a named consumer identity but no trigger-selection attribute is a
+  with a named consumer participant identity but no Functions-host attribute is
+  a
   compile-time diagnostic.
 - **Output per assembly**: zero or one identity-queue trigger plus one
   deterministic desired-resource manifest.
@@ -45,7 +50,8 @@ dispatcher-less trigger code.
   `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus` API before emitting
   attributes; add a compile fixture using the actual package.
 - **Conformance**: run the AZM-05 transport conformance suite against the
-  Service Bus transport where infrastructure permits; absence of
+  Service Bus transport against the Azure Service Bus emulator (Docker) or a
+  live namespace; absence of
   infrastructure is explicit, never a silent skip.
 - **Generated-code gate**: after building, inspect emitted `.g.cs` in the
   boundary test host and sample as required by repository policy.
@@ -60,17 +66,23 @@ dispatcher-less trigger code.
 2. Implement the receive-side settlement adapter mapping the Functions
    Service Bus binding objects (message + message actions) onto the AZM-05
    locked-delivery contract consumed by the dispatcher.
-3. Extend the incremental generator with message, event, and host metadata
+3. Extend the incremental generator with message, event, and participant
+   metadata
    inputs, honoring the Functions host assembly trigger-selection attribute
-   (the transport-neutral `[MessagingHost]` attribute from AZM-02 has no
-   trigger member).
-4. Emit one stable trigger for the named host identity queue when the network
+   (the transport-neutral `[MessagingParticipant]` attribute from AZM-02 has
+   no trigger member).
+4. Emit one stable trigger for the named participant identity queue when the
+   network
    contains at least one message whose owner queue equals that identity or the
-   host declares an event subscription, and the assembly declares the Service
-   Bus trigger selection. Do not discover handler registrations in the
+   participant declares an event subscription, and the assembly declares the
+   Service
+   Bus trigger selection. A consumer participant whose identity matches no
+   registered message and declares no subscriptions is an empty receiver:
+   emit an information diagnostic and no trigger.
+   Do not discover handler registrations in the
    generator; dispatch always goes through the processors.
 5. Emit subscription manifest entries that forward each subscribed event into
-   the host identity queue. Do not emit direct subscription triggers.
+   the participant identity queue. Do not emit direct subscription triggers.
 6. Emit a deterministic resource/subscription manifest for startup management
    (consumed by AZM-12). Record the selected trigger binding in the manifest
    so AZM-13 startup composition can fail when the composed runtime transport
@@ -93,44 +105,50 @@ dispatcher-less trigger code.
 10. Add API-surface snapshot lines for generated messaging triggers and
     routing.
 
-Hosts without an identity emit no receive trigger or subscription. Hosts
-whose assembly does not select the Service Bus trigger (for example
-InMemory-composed test hosts) emit no trigger and use the runtime pump
-instead.
+Participants without an identity emit no receive trigger or subscription.
+Participants composed over InMemory cannot be hosted in Azure Functions: their
+assemblies emit no trigger, Functions composition rejects the InMemory receive
+transport (AZM-13), and their receive side runs through the runtime pump in a
+test or custom host. Azure Functions end-to-end tests use Azurite or the Azure
+Service Bus emulator (Docker).
 
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
 generated queue/subscription trigger model, deterministic routes, the
-compile-time trigger-selection attribute in the Functions host assembly, and
-the relationship between host identity, network profile, and event
+compile-time Functions-host attribute in the Functions host assembly, and
+the relationship between participant identity, network profile, and event
 subscriptions.
 
 ## Sample extension
 
-Add the generated Service Bus trigger host for the Book background contracts
+Add the Functions host with the generated Service Bus trigger for the Book
+consumer participant
 beside the existing InMemory-composed fixtures. The sample compiles and its
 generated `.g.cs` is inspected; live Azure execution is optional and explicit.
 
 ## Required test coverage
 
-- At most one trigger per named host identity queue.
+- At most one trigger per named participant identity queue.
+- A consumer participant with an empty receive set (no matching messages, no
+  subscriptions) produces an information diagnostic and no trigger.
 - Multiple types in one queue map to typed generated dispatch.
-- Same topic subscribed by two host configurations generates distinct,
+- Same topic subscribed by two participant configurations generates distinct,
   deterministic subscription identities.
 - Repeated generator runs produce byte-identical output.
 - Invalid and excluded contracts produce the expected diagnostics/no source.
 - Portable queue-name violations and received-contract owner mismatches are
   diagnosed before trigger generation.
 - PeekLock is configured and ReceiveAndDelete is rejected.
-- Every event subscription forwards to the host identity queue.
+- Every event subscription forwards to the participant identity queue.
 - The manifest records the selected trigger binding deterministically.
 - Envelope-to-Service-Bus mapping round-trips headers and binary payloads.
 - Settlement adapter maps complete/immediate-abandon/dead-letter (with
   reason) and exposes the native delivery count. No abandon delay is
   implemented or tested.
-- Transport conformance suite runs against Service Bus where infrastructure
-  permits, with explicit absence reporting.
+- Transport conformance suite runs against Service Bus through the Azure
+  Service Bus emulator (Docker) or a live namespace, with explicit absence
+  reporting.
 
 ## Caveats
 
@@ -141,7 +159,8 @@ generated `.g.cs` is inspected; live Azure execution is optional and explicit.
 
 ## Outcomes
 
-- A Functions host gets discoverable Service Bus triggers from contract
+- A Functions host gets discoverable Service Bus triggers for its consumer
+  participant from contract
   metadata, dispatching through the already-proven runtime.
 - Trigger source remains thin and reflection-free.
 - Startup receives a deterministic desired-resource manifest.
@@ -154,7 +173,7 @@ generated `.g.cs` is inspected; live Azure execution is optional and explicit.
   deterministic and typed.
 - [ ] Generated source awaits runtime dispatch and contains no serializer or
   retry logic.
-- [ ] Diagnostics cover all invalid routing and host-selection cases.
+- [ ] Diagnostics cover all invalid routing and participant-selection cases.
 - [ ] API-surface snapshots record generated messaging routes.
 - [ ] The [task board](../README.md) status for AZM-10 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.

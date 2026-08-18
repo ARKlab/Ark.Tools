@@ -25,6 +25,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NLog" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
   </ItemGroup>
 

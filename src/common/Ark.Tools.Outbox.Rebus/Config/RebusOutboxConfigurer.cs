@@ -1,8 +1,6 @@
 using Rebus.Bus;
 using Rebus.Config;
-using Rebus.Logging;
 using Rebus.Transport;
-using Rebus.Workers.ThreadPoolBased;
 
 
 namespace Ark.Tools.Outbox.Rebus.Config;
@@ -40,8 +38,6 @@ public class RebusOutboxProcessorConfigurer
             {
                 return new RebusOutboxProcessor(_options.MaxMessagesPerBatch,
                     s.Get<ITransport>(),
-                    s.Get<IBackoffStrategy>(),
-                    s.Get<IRebusLoggerFactory>(),
                     s.Get<IOutboxContextFactory>());
             });
         configurer?.Invoke(_configurer.OtherService<IOutboxContextFactory>());
@@ -54,8 +50,6 @@ public class RebusOutboxProcessorConfigurer
             {
                 return new RebusAsyncOutboxProcessor(_options.MaxMessagesPerBatch,
                     s.Get<ITransport>(),
-                    s.Get<IBackoffStrategy>(),
-                    s.Get<IRebusLoggerFactory>(),
                     s.Get<IOutboxAsyncContextFactory>());
             });
         configurer?.Invoke(_configurer.OtherService<IOutboxAsyncContextFactory>());

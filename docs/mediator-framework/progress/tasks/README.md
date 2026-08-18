@@ -180,7 +180,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | Task | Title | Status |
 | --- | --- | --- |
 | [AZM-01](azure-functions/AZM-01-shared-network-configuration.md) | Shared messaging network configuration and capability model | Pending |
-| [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and host metadata | Pending |
+| [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and participant metadata | Pending |
 | [AZM-03](azure-functions/AZM-03-message-contract-api-surface.md) | Message contract API-surface enforcement | Pending |
 | [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Multi-type envelope and serialization protocols | Pending |
 | [AZM-05](azure-functions/AZM-05-transport-abstraction-and-inmemory.md) | Transport abstraction and first-class InMemory transport | Pending |
@@ -193,9 +193,9 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-11](azure-functions/AZM-11-storage-queue-transport.md) | Azure Storage Queue transport and trigger generation | Pending |
 | [AZM-12](azure-functions/AZM-12-resource-lifecycle.md) | Concurrency-safe Service Bus resource lifecycle | Pending |
 | [AZM-13](azure-functions/AZM-13-package-and-composition.md) | Functions messaging package and composition | Pending |
-| [AZM-14](azure-functions/AZM-14-rebus-compatibility.md) | Rebus compatibility and generated host setup | Pending |
+| [AZM-14](azure-functions/AZM-14-rebus-compatibility.md) | Rebus compatibility and generated Rebus host setup | Pending |
 | [AZM-14A](azure-functions/AZM-14A-native-sql-outbox.md) | Native SQL outbox and hosted processor | Pending |
-| [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-host publish/subscribe sample | Pending |
+| [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-participant publish/subscribe sample | Pending |
 | [AZM-16](azure-functions/AZM-16-documentation-and-api-baseline.md) | User documentation, migration guidance, and API baseline | Pending |
 
 ## Testing redesign

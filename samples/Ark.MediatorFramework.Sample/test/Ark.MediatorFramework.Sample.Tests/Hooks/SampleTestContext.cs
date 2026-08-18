@@ -4,6 +4,7 @@
 using Reqnroll;
 
 using Ark.MediatorFramework.Sample.Tests.Fakes;
+using Ark.Tools.OTel;
 
 namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 
@@ -11,6 +12,7 @@ namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 [Binding]
 public sealed class SampleTestContext : IAsyncDisposable
 {
+    private static ArkTelemetryFileCollector? _fileTelemetry;
     private ApplicationTestContext? _application;
     private readonly MockPrintCompletedNotificationService _printCompletedNotificationService;
 
@@ -32,6 +34,14 @@ public sealed class SampleTestContext : IAsyncDisposable
     public static void ConfigureEnvironment()
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
+        _fileTelemetry = ArkTelemetryFileCollector.StartFromEnvironment();
+    }
+
+    /// <summary>Disposes the optional test telemetry collector.</summary>
+    [AfterTestRun]
+    public static void DisposeTelemetry()
+    {
+        _fileTelemetry?.Dispose();
     }
 
     /// <summary>Creates the scenario-owned application graph and its resources.</summary>

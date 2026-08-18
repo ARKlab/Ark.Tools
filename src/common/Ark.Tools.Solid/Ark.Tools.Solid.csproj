@@ -3,6 +3,7 @@
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <Description>SOLID base for Handler pattern</Description>
     <PackageTags>Ark;C#;.NET;Framework;SOLID;Handler</PackageTags>

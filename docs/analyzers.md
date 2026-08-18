@@ -43,6 +43,8 @@ attribute location:
 |---|---|---|
 | ARKCORE001 | Error | Evolvable enum backing type does not match |
 | ARKCORE002 | Error | Evolvable enum is missing `NOT_SET = 0` |
+| ARKCORE003 | Error | Evolvable enum names must be unique |
+| ARKCORE004 | Warning | Evolvable enum uses every value available in its backing type |
 | ARKSOLID001 | Warning | Use the self-referencing generic interface for dispatch |
 
 Generator diagnostics are reported at the relevant contract or attribute location.

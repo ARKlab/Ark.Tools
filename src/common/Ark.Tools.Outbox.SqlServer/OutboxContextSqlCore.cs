@@ -43,6 +43,7 @@ internal abstract class OutboxContextSqlCore
                 ";
 
             PeekLock = (int messageCount) => $@"
+                -- otel-query-label: outbox.peek-lock
                 ;WITH batch AS (
                     SELECT TOP ({messageCount}) *
                     FROM {full}

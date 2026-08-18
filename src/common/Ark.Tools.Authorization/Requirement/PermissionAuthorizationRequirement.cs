@@ -1,3 +1,7 @@
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using System.Collections.Concurrent;
 
 namespace Ark.Tools.Authorization.Requirement;
 
@@ -71,6 +75,20 @@ public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHan
 {
     private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
 
+    private static class ResourceRequirementTypeCache
+    {
+        private static readonly ConcurrentDictionary<Type, Lazy<Type>> _types = new();
+
+        public static Type Get(Type resourceType)
+        {
+            return _types.GetOrAdd(
+                resourceType,
+                static resourceType => new Lazy<Type>(
+                    () => typeof(PermissionAuthorizationRequirement<,>).MakeGenericType(typeof(TPermissionEnum), resourceType),
+                    LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+        }
+    }
+
     public PermissionAuthorizationHandler(IUserPermissionsProvider<TPermissionEnum> provider)
     {
         _provider = provider;
@@ -80,9 +98,14 @@ public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHan
     {
         var permissionType = typeof(PermissionAuthorizationRequirement<TPermissionEnum>);
         if (context.Resource != null)
-            permissionType = typeof(PermissionAuthorizationRequirement<,>).MakeGenericType(typeof(TPermissionEnum), context.Resource.GetType());
+            permissionType = ResourceRequirementTypeCache.Get(context.Resource.GetType());
 
-        var requirements = context.Policy.Requirements.Where(t => permissionType.IsAssignableFrom(t.GetType())).Cast<PermissionAuthorizationRequirement<TPermissionEnum>>().ToArray();
+        var requirements = context.Policy.Requirements
+            .Where(t => permissionType == typeof(PermissionAuthorizationRequirement<TPermissionEnum>)
+                ? t.GetType() == permissionType
+                : permissionType.IsAssignableFrom(t.GetType()))
+            .Cast<PermissionAuthorizationRequirement<TPermissionEnum>>()
+            .ToArray();
         if (requirements.Length == 0) return;
 
         var permissions = await _provider.GetPermissions(context).ConfigureAwait(false);
