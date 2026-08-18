@@ -243,7 +243,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         if (subscriptions.Length > 0 && string.Equals(role, "Producer", StringComparison.Ordinal))
             context.ReportDiagnostic(Diagnostic.Create(
                 _producerSubscription, Location.None, identity ?? "<unnamed>"));
-        if (identity is null && string.Equals(role, "Consumer", StringComparison.Ordinal))
+        if (identity is null && !string.Equals(role, "Producer", StringComparison.Ordinal))
             context.ReportDiagnostic(Diagnostic.Create(
                 _invalidParticipant, Location.None, "consumer participants require an identity"));
         if (subscriptions.Length > 0 && !networkInfo.Requires.HasFlag(MessagingCapabilities.PubSub))
