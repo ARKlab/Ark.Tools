@@ -28,10 +28,10 @@ Implemented by `Ark.Tools.AspNetCore.OTel`.
 | Metrics | SQL Client instrumentation | Provider SQL client duration metrics. |
 | Logs | OpenTelemetry logger provider | Only `Error` and `Critical` records are enabled for OTel export. |
 
-Azure Monitor is configured only when
-`ApplicationInsights:ConnectionString`, `APPLICATIONINSIGHTS_CONNECTION_STRING`
-in configuration, or the environment variable contains a value. Without a
-connection string the setup remains exporter-neutral.
+Azure Monitor is configured only when `ApplicationInsights:ConnectionString`
+(configuration key) or the `APPLICATIONINSIGHTS_CONNECTION_STRING` environment
+variable contains a value. Without a connection string the setup remains
+exporter-neutral.
 
 ### Exporter-neutral Rebus
 
