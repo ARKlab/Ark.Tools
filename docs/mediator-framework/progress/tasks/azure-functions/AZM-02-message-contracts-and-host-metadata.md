@@ -163,13 +163,13 @@ runtime exists yet, so no runtime fixture is added in this task.
 
 ## Acceptance
 
-- [ ] Message and event attributes are public, documented, validated, and
+- [x] Message and event attributes are public, documented, validated, and
   covered by API-surface tests.
-- [ ] Network contract, participant identity, and event subscription metadata
+- [x] Network contract, participant identity, and event subscription metadata
   are
   deterministic.
-- [ ] Invalid ownership, duplicate, and protocol-conflict diagnostics are stable.
-- [ ] Existing Rebus generation and tests remain behaviorally compatible.
-- [ ] The [task board](../README.md) status for AZM-02 is updated to this task's acceptance state.
+- [x] Invalid ownership, duplicate, and protocol-conflict diagnostics are stable.
+- [x] Existing Rebus generation and tests remain behaviorally compatible.
+- [x] The [task board](../README.md) status for AZM-02 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

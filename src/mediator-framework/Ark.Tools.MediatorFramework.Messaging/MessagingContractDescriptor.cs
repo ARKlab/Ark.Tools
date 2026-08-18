@@ -1,11 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Reflection;
-using System.Text;
-
-using Ark.MediatorFramework;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Immutable metadata for one registered message or event contract.</summary>
@@ -45,8 +40,8 @@ public sealed record MessagingContractDescriptor
     public static MessagingContractDescriptor Resolve(Type contractType)
     {
         ArgumentNullException.ThrowIfNull(contractType);
-        var message = contractType.GetCustomAttribute<MessageAttribute>();
-        var @event = contractType.GetCustomAttribute<EventAttribute>();
+        var message = Attribute.GetCustomAttribute(contractType, typeof(MessageAttribute)) as MessageAttribute;
+        var @event = Attribute.GetCustomAttribute(contractType, typeof(EventAttribute)) as EventAttribute;
         if ((message is null) == (@event is null))
             throw new InvalidOperationException($"Contract '{contractType.FullName}' must have exactly one messaging attribute.");
 

@@ -180,7 +180,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | Task | Title | Status |
 | --- | --- | --- |
 | [AZM-01](azure-functions/AZM-01-shared-network-configuration.md) | Shared messaging network configuration and capability model | Complete |
-| [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and participant metadata | Pending |
+| [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and participant metadata | Complete |
 | [AZM-03](azure-functions/AZM-03-message-contract-api-surface.md) | Message contract API-surface enforcement | Pending |
 | [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Multi-type envelope and serialization protocols | Pending |
 | [AZM-05](azure-functions/AZM-05-transport-abstraction-and-inmemory.md) | Transport abstraction and first-class InMemory transport | Pending |

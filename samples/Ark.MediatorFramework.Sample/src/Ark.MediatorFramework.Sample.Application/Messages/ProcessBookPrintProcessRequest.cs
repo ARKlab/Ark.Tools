@@ -6,8 +6,8 @@ using Ark.Tools.Solid;
 namespace Ark.MediatorFramework.Sample.Application.Messages;
 
 /// <summary>Processes a queued book print request in the background.</summary>
-[Message(OwnerQueue = "ark.mediator.sample")]
-[RebusMessage(OwnerQueue = "ark.mediator.sample")]
+[Message(OwnerQueue = "ark-mediator-sample")]
+[RebusMessage(OwnerQueue = "ark-mediator-sample")]
 public sealed record ProcessBookPrintProcessRequest :
     IRequest<ProcessBookPrintProcessRequest, BookPrintProcessResponse>
 {

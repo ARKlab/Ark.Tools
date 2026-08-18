@@ -17,6 +17,6 @@ EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
 EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
 EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
 EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
-REBUS FailingRebusRequest -> queue:ark.mediator.sample
-REBUS ProcessBookPrintProcessRequest -> queue:ark.mediator.sample
+REBUS FailingRebusRequest -> queue:ark-mediator-sample
+REBUS ProcessBookPrintProcessRequest -> queue:ark-mediator-sample
 */

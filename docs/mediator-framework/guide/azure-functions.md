@@ -27,6 +27,41 @@ capabilities. Service Bus supports all three; Storage Queue supports
 Startup validation rejects a transport that does not provide every declared
 capability.
 
+## 1.2 Transport-neutral message contracts
+
+Message and event declarations live in the application contract assembly and do
+not reference Azure SDK or Rebus types:
+
+```csharp
+[Message(OwnerQueue = "orders")]
+public sealed record RecalculateOrder : ICommand<RecalculateOrder>;
+
+[Event(OwnerPublisher = "orders")]
+public sealed record OrderRecalculated : ICommand<OrderRecalculated>;
+```
+
+Register every contract once in the shared network profile. The default logical
+name is the namespace-qualified CLR name normalized to lowercase `snake_case`.
+Use `Name` and normalized `FormerNames` for stable names and compatible CLR
+renames. Owners and named participant identities use three-to-63-character
+lowercase portable queue names. `outbox-processor` and `-poison` owner queues
+are reserved.
+
+An assembly declares at most one participant:
+
+```csharp
+[assembly: MessagingParticipant(
+    Identity = "billing",
+    Network = typeof(BillingMessagingNetwork),
+    Subscriptions = new[] { typeof(OrderRecalculated) })]
+```
+
+A named consumer automatically receives registered messages owned by its
+identity queue; event receipt always requires an explicit subscription. A
+producer identity owns no queue and cannot subscribe. Omitting `Identity`
+creates a sender-only participant. The participant selects no transport or
+shared network settings; those remain network and host composition concerns.
+
 Network settings are shared: serializers, compression, payload limits, retry
 policy, scheduling limits, and resource lifecycle must not be overridden by a
 participant. Participant identities and subscriptions remain participant-local.

@@ -1,21 +1,19 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application.Messages;
-
 namespace Ark.MediatorFramework.Sample.Application.Messaging;
 
 /// <summary>Shared messaging network used by the Book background activities.</summary>
 [MessagingNetwork(
+    MessagingCapabilities.Receive
+        | MessagingCapabilities.PubSub
+        | MessagingCapabilities.ScheduledSend,
     Contracts = new[]
     {
         typeof(ProcessBookPrintProcessRequest),
         typeof(FailingRebusRequest),
         typeof(BookPrintCompleted),
     },
-    MessagingCapabilities.Receive
-        | MessagingCapabilities.PubSub
-        | MessagingCapabilities.ScheduledSend,
     DefaultSerializer = SerializationProtocol.Json,
     Compression = CompressionAlgorithm.Brotli,
     CompressionMinimumSizeBytes = 4096,

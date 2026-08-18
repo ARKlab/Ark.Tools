@@ -264,9 +264,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         }
 
         if (message is not null)
-            metadata.Add($"message={StringArgument(message, "OwnerQueue") ?? "<missing>"} name={StringArgument(message, "Name") ?? "<default>"}");
+            metadata.Add($"message={StringNamed(message, "OwnerQueue") ?? "<missing>"} name={StringNamed(message, "Name") ?? "<default>"}");
         if (@event is not null)
-            metadata.Add($"event={StringArgument(@event, "OwnerPublisher") ?? "<missing>"} name={StringArgument(@event, "Name") ?? "<default>"}");
+            metadata.Add($"event={StringNamed(@event, "OwnerPublisher") ?? "<missing>"} name={StringNamed(@event, "Name") ?? "<default>"}");
 
         lines.Add($"CONTRACT {request} -> {TypeName(result)} [group={group}]"
             + (metadata.Count == 0 ? string.Empty : " [" + string.Join("] [", metadata) + "]"));

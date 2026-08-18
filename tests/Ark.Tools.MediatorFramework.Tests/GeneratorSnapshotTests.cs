@@ -176,6 +176,49 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingGeneratorEmitsDeterministicContractAndParticipantMetadata()
+    {
+        var result = _runGeneratorResult<MessagingMetadataGenerator>(
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: MessagingParticipant(Identity = "orders", Network = typeof(OrderNetwork))]
+            [Message(OwnerQueue = "orders")] public sealed class PlaceOrder { }
+            [Event(OwnerPublisher = "orders")] public sealed class OrderPlaced : ICommand<OrderPlaced> { }
+            [MessagingNetwork(MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
+                Contracts = new[] { typeof(OrderPlaced), typeof(PlaceOrder) })]
+            public sealed class OrderNetwork { }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("ArkGeneratedMessagingMetadata");
+        result.Generated.Should().Contain("place_order");
+        result.Generated.Should().Contain("order_placed");
+        result.Generated.Should().Contain("MessagingParticipantRole.Consumer");
+    }
+
+    [TestMethod]
+    public void MessagingGeneratorDiagnosesOwnerAndProducerSubscriptionErrors()
+    {
+        var result = _runGeneratorResult<MessagingMetadataGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [assembly: MessagingParticipant(
+                Identity = "sender",
+                Role = MessagingParticipantRole.Producer,
+                Network = typeof(Network),
+                Subscriptions = new[] { typeof(SomeEvent) })]
+            [Event(OwnerPublisher = "sender")] public sealed class SomeEvent : ICommand<SomeEvent> { }
+            [Message] public sealed class MissingOwner { }
+            [MessagingNetwork(Contracts = new[] { typeof(SomeEvent), typeof(MissingOwner) })]
+            public sealed class Network { }
+            """);
+
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKMF033");
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKMF048");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(

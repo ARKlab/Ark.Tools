@@ -7,8 +7,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
-using Ark.MediatorFramework;
-
 using Microsoft.CodeAnalysis;
 
 namespace Ark.MediatorFramework.AzureFunctions.Generators;
@@ -17,45 +15,43 @@ namespace Ark.MediatorFramework.AzureFunctions.Generators;
 [Generator(LanguageNames.CSharp)]
 public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 {
-    private const string Message = "Ark.MediatorFramework.MessageAttribute";
-    private const string Event = "Ark.MediatorFramework.EventAttribute";
-    private const string Network = "Ark.MediatorFramework.MessagingNetworkAttribute";
-    private const string Participant = "Ark.MediatorFramework.MessagingParticipantAttribute";
-    private const string Command = "Ark.Tools.Solid.ICommand";
-
-    private static readonly DiagnosticDescriptor MissingOwner = _diagnostic(
+    private const string _message = "Ark.MediatorFramework.MessageAttribute";
+    private const string _event = "Ark.MediatorFramework.EventAttribute";
+    private const string _network = "Ark.MediatorFramework.MessagingNetworkAttribute";
+    private const string _participant = "Ark.MediatorFramework.MessagingParticipantAttribute";
+    private static readonly DiagnosticDescriptor _missingOwner = _diagnostic(
         "ARKMF033", "Missing messaging owner", "Messaging contract '{0}' must declare a non-blank owner");
-    private static readonly DiagnosticDescriptor DualContract = _diagnostic(
+    private static readonly DiagnosticDescriptor _dualContract = _diagnostic(
         "ARKMF034", "Dual messaging contract", "Contract '{0}' cannot be both a message and an event");
-    private static readonly DiagnosticDescriptor UnregisteredContract = _diagnostic(
+    private static readonly DiagnosticDescriptor _unregisteredContract = _diagnostic(
         "ARKMF035", "Unregistered messaging contract", "Messaging contract '{0}' is not registered in a messaging network");
-    private static readonly DiagnosticDescriptor DuplicateRegistration = _diagnostic(
+    private static readonly DiagnosticDescriptor _duplicateRegistration = _diagnostic(
         "ARKMF036", "Duplicate messaging registration", "Messaging network '{0}' registers contract '{1}' more than once");
-    private static readonly DiagnosticDescriptor MissingParticipantNetwork = _diagnostic(
+    private static readonly DiagnosticDescriptor _missingParticipantNetwork = _diagnostic(
         "ARKMF037", "Missing participant network", "Messaging participant must reference a declared network profile");
-    private static readonly DiagnosticDescriptor DuplicateParticipant = _diagnostic(
+    private static readonly DiagnosticDescriptor _duplicateParticipant = _diagnostic(
         "ARKMF038", "Duplicate messaging participant", "An assembly can declare only one MessagingParticipant");
-    private static readonly DiagnosticDescriptor InvalidParticipant = _diagnostic(
+    private static readonly DiagnosticDescriptor _invalidParticipant = _diagnostic(
         "ARKMF039", "Invalid messaging participant", "Messaging participant declaration is invalid: {0}");
-    private static readonly DiagnosticDescriptor InvalidName = _diagnostic(
+    private static readonly DiagnosticDescriptor _invalidName = _diagnostic(
         "ARKMF040", "Invalid messaging name", "Messaging name '{0}' for contract '{1}' is not normalized lowercase snake_case");
-    private static readonly DiagnosticDescriptor InvalidQueueName = _diagnostic(
+    private static readonly DiagnosticDescriptor _invalidQueueName = _diagnostic(
         "ARKMF041", "Invalid messaging queue name", "Messaging owner or participant identity '{0}' must be a portable queue name");
-    private static readonly DiagnosticDescriptor ReservedName = _diagnostic(
+    private static readonly DiagnosticDescriptor _reservedName = _diagnostic(
         "ARKMF042", "Reserved messaging name", "Messaging name '{0}' is reserved by the framework");
-    private static readonly DiagnosticDescriptor MissingCapability = _diagnostic(
+    private static readonly DiagnosticDescriptor _missingCapability = _diagnostic(
         "ARKMF043", "Missing messaging capability", "Messaging declaration '{0}' requires network capability '{1}'");
-    private static readonly DiagnosticDescriptor InvalidEventContract = _diagnostic(
+    private static readonly DiagnosticDescriptor _invalidEventContract = _diagnostic(
         "ARKMF044", "Invalid event contract", "Event contract '{0}' must implement Ark.Tools.Solid.ICommand");
-    private static readonly DiagnosticDescriptor DuplicateName = _diagnostic(
+    private static readonly DiagnosticDescriptor _duplicateName = _diagnostic(
         "ARKMF045", "Duplicate messaging name", "Messaging name or alias '{0}' is used by more than one contract");
-    private static readonly DiagnosticDescriptor AliasCurrentName = _diagnostic(
-        "ARKMF046", "Messaging alias conflicts with current name", "Messaging alias '{0}' is another contract's current name");
-    private static readonly DiagnosticDescriptor TopicTooLong = _diagnostic(
+    private static readonly DiagnosticDescriptor _aliasConflict = _diagnostic(
+        "ARKMF046", "Messaging alias conflicts with a current name", "Messaging alias '{0}' conflicts with a current contract name");
+    private static readonly DiagnosticDescriptor _topicTooLong = _diagnostic(
         "ARKMF047", "Messaging topic name too long", "Derived event topic '{0}' exceeds the Service Bus 260-character limit");
-    private static readonly DiagnosticDescriptor ProducerSubscription = _diagnostic(
+    private static readonly DiagnosticDescriptor _producerSubscription = _diagnostic(
         "ARKMF048", "Producer subscriptions are not allowed", "Producer participant '{0}' cannot declare event subscriptions");
-    private static readonly DiagnosticDescriptor InvalidSerialization = _diagnostic(
+    private static readonly DiagnosticDescriptor _invalidSerialization = _diagnostic(
         "ARKMF049", "Conflicting messaging serializer", "Contract '{0}' explicitly selects '{1}', which conflicts with network default '{2}'");
 
     /// <inheritdoc />
@@ -69,15 +65,16 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
     {
         var sourceTypes = _allTypes(compilation.Assembly.GlobalNamespace).ToArray();
         var participantAttributes = compilation.Assembly.GetAttributes()
-            .Where(attribute => _is(attribute, Participant))
+            .Where(attribute => _is(attribute, _participant))
             .ToArray();
-        var participantNetwork = participantAttributes
+        INamedTypeSymbol? participantNetwork = participantAttributes
             .Select(attribute => _typeArgument(attribute, "Network"))
             .FirstOrDefault(type => type is not null);
         var networkTypes = sourceTypes
-            .Where(type => _hasAttribute(type, Network))
+            .Where(type => _hasAttribute(type, _network))
             .Concat(participantNetwork is null ? Array.Empty<INamedTypeSymbol>() : new[] { participantNetwork })
             .Distinct(SymbolEqualityComparer.Default)
+            .OfType<INamedTypeSymbol>()
             .ToArray();
         var networks = networkTypes
             .Select(type => _readNetwork(type))
@@ -86,9 +83,10 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
             .OrderBy(network => network.TypeName, StringComparer.Ordinal)
             .ToArray();
         var contractTypes = sourceTypes
-            .Where(type => _hasAttribute(type, Message) || _hasAttribute(type, Event))
+            .Where(type => _hasAttribute(type, _message) || _hasAttribute(type, _event))
             .Concat(networks.SelectMany(network => network.Contracts))
             .Distinct(SymbolEqualityComparer.Default)
+            .OfType<INamedTypeSymbol>()
             .ToArray();
         var contracts = contractTypes
             .Select(type => _readContract(type, context))
@@ -99,7 +97,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 
         _validateContracts(context, contracts, networks);
         if (participantAttributes.Length > 1)
-            context.ReportDiagnostic(Diagnostic.Create(DuplicateParticipant, Location.None));
+            context.ReportDiagnostic(Diagnostic.Create(_duplicateParticipant, Location.None));
 
         ParticipantInfo? participant = null;
         if (participantAttributes.Length > 0)
@@ -120,6 +118,13 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         foreach (var network in networks)
         {
             var names = new Dictionary<string, ContractInfo>(StringComparer.Ordinal);
+            var currentNames = network.Contracts
+                .Select(contractType => contracts.FirstOrDefault(item =>
+                    SymbolEqualityComparer.Default.Equals(item.Type, contractType)))
+                .Where(contract => contract is not null)
+                .Select(contract => contract!)
+                .Select(contract => contract.Name)
+                .ToHashSet(StringComparer.Ordinal);
             foreach (var contractType in network.Contracts)
             {
                 var contract = contracts.FirstOrDefault(item =>
@@ -134,28 +139,34 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 
                 if (!names.TryAdd(contract.Name, contract))
                     context.ReportDiagnostic(Diagnostic.Create(
-                        DuplicateRegistration, contract.Location, network.TypeName, contract.TypeName));
+                        _duplicateRegistration, contract.Location, network.TypeName, contract.TypeName));
                 foreach (var alias in contract.FormerNames)
                 {
+                    if (currentNames.Contains(alias))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            _aliasConflict, contract.Location, alias));
+                        continue;
+                    }
                     if (!names.TryAdd(alias, contract))
                         context.ReportDiagnostic(Diagnostic.Create(
-                            DuplicateName, contract.Location, alias));
+                            _duplicateName, contract.Location, alias));
                 }
 
                 if (contract.IsEvent && !network.Requires.HasFlag(MessagingCapabilities.PubSub))
                     context.ReportDiagnostic(Diagnostic.Create(
-                        MissingCapability, contract.Location, contract.TypeName, nameof(MessagingCapabilities.PubSub)));
+                        _missingCapability, contract.Location, contract.TypeName, nameof(MessagingCapabilities.PubSub)));
                 if (contract.Serializer is not null
-                    && contract.Serializer != network.DefaultSerializer)
+                    && contract.Serializer.Value.ToString() != network.DefaultSerializer)
                     context.ReportDiagnostic(Diagnostic.Create(
-                        InvalidSerialization, contract.Location, contract.TypeName,
+                        _invalidSerialization, contract.Location, contract.TypeName,
                         contract.Serializer.Value, network.DefaultSerializer));
 
                 if (contract.IsEvent)
                 {
                     var topic = contract.Owner + "-" + contract.Name;
                     if (topic.Length > 260)
-                        context.ReportDiagnostic(Diagnostic.Create(TopicTooLong, contract.Location, topic));
+                        context.ReportDiagnostic(Diagnostic.Create(_topicTooLong, contract.Location, topic));
                 }
             }
         }
@@ -164,7 +175,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         {
             if (!registered.Contains(contract.Type))
                 context.ReportDiagnostic(Diagnostic.Create(
-                    UnregisteredContract, contract.Location, contract.TypeName));
+                    _unregisteredContract, contract.Location, contract.TypeName));
         }
     }
 
@@ -176,7 +187,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         var network = _typeArgument(attribute, "Network");
         if (network is null)
         {
-            context.ReportDiagnostic(Diagnostic.Create(MissingParticipantNetwork, Location.None));
+            context.ReportDiagnostic(Diagnostic.Create(_missingParticipantNetwork, Location.None));
             return null;
         }
 
@@ -185,7 +196,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         if (networkInfo is null)
         {
             context.ReportDiagnostic(Diagnostic.Create(
-                InvalidParticipant, Location.None, "the referenced network profile is not declared"));
+                _invalidParticipant, Location.None, "the referenced network profile is not declared"));
             return null;
         }
 
@@ -196,23 +207,23 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         {
             _validateQueueName(context, identity, Location.None);
             if (identity == "outbox-processor")
-                context.ReportDiagnostic(Diagnostic.Create(ReservedName, Location.None, identity));
+                context.ReportDiagnostic(Diagnostic.Create(_reservedName, Location.None, identity));
         }
 
         if (subscriptions.Length > 0 && string.Equals(role, "Producer", StringComparison.Ordinal))
             context.ReportDiagnostic(Diagnostic.Create(
-                ProducerSubscription, Location.None, identity ?? "<unnamed>"));
+                _producerSubscription, Location.None, identity ?? "<unnamed>"));
         if (subscriptions.Length > 0 && identity is null)
             context.ReportDiagnostic(Diagnostic.Create(
-                InvalidParticipant, Location.None, "subscriptions require an identity"));
+                _invalidParticipant, Location.None, "subscriptions require an identity"));
         if (subscriptions.Length > 0 && !networkInfo.Requires.HasFlag(MessagingCapabilities.PubSub))
             context.ReportDiagnostic(Diagnostic.Create(
-                MissingCapability, Location.None, "participant subscriptions", nameof(MessagingCapabilities.PubSub)));
+                _missingCapability, Location.None, "participant subscriptions", nameof(MessagingCapabilities.PubSub)));
         if (identity is not null
             && string.Equals(role, "Consumer", StringComparison.Ordinal)
             && !networkInfo.Requires.HasFlag(MessagingCapabilities.Receive))
             context.ReportDiagnostic(Diagnostic.Create(
-                MissingCapability, Location.None, "participant identity", nameof(MessagingCapabilities.Receive)));
+                _missingCapability, Location.None, "participant identity", nameof(MessagingCapabilities.Receive)));
 
         foreach (var subscription in subscriptions)
         {
@@ -221,19 +232,19 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
             if (contract is null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    InvalidParticipant, Location.None, "subscription is not registered in the referenced network"));
+                    _invalidParticipant, Location.None, "subscription is not registered in the referenced network"));
             }
-            else if (!_hasAttribute(contract, Event))
+            else if (!_hasAttribute(contract, _event))
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    InvalidParticipant, Location.None, "subscriptions must reference event contracts"));
+                    _invalidParticipant, Location.None, "subscriptions must reference event contracts"));
             }
         }
 
         var received = networkInfo.Contracts
-            .Where(contract => _hasAttribute(contract, Message)
+            .Where(contract => _hasAttribute(contract, _message)
                 && identity is not null
-                && string.Equals(_owner(contract, Message), identity, StringComparison.Ordinal))
+                && string.Equals(_owner(contract, _message), identity, StringComparison.Ordinal))
             .OrderBy(contract => contract.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
             .ToArray();
         return new ParticipantInfo(network, identity, role, subscriptions, _typeArguments(attribute, "IncomingSteps"),
@@ -242,40 +253,40 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 
     private static ContractInfo? _readContract(INamedTypeSymbol type, SourceProductionContext context)
     {
-        var message = type.GetAttributes().FirstOrDefault(attribute => _is(attribute, Message));
-        var @event = type.GetAttributes().FirstOrDefault(attribute => _is(attribute, Event));
+        var message = type.GetAttributes().FirstOrDefault(attribute => _is(attribute, _message));
+        var @event = type.GetAttributes().FirstOrDefault(attribute => _is(attribute, _event));
         if (message is null && @event is null)
             return null;
         if (message is not null && @event is not null)
         {
-            context.ReportDiagnostic(Diagnostic.Create(DualContract, _location(type), type.Name));
+            context.ReportDiagnostic(Diagnostic.Create(_dualContract, _location(type), type.Name));
             return null;
         }
 
         var attribute = message ?? @event!;
         var owner = _stringArgument(attribute, message is not null ? "OwnerQueue" : "OwnerPublisher");
         if (string.IsNullOrWhiteSpace(owner))
-            context.ReportDiagnostic(Diagnostic.Create(MissingOwner, _location(type), type.Name));
+            context.ReportDiagnostic(Diagnostic.Create(_missingOwner, _location(type), type.Name));
         else
         {
-            _validateQueueName(context, owner, _location(type));
-            if (owner == "outbox-processor" || (message is not null && owner.EndsWith("-poison", StringComparison.Ordinal)))
-                context.ReportDiagnostic(Diagnostic.Create(ReservedName, _location(type), owner));
+            _validateQueueName(context, owner!, _location(type));
+            if (owner == "outbox-processor" || (message is not null && owner!.EndsWith("-poison", StringComparison.Ordinal)))
+                context.ReportDiagnostic(Diagnostic.Create(_reservedName, _location(type), owner!));
         }
 
         var explicitName = _stringArgument(attribute, "Name");
         var name = explicitName ?? _normalize(type);
         if (explicitName is not null && explicitName != _normalizeValue(explicitName))
-            context.ReportDiagnostic(Diagnostic.Create(InvalidName, _location(type), explicitName, type.Name));
+            context.ReportDiagnostic(Diagnostic.Create(_invalidName, _location(type), explicitName, type.Name));
         var formerNames = _stringArguments(attribute, "FormerNames");
         foreach (var formerName in formerNames)
         {
             if (formerName != _normalizeValue(formerName))
-                context.ReportDiagnostic(Diagnostic.Create(InvalidName, _location(type), formerName, type.Name));
+                context.ReportDiagnostic(Diagnostic.Create(_invalidName, _location(type), formerName, type.Name));
         }
 
         if (@event is not null && !_implementsCommand(type))
-            context.ReportDiagnostic(Diagnostic.Create(InvalidEventContract, _location(type), type.Name));
+            context.ReportDiagnostic(Diagnostic.Create(_invalidEventContract, _location(type), type.Name));
 
         return new ContractInfo(
             type,
@@ -290,7 +301,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 
     private static NetworkInfo? _readNetwork(INamedTypeSymbol type)
     {
-        var attribute = type.GetAttributes().FirstOrDefault(item => _is(item, Network));
+        var attribute = type.GetAttributes().FirstOrDefault(item => _is(item, _network));
         if (attribute is null)
             return null;
         return new NetworkInfo(
@@ -320,8 +331,8 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
             network.Contracts.Any(type => SymbolEqualityComparer.Default.Equals(type, contract.Type))))
             .OrderBy(contract => contract.Name, StringComparer.Ordinal))
         {
-            source.Append("        new global::Ark.MediatorFramework.Messaging.MessagingContractDescriptor(")
-                .Append(contract.TypeName).Append(", ")
+            source.Append("        new global::Ark.MediatorFramework.Messaging.MessagingContractDescriptor(typeof(")
+                .Append(contract.TypeName).Append("), ")
                 .Append(contract.IsEvent ? "true" : "false").Append(", ")
                 .Append(_literal(contract.Owner)).Append(", ")
                 .Append(_literal(contract.Name)).Append(", new string[] { ")
@@ -376,14 +387,14 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         if (value.Length < 3 || value.Length > 63 || value.Contains("--", StringComparison.Ordinal)
             || !char.IsLetterOrDigit(value[0]) || !char.IsLetterOrDigit(value[^1])
             || value.Any(character => !(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-')))
-            context.ReportDiagnostic(Diagnostic.Create(InvalidQueueName, location, value));
+            context.ReportDiagnostic(Diagnostic.Create(_invalidQueueName, location, value));
     }
 
     private static string _normalize(INamedTypeSymbol type)
     {
         return _normalizeValue(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-            .Replace("global::", string.Empty, StringComparison.Ordinal)
-            .Replace("+", ".", StringComparison.Ordinal));
+            .Replace("global::", string.Empty)
+            .Replace("+", "."));
     }
 
     private static string _normalizeValue(string value)
@@ -448,7 +459,7 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
     private static string? _owner(ITypeSymbol type, string attributeName)
     {
         var attribute = type.GetAttributes().FirstOrDefault(item => _is(item, attributeName));
-        return attribute is null ? null : _stringArgument(attribute, attributeName == Message ? "OwnerQueue" : "OwnerPublisher");
+        return attribute is null ? null : _stringArgument(attribute, attributeName == _message ? "OwnerQueue" : "OwnerPublisher");
     }
 
     private static string? _stringArgument(AttributeData attribute, string name) =>
@@ -492,8 +503,10 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 
     private static MessagingCapabilities _enumFlags(AttributeData attribute, string name)
     {
+        if (attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is int integer)
+            return (MessagingCapabilities)integer;
         var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value.Value;
-        return value is int integer ? (MessagingCapabilities)integer : MessagingCapabilities.None;
+        return value is int namedInteger ? (MessagingCapabilities)namedInteger : MessagingCapabilities.None;
     }
 
     private static SerializationProtocol? _serializerArgument(AttributeData attribute)
@@ -588,5 +601,27 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         public ImmutableArray<INamedTypeSymbol> IncomingSteps { get; }
         public ImmutableArray<INamedTypeSymbol> OutgoingSteps { get; }
         public ImmutableArray<INamedTypeSymbol> ReceivedMessages { get; }
+    }
+
+    [Flags]
+    private enum MessagingCapabilities
+    {
+        None = 0,
+        Receive = 1,
+        PubSub = 2,
+        ScheduledSend = 4,
+    }
+
+    private enum SerializationProtocol
+    {
+        Json,
+        MessagePack,
+        Protobuf,
+    }
+
+    private enum MessagingParticipantRole
+    {
+        Consumer,
+        Producer,
     }
 }

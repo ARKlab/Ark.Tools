@@ -800,6 +800,7 @@
         "dependencies": {
           "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",

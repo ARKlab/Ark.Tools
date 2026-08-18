@@ -314,6 +314,12 @@
           "protobuf-net": "[3.3.21, )"
         }
       },
+      "ark.tools.mediatorframework.messaging": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
+        }
+      },
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {

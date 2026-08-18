@@ -75,7 +75,7 @@ public static class RebusProcessorComposition
         {
             cfg.Transport(transport =>
             {
-                transport.UseInMemoryTransport(network, "ark.mediator.sample");
+                transport.UseInMemoryTransport(network, "ark-mediator-sample");
                 ApplicationComposition.ConfigureRebusOutbox(transport, container, startProcessor: true);
             });
             ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<ProcessBookPrintProcessRequest>, options =>

@@ -66,6 +66,17 @@ public sealed class MessagingNetworkTests
         action.Should().Throw<ArgumentOutOfRangeException>();
     }
 
+    [TestMethod]
+    public void ResolvesRegisteredContractMetadata()
+    {
+        var options = MessagingNetworkDescriptor.Resolve(typeof(ContractNetwork));
+
+        options.Contracts.Should().ContainSingle();
+        options.Contracts[0].ContractType.Should().Be<ContractMessage>();
+        options.Contracts[0].Name.Should().Be("contract_message");
+        options.Contracts[0].FormerNames.Should().ContainSingle().Which.Should().Be("old_contract_message");
+    }
+
     [MessagingNetwork(MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
     private sealed class TestNetwork
     {
@@ -77,5 +88,17 @@ public sealed class MessagingNetworkTests
         public bool SecondLevelRetriesEnabled => true;
         public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
         public TimeSpan RetryDelay => TimeSpan.Zero;
+    }
+
+    [Message(
+        OwnerQueue = "contracts",
+        Name = "contract_message",
+        FormerNames = new[] { "old_contract_message" })]
+    private sealed record ContractMessage;
+
+    [MessagingNetwork(MessagingCapabilities.Receive,
+        Contracts = new[] { typeof(ContractMessage) })]
+    private sealed class ContractNetwork
+    {
     }
 }
