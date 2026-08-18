@@ -8,7 +8,7 @@ namespace Ark.Tools.Outbox.OTel;
 /// <summary>
 /// OpenTelemetry setup extensions for outbox processors.
 /// </summary>
-public static class Ex
+public static class OutboxOpenTelemetryExtensions
 {
     /// <summary>
     /// Adds outbox processor activities and meters to an exporter-agnostic OpenTelemetry builder.
