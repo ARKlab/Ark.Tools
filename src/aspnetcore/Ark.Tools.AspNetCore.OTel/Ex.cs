@@ -34,6 +34,9 @@ public static class Ex
             .ConfigureResource(resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
+                .AddHttpClientInstrumentation()
+                .AddSqlClientInstrumentation()
+                .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
             .WithMetrics(metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));

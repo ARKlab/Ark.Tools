@@ -120,6 +120,36 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=h
 `AddArkAzureMonitorOpenTelemetry` also reads
 `ApplicationInsights:ConnectionString` from application configuration.
 
+### Core client instrumentations
+
+`AddArkAzureMonitorOpenTelemetry` registers the stable OpenTelemetry .NET
+instrumentations for `HttpClient` and `Microsoft.Data.SqlClient`. Flurl clients
+created by `Ark.Tools.Http` use `HttpClient`, so their outbound requests are
+captured automatically; no Flurl-specific hook is required.
+
+Azure Service Bus uses the tracing `ActivitySource` emitted by the
+`Azure.Messaging.ServiceBus` SDK. Ark registers that source
+(`Azure.Messaging.ServiceBus`) so sender and receiver spans flow through the
+same provider. Applications should use the current Azure Service Bus SDK rather
+than adding a separate, unsupported Service Bus instrumentation package.
+
+### Further instrumentation candidates
+
+Prioritize these additions when the corresponding dependency is used:
+
+- **gRPC client** (`OpenTelemetry.Instrumentation.GrpcNetClient`) for RPC spans
+  and status details.
+- **Entity Framework Core** (`OpenTelemetry.Instrumentation.EntityFrameworkCore`)
+  for ORM operation context in addition to SQL spans.
+- **StackExchange.Redis** (`OpenTelemetry.Instrumentation.StackExchangeRedis`)
+  for cache dependency latency and failures.
+- **MongoDB** (`OpenTelemetry.Instrumentation.MongoDB`) or **Npgsql**
+  (`OpenTelemetry.Instrumentation.Npgsql`) for applications using those stores.
+
+These should remain opt-in because each adds a provider-specific dependency and
+can duplicate lower-level database spans. Review package stability and target
+framework support before adding them to the default registration.
+
 ---
 
 ## Configuration Reference
