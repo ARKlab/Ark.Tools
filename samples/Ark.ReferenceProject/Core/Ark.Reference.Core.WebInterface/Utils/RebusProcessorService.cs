@@ -46,7 +46,7 @@ public sealed class RebusProcessorService : IHostedService, IDisposable
         var apiHost = _container.GetInstance<ApiHost>();
         await apiHost.RunBusInBackgroundAsync(cancellationToken).ConfigureAwait(false);
 
-        var bus = _container.GetInstance<IBus>();
+        _container.GetInstance<IBus>();
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

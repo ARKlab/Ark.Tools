@@ -10,7 +10,6 @@ using MessagePack.NodaTime;
 using MessagePack.Resolvers;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Identity.Web;
@@ -53,11 +52,6 @@ public class Startup : ArkStartupWebApi
         var domain = "Domain";
         var swaggerClientId = "SwaggerClientId";
 
-        var defaultPolicy = new AuthorizationPolicyBuilder()
-            .AddAuthenticationSchemes(auth0Scheme)
-            .RequireAuthenticatedUser()
-            .Build();
-
         var authBuilder = services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = auth0Scheme;
@@ -94,10 +88,10 @@ public class Startup : ArkStartupWebApi
 
         services.AddArkHealthChecksUIOptions(setup =>
         {
-            if (File.Exists(Path.Combine(Environment.CurrentDirectory, "UIHealthChecks.css")))
+            if (File.Exists(Path.Join(Environment.CurrentDirectory, "UIHealthChecks.css")))
                 setup.AddCustomStylesheet("UIHealthChecks.css");
 
-            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css")))
+            if (File.Exists(Path.Join(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css")))
                 setup.AddCustomStylesheet(AppDomain.CurrentDomain.BaseDirectory + "UIHealthChecks.css");
         });
 
@@ -165,7 +159,7 @@ public class Startup : ArkStartupWebApi
     {
         base.RegisterContainer(services);
 
-        var ext = services.GetService<IExternalInjected>();
+        services.GetService<IExternalInjected>();
 
         var cfg = new ApiConfig()
         {
@@ -175,7 +169,7 @@ public class Startup : ArkStartupWebApi
 
 
 
-        var apiHost = new ApiHost(cfg)
+        new ApiHost(cfg)
             .WithContainer(Container);
     }
 }

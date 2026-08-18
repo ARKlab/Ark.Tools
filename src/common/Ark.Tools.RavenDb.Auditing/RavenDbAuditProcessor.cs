@@ -33,7 +33,7 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
         {
             try
             {
-                var localName = await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions()
+                await _store.Subscriptions.CreateAsync(new SubscriptionCreationOptions()
                 {
                     Name = _prefixName + name,
                     Query = $@"From {name}(Revisions = true)"

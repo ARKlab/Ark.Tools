@@ -66,16 +66,9 @@ public static class Ex
         var handlerType = typeof(IAuthorizationResourceHandler<,>).MakeGenericType(queryType, policyType);
 
         dynamic handler = c.GetInstance(handlerType);
+        using var disposable = handler as IDisposable;
 
-        try
-        {
-            return await handler.GetResouceAsync((dynamic)query, ctk);
-        }
-        finally
-        {
-            IDisposable? disp = handler as IDisposable;
-            disp?.Dispose();
-        }
+        return await handler.GetResouceAsync((dynamic)query, ctk).ConfigureAwait(false);
     }
 
     public static async Task<IAuthorizationPolicy> GetPolicyAsync(PolicyAuthorizeAttribute p, IAuthorizationPolicyProvider policyProvider, CancellationToken ctk = default)

@@ -69,9 +69,9 @@ public static class Program
         }
         catch (Exception ex)
         {
-            NLog.LogManager.GetLogger("Main").Fatal(ex, $@"Unhandled Fatal Exception occurred: {ex.Message}");
+NLog.LogManager.GetLogger("Main").Fatal(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Unhandled fatal exception occurred: {Message}", ex.Message);
 #pragma warning disable RS0030 // Exception handler - console output for critical failures
-            Console.WriteLine(ex.ToString());
+            Console.WriteLine(ex);
 #pragma warning restore RS0030
         }
         finally

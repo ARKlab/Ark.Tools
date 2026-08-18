@@ -9,7 +9,7 @@ public class PrettifyOperationIdOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        if (context.ApiDescription.ActionDescriptor is ControllerActionDescriptor cad)
+        if (context.ApiDescription.ActionDescriptor is ControllerActionDescriptor)
         {
             operation.OperationId = $@"{context.ApiDescription.HttpMethod}{context.ApiDescription.RelativePath?
                 .Replace(@"v{api-version}", "", System.StringComparison.Ordinal)

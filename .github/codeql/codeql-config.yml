@@ -6,3 +6,11 @@ threat-models: local
 
 queries:
   - uses: security-and-quality
+
+query-filters:
+  - exclude:
+      id: cs/linq/missed-where
+  - exclude:
+      id: cs/linq/missed-select
+  - exclude:
+      id: cs/simplifiable-boolean-expression

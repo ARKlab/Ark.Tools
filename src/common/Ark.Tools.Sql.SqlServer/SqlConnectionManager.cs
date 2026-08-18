@@ -23,7 +23,7 @@ public class SqlConnectionManager : IDbConnectionManager
         }
         catch
         {
-            conn?.Dispose();
+            conn.Dispose();
             throw;
         }
     }
@@ -38,7 +38,7 @@ public class SqlConnectionManager : IDbConnectionManager
         }
         catch
         {
-            conn?.Dispose();
+            conn.Dispose();
             throw;
         }
     }

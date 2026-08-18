@@ -42,7 +42,7 @@ var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(rebusContainer);
             builder.Services.AddArkHealthChecks();
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
+            if (builder.Environment.IsEnvironment("IntegrationTests"))
             {
                 builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
                     .AddAuthentication()

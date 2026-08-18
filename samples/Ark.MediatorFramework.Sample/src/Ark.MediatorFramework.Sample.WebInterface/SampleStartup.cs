@@ -53,10 +53,12 @@ public sealed class SampleStartup
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
     private readonly IConfiguration _configuration;
     private readonly bool _configureFallbackPolicy;
+    private readonly IHostEnvironment _environment;
 
     /// <summary>Initializes a new instance of the <see cref="SampleStartup"/> class.</summary>
     /// <param name="container">The application dependency injection container.</param>
     /// <param name="network">The in-memory Rebus transport network.</param>
+    /// <param name="environment">The hosting environment.</param>
     /// <param name="configuration">Optional application configuration.</param>
     /// <param name="useSqlStore">Whether the processor should use SQL persistence.</param>
     /// <param name="connectionString">Optional SQL Server connection string for the processor.</param>
@@ -69,6 +71,7 @@ public sealed class SampleStartup
     public SampleStartup(
         Container container,
         InMemNetwork network,
+        IHostEnvironment environment,
         IConfiguration? configuration = null,
         bool useSqlStore = true,
         string? connectionString = null,
@@ -82,6 +85,8 @@ public sealed class SampleStartup
         _sharedDataContextFactory = sharedDataContextFactory;
         _configuration = configuration ?? new ConfigurationBuilder().Build();
         _configureFallbackPolicy = configureFallbackPolicy;
+        ArgumentNullException.ThrowIfNull(environment);
+        _environment = environment;
         var instance = _configuration["EntraId:Instance"]!;
         var tenantId = _configuration["EntraId:TenantId"]!;
         var clientId = _configuration["EntraId:ClientId"]!;
@@ -107,7 +112,7 @@ public sealed class SampleStartup
         if (_configuration.GetSection("EntraId").Exists()
             || _configuration.GetSection("AzureAdB2C").Exists())
         {
-            services.ConfigureAuthentication(_configuration);
+            services.ConfigureAuthentication(_configuration, _environment);
         }
         services.AddArkMinimalApiHost(_container, options =>
         {

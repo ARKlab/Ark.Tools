@@ -44,10 +44,10 @@ public class SliceReady : IEquatable<SliceReady>
 
     public override bool Equals(object? obj)
     {
-        if (!(obj is SliceReady))
+        if (obj is not SliceReady other || other.GetType() != GetType())
             return false;
 
-        return Equals((SliceReady)obj);
+        return Equals(other);
     }
 
     public override int GetHashCode()

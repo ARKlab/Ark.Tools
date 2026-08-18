@@ -12,7 +12,6 @@ public class HostedService : BackgroundService
 
     public HostedService()
     {
-        var enabled = _logger.IsEnabled(NLog.LogLevel.Info);
         _random = new Random();
     }
 

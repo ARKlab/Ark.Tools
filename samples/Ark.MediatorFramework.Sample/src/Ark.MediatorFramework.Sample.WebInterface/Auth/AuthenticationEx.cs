@@ -16,13 +16,17 @@ public static class AuthenticationEx
     /// <summary>Registers the smart Entra ID and Azure AD B2C bearer authentication schemes.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="configuration">The application configuration.</param>
-    public static void ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)
+    /// <param name="environment">The hosting environment.</param>
+    public static void ConfigureAuthentication(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(environment);
 
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests"
-            || configuration["ASPNETCORE_ENVIRONMENT"] == "IntegrationTests")
+        if (environment.IsEnvironment("IntegrationTests"))
         {
             _ = services.AddAuthentication(options => options.DefaultScheme = "IntegrationTests")
                 .AddJwtBearer("IntegrationTests", options =>

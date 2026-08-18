@@ -427,11 +427,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static string? StringArgument(AttributeData? attribute, int index) =>
         attribute?.ConstructorArguments.Length > index ? attribute.ConstructorArguments[index].Value as string : null;
 
-    private static string? StringNamed(AttributeData attribute, string name) =>
-        attribute.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as string;
+    private static string? StringNamed(AttributeData? attribute, string name) =>
+        attribute?.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as string;
 
-    private static bool BoolNamed(AttributeData attribute, string name) =>
-        attribute.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as bool? == true;
+    private static bool BoolNamed(AttributeData? attribute, string name) =>
+        attribute?.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as bool? == true;
 
     private static int IntArgument(AttributeData? attribute, string? name, int fallback)
     {

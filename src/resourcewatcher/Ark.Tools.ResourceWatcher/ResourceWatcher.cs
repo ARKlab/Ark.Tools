@@ -356,7 +356,6 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     {
         var info = pc.CurrentInfo;
         var lastState = pc.LastState;
-        var dataType = pc.ProcessType;
         using var scope = ScopeContext.PushNestedStateProperties(info.ResourceId,
         [
             // when 'logging' these, 'info' is serialized as the actual implementation which may contain a lot of data. slice to 'log' only the Interface

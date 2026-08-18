@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -48,8 +47,6 @@ internal sealed class ArkStartupBase
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
     public void Configure(IApplicationBuilder app)
     {
-        var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
-
         app.Use((context, next) =>
         {
             if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")

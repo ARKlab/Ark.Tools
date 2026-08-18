@@ -46,7 +46,7 @@ public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
     }
 
     [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Socket must be configured sync")]
-    private protected virtual ArxOne.Ftp.FtpClient _getClient()
+    private ArxOne.Ftp.FtpClient _getClient()
     {
         var ftpClientParameters = new FtpClientParameters()
         {

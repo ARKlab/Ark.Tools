@@ -8,11 +8,8 @@ namespace TestWorker.Configs;
 
 public class Test_Host_Config : DefaultHostConfig, ITest_Host_Config
 {
-    public Test_Host_Config()
-    {
-        WorkerName = Test_Constants.AppName;
-    }
+    public override string WorkerName { get; set; } = Test_Constants.AppName;
 
     public string? StateDbConnectionString { get; set; }
-    string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("");
+string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("StateDbConnectionString must be configured.");
 }
