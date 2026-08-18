@@ -57,7 +57,7 @@ public static class Ex
     }
 
     public static async Task<object> GetResourceAsync<TQuery, TPolicy>(Container c, TQuery query, TPolicy policy, CancellationToken ctk = default)
-        where TQuery : class
+        where TQuery : notnull
         where TPolicy : IAuthorizationPolicy
     {
         var handler = c.GetInstance<IAuthorizationResourceHandler<TQuery, TPolicy>>();
