@@ -11,6 +11,7 @@ try
 
     var network = new InMemNetwork();
     var container = SampleComposition.BuildContainer(network);
+    await using var containerDisposable = container.ConfigureAwait(false);
     var startup = SampleHost.Configure(builder, container, network);
 
     var app = builder.Build();

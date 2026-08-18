@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
 

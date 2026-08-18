@@ -48,6 +48,17 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
     /// <inheritdoc/>
     public override void OnStart(Activity data)
     {
+        _filter(data);
+    }
+
+    /// <inheritdoc/>
+    public override void OnEnd(Activity data)
+    {
+        _filter(data);
+    }
+
+    private void _filter(Activity data)
+    {
         if (!_enabled)
             return;
 
@@ -55,7 +66,8 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                     ?? data.GetTagItem("db.system.name") as string;
 
         if (!string.Equals(dbSystem, "mssql", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(dbSystem, "microsoft.sql", StringComparison.OrdinalIgnoreCase))
+            !string.Equals(dbSystem, "microsoft.sql", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(dbSystem, "microsoft.sql_server", StringComparison.OrdinalIgnoreCase))
             return;
 
         // Match by server name.
@@ -63,8 +75,10 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                     ?? data.GetTagItem("net.peer.name") as string
                     ?? data.GetTagItem("peer.service") as string;
 
+        var configuredServer = _dataSource!.Split(',', 2)[0].Trim();
         if (peerName != null &&
-            peerName.Contains(_dataSource!, StringComparison.OrdinalIgnoreCase))
+            (peerName.Equals(configuredServer, StringComparison.OrdinalIgnoreCase) ||
+             peerName.Contains(configuredServer, StringComparison.OrdinalIgnoreCase)))
         {
             var dbName = data.GetTagItem("db.name") as string
                       ?? data.GetTagItem("db.namespace") as string;

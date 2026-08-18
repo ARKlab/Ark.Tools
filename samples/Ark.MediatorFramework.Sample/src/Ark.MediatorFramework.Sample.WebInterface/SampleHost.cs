@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.NLog;
@@ -46,6 +47,8 @@ public static class SampleHost
         }
 
         builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName));
         var startup = new SampleStartup(
             container,
             network,

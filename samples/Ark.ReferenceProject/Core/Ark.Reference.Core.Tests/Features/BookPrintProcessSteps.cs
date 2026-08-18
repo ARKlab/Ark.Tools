@@ -1,3 +1,4 @@
+using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Init;
@@ -120,6 +121,21 @@ public sealed class BookPrintProcessSteps
         Current!.Status.Should().Be(BookPrintProcessStatus.Error);
         Current.Progress.Should().BeLessThan(1.0);
         Current.ErrorMessage.Should().NotBeNullOrEmpty();
+    }
+
+    [Then(@"OpenTelemetry recorded the book print processing telemetry")]
+    public void ThenOpenTelemetryRecordedTheBookPrintProcessingTelemetry()
+    {
+        var applicationSpan = TestHost._telemetry._getSpans().Single(span =>
+            span.SourceName == ReferenceTelemetry.ActivitySourceName
+            && span.Name == "ark.reference.book_print_process");
+        applicationSpan.Tags["book_print_process.status"].Should().Be("Completed");
+
+        TestHost._telemetry._getMetrics()
+            .Should().Contain(metric =>
+                metric.MeterName == Ark.Tools.Rebus.OpenTelemetryProcessingMetricsStep.MeterName
+                && metric.Name == "ark.tools.rebus.message_processing_time"
+                && metric.Tags["operation.result"] == "success");
     }
 
 }

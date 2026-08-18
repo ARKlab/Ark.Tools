@@ -11,6 +11,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 namespace Ark.ResourceWatcher.Sample;
 
 sealed class Program
@@ -20,6 +23,9 @@ sealed class Program
         var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
             .AddWorkerHostInfrastracture()
             .AddArkOpenTelemetryForWorkerHost()
+            .ConfigureServices(services => services.AddOpenTelemetry()
+                .WithTracing(tracing => tracing.AddSource(ResourceWatcherSampleTelemetry._activitySourceName))
+                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherSampleTelemetry._meterName)))
             .ConfigureNLog("BlobWorkerSample")
             .AddWorkerHost(sp =>
             {

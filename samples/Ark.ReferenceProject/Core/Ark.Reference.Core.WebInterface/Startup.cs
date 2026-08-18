@@ -47,6 +47,8 @@ public class Startup : ArkStartupWebApi
     {
         base.ConfigureServices(services);
         services.AddArkAzureMonitorOpenTelemetry(Configuration);
+        services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing.AddSource(ReferenceTelemetry.ActivitySourceName));
 
         // Configure System.Text.Json source generation with Ark defaults
         // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts
