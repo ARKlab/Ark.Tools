@@ -129,10 +129,11 @@ instrumentations for `HttpClient` and `Microsoft.Data.SqlClient`. Flurl clients
 created by `Ark.Tools.Http` use `HttpClient`, so their outbound requests are
 captured automatically; no Flurl-specific hook is required.
 
-SQL spans keep a compact `db.query.summary` and redact the large
-`db.query.text` attribute by default. The SQL client duration meter is enabled
-by default. Applications can extend the Ark defaults and opt into query text
-only for controlled diagnostics:
+SQL spans redact the large `db.query.text` attribute by default. A command can
+carry a `-- otel-query-label: ...` linting comment; its trimmed, sanitized value
+is emitted as `otel.query.label`. The SQL client duration meter is enabled by
+default. Applications can extend the Ark defaults and opt into query text only
+for controlled diagnostics:
 
 ```csharp
 builder.Services.AddArkAzureMonitorOpenTelemetry(
@@ -141,7 +142,8 @@ builder.Services.AddArkAzureMonitorOpenTelemetry(
     includeSqlQueryText: true);
 ```
 
-The default SQL summary includes the target table for `INSERT INTO` commands.
+The SQL Server outbox polling command uses this label instead of matching SQL
+hints, so unrelated commands containing hints remain visible.
 
 Azure Service Bus uses the tracing `ActivitySource` emitted by the
 `Azure.Messaging.ServiceBus` SDK. Ark registers that source

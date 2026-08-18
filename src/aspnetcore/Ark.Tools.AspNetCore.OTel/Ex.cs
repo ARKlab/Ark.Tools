@@ -51,12 +51,18 @@ public static class Ex
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = true;
-                    options.Filter = _includeSqlClientSpan;
                     configureSqlClient?.Invoke(options);
                     var applicationFilter = options.Filter;
                     options.Filter = command =>
                         _includeSqlClientSpan(command)
                         && (applicationFilter is null || applicationFilter(command));
+                    var applicationEnricher = options.EnrichWithSqlCommand;
+                    options.EnrichWithSqlCommand = (activity, command) =>
+                    {
+                        applicationEnricher?.Invoke(activity, command);
+                        if (command is DbCommand dbCommand)
+                            ArkSqlQueryLabel.SetTag(activity, dbCommand.CommandText);
+                    };
                 })
                 .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(includeSqlQueryText))
@@ -108,10 +114,9 @@ public static class Ex
         if (command is not DbCommand dbCommand)
             return true;
 
-        var text = dbCommand.CommandText;
-        return !text.Contains("READPAST", StringComparison.OrdinalIgnoreCase)
-            || !text.Contains("ROWLOCK", StringComparison.OrdinalIgnoreCase)
-            || !text.Contains("READCOMMITTEDLOCK", StringComparison.OrdinalIgnoreCase)
-            || !text.Contains("DELETE FROM batch", StringComparison.OrdinalIgnoreCase);
+        return !string.Equals(
+            ArkSqlQueryLabel.Extract(dbCommand.CommandText),
+            "outbox.peek-lock",
+            StringComparison.OrdinalIgnoreCase);
     }
 }

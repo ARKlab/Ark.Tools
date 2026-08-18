@@ -138,16 +138,16 @@ public sealed class SqlInstrumentationFilterTests
 }
 
 /// <summary>
-/// Verifies SQL span redaction and summary normalization.
+/// Verifies SQL span redaction and query labels.
 /// </summary>
 [TestClass]
 public sealed class SqlClientSpanProcessorTests
 {
     /// <summary>
-    /// SQL text is removed by default while INSERT summaries retain their target table.
+    /// SQL text is removed by default while a query linting comment is retained as a label.
     /// </summary>
     [TestMethod]
-    public void OnEnd_RedactsTextAndImprovesInsertSummary()
+    public void OnEnd_RedactsTextAndExtractsQueryLabel()
     {
         using var processor = new ArkSqlClientSpanProcessor();
         using var listener = new ActivityListener
@@ -166,14 +166,28 @@ public sealed class SqlClientSpanProcessorTests
             default(ActivityContext),
             [
                 new KeyValuePair<string, object?>("db.system.name", "mssql"),
-                new KeyValuePair<string, object?>("db.query.text", "INSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body)")
+                new KeyValuePair<string, object?>(
+                    "db.query.text",
+                    "-- otel-query-label:  outbox.insert  \nINSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body)")
             ]);
 
         activity.Should().NotBeNull();
         activity!.Stop();
 
-        activity.GetTagItem("db.query.summary").Should().Be("INSERT INTO [dbo].[Outbox]");
+        activity.GetTagItem(ArkSqlQueryLabel.TagName).Should().Be("outbox.insert");
         activity.GetTagItem("db.query.text").Should().BeNull();
+    }
+
+    /// <summary>
+    /// Query labels collapse whitespace, remove control characters, and enforce a bounded value.
+    /// </summary>
+    [TestMethod]
+    public void Extract_SanitizesQueryLabel()
+    {
+        var label = ArkSqlQueryLabel.Extract(
+            "-- otel-query-label:  my \tquery name \u0001 ");
+
+        label.Should().Be("my query name");
     }
 
     /// <summary>

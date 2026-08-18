@@ -8,7 +8,7 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel;
 
 /// <summary>
-/// Redacts SQL query text and improves summaries on SQL client spans.
+/// Redacts SQL query text and extracts labels from SQL linting comments.
 /// </summary>
 public sealed class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
 {
@@ -31,6 +31,8 @@ public sealed class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
         if (data.GetTagItem("db.query.text") is not string queryText)
             return;
 
+        ArkSqlQueryLabel.SetTag(data, queryText);
+
         var dbSystem = data.GetTagItem("db.system.name") as string
                      ?? data.GetTagItem("db.system") as string;
         if (dbSystem is not null
@@ -39,27 +41,7 @@ public sealed class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
             && !dbSystem.Equals("microsoft.sql_server", StringComparison.OrdinalIgnoreCase))
             return;
 
-        var summary = _createSummary(queryText);
-        if (summary is not null)
-            data.SetTag("db.query.summary", summary);
-
         if (!_includeQueryText)
             data.SetTag("db.query.text", null);
-    }
-
-    private static string? _createSummary(string queryText)
-    {
-        var tokens = queryText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-        if (tokens.Length < 2 || !tokens[0].Equals("INSERT", StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        var intoIndex = Array.FindIndex(
-            tokens,
-            token => token.Equals("INTO", StringComparison.OrdinalIgnoreCase));
-        if (intoIndex < 0 || intoIndex == tokens.Length - 1)
-            return null;
-
-        var table = tokens[intoIndex + 1].Trim(',', ';');
-        return table.Length == 0 ? null : "INSERT INTO " + table;
     }
 }
