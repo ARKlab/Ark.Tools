@@ -270,10 +270,10 @@ Storage Queue has no topics, so it never supports `PubSub`.
 
 Validation is split by binding time:
 
-- **Compile time** validates usage against the network declaration. A
-  participant with a named consumer identity, a subscription or `[Event]` usage
-  on a network without `PubSub`, and delayed-send usage on a
-  network without `ScheduledSend` (where statically visible) are diagnostics.
+- **Compile time** validates usage against the network declaration. A consumer
+  without an identity, a subscription or `[Event]` usage on a network without
+  `PubSub`, and delayed-send usage on a network without `ScheduledSend` (where
+  statically visible) are diagnostics.
   Compile time never checks a transport, because the transport is unknown.
 - **Startup** validates the composed transport against the network
   declaration: registering a transport that does not support every declared
