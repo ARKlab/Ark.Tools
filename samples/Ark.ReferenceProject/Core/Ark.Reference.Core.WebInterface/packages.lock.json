@@ -1490,7 +1490,8 @@
       "ark.tools.outbox": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
+          "Ark.Tools.Core": "[1.0.0, )",
+          "NLog": "[6.2.0, )"
         }
       },
       "ark.tools.outbox.rebus": {
