@@ -89,7 +89,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
         where TPolicy : class, IAuthorizationPolicy
     {
         var container = new Container();
-        container.Register<IAuthorizationResourceHandler<TRequest, TPolicy>, ResourceHandler<TRequest, TPolicy>>();
+        container.Register<IAuthorizationResourceHandler<TRequest, IAuthorizationPolicy>, ResourceHandler<TRequest, TPolicy>>();
         return container;
     }
 
