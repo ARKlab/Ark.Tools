@@ -61,6 +61,18 @@ Queue time is emitted only after successful processing. Processing time is emitt
 success and failure. Missing or invalid sent-time headers do not affect message
 processing.
 
+### Outbox
+
+Outbox processors emit implementation-independent signals through
+`ark.tools.outbox`. Empty polling cycles do not create spans. The optional
+`Ark.Tools.Outbox.OTel` package registers the source and meter without coupling
+the instrumentation to Rebus or another transport implementation.
+
+The meter records processed-message throughput, retrieved batch size, and
+processing duration. Batch size is the number of messages retrieved by a poll;
+it is not a database queue-depth query and therefore does not add polling SQL
+noise.
+
 ### ResourceWatcher
 
 `Ark.Tools.ResourceWatcher` emits lowercase, dot-separated OpenTelemetry scope and

@@ -5,10 +5,11 @@ using Rebus.Messages;
 using Rebus.Transport;
 using Rebus.Workers.ThreadPoolBased;
 
+using System.Diagnostics;
 
 namespace Ark.Tools.Outbox.Rebus;
 
-internal abstract class RebusOutboxProcessorCore : IRebusOutboxProcessor, IDisposable
+internal abstract class RebusOutboxProcessorCore : OutboxProcessorBase, IRebusOutboxProcessor, IDisposable
 {
     private readonly IBackoffStrategy _backoffStrategy;
     private readonly int _topMessagesToRetrieve;
@@ -46,20 +47,39 @@ internal abstract class RebusOutboxProcessorCore : IRebusOutboxProcessor, IDispo
     private protected async Task<bool> _tryProcessMessages(IOutboxContextCore ctx, CancellationToken ctk)
     {
         bool waitForMessages = true;
-        var messages = await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk).ConfigureAwait(false);
-        if (messages.Any())
+        var messages = (await ctx.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk).ConfigureAwait(false)).ToList();
+        if (messages.Count > 0)
         {
-            using (var rebusTransactionScope = new RebusTransactionScope())
+            using var activity = StartProcessingActivity(messages.Count);
+            var stopwatch = Stopwatch.StartNew();
+            var succeeded = false;
+            try
             {
-                foreach (var message in messages)
+                using (var rebusTransactionScope = new RebusTransactionScope())
                 {
-                    var destinationAddress = message?.Headers?[OutboxTransportDecorator._outboxRecepientHeader];
-                    message?.Headers?.Remove(OutboxTransportDecorator._outboxRecepientHeader);
-                    await _transport.Send(destinationAddress!, new TransportMessage(message?.Headers, message?.Body),
-                        rebusTransactionScope.TransactionContext).WithCancellation(ctk).ConfigureAwait(false);
+                    foreach (var message in messages)
+                    {
+                        var destinationAddress = message.Headers?[OutboxTransportDecorator._outboxRecepientHeader];
+                        message.Headers?.Remove(OutboxTransportDecorator._outboxRecepientHeader);
+                        await _transport.Send(destinationAddress!, new TransportMessage(message.Headers, message.Body),
+                            rebusTransactionScope.TransactionContext).WithCancellation(ctk).ConfigureAwait(false);
+                    }
+                    await rebusTransactionScope.CompleteAsync().WithCancellation(ctk).ConfigureAwait(false);
                 }
-                await rebusTransactionScope.CompleteAsync().WithCancellation(ctk).ConfigureAwait(false);
+
+                activity?.SetStatus(ActivityStatusCode.Ok);
+                succeeded = true;
             }
+            catch (Exception exception)
+            {
+                RecordProcessingException(activity, exception);
+                throw;
+            }
+            finally
+            {
+                RecordProcessing(messages.Count, stopwatch.Elapsed, succeeded);
+            }
+
             waitForMessages = false;
         }
 

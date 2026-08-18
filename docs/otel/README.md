@@ -46,6 +46,7 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 - `OPTIONS` requests (CORS preflight) – successful only
 - Azure Service Bus `Receive` operations – successful only  
 - SQL `Commit` operations – successful only
+- Empty outbox polling cycles do not create spans
 - Optional: specific SQL server/database combinations (for NLog database)
 
 ### Telemetry Enrichment
@@ -126,6 +127,20 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=h
 instrumentations for `HttpClient` and `Microsoft.Data.SqlClient`. Flurl clients
 created by `Ark.Tools.Http` use `HttpClient`, so their outbound requests are
 captured automatically; no Flurl-specific hook is required.
+
+SQL spans keep a compact `db.query.summary` and redact the large
+`db.query.text` attribute by default. The SQL client duration meter is enabled
+by default. Applications can extend the Ark defaults and opt into query text
+only for controlled diagnostics:
+
+```csharp
+builder.Services.AddArkAzureMonitorOpenTelemetry(
+    builder.Configuration,
+    sql => sql.Filter = command => true,
+    includeSqlQueryText: true);
+```
+
+The default SQL summary includes the target table for `INSERT INTO` commands.
 
 Azure Service Bus uses the tracing `ActivitySource` emitted by the
 `Azure.Messaging.ServiceBus` SDK. Ark registers that source
@@ -292,6 +307,11 @@ sample integration-test configuration are safe.
 All three samples also collect Ark framework signals. Rebus uses source/meter
 `ark.tools.rebus`; the reference feature specifically asserts
 `ark.tools.rebus.message_processing_time` with `operation.result=success`.
+Outbox processors use the implementation-independent source/meter
+`ark.tools.outbox`. Add `Ark.Tools.Outbox.OTel` and call
+`AddArkOutboxOpenTelemetry()` to register those signals. It emits a processing
+span only for non-empty batches and records processed messages, batch size, and
+processing duration.
 ResourceWatcher uses `ark.tools.resourcewatcher` for framework lifecycle
 signals. ASP.NET Core samples additionally collect HTTP and SQL client spans
 when those instrumentations are used.

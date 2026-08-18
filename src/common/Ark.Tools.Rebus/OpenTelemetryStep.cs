@@ -42,7 +42,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         var parentContext = _tryExtractActivityContext(transportMessage);
 
         using var activity = _activitySource.StartActivity(
-            _activityName + " | " + messageType,
+            _activityName,
             ActivityKind.Consumer,
             parentContext);
 
@@ -50,6 +50,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         activity?.SetTag("messaging.operation.type", "process");
         activity?.SetTag("messaging.message.id", messageId);
         activity?.SetTag("messaging.message.type", messageType);
+        activity?.SetTag("message.type", messageType);
         activity?.SetTag("rebus.correlation_id", correlationId);
 
         try

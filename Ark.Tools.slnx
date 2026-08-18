@@ -33,6 +33,7 @@
     <Project Path="src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj" />
     <Project Path="src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj" />
     <Project Path="src/common/Ark.Tools.Outbox.Rebus/Ark.Tools.Outbox.Rebus.csproj" />
+    <Project Path="src/common/Ark.Tools.Outbox.OTel/Ark.Tools.Outbox.OTel.csproj" />
     <Project Path="src/common/Ark.Tools.Outbox.SqlServer/Ark.Tools.Outbox.SqlServer.csproj" />
     <Project Path="src/common/Ark.Tools.Outbox/Ark.Tools.Outbox.csproj" />
     <Project Path="src/common/Ark.Tools.RavenDb.Auditing/Ark.Tools.RavenDb.Auditing.csproj" />

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 
 using OpenTelemetry;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 using Ark.Tools.Rebus;
@@ -25,8 +26,17 @@ public static class Ex
     /// Adds Ark ASP.NET Core instrumentation to an exporter-agnostic OpenTelemetry builder.
     /// </summary>
     /// <param name="builder">The OpenTelemetry builder.</param>
+    /// <param name="configureSqlClient">
+    /// Optional application configuration applied after Ark SQL defaults.
+    /// </param>
+    /// <param name="includeSqlQueryText">
+    /// Whether to retain SQL query text on exported spans. Defaults to <see langword="false"/>.
+    /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
-    public static OpenTelemetryBuilder AddArkAspNetCoreOpenTelemetry(this OpenTelemetryBuilder builder)
+    public static OpenTelemetryBuilder AddArkAspNetCoreOpenTelemetry(
+        this OpenTelemetryBuilder builder,
+        Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
+        bool includeSqlQueryText = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -35,11 +45,17 @@ public static class Ex
             .WithTracing(tracing => tracing
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
                 .AddHttpClientInstrumentation()
-                .AddSqlClientInstrumentation()
+                .AddSqlClientInstrumentation(options =>
+                {
+                    options.RecordException = true;
+                    configureSqlClient?.Invoke(options);
+                })
                 .AddSource("Azure.Messaging.ServiceBus")
+                .AddProcessor(new ArkSqlClientSpanProcessor(includeSqlQueryText))
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
             .WithMetrics(metrics => metrics
-                .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
+                .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
+                .AddSqlClientInstrumentation());
     }
 
     /// <summary>
@@ -48,10 +64,18 @@ public static class Ex
     /// </summary>
     /// <param name="services">The application service collection.</param>
     /// <param name="configuration">Optional application configuration.</param>
+    /// <param name="configureSqlClient">
+    /// Optional application configuration applied after Ark SQL defaults.
+    /// </param>
+    /// <param name="includeSqlQueryText">
+    /// Whether to retain SQL query text on exported spans. Defaults to <see langword="false"/>.
+    /// </param>
     /// <returns>The original service collection.</returns>
     public static IServiceCollection AddArkAzureMonitorOpenTelemetry(
         this IServiceCollection services,
-        IConfiguration? configuration = null)
+        IConfiguration? configuration = null,
+        Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
+        bool includeSqlQueryText = false)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -66,7 +90,7 @@ public static class Ex
         services.AddLogging(logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
-        builder.AddArkAspNetCoreOpenTelemetry();
+        builder.AddArkAspNetCoreOpenTelemetry(configureSqlClient, includeSqlQueryText);
 
         return services;
     }

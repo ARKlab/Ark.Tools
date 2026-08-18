@@ -19,7 +19,7 @@ namespace Ark.Tools.Rebus.Tests;
 public sealed class OpenTelemetryStepTests
 {
     [TestMethod]
-    public async Task Process_RecordsMessageTypeWithoutUsingItAsDestination()
+    public async Task Process_RecordsMessageTypeAsAPropertyWithoutUsingItInTheActivityName()
     {
         Activity? captured = null;
         using var listener = new ActivityListener
@@ -44,7 +44,9 @@ public sealed class OpenTelemetryStepTests
         await step.Process(context, () => Task.CompletedTask).ConfigureAwait(false);
 
         captured.Should().NotBeNull();
+        captured!.DisplayName.Should().Be("ark.tools.rebus.process");
         captured!.GetTagItem("messaging.message.type").Should().Be("tests.Message");
+        captured.GetTagItem("message.type").Should().Be("tests.Message");
         captured.GetTagItem("messaging.destination.name").Should().BeNull();
     }
 
