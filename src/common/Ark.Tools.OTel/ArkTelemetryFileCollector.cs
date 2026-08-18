@@ -109,8 +109,7 @@ public sealed class ArkTelemetryFileCollector : IDisposable
                 parent_span_id = activity.ParentSpanId.ToString(),
                 status = activity.Status.ToString(),
                 status_description = activity.StatusDescription,
-                tags = _tags(activity.Tags.Select(tag =>
-                    new KeyValuePair<string, object?>(tag.Key, tag.Value))),
+                tags = _tags(activity.TagObjects),
                 events = activity.Events.Select(activityEvent => new
                 {
                     name = activityEvent.Name,

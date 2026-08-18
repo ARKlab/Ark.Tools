@@ -19,9 +19,9 @@ internal sealed class OtelTestCollector : IDisposable
             ActivityStopped = activity => _spans.Enqueue(new OtelSpan(
                 activity.Source.Name,
                 activity.DisplayName,
-                activity.Tags.ToDictionary(
+                activity.TagObjects.ToDictionary(
                     tag => tag.Key,
-                    tag => tag.Value,
+                    tag => tag.Value?.ToString(),
                     StringComparer.Ordinal)))
         };
         ActivitySource.AddActivityListener(_activityListener);
