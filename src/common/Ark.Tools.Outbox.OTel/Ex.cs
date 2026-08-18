@@ -3,8 +3,6 @@
 
 using OpenTelemetry;
 
-using Ark.Tools.Outbox;
-
 namespace Ark.Tools.Outbox.OTel;
 
 /// <summary>

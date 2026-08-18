@@ -136,3 +136,70 @@ public sealed class SqlInstrumentationFilterTests
         return builder.ConnectionString;
     }
 }
+
+/// <summary>
+/// Verifies SQL span redaction and summary normalization.
+/// </summary>
+[TestClass]
+public sealed class SqlClientSpanProcessorTests
+{
+    /// <summary>
+    /// SQL text is removed by default while INSERT summaries retain their target table.
+    /// </summary>
+    [TestMethod]
+    public void OnEnd_RedactsTextAndImprovesInsertSummary()
+    {
+        using var processor = new ArkSqlClientSpanProcessor();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "sql-client-test",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ActivityStarted = activity => processor.OnStart(activity),
+            ActivityStopped = activity => processor.OnEnd(activity)
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        using var source = new ActivitySource("sql-client-test");
+        using var activity = source.StartActivity(
+            "INSERT",
+            ActivityKind.Client,
+            default(ActivityContext),
+            [
+                new KeyValuePair<string, object?>("db.system.name", "mssql"),
+                new KeyValuePair<string, object?>("db.query.text", "INSERT INTO [dbo].[Outbox] ([Body]) VALUES (@body)")
+            ]);
+
+        activity.Should().NotBeNull();
+        activity!.Stop();
+
+        activity.GetTagItem("db.query.summary").Should().Be("INSERT INTO [dbo].[Outbox]");
+        activity.GetTagItem("db.query.text").Should().BeNull();
+    }
+
+    /// <summary>
+    /// Applications can retain SQL text for controlled diagnostics.
+    /// </summary>
+    [TestMethod]
+    public void OnEnd_WhenEnabled_RetainsText()
+    {
+        using var processor = new ArkSqlClientSpanProcessor(includeQueryText: true);
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == "sql-client-test-enabled",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ActivityStopped = processor.OnEnd
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        using var source = new ActivitySource("sql-client-test-enabled");
+        using var activity = source.StartActivity(
+            "SELECT",
+            ActivityKind.Client,
+            default(ActivityContext),
+            [new KeyValuePair<string, object?>("db.query.text", "SELECT 1")]);
+
+        activity.Should().NotBeNull();
+        activity!.Stop();
+        activity.GetTagItem("db.query.text").Should().Be("SELECT 1");
+    }
+}

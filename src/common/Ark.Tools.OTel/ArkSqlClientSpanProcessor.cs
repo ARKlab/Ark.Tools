@@ -4,14 +4,13 @@
 using OpenTelemetry;
 
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace Ark.Tools.OTel;
 
 /// <summary>
 /// Redacts SQL query text and improves summaries on SQL client spans.
 /// </summary>
-public sealed partial class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
+public sealed class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
 {
     private readonly bool _includeQueryText;
 
@@ -50,7 +49,9 @@ public sealed partial class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
 
     private static string? _createSummary(string queryText)
     {
-        var normalized = _whitespace().Replace(queryText, " ").Trim();
+        var normalized = string.Join(
+            ' ',
+            queryText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         if (normalized.Length == 0)
             return null;
 
@@ -64,10 +65,7 @@ public sealed partial class ArkSqlClientSpanProcessor : BaseProcessor<Activity>
         if (intoIndex < 0 || intoIndex == tokens.Length - 1)
             return null;
 
-        var table = tokens[intoIndex + 1].Trim('[', ']', ',', ';');
+        var table = tokens[intoIndex + 1].Trim(',', ';');
         return table.Length == 0 ? null : "INSERT INTO " + table;
     }
-
-    [GeneratedRegex(@"\s+")]
-    private static partial Regex _whitespace();
 }
