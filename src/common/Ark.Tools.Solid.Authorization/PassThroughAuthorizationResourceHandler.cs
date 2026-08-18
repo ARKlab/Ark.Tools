@@ -8,6 +8,6 @@ internal sealed class PassThroughAuthorizationResourceHandler<T, R> : IAuthoriza
 {
     public Task<object> GetResouceAsync(T query, CancellationToken ctk = default)
     {
-        return Task.FromResult<object>(query);
+        return Task.FromResult<object>(query!);
     }
 }
