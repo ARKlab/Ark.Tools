@@ -121,7 +121,7 @@ public sealed class SqlInstrumentationFilterTests
             value = new SqlConnectionStringBuilder
             {
                 DataSource = "localhost,1433",
-                InitialCatalog = "Ark.MediatorFramework.Sample",
+                InitialCatalog = "master",
                 UserID = "sa",
                 Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
                 TrustServerCertificate = true,
