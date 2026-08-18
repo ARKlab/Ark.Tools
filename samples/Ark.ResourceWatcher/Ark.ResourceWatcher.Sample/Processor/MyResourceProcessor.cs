@@ -9,6 +9,8 @@ using Flurl.Http;
 
 using NLog;
 
+using System.Diagnostics;
+
 namespace Ark.ResourceWatcher.Sample.Processor;
 
 /// <summary>
@@ -33,6 +35,12 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
     /// <inheritdoc/>
     public async Task Process(MyResource file, CancellationToken ctk = default)
     {
+        using var activity = ResourceWatcherSampleTelemetry.ActivitySource.StartActivity(
+            "ark.resourcewatcher.sample.process",
+            ActivityKind.Internal);
+        activity?.SetTag("resource.id", file.Metadata.ResourceId);
+        var stopwatch = Stopwatch.StartNew();
+
         _logger.Info(System.Globalization.CultureInfo.InvariantCulture, "Processing blob {ResourceId} ({Size} bytes)",
             file.Metadata.ResourceId, file.Data.Length);
 
@@ -49,6 +57,10 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
             .PostJsonAsync(sinkData, cancellationToken: ctk)
             .ConfigureAwait(false);
 
+        ResourceWatcherSampleTelemetry.ProcessedRecords.Add(sinkData.Records.Count);
+        ResourceWatcherSampleTelemetry.ProcessingDuration.Record(stopwatch.Elapsed.TotalMilliseconds);
+        activity?.SetTag("records.count", sinkData.Records.Count);
+        activity?.SetStatus(ActivityStatusCode.Ok);
         _logger.Info(System.Globalization.CultureInfo.InvariantCulture, "Successfully processed blob {ResourceId}",
             file.Metadata.ResourceId);
     }

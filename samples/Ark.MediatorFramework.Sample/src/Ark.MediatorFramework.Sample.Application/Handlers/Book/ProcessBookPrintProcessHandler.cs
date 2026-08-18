@@ -6,6 +6,7 @@ using Ark.Tools.Core;
 
 using NodaTime;
 
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
@@ -38,6 +39,11 @@ public sealed class ProcessBookPrintProcessHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        using var activity = SampleTelemetry.ActivitySource.StartActivity(
+            "ark.mediator.sample.book_print_process",
+            ActivityKind.Consumer);
+        activity?.SetTag("book_print_process.id", request.Id);
+
         var readContext = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = readContext.ConfigureAwait(false);
         var process = await readContext.ReadBookPrintProcessAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
@@ -77,6 +83,9 @@ public sealed class ProcessBookPrintProcessHandler :
         process = await _persistAsync(process, ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
+        SampleTelemetry.RecordProcess(process);
+        activity?.SetTag("book_print_process.status", process.Status.ToString());
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return process;
     }
 

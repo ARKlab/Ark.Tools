@@ -19,6 +19,9 @@ using Microsoft.OpenApi;
 
 using NodaTime;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
 
@@ -47,6 +50,9 @@ public class Startup : ArkStartupWebApi
     {
         base.ConfigureServices(services);
         services.AddArkAzureMonitorOpenTelemetry(Configuration);
+        services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing.AddSource(ReferenceTelemetry.ActivitySourceName))
+            .WithMetrics(metrics => metrics.AddMeter(ReferenceTelemetry.MeterName));
 
         // Configure System.Text.Json source generation with Ark defaults
         // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts

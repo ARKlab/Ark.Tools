@@ -41,6 +41,10 @@ public static class Ex
 
         return builder.ConfigureServices((_, services) =>
         {
+            var fileCollector = ArkTelemetryFileCollector.StartFromEnvironment();
+            if (fileCollector is not null)
+                services.AddSingleton(fileCollector);
+
             services.AddOpenTelemetry().AddArkResourceWatcherOpenTelemetry();
         });
     }

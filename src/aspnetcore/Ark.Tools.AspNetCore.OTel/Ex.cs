@@ -63,6 +63,10 @@ public static class Ex
         if (!string.IsNullOrWhiteSpace(connectionString))
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
+        var fileCollector = ArkTelemetryFileCollector.StartFromEnvironment();
+        if (fileCollector is not null)
+            services.AddSingleton(fileCollector);
+
         services.AddLogging(logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 

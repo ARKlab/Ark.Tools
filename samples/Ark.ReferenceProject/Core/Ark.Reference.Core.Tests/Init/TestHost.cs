@@ -43,6 +43,7 @@ public sealed class TestHost : IDisposable
 
     public static IHost Server { get => _server ?? throw new InvalidOperationException("_server is null"); set => _server = value; }
     public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
+    internal static OtelTestCollector Telemetry { get; } = new();
 
     private static ArkFlurlClientFactory? _factory;
     public static readonly TestEnv Env = new();
@@ -55,6 +56,7 @@ public sealed class TestHost : IDisposable
     public void Set(ScenarioContext ctx)
     {
         _scenarioContext = ctx;
+        Telemetry.Reset();
     }
 
     [AfterScenario(Order = int.MinValue)]
@@ -236,6 +238,7 @@ public sealed class TestHost : IDisposable
     public static void AfterTests()
     {
         _server?.Dispose();
+        Telemetry.Dispose();
     }
 
     public void Dispose()

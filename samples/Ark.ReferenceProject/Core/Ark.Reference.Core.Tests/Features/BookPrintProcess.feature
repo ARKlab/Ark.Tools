@@ -30,6 +30,7 @@ Feature: BookPrintProcess
         | The Pragmatic Programmer | Hunt and Thomas | Technology | 978-0135957059 |
       And I have created a book print process for that book with ShouldFail false
       When I wait background bus to idle and outbox to be empty
+      And OpenTelemetry recorded the book print processing telemetry
       And I retrieve the print process status
       Then the print process is
         | Status    | Progress |

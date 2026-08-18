@@ -7,6 +7,9 @@ using Ark.Tools.NLog;
 
 using Azure.Identity;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>Provides the sample's production host composition seam.</summary>
@@ -46,6 +49,9 @@ public static class SampleHost
         }
 
         builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName))
+            .WithMetrics(metrics => metrics.AddMeter(SampleTelemetry.MeterName));
         var startup = new SampleStartup(
             container,
             network,
