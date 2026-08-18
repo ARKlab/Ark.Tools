@@ -131,7 +131,7 @@ captured automatically; no Flurl-specific hook is required.
 
 SQL spans redact the large `db.query.text` attribute by default. A command can
 carry a `-- otel-query-label: ...` linting comment; its trimmed, sanitized value
-is emitted as `otel.query.label`. Commands with the `outbox.peek-lock` label
+is emitted as `db.query.label`. Commands with the `outbox.peek-lock` label
 are skipped by default; applications can add more labels to skip. The SQL
 client duration meter is enabled by default. Applications can extend the Ark
 defaults and opt into query text only for controlled diagnostics:

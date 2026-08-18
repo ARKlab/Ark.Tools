@@ -13,7 +13,7 @@ public static class ArkSqlQueryLabel
     /// <summary>
     /// The activity tag used for an extracted query label.
     /// </summary>
-    public const string TagName = "otel.query.label";
+    public const string TagName = "db.query.label";
 
     private const string _commentMarker = "--";
     private const string _labelPrefix = "otel-query-label:";
