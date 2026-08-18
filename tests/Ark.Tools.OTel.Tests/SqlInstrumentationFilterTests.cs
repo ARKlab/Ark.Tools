@@ -114,11 +114,19 @@ public sealed class SqlInstrumentationFilterTests
             ?? span.GetTagItem("db.namespace") as string;
     }
 
-    private static string? _getConnectionString()
+    private static string _getConnectionString()
     {
         var value = Environment.GetEnvironmentVariable(_connectionStringEnvironmentVariable);
         if (string.IsNullOrWhiteSpace(value))
-            return null;
+            value = new SqlConnectionStringBuilder
+            {
+                DataSource = "localhost,1433",
+                InitialCatalog = "Ark.MediatorFramework.Sample",
+                UserID = "sa",
+                Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
+                TrustServerCertificate = true,
+                Encrypt = false,
+            }.ConnectionString;
 
         var builder = new SqlConnectionStringBuilder(value);
         var password = Environment.GetEnvironmentVariable(_passwordEnvironmentVariable);
