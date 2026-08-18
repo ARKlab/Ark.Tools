@@ -778,6 +778,7 @@
         "dependencies": {
           "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
@@ -806,6 +807,12 @@
           "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.11, )"
+        }
+      },
+      "ark.tools.mediatorframework.messaging": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {
