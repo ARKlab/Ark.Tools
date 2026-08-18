@@ -592,9 +592,9 @@ still fail on length/hash checks. Wrong-namespace same-type topology is a
 documented operational assumption, not a wire check.
 Senders always write the resolved network identity.
 They also write `amf1-sender-identity` for both `Send` and `Publish`. A named
-participant uses `MessagingParticipant.Identity`; a producer without an identity uses
-the stable
-host application identity required by runtime composition. The sender header
+participant uses `MessagingParticipant.Identity`; a producer without an identity
+uses the stable host application identity required by runtime composition. The
+sender header
 is diagnostic/audit metadata only: it does not select a queue, grant publish
 ownership, or replace the original sender when a later outbox processor
 dispatches the persisted envelope.
