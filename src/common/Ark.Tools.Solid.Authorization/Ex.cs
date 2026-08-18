@@ -56,19 +56,14 @@ public static class Ex
             container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
     }
 
-    [RequiresUnreferencedCode("Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
     public static async Task<object> GetResourceAsync<TQuery, TPolicy>(Container c, TQuery query, TPolicy policy, CancellationToken ctk = default)
-        where TQuery : notnull
-        where TPolicy : notnull
+        where TQuery : class
+        where TPolicy : IAuthorizationPolicy
     {
-        var queryType = query.GetType();
-        var policyType = policy.GetType();
-        var handlerType = typeof(IAuthorizationResourceHandler<,>).MakeGenericType(queryType, policyType);
-
-        dynamic handler = c.GetInstance(handlerType);
+        var handler = c.GetInstance<IAuthorizationResourceHandler<TQuery, TPolicy>>();
         using var disposable = handler as IDisposable;
 
-        return await handler.GetResouceAsync((dynamic)query, ctk).ConfigureAwait(false);
+        return await handler.GetResouceAsync(query, ctk).ConfigureAwait(false);
     }
 
     public static async Task<IAuthorizationPolicy> GetPolicyAsync(PolicyAuthorizeAttribute p, IAuthorizationPolicyProvider policyProvider, CancellationToken ctk = default)

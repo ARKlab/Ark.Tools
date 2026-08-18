@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Ark.Tools.Solid.Authorization;
 
 public class PolicyAuthorizeQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult>
-    where TQuery : IQuery<TResult>
+    where TQuery : class, IQuery<TQuery, TResult>
 {
     private readonly IAuthorizationService _authSvc;
     private readonly IContextProvider<ClaimsPrincipal> _currentUser;
@@ -30,7 +30,6 @@ public class PolicyAuthorizeQueryDecorator<TQuery, TResult> : IQueryHandler<TQue
             typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
-    [RequiresUnreferencedCode("Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
     [UnconditionalSuppressMessage("Trimming", "IL2046", Justification = "IQueryHandler interface cannot have RequiresUnreferencedCode. Warning propagated to consumers via this attribute.")]
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {

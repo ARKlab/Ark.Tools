@@ -3,7 +3,7 @@ using Ark.Tools.Authorization;
 
 namespace Ark.Tools.Solid.Authorization;
 
-public interface IAuthorizationResourceHandler<T, TPolicy>
+public interface IAuthorizationResourceHandler<T, out TPolicy>
         where T : class
         where TPolicy : IAuthorizationPolicy
 {

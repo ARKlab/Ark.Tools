@@ -4,7 +4,7 @@
 namespace Ark.Tools.Solid.Decorators;
 
 public sealed class ExceptionLogCommandDecorator<TCommand> : ICommandHandler<TCommand>
-    where TCommand : ICommand
+    where TCommand : class, ICommand<TCommand>
 {
     private readonly ICommandHandler<TCommand> _decorated;
 

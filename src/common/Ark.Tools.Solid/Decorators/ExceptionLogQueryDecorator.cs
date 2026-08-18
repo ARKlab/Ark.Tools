@@ -3,7 +3,7 @@
 
 namespace Ark.Tools.Solid.Decorators;
 
-public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>, IDisposable
+public sealed class ExceptionLogQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : class, IQuery<TQuery, TResult>, IDisposable
 {
     private readonly IQueryHandler<TQuery, TResult> _decorated;
     private readonly ILogger _logger;
