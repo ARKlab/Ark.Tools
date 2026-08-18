@@ -1,7 +1,5 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Globalization;
 
 namespace Ark.Reference.Core.Tests.Init;
 
@@ -9,8 +7,8 @@ internal sealed class OtelTestCollector : IDisposable
 {
     private readonly ActivityListener _activityListener;
     private readonly MeterListener _meterListener;
-    private readonly ConcurrentQueue<OtelSpan> _spans = new();
-    private readonly ConcurrentQueue<OtelMetric> _metrics = new();
+    private readonly System.Collections.Concurrent.ConcurrentQueue<OtelSpan> _spans = new();
+    private readonly System.Collections.Concurrent.ConcurrentQueue<OtelMetric> _metrics = new();
 
     internal OtelTestCollector()
     {
@@ -23,7 +21,7 @@ internal sealed class OtelTestCollector : IDisposable
                 activity.DisplayName,
                 activity.Tags.ToDictionary(
                     tag => tag.Key,
-                    tag => tag.Value?.ToString(),
+                    tag => tag.Value,
                     StringComparer.Ordinal)))
         };
         ActivitySource.AddActivityListener(_activityListener);
@@ -39,10 +37,10 @@ internal sealed class OtelTestCollector : IDisposable
         _meterListener.Start();
     }
 
-    internal IReadOnlyCollection<OtelSpan> Spans => _spans.ToArray();
-    internal IReadOnlyCollection<OtelMetric> Metrics => _metrics.ToArray();
+    internal IReadOnlyCollection<OtelSpan> _getSpans() => _spans.ToArray();
+    internal IReadOnlyCollection<OtelMetric> _getMetrics() => _metrics.ToArray();
 
-    internal void Reset()
+    internal void _reset()
     {
         while (_spans.TryDequeue(out _))
         {
@@ -67,7 +65,7 @@ internal sealed class OtelTestCollector : IDisposable
         return new OtelMetric(
             instrument.Meter.Name,
             instrument.Name,
-            Convert.ToDouble(value, CultureInfo.InvariantCulture),
+            Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture),
             tags.ToArray().ToDictionary(
                 tag => tag.Key,
                 tag => tag.Value?.ToString(),

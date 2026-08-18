@@ -23,11 +23,19 @@ public static class ReferenceTelemetry
     /// </summary>
     public const string MeterName = ActivitySourceName;
 
-    internal static readonly ActivitySource ActivitySource = new(ActivitySourceName);
-    internal static readonly Meter Meter = new(MeterName);
-    internal static readonly Counter<long> CompletedProcesses =
+    /// <summary>
+    /// Gets the activity source for reference application operations.
+    /// </summary>
+    public static ActivitySource ActivitySource { get; } = new(ActivitySourceName);
+
+    /// <summary>
+    /// Gets the meter for reference application measurements.
+    /// </summary>
+    public static Meter Meter { get; } = new(MeterName);
+
+    private static readonly Counter<long> _completedProcesses =
         Meter.CreateCounter<long>("ark.reference.book_print_process.completed");
-    internal static readonly Histogram<double> Progress =
+    private static readonly Histogram<double> _progress =
         Meter.CreateHistogram<double>("ark.reference.book_print_process.progress", unit: "ratio");
 
     /// <summary>
@@ -39,8 +47,8 @@ public static class ReferenceTelemetry
         ArgumentNullException.ThrowIfNull(process);
 
         var status = process.Status.ToString();
-        Progress.Record(process.Progress, new KeyValuePair<string, object?>("process.status", status));
+        _progress.Record(process.Progress, new KeyValuePair<string, object?>("process.status", status));
         if (status.Equals("Completed", StringComparison.Ordinal))
-            CompletedProcesses.Add(1);
+            _completedProcesses.Add(1);
     }
 }

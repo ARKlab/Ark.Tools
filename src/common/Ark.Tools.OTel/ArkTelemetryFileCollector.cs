@@ -17,7 +17,9 @@ public sealed class ArkTelemetryFileCollector : IDisposable
     /// </summary>
     public const string DirectoryEnvironmentVariable = "ARK_OTEL_FILE_DIRECTORY";
 
+#pragma warning disable MA0158 // object lock is required for net8.0 compatibility
     private readonly object _gate = new();
+#pragma warning restore MA0158
     private readonly StreamWriter _spans;
     private readonly StreamWriter _metrics;
     private readonly ActivityListener _activityListener;
@@ -107,7 +109,8 @@ public sealed class ArkTelemetryFileCollector : IDisposable
                 parent_span_id = activity.ParentSpanId.ToString(),
                 status = activity.Status.ToString(),
                 status_description = activity.StatusDescription,
-                tags = _tags(activity.Tags),
+                tags = _tags(activity.Tags.Select(tag =>
+                    new KeyValuePair<string, object?>(tag.Key, tag.Value))),
                 events = activity.Events.Select(activityEvent => new
                 {
                     name = activityEvent.Name,
@@ -151,10 +154,14 @@ public sealed class ArkTelemetryFileCollector : IDisposable
                 unit = instrument.Unit,
                 type = instrument.GetType().Name,
                 value = measurement,
-                tags = _tags(tags)
+                tags = _tags(tags.ToArray())
             });
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "The anonymous payload is created in this method and only contains JSON scalar values and collections.")]
     private void _write(StreamWriter writer, object value)
     {
         lock (_gate)

@@ -19,9 +19,6 @@ using Microsoft.OpenApi;
 
 using NodaTime;
 
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
-
 using Rebus.Persistence.InMem;
 using Rebus.Transport.InMem;
 

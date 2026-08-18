@@ -1,6 +1,5 @@
 using Ark.Reference.Core.API.Messages;
 using Ark.Reference.Core.Application.DAL;
-using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Solid;
 
