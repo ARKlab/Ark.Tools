@@ -69,12 +69,12 @@ public static class Ex
 
         try
         {
-            return await handler.GetResouceAsync((dynamic)query, ctk);
+            return await handler.GetResouceAsync((dynamic)query, ctk).ConfigureAwait(false);
         }
         finally
         {
-            IDisposable? disp = handler as IDisposable;
-            disp?.Dispose();
+            IDisposable? disposable = handler as IDisposable;
+            disposable?.Dispose();
         }
     }
 

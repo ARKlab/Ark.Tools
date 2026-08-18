@@ -16,7 +16,9 @@ public static partial class Ex
     public static void IncludeXmlCommentsForAssembly(this SwaggerGenOptions o, Assembly assembly)
     {
         var baseDirectory = System.AppContext.BaseDirectory;
-        var commentsFileName = assembly.GetName().Name + ".xml";
+        var assemblyName = assembly.GetName().Name
+            ?? throw new InvalidOperationException("The assembly does not have a name.");
+        var commentsFileName = Path.GetFileName(assemblyName) + ".xml";
         var path = Path.Combine(baseDirectory, commentsFileName);
         if (File.Exists(path))
             o.IncludeXmlComments(path);

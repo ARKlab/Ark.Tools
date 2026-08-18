@@ -117,7 +117,7 @@ where startsWith(id(e), '{prefix}')
                     // closed explicitly by admin, probably
                     return;
 
-                if (e is SubscriberErrorException se)
+                if (e is SubscriberErrorException)
                     throw;
 
                 // handle this depending on subscription

@@ -10,7 +10,7 @@ public static class TaskExtensions
 {
     public static Task IgnoreExceptions(this Task task)
     {
-        _ = task.ContinueWith(c => { var ignored = c.Exception; },
+        _ = task.ContinueWith(c => { _ = c.Exception; },
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted |
             TaskContinuationOptions.ExecuteSynchronously,

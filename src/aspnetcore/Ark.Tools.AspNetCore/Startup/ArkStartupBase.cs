@@ -3,7 +3,6 @@
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -52,8 +51,6 @@ internal sealed class ArkStartupBase
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
     public void Configure(IApplicationBuilder app)
     {
-        var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
-
         app.Use((context, next) =>
         {
             if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")

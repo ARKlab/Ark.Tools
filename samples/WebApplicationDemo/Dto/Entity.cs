@@ -20,7 +20,7 @@ public static class Entity
             [Required]
             public string? EntityId { get; set; }
             [MessagePack.Key(1)]
-            public virtual string? _ETag { get; set; }
+            public string? _ETag { get; set; }
 
             [MessagePack.Key(2)]
             public EntityResult EntityResult { get; set; }

@@ -62,7 +62,7 @@ public class DynamicTypeAssembly
             {
                 var parameter = parameters[i];
                 // Define the parameter
-                var parameterBuilder = newConstructor.DefineParameter(i + 1, parameter.Attributes, parameter.Name);
+                newConstructor.DefineParameter(i + 1, parameter.Attributes, parameter.Name);
             }
 
             // Get the IL generator from the new constructor we defined earlier

@@ -10,7 +10,6 @@ using MessagePack.NodaTime;
 using MessagePack.Resolvers;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Identity.Web;
@@ -52,11 +51,6 @@ public class Startup : ArkStartupWebApi
         var audience = "Audience";
         var domain = "Domain";
         var swaggerClientId = "SwaggerClientId";
-
-        var defaultPolicy = new AuthorizationPolicyBuilder()
-            .AddAuthenticationSchemes(auth0Scheme)
-            .RequireAuthenticatedUser()
-            .Build();
 
         var authBuilder = services.AddAuthentication(options =>
         {
@@ -165,7 +159,7 @@ public class Startup : ArkStartupWebApi
     {
         base.RegisterContainer(services);
 
-        var ext = services.GetService<IExternalInjected>();
+        services.GetService<IExternalInjected>();
 
         var cfg = new ApiConfig()
         {
@@ -175,7 +169,7 @@ public class Startup : ArkStartupWebApi
 
 
 
-        var apiHost = new ApiHost(cfg)
+        new ApiHost(cfg)
             .WithContainer(Container);
     }
 }

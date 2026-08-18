@@ -10,6 +10,9 @@ public class AuthorizationContext
     private readonly HashSet<IAuthorizationRequirement> _pendingRequirements;
     private readonly HashSet<IAuthorizationRequirement> _failedRequirements;
     private readonly HashSet<IAuthorizationRequirement> _succeededRequirements;
+    private readonly IAuthorizationPolicy _policy;
+    private readonly ClaimsPrincipal _user;
+    private readonly object? _resource;
     private bool _failCalled;
 
     /// <summary>
@@ -23,9 +26,9 @@ public class AuthorizationContext
         ClaimsPrincipal user,
         object? resource)
     {
-        Policy = policy;
-        User = user;
-        Resource = resource;
+        _policy = policy;
+        _user = user;
+        _resource = resource;
 
         _pendingRequirements = new HashSet<IAuthorizationRequirement>(policy.Requirements);
         _failedRequirements = new HashSet<IAuthorizationRequirement>();
@@ -37,17 +40,17 @@ public class AuthorizationContext
     /// <summary>
     /// The policy for the current authorization action.
     /// </summary>
-    public virtual IAuthorizationPolicy Policy { get; }
+    public virtual IAuthorizationPolicy Policy => _policy;
 
     /// <summary>
     /// The <see cref="ClaimsPrincipal"/> representing the current user.
     /// </summary>
-    public virtual ClaimsPrincipal User { get; }
+    public virtual ClaimsPrincipal User => _user;
 
     /// <summary>
     /// The optional resource to evaluate the <see cref="Policy"/> against.
     /// </summary>
-    public virtual object? Resource { get; }
+    public virtual object? Resource => _resource;
 
     /// <summary>
     /// Gets the requirements that have not yet been marked as succeeded.

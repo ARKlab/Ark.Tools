@@ -34,9 +34,6 @@ public class TestController : ApiController
             { "api-version", ambients?["api-version"] }
         };
 
-        var rd2 = new RouteValueDictionary(new { operationId = res });
-        rd2.Add("api-version", ambients?["api-version"]);
-
         var uri = this.Url.Link("V1.GetOperationById", rd);
 
         var u_GetPathByName = _linkGenerator.GetPathByName("V1.GetOperationById", new { operationId = res });

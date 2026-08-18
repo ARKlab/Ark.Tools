@@ -160,7 +160,7 @@ public class Startup : ArkStartupWebApi
     {
         base.RegisterContainer(services);
 
-        var api = Configuration.BuildApiHost()
+        Configuration.BuildApiHost()
             .WithContainer(Container)
             .WithIClock(services.GetService<IClock>())
             .WithAuthorization()

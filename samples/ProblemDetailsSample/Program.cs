@@ -60,14 +60,13 @@ public static class Program
         //DapperNodaTimeSetup.Register();
         NodeTimeConverter.Register();
 
-        var cfg = new ConfigurationBuilder()
+        new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
             .AddEnvironmentVariables()
             .AddCommandLine(args)
-            .Build()
-            ;
+            .Build();
     }
 
     public static async Task Main(string[] args)

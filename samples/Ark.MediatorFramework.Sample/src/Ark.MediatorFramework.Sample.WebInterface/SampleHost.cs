@@ -49,6 +49,7 @@ public static class SampleHost
         var startup = new SampleStartup(
             container,
             network,
+            builder.Environment,
             builder.Configuration,
             useSqlStore,
             connectionString,

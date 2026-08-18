@@ -1011,10 +1011,11 @@ namespace Ark.MediatorFramework.Generators
         {
             if (string.IsNullOrWhiteSpace(text))
                 return;
+            var current = new StringBuilder();
             foreach (var line in text!.Split('\n'))
             {
                 var words = line.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                var current = new StringBuilder();
+                current.Clear();
                 foreach (var word in words)
                 {
                     if (current.Length > 0 && current.Length + word.Length + 1 > 96)

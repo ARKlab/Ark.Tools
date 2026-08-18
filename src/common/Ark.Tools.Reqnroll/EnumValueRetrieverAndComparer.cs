@@ -95,8 +95,11 @@ public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
 
     public bool Compare(string expectedValue, object actualValue)
     {
-        if (string.IsNullOrWhiteSpace(expectedValue) && actualValue == null)
-            return true;
+        if (actualValue == null)
+            return string.IsNullOrWhiteSpace(expectedValue);
+        if (string.IsNullOrWhiteSpace(expectedValue))
+            return false;
+
         var e = _convertTheStringToAnEnum(expectedValue, actualValue.GetType());
         return e?.Equals(actualValue) == true;
     }

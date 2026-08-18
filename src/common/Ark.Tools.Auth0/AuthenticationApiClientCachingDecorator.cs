@@ -271,7 +271,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     public void Dispose()
     {
         ((IDisposable)_cache).Dispose();
-        if (_inner is IDisposable disposable) disposable.Dispose();
+        _inner.Dispose();
     }
 
     public async Task RevokeRefreshTokenAsync(RevokeRefreshTokenRequest request, CancellationToken cancellationToken = default)
