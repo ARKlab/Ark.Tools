@@ -129,16 +129,22 @@ captured automatically; no Flurl-specific hook is required.
 
 Azure Service Bus uses the tracing `ActivitySource` emitted by the
 `Azure.Messaging.ServiceBus` SDK. Ark registers that source
-(`Azure.Messaging.ServiceBus`) so sender and receiver spans flow through the
-same provider. Applications should use the current Azure Service Bus SDK rather
-than adding a separate, unsupported Service Bus instrumentation package.
+(`Azure.Messaging.ServiceBus`) and enables the SDK's ActivitySource support so
+sender and receiver spans flow through the same provider. Applications should
+use the current Azure Service Bus SDK rather than adding a separate, unsupported
+Service Bus instrumentation package.
+
+The Azure Monitor distro can also register some of these instrumentations.
+Applications should verify their exporter setup does not register the same
+instrumentation twice.
 
 ### Further instrumentation candidates
 
 Prioritize these additions when the corresponding dependency is used:
 
-- **gRPC client** (`OpenTelemetry.Instrumentation.GrpcNetClient`) for RPC spans
-  and status details.
+- **gRPC client** (`OpenTelemetry.Instrumentation.GrpcNetClient`, currently
+  beta) for RPC spans and status details. Filter either gRPC or HTTP spans if
+  both are enabled to avoid duplicate downstream spans.
 - **Entity Framework Core** (`OpenTelemetry.Instrumentation.EntityFrameworkCore`)
   for ORM operation context in addition to SQL spans.
 - **StackExchange.Redis** (`OpenTelemetry.Instrumentation.StackExchangeRedis`)

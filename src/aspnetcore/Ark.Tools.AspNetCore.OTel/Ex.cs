@@ -30,6 +30,8 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        AppContext.SetSwitch("Azure.Experimental.EnableActivitySource", true);
+
         return builder
             .ConfigureResource(resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
