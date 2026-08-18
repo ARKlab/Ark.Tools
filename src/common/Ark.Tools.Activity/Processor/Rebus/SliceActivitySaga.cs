@@ -28,7 +28,9 @@ public sealed class SliceActivitySaga
     public async Task Handle(SliceReady message)
     {
         _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Slice {ActivitySlice} received dependency for resource {Resource}@{ResourceSlice}", message.ActivitySlice, message.Resource, message.ResourceSlice);
-        var sourceDep = _activity.Dependencies.Single(x => x.Resource == message.Resource);
+        var matchingDependencyCount = _activity.Dependencies.Count(x => x.Resource == message.Resource);
+        if (matchingDependencyCount != 1)
+            throw new InvalidOperationException($"Expected exactly one dependency for resource '{message.Resource}'.");
 
         if (IsNew)
         {

@@ -158,14 +158,14 @@ internal sealed class Socks5Handler : SocksHandler
         switch (buffer[3])
         {
             case 1:
-                buffer = ReadBytes(6); //IPv4 address with port
+                ReadBytes(6); //IPv4 address with port
                 break;
             case 3:
-                buffer = ReadBytes(1);
-                buffer = ReadBytes(buffer[0] + 2); //domain name with port
+                var domainLength = ReadBytes(1)[0];
+                ReadBytes(domainLength + 2); //domain name with port
                 break;
             case 4:
-                buffer = ReadBytes(18); //IPv6 address with port
+                ReadBytes(18); //IPv6 address with port
                 break;
             default:
                 Server.Close();

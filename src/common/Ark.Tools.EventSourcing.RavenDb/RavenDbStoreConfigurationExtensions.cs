@@ -15,7 +15,6 @@ public static class RavenDbStoreConfigurationExtensions
     [RequiresUnreferencedCode("RavenDB document conventions use reflection. Document types must be preserved.")]
     public static DocumentStore ConfigureForArkEventSourcing(this DocumentStore store)
     {
-        var current = store.Conventions.FindCollectionName;
         store.Conventions.AddFindCollectionName(type =>
         {
             if (typeof(IOutboxEvent).IsAssignableFrom(type))

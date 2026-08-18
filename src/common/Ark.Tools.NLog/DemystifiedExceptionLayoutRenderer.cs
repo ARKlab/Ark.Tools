@@ -32,6 +32,6 @@ public class DemystifiedExceptionLayoutRenderer : ExceptionLayoutRenderer
     /// <param name="ex">The Exception whose call to ToString() should be appended.</param>
     protected override void AppendToString(StringBuilder sb, Exception ex)
     {
-        sb.Append(ex.Demystify().ToString());
+        sb.Append(ex.Demystify());
     }
 }

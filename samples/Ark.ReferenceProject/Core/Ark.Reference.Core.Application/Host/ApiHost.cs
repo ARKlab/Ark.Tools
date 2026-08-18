@@ -147,7 +147,7 @@ public class ApiHost
             Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusLogDecorator<>));
         }
 
-        Container?.ConfigureRebus(_ => _
+        Container.ConfigureRebus(_ => _
             .Logging(l => l.NLog())
             .Transport(t =>
             {

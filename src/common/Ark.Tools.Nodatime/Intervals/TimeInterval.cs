@@ -181,15 +181,15 @@ public readonly struct TimeInterval
         switch (period)
         {
             case TimePeriod.Hour:
-                return Duration.FromHours(1 * count);
+                return Duration.FromHours(1L * count);
             case TimePeriod.Minute:
-                return Duration.FromMinutes(1 * count);
+                return Duration.FromMinutes(1L * count);
             case TimePeriod.TenMinutes:
-                return Duration.FromMinutes(10 * count);
+                return Duration.FromMinutes(10L * count);
             case TimePeriod.QuarterHour:
-                return Duration.FromMinutes(15 * count);
+                return Duration.FromMinutes(15L * count);
             case TimePeriod.HalfHour:
-                return Duration.FromMinutes(30 * count);
+                return Duration.FromMinutes(30L * count);
         }
 
         throw new ArgumentOutOfRangeException(nameof(period));

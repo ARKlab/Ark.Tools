@@ -52,6 +52,6 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
 
         await ctx.CommitAsync(ctk).ConfigureAwait(false);
 
-        return entity!;
+        return entity ?? throw new InvalidOperationException($"Book with id '{id}' was not found after insertion.");
     }
 }

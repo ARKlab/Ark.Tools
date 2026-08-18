@@ -94,8 +94,6 @@ public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAcces
     static AggregateRoot()
     {
         var aggregateEventType = typeof(IAggregateEvent<TAggregate>);
-        var aggregateStateType = typeof(TAggregateState);
-
         var methods = typeof(TAggregateRoot)
             .GetTypeInfo()
             .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)

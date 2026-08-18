@@ -4,7 +4,6 @@ using Ark.Tools.AspNetCore.Swashbuckle;
 using Asp.Versioning;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi;
 
@@ -40,11 +39,6 @@ internal sealed class Startup : ArkStartupWebApi
         var audience = "Audience";
         var domain = "Domain";
         var swaggerClientId = "SwaggerClientId";
-
-        var defaultPolicy = new AuthorizationPolicyBuilder()
-            .AddAuthenticationSchemes(auth0Scheme)
-            .RequireAuthenticatedUser()
-            .Build();
 
         var authBuilder = services.AddAuthentication(options =>
         {
@@ -117,7 +111,7 @@ internal sealed class Startup : ArkStartupWebApi
         {
         };
 
-        var apiHost = new ApiHost(cfg)
+        new ApiHost(cfg)
             .WithContainer(Container);
     }
 }

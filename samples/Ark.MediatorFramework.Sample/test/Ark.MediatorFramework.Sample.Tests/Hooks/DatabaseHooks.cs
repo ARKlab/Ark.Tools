@@ -34,7 +34,7 @@ public sealed class DatabaseHooks
 
         var builder = new SqlConnectionStringBuilder(ConnectionString);
         builder.Remove("Initial Catalog");
-        var dacpacPath = Path.Combine(
+        var dacpacPath = Path.Join(
             AppContext.BaseDirectory,
             "Ark.MediatorFramework.Sample.Database.dacpac");
         using var dacpac = DacPackage.Load(dacpacPath);

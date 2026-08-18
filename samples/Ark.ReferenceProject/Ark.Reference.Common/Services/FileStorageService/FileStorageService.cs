@@ -53,7 +53,7 @@ public class FileStorageService
 
     private BlobClient _getBlobFor(Guid guid, string filename)
     {
-        var name = string.Format(CultureInfo.InvariantCulture, "{0}/{1}", guid.ToString(), filename);
+        var name = string.Format(CultureInfo.InvariantCulture, "{0}/{1}", guid, filename);
         return _fileClient
             .GetBlobClient(name);
     }

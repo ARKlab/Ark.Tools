@@ -244,7 +244,7 @@ public class ReferenceEndpointBenchmarks
 
     private static void _deployDatabase()
     {
-        var dacpacPath = Path.Combine(AppContext.BaseDirectory, "Ark.Reference.Core.Database.dacpac");
+        var dacpacPath = Path.Join(AppContext.BaseDirectory, "Ark.Reference.Core.Database.dacpac");
         using var dacpac = DacPackage.Load(dacpacPath);
         var services = new DacServices(DatabaseUtils.DatabaseConnectionString);
         services.Deploy(

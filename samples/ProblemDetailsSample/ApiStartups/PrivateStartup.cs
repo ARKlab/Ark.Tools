@@ -72,7 +72,7 @@ public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
         {
         };
 
-        var apiHost = new ApiHost(cfg)
+        new ApiHost(cfg)
             .WithContainer(Container);
 
     }

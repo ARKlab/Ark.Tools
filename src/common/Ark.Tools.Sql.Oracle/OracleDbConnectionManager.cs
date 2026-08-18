@@ -33,7 +33,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
         }
         catch
         {
-            conn?.Dispose();
+            conn.Dispose();
             throw;
         }
     }
@@ -48,7 +48,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
         }
         catch
         {
-            conn?.Dispose();
+            conn.Dispose();
             throw;
         }
     }

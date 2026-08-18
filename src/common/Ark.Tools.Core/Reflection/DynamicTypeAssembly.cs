@@ -40,7 +40,7 @@ public class DynamicTypeAssembly
         Justification = "The GetConstructors call on parentType is necessary for copying constructors to the dynamic type. Callers are warned via RequiresUnreferencedCode that the parent type must be preserved.")]
     public Type CreateNewTypeWithDynamicProperties(Type parentType, IEnumerable<(string name, Type type)> dynamicProperties)
     {
-        var typeBuilder = _moduleBuilder.DefineType(parentType.Name + Guid.NewGuid().ToString(), TypeAttributes.Public);
+        var typeBuilder = _moduleBuilder.DefineType(parentType.Name + Guid.NewGuid(), TypeAttributes.Public);
         typeBuilder.SetParent(parentType);
 
         var constructors = parentType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -62,7 +62,7 @@ public class DynamicTypeAssembly
             {
                 var parameter = parameters[i];
                 // Define the parameter
-                var parameterBuilder = newConstructor.DefineParameter(i + 1, parameter.Attributes, parameter.Name);
+                newConstructor.DefineParameter(i + 1, parameter.Attributes, parameter.Name);
             }
 
             // Get the IL generator from the new constructor we defined earlier

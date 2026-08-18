@@ -24,16 +24,18 @@ internal static class FtpPathExtensions
         if (String.IsNullOrEmpty(path))
             path = "./";
 
+        var builder = new StringBuilder(path);
         foreach (string part in segments)
         {
             if (part != null)
             {
-                if (path.Length > 0 && !path.EndsWith('/'))
-                    path += "/";
-                path += Regex.Replace(part.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
+                if (builder.Length > 0 && builder[^1] != '/')
+                    builder.Append('/');
+                builder.Append(Regex.Replace(part.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/'));
             }
         }
 
+        path = builder.ToString();
         path = Regex.Replace(path.Replace('\\', '/'), "[/]+", "/", RegexOptions.None, TimeSpan.FromMilliseconds(1000)).TrimEnd('/');
         if (path.Length == 0)
             path = "./";
