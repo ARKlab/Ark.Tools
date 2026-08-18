@@ -51,11 +51,11 @@ Azure SDK types.
    incoming/outgoing step types. There is no `ReceivedContracts` member. A
    named consumer automatically receives every registered message whose owner
    queue equals its identity; event publisher identity never implies event
-   receipt. A missing identity is a valid sender-only participant. A
-   `Producer` role
-   with a named identity grants event-publish ownership only: it owns no queue,
-   receives nothing, and declares no subscriptions — any subscription is a
-   diagnostic. An assembly declares at most one `[MessagingParticipant]`;
+   receipt. A consumer requires an identity. A `Producer` role may omit its
+   identity when it only sends messages; a named producer identity grants
+   event-publish ownership but owns no queue, receives nothing, and declares no
+   subscriptions — any subscription is a diagnostic. An assembly declares at
+   most one `[MessagingParticipant]`;
    duplicate declarations are a diagnostic. The attribute never selects or
    registers handlers; developers
    register handlers and step implementations in SimpleInjector and runtime
@@ -81,8 +81,8 @@ Azure SDK types.
    received message set from registered messages whose owner queue equals the
    participant identity ordinally.
    Validate usage against the referenced network's declared capabilities: a
-   named consumer identity requires `Receive`; any subscription or `[Event]`
-   usage requires `PubSub`. Emit a diagnostic naming the missing capability.
+   any subscription or `[Event]` usage requires `PubSub`. Emit a diagnostic
+   naming the missing capability.
    Never validate against a transport — transports are unknown at compile
    time.
 5. Add immutable internal models consumed by the generator and runtime
@@ -127,19 +127,18 @@ runtime exists yet, so no runtime fixture is added in this task.
 - Every used message/event is registered exactly once in the network.
 - Participant identity and subscription declarations are deterministic.
 - An assembly with two `[MessagingParticipant]` declarations is diagnosed.
-- Identity-less participants generate no receive queue or subscription
+- Producers without an identity generate no receive queue or subscription
   declarations.
 - Explicit contract protocol plus conflicting network default is diagnosed.
 - Existing Rebus-only contracts continue to compile and route.
-- A named consumer identity on a network without `Receive` is diagnosed naming
-  the capability; a subscription or `[Event]` usage on a network without
-  `PubSub` is diagnosed naming the capability.
+- A subscription or `[Event]` usage on a network without `PubSub` is diagnosed
+  naming the capability.
 - A `Producer`-role participant declaring subscriptions is
   diagnosed; a valid producer declaration is deterministic and owns no queue.
 - Named consumer participants automatically select every network message whose
   owner queue equals the participant identity; publisher identity does not
   select events.
-- Identity-less participants cannot declare subscriptions.
+- Producers without an identity cannot declare subscriptions.
 - Portable queue-name diagnostics cover length, case, characters, edge
   hyphens, and consecutive hyphens.
 - Reserved-name diagnostics cover `outbox-processor` as participant identity,

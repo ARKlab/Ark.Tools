@@ -19,9 +19,8 @@ subscriptions without deleting resources owned by another participant.
   forwarding
   subscriptions. Topics declared by the network may be `Ensure`d by the
   owning publisher **or** by any subscriber (create if missing only).
-  Producer-role participants own no queue and no subscription. Sender-only
-  participants
-  own no entity. Queues and topics are never auto-deleted.
+  Producer-role participants own no queue and no subscription. Producers
+  without an identity own no entity. Queues and topics are never auto-deleted.
 - **Reconciliation order**: validate configuration → ensure identity queue →
   ensure declared topics (publisher or subscriber) → ensure/update
   forwarding subscriptions → delete obsolete **subscriptions** proven to be

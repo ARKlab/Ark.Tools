@@ -19,9 +19,9 @@ requires.
 
 - **Public API**: add network attributes/options/enums under
   `src/mediator-framework/Ark.Tools.MediatorFramework`, including the
-  `MessagingCapabilities` flags enum with `Receive`, `PubSub`, and
-  `ScheduledSend` (plain `Send` is implicit and always available; it is not a
-  capability and never appears in capability tables or flags).
+  `MessagingCapabilities` flags enum with `PubSub` and `ScheduledSend`
+  (`Send` and `Receive` are foundational and implicit; they are not
+  capabilities and never appear in capability tables or flags).
 - **Runtime project**: create the transport-neutral
   `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging` project
   following existing project conventions; resolve the network descriptor and
@@ -42,8 +42,9 @@ requires.
 ## Implementation steps
 
 1. Define the public `MessagingCapabilities` `[Flags]` enum:
-   `None = 0`, `Receive = 1`, `PubSub = 2`, `ScheduledSend = 4`. XML-document
-   that `Send` is implicit and not a flag.
+   `None = 0`, `PubSub = 2`, `ScheduledSend = 4`. XML-document that `Send` and
+   `Receive` are implicit and not flags; retain the optional capability values
+   for compatibility.
 2. Define the public network configuration attribute and immutable runtime
    options model. The class carrying the attribute supplies the network
    identity; the attribute has no separate name field. The attribute exposes
@@ -105,7 +106,7 @@ headers.
 ## Sample extension
 
 Extend `samples/Ark.MediatorFramework.Sample` with one Book background network
-profile declaring `Receive | PubSub | ScheduledSend`, referenced by every
+profile declaring `PubSub | ScheduledSend`, referenced by every
 Mediator Framework messaging participant added by later tasks. The profile
 compiles and is validated even though nothing consumes it yet.
 

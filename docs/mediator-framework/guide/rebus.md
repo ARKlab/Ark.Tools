@@ -127,7 +127,7 @@ container.ConfigureRebus(config =>
 For local tests, use the sample's `InMemNetwork`. It still exercises routing,
 scopes, retries, and outbox behavior.
 
-## 5. Configure a sender-only host
+## 5. Configure an outbound-only host
 
 An outbound-only host must not register receivers, workers, subscriptions, or
 an outbox processor:

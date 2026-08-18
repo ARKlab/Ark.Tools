@@ -5,8 +5,7 @@ namespace Ark.MediatorFramework.Sample.Application.Messaging;
 
 /// <summary>Shared messaging network used by the Book background activities.</summary>
 [MessagingNetwork(
-    MessagingCapabilities.Receive
-        | MessagingCapabilities.PubSub
+    MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
     Contracts = new[]
     {

@@ -18,7 +18,7 @@ public sealed class MessagingNetworkTests
         var options = MessagingNetworkDescriptor.Resolve(typeof(TestNetwork));
 
         options.NetworkType.Should().Be<TestNetwork>();
-        options.Requires.Should().Be(MessagingCapabilities.Receive | MessagingCapabilities.PubSub);
+        options.Requires.Should().Be(MessagingCapabilities.PubSub);
         options.MaximumTransportPayloadBytes.Should().Be(240_000);
         options.Serializers.Should().ContainSingle().Which.Should().Be(SerializationProtocol.Json);
     }
@@ -28,7 +28,7 @@ public sealed class MessagingNetworkTests
     {
         var options = MessagingNetworkDescriptor.Resolve(typeof(TestNetwork));
 
-        options.Validate(MessagingCapabilities.Receive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend);
+        options.Validate(MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend);
     }
 
     [TestMethod]
@@ -36,7 +36,7 @@ public sealed class MessagingNetworkTests
     {
         var options = MessagingNetworkDescriptor.Resolve(typeof(TestNetwork));
 
-        Action action = () => options.Validate(MessagingCapabilities.Receive);
+        Action action = () => options.Validate(MessagingCapabilities.None);
 
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*PubSub*");
@@ -109,7 +109,7 @@ public sealed class MessagingNetworkTests
             .Which.ParamName.Should().Be("maximumSchedulingDelay");
     }
 
-    [MessagingNetwork(MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+    [MessagingNetwork(MessagingCapabilities.PubSub)]
     private sealed class TestNetwork
     {
     }
@@ -140,7 +140,7 @@ public sealed class MessagingNetworkTests
     {
     }
 
-    [MessagingNetwork(MessagingCapabilities.Receive,
+    [MessagingNetwork(
         Contracts = new[] { typeof(ContractMessage) })]
     private sealed class ContractNetwork
     {

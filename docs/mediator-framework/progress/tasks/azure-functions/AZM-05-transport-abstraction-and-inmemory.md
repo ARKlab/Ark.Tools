@@ -44,8 +44,8 @@ infrastructure.
      `ScheduledSend` is declared;
    - `PublishAsync(topicName, envelope, ctk)` valid only when `PubSub` is
      declared;
-   - a receive seam valid only when `Receive` is declared, delivering a locked
-     envelope with a native delivery count and accepting exactly one of
+   - a receive seam delivering a locked envelope with a native delivery count
+     and accepting exactly one of
      `CompleteAsync`, `AbandonAsync`, or `DeadLetterAsync(reason)` per
      delivery. This PeekLock-style settlement plus delivery-count contract is
      fixed for every receive-capable transport;
@@ -53,7 +53,7 @@ infrastructure.
      transports that support broker management.
 2. Guard every capability-gated member: invoking an undeclared capability
    throws `NotSupportedException` naming the capability.
-3. Implement the InMemory transport with `Capabilities = Receive | PubSub |
+3. Implement the InMemory transport with `Capabilities = PubSub |
    ScheduledSend`:
    - named in-memory queues and topics; topic subscriptions forward a copy of
      each published envelope into each subscriber queue;

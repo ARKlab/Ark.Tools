@@ -12,7 +12,6 @@ The profile declares capabilities; the host selects the concrete transport.
 
 ```csharp
 [MessagingNetwork(
-    MessagingCapabilities.Receive |
     MessagingCapabilities.PubSub |
     MessagingCapabilities.ScheduledSend,
     DefaultSerializer = SerializationProtocol.Json,
@@ -21,11 +20,11 @@ The profile declares capabilities; the host selects the concrete transport.
 public sealed class BookMessagingNetwork;
 ```
 
-`Send` is implicit. `Receive`, `PubSub`, and `ScheduledSend` are the optional
-capabilities. Service Bus supports all three; Storage Queue supports
-`Receive` and `ScheduledSend`, but not `PubSub`; InMemory supports all three.
-Startup validation rejects a transport that does not provide every declared
-capability.
+`Send` and `Receive` are implicit as one foundational capability. `PubSub` and
+`ScheduledSend` are the optional capabilities. Service Bus and InMemory support
+both optional capabilities; Storage Queue supports `ScheduledSend`, but not
+`PubSub`. Startup validation rejects a transport that does not provide every
+declared optional capability.
 
 ## 1.2 Transport-neutral message contracts
 
@@ -58,9 +57,10 @@ An assembly declares at most one participant:
 
 A named consumer automatically receives registered messages owned by its
 identity queue; event receipt always requires an explicit subscription. A
-producer identity owns no queue and cannot subscribe. Omitting `Identity`
-creates a sender-only participant. The participant selects no transport or
-shared network settings; those remain network and host composition concerns.
+producer identity owns no queue and cannot subscribe. A producer may omit
+`Identity` when it only sends messages and does not publish events. The
+participant selects no transport or shared network settings; those remain
+network and host composition concerns.
 
 Network settings are shared: serializers, compression, payload limits, retry
 policy, scheduling limits, and resource lifecycle must not be overridden by a
@@ -115,7 +115,7 @@ await builder.Build().RunAsync().ConfigureAwait(false);
 ```
 
 The sample uses the same `ApplicationComposition.RegisterOutboundRebus` path as
-other sender-only hosts. The Rebus setup includes source-generated application
+other outbound-only hosts. The Rebus setup includes source-generated application
 JSON and `logging.NLog()`.
 
 ## 3. Configure local settings

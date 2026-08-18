@@ -17,7 +17,7 @@ generated Azure Functions QueueTrigger.
 ## Execution map
 
 - **Transport**: implement the Storage Queue transport
-  (`Capabilities = Receive | ScheduledSend`; `Send` implicit; no `PubSub`;
+  (`Capabilities = ScheduledSend`; send/receive implicit; no `PubSub`;
   hard payload ceiling 49 152 bytes of binary envelope before base64 — 64 KiB
   encoded) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract.
@@ -87,7 +87,7 @@ generated Azure Functions QueueTrigger.
    only when the network enables second-level retries. `host.json`
    `visibilityTimeout` equals `RetryDelay`. `maxDequeueCount` equals `2N` or
    `N` per the Execution map.
-6. Declare `Capabilities = Receive | ScheduledSend`; verify AZM-01 startup
+6. Declare `Capabilities = ScheduledSend`; verify AZM-01 startup
    validation rejects this transport for networks declaring `PubSub`, naming
    the capability.
 7. Emit the generated QueueTrigger for `StorageQueue`-bound consumer
@@ -130,8 +130,8 @@ QueueTriggers, and Azurite-based testing.
 Add a Book sample fixture composing a consumer participant with the Storage
 Queue
 transport against Azurite: send, scheduled send, receive, retry exhaustion,
-and poison-queue dead-letter of a Book background message on a `Send`-only
-network profile.
+and poison-queue dead-letter of a Book background message on a network profile
+with no optional capabilities.
 
 ## Required test coverage
 
@@ -173,8 +173,8 @@ network profile.
 
 ## Outcomes
 
-- `Send`/`Receive` networks run end-to-end on the cheapest transport,
-  including generated Functions consumers.
+- Networks using only the foundational send/receive capability run end-to-end
+  on the cheapest transport, including generated Functions consumers.
 - Capability validation, not special-case diagnostics, enforces the no-PubSub
   shape.
 

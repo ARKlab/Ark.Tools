@@ -7,7 +7,7 @@ namespace Ark.MediatorFramework;
 [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
 public sealed class MessagingParticipantAttribute : Attribute
 {
-    /// <summary>Gets or sets the optional participant identity.</summary>
+    /// <summary>Gets or sets the participant identity, which is required for consumers and optional for producers.</summary>
     public string? Identity { get; set; }
 
     /// <summary>Gets or sets the participant role.</summary>

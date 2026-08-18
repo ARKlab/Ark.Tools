@@ -93,8 +93,8 @@ exists yet.
 - Missing, unknown, uninstalled, and conflicting protocol headers.
 - Unknown contract type and malformed payload.
 - Correlation/message IDs and sent time use invariant formats.
-- Sender identity round-trips for both send and publish, including an
-  identity-less participant's composition-supplied application identity.
+- Sender identity round-trips for both send and publish, including a producer
+  without an identity's composition-supplied application identity.
 - Optional content-encoding and DataBus attachment headers survive envelope
   round trips without being interpreted.
 - Type-confusion attempts cannot resolve contracts outside the generated

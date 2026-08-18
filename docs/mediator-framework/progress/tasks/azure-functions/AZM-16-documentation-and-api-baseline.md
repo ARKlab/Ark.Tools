@@ -34,7 +34,7 @@ explicit guidance and the public API must be reviewable before release.
 
 1. Update the Mediator Framework guide with network contract registration,
    participant
-   identity/identity-less sender participants, subscriptions, shared network
+   participant identities, producers without identities, subscriptions, shared network
    configuration, the capability model with runtime transport selection
    (InMemory, Service Bus, Storage Queue), and the restricted bus API.
    Document the participant/host distinction: a participant is a logical

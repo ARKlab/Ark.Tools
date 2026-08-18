@@ -185,7 +185,7 @@ public sealed class GeneratorSnapshotTests
             [assembly: MessagingParticipant(Identity = "orders", Network = typeof(OrderNetwork))]
             [Message(OwnerQueue = "orders")] public sealed class PlaceOrder { }
             [Event(OwnerPublisher = "orders")] public sealed class OrderPlaced : ICommand<OrderPlaced> { }
-            [MessagingNetwork(MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
+            [MessagingNetwork(MessagingCapabilities.PubSub,
                 Contracts = new[] { typeof(OrderPlaced), typeof(PlaceOrder) })]
             public sealed class OrderNetwork { }
             """);
@@ -216,6 +216,35 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().Contain(d => d.Id == "ARKMF033");
         result.Diagnostics.Should().Contain(d => d.Id == "ARKMF048");
+    }
+
+    [TestMethod]
+    public void MessagingGeneratorRequiresConsumerIdentityAndAllowsIdentityLessProducer()
+    {
+        var consumerResult = _runGeneratorResult<MessagingMetadataGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [assembly: MessagingParticipant(Network = typeof(Network))]
+            [Message(OwnerQueue = "orders")] public sealed class PlaceOrder { }
+            [MessagingNetwork(Contracts = new[] { typeof(PlaceOrder) })]
+            public sealed class Network { }
+            """);
+
+        consumerResult.Diagnostics.Should().Contain(d => d.Id == "ARKMF039");
+
+        var producerResult = _runGeneratorResult<MessagingMetadataGenerator>(
+            """
+            using Ark.MediatorFramework;
+            [assembly: MessagingParticipant(
+                Role = MessagingParticipantRole.Producer,
+                Network = typeof(Network))]
+            [Message(OwnerQueue = "orders")] public sealed class PlaceOrder { }
+            [MessagingNetwork(Contracts = new[] { typeof(PlaceOrder) })]
+            public sealed class Network { }
+            """);
+
+        producerResult.Diagnostics.Should().BeEmpty();
+        producerResult.Generated.Should().Contain("MessagingParticipantRole.Producer");
     }
 
     [TestMethod]

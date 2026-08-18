@@ -27,7 +27,7 @@ public sealed record MessagingParticipantDescriptor
 
     /// <summary>Referenced network profile.</summary>
     public Type NetworkType { get; }
-    /// <summary>Optional participant identity.</summary>
+    /// <summary>Participant identity, which is required for consumers and optional for producers.</summary>
     public string? Identity { get; }
     /// <summary>Participant role.</summary>
     public MessagingParticipantRole Role { get; }

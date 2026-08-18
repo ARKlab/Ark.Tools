@@ -36,7 +36,7 @@ The result of this work is a generated Azure Functions message surface that:
   different handlers.
 
 Terminology: a **participant** is a logical member of a messaging network
-(producer, consumer, or sender-only). A **host** is the deployable process and
+(producer or consumer). A **host** is the deployable process and
 hosting technology that runs a participant: an Azure Functions app with
 generated triggers, a Rebus-based worker, or a test/custom host running the
 InMemory pump or the outbox processor.
@@ -244,23 +244,23 @@ transport capabilities it requires. The concrete transport is a runtime
 composition decision made for each participant by its host (for example
 InMemory when testing, Azure Service Bus in production).
 
-Capabilities are a flags-style set. `Send` is implicit and always required;
-the declarable capabilities are:
+Capabilities are a flags-style set. `Send` and `Receive` are one foundational
+capability and are implicit and always available; the optional declarable
+capabilities are:
 
 | Capability | Meaning |
 | --- | --- |
-| `Receive` | A participant identity can own a queue and receive from it with PeekLock-style settlement |
 | `PubSub` | Events can be published to topics and forwarded into subscriber identity queues |
 | `ScheduledSend` | `Send` supports delayed delivery by duration or due time |
 
-Each transport implementation declares the capabilities it supports (`Send` is
-implicit and universal, so it is not a capability and does not appear here):
+Each transport implementation declares the optional capabilities it supports
+(`Send` and `Receive` are implicit and universal, so they do not appear here):
 
-| Transport | Receive | PubSub | ScheduledSend |
-| --- | --- | --- | --- |
-| Azure Service Bus | yes | yes | yes |
-| Azure Storage Queue | yes (visibility timeout, `DequeueCount`, poison-queue DLQ) | no | yes (visibility delay) |
-| InMemory | yes | yes | yes |
+| Transport | PubSub | ScheduledSend |
+| --- | --- | --- |
+| Azure Service Bus | yes | yes |
+| Azure Storage Queue | no | yes (visibility delay) |
+| InMemory | yes | yes |
 
 Storage Queue receive is at-least-once through the visibility timeout. It has
 no native dead-letter queue, so the transport maps the fixed settlement
@@ -271,9 +271,8 @@ Storage Queue has no topics, so it never supports `PubSub`.
 Validation is split by binding time:
 
 - **Compile time** validates usage against the network declaration. A
-  participant
-  with an `Identity` on a network without `Receive`, a subscription or
-  `[Event]` usage on a network without `PubSub`, and delayed-send usage on a
+  participant with a named consumer identity, a subscription or `[Event]` usage
+  on a network without `PubSub`, and delayed-send usage on a
   network without `ScheduledSend` (where statically visible) are diagnostics.
   Compile time never checks a transport, because the transport is unknown.
 - **Startup** validates the composed transport against the network
@@ -282,8 +281,9 @@ Validation is split by binding time:
 - **Runtime** guards remain for dynamic operations: delayed `Send` and
   `Publish` throw when the capability is absent from the network declaration.
 
-A network that only requires `Send` can therefore run on every transport; a
-network requiring `PubSub` can run only on transports that support it.
+A network that requires no optional capability can therefore run on every
+transport; a network requiring `PubSub` can run only on transports that support
+it.
 
 That all participants in one network use the same transport and the
 same physical resources (broker namespace, DataBus store) is a runtime
@@ -379,8 +379,7 @@ Conceptual shape:
         typeof(PrintBook),
         typeof(BookPrintCompleted)
     },
-    Requires = MessagingCapabilities.Receive
-        | MessagingCapabilities.PubSub
+    Requires = MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
     DefaultSerializer = SerializationProtocol.Json,
     Compression = CompressionAlgorithm.Brotli,
@@ -477,15 +476,12 @@ the participant role:
   only the topics for events owned by that identity. Typical hosts: the
   Minimal API web frontend or a client application that sends commands and
   publishes its own events.
-- **Sender-only (no identity)**: no queue, no trigger, no subscription, and no
-  publish; the participant may still send messages to their declared owner
-  queues.
-
-A named consumer identity requires the network to declare `Receive`; a
-subscription requires `PubSub`; a producer identity requires `PubSub` only
-when it owns events. A network declaring only implicit `Send` (optionally plus
-`ScheduledSend`) permits identity-less senders and producers without owned
-events on any transport.
+A producer identity is optional: a producer without an identity may send
+messages to their declared owner queues but cannot publish events or subscribe.
+A named consumer identity always owns the foundational receive queue; a
+subscription requires `PubSub`; a producer identity requires `PubSub` only when
+it owns events. A network declaring no optional capability (optionally plus
+`ScheduledSend`) permits producers without owned events on any transport.
 
 ### Proposed API shape
 
@@ -518,9 +514,8 @@ to the
 shared network configuration. It must not contain independent serialization,
 compression, DataBus, transport, or retry values — and it never names an Azure
 technology: the Functions trigger binding is selected in the Functions host
-project setup instead (see §6). A participant with no identity is valid only as
-a
-sender-only participant and cannot declare subscriptions. An assembly declares
+project setup instead (see §6). A producer without an identity cannot declare
+subscriptions. An assembly declares
 at
 most one `[MessagingParticipant]`: one assembly is one participant, and
 duplicate declarations are a generator error.
@@ -597,7 +592,7 @@ still fail on length/hash checks. Wrong-namespace same-type topology is a
 documented operational assumption, not a wire check.
 Senders always write the resolved network identity.
 They also write `amf1-sender-identity` for both `Send` and `Publish`. A named
-participant uses `MessagingParticipant.Identity`; an identity-less sender uses
+participant uses `MessagingParticipant.Identity`; a producer without an identity uses
 the stable
 host application identity required by runtime composition. The sender header
 is diagnostic/audit metadata only: it does not select a queue, grant publish

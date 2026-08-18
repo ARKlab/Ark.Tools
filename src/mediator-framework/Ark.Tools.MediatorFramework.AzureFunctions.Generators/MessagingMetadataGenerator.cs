@@ -243,17 +243,15 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
         if (subscriptions.Length > 0 && string.Equals(role, "Producer", StringComparison.Ordinal))
             context.ReportDiagnostic(Diagnostic.Create(
                 _producerSubscription, Location.None, identity ?? "<unnamed>"));
+        if (identity is null && string.Equals(role, "Consumer", StringComparison.Ordinal))
+            context.ReportDiagnostic(Diagnostic.Create(
+                _invalidParticipant, Location.None, "consumer participants require an identity"));
         if (subscriptions.Length > 0 && identity is null)
             context.ReportDiagnostic(Diagnostic.Create(
                 _invalidParticipant, Location.None, "subscriptions require an identity"));
         if (subscriptions.Length > 0 && !networkInfo.Requires.HasFlag(MessagingCapabilities.PubSub))
             context.ReportDiagnostic(Diagnostic.Create(
                 _missingCapability, Location.None, "participant subscriptions", nameof(MessagingCapabilities.PubSub)));
-        if (identity is not null
-            && string.Equals(role, "Consumer", StringComparison.Ordinal)
-            && !networkInfo.Requires.HasFlag(MessagingCapabilities.Receive))
-            context.ReportDiagnostic(Diagnostic.Create(
-                _missingCapability, Location.None, "participant identity", nameof(MessagingCapabilities.Receive)));
 
         foreach (var subscription in subscriptions)
         {
@@ -610,7 +608,6 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
     private enum MessagingCapabilities
     {
         None = 0,
-        Receive = 1,
         PubSub = 2,
         ScheduledSend = 4,
     }

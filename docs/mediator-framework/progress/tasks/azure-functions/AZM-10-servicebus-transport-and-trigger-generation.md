@@ -22,7 +22,7 @@ dispatcher-less trigger code.
 ## Execution map
 
 - **Transport**: implement the Service Bus transport
-  (`Capabilities = Receive | PubSub | ScheduledSend`, hard payload ceiling
+  (`Capabilities = PubSub | ScheduledSend`, hard payload ceiling
   256 KB total standard-tier message including application properties) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract:
   envelope-to-message mapping via application properties and binary body,

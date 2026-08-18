@@ -64,14 +64,14 @@ composition switch, while intentionally reducing the framework API surface.
 
 `Publish<TEvent>` requires a named participant identity matching the event
 canonical
-publisher owner. An identity-less sender participant may still use
+publisher owner. A producer without an identity may still use
 `Send<TMessage>`
 to declared owner queues.
 
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
-restricted `IBus` API, owner routing, additional headers, send-only
+restricted `IBus` API, owner routing, additional headers, outbound-only
 scheduling, and the capability guard behavior.
 
 ## Sample extension
@@ -87,7 +87,7 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
 - Publish from a named participant whose identity matches the event owner,
   including
   a `Producer`-role participant with no receive registration.
-- Identity-less sender participants reject `Publish` but allow `Send`.
+- Producers without an identity reject `Publish` but allow `Send`.
 - Delayed `Send` on a network without `ScheduledSend` throws naming the
   capability; `Publish` on a network without `PubSub` throws naming the
   capability.

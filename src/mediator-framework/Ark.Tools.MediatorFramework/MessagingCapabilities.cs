@@ -5,16 +5,14 @@ namespace Ark.MediatorFramework;
 
 /// <summary>
 /// Describes optional capabilities required by a messaging network.
-/// Sending is implicit and is therefore not represented by a flag.
+/// Sending and receiving are foundational and are therefore not represented by
+/// flags.
 /// </summary>
 [Flags]
 public enum MessagingCapabilities
 {
     /// <summary>No optional capability is required.</summary>
     None = 0,
-
-    /// <summary>Participants can receive and settle messages.</summary>
-    Receive = 1,
 
     /// <summary>Events can be published and subscribed to.</summary>
     PubSub = 2,
