@@ -30,7 +30,6 @@ public class PolicyAuthorizeQueryDecorator<TQuery, TResult> : IQueryHandler<TQue
             typeof(TQuery).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2046", Justification = "IQueryHandler interface cannot have RequiresUnreferencedCode. Warning propagated to consumers via this attribute.")]
     public async Task<TResult> ExecuteAsync(TQuery query, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)
