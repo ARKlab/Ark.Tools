@@ -30,7 +30,7 @@ public sealed class MyTransformServiceTests
 {
     private const string _testSourceId = "test-source";
 
-    private static readonly string _testDataPath = Path.Combine(
+    private static readonly string _testDataPath = Path.Join(
         Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!,
         "TestData",
         "Transform");
@@ -61,8 +61,8 @@ public sealed class MyTransformServiceTests
             var extension = Path.GetExtension(inputFile);
             var caseName = fileName.Replace("_input" + extension, "", StringComparison.OrdinalIgnoreCase);
 
-            var outputFile = Path.Combine(_testDataPath, $"{caseName}_output.json");
-            var errorFile = Path.Combine(_testDataPath, $"{caseName}_error.json");
+            var outputFile = Path.Join(_testDataPath, $"{caseName}_output.json");
+            var errorFile = Path.Join(_testDataPath, $"{caseName}_error.json");
 
             var isErrorCase = File.Exists(errorFile);
             var expectedFile = isErrorCase ? errorFile : outputFile;

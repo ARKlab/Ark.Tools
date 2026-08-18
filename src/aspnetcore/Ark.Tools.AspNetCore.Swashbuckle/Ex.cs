@@ -19,7 +19,7 @@ public static partial class Ex
         var assemblyName = assembly.GetName().Name
             ?? throw new InvalidOperationException("The assembly does not have a name.");
         var commentsFileName = Path.GetFileName(assemblyName) + ".xml";
-        var path = Path.Combine(baseDirectory, commentsFileName);
+        var path = Path.Join(baseDirectory, commentsFileName);
         if (File.Exists(path))
             o.IncludeXmlComments(path);
     }

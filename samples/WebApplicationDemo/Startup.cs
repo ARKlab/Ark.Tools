@@ -88,10 +88,10 @@ public class Startup : ArkStartupWebApi
 
         services.AddArkHealthChecksUIOptions(setup =>
         {
-            if (File.Exists(Path.Combine(Environment.CurrentDirectory, "UIHealthChecks.css")))
+            if (File.Exists(Path.Join(Environment.CurrentDirectory, "UIHealthChecks.css")))
                 setup.AddCustomStylesheet("UIHealthChecks.css");
 
-            if (File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css")))
+            if (File.Exists(Path.Join(AppDomain.CurrentDomain.BaseDirectory, "UIHealthChecks.css")))
                 setup.AddCustomStylesheet(AppDomain.CurrentDomain.BaseDirectory + "UIHealthChecks.css");
         });
 
