@@ -454,34 +454,6 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
     private static DiagnosticDescriptor _diagnostic(string id, string title, string message) =>
         new(id, title, message, "Ark.MediatorFramework", DiagnosticSeverity.Error, true);
 
-    private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol root)
-    {
-        foreach (var member in root.GetMembers())
-        {
-            if (member is INamespaceSymbol childNamespace)
-            {
-                foreach (var type in _allTypes(childNamespace))
-                    yield return type;
-            }
-            else if (member is INamedTypeSymbol type)
-            {
-                yield return type;
-                foreach (var nested in _nestedTypes(type))
-                    yield return nested;
-            }
-        }
-    }
-
-    private static IEnumerable<INamedTypeSymbol> _nestedTypes(INamedTypeSymbol type)
-    {
-        foreach (var nested in type.GetTypeMembers())
-        {
-            yield return nested;
-            foreach (var descendant in _nestedTypes(nested))
-                yield return descendant;
-        }
-    }
-
     private static bool _is(AttributeData attribute, string name) =>
         attribute.AttributeClass?.ToDisplayString() == name;
 
