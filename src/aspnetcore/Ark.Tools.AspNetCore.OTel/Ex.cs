@@ -48,11 +48,29 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        return _addArkAspNetCoreOpenTelemetry(
+            builder,
+            configureSqlClient,
+            includeSqlQueryText,
+            sqlQueryLabelsToSkip,
+            new ArkAdaptiveSamplerOptions());
+    }
+
+    private static OpenTelemetryBuilder _addArkAspNetCoreOpenTelemetry(
+        OpenTelemetryBuilder builder,
+        Action<SqlClientTraceInstrumentationOptions>? configureSqlClient,
+        bool includeSqlQueryText,
+        IEnumerable<string>? sqlQueryLabelsToSkip,
+        ArkAdaptiveSamplerOptions adaptiveSamplerOptions)
+    {
         var skippedSqlQueryLabels = _getSkippedSqlQueryLabels(sqlQueryLabelsToSkip);
+        var failedTraceRegistry = new FailedTraceRegistry();
 
         return builder
             .ConfigureResource(resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
+                .AddProcessor(new ArkPreFilterProcessor())
+                .SetSampler(new ArkAdaptiveSampler(adaptiveSamplerOptions, failedTraceRegistry))
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
                 .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation(options =>
@@ -73,6 +91,7 @@ public static class Ex
                 })
                 .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(includeSqlQueryText))
+                .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
             .WithMetrics(metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
@@ -113,13 +132,18 @@ public static class Ex
         if (!string.IsNullOrWhiteSpace(connectionString))
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
+        var adaptiveSamplerOptions = new ArkAdaptiveSamplerOptions();
+        configuration?.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(adaptiveSamplerOptions);
+
         services.AddLogging(logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
-        builder.AddArkAspNetCoreOpenTelemetry(
+        _addArkAspNetCoreOpenTelemetry(
+            builder,
             configureSqlClient,
             includeSqlQueryText,
-            sqlQueryLabelsToSkip);
+            sqlQueryLabelsToSkip,
+            adaptiveSamplerOptions);
 
         return services;
     }

@@ -120,9 +120,9 @@ Success-only queue-time semantics are retained.
 ## Sampling and exporters
 
 `Ark.Tools.OTel` remains exporter-neutral. Its processors and sampler are added to
-the application's OTel tracer provider. Azure Monitor sampling and export are owned
-by the Azure Monitor Distro setup extension; applications using the legacy AI v3
-path use the existing AI bridge package.
+the application's OTel tracer provider by both the exporter-neutral and Azure
+Monitor Distro setup extensions. Applications using the legacy AI v3 path use
+the existing AI bridge package, which registers the same sampler.
 
 ## Non-goals
 

@@ -203,11 +203,13 @@ Azure SDK and OpenTelemetry semantic conventions.
 
 ## Adaptive sampler
 
-The `ArkAdaptiveSampler` is a parent-sampling enhancement. It is not installed
-by `AddArkAzureMonitorOpenTelemetry`; Azure Monitor's OTel distro owns sampling
-for that setup. It is installed by
-`AddArkApplicationInsightsCustomizations`, after registering the Application
-Insights v3 SDK.
+The `ArkAdaptiveSampler` is always installed by Ark's OpenTelemetry setup. The
+exporter-neutral `AddArkAspNetCoreOpenTelemetry` and the Azure Monitor
+`AddArkAzureMonitorOpenTelemetry` paths install it with the
+`ArkFailurePromotionProcessor`. The Azure Monitor path binds
+`ApplicationInsights:ArkAdaptiveSampler`; the exporter-neutral path uses the
+documented defaults. The Application Insights v3 compatibility path installs
+the same sampler through `AddArkApplicationInsightsCustomizations`.
 
 The sampler and `ArkFailurePromotionProcessor` must share one
 `FailedTraceRegistry` for whole-operation failure promotion.
