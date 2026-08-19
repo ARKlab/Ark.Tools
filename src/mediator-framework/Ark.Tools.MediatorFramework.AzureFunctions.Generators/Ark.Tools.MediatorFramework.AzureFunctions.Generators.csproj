@@ -23,6 +23,8 @@
   <ItemGroup>
     <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    <Compile Include="../Ark.Tools.MediatorFramework.ApiSurface.Generators/MessagingMetadata.cs"
+             Link="MessagingMetadata.cs" />
   </ItemGroup>
 
   <ItemGroup>

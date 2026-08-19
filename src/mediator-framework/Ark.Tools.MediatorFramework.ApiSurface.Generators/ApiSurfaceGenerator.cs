@@ -10,6 +10,8 @@ using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 
+using Ark.MediatorFramework.MessagingGenerators;
+
 namespace Ark.MediatorFramework.ApiSurface;
 
 /// <summary>Generates the deterministic transport API surface and emits per-contract diagnostics when the snapshot drifts.</summary>
@@ -20,6 +22,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string Grpc = "Ark.MediatorFramework.GrpcMethodAttribute";
     private const string GrpcService = "Ark.MediatorFramework.GrpcServiceAttribute";
     private const string Rebus = "Ark.MediatorFramework.RebusMessageAttribute";
+    private const string Message = "Ark.MediatorFramework.MessageAttribute";
+    private const string Event = "Ark.MediatorFramework.EventAttribute";
+    private const string MessagingParticipant = "Ark.MediatorFramework.MessagingParticipantAttribute";
+    private const string MessagingNetwork = "Ark.MediatorFramework.MessagingNetworkAttribute";
     private const string ApiGroup = "Ark.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.MediatorFramework.ServerSetAttribute";
     private const string Versioning = "Ark.MediatorFramework.VersioningAttribute";
@@ -74,11 +80,33 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 static (_, _) => true,
                 static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
             .Collect();
-        var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
+        var messageTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Message,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var eventTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                Event,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var participantTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                MessagingParticipant,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var networkTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                MessagingNetwork,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes).Combine(messageTypes)
+            .Combine(eventTypes).Combine(participantTypes).Combine(networkTypes)
             .Select(static (pair, _) =>
             {
-                var ((http, grpc), rebus) = pair;
-                return http.AddRange(grpc).AddRange(rebus);
+                var ((((((http, grpc), rebus), message), @event), participant), network) = pair;
+                return http.AddRange(grpc).AddRange(rebus).AddRange(message).AddRange(@event)
+                    .AddRange(participant).AddRange(network);
             });
         var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
             BuildSurface(types, cancellationToken));
@@ -178,13 +206,131 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             var key = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             if (!locBuilder.ContainsKey(key))
                 locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
+            var messagingKey = type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+            if (!locBuilder.ContainsKey(messagingKey))
+                locBuilder[messagingKey] = type.Locations.FirstOrDefault() ?? Location.None;
             AddType(lines, type);
+            AddMessagingType(lines, type, contractTypes);
         }
 
         var ordered = lines.Distinct(StringComparer.Ordinal)
             .OrderBy(l => l, StringComparer.Ordinal)
             .ToImmutableArray();
         return (ordered, locBuilder.ToImmutable());
+    }
+
+    private static void AddMessagingType(
+        List<string> lines,
+        INamedTypeSymbol type,
+        ImmutableArray<INamedTypeSymbol> allTypes)
+    {
+        var message = Attribute(type, Message);
+        var @event = Attribute(type, Event);
+        if (message is not null)
+            lines.Add(MessagingContractLine("MESSAGE", type, message));
+        if (@event is not null)
+            lines.Add(MessagingContractLine("EVENT", type, @event));
+
+        var participant = Attribute(type, MessagingParticipant);
+        if (participant is not null)
+        {
+            var network = allTypes
+                .Where(candidate => Attribute(candidate, MessagingNetwork) is not null)
+                .OrderBy(candidate => MessagingTypeName(candidate), StringComparer.Ordinal)
+                .FirstOrDefault(candidate => TypeArrayNamed(Attribute(candidate, MessagingNetwork)!, "Members")
+                    .Any(member => SymbolEqualityComparer.Default.Equals(member, type)));
+            var networkName = network is null ? "-" : MessagingTypeName(network);
+            var processes = ContractNames(TypeArrayNamed(participant, "Processes"));
+            var publishes = ContractNames(TypeArrayNamed(participant, "Publishes"));
+            var subscribes = ContractNames(TypeArrayNamed(participant, "Subscribes"));
+            var serializers = EnumArrayNamed(participant, "Serializers")
+                .Select(MessagingMetadata.SerializerName)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, StringComparer.Ordinal);
+            var identity = StringNamed(participant, "Identity")
+                ?? MessagingMetadata.NormalizeIdentity(type.Name.EndsWith("Participant", StringComparison.Ordinal)
+                    ? type.Name[..^"Participant".Length]
+                    : type.Name);
+            var defaultSerializer = MessagingMetadata.SerializerName(EnumNamed(participant, "DefaultSerializer"));
+            lines.Add(
+                $"PARTICIPANT {MessagingTypeName(type)} -> network:{networkName} identity:{identity}"
+                + $" processes:{FormatList(processes)} publishes:{FormatList(publishes)}"
+                + $" subscribes:{FormatList(subscribes)} serializers:{FormatList(serializers)}"
+                + $" default:{defaultSerializer}");
+        }
+
+        var networkAttribute = Attribute(type, MessagingNetwork);
+        if (networkAttribute is not null)
+        {
+            var members = TypeArrayNamed(networkAttribute, "Members")
+                .Select(MessagingMetadata.NormalizeMemberName)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, StringComparer.Ordinal);
+            var requires = MessagingMetadata.CapabilityNames(
+                EnumNamed(networkAttribute, "Requires"));
+            lines.Add($"NETWORK {MessagingTypeName(type)} -> members:{FormatList(members)} requires:{requires}");
+        }
+    }
+
+    private static string MessagingContractLine(string kind, INamedTypeSymbol type, AttributeData attribute)
+    {
+        var formerNames = StringArrayNamed(attribute, "FormerNames")
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(value => value, StringComparer.Ordinal);
+        return $"{kind} {MessagingTypeName(type)} -> name:{MessagingMetadata.ContractName(type)}"
+            + $" former:{FormatList(formerNames)}";
+    }
+
+    private static IEnumerable<string> ContractNames(IEnumerable<INamedTypeSymbol> types)
+    {
+        return types.Select(MessagingMetadata.ContractName)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(value => value, StringComparer.Ordinal);
+    }
+
+    private static string FormatList(IEnumerable<string> values)
+    {
+        var items = values.ToArray();
+        return items.Length == 0 ? "-" : string.Join("|", items);
+    }
+
+    private static IEnumerable<INamedTypeSymbol> TypeArrayNamed(AttributeData attribute, string name)
+    {
+        var value = Named(attribute, name);
+        return value.Kind == TypedConstantKind.Array
+            ? value.Values.Where(item => item.Value is INamedTypeSymbol).Select(item => (INamedTypeSymbol)item.Value!)
+            : Enumerable.Empty<INamedTypeSymbol>();
+    }
+
+    private static IEnumerable<string> StringArrayNamed(AttributeData attribute, string name)
+    {
+        var value = Named(attribute, name);
+        return value.Kind == TypedConstantKind.Array
+            ? value.Values.Where(item => item.Value is string).Select(item => (string)item.Value!)
+            : Enumerable.Empty<string>();
+    }
+
+    private static IEnumerable<int> EnumArrayNamed(AttributeData attribute, string name)
+    {
+        var value = Named(attribute, name);
+        return value.Kind == TypedConstantKind.Array
+            ? value.Values.Where(item => item.Value is int).Select(item => (int)item.Value!)
+            : Enumerable.Empty<int>();
+    }
+
+    private static int EnumNamed(AttributeData attribute, string name)
+    {
+        return Named(attribute, name).Value is int value ? value : 0;
+    }
+
+    private static TypedConstant Named(AttributeData attribute, string name)
+    {
+        return attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
+    }
+
+    private static string MessagingTypeName(INamedTypeSymbol type)
+    {
+        return type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
     }
 
     private static SnapshotParseResult ParseSnapshotLines(string text)
@@ -195,10 +341,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             .Where(static l => l.Length > 0 && l != "/*" && l != "*/")
             .ToImmutableArray();
         var invalidLine = lines.FirstOrDefault(static line =>
-            !line.StartsWith("CONTRACT ", StringComparison.Ordinal)
-            && !line.StartsWith("REBUS ", StringComparison.Ordinal)
-            && !line.StartsWith("ENUM ", StringComparison.Ordinal)
-            && !line.StartsWith("EVOLVABLE-ENUM ", StringComparison.Ordinal));
+            !IsValidSnapshotLine(line));
         return invalidLine is null
             ? new SnapshotParseResult(new HashSet<string>(lines, StringComparer.Ordinal), true, string.Empty)
             : new SnapshotParseResult(new HashSet<string>(StringComparer.Ordinal), false, invalidLine);
@@ -213,11 +356,76 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var start = line.IndexOf(' ') + 1;
         if (start <= 0 || start >= line.Length)
             return line;
+        if (line.StartsWith("MESSAGE ", StringComparison.Ordinal)
+            || line.StartsWith("EVENT ", StringComparison.Ordinal)
+            || line.StartsWith("PARTICIPANT ", StringComparison.Ordinal)
+            || line.StartsWith("NETWORK ", StringComparison.Ordinal))
+        {
+            var arrow = line.IndexOf(" ->", start, StringComparison.Ordinal);
+            return arrow < 0 ? line[start..] : line[start..arrow];
+        }
         var end = line.IndexOfAny(_ownerTerminators, start);
         return end < 0 ? line[start..] : line[start..end];
     }
 
     private static readonly char[] _ownerTerminators = { ' ', '.', '[' };
+
+    private static bool IsValidSnapshotLine(string line)
+    {
+        if (line.StartsWith("CONTRACT ", StringComparison.Ordinal)
+            || line.StartsWith("REBUS ", StringComparison.Ordinal)
+            || line.StartsWith("ENUM ", StringComparison.Ordinal)
+            || line.StartsWith("EVOLVABLE-ENUM ", StringComparison.Ordinal))
+            return true;
+        if (line.StartsWith("MESSAGE ", StringComparison.Ordinal)
+            || line.StartsWith("EVENT ", StringComparison.Ordinal))
+            return IsValidContractMetadataLine(line);
+        if (line.StartsWith("PARTICIPANT ", StringComparison.Ordinal))
+            return IsValidParticipantLine(line);
+        if (line.StartsWith("NETWORK ", StringComparison.Ordinal))
+            return IsValidNetworkLine(line);
+        return false;
+    }
+
+    private static bool IsValidContractMetadataLine(string line)
+    {
+        var arrow = line.IndexOf(" -> name:", StringComparison.Ordinal);
+        var former = line.IndexOf(" former:", StringComparison.Ordinal);
+        return arrow > 0 && former > arrow + 9 && former + 8 < line.Length;
+    }
+
+    private static bool IsValidParticipantLine(string line)
+    {
+        return HasMetadataFields(
+            line,
+            " -> network:",
+            " identity:",
+            " processes:",
+            " publishes:",
+            " subscribes:",
+            " serializers:",
+            " default:");
+    }
+
+    private static bool IsValidNetworkLine(string line)
+    {
+        return HasMetadataFields(line, " -> members:", " requires:");
+    }
+
+    private static bool HasMetadataFields(string line, params string[] fields)
+    {
+        var position = line.IndexOf(" ->", StringComparison.Ordinal);
+        if (position <= 0)
+            return false;
+        foreach (var field in fields)
+        {
+            var next = line.IndexOf(field, position, StringComparison.Ordinal);
+            if (next < 0)
+                return false;
+            position = next + field.Length;
+        }
+        return position < line.Length;
+    }
 
     private static void AddType(List<string> lines, INamedTypeSymbol type)
     {

@@ -11,6 +11,8 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using Ark.MediatorFramework.MessagingGenerators;
+
 namespace Ark.MediatorFramework.AzureFunctions.Generators;
 
 /// <summary>Validates messaging topology and emits deterministic network metadata.</summary>
@@ -413,51 +415,22 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static string _contractName(INamedTypeSymbol symbol)
     {
-        var attributes = _contractAttributes(symbol);
-        return attributes.Name ?? _defaultContractName(symbol);
+        return MessagingMetadata.ContractName(symbol);
     }
 
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
-        var fullName = symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
-        return _normalizeSnake(fullName);
+        return MessagingMetadata.DefaultContractName(symbol);
     }
 
     private static string _normalizeIdentity(string value)
     {
-        return string.Join("-", _words(value).Select(word => word.ToLowerInvariant()));
+        return MessagingMetadata.NormalizeIdentity(value);
     }
 
     private static string _normalizeSnake(string value)
     {
-        return string.Join("_", value.Split('.').SelectMany(_words).Select(word => word.ToLowerInvariant()));
-    }
-
-    private static IEnumerable<string> _words(string value)
-    {
-        var word = new StringBuilder();
-        for (var index = 0; index < value.Length; index++)
-        {
-            var character = value[index];
-            var startsWord = index > 0
-                && char.IsUpper(character)
-                && (char.IsLower(value[index - 1])
-                    || (index + 1 < value.Length && char.IsLower(value[index + 1])));
-            if (startsWord && word.Length > 0)
-            {
-                yield return word.ToString();
-                word.Clear();
-            }
-            if (char.IsLetterOrDigit(character))
-                word.Append(character);
-            else if (word.Length > 0)
-            {
-                yield return word.ToString();
-                word.Clear();
-            }
-        }
-        if (word.Length > 0)
-            yield return word.ToString();
+        return MessagingMetadata.NormalizeSnake(value);
     }
 
     private static bool _isPortableName(string value)
