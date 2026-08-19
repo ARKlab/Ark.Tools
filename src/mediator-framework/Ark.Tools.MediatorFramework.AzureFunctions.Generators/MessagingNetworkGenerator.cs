@@ -4,10 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Ark.MediatorFramework.AzureFunctions.Generators;
 
@@ -219,8 +221,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     _report(context, _unsatisfiableSubscription, participant.Symbol, participant.Identity, _contractName(subscription), network.Name);
                     continue;
                 }
-                if (!eventPublishers[0].Serializers.Contains(eventPublishers[0].DefaultSerializer)
-                    || !participant.Serializers.Contains(eventPublishers[0].DefaultSerializer))
+                if (!participant.Serializers.Contains(eventPublishers[0].DefaultSerializer))
                     _report(context, _serializerMismatch, participant.Symbol, participant.Identity, eventPublishers[0].Identity, _contractName(subscription));
             }
         }
@@ -321,15 +322,70 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static RetryPolicy? _readRetry(INamedTypeSymbol retryType)
     {
-        var maximum = retryType.GetMembers("MaximumDeliveryCount").OfType<IFieldSymbol>()
-            .FirstOrDefault(field => field.IsConst && field.ConstantValue is int);
-        if (maximum?.ConstantValue is not int maximumCount)
+        var maximumCount = _readIntProperty(retryType, "MaximumDeliveryCount");
+        if (maximumCount is null)
             return null;
-        var second = retryType.GetMembers("SecondLevelRetriesEnabled").OfType<IFieldSymbol>()
-            .FirstOrDefault(field => field.IsConst && field.ConstantValue is bool);
-        var secondLevel = second?.ConstantValue is bool enabled && enabled;
-        return new RetryPolicy(maximumCount, secondLevel);
+        var secondLevel = _readBoolProperty(retryType, "SecondLevelRetriesEnabled") ?? false;
+        return new RetryPolicy(maximumCount.Value, secondLevel);
     }
+
+    private static int? _readIntProperty(INamedTypeSymbol type, string name)
+    {
+        var field = type.GetMembers(name).OfType<IFieldSymbol>()
+            .FirstOrDefault(candidate => candidate.IsConst && candidate.ConstantValue is int);
+        if (field?.ConstantValue is int fieldValue)
+            return fieldValue;
+
+        var property = type.GetMembers(name).OfType<IPropertySymbol>().FirstOrDefault();
+        if (property is null)
+            return null;
+#pragma warning disable MA0045
+        foreach (var syntaxReference in property.DeclaringSyntaxReferences)
+        {
+            if (syntaxReference.GetSyntax() is not PropertyDeclarationSyntax declaration)
+                continue;
+            var expression = declaration.ExpressionBody?.Expression
+                ?? declaration.Initializer?.Value
+                ?? declaration.AccessorList?.Accessors
+                    .SelectMany(accessor => accessor.Body?.Statements ?? Enumerable.Empty<Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax>())
+                    .OfType<ReturnStatementSyntax>()
+                    .Select(statement => statement.Expression)
+                    .FirstOrDefault();
+            if (expression is LiteralExpressionSyntax literal
+                && int.TryParse(literal.Token.ValueText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                return value;
+        }
+        return null;
+    }
+
+    private static bool? _readBoolProperty(INamedTypeSymbol type, string name)
+    {
+        var field = type.GetMembers(name).OfType<IFieldSymbol>()
+            .FirstOrDefault(candidate => candidate.IsConst && candidate.ConstantValue is bool);
+        if (field?.ConstantValue is bool fieldValue)
+            return fieldValue;
+
+        var property = type.GetMembers(name).OfType<IPropertySymbol>().FirstOrDefault();
+        if (property is null)
+            return null;
+        foreach (var syntaxReference in property.DeclaringSyntaxReferences)
+        {
+            if (syntaxReference.GetSyntax() is not PropertyDeclarationSyntax declaration)
+                continue;
+            var expression = declaration.ExpressionBody?.Expression
+                ?? declaration.Initializer?.Value
+                ?? declaration.AccessorList?.Accessors
+                    .SelectMany(accessor => accessor.Body?.Statements ?? Enumerable.Empty<Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax>())
+                    .OfType<ReturnStatementSyntax>()
+                    .Select(statement => statement.Expression)
+                    .FirstOrDefault();
+            if (expression is LiteralExpressionSyntax literal
+                && bool.TryParse(literal.Token.ValueText, out var value))
+                return value;
+        }
+        return null;
+    }
+#pragma warning restore MA0045
 
     private static (AttributeData? Message, AttributeData? Event, string? Name, ImmutableArray<string> FormerNames)
         _contractAttributes(INamedTypeSymbol symbol)
