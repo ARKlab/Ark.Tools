@@ -84,11 +84,22 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
         values.Distinct().Count().Should().Be(1);
     }
 
+    [TestMethod]
+    public void ResourceHandlerIsResolvedWithConcretePolicy()
+    {
+        using var container = _createContainer<AuthorizedRequest, TestPolicy>();
+
+        var handler = container.GetInstance<IAuthorizationResourceHandler<AuthorizedRequest, TestPolicy>>();
+
+        handler.Should().BeOfType<ResourceHandler<AuthorizedRequest, TestPolicy>>();
+    }
+
     private static Container _createContainer<TRequest, TPolicy>()
         where TRequest : class
         where TPolicy : class, IAuthorizationPolicy
     {
         var container = new Container();
+        container.Register<IAuthorizationResourceHandler<TRequest, TPolicy>, ResourceHandler<TRequest, TPolicy>>();
         container.Register<IAuthorizationResourceHandler<TRequest, IAuthorizationPolicy>, ResourceHandler<TRequest, TPolicy>>();
         return container;
     }
