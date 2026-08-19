@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace Ark.MediatorFramework.Messaging;
 
@@ -69,6 +70,11 @@ public sealed class MessagingNetworkOptions
     {
         var missing = Requires & ~transportCapabilities;
         if (missing != MessagingCapabilities.None)
-            throw new InvalidOperationException($"Network '{NetworkIdentity}' requires unsupported capability '{missing}'.");
+            throw new InvalidOperationException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Network '{0}' requires unsupported capability '{1}'.",
+                    NetworkIdentity,
+                    missing));
     }
 }
