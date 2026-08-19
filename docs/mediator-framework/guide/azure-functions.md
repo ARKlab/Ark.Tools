@@ -54,7 +54,29 @@ The sample uses the same `ApplicationComposition.RegisterOutboundRebus` path as
 other sender-only hosts. The Rebus setup includes source-generated application
 JSON and `logging.NLog()`.
 
-## 3. Configure local settings
+## 3. Declare a shared messaging network
+
+Messaging networks are transport-neutral attributed classes. `Members` is the
+sole membership input; AZM-02 validates participant declarations and membership.
+Members inherit the network's ability to send, receive, publish, and subscribe.
+Declare capabilities (`Receive`, `PubSub`, and `ScheduledSend`) on the network,
+then select the concrete transport at runtime. `Send` is implicit and is not a
+capability flag.
+
+All members share payload limits, DataBus offload and integrity limits, resource
+lifecycle policy, and configuration key names. Serialization, compression, and
+retry belong to each participant. Pipeline steps are host-local because their
+dependencies and environment-specific choices may differ. Receivers accept
+installed codecs selected by message headers.
+
+The network does not contain secrets or provider-specific retention. Use
+configuration key names and resolve connection strings or managed identity in
+the host. All participants on one network must use the same runtime transport
+and physical resources as a deployment assumption. Service Bus permits the
+default 240,000-byte transport threshold; networks intended for Storage Queue
+should use 46,080 bytes or less.
+
+## 4. Configure local settings
 
 Copy, do not commit:
 
@@ -87,7 +109,7 @@ Set an empty Functions route prefix when the generated route already includes
 }
 ```
 
-## 4. Understand the Rebus boundary
+## 5. Understand the Rebus boundary
 
 The Functions process:
 
@@ -100,7 +122,7 @@ The standalone processor receives `CompleteGreetingCompositionRequest` and
 updates durable state. This separation lets Functions scale independently from
 background processing.
 
-## 5. Authentication and supported features
+## 6. Authentication and supported features
 
 Every generated trigger is `AuthorizationLevel.Anonymous`; ASP.NET Core
 authentication and authorization still enforce the application policy. Never
@@ -113,7 +135,7 @@ are excluded because the Functions binding does not provide the same formatter.
 Read [Serialization](serialization.md) before enabling a transport-specific
 format.
 
-## 6. Test the boundary
+## 7. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test
 must launch the built host with a dynamically allocated loopback port, wait for
