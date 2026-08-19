@@ -30,6 +30,8 @@ public class PolicyAuthorizeRequestDecorator<TRequest, TResult> : IRequestHandle
             typeof(TRequest).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
+    [RequiresUnreferencedCode("Uses reflection for authorization resource handler dispatch. Handler types must be preserved.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2046", Justification = "IRequestHandler interface cannot have RequiresUnreferencedCode. Warning propagated to consumers via this attribute.")]
     public async Task<TResult> ExecuteAsync(TRequest request, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)

@@ -30,6 +30,8 @@ public class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TComman
             typeof(TCommand).GetCustomAttributes(typeof(PolicyAuthorizeAttribute), true).OfType<PolicyAuthorizeAttribute>().ToArray();
     }
 
+    [RequiresUnreferencedCode("Uses reflection for authorization resource handler dispatch. Handler types must be preserved.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2046", Justification = "ICommandHandler interface cannot have RequiresUnreferencedCode. Warning propagated to consumers via this attribute.")]
     public async Task ExecuteAsync(TCommand command, CancellationToken ctk = default)
     {
         if (_policies.Length != 0)
