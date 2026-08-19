@@ -9,6 +9,8 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="MessagePack" />
+    <PackageReference Include="protobuf-net" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
   </ItemGroup>
 </Project>
