@@ -449,16 +449,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static bool _isNormalized(string value)
     {
-        if (value.Length == 0 || value[0] == '_' || value[value.Length - 1] == '_')
-            return false;
-        for (var index = 0; index < value.Length; index++)
-        {
-            var character = value[index];
-            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')
-                || (character == '_' && index > 0 && value[index - 1] == '_'))
-                return false;
-        }
-        return true;
+        return MessagingMetadata.IsNormalized(value);
     }
 
     private static void _emitMetadata(SourceProductionContext context, IReadOnlyList<Network> networks)

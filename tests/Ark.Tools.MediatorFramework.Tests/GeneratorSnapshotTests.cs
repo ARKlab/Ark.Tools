@@ -656,6 +656,74 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorEmitsDeterministicMessagingEntries()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace Books;
+            [Message(Name = "books.recalculate_print")]
+            public sealed class RecalculatePrint { }
+            [Event(Name = "books.print_completed", FormerNames = new[] { "legacy.print_completed", "books.print_finished", "legacy.print_completed" })]
+            public sealed class PrintCompleted : IRequest<PrintCompleted, string> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(RecalculatePrint) },
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.MessagePack, SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class PrintingParticipant;
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+            public sealed class BookMessagingNetwork;
+            """;
+
+        var generated = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+
+        generated.Should().Contain(
+            "MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-");
+        generated.Should().Contain(
+            "EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed");
+        generated.Should().Contain(
+            "PARTICIPANT Books.PrintingParticipant -> network:Books.BookMessagingNetwork identity:printing"
+            + " processes:books.recalculate_print publishes:books.print_completed subscribes:-"
+            + " serializers:json|msgpack default:json");
+        generated.Should().Contain(
+            "NETWORK Books.BookMessagingNetwork -> members:printing_participant requires:receive|pubsub");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorReportsMessagingSnapshotDriftAndMalformedLines()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            namespace Books;
+            [Message(Name = "books.recalculate_print")]
+            public sealed class RecalculatePrint { }
+            """;
+        var baseline = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+        const string changedSource =
+            """
+            using Ark.MediatorFramework;
+            namespace Books;
+            [Message(Name = "books.recalculate_print_v2")]
+            public sealed class RecalculatePrint { }
+            """;
+
+        var changed = _runApiSurfaceGeneratorResult(changedSource, baseline, enabled: true);
+        changed.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002"
+            && d.GetMessage().Contains("Books.RecalculatePrint"));
+
+        var malformed = _runApiSurfaceGeneratorResult(
+            source,
+            "/*\nMESSAGE malformed\n*/\n",
+            enabled: true);
+        malformed.Diagnostics.Should().Contain(d => d.Id == "ARKAPI004");
+    }
+
+    [TestMethod]
     public void ResponseETagIsEmittedOnlyForMarkedResponses()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(

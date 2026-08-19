@@ -37,6 +37,13 @@ attribute location:
 | ARKAPI003 | Error | Multiple API surface baselines were found |
 | ARKAPI004 | Error | API surface baseline contains a malformed line |
 
+API-surface snapshots also include transport-neutral `MESSAGE`, `EVENT`,
+`PARTICIPANT`, and `NETWORK` entries. These record logical names and aliases,
+routing ownership, serializer choices, participant identities, and network
+membership. Changes require an accepted baseline diff; changing an event name,
+publisher, or subscriber membership additionally requires the topology migration
+described in the Azure Functions messaging design.
+
 ### Custom Ark.Tools analyzers
 
 | ID | Severity | Meaning |

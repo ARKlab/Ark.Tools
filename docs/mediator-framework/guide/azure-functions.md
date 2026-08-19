@@ -106,6 +106,24 @@ derived identities must be 3–50 characters, use lowercase ASCII letters, digit
 and hyphens, and cannot be `outbox-processor`, end in `-poison`, or contain
 consecutive hyphens. Network `Members` is the sole membership input.
 
+### API-surface baseline
+
+`ArkApiSurface.txt` records canonical and former logical names, participant
+ownership, serializer declarations, identities, and network member lists in
+`MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` lines. Build failures with
+`ARKAPI002` are expected when this metadata changes. Inspect the generated
+`ArkApiSurface.current.txt` with:
+
+```bash
+dotnet build -p:EmitCompilerGeneratedFiles=true
+```
+
+Accept a reviewed change by copying that generated file over the committed
+`ArkApiSurface.txt`. Adding a former name is still a reviewed wire-contract
+change. An event canonical-name, publisher, or subscriber-membership change
+also requires the event-topic and subscription migration defined by the
+messaging design; accepting the baseline alone does not perform that migration.
+
 ## 4. Configure local settings
 
 Copy, do not commit:

@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -38,6 +37,20 @@ internal static class MessagingMetadata
     public static string NormalizeMemberName(INamedTypeSymbol symbol)
     {
         return NormalizeSnake(symbol.Name);
+    }
+
+    public static bool IsNormalized(string value)
+    {
+        if (value.Length == 0 || value[0] == '_' || value[^1] == '_')
+            return false;
+        for (var index = 0; index < value.Length; index++)
+        {
+            var character = value[index];
+            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')
+                || (character == '_' && index > 0 && value[index - 1] == '_'))
+                return false;
+        }
+        return true;
     }
 
     public static string SerializerName(int value)

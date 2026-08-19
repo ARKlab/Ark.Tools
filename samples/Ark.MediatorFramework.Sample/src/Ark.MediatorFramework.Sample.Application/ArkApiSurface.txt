@@ -17,6 +17,9 @@ EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
 EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
 EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
 EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
+MESSAGE Ark.MediatorFramework.Sample.Application.Messages.ProcessBookPrintProcessRequest -> name:ark_mediator_framework_sample_application_messages_process_book_print_process_request former:-
+NETWORK Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork -> members:sample_messaging_participant requires:receive
+PARTICIPANT Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant -> network:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork identity:sample-messaging processes:ark_mediator_framework_sample_application_messages_process_book_print_process_request publishes:- subscribes:- serializers:json default:json
 REBUS FailingRebusRequest -> queue:ark.mediator.sample
 REBUS ProcessBookPrintProcessRequest -> queue:ark.mediator.sample
 */

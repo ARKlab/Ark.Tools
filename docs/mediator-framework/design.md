@@ -860,6 +860,10 @@ snapshot differs from what is committed.
   diff. Plain (`strict`) enums produce `ENUM Type.Member=value` lines;
   `EvolvableEnum<TEnum>` members produce `EVOLVABLE-ENUM Type.Member=value`
   lines for the wrapped `TEnum`.
+- Transport-neutral messaging metadata: `MESSAGE` and `EVENT` logical names
+  and aliases, `PARTICIPANT` ownership and serializer declarations, and
+  `NETWORK` member and capability declarations. These entries are wire and
+  topology contracts, not implementation details.
 
 **Workflow:**
 
@@ -911,6 +915,19 @@ EVOLVABLE-ENUM GreetingStatus.Active=1
 EVOLVABLE-ENUM GreetingStatus.Archived=2
 REBUS RefreshGreetingCommand -> queue:greetings
 ```
+
+Messaging entries use deterministic, ordinal-sorted lists:
+
+```
+MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json,msgpack default:json
+NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
+```
+
+Accepting `ARKAPI002` for an event name, its publisher, or a subscriber
+membership does not migrate Service Bus topics or subscriptions. Apply the
+explicit event-topic migration before accepting that baseline change.
 
 ## Testing strategy
 

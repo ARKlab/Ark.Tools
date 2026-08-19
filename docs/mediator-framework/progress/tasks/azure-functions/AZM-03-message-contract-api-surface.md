@@ -156,14 +156,14 @@ surface lines without implying wire interoperability.
 
 ## Acceptance
 
-- [ ] `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` entries follow the
+- [x] `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` entries follow the
   fixed deterministic format.
-- [ ] Canonical names, ownership, membership, and `FormerNames` changes
+- [x] Canonical names, ownership, membership, and `FormerNames` changes
   trigger `ARKAPI002`.
-- [ ] Snapshot parsing and contract-local diagnostics cover the new entries.
-- [ ] The Book sample baseline contains generated transport-neutral entries.
-- [ ] Analyzer and Mediator Framework guides document baseline acceptance and
+- [x] Snapshot parsing and contract-local diagnostics cover the new entries.
+- [x] The Book sample baseline contains generated transport-neutral entries.
+- [x] Analyzer and Mediator Framework guides document baseline acceptance and
   event-topic migration.
-- [ ] The [task board](../README.md) status for AZM-03 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-03 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
