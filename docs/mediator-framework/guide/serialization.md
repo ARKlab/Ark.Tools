@@ -14,6 +14,37 @@ format explicitly where it needs metadata.
 | gRPC | protobuf | `[ProtoContract]`, stable `[ProtoMember(n)]` numbers | generated protobuf messages |
 | Rebus | host-selected serializer | no transport attribute beyond `[RebusMessage]`; optional protobuf/JSON host config | serialized bus payload |
 
+## Transport-neutral messaging envelopes
+
+Native Mediator Framework messaging carries a binary payload and string headers in
+`MessagingEnvelope`. The envelope is independent of Azure SDK and transport
+types, so a queue can contain multiple contract types and protocols.
+
+The runtime writes these headers:
+
+| Header | Purpose |
+| --- | --- |
+| `amf1-msg-type` | Registered logical contract name |
+| `amf1-content-type` | `application/json;charset=utf-8`, `application/x-msgpack`, or `application/x-protobuf` |
+| `amf1-msg-id` / `amf1-corr-id` | Message and optional correlation identifiers |
+| `amf1-senttime` | Invariant UTC round-trip timestamp |
+| `amf1-network` / `amf1-sender-identity` | Producing network and sending participant identities |
+| `amf1-content-encoding` | Optional opaque compression token |
+| `amf1-payload-attachment-*` | Optional opaque DataBus claim-check metadata |
+
+`MessagingContractRegistry` is the only contract lookup seam. Register current
+logical names, former-name aliases, CLR contract types, and the owner-selected
+default serializer from generated metadata. The receiver selects the codec from
+`amf1-content-type`; it never falls back to a participant default or loads a CLR
+type from an untrusted header. Unknown contracts, unsupported codecs, malformed
+payloads, foreign networks, and size violations raise
+`MessagingEnvelopeException` without including the payload in the diagnostic.
+
+Delivery count is native transport runtime state and is not emitted as an
+envelope header. Compression and DataBus interpretation are later pipeline
+stages; their headers remain intact while the envelope codec stays transport
+neutral.
+
 ## Enable MessagePack deliberately
 
 ```csharp

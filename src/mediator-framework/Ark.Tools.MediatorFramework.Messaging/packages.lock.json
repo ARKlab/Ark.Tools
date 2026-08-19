@@ -8,6 +8,17 @@
         "resolved": "0.1.2",
         "contentHash": "RQdzUtFVhwLwisP2Du7Ugm7ldwAzc+QJrlZWNIwHXcgq4b5fLwZgdN1203RdYiHS8OOALophC6yWekxu3UgN2g=="
       },
+      "MessagePack": {
+        "type": "Direct",
+        "requested": "[3.1.8, )",
+        "resolved": "3.1.8",
+        "contentHash": "Qk2q+9FVxnMSp+NQ9y3SLz3HqWe7Rg3KRMHhBX28FkKUoOeP9YIU86mA4pFOxDDjUIRA9e7Ssbxs/LwWUcAzPw==",
+        "dependencies": {
+          "MessagePack.Annotations": "3.1.8",
+          "MessagePackAnalyzer": "3.1.8",
+          "Microsoft.NET.StringTools": "17.11.4"
+        }
+      },
       "Meziantou.Analyzer": {
         "type": "Direct",
         "requested": "[3.0.160, )",
@@ -61,6 +72,25 @@
         "resolved": "11.2.0",
         "contentHash": "3dDzS+dsKI9Qlb0lm0svPk/hFx1CuX2RHM0jHenTGuNI0jTw8fsXi3u4r/PI8sTf5PGKZKS4TaWQVybuiKSbVQ=="
       },
+      "protobuf-net": {
+        "type": "Direct",
+        "requested": "[3.3.21, )",
+        "resolved": "3.3.21",
+        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
+        "dependencies": {
+          "protobuf-net.Core": "3.3.21"
+        }
+      },
+      "MessagePack.Annotations": {
+        "type": "Transitive",
+        "resolved": "3.1.8",
+        "contentHash": "SitOtZ4tOlAZZPF7p52M7143F+Cuz7o/aU0MrtAXX0+ZkPXzDNroOFhzzE2ogMFThsoEW/E6akXVVcBFM9ZKaw=="
+      },
+      "MessagePackAnalyzer": {
+        "type": "Transitive",
+        "resolved": "3.1.8",
+        "contentHash": "Vm4g0cR4YRKRchEOmMJ0uVFU6yxdg7cJa2KHv3SUAHEsdYKvMpHMF5A1hZfsix89ymD5cmuzRnw9a6dKMcvq+Q=="
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.400",
@@ -68,6 +98,11 @@
         "dependencies": {
           "System.IO.Hashing": "10.0.11"
         }
+      },
+      "Microsoft.NET.StringTools": {
+        "type": "Transitive",
+        "resolved": "17.11.4",
+        "contentHash": "mudqUHhNpeqIdJoUx2YDWZO/I9uEDYVowan89R6wsomfnUJQk6HteoQTlNjZDixhT2B4IXMkMtgZtoceIjLRmA=="
       },
       "Microsoft.SourceLink.Common": {
         "type": "Transitive",
@@ -89,15 +124,6 @@
         "dependencies": {
           "protobuf-net": "[3.3.21, )"
         }
-      },
-      "protobuf-net": {
-        "type": "CentralTransitive",
-        "requested": "[3.3.21, )",
-        "resolved": "3.3.21",
-        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
-        "dependencies": {
-          "protobuf-net.Core": "3.3.21"
-        }
       }
     },
     "net8.0": {
@@ -106,6 +132,17 @@
         "requested": "[0.1.2, )",
         "resolved": "0.1.2",
         "contentHash": "RQdzUtFVhwLwisP2Du7Ugm7ldwAzc+QJrlZWNIwHXcgq4b5fLwZgdN1203RdYiHS8OOALophC6yWekxu3UgN2g=="
+      },
+      "MessagePack": {
+        "type": "Direct",
+        "requested": "[3.1.8, )",
+        "resolved": "3.1.8",
+        "contentHash": "Qk2q+9FVxnMSp+NQ9y3SLz3HqWe7Rg3KRMHhBX28FkKUoOeP9YIU86mA4pFOxDDjUIRA9e7Ssbxs/LwWUcAzPw==",
+        "dependencies": {
+          "MessagePack.Annotations": "3.1.8",
+          "MessagePackAnalyzer": "3.1.8",
+          "Microsoft.NET.StringTools": "17.11.4"
+        }
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
@@ -160,6 +197,25 @@
         "resolved": "11.2.0",
         "contentHash": "3dDzS+dsKI9Qlb0lm0svPk/hFx1CuX2RHM0jHenTGuNI0jTw8fsXi3u4r/PI8sTf5PGKZKS4TaWQVybuiKSbVQ=="
       },
+      "protobuf-net": {
+        "type": "Direct",
+        "requested": "[3.3.21, )",
+        "resolved": "3.3.21",
+        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
+        "dependencies": {
+          "protobuf-net.Core": "3.3.21"
+        }
+      },
+      "MessagePack.Annotations": {
+        "type": "Transitive",
+        "resolved": "3.1.8",
+        "contentHash": "SitOtZ4tOlAZZPF7p52M7143F+Cuz7o/aU0MrtAXX0+ZkPXzDNroOFhzzE2ogMFThsoEW/E6akXVVcBFM9ZKaw=="
+      },
+      "MessagePackAnalyzer": {
+        "type": "Transitive",
+        "resolved": "3.1.8",
+        "contentHash": "Vm4g0cR4YRKRchEOmMJ0uVFU6yxdg7cJa2KHv3SUAHEsdYKvMpHMF5A1hZfsix89ymD5cmuzRnw9a6dKMcvq+Q=="
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.400",
@@ -167,6 +223,11 @@
         "dependencies": {
           "System.IO.Hashing": "10.0.11"
         }
+      },
+      "Microsoft.NET.StringTools": {
+        "type": "Transitive",
+        "resolved": "17.11.4",
+        "contentHash": "mudqUHhNpeqIdJoUx2YDWZO/I9uEDYVowan89R6wsomfnUJQk6HteoQTlNjZDixhT2B4IXMkMtgZtoceIjLRmA=="
       },
       "Microsoft.SourceLink.Common": {
         "type": "Transitive",
@@ -187,15 +248,6 @@
         "type": "Project",
         "dependencies": {
           "protobuf-net": "[3.3.21, )"
-        }
-      },
-      "protobuf-net": {
-        "type": "CentralTransitive",
-        "requested": "[3.3.21, )",
-        "resolved": "3.3.21",
-        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
-        "dependencies": {
-          "protobuf-net.Core": "3.3.21"
         }
       }
     }

@@ -1,10 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Globalization;
-
-using Ark.MediatorFramework;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Decoded contract value together with its resolved registry descriptor.</summary>
@@ -133,7 +129,8 @@ public sealed class MessagingEnvelopeCodec
     public MessagingDecodedMessage Decode(MessagingEnvelope envelope)
     {
         ArgumentNullException.ThrowIfNull(envelope);
-        ValidateRequiredHeaders(envelope.Headers);
+        _validateEnvelopeSize(envelope);
+        _validateRequiredHeaders(envelope.Headers);
 
         var network = envelope.Headers[MessagingHeaderNames.Network];
         if (_networkIdentity is not null
@@ -171,7 +168,7 @@ public sealed class MessagingEnvelopeCodec
         return value;
     }
 
-    private void ValidateRequiredHeaders(IReadOnlyDictionary<string, string> headers)
+    private static void _validateRequiredHeaders(IReadOnlyDictionary<string, string> headers)
     {
         foreach (var name in new[]
         {
@@ -193,5 +190,20 @@ public sealed class MessagingEnvelopeCodec
         if (headers.TryGetValue(MessagingHeaderNames.CorrelationId, out var correlationId)
             && !Guid.TryParse(correlationId, out _))
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The correlation identifier is not a valid GUID.", MessagingHeaderNames.CorrelationId);
+    }
+
+    private void _validateEnvelopeSize(MessagingEnvelope envelope)
+    {
+        if (envelope.Payload.Length > _limits.MaximumPayloadLength)
+            throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope payload exceeds its configured limit.");
+        if (envelope.Headers.Count > _limits.MaximumHeaderCount)
+            throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope header count exceeds its configured limit.");
+        foreach (var header in envelope.Headers)
+        {
+            if (header.Key.Length > _limits.MaximumHeaderNameLength)
+                throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header name exceeds its configured limit.", header.Key);
+            if (header.Value.Length > _limits.MaximumHeaderValueLength)
+                throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header value exceeds its configured limit.", header.Key);
+        }
     }
 }

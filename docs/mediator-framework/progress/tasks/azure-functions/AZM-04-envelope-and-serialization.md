@@ -128,11 +128,11 @@ exists yet.
 
 ## Acceptance
 
-- [ ] All three protocols have registered implementations and tests.
-- [ ] A queue can contain multiple types and protocols without ambiguity.
-- [ ] The envelope model is transport-neutral and free of Azure SDK types.
-- [ ] Unsupported reads fail fast with bounded, serializable diagnostics.
-- [ ] No raw payload or secret metadata is logged.
-- [ ] The [task board](../README.md) status for AZM-04 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] All three protocols have registered implementations and tests.
+- [x] A queue can contain multiple types and protocols without ambiguity.
+- [x] The envelope model is transport-neutral and free of Azure SDK types.
+- [x] Unsupported reads fail fast with bounded, serializable diagnostics.
+- [x] No raw payload or secret metadata is logged.
+- [x] The [task board](../README.md) status for AZM-04 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

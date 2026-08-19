@@ -7,8 +7,6 @@ using MessagePack;
 
 using ProtoBuf;
 
-using Ark.MediatorFramework;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Serializer implementation selected by an envelope content type.</summary>
@@ -45,6 +43,7 @@ public sealed class MessagingJsonCodec : IMessagingCodec
     public string ContentType => MessagingContentTypes.Json;
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Contract types come from the explicit generated registry.")]
     public byte[] Serialize(Type contractType, object value)
     {
         ArgumentNullException.ThrowIfNull(contractType);
@@ -53,6 +52,7 @@ public sealed class MessagingJsonCodec : IMessagingCodec
     }
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Contract types come from the explicit generated registry.")]
     public object Deserialize(Type contractType, ReadOnlyMemory<byte> payload)
     {
         ArgumentNullException.ThrowIfNull(contractType);
@@ -111,7 +111,7 @@ public sealed class MessagingMessagePackCodec : IMessagingCodec
         {
             throw;
         }
-        catch (Exception exception) when (exception is MessagePackSerializationException or InvalidOperationException)
+        catch (Exception)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The MessagePack payload is malformed.");
         }
@@ -138,6 +138,7 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
     }
 
     /// <inheritdoc />
+    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Contract types come from the explicit generated registry.")]
     public object Deserialize(Type contractType, ReadOnlyMemory<byte> payload)
     {
         ArgumentNullException.ThrowIfNull(contractType);
@@ -151,7 +152,7 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
         {
             throw;
         }
-        catch (Exception exception) when (exception is InvalidOperationException or ProtoException or EndOfStreamException)
+        catch (Exception)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The protobuf payload is malformed.");
         }

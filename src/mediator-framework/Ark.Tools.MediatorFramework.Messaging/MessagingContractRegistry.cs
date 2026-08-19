@@ -3,8 +3,6 @@
 
 using System.Collections.ObjectModel;
 
-using Ark.MediatorFramework;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Explicit generated-registry entry for one messaging contract.</summary>

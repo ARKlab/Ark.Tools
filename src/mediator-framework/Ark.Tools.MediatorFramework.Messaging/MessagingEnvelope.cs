@@ -1,9 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Collections.ObjectModel;
-using System.Globalization;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Classifies fail-fast envelope and serialization failures.</summary>
@@ -28,6 +25,25 @@ public enum MessagingFailureKind
 /// <summary>Exception raised when an envelope cannot be safely interpreted.</summary>
 public sealed class MessagingEnvelopeException : InvalidOperationException
 {
+    /// <summary>Creates an envelope failure with the default malformed classification.</summary>
+    public MessagingEnvelopeException()
+        : this(MessagingFailureKind.Malformed, "The messaging envelope is invalid.")
+    {
+    }
+
+    /// <summary>Creates an envelope failure with a message.</summary>
+    public MessagingEnvelopeException(string message)
+        : this(MessagingFailureKind.Malformed, message)
+    {
+    }
+
+    /// <summary>Creates an envelope failure with a message and inner exception.</summary>
+    public MessagingEnvelopeException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+        Kind = MessagingFailureKind.Malformed;
+    }
+
     /// <summary>Creates a bounded, serializable envelope failure.</summary>
     public MessagingEnvelopeException(MessagingFailureKind kind, string message, string? headerName = null)
         : base(message)
@@ -56,14 +72,10 @@ public sealed class MessagingEnvelopeLimits
         int maximumHeaderValueLength = 4096,
         int maximumPayloadLength = 1_000_000)
     {
-        if (maximumHeaderCount < 1)
-            throw new ArgumentOutOfRangeException(nameof(maximumHeaderCount));
-        if (maximumHeaderNameLength < 1)
-            throw new ArgumentOutOfRangeException(nameof(maximumHeaderNameLength));
-        if (maximumHeaderValueLength < 1)
-            throw new ArgumentOutOfRangeException(nameof(maximumHeaderValueLength));
-        if (maximumPayloadLength < 0)
-            throw new ArgumentOutOfRangeException(nameof(maximumPayloadLength));
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumHeaderCount, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumHeaderNameLength, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumHeaderValueLength, 1);
+        ArgumentOutOfRangeException.ThrowIfNegative(maximumPayloadLength);
 
         MaximumHeaderCount = maximumHeaderCount;
         MaximumHeaderNameLength = maximumHeaderNameLength;
@@ -115,7 +127,7 @@ public sealed class MessagingEnvelope
         }
 
         Payload = payload.ToArray();
-        Headers = new ReadOnlyDictionary<string, string>(copy);
+        Headers = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(copy);
     }
 
     /// <summary>Gets the copied binary payload.</summary>
