@@ -118,7 +118,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .OrderBy(network => network.Symbol.ToDisplayString(), StringComparer.Ordinal)
             .ToArray();
         var participantNetworks = new Dictionary<INamedTypeSymbol, List<Network>>(SymbolEqualityComparer.Default);
-        var allContracts = new Dictionary<INamedTypeSymbol, List<Network>>(SymbolEqualityComparer.Default);
+        var allContracts = new Dictionary<INamedTypeSymbol, HashSet<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
 
         foreach (var network in networks)
         {
@@ -146,10 +146,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 foreach (var contract in participant.Value.Contracts)
                 {
                     if (!allContracts.TryGetValue(contract, out var declarations))
-                        allContracts.Add(contract, declarations = new List<Network>());
-                    if (!declarations.Any(declaration =>
-                        SymbolEqualityComparer.Default.Equals(declaration.Symbol, network.Symbol)))
-                        declarations.Add(network);
+                        allContracts.Add(contract, declarations = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+                    declarations.Add(network.Symbol);
                 }
             }
 
@@ -182,7 +180,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _report(context, _invalidIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
             if (participant.Identity == "outbox-processor" || participant.Identity.EndsWith("-poison", StringComparison.Ordinal))
                 _report(context, _reservedIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
-            if (!participant.Serializers.Contains(participant.DefaultSerializer))
+            if (participant.Contracts.Length > 0 && !participant.Serializers.Contains(participant.DefaultSerializer))
                 _report(context, _defaultSerializer, participant.Symbol, participant.Identity, participant.DefaultSerializer);
             if (participant.Retry is not null
                 && participant.Retry.Value.MaximumDeliveryCount < (participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1))
@@ -497,7 +495,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("namespace Ark.MediatorFramework.Generated;");
         foreach (var network in networks)
         {
-            var name = _safeIdentifier(network.Symbol.ToDisplayString()) + "MessagingDescriptor";
+            var displayName = network.Symbol.ToDisplayString();
+            var name = _safeIdentifier(displayName) + "_" + _stableHash(displayName) + "MessagingDescriptor";
             source.Append("internal static class ").Append(name).AppendLine()
                 .AppendLine("{")
                 .Append("    internal const string Network = \"").Append(_escape(network.Name)).AppendLine("\";")
@@ -520,6 +519,17 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _escape(string value)
     {
         return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+
+    private static string _stableHash(string value)
+    {
+        unchecked
+        {
+            var hash = 2166136261u;
+            foreach (var character in value)
+                hash = (hash ^ character) * 16777619u;
+            return hash.ToString("x8", CultureInfo.InvariantCulture);
+        }
     }
 
     private static void _add(
