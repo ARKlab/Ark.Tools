@@ -429,6 +429,12 @@ public sealed class MessagingMetadataGenerator : IIncrementalGenerator
 
     private static string _normalizeSegment(string value)
     {
+        var genericStart = value.IndexOf('<', StringComparison.Ordinal);
+        if (genericStart >= 0)
+            value = value[..genericStart];
+        var genericArity = value.IndexOf('`', StringComparison.Ordinal);
+        if (genericArity >= 0)
+            value = value[..genericArity];
         var builder = new StringBuilder(value.Length + 4);
         for (var index = 0; index < value.Length; index++)
         {
