@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.ObjectModel;
-using System.Globalization;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Immutable, resolved configuration for a messaging network.</summary>

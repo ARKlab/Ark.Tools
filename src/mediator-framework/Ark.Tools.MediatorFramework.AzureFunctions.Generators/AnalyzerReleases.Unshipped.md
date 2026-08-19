@@ -8,7 +8,3 @@ Rule ID | Category | Severity | Notes
 ARKMF030 | Ark.MediatorFramework | Error | MessagePack is not supported by Azure Functions
 ARKMF031 | Ark.MediatorFramework | Error | Duplicate Azure Functions route
 ARKMF032 | Ark.MediatorFramework | Error | Duplicate Azure Functions name
-
-## Unshipped Changes
-
-Added messaging network discovery for Azure Functions host metadata.
