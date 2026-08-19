@@ -406,7 +406,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         symbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.ToDisplayString() == name);
 
     private static string? StringArgument(AttributeData? attribute, int index) =>
-        attribute?.ConstructorArguments.Length > index ? attribute.ConstructorArguments[index].Value as string : null;
+        attribute is not null && attribute.ConstructorArguments.Length > index
+            ? attribute.ConstructorArguments[index].Value as string
+            : null;
 
     private static string? StringNamed(AttributeData? attribute, string name) =>
         attribute?.NamedArguments.FirstOrDefault(x => x.Key == name).Value.Value as string;

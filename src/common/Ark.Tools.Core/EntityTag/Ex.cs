@@ -11,8 +11,7 @@ public static class Ex
                 throw new EntityTagMismatchException("Entity already exists.");
             else return;
 
-        if (!string.IsNullOrEmpty(newEntity?._ETag))
-            if (existingEntity._ETag != newEntity._ETag)
-                throw new EntityTagMismatchException("Entity tags mismatch.");
+        if (!string.IsNullOrEmpty(newEntity?._ETag) && existingEntity._ETag != newEntity._ETag)
+            throw new EntityTagMismatchException("Entity tags mismatch.");
     }
 }
