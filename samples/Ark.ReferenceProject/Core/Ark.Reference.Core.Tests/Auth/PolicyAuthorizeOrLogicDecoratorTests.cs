@@ -44,6 +44,19 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     }
 
     [TestMethod]
+    public async Task ResourceHandlerDispatchUsesRuntimePolicyType()
+    {
+        await using var container = _createContainer<AuthorizedRequest, TestPolicy>();
+        var auth = new AuthorizationService(true);
+        var decorator = new PolicyAuthorizeOrLogicRequestDecorator<AuthorizedRequest, object>(
+            new RequestHandler(), auth, new UserContext(), container);
+
+        await decorator.ExecuteAsync(new AuthorizedRequest());
+
+        auth.LastResource.Should().BeOfType<ResourceMarker>();
+    }
+
+    [TestMethod]
     public async Task AllPoliciesFailurePreservesPolicyMessages()
     {
         await using var container = _createContainer<DeniedRequest, TestPolicy>();
@@ -100,7 +113,6 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     {
         var container = new Container();
         container.Register<IAuthorizationResourceHandler<TRequest, TPolicy>, ResourceHandler<TRequest, TPolicy>>();
-        container.Register<IAuthorizationResourceHandler<TRequest, IAuthorizationPolicy>, ResourceHandler<TRequest, TPolicy>>();
         return container;
     }
 
@@ -131,6 +143,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     private sealed class AuthorizationService(bool authorized) : IAuthorizationService
     {
         public int Calls { get; private set; }
+        public object? LastResource { get; private set; }
         public IAuthorizationPolicyProvider PolicyProvider { get; } = new PolicyProvider();
 
         public Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName, CancellationToken ctk = default)
@@ -141,6 +154,7 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
         public Task<(bool, IList<string>)> AuthorizeAsync(ClaimsPrincipal user, object? resource, IAuthorizationPolicy policy, CancellationToken ctk = default)
         {
             Calls++;
+            LastResource = resource;
             return Task.FromResult((authorized, (IList<string>)new[] { policy.Name }));
         }
     }
@@ -164,8 +178,12 @@ public sealed class PolicyAuthorizeOrLogicDecoratorTests
     {
         public Task<object> GetResouceAsync(TRequest query, CancellationToken ctk = default)
         {
-            return Task.FromResult<object>(query);
+            return Task.FromResult<object>(new ResourceMarker());
         }
+    }
+
+    private sealed class ResourceMarker
+    {
     }
 
     public sealed class TestPolicy : IAuthorizationPolicy
