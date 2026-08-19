@@ -147,7 +147,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 {
                     if (!allContracts.TryGetValue(contract, out var declarations))
                         allContracts.Add(contract, declarations = new List<Network>());
-                    if (!declarations.Contains(network))
+                    if (!declarations.Any(declaration =>
+                        SymbolEqualityComparer.Default.Equals(declaration.Symbol, network.Symbol)))
                         declarations.Add(network);
                 }
             }
@@ -307,16 +308,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var serializers = _enums(attribute, "Serializers");
         var retryType = _type(attribute, "Retry");
         var retry = retryType is null ? null : _readRetry(retryType);
+        var processes = _types(attribute, "Processes");
+        var publishes = _types(attribute, "Publishes");
+        var subscribes = _types(attribute, "Subscribes");
         return new Participant(
             symbol,
             identity,
-            _types(attribute, "Processes"),
-            _types(attribute, "Publishes"),
-            _types(attribute, "Subscribes"),
+            processes,
+            publishes,
+            subscribes,
             serializers,
             _enum(attribute, "DefaultSerializer"),
             retry,
-            _types(attribute, "Processes").Concat(_types(attribute, "Publishes")).Concat(_types(attribute, "Subscribes"))
+            processes.Concat(publishes).Concat(subscribes)
                 .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>().ToImmutableArray());
     }
 
