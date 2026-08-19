@@ -217,11 +217,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         {
             foreach (var subscription in participant.Subscribes)
             {
-                if (!publishers.TryGetValue(subscription, out var eventPublishers) || eventPublishers.Count != 1)
+                if (!publishers.TryGetValue(subscription, out var eventPublishers))
                 {
                     _report(context, _unsatisfiableSubscription, participant.Symbol, participant.Identity, _contractName(subscription), network.Name);
                     continue;
                 }
+                if (eventPublishers.Count != 1)
+                    continue;
                 if (!participant.Serializers.Contains(eventPublishers[0].DefaultSerializer))
                     _report(context, _serializerMismatch, participant.Symbol, participant.Identity, eventPublishers[0].Identity, _contractName(subscription));
             }
@@ -499,7 +501,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             source.Append("internal static class ").Append(name).AppendLine()
                 .AppendLine("{")
                 .Append("    internal const string Network = \"").Append(_escape(network.Name)).AppendLine("\";")
-                .Append("    internal static readonly string[] Members = new[] { ")
+                .Append("    internal static readonly string[] Members = new string[] { ")
                 .Append(string.Join(", ", network.MemberSymbols.Select(member => "\"" + _escape(member.ToDisplayString()) + "\"")))
                 .AppendLine(" };")
                 .AppendLine("}");
