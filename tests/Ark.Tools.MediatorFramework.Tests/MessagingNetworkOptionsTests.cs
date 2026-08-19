@@ -130,7 +130,7 @@ public sealed class MessagingNetworkOptionsTests
 
         var options = new MessagingNetworkOptions(typeof(BookNetwork), declaration);
 
-        options.NetworkType.Should().Be(typeof(BookNetwork));
+        options.NetworkType.Should().Be<BookNetwork>();
         options.NetworkIdentity.Should().Be(typeof(BookNetwork).FullName);
         options.Members.Should().Equal(typeof(MemberMarker));
         options.Requires.Should().Be(declaration.Requires);
