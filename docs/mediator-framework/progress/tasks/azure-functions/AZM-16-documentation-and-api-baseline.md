@@ -19,22 +19,26 @@ explicit guidance and the public API must be reviewable before release.
   exact commands and the separate Rebus/AMF topology diagrams.
 - **API baseline**: update repository API-surface snapshots for every public
   attribute, enum, option, `IBus`, `IFailed<T>`, pipeline, DataBus, outbox,
-  processor-hosting, and context member; verify the AZM-03 message/event name,
-  owner, and alias entries.
+  processor-hosting, and context member; verify the AZM-03 `MESSAGE`/`EVENT`
+  name and alias entries plus the `PARTICIPANT`/`NETWORK` ownership and
+  membership entries.
 - **Generated examples**: copy from inspected emitted `.g.cs`; do not
   hand-invent trigger signatures.
 - **Release gate**: search for stale old task names, direct-subscription claims,
   Rebus interoperability claims, technology-typed network claims,
-  network-level pipeline settings, passthrough-outbox claims, claims that
+  network-level pipeline settings, network-level serialization/compression/
+  retry settings, contract-level ownership (`OwnerQueue`, `OwnerPublisher`),
+  explicit `Role` declarations, passthrough-outbox claims, claims that
   an outbox processor runs inside Functions, and stale host/participant
   terminology (`MessagingHost`, `MessagingFunctionsTrigger`,
   "host identity" meaning a participant).
 
 ## Implementation steps
 
-1. Update the Mediator Framework guide with network contract registration,
-   participant
-   identity/identity-less sender participants, subscriptions, shared network
+1. Update the Mediator Framework guide with the network member list,
+   participant declarations (processes/publishes/subscribes/serializers and
+   default identity normalization), inferred roles, subscriptions, shared
+   network
    configuration, the capability model with runtime transport selection
    (InMemory, Service Bus, Storage Queue), and the restricted bus API.
    Document the participant/host distinction: a participant is a logical
@@ -43,8 +47,12 @@ explicit guidance and the public API must be reviewable before release.
    running the InMemory pump or the outbox processor). InMemory consumer
    participants are never hosted in a Functions app; Azure Functions
    end-to-end testing uses Azurite or the Azure Service Bus emulator.
-2. Document ownership: messages have one destination queue; events have one
-   publisher and many subscriber queues.
+2. Document ownership: contracts are owner-free; the participant declaring a
+   message in `Processes` owns it (destination = its identity queue); the
+   participant declaring an event in `Publishes` owns its topic; subscribers
+   get independent copies in their own identity queues. Document wire-protocol
+   ownership: the processing participant's default serializer for messages,
+   the publisher's for events, and the strict subscriber-compatibility rule.
 3. Document header-driven protocol reads, protocol retirement behavior, and
    conflict diagnostics.
 4. Document at-least-once delivery, fail-fast DLQ, retry exhaustion, native
@@ -52,15 +60,18 @@ explicit guidance and the public API must be reviewable before release.
    dispatch, no persisted `IFailed<T>` message, and separate scopes.
 5. Document resource lifecycle, IaC coexistence, ownership-safe subscription
    removal, and local testing limitations.
-6. Document the participant-local incoming/outgoing pipeline, opt-in user/OTel
-   propagation, additional headers, compression, DataBus claim-check,
+6. Document the host-local incoming/outgoing pipeline (registered on the host
+   binding), opt-in user/OTel
+   propagation, additional headers, per-participant compression, DataBus
+   claim-check,
    provider-specific minimum lifetime, and the Azure Blob IaC lifecycle
    prerequisite.
 7. Document that request/reply and delayed publish are out of scope; document
    each transport's capability set (Storage Queue has no `PubSub`; its DLQ is
    the framework-managed poison queue).
 8. Review API-surface snapshots and generated-source examples, including the
-   deterministic `MESSAGE` and `EVENT` entries implemented by AZM-03.
+   deterministic `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` entries
+   implemented by AZM-03.
 9. Add migration guidance from Rebus-only receive hosts to Functions hosts,
    explicitly stating that Rebus remains supported, the new ownership metadata
    is shared, and persisted-message interoperability is unsupported.
@@ -100,14 +111,15 @@ receiver owns the queue in each mode.
 
 - Documentation examples compile in representative fixtures.
 - API baseline includes all public attributes, options, bus methods, and failure
-  abstractions plus canonical message/event names, owners, and aliases.
+  abstractions plus canonical message/event names, aliases, participant
+  declarations, and network member lists.
 - Generated examples match actual routes, headers, and resource names.
 - No documentation claims unsupported emulator or Rebus interoperability.
 - Composition examples preserve the WebInterface Rebus outbox with its
   processor disabled and the RebusProcessor outbox with its processor enabled.
 - Native composition examples place `outbox-processor` in a separate
   always-running host and never in Azure Functions.
-- Rebus examples show producer-only (`Role = Producer`) and Consumer generated
+- Rebus examples show publisher-only and consumer generated
   setup, including awaited subscriptions, without hiding runtime
   infrastructure choices.
 

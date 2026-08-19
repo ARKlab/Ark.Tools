@@ -18,17 +18,18 @@ generated Azure Functions QueueTrigger.
 
 - **Transport**: implement the Storage Queue transport
   (`Capabilities = Receive | ScheduledSend`; `Send` implicit; no `PubSub`;
-  hard payload ceiling 49 152 bytes of binary envelope before base64 — 64 KiB
-  encoded) in
+  a 64 KiB final-message limit) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract.
-- **Encoding**: the queue message body is a text-safe encoded envelope
-  carrying the binary payload and the full `amf1-*` header set. The encoder
-  must not assume the payload is JSON merely because the outer envelope is
-  text-encoded.
+- **Encoding**: serialize the complete canonical binary envelope (binary
+  payload plus the full `amf1-*` header set), Base64-encode it exactly once,
+  and send the resulting text with `QueueMessageEncoding.None`. Generated
+  Functions hosts set `extensions.queues.messageEncoding` to `none` and
+  decode that raw Base64 body exactly once. The encoder must not assume the
+  payload is JSON merely because the outer envelope is text-encoded.
 - **Settlement mapping (QueueTrigger, not PeekLock)**: isolated QueueTrigger
   has no `MessageActions`. Complete = return successfully (host deletes).
   Abandon = throw (host applies `queues.visibilityTimeout` =
-  network `RetryDelay`; default zero is invalid). Delivery count = native
+  participant `RetryDelay`; default zero is invalid). Delivery count = native
   `DequeueCount` from bound `QueueMessage`. Immediate DLQ = `QueueClient`
   send to `<queue>-poison` with bounded metadata, `DeleteMessage` with the
   current pop receipt, then return successfully.
@@ -37,16 +38,18 @@ generated Azure Functions QueueTrigger.
   `queues.maxDequeueCount` failed throws (no metadata). Fail-fast,
   malformed envelopes, foreign `amf1-network`, and missing `IFailed<T>` at
   delivery `N` always use the SDK move. `maxDequeueCount` is `2N` when the
-  network enables second-level retries, otherwise `N`. Verify that a
+  participant enables second-level retries, otherwise `N`. A Functions app
+  hosts exactly one messaging participant, so its host-wide queue settings
+  have one unambiguous retry policy. Verify that a
   successful return after SDK `DeleteMessage` is a completed invocation; if
   the host fails the invocation, record evidence and pick the first
   non-resurrecting alternative. The send-then-delete move is non-transactional;
   duplicate poison copies are acceptable and retain the original message ID.
 - **Trigger generation**: extend
   `Ark.Tools.MediatorFramework.AzureFunctions.Generators` to emit a
-  QueueTrigger for consumer participants whose Functions host assembly
-  declares
-  `[MessagingFunctionsHost(MessagingFunctionsTriggerBinding.StorageQueue)]`,
+  QueueTrigger when the Functions host assembly binds a consumer participant
+  through
+  `[MessagingFunctionsHost(typeof(PrintingParticipant), MessagingFunctionsTriggerBinding.StorageQueue)]`,
   reusing the AZM-10
   generation pipeline and the AZM-09 dispatcher. Verify the exact installed
   `Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues` API before
@@ -64,12 +67,16 @@ generated Azure Functions QueueTrigger.
 
 ## Implementation steps
 
-1. Implement the transport send path: encode the envelope (headers + binary
-   payload) into a single text-safe body within Storage Queue size limits
-   (hard ceiling: 49 152 bytes of binary envelope before base64 — 64 KiB
-   encoded);
-   the bus offloads to DataBus above the effective limit (smaller of the
-   network threshold and this ceiling) before encoding.
+1. Implement the transport send path: serialize the complete canonical binary
+   envelope (headers + binary payload), Base64-encode it once, and send it
+   through an SDK client configured with `QueueMessageEncoding.None`. The
+   transport measures the final text before send and before the AZM-07
+   claim-check decision. Reserve 3 072 canonical bytes for bounded poison
+   metadata: a normal inline envelope is at most 46 080 bytes and a poison
+   envelope is at most 49 152 bytes, which Base64-encodes to at most 64 KiB.
+   The bus offloads to DataBus before encoding when its complete candidate
+   does not fit; it re-measures the attachment-reference envelope and fails
+   explicitly if that cannot fit.
 2. Implement scheduled send using the initial visibility delay, validating
    duration and due-time variants against transport and network limits.
 3. Implement the Functions receive adapter: bind `QueueMessage`, pass
@@ -81,11 +88,13 @@ generated Azure Functions QueueTrigger.
    participant identity queue and the deterministic `<queue>-poison` companion
    queue through the management seam when resource creation is enabled;
    both may be IaC-precreated, ensure is idempotent, and queues are never
-   auto-deleted. Immediate DLQ uses `QueueClient`
-   send + delete + return as specified above.
+   auto-deleted. Immediate DLQ uses a `QueueClient` configured with
+   `QueueMessageEncoding.None` to send + delete + return as specified above.
 5. Wire the retry policy: AZM-09 runs `IFailed<T>` at `DequeueCount == N`
-   only when the network enables second-level retries. `host.json`
-   `visibilityTimeout` equals `RetryDelay`. `maxDequeueCount` equals `2N` or
+   only when the participant's retry policy enables second-level retries.
+   `host.json`
+   `visibilityTimeout` equals the participant's `RetryDelay`.
+   `maxDequeueCount` equals `2N` or
    `N` per the Execution map.
 6. Declare `Capabilities = Receive | ScheduledSend`; verify AZM-01 startup
    validation rejects this transport for networks declaring `PubSub`, naming
@@ -94,8 +103,11 @@ generated Azure Functions QueueTrigger.
    participants:
    one trigger per identity queue, thin async methods passing the
    binding object and cancellation token to the settlement adapter in
-   `Ark.Tools.MediatorFramework.AzureFunctions`, no per-contract logic.
-8. Diagnose subscriptions or event usage on participants whose network lacks
+   `Ark.Tools.MediatorFramework.AzureFunctions`, no per-contract logic. Reuse
+   the AZM-10 diagnostic that rejects more than one bound messaging
+   participant in a Functions app.
+8. Diagnose `Subscribes`/`Publishes` declarations on participants whose
+   network lacks
    `PubSub` (already covered by AZM-02 capability validation; add fixtures for
    the Storage Queue binding).
 9. Reuse the shared DataBus claim-check unchanged: oversized compressed
@@ -106,9 +118,10 @@ generated Azure Functions QueueTrigger.
     snapshot lines for generated Storage Queue triggers.
 12. Add generator diagnostics for the `host.json` contract: when the
     consuming Functions host project supplies `host.json` through
-    `AdditionalFiles`, parse `queues.maxDequeueCount` and
-    `queues.visibilityTimeout` and warn (a new `ARKMF` warning) when either
-    is missing or is not a valid literal. The generator must not execute the
+    `AdditionalFiles`, parse `queues.messageEncoding`,
+    `queues.maxDequeueCount`, and `queues.visibilityTimeout`. Warn (a new
+    `ARKMF` warning) when `messageEncoding` is not literal `none`, or either
+    retry setting is missing or malformed. The generator must not execute the
     runtime retry-policy type. When `host.json` is not supplied, emit an
     information diagnostic recommending the `AdditionalFiles` opt-in.
 13. Add a startup check in the Functions composition that reads the effective
@@ -121,9 +134,11 @@ generated Azure Functions QueueTrigger.
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
 Storage Queue capability set, at-least-once visibility semantics, the
 poison-queue DLQ mapping, the prominent `host.json` `maxDequeueCount`
-poison-ownership contract, network-level second-level enablement, accepted
-duplicate poison copies, text-safe encoding, scheduling limits, generated
-QueueTriggers, and Azurite-based testing.
+poison-ownership contract, participant-owned second-level enablement, accepted
+duplicate poison copies, the canonical single-Base64 `messageEncoding: none`
+wire format, the one-messaging-participant-per-Functions-app rule, the
+prohibition on unrelated conflicting QueueTriggers, scheduling limits,
+generated QueueTriggers, and Azurite-based testing.
 
 ## Sample extension
 
@@ -131,12 +146,17 @@ Add a Book sample fixture composing a consumer participant with the Storage
 Queue
 transport against Azurite: send, scheduled send, receive, retry exhaustion,
 and poison-queue dead-letter of a Book background message on a `Send`-only
-network profile.
+network declaration.
 
 ## Required test coverage
 
 - Envelope encoding round-trips binary JSON, MessagePack, and protobuf
-  payloads and all headers through a real Azurite queue.
+  payloads and all headers through a real Azurite queue with
+  `messageEncoding: none`; the sender and trigger each perform exactly one
+  Base64 operation.
+- Inline and claim-check boundary tests prove that the final encoded normal
+  and poison envelopes, including headers and bounded failure metadata, stay
+  within 64 KiB.
 - Scheduled send visibility behavior and limit validation.
 - Receive, complete, abandon/visibility-expiry redelivery, and `DequeueCount`
   exactness.
@@ -152,7 +172,8 @@ network profile.
 - Generated QueueTrigger output is deterministic and byte-identical across
   runs.
 - One portable identity/owner queue is used unchanged by Service Bus and
-  Storage Queue trigger manifests.
+  Storage Queue trigger manifests, and the AZM-02 50-character identity cap
+  leaves room for the `-poison` companion queue.
 - Conformance send/receive groups pass against Azurite.
 - Startup ensures the participant identity queue and the `<queue>-poison`
   companion queue when resource creation is enabled, coexists with
@@ -161,9 +182,10 @@ network profile.
   metadata, then the function returns successfully; the original is gone.
 - Abandon is a thrown exception; the next visible time honors
   `RetryDelay`.
-- The generator warns on missing or malformed `maxDequeueCount` or
-  `visibilityTimeout` when `host.json` is supplied, and informs when it is
-  not inspectable. Startup performs exact value comparison.
+- The generator warns on non-`none`, missing, or malformed
+  `messageEncoding`, `maxDequeueCount`, or `visibilityTimeout` when
+  `host.json` is supplied, and informs when it is not inspectable. Startup
+  performs exact value comparison.
 - A required extension-verification test records what the host does after
   SDK delete + successful return.
 - Startup logs the expected-versus-actual `maxDequeueCount` warning; strict
@@ -177,6 +199,8 @@ network profile.
   including generated Functions consumers.
 - Capability validation, not special-case diagnostics, enforces the no-PubSub
   shape.
+- One bound participant gives each Storage Queue Functions app one unambiguous
+  host-wide retry and message-encoding configuration.
 
 ## Acceptance
 
@@ -185,8 +209,11 @@ network profile.
 - [ ] QueueTrigger complete=return, abandon=throw, immediate DLQ=SDK
   poison+delete+return, verified against the installed extension.
 - [ ] Generator presence/shape diagnostics and startup exact validation cover
-  the `host.json` `visibilityTimeout` and `N`/`2N` contract.
+  the `host.json` `messageEncoding`, `visibilityTimeout`, and `N`/`2N`
+  contract.
 - [ ] Text-safe encoding preserves binary payloads and headers.
+- [ ] The single-Base64 `messageEncoding: none` contract and final encoded
+  envelope-size boundaries are verified against Azurite.
 - [ ] Generated QueueTriggers dispatch through the AZM-09 runtime.
 - [ ] Capability rejection and `NotSupportedException` behavior are tested.
 - [ ] Conformance groups pass against Azurite.

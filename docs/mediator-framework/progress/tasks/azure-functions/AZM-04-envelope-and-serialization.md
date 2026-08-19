@@ -55,15 +55,19 @@ so every transport adapter can map it to its native message shape.
 7. Resolve serializer and contract reads from the content-type and contract
    type headers. Preserve optional content-encoding and DataBus attachment
    metadata as opaque envelope headers for AZM-07; do not interpret them in
-   this task. Receive must not depend on the network default or retry settings;
+   this task. Receive must not depend on any participant default or retry
+   settings;
    an unknown/unsupported protocol or type must produce a typed, fail-fast
    error. Senders always write the resolved network identity in
    `amf1-network` and `amf1-sender-identity` on both `Send` and `Publish`; a
    received `amf1-network` value that differs from the local
    network identity fails fast the same way, because it indicates a different
    network type sharing the receive entity, not a same-type wrong namespace.
-8. Resolve writes from a contract-level protocol or shared network default.
-   Conflicting explicit values are compile-time diagnostics.
+8. Resolve writes from the contract owner's `DefaultSerializer` through the
+   generated registry: the processing participant's default for messages, the
+   publishing participant's default for events. Sender-side protocol choice
+   does not exist; owner protocol and serializer-set incompatibilities are
+   compile-time diagnostics (AZM-02).
 9. Resolve contract types only through the generated registry; never perform
     unrestricted CLR type loading from `amf1-msg-type`.
 10. Write the current logical contract name and resolve both current names and
@@ -93,20 +97,23 @@ exists yet.
 - Missing, unknown, uninstalled, and conflicting protocol headers.
 - Unknown contract type and malformed payload.
 - Correlation/message IDs and sent time use invariant formats.
-- Sender identity round-trips for both send and publish, including an
-  identity-less participant's composition-supplied application identity.
+- Sender identity round-trips for both send and publish; every participant has
+  an identity (explicit or the normalized class-name default), so the sender
+  identity is always the sending participant's identity.
 - Optional content-encoding and DataBus attachment headers survive envelope
   round trips without being interpreted.
 - Type-confusion attempts cannot resolve contracts outside the generated
   registry.
 - Former-name aliases deserialize to the current contract; unknown names fail
   fast.
-- A foreign `amf1-network` identity fails fast to the dead-letter queue.
+- A foreign `amf1-network` identity produces the typed fail-fast
+  classification consumed by AZM-09; AZM-09 and the transport tasks verify
+  physical dead-letter settlement.
 - Oversized headers and serialized payloads fail fast before dispatch.
 
 ## Caveats
 
-- Header-driven reads must not silently fall back to the network default.
+- Header-driven reads must not silently fall back to any participant default.
 - Rebus header compatibility does not imply Rebus endpoint interoperability.
 - Do not log raw message bodies or sensitive failure details.
 
@@ -115,8 +122,9 @@ exists yet.
 - Any consumer can read every installed supported format selected by the
   message headers.
 - Sending one protocol and reading another installed protocol is deterministic.
-- Old messages fail directly to DLQ only when their codec is no longer
-  installed or their contract is no longer registered.
+- Old messages are classified as fail-fast only when their codec is no longer
+  installed or their contract is no longer registered; AZM-09 maps that
+  classification to physical dead-letter settlement.
 
 ## Acceptance
 

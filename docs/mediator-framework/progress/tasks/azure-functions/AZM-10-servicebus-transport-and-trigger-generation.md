@@ -22,30 +22,33 @@ dispatcher-less trigger code.
 ## Execution map
 
 - **Transport**: implement the Service Bus transport
-  (`Capabilities = Receive | PubSub | ScheduledSend`, hard payload ceiling
-  256 KB total standard-tier message including application properties) in
+  (`Capabilities = Receive | PubSub | ScheduledSend`, hard 256 KB total
+  standard-tier message limit including application properties) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract:
   envelope-to-message mapping via application properties and binary body,
   native scheduling, topic publish, and PeekLock settlement mapped to
   complete/abandon/dead-letter with the native `DeliveryCount`. Producer-only
-  participants reference only this messaging package.
+  participants reference only this messaging package. Its AZM-05 measurement
+  must evaluate the full native message, not body bytes alone.
 - **Generator project**:
   `Ark.Tools.MediatorFramework.AzureFunctions.Generators`. Generated methods
   call the existing AZM-09 runtime dispatcher; generated source contains no
   codec, pipeline, retry, or DI logic. The Functions-binding settlement
   adapter lives in `Ark.Tools.MediatorFramework.AzureFunctions`, which
   references the messaging package.
-- **Trigger selection**: emit the Service Bus trigger only for consumer
-  participants
-  whose Functions host assembly declares it through the
-  `[assembly: MessagingFunctionsHost(MessagingFunctionsTriggerBinding.ServiceBus)]`
+- **Trigger selection**: emit the Service Bus trigger only when the Functions
+  host assembly binds itself to a consumer participant through the
+  `[assembly: MessagingFunctionsHost(typeof(PrintingParticipant), MessagingFunctionsTriggerBinding.ServiceBus)]`
   attribute defined in `Ark.Tools.MediatorFramework.AzureFunctions`; the
   Storage Queue selection is handled by AZM-11. A Functions host assembly
-  with a named consumer participant identity but no Functions-host attribute is
-  a
+  binding a consumer participant without this attribute, or binding a
+  participant listed in no network, is a
   compile-time diagnostic.
-- **Output per assembly**: zero or one identity-queue trigger plus one
-  deterministic desired-resource manifest.
+- **Output per Functions app**: exactly one bound
+  `[MessagingFunctionsHost]` participant is permitted. That participant emits
+  zero or one identity-queue trigger plus one deterministic desired-resource
+  manifest. Multiple messaging participant bindings are a compile-time
+  diagnostic.
 - **Binding verification**: inspect the exact installed
   `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus` API before emitting
   attributes; add a compile fixture using the actual package.
@@ -66,18 +69,19 @@ dispatcher-less trigger code.
 2. Implement the receive-side settlement adapter mapping the Functions
    Service Bus binding objects (message + message actions) onto the AZM-05
    locked-delivery contract consumed by the dispatcher.
-3. Extend the incremental generator with message, event, and participant
+3. Extend the incremental generator with contract, network, and participant
    metadata
-   inputs, honoring the Functions host assembly trigger-selection attribute
+   inputs, honoring the Functions host binding attribute, which references the
+   participant type, selects the trigger binding, and may add host-local steps
    (the transport-neutral `[MessagingParticipant]` attribute from AZM-02 has
-   no trigger member).
-4. Emit one stable trigger for the named participant identity queue when the
-   network
-   contains at least one message whose owner queue equals that identity or the
-   participant declares an event subscription, and the assembly declares the
-   Service
-   Bus trigger selection. A consumer participant whose identity matches no
-   registered message and declares no subscriptions is an empty receiver:
+   no trigger or step members). A Functions app may bind exactly one messaging
+   participant; diagnose multiple `[MessagingFunctionsHost]` bindings before
+   generating source.
+4. Emit one stable trigger for the bound participant's identity queue when the
+   participant declares `Processes` or `Subscribes` and the assembly declares
+   the Service
+   Bus trigger selection. A bound participant with no `Processes` and no
+   `Subscribes` is a send-only Functions host:
    emit an information diagnostic and no trigger.
    Do not discover handler registrations in the
    generator; dispatch always goes through the processors.
@@ -100,12 +104,13 @@ dispatcher-less trigger code.
    so `RetryDelay` is ignored and a retry storm is accepted. Fail-fast and
    missing-`IFailed` DLQ map to `DeadLetterMessageAsync` with bounded
    reason and description. Apply entity `MaxDeliveryCount = 2N` when the
-   network enables second-level retries, otherwise `N`.
+   participant's retry policy enables second-level retries, otherwise `N`.
    `maxAutoLockRenewalDuration` must cover `MaximumHandlerDuration`.
 10. Add API-surface snapshot lines for generated messaging triggers and
     routing.
 
-Participants without an identity emit no receive trigger or subscription.
+Participants that consume nothing (no `Processes`, no `Subscribes`) emit no
+receive trigger or subscription manifest entry.
 Participants composed over InMemory cannot be hosted in Azure Functions: their
 assemblies emit no trigger, Functions composition rejects the InMemory receive
 transport (AZM-13), and their receive side runs through the runtime pump in a
@@ -117,7 +122,7 @@ Service Bus emulator (Docker).
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
 generated queue/subscription trigger model, deterministic routes, the
 compile-time Functions-host attribute in the Functions host assembly, and
-the relationship between participant identity, network profile, and event
+the relationship between participant identity, network declaration, and event
 subscriptions.
 
 ## Sample extension
@@ -129,16 +134,19 @@ generated `.g.cs` is inspected; live Azure execution is optional and explicit.
 
 ## Required test coverage
 
-- At most one trigger per named participant identity queue.
-- A consumer participant with an empty receive set (no matching messages, no
-  subscriptions) produces an information diagnostic and no trigger.
+- At most one trigger per participant identity queue.
+- Multiple `[MessagingFunctionsHost]` bindings in one Functions app are
+  diagnosed; one bound sender-only participant remains valid and emits no
+  trigger.
+- A bound participant with an empty receive set (no `Processes`, no
+  `Subscribes`) produces an information diagnostic and no trigger.
 - Multiple types in one queue map to typed generated dispatch.
 - Same topic subscribed by two participant configurations generates distinct,
   deterministic subscription identities.
 - Repeated generator runs produce byte-identical output.
 - Invalid and excluded contracts produce the expected diagnostics/no source.
-- Portable queue-name violations and received-contract owner mismatches are
-  diagnosed before trigger generation.
+- Portable queue-name violations and ownership/membership diagnostics are
+  raised before trigger generation.
 - PeekLock is configured and ReceiveAndDelete is rejected.
 - Every event subscription forwards to the participant identity queue.
 - The manifest records the selected trigger binding deterministically.

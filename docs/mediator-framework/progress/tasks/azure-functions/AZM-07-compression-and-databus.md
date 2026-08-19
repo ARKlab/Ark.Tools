@@ -38,20 +38,29 @@ bytes to a shared DataBus when they still exceed the configured limit.
    composing the
    same network must compose the same provider, store, and compatible options;
    this is a documented deployment assumption validated per participant.
-3. Add network-configured maximum payload and minimum compression-size
-   settings.
-   Default the maximum payload threshold to 240 000 bytes (safe for Service
-   Bus standard tier). The effective offload limit is the smaller of the
-   configured threshold and the composed transport's hard ceiling (AZM-05);
-   Storage Queue's ceiling is 49 152 bytes of binary envelope before base64
-   encoding. Startup warns when the configured threshold exceeds the composed
-   transport's ceiling.
-4. Implement gzip and Brotli content encodings selected by network configuration.
+3. Maximum payload and decompressed-size thresholds stay on the network
+   (AZM-01); compression algorithm and minimum compression size are
+   participant-owned sender-side settings (AZM-02).
+   The network maximum payload threshold defaults to 240 000 bytes (safe for
+   Service Bus standard tier). The runtime first constructs the complete
+   inline envelope and offloads when either its compressed payload exceeds the
+   configured threshold or the AZM-05 transport measurement exceeds its hard
+   inline-envelope ceiling. Storage Queue measures its final canonical
+   Base64 body, including headers and the poison-metadata reservation; it
+   never decides from payload bytes alone. Startup warns when the configured
+   threshold exceeds the composed transport's practical inline ceiling.
+4. Implement gzip and Brotli content encodings selected per participant on the
+   send side. Receive is header-driven and both encodings are always decodable
+   by the runtime, so members may diverge freely — no cross-participant
+   compression validation is needed.
 5. Omit `amf1-content-encoding` for uncompressed payloads; emit `gzip` or `br`
    for compressed payloads.
-6. Serialize, compress when eligible, compare final bytes with the effective
-   payload limit (smaller of network threshold and transport ceiling), and
-   store those exact compressed bytes in DataBus when needed.
+6. Serialize and compress when eligible, then construct the complete inline
+   envelope and measure its native representation. Store those exact
+   compressed bytes in DataBus when the network payload threshold or the
+   measured transport inline-envelope ceiling is exceeded. Re-measure the
+   resulting attachment-reference envelope and fail explicitly if it cannot
+   fit.
 7. Emit `amf1-payload-attachment-id`, stored byte length, and SHA-256 metadata
    for transparent consumer retrieval and integrity validation.
 8. Fetch attachments before decompression and deserialization. Missing,
@@ -74,7 +83,8 @@ bytes to a shared DataBus when they still exceed the configured limit.
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
 serialize-compress-threshold-claim-check order, provider-specific lifetime
-responsibility, and the network-wide provider/store compatibility requirement.
+responsibility, per-participant sender-side compression with header-driven
+reads, and the network-wide provider/store compatibility requirement.
 
 ## Sample extension
 
@@ -86,7 +96,9 @@ transport coverage lands with AZM-10/AZM-11.
 
 - Gzip and Brotli compression/decompression.
 - Minimum-size threshold and uncompressed encoding-header behavior.
-- DataBus offload after compression when the final bytes exceed the limit.
+- DataBus offload after compression when either the final payload threshold or
+  the measured complete inline envelope exceeds its limit, including
+  header/encoding boundaries.
 - Claim-check envelope references survive the InMemory transport round trip.
 - Transparent consumer retrieval and decompression.
 - Missing, expired, and metadata-mismatched attachment failures.
@@ -105,10 +117,11 @@ transport coverage lands with AZM-10/AZM-11.
 
 ## Acceptance
 
-- [ ] Gzip and Brotli are implemented behind network configuration.
-- [ ] Final compressed bytes, not original bytes, determine DataBus offload,
-  using the effective limit (smaller of network threshold and transport
-  ceiling).
+- [ ] Gzip and Brotli are implemented behind participant configuration, with
+  header-driven reads that always decode both.
+- [ ] Final compressed bytes, not original bytes, determine DataBus offload;
+  the complete inline envelope is also measured so headers and transport
+  encoding cannot exceed a transport limit.
 - [ ] Claim-check is transport-neutral and proven over InMemory.
 - [ ] Consumers retrieve, validate, decompress, and deserialize transparently.
 - [ ] Provider lifecycle cleanup, not consumers, owns deletion.

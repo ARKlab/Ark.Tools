@@ -25,11 +25,11 @@ their infrastructure.
 - **Application project**: replace `Rebus.Bus.IBus` and
   `Rebus.Retry.Simple.IFailed<T>` dependencies in
   `Ark.MediatorFramework.Sample.Application` with framework abstractions.
-- **Rebus participant metadata**: both sample participants reference the same
-  messaging
-  network and declare distinct participant roles:
-  `WebInterface` is producer-only (`Role = Producer`); `RebusProcessor` is the
-  named `Consumer`.
+- **Rebus participant metadata**: both sample Rebus hosts bind to participants
+  of the same messaging
+  network with distinct inferred roles:
+  `WebInterface` binds a publisher-only participant; `RebusProcessor` binds
+  the consumer participant.
 - **Generated API**: generate participant-specific routing, framework-owned
   Rebus
   dispatch adapters, post-start event subscriptions, exact retry options, and
@@ -50,7 +50,8 @@ their infrastructure.
   `ApplicationComposition.ConfigureRebusOutbox` calls in
   `Ark.MediatorFramework.Sample.WebInterface/SampleComposition.cs` and
   `Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs`;
-  participant role alone must not infer whether an outbox processor starts.
+  the participant's declarations alone must not infer whether an outbox
+  processor starts.
 - **Stop condition**: no AMF/Rebus header translation and no attempt to consume
   a persisted message produced by the other stack. Do not generate a complete
   Rebus configuration or silently select infrastructure.
@@ -59,40 +60,46 @@ their infrastructure.
 
 1. Move the restricted `IBus` and `IFailed<T>` contracts to a
    transport-neutral Mediator Framework package.
-2. Make the Rebus generator consume the referenced network contract registry
-   and the current assembly's participant declaration while preserving legacy
+2. Make the Rebus generator consume the network's member-derived contract
+   registry
+   and the participant declaration bound to the current assembly's host while
+   preserving legacy
    `[RebusMessage]` behavior. Diagnose conflicting dual declarations, missing
-   network/participant references, multiple participant declarations, and
+   network/participant references, a host binding referencing a participant
+   listed in no network, and
    subscriptions to
-   events outside the network. Remove handler-symbol discovery and generated
+   events no member publishes. Remove handler-symbol discovery and generated
    missing-handler verification from this path.
-3. Generate owner routing for every registered message. Preserve
+3. Generate owner routing for every processed message, targeting the
+   processing participant's identity queue. Preserve
    `ConfigureArkRebusRouting<TAssemblyMarker>` as the compatibility entry point
-   and make it derive routes from `[Message]` metadata.
+   and make it derive routes from the generated registry.
 4. Generate participant-filtered Rebus dispatch adapters solely from contract
    metadata:
-   - producer-only (`Role = Producer`) emits/registers no receive adapters;
-   - the named `Consumer` emits contract adapters for every network message
-     whose owner queue equals its identity;
-   - the Consumer also emits contract adapters for its explicit event
-     subscriptions.
+   - a participant with no `Processes`/`Subscribes` emits/registers no receive
+     adapters;
+   - a consumer participant emits contract adapters for exactly its
+     `Processes` messages;
+   - it also emits contract adapters for its `Subscribes` events.
    Each adapter depends only on `IRequestProcessor` or `ICommandProcessor` and
    dispatches the received contract through that processor. A generated
    registration method may register only these framework-owned adapters with
    Rebus/SimpleInjector; it must not register or verify application handlers.
    Developers keep application-handler registration in their composition root.
 5. Generate an async post-start subscription method that invokes Rebus
-   `Subscribe<TEvent>` once for every event in the Consumer participant's
-   `Subscriptions`. Producer-only hosts emit a no-op method. Subscription
+   `Subscribe<TEvent>` once for every event in the consumer participant's
+   `Subscribes`. Hosts bound to sender-only/publisher participants emit a
+   no-op method. Subscription
    storage remains a required runtime configuration.
-6. Generate an options extension that maps only
+6. Generate an options extension that maps the bound participant's
    `MaximumDeliveryCount` and `SecondLevelRetriesEnabled` to
    `ArkRetryStrategy`. Preserve explicit runtime configuration for error queue
    name, error-detail bounds, cooldown, and Rebus-only options that do not
    alter the mapped attempt counts.
-7. Generate an immutable Rebus host requirements descriptor containing
-   participant
-   role/identity, input queue name when applicable, subscribed event types,
+7. Generate an immutable Rebus host requirements descriptor containing the
+   bound participant's
+   inferred roles/identity, input queue name when applicable, subscribed event
+   types,
    `MaximumHandlerDuration`, and whether compression/DataBus are required.
    Runtime composition uses it for validation and diagnostics.
 8. Do not automatically map:
@@ -110,9 +117,10 @@ their infrastructure.
    absent. Do not attempt to infer provider registration from Rebus internals.
 9. Register a Rebus `IBus` adapter that proxies `Send`, delayed `Send`,
    `Publish`, optional `Dictionary<string, string>` additional headers, and
-   cancellation to the supported Rebus APIs. Rebus composition supplies its
-   participant identity to enforce the same owner-matched publish rule; an
-   identity-less Rebus sender cannot publish.
+   cancellation to the supported Rebus APIs. Rebus composition enforces the
+   same declaration-based publish rule through the bound participant; a
+   participant that does not declare the event in `Publishes` cannot publish
+   it.
 10. Map Rebus `IFailed<T>` to the framework `IFailed<T>` so application failure
    handlers contain no Rebus types.
 11. Keep Rebus headers, wire serialization, pipeline implementations,
@@ -120,10 +128,10 @@ their infrastructure.
     the native Mediator Framework transport. Document that the stacks are not
     wire-interoperable; do not test for the absence of interoperability,
     because it is neither required nor expected.
-12. Keep `WebInterface` registered as a Rebus one-way producer-only
-    (`Role = Producer`) sender with
+12. Keep `WebInterface` registered as a Rebus one-way sender bound to the
+   publisher-only participant with
     `ConfigureRebusOutbox(..., startProcessor: false)`.
-13. Keep `RebusProcessor` registered as the Consumer with
+13. Keep `RebusProcessor` registered as the consumer's Rebus host with
    `ConfigureRebusOutbox(..., startProcessor: true)` so it continues to run
    the durable Rebus outbox processor. Preserve existing SQL and in-memory
    outbox profiles and their cleanup/processing behavior.
@@ -143,14 +151,15 @@ subscriptions run after bus start while infrastructure remains explicit.
 
 Update the Book application handlers to depend only on the framework `IBus`
 and `IFailed<T>`. Keep the existing WebInterface and RebusProcessor durable
-Rebus outbox registrations as-is behind the Rebus adapter. Add the shared
-network definition to both Rebus host assemblies:
+Rebus outbox registrations as-is behind the Rebus adapter. Bind both Rebus
+hosts to participants of the shared network:
 
-- `WebInterface`: producer-only (`Role = Producer`); generated
+- `WebInterface`: binds the publisher-only participant; generated
   routing/options/requirements, no Rebus receive adapters, input queue, or
   subscriptions.
-- `RebusProcessor`: Consumer; generated identity-filtered message/event
-  dispatch adapters, routing, retry options, and post-start subscriptions.
+- `RebusProcessor`: binds the consumer participant; generated dispatch
+  adapters for exactly its `Processes`/`Subscribes`, routing, retry options,
+  and post-start subscriptions.
 
 Replace the hand-written `SampleRebusEndpoints` forwarding helper with the
 generated Rebus host APIs. Keep application-handler registration, serializer,
@@ -162,22 +171,23 @@ Native SQL outbox integration is owned by AZM-14A.
 ## Required test coverage
 
 - Legacy `[RebusMessage]` routing remains compatible.
-- New network message ownership metadata drives Rebus routing without Azure
+- Member-derived ownership metadata drives Rebus routing without Azure
   types.
 - Conflicting legacy/new routing metadata is diagnosed.
 - Generator inputs contain contracts/network/participant metadata and no
   application
   handler symbols.
-- Producer-only generates routes but no receive adapters or subscriptions.
-- Consumer message dispatch adapters are exactly the network messages whose
-  owner queue equals its identity.
+- Sender-only/publisher participants generate routes but no receive adapters
+  or subscriptions.
+- Consumer message dispatch adapters are exactly the participant's
+  `Processes` messages.
 - Consumer event dispatch adapters/subscriptions are exactly its declared
-  network event subscriptions.
+  `Subscribes`.
 - Generated adapters resolve only `IRequestProcessor`/`ICommandProcessor`;
   application handlers are developer-registered and never emitted or
   registered by the generator.
 - Generated subscriptions are awaited after bus start and are no-ops for
-  producer-only participants.
+  sender-only/publisher participants.
 - Generated retry options map maximum attempts and second-level enablement
   exactly to `ArkRetryStrategy`.
 - Requirements expose handler duration and compression/DataBus needs; missing
@@ -207,7 +217,7 @@ Native SQL outbox integration is owned by AZM-14A.
 
 - [ ] Application code contains no Rebus `IBus` or Rebus `IFailed<T>` dependency.
 - [ ] Rebus adapters preserve existing behavior and legacy metadata.
-- [ ] Producer-only and Consumer Rebus setup is generated from
+- [ ] Sender-only/publisher and consumer Rebus setup is generated from
   network/participant
   definitions, including routing, filtered dispatch adapters, subscriptions,
   and exact retry mapping.

@@ -32,12 +32,15 @@ Rebus provides this through `IPipeline` and direction-specific steps.
    continuation-based async processing.
 2. Define named relative positions around deserialize, dispatch, serialize,
    send, and settlement.
-3. Provide participant-level registration for custom steps and deterministic
+3. Provide registration for custom steps on the participant's host binding
+   (the assembly-level host attribute, AZM-10/AZM-13), with deterministic
    ordering.
    Participants referencing one network may intentionally use different steps
    because
    implementations can add heavy dependencies and environment-specific
-   behavior. The network owns only stable stage identifiers and contracts.
+   behavior. Steps are host-local: they live on the host binding, not on the
+   shared participant declaration. The network owns only stable stage
+   identifiers and contracts.
 4. Implement the existing `ark-user-*` propagation behavior as an opt-in
    built-in step.
 5. Implement an opt-in OpenTelemetry step that propagates W3C
@@ -47,8 +50,9 @@ Rebus provides this through `IPipeline` and direction-specific steps.
    steps can restore context before handler resolution.
 7. Reject custom attempts to override reserved routing, content, encoding,
    attachment, and identity headers.
-8. Ensure exceptions and cancellation pass through the pipeline with explicit
-   settlement behavior.
+8. Ensure exceptions and cancellation pass through the pipeline unchanged.
+   AZM-09 owns handler execution and all completion, abandon, and
+   dead-letter settlement decisions.
 9. Keep the step contracts independent of Azure Service Bus, Storage Queue,
    and Rebus types.
 
@@ -61,7 +65,7 @@ propagation, OpenTelemetry propagation, and reserved-header protection.
 ## Sample extension
 
 Register the opt-in user-context and OpenTelemetry steps on the applicable Book
-sample participant declarations/composition. Pipeline behavior is proven in
+sample host bindings/composition. Pipeline behavior is proven in
 framework
 tests over the InMemory transport in this task; end-to-end Book assertions
 through dispatch land with AZM-09.
@@ -73,8 +77,9 @@ through dispatch land with AZM-09.
 - OpenTelemetry parent/context propagation and activity lifecycle.
 - Custom step adds an allowed header.
 - Reserved-header override is rejected.
-- Step failure, handler failure, and cancellation preserve settlement rules,
-  exercised over the InMemory transport pump.
+- Step failure and cancellation are observable by the caller/test callback and
+  do not corrupt pipeline ordering or context. Handler-failure settlement is
+  covered by AZM-09.
 - Multiple concurrent invocations do not share step state or context.
 - Two participants referencing one network may resolve different step sets
   while each
@@ -92,7 +97,8 @@ through dispatch land with AZM-09.
 - [ ] Named ordering is deterministic and tested.
 - [ ] User-context and OpenTelemetry steps are opt-in and tested.
 - [ ] Additional header injection and reserved-header protection are tested.
-- [ ] Pipeline failures are explicit and preserve settlement behavior.
+- [ ] Pipeline failures and cancellation are explicit and reach the dispatcher
+  seam unchanged; AZM-09 verifies their settlement behavior.
 - [ ] The [task board](../README.md) status for AZM-06 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
