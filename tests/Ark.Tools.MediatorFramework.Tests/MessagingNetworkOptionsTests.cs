@@ -45,6 +45,7 @@ public sealed class MessagingNetworkOptionsTests
             });
 
         typeof(MessagingNetworkAttribute).GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(property => property.DeclaringType == typeof(MessagingNetworkAttribute))
             .Select(property => property.Name)
             .Should().BeEquivalentTo(
                 "Members",
