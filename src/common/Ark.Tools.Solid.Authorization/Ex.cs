@@ -2,6 +2,7 @@ using Ark.Tools.Authorization;
 
 using SimpleInjector;
 
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Security.Claims;
 
@@ -9,6 +10,8 @@ namespace Ark.Tools.Solid.Authorization;
 
 public static class Ex
 {
+    private static readonly ConcurrentDictionary<(Type queryType, Type policyType), Func<Container, object, CancellationToken, Task<object>>> _resourceHandlers = new();
+
     public static Task<(bool authorized, IList<string> messages)> AuthorizeAsync<TPolicy>(this IAuthorizationService service, ClaimsPrincipal user, object resource)
         where TPolicy : IAuthorizationPolicy, new()
     {
@@ -56,19 +59,30 @@ public static class Ex
             container.Collection.Append(typeof(IAuthorizationPolicy), policyType);
     }
 
-    [RequiresUnreferencedCode("Uses dynamic invocation for authorization resource handler dispatch. Handler types must be preserved.")]
+    [RequiresUnreferencedCode("Uses reflection for authorization resource handler dispatch. Handler types must be preserved.")]
     public static async Task<object> GetResourceAsync<TQuery, TPolicy>(Container c, TQuery query, TPolicy policy, CancellationToken ctk = default)
         where TQuery : notnull
-        where TPolicy : notnull
+        where TPolicy : IAuthorizationPolicy
     {
-        var queryType = query.GetType();
-        var policyType = policy.GetType();
-        var handlerType = typeof(IAuthorizationResourceHandler<,>).MakeGenericType(queryType, policyType);
+        var handler = _resourceHandlers.GetOrAdd((query.GetType(), policy.GetType()), static types =>
+        {
+            var method = typeof(Ex).GetMethod(nameof(_getResourceCoreAsync), BindingFlags.NonPublic | BindingFlags.Static)!;
+            return (Func<Container, object, CancellationToken, Task<object>>)method
+                .MakeGenericMethod(types.queryType, types.policyType)
+                .CreateDelegate(typeof(Func<Container, object, CancellationToken, Task<object>>));
+        });
 
-        dynamic handler = c.GetInstance(handlerType);
+        return await handler(c, query, ctk).ConfigureAwait(false);
+    }
+
+    private static async Task<object> _getResourceCoreAsync<TQuery, TPolicy>(Container c, object query, CancellationToken ctk)
+        where TQuery : notnull
+        where TPolicy : IAuthorizationPolicy
+    {
+        var handler = c.GetInstance<IAuthorizationResourceHandler<TQuery, TPolicy>>();
         using var disposable = handler as IDisposable;
 
-        return await handler.GetResouceAsync((dynamic)query, ctk).ConfigureAwait(false);
+        return await handler.GetResouceAsync((TQuery)query, ctk).ConfigureAwait(false);
     }
 
     public static async Task<IAuthorizationPolicy> GetPolicyAsync(PolicyAuthorizeAttribute p, IAuthorizationPolicyProvider policyProvider, CancellationToken ctk = default)

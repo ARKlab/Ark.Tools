@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Solid.Decorators;
 
-public sealed class ProfileRequestDecorator<TRequest, TResponse> : IRequestHandler<TRequest, TResponse> where TRequest : IRequest<TResponse>
+public sealed class ProfileRequestDecorator<TRequest, TResponse> : IRequestHandler<TRequest, TResponse> where TRequest : class, IRequest<TRequest, TResponse>
 {
     // We use Logger to trace the profile results. Could be written to a Db but I'm lazy atm.
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

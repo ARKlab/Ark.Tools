@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Solid.Decorators;
 
-public sealed class ProfileQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : IQuery<TResult>
+public sealed class ProfileQueryDecorator<TQuery, TResult> : IQueryHandler<TQuery, TResult> where TQuery : class, IQuery<TQuery, TResult>
 {
     // We use Logger to trace the profile results. Could be written to a Db but I'm lazy atm.
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

@@ -3,7 +3,7 @@
 
 namespace Ark.Tools.Solid.Decorators;
 
-public sealed class ExceptionLogRequestDecorator<TRequest, TResponse> : IRequestHandler<TRequest, TResponse> where TRequest : IRequest<TResponse>
+public sealed class ExceptionLogRequestDecorator<TRequest, TResponse> : IRequestHandler<TRequest, TResponse> where TRequest : class, IRequest<TRequest, TResponse>
 {
     private readonly IRequestHandler<TRequest, TResponse> _decorated;
 
