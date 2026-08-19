@@ -83,7 +83,7 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
             catch (Exception)
             {
                 if (retryCount > 10)
-                    throw new InvalidOperationException($"Task Process for pachting records failed after {retryCount - 1} times");
+                    throw new InvalidOperationException($"Task Process for patching records failed after {retryCount - 1} times");
 
                 // retry
             }
