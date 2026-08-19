@@ -56,12 +56,11 @@ JSON and `logging.NLog()`.
 
 ## 3. Declare a shared messaging network
 
-Messaging networks are transport-neutral attributed classes. `Members` is the
-sole membership input; AZM-02 validates participant declarations and membership.
-Members inherit the network's ability to send, receive, publish, and subscribe.
-Declare capabilities (`Receive`, `PubSub`, and `ScheduledSend`) on the network,
-then select the concrete transport at runtime. `Send` is implicit and is not a
-capability flag.
+Declare a messaging network as an attributed class. List every participant in
+`Members`. Declare the optional capabilities the transport must provide:
+`Receive` for message consumption, `PubSub` for event publication and
+subscriptions, and `ScheduledSend` for delayed delivery. `Send` is always
+available and is not a capability flag.
 
 All members share payload limits, DataBus offload and integrity limits, resource
 lifecycle policy, and configuration key names. Serialization, compression, and
@@ -69,12 +68,11 @@ retry belong to each participant. Pipeline steps are host-local because their
 dependencies and environment-specific choices may differ. Receivers accept
 installed codecs selected by message headers.
 
-The network does not contain secrets or provider-specific retention. Use
+Do not store secrets or provider-specific values in the network attribute. Use
 configuration key names and resolve connection strings or managed identity in
 the host. All participants on one network must use the same runtime transport
-and physical resources as a deployment assumption. Service Bus permits the
-default 240,000-byte transport threshold; networks intended for Storage Queue
-should use 46,080 bytes or less.
+and physical resources. Service Bus supports the default 240,000-byte transport
+threshold; networks intended for Storage Queue should use 46,080 bytes or less.
 
 ### Transport-neutral contracts and participants
 
