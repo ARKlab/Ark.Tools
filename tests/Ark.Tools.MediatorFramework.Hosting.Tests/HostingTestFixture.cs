@@ -141,6 +141,34 @@ public sealed class HostingTestFixture : IAsyncDisposable
         }
     }
 
+    /// <summary>Waits until the Rebus error queue contains at least the expected number of messages.</summary>
+    /// <param name="expectedCount">The minimum number of messages expected in the error queue.</param>
+    /// <param name="timeout">The maximum time to wait.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task WaitForErrorCountAsync(
+        int expectedCount,
+        TimeSpan? timeout = null,
+        CancellationToken ctk = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedCount);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
+        cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(5));
+
+        try
+        {
+            while (GetRebusCounts().Error < expectedCount)
+            {
+                await Task.Delay(50, cts.Token).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (!ctk.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"Rebus error queue did not reach {expectedCount} messages. Actual={GetRebusCounts().Error}.");
+        }
+    }
+
     /// <summary>Gets diagnostic counts for all synthetic Rebus work.</summary>
     public RebusWorkCounts GetRebusCounts()
     {
