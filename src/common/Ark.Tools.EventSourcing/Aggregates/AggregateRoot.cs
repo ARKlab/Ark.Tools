@@ -224,7 +224,7 @@ public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAcces
         if (!_applyMethods.TryGetValue(eventType, out var applyMethod))
         {
             throw new InvalidOperationException(
-                $"Aggregate '{Name}' does have an 'Apply' method that takes aggregate event '{eventType}' as argument");
+                $"Aggregate '{Name}' does not have an 'Apply' method that takes aggregate event '{eventType}' as argument");
         }
 
         applyMethod((TAggregateRoot)this, aggregateEvent.Event, aggregateEvent.Metadata);

@@ -196,7 +196,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         {
             var states = _config.IgnoreState ? Enumerable.Empty<ResourceState<TExtensions>>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
-            var evaluated = _createEvalueteList(list, states);
+            var evaluated = _createEvaluateList(list, states);
 
             var processCounts = evaluated
                 .GroupBy(x => x.ProcessType)
@@ -241,7 +241,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         }
     }
 
-    private IList<ProcessContext<TExtensions>> _createEvalueteList(IList<IResourceMetadata<TExtensions>> list, IEnumerable<ResourceState<TExtensions>> states)
+    private IList<ProcessContext<TExtensions>> _createEvaluateList(IList<IResourceMetadata<TExtensions>> list, IEnumerable<ResourceState<TExtensions>> states)
     {
         var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
          {
@@ -455,7 +455,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
             {
                 state.LastException = ex;
                 pc.ResultType = ResultType.Error;
-                var isBanned = ++state.RetryCount == _config.MaxRetries;
+                var isBanned = ++state.RetryCount > _config.MaxRetries;
 
                 state.Extensions = info.Extensions;
 
