@@ -1,4 +1,6 @@
 ﻿/*
+CONTRACT BookPrintCompleted -> BookPrintCompleted [group=Ark] [event=ark-mediator-sample name=<default>]
+CONTRACT BookPrintCompleted.ProcessId : Guid
 CONTRACT BookPrintProcessResponse
 CONTRACT BookPrintProcessResponse.BookId : Guid
 CONTRACT BookPrintProcessResponse.ErrorMessage : string?
@@ -7,9 +9,9 @@ CONTRACT BookPrintProcessResponse.Progress : double
 CONTRACT BookPrintProcessResponse.ShouldFail : bool
 CONTRACT BookPrintProcessResponse.Status : EvolvableEnum<BookPrintProcessStatus>
 CONTRACT DeadLetterAck
-CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark]
+CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark] [message=ark-mediator-sample name=<default>]
 CONTRACT FailingRebusRequest.Reason : string default="boom"
-CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
+CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark] [message=ark-mediator-sample name=<default>]
 CONTRACT ProcessBookPrintProcessRequest.Id : Guid
 EVOLVABLE-ENUM BookPrintProcessStatus.Cancelled=5
 EVOLVABLE-ENUM BookPrintProcessStatus.Completed=3

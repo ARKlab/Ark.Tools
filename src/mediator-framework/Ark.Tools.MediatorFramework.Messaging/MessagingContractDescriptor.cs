@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Text;
-
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Immutable metadata for one registered message or event contract.</summary>
