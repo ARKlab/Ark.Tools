@@ -186,13 +186,13 @@ added in this task.
 
 ## Acceptance
 
-- [ ] Message, event, and participant attributes are public, documented,
+- [x] Message, event, and participant attributes are public, documented,
   validated, and covered by API-surface tests.
-- [ ] Network membership, participant identity, ownership, and subscription
+- [x] Network membership, participant identity, ownership, and subscription
   metadata are deterministic.
-- [ ] Ownership, satisfiability, serializer-compatibility, and capability
+- [x] Ownership, satisfiability, serializer-compatibility, and capability
   diagnostics are stable.
-- [ ] Existing Rebus generation and tests remain behaviorally compatible.
-- [ ] The [task board](../README.md) status for AZM-02 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Existing Rebus generation and tests remain behaviorally compatible.
+- [x] The [task board](../README.md) status for AZM-02 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

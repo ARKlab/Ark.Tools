@@ -133,14 +133,14 @@ special-case unvalidated sample members.
 
 ## Acceptance
 
-- [ ] Network configuration API, `MessagingCapabilities`, and runtime options
+- [x] Network configuration API, `MessagingCapabilities`, and runtime options
   are public, documented, and covered by API-surface tests.
-- [ ] `Members` is available as an opaque network declaration input; AZM-02
+- [x] `Members` is available as an opaque network declaration input; AZM-02
   owns participant and membership validation.
-- [ ] Shared settings and capability declarations are enforced; no technology
+- [x] Shared settings and capability declarations are enforced; no technology
   member exists.
-- [ ] No sample network declaration depends on participant metadata that is
+- [x] No sample network declaration depends on participant metadata that is
   introduced by a later task.
-- [ ] The [task board](../README.md) status for AZM-01 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-01 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

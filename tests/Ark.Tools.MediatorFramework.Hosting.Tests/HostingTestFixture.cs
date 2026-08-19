@@ -108,7 +108,8 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public InMemNetwork Network => _network;
 
     /// <summary>
-    /// Waits until every non-error queue in the in-memory network is empty, or throws
+    /// Waits until every non-error queue in the in-memory network is empty and the error queue
+    /// count is stable across five samples, or throws
     /// <see cref="TimeoutException"/> if <paramref name="timeout"/> elapses first.
     /// </summary>
     public async Task WaitForIdleAsync(
@@ -118,20 +119,27 @@ public sealed class HostingTestFixture : IAsyncDisposable
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
         cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(5));
+        var idleSamples = 0;
+        var lastErrorCount = -1;
 
         try
         {
-            while (true)
+            while (idleSamples < 5)
             {
                 cts.Token.ThrowIfCancellationRequested();
 
                 var pending = GetRebusCounts();
 
-                if (pending.InQueue + pending.InProcess + (ignoreDeferred ? 0 : pending.Deferred) == 0)
-                    return;
+                if (pending.InQueue + pending.InProcess + (ignoreDeferred ? 0 : pending.Deferred) == 0
+                    && pending.Error == lastErrorCount)
+                    idleSamples++;
+                else
+                    idleSamples = 0;
 
+                lastErrorCount = pending.Error;
                 await Task.Delay(50, cts.Token).ConfigureAwait(false);
             }
+            return;
         }
         catch (OperationCanceledException) when (!ctk.IsCancellationRequested)
         {

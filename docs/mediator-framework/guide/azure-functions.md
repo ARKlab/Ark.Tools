@@ -54,7 +54,59 @@ The sample uses the same `ApplicationComposition.RegisterOutboundRebus` path as
 other sender-only hosts. The Rebus setup includes source-generated application
 JSON and `logging.NLog()`.
 
-## 3. Configure local settings
+## 3. Declare a shared messaging network
+
+Declare a messaging network as an attributed class. List every participant in
+`Members`. Declare the optional capabilities the transport must provide:
+`Receive` for message consumption, `PubSub` for event publication and
+subscriptions, and `ScheduledSend` for delayed delivery. `Send` is always
+available and is not a capability flag.
+
+All members share payload limits, DataBus offload and integrity limits, resource
+lifecycle policy, and configuration key names. Serialization, compression, and
+retry belong to each participant. Pipeline steps are host-local because their
+dependencies and environment-specific choices may differ. Receivers accept
+installed codecs selected by message headers.
+
+Do not store secrets or provider-specific values in the network attribute. Use
+configuration key names and resolve connection strings or managed identity in
+the host. All participants on one network must use the same runtime transport
+and physical resources. Service Bus supports the default 240,000-byte transport
+threshold; networks intended for Storage Queue should use 46,080 bytes or less.
+
+### Transport-neutral contracts and participants
+
+Contracts do not own queues or transports. Mark a request with `[Message]` or an
+event with `[Event]`, optionally supplying a normalized `Name` and
+`FormerNames`. A contract cannot use both attributes. Names default to the
+namespace-qualified CLR name normalized to lowercase `snake_case`.
+
+Participants own routing and participant-local behavior:
+
+```csharp
+[MessagingParticipant(
+    Processes = new[] { typeof(PrintBook) },
+    Publishes = new[] { typeof(BookPrinted) },
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json)]
+public sealed class PrintingParticipant;
+```
+
+`Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
+copies of events published on the same network. Exactly one member must process
+each message or publish each event; subscriptions must be satisfiable and use a
+serializer supported by the subscriber. `DefaultSerializer` must be included in
+`Serializers`. Retry and compression are participant-owned and may differ
+between members.
+
+Participant identities default to the class name without a trailing
+`Participant`, normalized to lowercase portable queue-name syntax. Explicit and
+derived identities must be 3–50 characters, use lowercase ASCII letters, digits,
+and hyphens, and cannot be `outbox-processor`, end in `-poison`, or contain
+consecutive hyphens. Network `Members` is the sole membership input.
+
+## 4. Configure local settings
 
 Copy, do not commit:
 
@@ -87,7 +139,7 @@ Set an empty Functions route prefix when the generated route already includes
 }
 ```
 
-## 4. Understand the Rebus boundary
+## 5. Understand the Rebus boundary
 
 The Functions process:
 
@@ -100,7 +152,7 @@ The standalone processor receives `CompleteGreetingCompositionRequest` and
 updates durable state. This separation lets Functions scale independently from
 background processing.
 
-## 5. Authentication and supported features
+## 6. Authentication and supported features
 
 Every generated trigger is `AuthorizationLevel.Anonymous`; ASP.NET Core
 authentication and authorization still enforce the application policy. Never
@@ -113,7 +165,7 @@ are excluded because the Functions binding does not provide the same formatter.
 Read [Serialization](serialization.md) before enabling a transport-specific
 format.
 
-## 6. Test the boundary
+## 7. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test
 must launch the built host with a dynamically allocated loopback port, wait for
