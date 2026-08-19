@@ -90,6 +90,13 @@ public sealed class MessagingNetworkOptionsTests
     }
 
     [TestMethod]
+    public void ResourceLifecycleExposesTheDocumentedValues()
+    {
+        Enum.GetValues<MessagingResourceLifecycle>()
+            .Should().Equal(MessagingResourceLifecycle.CreateIfMissing, MessagingResourceLifecycle.External);
+    }
+
+    [TestMethod]
     public void OptionsExposeTheCompleteImmutableSharedApi()
     {
         typeof(MessagingNetworkOptions).GetProperties(BindingFlags.Instance | BindingFlags.Public)
@@ -109,6 +116,12 @@ public sealed class MessagingNetworkOptionsTests
                 "ManagedIdentityConfigurationKey");
 
         typeof(MessagingNetworkOptions).GetConstructor([typeof(Type), typeof(MessagingNetworkAttribute)])
+            .Should().NotBeNull();
+
+        typeof(MessagingNetworkOptions).GetMethod(
+                nameof(MessagingNetworkOptions.Validate),
+                BindingFlags.Instance | BindingFlags.Public,
+                [typeof(MessagingCapabilities)])
             .Should().NotBeNull();
     }
 
