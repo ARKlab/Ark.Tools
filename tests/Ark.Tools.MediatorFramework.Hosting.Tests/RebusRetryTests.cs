@@ -21,7 +21,6 @@ public sealed class RebusRetryTests
             var bus = fixture.BuildRebusHost();
             await bus.Send(new HostingRetryCommand()).ConfigureAwait(false);
             await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-            await fixture.WaitForErrorCountAsync(1, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
             fixture.State.RetryAttempts.Should().Be(2);
             fixture.GetRebusCounts().Error.Should().Be(1);
@@ -57,7 +56,6 @@ public sealed class RebusRetryTests
             var bus = fixture.BuildRebusHost(secondLevelRetriesEnabled: true);
             await bus.Send(new HostingSecondLevelRetryCommand()).ConfigureAwait(false);
             await fixture.WaitForIdleAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-            await fixture.WaitForErrorCountAsync(1, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
 
             fixture.State.SecondLevelRetryAttempts.Should().Be(2);
             fixture.State.FailedMessageExecutions.Should().Be(1);

@@ -118,54 +118,30 @@ public sealed class HostingTestFixture : IAsyncDisposable
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
         cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(5));
+        var idleSamples = 0;
 
         try
         {
-            while (true)
+            while (idleSamples < 5)
             {
                 cts.Token.ThrowIfCancellationRequested();
 
                 var pending = GetRebusCounts();
 
                 if (pending.InQueue + pending.InProcess + (ignoreDeferred ? 0 : pending.Deferred) == 0)
-                    return;
+                    idleSamples++;
+                else
+                    idleSamples = 0;
 
                 await Task.Delay(50, cts.Token).ConfigureAwait(false);
             }
+            return;
         }
         catch (OperationCanceledException) when (!ctk.IsCancellationRequested)
         {
             var counts = GetRebusCounts();
             throw new TimeoutException(
                 $"Rebus did not become idle. queue={counts.InQueue}, in-process={counts.InProcess}, deferred={counts.Deferred}, outbox={counts.Outbox}, error={counts.Error}.");
-        }
-    }
-
-    /// <summary>Waits until the Rebus error queue contains at least the expected number of messages.</summary>
-    /// <param name="expectedCount">The minimum number of messages expected in the error queue.</param>
-    /// <param name="timeout">The maximum time to wait.</param>
-    /// <param name="ctk">The cancellation token.</param>
-    public async Task WaitForErrorCountAsync(
-        int expectedCount,
-        TimeSpan? timeout = null,
-        CancellationToken ctk = default)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedCount);
-
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
-        cts.CancelAfter(timeout ?? TimeSpan.FromSeconds(5));
-
-        try
-        {
-            while (GetRebusCounts().Error < expectedCount)
-            {
-                await Task.Delay(50, cts.Token).ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException) when (!ctk.IsCancellationRequested)
-        {
-            throw new TimeoutException(
-                $"Rebus error queue did not reach {expectedCount} messages. Actual={GetRebusCounts().Error}.");
         }
     }
 
