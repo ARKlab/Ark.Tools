@@ -76,6 +76,38 @@ and physical resources as a deployment assumption. Service Bus permits the
 default 240,000-byte transport threshold; networks intended for Storage Queue
 should use 46,080 bytes or less.
 
+### Transport-neutral contracts and participants
+
+Contracts do not own queues or transports. Mark a request with `[Message]` or an
+event with `[Event]`, optionally supplying a normalized `Name` and
+`FormerNames`. A contract cannot use both attributes. Names default to the
+namespace-qualified CLR name normalized to lowercase `snake_case`.
+
+Participants own routing and participant-local behavior:
+
+```csharp
+[MessagingParticipant(
+    Processes = new[] { typeof(PrintBook) },
+    Publishes = new[] { typeof(BookPrinted) },
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json)]
+public sealed class PrintingParticipant;
+```
+
+`Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
+copies of events published on the same network. Exactly one member must process
+each message or publish each event; subscriptions must be satisfiable and use a
+serializer supported by the subscriber. `DefaultSerializer` must be included in
+`Serializers`. Retry and compression are participant-owned and may differ
+between members.
+
+Participant identities default to the class name without a trailing
+`Participant`, normalized to lowercase portable queue-name syntax. Explicit and
+derived identities must be 3–50 characters, use lowercase ASCII letters, digits,
+and hyphens, and cannot be `outbox-processor`, end in `-poison`, or contain
+consecutive hyphens. Network `Members` is the sole membership input.
+
 ## 4. Configure local settings
 
 Copy, do not commit:

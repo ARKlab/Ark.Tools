@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -14,6 +16,33 @@ namespace Ark.MediatorFramework.AzureFunctions.Generators;
 public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 {
     private const string _attributeName = "Ark.MediatorFramework.MessagingNetworkAttribute";
+    private const string _participantAttributeName = "Ark.MediatorFramework.MessagingParticipantAttribute";
+    private const string _messageAttributeName = "Ark.MediatorFramework.MessageAttribute";
+    private const string _eventAttributeName = "Ark.MediatorFramework.EventAttribute";
+
+    private static readonly DiagnosticDescriptor _duplicateMember = new(
+        "ARKMSG001",
+        "Duplicate messaging network member",
+        "Network '{0}' lists participant '{1}' more than once",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor _missingParticipant = new(
+        "ARKMSG002",
+        "Messaging network member is not a participant",
+        "Network '{0}' lists '{1}', which is not marked with MessagingParticipant",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor _dualContract = new(
+        "ARKMSG003",
+        "Contract has multiple messaging kinds",
+        "Contract '{0}' cannot be both a message and an event",
+        "Ark.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true);
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -23,6 +52,24 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _attributeName,
                 static (_, _) => true,
                 static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var participants = context.SyntaxProvider
+            .ForAttributeWithMetadataName(
+               _participantAttributeName,
+               static (_, _) => true,
+               static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var messages = context.SyntaxProvider
+            .ForAttributeWithMetadataName(
+               _messageAttributeName,
+               static (_, _) => true,
+               static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
+        var events = context.SyntaxProvider
+            .ForAttributeWithMetadataName(
+               _eventAttributeName,
+               static (_, _) => true,
+               static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
             .Collect();
 
         context.RegisterSourceOutput(networks, static (productionContext, symbols) =>
@@ -47,6 +94,61 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 productionContext.AddSource(hint + ".MessagingNetwork.g.cs", source);
             }
         });
+
+        context.RegisterSourceOutput(
+            networks.Combine(participants).Combine(messages).Combine(events),
+            static (productionContext, input) =>
+            {
+                var (((networks, participants), messages), events) = input;
+                var participantSet = participants.ToHashSet(SymbolEqualityComparer.Default);
+
+                foreach (var contract in messages.Intersect(events, SymbolEqualityComparer.Default))
+                {
+                    if (contract is null)
+                        continue;
+                    productionContext.ReportDiagnostic(Diagnostic.Create(
+                        _dualContract,
+                        contract.Locations.FirstOrDefault() ?? Location.None,
+                        contract.ToDisplayString()));
+                }
+
+                foreach (var network in networks.Distinct(SymbolEqualityComparer.Default))
+                {
+                    if (network is null)
+                        continue;
+                    var declaration = network.GetAttributes()
+                        .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == _attributeName);
+                    if (declaration is null)
+                        continue;
+
+                    var members = declaration.NamedArguments
+                        .FirstOrDefault(argument => argument.Key == "Members").Value;
+                    var seen = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+                    foreach (var member in members.Kind == TypedConstantKind.Array
+                        ? members.Values
+                        : ImmutableArray<TypedConstant>.Empty)
+                    {
+                        if (member.Value is not INamedTypeSymbol memberSymbol)
+                            continue;
+                        if (!seen.Add(memberSymbol))
+                        {
+                            productionContext.ReportDiagnostic(Diagnostic.Create(
+                                _duplicateMember,
+                                network.Locations.FirstOrDefault() ?? Location.None,
+                                network.ToDisplayString(),
+                                memberSymbol.ToDisplayString()));
+                        }
+                        else if (!participantSet.Contains(memberSymbol))
+                        {
+                            productionContext.ReportDiagnostic(Diagnostic.Create(
+                                _missingParticipant,
+                                network.Locations.FirstOrDefault() ?? Location.None,
+                                network.ToDisplayString(),
+                                memberSymbol.ToDisplayString()));
+                        }
+                    }
+                }
+            });
     }
 
     private static string _safeIdentifier(string value)
