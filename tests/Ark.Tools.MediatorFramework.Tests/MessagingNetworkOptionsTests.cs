@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.MediatorFramework;
 using Ark.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
@@ -24,10 +25,11 @@ public sealed class MessagingNetworkOptionsTests
             });
 
         options.NetworkIdentity.Should().Be(typeof(BookNetwork).FullName);
-        options.Members.Should().ContainSingle().Which.Should().Be(typeof(MemberMarker));
+        options.Members.Should().ContainSingle();
+        (options.Members[0] == typeof(MemberMarker)).Should().BeTrue();
         options.MaximumTransportPayloadBytes.Should().Be(240_000);
         members[0] = typeof(BookNetwork);
-        options.Members[0].Should().Be(typeof(MemberMarker));
+        (options.Members[0] == typeof(MemberMarker)).Should().BeTrue();
     }
 
     [TestMethod]
@@ -45,10 +47,15 @@ public sealed class MessagingNetworkOptionsTests
     [TestMethod]
     public void NetworkHasNoParticipantOwnedSettings()
     {
-        typeof(MessagingNetworkAttribute).GetProperties()
+        var properties = typeof(MessagingNetworkAttribute).GetProperties()
             .Select(property => property.Name)
-            .Should()
-            .NotContain(new[] { "Serialization", "Compression", "Retry", "IncomingSteps", "OutgoingSteps", "DataBusRetention" });
+            .ToArray();
+        properties.Should().NotContain("Serialization");
+        properties.Should().NotContain("Compression");
+        properties.Should().NotContain("Retry");
+        properties.Should().NotContain("IncomingSteps");
+        properties.Should().NotContain("OutgoingSteps");
+        properties.Should().NotContain("DataBusRetention");
     }
 
     private sealed class BookNetwork;
