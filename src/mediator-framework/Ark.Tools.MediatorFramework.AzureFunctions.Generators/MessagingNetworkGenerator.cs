@@ -19,7 +19,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _participantAttribute = "Ark.MediatorFramework.MessagingParticipantAttribute";
     private const string _messageAttribute = "Ark.MediatorFramework.MessageAttribute";
     private const string _eventAttribute = "Ark.MediatorFramework.EventAttribute";
-    private const string _retryPolicy = "Ark.MediatorFramework.IMessagingRetryPolicy";
     private const string _requestNamespace = "Ark.Tools.Solid";
     private const int _receive = 1;
     private const int _pubSub = 2;
@@ -107,7 +106,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .Collect();
 
         context.RegisterSourceOutput(networks, static (productionContext, symbols) =>
-            _emit(productionContext, symbols.Distinct(SymbolEqualityComparer.Default).Where(static s => s is not null)!));
+            _emit(productionContext, symbols.Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>()));
     }
 
     private static void _emit(SourceProductionContext context, IEnumerable<INamedTypeSymbol> symbols)
@@ -182,8 +181,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _report(context, _reservedIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
             if (!participant.Serializers.Contains(participant.DefaultSerializer))
                 _report(context, _defaultSerializer, participant.Symbol, participant.Identity, participant.DefaultSerializer);
-            if (participant.Retry is not null && participant.Retry.MaximumDeliveryCount < (participant.Retry.SecondLevelRetriesEnabled ? 2 : 1))
-                _report(context, _invalidRetry, participant.Symbol, participant.Identity, participant.Retry.SecondLevelRetriesEnabled ? 2 : 1);
+            if (participant.Retry is not null
+                && participant.Retry.Value.MaximumDeliveryCount < (participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1))
+                _report(context, _invalidRetry, participant.Symbol, participant.Identity, participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1);
 
             if (participant.Processes.Length > 0 || participant.Subscribes.Length > 0)
                 _requireCapability(context, network, participant, "Receive", _receive);
@@ -225,7 +225,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             }
         }
 
-        foreach (var contract in participants.SelectMany(participant => participant.Contracts).Distinct(SymbolEqualityComparer.Default))
+        foreach (var contract in participants.SelectMany(participant => participant.Contracts)
+            .Distinct(SymbolEqualityComparer.Default)
+            .Cast<INamedTypeSymbol>())
         {
             var hasProcessor = processors.ContainsKey(contract);
             var hasPublisher = publishers.ContainsKey(contract);
@@ -314,18 +316,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _enum(attribute, "DefaultSerializer"),
             retry,
             _types(attribute, "Processes").Concat(_types(attribute, "Publishes")).Concat(_types(attribute, "Subscribes"))
-                .Distinct(SymbolEqualityComparer.Default).ToImmutableArray());
+                .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>().ToImmutableArray());
     }
 
     private static RetryPolicy? _readRetry(INamedTypeSymbol retryType)
     {
-        var properties = retryType.GetMembers().OfType<IPropertySymbol>()
-            .ToDictionary(property => property.Name, StringComparer.Ordinal);
-        if (!properties.TryGetValue("MaximumDeliveryCount", out var maximum)
-            || maximum.HasConstantValue is false || maximum.ConstantValue is not int maximumCount)
+        var maximum = retryType.GetMembers("MaximumDeliveryCount").OfType<IFieldSymbol>()
+            .FirstOrDefault(field => field.IsConst && field.ConstantValue is int);
+        if (maximum?.ConstantValue is not int maximumCount)
             return null;
-        var secondLevel = properties.TryGetValue("SecondLevelRetriesEnabled", out var second)
-            && second.HasConstantValue && second.ConstantValue is bool enabled && enabled;
+        var second = retryType.GetMembers("SecondLevelRetriesEnabled").OfType<IFieldSymbol>()
+            .FirstOrDefault(field => field.IsConst && field.ConstantValue is bool);
+        var secondLevel = second?.ConstantValue is bool enabled && enabled;
         return new RetryPolicy(maximumCount, secondLevel);
     }
 
