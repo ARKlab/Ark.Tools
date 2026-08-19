@@ -686,7 +686,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain(
             "EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed");
         generated.Should().Contain(
-            "PARTICIPANT Books.PrintingParticipant -> network:Books.BookMessagingNetwork identity:printing"
+            "PARTICIPANT Books.PrintingParticipant -> network:BookMessagingNetwork identity:printing"
             + " processes:books.recalculate_print publishes:books.print_completed subscribes:-"
             + " serializers:json|msgpack default:json");
         generated.Should().Contain(

@@ -239,7 +239,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 .OrderBy(candidate => MessagingTypeName(candidate), StringComparer.Ordinal)
                 .FirstOrDefault(candidate => TypeArrayNamed(Attribute(candidate, MessagingNetwork)!, "Members")
                     .Any(member => SymbolEqualityComparer.Default.Equals(member, type)));
-            var networkName = network is null ? "-" : MessagingTypeName(network);
+            var networkName = network is null ? "-" : network.Name;
             var processes = ContractNames(TypeArrayNamed(participant, "Processes"));
             var publishes = ContractNames(TypeArrayNamed(participant, "Publishes"));
             var subscribes = ContractNames(TypeArrayNamed(participant, "Subscribes"));
@@ -391,7 +391,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     {
         var arrow = line.IndexOf(" -> name:", StringComparison.Ordinal);
         var former = line.IndexOf(" former:", StringComparison.Ordinal);
-        return arrow > 0 && former > arrow + 9 && former + 8 < line.Length;
+        return arrow > 0
+            && former > arrow + 9
+            && former + 8 < line.Length
+            && !line[(arrow + 9)..former].Contains(' ')
+            && !line[(former + 8)..].Contains(' ');
     }
 
     private static bool IsValidParticipantLine(string line)
@@ -417,14 +421,19 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var position = line.IndexOf(" ->", StringComparison.Ordinal);
         if (position <= 0)
             return false;
-        foreach (var field in fields)
+        foreach (var (field, index) in fields.Select((field, index) => (field, index)))
         {
-            var next = line.IndexOf(field, position, StringComparison.Ordinal);
-            if (next < 0)
+            if (line.IndexOf(field, position, StringComparison.Ordinal) != position)
                 return false;
-            position = next + field.Length;
+            var valueStart = position + field.Length;
+            var next = index + 1 == fields.Length
+                ? line.Length
+                : line.IndexOf(fields[index + 1], valueStart, StringComparison.Ordinal);
+            if (next <= valueStart || line[valueStart..next].Contains(' '))
+                return false;
+            position = next;
         }
-        return position < line.Length;
+        return true;
     }
 
     private static void AddType(List<string> lines, INamedTypeSymbol type)
