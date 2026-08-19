@@ -93,8 +93,9 @@ WebInterface and RebusProcessor outbox registrations unchanged.
 - Concurrent processor attempts do not double-lock one row; duplicate broker
   delivery remains covered by normal at-least-once semantics.
 - Functions composition cannot resolve or start the processor.
-- A participant declaration or composition-supplied identity using the
-  reserved `outbox-processor` identity is rejected.
+- A participant declaration using the reserved `outbox-processor` identity is
+  rejected at compile time, and startup rejects registering a participant
+  under it.
 - The custom host resolves one `IHostedService` under identity
   `outbox-processor` and shuts down cooperatively.
 - Rebus and native outbox adapters remain mutually exclusive per topology.

@@ -15,12 +15,13 @@ subscriptions without deleting resources owned by another participant.
 - **Runtime project**: implement management reconciliation in
   `Ark.Tools.MediatorFramework.Messaging`; consume only the generated
   manifest from AZM-10 through the AZM-05 transport management seam.
-- **Ownership**: named consumer participants own their identity queue and
-  forwarding
-  subscriptions. Topics declared by the network may be `Ensure`d by the
+- **Ownership**: consumer participants (declaring `Processes` or
+  `Subscribes`) own their identity queue and forwarding
+  subscriptions. Topics of events declared in a member's `Publishes` may be
+  `Ensure`d by the
   owning publisher **or** by any subscriber (create if missing only).
-  Producer-role participants own no queue and no subscription. Sender-only
-  participants
+  Publisher-only participants own topics but no queue and no subscription.
+  Sender-only participants
   own no entity. Queues and topics are never auto-deleted.
 - **Reconciliation order**: validate configuration → ensure identity queue →
   ensure declared topics (publisher or subscriber) → ensure/update
@@ -64,7 +65,8 @@ subscriptions without deleting resources owned by another participant.
    multiple instances and participants.
 7. Expose diagnostics for management failures and avoid silently treating
    authorization or naming failures as success.
-8. Apply the network retry policy to queue/subscription maximum delivery count
+8. Apply the owning participant's retry policy to queue/subscription maximum
+   delivery count
    and validate PeekLock-compatible entity settings.
 9. Keep queues/topics optionally IaC-precreated; startup ensure must be
    idempotent.

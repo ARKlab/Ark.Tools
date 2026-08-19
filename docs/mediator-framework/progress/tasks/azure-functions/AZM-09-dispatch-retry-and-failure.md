@@ -22,7 +22,8 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
   contract (locked delivery + native delivery count + complete/abandon/
   dead-letter). No Azure SDK type appears in the dispatcher.
 - **Exact exhaustion rule**: second-level retries are enabled or disabled by
-  the network, never inferred from handler registrations. When disabled,
+  the participant's retry policy, never inferred from handler registrations.
+  When disabled,
   deliveries `1..N` run normal `T` and max delivery is `N`. When enabled,
   deliveries `1..N-1` run normal `T` (fail-fast → immediate DLQ, otherwise
   abandon). Delivery `N` runs inline `IFailed<T>` in a fresh scope, or
@@ -50,8 +51,9 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 3. Complete/ack only after successful handler completion.
 4. Translate the existing fail-fast marker/mechanism into direct dead-letter
    settlement on the receiving transport.
-5. Use the native delivery count from the locked delivery and shared network
-   overrides for retry exhaustion. Never copy or increment it in message
+5. Use the native delivery count from the locked delivery and the
+   participant's retry policy (declared or framework default, AZM-02) for
+   retry exhaustion. Never copy or increment it in message
    headers. Configure InMemory max delivery to `2N` when second-level retries
    are enabled and `N` otherwise.
 6. Define the public transport-neutral `IFailed<T>` containing the original
@@ -67,10 +69,14 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
    Otherwise abandon and allow normal `T` on later deliveries through `2N`.
 9. Make malformed/unsupported envelopes fail fast and prevent second-level
    dispatch.
-10. Add structured NLog logging with invariant formatting and bounded metadata.
-11. Validate manual settlement, lock renewal, and lock-loss behavior through
+10. Apply the same settlement policy to an exception propagated by an AZM-06
+    pipeline step as to a handler exception: fail-fast dead-letters and every
+    other exception abandons. AZM-06 tests propagation only; this task owns
+    the physical settlement assertion.
+11. Add structured NLog logging with invariant formatting and bounded metadata.
+12. Validate manual settlement, lock renewal, and lock-loss behavior through
     the transport contract.
-12. Add decision-lock tests for the selected retry strategy and document the
+13. Add decision-lock tests for the selected retry strategy and document the
     alternatives from the design: Ark/Rebus terminal second-level failure,
     explicit deferred second-level handling, and delayed first-level
     rescheduling.
@@ -94,10 +100,13 @@ dispatcher. The existing Rebus processor path remains untouched and green.
 - Successful typed dispatch and completion.
 - Fresh scope and cancellation propagation.
 - Handler failure followed by retry and eventual success.
+- Pipeline-step failure follows the same tested settlement policy as a handler
+  failure.
 - Delivery `N` with no `IFailed<T>` handler dead-letters immediately.
 - Second-level disabled runs normal `T` through `N` and never resolves
   `IFailed<T>`.
-- Network validation rejects `N = 1` when second-level retries are enabled.
+- Participant retry policy validation rejects `N = 1` when second-level
+  retries are enabled.
 - Fail-fast exception goes directly to DLQ at any delivery.
 - Inline second-level handler receives original message and serializable error
   info at delivery `N` only.
@@ -126,7 +135,7 @@ dispatcher. The existing Rebus processor path remains untouched and green.
 - [ ] Fail-fast and unsupported-read paths go directly to DLQ.
 - [ ] With second-level enabled, delivery `N` runs `IFailed<T>` or immediate
   DLQ and max delivery is `2N`.
-- [ ] Network second-level enablement, not handler discovery, selects `N` or
+- [ ] Participant retry policy, not handler discovery, selects `N` or
   `2N` behavior.
 - [ ] Native delivery count controls retry exhaustion.
 - [ ] Failure metadata is serializable, bounded, and tested.

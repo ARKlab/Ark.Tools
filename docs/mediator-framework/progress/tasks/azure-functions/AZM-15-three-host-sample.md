@@ -13,7 +13,7 @@ contract assembly while using different handlers and independent queues.
 ## Execution map
 
 - **Projects**: extend the existing sample solution with explicitly named
-  publisher (producer-only participant in a non-Functions process) and
+  publisher (publisher-only participant in a non-Functions process) and
   subscriber-A/subscriber-B Functions host projects, each hosting a distinct
   consumer participant, or
   equivalent launchable host compositions; do not create another sample root.
@@ -24,7 +24,7 @@ contract assembly while using different handlers and independent queues.
   one identity queue and one forwarding subscription.
 - **Two modes**: Book printing scenarios run separately through Rebus and
   Mediator Framework. Tests create messages through the matching sender stack.
-  The Rebus producer-only (`Role = Producer`) and Consumer participants use
+  The Rebus publisher-only and consumer participants use
   the same
   network/participant declarations and AZM-14 generated setup.
 - **Transport**: automated three-participant tests compose the InMemory
@@ -40,12 +40,13 @@ contract assembly while using different handlers and independent queues.
 
 1. Add transport-neutral message and event contracts to the sample's
    appropriate contract/application boundary.
-2. Add a publisher participant with its identity, `Role = Producer`, and no
+2. Add a publisher participant declaring the event in `Publishes`, with no
    event
    handler. Run it in a non-Functions host (for example the Minimal API
-   web host or a console producer) composing only the configured `IBus`, to
-   prove producer-only participation outside Azure Functions.
-3. Add two subscriber participants, each hosted in its own Functions host,
+   web host or a console sender) composing only the configured `IBus`, to
+   prove publisher-only participation outside Azure Functions.
+3. Add two subscriber participants, each declaring the event in `Subscribes`
+   and each hosted in its own Functions host,
    with
    distinct identity queues, generated
    forwarding subscriptions, and different handlers for the same event.
@@ -67,7 +68,8 @@ contract assembly while using different handlers and independent queues.
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the
-three-host topology, shared network profile, independent subscriptions, and
+three-participant topology, shared network declaration, independent
+subscriptions, and
 the choice between Rebus and Azure Functions for Book background activities.
 
 ## Sample extension
@@ -87,20 +89,20 @@ registered by each application composition root.
 
 ## Required test coverage
 
-- Publisher has no handler for the published event and runs producer-only in
+- Publisher has no handler for the published event and runs publisher-only in
   a non-Functions process.
 - Subscriber A and B receive one independent copy each.
 - Subscriber handlers are different and both run.
-- Queue send reaches the declared owner.
+- Queue send reaches the processing participant's identity queue.
 - Scheduling is observable without arbitrary sleeps.
 - Failure and second-level behavior is visible in assertions.
 - Hosts can start concurrently without subscription corruption: concurrent
   instances of one participant and of different participants reconcile safely.
 - Rebus and Mediator Framework modes run the same application behavior from
   separately produced transport messages.
-- Rebus producer-only/Consumer compositions use generated network/participant
+- Rebus publisher-only/consumer compositions use generated network/participant
   setup;
-  Consumer subscriptions are awaited after bus start.
+  consumer subscriptions are awaited after bus start.
 - Rebus generation sees contracts only; application handlers remain
   developer-registered and are reached through the processors.
 - WebInterface and RebusProcessor still exercise the real Rebus outbox.

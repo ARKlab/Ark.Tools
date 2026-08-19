@@ -24,13 +24,12 @@ composition switch, while intentionally reducing the framework API surface.
   `Ark.Tools.MediatorFramework.Messaging` composed from the envelope,
   pipeline, DataBus, and transport seams of AZM-04/05/06/07. There is no
   per-technology bus implementation.
-- **Routing source**: use only generated ownership metadata; callers never pass
-  queue/topic names.
+- **Routing source**: use only the generated registry (contract → owning
+  participant → route); callers never pass queue/topic names.
 - **Capability guards**: delayed `Send` requires the network to declare
-  `ScheduledSend`; `Publish` requires `PubSub` plus a named participant
-  identity
-  matching the event owner. Violations throw with the capability or identity
-  named in the message.
+  `ScheduledSend`; `Publish` requires `PubSub` plus the current participant
+  declaring the event in `Publishes`. Violations throw with the capability or
+  participant named in the message.
 - **Runnable state**: at task end the bus sends, schedules, and publishes over
   the InMemory transport end-to-end; full solution builds and tests green.
 - **Stop condition**: do not add receive, request/reply, `SendLocal`, worker,
@@ -42,10 +41,12 @@ composition switch, while intentionally reducing the framework API surface.
 1. Define the Mediator Framework transport-neutral restricted one-way `IBus`
    contract for `Send`, `Publish`, and delayed `Send` variants using both
    `TimeSpan` and `DateTimeOffset`. Do not expose delayed `Publish`.
-2. Implement sending to the message owner queue through the composed
-   transport.
-3. Implement publishing to `<owner-publisher>-<contract-name>` through the
-   composed transport when `PubSub` is declared.
+2. Implement sending to the processing participant's identity queue through
+   the composed transport, resolved through the generated registry. Sending a
+   message no member processes (unwired) fails explicitly.
+3. Implement publishing to `<publisher-identity>-<contract-name>` through the
+   composed transport when `PubSub` is declared and the current participant
+   declares the event in `Publishes`.
 4. Enforce the capability guards defined in the Execution map, plus
    negative/past delay validation and network scheduling limits before
    enqueue. No API cancels an already scheduled message.
@@ -62,11 +63,10 @@ composition switch, while intentionally reducing the framework API surface.
 10. Bound caller header count/key/value sizes and reserve framework routing,
     serialization, DataBus, trace, and user-context headers.
 
-`Publish<TEvent>` requires a named participant identity matching the event
-canonical
-publisher owner. An identity-less sender participant may still use
-`Send<TMessage>`
-to declared owner queues.
+`Publish<TEvent>` requires the sending participant to declare the event in its
+`Publishes` set. A sender-only participant (owning no contracts) may still use
+`Send<TMessage>` to the processing participant's identity queue; it cannot
+publish.
 
 ## Guide contribution
 
@@ -82,12 +82,11 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
 
 ## Required test coverage
 
-- Owned queue routing for messages.
-- Per-owner/per-contract topic routing for events.
-- Publish from a named participant whose identity matches the event owner,
-  including
-  a `Producer`-role participant with no receive registration.
-- Identity-less sender participants reject `Publish` but allow `Send`.
+- Messages route to the processing participant's identity queue.
+- Per-publisher/per-contract topic routing for events.
+- Publish from a participant declaring the event in `Publishes`, including
+  a publisher-only participant with no receive registration.
+- Sender-only participants reject `Publish` but allow `Send`.
 - Delayed `Send` on a network without `ScheduledSend` throws naming the
   capability; `Publish` on a network without `PubSub` throws naming the
   capability.
@@ -98,7 +97,7 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
 - Scheduled send via the transport contract with a controlled clock.
 - Compression and DataBus offload are applied before send using the effective
   limit (smaller of network threshold and transport ceiling).
-- Missing owner/publisher rejection.
+- Missing processor/publisher (unwired contract) rejection.
 - No request/reply, local send, or receive API is available.
 - Disposal and cancellation do not leave partial sends.
 
