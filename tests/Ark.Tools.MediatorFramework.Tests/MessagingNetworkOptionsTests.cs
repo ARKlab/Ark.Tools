@@ -41,7 +41,8 @@ public sealed class MessagingNetworkOptionsTests
 
         var action = () => options.Validate(MessagingCapabilities.Receive);
 
-        action.Should().Throw<InvalidOperationException>().Which.Message.Should().Contain("PubSub");
+        action.Should().Throw<InvalidOperationException>().Which.Message.Should()
+            .Be($"Network '{typeof(BookNetwork).FullName}' requires unsupported capability 'PubSub'.");
     }
 
     [TestMethod]
