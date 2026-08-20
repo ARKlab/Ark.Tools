@@ -57,7 +57,10 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         if (context.Node is ThrowStatementSyntax { Expression: null })
             return;
 
-        var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration!, context.CancellationToken);
+        if (catchClause.Declaration is null)
+            return;
+
+        var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration, context.CancellationToken);
         if (caughtExceptionSymbol is null)
             return;
 

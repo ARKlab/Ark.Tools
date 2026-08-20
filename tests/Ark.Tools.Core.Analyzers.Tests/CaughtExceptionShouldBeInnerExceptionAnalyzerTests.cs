@@ -170,6 +170,29 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>Verifies catch clauses without a variable are ignored safely.</summary>
+    [TestMethod]
+    public async Task CatchWithoutVariable_ShouldNotReportDiagnostic()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            using System;
+            class C
+            {
+                void M()
+                {
+                    try { throw new Exception(); }
+                    catch
+                    {
+                        throw new InvalidOperationException();
+                    }
+                }
+            }
+            """);
+
+        diagnostics.Should().BeEmpty();
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
