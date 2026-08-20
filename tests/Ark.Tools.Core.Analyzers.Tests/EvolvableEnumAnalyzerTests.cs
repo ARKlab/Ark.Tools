@@ -150,6 +150,53 @@ public class EvolvableEnumAnalyzerTests
         diagnostics.Single(item => item.Id == "ARKCORE004").Severity.Should().Be(DiagnosticSeverity.Warning);
     }
 
+    /// <summary>Verifies wrapped exceptions preserve the caught exception.</summary>
+    [TestMethod]
+    public async Task WrappedExceptionWithoutInnerException_ShouldReportError()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            using System;
+            class C
+            {
+                void M()
+                {
+                    try { throw new Exception(); }
+                    catch (Exception exception)
+                    {
+                        throw new InvalidOperationException("failed");
+                    }
+                }
+            }
+            """);
+
+        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE005");
+        diagnostics.Single(item => item.Id == "ARKCORE005").Severity.Should().Be(DiagnosticSeverity.Error);
+    }
+
+    /// <summary>Verifies wrapped exceptions with the caught exception are accepted.</summary>
+    [TestMethod]
+    public async Task WrappedExceptionWithInnerException_ShouldNotReportDiagnostic()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            using System;
+            class C
+            {
+                void M()
+                {
+                    try { throw new Exception(); }
+                    catch (Exception exception)
+                    {
+                        throw new InvalidOperationException("failed", exception);
+                    }
+                }
+            }
+            """);
+
+        diagnostics.Should().BeEmpty();
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(

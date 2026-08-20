@@ -104,11 +104,12 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                 await Task.Delay(TimeSpan.FromMilliseconds(50), cancellation.Token).ConfigureAwait(false);
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException exception)
         {
             var counts = await _getWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
             throw new TimeoutException(
-                $"Rebus did not become idle. queue={counts.InQueue}, in-process={counts.InProcess}, deferred={counts.Deferred}, outbox={counts.Outbox}, error={counts.Error}.");
+                $"Rebus did not become idle. queue={counts.InQueue}, in-process={counts.InProcess}, deferred={counts.Deferred}, outbox={counts.Outbox}, error={counts.Error}.",
+                exception);
         }
     }
 
@@ -161,7 +162,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                         remaining.Error));
             }
         }
-        catch (OperationCanceledException) when (cleanupCancellation.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (cleanupCancellation.IsCancellationRequested)
         {
             var counts = await _getWorkCountsAsync(CancellationToken.None).ConfigureAwait(false);
             throw new TimeoutException(
@@ -172,7 +173,8 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                     counts.InProcess,
                     counts.Deferred,
                     counts.Outbox,
-                    counts.Error));
+                    counts.Error,
+                    exception));
         }
     }
 

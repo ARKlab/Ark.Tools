@@ -80,10 +80,10 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
             }
             catch (TaskCanceledException) { throw; }
 #pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional retry logic
-            catch (Exception)
+            catch (Exception exception)
             {
                 if (retryCount > 10)
-                    throw new InvalidOperationException($"Task Process for patching records failed after {retryCount - 1} times");
+                    throw new InvalidOperationException($"Task Process for patching records failed after {retryCount - 1} times", exception);
 
                 // retry
             }
