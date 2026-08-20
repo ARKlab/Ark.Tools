@@ -190,8 +190,7 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE006");
-        diagnostics.Single(item => item.Id == "ARKCORE006").Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE006" && item.Severity == DiagnosticSeverity.Error);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
