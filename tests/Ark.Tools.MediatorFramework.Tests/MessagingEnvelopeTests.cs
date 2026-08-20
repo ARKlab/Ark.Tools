@@ -10,11 +10,14 @@ using MessagePack;
 
 using ProtoBuf;
 
+using System.Buffers;
+using System.Text.Json.Serialization;
+
 namespace Ark.Tools.MediatorFramework.Tests;
 
 /// <summary>Verifies transport-neutral envelope and codec behavior.</summary>
 [TestClass]
-public sealed class MessagingEnvelopeTests
+public sealed partial class MessagingEnvelopeTests
 {
     [TestMethod]
     [DataRow(SerializationProtocol.Json)]
@@ -24,11 +27,11 @@ public sealed class MessagingEnvelopeTests
     {
         var registry = new MessagingContractRegistry(
         [
-            new MessagingContractDescriptor(
-                typeof(SampleMessage),
+            new MessagingContractDescriptor<SampleMessage>(
                 "tests.sample_message",
                 protocol,
-                ["tests.legacy_message"])
+                ["tests.legacy_message"],
+                SampleMessageJsonContext.Default.SampleMessage)
         ]);
         var codec = new MessagingEnvelopeCodec(registry, networkIdentity: "tests-network");
         var expected = new SampleMessage { Text = "binary", Data = [0, 1, 255] };
@@ -41,26 +44,26 @@ public sealed class MessagingEnvelopeTests
             Guid.Parse("11111111-1111-1111-1111-111111111111"),
             Guid.Parse("22222222-2222-2222-2222-222222222222"),
             DateTimeOffset.Parse("2026-08-19T20:00:00+00:00", CultureInfo.InvariantCulture));
-        var headers = new Dictionary<string, string>(envelope.Headers, StringComparer.Ordinal)
+        var headers = new Dictionary<string, string>(envelope.Context.Headers, StringComparer.Ordinal)
         {
             [MessagingHeaderNames.ContentEncoding] = "br",
             [MessagingHeaderNames.PayloadAttachmentId] = "opaque-attachment"
         };
-        envelope = new MessagingEnvelope(envelope.Payload, headers);
+        envelope = new MessagingEnvelope(new MessagingEnvelopeContext(headers), envelope.Payload);
 
         var actual = codec.Decode<SampleMessage>(envelope);
 
         actual.Text.Should().Be(expected.Text);
         actual.Data.Should().Equal(expected.Data);
-        envelope.Headers[MessagingHeaderNames.ContentType].Should().Be(protocol switch
+        envelope.Context.Headers[MessagingHeaderNames.ContentType].Should().Be(protocol switch
         {
             SerializationProtocol.Json => MessagingContentTypes.Json,
             SerializationProtocol.MessagePack => MessagingContentTypes.MessagePack,
             SerializationProtocol.Protobuf => MessagingContentTypes.Protobuf,
             _ => throw new InvalidOperationException()
         });
-        envelope.Headers[MessagingHeaderNames.ContentEncoding].Should().Be("br");
-        envelope.Headers[MessagingHeaderNames.PayloadAttachmentId].Should().Be("opaque-attachment");
+        envelope.Context.Headers[MessagingHeaderNames.ContentEncoding].Should().Be("br");
+        envelope.Context.Headers[MessagingHeaderNames.PayloadAttachmentId].Should().Be("opaque-attachment");
     }
 
     [TestMethod]
@@ -68,16 +71,17 @@ public sealed class MessagingEnvelopeTests
     {
         var registry = new MessagingContractRegistry(
         [
-            new MessagingContractDescriptor(
-                typeof(SampleMessage),
+            new MessagingContractDescriptor<SampleMessage>(
                 "tests.current",
                 SerializationProtocol.Json,
-                ["tests.former"])
+                ["tests.former"],
+                SampleMessageJsonContext.Default.SampleMessage)
         ]);
         var serializer = new MessagingJsonCodec();
-        var payload = serializer.Serialize(typeof(SampleMessage), new SampleMessage { Text = "value", Data = [7] });
+        var payload = new ArrayBufferWriter<byte>();
+        serializer.Serialize(payload, new SampleMessage { Text = "value", Data = [7] }, SampleMessageJsonContext.Default.SampleMessage);
         var envelope = new MessagingEnvelope(
-            payload,
+            new MessagingEnvelopeContext(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 [MessagingHeaderNames.MessageType] = "tests.former",
@@ -86,7 +90,8 @@ public sealed class MessagingEnvelopeTests
                 [MessagingHeaderNames.SentTime] = MessagingEnvelope.FormatSentTime(DateTimeOffset.UtcNow),
                 [MessagingHeaderNames.Network] = "tests-network",
                 [MessagingHeaderNames.SenderIdentity] = "sender"
-            });
+            }),
+            payload.WrittenMemory);
 
         var result = new MessagingEnvelopeCodec(registry, networkIdentity: "tests-network").Decode<SampleMessage>(envelope);
 
@@ -98,7 +103,10 @@ public sealed class MessagingEnvelopeTests
     {
         var registry = new MessagingContractRegistry(
         [
-            new MessagingContractDescriptor(typeof(SampleMessage), "tests.current", SerializationProtocol.Json)
+            new MessagingContractDescriptor<SampleMessage>(
+                "tests.current",
+                SerializationProtocol.Json,
+                jsonTypeInfo: SampleMessageJsonContext.Default.SampleMessage)
         ]);
         var codec = new MessagingEnvelopeCodec(registry, networkIdentity: "tests-network");
         var envelope = codec.Create(new SampleMessage { Text = "value" }, "foreign-network", "sender");
@@ -109,16 +117,16 @@ public sealed class MessagingEnvelopeTests
     }
 
     [TestMethod]
-    public void DeliveryCountCannotBeCarriedByEnvelope()
+    public void PayloadAndHeadersRemainSeparate()
     {
-        var action = () => new MessagingEnvelope(
-            Array.Empty<byte>(),
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                [MessagingHeaderNames.RebusDeliveryCount] = "1"
-            });
+        var context = new MessagingEnvelopeContext(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["transport-delivery-count"] = "1"
+        });
+        var envelope = new MessagingEnvelope(context, new byte[] { 1, 2, 3 });
 
-        action.Should().Throw<MessagingEnvelopeException>().Which.Kind.Should().Be(MessagingFailureKind.Malformed);
+        envelope.Context.Headers.Should().ContainKey("transport-delivery-count");
+        envelope.Payload.Should().Equal(1, 2, 3);
     }
 
     [MessagePackObject(AllowPrivate = true)]
@@ -133,4 +141,7 @@ public sealed class MessagingEnvelopeTests
         [ProtoMember(2)]
         public byte[] Data { get; set; } = Array.Empty<byte>();
     }
+
+    [JsonSerializable(typeof(SampleMessage))]
+    private sealed partial class SampleMessageJsonContext : JsonSerializerContext;
 }

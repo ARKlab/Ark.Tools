@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Buffers;
+
 namespace Ark.MediatorFramework.Messaging;
 
 /// <summary>Decoded contract value together with its resolved registry descriptor.</summary>
@@ -35,8 +37,7 @@ public sealed class MessagingEnvelopeCodec
         MessagingHeaderNames.SenderIdentity,
         MessagingHeaderNames.PayloadAttachmentId,
         MessagingHeaderNames.PayloadAttachmentLength,
-        MessagingHeaderNames.PayloadAttachmentSha256,
-        MessagingHeaderNames.RebusDeliveryCount
+        MessagingHeaderNames.PayloadAttachmentSha256
     };
 
     private readonly MessagingContractRegistry _contracts;
@@ -68,36 +69,11 @@ public sealed class MessagingEnvelopeCodec
         DateTimeOffset? sentTime = null)
         where T : notnull
     {
-        return Create(
-            typeof(T),
-            value,
-            networkIdentity,
-            senderIdentity,
-            additionalHeaders,
-            messageId,
-            correlationId,
-            sentTime);
-    }
-
-    /// <summary>Serializes a registered message or event using its owner-selected protocol.</summary>
-    public MessagingEnvelope Create(
-        Type contractType,
-        object value,
-        string networkIdentity,
-        string senderIdentity,
-        IReadOnlyDictionary<string, string>? additionalHeaders = null,
-        Guid? messageId = null,
-        Guid? correlationId = null,
-        DateTimeOffset? sentTime = null)
-    {
-        ArgumentNullException.ThrowIfNull(contractType);
         ArgumentNullException.ThrowIfNull(value);
         ArgumentException.ThrowIfNullOrEmpty(networkIdentity);
         ArgumentException.ThrowIfNullOrEmpty(senderIdentity);
 
-        var contract = _contracts.Resolve(contractType);
-        if (!contract.ContractType.IsInstanceOfType(value))
-            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The value does not match the registered contract type.");
+        var contract = _contracts.Resolve<T>();
         var serializer = _serializers.Resolve(contract.DefaultSerializer);
         var headers = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -122,88 +98,47 @@ public sealed class MessagingEnvelopeCodec
             }
         }
 
-        return new MessagingEnvelope(serializer.Serialize(contractType, value), headers, _limits);
+        var payload = new ArrayBufferWriter<byte>();
+        contract._serialize(serializer, payload, value);
+        return new MessagingEnvelope(new MessagingEnvelopeContext(headers, _limits), payload.WrittenMemory, _limits);
     }
 
     /// <summary>Deserializes an envelope using only its registered contract and content-type headers.</summary>
     public MessagingDecodedMessage Decode(MessagingEnvelope envelope)
     {
-        ArgumentNullException.ThrowIfNull(envelope);
-        _validateEnvelopeSize(envelope);
-        _validateRequiredHeaders(envelope.Headers);
-
-        var network = envelope.Headers[MessagingHeaderNames.Network];
-        if (_networkIdentity is not null
-            && !string.Equals(network, _networkIdentity, StringComparison.Ordinal))
-            throw new MessagingEnvelopeException(MessagingFailureKind.ForeignNetwork, "The envelope belongs to a different messaging network.", MessagingHeaderNames.Network);
-
-        var contract = _contracts.Resolve(envelope.Headers[MessagingHeaderNames.MessageType]);
-        var contentType = envelope.Headers[MessagingHeaderNames.ContentType];
-        if (envelope.Headers.TryGetValue(MessagingHeaderNames.RebusContentType, out var rebusContentType)
-            && !string.Equals(contentType, rebusContentType, StringComparison.OrdinalIgnoreCase))
-            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "AMF and Rebus content-type headers conflict.", MessagingHeaderNames.ContentType);
-
-        var serializer = _serializers.Resolve(contentType);
-        try
-        {
-            return new MessagingDecodedMessage(contract, serializer.Deserialize(contract.ContractType, envelope.Payload));
-        }
-        catch (MessagingEnvelopeException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The envelope payload could not be deserialized.");
-        }
+        var (contract, serializer) = _resolveIncoming(envelope);
+        var payload = new ReadOnlySequence<byte>(envelope.Payload);
+        return new MessagingDecodedMessage(contract, contract._deserialize(serializer, payload));
     }
 
     /// <summary>Deserializes an envelope and verifies the expected registered contract type.</summary>
     public T Decode<T>(MessagingEnvelope envelope)
         where T : notnull
     {
-        var result = Decode(envelope);
-        if (result.Value is not T value)
+        var (actual, serializer) = _resolveIncoming(envelope);
+        var expected = _contracts.Resolve<T>();
+        if (!ReferenceEquals(actual, expected))
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The envelope contract type does not match the requested type.");
-        return value;
+
+        var payload = new ReadOnlySequence<byte>(envelope.Payload);
+        return expected._deserializeTyped(serializer, payload);
     }
 
-    private static void _validateRequiredHeaders(IReadOnlyDictionary<string, string> headers)
+    private (MessagingContractDescriptor Contract, IMessagingCodec Serializer) _resolveIncoming(MessagingEnvelope envelope)
     {
-        foreach (var name in new[]
-        {
-            MessagingHeaderNames.MessageType,
-            MessagingHeaderNames.ContentType,
-            MessagingHeaderNames.MessageId,
-            MessagingHeaderNames.SentTime,
-            MessagingHeaderNames.Network,
-            MessagingHeaderNames.SenderIdentity
-        })
-        {
-            if (!headers.TryGetValue(name, out var value) || string.IsNullOrWhiteSpace(value))
-                throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "A required envelope header is missing.", name);
-        }
-
-        _ = MessagingEnvelope.ParseSentTime(headers[MessagingHeaderNames.SentTime]);
-        if (!Guid.TryParse(headers[MessagingHeaderNames.MessageId], out _))
-            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The message identifier is not a valid GUID.", MessagingHeaderNames.MessageId);
-        if (headers.TryGetValue(MessagingHeaderNames.CorrelationId, out var correlationId)
-            && !Guid.TryParse(correlationId, out _))
-            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The correlation identifier is not a valid GUID.", MessagingHeaderNames.CorrelationId);
-    }
-
-    private void _validateEnvelopeSize(MessagingEnvelope envelope)
-    {
+        ArgumentNullException.ThrowIfNull(envelope);
         if (envelope.Payload.Length > _limits.MaximumPayloadLength)
             throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope payload exceeds its configured limit.");
-        if (envelope.Headers.Count > _limits.MaximumHeaderCount)
-            throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope header count exceeds its configured limit.");
-        foreach (var header in envelope.Headers)
-        {
-            if (header.Key.Length > _limits.MaximumHeaderNameLength)
-                throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header name exceeds its configured limit.", header.Key);
-            if (header.Value.Length > _limits.MaximumHeaderValueLength)
-                throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header value exceeds its configured limit.", header.Key);
-        }
+        envelope.Context._validateLimits(_limits);
+        envelope.Context.ValidateRequiredHeaders();
+
+        var network = envelope.Context.Headers[MessagingHeaderNames.Network];
+        if (_networkIdentity is not null
+            && !string.Equals(network, _networkIdentity, StringComparison.Ordinal))
+            throw new MessagingEnvelopeException(MessagingFailureKind.ForeignNetwork, "The envelope belongs to a different messaging network.", MessagingHeaderNames.Network);
+
+        var contract = _contracts.Resolve(envelope.Context.Headers[MessagingHeaderNames.MessageType]);
+        var serializer = _serializers.Resolve(envelope.Context.Headers[MessagingHeaderNames.ContentType]);
+        return (contract, serializer);
     }
 }

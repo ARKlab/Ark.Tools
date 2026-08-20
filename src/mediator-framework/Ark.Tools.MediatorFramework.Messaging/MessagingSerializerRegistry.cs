@@ -1,7 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Collections.Frozen;
+using System.Buffers;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 using MessagePack;
 
@@ -18,22 +21,34 @@ public interface IMessagingCodec
     /// <summary>Gets the wire content type.</summary>
     string ContentType { get; }
 
-    /// <summary>Serializes a registered contract value.</summary>
-    byte[] Serialize(Type contractType, object value);
+    /// <summary>Serializes a statically known contract value.</summary>
+    /// <typeparam name="T">The contract type.</typeparam>
+    /// <param name="output">The destination buffer.</param>
+    /// <param name="value">The value to serialize.</param>
+    /// <param name="jsonTypeInfo">Source-generated JSON metadata for the contract.</param>
+    void Serialize<T>(
+        IBufferWriter<byte> output,
+        T value,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull;
 
-    /// <summary>Deserializes bytes into a registered contract type.</summary>
-    object Deserialize(Type contractType, ReadOnlyMemory<byte> payload);
+    /// <summary>Deserializes a statically known contract value.</summary>
+    /// <typeparam name="T">The contract type.</typeparam>
+    /// <param name="payload">The payload sequence.</param>
+    /// <param name="jsonTypeInfo">Source-generated JSON metadata for the contract.</param>
+    /// <returns>The deserialized value.</returns>
+    T Deserialize<T>(
+        in ReadOnlySequence<byte> payload,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull;
 }
 
 /// <summary>UTF-8 JSON messaging codec.</summary>
 public sealed class MessagingJsonCodec : IMessagingCodec
 {
-    private readonly JsonSerializerOptions _options;
-
-    /// <summary>Creates a JSON codec with optional serializer options.</summary>
-    public MessagingJsonCodec(JsonSerializerOptions? options = null)
+    /// <summary>Creates a JSON codec.</summary>
+    public MessagingJsonCodec()
     {
-        _options = options ?? new JsonSerializerOptions(JsonSerializerDefaults.Web);
     }
 
     /// <inheritdoc />
@@ -43,29 +58,41 @@ public sealed class MessagingJsonCodec : IMessagingCodec
     public string ContentType => MessagingContentTypes.Json;
 
     /// <inheritdoc />
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Contract types come from the explicit generated registry.")]
-    public byte[] Serialize(Type contractType, object value)
+    public void Serialize<T>(
+        IBufferWriter<byte> output,
+        T value,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull
     {
-        ArgumentNullException.ThrowIfNull(contractType);
+        ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(value);
-        return JsonSerializer.SerializeToUtf8Bytes(value, contractType, _options);
+        ArgumentNullException.ThrowIfNull(jsonTypeInfo);
+        using var writer = new Utf8JsonWriter(output);
+        JsonSerializer.Serialize(writer, value, jsonTypeInfo);
     }
 
     /// <inheritdoc />
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Contract types come from the explicit generated registry.")]
-    public object Deserialize(Type contractType, ReadOnlyMemory<byte> payload)
+    public T Deserialize<T>(
+        in ReadOnlySequence<byte> payload,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull
     {
-        ArgumentNullException.ThrowIfNull(contractType);
         try
         {
-            return JsonSerializer.Deserialize(payload.Span, contractType, _options)
+            ArgumentNullException.ThrowIfNull(jsonTypeInfo);
+            var reader = new Utf8JsonReader(payload);
+            return JsonSerializer.Deserialize(ref reader, jsonTypeInfo)
                 ?? throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The JSON payload deserialized to null.");
         }
         catch (MessagingEnvelopeException)
         {
             throw;
         }
-        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        catch (JsonException)
+        {
+            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The JSON payload is malformed.");
+        }
+        catch (NotSupportedException)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The JSON payload is malformed.");
         }
@@ -91,27 +118,28 @@ public sealed class MessagingMessagePackCodec : IMessagingCodec
     public string ContentType => MessagingContentTypes.MessagePack;
 
     /// <inheritdoc />
-    public byte[] Serialize(Type contractType, object value)
+    public void Serialize<T>(
+        IBufferWriter<byte> output,
+        T value,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull
     {
-        ArgumentNullException.ThrowIfNull(contractType);
+        ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(value);
-        return MessagePackSerializer.Serialize(contractType, value, _options);
+        MessagePackSerializer.Serialize(output, value, _options);
     }
 
     /// <inheritdoc />
-    public object Deserialize(Type contractType, ReadOnlyMemory<byte> payload)
+    public T Deserialize<T>(
+        in ReadOnlySequence<byte> payload,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull
     {
-        ArgumentNullException.ThrowIfNull(contractType);
         try
         {
-            return MessagePackSerializer.Deserialize(contractType, payload, _options)
-                ?? throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The MessagePack payload deserialized to null.");
+            return MessagePackSerializer.Deserialize<T>(payload, _options);
         }
-        catch (MessagingEnvelopeException)
-        {
-            throw;
-        }
-        catch (Exception)
+        catch (MessagePackSerializationException)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The MessagePack payload is malformed.");
         }
@@ -128,31 +156,30 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
     public string ContentType => MessagingContentTypes.Protobuf;
 
     /// <inheritdoc />
-    public byte[] Serialize(Type contractType, object value)
+    [UnconditionalSuppressMessage("Trimming", "IL2091", Justification = "Contracts are closed generic types registered by generated metadata.")]
+    public void Serialize<T>(
+        IBufferWriter<byte> output,
+        T value,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull
     {
-        ArgumentNullException.ThrowIfNull(contractType);
+        ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(value);
-        using var stream = new MemoryStream();
-        Serializer.NonGeneric.Serialize(stream, value);
-        return stream.ToArray();
+        Serializer.Serialize(output, value);
     }
 
     /// <inheritdoc />
-    [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Contract types come from the explicit generated registry.")]
-    public object Deserialize(Type contractType, ReadOnlyMemory<byte> payload)
+    [UnconditionalSuppressMessage("Trimming", "IL2091", Justification = "Contracts are closed generic types registered by generated metadata.")]
+    public T Deserialize<T>(
+        in ReadOnlySequence<byte> payload,
+        JsonTypeInfo<T>? jsonTypeInfo)
+        where T : notnull
     {
-        ArgumentNullException.ThrowIfNull(contractType);
         try
         {
-            using var stream = new MemoryStream(payload.ToArray(), writable: false);
-            return Serializer.NonGeneric.Deserialize(contractType, stream)
-                ?? throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The protobuf payload deserialized to null.");
+            return Serializer.Deserialize<T>(payload);
         }
-        catch (MessagingEnvelopeException)
-        {
-            throw;
-        }
-        catch (Exception)
+        catch (ProtoException)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The protobuf payload is malformed.");
         }
@@ -162,34 +189,24 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
 /// <summary>Registry of installed messaging codecs.</summary>
 public sealed class MessagingSerializerRegistry
 {
-    private readonly Dictionary<string, IMessagingCodec> _byContentType;
-    private readonly Dictionary<SerializationProtocol, IMessagingCodec> _byProtocol;
+    private readonly FrozenDictionary<string, IMessagingCodec> _byContentType;
+    private readonly FrozenDictionary<SerializationProtocol, IMessagingCodec> _byProtocol;
 
     /// <summary>Creates a registry with the three built-in codecs installed.</summary>
     public MessagingSerializerRegistry(IEnumerable<IMessagingCodec>? codecs = null)
     {
-        _byContentType = new Dictionary<string, IMessagingCodec>(StringComparer.OrdinalIgnoreCase);
-        _byProtocol = new Dictionary<SerializationProtocol, IMessagingCodec>();
-        foreach (var codec in codecs ?? new IMessagingCodec[]
+        var byContentType = new Dictionary<string, IMessagingCodec>(StringComparer.OrdinalIgnoreCase);
+        var byProtocol = new Dictionary<SerializationProtocol, IMessagingCodec>();
+        foreach (var codec in codecs ?? _builtIns)
         {
-            new MessagingJsonCodec(),
-            new MessagingMessagePackCodec(),
-            new MessagingProtobufCodec()
-        })
-            Register(codec);
-    }
-
-    /// <summary>Registers an installed codec.</summary>
-    public void Register(IMessagingCodec codec)
-    {
-        ArgumentNullException.ThrowIfNull(codec);
-        if (!_byProtocol.TryAdd(codec.Protocol, codec))
-            throw new InvalidOperationException($"A codec for protocol '{codec.Protocol}' is already registered.");
-        if (!_byContentType.TryAdd(codec.ContentType, codec))
-        {
-            _byProtocol.Remove(codec.Protocol);
-            throw new InvalidOperationException($"A codec for content type '{codec.ContentType}' is already registered.");
+            ArgumentNullException.ThrowIfNull(codec);
+            if (!byProtocol.TryAdd(codec.Protocol, codec)
+                || !byContentType.TryAdd(codec.ContentType, codec))
+                throw new InvalidOperationException("A codec for this protocol or content type is already registered.");
         }
+
+        _byContentType = byContentType.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+        _byProtocol = byProtocol.ToFrozenDictionary();
     }
 
     /// <summary>Resolves a codec by its protocol.</summary>
@@ -208,4 +225,11 @@ public sealed class MessagingSerializerRegistry
             return codec;
         throw new MessagingEnvelopeException(MessagingFailureKind.UnsupportedProtocol, "The envelope content type is not supported.", MessagingHeaderNames.ContentType);
     }
+
+    private static readonly IMessagingCodec[] _builtIns =
+    [
+        new MessagingJsonCodec(),
+        new MessagingMessagePackCodec(),
+        new MessagingProtobufCodec()
+    ];
 }

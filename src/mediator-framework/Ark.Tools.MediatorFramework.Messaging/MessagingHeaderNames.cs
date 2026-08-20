@@ -38,39 +38,9 @@ public static class MessagingHeaderNames
 
     /// <summary>AMF DataBus attachment SHA-256 header.</summary>
     public const string PayloadAttachmentSha256 = "amf1-payload-attachment-sha256";
-
-    /// <summary>Rebus-compatible message type header.</summary>
-    public const string RebusMessageType = "rbs2-msg-type";
-
-    /// <summary>Rebus-compatible content type header.</summary>
-    public const string RebusContentType = "rbs2-content-type";
-
-    /// <summary>Rebus-compatible content encoding header.</summary>
-    public const string RebusContentEncoding = "rbs2-content-encoding";
-
-    /// <summary>Rebus-compatible message identifier header.</summary>
-    public const string RebusMessageId = "rbs2-msg-id";
-
-    /// <summary>Rebus-compatible correlation identifier header.</summary>
-    public const string RebusCorrelationId = "rbs2-corr-id";
-
-    /// <summary>Rebus-compatible sent-time header.</summary>
-    public const string RebusSentTime = "rbs2-senttime";
-
-    /// <summary>Rebus-compatible delivery-count header. Transports must not emit it in an envelope.</summary>
-    public const string RebusDeliveryCount = "rbs2-delivery-count";
-
-    /// <summary>Rebus-compatible failure step header.</summary>
-    public const string RebusFailureStep = "rbs2-failure-step";
-
-    /// <summary>Rebus-compatible failure exception type header.</summary>
-    public const string RebusFailureType = "rbs2-exception-type";
-
-    /// <summary>Rebus-compatible failure message header.</summary>
-    public const string RebusFailureMessage = "rbs2-exception-message";
 }
 
-/// <summary>Rebus-compatible content types supported by the messaging runtime.</summary>
+/// <summary>Content types supported by the native messaging runtime.</summary>
 public static class MessagingContentTypes
 {
     /// <summary>UTF-8 JSON content type.</summary>

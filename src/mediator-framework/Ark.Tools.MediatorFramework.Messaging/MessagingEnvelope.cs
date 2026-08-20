@@ -96,20 +96,17 @@ public sealed class MessagingEnvelopeLimits
     public int MaximumPayloadLength { get; }
 }
 
-/// <summary>Transport-neutral binary payload and string metadata.</summary>
-public sealed class MessagingEnvelope
+/// <summary>Transport-neutral envelope headers and metadata.</summary>
+public sealed class MessagingEnvelopeContext
 {
-    /// <summary>Creates an envelope and copies its payload and headers.</summary>
-    public MessagingEnvelope(
-        ReadOnlyMemory<byte> payload,
+    /// <summary>Creates an envelope context and copies its headers.</summary>
+    public MessagingEnvelopeContext(
         IReadOnlyDictionary<string, string> headers,
         MessagingEnvelopeLimits? limits = null)
     {
         ArgumentNullException.ThrowIfNull(headers);
 
         var effectiveLimits = limits ?? MessagingEnvelopeLimits.Default;
-        if (payload.Length > effectiveLimits.MaximumPayloadLength)
-            throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope payload exceeds its configured limit.");
         if (headers.Count > effectiveLimits.MaximumHeaderCount)
             throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope header count exceeds its configured limit.");
 
@@ -120,18 +117,12 @@ public sealed class MessagingEnvelope
                 throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header name is invalid or exceeds its configured limit.", header.Key);
             if (header.Value is null || header.Value.Length > effectiveLimits.MaximumHeaderValueLength)
                 throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header value exceeds its configured limit.", header.Key);
-            if (header.Key.Equals(MessagingHeaderNames.RebusDeliveryCount, StringComparison.OrdinalIgnoreCase))
-                throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "Delivery count is transport runtime metadata and cannot be carried by an envelope.", header.Key);
             if (!copy.TryAdd(header.Key, header.Value))
                 throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "Envelope headers must have unique names.", header.Key);
         }
 
-        Payload = payload.ToArray();
         Headers = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(copy);
     }
-
-    /// <summary>Gets the copied binary payload.</summary>
-    public byte[] Payload { get; }
 
     /// <summary>Gets the immutable string metadata.</summary>
     public IReadOnlyDictionary<string, string> Headers { get; }
@@ -142,6 +133,71 @@ public sealed class MessagingEnvelope
         ArgumentException.ThrowIfNullOrEmpty(name);
         return Headers.TryGetValue(name, out value!);
     }
+
+    /// <summary>Validates required native messaging headers.</summary>
+    public void ValidateRequiredHeaders()
+    {
+        foreach (var name in _requiredHeaders)
+        {
+            if (!Headers.TryGetValue(name, out var value) || string.IsNullOrWhiteSpace(value))
+                throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "A required envelope header is missing.", name);
+        }
+
+        _ = MessagingEnvelope.ParseSentTime(Headers[MessagingHeaderNames.SentTime]);
+        if (!Guid.TryParse(Headers[MessagingHeaderNames.MessageId], out _))
+            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The message identifier is not a valid GUID.", MessagingHeaderNames.MessageId);
+        if (Headers.TryGetValue(MessagingHeaderNames.CorrelationId, out var correlationId)
+            && !Guid.TryParse(correlationId, out _))
+            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The correlation identifier is not a valid GUID.", MessagingHeaderNames.CorrelationId);
+    }
+
+    internal void _validateLimits(MessagingEnvelopeLimits limits)
+    {
+        if (Headers.Count > limits.MaximumHeaderCount)
+            throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope header count exceeds its configured limit.");
+        foreach (var header in Headers)
+        {
+            if (header.Key.Length > limits.MaximumHeaderNameLength)
+                throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header name exceeds its configured limit.", header.Key);
+            if (header.Value.Length > limits.MaximumHeaderValueLength)
+                throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "An envelope header value exceeds its configured limit.", header.Key);
+        }
+    }
+
+    private static readonly string[] _requiredHeaders =
+    [
+        MessagingHeaderNames.MessageType,
+        MessagingHeaderNames.ContentType,
+        MessagingHeaderNames.MessageId,
+        MessagingHeaderNames.SentTime,
+        MessagingHeaderNames.Network,
+        MessagingHeaderNames.SenderIdentity
+    ];
+}
+
+/// <summary>Transport-neutral binary payload paired with separate envelope metadata.</summary>
+public sealed class MessagingEnvelope
+{
+    /// <summary>Creates an envelope and copies its payload.</summary>
+    public MessagingEnvelope(
+        MessagingEnvelopeContext context,
+        ReadOnlyMemory<byte> payload,
+        MessagingEnvelopeLimits? limits = null)
+    {
+        Context = context ?? throw new ArgumentNullException(nameof(context));
+
+        var effectiveLimits = limits ?? MessagingEnvelopeLimits.Default;
+        if (payload.Length > effectiveLimits.MaximumPayloadLength)
+            throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope payload exceeds its configured limit.");
+
+        Payload = payload.ToArray();
+    }
+
+    /// <summary>Gets the immutable envelope metadata.</summary>
+    public MessagingEnvelopeContext Context { get; }
+
+    /// <summary>Gets the copied binary payload.</summary>
+    public byte[] Payload { get; }
 
     /// <summary>Formats a UTC timestamp for the sent-time header.</summary>
     public static string FormatSentTime(DateTimeOffset sentTime)
