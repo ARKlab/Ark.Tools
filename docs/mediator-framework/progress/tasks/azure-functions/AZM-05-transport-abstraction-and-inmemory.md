@@ -16,7 +16,7 @@ infrastructure.
 ## Execution map
 
 - **Transport contract**: define it in
-  `Ark.Tools.MediatorFramework.Messaging` (internal-facing; not part of
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework` (internal-facing; not part of
   the application-visible API surface unless needed for custom transports —
   keep it public but clearly documented as an integrator seam).
 - **InMemory transport**: implement in the same package as a first-class,

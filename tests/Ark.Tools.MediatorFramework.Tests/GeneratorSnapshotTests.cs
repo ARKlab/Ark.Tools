@@ -4,6 +4,7 @@
 using Ark.MediatorFramework;
 using Ark.MediatorFramework.AzureFunctions;
 using Ark.MediatorFramework.AzureFunctions.Generators;
+using Ark.MediatorFramework.MessagingGenerators;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.MediatorFramework.Generators;
 using Ark.Tools.Solid;
@@ -691,6 +692,72 @@ public sealed class GeneratorSnapshotTests
             + " serializers:json|msgpack default:json");
         generated.Should().Contain(
             "NETWORK Books.BookMessagingNetwork -> members:printing_participant requires:receive|pubsub");
+    }
+
+    [TestMethod]
+    public void MessagingParticipantGeneratorEmitsIdentityAndRegistryCore()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace Books;
+            [Message(Name = "books.recalculate_print", FormerNames = new[] { "legacy.recalculate_print" })]
+            public sealed class RecalculatePrint { }
+            [Event(Name = "books.print_completed")]
+            public sealed class PrintCompleted : IRequest<PrintCompleted, string> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(RecalculatePrint) },
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant;
+            """;
+
+        var generated = _runGenerator<MessagingParticipantGenerator>(source);
+
+        generated.Should().Contain("partial class PrintingParticipant");
+        generated.Should().Contain("public const string Identity = \"printing\";");
+        generated.Should().Contain("if (contractType == typeof(global::Books.RecalculatePrint))");
+        generated.Should().Contain("name = \"books.recalculate_print\";");
+        generated.Should().Contain("case \"books.recalculate_print\":");
+        generated.Should().Contain("case \"legacy.recalculate_print\":");
+        generated.Should().Contain("case \"books.print_completed\":");
+        generated.Should().Contain("return codec.Deserialize<global::Books.RecalculatePrint>(payload);");
+        generated.Should().Contain("MessagingFailureKind.UnknownContract");
+    }
+
+    [TestMethod]
+    public void MessagingParticipantGeneratorHonorsExplicitIdentityAndNamespace()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            [MessagingParticipant(Identity = "billing-worker")]
+            public sealed partial class BillingParticipant;
+            """;
+
+        var generated = _runGenerator<MessagingParticipantGenerator>(source);
+
+        generated.Should().Contain("public const string Identity = \"billing-worker\";");
+        generated.Should().NotContain("namespace ");
+        generated.Should().Contain("switch (name)");
+    }
+
+    [TestMethod]
+    public void MessagingParticipantGeneratorSkipsNonPartialParticipants()
+    {
+        const string source =
+            """
+            using Ark.MediatorFramework;
+            namespace Books;
+            [MessagingParticipant]
+            public sealed class PrintingParticipant;
+            """;
+
+        var generated = _runGenerator<MessagingParticipantGenerator>(source);
+
+        generated.Should().BeEmpty();
     }
 
     [TestMethod]

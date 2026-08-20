@@ -11,8 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MessagePack" />
     <PackageReference Include="protobuf-net" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.ApiSurface.Generators\Ark.Tools.MediatorFramework.ApiSurface.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Messaging.Generators\Ark.Tools.MediatorFramework.Messaging.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.props" Pack="true"
@@ -28,6 +32,15 @@
             PackagePath="analyzers/dotnet/cs"
             Visible="false"
             Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.ApiSurface.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.ApiSurface.Generators.dll')" />
+    </ItemGroup>
+  </Target>
+  <Target Name="IncludeMessagingGeneratorInPackage" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Messaging.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Messaging.Generators.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false"
+            Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Messaging.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Messaging.Generators.dll')" />
     </ItemGroup>
   </Target>
 </Project>

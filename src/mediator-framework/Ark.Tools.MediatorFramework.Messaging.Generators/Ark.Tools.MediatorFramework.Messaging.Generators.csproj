@@ -9,8 +9,8 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Description>Source generator for Ark.Tools MediatorFramework Azure Functions HTTP triggers.</Description>
-    <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;Source Generator;Roslyn</PackageTags>
+    <Description>Source generator for Ark.Tools MediatorFramework messaging networks and participant-owned contract mappers.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;Messaging;Source Generator;Roslyn</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>

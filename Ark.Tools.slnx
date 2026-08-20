@@ -94,8 +94,8 @@
   </Folder>
   <Folder Name="/samples/Ark.MediatorFramework/">
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj" />
-    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/Ark.Tools.MediatorFramework.Messaging.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.Generators.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Messaging.Generators/Ark.Tools.MediatorFramework.Messaging.Generators.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/Ark.Tools.MediatorFramework.AzureFunctions.csproj" />

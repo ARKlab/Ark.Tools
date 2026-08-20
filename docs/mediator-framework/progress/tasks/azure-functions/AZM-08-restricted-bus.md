@@ -21,7 +21,7 @@ composition switch, while intentionally reducing the framework API surface.
   `Dictionary<string, string>` of additional application headers on every
   operation.
 - **Native implementation**: implement one transport-neutral bus in
-  `Ark.Tools.MediatorFramework.Messaging` composed from the message-context,
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework` composed from the message-context,
   pipeline, DataBus, and transport seams of AZM-04/05/06/07. There is no
   per-technology bus implementation.
 - **Routing source**: use only the generated registry (contract → owning

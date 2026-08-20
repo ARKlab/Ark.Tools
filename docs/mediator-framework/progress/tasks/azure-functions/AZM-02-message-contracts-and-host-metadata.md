@@ -25,11 +25,13 @@ ownership on both contract and participant.
   serialization/compression enums in
   `Ark.Tools.MediatorFramework`. The participant declaration is not
   Functions-specific; Azure Functions is one hosting adapter over it.
-- **Generator inputs**: extend the Azure Functions generator's immutable
+- **Generator inputs**: implement the generic
+  `Ark.Tools.MediatorFramework.Messaging.Generators` project's immutable
   contract/participant models; reuse existing symbol-display and diagnostic
-  helpers. Cross-participant validation reads participant declarations from
-  the current compilation and referenced-assembly metadata via the network's
-  `Members` list.
+  helpers. This generator is not tied to Azure Functions or to the
+  ApiSurface generator. Cross-participant validation reads participant
+  declarations from the current compilation and referenced-assembly metadata
+  via the network's `Members` list.
 - **Generated artifact**: emit a deterministic metadata descriptor only; do
   not emit Service Bus trigger methods yet. The participant-owned contract
   registry core (the `typeof(T)` to current-name map and the

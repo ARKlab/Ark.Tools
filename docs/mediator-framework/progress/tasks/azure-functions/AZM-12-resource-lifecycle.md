@@ -13,7 +13,7 @@ subscriptions without deleting resources owned by another participant.
 ## Execution map
 
 - **Runtime project**: implement management reconciliation in
-  `Ark.Tools.MediatorFramework.Messaging`; consume only the generated
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework`; consume only the generated
   manifest from AZM-10 through the AZM-05 transport management seam.
 - **Ownership**: consumer participants (declaring `Processes` or
   `Subscribes`) own their identity queue and forwarding

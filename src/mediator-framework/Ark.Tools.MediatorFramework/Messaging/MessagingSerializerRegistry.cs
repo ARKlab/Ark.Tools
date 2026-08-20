@@ -183,7 +183,11 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
     {
         ArgumentNullException.ThrowIfNull(output);
         ArgumentNullException.ThrowIfNull(value);
+        // Messaging contracts live in consuming assemblies; this assembly's AOT model (DownloadDocumentQuery)
+        // cannot cover them, so PBN3010's suggested alternative is inapplicable here.
+#pragma warning disable PBN3010
         Serializer.Serialize(output, value);
+#pragma warning restore PBN3010
     }
 
     /// <inheritdoc />
@@ -194,7 +198,9 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
     {
         try
         {
+#pragma warning disable PBN3010 // See Serialize.
             return Serializer.Deserialize<T>(payload)
+#pragma warning restore PBN3010
                 ?? throw new MessagingProtocolException(MessagingFailureKind.Malformed, "The protobuf payload deserialized to null.");
         }
         catch (ProtoException)

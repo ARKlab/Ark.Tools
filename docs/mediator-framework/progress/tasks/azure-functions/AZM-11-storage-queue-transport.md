@@ -19,7 +19,7 @@ generated Azure Functions QueueTrigger.
 - **Transport**: implement the Storage Queue transport
   (`Capabilities = Receive | ScheduledSend`; `Send` implicit; no `PubSub`;
   a 64 KiB final-message limit) in
-  `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract.
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework` using the AZM-05 contract.
 - **Encoding**: the Storage Queue transport frames the separate binary body and
   full `amf1-*` header set, then Base64-encodes that frame exactly once,
   and send the resulting text with `QueueMessageEncoding.None`. Generated

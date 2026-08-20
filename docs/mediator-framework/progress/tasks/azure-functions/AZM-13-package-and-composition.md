@@ -13,13 +13,16 @@ SimpleInjector registrations.
 
 ## Execution map
 
-- **Projects**: finalize the package split:
-  `Ark.Tools.MediatorFramework.Messaging` (transport-neutral runtime:
-  network options, message context, codecs, pipeline contracts, DataBus, transports, bus,
-  dispatcher, lifecycle) and `Ark.Tools.MediatorFramework.AzureFunctions`
-  (trigger generation and Functions hosting adapters, depending on the
-  messaging package), plus
-  `Ark.Tools.MediatorFramework.AzureFunctions.Generators`, central package
+- **Projects**: finalize the package split: the transport-neutral runtime
+  (network options, message context, codecs, pipeline contracts, DataBus,
+  transports, bus, dispatcher, lifecycle) lives in the
+  `Ark.MediatorFramework.Messaging` namespace of the
+  `Ark.Tools.MediatorFramework` assembly (a `Messaging/` sub-folder), and
+  `Ark.Tools.MediatorFramework.AzureFunctions`
+  (trigger generation and Functions hosting adapters) depends on it, plus
+  `Ark.Tools.MediatorFramework.AzureFunctions.Generators` and the generic
+  `Ark.Tools.MediatorFramework.Messaging.Generators` (network validation
+  and the participant-owned contract mappers), central package
   versions, and lock files.
 - **Producer composition**: expose a sender/publisher registration usable from
   any process (Minimal API, console client, Functions) that composes only the

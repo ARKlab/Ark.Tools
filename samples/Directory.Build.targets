@@ -82,7 +82,11 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
-        
+        <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Messaging.Generators\Ark.Tools.MediatorFramework.Messaging.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework'" />
+
 
       </ItemGroup>
 

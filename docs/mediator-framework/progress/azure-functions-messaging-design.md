@@ -846,17 +846,22 @@ semantics cannot drift from production transports.
 
 ### Packaging
 
-The transport-neutral messaging runtime — network options, envelope, codecs,
-pipeline, DataBus, transports, dispatcher, and the restricted `IBus` — lives
-in a transport-neutral messaging package (working name
-`Ark.Tools.MediatorFramework.Messaging`) so send-only participants such as
-a Minimal API host or a client application compose the bus without referencing
-anything Functions-flavored. The Azure Functions package contains only trigger
-source generation and Functions hosting adapters and depends on the messaging
-package. Task documents that name
+The transport-neutral messaging runtime — network options, message context,
+codecs, pipeline, DataBus, transports, dispatcher, and the restricted `IBus` —
+lives in the `Ark.MediatorFramework.Messaging` namespace of the
+`Ark.Tools.MediatorFramework` assembly (a `Messaging/` sub-folder) so
+send-only participants such as a Minimal API host or a client application
+compose the bus without referencing anything Functions-flavored. The Azure
+Functions package contains only trigger source generation and Functions
+hosting adapters and depends on the core MediatorFramework assembly.
+Messaging source generation (network validation and the participant-owned
+contract mappers) lives in the generic
+`Ark.Tools.MediatorFramework.Messaging.Generators` project, which is tied to
+neither Azure Functions nor the ApiSurface generator and ships as an analyzer
+inside the `Ark.Tools.MediatorFramework` package. Task documents that name
 `Ark.Tools.MediatorFramework.AzureFunctions` for runtime seams are satisfied
-by this messaging package; the split is finalized in the package/composition
-task.
+by the messaging runtime in the core assembly; the split is finalized in the
+package/composition task.
 
 ## 6. Generated Functions surface
 

@@ -11,9 +11,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using Ark.MediatorFramework.MessagingGenerators;
-
-namespace Ark.MediatorFramework.AzureFunctions.Generators;
+namespace Ark.MediatorFramework.MessagingGenerators;
 
 /// <summary>Validates messaging topology and emits deterministic network metadata.</summary>
 [Generator(LanguageNames.CSharp)]

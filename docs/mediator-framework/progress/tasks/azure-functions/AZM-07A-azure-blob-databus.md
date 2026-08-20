@@ -15,7 +15,7 @@ Attachment cleanup must coexist safely with storage accounts managed by IaC.
 ## Execution map
 
 - **Runtime project**: implement the Azure Blob provider in
-  `Ark.Tools.MediatorFramework.Messaging` using the repository-approved Azure
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework` using the repository-approved Azure
   Storage client packages and credential patterns.
 - **Configuration**: support connection-string and managed-identity
   composition without secrets in attributes. Configure a dedicated container

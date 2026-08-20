@@ -18,7 +18,7 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 - **Public API**: define framework `IFailed<T>`, exception DTO, and incoming
   message context in `Ark.Tools.MediatorFramework`.
 - **Runtime**: implement manual settlement and scoped dispatch in
-  `Ark.Tools.MediatorFramework.Messaging` against the transport receive
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework` against the transport receive
   contract (locked delivery + native delivery count + complete/abandon/
   dead-letter). No Azure SDK type appears in the dispatcher.
 - **Exact exhaustion rule**: second-level retries are enabled or disabled by

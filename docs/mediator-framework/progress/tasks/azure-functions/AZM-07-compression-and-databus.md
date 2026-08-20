@@ -16,7 +16,7 @@ bytes to a shared DataBus when they still exceed the configured limit.
 - **Public API**: define DataBus provider/attachment abstractions and
   compression options in `Ark.Tools.MediatorFramework`.
 - **Runtime**: implement gzip/Brotli, claim-check orchestration, integrity
-  checks, and bounded reads in `Ark.Tools.MediatorFramework.Messaging`.
+  checks, and bounded reads in the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework`.
 - **Provider seam**: use an opaque attachment ID; provider implementations own
   credentials, storage SDKs, and provider-specific minimum attachment
   lifetime. The concrete provider is a runtime composition decision, exactly

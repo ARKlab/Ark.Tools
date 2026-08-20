@@ -24,7 +24,7 @@ dispatcher-less trigger code.
 - **Transport**: implement the Service Bus transport
   (`Capabilities = Receive | PubSub | ScheduledSend`, hard 256 KB total
   standard-tier message limit including application properties) in
-  `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract:
+  the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework` using the AZM-05 contract:
   message-context headers mapped to application properties plus a separate binary body,
   native scheduling, topic publish, and PeekLock settlement mapped to
   complete/abandon/dead-letter with the native `DeliveryCount`. Producer-only

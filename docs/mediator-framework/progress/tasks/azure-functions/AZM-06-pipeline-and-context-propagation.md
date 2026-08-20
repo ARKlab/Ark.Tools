@@ -17,7 +17,7 @@ Rebus provides this through `IPipeline` and direction-specific steps.
   `UserFlowStep.cs`, and `Ex.cs` before defining the new contracts.
 - **Public API/runtime**: put transport-neutral step/context contracts in
   `Ark.Tools.MediatorFramework`; put transport context adapters and built-in
-  steps in `Ark.Tools.MediatorFramework.Messaging`.
+  steps in the `Ark.MediatorFramework.Messaging` namespace of `Ark.Tools.MediatorFramework`.
 - **Ordering**: represent stages with framework-owned stable identifiers and
   validate missing anchors, duplicate registrations, and ordering cycles at
   startup.

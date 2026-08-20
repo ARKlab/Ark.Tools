@@ -22,17 +22,19 @@ requires.
   `MessagingCapabilities` flags enum with `Receive`, `PubSub`, and
   `ScheduledSend` (plain `Send` is implicit and always available; it is not a
   capability and never appears in capability tables or flags).
-- **Runtime project**: create the transport-neutral
-  `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging` project
-  following existing project conventions; resolve the network descriptor and
-  immutable options there. Sender-only and publisher participants (Minimal
-  API, client apps)
-  reference this package without any Functions dependency.
+- **Runtime project**: place the transport-neutral network descriptor and
+  immutable options in the
+  `Ark.Tools.MediatorFramework` assembly under the
+  `Ark.MediatorFramework.Messaging` namespace (a `Messaging/` sub-folder);
+  sender-only and publisher participants (Minimal API, client apps)
+  already reference this assembly without any Functions dependency.
 - **Generator model**: add symbol discovery and diagnostics under
-  `Ark.Tools.MediatorFramework.AzureFunctions.Generators`; keep Roslyn types
-  internal to the generator.
+  `Ark.Tools.MediatorFramework.Messaging.Generators`, a generic
+  MediatorFramework generator project that is tied to neither Azure
+  Functions nor the ApiSurface generator; keep Roslyn types internal to the
+  generator.
 - **Tests**: add API/model tests to `Ark.Tools.MediatorFramework.Tests` and
-  generator fixtures beside existing Azure Functions generator tests.
+  generator fixtures beside the existing generator snapshot tests.
 - **Runnable state**: this task ships the network attribute, options, and the
   resolved descriptor only. `Members` is retained as an opaque type list until
   AZM-02 introduces participant declarations and validates membership. Nothing

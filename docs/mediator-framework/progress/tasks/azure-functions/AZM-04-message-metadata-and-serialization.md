@@ -14,9 +14,10 @@ so every transport adapter can map it to its native message shape.
 
 ## Execution map
 
-- **Runtime project**: implement header context and codec registries in
-  `Ark.Tools.MediatorFramework.Messaging`; headers and bodies remain separate
-  and reference no Azure SDK type.
+- **Runtime project**: implement header context and codec registries in the
+  `Ark.MediatorFramework.Messaging` namespace of the
+  `Ark.Tools.MediatorFramework` assembly (a `Messaging/` sub-folder);
+  headers and bodies remain separate and reference no Azure SDK type.
 - **Existing integrations**: reuse Ark System.Text.Json, MessagePack, and
   protobuf abstractions already referenced by Mediator Framework projects; add
   no serializer package.

@@ -17,5 +17,7 @@
   <ItemGroup>
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Messaging.Generators/MessagingMetadata.cs"
+             Link="MessagingMetadata.cs" />
   </ItemGroup>
 </Project>
