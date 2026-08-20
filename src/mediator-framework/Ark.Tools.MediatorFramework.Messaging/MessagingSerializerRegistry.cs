@@ -210,9 +210,13 @@ public sealed class MessagingSerializerRegistry
         foreach (var codec in codecs ?? _builtIns)
         {
             ArgumentNullException.ThrowIfNull(codec);
-            if (!byProtocol.TryAdd(codec.Protocol, codec)
-                || !byContentType.TryAdd(codec.ContentType, codec))
+            if (!byProtocol.TryAdd(codec.Protocol, codec))
                 throw new InvalidOperationException("A codec for this protocol or content type is already registered.");
+            if (!byContentType.TryAdd(codec.ContentType, codec))
+            {
+                byProtocol.Remove(codec.Protocol);
+                throw new InvalidOperationException("A codec for this protocol or content type is already registered.");
+            }
         }
 
         _byContentType = byContentType.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
