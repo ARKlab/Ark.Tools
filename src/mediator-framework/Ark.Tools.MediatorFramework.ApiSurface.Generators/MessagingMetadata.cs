@@ -33,10 +33,13 @@ internal static class MessagingMetadata
 
     public static string NormalizeParticipantIdentity(string className)
     {
-        return NormalizeIdentity(className.EndsWith("Participant", StringComparison.Ordinal)
-            ? className[..^"Participant".Length]
+        return NormalizeIdentity(className.EndsWith(_participantSuffix, StringComparison.Ordinal)
+            ? className[..^_participantSuffix.Length]
             : className);
     }
+
+    // Mirrors MessagingParticipantAttribute.IdentityClassSuffix; generators cannot reference the runtime assembly.
+    private const string _participantSuffix = "Participant";
 
     public static string NormalizeSnake(string value)
     {
