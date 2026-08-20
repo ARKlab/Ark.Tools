@@ -43,12 +43,19 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         if (objectCreation is null)
             return;
 
-        var ancestors = context.Node.Ancestors().ToList();
-        var catchClause = ancestors.OfType<CatchClauseSyntax>().FirstOrDefault();
-        if (catchClause is null
-            || ancestors
-                .TakeWhile(ancestor => ancestor != catchClause)
-                .Any(ancestor => ancestor is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax))
+        CatchClauseSyntax? catchClause = null;
+        foreach (var ancestor in context.Node.Ancestors())
+        {
+            if (ancestor is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax)
+                return;
+            if (ancestor is CatchClauseSyntax candidate)
+            {
+                catchClause = candidate;
+                break;
+            }
+        }
+
+        if (catchClause is null)
             return;
 
         var caughtExceptionName = catchClause.Declaration?.Identifier.ValueText;
@@ -60,10 +67,10 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
             return;
 
         var preservesCaughtException = objectCreation.ArgumentList?.Arguments
-                .SelectMany(argument => argument.DescendantNodesAndSelf())
-                .OfType<IdentifierNameSyntax>()
-                .Select(identifier => context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol)
-                .Any(symbol => SymbolEqualityComparer.Default.Equals(symbol, caughtExceptionSymbol)) ?? false;
+                .Any(argument => argument.Expression is IdentifierNameSyntax identifier
+                    && SymbolEqualityComparer.Default.Equals(
+                        context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol,
+                        caughtExceptionSymbol)) ?? false;
 
         if (!preservesCaughtException)
             context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
