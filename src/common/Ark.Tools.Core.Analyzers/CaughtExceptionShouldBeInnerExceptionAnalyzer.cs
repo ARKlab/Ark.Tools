@@ -56,9 +56,10 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
                 continue;
 
             var preservesCaughtException = !string.IsNullOrEmpty(caughtExceptionName)
-                && objectCreation.DescendantNodes()
+                && objectCreation.ArgumentList?.Arguments
+                    .SelectMany(argument => argument.DescendantNodesAndSelf())
                 .OfType<IdentifierNameSyntax>()
-                .Any(identifier => identifier.Identifier.ValueText == caughtExceptionName);
+                .Any(identifier => identifier.Identifier.ValueText == caughtExceptionName) == true;
 
             if (!preservesCaughtException)
                 context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
