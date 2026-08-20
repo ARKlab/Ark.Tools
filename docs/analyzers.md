@@ -6,6 +6,15 @@ This document describes the NuGet analyzer packages used in Ark.Tools and the ra
 
 Ark.Tools uses multiple analyzer packages to maintain code quality, prevent bugs, and enforce best practices. The analyzers are configured to work together with minimal overlap while providing comprehensive coverage of common issues.
 
+## Ark.Tools.Core analyzers
+
+- `ARKCORE001` (error): Evolvable enum backing type must match the enum's underlying type.
+- `ARKCORE002` (error): Evolvable enum must declare `NOT_SET = 0`.
+- `ARKCORE003` (error): Evolvable enum member names must be unique.
+- `ARKCORE004` (warning): Evolvable enum uses every value available in its backing type.
+- `ARKCORE005` (error): Exceptions thrown from a catch clause must preserve the caught exception as their inner exception.
+- `ARKCORE006` (error): Catch clauses throwing replacement exceptions must capture the caught exception.
+
 ## Mediator Framework generator diagnostics
 
 The mediator source generators report these contract errors at the transport
@@ -45,6 +54,8 @@ attribute location:
 | ARKCORE002 | Error | Evolvable enum is missing `NOT_SET = 0` |
 | ARKCORE003 | Error | Evolvable enum names must be unique |
 | ARKCORE004 | Warning | Evolvable enum uses every value available in its backing type |
+| ARKCORE005 | Error | Exceptions thrown from a catch clause must preserve the caught exception as their inner exception |
+| ARKCORE006 | Error | Catch clauses throwing replacement exceptions must capture the caught exception |
 | ARKSOLID001 | Warning | Use the self-referencing generic interface for dispatch |
 
 Generator diagnostics are reported at the relevant contract or attribute location.
