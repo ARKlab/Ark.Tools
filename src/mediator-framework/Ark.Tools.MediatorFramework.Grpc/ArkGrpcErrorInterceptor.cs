@@ -5,8 +5,6 @@ using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Core;
 using Ark.Tools.Authorization;
-using Ark.Tools.MediatorFramework;
-
 using FluentValidation;
 
 using Google.Protobuf;
