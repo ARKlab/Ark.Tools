@@ -55,6 +55,9 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
             return;
 
         var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration!, context.CancellationToken);
+        if (caughtExceptionSymbol is null)
+            return;
+
         var preservesCaughtException = objectCreation.ArgumentList?.Arguments
                 .SelectMany(argument => argument.DescendantNodesAndSelf())
                 .OfType<IdentifierNameSyntax>()
