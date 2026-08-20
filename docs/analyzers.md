@@ -6,6 +6,10 @@ This document describes the NuGet analyzer packages used in Ark.Tools and the ra
 
 Ark.Tools uses multiple analyzer packages to maintain code quality, prevent bugs, and enforce best practices. The analyzers are configured to work together with minimal overlap while providing comprehensive coverage of common issues.
 
+## Ark.Tools.Core analyzers
+
+- `ARKCORE005` (error): Exceptions thrown from a catch clause must preserve the caught exception as their inner exception.
+
 ## Mediator Framework generator diagnostics
 
 The mediator source generators report these contract errors at the transport

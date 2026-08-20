@@ -2,6 +2,7 @@
 root = true
 
 dotnet_diagnostic.IDX00001.severity = error
+dotnet_diagnostic.ARKCORE005.severity = error
 
 # C# files
 [*.cs]
