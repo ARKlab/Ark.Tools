@@ -48,16 +48,20 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
     private static void _analyzeCatch(SyntaxTreeAnalysisContext context, CatchClauseSyntax catchClause)
     {
         var caughtExceptionName = catchClause.Declaration?.Identifier.ValueText;
+        if (string.IsNullOrEmpty(caughtExceptionName))
+            return;
 
         foreach (var throwStatement in catchClause.DescendantNodes().OfType<ThrowStatementSyntax>())
         {
             if (throwStatement.Ancestors().OfType<CatchClauseSyntax>().FirstOrDefault() != catchClause
+                || throwStatement.Ancestors()
+                .TakeWhile(ancestor => ancestor != catchClause)
+                .Any(ancestor => ancestor is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax)
                 || throwStatement.Expression is not ObjectCreationExpressionSyntax objectCreation)
                 continue;
 
-            var preservesCaughtException = !string.IsNullOrEmpty(caughtExceptionName)
-                && objectCreation.ArgumentList?.Arguments
-                    .SelectMany(argument => argument.DescendantNodesAndSelf())
+            var preservesCaughtException = objectCreation.ArgumentList?.Arguments
+                .SelectMany(argument => argument.DescendantNodesAndSelf())
                 .OfType<IdentifierNameSyntax>()
                 .Any(identifier => identifier.Identifier.ValueText == caughtExceptionName) == true;
 
