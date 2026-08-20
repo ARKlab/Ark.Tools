@@ -80,7 +80,7 @@ so every transport adapter can map it to its native message shape.
     processor call without runtime reflection.
 12. Bound header count/size and serialized payload size before transport.
     Compressed/decompressed and attachment bounds belong to AZM-07.
-12. Add deterministic round-trip and malformed-input diagnostics.
+13. Add deterministic round-trip and malformed-input diagnostics.
 
 ## Guide contribution
 

@@ -139,7 +139,11 @@ public sealed class MessagingMessagePackCodec : IMessagingCodec
         {
             return MessagePackSerializer.Deserialize<T>(payload, _options);
         }
-        catch (MessagePackSerializationException)
+        catch (Exception exception) when (exception is MessagePackSerializationException
+                                           or InvalidOperationException
+                                           or OverflowException
+                                           or FormatException
+                                           or ArgumentException)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The MessagePack payload is malformed.");
         }
@@ -179,7 +183,11 @@ public sealed class MessagingProtobufCodec : IMessagingCodec
         {
             return Serializer.Deserialize<T>(payload);
         }
-        catch (ProtoException)
+        catch (Exception exception) when (exception is ProtoException
+                                           or InvalidOperationException
+                                           or OverflowException
+                                           or EndOfStreamException
+                                           or ArgumentException)
         {
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The protobuf payload is malformed.");
         }
