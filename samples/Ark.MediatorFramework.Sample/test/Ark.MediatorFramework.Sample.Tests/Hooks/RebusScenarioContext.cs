@@ -173,8 +173,8 @@ public sealed class RebusScenarioContext : IAsyncDisposable
                     counts.InProcess,
                     counts.Deferred,
                     counts.Outbox,
-                    counts.Error,
-                    exception));
+                    counts.Error),
+                exception);
         }
     }
 

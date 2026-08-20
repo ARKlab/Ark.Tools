@@ -5,7 +5,6 @@ using System.Collections.Immutable;
 using System.Linq;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -34,36 +33,35 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(_analyzeThrow, SyntaxKind.ThrowStatement);
+        context.RegisterSyntaxTreeAction(_analyzeTree);
     }
 
-    private static void _analyzeThrow(SyntaxNodeAnalysisContext context)
+    private static void _analyzeTree(SyntaxTreeAnalysisContext context)
     {
-        var throwStatement = (ThrowStatementSyntax)context.Node;
-        if (throwStatement.Expression is not ObjectCreationExpressionSyntax objectCreation)
-            return;
+#pragma warning disable MA0045 // SyntaxTreeAnalysisContext does not provide an async callback.
+        var root = context.Tree.GetRoot(context.CancellationToken);
+#pragma warning restore MA0045
+        foreach (var catchClause in root.DescendantNodes().OfType<CatchClauseSyntax>())
+            _analyzeCatch(context, catchClause);
+    }
 
-        var catchClause = throwStatement.Ancestors().OfType<CatchClauseSyntax>().FirstOrDefault();
-        if (catchClause is null)
-            return;
+    private static void _analyzeCatch(SyntaxTreeAnalysisContext context, CatchClauseSyntax catchClause)
+    {
+        var caughtExceptionName = catchClause.Declaration?.Identifier.ValueText;
 
-        var caughtException = catchClause.Declaration?.Identifier;
-        if (caughtException is null)
+        foreach (var throwStatement in catchClause.DescendantNodes().OfType<ThrowStatementSyntax>())
         {
-            context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
-            return;
+            if (throwStatement.Ancestors().OfType<CatchClauseSyntax>().FirstOrDefault() != catchClause
+                || throwStatement.Expression is not ObjectCreationExpressionSyntax objectCreation)
+                continue;
+
+            var preservesCaughtException = caughtExceptionName is not null
+                && objectCreation.DescendantNodes()
+                .OfType<IdentifierNameSyntax>()
+                .Any(identifier => identifier.Identifier.ValueText == caughtExceptionName);
+
+            if (!preservesCaughtException)
+                context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
         }
-
-        var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration!, context.CancellationToken);
-        if (caughtExceptionSymbol is null)
-            return;
-
-        var preservesCaughtException = objectCreation.DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Select(identifier => context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol)
-            .Any(symbol => SymbolEqualityComparer.Default.Equals(symbol, caughtExceptionSymbol));
-
-        if (!preservesCaughtException)
-            context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
     }
 }

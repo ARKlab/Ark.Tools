@@ -207,7 +207,7 @@ public class EvolvableEnumAnalyzerTests
              MetadataReference.CreateFromFile(typeof(EnumMemberAttribute).Assembly.Location)]);
 
         return await compilation
-            .WithAnalyzers([new EvolvableEnumAnalyzer()])
+            .WithAnalyzers([new EvolvableEnumAnalyzer(), new CaughtExceptionShouldBeInnerExceptionAnalyzer()])
             .GetAnalyzerDiagnosticsAsync()
             .ConfigureAwait(false);
     }
