@@ -63,7 +63,7 @@ This task covers the **request/precondition** direction only. FW-09 covers respo
 ### 1. `ETagAttribute` (new file)
 
 Create `src/mediator-framework/Ark.Tools.MediatorFramework/ETagAttribute.cs`, namespace
-`Ark.MediatorFramework` (this is the transport-agnostic core package — `ApiGroupAttribute.cs` in the
+`Ark.Tools.MediatorFramework` (this is the transport-agnostic core package — `ApiGroupAttribute.cs` in the
 same folder is the pattern to copy for file header, XML docs and style):
 
 - `[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]`
@@ -77,13 +77,13 @@ same folder is the pattern to copy for file header, XML docs and style):
 
 In `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/MinimalApiEndpointGenerator.cs`:
 
-- Add `private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";` next to the
+- Add `private const string ETagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";` next to the
   existing `ServerSetAttribute` constant, resolve it with `compilation.GetTypeByMetadataName(...)`
   and thread the (nullable) symbol through `Extract(...)` exactly like `serverSetAttr`.
 - Add `bool IsETag` to `PropertyModel` and populate it from the attribute presence.
 - Add two diagnostics to
   `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/DiagnosticDescriptors.cs`
-  (ids `ARKMF017` and `ARKMF018` are free; category `Ark.MediatorFramework`, severity `Error`):
+  (ids `ARKMF017` and `ARKMF018` are free; category `Ark.Tools.MediatorFramework`, severity `Error`):
   - `ARKMF017` "Invalid ETag property" — `[ETag]` applied to a property whose type is not `string`
     (nullable or not).
   - `ARKMF018` "Duplicate ETag property" — more than one `[ETag]` property on one contract.

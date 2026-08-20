@@ -386,7 +386,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.Register<IQueryHandler<HostingStreamQuery, IAsyncEnumerable<HostingStreamItem>>, HostingStreamHandler>();
         container.Register<IRequestHandler<HostingAttachmentUploadRequest, HostingResponse>, HostingAttachmentUploadHandler>();
         container.Register<IRequestHandler<HostingAttachmentCollectionUploadRequest, HostingResponse>, HostingAttachmentCollectionUploadHandler>();
-        container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
+        container.Register<IQueryHandler<HostingAttachmentDownloadQuery, Ark.Tools.MediatorFramework.IArkAttachment>, HostingAttachmentDownloadHandler>();
         container.Register<IQueryHandler<HostingOpenApiQuery, HostingOpenApiResponse>, HostingOpenApiHandler>();
         container.Register<IQueryHandler<HostingWireTypesQuery, HostingWireTypesResponse>, HostingWireTypesHandler>();
         container.Register<IQueryHandler<HostingVersionedQuery, HostingResponse>, HostingVersionedHandler>();
@@ -924,9 +924,9 @@ internal sealed class HostingAttachmentCollectionUploadHandler : IRequestHandler
     }
 }
 
-internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAttachmentDownloadQuery, Ark.MediatorFramework.IArkAttachment>
+internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAttachmentDownloadQuery, Ark.Tools.MediatorFramework.IArkAttachment>
 {
-    public async Task<Ark.MediatorFramework.IArkAttachment> ExecuteAsync(
+    public async Task<Ark.Tools.MediatorFramework.IArkAttachment> ExecuteAsync(
         HostingAttachmentDownloadQuery query,
         CancellationToken ctk = default)
     {
@@ -934,7 +934,7 @@ internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAt
         if (!string.Equals(query.Name, "download.txt", StringComparison.Ordinal))
             return null!;
 
-        return new Ark.MediatorFramework.ArkAttachment(
+        return new Ark.Tools.MediatorFramework.ArkAttachment(
             query.Name,
             "text/plain",
             () => new MemoryStream(Encoding.UTF8.GetBytes("downloaded content")));

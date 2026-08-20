@@ -1,11 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework;
-using Ark.MediatorFramework.AzureFunctions;
-using Ark.MediatorFramework.AzureFunctions.Generators;
+using Ark.Tools.MediatorFramework;
+using Ark.Tools.MediatorFramework.AzureFunctions;
+using Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
-using Ark.MediatorFramework.Generators;
+using Ark.Tools.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
 using AwesomeAssertions;
@@ -107,7 +107,7 @@ public sealed class GeneratorSnapshotTests
         var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
             using System.Collections.Generic;
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/stream", AcceptsMessagePack = true, MaxMessagePackStreamedItems = 10)]
             public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
@@ -121,7 +121,7 @@ public sealed class GeneratorSnapshotTests
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             using System.Collections.Generic;
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcMethod("GetStream")]
             public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
@@ -135,9 +135,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/greetings/{id}")]
             [Versioning(Introduced = 1, Retired = 3)]
@@ -163,8 +163,8 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            using Ark.Tools.MediatorFramework;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             """);
 
@@ -180,9 +180,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<string>
@@ -202,9 +202,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/items/{name}")]
             public sealed class GetItem : IQuery<string>
@@ -224,9 +224,9 @@ public sealed class GeneratorSnapshotTests
     {
         var anonymous = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
             public sealed class PublicEndpoint : IQuery<string> { }
@@ -245,9 +245,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/items")]
             public sealed class GetItems : IQuery<string> { }
@@ -264,9 +264,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/queries", SuccessStatusCode = 200, NullResultStatusCode = 404)]
             public sealed class GetQuery : IQuery<string> { }
@@ -285,7 +285,7 @@ public sealed class GeneratorSnapshotTests
     {
         var source =
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public sealed record Input(string Message);
             [HttpEndpoint("PUT", "/items/{id}")]
@@ -299,9 +299,9 @@ public sealed class GeneratorSnapshotTests
 
         var azure = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(Marker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(Marker), "/api")]
             public sealed class Marker { }
             public sealed record Input(string Message);
             [HttpEndpoint("PUT", "/items/{id}")]
@@ -318,7 +318,7 @@ public sealed class GeneratorSnapshotTests
     {
         var source =
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public record Input(string Message);
             public record BaseRequest
@@ -340,9 +340,9 @@ public sealed class GeneratorSnapshotTests
 
         var azure = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(Marker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(Marker), "/api")]
             public sealed class Marker { }
             public record Input(string Message);
             public record BaseRequest
@@ -366,9 +366,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             public sealed class ItemResponse { [ETag] public string? Version { get; set; } }
             [HttpEndpoint("PUT", "/items/{id}")]
@@ -508,9 +508,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/messages", AcceptsMessagePack = true)]
             public sealed class GetMessages : IQuery<string> { }
@@ -524,9 +524,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/messages")]
             public sealed class GetMessages : IQuery<string> { }
@@ -542,9 +542,9 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
             public sealed class ContractMarker { }
             namespace First
             {
@@ -567,7 +567,7 @@ public sealed class GeneratorSnapshotTests
         var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
             using System.Collections.Generic;
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [RebusMessage]
             public sealed class StreamMessage : IRequest<IAsyncEnumerable<string>> { }
@@ -581,7 +581,7 @@ public sealed class GeneratorSnapshotTests
     {
         const string source =
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
             public sealed record Response(Inner Value);
@@ -596,8 +596,8 @@ public sealed class GeneratorSnapshotTests
             }
             """;
 
-        var first = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
-        var second = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var first = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var second = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
@@ -612,7 +612,7 @@ public sealed class GeneratorSnapshotTests
     {
         const string source =
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public enum Status { NOT_SET = 0, Active = 1, Archived = 2 }
             [HttpEndpoint("GET", "/items/{id}")]
@@ -622,7 +622,7 @@ public sealed class GeneratorSnapshotTests
             }
             """;
 
-        var generated = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
         generated.Should().Contain("ENUM Status.NOT_SET=0");
         generated.Should().Contain("ENUM Status.Active=1");
@@ -635,7 +635,7 @@ public sealed class GeneratorSnapshotTests
     {
         const string source =
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using Ark.Tools.Core;
             public enum Status : byte { NOT_SET = 0, Active = 1, Archived = 2 }
@@ -647,7 +647,7 @@ public sealed class GeneratorSnapshotTests
             }
             """;
 
-        var generated = _runGenerator<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
         generated.Should().Contain("EVOLVABLE-ENUM Status.NOT_SET=0");
         generated.Should().Contain("EVOLVABLE-ENUM Status.Active=1");
@@ -660,7 +660,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public sealed record Response([property: ETag] string? Token);
             [HttpEndpoint("GET", "/etag")]
@@ -672,7 +672,7 @@ public sealed class GeneratorSnapshotTests
 
         var withoutETag = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public sealed record Response(string? Token);
             [HttpEndpoint("GET", "/plain")]
@@ -703,7 +703,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [Versioning(Introduced = 1, Retired = 3)]
             [HttpEndpoint("GET", "/api/v{version}/greetings/{id}")]
@@ -728,7 +728,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [Versioning(Introduced = 1, Retired = 3)]
             [HttpEndpoint("GET", "/items")]
@@ -743,7 +743,7 @@ public sealed class GeneratorSnapshotTests
 
         var explicitTemplate = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [Versioning(Introduced = 1)]
             [HttpEndpoint("GET", "/legacy/v{version}/items")]
@@ -770,7 +770,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             /// <summary>Gets a documented value.</summary>
             /// <remarks>The value is read from the contract.</remarks>
@@ -789,7 +789,7 @@ public sealed class GeneratorSnapshotTests
 
         var undocumented = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/undocumented")]
             public sealed class GetUndocumented : IQuery<string> { }
@@ -803,7 +803,7 @@ public sealed class GeneratorSnapshotTests
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             /// <summary>
             /// First line
@@ -830,7 +830,7 @@ public sealed class GeneratorSnapshotTests
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
             /// <summary>
@@ -865,7 +865,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             namespace Api.Contracts;
             [ApiGroup("Public")]
@@ -879,7 +879,7 @@ public sealed class GeneratorSnapshotTests
 
         var result2 = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             namespace First
             {
@@ -900,7 +900,7 @@ public sealed class GeneratorSnapshotTests
     public void MinimalApiGeneratorCachesUnchangedInputs()
     {
         var source = """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/cached")]
             public sealed class CachedEndpoint : IQuery<string>
@@ -943,7 +943,7 @@ public sealed class GeneratorSnapshotTests
     {
         _assertGeneratorCaches<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcMethod("Cached")]
             public sealed class CachedGrpc : IQuery<string> { }
@@ -955,7 +955,7 @@ public sealed class GeneratorSnapshotTests
     {
         _assertGeneratorCaches<ArkRebusEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [RebusMessage]
             public sealed class CachedRebus : ICommand { }
@@ -965,9 +965,9 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void ApiSurfaceGeneratorCachesUnchangedInputs()
     {
-        _assertGeneratorCaches<Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(
+        _assertGeneratorCaches<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/cached-api")]
             public sealed class CachedApi : IQuery<string> { }
@@ -979,7 +979,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/secure")]
             public sealed class SecureEndpoint : IQuery<string>
@@ -1009,7 +1009,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/secure", SuccessStatusCode = 400, NullResultStatusCode = 500)]
             public sealed class SecureEndpoint : IQuery<string>
@@ -1034,7 +1034,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/commands/delete")]
             public sealed record DeleteCommand : ICommand<DeleteCommand>
@@ -1053,7 +1053,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("PUT", "/items/{id}")]
             public sealed record UpdateItem : IRequest<string>
@@ -1074,7 +1074,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("PUT", "/items")]
             public sealed record InvalidETag : IRequest<string>
@@ -1109,7 +1109,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/queries", AllowAnonymous = true)]
             public sealed class Query : IQuery<string>
@@ -1132,7 +1132,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcMethod("Delete")]
             public sealed class DeleteCommand : ICommand<DeleteCommand>
@@ -1152,7 +1152,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkRebusEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [RebusMessage(OwnerQueue = "orders")]
             public sealed class CreateOrder : IRequest<string>
@@ -1173,7 +1173,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkRebusEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [RebusMessage(OwnerQueue = "orders")]
             public sealed class RebuildOrder : ICommand
@@ -1216,7 +1216,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [RebusMessage(OwnerQueue = " ")]
             public sealed class CreateOrder : IRequest<string>
@@ -1232,7 +1232,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [GrpcService("Greetings")]
             [Versioning(Introduced = 1, Retired = 2)]
@@ -1262,7 +1262,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [ApiGroup("Greetings")]
             [GrpcMethod("GetGreeting")]
@@ -1279,7 +1279,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/api/v{version}/greetings/{id}")]
             public sealed record UpdateGreeting : IRequest<string>
@@ -1302,7 +1302,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using System.Collections.Generic;
             [HttpEndpoint("GET", "/audits")]
@@ -1322,7 +1322,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public readonly struct ExternalTimestamp
             {
@@ -1347,7 +1347,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/values/{Count}/{Ratio}")]
             public sealed class GetValues : IQuery<string>
@@ -1376,7 +1376,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public enum Status
             {
@@ -1402,7 +1402,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/messages")]
             public sealed record Message : IRequest<string>
@@ -1422,7 +1422,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/messages")]
             public sealed record Message : IQuery<string>
@@ -1439,7 +1439,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/messages", AcceptsMessagePack = true)]
             public sealed record Message : IRequest<string>
@@ -1459,7 +1459,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/api/v{version}/uploads/{id}", MaxRequestBodySizeBytes = 1024, AllowedContentTypes = new[] { "text/plain" })]
             public sealed record Upload : IRequest<string>
@@ -1473,7 +1473,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")");
         generated.Should().Contain("form.Files.Count != 1");
-        generated.Should().Contain("Attachment = new global::Ark.MediatorFramework.ArkAttachment");
+        generated.Should().Contain("Attachment = new global::Ark.Tools.MediatorFramework.ArkAttachment");
         generated.Should().Contain("DisableAntiforgery()");
         generated.Should().Contain("RequestSizeLimitAttribute(1024L)");
         generated.Should().Contain("Contains(new[] { \"text/plain\" }, file.ContentType");
@@ -1484,7 +1484,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/uploads", MaxFileCount = 3)]
             public sealed record Upload : IRequest<string>
@@ -1512,7 +1512,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/uploads")]
             public sealed record Upload : IRequest<string>
@@ -1531,7 +1531,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/uploads")]
             public sealed record Upload : IRequest<string>
@@ -1548,7 +1548,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
             [GrpcService("Greetings")]
@@ -1580,7 +1580,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
             [GrpcMethod("GetGreeting")]
@@ -1610,7 +1610,7 @@ public sealed class GeneratorSnapshotTests
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
             [GrpcService("Documents")]
@@ -1631,7 +1631,7 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().Contain("rpc UploadMany(stream ark.mediator.UploadDocumentChunk) returns (UploadResult);");
-        generated.Should().Contain("IAsyncEnumerable<global::Ark.MediatorFramework.UploadDocumentChunk> chunks");
+        generated.Should().Contain("IAsyncEnumerable<global::Ark.Tools.MediatorFramework.UploadDocumentChunk> chunks");
         generated.Should().Contain("StreamingArkAttachments.ReadAllAsync");
     }
 
@@ -1641,7 +1641,7 @@ public sealed class GeneratorSnapshotTests
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
             """
             namespace Test;
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using Ark.Tools.Core;
             using ProtoBuf;
@@ -1683,7 +1683,7 @@ public sealed class GeneratorSnapshotTests
         var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
             """
             namespace Test;
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using Ark.Tools.Core;
             using ProtoBuf;
@@ -1708,7 +1708,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("OPTIONS", "/options")]
             public sealed record OptionsRequest : IRequest<string>;
@@ -1723,7 +1723,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             [HttpEndpoint("GET", "/invalid")]
             public sealed class InvalidEndpoint;
             """);
@@ -1736,7 +1736,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class MissingRoute : IQuery<string>;
@@ -1750,7 +1750,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/invalid")]
             public sealed class InvalidBody : IRequest<string>
@@ -1767,7 +1767,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             [GrpcMethod]
             public sealed class InvalidGrpc;
             """);
@@ -1780,7 +1780,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             [RebusMessage]
             public sealed class InvalidRebus;
             """);
@@ -1912,7 +1912,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runApiSurfaceGeneratorResult(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
@@ -1928,7 +1928,7 @@ public sealed class GeneratorSnapshotTests
     public void ApiSurfaceGeneratorEmitsPerContractDiagnosticsWhenSnapshotDiffers()
     {
         const string source = """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
@@ -1949,7 +1949,7 @@ public sealed class GeneratorSnapshotTests
     public void ApiSurfaceGeneratorEmitsNoDiagnosticsWhenSnapshotMatches()
     {
         const string source = """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
@@ -1969,7 +1969,7 @@ public sealed class GeneratorSnapshotTests
     {
         var result = _runApiSurfaceGeneratorResult(
             """
-            using Ark.MediatorFramework;
+            using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
@@ -2008,7 +2008,7 @@ public sealed class GeneratorSnapshotTests
             : [new TestAdditionalText("ArkApiSurface.txt", baseline)];
 
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: [new Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
+            generators: [new Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
             additionalTexts: additionalTexts,
             optionsProvider: new TestAnalyzerConfigOptionsProvider(
                 new Dictionary<string, string>(StringComparer.Ordinal)

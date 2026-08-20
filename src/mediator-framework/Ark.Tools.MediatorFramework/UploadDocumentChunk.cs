@@ -3,7 +3,7 @@
 
 using ProtoBuf;
 
-namespace Ark.MediatorFramework;
+namespace Ark.Tools.MediatorFramework;
 
 /// <summary>Metadata sent as the first message of a streamed document upload.</summary>
 [ProtoContract]

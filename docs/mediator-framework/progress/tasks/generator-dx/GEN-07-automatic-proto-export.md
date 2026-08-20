@@ -24,7 +24,7 @@ Proto export is a build concern owned by the gRPC package. Keep `ArkGeneratedPro
 in-assembly manifest, but replace host execution with a package-owned export runner invoked by
 `buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets` after `Build`. The runner receives
 `$(TargetPath)` and `$(ArkExportProtoDir)`, loads the built assembly without invoking its entry point,
-and exports only when `Ark.MediatorFramework.Generated.ArkGeneratedProtos` contains at least one
+and exports only when `Ark.Tools.MediatorFramework.Generated.ArkGeneratedProtos` contains at least one
 generated service proto.
 
 The runner also writes the shared `ark/nodatime.proto` and `ark/mediator.proto` assets and preserves

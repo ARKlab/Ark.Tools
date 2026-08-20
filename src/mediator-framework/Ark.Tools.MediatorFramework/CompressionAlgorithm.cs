@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-namespace Ark.MediatorFramework;
+namespace Ark.Tools.MediatorFramework;
 
 /// <summary>Optional sender-side payload compression algorithms.</summary>
 public enum CompressionAlgorithm

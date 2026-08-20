@@ -10,25 +10,25 @@ using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 
-namespace Ark.MediatorFramework.ApiSurface;
+namespace Ark.Tools.MediatorFramework.ApiSurface;
 
 /// <summary>Generates the deterministic transport API surface and emits per-contract diagnostics when the snapshot drifts.</summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 {
-    private const string Http = "Ark.MediatorFramework.HttpEndpointAttribute";
-    private const string Grpc = "Ark.MediatorFramework.GrpcMethodAttribute";
-    private const string GrpcService = "Ark.MediatorFramework.GrpcServiceAttribute";
-    private const string Rebus = "Ark.MediatorFramework.RebusMessageAttribute";
-    private const string ApiGroup = "Ark.MediatorFramework.ApiGroupAttribute";
-    private const string ServerSet = "Ark.MediatorFramework.ServerSetAttribute";
-    private const string Versioning = "Ark.MediatorFramework.VersioningAttribute";
+    private const string Http = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
+    private const string Grpc = "Ark.Tools.MediatorFramework.GrpcMethodAttribute";
+    private const string GrpcService = "Ark.Tools.MediatorFramework.GrpcServiceAttribute";
+    private const string Rebus = "Ark.Tools.MediatorFramework.RebusMessageAttribute";
+    private const string ApiGroup = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
+    private const string ServerSet = "Ark.Tools.MediatorFramework.ServerSetAttribute";
+    private const string Versioning = "Ark.Tools.MediatorFramework.VersioningAttribute";
 
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
         "API surface snapshot missing",
         "ArkApiSurface.txt is missing. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to generate ArkApiSurface.current.txt, copy it to $(MSBuildProjectDirectory)/ArkApiSurface.txt, and commit it.",
-        "Ark.MediatorFramework",
+        "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
@@ -36,7 +36,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "ARKAPI002",
         "API surface contract changed",
         "Contract '{0}' has changed since the last accepted snapshot. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to inspect ArkApiSurface.current.txt, then update ArkApiSurface.txt to accept this change.",
-        "Ark.MediatorFramework",
+        "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
@@ -44,7 +44,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "ARKAPI003",
         "Multiple API surface snapshots",
         "Only one ArkApiSurface.txt baseline is allowed, but {0} were found.",
-        "Ark.MediatorFramework",
+        "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
@@ -52,7 +52,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "ARKAPI004",
         "Malformed API surface snapshot",
         "ArkApiSurface.txt contains an invalid snapshot line: '{0}'.",
-        "Ark.MediatorFramework",
+        "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 

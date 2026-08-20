@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 
-namespace Ark.MediatorFramework.Generators
+namespace Ark.Tools.MediatorFramework.Generators
 {
     /// <summary>
     /// Incremental generator that discovers <c>Ark.Tools.Solid</c> requests/queries decorated with
@@ -26,17 +26,17 @@ namespace Ark.MediatorFramework.Generators
     [Generator(LanguageNames.CSharp)]
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
-        private const string HttpEndpointAttribute = "Ark.MediatorFramework.HttpEndpointAttribute";
+        private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
         private const string ArkGenerateMinimalApiForAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkGenerateMinimalApiForAssemblyAttribute";
-        private const string HttpQueryAttribute = "Ark.MediatorFramework.HttpQueryAttribute";
-        private const string HttpBodyAttribute = "Ark.MediatorFramework.HttpBodyAttribute";
-        private const string HttpRouteAttribute = "Ark.MediatorFramework.HttpRouteAttribute";
-        private const string ServerSetAttribute = "Ark.MediatorFramework.ServerSetAttribute";
-        private const string ETagAttribute = "Ark.MediatorFramework.ETagAttribute";
-        private const string RebusMessageAttribute = "Ark.MediatorFramework.RebusMessageAttribute";
-        private const string ApiGroupAttribute = "Ark.MediatorFramework.ApiGroupAttribute";
-        private const string VersioningAttribute = "Ark.MediatorFramework.VersioningAttribute";
-        private const string ArkAttachment = "Ark.MediatorFramework.IArkAttachment";
+        private const string HttpQueryAttribute = "Ark.Tools.MediatorFramework.HttpQueryAttribute";
+        private const string HttpBodyAttribute = "Ark.Tools.MediatorFramework.HttpBodyAttribute";
+        private const string HttpRouteAttribute = "Ark.Tools.MediatorFramework.HttpRouteAttribute";
+        private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
+        private const string ETagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
+        private const string RebusMessageAttribute = "Ark.Tools.MediatorFramework.RebusMessageAttribute";
+        private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
+        private const string VersioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
+        private const string ArkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private const string List = "System.Collections.Generic.List`1";
         private const string ReadOnlyList = "System.Collections.Generic.IReadOnlyList`1";
@@ -46,42 +46,42 @@ namespace Ark.MediatorFramework.Generators
             "ARKMF001",
             "Only one attachment is supported",
             "HTTP endpoint '{0}' declares more than one IArkAttachment property",
-            "Ark.MediatorFramework",
+            "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor UnsupportedAttachmentCollection = new DiagnosticDescriptor(
             "ARKMF005",
             "Unsupported attachment collection",
             "HTTP endpoint '{0}' has attachment collection property '{1}' with an unsupported shape",
-            "Ark.MediatorFramework",
+            "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor ServerSetPropertyCannotBeReset = new DiagnosticDescriptor(
             "ARKMF002",
             "Server-set property cannot be reset",
             "HTTP endpoint '{0}' has server-set property '{1}' without an accessible setter",
-            "Ark.MediatorFramework",
+            "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor PossibleMassAssignment = new DiagnosticDescriptor(
             "ARKMF003",
             "Possible mass assignment",
             "HTTP endpoint '{0}' has property '{1}' that may be server-owned; mark it with [ServerSet] or suppress this warning",
-            "Ark.MediatorFramework",
+            "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor DuplicateOperationName = new DiagnosticDescriptor(
             "ARKMF016",
             "Duplicate operation name",
             "HTTP endpoints '{0}' and '{1}' resolve to the same operation name '{2}' in API version {3}",
-            "Ark.MediatorFramework",
+            "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
         private static readonly DiagnosticDescriptor VersionPrefixMissingToken = new DiagnosticDescriptor(
             "ARKMF020",
             "Version prefix is missing the version token",
             "The version prefix must contain the '{version}' token",
-            "Ark.MediatorFramework",
+            "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
@@ -525,7 +525,7 @@ namespace Ark.MediatorFramework.Generators
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidContractShape, type.Name, GetLocation(http)));
             var attachmentProperties = attachmentType is null
                 ? ImmutableArray<PropertyModel>.Empty
-                : properties.Where(property => property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection).ToImmutableArray();
+                : properties.Where(property => property.TypeFullName == "global::Ark.Tools.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection).ToImmutableArray();
             foreach (var property in properties.Where(property => IsPotentialAttachmentCollection(property.TypeFullName))
                 .Where(property => !property.IsAttachmentCollection))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedAttachmentCollection, type.Name, GetLocation(http), property.Name));
@@ -683,7 +683,7 @@ namespace Ark.MediatorFramework.Generators
 
         private static bool IsPotentialAttachmentCollection(string typeName)
             => typeName.Contains("IArkAttachment", StringComparison.Ordinal)
-                && !string.Equals(typeName, "global::Ark.MediatorFramework.IArkAttachment", StringComparison.Ordinal);
+                && !string.Equals(typeName, "global::Ark.Tools.MediatorFramework.IArkAttachment", StringComparison.Ordinal);
 
         private static string? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
         {
@@ -706,10 +706,10 @@ namespace Ark.MediatorFramework.Generators
             var sb = new StringBuilder();
             sb.AppendLine("// <auto-generated/>");
             sb.AppendLine("#nullable enable");
-            sb.AppendLine("namespace Ark.MediatorFramework.Generated");
+            sb.AppendLine("namespace Ark.Tools.MediatorFramework.Generated");
             sb.AppendLine("{");
             sb.AppendLine("    /// <summary>Source-generated Minimal API transport hosting for pure Ark.Tools.Solid handlers.</summary>");
-            sb.AppendLine("    [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.MediatorFramework.MinimalApi.Generators\", \"1.0.0\")]");
+            sb.AppendLine("    [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.Tools.MediatorFramework.MinimalApi.Generators\", \"1.0.0\")]");
             sb.AppendLine("    public static partial class ArkGeneratedEndpoints");
             sb.AppendLine("    {");
 
@@ -1169,7 +1169,7 @@ namespace Ark.MediatorFramework.Generators
             int maxVersion)
         {
             var attachment = endpoint.Properties.Single(property =>
-                property.TypeFullName == "global::Ark.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection);
+                property.TypeFullName == "global::Ark.Tools.MediatorFramework.IArkAttachment" || property.IsAttachmentCollection);
             var bindings = endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet).ToArray();
             sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             foreach (var property in bindings)
@@ -1210,10 +1210,10 @@ namespace Ark.MediatorFramework.Generators
             if (attachment.IsAttachmentCollection)
             {
                 var conversion = attachment.IsAttachmentArray ? ".ToArray()" : ".ToList()";
-                sb.AppendLine("                    " + attachment.Name + " = global::System.Linq.Enumerable.Select(form.Files, file => (global::Ark.MediatorFramework.IArkAttachment)new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream))" + conversion + ",");
+                sb.AppendLine("                    " + attachment.Name + " = global::System.Linq.Enumerable.Select(form.Files, file => (global::Ark.Tools.MediatorFramework.IArkAttachment)new global::Ark.Tools.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream))" + conversion + ",");
             }
             else
-                sb.AppendLine("                    " + attachment.Name + " = new global::Ark.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
+                sb.AppendLine("                    " + attachment.Name + " = new global::Ark.Tools.MediatorFramework.ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream),");
             sb.AppendLine("                };");
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
@@ -1276,7 +1276,7 @@ namespace Ark.MediatorFramework.Generators
             sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
-            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
+            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.Tools.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
             sb.Append("            }).Produces(200, contentType: \"application/octet-stream\").Produces(404)")
                 .Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }

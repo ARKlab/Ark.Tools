@@ -3,6 +3,6 @@
 
 using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
-[assembly: Ark.MediatorFramework.HttpHost(
+[assembly: Ark.Tools.MediatorFramework.HttpHost(
     typeof(EchoQuery),
     "/api/v{version}")]

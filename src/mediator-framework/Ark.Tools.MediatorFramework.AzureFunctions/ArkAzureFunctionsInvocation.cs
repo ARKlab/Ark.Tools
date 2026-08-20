@@ -14,7 +14,7 @@ using SimpleInjector.Lifestyles;
 using System.Reflection;
 using System.Text.Json;
 
-namespace Ark.MediatorFramework.AzureFunctions;
+namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Provides the typed invocation boundary used by generated Functions.</summary>
 public static class ArkAzureFunctionsInvocation
@@ -273,13 +273,13 @@ public static class ArkAzureFunctionsInvocation
                 .Select(p =>
                 {
                     var routeAttr = p.CustomAttributes.FirstOrDefault(a =>
-                        string.Equals(a.AttributeType.FullName, "Ark.MediatorFramework.HttpRouteAttribute", StringComparison.Ordinal));
+                        string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.HttpRouteAttribute", StringComparison.Ordinal));
                     var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                     var isRoute = routeAttr is not null;
                     var isQuery = p.CustomAttributes.Any(a =>
-                        string.Equals(a.AttributeType.FullName, "Ark.MediatorFramework.HttpQueryAttribute", StringComparison.Ordinal));
+                        string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.HttpQueryAttribute", StringComparison.Ordinal));
                     var isServerSet = p.CustomAttributes.Any(a =>
-                        string.Equals(a.AttributeType.FullName, "Ark.MediatorFramework.ServerSetAttribute", StringComparison.Ordinal));
+                        string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.ServerSetAttribute", StringComparison.Ordinal));
                     var propType = p.PropertyType;
                     var isNullableOrRef = !propType.IsValueType || Nullable.GetUnderlyingType(propType) is not null;
                     var defaultValue = propType.IsValueType ? Activator.CreateInstance(propType) : null;

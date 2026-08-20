@@ -3,11 +3,11 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace Ark.MediatorFramework.Generators;
+namespace Ark.Tools.MediatorFramework.Generators;
 
 internal static class DiagnosticDescriptors
 {
     public static readonly DiagnosticDescriptor UnsupportedHandlerKind = new(
         "ARKMF011", "Unsupported handler kind", "Attributed type '{0}' does not implement a supported handler interface",
-        "Ark.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
 }

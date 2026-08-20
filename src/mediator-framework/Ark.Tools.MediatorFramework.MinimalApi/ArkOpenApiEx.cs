@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.OpenApi;
 
-using Ark.MediatorFramework;
+using Ark.Tools.MediatorFramework;
 
 using System.Text.Json.Nodes;
 

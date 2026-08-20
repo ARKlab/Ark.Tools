@@ -3,7 +3,7 @@
 
 using ProtoBuf;
 
-namespace Ark.MediatorFramework;
+namespace Ark.Tools.MediatorFramework;
 
 /// <summary>Identifies an attachment for a streamed download.</summary>
 // ProtoModel is currently evaluation-only in protobuf-net; this contract opts into its AOT model generation.

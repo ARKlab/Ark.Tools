@@ -4,8 +4,8 @@
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Http;
 
-using Ark.MediatorFramework;
-using Ark.MediatorFramework.Generated;
+using Ark.Tools.MediatorFramework;
+using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.MinimalApi;

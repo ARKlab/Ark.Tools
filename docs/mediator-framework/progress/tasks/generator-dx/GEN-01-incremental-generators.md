@@ -16,7 +16,7 @@ the full walk on every keystroke.
 
 ## Steps
 
-1. For **source-declared** contracts: switch to `context.SyntaxProvider.ForAttributeWithMetadataName("Ark.MediatorFramework.HttpEndpointAttribute", ...)` (and the gRPC/Rebus attribute names) producing equatable model records (no `ISymbol` retained in the pipeline — extract strings/primitives into `record` models so caching works).
+1. For **source-declared** contracts: switch to `context.SyntaxProvider.ForAttributeWithMetadataName("Ark.Tools.MediatorFramework.HttpEndpointAttribute", ...)` (and the gRPC/Rebus attribute names) producing equatable model records (no `ISymbol` retained in the pipeline — extract strings/primitives into `record` models so caching works).
 2. For contracts in **referenced assemblies** (the current reason for the full walk): keep a `CompilationProvider`-based scan but restrict it to `MetadataReference`s whose assembly references `Ark.Tools.MediatorFramework` (cheap pre-filter via `Compilation.GetUsedAssemblyReferences`/assembly-identity check), and combine with the syntax branch. If cross-assembly discovery is not actually required (check the sample: contracts live in `Ark.MediatorFramework.Sample.Application`, referenced by WebInterface — so it IS required), document the cost.
    The referenced branch is intentionally bounded to assemblies selected by the
    `*FromAssembly<TAssemblyMarker>` marker; metadata symbols do not expose an attribute index for

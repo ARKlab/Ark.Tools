@@ -29,8 +29,8 @@
   <Target Name="ArkApiSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
           Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
-    <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
+    <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
           DestinationFiles="$(IntermediateOutputPath)ArkApiSurface.current.txt"
-          Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
+          Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
   </Target>
 </Project>

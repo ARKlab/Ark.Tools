@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Text.Json;
 
-namespace Ark.MediatorFramework.AzureFunctions;
+namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 internal sealed partial class ArkAzureFunctionsEasyAuthHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,

@@ -6,7 +6,7 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace Ark.MediatorFramework.AzureFunctions;
+namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Provides HTTP file and streaming operations for generated Functions.</summary>
 public static class ArkAzureFunctionsHttp

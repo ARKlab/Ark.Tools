@@ -311,7 +311,7 @@ sample integration-test configuration are safe.
 |---|---|---|---|
 | Ark.ReferenceProject | `ark.reference.core.application` | `ark.reference.book_print_process` (`Consumer`), process ID and final status tags | — |
 | Ark.ResourceWatcher | `ark.resourcewatcher.sample` | `ark.resourcewatcher.sample.process` (`Internal`), resource ID and record count tags | `ark.resourcewatcher.sample.records_processed` counter; `ark.resourcewatcher.sample.processing_duration` millisecond histogram |
-| Ark.MediatorFramework | `ark.mediator.sample.application` | `ark.mediator.sample.book_print_process` (`Consumer`), process ID and final status tags | — |
+| Ark.Tools.MediatorFramework | `ark.mediator.sample.application` | `ark.mediator.sample.book_print_process` (`Consumer`), process ID and final status tags | — |
 
 All three samples also collect Ark framework signals. Rebus uses source/meter
 `ark.tools.rebus`; the reference feature specifically asserts

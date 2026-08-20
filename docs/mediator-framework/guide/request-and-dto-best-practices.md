@@ -5,7 +5,7 @@ static class as the namespace for each model and version its transport-neutral
 types under that namespace:
 
 ```csharp
-using Ark.MediatorFramework;
+using Ark.Tools.MediatorFramework;
 
 public static class Book
 {

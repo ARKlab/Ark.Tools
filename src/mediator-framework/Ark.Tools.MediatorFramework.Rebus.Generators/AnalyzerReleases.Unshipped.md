@@ -5,8 +5,8 @@
 
 Rule ID | Category | Severity | Notes
 ---------|----------|----------|-------
-ARKMF004 | Ark.MediatorFramework | Error | Invalid owner queue
-ARKMF011 | Ark.MediatorFramework | Error | Unsupported handler kind
-ARKMF014 | Ark.MediatorFramework | Error | Duplicate Rebus registration
-ARKMF015 | Ark.MediatorFramework | Error | Conflicting Rebus owner queues
-ARKMF019 | Ark.MediatorFramework | Error | Unsupported streaming response
+ARKMF004 | Ark.Tools.MediatorFramework | Error | Invalid owner queue
+ARKMF011 | Ark.Tools.MediatorFramework | Error | Unsupported handler kind
+ARKMF014 | Ark.Tools.MediatorFramework | Error | Duplicate Rebus registration
+ARKMF015 | Ark.Tools.MediatorFramework | Error | Conflicting Rebus owner queues
+ARKMF019 | Ark.Tools.MediatorFramework | Error | Unsupported streaming response

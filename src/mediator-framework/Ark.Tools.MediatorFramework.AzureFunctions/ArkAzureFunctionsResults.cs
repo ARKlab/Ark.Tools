@@ -5,7 +5,7 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 
 using Microsoft.AspNetCore.Http;
 
-namespace Ark.MediatorFramework.AzureFunctions;
+namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Creates HTTP results for generated Azure Functions endpoints.</summary>
 public static class ArkAzureFunctionsResults

@@ -27,7 +27,7 @@ Task breakdown: see [`tasks/README.md`](tasks/README.md).
 - **High — Non-record contracts break compilation inside `.g.cs`**: `body with { }` requires records; multipart requires settable props. Cryptic CS errors in generated code; only `ARKMF001` exists in the whole MinimalApi generator.
 - **Medium — No startup handler verification**: missing handler registration = 500 at first request (contra design "validated at startup").
 - **Medium — Fixed 200-only semantics**: `TypedResults.Ok` always; `null` result serializes as `200 null`.
-- **Low**: namespace split (`Ark.MediatorFramework` attributes vs `Ark.Tools.MediatorFramework.*` runtime); diagnostic IDs 002/003 unaccounted; MessagePack 400 lacks ProblemDetails body.
+- **Low**: namespace split (`Ark.Tools.MediatorFramework` attributes vs `Ark.Tools.MediatorFramework.*` runtime); diagnostic IDs 002/003 unaccounted; MessagePack 400 lacks ProblemDetails body.
 
 ### 1c. Security foot-guns (developer-mistake focus)
 
