@@ -90,8 +90,12 @@ Participants own routing and participant-local behavior:
     Subscribes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed class PrintingParticipant;
+public sealed partial class PrintingParticipant;
 ```
+
+Declare participants `partial`: the generator extends the class in the same
+contracts assembly with the resolved `Identity` constant and the
+participant-owned contract registry core.
 
 `Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
 copies of events published on the same network. Exactly one member must process
@@ -104,9 +108,12 @@ serializer supported by the subscriber. `DefaultSerializer` must be included in
 Native messaging uses the `amf1-*` header set documented in
 [serialization](serialization.md). Senders write the registered contract name,
 owner-selected content type, message/correlation identifiers, invariant sent
-time, network identity, and sending participant identity. Receivers resolve the
-contract and codec only from those headers, accepting current names and
-`FormerNames` aliases from the generated registry.
+time, network identity, and sending participant identity. The identity header
+values are compile-time constants on the generated participant and network
+partial classes — the participant partial lives in the contracts assembly and
+also carries the contract registry core. Receivers resolve the contract and
+codec only from those headers, accepting current names and `FormerNames`
+aliases from the generated registry.
 
 JSON, MessagePack, and protobuf use the native content types
 `application/json;charset=utf-8`, `application/x-msgpack`, and

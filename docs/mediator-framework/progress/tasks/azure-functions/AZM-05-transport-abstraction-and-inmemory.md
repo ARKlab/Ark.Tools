@@ -35,7 +35,8 @@ infrastructure.
 ## Implementation steps
 
 1. Define the transport contract consuming AZM-04's separate message context
-   and body:
+   and body, whose send path is driven by the participant-level generated
+   registry core and identity constants (AZM-02/AZM-04):
    - `MessagingCapabilities Capabilities { get; }`;
    - a hard maximum inline-message ceiling in bytes, plus a deterministic
      measurement seam that measures the completed native representation of an

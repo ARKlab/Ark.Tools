@@ -304,9 +304,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             return null;
 
         var explicitIdentity = _string(attribute, "Identity");
-        var identity = explicitIdentity ?? _normalizeIdentity(symbol.Name.EndsWith("Participant", StringComparison.Ordinal)
-            ? symbol.Name.Substring(0, symbol.Name.Length - "Participant".Length)
-            : symbol.Name);
+        var identity = explicitIdentity ?? MessagingMetadata.NormalizeParticipantIdentity(symbol.Name);
         var serializers = _enums(attribute, "Serializers");
         var retryType = _type(attribute, "Retry");
         var retry = retryType is null ? null : _readRetry(retryType);
@@ -421,11 +419,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
         return MessagingMetadata.DefaultContractName(symbol);
-    }
-
-    private static string _normalizeIdentity(string value)
-    {
-        return MessagingMetadata.NormalizeIdentity(value);
     }
 
     private static string _normalizeSnake(string value)

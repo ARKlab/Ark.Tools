@@ -31,7 +31,13 @@ ownership on both contract and participant.
   the current compilation and referenced-assembly metadata via the network's
   `Members` list.
 - **Generated artifact**: emit a deterministic metadata descriptor only; do
-  not emit Service Bus trigger methods yet.
+  not emit Service Bus trigger methods yet. The participant-owned contract
+  registry core (the `typeof(T)` to current-name map and the
+  name-to-typed-deserializer dispatch consumed by AZM-04) is generated into
+  the participant's public partial class in this same contracts (non-Host)
+  assembly — the mapping depends only on the participant declaration, not on
+  any host. The participant partial also exposes the resolved identity as a
+  compile-time constant (explicit `Identity` or the normalized class name).
 - **Compatibility**: leave Rebus consumption of the new metadata to AZM-14;
   only ensure legacy Rebus generation remains unchanged here.
 - **Tests**: use compile-time generator fixtures for every diagnostic and API

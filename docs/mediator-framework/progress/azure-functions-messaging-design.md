@@ -485,7 +485,7 @@ public sealed class BookRetryPolicy : IMessagingRetryPolicy
     Retry = typeof(BookRetryPolicy),
     Compression = CompressionAlgorithm.Brotli,
     CompressionMinimumSizeBytes = 4096)]
-public sealed class PrintingParticipant;
+public sealed partial class PrintingParticipant;
 
 // Publisher participant (run by any process: Minimal API, client app,
 // Functions): owns and publishes BookPrintCompleted; no queue, no trigger,
@@ -494,7 +494,7 @@ public sealed class PrintingParticipant;
     Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed class WebFrontendParticipant;
+public sealed partial class WebFrontendParticipant;
 
 // Functions host binding (in the Functions host assembly): attaches this
 // host to the participant, selects the trigger binding, and adds host-local
@@ -575,7 +575,7 @@ public sealed record OrderRecalculated : ICommand<OrderRecalculated>;
     Subscribes = new[] { typeof(OrderRecalculated) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed class BillingParticipant;
+public sealed partial class BillingParticipant;
 
 [MessagingNetwork(Members = new[] { typeof(BillingParticipant) })]
 public sealed class BillingMessagingNetwork;

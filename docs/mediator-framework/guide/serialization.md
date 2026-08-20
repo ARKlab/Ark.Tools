@@ -33,19 +33,24 @@ The runtime writes these headers:
 | `amf1-content-encoding` | Optional opaque compression token |
 | `amf1-payload-attachment-*` | Optional opaque DataBus claim-check metadata |
 
-`MessagingContractRegistry` is the only contract lookup seam. Generated metadata
-maps `typeof(T)` to its current logical name for writes and a received logical
-name to a closed generic deserializer for reads. Codecs write to
-`IBufferWriter<byte>` and read `ReadOnlySequence<byte>`; context/header handling
-stays separate from the payload. JSON uses the host's source-generated
-`JsonSerializerOptions`; JSON metadata does not leak into contract descriptors
-or protocol-neutral codec methods. This mirrors generated Minimal API and
-HttpTrigger binding, response serialization, and processor dispatch, so it
-performs no runtime payload-type lookup or reflection. The receiver selects the
-codec from `amf1-content-type`; it never falls back to a participant default or
-loads a CLR type from an untrusted header. Unknown contracts, unsupported codecs,
-malformed payloads, foreign networks, and size violations raise
-`MessagingProtocolException` without including the payload in the diagnostic.
+`MessagingContractRegistry` is the only contract lookup seam. Its core is
+generated into each participant's public partial class in the contracts
+assembly — the mapping depends only on the participant declaration — and maps
+`typeof(T)` to its current logical name for writes and a received logical
+name to a closed generic deserializer for reads. The same participant partial
+exposes the sender identity as a compile-time constant, so the
+`amf1-sender-identity` and `amf1-network` header values never need runtime
+resolution. Codecs write to `IBufferWriter<byte>` and read
+`ReadOnlySequence<byte>`; context/header handling stays separate from the
+payload. JSON uses the host's source-generated `JsonSerializerOptions`; JSON
+metadata does not leak into contract descriptors or protocol-neutral codec
+methods. This mirrors generated Minimal API and HttpTrigger binding, response
+serialization, and processor dispatch, so it performs no runtime payload-type
+lookup or reflection. The receiver selects the codec from `amf1-content-type`;
+it never falls back to a participant default or loads a CLR type from an
+untrusted header. Unknown contracts, unsupported codecs, malformed payloads,
+foreign networks, and size violations raise `MessagingProtocolException`
+without including the payload in the diagnostic.
 
 Delivery count is native transport runtime state and is not emitted as an
 AMF header. Compression and DataBus interpretation are later pipeline stages;

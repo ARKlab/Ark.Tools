@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,13 @@ internal static class MessagingMetadata
     public static string NormalizeIdentity(string value)
     {
         return string.Join("-", Words(value).Select(word => word.ToLowerInvariant()));
+    }
+
+    public static string NormalizeParticipantIdentity(string className)
+    {
+        return NormalizeIdentity(className.EndsWith("Participant", StringComparison.Ordinal)
+            ? className[..^"Participant".Length]
+            : className);
     }
 
     public static string NormalizeSnake(string value)

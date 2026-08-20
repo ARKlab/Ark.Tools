@@ -8,7 +8,7 @@ namespace Ark.MediatorFramework.Sample.Application.Messages;
     Processes = new[] { typeof(ProcessBookPrintProcessRequest) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed class SampleMessagingParticipant;
+public sealed partial class SampleMessagingParticipant;
 
 /// <summary>Declares the sample messaging network.</summary>
 [MessagingNetwork(

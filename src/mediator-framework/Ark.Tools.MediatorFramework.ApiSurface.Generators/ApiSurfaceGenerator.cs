@@ -248,9 +248,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(value => value, StringComparer.Ordinal);
             var identity = StringNamed(participant, "Identity")
-                ?? MessagingMetadata.NormalizeIdentity(type.Name.EndsWith("Participant", StringComparison.Ordinal)
-                    ? type.Name[..^"Participant".Length]
-                    : type.Name);
+                ?? MessagingMetadata.NormalizeParticipantIdentity(type.Name);
             var defaultSerializer = MessagingMetadata.SerializerName(EnumNamed(participant, "DefaultSerializer"));
             lines.Add(
                 $"PARTICIPANT {MessagingTypeName(type)} -> network:{networkName} identity:{identity}"

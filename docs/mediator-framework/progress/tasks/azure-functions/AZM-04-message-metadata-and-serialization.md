@@ -20,11 +20,13 @@ so every transport adapter can map it to its native message shape.
 - **Existing integrations**: reuse Ark System.Text.Json, MessagePack, and
   protobuf abstractions already referenced by Mediator Framework projects; add
   no serializer package.
-- **Contract lookup**: consume the generated registry from AZM-02 and expose no
-  `Type.GetType` fallback. Generated metadata emits a frozen `typeof(T)` to
-  current-name map for writes and a name-to-typed-deserializer dispatch table
-  for reads, mirroring generated Minimal API and HttpTrigger parameter binding,
-  response serialization, and handler dispatch.
+- **Contract lookup**: consume the generated contract registry core from AZM-02
+  and expose no `Type.GetType` fallback. Because the registry depends only on
+  the participant mapping, AZM-02 emits its core — the frozen `typeof(T)` to
+  current-name map for writes and the name-to-typed-deserializer dispatch table
+  for reads — into the participant's public partial class in the contracts
+  (non-Host) assembly, mirroring generated Minimal API and HttpTrigger
+  parameter binding, response serialization, and handler dispatch.
 - **Testing**: place pure header/codec tests in
   `Ark.Tools.MediatorFramework.Tests`.
 - **Runnable state**: the message context and codecs are complete and fully tested in
@@ -42,12 +44,17 @@ so every transport adapter can map it to its native message shape.
    `amf1-content-type`, optional `amf1-content-encoding`,
    `amf1-payload-attachment-id`, `amf1-network` carrying the resolved producer
    network identity, and `amf1-sender-identity` carrying the participant that
-   invoked `Send` or `Publish`.
+   invoked `Send` or `Publish`. Both identities are known at compile time: the
+   sender identity comes from the participant-level `Identity` constant, the
+   network identity from the network-level constant.
 3. Define a transport-neutral message context containing string headers only.
    Body bytes are always a separate transport-owned `IBufferWriter<byte>` or
    `ReadOnlySequence<byte>`; do not define a DTO combining headers and body.
    Do not emit a delivery-count header; expose native delivery count only
-   through runtime context.
+   through runtime context. Every non-runtime, identity-related header value
+   (participant identity, and the network identity on the network partial) is
+   a compile-time constant on the generated public partial declaration rather
+   than a runtime-resolved value.
 4. Specify (but do not implement) the transport mapping requirement: each
    transport adapter maps the separate headers and body to its native shape
    without loss. AZM-10/AZM-11 implement the mappings.
@@ -72,9 +79,12 @@ so every transport adapter can map it to its native message shape.
    generated registry: the processing participant's default for messages, the
    publishing participant's default for events. Sender-side protocol choice
    does not exist; owner protocol and serializer-set incompatibilities are
-   compile-time diagnostics (AZM-02).
+   compile-time diagnostics (AZM-02). The write path reads the sender's
+   participant-level registry core and identity constant directly.
 9. Resolve contract types only through the generated registry; never perform
-    unrestricted CLR type loading from `amf1-msg-type`.
+    unrestricted CLR type loading from `amf1-msg-type`. On receive, the host
+    composes the registry cores of the participants it runs; on send, the
+    participant's own registry core resolves `typeof(T)`.
 10. Write the current logical contract name and resolve both current names and
     `FormerNames` aliases on receive.
 11. Keep header/context construction separate from payload serde. Codecs write
