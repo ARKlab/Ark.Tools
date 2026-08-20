@@ -25,9 +25,19 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         description: "When a caught exception is replaced with another exception, preserve it as the inner exception.",
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
 
+    private static readonly DiagnosticDescriptor _missingDeclarationDiagnostic = new(
+        "ARKCORE006",
+        "Capture the caught exception",
+        "The catch clause must capture the exception before throwing a replacement",
+        "Exception handling",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "When a caught exception is replaced with another exception, capture it so it can be preserved as the inner exception.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-        => [_diagnostic];
+        => [_diagnostic, _missingDeclarationDiagnostic];
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
@@ -58,7 +68,10 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
             return;
 
         if (catchClause.Declaration is null)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(_missingDeclarationDiagnostic, context.Node.GetLocation()));
             return;
+        }
 
         var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration, context.CancellationToken);
         if (caughtExceptionSymbol is null)

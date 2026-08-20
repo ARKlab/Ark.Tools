@@ -170,9 +170,9 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
-    /// <summary>Verifies catch clauses without a variable are ignored safely.</summary>
+    /// <summary>Verifies catch clauses without a variable report a dedicated diagnostic.</summary>
     [TestMethod]
-    public async Task CatchWithoutVariable_ShouldNotReportDiagnostic()
+    public async Task CatchWithoutVariable_ShouldReportCaptureDiagnostic()
     {
         var diagnostics = await _analyzeAsync(
             """
@@ -190,7 +190,8 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().BeEmpty();
+        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE006");
+        diagnostics.Single(item => item.Id == "ARKCORE006").Severity.Should().Be(DiagnosticSeverity.Error);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
