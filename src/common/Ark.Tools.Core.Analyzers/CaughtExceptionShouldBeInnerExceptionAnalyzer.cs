@@ -43,9 +43,10 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         if (objectCreation is null)
             return;
 
-        var catchClause = context.Node.Ancestors().OfType<CatchClauseSyntax>().FirstOrDefault();
+        var ancestors = context.Node.Ancestors().ToList();
+        var catchClause = ancestors.OfType<CatchClauseSyntax>().FirstOrDefault();
         if (catchClause is null
-            || context.Node.Ancestors()
+            || ancestors
                 .TakeWhile(ancestor => ancestor != catchClause)
                 .Any(ancestor => ancestor is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax))
             return;
@@ -62,7 +63,7 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
                 .SelectMany(argument => argument.DescendantNodesAndSelf())
                 .OfType<IdentifierNameSyntax>()
                 .Select(identifier => context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol)
-                .Any(symbol => SymbolEqualityComparer.Default.Equals(symbol, caughtExceptionSymbol)) == true;
+                .Any(symbol => SymbolEqualityComparer.Default.Equals(symbol, caughtExceptionSymbol)) ?? false;
 
         if (!preservesCaughtException)
             context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
