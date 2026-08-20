@@ -39,10 +39,6 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
 
     private static void _analyzeThrow(SyntaxNodeAnalysisContext context)
     {
-        var objectCreation = _getObjectCreation(context.Node);
-        if (objectCreation is null)
-            return;
-
         CatchClauseSyntax? catchClause = null;
         foreach (var ancestor in context.Node.Ancestors())
         {
@@ -58,31 +54,39 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         if (catchClause is null)
             return;
 
-        var caughtExceptionName = catchClause.Declaration?.Identifier.ValueText;
-        if (string.IsNullOrEmpty(caughtExceptionName))
+        if (context.Node is ThrowStatementSyntax { Expression: null })
             return;
 
         var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration!, context.CancellationToken);
         if (caughtExceptionSymbol is null)
             return;
 
-        var preservesCaughtException = objectCreation.ArgumentList?.Arguments
-                .Any(argument => argument.Expression is IdentifierNameSyntax identifier
-                    && SymbolEqualityComparer.Default.Equals(
-                        context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol,
-                        caughtExceptionSymbol)) ?? false;
-
-        if (!preservesCaughtException)
-            context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
-    }
-
-    private static ObjectCreationExpressionSyntax? _getObjectCreation(SyntaxNode node)
-    {
-        return node switch
+        var expression = context.Node switch
         {
-            ThrowStatementSyntax statement when statement.Expression is ObjectCreationExpressionSyntax expression => expression,
-            ThrowExpressionSyntax expression when expression.Expression is ObjectCreationExpressionSyntax objectCreation => objectCreation,
+            ThrowStatementSyntax statement => statement.Expression,
+            ThrowExpressionSyntax throwExpression => throwExpression.Expression,
             _ => null,
         };
+
+        if (expression is IdentifierNameSyntax identifier
+            && SymbolEqualityComparer.Default.Equals(
+                context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol,
+                caughtExceptionSymbol))
+            return;
+
+        var objectCreation = _getObjectCreation(expression);
+        var preservesCaughtException = objectCreation?.ArgumentList?.Arguments
+            .Any(argument => argument.Expression is IdentifierNameSyntax identifier
+                && SymbolEqualityComparer.Default.Equals(
+                    context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol,
+                    caughtExceptionSymbol)) ?? false;
+
+        if (!preservesCaughtException)
+            context.ReportDiagnostic(Diagnostic.Create(_diagnostic, context.Node.GetLocation()));
+    }
+
+    private static ObjectCreationExpressionSyntax? _getObjectCreation(ExpressionSyntax? expression)
+    {
+        return expression as ObjectCreationExpressionSyntax;
     }
 }
