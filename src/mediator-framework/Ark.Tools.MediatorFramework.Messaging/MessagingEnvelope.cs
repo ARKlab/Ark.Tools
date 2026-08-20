@@ -151,7 +151,8 @@ public sealed class MessagingEnvelopeContext
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The correlation identifier is not a valid GUID.", MessagingHeaderNames.CorrelationId);
     }
 
-    internal void _validateLimits(MessagingEnvelopeLimits limits)
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal context validation follows public member naming.")]
+    internal void ValidateLimits(MessagingEnvelopeLimits limits)
     {
         if (Headers.Count > limits.MaximumHeaderCount)
             throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope header count exceeds its configured limit.");

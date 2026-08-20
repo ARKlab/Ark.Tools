@@ -36,11 +36,14 @@ public abstract class MessagingContractDescriptor
     /// <summary>Gets the ordinal-sorted former names accepted on receive.</summary>
     public IReadOnlyList<string> FormerNames { get; }
 
-    internal abstract Type _contractType { get; }
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal abstract Type ContractType { get; }
 
-    internal abstract void _serialize(IMessagingCodec codec, IBufferWriter<byte> output, object value);
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal abstract void Serialize(IMessagingCodec codec, IBufferWriter<byte> output, object value);
 
-    internal abstract object _deserialize(IMessagingCodec codec, in ReadOnlySequence<byte> payload);
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal abstract object Deserialize(IMessagingCodec codec, in ReadOnlySequence<byte> payload);
 }
 
 /// <summary>Describes one statically known messaging contract of type <typeparamref name="T"/>.</summary>
@@ -59,12 +62,14 @@ public sealed class MessagingContractDescriptor<T> : MessagingContractDescriptor
         JsonTypeInfo = jsonTypeInfo;
     }
 
-    internal override Type _contractType => typeof(T);
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal override Type ContractType => typeof(T);
 
     /// <summary>Gets source-generated JSON metadata for this contract, when JSON is supported.</summary>
     public JsonTypeInfo<T>? JsonTypeInfo { get; }
 
-    internal override void _serialize(IMessagingCodec codec, IBufferWriter<byte> output, object value)
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal override void Serialize(IMessagingCodec codec, IBufferWriter<byte> output, object value)
     {
         if (value is not T typedValue)
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The value does not match the registered contract type.");
@@ -72,12 +77,14 @@ public sealed class MessagingContractDescriptor<T> : MessagingContractDescriptor
         codec.Serialize(output, typedValue, JsonTypeInfo);
     }
 
-    internal override object _deserialize(IMessagingCodec codec, in ReadOnlySequence<byte> payload)
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal override object Deserialize(IMessagingCodec codec, in ReadOnlySequence<byte> payload)
     {
         return codec.Deserialize<T>(payload, JsonTypeInfo);
     }
 
-    internal T _deserializeTyped(IMessagingCodec codec, in ReadOnlySequence<byte> payload)
+    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
+    internal T DeserializeTyped(IMessagingCodec codec, in ReadOnlySequence<byte> payload)
     {
         return codec.Deserialize<T>(payload, JsonTypeInfo);
     }
@@ -99,7 +106,7 @@ public sealed class MessagingContractRegistry
         foreach (var descriptor in descriptors)
         {
             ArgumentNullException.ThrowIfNull(descriptor);
-            if (!namesByType.TryAdd(descriptor._contractType, descriptor.Name))
+            if (!namesByType.TryAdd(descriptor.ContractType, descriptor.Name))
                 throw new InvalidOperationException("A contract type is already registered.");
             _addName(byName, descriptor.Name, descriptor);
             foreach (var alias in descriptor.FormerNames)

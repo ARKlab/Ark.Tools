@@ -99,7 +99,7 @@ public sealed class MessagingEnvelopeCodec
         }
 
         var payload = new ArrayBufferWriter<byte>();
-        contract._serialize(serializer, payload, value);
+        contract.Serialize(serializer, payload, value);
         return new MessagingEnvelope(new MessagingEnvelopeContext(headers, _limits), payload.WrittenMemory, _limits);
     }
 
@@ -108,7 +108,7 @@ public sealed class MessagingEnvelopeCodec
     {
         var (contract, serializer) = _resolveIncoming(envelope);
         var payload = new ReadOnlySequence<byte>(envelope.Payload);
-        return new MessagingDecodedMessage(contract, contract._deserialize(serializer, payload));
+        return new MessagingDecodedMessage(contract, contract.Deserialize(serializer, payload));
     }
 
     /// <summary>Deserializes an envelope and verifies the expected registered contract type.</summary>
@@ -121,7 +121,7 @@ public sealed class MessagingEnvelopeCodec
             throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The envelope contract type does not match the requested type.");
 
         var payload = new ReadOnlySequence<byte>(envelope.Payload);
-        return expected._deserializeTyped(serializer, payload);
+        return expected.DeserializeTyped(serializer, payload);
     }
 
     private (MessagingContractDescriptor Contract, IMessagingCodec Serializer) _resolveIncoming(MessagingEnvelope envelope)
@@ -129,7 +129,7 @@ public sealed class MessagingEnvelopeCodec
         ArgumentNullException.ThrowIfNull(envelope);
         if (envelope.Payload.Length > _limits.MaximumPayloadLength)
             throw new MessagingEnvelopeException(MessagingFailureKind.SizeLimit, "The envelope payload exceeds its configured limit.");
-        envelope.Context._validateLimits(_limits);
+        envelope.Context.ValidateLimits(_limits);
         envelope.Context.ValidateRequiredHeaders();
 
         var network = envelope.Context.Headers[MessagingHeaderNames.Network];
