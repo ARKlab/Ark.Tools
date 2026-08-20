@@ -8,7 +8,7 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis;
 
-namespace Ark.MediatorFramework.Generators;
+namespace Ark.Tools.MediatorFramework.Generators;
 
 internal static class XmlDocumentation
 {

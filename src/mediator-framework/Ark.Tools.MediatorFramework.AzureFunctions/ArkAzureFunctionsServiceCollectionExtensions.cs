@@ -13,7 +13,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace Ark.MediatorFramework.AzureFunctions;
+namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Registers the runtime services used by generated Azure Functions.</summary>
 public static class ArkAzureFunctionsServiceCollectionExtensions

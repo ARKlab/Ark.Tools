@@ -5,4 +5,4 @@
 
 Rule ID | Category | Severity | Notes
 ---------|----------|----------|-------
-ARKMF011 | Ark.MediatorFramework | Error | Unsupported handler kind
+ARKMF011 | Ark.Tools.MediatorFramework | Error | Unsupported handler kind

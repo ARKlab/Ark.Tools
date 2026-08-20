@@ -40,7 +40,7 @@ In `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Min
 
 - During `Extract(...)`, inspect the **response type** symbol (`response` is already resolved from
   `IRequest<T>` / `IQuery<T>`) for a single public property carrying
-  `Ark.MediatorFramework.ETagAttribute`. Record its name on `EndpointModel` as
+  `Ark.Tools.MediatorFramework.ETagAttribute`. Record its name on `EndpointModel` as
   `string? ResponseETagProperty`. Apply the same validation as FW-08 (`ARKMF017` for a non-`string`
   type, `ARKMF018` for more than one) to the response type.
 - Commands (`ICommand`) and attachment/download responses have no response ETag — leave those emit

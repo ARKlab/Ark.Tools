@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 
-using Ark.MediatorFramework;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 

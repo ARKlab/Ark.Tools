@@ -1,8 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Hosting.Contracts.GrpcClient;
+
+using GrpcUploadDocumentChunk = Ark.Tools.MediatorFramework.Grpc.UploadDocumentChunk;
+using GrpcUploadDocumentMetadata = Ark.Tools.MediatorFramework.Grpc.UploadDocumentMetadata;
 
 using AwesomeAssertions;
 
@@ -29,15 +31,15 @@ public sealed class GrpcUploadTests
         using var call = client.UploadHostingAttachment(
             cancellationToken: app.Lifetime.ApplicationStopping);
 
-        await call.RequestStream.WriteAsync(new UploadDocumentChunk
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
         {
-            Metadata = new UploadDocumentMetadata { Name = "document.txt", ContentType = "text/plain" },
+            Metadata = new GrpcUploadDocumentMetadata { Name = "document.txt", ContentType = "text/plain" },
         }, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        await call.RequestStream.WriteAsync(new UploadDocumentChunk
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
         {
             Data = Google.Protobuf.ByteString.CopyFromUtf8("first-"),
         }, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        await call.RequestStream.WriteAsync(new UploadDocumentChunk
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
         {
             Data = Google.Protobuf.ByteString.CopyFromUtf8("second"),
         }, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
@@ -60,7 +62,7 @@ public sealed class GrpcUploadTests
         var client = new HostingV1.HostingV1Client(channel);
         using var call = client.UploadHostingAttachment(
             cancellationToken: app.Lifetime.ApplicationStopping);
-        await call.RequestStream.WriteAsync(new UploadDocumentChunk
+        await call.RequestStream.WriteAsync(new GrpcUploadDocumentChunk
         {
             Data = Google.Protobuf.ByteString.CopyFromUtf8("invalid"),
         }, app.Lifetime.ApplicationStopping).ConfigureAwait(false);

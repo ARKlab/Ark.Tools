@@ -3,7 +3,7 @@
 
 using Ark.MediatorFramework.Sample.API;
 
-[assembly: Ark.MediatorFramework.HttpHost(
+[assembly: Ark.Tools.MediatorFramework.HttpHost(
     typeof(Book_CreateRequest.V1),
     "/api/v{version}",
     ExcludedContracts = new[]

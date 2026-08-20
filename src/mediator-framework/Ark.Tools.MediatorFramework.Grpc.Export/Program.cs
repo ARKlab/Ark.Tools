@@ -18,8 +18,8 @@ AssemblyLoadContext.Default.Resolving += (_, name) =>
         : null;
 };
 var targetAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(targetAssemblyPath);
-var generatedType = targetAssembly.GetType("Ark.MediatorFramework.Generated.ArkGeneratedProtos")
-    ?? targetAssembly.GetType("Ark.MediatorFramework.Generated.ArkGeneratedEndpoints+ArkGeneratedProtos");
+var generatedType = targetAssembly.GetType("Ark.Tools.MediatorFramework.Generated.ArkGeneratedProtos")
+    ?? targetAssembly.GetType("Ark.Tools.MediatorFramework.Generated.ArkGeneratedEndpoints+ArkGeneratedProtos");
 var getFiles = generatedType?.GetMethod("GetFiles", BindingFlags.Public | BindingFlags.Static);
 if (getFiles?.Invoke(null, null) is not Array files || files.Length == 0)
     return;

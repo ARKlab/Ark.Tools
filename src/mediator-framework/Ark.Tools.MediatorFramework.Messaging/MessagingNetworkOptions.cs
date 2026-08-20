@@ -3,7 +3,7 @@
 
 using System.Collections.ObjectModel;
 
-namespace Ark.MediatorFramework.Messaging;
+namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Immutable, resolved configuration for a messaging network.</summary>
 public sealed class MessagingNetworkOptions

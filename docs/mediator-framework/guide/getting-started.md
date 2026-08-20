@@ -74,7 +74,7 @@ regardless of whether the caller is HTTP, gRPC, a test, or a later transport.
 Create `Program.cs`:
 
 ```csharp
-using Ark.MediatorFramework.Generated;
+using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.MediatorFramework.MinimalApi;
 

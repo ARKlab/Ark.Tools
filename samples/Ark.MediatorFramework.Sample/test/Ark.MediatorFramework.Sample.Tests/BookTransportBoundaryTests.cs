@@ -52,7 +52,7 @@ public sealed class BookTransportBoundaryTests
             container.Verify();
             await using var scope = AsyncScopedLifestyle.BeginScope(container);
             var generatedEndpointsType = typeof(SampleHost).Assembly.GetType(
-                "Ark.MediatorFramework.Generated.ArkGeneratedEndpoints")
+                "Ark.Tools.MediatorFramework.Generated.ArkGeneratedEndpoints")
                 ?? throw new InvalidOperationException("Generated gRPC endpoint type was not found.");
             var serviceType = generatedEndpointsType.GetNestedType(
                 "BooksV1GrpcService",
