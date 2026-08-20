@@ -99,21 +99,22 @@ each message or publish each event; subscriptions must be satisfiable and use a
 serializer supported by the subscriber. `DefaultSerializer` must be included in
 `Serializers`. Retry and compression are participant-owned and may differ
 
-### Envelope and serializer compatibility
+### Message headers and serializer compatibility
 
-Native messaging envelopes use the `amf1-*` header set documented in
+Native messaging uses the `amf1-*` header set documented in
 [serialization](serialization.md). Senders write the registered contract name,
 owner-selected content type, message/correlation identifiers, invariant sent
 time, network identity, and sending participant identity. Receivers resolve the
 contract and codec only from those headers, accepting current names and
 `FormerNames` aliases from the generated registry.
 
-JSON, MessagePack, and protobuf use the Rebus-compatible content types
+JSON, MessagePack, and protobuf use the native content types
 `application/json;charset=utf-8`, `application/x-msgpack`, and
 `application/x-protobuf`. Content encoding and DataBus attachment headers are
 opaque until their later pipeline stages. Unknown contracts, unsupported
 protocols, malformed payloads, and a foreign `amf1-network` fail fast; delivery
-count remains native transport context and is never serialized into the envelope. Retry and compression are participant-owned and may differ
+count remains native transport context and is never serialized into message
+headers. Retry and compression are participant-owned and may differ
 between members.
 
 Participant identities default to the class name without a trailing

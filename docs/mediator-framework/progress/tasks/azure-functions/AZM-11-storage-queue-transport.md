@@ -10,8 +10,8 @@
 Networks without `PubSub` should be able to run on the cheaper Azure Storage
 Queue transport, including consuming. Storage Queue supports at-least-once
 receive through the visibility timeout and `DequeueCount`, but has no
-application properties, no topics, and no native dead-letter queue, so it
-needs a text-safe envelope encoding, a poison-queue DLQ mapping, and its own
+application properties, no topics, and no native dead-letter queue, so its
+transport must define a text-safe frame, a poison-queue DLQ mapping, and its own
 generated Azure Functions QueueTrigger.
 
 ## Execution map
@@ -20,15 +20,16 @@ generated Azure Functions QueueTrigger.
   (`Capabilities = Receive | ScheduledSend`; `Send` implicit; no `PubSub`;
   a 64 KiB final-message limit) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract.
-- **Encoding**: serialize the complete canonical binary envelope (binary
-  payload plus the full `amf1-*` header set), Base64-encode it exactly once,
+- **Encoding**: the Storage Queue transport frames the separate binary body and
+  full `amf1-*` header set, then Base64-encodes that frame exactly once,
   and send the resulting text with `QueueMessageEncoding.None`. Generated
   Functions hosts set `extensions.queues.messageEncoding` to `none` and
   decode that raw Base64 body exactly once. The encoder must not assume the
-  payload is JSON merely because the outer envelope is text-encoded.
+  payload is JSON merely because the transport frame is text-encoded.
   Its received contract is selected by the generated native name-to-generic
   deserializer dispatch table, followed by the matching typed processor call;
-  it must not use runtime reflection.
+  it must not use runtime reflection. This mirrors generated Minimal API and
+  HttpTrigger parameter binding, response serialization, and handler dispatch.
 - **Settlement mapping (QueueTrigger, not PeekLock)**: isolated QueueTrigger
   has no `MessageActions`. Complete = return successfully (host deletes).
   Abandon = throw (host applies `queues.visibilityTimeout` =
@@ -39,7 +40,7 @@ generated Azure Functions QueueTrigger.
 - **Poison ownership**: two actors can write `<queue>-poison` — the
   framework SDK move (metadata) and the Functions host after
   `queues.maxDequeueCount` failed throws (no metadata). Fail-fast,
-  malformed envelopes, foreign `amf1-network`, and missing `IFailed<T>` at
+  malformed messages, foreign `amf1-network`, and missing `IFailed<T>` at
   delivery `N` always use the SDK move. `maxDequeueCount` is `2N` when the
   participant enables second-level retries, otherwise `N`. A Functions app
   hosts exactly one messaging participant, so its host-wide queue settings
@@ -70,15 +71,15 @@ generated Azure Functions QueueTrigger.
 
 ## Implementation steps
 
-1. Implement the transport send path: serialize the complete canonical binary
-   envelope (headers + binary payload), Base64-encode it once, and send it
+1. Implement the transport send path: frame the separate headers and binary
+   body in a transport-private format, Base64-encode it once, and send it
    through an SDK client configured with `QueueMessageEncoding.None`. The
    transport measures the final text before send and before the AZM-07
    claim-check decision. Reserve 3 072 canonical bytes for bounded poison
-   metadata: a normal inline envelope is at most 46 080 bytes and a poison
-   envelope is at most 49 152 bytes, which Base64-encodes to at most 64 KiB.
+   metadata: a normal inline frame is at most 46 080 bytes and a poison
+   frame is at most 49 152 bytes, which Base64-encodes to at most 64 KiB.
    The bus offloads to DataBus before encoding when its complete candidate
-   does not fit; it re-measures the attachment-reference envelope and fails
+   does not fit; it re-measures the attachment-reference frame and fails
    explicitly if that cannot fit.
 2. Implement scheduled send using the initial visibility delay, validating
    duration and due-time variants against transport and network limits.
@@ -153,17 +154,17 @@ network declaration.
 
 ## Required test coverage
 
-- Envelope encoding round-trips binary JSON, MessagePack, and protobuf
+- The transport frame round-trips binary JSON, MessagePack, and protobuf
   payloads and all headers through a real Azurite queue with
   `messageEncoding: none`; the sender and trigger each perform exactly one
   Base64 operation.
 - Inline and claim-check boundary tests prove that the final encoded normal
-  and poison envelopes, including headers and bounded failure metadata, stay
+  and poison frames, including headers and bounded failure metadata, stay
   within 64 KiB.
 - Scheduled send visibility behavior and limit validation.
 - Receive, complete, abandon/visibility-expiry redelivery, and `DequeueCount`
   exactness.
-- Dead-letter moves the envelope and failure metadata to `<queue>-poison` and
+- Dead-letter moves the message and failure metadata to `<queue>-poison` and
   removes the original; fault injection may produce duplicate poison copies,
   which retain the same original message ID.
 - Retry exhaustion triggers the inline second-level flow at the configured
@@ -181,7 +182,7 @@ network declaration.
 - Startup ensures the participant identity queue and the `<queue>-poison`
   companion queue when resource creation is enabled, coexists with
   IaC-precreated queues, and never auto-deletes queues.
-- Fail-fast and malformed envelopes are SDK-moved to `<queue>-poison` with
+- Fail-fast and malformed messages are SDK-moved to `<queue>-poison` with
   metadata, then the function returns successfully; the original is gone.
 - Abandon is a thrown exception; the next visible time honors
   `RetryDelay`.
@@ -216,7 +217,7 @@ network declaration.
   contract.
 - [ ] Text-safe encoding preserves binary payloads and headers.
 - [ ] The single-Base64 `messageEncoding: none` contract and final encoded
-  envelope-size boundaries are verified against Azurite.
+  frame-size boundaries are verified against Azurite.
 - [ ] Generated QueueTriggers dispatch through the AZM-09 runtime.
 - [ ] Capability rejection and `NotSupportedException` behavior are tested.
 - [ ] Conformance groups pass against Azurite.

@@ -26,7 +26,7 @@ infrastructure.
 - **Conformance suite**: add a reusable transport-contract test suite in
   `Ark.Tools.MediatorFramework.Tests` structured so later transports (Service
   Bus, Storage Queue) re-run the same assertions where capabilities apply.
-- **Runnable state**: at task end, envelopes can be sent, scheduled,
+- **Runnable state**: at task end, messages can be sent, scheduled,
   published, received, settled, and dead-lettered through InMemory; the full
   solution builds and tests green.
 - **Stop condition**: no Azure SDK reference, no generated triggers, no
@@ -34,19 +34,20 @@ infrastructure.
 
 ## Implementation steps
 
-1. Define the transport contract consuming the AZM-04 envelope:
+1. Define the transport contract consuming AZM-04's separate message context
+   and body:
    - `MessagingCapabilities Capabilities { get; }`;
-   - a hard maximum inline-envelope ceiling in bytes, plus a deterministic
+   - a hard maximum inline-message ceiling in bytes, plus a deterministic
      measurement seam that measures the completed native representation of an
-     envelope, including headers and transport encoding. The DataBus decision
+     message, including headers, body, and transport encoding. The DataBus decision
      must use this measurement rather than payload bytes alone (AZM-07);
-   - `SendAsync(queueName, envelope, ctk)`;
-   - `SendAsync(queueName, envelope, scheduledFor, ctk)` valid only when
+   - `SendAsync(queueName, context, body, ctk)`;
+   - `SendAsync(queueName, context, body, scheduledFor, ctk)` valid only when
      `ScheduledSend` is declared;
-   - `PublishAsync(topicName, envelope, ctk)` valid only when `PubSub` is
+   - `PublishAsync(topicName, context, body, ctk)` valid only when `PubSub` is
      declared;
    - a receive seam valid only when `Receive` is declared, delivering a locked
-     envelope with a native delivery count and accepting exactly one of
+     separate message context/body with a native delivery count and accepting exactly one of
      `CompleteAsync`, `AbandonAsync`, or `DeadLetterAsync(reason)` per
      delivery. This PeekLock-style settlement plus delivery-count contract is
      fixed for every receive-capable transport;
@@ -57,18 +58,18 @@ infrastructure.
 3. Implement the InMemory transport with `Capabilities = Receive | PubSub |
    ScheduledSend`:
    - named in-memory queues and topics; topic subscriptions forward a copy of
-     each published envelope into each subscriber queue;
+     each published message into each subscriber queue;
    - PeekLock semantics: a delivered message is invisible until completed,
      abandoned, or lock-expired; abandon and lock expiry increment the
-     delivery count and requeue; dead-letter moves the envelope to a
+     delivery count and requeue; dead-letter moves the message to a
      per-queue DLQ readable by tests;
    - configurable lock duration and a test-controllable clock (reuse the
      repository NodaTime clock abstractions) so lock expiry and scheduled
      delivery are testable without real waits;
-   - scheduled envelopes become visible at their due time;
+   - scheduled messages become visible at their due time;
    - thread-safe under concurrent senders, competing consumers, and
      settlement races;
-   - no hard inline-envelope ceiling (`long.MaxValue`-style unbounded): the
+   - no hard inline-message ceiling (`long.MaxValue`-style unbounded): the
      network payload threshold applies alone.
 4. Implement a runtime message pump for receive-capable transports: a
    start/stop async loop that takes locked deliveries and invokes a supplied
@@ -109,7 +110,7 @@ application handler changes in this task.
 - Competing consumers never observe one lock twice concurrently.
 - Scheduled delivery with a controlled clock; no arbitrary sleeps.
 - Startup transport-vs-network capability validation success and failure.
-- Inline-envelope boundary tests prove that headers and transport encoding are
+- Inline-message boundary tests prove that headers, body, and transport encoding are
   included in the claim-check decision.
 - Conformance suite passes fully against InMemory.
 

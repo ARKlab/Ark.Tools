@@ -15,7 +15,7 @@ SimpleInjector registrations.
 
 - **Projects**: finalize the package split:
   `Ark.Tools.MediatorFramework.Messaging` (transport-neutral runtime:
-  network options, envelope, codecs, pipeline contracts, DataBus, transports, bus,
+  network options, message context, codecs, pipeline contracts, DataBus, transports, bus,
   dispatcher, lifecycle) and `Ark.Tools.MediatorFramework.AzureFunctions`
   (trigger generation and Functions hosting adapters, depending on the
   messaging package), plus
@@ -38,7 +38,11 @@ SimpleInjector registrations.
   services.
   The generated descriptor owns the static generic serde/dispatch entries:
   `typeof(T)` maps to the current wire name for writes, while a wire name maps
-  to a closed generic deserializer and processor dispatch for reads.
+  to a closed generic deserializer and processor dispatch for reads. JSON
+  codecs consume the host's source-generated `JsonSerializerOptions`; contract
+  descriptors and protocol-neutral codec APIs expose no JSON metadata. The
+  generated shape mirrors Minimal API and HttpTrigger binding, response
+  serialization, and handler dispatch.
 - **DI**: follow the existing Azure Functions HTTP/SimpleInjector composition;
   do not create a second container or duplicate application registrations.
 - **Mode selection**: fail startup if both Rebus and Mediator Framework buses

@@ -57,7 +57,10 @@ explicit guidance and the public API must be reviewable before release.
    conflict diagnostics. Explain that generated metadata maps `typeof(T)` to
    the write name and a received name to closed generic serde/processor calls,
    following the same no-reflection boundary as generated Minimal API and
-   HttpTrigger binding and response serialization.
+   HttpTrigger binding and response serialization. Document that headers and
+   transport-owned body sequences remain separate, and that JSON uses the
+   host's source-generated `JsonSerializerOptions` without leaking JSON
+   metadata into protocol-neutral codec APIs.
 4. Document at-least-once delivery, fail-fast DLQ, retry exhaustion, native
    delivery-count semantics, PeekLock requirements, inline second-level
    dispatch, no persisted `IFailed<T>` message, and separate scopes.

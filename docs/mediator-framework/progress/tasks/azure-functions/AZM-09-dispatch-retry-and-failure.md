@@ -39,12 +39,12 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
   dispatched, retried, and failure-handled over the InMemory transport; full
   solution builds and tests green.
 - **Stop condition**: never send or persist `IFailed<T>` and never perform
-  second-level dispatch for malformed/unsupported envelopes or fail-fast
+  second-level dispatch for malformed/unsupported messages or fail-fast
   exceptions.
 
 ## Implementation steps
 
-1. Implement typed envelope-to-contract dispatch with one
+1. Implement typed message-to-contract dispatch with one
    `AsyncScopedLifestyle` scope for normal handling, plugged into the AZM-05
    runtime message pump. The generated name-to-deserializer dispatch table
    must deserialize with a closed generic `T` and call the corresponding
@@ -62,7 +62,7 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 6. Define the public transport-neutral `IFailed<T>` containing the original
    message, serializable exception info, and a read-only native
    delivery-count snapshot. Do not require failure headers on the live
-   envelope; attach bounded details only when dead-lettering if the
+   message; attach bounded details only when dead-lettering if the
    transport can carry them.
 7. Dispatch the failure wrapper inline in a fresh SimpleInjector scope from the
    catch path at delivery `N` only. Do not enqueue a separate second-level
@@ -70,7 +70,7 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 8. If no `IFailed<T>` handler is registered at delivery `N`, dead-letter
    immediately as fail-fast. If the handler throws fail-fast, dead-letter.
    Otherwise abandon and allow normal `T` on later deliveries through `2N`.
-9. Make malformed/unsupported envelopes fail fast and prevent second-level
+9. Make malformed/unsupported messages fail fast and prevent second-level
    dispatch.
 10. Apply the same settlement policy to an exception propagated by an AZM-06
     pipeline step as to a handler exception: fail-fast dead-letters and every

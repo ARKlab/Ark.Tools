@@ -21,7 +21,7 @@ composition switch, while intentionally reducing the framework API surface.
   `Dictionary<string, string>` of additional application headers on every
   operation.
 - **Native implementation**: implement one transport-neutral bus in
-  `Ark.Tools.MediatorFramework.Messaging` composed from the envelope,
+  `Ark.Tools.MediatorFramework.Messaging` composed from the message-context,
   pipeline, DataBus, and transport seams of AZM-04/05/06/07. There is no
   per-technology bus implementation.
 - **Routing source**: use only the generated registry (contract → owning
@@ -52,11 +52,12 @@ composition switch, while intentionally reducing the framework API surface.
    enqueue. No API cancels an already scheduled message.
 5. Reject all local-send/request/reply operations by omission; the interface
    has no such members.
-6. Delegate all envelope construction, content encoding, compression, and
+6. Delegate header construction, body serialization, content encoding, compression, and
    DataBus claim-checking to AZM-04/AZM-07.
    The generated registry binds every `Send<TMessage>`/`Publish<TEvent>` to its
    generic serializer and logical name; it never resolves a payload CLR type
-   from runtime metadata.
+   from runtime metadata. This mirrors generated Minimal API and HttpTrigger
+   response serialization.
 7. Propagate message, correlation, causation, sent-time, sender-identity, and
    allowed context headers using centralized constants. Write
    `amf1-sender-identity` for both `Send` and `Publish`.
@@ -117,7 +118,7 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
   reply operation.
 - [ ] Queue/topic routing, scheduling, and capability guards are tested over
   InMemory.
-- [ ] Serialization and headers are delegated to the shared envelope runtime.
+- [ ] Serialization and headers are delegated to the shared messaging runtime.
 - [ ] Invalid routing and capability violations fail explicitly.
 - [ ] No worker or processor starts during bus composition.
 - [ ] The [task board](../README.md) status for AZM-08 is updated to this task's acceptance state.

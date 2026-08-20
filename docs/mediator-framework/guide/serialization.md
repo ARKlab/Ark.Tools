@@ -14,11 +14,12 @@ format explicitly where it needs metadata.
 | gRPC | protobuf | `[ProtoContract]`, stable `[ProtoMember(n)]` numbers | generated protobuf messages |
 | Rebus | host-selected serializer | no transport attribute beyond `[RebusMessage]`; optional protobuf/JSON host config | serialized bus payload |
 
-## Transport-neutral messaging envelopes
+## Transport-neutral messaging headers and bodies
 
-Native Mediator Framework messaging carries a binary payload and string headers in
-`MessagingEnvelope`. The envelope is independent of Azure SDK and transport
-types, so a queue can contain multiple contract types and protocols.
+Native Mediator Framework messaging keeps `MessagingMessageContext` string
+headers separate from the transport-owned binary body. No DTO combines them,
+and neither depends on Azure SDK types, so a queue can contain multiple contract
+types and protocols.
 
 The runtime writes these headers:
 
@@ -36,18 +37,19 @@ The runtime writes these headers:
 maps `typeof(T)` to its current logical name for writes and a received logical
 name to a closed generic deserializer for reads. Codecs write to
 `IBufferWriter<byte>` and read `ReadOnlySequence<byte>`; context/header handling
-stays separate from the payload. This mirrors generated Minimal API and
+stays separate from the payload. JSON uses the host's source-generated
+`JsonSerializerOptions`; JSON metadata does not leak into contract descriptors
+or protocol-neutral codec methods. This mirrors generated Minimal API and
 HttpTrigger binding, response serialization, and processor dispatch, so it
 performs no runtime payload-type lookup or reflection. The receiver selects the
 codec from `amf1-content-type`; it never falls back to a participant default or
 loads a CLR type from an untrusted header. Unknown contracts, unsupported codecs,
 malformed payloads, foreign networks, and size violations raise
-`MessagingEnvelopeException` without including the payload in the diagnostic.
+`MessagingProtocolException` without including the payload in the diagnostic.
 
 Delivery count is native transport runtime state and is not emitted as an
-envelope header. Compression and DataBus interpretation are later pipeline
-stages; their headers remain intact while the envelope codec stays transport
-neutral.
+AMF header. Compression and DataBus interpretation are later pipeline stages;
+their headers remain intact while the message codec stays transport neutral.
 
 ## Enable MessagePack deliberately
 

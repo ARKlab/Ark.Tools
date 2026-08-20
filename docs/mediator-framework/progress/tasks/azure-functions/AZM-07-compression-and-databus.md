@@ -3,7 +3,7 @@
 **Category**: azure-functions-messaging · **Priority**: core
 **Depends on**: AZM-01, AZM-04, AZM-05
 **Scope**: RUNTIME + TRANSPORT
-**Design**: [DataBus claim-check](../../azure-functions-messaging-design.md#11-databus-claim-check), [Envelope and compatibility model](../../azure-functions-messaging-design.md#4-envelope-and-compatibility-model)
+**Design**: [DataBus claim-check](../../azure-functions-messaging-design.md#11-databus-claim-check), [Wire metadata and compatibility model](../../azure-functions-messaging-design.md#4-envelope-and-compatibility-model)
 
 ## Problem
 
@@ -28,8 +28,9 @@ bytes to a shared DataBus when they still exceed the configured limit.
   bounded decompress → deserialize.
 - **Serde boundary**: preserve AZM-04's generated generic contract binding:
   codecs write to `IBufferWriter<byte>` and read `ReadOnlySequence<byte>`.
-  Compression operates only on the resulting payload bytes, never headers or
-  CLR types.
+  Compression operates only on the resulting body bytes, never headers or
+  CLR types. This is the same closed-generic boundary used by generated Minimal
+  API and HttpTrigger parameter binding and response serialization.
 - **Stop condition**: do not delete attachments during message settlement and
   do not add a durable outbox.
 
@@ -46,10 +47,10 @@ bytes to a shared DataBus when they still exceed the configured limit.
    (AZM-01); compression algorithm and minimum compression size are
    participant-owned sender-side settings (AZM-02).
    The network maximum payload threshold defaults to 240 000 bytes (safe for
-   Service Bus standard tier). The runtime first constructs the complete
-   inline envelope and offloads when either its compressed payload exceeds the
+   Service Bus standard tier). The runtime keeps context headers separate from
+   the body and offloads when either its compressed body exceeds the
    configured threshold or the AZM-05 transport measurement exceeds its hard
-   inline-envelope ceiling. Storage Queue measures its final canonical
+   inline-message ceiling. Storage Queue measures its final transport-owned
    Base64 body, including headers and the poison-metadata reservation; it
    never decides from payload bytes alone. Startup warns when the configured
    threshold exceeds the composed transport's practical inline ceiling.
@@ -59,11 +60,11 @@ bytes to a shared DataBus when they still exceed the configured limit.
    compression validation is needed.
 5. Omit `amf1-content-encoding` for uncompressed payloads; emit `gzip` or `br`
    for compressed payloads.
-6. Serialize and compress when eligible, then construct the complete inline
-   envelope and measure its native representation. Store those exact
+6. Serialize and compress when eligible, then have the transport measure the
+   complete native representation of the separate headers and body. Store those exact
    compressed bytes in DataBus when the network payload threshold or the
-   measured transport inline-envelope ceiling is exceeded. Re-measure the
-   resulting attachment-reference envelope and fail explicitly if it cannot
+   measured transport inline-message ceiling is exceeded. Re-measure the
+   resulting attachment-reference message and fail explicitly if it cannot
    fit.
 7. Emit `amf1-payload-attachment-id`, stored byte length, and SHA-256 metadata
    for transparent consumer retrieval and integrity validation.
@@ -101,9 +102,9 @@ transport coverage lands with AZM-10/AZM-11.
 - Gzip and Brotli compression/decompression.
 - Minimum-size threshold and uncompressed encoding-header behavior.
 - DataBus offload after compression when either the final payload threshold or
-  the measured complete inline envelope exceeds its limit, including
+  the measured complete inline message exceeds its limit, including
   header/encoding boundaries.
-- Claim-check envelope references survive the InMemory transport round trip.
+- Claim-check message references survive the InMemory transport round trip.
 - Transparent consumer retrieval and decompression.
 - Missing, expired, and metadata-mismatched attachment failures.
 - Length and SHA-256 mismatch failures.
@@ -124,7 +125,7 @@ transport coverage lands with AZM-10/AZM-11.
 - [ ] Gzip and Brotli are implemented behind participant configuration, with
   header-driven reads that always decode both.
 - [ ] Final compressed bytes, not original bytes, determine DataBus offload;
-  the complete inline envelope is also measured so headers and transport
+  the complete inline message is also measured so headers and transport
   encoding cannot exceed a transport limit.
 - [ ] Claim-check is transport-neutral and proven over InMemory.
 - [ ] Consumers retrieve, validate, decompress, and deserialize transparently.

@@ -25,7 +25,7 @@ dispatcher-less trigger code.
   (`Capabilities = Receive | PubSub | ScheduledSend`, hard 256 KB total
   standard-tier message limit including application properties) in
   `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract:
-  envelope-to-message mapping via application properties and binary body,
+  message-context headers mapped to application properties plus a separate binary body,
   native scheduling, topic publish, and PeekLock settlement mapped to
   complete/abandon/dead-letter with the native `DeliveryCount`. Producer-only
   participants reference only this messaging package. Its AZM-05 measurement
@@ -66,7 +66,7 @@ dispatcher-less trigger code.
 
 ## Implementation steps
 
-1. Implement the Service Bus transport send path: envelope headers to
+1. Implement the Service Bus transport send path: message-context headers to
    application properties, binary body, scheduled enqueue for delayed send,
    and topic publish.
 2. Implement the receive-side settlement adapter mapping the Functions
@@ -153,7 +153,7 @@ generated `.g.cs` is inspected; live Azure execution is optional and explicit.
 - PeekLock is configured and ReceiveAndDelete is rejected.
 - Every event subscription forwards to the participant identity queue.
 - The manifest records the selected trigger binding deterministically.
-- Envelope-to-Service-Bus mapping round-trips headers and binary payloads.
+- Message-context/body mapping round-trips headers and binary payloads.
 - Settlement adapter maps complete/immediate-abandon/dead-letter (with
   reason) and exposes the native delivery count. No abandon delay is
   implemented or tested.

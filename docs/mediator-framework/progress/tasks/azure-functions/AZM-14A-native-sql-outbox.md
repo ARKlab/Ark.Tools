@@ -18,7 +18,7 @@ must have separate composition paths.
   `Ark.Tools.Outbox.SqlServer`, `IOutboxContextCore`, and existing SQL locking
   semantics. Do not add a parallel outbox schema or a new third-party package.
 - **Producer integration**: add a native AMF outbox producer that persists the
-  complete validated envelope plus destination/scheduling metadata for both
+  validated headers and serialized body plus destination/scheduling metadata for both
   `Send` and `Publish`.
 - **Processor hosting**: expose an opt-in `IHostedService` registration for a
   custom always-running process. It joins the configured network with the
@@ -27,7 +27,7 @@ must have separate composition paths.
   identity is reserved: AZM-02 rejects `[MessagingParticipant]` declarations
   using it, and startup validation rejects composition-supplied identities
   using it.
-- **Dispatch seam**: drain persisted raw envelopes through an internal
+- **Dispatch seam**: drain persisted message headers and bodies through an internal
   transport sender. Do not reconstruct application contracts, rerun outgoing
   steps, or overwrite `amf1-sender-identity`.
 - **Stop condition**: no polling loop starts in an Azure Functions process and
@@ -38,22 +38,22 @@ must have separate composition paths.
 1. Add transport-neutral enlistment for the framework `IBus` and
    `IOutboxContextCore` without adding outbox members to the public bus.
 2. When enlisted, make every `Send` overload and `Publish` build and validate
-   its final AMF envelope, including additional headers,
+   its final AMF headers and serialized body, including additional headers,
    `amf1-sender-identity`, destination, and scheduling metadata, then persist
    it through the existing outbox context in the application transaction.
 3. Keep direct sending available when no outbox context is enlisted.
 4. Add the native outbox processor as an `IHostedService` with bounded batch,
    cancellation, error backoff, and explicit structured diagnostics. Register
    it as the network participant `outbox-processor`.
-5. Peek-lock a batch through `IOutboxContextCore`, send each persisted envelope
+5. Peek-lock a batch through `IOutboxContextCore`, send each persisted message
    through the configured transport, and commit deletion only after successful
    broker acceptance. A failed batch remains retryable.
 6. Preserve the original sender identity and message ID during processor
    dispatch. The processor identity is operational metadata only and must not
-   replace envelope headers or grant publish ownership after enqueue.
+   replace message headers or grant publish ownership after enqueue.
 7. Validate public publish ownership, capability guards, reserved headers,
    scheduling bounds, serialization, compression, and DataBus claim-check
-   before persistence. The processor sends the already validated envelope and
+   before persistence. The processor sends the already validated headers/body and
    does not repeat application pipeline steps.
 8. Provide separate composition extensions for native outbox enqueue and for
    hosting the processor. Functions composition may use only enqueue.
@@ -114,7 +114,7 @@ WebInterface and RebusProcessor outbox registrations unchanged.
   `outbox-processor`; participant declarations and compositions using that
   identity are rejected.
 - [ ] No outbox processor starts in Azure Functions composition.
-- [ ] Original sender identity and envelope bytes survive durable dispatch.
+- [ ] Original sender identity, headers, and body bytes survive durable dispatch.
 - [ ] SQL locking, retry, cancellation, and failure behavior are tested.
 - [ ] The [task board](../README.md) status for AZM-14A is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
