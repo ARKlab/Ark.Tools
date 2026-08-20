@@ -145,6 +145,18 @@ public sealed partial class MessagingSerializationTests
         action.Should().Throw<MessagingProtocolException>().Which.Kind.Should().Be(MessagingFailureKind.SizeLimit);
     }
 
+    [TestMethod]
+    public void JsonCodecReportsMissingHostMetadata()
+    {
+        var codec = new MessagingJsonCodec(SampleMessageJsonContext.Default.Options);
+        var payload = ReadOnlySequence<byte>.Empty;
+
+        var action = () => codec.Deserialize<UnregisteredMessage>(payload);
+
+        action.Should().Throw<NotSupportedException>()
+            .WithMessage("*metadata*");
+    }
+
     [MessagePackObject(AllowPrivate = true)]
     [ProtoContract]
     internal sealed class SampleMessage
@@ -157,6 +169,8 @@ public sealed partial class MessagingSerializationTests
         [ProtoMember(2)]
         public byte[] Data { get; set; } = Array.Empty<byte>();
     }
+
+    private sealed class UnregisteredMessage;
 
     [JsonSerializable(typeof(SampleMessage))]
     private sealed partial class SampleMessageJsonContext : JsonSerializerContext;

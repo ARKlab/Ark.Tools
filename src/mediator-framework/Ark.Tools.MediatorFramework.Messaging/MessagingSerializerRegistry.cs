@@ -73,10 +73,11 @@ public sealed class MessagingJsonCodec : IMessagingCodec
         in ReadOnlySequence<byte> payload)
         where T : notnull
     {
+        var jsonTypeInfo = _getTypeInfo<T>();
         try
         {
             var reader = new Utf8JsonReader(payload);
-            return JsonSerializer.Deserialize(ref reader, _getTypeInfo<T>())
+            return JsonSerializer.Deserialize(ref reader, jsonTypeInfo)
                 ?? throw new MessagingProtocolException(MessagingFailureKind.Malformed, "The JSON payload deserialized to null.");
         }
         catch (MessagingProtocolException)
@@ -84,10 +85,6 @@ public sealed class MessagingJsonCodec : IMessagingCodec
             throw;
         }
         catch (JsonException)
-        {
-            throw new MessagingProtocolException(MessagingFailureKind.Malformed, "The JSON payload is malformed.");
-        }
-        catch (NotSupportedException)
         {
             throw new MessagingProtocolException(MessagingFailureKind.Malformed, "The JSON payload is malformed.");
         }
