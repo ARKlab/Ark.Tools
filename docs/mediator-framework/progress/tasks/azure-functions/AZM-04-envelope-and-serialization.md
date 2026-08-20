@@ -21,7 +21,9 @@ so every transport adapter can map it to its native message shape.
   protobuf abstractions already referenced by Mediator Framework projects; add
   no serializer package.
 - **Contract lookup**: consume the generated registry from AZM-02 and expose no
-  `Type.GetType` fallback.
+  `Type.GetType` fallback. Generated metadata emits a frozen `typeof(T)` to
+  current-name map for writes and a name-to-typed-deserializer dispatch table
+  for reads, mirroring generated HTTP parameter binding and handler dispatch.
 - **Testing**: place pure envelope/codec tests in
   `Ark.Tools.MediatorFramework.Tests`.
 - **Runnable state**: the envelope and codecs are complete and fully tested in
@@ -33,9 +35,9 @@ so every transport adapter can map it to its native message shape.
 
 ## Implementation steps
 
-1. Define centralized Rebus-compatible type, message, correlation, sent-time,
-   delivery, protocol, and failure header constants.
-2. Define `amf1-*` header constants, including Rebus-compatible
+1. Define centralized native AMF type, message, correlation, sent-time,
+   protocol, and failure header constants.
+2. Define `amf1-*` header constants, including
    `amf1-content-type`, optional `amf1-content-encoding`,
    `amf1-payload-attachment-id`, `amf1-network` carrying the resolved producer
    network identity, and `amf1-sender-identity` carrying the participant that
@@ -49,7 +51,7 @@ so every transport adapter can map it to its native message shape.
 5. Implement a serializer registry for JSON, MessagePack, and protobuf using
    existing repository abstractions; do not add a third-party dependency
    without approval.
-6. Use Rebus content-type values: JSON
+6. Use native content-type values: JSON
    `application/json;charset=utf-8`, protobuf `application/x-protobuf`, and
    MessagePack `application/x-msgpack`.
 7. Resolve serializer and contract reads from the content-type and contract
@@ -72,14 +74,18 @@ so every transport adapter can map it to its native message shape.
     unrestricted CLR type loading from `amf1-msg-type`.
 10. Write the current logical contract name and resolve both current names and
     `FormerNames` aliases on receive.
-11. Bound header count/size and serialized payload size before transport.
+11. Keep header/context construction separate from payload serde. Codecs write
+    to `IBufferWriter<byte>` and read `ReadOnlySequence<byte>`; generated
+    generic contract entries bind `T` to the serializer and the eventual
+    processor call without runtime reflection.
+12. Bound header count/size and serialized payload size before transport.
     Compressed/decompressed and attachment bounds belong to AZM-07.
 12. Add deterministic round-trip and malformed-input diagnostics.
 
 ## Guide contribution
 
 Update [`guide/serialization.md`](../../../guide/serialization.md) and the
-Azure Functions guide with `amf1-*` headers, Rebus-compatible content types,
+Azure Functions guide with `amf1-*` headers, native content types,
 header-driven serializer reads, and protocol retirement behavior. Compression
 and claim-check guidance belongs to AZM-07.
 
@@ -114,7 +120,8 @@ exists yet.
 ## Caveats
 
 - Header-driven reads must not silently fall back to any participant default.
-- Rebus header compatibility does not imply Rebus endpoint interoperability.
+- Native AMF envelopes and Rebus messages are separate wire formats and are not
+  interoperable.
 - Do not log raw message bodies or sensitive failure details.
 
 ## Outcomes

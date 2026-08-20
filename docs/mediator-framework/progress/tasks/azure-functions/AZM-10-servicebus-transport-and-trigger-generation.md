@@ -33,7 +33,10 @@ dispatcher-less trigger code.
 - **Generator project**:
   `Ark.Tools.MediatorFramework.AzureFunctions.Generators`. Generated methods
   call the existing AZM-09 runtime dispatcher; generated source contains no
-  codec, pipeline, retry, or DI logic. The Functions-binding settlement
+  codec, pipeline, retry, or DI logic. The generated dispatcher registration
+  selects the closed generic deserializer and processor call from contract
+  metadata, equivalent to generated HTTP parameter binding and response
+  serialization, without reflection. The Functions-binding settlement
   adapter lives in `Ark.Tools.MediatorFramework.AzureFunctions`, which
   references the messaging package.
 - **Trigger selection**: emit the Service Bus trigger only when the Functions

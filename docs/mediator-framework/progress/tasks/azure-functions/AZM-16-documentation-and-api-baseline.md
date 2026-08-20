@@ -54,7 +54,10 @@ explicit guidance and the public API must be reviewable before release.
    ownership: the processing participant's default serializer for messages,
    the publisher's for events, and the strict subscriber-compatibility rule.
 3. Document header-driven protocol reads, protocol retirement behavior, and
-   conflict diagnostics.
+   conflict diagnostics. Explain that generated metadata maps `typeof(T)` to
+   the write name and a received name to closed generic serde/processor calls,
+   following the same no-reflection boundary as generated Minimal API and
+   HttpTrigger binding and response serialization.
 4. Document at-least-once delivery, fail-fast DLQ, retry exhaustion, native
    delivery-count semantics, PeekLock requirements, inline second-level
    dispatch, no persisted `IFailed<T>` message, and separate scopes.

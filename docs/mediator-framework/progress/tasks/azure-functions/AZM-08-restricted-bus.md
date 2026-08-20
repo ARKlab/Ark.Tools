@@ -54,6 +54,9 @@ composition switch, while intentionally reducing the framework API surface.
    has no such members.
 6. Delegate all envelope construction, content encoding, compression, and
    DataBus claim-checking to AZM-04/AZM-07.
+   The generated registry binds every `Send<TMessage>`/`Publish<TEvent>` to its
+   generic serializer and logical name; it never resolves a payload CLR type
+   from runtime metadata.
 7. Propagate message, correlation, causation, sent-time, sender-identity, and
    allowed context headers using centralized constants. Write
    `amf1-sender-identity` for both `Send` and `Publish`.

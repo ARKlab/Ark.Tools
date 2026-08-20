@@ -26,6 +26,9 @@ generated Azure Functions QueueTrigger.
   Functions hosts set `extensions.queues.messageEncoding` to `none` and
   decode that raw Base64 body exactly once. The encoder must not assume the
   payload is JSON merely because the outer envelope is text-encoded.
+  Its received contract is selected by the generated native name-to-generic
+  deserializer dispatch table, followed by the matching typed processor call;
+  it must not use runtime reflection.
 - **Settlement mapping (QueueTrigger, not PeekLock)**: isolated QueueTrigger
   has no `MessageActions`. Complete = return successfully (host deletes).
   Abandon = throw (host applies `queues.visibilityTimeout` =

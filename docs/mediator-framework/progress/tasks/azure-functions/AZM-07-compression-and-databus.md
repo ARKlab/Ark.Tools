@@ -26,6 +26,10 @@ bytes to a shared DataBus when they still exceed the configured limit.
 - **Order is fixed**: serialize → compress if eligible → threshold check →
   DataBus write; receive performs DataBus read → length/hash validation →
   bounded decompress → deserialize.
+- **Serde boundary**: preserve AZM-04's generated generic contract binding:
+  codecs write to `IBufferWriter<byte>` and read `ReadOnlySequence<byte>`.
+  Compression operates only on the resulting payload bytes, never headers or
+  CLR types.
 - **Stop condition**: do not delete attachments during message settlement and
   do not add a durable outbox.
 

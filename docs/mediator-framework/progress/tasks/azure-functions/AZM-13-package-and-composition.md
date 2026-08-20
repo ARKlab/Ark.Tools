@@ -36,6 +36,9 @@ SimpleInjector registrations.
   transport capabilities against the network declaration, and registers the
   native bus, codecs, pipeline, DataBus, dispatcher, settlement, and lifecycle
   services.
+  The generated descriptor owns the static generic serde/dispatch entries:
+  `typeof(T)` maps to the current wire name for writes, while a wire name maps
+  to a closed generic deserializer and processor dispatch for reads.
 - **DI**: follow the existing Azure Functions HTTP/SimpleInjector composition;
   do not create a second container or duplicate application registrations.
 - **Mode selection**: fail startup if both Rebus and Mediator Framework buses

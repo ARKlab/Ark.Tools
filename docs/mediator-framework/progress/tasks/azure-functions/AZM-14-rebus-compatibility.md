@@ -86,6 +86,9 @@ their infrastructure.
    registration method may register only these framework-owned adapters with
    Rebus/SimpleInjector; it must not register or verify application handlers.
    Developers keep application-handler registration in their composition root.
+   This is analogous to the native generated envelope dispatch boundary:
+   both select a statically known `T` and invoke a generic processor method;
+   neither discovers a handler or payload type through reflection.
 5. Generate an async post-start subscription method that invokes Rebus
    `Subscribe<TEvent>` once for every event in the consumer participant's
    `Subscribes`. Hosts bound to sender-only/publisher participants emit a

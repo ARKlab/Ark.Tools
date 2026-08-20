@@ -32,12 +32,16 @@ The runtime writes these headers:
 | `amf1-content-encoding` | Optional opaque compression token |
 | `amf1-payload-attachment-*` | Optional opaque DataBus claim-check metadata |
 
-`MessagingContractRegistry` is the only contract lookup seam. Register current
-logical names, former-name aliases, CLR contract types, and the owner-selected
-default serializer from generated metadata. The receiver selects the codec from
-`amf1-content-type`; it never falls back to a participant default or loads a CLR
-type from an untrusted header. Unknown contracts, unsupported codecs, malformed
-payloads, foreign networks, and size violations raise
+`MessagingContractRegistry` is the only contract lookup seam. Generated metadata
+maps `typeof(T)` to its current logical name for writes and a received logical
+name to a closed generic deserializer for reads. Codecs write to
+`IBufferWriter<byte>` and read `ReadOnlySequence<byte>`; context/header handling
+stays separate from the payload. This mirrors generated Minimal API and
+HttpTrigger binding, response serialization, and processor dispatch, so it
+performs no runtime payload-type lookup or reflection. The receiver selects the
+codec from `amf1-content-type`; it never falls back to a participant default or
+loads a CLR type from an untrusted header. Unknown contracts, unsupported codecs,
+malformed payloads, foreign networks, and size violations raise
 `MessagingEnvelopeException` without including the payload in the diagnostic.
 
 Delivery count is native transport runtime state and is not emitted as an

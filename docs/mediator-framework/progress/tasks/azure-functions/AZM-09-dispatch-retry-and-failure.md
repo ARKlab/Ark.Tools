@@ -46,7 +46,10 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 
 1. Implement typed envelope-to-contract dispatch with one
    `AsyncScopedLifestyle` scope for normal handling, plugged into the AZM-05
-   runtime message pump.
+   runtime message pump. The generated name-to-deserializer dispatch table
+   must deserialize with a closed generic `T` and call the corresponding
+   generic processor method, like generated Minimal API and HttpTrigger
+   parameter binding/handler dispatch; reflection is forbidden.
 2. Populate message context and cancellation before handler resolution.
 3. Complete/ack only after successful handler completion.
 4. Translate the existing fail-fast marker/mechanism into direct dead-letter
