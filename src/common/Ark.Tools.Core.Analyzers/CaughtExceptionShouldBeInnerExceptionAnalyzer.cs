@@ -55,7 +55,7 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
                 || throwStatement.Expression is not ObjectCreationExpressionSyntax objectCreation)
                 continue;
 
-            var preservesCaughtException = caughtExceptionName is not null
+            var preservesCaughtException = !string.IsNullOrEmpty(caughtExceptionName)
                 && objectCreation.DescendantNodes()
                 .OfType<IdentifierNameSyntax>()
                 .Any(identifier => identifier.Identifier.ValueText == caughtExceptionName);
