@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -33,40 +34,44 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxTreeAction(_analyzeTree);
+        context.RegisterSyntaxNodeAction(_analyzeThrow, SyntaxKind.ThrowStatement, SyntaxKind.ThrowExpression);
     }
 
-    private static void _analyzeTree(SyntaxTreeAnalysisContext context)
+    private static void _analyzeThrow(SyntaxNodeAnalysisContext context)
     {
-#pragma warning disable MA0045 // SyntaxTreeAnalysisContext does not provide an async callback.
-        var root = context.Tree.GetRoot(context.CancellationToken);
-#pragma warning restore MA0045
-        foreach (var catchClause in root.DescendantNodes().OfType<CatchClauseSyntax>())
-            _analyzeCatch(context, catchClause);
-    }
+        var objectCreation = _getObjectCreation(context.Node);
+        if (objectCreation is null)
+            return;
 
-    private static void _analyzeCatch(SyntaxTreeAnalysisContext context, CatchClauseSyntax catchClause)
-    {
+        var catchClause = context.Node.Ancestors().OfType<CatchClauseSyntax>().FirstOrDefault();
+        if (catchClause is null
+            || context.Node.Ancestors()
+                .TakeWhile(ancestor => ancestor != catchClause)
+                .Any(ancestor => ancestor is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax))
+            return;
+
         var caughtExceptionName = catchClause.Declaration?.Identifier.ValueText;
         if (string.IsNullOrEmpty(caughtExceptionName))
             return;
 
-        foreach (var throwStatement in catchClause.DescendantNodes().OfType<ThrowStatementSyntax>())
-        {
-            if (throwStatement.Ancestors().OfType<CatchClauseSyntax>().FirstOrDefault() != catchClause
-                || throwStatement.Ancestors()
-                .TakeWhile(ancestor => ancestor != catchClause)
-                .Any(ancestor => ancestor is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax)
-                || throwStatement.Expression is not ObjectCreationExpressionSyntax objectCreation)
-                continue;
-
-            var preservesCaughtException = objectCreation.ArgumentList?.Arguments
+        var caughtExceptionSymbol = context.SemanticModel.GetDeclaredSymbol(catchClause.Declaration!, context.CancellationToken);
+        var preservesCaughtException = objectCreation.ArgumentList?.Arguments
                 .SelectMany(argument => argument.DescendantNodesAndSelf())
                 .OfType<IdentifierNameSyntax>()
-                .Any(identifier => identifier.Identifier.ValueText == caughtExceptionName) == true;
+                .Select(identifier => context.SemanticModel.GetSymbolInfo(identifier, context.CancellationToken).Symbol)
+                .Any(symbol => SymbolEqualityComparer.Default.Equals(symbol, caughtExceptionSymbol)) == true;
 
-            if (!preservesCaughtException)
-                context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
-        }
+        if (!preservesCaughtException)
+            context.ReportDiagnostic(Diagnostic.Create(_diagnostic, objectCreation.GetLocation()));
+    }
+
+    private static ObjectCreationExpressionSyntax? _getObjectCreation(SyntaxNode node)
+    {
+        return node switch
+        {
+            ThrowStatementSyntax statement when statement.Expression is ObjectCreationExpressionSyntax expression => expression,
+            ThrowExpressionSyntax expression when expression.Expression is ObjectCreationExpressionSyntax objectCreation => objectCreation,
+            _ => null,
+        };
     }
 }

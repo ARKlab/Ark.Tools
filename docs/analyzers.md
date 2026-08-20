@@ -8,6 +8,10 @@ Ark.Tools uses multiple analyzer packages to maintain code quality, prevent bugs
 
 ## Ark.Tools.Core analyzers
 
+- `ARKCORE001` (error): Evolvable enum backing type must match the enum's underlying type.
+- `ARKCORE002` (error): Evolvable enum must declare `NOT_SET = 0`.
+- `ARKCORE003` (error): Evolvable enum member names must be unique.
+- `ARKCORE004` (warning): Evolvable enum uses every value available in its backing type.
 - `ARKCORE005` (error): Exceptions thrown from a catch clause must preserve the caught exception as their inner exception.
 
 ## Mediator Framework generator diagnostics
