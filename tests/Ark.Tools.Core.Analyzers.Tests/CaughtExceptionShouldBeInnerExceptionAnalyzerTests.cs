@@ -193,6 +193,29 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
         diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE006" && item.Severity == DiagnosticSeverity.Error);
     }
 
+    /// <summary>Verifies bare rethrows from catch clauses without variables are accepted.</summary>
+    [TestMethod]
+    public async Task CatchWithoutVariableBareRethrow_ShouldNotReportDiagnostic()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            using System;
+            class C
+            {
+                void M()
+                {
+                    try { throw new Exception(); }
+                    catch
+                    {
+                        throw;
+                    }
+                }
+            }
+            """);
+
+        diagnostics.Should().BeEmpty();
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
