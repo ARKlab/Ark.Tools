@@ -3,7 +3,7 @@
 
 namespace Ark.MediatorFramework.Messaging;
 
-/// <summary>Names of headers used by the transport-neutral messaging envelope.</summary>
+/// <summary>Names of transport-neutral messaging headers.</summary>
 public static class MessagingHeaderNames
 {
     /// <summary>AMF contract logical name header.</summary>

@@ -15,9 +15,9 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
-/// <summary>Verifies transport-neutral envelope and codec behavior.</summary>
+/// <summary>Verifies transport-neutral message metadata and codec behavior.</summary>
 [TestClass]
-public sealed partial class MessagingEnvelopeTests
+public sealed partial class MessagingSerializationTests
 {
     [TestMethod]
     [DataRow(SerializationProtocol.Json)]
@@ -30,40 +30,40 @@ public sealed partial class MessagingEnvelopeTests
             new MessagingContractDescriptor<SampleMessage>(
                 "tests.sample_message",
                 protocol,
-                ["tests.legacy_message"],
-                SampleMessageJsonContext.Default.SampleMessage)
+                ["tests.legacy_message"])
         ]);
-        var codec = new MessagingEnvelopeCodec(registry, networkIdentity: "tests-network");
+        var codec = new MessagingMessageCodec(registry, _createSerializers(), networkIdentity: "tests-network");
         var expected = new SampleMessage { Text = "binary", Data = [0, 1, 255] };
+        var payload = new ArrayBufferWriter<byte>();
 
-        var envelope = codec.Create(
-            expected,
+        var context = codec.CreateContext<SampleMessage>(
             "tests-network",
             "sender",
             null,
             Guid.Parse("11111111-1111-1111-1111-111111111111"),
             Guid.Parse("22222222-2222-2222-2222-222222222222"),
             DateTimeOffset.Parse("2026-08-19T20:00:00+00:00", CultureInfo.InvariantCulture));
-        var headers = new Dictionary<string, string>(envelope.Context.Headers, StringComparer.Ordinal)
+        codec.Serialize(payload, expected);
+        var headers = new Dictionary<string, string>(context.Headers, StringComparer.Ordinal)
         {
             [MessagingHeaderNames.ContentEncoding] = "br",
             [MessagingHeaderNames.PayloadAttachmentId] = "opaque-attachment"
         };
-        envelope = new MessagingEnvelope(new MessagingEnvelopeContext(headers), envelope.Payload);
+        context = new MessagingMessageContext(headers);
 
-        var actual = codec.Decode<SampleMessage>(envelope);
+        var actual = codec.Deserialize<SampleMessage>(context, new ReadOnlySequence<byte>(payload.WrittenMemory));
 
         actual.Text.Should().Be(expected.Text);
         actual.Data.Should().Equal(expected.Data);
-        envelope.Context.Headers[MessagingHeaderNames.ContentType].Should().Be(protocol switch
+        context.Headers[MessagingHeaderNames.ContentType].Should().Be(protocol switch
         {
             SerializationProtocol.Json => MessagingContentTypes.Json,
             SerializationProtocol.MessagePack => MessagingContentTypes.MessagePack,
             SerializationProtocol.Protobuf => MessagingContentTypes.Protobuf,
             _ => throw new InvalidOperationException()
         });
-        envelope.Context.Headers[MessagingHeaderNames.ContentEncoding].Should().Be("br");
-        envelope.Context.Headers[MessagingHeaderNames.PayloadAttachmentId].Should().Be("opaque-attachment");
+        context.Headers[MessagingHeaderNames.ContentEncoding].Should().Be("br");
+        context.Headers[MessagingHeaderNames.PayloadAttachmentId].Should().Be("opaque-attachment");
     }
 
     [TestMethod]
@@ -74,26 +74,24 @@ public sealed partial class MessagingEnvelopeTests
             new MessagingContractDescriptor<SampleMessage>(
                 "tests.current",
                 SerializationProtocol.Json,
-                ["tests.former"],
-                SampleMessageJsonContext.Default.SampleMessage)
+                ["tests.former"])
         ]);
-        var serializer = new MessagingJsonCodec();
+        var serializer = new MessagingJsonCodec(SampleMessageJsonContext.Default.Options);
         var payload = new ArrayBufferWriter<byte>();
-        serializer.Serialize(payload, new SampleMessage { Text = "value", Data = [7] }, SampleMessageJsonContext.Default.SampleMessage);
-        var envelope = new MessagingEnvelope(
-            new MessagingEnvelopeContext(
+        serializer.Serialize(payload, new SampleMessage { Text = "value", Data = [7] });
+        var context = new MessagingMessageContext(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 [MessagingHeaderNames.MessageType] = "tests.former",
                 [MessagingHeaderNames.ContentType] = MessagingContentTypes.Json,
                 [MessagingHeaderNames.MessageId] = "11111111-1111-1111-1111-111111111111",
-                [MessagingHeaderNames.SentTime] = MessagingEnvelope.FormatSentTime(DateTimeOffset.UtcNow),
+                [MessagingHeaderNames.SentTime] = MessagingMessageContext.FormatSentTime(DateTimeOffset.UtcNow),
                 [MessagingHeaderNames.Network] = "tests-network",
                 [MessagingHeaderNames.SenderIdentity] = "sender"
-            }),
-            payload.WrittenMemory);
+            });
 
-        var result = new MessagingEnvelopeCodec(registry, networkIdentity: "tests-network").Decode<SampleMessage>(envelope);
+        var codec = new MessagingMessageCodec(registry, _createSerializers(), networkIdentity: "tests-network");
+        var result = codec.Deserialize<SampleMessage>(context, new ReadOnlySequence<byte>(payload.WrittenMemory));
 
         result.Text.Should().Be("value");
     }
@@ -105,28 +103,46 @@ public sealed partial class MessagingEnvelopeTests
         [
             new MessagingContractDescriptor<SampleMessage>(
                 "tests.current",
-                SerializationProtocol.Json,
-                jsonTypeInfo: SampleMessageJsonContext.Default.SampleMessage)
+                SerializationProtocol.Json)
         ]);
-        var codec = new MessagingEnvelopeCodec(registry, networkIdentity: "tests-network");
-        var envelope = codec.Create(new SampleMessage { Text = "value" }, "foreign-network", "sender");
+        var codec = new MessagingMessageCodec(registry, _createSerializers(), networkIdentity: "tests-network");
+        var context = codec.CreateContext<SampleMessage>("foreign-network", "sender");
+        var payload = ReadOnlySequence<byte>.Empty;
 
-        var action = () => codec.Decode(envelope);
+        var action = () => codec.Deserialize<SampleMessage>(context, payload);
 
-        action.Should().Throw<MessagingEnvelopeException>().Which.Kind.Should().Be(MessagingFailureKind.ForeignNetwork);
+        action.Should().Throw<MessagingProtocolException>().Which.Kind.Should().Be(MessagingFailureKind.ForeignNetwork);
     }
 
     [TestMethod]
     public void PayloadAndHeadersRemainSeparate()
     {
-        var context = new MessagingEnvelopeContext(new Dictionary<string, string>(StringComparer.Ordinal)
+        var context = new MessagingMessageContext(new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["transport-delivery-count"] = "1"
         });
-        var envelope = new MessagingEnvelope(context, new byte[] { 1, 2, 3 });
+        var payload = new ReadOnlySequence<byte>(new byte[] { 1, 2, 3 });
 
-        envelope.Context.Headers.Should().ContainKey("transport-delivery-count");
-        envelope.Payload.Should().Equal(1, 2, 3);
+        context.Headers.Should().ContainKey("transport-delivery-count");
+        payload.ToArray().Should().Equal(1, 2, 3);
+    }
+
+    [TestMethod]
+    public void SerializeRejectsOversizedPayloadWithoutBuffering()
+    {
+        var registry = new MessagingContractRegistry(
+        [
+            new MessagingContractDescriptor<SampleMessage>("tests.current", SerializationProtocol.Json)
+        ]);
+        var codec = new MessagingMessageCodec(
+            registry,
+            _createSerializers(),
+            limits: new MessagingMessageLimits(maximumPayloadLength: 1));
+        var payload = new ArrayBufferWriter<byte>();
+
+        var action = () => codec.Serialize(payload, new SampleMessage { Text = "value" });
+
+        action.Should().Throw<MessagingProtocolException>().Which.Kind.Should().Be(MessagingFailureKind.SizeLimit);
     }
 
     [MessagePackObject(AllowPrivate = true)]
@@ -144,4 +160,14 @@ public sealed partial class MessagingEnvelopeTests
 
     [JsonSerializable(typeof(SampleMessage))]
     private sealed partial class SampleMessageJsonContext : JsonSerializerContext;
+
+    private static MessagingSerializerRegistry _createSerializers()
+    {
+        return new MessagingSerializerRegistry(
+        [
+            new MessagingJsonCodec(SampleMessageJsonContext.Default.Options),
+            new MessagingMessagePackCodec(),
+            new MessagingProtobufCodec()
+        ]);
+    }
 }

@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Frozen;
-using System.Buffers;
-using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.MediatorFramework.Messaging;
 
@@ -39,11 +37,6 @@ public abstract class MessagingContractDescriptor
     [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
     internal abstract Type ContractType { get; }
 
-    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
-    internal abstract void Serialize(IMessagingCodec codec, IBufferWriter<byte> output, object value);
-
-    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
-    internal abstract object Deserialize(IMessagingCodec codec, in ReadOnlySequence<byte> payload);
 }
 
 /// <summary>Describes one statically known messaging contract of type <typeparamref name="T"/>.</summary>
@@ -55,39 +48,14 @@ public sealed class MessagingContractDescriptor<T> : MessagingContractDescriptor
     public MessagingContractDescriptor(
         string name,
         SerializationProtocol defaultSerializer,
-        IEnumerable<string>? formerNames = null,
-        JsonTypeInfo<T>? jsonTypeInfo = null)
+        IEnumerable<string>? formerNames = null)
         : base(name, defaultSerializer, formerNames)
     {
-        JsonTypeInfo = jsonTypeInfo;
     }
 
     [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
     internal override Type ContractType => typeof(T);
 
-    /// <summary>Gets source-generated JSON metadata for this contract, when JSON is supported.</summary>
-    public JsonTypeInfo<T>? JsonTypeInfo { get; }
-
-    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
-    internal override void Serialize(IMessagingCodec codec, IBufferWriter<byte> output, object value)
-    {
-        if (value is not T typedValue)
-            throw new MessagingEnvelopeException(MessagingFailureKind.Malformed, "The value does not match the registered contract type.");
-
-        codec.Serialize(output, typedValue, JsonTypeInfo);
-    }
-
-    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
-    internal override object Deserialize(IMessagingCodec codec, in ReadOnlySequence<byte> payload)
-    {
-        return codec.Deserialize<T>(payload, JsonTypeInfo);
-    }
-
-    [SuppressMessage("Naming", "IDE1006", Justification = "Internal generated dispatch members use the public member naming convention.")]
-    internal T DeserializeTyped(IMessagingCodec codec, in ReadOnlySequence<byte> payload)
-    {
-        return codec.Deserialize<T>(payload, JsonTypeInfo);
-    }
 }
 
 /// <summary>Resolves only statically registered messaging contracts.</summary>
@@ -123,7 +91,7 @@ public sealed class MessagingContractRegistry
         ArgumentException.ThrowIfNullOrEmpty(name);
         if (_byName.TryGetValue(name, out var descriptor))
             return descriptor;
-        throw new MessagingEnvelopeException(MessagingFailureKind.UnknownContract, "The envelope contract is not registered.", MessagingHeaderNames.MessageType);
+        throw new MessagingProtocolException(MessagingFailureKind.UnknownContract, "The message contract is not registered.", MessagingHeaderNames.MessageType);
     }
 
     /// <summary>Resolves the statically registered descriptor for <typeparamref name="T"/>.</summary>
@@ -134,7 +102,7 @@ public sealed class MessagingContractRegistry
         if (_namesByType.TryGetValue(typeof(T), out var name)
             && _byName[name] is MessagingContractDescriptor<T> descriptor)
             return descriptor;
-        throw new MessagingEnvelopeException(MessagingFailureKind.UnknownContract, "The contract type is not registered.");
+        throw new MessagingProtocolException(MessagingFailureKind.UnknownContract, "The contract type is not registered.");
     }
 
     /// <summary>Gets all current contract descriptors in deterministic order.</summary>

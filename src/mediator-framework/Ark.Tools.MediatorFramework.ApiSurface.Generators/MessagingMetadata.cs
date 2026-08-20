@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Ark.MediatorFramework.MessagingGenerators;
@@ -78,7 +79,7 @@ internal static class MessagingMetadata
 
     public static IEnumerable<string> Words(string value)
     {
-        var word = string.Empty;
+        var word = new StringBuilder();
         for (var index = 0; index < value.Length; index++)
         {
             var character = value[index];
@@ -88,18 +89,18 @@ internal static class MessagingMetadata
                     || (index + 1 < value.Length && char.IsLower(value[index + 1])));
             if (startsWord && word.Length > 0)
             {
-                yield return word;
-                word = string.Empty;
+                yield return word.ToString();
+                word.Clear();
             }
             if (char.IsLetterOrDigit(character))
-                word += character;
+                word.Append(character);
             else if (word.Length > 0)
             {
-                yield return word;
-                word = string.Empty;
+                yield return word.ToString();
+                word.Clear();
             }
         }
         if (word.Length > 0)
-            yield return word;
+            yield return word.ToString();
     }
 }
