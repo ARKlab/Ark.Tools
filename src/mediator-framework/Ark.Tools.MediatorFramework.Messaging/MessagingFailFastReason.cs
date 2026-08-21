@@ -9,6 +9,9 @@ public enum MessagingFailFastReason
     /// <summary>The content type is not registered.</summary>
     UnknownContentType,
 
+    /// <summary>The serialization protocol is not registered.</summary>
+    UnknownProtocol,
+
     /// <summary>The content encoding is not supported.</summary>
     UnsupportedContentEncoding,
 

@@ -53,7 +53,7 @@ public sealed class MessagingCodecRegistry : IMessagingCodecRegistry
         if (_byProtocol.TryGetValue(protocol, out var codec))
             return codec;
         throw new MessagingFailFastException(
-            MessagingFailFastReason.UnknownContentType,
+            MessagingFailFastReason.UnknownProtocol,
             protocol.ToString());
     }
 

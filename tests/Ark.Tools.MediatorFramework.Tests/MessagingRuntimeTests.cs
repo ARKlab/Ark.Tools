@@ -106,6 +106,21 @@ public sealed partial class MessagingRuntimeTests
             .Should().Be(MessagingFailFastReason.UnknownContentType);
     }
 
+    [TestMethod]
+    public void CodecRegistryRejectsUnknownProtocol()
+    {
+        var codec = new JsonMessagingCodec(new JsonSerializerOptions
+        {
+            TypeInfoResolver = MessagingTestJsonContext.Default
+        });
+        var registry = new MessagingCodecRegistry([codec]);
+
+        var action = () => registry.GetByProtocol((SerializationProtocol)999);
+
+        action.Should().Throw<MessagingFailFastException>().Which.Reason
+            .Should().Be(MessagingFailFastReason.UnknownProtocol);
+    }
+
     private sealed class MessagingRuntimeContract
     {
         public string Name { get; init; } = string.Empty;
