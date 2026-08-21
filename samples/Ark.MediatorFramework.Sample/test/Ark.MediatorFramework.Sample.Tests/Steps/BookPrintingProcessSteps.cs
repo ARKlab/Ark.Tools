@@ -76,7 +76,9 @@ public sealed class BookPrintingProcessSteps
             var successfulRequests = requests.Where(task => task.Status == TaskStatus.RanToCompletion).ToArray();
             if (successfulRequests.Length != 1)
             {
-                throw new InvalidOperationException("Expected exactly one concurrent print request to succeed.");
+                throw new InvalidOperationException(
+                    "Expected exactly one concurrent print request to succeed.",
+                    exception);
             }
 
             Current = await successfulRequests[0].ConfigureAwait(false);
