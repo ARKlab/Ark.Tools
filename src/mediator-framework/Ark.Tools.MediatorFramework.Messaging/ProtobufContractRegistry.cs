@@ -20,7 +20,6 @@ public static class ProtobufContractRegistry<T> where T : class
         }
         set
         {
-            ArgumentNullException.ThrowIfNull(value);
             Volatile.Write(ref _parse, value);
         }
     }

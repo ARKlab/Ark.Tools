@@ -142,14 +142,21 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public void ProtobufCodecRoundTripsThroughRegisteredParser()
     {
-        ProtobufContractRegistry<Empty>.Parse = static payload => Empty.Parser.ParseFrom(payload);
-        var codec = new ProtobufMessagingCodec();
-        var writer = new ArrayBufferWriter<byte>();
+        try
+        {
+            ProtobufContractRegistry<Empty>.Parse = static payload => Empty.Parser.ParseFrom(payload);
+            var codec = new ProtobufMessagingCodec();
+            var writer = new ArrayBufferWriter<byte>();
 
-        codec.Serialize(new Empty(), writer);
-        var result = codec.Deserialize<Empty>(new ReadOnlySequence<byte>(writer.WrittenMemory));
+            codec.Serialize(new Empty(), writer);
+            var result = codec.Deserialize<Empty>(new ReadOnlySequence<byte>(writer.WrittenMemory));
 
-        result.Should().NotBeNull();
+            result.Should().NotBeNull();
+        }
+        finally
+        {
+            ProtobufContractRegistry<Empty>.Parse = null;
+        }
     }
 
     [TestMethod]

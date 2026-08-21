@@ -7,6 +7,7 @@ using MessagePack;
 using MessagePack.Resolvers;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -40,8 +41,8 @@ public static class MessagingServiceCollectionExtensions
 
         if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IFormatterResolver)))
             services.AddSingleton<IFormatterResolver>(StandardResolver.Instance);
-        services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>();
-        services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, MessagePackMessagingCodec>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, ProtobufMessagingCodec>());
         return services;
     }
 
@@ -58,8 +59,8 @@ public static class MessagingServiceCollectionExtensions
 
         if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IFormatterResolver)))
             services.AddSingleton(resolver);
-        services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>();
-        services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, MessagePackMessagingCodec>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, ProtobufMessagingCodec>());
         return services;
     }
 }
