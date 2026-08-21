@@ -31,6 +31,7 @@ public sealed class MessagePackMessagingCodec : IMessagingCodec
     /// <inheritdoc />
     public void Serialize<T>(T value, IBufferWriter<byte> writer) where T : class
     {
+        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(writer);
         MessagePackSerializer.Serialize(writer, value, _serializeOptions);
     }
