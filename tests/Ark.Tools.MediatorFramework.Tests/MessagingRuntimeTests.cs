@@ -176,11 +176,11 @@ public sealed partial class MessagingRuntimeTests
         public byte[] Data { get; init; } = [];
     }
 
-    [MessagePackObject]
-    private sealed class MessagePackRuntimeContract
+    [MessagePackObject(true)]
+    public sealed class MessagePackRuntimeContract
     {
         [Key(0)]
-        public string Name { get; init; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
     }
 
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]

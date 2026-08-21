@@ -4,6 +4,7 @@
 using System.Text.Json;
 
 using MessagePack;
+using MessagePack.Resolvers;
 
 using Microsoft.Extensions.DependencyInjection;
 
