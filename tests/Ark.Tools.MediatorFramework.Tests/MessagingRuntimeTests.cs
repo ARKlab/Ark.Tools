@@ -179,13 +179,14 @@ public sealed partial class MessagingRuntimeTests
 
         var messagePackAction = () => messagePack.Deserialize<MessagePackRuntimeContract>(
             new ReadOnlySequence<byte>(new byte[] { MessagePackCode.Map16, 0, 255 }));
+        messagePackAction.Should().Throw<MessagePackSerializationException>();
+
         try
         {
             ProtobufContractRegistry<Empty>.Parse = static payload => Empty.Parser.ParseFrom(payload);
             var protobufAction = () => protobuf.Deserialize<Empty>(
                 new ReadOnlySequence<byte>(new byte[] { 255 }));
 
-            messagePackAction.Should().Throw<MessagePackSerializationException>();
             protobufAction.Should().Throw<Google.Protobuf.InvalidProtocolBufferException>();
         }
         finally
