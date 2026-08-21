@@ -9,7 +9,7 @@ public sealed class MessagingContractNotInNetworkException : InvalidOperationExc
     /// <summary>Creates an empty contract lookup exception.</summary>
     public MessagingContractNotInNetworkException()
     {
-        ContractType = typeof(object);
+        ContractType = null;
         NetworkIdentity = string.Empty;
     }
 
@@ -18,7 +18,7 @@ public sealed class MessagingContractNotInNetworkException : InvalidOperationExc
     public MessagingContractNotInNetworkException(string message)
         : base(message)
     {
-        ContractType = typeof(object);
+        ContractType = null;
         NetworkIdentity = string.Empty;
     }
 
@@ -28,7 +28,7 @@ public sealed class MessagingContractNotInNetworkException : InvalidOperationExc
     public MessagingContractNotInNetworkException(string message, Exception innerException)
         : base(message, innerException)
     {
-        ContractType = typeof(object);
+        ContractType = null;
         NetworkIdentity = string.Empty;
     }
 
@@ -48,7 +48,7 @@ public sealed class MessagingContractNotInNetworkException : InvalidOperationExc
     }
 
     /// <summary>Gets the missing contract type.</summary>
-    public Type ContractType { get; }
+    public Type? ContractType { get; }
 
     /// <summary>Gets the network identity searched.</summary>
     public string NetworkIdentity { get; }

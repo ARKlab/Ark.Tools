@@ -2124,6 +2124,24 @@ public sealed class GeneratorSnapshotTests
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG023");
     }
 
+    [TestMethod]
+    public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Generated.Should().Contain("partial class PrintingParticipant");
+        result.Generated.Should().Contain("partial class BookMessagingNetwork");
+        result.Generated.Should().NotContain("namespace <global namespace>;");
+    }
+
     private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runApiSurfaceGeneratorResult(
         string source,
         string? baseline,
