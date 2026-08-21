@@ -2035,6 +2035,95 @@ public sealed class GeneratorSnapshotTests
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
     }
 
+    [TestMethod]
+    public void MessagingNetworkGeneratorEmitsReflectionFreeRegistries()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [Event(Name = "books.print_completed")]
+            public sealed class PrintCompleted : IRequest<PrintCompleted, string> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Generated.Should().Contain("FrozenDictionary");
+        result.Generated.Should().Contain("GetDestinationFor<T>()");
+        result.Generated.Should().Contain("GetWireProtocolFor<T>()");
+        result.Generated.Should().Contain("GetLogicalNameFor<T>()");
+        result.Generated.Should().Contain("public const string Identity");
+        result.Generated.Should().Contain("books.print_completed");
+        result.Generated.Should().NotContain("Type.GetType");
+        result.Generated.Should().NotContain("Activator.");
+        result.Generated.Should().NotContain("MakeGenericType");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorEmitsAliasesAndTypedBinder()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace Ark.Tools.MediatorFramework.Messaging
+            {
+                public interface IMessagingPayloadReader
+                {
+                    T Deserialize<T>() where T : class;
+                }
+                public enum MessagingFailFastReason { UnknownContractName }
+                public sealed class MessagingFailFastException : System.Exception
+                {
+                    public MessagingFailFastException(MessagingFailFastReason reason, string detail) { }
+                }
+            }
+            [Message(Name = "books.print_book", FormerNames = new[] { "legacy_print_book" })]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Generated.Should().Contain("case \"books.print_book\":");
+        result.Generated.Should().Contain("case \"legacy_print_book\":");
+        result.Generated.Should().Contain("payload.Deserialize<global::PrintBook>()");
+        result.Generated.Should().Contain("processor.ExecuteAsync<global::PrintBook>");
+        result.Generated.Should().Contain("UnknownContractName");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorDiagnosesNonPartialDeclaringTypes()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG023");
+    }
+
     private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runApiSurfaceGeneratorResult(
         string source,
         string? baseline,
