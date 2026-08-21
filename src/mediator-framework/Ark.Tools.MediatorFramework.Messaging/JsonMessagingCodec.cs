@@ -5,20 +5,19 @@ using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
-/// <summary>JSON codec using the host's HTTP JSON serializer options.</summary>
+/// <summary>JSON codec using host-configured serializer options.</summary>
 public sealed class JsonMessagingCodec : IMessagingCodec
 {
     private readonly JsonSerializerOptions _options;
 
-    /// <summary>Creates a codec from host-configured HTTP JSON options.</summary>
+    /// <summary>Creates a codec from host-configured serializer options.</summary>
     /// <param name="jsonOptions">The host JSON options.</param>
-    public JsonMessagingCodec(IOptions<JsonOptions> jsonOptions)
-        : this((jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions))).Value.SerializerOptions)
+    public JsonMessagingCodec(IOptions<JsonSerializerOptions> jsonOptions)
+        : this((jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions))).Value)
     {
     }
 

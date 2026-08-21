@@ -9,7 +9,8 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
   </ItemGroup>
 </Project>

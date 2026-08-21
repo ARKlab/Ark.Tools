@@ -1,7 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Microsoft.AspNetCore.Http.Json;
+using System.Text.Json;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -18,7 +19,7 @@ public static class MessagingServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddOptions<JsonOptions>();
+        services.AddOptions<JsonSerializerOptions>();
         services.AddSingleton<IMessagingCodec, JsonMessagingCodec>();
         services.AddSingleton<MessagingCodecRegistry>();
         services.AddSingleton<IMessagingCodecRegistry>(

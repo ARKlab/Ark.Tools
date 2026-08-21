@@ -186,9 +186,8 @@ public sealed partial class BookContractsJsonContext : JsonSerializerContext;
 *JSON codec skeleton: `Utf8JsonWriter` over `IBufferWriter<byte>` on write,
 `Utf8JsonReader` over `ReadOnlySequence<byte>` on read, with the
 host-resolved `JsonSerializerOptions` constructor-injected from MS-DI
-(`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` for parity with the
-MinimalApi/HTTP triggers; a messaging-owned accessor seam wraps this so
-non-ASP.NET hosts can supply equivalent options):*
+(`IOptions<JsonSerializerOptions>` so non-ASP.NET hosts can supply equivalent
+options):*
 
 ```csharp
 /// <summary>JSON codec over the host-resolved <see cref="JsonSerializerOptions"/>.</summary>
@@ -196,11 +195,10 @@ public sealed class JsonMessagingCodec : IMessagingCodec
 {
     private readonly JsonSerializerOptions _options;
 
-    /// <summary>Resolves the same options instance the MinimalApi and Azure
-    /// Functions HTTP triggers use.</summary>
-    public JsonMessagingCodec(IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions> jsonOptions)
+    /// <summary>Resolves the host-configured serializer options.</summary>
+    public JsonMessagingCodec(IOptions<JsonSerializerOptions> jsonOptions)
     {
-        _options = jsonOptions.Value.SerializerOptions;
+        _options = jsonOptions.Value;
     }
 
     /// <inheritdoc />

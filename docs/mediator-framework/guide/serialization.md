@@ -111,10 +111,10 @@ selection:
 `IMessagingCodec` is generic-only and writes through `IBufferWriter<byte>` or
 reads from `ReadOnlySequence<byte>`; the framework does not expose a buffered
 `byte[]` payload or an envelope object. JSON is registered with
-`services.AddArkMessaging()` and uses the host's `JsonOptions`, including a
-shared application `JsonSerializerContext`. Validate every declared messaging
-contract at startup with `MessagingJsonStartupValidation` so a missing context
-fails before processing begins.
+`services.AddArkMessaging()` and uses host-configured `JsonSerializerOptions`,
+including a shared application `JsonSerializerContext`. Validate every
+declared messaging contract at startup with `MessagingJsonStartupValidation` so
+a missing context fails before processing begins.
 
 Receive is two-phase: `MessagingHeaderProcessor` bounds and validates headers,
 checks the network identity, and resolves the codec from
