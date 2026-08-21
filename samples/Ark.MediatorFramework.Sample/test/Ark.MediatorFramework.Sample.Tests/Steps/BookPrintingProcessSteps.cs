@@ -73,11 +73,13 @@ public sealed class BookPrintingProcessSteps
         catch (Exception exception)
         {
             _exception = exception;
-            foreach (var task in requests.Where(task => task.Status == TaskStatus.RanToCompletion))
+            var successfulRequests = requests.Where(task => task.Status == TaskStatus.RanToCompletion).ToArray();
+            if (successfulRequests.Length != 1)
             {
-                Current = await task.ConfigureAwait(false);
-                break;
+                throw new InvalidOperationException("Expected exactly one concurrent print request to succeed.");
             }
+
+            Current = await successfulRequests[0].ConfigureAwait(false);
         }
     }
 
