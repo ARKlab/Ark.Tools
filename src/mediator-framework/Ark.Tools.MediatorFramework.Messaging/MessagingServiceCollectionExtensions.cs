@@ -31,6 +31,44 @@ public static class MessagingServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Registers a messaging transport and validates network capabilities.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="transport">The transport to register.</param>
+    /// <param name="networks">The resolved networks using the transport.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessaging(
+        this IServiceCollection services,
+        IMessagingTransport transport,
+        params MessagingNetworkOptions[] networks)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(networks);
+
+        foreach (var network in networks)
+        {
+            ArgumentNullException.ThrowIfNull(network);
+            network.Validate(transport.Capabilities);
+        }
+
+        services.AddArkMessaging();
+        services.AddSingleton(transport);
+        services.AddSingleton<IMessagingTransport>(transport);
+        return services;
+    }
+
+    /// <summary>Registers the first-class in-memory messaging transport.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="networks">The resolved networks using the transport.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkInMemoryMessaging(
+        this IServiceCollection services,
+        params MessagingNetworkOptions[] networks)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        return services.AddArkMessaging(new InMemoryMessagingTransport(), networks);
+    }
+
     /// <summary>Registers the MessagePack and protobuf messaging codecs.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same service collection.</returns>
