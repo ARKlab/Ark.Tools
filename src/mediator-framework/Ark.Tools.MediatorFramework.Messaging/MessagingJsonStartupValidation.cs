@@ -37,8 +37,7 @@ public static class MessagingJsonStartupValidation
     {
         try
         {
-            if (options.GetTypeInfo(contractType) is null)
-                throw new InvalidOperationException();
+            _ = options.GetTypeInfo(contractType);
         }
         catch (Exception exception) when (exception is InvalidOperationException or NotSupportedException)
         {
