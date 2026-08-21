@@ -23,7 +23,7 @@ public sealed class ProtobufMessagingCodec : IMessagingCodec
         ArgumentNullException.ThrowIfNull(writer);
         if (value is not IMessage message)
             throw new InvalidOperationException(
-                $"Protobuf contract '{typeof(T)}' must implement Google.Protobuf.IMessage<T>.");
+                $"Protobuf contract '{typeof(T)}' must implement Google.Protobuf.IMessage.");
 
         message.WriteTo(writer);
     }

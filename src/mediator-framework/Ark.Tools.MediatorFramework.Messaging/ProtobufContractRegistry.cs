@@ -9,6 +9,21 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <typeparam name="T">The protobuf contract type.</typeparam>
 public static class ProtobufContractRegistry<T> where T : class
 {
+    private static Func<ReadOnlySequence<byte>, T>? _parse;
+
     /// <summary>Gets or sets the parser delegate.</summary>
-    public static Func<ReadOnlySequence<byte>, T>? Parse { get; set; }
+    public static Func<ReadOnlySequence<byte>, T>? Parse
+    {
+        get
+        {
+            return Volatile.Read(ref _parse);
+        }
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            if (Interlocked.CompareExchange(ref _parse, value, null) is not null)
+                throw new InvalidOperationException(
+                    $"A protobuf parser is already registered for contract '{typeof(T)}'.");
+        }
+    }
 }
