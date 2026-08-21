@@ -176,7 +176,7 @@ public sealed partial class MessagingRuntimeTests
         public byte[] Data { get; init; } = [];
     }
 
-    [MessagePackObject(true)]
+    [MessagePackObject(false)]
     public sealed class MessagePackRuntimeContract
     {
         [Key(0)]
