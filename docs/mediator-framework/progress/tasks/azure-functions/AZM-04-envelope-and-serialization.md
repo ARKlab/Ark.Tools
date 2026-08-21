@@ -401,15 +401,15 @@ only; no transport exists yet. Add the shared Book contracts
 
 ## Acceptance
 
-- [ ] The JSON codec is registered, host-options-driven, generics-only, and
+- [x] The JSON codec is registered, host-options-driven, generics-only, and
   `IBufferWriter`/`ReadOnlySequence`-based with no `byte[]` surface.
-- [ ] A queue can contain multiple types without ambiguity via the generated
+- [x] A queue can contain multiple types without ambiguity via the generated
   binder; the codec registry seam accepts AZM-04A codecs unchanged.
-- [ ] The headers/payload model is transport-neutral and free of Azure SDK
+- [x] The headers/payload model is transport-neutral and free of Azure SDK
   types; there is no envelope object.
-- [ ] Unsupported reads fail fast with bounded, serializable diagnostics.
-- [ ] Startup validates contracts against the registered options/context.
-- [ ] No raw payload or secret metadata is logged.
-- [ ] The [task board](../README.md) status for AZM-04 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Unsupported reads fail fast with bounded, serializable diagnostics.
+- [x] Startup validates contracts against the registered options/context.
+- [x] No raw payload or secret metadata is logged.
+- [x] The [task board](../README.md) status for AZM-04 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

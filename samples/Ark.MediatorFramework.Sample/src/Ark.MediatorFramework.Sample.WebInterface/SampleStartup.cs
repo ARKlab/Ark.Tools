@@ -5,10 +5,12 @@ using Ark.Tools.MediatorFramework.Generated;
 using Ark.MediatorFramework.Sample.API.JsonContext;
 
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
+using Ark.MediatorFramework.Sample.Application.JsonContext;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
+using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Rebus;
 using Ark.Tools.Nodatime;
@@ -154,13 +156,17 @@ public sealed class SampleStartup
         // defaults (camelCase, NodaTime, enum-as-member).
         services.ConfigureHttpJsonOptions(options =>
         {
-            var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-            var context = new SampleApiJsonSerializerContext(contextOptions);
+            var context = new SampleApiJsonSerializerContext(
+                new JsonSerializerOptions().ConfigureArkDefaults());
+            var applicationContext = new ApplicationJsonSerializerContext(
+                new JsonSerializerOptions().ConfigureArkDefaults());
             options.SerializerOptions.ConfigureArkDefaults();
             options.SerializerOptions.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
                 context,
+                applicationContext,
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
+        services.AddArkMessaging();
 
         // RFC 7807 ProblemDetails: map semantic domain exceptions consistently across hosts.
         services.AddArkProblemDetailsExceptionHandler();

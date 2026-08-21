@@ -93,6 +93,35 @@ services.ConfigureHttpJsonOptions(options =>
 This keeps Minimal API JSON behavior explicit and fast while still allowing the
 generated endpoints to serialize normal framework shapes.
 
+## Mediator Framework messaging JSON
+
+Transport-neutral messaging keeps headers separate from the transport-owned
+payload. The framework uses the following headers for routing and codec
+selection:
+
+| Header | Meaning |
+| --- | --- |
+| `amf1-msg-type` | Normalized logical contract name |
+| `amf1-content-type` | Installed codec content type |
+| `amf1-network` | Resolved network identity |
+| `amf1-sender-identity` | Participant that sent or published |
+| `amf1-msg-id` / `amf1-corr-id` | Message and correlation identifiers |
+| `amf1-senttime` | Invariant sent-time value |
+
+`IMessagingCodec` is generic-only and writes through `IBufferWriter<byte>` or
+reads from `ReadOnlySequence<byte>`; the framework does not expose a buffered
+`byte[]` payload or an envelope object. JSON is registered with
+`services.AddArkMessaging()` and uses the host's `JsonOptions`, including a
+shared application `JsonSerializerContext`. Validate every declared messaging
+contract at startup with `MessagingJsonStartupValidation` so a missing context
+fails before processing begins.
+
+Receive is two-phase: `MessagingHeaderProcessor` bounds and validates headers,
+checks the network identity, and resolves the codec from
+`amf1-content-type`; the generated participant binder then deserializes the
+selected contract. Content encoding and DataBus attachment headers remain
+opaque until the compression and claim-check task adds their processing.
+
 ## NodaTime and polymorphism
 
 For polymorphism, define a stable discriminator and register every supported

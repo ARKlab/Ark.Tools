@@ -23,7 +23,7 @@ public sealed class MessagingFailFastException : Exception
     /// <param name="message">The diagnostic detail.</param>
     /// <param name="innerException">The underlying exception.</param>
     public MessagingFailFastException(string message, Exception innerException)
-        : base(message, innerException)
+        : base(_bounded(message), innerException)
     {
         Reason = MessagingFailFastReason.MalformedHeaders;
     }
@@ -32,11 +32,16 @@ public sealed class MessagingFailFastException : Exception
     /// <param name="reason">The failure classification.</param>
     /// <param name="detail">Optional bounded diagnostic detail.</param>
     public MessagingFailFastException(MessagingFailFastReason reason, string? detail = null)
-        : base(detail)
+        : base(_bounded(detail))
     {
         Reason = reason;
     }
 
     /// <summary>Gets the failure classification.</summary>
     public MessagingFailFastReason Reason { get; }
+
+    private static string? _bounded(string? detail)
+    {
+        return detail is null || detail.Length <= 256 ? detail : detail[..256];
+    }
 }
