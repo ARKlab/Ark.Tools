@@ -193,10 +193,14 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var lines = new List<string>();
         var locBuilder = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
 
-        foreach (var type in contractTypes
+        var types = contractTypes
             .GroupBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
             .Select(static group => group.First())
-            .OrderBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal))
+            .OrderBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
+            .ToArray();
+        var networkMemberships = BuildNetworkMemberships(types);
+
+        foreach (var type in types)
         {
             cancellationToken.ThrowIfCancellationRequested();
             // ponytail: MinimallyQualifiedFormat == Name for non-generic non-nested types; generic
@@ -205,7 +209,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             var key = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             if (!locBuilder.ContainsKey(key))
                 locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
-            AddType(lines, type);
+            AddType(lines, type, networkMemberships);
         }
 
         var ordered = lines.Distinct(StringComparer.Ordinal)
@@ -250,7 +254,38 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static readonly char[] _ownerTerminators = { ' ', '.', '[' };
 
-    private static void AddType(List<string> lines, INamedTypeSymbol type)
+    private static Dictionary<INamedTypeSymbol, string[]> BuildNetworkMemberships(
+        IEnumerable<INamedTypeSymbol> types)
+    {
+        var result = new Dictionary<INamedTypeSymbol, List<string>>(SymbolEqualityComparer.Default);
+        foreach (var network in types)
+        {
+            var attribute = Attribute(network, Network);
+            if (attribute is null)
+                continue;
+
+            var networkName = network.ToDisplayString();
+            foreach (var member in TypeSymbols(attribute, "Members"))
+            {
+                if (!result.TryGetValue(member, out var networks))
+                    result.Add(member, networks = new List<string>());
+                networks.Add(networkName);
+            }
+        }
+
+        var memberships = new Dictionary<INamedTypeSymbol, string[]>(SymbolEqualityComparer.Default);
+        foreach (var pair in result)
+            memberships[pair.Key] = pair.Value
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(value => value, StringComparer.Ordinal)
+                .ToArray();
+        return memberships;
+    }
+
+    private static void AddType(
+        List<string> lines,
+        INamedTypeSymbol type,
+        IReadOnlyDictionary<INamedTypeSymbol, string[]> networkMemberships)
     {
         var http = Attribute(type, Http);
         var grpc = Attribute(type, Grpc);
@@ -264,7 +299,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             return;
 
         var request = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        AddMessagingLines(lines, type, message, @event, participant, network);
+        AddMessagingLines(lines, type, message, @event, participant, network, networkMemberships);
         if (message is not null || @event is not null || participant is not null || network is not null)
         {
             if (http is null && grpc is null && rebus is null)
@@ -321,7 +356,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         AttributeData? message,
         AttributeData? @event,
         AttributeData? participant,
-        AttributeData? network)
+        AttributeData? network,
+        IReadOnlyDictionary<INamedTypeSymbol, string[]> networkMemberships)
     {
         var clrName = type.ToDisplayString();
         if (message is not null)
@@ -330,8 +366,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             lines.Add($"EVENT {clrName} -> name:{ContractName(type, @event)} former:{FormatSet(StringsNamed(@event, "FormerNames"))}");
         if (participant is not null)
         {
-            var networks = FindNetworks(type);
-            var networkName = networks.Length == 0 ? "-" : string.Join("|", networks);
+            var networkName = networkMemberships.TryGetValue(type, out var networks)
+                ? string.Join("|", networks)
+                : "-";
             var identity = StringNamed(participant, "Identity") ?? NormalizeIdentity(
                 type.Name.EndsWith("Participant", StringComparison.Ordinal)
                     ? type.Name[..^"Participant".Length]
@@ -418,17 +455,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static IEnumerable<INamedTypeSymbol> TypeSymbols(AttributeData attribute, string name)
         => NamedArray(attribute, name).Where(value => value.Value is INamedTypeSymbol)
             .Select(value => (INamedTypeSymbol)value.Value!);
-
-    private static string[] FindNetworks(INamedTypeSymbol participant)
-    {
-        var containing = participant.ContainingAssembly.GlobalNamespace;
-        return AllTypes(containing)
-            .Where(type => Attribute(type, Network) is { } attribute
-                && TypeSymbols(attribute, "Members").Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
-            .Select(static type => type.ToDisplayString())
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray();
-    }
 
     private static string NormalizeIdentity(string value)
         => string.Join("-", Words(value).Select(static word => word.ToLowerInvariant()));
@@ -556,32 +582,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var name = TypeName(enumType);
         foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>().Where(static f => f.HasConstantValue))
             lines.Add($"{kind} {name}.{field.Name}={Convert.ToString(field.ConstantValue, CultureInfo.InvariantCulture)}");
-    }
-
-    private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol ns)
-    {
-        foreach (var member in ns.GetMembers())
-        {
-            if (member is INamespaceSymbol child)
-                foreach (var type in AllTypes(child))
-                    yield return type;
-            else if (member is INamedTypeSymbol type)
-            {
-                yield return type;
-                foreach (var nested in AllNestedTypes(type))
-                    yield return nested;
-            }
-        }
-    }
-
-    private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type)
-    {
-        foreach (var nested in type.GetTypeMembers())
-        {
-            yield return nested;
-            foreach (var child in AllNestedTypes(nested))
-                yield return child;
-        }
     }
 
     private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
