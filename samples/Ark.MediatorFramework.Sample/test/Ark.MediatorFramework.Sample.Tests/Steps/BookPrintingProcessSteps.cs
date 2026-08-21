@@ -82,7 +82,10 @@ public sealed class BookPrintingProcessSteps
             }
 
             Current = await successfulRequests[0].ConfigureAwait(false);
+            return;
         }
+
+        throw new InvalidOperationException("Expected one concurrent print request to fail.");
     }
 
     /// <summary>Loads the active print process through its query contract.</summary>
