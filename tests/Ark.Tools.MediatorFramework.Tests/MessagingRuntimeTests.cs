@@ -234,7 +234,7 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public void CodecRegistrationInstallsAllDeclaredProtocols()
     {
-        var services = new ServiceCollection()
+        using var services = new ServiceCollection()
             .AddArkMessaging()
             .AddMessagePackAndProtobufMessagingCodecs()
             .BuildServiceProvider();
