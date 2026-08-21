@@ -118,7 +118,7 @@ ownership on both contract and participant.
    `Name` to the namespace-qualified CLR type name without assembly version,
    normalized to lowercase snake_case: each namespace/type segment is
    lowercased and PascalCase word boundaries become underscores (for example
-   `Books.PrintCompleted` becomes `books.print_completed`). Explicit `Name`
+   `Books.PrintCompleted` becomes `books_print_completed`). Explicit `Name`
    and `FormerNames` values must already be in normalized form;
    non-normalized values are diagnosed.
 11. Validate duplicate names/aliases (including normalization collisions
