@@ -235,10 +235,7 @@ Feature: Books
             Given I create a book with
                 | Title | Author | Genre   |
                 | Dune  | Herbert | Fiction |
-            When I start a book print process for the current book with
-                | ShouldFail |
-                | false      |
-            And I start a book print process for the current book with
+            When I concurrently start two book print processes for the current book with
                 | ShouldFail |
                 | false      |
             Then the request fails because the current book is already printing
