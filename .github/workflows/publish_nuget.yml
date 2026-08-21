@@ -10,6 +10,10 @@ env:
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}/output
   NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
 
+permissions:
+  contents: read
+  code-quality: write
+
 jobs:
   deploy:
     name: 'Nuget Push'
@@ -59,6 +63,19 @@ jobs:
       
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
+
+    - name: Install dotnet-coverage
+      run: dotnet tool install -g dotnet-coverage
+
+    - name: Convert coverage to cobertura
+      run: dotnet-coverage merge **/*.coverage -f cobertura -o coverage.cobertura.xml
+
+    - name: Upload coverage report
+      uses: actions/upload-code-coverage@v1
+      with:
+        file: coverage.cobertura.xml
+        language: csharp
+        label: Ark.Tools
 
     - name: 'Pack project'
       run: dotnet pack --configuration Release --include-symbols -p:Version=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}

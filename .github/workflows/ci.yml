@@ -12,6 +12,7 @@ permissions:
   contents: read
   actions: write
   checks: write
+  code-quality: write
 
 jobs:
   build:
@@ -91,6 +92,13 @@ jobs:
 
     - name: Convert coverage to cobertura
       run: dotnet-coverage merge **/*.coverage -f cobertura -o coverage.cobertura.xml
+
+    - name: Upload coverage report
+      uses: actions/upload-code-coverage@v1
+      with:
+        file: coverage.cobertura.xml
+        language: csharp
+        label: Ark.Tools
 
     - name: Create code coverage report
       run: |
