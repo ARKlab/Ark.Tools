@@ -90,7 +90,7 @@ Participants own routing and participant-local behavior:
     Subscribes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed class PrintingParticipant;
+public sealed partial class PrintingParticipant;
 ```
 
 `Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
@@ -99,6 +99,14 @@ each message or publish each event; subscriptions must be satisfiable and use a
 serializer supported by the subscriber. `DefaultSerializer` must be included in
 `Serializers`. Retry and compression are participant-owned and may differ
 between members.
+
+Network and participant declarations must be non-nested, non-generic `partial`
+classes. The transport-neutral generator adds the participant identity and
+network registry members to those classes. Hosts and transports must use
+`GetDestinationFor<T>()`, `GetWireProtocolFor<T>()`, and
+`GetLogicalNameFor<T>()`; they must not rediscover routing with reflection.
+Generated members are marked with `MessagingGeneratedSurfaceAttribute`, so the
+dedicated messaging snapshot lines remain the API-surface source of truth.
 
 Participant identities default to the class name without a trailing
 `Participant`, normalized to lowercase portable queue-name syntax. Explicit and
