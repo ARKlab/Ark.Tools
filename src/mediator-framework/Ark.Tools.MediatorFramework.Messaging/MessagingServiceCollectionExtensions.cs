@@ -3,6 +3,8 @@
 
 using System.Text.Json;
 
+using MessagePack;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -24,6 +26,37 @@ public static class MessagingServiceCollectionExtensions
         services.AddSingleton<MessagingCodecRegistry>();
         services.AddSingleton<IMessagingCodecRegistry>(
             serviceProvider => serviceProvider.GetRequiredService<MessagingCodecRegistry>());
+        return services;
+    }
+
+    /// <summary>Registers the MessagePack and protobuf messaging codecs.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddMessagePackAndProtobufMessagingCodecs(
+        this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddSingleton<IFormatterResolver>(StandardResolver.Instance);
+        services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>();
+        services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();
+        return services;
+    }
+
+    /// <summary>Registers the MessagePack and protobuf codecs with a host resolver.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="resolver">The host MessagePack formatter resolver.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddMessagePackAndProtobufMessagingCodecs(
+        this IServiceCollection services,
+        IFormatterResolver resolver)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(resolver);
+
+        services.AddSingleton(resolver);
+        services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>();
+        services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();
         return services;
     }
 }
