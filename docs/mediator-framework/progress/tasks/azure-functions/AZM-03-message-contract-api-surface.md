@@ -47,9 +47,9 @@ Emit one deterministic line for each transport-neutral message or event, each
 participant, and each network:
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json,msgpack default:json
+MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished|legacy_print_completed
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json,msgpack default:json
 NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
 ```
 
@@ -176,9 +176,9 @@ var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
 above — these strings are the wire-drift baseline, byte-for-byte):*
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json,msgpack default:json
+MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished|legacy_print_completed
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json,msgpack default:json
 NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
 ```
 
