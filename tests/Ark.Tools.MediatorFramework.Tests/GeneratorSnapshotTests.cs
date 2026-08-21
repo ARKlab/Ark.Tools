@@ -1980,6 +1980,168 @@ public sealed class GeneratorSnapshotTests
         result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
     }
 
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsMessagingEntriesAndTracksDrift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            [Message(FormerNames = new[] { "legacy_recalculate" })]
+            public sealed class RecalculatePrint { }
+            [Event(Name = "books.print_completed", FormerNames = new[] { "legacy_print_completed" })]
+            public sealed class PrintCompleted { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(RecalculatePrint) },
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.Json, SerializationProtocol.MessagePack },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+            public sealed class BookMessagingNetwork { }
+            """;
+
+        var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+
+        snapshot.Should().Contain("MESSAGE RecalculatePrint -> name:recalculate_print former:legacy_recalculate");
+        snapshot.Should().Contain("EVENT PrintCompleted -> name:books.print_completed former:legacy_print_completed");
+        snapshot.Should().Contain(
+            "PARTICIPANT PrintingParticipant -> network:BookMessagingNetwork identity:printing"
+            + " processes:recalculate_print publishes:books.print_completed subscribes:-"
+            + " serializers:json|messagepack default:json");
+        snapshot.Should().Contain(
+            "NETWORK BookMessagingNetwork -> members:PrintingParticipant requires:receive|pubsub");
+
+        var result = _runApiSurfaceGeneratorResult(
+            source,
+            snapshot.Replace("legacy_recalculate", "older_recalculate", StringComparison.Ordinal),
+            enabled: true);
+        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002" && d.GetMessage().Contains("RecalculatePrint"));
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorAcceptsMessagingSnapshotPrefixes()
+    {
+        var result = _runApiSurfaceGeneratorResult(
+            """
+            using Ark.Tools.MediatorFramework;
+            [Message]
+            public sealed class RecalculatePrint { }
+            """,
+            baseline: "/*\nMESSAGE RecalculatePrint -> name:recalculate_print former:-\n*/\n",
+            enabled: true);
+
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI004");
+        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorEmitsReflectionFreeRegistries()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [Event(Name = "books.print_completed")]
+            public sealed class PrintCompleted : IRequest<PrintCompleted, string> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Generated.Should().Contain("FrozenDictionary");
+        result.Generated.Should().Contain("GetDestinationFor<T>()");
+        result.Generated.Should().Contain("GetWireProtocolFor<T>()");
+        result.Generated.Should().Contain("GetLogicalNameFor<T>()");
+        result.Generated.Should().Contain("public const string Identity");
+        result.Generated.Should().Contain("books.print_completed");
+        result.Generated.Should().NotContain("Type.GetType");
+        result.Generated.Should().NotContain("Activator.");
+        result.Generated.Should().NotContain("MakeGenericType");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorEmitsAliasesAndTypedBinder()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace Ark.Tools.MediatorFramework.Messaging
+            {
+                public interface IMessagingPayloadReader
+                {
+                    T Deserialize<T>() where T : class;
+                }
+                public enum MessagingFailFastReason { UnknownContractName }
+                public sealed class MessagingFailFastException : System.Exception
+                {
+                    public MessagingFailFastException(MessagingFailFastReason reason, string detail) { }
+                }
+            }
+            [Message(Name = "books.print_book", FormerNames = new[] { "legacy_print_book" })]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Generated.Should().Contain("case \"books.print_book\":");
+        result.Generated.Should().Contain("case \"legacy_print_book\":");
+        result.Generated.Should().Contain("payload.Deserialize<global::PrintBook>()");
+        result.Generated.Should().Contain("processor.ExecuteAsync<global::PrintBook>");
+        result.Generated.Should().Contain("UnknownContractName");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorDiagnosesNonPartialDeclaringTypes()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG023");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Generated.Should().Contain("partial class PrintingParticipant");
+        result.Generated.Should().Contain("partial class BookMessagingNetwork");
+        result.Generated.Should().NotContain("namespace <global namespace>;");
+    }
+
     private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runApiSurfaceGeneratorResult(
         string source,
         string? baseline,

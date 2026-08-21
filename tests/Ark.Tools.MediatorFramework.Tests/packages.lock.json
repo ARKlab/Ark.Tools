@@ -811,6 +811,9 @@
       "ark.tools.mediatorframework.azurefunctions.generators": {
         "type": "Project"
       },
+      "ark.tools.mediatorframework.generators": {
+        "type": "Project"
+      },
       "ark.tools.mediatorframework.grpc": {
         "type": "Project",
         "dependencies": {

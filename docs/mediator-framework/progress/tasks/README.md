@@ -182,8 +182,8 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | --- | --- | --- |
 | [AZM-01](azure-functions/AZM-01-shared-network-configuration.md) | Shared messaging network configuration and capability model | Complete |
 | [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and participant declarations | Complete |
-| [AZM-03](azure-functions/AZM-03-message-contract-api-surface.md) | Message contract API-surface enforcement | Pending |
-| [AZM-03A](azure-functions/AZM-03A-runtime-registry-generators.md) | Transport-neutral runtime registry generation | Pending |
+| [AZM-03](azure-functions/AZM-03-message-contract-api-surface.md) | Message contract API-surface enforcement | Complete |
+| [AZM-03A](azure-functions/AZM-03A-runtime-registry-generators.md) | Transport-neutral runtime registry generation | Complete |
 | [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Message headers, payload model, and JSON serialization runtime | Pending |
 | [AZM-04A](azure-functions/AZM-04A-messagepack-protobuf-codecs.md) | MessagePack and protobuf codecs | Pending |
 | [AZM-05](azure-functions/AZM-05-transport-abstraction-and-inmemory.md) | Transport abstraction and first-class InMemory transport | Pending |

@@ -153,7 +153,7 @@ normally on that one queue.
 Every message/event has a stable logical contract identity. Logical names use
 one global normalization, lowercase snake_case: each namespace and type
 segment is lowercased and PascalCase word boundaries become underscores, so
-`Books.PrintCompleted` becomes `books.print_completed`. By default the name
+`Books.PrintCompleted` becomes `books_print_completed`. By default the name
 is the namespace-qualified CLR type name without assembly version, normalized
 this way. `[Message]` and `[Event]` may override it with an explicit stable
 `Name` and may declare `FormerNames` aliases for compatible CLR renames;

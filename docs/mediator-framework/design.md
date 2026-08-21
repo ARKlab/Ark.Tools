@@ -860,6 +860,12 @@ snapshot differs from what is committed.
   diff. Plain (`strict`) enums produce `ENUM Type.Member=value` lines;
   `EvolvableEnum<TEnum>` members produce `EVOLVABLE-ENUM Type.Member=value`
   lines for the wrapped `TEnum`.
+- Transport-neutral messaging metadata: `MESSAGE` and `EVENT` lines record the
+  resolved logical name and ordinal-sorted former-name aliases. `PARTICIPANT`
+  lines record network membership, identity, ownership, subscriptions, and
+  serialization. `NETWORK` lines record members and required capabilities.
+  These entries are wire and topology decisions; accepting a baseline diff does
+  not migrate an existing event topic or Azure resource.
 
 **Workflow:**
 
@@ -910,6 +916,10 @@ EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
 EVOLVABLE-ENUM GreetingStatus.Active=1
 EVOLVABLE-ENUM GreetingStatus.Archived=2
 REBUS RefreshGreetingCommand -> queue:greetings
+MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json|messagepack default:json
+NETWORK BookTopology.BookMessagingNetwork -> members:BookTopology.PrintingParticipant|BookTopology.WebFrontendParticipant requires:receive|pubsub|scheduled_send
 ```
 
 ## Testing strategy

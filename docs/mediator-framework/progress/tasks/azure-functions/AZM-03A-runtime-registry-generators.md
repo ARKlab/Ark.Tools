@@ -270,13 +270,13 @@ verify the generated members are correct and compilable.
 
 ## Acceptance
 
-- [ ] `Ark.Tools.MediatorFramework.Generators` exists, owns the moved
+- [x] `Ark.Tools.MediatorFramework.Generators` exists, owns the moved
   generator, and emits the network/participant partial members.
-- [ ] Generic lookups are `FrozenDictionary`-backed and reflection-free; the
+- [x] Generic lookups are `FrozenDictionary`-backed and reflection-free; the
   receive binder is a compile-time exhaustive switch including aliases.
-- [ ] Non-partial declaring types are diagnosed.
-- [ ] Generated members are excluded from API-surface snapshots via the
+- [x] Non-partial declaring types are diagnosed.
+- [x] Generated members are excluded from API-surface snapshots via the
   marker attribute.
-- [ ] The [task board](../README.md) status for AZM-03A is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-03A is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

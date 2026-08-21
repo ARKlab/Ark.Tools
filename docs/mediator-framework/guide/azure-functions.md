@@ -90,7 +90,7 @@ Participants own routing and participant-local behavior:
     Subscribes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed class PrintingParticipant;
+public sealed partial class PrintingParticipant;
 ```
 
 `Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
@@ -100,11 +100,41 @@ serializer supported by the subscriber. `DefaultSerializer` must be included in
 `Serializers`. Retry and compression are participant-owned and may differ
 between members.
 
+Network and participant declarations must be non-nested, non-generic `partial`
+classes. The transport-neutral generator adds the participant identity and
+network registry members to those classes. Hosts and transports must use
+`GetDestinationFor<T>()`, `GetWireProtocolFor<T>()`, and
+`GetLogicalNameFor<T>()`; they must not rediscover routing with reflection.
+Generated members are marked with `MessagingGeneratedSurfaceAttribute`, so the
+dedicated messaging snapshot lines remain the API-surface source of truth.
+
 Participant identities default to the class name without a trailing
 `Participant`, normalized to lowercase portable queue-name syntax. Explicit and
 derived identities must be 3–50 characters, use lowercase ASCII letters, digits,
 and hyphens, and cannot be `outbox-processor`, end in `-poison`, or contain
 consecutive hyphens. Network `Members` is the sole membership input.
+
+### Accepting messaging API-surface changes
+
+The API-surface generator records message and event logical names, former-name
+aliases, participant ownership and membership, serializer sets, and network
+capabilities. It also records the event publisher because changing that
+publisher changes the derived topic. A generated routing member marked with
+`MessagingGeneratedSurfaceAttribute` is intentionally omitted; its routing
+metadata is represented by the dedicated `MESSAGE`, `EVENT`, `PARTICIPANT`, and
+`NETWORK` entries.
+
+When a declaration changes, inspect and explicitly accept the generated
+baseline:
+
+```powershell
+dotnet build -p:EmitCompilerGeneratedFiles=true
+Copy-Item obj/Debug/net10.0/ArkApiSurface.current.txt ArkApiSurface.txt
+```
+
+Accepting `ARKAPI002` records the reviewed contract decision only. It does not
+rename an existing event topic, move subscriptions, or migrate Azure resources;
+perform that topology migration separately.
 
 ## 4. Configure local settings
 

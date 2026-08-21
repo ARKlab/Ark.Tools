@@ -47,9 +47,9 @@ Emit one deterministic line for each transport-neutral message or event, each
 participant, and each network:
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json,msgpack default:json
+MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished|legacy_print_completed
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json,msgpack default:json
 NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
 ```
 
@@ -176,9 +176,9 @@ var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
 above — these strings are the wire-drift baseline, byte-for-byte):*
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json,msgpack default:json
+MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished|legacy_print_completed
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json,msgpack default:json
 NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
 ```
 
@@ -299,14 +299,14 @@ surface lines without implying wire interoperability.
 
 ## Acceptance
 
-- [ ] `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` entries follow the
+- [x] `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` entries follow the
   fixed deterministic format.
-- [ ] Canonical names, ownership, membership, and `FormerNames` changes
+- [x] Canonical names, ownership, membership, and `FormerNames` changes
   trigger `ARKAPI002`.
-- [ ] Snapshot parsing and contract-local diagnostics cover the new entries.
-- [ ] The Book sample baseline contains generated transport-neutral entries.
-- [ ] Analyzer and Mediator Framework guides document baseline acceptance and
+- [x] Snapshot parsing and contract-local diagnostics cover the new entries.
+- [x] The Book sample baseline contains generated transport-neutral entries.
+- [x] Analyzer and Mediator Framework guides document baseline acceptance and
   event-topic migration.
-- [ ] The [task board](../README.md) status for AZM-03 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-03 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
