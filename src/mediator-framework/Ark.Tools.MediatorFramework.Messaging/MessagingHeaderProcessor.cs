@@ -55,13 +55,14 @@ public sealed class MessagingHeaderProcessor
         IReadOnlyDictionary<string, string> headers)
     {
         ArgumentNullException.ThrowIfNull(headers);
-        if (headers.Count > _maximumHeaderCount
-            || headers.Any(static header => header.Key is null || header.Value is null))
+        if (headers.Count > _maximumHeaderCount)
             throw new MessagingFailFastException(MessagingFailFastReason.OversizedHeaders);
 
         foreach (var header in headers)
         {
-            if (Encoding.UTF8.GetByteCount(header.Key) > _maximumHeaderKeyBytes
+            if (header.Key is null
+                || header.Value is null
+                || Encoding.UTF8.GetByteCount(header.Key) > _maximumHeaderKeyBytes
                 || Encoding.UTF8.GetByteCount(header.Value) > _maximumHeaderValueBytes)
                 throw new MessagingFailFastException(MessagingFailFastReason.OversizedHeaders);
         }
