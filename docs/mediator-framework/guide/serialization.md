@@ -122,6 +122,21 @@ checks the network identity, and resolves the codec from
 selected contract. Content encoding and DataBus attachment headers remain
 opaque until the compression and claim-check task adds their processing.
 
+### Additional messaging codecs
+
+Register `AddMessagePackMessagingCodec()` and
+`AddProtobufMessagingCodec()` alongside `AddArkMessaging()` to install
+`application/x-msgpack` and `application/x-protobuf`. The MessagePack overload
+accepting an `IFormatterResolver` uses the host's contract configuration; the
+parameterless overload uses the standard resolver. MessagePack reads use the
+`UntrustedData` security mode.
+
+At startup, call `MessagingJsonStartupValidation.ValidateDeclaredSerializers`
+for every participant. It rejects a participant whose `Serializers` declaration
+contains a protocol without an installed codec, before any message is sent or
+received. Protobuf contracts register their generated `MessageParser<T>` with
+`ProtobufContractRegistry<T>.Parse`; no runtime reflection is used.
+
 ## NodaTime and polymorphism
 
 For polymorphism, define a stable discriminator and register every supported

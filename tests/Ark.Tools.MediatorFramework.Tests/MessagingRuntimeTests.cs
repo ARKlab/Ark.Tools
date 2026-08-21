@@ -5,6 +5,11 @@ using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
 
+using Google.Protobuf.WellKnownTypes;
+
+using MessagePack;
+using MessagePack.Resolvers;
+
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -121,11 +126,68 @@ public sealed partial class MessagingRuntimeTests
             .Should().Be(MessagingFailFastReason.UnknownProtocol);
     }
 
+    [TestMethod]
+    public void MessagePackCodecRoundTripsWithUntrustedDataOptions()
+    {
+        var codec = new MessagePackMessagingCodec(StandardResolver.Instance);
+        var writer = new ArrayBufferWriter<byte>();
+
+        codec.Serialize(new MessagePackRuntimeContract { Name = "Ada" }, writer);
+        var result = codec.Deserialize<MessagePackRuntimeContract>(
+            new ReadOnlySequence<byte>(writer.WrittenMemory));
+
+        result.Name.Should().Be("Ada");
+    }
+
+    [TestMethod]
+    public void ProtobufCodecRoundTripsThroughRegisteredParser()
+    {
+        try
+        {
+            ProtobufContractRegistry<Empty>.Parse = static payload => Empty.Parser.ParseFrom(payload);
+            var codec = new ProtobufMessagingCodec();
+            var writer = new ArrayBufferWriter<byte>();
+
+            codec.Serialize(new Empty(), writer);
+            var result = codec.Deserialize<Empty>(new ReadOnlySequence<byte>(writer.WrittenMemory));
+
+            result.Should().NotBeNull();
+        }
+        finally
+        {
+            ProtobufContractRegistry<Empty>.Parse = null;
+        }
+    }
+
+    [TestMethod]
+    public void StartupValidationRejectsUninstalledDeclaredSerializer()
+    {
+        var codec = new JsonMessagingCodec(new JsonSerializerOptions
+        {
+            TypeInfoResolver = MessagingTestJsonContext.Default
+        });
+
+        var action = () => MessagingJsonStartupValidation.ValidateDeclaredSerializers(
+            new MessagingCodecRegistry([codec]),
+            [SerializationProtocol.Json, SerializationProtocol.MessagePack],
+            "books");
+
+        action.Should().Throw<MessagingFailFastException>()
+            .Which.Reason.Should().Be(MessagingFailFastReason.UnknownProtocol);
+    }
+
     private sealed class MessagingRuntimeContract
     {
         public string Name { get; init; } = string.Empty;
 
         public byte[] Data { get; init; } = [];
+    }
+
+    [MessagePackObject(false)]
+    public sealed class MessagePackRuntimeContract
+    {
+        [Key(0)]
+        public string Name { get; set; } = string.Empty;
     }
 
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]

@@ -56,6 +56,38 @@ public sealed class BookPrintingProcessSteps
         }).ConfigureAwait(false);
     }
 
+    [When("I concurrently start two book print processes for the current book with")]
+    public async Task ConcurrentlyStartCurrentBookPrintProcesses(Table table)
+    {
+        var request = table.CreateInstance<CreateBookPrintProcessRequest>() with { BookId = _books.Current.Id };
+        var requests = new[]
+        {
+            _context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request),
+            _context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request),
+        };
+
+        try
+        {
+            await Task.WhenAll(requests).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            _exception = exception;
+            var successfulRequests = requests.Where(task => task.Status == TaskStatus.RanToCompletion).ToArray();
+            if (successfulRequests.Length != 1)
+            {
+                throw new InvalidOperationException(
+                    "Expected exactly one concurrent print request to succeed.",
+                    exception);
+            }
+
+            Current = await successfulRequests[0].ConfigureAwait(false);
+            return;
+        }
+
+        throw new InvalidOperationException("Expected one concurrent print request to fail.");
+    }
+
     /// <summary>Loads the active print process through its query contract.</summary>
     [When("I retrieve the current book print process")]
     public async Task RetrieveCurrentBookPrintProcess()

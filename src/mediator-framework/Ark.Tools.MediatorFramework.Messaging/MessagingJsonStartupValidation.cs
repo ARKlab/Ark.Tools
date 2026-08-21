@@ -8,6 +8,28 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Validates source-generated JSON metadata during host startup.</summary>
 public static class MessagingJsonStartupValidation
 {
+    /// <summary>Validates that every declared serializer has an installed codec.</summary>
+    /// <param name="registry">The installed codec registry.</param>
+    /// <param name="declaredSerializers">The participant's declared serializers.</param>
+    /// <param name="participantIdentity">The participant identity.</param>
+    public static void ValidateDeclaredSerializers(
+        IMessagingCodecRegistry registry,
+        IEnumerable<SerializationProtocol> declaredSerializers,
+        string participantIdentity)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
+        ArgumentNullException.ThrowIfNull(declaredSerializers);
+        ArgumentException.ThrowIfNullOrEmpty(participantIdentity);
+
+        foreach (var protocol in declaredSerializers)
+        {
+            if (!registry.IsInstalled(protocol))
+                throw new MessagingFailFastException(
+                    MessagingFailFastReason.UnknownProtocol,
+                    $"Participant '{participantIdentity}' declares serializer '{protocol}', but no codec is installed.");
+        }
+    }
+
     /// <summary>Validates one contract against host-configured JSON metadata.</summary>
     /// <typeparam name="T">The messaging contract type.</typeparam>
     /// <param name="options">The host JSON options.</param>
