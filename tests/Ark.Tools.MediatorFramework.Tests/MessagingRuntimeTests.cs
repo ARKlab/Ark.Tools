@@ -10,6 +10,8 @@ using Google.Protobuf.WellKnownTypes;
 using MessagePack;
 using MessagePack.Resolvers;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -140,6 +142,51 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public void MultipleCodecsRoundTripPayloadsSelectedByContentType()
+    {
+        var messagePack = new MessagePackMessagingCodec(StandardResolver.Instance);
+        var protobuf = new ProtobufMessagingCodec();
+        var registry = new MessagingCodecRegistry([messagePack, protobuf]);
+
+        try
+        {
+            ProtobufContractRegistry<Empty>.Parse = static payload => Empty.Parser.ParseFrom(payload);
+            var messagePackWriter = new ArrayBufferWriter<byte>();
+            messagePack.Serialize(new MessagePackRuntimeContract { Name = "Ada" }, messagePackWriter);
+            var selectedMessagePack = registry.GetByContentType(messagePack.ContentType);
+            selectedMessagePack.Should().BeSameAs(messagePack);
+            selectedMessagePack.Deserialize<MessagePackRuntimeContract>(
+                new ReadOnlySequence<byte>(messagePackWriter.WrittenMemory)).Name.Should().Be("Ada");
+
+            var protobufWriter = new ArrayBufferWriter<byte>();
+            protobuf.Serialize(new Empty(), protobufWriter);
+            var selectedProtobuf = registry.GetByContentType(protobuf.ContentType);
+            selectedProtobuf.Should().BeSameAs(protobuf);
+            selectedProtobuf.Deserialize<Empty>(
+                new ReadOnlySequence<byte>(protobufWriter.WrittenMemory)).Should().NotBeNull();
+        }
+        finally
+        {
+            ProtobufContractRegistry<Empty>.Parse = null;
+        }
+    }
+
+    [TestMethod]
+    public void MalformedPayloadsFailFast()
+    {
+        var messagePack = new MessagePackMessagingCodec(StandardResolver.Instance);
+        var protobuf = new ProtobufMessagingCodec();
+
+        var messagePackAction = () => messagePack.Deserialize<MessagePackRuntimeContract>(
+            new ReadOnlySequence<byte>(new byte[] { MessagePackCode.Map16, 0, 255 }));
+        var protobufAction = () => protobuf.Deserialize<Empty>(
+            new ReadOnlySequence<byte>(new byte[] { 255 }));
+
+        messagePackAction.Should().Throw<MessagePackSerializationException>();
+        protobufAction.Should().Throw<Google.Protobuf.InvalidProtocolBufferException>();
+    }
+
+    [TestMethod]
     public void ProtobufCodecRoundTripsThroughRegisteredParser()
     {
         try
@@ -174,6 +221,21 @@ public sealed partial class MessagingRuntimeTests
 
         action.Should().Throw<MessagingFailFastException>()
             .Which.Reason.Should().Be(MessagingFailFastReason.UnknownProtocol);
+    }
+
+    [TestMethod]
+    public void CodecRegistrationInstallsAllDeclaredProtocols()
+    {
+        var services = new ServiceCollection()
+            .AddArkMessaging()
+            .AddMessagePackAndProtobufMessagingCodecs()
+            .BuildServiceProvider();
+
+        var registry = services.GetRequiredService<IMessagingCodecRegistry>();
+
+        registry.IsInstalled(SerializationProtocol.Json).Should().BeTrue();
+        registry.IsInstalled(SerializationProtocol.MessagePack).Should().BeTrue();
+        registry.IsInstalled(SerializationProtocol.Protobuf).Should().BeTrue();
     }
 
     private sealed class MessagingRuntimeContract
