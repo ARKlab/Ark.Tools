@@ -38,7 +38,8 @@ public static class MessagingServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddSingleton<IFormatterResolver>(StandardResolver.Instance);
+        if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IFormatterResolver)))
+            services.AddSingleton<IFormatterResolver>(StandardResolver.Instance);
         services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>();
         services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();
         return services;
@@ -55,7 +56,8 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(resolver);
 
-        services.AddSingleton(resolver);
+        if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IFormatterResolver)))
+            services.AddSingleton(resolver);
         services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>();
         services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();
         return services;

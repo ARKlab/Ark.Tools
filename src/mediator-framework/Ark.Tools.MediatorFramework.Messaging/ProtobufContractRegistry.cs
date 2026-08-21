@@ -21,9 +21,7 @@ public static class ProtobufContractRegistry<T> where T : class
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            if (Interlocked.CompareExchange(ref _parse, value, null) is not null)
-                throw new InvalidOperationException(
-                    $"A protobuf parser is already registered for contract '{typeof(T)}'.");
+            Volatile.Write(ref _parse, value);
         }
     }
 }
