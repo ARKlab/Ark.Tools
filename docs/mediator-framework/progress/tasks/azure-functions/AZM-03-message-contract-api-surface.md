@@ -308,5 +308,5 @@ surface lines without implying wire interoperability.
 - [x] Analyzer and Mediator Framework guides document baseline acceptance and
   event-topic migration.
 - [x] The [task board](../README.md) status for AZM-03 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
