@@ -919,7 +919,7 @@ REBUS RefreshGreetingCommand -> queue:greetings
 MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
 EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished
 PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json|messagepack default:json
-NETWORK BookTopology.BookMessagingNetwork -> members:printing|web_frontend requires:receive|pubsub|scheduled_send
+NETWORK BookTopology.BookMessagingNetwork -> members:BookTopology.PrintingParticipant|BookTopology.WebFrontendParticipant requires:receive|pubsub|scheduled_send
 ```
 
 ## Testing strategy
