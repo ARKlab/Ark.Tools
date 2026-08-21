@@ -65,6 +65,165 @@ contract assembly while using different handlers and independent queues.
 9. Document local configuration, IaC expectations, and the Azurite / Azure
    Service Bus emulator (Docker) setup for local runs.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed. Attribute names are the real
+`Ark.MediatorFramework` declarations; the declaring classes are `partial`
+because AZM-03A generates registry/binder members onto them.
+
+Sample contracts and the three participant declarations sharing one network
+(publisher in the Minimal API host; two Functions subscribers with different
+handlers):
+
+```csharp
+namespace Sample.Contracts;
+
+[Message(Name = "books.print_book")]
+public sealed record PrintBook(int BookId) : ICommand<PrintBook>;
+
+[Event(Name = "books.book_print_completed")]
+public sealed record BookPrintCompleted(int BookId) : ICommand<BookPrintCompleted>;
+
+/// <summary>Shared retry policy for the subscriber participants.</summary>
+public sealed class BookRetryPolicy : IMessagingRetryPolicy
+{
+    public int MaximumDeliveryCount => 5;
+    public bool SecondLevelRetriesEnabled => true;
+    public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(5);
+    public TimeSpan RetryDelay => TimeSpan.FromSeconds(30);
+}
+
+// Publisher-only participant, run by the Minimal API host (no queue, no trigger,
+// no handler for its own event). Identity: "web-frontend".
+[MessagingParticipant(
+    Publishes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json)]
+public sealed partial class WebFrontendParticipant;
+
+// Subscriber A, hosted in its own Functions app. Identity: "print-notifications".
+[MessagingParticipant(
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json,
+    Retry = typeof(BookRetryPolicy))]
+public sealed partial class PrintNotificationsParticipant;
+
+// Subscriber B, hosted in a second Functions app with a different handler effect.
+// Identity: "print-audit".
+[MessagingParticipant(
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json,
+    Retry = typeof(BookRetryPolicy))]
+public sealed partial class PrintAuditParticipant;
+
+[MessagingNetwork(
+    Members = new[]
+    {
+        typeof(WebFrontendParticipant),
+        typeof(PrintNotificationsParticipant),
+        typeof(PrintAuditParticipant)
+    },
+    Requires = MessagingCapabilities.Receive
+        | MessagingCapabilities.PubSub
+        | MessagingCapabilities.ScheduledSend)]
+public sealed partial class BookMessagingNetwork;
+
+// Topology derived by generation: topic "web-frontend-book_print_completed" with two
+// forwarding subscriptions into the "print-notifications" and "print-audit" queues.
+// Each Functions host binds its own participant with
+// [assembly: MessagingFunctionsHost(typeof(PrintNotificationsParticipant),
+//     MessagingFunctionsTriggerBinding.ServiceBus)].
+```
+
+Subscriber handler — plain `Ark.Tools.Solid.ICommandHandler<T>`, reached
+through `ICommandProcessor.ExecuteAsync<T>` by the generated binder, and
+registered explicitly in each subscriber's composition root:
+
+```csharp
+namespace Sample.Application;
+
+/// <summary>Subscriber A effect: records a user-facing notification.</summary>
+public sealed class NotifyOnBookPrintCompletedHandler : ICommandHandler<BookPrintCompleted>
+{
+    private readonly INotificationService _notifications;
+
+    /// <summary>Creates the handler over the notification service.</summary>
+    public NotifyOnBookPrintCompletedHandler(INotificationService notifications)
+    {
+        _notifications = notifications;
+    }
+
+    /// <inheritdoc/>
+    public async Task ExecuteAsync(BookPrintCompleted command, CancellationToken ctk = default)
+    {
+        await _notifications.NotifyPrintCompletedAsync(command.BookId, ctk).ConfigureAwait(false);
+    }
+}
+
+// Subscriber A composition root:
+//   container.Register<ICommandHandler<BookPrintCompleted>, NotifyOnBookPrintCompletedHandler>();
+// Subscriber B registers a different handler for the same contract:
+//   container.Register<ICommandHandler<BookPrintCompleted>, AuditBookPrintCompletedHandler>();
+```
+
+Reqnroll sketch proving one publish produces two independent deliveries with
+distinct handler effects (test hosts compose the InMemory transport;
+publisher and subscribers use independent containers sharing only the
+transport and intentional scenario state):
+
+```gherkin
+Scenario: One published event reaches both subscribers with distinct effects
+    Given the book messaging network is composed over the InMemory transport
+    When the web frontend publishes a book print completed event for book 42
+    And I wait for the messaging network to become idle
+    Then the print notifications subscriber recorded one notification for book 42
+    And the print audit subscriber recorded one audit entry for book 42
+```
+
+```csharp
+[Binding]
+public sealed class ThreeParticipantSteps
+{
+    private readonly MessagingScenarioDriver _driver;
+
+    /// <summary>Creates the steps over the scenario-owned messaging driver.</summary>
+    public ThreeParticipantSteps(MessagingScenarioDriver driver)
+    {
+        _driver = driver;
+    }
+
+    [When("the web frontend publishes a book print completed event for book {int}")]
+    public async Task WhenTheWebFrontendPublishes(int bookId)
+    {
+        // The driver resolves IBus from the publisher container only.
+        await _driver.PublishAsync(new BookPrintCompleted(bookId)).ConfigureAwait(false);
+    }
+
+    [When("I wait for the messaging network to become idle")]
+    public async Task WhenIWaitForIdle()
+    {
+        // Bounded polling on the InMemory transport; timeout diagnostics include
+        // queue depths, in-flight deliveries, scheduled messages, and DLQ contents.
+        await _driver.WaitForIdleAsync().ConfigureAwait(false);
+    }
+
+    [Then("the print notifications subscriber recorded one notification for book {int}")]
+    public void ThenNotificationRecorded(int bookId)
+    {
+        _driver.NotificationsSpy.Notified.Should().ContainSingle(x => x == bookId);
+    }
+
+    [Then("the print audit subscriber recorded one audit entry for book {int}")]
+    public void ThenAuditRecorded(int bookId)
+    {
+        _driver.AuditSpy.Audited.Should().ContainSingle(x => x == bookId);
+    }
+}
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the

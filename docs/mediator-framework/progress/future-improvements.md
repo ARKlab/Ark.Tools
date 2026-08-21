@@ -33,3 +33,16 @@ redirect for `/api` routes.
 ## 5. Server-Sent Events transport
 
 See task [tasks/aspnetcore/NET-05-sse-transport-spike.md](tasks/aspnetcore/NET-05-sse-transport-spike.md) — spike scheduled post-release.
+
+## 6. Host-optimized streaming serialization pipeline (messaging)
+
+The AZM messaging runtime counts payload sizes while writing (counting
+`IBufferWriter<byte>`), buffers the pre-compression prefix in pooled
+fixed-size arrays, and switches mid-serialization to a compression writer
+(AZM-07); the single fully buffered representation is transport-owned. A
+further optimization — a fully streamed `PipeWriter` chain that can also
+divert to the DataBus mid-write without a transport-owned buffer — requires
+host-technology knowledge to prepare the pipe (Functions worker, Service Bus
+`BinaryData` shapes, Storage Queue single-Base64 body) and is deliberately
+deferred. Revisit after AZM-10/AZM-11 land, when the real native
+send/measure shapes are known.

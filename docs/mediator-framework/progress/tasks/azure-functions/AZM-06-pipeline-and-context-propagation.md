@@ -56,6 +56,214 @@ Rebus provides this through `IPipeline` and direction-specific steps.
 9. Keep the step contracts independent of Azure Service Bus, Storage Queue,
    and Rebus types.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed.
+
+The transport-neutral step contracts and contexts (public API project,
+namespace `Ark.MediatorFramework`). Steps follow the Rebus continuation model;
+contexts carry the header dictionary, payload accessors, scope, and
+cancellation, and are never cached across invocations:
+
+```csharp
+namespace Ark.MediatorFramework;
+
+/// <summary>Continuation-based incoming step, modelled on Rebus IIncomingStep.</summary>
+public interface IMessagingIncomingStep
+{
+    /// <summary>Processes the incoming context and invokes the rest of the pipeline.</summary>
+    Task ProcessAsync(MessagingIncomingContext context, Func<Task> next);
+}
+
+/// <summary>Continuation-based outgoing step, modelled on Rebus IOutgoingStep.</summary>
+public interface IMessagingOutgoingStep
+{
+    /// <summary>Processes the outgoing context and invokes the rest of the pipeline.</summary>
+    Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next);
+}
+
+/// <summary>Per-delivery incoming context. One instance per invocation; never shared.</summary>
+public sealed class MessagingIncomingContext
+{
+    /// <summary>Gets the received headers (read-only; reserved amf1-* keys are framework-owned).</summary>
+    public IReadOnlyDictionary<string, string> Headers { get; }
+
+    /// <summary>Gets the prepared payload (after DataBus fetch and bounded decompression).</summary>
+    public ReadOnlySequence<byte> Payload { get; }
+
+    /// <summary>Gets the service resolver for the current handling scope (the SimpleInjector
+    /// AsyncScopedLifestyle scope; SimpleInjector Scope implements IServiceProvider).</summary>
+    public IServiceProvider Scope { get; }
+
+    /// <summary>Gets the processing cancellation token.</summary>
+    public CancellationToken CancellationToken { get; }
+
+    /// <summary>Gets a per-invocation items bag for step-to-step state.</summary>
+    public IDictionary<string, object> Items { get; }
+}
+
+/// <summary>Per-send outgoing context. Steps positioned before serialization may add
+/// headers; reserved routing/content/encoding/attachment/identity headers are rejected.</summary>
+public sealed class MessagingOutgoingContext
+{
+    /// <summary>Gets the mutable header map; writes to reserved amf1-* keys throw.</summary>
+    public IDictionary<string, string> Headers { get; }
+
+    /// <summary>Gets the destination queue or topic resolved from the generated registry.</summary>
+    public string Destination { get; }
+
+    /// <summary>Gets the serialized payload; null before the serialize stage runs.</summary>
+    public ReadOnlySequence<byte>? Payload { get; }
+
+    /// <summary>Gets the send cancellation token.</summary>
+    public CancellationToken CancellationToken { get; }
+
+    /// <summary>Gets a per-invocation items bag for step-to-step state.</summary>
+    public IDictionary<string, object> Items { get; }
+}
+```
+
+The framework-owned stable stage identifiers. Custom steps register relative
+to these anchors on the participant's host binding; startup validates missing
+anchors, duplicate registrations, and ordering cycles:
+
+```csharp
+namespace Ark.MediatorFramework;
+
+/// <summary>Named relative positions around deserialize, dispatch, serialize, send, and
+/// settlement (design §10). The network owns only these identifiers and the contracts.</summary>
+public enum MessagingPipelineStage
+{
+    /// <summary>Incoming: headers parsed and payload prepared; contract not yet deserialized.</summary>
+    BeforeDeserialize,
+
+    /// <summary>Incoming: typed contract available; handler not yet dispatched
+    /// (reads as "before dispatch").</summary>
+    AfterDeserialize,
+
+    /// <summary>Incoming: handler completed; settlement not yet applied (AZM-09 owns it).</summary>
+    AfterDispatch,
+
+    /// <summary>Outgoing: headers mutable; contract not yet serialized.</summary>
+    BeforeSerialize,
+
+    /// <summary>Outgoing: payload bytes final (compressed/claim-checked); transport not
+    /// yet called.</summary>
+    BeforeSend,
+
+    /// <summary>Incoming: after complete/abandon/dead-letter settlement was applied.</summary>
+    AfterSettlement
+}
+```
+
+The pipeline invoker skeleton — a reverse fold of the ordered steps into one
+continuation chain (identical shape for the outgoing direction):
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Composes ordered steps into a continuation chain, Rebus-style.</summary>
+public static class MessagingPipelineInvoker
+{
+    /// <summary>Invokes the incoming pipeline; terminal is the deserialize+dispatch stage.</summary>
+    public static Task InvokeIncomingAsync(
+        IReadOnlyList<IMessagingIncomingStep> orderedSteps,
+        MessagingIncomingContext context,
+        Func<Task> terminal)
+    {
+        var next = terminal;
+        for (var i = orderedSteps.Count - 1; i >= 0; i--)
+        {
+            var step = orderedSteps[i];
+            var continuation = next;
+            next = () => step.ProcessAsync(context, continuation);
+        }
+
+        // Exceptions and cancellation flow through unchanged; settlement is AZM-09's job.
+        return next();
+    }
+}
+```
+
+The opt-in built-in user-context incoming step, mirroring the existing Rebus
+`ark-user-*` behavior (see `src/common/Ark.Tools.Rebus/UserFlowStep.cs`):
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Restores the sender's principal from ark-user-* headers before handler
+/// resolution. Opt-in per participant host binding.</summary>
+public sealed class UserContextIncomingStep : IMessagingIncomingStep
+{
+    public async Task ProcessAsync(MessagingIncomingContext context, Func<Task> next)
+    {
+        if (context.Headers.TryGetValue("ark-user-id", out var userId))
+        {
+            var identity = new ClaimsIdentity(
+                new[] { new Claim(ClaimTypes.NameIdentifier, userId) }, "ark-messaging");
+            var principal = new ClaimsPrincipal(identity);
+            // Publish the principal into the scoped context-provider resolved from
+            // context.Scope, mirroring the Rebus UserFlowStep restore behavior. The
+            // outgoing counterpart writes ark-user-* headers from the current principal.
+            _setScopedPrincipal(context.Scope, principal);
+        }
+
+        await next().ConfigureAwait(false);
+    }
+}
+```
+
+The opt-in OpenTelemetry step sketch — W3C `traceparent`/`tracestate`/`baggage`
+propagation with an `Activity` around processing:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Creates/continues an Activity around message processing from W3C headers.</summary>
+public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
+{
+    private static readonly ActivitySource _source = new("Ark.MediatorFramework.Messaging");
+
+    public async Task ProcessAsync(MessagingIncomingContext context, Func<Task> next)
+    {
+        context.Headers.TryGetValue("traceparent", out var traceparent);
+        ActivityContext.TryParse(traceparent,
+            context.Headers.GetValueOrDefault("tracestate"), out var parent);
+
+        using var activity = _source.StartActivity(
+            "amf.message.process", ActivityKind.Consumer, parent);
+        // "baggage" header entries are restored into Activity baggage here.
+        try
+        {
+            await next().ConfigureAwait(false);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            throw;   // unchanged; AZM-09 owns settlement
+        }
+    }
+}
+
+/// <summary>Writes traceparent/tracestate/baggage headers from Activity.Current.</summary>
+public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
+{
+    public async Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next)
+    {
+        if (Activity.Current is { } current)
+        {
+            context.Headers["traceparent"] = current.Id!;   // W3C format
+            if (current.TraceStateString is { } state)
+                context.Headers["tracestate"] = state;
+        }
+
+        await next().ConfigureAwait(false);
+    }
+}
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with

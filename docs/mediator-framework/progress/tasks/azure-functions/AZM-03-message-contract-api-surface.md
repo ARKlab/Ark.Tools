@@ -1,7 +1,7 @@
 # AZM-03 — Message contract API-surface enforcement
 
 **Category**: azure-functions-messaging · **Priority**: foundation
-**Depends on**: AZM-02
+**Depends on**: AZM-02, AZM-03A
 **Scope**: API-SURFACE GENERATOR + CONTRACT COMPATIBILITY
 **Design**: [Contract model — logical names and aliases](../../azure-functions-messaging-design.md#3-contract-model)
 
@@ -22,9 +22,14 @@ introduced by AZM-02.
 
 - **Analyzer project**: extend
   `src/mediator-framework/Ark.Tools.MediatorFramework.ApiSurface.Generators/ApiSurfaceGenerator.cs`.
-- **Shared semantic model**: reuse or extract the exact logical-name and alias
-  resolution used by the Mediator Framework generators. Do not independently
+- **Shared semantic model**: reuse the source-linked logical-name, alias, and
+  identity resolution helper owned by
+  `Ark.Tools.MediatorFramework.Generators` (AZM-03A). Do not independently
   reimplement default names, owner parsing, or alias normalization.
+- **Generated-member exclusion**: honor the AZM-03A API-surface exclusion
+  marker attribute so the generated partial-class routing members never
+  appear in `ArkApiSurface.txt`; routing drift is tracked solely by the
+  `MESSAGE`/`EVENT`/`PARTICIPANT`/`NETWORK` lines below.
 - **Generator tests**: extend
   `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`.
 - **Sample baseline**: update
@@ -80,9 +85,9 @@ The rules are fixed:
 3. Resolve the canonical name, `FormerNames`, participant identity, network
    membership, and processes/publishes/subscribes sets through the same
    immutable
-   metadata/helper used by the messaging generators. If AZM-02 initially puts
-   this logic in a generator-specific class, extract a source-linked
-   Roslyn-only helper usable by both generators.
+   metadata/helper used by the messaging generators — the source-linked
+   Roslyn-only helper owned by `Ark.Tools.MediatorFramework.Generators`
+   (AZM-03A).
 4. Emit the exact `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` formats
    above. Use
    `StringComparer.Ordinal` for deduplication and ordering.
@@ -107,6 +112,144 @@ The rules are fixed:
    subscriber's membership also changes topics/subscriptions and
    requires the explicit topology migration defined by the messaging design;
    accepting `ARKAPI002` alone does not perform that migration.
+
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed.
+
+*Incremental provider registration for the four messaging attributes,
+mirroring the existing `ApiSurfaceGenerator` style: fully qualified
+metadata-name constants (like the existing `Http`/`Grpc`/`Rebus`),
+`ForAttributeWithMetadataName` + `Collect()`, a `Combine` merge, and the
+existing `BuildSurface(types, cancellationToken)` which already deduplicates
+by fully qualified display string and ordinal-sorts the final lines:*
+
+```csharp
+// New constants alongside the existing Http/Grpc/Rebus metadata names.
+private const string Message = "Ark.MediatorFramework.MessageAttribute";
+private const string Event = "Ark.MediatorFramework.EventAttribute";
+private const string Participant = "Ark.MediatorFramework.MessagingParticipantAttribute";
+private const string Network = "Ark.MediatorFramework.MessagingNetworkAttribute";
+
+// Inside Initialize(IncrementalGeneratorInitializationContext context):
+var messageTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+        Message,
+        static (_, _) => true,
+        static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+    .Collect();
+var eventTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+        Event,
+        static (_, _) => true,
+        static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+    .Collect();
+var participantTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+        Participant,
+        static (_, _) => true,
+        static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+    .Collect();
+var networkTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+        Network,
+        static (_, _) => true,
+        static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+    .Collect();
+
+// Extend the existing merge; BuildSurface groups by the fully qualified
+// display string, so a type carrying [RebusMessage] plus [Message] is
+// processed once and contributes both its REBUS and MESSAGE lines.
+var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
+    .Combine(messageTypes).Combine(eventTypes)
+    .Combine(participantTypes).Combine(networkTypes)
+    .Select(static (tuple, _) =>
+    {
+        var ((((((http, grpc), rebus), messages), events), participants), networks) = tuple;
+        return http.AddRange(grpc).AddRange(rebus)
+            .AddRange(messages).AddRange(events)
+            .AddRange(participants).AddRange(networks);
+    });
+
+var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
+    BuildSurface(types, cancellationToken));
+```
+
+*Exact emitted line formats (same examples as the Snapshot format section
+above — these strings are the wire-drift baseline, byte-for-byte):*
+
+```text
+MESSAGE Books.RecalculatePrint -> name:books.recalculate_print former:-
+EVENT Books.PrintCompleted -> name:books.print_completed former:books.print_finished|legacy.print_completed
+PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books.recalculate_print publishes:- subscribes:books.print_completed serializers:json,msgpack default:json
+NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
+```
+
+*Emission helper sketch, called from `AddType` beside the existing
+HTTP/gRPC/Rebus emission. Canonical-name, alias, and identity resolution is
+delegated to the shared source-linked helper owned by
+`Ark.Tools.MediatorFramework.Generators` (AZM-03A) — never reimplemented
+here. All ordering and deduplication uses `StringComparer.Ordinal`:*
+
+```csharp
+private static void AddMessagingLines(List<string> lines, INamedTypeSymbol type)
+{
+    // Namespace-qualified CLR type name, no assembly qualification.
+    var clrName = type.ToDisplayString();
+
+    var message = Attribute(type, Message);
+    if (message is not null)
+    {
+        var name = SharedNameResolver.ResolveCanonicalName(type, message);
+        var former = FormatSet(SharedNameResolver.ResolveFormerNames(message));
+        lines.Add($"MESSAGE {clrName} -> name:{name} former:{former}");
+    }
+
+    var @event = Attribute(type, Event);
+    if (@event is not null)
+    {
+        var name = SharedNameResolver.ResolveCanonicalName(type, @event);
+        var former = FormatSet(SharedNameResolver.ResolveFormerNames(@event));
+        lines.Add($"EVENT {clrName} -> name:{name} former:{former}");
+    }
+
+    // PARTICIPANT {clrName} -> network:{network} identity:{identity}
+    //   processes:{set} publishes:{set} subscribes:{set}
+    //   serializers:{set} default:{protocol}
+    // NETWORK {clrName} -> members:{set} requires:{flags-in-value-order or -}
+    // Both use the same shared resolution helper and FormatSet.
+}
+
+// Distinct, ordinal-sorted, '|'-joined; '-' when the set is empty.
+private static string FormatSet(IEnumerable<string> values)
+{
+    var sorted = values.Distinct(StringComparer.Ordinal)
+        .OrderBy(static v => v, StringComparer.Ordinal)
+        .ToArray();
+    return sorted.Length == 0 ? "-" : string.Join("|", sorted);
+}
+```
+
+*Honoring the AZM-03A generated-member exclusion marker (conceptual name
+`Ark.MediatorFramework.MessagingGeneratedSurfaceAttribute`; declared by
+AZM-03A): members carrying the marker never contribute snapshot lines, so
+the generated partial routing members produce no API-surface churn:*
+
+```csharp
+private const string GeneratedSurface =
+    "Ark.MediatorFramework.MessagingGeneratedSurfaceAttribute";
+
+private static bool IsGeneratedSurface(ISymbol symbol)
+{
+    return symbol.GetAttributes().Any(static attribute =>
+        attribute.AttributeClass?.ToDisplayString() == GeneratedSurface);
+}
+
+// Applied wherever type members are walked, e.g. in AddType:
+foreach (var member in AllProperties(type))
+{
+    if (IsGeneratedSurface(member))
+        continue; // generated routing members never reach ArkApiSurface.txt
+    AddContract(lines, request, member, string.Empty, visited);
+}
+```
 
 ## Guide contribution
 

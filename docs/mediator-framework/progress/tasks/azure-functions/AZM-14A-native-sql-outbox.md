@@ -63,6 +63,144 @@ must have separate composition paths.
 10. Add a dedicated always-running Book sample processor host beside the three
     messaging participants. Reuse the sample SQL and in-memory outbox profiles.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed. Outbox names below are the real
+`Ark.Tools.Outbox` abstractions: `IOutboxContextCore.SendAsync` /
+`PeekLockMessagesAsync`, `OutboxMessage { Headers, Body }`,
+`IOutboxAsyncContextFactory`, and the `OutboxProcessorBase` polling loop.
+
+Enqueue path — when an `IOutboxContextCore` is enlisted, the fully validated
+envelope (headers + payload + destination/scheduling metadata) is persisted
+within the ambient SQL transaction instead of being sent directly:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Bus decoration that persists validated envelopes through an enlisted outbox.</summary>
+public sealed class OutboxEnlistedBus : IBus
+{
+    private readonly IOutboxContextCore _outbox;
+
+    /// <inheritdoc/>
+    public async Task Send<T>(
+        T message,
+        Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        // Full validation and the outgoing pipeline run BEFORE persistence: publish
+        // ownership, capability guards, reserved-header rejection, serialization,
+        // compression, DataBus claim-check, and native measurement. The persisted
+        // envelope already carries amf1-sender-identity (the enqueuing participant).
+        var (headers, payload, destinationQueue) =
+            await _prepareValidatedEnvelopeAsync(message, additionalHeaders, cancellationToken)
+                .ConfigureAwait(false);
+
+        // Destination and scheduling ride in framework-reserved outbox headers so the
+        // existing Headers + Body schema is reused unchanged (header names conceptual).
+        headers["amf1-outbox-destination-kind"] = "queue"; // "topic" for Publish
+        headers["amf1-outbox-destination"] = destinationQueue;
+
+        // OutboxMessage.Body is the existing persistence contract of Ark.Tools.Outbox,
+        // not a framework-facing payload API; the transport-owned buffer is copied once.
+        await _outbox.SendAsync(
+                new[] { new OutboxMessage { Headers = headers, Body = payload.ToArray() } },
+                cancellationToken)
+            .ConfigureAwait(false);
+        // Commits or rolls back atomically with the application state of the same
+        // SQL context. Without an enlisted outbox context, Send/Publish go directly
+        // to the transport.
+    }
+
+    // Send(T, TimeSpan, ...), Send(T, DateTimeOffset, ...) additionally persist
+    // "amf1-outbox-due-time"; Publish<T> persists the derived topic destination.
+}
+```
+
+Processor — an `IHostedService` built on the real `OutboxProcessorBase`
+polling loop, registered under the reserved identity, peek-locking batches
+and committing deletion only after the transport accepts every send:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Drains the native outbox through the configured network transport.</summary>
+public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedService
+{
+    /// <summary>Reserved network identity of the running processor.</summary>
+    public const string Identity = "outbox-processor";
+
+    private readonly IOutboxAsyncContextFactory _contextFactory;
+    private readonly IMessagingTransport _transport;
+    private CancellationTokenSource? _cts;
+    private Task? _loop;
+
+    protected override async ValueTask<IOutboxContextCore> CreateContextAsync(
+        CancellationToken ctk)
+    {
+        return await _contextFactory.CreateAsync(ctk).ConfigureAwait(false);
+    }
+
+    protected override async Task ProcessMessagesAsync(
+        IReadOnlyList<OutboxMessage> messages, CancellationToken ctk)
+    {
+        foreach (var message in messages)
+        {
+            // Raw-envelope dispatch seam: strip the reserved outbox headers, send the
+            // persisted headers/payload as-is. Never reconstruct application contracts,
+            // rerun outgoing steps, or overwrite amf1-sender-identity.
+            var (headers, destination, dueTime) = _splitReservedOutboxHeaders(message.Headers!);
+            var payload = new ReadOnlySequence<byte>(message.Body!);
+
+            await _transport.SendAsync(destination, headers, payload, dueTime, ctk)
+                .ConfigureAwait(false);
+        }
+        // The base loop commits the peek-locked batch (deleting the rows) only after
+        // every send succeeded; a failed batch stays locked-then-retryable with the
+        // base class error backoff.
+    }
+
+    /// <inheritdoc/>
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        // Startup composition rejects this registration inside an Azure Functions host
+        // and rejects any participant declared or composed under the reserved identity.
+        _cts = new CancellationTokenSource();
+        _loop = ProcessLoopAsync(_cts.Token);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _cts?.Cancel();
+        if (_loop is not null)
+        {
+            await _loop.ConfigureAwait(false);
+        }
+    }
+}
+```
+
+Persisted row shape — the existing `Ark.Tools.Outbox.SqlServer` table is
+reused unchanged; destination metadata lives in the headers JSON:
+
+```text
+[ops].[Outbox]  (existing Ark.Tools.Outbox.SqlServer schema; no new columns)
+  [Id]      bigint IDENTITY(1,1) NOT NULL   -- peek-lock/delete key, insertion order
+  [Headers] nvarchar(MAX)        NOT NULL   -- JSON header map: full amf1-* envelope
+                                            -- headers (msg-type, msg-id, corr-id,
+                                            -- senttime, network, sender-identity,
+                                            -- content-type/encoding, attachment refs)
+                                            -- plus reserved outbox routing headers:
+                                            --   amf1-outbox-destination-kind
+                                            --   amf1-outbox-destination
+                                            --   amf1-outbox-due-time (optional)
+  [Body]    varbinary(MAX)       NOT NULL   -- validated payload bytes exactly as
+                                            -- serialized/compressed at enqueue time
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md),

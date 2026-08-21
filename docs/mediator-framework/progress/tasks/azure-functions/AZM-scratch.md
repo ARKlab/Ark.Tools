@@ -31,3 +31,12 @@ task.
   to carries the matching wire-format attribute (e.g., `[MessagePackObject]` for
   MessagePack, `[ProtoContract]` for Protobuf). Missing attributes should produce
   a compile-time error diagnostic.
+
+## Observability
+
+- **Analyze enhancing `Activity` usage for OTEL instrumentation.** Capture the
+  future capability need: the messaging runtime (and framework in general)
+  should be reviewed for richer OpenTelemetry instrumentation — proper
+  `ActivitySource` activities with messaging semantic conventions, links,
+  events, and status across send/publish/receive/dispatch. Needs analysis;
+  not yet assigned to a task.

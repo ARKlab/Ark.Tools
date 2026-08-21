@@ -95,6 +95,60 @@ explicit guidance and the public API must be reviewable before release.
     migration required when an event topic name changes.
 13. Document the portable queue-name convention and analyzer diagnostics.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed. This task is documentation-oriented, so the
+shapes below are the baseline-regeneration commands and the doc checklist.
+
+Regenerating and accepting `ArkApiSurface.txt` baselines (per the repository
+API-surface workflow; `ARKAPI001` = missing baseline, `ARKAPI002` = drift):
+
+```text
+# 1. Build the project with generated-file emission to refresh the snapshot:
+dotnet build <project>.csproj -p:EmitCompilerGeneratedFiles=true
+
+# 2. Review obj/Debug/<tfm>/ArkApiSurface.current.txt, including the deterministic
+#    MESSAGE / EVENT / PARTICIPANT / NETWORK entries (AZM-03) and generated
+#    messaging trigger/route lines (AZM-10/11).
+
+# 3. Only after approval, copy the snapshot over the committed baseline:
+copy obj\Debug\net10.0\ArkApiSurface.current.txt ArkApiSurface.txt
+
+# 4. Verify the release gates:
+dotnet build Ark.Tools.slnx --configuration Debug
+dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1
+```
+
+Release-gate documentation checklist (each item is verified, not assumed):
+
+```text
+[ ] Every generated example is copied from inspected emitted .g.cs output
+    (obj/<Configuration>/<tfm>/generated/...), never hand-invented.
+[ ] Wire identity examples use logical snake_case names ("books.print_book"),
+    never CLR type names.
+[ ] Retry examples use the N / 2N model and the fixed per-transport abandon
+    semantics (Service Bus immediate; Storage Queue visibilityTimeout = RetryDelay).
+[ ] Storage Queue docs state the single-Base64 messageEncoding "none" contract
+    and the 46 080 / 49 152 canonical caps.
+[ ] No stale terminology: MessagingHost, MessagingFunctionsTrigger, OwnerQueue,
+    OwnerPublisher, explicit Role declarations, "host identity" as participant.
+[ ] No Rebus wire-interoperability, direct-subscription, technology-typed
+    network, or Functions-hosted outbox-processor claims.
+[ ] The design-preview banner is removed only after every example compiles.
+```
+
+Sample docs cross-link table (verified while integrating task-owned guide
+sections):
+
+| Doc | Must link to | Owned by |
+| --- | --- | --- |
+| `guide/azure-functions.md` | Trigger model, host binding attribute, Storage Queue host.json contract, resource lifecycle | AZM-10/11/12/13 |
+| `guide/host-setup-and-composition.md` | Functions/sender-only composition, outbox hosting split | AZM-13/14A |
+| `guide/rebus.md` | Generated Rebus assistance, adapter `IBus`/`IFailed<T>`, non-interoperability | AZM-14 |
+| `guide/api-surface-snapshots.md` | MESSAGE/EVENT/PARTICIPANT/NETWORK lines, generated trigger entries | AZM-03/16 |
+| `samples/Ark.MediatorFramework.Sample/README.md` | Three-participant topology, two topology modes, `outbox-processor` host commands | AZM-15/16 |
+
 ## Guide contribution
 
 This task integrates and reviews the guide sections contributed by AZM-01

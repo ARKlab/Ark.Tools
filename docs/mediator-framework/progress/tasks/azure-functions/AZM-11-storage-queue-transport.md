@@ -129,6 +129,228 @@ generated Azure Functions QueueTrigger.
     expected and actual values; an opt-in strict setting fails startup
     instead.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed. The single-Base64 wire contract, the
+46 080/49 152 canonical caps, and the settlement table are fixed by the
+design; the exact binary field layout below is conceptual.
+
+Canonical envelope binary layout (before the single Base64 pass):
+
+```text
+canonical envelope (binary; layout conceptual, single-Base64 contract fixed)
++------------------------+--------------------------------------------------+
+| varint headerCount     | number of header key/value pairs                 |
+| repeated per header:   |                                                  |
+|   varint keyLength     | followed by UTF-8 key bytes (amf1-*)             |
+|   varint valueLength   | followed by UTF-8 value bytes                    |
+| payload bytes          | remainder of the buffer, exactly as serialized   |
+|                        | (or compressed / attachment-reference form)      |
++------------------------+--------------------------------------------------+
+normal inline envelope  <= 46 080 canonical bytes (3 072 reserved for poison
+                           metadata)
+poison envelope         <= 49 152 canonical bytes -> Base64 <= 65 536 text
+                           bytes (the 64 KiB queue-message ceiling)
+```
+
+Encoder/decoder skeleton — exactly one Base64 operation on each side, over a
+transport-owned buffer, paired with `QueueMessageEncoding.None`:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Encodes and decodes the canonical Storage Queue envelope.</summary>
+public static class StorageQueueEnvelopeCodec
+{
+    /// <summary>Writes headers and payload into the canonical layout, then Base64 text.</summary>
+    public static string Encode(
+        IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
+    {
+        // Transport-owned buffered representation; never exposed as byte[] to callers.
+        var canonical = new ArrayBufferWriter<byte>();
+        _writeVarInt(canonical, headers.Count);
+        foreach (var (key, value) in headers)
+        {
+            _writeLengthPrefixedUtf8(canonical, key);
+            _writeLengthPrefixedUtf8(canonical, value);
+        }
+
+        foreach (var segment in payload)
+        {
+            canonical.Write(segment.Span);
+        }
+
+        // Exactly one Base64 operation; the SDK client uses QueueMessageEncoding.None
+        // and host.json requires queues.messageEncoding = "none".
+        var encoded = new byte[Base64.GetMaxEncodedToUtf8Length(canonical.WrittenCount)];
+        Base64.EncodeToUtf8(canonical.WrittenSpan, encoded, out _, out var written);
+        return Encoding.UTF8.GetString(encoded.AsSpan(0, written));
+    }
+
+    /// <summary>Decodes the raw queue-message body back into headers and payload.</summary>
+    public static (IReadOnlyDictionary<string, string> Headers, ReadOnlySequence<byte> Payload)
+        Decode(BinaryData rawBody)
+    {
+        // Exactly one Base64 decode of the raw body; the remainder of the canonical
+        // buffer is the binary payload as sent. The decoder must not assume the
+        // payload is JSON merely because the outer representation is text.
+        var text = rawBody.ToMemory();
+        var canonical = new byte[Base64.GetMaxDecodedFromUtf8Length(text.Length)];
+        if (Base64.DecodeFromUtf8(text.Span, canonical, out _, out var written)
+            != OperationStatus.Done)
+        {
+            throw new MessagingFailFastException(MessagingFailFastReason.MalformedHeaders);
+        }
+
+        return _readCanonical(canonical.AsMemory(0, written));
+    }
+}
+```
+
+Size gate applied by the transport before send and before the AZM-07
+claim-check decision, measuring the completed native representation:
+
+```csharp
+/// <summary>Fixed Storage Queue inline-envelope size caps.</summary>
+public static class StorageQueueLimits
+{
+    /// <summary>Canonical bytes reserved for bounded poison metadata.</summary>
+    public const int PoisonMetadataReservedBytes = 3_072;
+
+    /// <summary>Maximum canonical bytes of a normal inline envelope.</summary>
+    public const int MaximumNormalCanonicalBytes = 46_080;
+
+    /// <summary>Maximum canonical bytes of a poison envelope (Base64 fits 64 KiB).</summary>
+    public const int MaximumPoisonCanonicalBytes = 49_152;
+
+    /// <summary>Final encoded queue-message text ceiling.</summary>
+    public const int MaximumEncodedTextBytes = 65_536;
+}
+
+// On the transport (Capabilities = Receive | ScheduledSend; no PubSub):
+public long? MaximumInlineEnvelopeBytes => StorageQueueLimits.MaximumEncodedTextBytes;
+
+public long MeasureNative(
+    IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
+{
+    // Measures the final encoded text of the complete candidate envelope. The bus
+    // offloads to DataBus before encoding when the canonical size exceeds
+    // MaximumNormalCanonicalBytes, re-measures the attachment-reference envelope,
+    // and fails explicitly if that still cannot fit.
+    var canonicalBytes = _measureCanonical(headers, payload);
+    return Base64.GetMaxEncodedToUtf8Length(checked((int)canonicalBytes));
+}
+```
+
+Generated QueueTrigger binding `QueueMessage` (Storage Queues Worker
+extension 5.2.0+) with the three fixed settlement outcomes, plus the runtime
+helper it delegates to:
+
+```csharp
+// <auto-generated />
+#nullable enable
+namespace Ark.MediatorFramework.AzureFunctions.Generated;
+
+public static class ArkGeneratedFunctions
+{
+    /// <summary>Receives the "printing" participant identity queue.</summary>
+    [global::Microsoft.Azure.Functions.Worker.Function("printing")]
+    public static async global::System.Threading.Tasks.Task Printing(
+        [global::Microsoft.Azure.Functions.Worker.QueueTrigger(
+            "printing",
+            Connection = "BookMessagingNetwork")]
+        global::Azure.Storage.Queues.Models.QueueMessage message,
+        global::System.Threading.CancellationToken cancellationToken)
+    {
+        // Complete = return; abandon = the helper rethrows so the host applies
+        // queues.visibilityTimeout = RetryDelay; immediate DLQ = the helper SDK-moves
+        // to "printing-poison", deletes by pop receipt, then returns successfully.
+        await global::Ark.MediatorFramework.AzureFunctions.MessagingQueueFunctionsDispatcher
+            .DispatchAsync(message, cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
+```
+
+```csharp
+namespace Ark.MediatorFramework.AzureFunctions;
+
+/// <summary>Maps QueueTrigger semantics onto the fixed settlement contract.</summary>
+public sealed class MessagingQueueFunctionsDispatcher
+{
+    // Both clients are composed with QueueMessageEncoding.None (AZM-13).
+    private readonly QueueClient _sourceQueue;   // "printing"
+    private readonly QueueClient _poisonQueue;   // "printing-poison"
+
+    /// <summary>Dispatches one delivery and applies the QueueTrigger settlement table.</summary>
+    public async Task DispatchAsync(QueueMessage message, CancellationToken ctk)
+    {
+        try
+        {
+            var (headers, payload) = StorageQueueEnvelopeCodec.Decode(message.Body);
+            // Header phase + generated binder + inline second-level per AZM-09; the
+            // native delivery count is message.DequeueCount.
+            await MessagingReceivePipeline.ProcessAsync(
+                    new StorageQueueLockedDelivery(headers, payload, (int)message.DequeueCount),
+                    ctk)
+                .ConfigureAwait(false);
+            // Complete: return successfully; the Functions host deletes the message.
+        }
+        catch (MessagingFailFastException failFast)
+        {
+            // Immediate DLQ: SDK move with bounded metadata (within the 3 072-byte
+            // reservation), delete the original, then return success so the host does
+            // not also retry. The move is non-transactional; duplicate poison copies
+            // are accepted and keep the original message ID.
+            var poisonBody = StorageQueueEnvelopeCodec.EncodePoison(message.Body, failFast.Reason);
+            await _poisonQueue.SendMessageAsync(poisonBody, ctk).ConfigureAwait(false);
+            await _sourceQueue.DeleteMessageAsync(message.MessageId, message.PopReceipt, ctk)
+                .ConfigureAwait(false);
+        }
+        // Any other exception propagates (abandon): the host applies
+        // visibilityTimeout = RetryDelay and, after maxDequeueCount, host-side poison.
+    }
+}
+```
+
+Required `host.json` fragment for a participant with `RetryDelay` = 30s and
+`MaximumDeliveryCount` N = 5 with second-level retries enabled
+(`maxDequeueCount` = 2N = 10; N when disabled):
+
+```json
+{
+  "version": "2.0",
+  "extensions": {
+    "queues": {
+      "messageEncoding": "none",
+      "visibilityTimeout": "00:00:30",
+      "maxDequeueCount": 10
+    }
+  }
+}
+```
+
+Generator `host.json` diagnostic sketch over `AdditionalFiles`:
+
+```csharp
+// In the incremental generator: pair the StorageQueue host binding with host.json.
+var hostJson = context.AdditionalTextsProvider
+    .Where(static t => Path.GetFileName(t.Path)
+        .Equals("host.json", StringComparison.OrdinalIgnoreCase))
+    .Select(static (t, ct) => t.GetText(ct)?.ToString());
+
+// When host.json is supplied:
+//   - warn (new ARKMF diagnostic) when extensions.queues.messageEncoding is not the
+//     literal "none";
+//   - warn when queues.maxDequeueCount or queues.visibilityTimeout is missing or
+//     malformed. The generator cannot execute the runtime retry-policy type, so the
+//     exact N/2N and RetryDelay comparison is a startup check (expected-versus-actual
+//     structured warning; opt-in strict mode fails startup).
+// When host.json is not supplied: emit an information diagnostic recommending the
+// AdditionalFiles opt-in.
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the

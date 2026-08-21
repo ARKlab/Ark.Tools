@@ -26,6 +26,16 @@ bytes to a shared DataBus when they still exceed the configured limit.
 - **Order is fixed**: serialize → compress if eligible → threshold check →
   DataBus write; receive performs DataBus read → length/hash validation →
   bounded decompress → deserialize.
+- **Mid-serialization compression switch (deferred from AZM-04)**: this task
+  owns the sender-side automatic switch to compression during serialization —
+  payload bytes below the participant's `CompressionMinimumSizeBytes`
+  (generally small) buffer in pooled fixed-size arrays; when the counting
+  writer crosses the minimum, the buffered prefix is re-piped into the
+  compression writer and writing continues compressed. A fully streamed
+  pipeline that can additionally divert to DataBus mid-write requires
+  host-technology-aware pipe preparation and stays a recorded future host
+  optimization ([future-improvements.md](../../future-improvements.md)), not
+  part of this task.
 - **Stop condition**: do not delete attachments during message settlement and
   do not add a durable outbox.
 
@@ -78,6 +88,176 @@ bytes to a shared DataBus when they still exceed the configured limit.
     framework cannot prove. Document that a rolled-back enqueue transaction
     can leave an orphaned attachment that provider lifecycle cleanup
     eventually removes.
+
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed.
+
+The shared DataBus provider seam (public API project, namespace
+`Ark.MediatorFramework`). Attachment IDs are opaque; providers own credentials,
+SDKs, and lifecycle:
+
+```csharp
+namespace Ark.MediatorFramework;
+
+/// <summary>Shared DataBus provider seam (Rebus IDataBus equivalent). The concrete provider
+/// is a runtime composition decision; every participant on a network composes the same
+/// provider, store, and compatible options.</summary>
+public interface IMessagingDataBus
+{
+    /// <summary>Stores the exact final (possibly compressed) payload bytes and returns an
+    /// opaque attachment identifier.</summary>
+    Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk);
+
+    /// <summary>Opens the attachment for bounded streaming read, verifying the stored byte
+    /// length and SHA-256 digest. Missing, expired, or mismatched attachments throw
+    /// MessagingFailFastException(AttachmentIntegrityFailure).</summary>
+    Task<Stream> OpenReadAsync(string attachmentId, long expectedLength, string expectedSha256,
+        CancellationToken ctk);
+}
+```
+
+The send-side orchestration skeleton implementing the fixed order
+serialize → compress if eligible → threshold check → DataBus write, including
+the mid-serialization compression switch and the header emission rules
+(`amf1-content-encoding` only when compressed; attachment id/length/sha256
+only when offloaded):
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Builds the outgoing payload bytes and payload-related headers for one send.</summary>
+public sealed class MessagingPayloadSender
+{
+    private readonly IMessagingDataBus _dataBus;
+    private readonly MessagingNetworkOptions _network;
+    private readonly CompressionAlgorithm _algorithm;    // participant sender-side setting (AZM-02)
+    private readonly int _compressionMinimumSizeBytes;   // participant sender-side setting (AZM-02)
+
+    /// <summary>Returns the final payload for the transport message and mutates headers.</summary>
+    public async Task<ReadOnlySequence<byte>> BuildOutgoingPayloadAsync<T>(
+        T message, IMessagingCodec codec, IMessagingTransport transport,
+        Dictionary<string, string> headers, CancellationToken ctk) where T : class
+    {
+        headers[MessagingHeaders.ContentType] = codec.ContentType;
+
+        // 1. Serialize through a counting + switching writer. Bytes below
+        //    _compressionMinimumSizeBytes buffer into pooled fixed-size arrays; when the
+        //    running count crosses the minimum, the buffered prefix is re-piped into a
+        //    BrotliStream/GZipStream over the buffer writer and writing continues
+        //    compressed (the mid-serialization switch). The counter throws
+        //    MessagingFailFastException(OversizedPayload) past
+        //    _network.MaximumTransportPayloadBytes.
+        var buffer = new ArrayBufferWriter<byte>();        // transport-owned buffered form
+        var writer = new CompressionSwitchingBufferWriter(
+            buffer, _algorithm, _compressionMinimumSizeBytes,
+            _network.MaximumTransportPayloadBytes);
+        codec.Serialize(message, writer);
+        writer.Complete();                                 // flush final compressor frame
+
+        if (writer.Compressed)
+            headers[MessagingHeaders.ContentEncoding] =
+                _algorithm == CompressionAlgorithm.Brotli ? "br" : "gzip";
+        // The header is omitted entirely for uncompressed payloads.
+
+        var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
+
+        // 2. Threshold check on the FINAL compressed bytes plus the measured complete
+        //    native envelope (headers and transport encoding included, AZM-05 seam).
+        var native = transport.MeasureNative(headers, payload);
+        var mustOffload = payload.Length > _network.DataBusOffloadThresholdBytes
+            || (transport.MaximumInlineEnvelopeBytes is { } ceiling && native > ceiling);
+        if (!mustOffload)
+            return payload;
+
+        if (payload.Length > _network.DataBusMaximumAttachmentBytes)
+            throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload,
+                "Payload exceeds the maximum DataBus attachment size.");
+
+        // 3. DataBus write of those exact compressed bytes; emit attachment headers.
+        var attachmentId = await _dataBus.StoreAsync(payload, ctk).ConfigureAwait(false);
+        headers[MessagingHeaders.PayloadAttachmentId] = attachmentId;
+        headers[MessagingHeaders.PayloadAttachmentLength] =
+            payload.Length.ToString(CultureInfo.InvariantCulture);
+        headers[MessagingHeaders.PayloadAttachmentSha256] =
+            _sha256Hex(payload);   // IncrementalHash over the sequence segments; no byte[]
+
+        // 4. Re-measure the attachment-reference envelope and fail explicitly if it
+        //    still cannot fit the transport's hard inline ceiling.
+        var reference = ReadOnlySequence<byte>.Empty;
+        if (transport.MaximumInlineEnvelopeBytes is { } c
+            && transport.MeasureNative(headers, reference) > c)
+            throw new MessagingFailFastException(MessagingFailFastReason.OversizedHeaders,
+                "Attachment-reference envelope exceeds the transport inline ceiling.");
+        return reference;
+    }
+}
+```
+
+The receive-side skeleton — attachment fetch with length/SHA-256 verification,
+then bounded decompression; runs in the header phase before the generated
+typed binder:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Prepares the payload source for the typed phase: DataBus fetch → integrity
+/// validation → bounded decompress. Read behavior is header-driven only.</summary>
+public sealed class MessagingPayloadReceiver
+{
+    private readonly IMessagingDataBus _dataBus;
+    private readonly MessagingNetworkOptions _network;
+
+    public async Task<ReadOnlySequence<byte>> PreparePayloadAsync(
+        IReadOnlyDictionary<string, string> headers, ReadOnlySequence<byte> transportPayload,
+        CancellationToken ctk)
+    {
+        var payload = transportPayload;
+
+        if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
+        {
+            var expectedLength = long.Parse(
+                headers[MessagingHeaders.PayloadAttachmentLength], CultureInfo.InvariantCulture);
+            var expectedSha256 = headers[MessagingHeaders.PayloadAttachmentSha256];
+
+            // The provider verifies length and SHA-256 while streaming; missing, expired,
+            // or mismatched attachments throw
+            // MessagingFailFastException(AttachmentIntegrityFailure).
+            var stream = await _dataBus
+                .OpenReadAsync(attachmentId, expectedLength, expectedSha256, ctk)
+                .ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
+            {
+                payload = await _bufferAsync(stream, ctk).ConfigureAwait(false);
+            }
+        }
+
+        if (headers.TryGetValue(MessagingHeaders.ContentEncoding, out var encoding))
+        {
+            payload = encoding switch
+            {
+                "gzip" => _decompressBounded(payload, useBrotli: false),
+                "br" => _decompressBounded(payload, useBrotli: true),
+                _ => throw new MessagingFailFastException(
+                    MessagingFailFastReason.UnsupportedContentEncoding, encoding),
+            };
+        }
+
+        return payload;   // handed to the generated binder through IMessagingPayloadReader
+    }
+
+    private ReadOnlySequence<byte> _decompressBounded(
+        ReadOnlySequence<byte> compressed, bool useBrotli)
+    {
+        // Bounded decompression reader over GZipStream/BrotliStream: counts output bytes
+        // while reading and throws MessagingFailFastException(OversizedPayload) as soon as
+        // _network.MaximumDecompressedPayloadBytes is exceeded — never buffers past the
+        // bound and never trusts the compressed length.
+        // ...
+    }
+}
+```
 
 ## Guide contribution
 
