@@ -106,6 +106,28 @@ derived identities must be 3–50 characters, use lowercase ASCII letters, digit
 and hyphens, and cannot be `outbox-processor`, end in `-poison`, or contain
 consecutive hyphens. Network `Members` is the sole membership input.
 
+### Accepting messaging API-surface changes
+
+The API-surface generator records message and event logical names, former-name
+aliases, participant ownership and membership, serializer sets, and network
+capabilities. It also records the event publisher because changing that
+publisher changes the derived topic. A generated routing member marked with
+`MessagingGeneratedSurfaceAttribute` is intentionally omitted; its routing
+metadata is represented by the dedicated `MESSAGE`, `EVENT`, `PARTICIPANT`, and
+`NETWORK` entries.
+
+When a declaration changes, inspect and explicitly accept the generated
+baseline:
+
+```powershell
+dotnet build -p:EmitCompilerGeneratedFiles=true
+Copy-Item obj/Debug/net10.0/ArkApiSurface.current.txt ArkApiSurface.txt
+```
+
+Accepting `ARKAPI002` records the reviewed contract decision only. It does not
+rename an existing event topic, move subscriptions, or migrate Azure resources;
+perform that topology migration separately.
+
 ## 4. Configure local settings
 
 Copy, do not commit:

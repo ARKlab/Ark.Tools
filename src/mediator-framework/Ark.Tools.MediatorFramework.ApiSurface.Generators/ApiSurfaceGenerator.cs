@@ -350,13 +350,15 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         }
     }
 
-    private static string ContractName(INamedTypeSymbol type, AttributeData attribute)
-        => StringNamed(attribute, "Name") ?? NormalizeSnake(type.ToDisplayString());
+    private static string ContractName(INamedTypeSymbol type, AttributeData? attribute)
+        => attribute is null
+            ? NormalizeSnake(type.ToDisplayString())
+            : StringNamed(attribute, "Name") ?? NormalizeSnake(type.ToDisplayString());
 
     private static string[] ContractNames(AttributeData attribute, string name)
         => TypeSymbols(attribute, name).Select(symbol => ContractName(
                 symbol,
-                Attribute(symbol, Message) ?? Attribute(symbol, Event)!))
+                Attribute(symbol, Message) ?? Attribute(symbol, Event)))
             .ToArray();
 
     private static string[] TypeNames(AttributeData attribute, string name)

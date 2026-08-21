@@ -46,6 +46,14 @@ attribute location:
 | ARKAPI003 | Error | Multiple API surface baselines were found |
 | ARKAPI004 | Error | API surface baseline contains a malformed line |
 
+Messaging contract snapshots use `MESSAGE`, `EVENT`, `PARTICIPANT`, and
+`NETWORK` lines. They record logical names, former-name aliases, ownership,
+participant membership, supported serializers, and network capabilities.
+Changing any of these persisted wire or routing identifiers requires accepting
+the generated `ArkApiSurface.current.txt` diff. Generated routing members marked
+with `MessagingGeneratedSurfaceAttribute` are excluded because their drift is
+already represented by those dedicated lines.
+
 ### Custom Ark.Tools analyzers
 
 | ID | Severity | Meaning |

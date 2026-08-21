@@ -2010,7 +2010,7 @@ public sealed class GeneratorSnapshotTests
             + " processes:recalculate_print publishes:books.print_completed subscribes:-"
             + " serializers:json|messagepack default:json");
         snapshot.Should().Contain(
-            "NETWORK BookMessagingNetwork -> members:PrintingParticipant requires:pubsub|receive");
+            "NETWORK BookMessagingNetwork -> members:PrintingParticipant requires:receive|pubsub");
 
         var result = _runApiSurfaceGeneratorResult(
             source,
