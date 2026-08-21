@@ -12,6 +12,7 @@
     <PackageVersion Include="Ark.Tools.MediatorFramework" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.AzureFunctions" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Rebus" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.NLog.Configuration" Version="999.9.9" />

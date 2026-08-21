@@ -186,9 +186,8 @@ public sealed partial class BookContractsJsonContext : JsonSerializerContext;
 *JSON codec skeleton: `Utf8JsonWriter` over `IBufferWriter<byte>` on write,
 `Utf8JsonReader` over `ReadOnlySequence<byte>` on read, with the
 host-resolved `JsonSerializerOptions` constructor-injected from MS-DI
-(`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` for parity with the
-MinimalApi/HTTP triggers; a messaging-owned accessor seam wraps this so
-non-ASP.NET hosts can supply equivalent options):*
+(`IOptions<JsonSerializerOptions>` so non-ASP.NET hosts can supply equivalent
+options):*
 
 ```csharp
 /// <summary>JSON codec over the host-resolved <see cref="JsonSerializerOptions"/>.</summary>
@@ -196,11 +195,10 @@ public sealed class JsonMessagingCodec : IMessagingCodec
 {
     private readonly JsonSerializerOptions _options;
 
-    /// <summary>Resolves the same options instance the MinimalApi and Azure
-    /// Functions HTTP triggers use.</summary>
-    public JsonMessagingCodec(IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions> jsonOptions)
+    /// <summary>Resolves the host-configured serializer options.</summary>
+    public JsonMessagingCodec(IOptions<JsonSerializerOptions> jsonOptions)
     {
-        _options = jsonOptions.Value.SerializerOptions;
+        _options = jsonOptions.Value;
     }
 
     /// <inheritdoc />
@@ -401,15 +399,15 @@ only; no transport exists yet. Add the shared Book contracts
 
 ## Acceptance
 
-- [ ] The JSON codec is registered, host-options-driven, generics-only, and
+- [x] The JSON codec is registered, host-options-driven, generics-only, and
   `IBufferWriter`/`ReadOnlySequence`-based with no `byte[]` surface.
-- [ ] A queue can contain multiple types without ambiguity via the generated
+- [x] A queue can contain multiple types without ambiguity via the generated
   binder; the codec registry seam accepts AZM-04A codecs unchanged.
-- [ ] The headers/payload model is transport-neutral and free of Azure SDK
+- [x] The headers/payload model is transport-neutral and free of Azure SDK
   types; there is no envelope object.
-- [ ] Unsupported reads fail fast with bounded, serializable diagnostics.
-- [ ] Startup validates contracts against the registered options/context.
-- [ ] No raw payload or secret metadata is logged.
-- [ ] The [task board](../README.md) status for AZM-04 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Unsupported reads fail fast with bounded, serializable diagnostics.
+- [x] Startup validates contracts against the registered options/context.
+- [x] No raw payload or secret metadata is logged.
+- [x] The [task board](../README.md) status for AZM-04 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
