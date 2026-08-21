@@ -9,6 +9,7 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
   </ItemGroup>
 </Project>
