@@ -54,6 +54,8 @@ public static class MessagingServiceCollectionExtensions
         services.AddArkMessaging();
         services.AddSingleton(transport);
         services.AddSingleton<IMessagingTransport>(transport);
+        if (transport is IMessagingReceiveTransport receiveTransport)
+            services.AddSingleton(receiveTransport);
         return services;
     }
 

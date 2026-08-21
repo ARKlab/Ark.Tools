@@ -118,6 +118,10 @@ public sealed class MessagingTransportTests
         var action = () => services.AddArkMessaging(new ReceiveOnlyTransport(), network);
         action.Should().Throw<InvalidOperationException>().Which.Message.Should().Contain("PubSub");
         services.AddArkMessaging(new InMemoryMessagingTransport(), network);
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetRequiredService<IMessagingReceiveTransport>().Should()
+            .BeSameAs(provider.GetRequiredService<IMessagingTransport>());
     }
 
     [TestMethod]
