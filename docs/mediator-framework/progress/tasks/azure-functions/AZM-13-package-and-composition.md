@@ -85,6 +85,108 @@ SimpleInjector registrations.
    reserved names.
 7. Add package-content and trim/analyzer checks.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed. `MessagingNetworkOptions` and its
+`Validate` method are the real `Ark.Tools.MediatorFramework.Messaging` types;
+codec registry, bus, and step registration names are conceptual seams from
+AZM-04/06/08.
+
+Functions host composition root (SimpleInjector, following the existing
+Functions HTTP composition — one container, no duplicated application
+registrations), for the app bound by
+`[assembly: MessagingFunctionsHost(typeof(PrintingParticipant),
+MessagingFunctionsTriggerBinding.ServiceBus, ...)]`:
+
+```csharp
+/// <summary>Composes the messaging runtime for the bound Functions participant.</summary>
+public static void AddArkMessagingFunctionsHost(
+    this Container container, IConfiguration configuration)
+{
+    // Immutable network options resolved from the [MessagingNetwork] declaration
+    // (generated registry accessor; conceptual name).
+    var options = BookMessagingNetwork.GetNetworkOptions();
+
+    // Runtime transport selection; the participant declaration never names Azure.
+    var transport = new ServiceBusMessagingTransport(
+        new ServiceBusClient(configuration[options.ConnectionConfigurationKey!]));
+
+    // Startup validations — each fails fast with an explicit diagnostic:
+    // 1. Capability check: throws naming any capability the transport lacks.
+    options.Validate(transport.Capabilities);
+
+    // 2. The composed transport must match the trigger binding recorded in the
+    //    generated manifest (the attribute and this code are different files that
+    //    can drift); the InMemory receive transport is rejected outright.
+    if (ArkGeneratedFunctions.Manifest.TriggerBinding
+        != MessagingFunctionsTriggerBinding.ServiceBus)
+    {
+        throw new InvalidOperationException(
+            "Composed transport 'AzureServiceBus' does not match the generated trigger "
+            + $"binding '{ArkGeneratedFunctions.Manifest.TriggerBinding}'.");
+    }
+
+    // 3. Exactly one MessagingFunctionsHost binding per Functions app; a composed
+    //    descriptor differing from the single generated binding is rejected.
+    // 4. Installed codecs must cover the participant's declared Serializers set.
+    // 5. Every Processes/Subscribes contract resolves exactly one handler at startup.
+    // 6. No Rebus worker, Rebus outbox processor, or native outbox processor starts
+    //    in this process; Rebus and native bus registrations are mutually exclusive.
+
+    container.RegisterInstance(options);
+    container.RegisterInstance<IMessagingTransport>(transport);
+
+    // Content-type-keyed codec registry; the JSON codec resolves the host's shared
+    // JsonSerializerOptions (same options as the HTTP triggers).
+    container.RegisterInstance<IMessagingCodecRegistry>(
+        MessagingCodecRegistry.Create(new JsonMessagingCodec()));
+
+    // Restricted bus: sender identity = the bound participant identity ("printing").
+    container.RegisterInstance<IBus>(
+        new MessagingNetworkBus<PrintingParticipant>(transport, options));
+
+    // Host-local pipeline steps from the host binding's IncomingSteps/OutgoingSteps.
+    container.Collection.Register<IMessagingIncomingStep>(
+        new[] { typeof(BookUserContextIncomingStep) });
+    container.Collection.Register<IMessagingOutgoingStep>(
+        new[] { typeof(BookUserContextOutgoingStep) });
+
+    // Dispatcher, settlement adapter, DataBus, and resource lifecycle (AZM-12)
+    // registrations follow; queue provisioning honors options.ResourceLifecycle.
+}
+```
+
+Sender-only Minimal API composition — references
+`Ark.Tools.MediatorFramework.Messaging` and the generated registry only; no
+Functions packages, no dispatch, no triggers, no queues, no subscriptions:
+
+```csharp
+// Publisher-only participant ("web-frontend") in a plain Minimal API host.
+var options = BookMessagingNetwork.GetNetworkOptions();
+var transport = new ServiceBusMessagingTransport(
+    new ServiceBusClient(builder.Configuration[options.ConnectionConfigurationKey!]));
+
+// Capability check only: no generated-manifest trigger check applies, because this
+// host receives nothing; the transport remains a pure runtime composition decision.
+options.Validate(transport.Capabilities);
+
+container.RegisterInstance(options);
+container.RegisterInstance<IMessagingTransport>(transport);
+container.RegisterInstance<IMessagingCodecRegistry>(
+    MessagingCodecRegistry.Create(new JsonMessagingCodec()));
+container.RegisterInstance<IBus>(
+    new MessagingNetworkBus<WebFrontendParticipant>(transport, options));
+// Topic Ensure covers only the events in WebFrontendParticipant.Publishes.
+
+// Application usage: handlers depend on the restricted IBus alone.
+app.MapPost("/books/{id}/print-completed", async (int id, IBus bus, CancellationToken ct) =>
+{
+    await bus.Publish(new BookPrintCompleted(id), cancellationToken: ct).ConfigureAwait(false);
+    return Results.Accepted();
+});
+```
+
 ## Guide contribution
 
 Update [`guide/host-setup-and-composition.md`](../../../guide/host-setup-and-composition.md)

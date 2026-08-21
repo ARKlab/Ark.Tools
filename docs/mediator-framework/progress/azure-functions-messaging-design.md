@@ -611,6 +611,43 @@ the normalized logical
 contract name directly; the generator diagnoses normalization collisions and
 derived topic names exceeding the Service Bus 260-character entity limit.
 
+### Generated routing registry
+
+Routing, wire-protocol, and contract-binding information is compile-time
+knowledge derived from the network and participant declarations, but the
+runtime needs it AoT-safe with no reflection. A transport-neutral generator
+package, `Ark.Tools.MediatorFramework.Generators`, generates it as public
+members of the attributed classes themselves: the network and participant
+declarations must be `partial` (a diagnostic reports a non-partial declaring
+type), and the generated members are excluded from API-surface snapshots
+through a marker attribute honored by the API-surface analyzer — routing
+drift is already tracked by the dedicated `MESSAGE`/`EVENT`/`PARTICIPANT`/
+`NETWORK` snapshot lines, so the generated members would only duplicate the
+churn.
+
+Conceptually (final names belong to the implementation task):
+
+- the network partial exposes `GetDestinationFor<T>()` (the processing
+  participant's identity queue for messages, the derived
+  `<publisher-identity>-<contract-name>` topic for events),
+  `GetWireProtocolFor<T>()` (the owner's `DefaultSerializer`),
+  `GetLogicalNameFor<T>()`, and the network identity used for
+  `amf1-network`. Lookups use a `FrozenDictionary` keyed by `typeof(T)`
+  primed in generated static initialization — an AoT-clean cached mechanism
+  with a typed unknown-contract failure; never `Type.GetType`, `Activator`,
+  or `MakeGenericType`;
+- the participant partial exposes its resolved identity (feeding
+  `amf1-sender-identity`) and the generated receive binder: a compile-time
+  switch over the current names and `FormerNames` aliases of its
+  `Processes`/`Subscribes` contracts whose cases perform exactly
+  `Deserialize<T>` and `ICommandProcessor` dispatch (§4).
+
+The Azure Functions generator and the Rebus assistance generator consume the
+same declaration model but never re-derive routing: hosts and transports call
+the generated registry members. Sender-only hosts (Minimal API, console
+clients) reference only the transport-neutral messaging runtime and this
+generator — nothing Functions-flavored.
+
 ## 4. Envelope and compatibility model
 
 The wire envelope is a byte payload plus metadata. The metadata follows Rebus
@@ -621,7 +658,7 @@ Required metadata:
 
 | Header | Meaning |
 | --- | --- |
-| `amf1-msg-type` | Fully qualified contract type identity |
+| `amf1-msg-type` | Current logical contract name (normalized snake_case, §3) |
 | `amf1-content-type` | Rebus-compatible content type |
 | `amf1-content-encoding` | Optional standard encoding token (`gzip` or `br`) |
 | `amf1-msg-id` | Stable message identifier |
@@ -637,6 +674,77 @@ Required metadata:
 `application/json;charset=utf-8`, protobuf is `application/x-protobuf`, and
 MessagePack is `application/x-msgpack`. Header constants are centralized in
 one package. The transport does not emit a delivery-count header.
+
+### Headers, payload, and serialization runtime model
+
+There is no envelope object in the framework API. Headers are a plain
+string-to-string dictionary kept strictly separate from the payload
+throughout the Mediator Framework runtime; "envelope" in this document names
+the logical pair only. Each transport adapter owns whatever packaged
+representation its broker needs (Service Bus application properties plus
+binary body, the Storage Queue canonical single-Base64 body, the InMemory
+in-process record).
+
+The framework never allocates or exposes `byte[]` payload buffers. Codecs
+write through `IBufferWriter<byte>` and read from `ReadOnlySequence<byte>`
+(both `PipeWriter`/`PipeReader`-compatible); the single buffered payload
+representation is owned by the transport, which needs it anyway for native
+measurement and claim-check. The codec contract is generics-only and
+AoT-ready — `Serialize<T>(T, IBufferWriter<byte>)` /
+`Deserialize<T>(ReadOnlySequence<byte>)` — with no object-typed overloads and
+no `Type.GetType`/`Activator`/`MakeGenericType` usage anywhere in the
+runtime.
+
+The JSON codec resolves `JsonSerializerOptions` from the host's MS-DI options
+— the same options instance the MinimalApi and Azure Functions HTTP triggers
+use — so messaging and HTTP share one wire format per host. Because different
+hosts of one network must produce identical wire JSON, every host registers a
+shared source-generated `JsonSerializerContext` authored in the contracts
+assembly and covering every `[Message]`/`[Event]` contract; startup validates
+that each contract the participant declares is resolvable from the registered
+options and fails fast otherwise. The framework generators cannot emit that
+context themselves, because generator output is not input to other generators
+(the System.Text.Json generator would never see it), so the context is
+user-authored and startup-validated. Codec delivery is staged: JSON ships
+first; the MessagePack and protobuf codecs register into the same
+content-type-driven registry later without changing the header-driven read
+model (MinimalApi already content-negotiates JSON and MessagePack, so this is
+an established pattern).
+
+Receive is two-phase:
+
+1. **Header phase (non-generated runtime):** parse and bound the headers
+   only, classify fail-fast conditions (foreign `amf1-network`, unknown
+   protocol or encoding, unregistered contract name), and prepare the payload
+   source — DataBus fetch and bounded decompression reader when the headers
+   say so.
+2. **Typed phase (generated):** the participant's generated binder switches
+   over the current logical contract names and `FormerNames` aliases of its
+   `Processes`/`Subscribes` set and performs exactly two type-parameterized
+   actions per case — `Deserialize<T>` and dispatch through
+   `ICommandProcessor.ExecuteAsync<T>`, the same processor and decorator
+   pipeline the HTTP hosts use. A name outside the switch is the typed
+   unknown-contract fail-fast result. Receive never keys lookups on
+   `typeof(T)`; the compile-time switch is exhaustive.
+
+On send, `T` is statically known from `Send<T>`/`Publish<T>`, so the sender
+resolves the destination and wire protocol through the generated registry
+(§3, generated routing registry) with no runtime discovery.
+
+Size guards are counted while writing and reading, not pre-measured by a
+separate framework buffering pass: serialization writes through a counting
+`IBufferWriter<byte>` that throws when the network payload threshold is
+exceeded, and decompression reads through a bounded reader. The
+pre-compression eligibility buffer (payload bytes below the participant's
+`CompressionMinimumSizeBytes`, generally small) may use pooled fixed-size
+arrays owned by the transport/pipeline. The sender-side mid-serialization
+switch — re-piping the buffered prefix into a compression writer once the
+count crosses the minimum — is implemented with compression (AZM-07). A fully
+streamed pipeline that can additionally divert to DataBus mid-write requires
+host-technology-aware pipe preparation and is a recorded future host
+optimization, not part of this workstream. The transport-owned buffered
+representation still exists at claim-check time, so the §11 native
+measurement remains valid.
 
 Service Bus uses application properties for headers and the binary body for
 the serialized or compressed contract. Storage Queue has no application
@@ -698,7 +806,9 @@ it. A default outside the declaring participant's supported set is a
 compile-time diagnostic, as is a subscriber whose supported set excludes the
 publisher's write protocol.
 The runtime serializer registry is pluggable and ships integrations for the
-repository's supported JSON, MessagePack, and protobuf abstractions. Startup
+repository's supported JSON, MessagePack, and protobuf abstractions; the JSON
+codec ships first and the MessagePack/protobuf codecs follow in a separate
+task without changing the header-driven read model. Startup
 composition validates that the installed codecs cover the participant's
 declared supported set; sending with an uninstalled owner protocol fails fast
 with a targeted error.
@@ -856,7 +966,11 @@ source generation and Functions hosting adapters and depends on the messaging
 package. Task documents that name
 `Ark.Tools.MediatorFramework.AzureFunctions` for runtime seams are satisfied
 by this messaging package; the split is finalized in the package/composition
-task.
+task. Transport-neutral source generation — the routing registry and the
+participant receive binder (§3) — lives in
+`Ark.Tools.MediatorFramework.Generators`; the Azure Functions generator
+package contains only trigger/host codegen and consumes those generated
+artifacts.
 
 ## 6. Generated Functions surface
 
@@ -930,7 +1044,12 @@ path in §5. They cannot declare subscriptions because the transport has no
 The generated method must remain thin. It receives the Azure Functions binding
 type selected by the implementation after checking the exact Worker extension
 API, passes the message and settlement context to the runtime helper, and
-awaits the helper. No reflection-based handler dispatch or serialization logic
+awaits the helper. The helper performs the non-generated header phase (parse,
+bound, classify, prepare the payload source) and then invokes the
+participant's generated binder (§3/§4), whose compile-time switch over
+logical contract names performs the only two type-parameterized actions:
+`Deserialize<T>` and dispatch through `ICommandProcessor`. No
+reflection-based handler dispatch or serialization logic
 is emitted per contract.
 
 ## 7. Dispatch and scope semantics

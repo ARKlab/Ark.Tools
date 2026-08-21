@@ -10,7 +10,8 @@ needed by the next task, and each task must extend the existing
 hosting, or transport behavior. Do not create a parallel messaging sample.
 Book background activities must remain runnable through either the standalone
 Rebus processor or the generated Azure Functions receiver.
-AZM task numbers, including the supplemental AZM-07A provider and AZM-14A
+AZM task numbers, including the supplemental AZM-03A registry-generation,
+AZM-04A codec, AZM-07A provider, and AZM-14A
 native outbox tasks, are the recommended implementation order. Each file's
 Execution map is mandatory: an implementation must produce every listed
 artifact and must not defer task-owned guide/sample work to AZM-16.
@@ -182,7 +183,9 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-01](azure-functions/AZM-01-shared-network-configuration.md) | Shared messaging network configuration and capability model | Complete |
 | [AZM-02](azure-functions/AZM-02-message-contracts-and-host-metadata.md) | Transport-neutral message contracts and participant declarations | Complete |
 | [AZM-03](azure-functions/AZM-03-message-contract-api-surface.md) | Message contract API-surface enforcement | Pending |
-| [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Multi-type envelope and serialization protocols | Pending |
+| [AZM-03A](azure-functions/AZM-03A-runtime-registry-generators.md) | Transport-neutral runtime registry generation | Pending |
+| [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Message headers, payload model, and JSON serialization runtime | Pending |
+| [AZM-04A](azure-functions/AZM-04A-messagepack-protobuf-codecs.md) | MessagePack and protobuf codecs | Pending |
 | [AZM-05](azure-functions/AZM-05-transport-abstraction-and-inmemory.md) | Transport abstraction and first-class InMemory transport | Pending |
 | [AZM-06](azure-functions/AZM-06-pipeline-and-context-propagation.md) | Incoming/outgoing pipeline and context propagation | Pending |
 | [AZM-07](azure-functions/AZM-07-compression-and-databus.md) | Compression and shared DataBus claim-check | Pending |

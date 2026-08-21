@@ -68,6 +68,168 @@ composition switch, while intentionally reducing the framework API surface.
 `Send<TMessage>` to the processing participant's identity queue; it cannot
 publish.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed.
+
+The restricted `IBus` (public API project, namespace `Ark.MediatorFramework`).
+The four operations and parameter shapes are FIXED by design §9; there is no
+receive, reply, local-send, or worker member:
+
+```csharp
+namespace Ark.MediatorFramework;
+
+/// <summary>Restricted one-way bus shim over the composed transport. Identical behavior
+/// over InMemory, Service Bus, and Storage Queue; capabilities gate the operations.</summary>
+public interface IBus
+{
+    /// <summary>Sends a message to its processing participant's identity queue.</summary>
+    Task Send<T>(T message, Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class;
+
+    /// <summary>Sends after a relative delay; requires the ScheduledSend capability.</summary>
+    Task Send<T>(T message, TimeSpan delay, Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class;
+
+    /// <summary>Sends at an absolute due time; requires the ScheduledSend capability.</summary>
+    Task Send<T>(T message, DateTimeOffset dueTime,
+        Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class;
+
+    /// <summary>Publishes an event; requires PubSub and the current participant declaring
+    /// the event in its Publishes set.</summary>
+    Task Publish<T>(T @event, Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class;
+}
+```
+
+The native implementation skeleton. Routing and wire protocol come only from
+the AZM-03A generated network partial members (`GetDestinationFor<T>()`,
+`GetWireProtocolFor<T>()`, `GetLogicalNameFor<T>()`, `NetworkIdentity`) and the
+generated participant `Identity` — never re-derived; shown here against the
+Book sample's generated `BookMessagingNetwork`:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Transport-neutral native bus: generated registry routing, reserved headers,
+/// outgoing pipeline, payload runtime (AZM-04/07), and the AZM-05 transport seam.</summary>
+public sealed class MessagingBus : IBus, IDisposable
+{
+    private readonly IMessagingTransport _transport;
+    private readonly MessagingNetworkOptions _network;
+    private readonly IReadOnlyList<IMessagingOutgoingStep> _outgoingSteps;
+    private readonly MessagingPayloadSender _payloadSender;   // AZM-07 orchestration
+
+    public async Task Send<T>(T message, Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        await _sendCoreAsync(message, dueTime: null, additionalHeaders, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    public async Task Send<T>(T message, TimeSpan delay,
+        Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        _requireCapability(MessagingCapabilities.ScheduledSend);   // capability guard
+        if (delay < TimeSpan.Zero || delay > _network.MaximumSchedulingDelay)
+            throw new ArgumentOutOfRangeException(nameof(delay));
+        await _sendCoreAsync(message, DateTimeOffset.UtcNow + delay, additionalHeaders,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    // The DateTimeOffset overload guards ScheduledSend, rejects past due times beyond the
+    // network's MaximumSchedulingDelay, and delegates to _sendCoreAsync identically.
+
+    public async Task Publish<T>(T @event, Dictionary<string, string>? additionalHeaders = null,
+        CancellationToken cancellationToken = default) where T : class
+    {
+        _requireCapability(MessagingCapabilities.PubSub);
+
+        // Publish ownership guard: the current participant must declare T in its Publishes
+        // set. The generated participant partial proves ownership; a violation throws
+        // NotSupportedException naming the participant and the contract.
+        var topic = BookMessagingNetwork.GetDestinationFor<T>();  // "<publisher-identity>-<contract>"
+        var headers = _buildReservedHeaders<T>(additionalHeaders);
+        await _runOutgoingAsync(@event, topic, headers, publish: true, dueTime: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task _sendCoreAsync<T>(T message, DateTimeOffset? dueTime,
+        Dictionary<string, string>? additionalHeaders, CancellationToken ctk) where T : class
+    {
+        // Sending an unwired contract (no processing member) fails explicitly here.
+        var queue = BookMessagingNetwork.GetDestinationFor<T>();  // owner's identity queue
+        var headers = _buildReservedHeaders<T>(additionalHeaders);
+        await _runOutgoingAsync(message, queue, headers, publish: false, dueTime, ctk)
+            .ConfigureAwait(false);
+    }
+
+    private Dictionary<string, string> _buildReservedHeaders<T>(
+        Dictionary<string, string>? additionalHeaders) where T : class
+    {
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [MessagingHeaders.MessageType] = BookMessagingNetwork.GetLogicalNameFor<T>(),
+            [MessagingHeaders.MessageId] = Guid.NewGuid().ToString("N"),
+            [MessagingHeaders.SentTime] =
+                DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+            [MessagingHeaders.Network] = BookMessagingNetwork.NetworkIdentity,
+            [MessagingHeaders.SenderIdentity] = BookParticipant.Identity,  // generated (AZM-03A)
+        };
+        // amf1-content-type/-encoding/attachment headers are written by the payload
+        // runtime (AZM-04/07); amf1-corr-id is written when correlation context exists.
+
+        if (additionalHeaders is not null)
+        {
+            foreach (var (key, value) in additionalHeaders)
+            {
+                if (MessagingHeaders.IsReserved(key))     // routing, content, encoding,
+                    throw new ArgumentException(          // attachment, trace, identity
+                        string.Format(CultureInfo.InvariantCulture,
+                            "Header '{0}' is reserved and cannot be overridden.", key),
+                        nameof(additionalHeaders));
+                headers[key] = value;   // bounded count, key, and value sizes enforced here
+            }
+        }
+
+        return headers;
+    }
+
+    private async Task _runOutgoingAsync<T>(T message, string destination,
+        Dictionary<string, string> headers, bool publish, DateTimeOffset? dueTime,
+        CancellationToken ctk) where T : class
+    {
+        var codec = _codecs.GetByProtocol(BookMessagingNetwork.GetWireProtocolFor<T>());  // owner protocol
+        var context = new MessagingOutgoingContext(destination, headers, ctk);
+
+        // Outgoing pipeline (AZM-06) runs around serialization and transport send.
+        await MessagingPipelineInvoker.InvokeOutgoingAsync(_outgoingSteps, context, async () =>
+        {
+            var payload = await _payloadSender
+                .BuildOutgoingPayloadAsync(message, codec, _transport, headers, ctk)
+                .ConfigureAwait(false);
+            if (publish)
+                await _transport.PublishAsync(destination, headers, payload, ctk)
+                    .ConfigureAwait(false);
+            else
+                await _transport.SendAsync(destination, headers, payload, dueTime, ctk)
+                    .ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
+
+    private void _requireCapability(MessagingCapabilities capability)
+    {
+        if (!_transport.Capabilities.HasFlag(capability))
+            throw new NotSupportedException(
+                string.Format(CultureInfo.InvariantCulture,
+                    "Transport does not declare the '{0}' capability.", capability));
+    }
+}
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with the

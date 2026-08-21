@@ -81,6 +81,249 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
     explicit deferred second-level handling, and delayed first-level
     rescheduling.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed.
+
+The public second-level failure wrapper and the serializable exception-info
+record (public API project, namespace `Ark.MediatorFramework`):
+
+```csharp
+namespace Ark.MediatorFramework;
+
+/// <summary>In-memory second-level failure wrapper. Never sent or persisted on the bus;
+/// dispatched inline at delivery N only, in a fresh scope.</summary>
+public interface IFailed<out T> where T : class
+{
+    /// <summary>Gets the original deserialized message.</summary>
+    T Message { get; }
+
+    /// <summary>Gets a read-only snapshot of the native delivery count.</summary>
+    int DeliveryCount { get; }
+
+    /// <summary>Gets the bounded, human-readable error description.</summary>
+    string ErrorDescription { get; }
+}
+
+/// <summary>Serializable, bounded snapshot of the exception that failed first-level
+/// handling. Used for IFailed diagnostics and bounded dead-letter metadata.</summary>
+public sealed record MessagingExceptionInfo(
+    string ExceptionType,
+    string Message,
+    string? StackTrace,
+    MessagingExceptionInfo? Inner)
+{
+    /// <summary>Creates a bounded snapshot from a live exception.</summary>
+    public static MessagingExceptionInfo From(Exception exception) { /* ... */ }
+}
+```
+
+The settlement decision as a pure, testable function encoding the design §7
+table (`N` = `MaximumDeliveryCount`). Fail-fast classification reuses
+`MessagingFailFastException` (and the existing repository fail-fast marker):
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Classification of the outcome of a handler or pipeline-step invocation.</summary>
+public enum MessagingExceptionClassification
+{
+    /// <summary>Completed successfully.</summary>
+    None,
+
+    /// <summary>Threw MessagingFailFastException or the repository fail-fast marker.</summary>
+    FailFast,
+
+    /// <summary>Threw any other exception.</summary>
+    Other
+}
+
+/// <summary>Requested settlement for one locked delivery.</summary>
+public enum MessagingSettlementDecision
+{
+    Complete,
+    Abandon,
+    DeadLetter,
+    RunSecondLevel
+}
+
+/// <summary>Pure encoding of the retry table; every branch is unit-testable without a
+/// transport.</summary>
+public static class MessagingSettlement
+{
+    /// <summary>Decides settlement from the native delivery count, the participant retry
+    /// policy, the exception classification, and the current stage.</summary>
+    public static MessagingSettlementDecision Decide(
+        int deliveryCount,
+        IMessagingRetryPolicy retryPolicy,
+        MessagingExceptionClassification classification,
+        bool isSecondLevelStage)
+    {
+        if (classification == MessagingExceptionClassification.None)
+            return MessagingSettlementDecision.Complete;
+
+        if (classification == MessagingExceptionClassification.FailFast)
+            return MessagingSettlementDecision.DeadLetter;      // any delivery, any stage
+
+        if (isSecondLevelStage)
+            return MessagingSettlementDecision.Abandon;         // IFailed threw non-fail-fast
+
+        var n = retryPolicy.MaximumDeliveryCount;
+        if (retryPolicy.SecondLevelRetriesEnabled && deliveryCount == n)
+            return MessagingSettlementDecision.RunSecondLevel;  // inline IFailed<T>, once, at N
+
+        // Deliveries 1..N-1 and N+1..2N (enabled), or 1..N (disabled): abandon and let the
+        // transport/host dead-letter at its configured maximum (2N or N).
+        return MessagingSettlementDecision.Abandon;
+    }
+}
+```
+
+The dispatch-loop skeleton plugged into the AZM-05 pump (identical logic later
+runs under generated triggers). Header phase → fresh `AsyncScopedLifestyle`
+scope → generated binder → settlement mapping; header-phase fail-fast never
+enters second-level dispatch:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Receive dispatcher: manual settlement only; no Azure SDK type appears here.</summary>
+public sealed class MessagingDispatcher
+{
+    private readonly Container _container;
+    private readonly IMessagingRetryPolicy _retryPolicy;      // participant policy (AZM-02)
+    private readonly MessagingPayloadReceiver _payloadReceiver;   // AZM-07 header phase
+
+    /// <summary>Callback wired into MessagingReceivePump (AZM-05) or a generated trigger.</summary>
+    public async Task OnDeliveryAsync(IMessagingLockedDelivery delivery, CancellationToken ctk)
+    {
+        try
+        {
+            // Header phase (non-generated): bound and classify headers, prepare the payload
+            // (DataBus fetch + bounded decompression), resolve the codec from
+            // amf1-content-type into an IMessagingPayloadReader for the typed phase.
+            var payloadReader = await _prepareHeaderPhaseAsync(delivery, ctk)
+                .ConfigureAwait(false);
+            var logicalName = delivery.Headers[MessagingHeaders.MessageType];
+
+            MessagingExceptionInfo? error = null;
+            var classification = MessagingExceptionClassification.None;
+            try
+            {
+                // One fresh AsyncScopedLifestyle scope for normal handling.
+                await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+                // Message context, correlation metadata, and cancellation are populated
+                // into the scope before handler resolution.
+                var processor = scope.GetInstance<ICommandProcessor>();
+
+                // Typed phase: generated participant binder (AZM-03A) switches over the
+                // participant's contract names and calls Deserialize<T> +
+                // ICommandProcessor.ExecuteAsync<T> per case. No reflection anywhere.
+                await BookParticipantBinder
+                    .DispatchAsync(logicalName, payloadReader, processor, ctk)
+                    .ConfigureAwait(false);
+            }
+            catch (MessagingFailFastException ex)
+            {
+                classification = MessagingExceptionClassification.FailFast;
+                error = MessagingExceptionInfo.From(ex);
+            }
+            catch (Exception ex)   // includes AZM-06 pipeline-step exceptions, unchanged
+            {
+                classification = MessagingExceptionClassification.Other;
+                error = MessagingExceptionInfo.From(ex);
+            }
+
+            var decision = MessagingSettlement.Decide(
+                delivery.DeliveryCount, _retryPolicy, classification, isSecondLevelStage: false);
+
+            if (decision == MessagingSettlementDecision.RunSecondLevel)
+                decision = await _runSecondLevelAsync(
+                    delivery, logicalName, payloadReader, error!, ctk).ConfigureAwait(false);
+
+            await _settleAsync(delivery, decision, error, ctk).ConfigureAwait(false);
+        }
+        catch (MessagingFailFastException ex)
+        {
+            // Header-phase fail-fast: unknown content type/encoding/contract, foreign
+            // network, malformed/oversized headers, oversized payload, attachment
+            // integrity. Direct DLQ; never retried, never second-level.
+            await delivery.DeadLetterAsync(ex.Reason.ToString(), ex.Message, ctk)
+                .ConfigureAwait(false);
+        }
+    }
+}
+```
+
+The second-level invocation and settlement mapping. `IFailed<T>` runs in a
+FRESH SimpleInjector scope, separate from the normal handling scope; a missing
+`IFailed<T>` handler at delivery `N` surfaces as
+`MessagingFailFastException(MessagingFailFastReason.MissingSecondLevelHandler)`
+and dead-letters immediately:
+
+```csharp
+    private async Task<MessagingSettlementDecision> _runSecondLevelAsync(
+        IMessagingLockedDelivery delivery, string logicalName,
+        IMessagingPayloadReader payloadReader, MessagingExceptionInfo error,
+        CancellationToken ctk)
+    {
+        try
+        {
+            // FRESH scope, distinct from the normal-handling scope that just failed.
+            await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+            var processor = scope.GetInstance<ICommandProcessor>();
+
+            // Generated second-level binder: switches on logicalName, deserializes T,
+            // wraps it into the framework Failed<T> (IFailed<T>) with the delivery-count
+            // snapshot and error info, and dispatches the participant's
+            // ICommandHandler<IFailed<T>>-style handler through the processor. When no
+            // handler is registered for T, it throws
+            // MessagingFailFastException(MissingSecondLevelHandler).
+            await BookParticipantBinder
+                .DispatchFailedAsync(logicalName, payloadReader, delivery.DeliveryCount,
+                    error, processor, ctk)
+                .ConfigureAwait(false);
+
+            return MessagingSettlementDecision.Complete;        // IFailed success → complete
+        }
+        catch (MessagingFailFastException)
+        {
+            // Includes MissingSecondLevelHandler at delivery N → immediate DLQ.
+            return MessagingSettlementDecision.DeadLetter;
+        }
+        catch (Exception)
+        {
+            // Decide(..., Other, isSecondLevelStage: true) → abandon; normal T resumes on
+            // deliveries N+1..2N until the transport maximum dead-letters.
+            return MessagingSettlementDecision.Abandon;
+        }
+    }
+
+    private async Task _settleAsync(IMessagingLockedDelivery delivery,
+        MessagingSettlementDecision decision, MessagingExceptionInfo? error,
+        CancellationToken ctk)
+    {
+        switch (decision)
+        {
+            case MessagingSettlementDecision.Complete:
+                await delivery.CompleteAsync(ctk).ConfigureAwait(false);
+                break;
+            case MessagingSettlementDecision.Abandon:
+                await delivery.AbandonAsync(ctk).ConfigureAwait(false);
+                break;
+            case MessagingSettlementDecision.DeadLetter:
+                // Bounded reason/description only; never the raw body.
+                await delivery.DeadLetterAsync(
+                    error?.ExceptionType ?? "fail-fast", error?.Message ?? string.Empty, ctk)
+                    .ConfigureAwait(false);
+                break;
+        }
+        // Lock loss or a failed settlement call is surfaced as unsuccessful processing and
+        // permits duplicate delivery (at-least-once).
+    }
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with

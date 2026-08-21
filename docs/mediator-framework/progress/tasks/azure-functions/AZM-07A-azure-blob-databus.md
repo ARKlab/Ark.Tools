@@ -57,6 +57,142 @@ Attachment cleanup must coexist safely with storage accounts managed by IaC.
 9. Add XML documentation and API-surface entries for public provider options
    and composition extensions.
 
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed.
+
+The provider options (composition-owned; no secrets in attributes; connection
+resolution mirrors the network's `ConnectionConfigurationKey` /
+`ManagedIdentityConfigurationKey` patterns):
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Composition options for the Azure Blob DataBus provider.</summary>
+public sealed record AzureBlobDataBusOptions
+{
+    /// <summary>Gets the dedicated container holding only Mediator Framework attachments.</summary>
+    public required string ContainerName { get; init; }
+
+    /// <summary>Gets the blob-name prefix isolating this network's attachments so an IaC
+    /// lifecycle rule can target them exclusively.</summary>
+    public string Prefix { get; init; } = "amf1/";
+
+    /// <summary>Gets the required minimum attachment lifetime the IaC lifecycle rule must
+    /// honor. Validated at startup against the bounded network windows supplied by AZM-07
+    /// (maximum scheduled delay plus retry/lock settings); operators must additionally
+    /// cover entity TTL, backlog, outages, and deployment delays.</summary>
+    public required TimeSpan MinimumAttachmentLifetime { get; init; }
+
+    /// <summary>Gets the configuration key for a connection string, when used.</summary>
+    public string? ConnectionConfigurationKey { get; init; }
+
+    /// <summary>Gets the configuration key for a service URI resolved with
+    /// DefaultAzureCredential, when used. Exactly one connection source must be set.</summary>
+    public string? ManagedIdentityConfigurationKey { get; init; }
+
+    /// <summary>Gets whether startup ensures the container exists; when false, a missing
+    /// container fails startup with a clear error. Never touches lifecycle policies.</summary>
+    public bool EnsureContainer { get; init; }
+}
+```
+
+The Azure Blob provider skeleton implementing the AZM-07 `IMessagingDataBus`
+contract (data-plane only; streaming write/read; length and SHA-256 metadata):
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Azure Blob implementation of the shared DataBus provider contract.</summary>
+public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
+{
+    private readonly BlobContainerClient _container;
+    private readonly AzureBlobDataBusOptions _options;
+
+    public async Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk)
+    {
+        // Opaque, deterministic GUID-based blob name under the configured prefix.
+        var attachmentId = Guid.NewGuid().ToString("N");
+        var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
+
+        long length = 0;
+        using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        var stream = await blob.OpenWriteAsync(overwrite: true, cancellationToken: ctk)
+            .ConfigureAwait(false);
+        await using (stream.ConfigureAwait(false))
+        {
+            foreach (var segment in content)     // streaming upload, no byte[] materialization
+            {
+                sha.AppendData(segment.Span);
+                length += segment.Length;
+                await stream.WriteAsync(segment, ctk).ConfigureAwait(false);
+            }
+        }
+
+        await blob.SetMetadataAsync(new Dictionary<string, string>
+        {
+            ["amf1_length"] = length.ToString(CultureInfo.InvariantCulture),
+            ["amf1_sha256"] = Convert.ToHexString(sha.GetHashAndReset()),
+        }, cancellationToken: ctk).ConfigureAwait(false);
+
+        return attachmentId;
+    }
+
+    public async Task<Stream> OpenReadAsync(string attachmentId, long expectedLength,
+        string expectedSha256, CancellationToken ctk)
+    {
+        var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
+
+        // Missing/deleted blob (404) surfaces as
+        // MessagingFailFastException(AttachmentIntegrityFailure).
+        var properties = await blob.GetPropertiesAsync(cancellationToken: ctk)
+            .ConfigureAwait(false);
+        if (properties.Value.ContentLength != expectedLength)
+            throw new MessagingFailFastException(
+                MessagingFailFastReason.AttachmentIntegrityFailure,
+                "Attachment length differs from the envelope metadata.");
+
+        var stream = await blob.OpenReadAsync(cancellationToken: ctk).ConfigureAwait(false);
+        // Wrap in a validating stream that hashes while the caller reads and throws
+        // AttachmentIntegrityFailure at EOF when the digest differs from expectedSha256.
+        return new Sha256ValidatingReadStream(stream, expectedLength, expectedSha256);
+    }
+
+    // Startup: validate options (exactly one connection source, required
+    // MinimumAttachmentLifetime), probe data-plane access, and optionally ensure the
+    // container. Never read or mutate the storage-account lifecycle policy.
+}
+```
+
+The required IaC lifecycle-rule shape (infrastructure prerequisite, never
+applied by the runtime; `prefixMatch` is `<container>/<prefix>` and the
+minimum age must be at least `MinimumAttachmentLifetime`, remembering that
+policy execution is asynchronous and not an exact deletion deadline):
+
+```json
+{
+  "rules": [
+    {
+      "name": "amf1-databus-attachment-cleanup",
+      "enabled": true,
+      "type": "Lifecycle",
+      "definition": {
+        "filters": {
+          "blobTypes": [ "blockBlob" ],
+          "prefixMatch": [ "amf1-databus/amf1/" ]
+        },
+        "actions": {
+          "baseBlob": {
+            "delete": { "daysAfterModificationGreaterThan": 7 }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Guide contribution
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with
