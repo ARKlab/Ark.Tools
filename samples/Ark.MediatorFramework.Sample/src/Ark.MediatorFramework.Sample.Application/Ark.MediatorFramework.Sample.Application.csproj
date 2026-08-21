@@ -11,6 +11,7 @@
     <PackageReference Include="Ark.Tools.Dapper" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.Solid" />
@@ -23,7 +24,6 @@
     <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
     <PackageReference Include="Ark.Tools.Sql" />
     <PackageReference Include="Ark.Tools.Sql.SqlServer" />
-    <ProjectReference Include="../../../../src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/Ark.Tools.MediatorFramework.Messaging.csproj" />
     <ProjectReference Include="../../../../src/mediator-framework/Ark.Tools.MediatorFramework.Generators/Ark.Tools.MediatorFramework.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
