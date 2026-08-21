@@ -34,10 +34,14 @@ public sealed class MessagingReceivePump : IAsyncDisposable
     /// <returns>A task completed once the loop has started.</returns>
     public Task StartAsync(CancellationToken ctk)
     {
-        if (Interlocked.CompareExchange(ref _cts, CancellationTokenSource.CreateLinkedTokenSource(ctk), null) is not null)
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
+        if (Interlocked.CompareExchange(ref _cts, cts, null) is not null)
+        {
+            cts.Dispose();
             throw new InvalidOperationException("The messaging receive pump has already been started.");
+        }
 
-        _loop = Task.Run(() => _runAsync(_cts.Token), CancellationToken.None);
+        _loop = Task.Run(() => _runAsync(cts.Token), CancellationToken.None);
         return Task.CompletedTask;
     }
 
@@ -53,7 +57,11 @@ public sealed class MessagingReceivePump : IAsyncDisposable
         try
         {
             if (_loop is not null)
+            {
+#pragma warning disable VSTHRD003 // The receive loop is intentionally started on the thread pool.
                 await _loop.ConfigureAwait(false);
+#pragma warning restore VSTHRD003
+            }
         }
         catch (OperationCanceledException)
         {

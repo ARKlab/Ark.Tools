@@ -23,15 +23,15 @@ public sealed class MessagingTransportTests
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
         var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
-        await transport.SendAsync("queue", new Dictionary<string, string>(), Sequence(1), null, default);
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(1), null, default).ConfigureAwait(false);
 
-        var first = await ReceiveOnce(transport, "queue");
+        var first = await _receiveOnce(transport, "queue").ConfigureAwait(false);
         first.DeliveryCount.Should().Be(1);
-        await first.AbandonAsync(default);
+        await first.AbandonAsync(default).ConfigureAwait(false);
 
-        var second = await ReceiveOnce(transport, "queue");
+        var second = await _receiveOnce(transport, "queue").ConfigureAwait(false);
         second.DeliveryCount.Should().Be(2);
-        await second.CompleteAsync(default);
+        await second.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -41,16 +41,16 @@ public sealed class MessagingTransportTests
         var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
         await transport.SendAsync(
             "queue",
-            new Dictionary<string, string> { ["x"] = "y" },
-            Sequence(2),
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["x"] = "y" },
+            _sequence(2),
             null,
-            default);
+            default).ConfigureAwait(false);
 
-        var first = await ReceiveOnce(transport, "queue");
+        var first = await _receiveOnce(transport, "queue").ConfigureAwait(false);
         clock.Advance(Duration.FromMinutes(1));
-        var second = await ReceiveOnce(transport, "queue");
+        var second = await _receiveOnce(transport, "queue").ConfigureAwait(false);
         second.DeliveryCount.Should().Be(2);
-        await second.DeadLetterAsync("invalid", "bad payload", default);
+        await second.DeadLetterAsync("invalid", "bad payload", default).ConfigureAwait(false);
 
         var deadLetter = transport.GetDeadLetters("queue").Should().ContainSingle().Which;
         deadLetter.Reason.Should().Be("invalid");
@@ -64,16 +64,16 @@ public sealed class MessagingTransportTests
     public async Task PublishFansOutToEachSubscription()
     {
         var transport = new InMemoryMessagingTransport();
-        await transport.EnsureSubscriptionAsync("topic", "one", "queue-one", default);
-        await transport.EnsureSubscriptionAsync("topic", "two", "queue-two", default);
-        await transport.PublishAsync("topic", new Dictionary<string, string>(), Sequence(3), default);
+        await transport.EnsureSubscriptionAsync("topic", "one", "queue-one", default).ConfigureAwait(false);
+        await transport.EnsureSubscriptionAsync("topic", "two", "queue-two", default).ConfigureAwait(false);
+        await transport.PublishAsync("topic", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(3), default).ConfigureAwait(false);
 
-        var first = await ReceiveOnce(transport, "queue-one");
-        var second = await ReceiveOnce(transport, "queue-two");
+        var first = await _receiveOnce(transport, "queue-one").ConfigureAwait(false);
+        var second = await _receiveOnce(transport, "queue-two").ConfigureAwait(false);
         first.Payload.ToArray().Should().Equal(3);
         second.Payload.ToArray().Should().Equal(3);
-        await first.CompleteAsync(default);
-        await second.CompleteAsync(default);
+        await first.CompleteAsync(default).ConfigureAwait(false);
+        await second.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -83,27 +83,27 @@ public sealed class MessagingTransportTests
         var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
         await transport.SendAsync(
             "queue",
-            new Dictionary<string, string>(),
-            Sequence(4),
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            _sequence(4),
             clock.GetCurrentInstant().ToDateTimeOffset().AddMinutes(1),
-            default);
+            default).ConfigureAwait(false);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator();
+        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
         var move = enumerator.MoveNextAsync().AsTask();
         clock.Advance(Duration.FromMinutes(1));
 
-        (await move).Should().BeTrue();
-        await enumerator.Current.CompleteAsync(default);
-        await enumerator.DisposeAsync();
+        (await move.ConfigureAwait(false)).Should().BeTrue();
+        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
+        await enumerator.DisposeAsync().ConfigureAwait(false);
     }
 
     [TestMethod]
     public void NativeMeasurementIncludesHeaderEncoding()
     {
         var transport = new InMemoryMessagingTransport();
-        var headers = new Dictionary<string, string> { ["é"] = "値" };
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["é"] = "値" };
 
-        transport.MeasureNative(headers, Sequence(1, 2))
+        transport.MeasureNative(headers, _sequence(1, 2))
             .Should().Be(2 + 2 + 3);
     }
 
@@ -113,43 +113,49 @@ public sealed class MessagingTransportTests
         var network = new MessagingNetworkOptions(
             typeof(MessagingTransportTests),
             new MessagingNetworkAttribute { Requires = MessagingCapabilities.PubSub });
-        using var services = new ServiceCollection();
-
-        services.AddArkMessaging(new ReceiveOnlyTransport(), network);
+        var services = new ServiceCollection();
 
         var action = () => services.AddArkMessaging(new ReceiveOnlyTransport(), network);
         action.Should().Throw<InvalidOperationException>().Which.Message.Should().Contain("PubSub");
+        services.AddArkMessaging(new InMemoryMessagingTransport(), network);
     }
 
     [TestMethod]
     public async Task ReceivePumpInvokesCallback()
     {
         var transport = new InMemoryMessagingTransport();
-        await transport.SendAsync("queue", new Dictionary<string, string>(), Sequence(5), null, default);
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(5), null, default).ConfigureAwait(false);
         var received = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-        await using var pump = new MessagingReceivePump(
+        var pump = new MessagingReceivePump(
             transport,
             "queue",
             async (delivery, ctk) =>
             {
                 received.SetResult(delivery.Payload.FirstSpan[0]);
-                await delivery.CompleteAsync(ctk);
+                await delivery.CompleteAsync(ctk).ConfigureAwait(false);
             });
 
-        await pump.StartAsync(default);
-        (await received.Task.WaitAsync(TimeSpan.FromSeconds(2))).Should().Be(5);
+        try
+        {
+            await pump.StartAsync(default).ConfigureAwait(false);
+            (await received.Task.WaitAsync(TimeSpan.FromSeconds(2), CancellationToken.None).ConfigureAwait(false)).Should().Be(5);
+        }
+        finally
+        {
+            await pump.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
-    private static ReadOnlySequence<byte> Sequence(params byte[] bytes)
+    private static ReadOnlySequence<byte> _sequence(params byte[] bytes)
     {
         return new ReadOnlySequence<byte>(bytes);
     }
 
-    private static async Task<IMessagingLockedDelivery> ReceiveOnce(
+    private static async Task<IMessagingLockedDelivery> _receiveOnce(
         IMessagingReceiveTransport transport,
         string queue)
     {
-        await foreach (var delivery in transport.ReceiveAsync(queue))
+        await foreach (var delivery in transport.ReceiveAsync(queue, CancellationToken.None).ConfigureAwait(false))
             return delivery;
 
         throw new InvalidOperationException("The receive stream ended without a delivery.");

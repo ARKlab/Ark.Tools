@@ -165,6 +165,15 @@
           "MSTest.Analyzers": "4.3.3"
         }
       },
+      "NodaTime.Testing": {
+        "type": "Direct",
+        "requested": "[3.3.3, )",
+        "resolved": "3.3.3",
+        "contentHash": "HXxij1x6brpOtTnWvauL2Ir9ydyObPGERyOHelHtnACbl/ctJXsRMqvF09ajJTa588pfuVhEvjo5/WzkCh8vlQ==",
+        "dependencies": {
+          "NodaTime": "3.3.3"
+        }
+      },
       "Polyfill": {
         "type": "Direct",
         "requested": "[11.2.0, )",
@@ -834,7 +843,8 @@
           "Google.Protobuf": "[3.35.1, )",
           "MessagePack": "[3.1.8, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.11, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )"
+          "Microsoft.Extensions.Options": "[10.0.11, )",
+          "NodaTime": "[3.3.3, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {

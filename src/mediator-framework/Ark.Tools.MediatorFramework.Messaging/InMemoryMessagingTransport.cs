@@ -4,7 +4,6 @@
 using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 using NodaTime;
 
@@ -13,9 +12,10 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>First-class in-memory transport with scheduled delivery and PeekLock settlement.</summary>
 public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMessagingTransportManagement
 {
-    private const int MaximumDeadLetterReasonLength = 256;
-    private const int MaximumDeadLetterDescriptionLength = 1_024;
+    private const int _maximumDeadLetterReasonLength = 256;
+    private const int _maximumDeadLetterDescriptionLength = 1_024;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Meziantou.Analyzer", "MA0158", Justification = "The transport targets net8.0, where System.Threading.Lock is unavailable.")]
     private readonly object _gate = new();
     private readonly Dictionary<string, InMemoryQueue> _queues = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Dictionary<string, string>> _subscriptions = new(StringComparer.Ordinal);
@@ -65,7 +65,8 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         checked
         {
             foreach (var pair in headers)
-                total += Encoding.UTF8.GetByteCount(pair.Key) + Encoding.UTF8.GetByteCount(pair.Value);
+                total += System.Text.Encoding.UTF8.GetByteCount(pair.Key)
+                    + System.Text.Encoding.UTF8.GetByteCount(pair.Value);
         }
 
         return total;
@@ -83,19 +84,19 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         ArgumentNullException.ThrowIfNull(headers);
         ctk.ThrowIfCancellationRequested();
 
-        var envelope = InMemoryEnvelope.Create(headers, payload);
+        var envelope = InMemoryEnvelope._create(headers, payload);
         lock (_gate)
         {
             var target = _getOrAddQueue(queue);
             if (dueTime is { } due)
             {
-                target.Scheduled.Enqueue(
+                target._scheduled.Enqueue(
                     envelope,
                     (Instant.FromDateTimeOffset(due), _scheduleSequence++));
             }
             else
             {
-                target.Visible.Enqueue(envelope);
+                target._visible.Enqueue(envelope);
             }
         }
 
@@ -118,7 +119,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
             if (_subscriptions.TryGetValue(topic, out var subscriptions))
             {
                 foreach (var queue in subscriptions.Values)
-                    _getOrAddQueue(queue).Visible.Enqueue(InMemoryEnvelope.Create(headers, payload));
+                    _getOrAddQueue(queue)._visible.Enqueue(InMemoryEnvelope._create(headers, payload));
             }
         }
 
@@ -126,12 +127,18 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<IMessagingLockedDelivery> ReceiveAsync(
+    public IAsyncEnumerable<IMessagingLockedDelivery> ReceiveAsync(
+        string queue,
+        CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+        return _receiveAsync(queue, ctk);
+    }
+
+    private async IAsyncEnumerable<IMessagingLockedDelivery> _receiveAsync(
         string queue,
         [EnumeratorCancellation] CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(queue);
-
         while (true)
         {
             ctk.ThrowIfCancellationRequested();
@@ -140,13 +147,13 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
             {
                 var target = _getOrAddQueue(queue);
                 var now = _clock.GetCurrentInstant();
-                target.PromoteDue(now);
-                target.ExpireLocks(now);
-                if (target.Visible.TryDequeue(out var envelope))
+                target._promoteDue(now);
+                target._expireLocks(now);
+                if (target._visible.TryDequeue(out var envelope))
                 {
-                    envelope.DeliveryCount++;
+                    envelope._deliveryCount++;
                     var lockId = Guid.NewGuid();
-                    target.Locked.Add(lockId, new InMemoryLock(envelope, now + _lockDuration));
+                    target._locked.Add(lockId, new InMemoryLock(envelope, now + _lockDuration));
                     delivery = new InMemoryLockedDelivery(this, target, lockId, envelope);
                 }
             }
@@ -170,7 +177,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         lock (_gate)
         {
             return _queues.TryGetValue(queue, out var target)
-                ? new ReadOnlyCollection<InMemoryDeadLetter>(target.DeadLetters.ToArray())
+                ? new ReadOnlyCollection<InMemoryDeadLetter>(target._deadLetters.ToArray())
                 : Array.Empty<InMemoryDeadLetter>();
         }
     }
@@ -255,20 +262,20 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         ctk.ThrowIfCancellationRequested();
         lock (_gate)
         {
-            queue.ExpireLocks(_clock.GetCurrentInstant());
-            if (!queue.Locked.Remove(lockId, out var locked))
+            queue._expireLocks(_clock.GetCurrentInstant());
+            if (!queue._locked.Remove(lockId, out var locked))
                 throw new InvalidOperationException("The messaging delivery has already been settled or expired.");
 
             if (settlement == Settlement.Abandon)
             {
-                queue.Visible.Enqueue(locked.Envelope);
+                queue._visible.Enqueue(locked._envelope);
             }
             else if (settlement == Settlement.DeadLetter)
             {
-                queue.DeadLetters.Add(new InMemoryDeadLetter(
-                    locked.Envelope.Headers,
-                    locked.Envelope.Payload,
-                    locked.Envelope.DeliveryCount,
+                queue._deadLetters.Add(new InMemoryDeadLetter(
+                    locked._envelope._headers,
+                    locked._envelope._payload,
+                    locked._envelope._deliveryCount,
                     reason!,
                     description!));
             }
@@ -279,43 +286,44 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 
     private sealed class InMemoryQueue
     {
-        internal Queue<InMemoryEnvelope> Visible { get; } = new();
-        internal PriorityQueue<InMemoryEnvelope, (Instant Due, long Sequence)> Scheduled { get; } = new();
-        internal Dictionary<Guid, InMemoryLock> Locked { get; } = [];
-        internal List<InMemoryDeadLetter> DeadLetters { get; } = [];
+        internal Queue<InMemoryEnvelope> _visible { get; } = new();
+        internal PriorityQueue<InMemoryEnvelope, (Instant Due, long Sequence)> _scheduled { get; } = new();
+        internal Dictionary<Guid, InMemoryLock> _locked { get; } = [];
+        internal List<InMemoryDeadLetter> _deadLetters { get; } = [];
 
-        internal void PromoteDue(Instant now)
+        internal void _promoteDue(Instant now)
         {
-            while (Scheduled.TryPeek(out _, out var priority) && priority.Due <= now)
-                Visible.Enqueue(Scheduled.Dequeue());
+            while (_scheduled.TryPeek(out _, out var priority) && priority.Due <= now)
+                _visible.Enqueue(_scheduled.Dequeue());
         }
 
-        internal void ExpireLocks(Instant now)
+        internal void _expireLocks(Instant now)
         {
-            foreach (var pair in Locked.ToArray())
+            foreach (var pair in _locked.ToArray())
             {
-                if (pair.Value.LockedUntil > now)
+                if (pair.Value._lockedUntil > now)
                     continue;
 
-                Locked.Remove(pair.Key);
-                Visible.Enqueue(pair.Value.Envelope);
+                _locked.Remove(pair.Key);
+                _visible.Enqueue(pair.Value._envelope);
             }
         }
+
     }
 
     private sealed class InMemoryEnvelope
     {
         private InMemoryEnvelope(IReadOnlyDictionary<string, string> headers, ReadOnlySequence<byte> payload)
         {
-            Headers = headers;
-            Payload = payload;
+            _headers = headers;
+            _payload = payload;
         }
 
-        internal IReadOnlyDictionary<string, string> Headers { get; }
-        internal ReadOnlySequence<byte> Payload { get; }
-        internal int DeliveryCount { get; set; }
+        internal IReadOnlyDictionary<string, string> _headers { get; }
+        internal ReadOnlySequence<byte> _payload { get; }
+        internal int _deliveryCount { get; set; }
 
-        internal static InMemoryEnvelope Create(
+        internal static InMemoryEnvelope _create(
             IReadOnlyDictionary<string, string> headers,
             in ReadOnlySequence<byte> payload)
         {
@@ -325,7 +333,17 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         }
     }
 
-    private sealed record InMemoryLock(InMemoryEnvelope Envelope, Instant LockedUntil);
+    private sealed class InMemoryLock
+    {
+        internal InMemoryLock(InMemoryEnvelope envelope, Instant lockedUntil)
+        {
+            _envelope = envelope;
+            _lockedUntil = lockedUntil;
+        }
+
+        internal InMemoryEnvelope _envelope { get; }
+        internal Instant _lockedUntil { get; }
+    }
 
     private enum Settlement
     {
@@ -353,11 +371,11 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
             _envelope = envelope;
         }
 
-        public IReadOnlyDictionary<string, string> Headers => _envelope.Headers;
+        public IReadOnlyDictionary<string, string> Headers => _envelope._headers;
 
-        public ReadOnlySequence<byte> Payload => _envelope.Payload;
+        public ReadOnlySequence<byte> Payload => _envelope._payload;
 
-        public int DeliveryCount => _envelope.DeliveryCount;
+        public int DeliveryCount => _envelope._deliveryCount;
 
         public Task CompleteAsync(CancellationToken ctk)
         {
@@ -373,9 +391,9 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         {
             ArgumentException.ThrowIfNullOrEmpty(reason);
             ArgumentNullException.ThrowIfNull(description);
-            if (reason.Length > MaximumDeadLetterReasonLength)
+            if (reason.Length > _maximumDeadLetterReasonLength)
                 throw new ArgumentException("The dead-letter reason is too long.", nameof(reason));
-            if (description.Length > MaximumDeadLetterDescriptionLength)
+            if (description.Length > _maximumDeadLetterDescriptionLength)
                 throw new ArgumentException("The dead-letter description is too long.", nameof(description));
 
             return _transport._settle(_queue, _lockId, Settlement.DeadLetter, reason, description, ctk);
