@@ -57,8 +57,7 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(resolver);
 
-        if (!services.Any(static descriptor => descriptor.ServiceType == typeof(IFormatterResolver)))
-            services.AddSingleton(resolver);
+        services.Replace(ServiceDescriptor.Singleton<IFormatterResolver>(resolver));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, MessagePackMessagingCodec>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, ProtobufMessagingCodec>());
         return services;
