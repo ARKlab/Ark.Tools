@@ -151,10 +151,16 @@ seam and the header-driven read model do not change shape:*
 
 ```csharp
 /// <summary>Registers the additional codecs into the AZM-04 codec registry.</summary>
-public static IServiceCollection AddMessagePackAndProtobufMessagingCodecs(
+public static IServiceCollection AddMessagePackMessagingCodec(
     this IServiceCollection services)
 {
     services.AddSingleton<IMessagingCodec, MessagePackMessagingCodec>(); // application/x-msgpack
+    return services;
+}
+
+public static IServiceCollection AddProtobufMessagingCodec(
+    this IServiceCollection services)
+{
     services.AddSingleton<IMessagingCodec, ProtobufMessagingCodec>();    // application/x-protobuf
     return services;
 }

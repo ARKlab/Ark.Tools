@@ -39,9 +39,8 @@ public static class MessagingServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<IFormatterResolver>(StandardResolver.Instance);
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, MessagePackMessagingCodec>());
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, ProtobufMessagingCodec>());
+        services.AddMessagePackMessagingCodec();
+        services.AddProtobufMessagingCodec();
         return services;
     }
 
@@ -56,8 +55,48 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(resolver);
 
+        services.AddMessagePackMessagingCodec(resolver);
+        services.AddProtobufMessagingCodec();
+        return services;
+    }
+
+    /// <summary>Registers the MessagePack messaging codec.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddMessagePackMessagingCodec(
+        this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.TryAddSingleton<IFormatterResolver>(StandardResolver.Instance);
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, MessagePackMessagingCodec>());
+        return services;
+    }
+
+    /// <summary>Registers the MessagePack messaging codec with a host resolver.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="resolver">The host MessagePack formatter resolver.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddMessagePackMessagingCodec(
+        this IServiceCollection services,
+        IFormatterResolver resolver)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(resolver);
+
         services.Replace(ServiceDescriptor.Singleton<IFormatterResolver>(resolver));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, MessagePackMessagingCodec>());
+        return services;
+    }
+
+    /// <summary>Registers the protobuf messaging codec.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddProtobufMessagingCodec(
+        this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, ProtobufMessagingCodec>());
         return services;
     }

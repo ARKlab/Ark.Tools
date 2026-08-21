@@ -124,11 +124,12 @@ opaque until the compression and claim-check task adds their processing.
 
 ### Additional messaging codecs
 
-Register `AddMessagePackAndProtobufMessagingCodecs()` alongside
-`AddArkMessaging()` to install `application/x-msgpack` and
-`application/x-protobuf`. The overload accepting an `IFormatterResolver` uses
-the host's MessagePack contract configuration; the parameterless overload uses
-the standard resolver. MessagePack reads use the `UntrustedData` security mode.
+Register `AddMessagePackMessagingCodec()` and
+`AddProtobufMessagingCodec()` alongside `AddArkMessaging()` to install
+`application/x-msgpack` and `application/x-protobuf`. The MessagePack overload
+accepting an `IFormatterResolver` uses the host's contract configuration; the
+parameterless overload uses the standard resolver. MessagePack reads use the
+`UntrustedData` security mode.
 
 At startup, call `MessagingJsonStartupValidation.ValidateDeclaredSerializers`
 for every participant. It rejects a participant whose `Serializers` declaration
