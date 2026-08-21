@@ -73,10 +73,11 @@ public sealed class BookPrintingProcessSteps
         catch (Exception exception)
         {
             _exception = exception;
-            Current = requests
-                .Where(task => task.Status == TaskStatus.RanToCompletion)
-                .Select(task => task.Result)
-                .FirstOrDefault();
+            foreach (var task in requests.Where(task => task.Status == TaskStatus.RanToCompletion))
+            {
+                Current = await task.ConfigureAwait(false);
+                break;
+            }
         }
     }
 
