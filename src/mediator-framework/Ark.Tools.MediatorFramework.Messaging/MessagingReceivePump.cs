@@ -71,9 +71,9 @@ public sealed class MessagingReceivePump : IAsyncDisposable
         }
 
         using var ctsToDispose = cts;
-        await cts.CancelAsync().ConfigureAwait(false);
         try
         {
+            await cts.CancelAsync().ConfigureAwait(false);
             if (loop is not null)
             {
 #pragma warning disable VSTHRD003 // The receive loop is intentionally started on the thread pool.

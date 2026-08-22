@@ -132,6 +132,18 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     [TestMethod]
+    public void MessagingRegistrationIsIdempotent()
+    {
+        var services = new ServiceCollection();
+        services.AddArkMessaging();
+        services.AddArkInMemoryMessaging();
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetServices<IMessagingCodec>().Should().ContainSingle(codec => codec is JsonMessagingCodec);
+        provider.GetServices<IMessagingTransport>().Should().ContainSingle();
+    }
+
+    [TestMethod]
     public async Task ReceivePumpInvokesCallback()
     {
         var transport = new InMemoryMessagingTransport();
@@ -154,65 +166,6 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         finally
         {
             await pump.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>Reusable conformance checks for locked-delivery transports.</summary>
-    public abstract class MessagingTransportConformanceTests
-    {
-        /// <summary>Creates the transport under test.</summary>
-        protected abstract IMessagingReceiveTransport CreateTransport();
-
-        /// <summary>Gets the capabilities exercised by the conformance checks.</summary>
-        protected virtual MessagingCapabilities Capabilities =>
-            MessagingCapabilities.Receive;
-
-        [TestMethod]
-        public async Task CompetingConsumersReceiveEachMessageOnce()
-        {
-            if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
-                return;
-
-            var transport = CreateTransport();
-            await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(9), null, default).ConfigureAwait(false);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            var first = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
-            var second = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
-            var results = await Task.WhenAll(
-                first.MoveNextAsync().AsTask(),
-                second.MoveNextAsync().AsTask().ContinueWith(
-                    static task => task.Status == TaskStatus.RanToCompletion && task.Result,
-                    CancellationToken.None,
-                    TaskContinuationOptions.ExecuteSynchronously,
-                    TaskScheduler.Default)).ConfigureAwait(false);
-
-            results.Count(static result => result).Should().Be(1);
-            if (results[0])
-                await first.Current.CompleteAsync(default).ConfigureAwait(false);
-            if (results[1])
-                await second.Current.CompleteAsync(default).ConfigureAwait(false);
-            await first.DisposeAsync().ConfigureAwait(false);
-            await second.DisposeAsync().ConfigureAwait(false);
-        }
-
-        [TestMethod]
-        public async Task ReceiveHonorsCancellation()
-        {
-            if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
-                return;
-
-            var transport = CreateTransport();
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-            var enumerator = transport.ReceiveAsync("empty", cts.Token).GetAsyncEnumerator(cts.Token);
-            Func<Task> action = async () => await enumerator.MoveNextAsync().AsTask().ConfigureAwait(false);
-
-            await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
-            await enumerator.DisposeAsync().ConfigureAwait(false);
-        }
-
-        private static ReadOnlySequence<byte> _sequence(params byte[] bytes)
-        {
-            return new ReadOnlySequence<byte>(bytes);
         }
     }
 
@@ -261,6 +214,73 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
             CancellationToken ctk)
         {
             return Task.CompletedTask;
+        }
+    }
+}
+
+/// <summary>Reusable conformance checks for locked-delivery transports.</summary>
+public abstract class MessagingTransportConformanceTests
+{
+    /// <summary>Creates the transport under test.</summary>
+    protected abstract IMessagingReceiveTransport CreateTransport();
+
+    /// <summary>Gets the capabilities exercised by the conformance checks.</summary>
+    protected virtual MessagingCapabilities Capabilities =>
+        MessagingCapabilities.Receive;
+
+    [TestMethod]
+    public async Task CompetingConsumersReceiveEachMessageOnce()
+    {
+        if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
+            return;
+
+        var transport = CreateTransport();
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(9), null, default).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var first = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
+        var second = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
+        var results = await Task.WhenAll(
+            _tryMoveNextAsync(first),
+            _tryMoveNextAsync(second)).ConfigureAwait(false);
+
+        results.Count(static result => result).Should().Be(1);
+        if (results[0])
+            await first.Current.CompleteAsync(default).ConfigureAwait(false);
+        if (results[1])
+            await second.Current.CompleteAsync(default).ConfigureAwait(false);
+        await first.DisposeAsync().ConfigureAwait(false);
+        await second.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task ReceiveHonorsCancellation()
+    {
+        if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
+            return;
+
+        var transport = CreateTransport();
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        var enumerator = transport.ReceiveAsync("empty", cts.Token).GetAsyncEnumerator(cts.Token);
+        Func<Task> action = async () => await enumerator.MoveNextAsync().AsTask().ConfigureAwait(false);
+
+        await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+        await enumerator.DisposeAsync().ConfigureAwait(false);
+    }
+
+    private static ReadOnlySequence<byte> _sequence(params byte[] bytes)
+    {
+        return new ReadOnlySequence<byte>(bytes);
+    }
+
+    private static async Task<bool> _tryMoveNextAsync(IAsyncEnumerator<IMessagingLockedDelivery> enumerator)
+    {
+        try
+        {
+            return await enumerator.MoveNextAsync().ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
         }
     }
 }
