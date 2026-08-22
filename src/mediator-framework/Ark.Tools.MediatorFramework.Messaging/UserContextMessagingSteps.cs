@@ -19,16 +19,16 @@ public sealed class UserContextIncomingStep : IMessagingIncomingStep
     /// <inheritdoc />
     public async Task ProcessAsync(MessagingIncomingContext context, Func<Task> next)
     {
-        if (context.Headers.TryGetValue("ark-user-id", out var userId))
+        if (context.Headers.TryGetValue(MessagingHeaders.UserId, out var userId))
         {
             var identity = new ClaimsIdentity(
-                context.Headers.TryGetValue("ark-auth-type", out var authType) ? authType : "SYSTEM");
+                context.Headers.TryGetValue(MessagingHeaders.UserAuthenticationType, out var authType) ? authType : "SYSTEM");
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
-            if (context.Headers.TryGetValue("ark-user-email", out var email))
+            if (context.Headers.TryGetValue(MessagingHeaders.UserEmail, out var email))
                 identity.AddClaim(new Claim(ClaimTypes.Email, email));
-            if (context.Headers.TryGetValue("ark-user-scopes", out var scopes))
+            if (context.Headers.TryGetValue(MessagingHeaders.UserScopes, out var scopes))
                 identity.AddClaim(new Claim("scope", scopes));
-            if (context.Headers.TryGetValue("ark-user-roles", out var roles))
+            if (context.Headers.TryGetValue(MessagingHeaders.UserRoles, out var roles))
                 identity.AddClaims(roles.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(role => new Claim(ClaimTypes.Role, role)));
             _setPrincipal(new ClaimsPrincipal(identity));
@@ -55,13 +55,13 @@ public sealed class UserContextOutgoingStep : IMessagingOutgoingStep
         var principal = _getPrincipal();
         if (principal?.Identity?.IsAuthenticated == true)
         {
-            _setIfPresent(context, "ark-auth-type", principal.Identity.AuthenticationType);
-            _setIfPresent(context, "ark-user-id", principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            _setIfPresent(context, "ark-user-email", principal.FindFirst(ClaimTypes.Email)?.Value);
-            _setIfPresent(context, "ark-user-scopes", principal.FindFirst("scope")?.Value);
+            _setIfPresent(context, MessagingHeaders.UserAuthenticationType, principal.Identity.AuthenticationType);
+            _setIfPresent(context, MessagingHeaders.UserId, principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            _setIfPresent(context, MessagingHeaders.UserEmail, principal.FindFirst(ClaimTypes.Email)?.Value);
+            _setIfPresent(context, MessagingHeaders.UserScopes, principal.FindFirst("scope")?.Value);
             var roles = principal.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
             if (roles.Length > 0)
-                context.Headers["ark-user-roles"] = string.Join(",", roles);
+                context.Headers[MessagingHeaders.UserRoles] = string.Join(",", roles);
         }
 
         await next().ConfigureAwait(false);

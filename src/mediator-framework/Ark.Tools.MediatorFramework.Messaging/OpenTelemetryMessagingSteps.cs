@@ -39,13 +39,23 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
         catch (Exception exception)
         {
             activity?.SetStatus(ActivityStatusCode.Error, exception.ToString());
-            activity?.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
-            {
-                ["exception.type"] = exception.GetType().FullName,
-                ["exception.stacktrace"] = exception.ToString()
-            }));
+            _recordException(activity, exception);
             throw;
         }
+
+    }
+
+    private static void _recordException(Activity? activity, Exception exception)
+    {
+        if (activity is null)
+            return;
+
+        activity.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
+        {
+            ["exception.type"] = exception.GetType().FullName,
+            ["exception.message"] = exception.Message,
+            ["exception.stacktrace"] = exception.ToString()
+        }));
     }
 }
 
