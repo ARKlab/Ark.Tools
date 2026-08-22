@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+  </PropertyGroup>
 
   <PropertyGroup>
     <NoWarn>$(NoWarn);NU5104</NoWarn>

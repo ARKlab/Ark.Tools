@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <Description>Transport-neutral messaging runtime for source-generated mediator endpoints</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Messaging</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>

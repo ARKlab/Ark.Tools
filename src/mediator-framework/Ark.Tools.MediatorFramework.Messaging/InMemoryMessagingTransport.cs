@@ -15,8 +15,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Meziantou.Analyzer", "MA0158", Justification = "The transport targets net8.0, where System.Threading.Lock is unavailable.")]
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private readonly Dictionary<string, InMemoryQueue> _queues = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Dictionary<string, string>> _subscriptions = new(StringComparer.Ordinal);
     private readonly IClock _clock;

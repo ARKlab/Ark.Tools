@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <Description>Transport markers and attachment abstractions for source-generated mediator endpoints</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Minimal API;Rebus;gRPC</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
