@@ -146,11 +146,14 @@ public static void AddArkMessagingFunctionsHost(
     container.RegisterInstance<IBus>(
         new MessagingNetworkBus<PrintingParticipant>(transport, options));
 
-    // Host-local pipeline steps from the host binding's IncomingSteps/OutgoingSteps.
+    // Host-local pipeline step types from the host binding's IncomingSteps/OutgoingSteps.
+    // Each type is registered in the application container and resolved per invocation.
     container.Collection.Register<IMessagingIncomingStep>(
         new[] { typeof(BookUserContextIncomingStep) });
     container.Collection.Register<IMessagingOutgoingStep>(
         new[] { typeof(BookUserContextOutgoingStep) });
+
+    // Pass the declared types and resolve from this same container on each send or delivery.
 
     // Dispatcher, settlement adapter, DataBus, and resource lifecycle (AZM-12)
     // registrations follow; queue provisioning honors options.ResourceLifecycle.

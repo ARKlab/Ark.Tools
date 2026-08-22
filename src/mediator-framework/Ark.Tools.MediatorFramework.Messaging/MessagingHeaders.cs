@@ -59,4 +59,16 @@ public static class MessagingHeaders
 
     /// <summary>SHA-256 digest of an offloaded payload attachment.</summary>
     public const string PayloadAttachmentSha256 = "amf1-payload-attachment-sha256";
+
+    /// <summary>User authentication type header.</summary>
+    public const string UserAuthenticationType = "ark-auth-type";
+
+    /// <summary>User identifier header.</summary>
+    public const string UserId = "ark-user-id";
+
+    /// <summary>User scopes header.</summary>
+    public const string UserScopes = "ark-user-scopes";
+
+    /// <summary>User roles header.</summary>
+    public const string UserRoles = "ark-user-roles";
 }

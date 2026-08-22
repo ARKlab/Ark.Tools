@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -245,6 +246,108 @@ public sealed partial class MessagingRuntimeTests
         registry.IsInstalled(SerializationProtocol.Json).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.MessagePack).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.Protobuf).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task PipelineRunsStepsInDeclaredOrderAndProtectsReservedHeaders()
+    {
+        var order = new List<string>();
+        var context = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books");
+        var cancellationTokens = new List<CancellationToken>();
+        var resolvedCount = 0;
+        var stepTypes = new[] { typeof(RecordingOutgoingStep), typeof(RecordingOutgoingStep) };
+        using var cancellationSource = new CancellationTokenSource();
+        var cancellationToken = cancellationSource.Token;
+
+        async Task InvokeAsync()
+        {
+            await MessagingPipelineInvoker.InvokeOutgoingAsync(
+                stepTypes,
+                _ =>
+                {
+                    resolvedCount++;
+                    return new RecordingOutgoingStep(
+                        resolvedCount % 2 == 1 ? "first" : "second",
+                        order,
+                        cancellationTokens);
+                },
+                context,
+                () =>
+                {
+                    order.Add("terminal");
+                    return Task.CompletedTask;
+                },
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await InvokeAsync().ConfigureAwait(false);
+        await InvokeAsync().ConfigureAwait(false);
+
+        order.Should().Equal(
+            "first", "second", "terminal",
+            "first", "second", "terminal");
+        resolvedCount.Should().Be(4);
+        cancellationTokens.Should().HaveCount(4);
+        foreach (var token in cancellationTokens)
+            token.Should().Be(cancellationToken);
+        var action = () => context.Headers[MessagingHeaders.MessageType] = "spoofed";
+        action.Should().Throw<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task UserContextStepsRoundTripClaims()
+    {
+        ClaimsPrincipal? restored = null;
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var outgoing = new MessagingOutgoingContext(
+            headers,
+            "books");
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.NameIdentifier, "42"),
+            new Claim(ClaimTypes.Email, "ada@example.test"),
+            new Claim(ClaimTypes.Role, "admin")
+        ], "test"));
+        await new UserContextOutgoingStep(() => principal)
+            .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
+
+        var incoming = new MessagingIncomingContext(headers, default);
+        await new UserContextIncomingStep(value => restored = value)
+            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
+
+        restored!.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be("42");
+        headers.Should().NotContainKey("ark-user-email");
+        restored.FindFirst(ClaimTypes.Email).Should().BeNull();
+        restored.IsInRole("admin").Should().BeTrue();
+    }
+
+    private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
+    {
+        private readonly string _name;
+        private readonly IList<string> _order;
+        private readonly IList<CancellationToken> _cancellationTokens;
+
+        public RecordingOutgoingStep(
+            string name,
+            IList<string> order,
+            IList<CancellationToken> cancellationTokens)
+        {
+            _name = name;
+            _order = order;
+            _cancellationTokens = cancellationTokens;
+        }
+
+        public async Task ProcessAsync(
+            MessagingOutgoingContext context,
+            Func<Task> next,
+            CancellationToken cancellationToken)
+        {
+            _order.Add(_name);
+            _cancellationTokens.Add(cancellationToken);
+            await next().ConfigureAwait(false);
+        }
     }
 
     private sealed class MessagingRuntimeContract
