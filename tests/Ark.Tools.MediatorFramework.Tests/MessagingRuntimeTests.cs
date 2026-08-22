@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -245,6 +246,79 @@ public sealed partial class MessagingRuntimeTests
         registry.IsInstalled(SerializationProtocol.Json).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.MessagePack).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.Protobuf).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task PipelineRunsStepsInDeclaredOrderAndProtectsReservedHeaders()
+    {
+        var order = new List<string>();
+        var context = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books",
+            default);
+        var steps = new IMessagingOutgoingStep[]
+        {
+            new RecordingOutgoingStep("first", order),
+            new RecordingOutgoingStep("second", order)
+        };
+
+        await MessagingPipelineInvoker.InvokeOutgoingAsync(
+            steps,
+            context,
+            () =>
+            {
+                order.Add("terminal");
+                return Task.CompletedTask;
+            }).ConfigureAwait(false);
+
+        order.Should().Equal("first", "second", "terminal");
+        var action = () => context.Headers[MessagingHeaders.MessageType] = "spoofed";
+        action.Should().Throw<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task UserContextStepsRoundTripClaims()
+    {
+        ClaimsPrincipal? restored = null;
+        var outgoing = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books",
+            default);
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.NameIdentifier, "42"),
+            new Claim(ClaimTypes.Email, "ada@example.test"),
+            new Claim(ClaimTypes.Role, "admin")
+        ], "test"));
+        await new UserContextOutgoingStep(() => principal)
+            .ProcessAsync(outgoing, () => Task.CompletedTask).ConfigureAwait(false);
+
+        using var scope = new ServiceCollection().BuildServiceProvider();
+        var incoming = new MessagingIncomingContext(outgoing.Headers, default, scope, default);
+        await new UserContextIncomingStep(value => restored = value)
+            .ProcessAsync(incoming, () => Task.CompletedTask).ConfigureAwait(false);
+
+        restored!.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be("42");
+        restored.FindFirst(ClaimTypes.Email)!.Value.Should().Be("ada@example.test");
+        restored.IsInRole("admin").Should().BeTrue();
+    }
+
+    private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
+    {
+        private readonly string _name;
+        private readonly IList<string> _order;
+
+        public RecordingOutgoingStep(string name, IList<string> order)
+        {
+            _name = name;
+            _order = order;
+        }
+
+        public async Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next)
+        {
+            _order.Add(_name);
+            await next().ConfigureAwait(false);
+        }
     }
 
     private sealed class MessagingRuntimeContract

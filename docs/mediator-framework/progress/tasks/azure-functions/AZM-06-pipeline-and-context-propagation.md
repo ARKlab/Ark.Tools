@@ -301,12 +301,12 @@ through dispatch land with AZM-09.
 
 ## Acceptance
 
-- [ ] Incoming/outgoing step APIs are public, documented, and transport-neutral.
-- [ ] Named ordering is deterministic and tested.
-- [ ] User-context and OpenTelemetry steps are opt-in and tested.
-- [ ] Additional header injection and reserved-header protection are tested.
-- [ ] Pipeline failures and cancellation are explicit and reach the dispatcher
+- [x] Incoming/outgoing step APIs are public, documented, and transport-neutral.
+- [x] Named ordering is deterministic and tested.
+- [x] User-context and OpenTelemetry steps are opt-in and tested.
+- [x] Additional header injection and reserved-header protection are tested.
+- [x] Pipeline failures and cancellation are explicit and reach the dispatcher
   seam unchanged; AZM-09 verifies their settlement behavior.
-- [ ] The [task board](../README.md) status for AZM-06 is updated to this task's acceptance state.
+- [x] The [task board](../README.md) status for AZM-06 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -153,7 +153,23 @@ not an Azure Functions hosting mechanism. Registration validates the transport
 capabilities against each network and fails immediately when a required
 capability is missing.
 
-## 5. Configure local settings
+## 5. Add messaging pipeline steps
+
+Incoming and outgoing steps are opt-in and host-local. Compose them around the
+stable `MessagingPipelineStage` positions and invoke them with
+`MessagingPipelineInvoker`; each invocation receives a fresh context and items
+bag. Steps may add application headers before serialization, but `amf1-*`
+routing, content, encoding, attachment, and identity headers are framework-owned
+and cannot be overridden.
+
+`UserContextIncomingStep` and `UserContextOutgoingStep` copy the `ark-user-*`
+claims used by the existing Rebus integration. Register them only when the host
+provides a principal accessor. `OpenTelemetryIncomingStep` and
+`OpenTelemetryOutgoingStep` propagate W3C trace context and baggage and are also
+opt-in. Exceptions and cancellation pass through unchanged; settlement remains
+the dispatch layer's responsibility.
+
+## 6. Configure local settings
 
 Copy, do not commit:
 
