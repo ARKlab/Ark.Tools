@@ -66,9 +66,6 @@ public static class MessagingHeaders
     /// <summary>User identifier header.</summary>
     public const string UserId = "ark-user-id";
 
-    /// <summary>User email header.</summary>
-    public const string UserEmail = "ark-user-email";
-
     /// <summary>User scopes header.</summary>
     public const string UserScopes = "ark-user-scopes";
 

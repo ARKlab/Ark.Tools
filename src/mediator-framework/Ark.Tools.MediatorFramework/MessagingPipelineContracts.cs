@@ -9,14 +9,20 @@ namespace Ark.Tools.MediatorFramework;
 public interface IMessagingIncomingStep
 {
     /// <summary>Processes the context and invokes the remaining pipeline.</summary>
-    Task ProcessAsync(MessagingIncomingContext context, Func<Task> next);
+    /// <param name="context">The incoming message context.</param>
+    /// <param name="next">The remaining pipeline.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    Task ProcessAsync(MessagingIncomingContext context, Func<Task> next, CancellationToken cancellationToken);
 }
 
 /// <summary>Continuation-based outgoing messaging step.</summary>
 public interface IMessagingOutgoingStep
 {
     /// <summary>Processes the context and invokes the remaining pipeline.</summary>
-    Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next);
+    /// <param name="context">The outgoing message context.</param>
+    /// <param name="next">The remaining pipeline.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next, CancellationToken cancellationToken);
 }
 
 /// <summary>Per-delivery incoming context.</summary>
@@ -25,14 +31,10 @@ public sealed class MessagingIncomingContext
     /// <summary>Creates an incoming context.</summary>
     public MessagingIncomingContext(
         IReadOnlyDictionary<string, string> headers,
-        ReadOnlySequence<byte> payload,
-        IServiceProvider scope,
-        CancellationToken cancellationToken)
+        ReadOnlySequence<byte> payload)
     {
         Headers = headers ?? throw new ArgumentNullException(nameof(headers));
-        Scope = scope ?? throw new ArgumentNullException(nameof(scope));
         Payload = payload;
-        CancellationToken = cancellationToken;
     }
 
     /// <summary>Gets received headers.</summary>
@@ -40,12 +42,6 @@ public sealed class MessagingIncomingContext
 
     /// <summary>Gets the prepared payload.</summary>
     public ReadOnlySequence<byte> Payload { get; }
-
-    /// <summary>Gets the current handling scope.</summary>
-    public IServiceProvider Scope { get; }
-
-    /// <summary>Gets the processing cancellation token.</summary>
-    public CancellationToken CancellationToken { get; }
 
     /// <summary>Gets step-local state.</summary>
     public IDictionary<string, object> Items { get; } = new Dictionary<string, object>(StringComparer.Ordinal);
@@ -57,14 +53,12 @@ public sealed class MessagingOutgoingContext
     /// <summary>Creates an outgoing context.</summary>
     public MessagingOutgoingContext(
         IDictionary<string, string> headers,
-        string destination,
-        CancellationToken cancellationToken)
+        string destination)
     {
         ArgumentNullException.ThrowIfNull(headers);
         Headers = new MessagingOutgoingHeaders(headers);
         ArgumentException.ThrowIfNullOrEmpty(destination);
         Destination = destination;
-        CancellationToken = cancellationToken;
     }
 
     /// <summary>Gets mutable, validated headers.</summary>
@@ -75,9 +69,6 @@ public sealed class MessagingOutgoingContext
 
     /// <summary>Gets or sets the serialized payload.</summary>
     public ReadOnlySequence<byte>? Payload { get; set; }
-
-    /// <summary>Gets the send cancellation token.</summary>
-    public CancellationToken CancellationToken { get; }
 
     /// <summary>Gets step-local state.</summary>
     public IDictionary<string, object> Items { get; } = new Dictionary<string, object>(StringComparer.Ordinal);

@@ -162,9 +162,10 @@ bag. Steps may add application headers before serialization, but `amf1-*`
 routing, content, encoding, attachment, and identity headers are framework-owned
 and cannot be overridden.
 
-`UserContextIncomingStep` and `UserContextOutgoingStep` copy the `ark-user-*`
-claims used by the existing Rebus integration. Register them only when the host
-provides a principal accessor. `OpenTelemetryIncomingStep` and
+`UserContextIncomingStep` and `UserContextOutgoingStep` copy selected
+`ark-user-*` claims used by the existing Rebus integration; email claims are
+intentionally excluded. Register them only when the host provides a principal
+accessor. `OpenTelemetryIncomingStep` and
 `OpenTelemetryOutgoingStep` propagate W3C trace context and baggage and are also
 opt-in. Exceptions and cancellation pass through unchanged; settlement remains
 the dispatch layer's responsibility.

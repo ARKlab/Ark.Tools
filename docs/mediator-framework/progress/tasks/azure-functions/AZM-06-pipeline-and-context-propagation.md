@@ -63,8 +63,9 @@ signatures' invariants are fixed.
 
 The transport-neutral step contracts and contexts (public API project,
 namespace `Ark.MediatorFramework`). Steps follow the Rebus continuation model;
-contexts carry the header dictionary, payload accessors, scope, and
-cancellation, and are never cached across invocations:
+contexts carry the header dictionary and payload accessors and are never
+cached across invocations. The cancellation token is passed to
+`ProcessAsync`.
 
 ```csharp
 namespace Ark.MediatorFramework;
@@ -73,14 +74,20 @@ namespace Ark.MediatorFramework;
 public interface IMessagingIncomingStep
 {
     /// <summary>Processes the incoming context and invokes the rest of the pipeline.</summary>
-    Task ProcessAsync(MessagingIncomingContext context, Func<Task> next);
+    Task ProcessAsync(
+        MessagingIncomingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Continuation-based outgoing step, modelled on Rebus IOutgoingStep.</summary>
 public interface IMessagingOutgoingStep
 {
     /// <summary>Processes the outgoing context and invokes the rest of the pipeline.</summary>
-    Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next);
+    Task ProcessAsync(
+        MessagingOutgoingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Per-delivery incoming context. One instance per invocation; never shared.</summary>
@@ -91,13 +98,6 @@ public sealed class MessagingIncomingContext
 
     /// <summary>Gets the prepared payload (after DataBus fetch and bounded decompression).</summary>
     public ReadOnlySequence<byte> Payload { get; }
-
-    /// <summary>Gets the service resolver for the current handling scope (the SimpleInjector
-    /// AsyncScopedLifestyle scope; SimpleInjector Scope implements IServiceProvider).</summary>
-    public IServiceProvider Scope { get; }
-
-    /// <summary>Gets the processing cancellation token.</summary>
-    public CancellationToken CancellationToken { get; }
 
     /// <summary>Gets a per-invocation items bag for step-to-step state.</summary>
     public IDictionary<string, object> Items { get; }
@@ -115,9 +115,6 @@ public sealed class MessagingOutgoingContext
 
     /// <summary>Gets the serialized payload; null before the serialize stage runs.</summary>
     public ReadOnlySequence<byte>? Payload { get; }
-
-    /// <summary>Gets the send cancellation token.</summary>
-    public CancellationToken CancellationToken { get; }
 
     /// <summary>Gets a per-invocation items bag for step-to-step state.</summary>
     public IDictionary<string, object> Items { get; }
@@ -167,27 +164,35 @@ namespace Ark.MediatorFramework.Messaging;
 public static class MessagingPipelineInvoker
 {
     /// <summary>Invokes the incoming pipeline; terminal is the deserialize+dispatch stage.</summary>
-    public static Task InvokeIncomingAsync(
-        IReadOnlyList<IMessagingIncomingStep> orderedSteps,
+    public static async Task InvokeIncomingAsync(
+        IReadOnlyList<Type> orderedStepTypes,
+        Func<Type, object> resolveStep,
         MessagingIncomingContext context,
-        Func<Task> terminal)
+        Func<Task> terminal,
+        CancellationToken cancellationToken)
     {
         var next = terminal;
-        for (var i = orderedSteps.Count - 1; i >= 0; i--)
+        for (var i = orderedStepTypes.Count - 1; i >= 0; i--)
         {
-            var step = orderedSteps[i];
+            var stepType = orderedStepTypes[i];
             var continuation = next;
-            next = () => step.ProcessAsync(context, continuation);
+            next = async () =>
+            {
+                var step = (IMessagingIncomingStep)resolveStep(stepType);
+                await step.ProcessAsync(context, continuation, cancellationToken)
+                    .ConfigureAwait(false);
+            };
         }
 
         // Exceptions and cancellation flow through unchanged; settlement is AZM-09's job.
-        return next();
+        await next().ConfigureAwait(false);
     }
 }
 ```
 
-The opt-in built-in user-context incoming step, mirroring the existing Rebus
-`ark-user-*` behavior (see `src/common/Ark.Tools.Rebus/UserFlowStep.cs`):
+The opt-in built-in user-context incoming step, mirroring the selected existing
+Rebus `ark-user-*` behavior (email claims are intentionally excluded; see
+`src/common/Ark.Tools.Rebus/UserFlowStep.cs`):
 
 ```csharp
 namespace Ark.MediatorFramework.Messaging;
@@ -196,17 +201,19 @@ namespace Ark.MediatorFramework.Messaging;
 /// resolution. Opt-in per participant host binding.</summary>
 public sealed class UserContextIncomingStep : IMessagingIncomingStep
 {
-    public async Task ProcessAsync(MessagingIncomingContext context, Func<Task> next)
+    public async Task ProcessAsync(
+        MessagingIncomingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken)
     {
         if (context.Headers.TryGetValue("ark-user-id", out var userId))
         {
             var identity = new ClaimsIdentity(
                 new[] { new Claim(ClaimTypes.NameIdentifier, userId) }, "ark-messaging");
             var principal = new ClaimsPrincipal(identity);
-            // Publish the principal into the scoped context-provider resolved from
-            // context.Scope, mirroring the Rebus UserFlowStep restore behavior. The
+            // Publish the principal into the application context provider. The
             // outgoing counterpart writes ark-user-* headers from the current principal.
-            _setScopedPrincipal(context.Scope, principal);
+            _setScopedPrincipal(principal);
         }
 
         await next().ConfigureAwait(false);
@@ -225,7 +232,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
 {
     private static readonly ActivitySource _source = new("Ark.MediatorFramework.Messaging");
 
-    public async Task ProcessAsync(MessagingIncomingContext context, Func<Task> next)
+    public async Task ProcessAsync(
+        MessagingIncomingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken)
     {
         context.Headers.TryGetValue("traceparent", out var traceparent);
         ActivityContext.TryParse(traceparent,
@@ -250,7 +260,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
 /// <summary>Writes traceparent/tracestate/baggage headers from Activity.Current.</summary>
 public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
 {
-    public async Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next)
+    public async Task ProcessAsync(
+        MessagingOutgoingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken)
     {
         if (Activity.Current is { } current)
         {

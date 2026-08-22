@@ -14,7 +14,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
     private static readonly ActivitySource _source = new(ActivitySourceName);
 
     /// <inheritdoc />
-    public async Task ProcessAsync(MessagingIncomingContext context, Func<Task> next)
+    public async Task ProcessAsync(
+        MessagingIncomingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken)
     {
         context.Headers.TryGetValue("traceparent", out var traceparent);
         context.Headers.TryGetValue("tracestate", out var tracestate);
@@ -63,7 +66,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
 public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
 {
     /// <inheritdoc />
-    public async Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next)
+    public async Task ProcessAsync(
+        MessagingOutgoingContext context,
+        Func<Task> next,
+        CancellationToken cancellationToken)
     {
         if (Activity.Current is { Id: not null } activity)
         {

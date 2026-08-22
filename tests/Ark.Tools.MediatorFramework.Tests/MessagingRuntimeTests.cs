@@ -254,24 +254,44 @@ public sealed partial class MessagingRuntimeTests
         var order = new List<string>();
         var context = new MessagingOutgoingContext(
             new Dictionary<string, string>(StringComparer.Ordinal),
-            "books",
-            default);
-        var steps = new IMessagingOutgoingStep[]
+            "books");
+        var cancellationTokens = new List<CancellationToken>();
+        var resolvedCount = 0;
+        var stepTypes = new[] { typeof(RecordingOutgoingStep), typeof(RecordingOutgoingStep) };
+        using var cancellationSource = new CancellationTokenSource();
+        var cancellationToken = cancellationSource.Token;
+
+        async Task InvokeAsync()
         {
-            new RecordingOutgoingStep("first", order),
-            new RecordingOutgoingStep("second", order)
-        };
+            await MessagingPipelineInvoker.InvokeOutgoingAsync(
+                stepTypes,
+                _ =>
+                {
+                    resolvedCount++;
+                    return new RecordingOutgoingStep(
+                        resolvedCount % 2 == 1 ? "first" : "second",
+                        order,
+                        cancellationTokens);
+                },
+                context,
+                () =>
+                {
+                    order.Add("terminal");
+                    return Task.CompletedTask;
+                },
+                cancellationToken).ConfigureAwait(false);
+        }
 
-        await MessagingPipelineInvoker.InvokeOutgoingAsync(
-            steps,
-            context,
-            () =>
-            {
-                order.Add("terminal");
-                return Task.CompletedTask;
-            }).ConfigureAwait(false);
+        await InvokeAsync().ConfigureAwait(false);
+        await InvokeAsync().ConfigureAwait(false);
 
-        order.Should().Equal("first", "second", "terminal");
+        order.Should().Equal(
+            "first", "second", "terminal",
+            "first", "second", "terminal");
+        resolvedCount.Should().Be(4);
+        cancellationTokens.Should().HaveCount(4);
+        foreach (var token in cancellationTokens)
+            token.Should().Be(cancellationToken);
         var action = () => context.Headers[MessagingHeaders.MessageType] = "spoofed";
         action.Should().Throw<InvalidOperationException>();
     }
@@ -283,8 +303,7 @@ public sealed partial class MessagingRuntimeTests
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
         var outgoing = new MessagingOutgoingContext(
             headers,
-            "books",
-            default);
+            "books");
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
             new Claim(ClaimTypes.NameIdentifier, "42"),
@@ -292,22 +311,15 @@ public sealed partial class MessagingRuntimeTests
             new Claim(ClaimTypes.Role, "admin")
         ], "test"));
         await new UserContextOutgoingStep(() => principal)
-            .ProcessAsync(outgoing, () => Task.CompletedTask).ConfigureAwait(false);
+            .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
 
-        var scope = new ServiceCollection().BuildServiceProvider();
-        try
-        {
-            var incoming = new MessagingIncomingContext(headers, default, scope, default);
-            await new UserContextIncomingStep(value => restored = value)
-                .ProcessAsync(incoming, () => Task.CompletedTask).ConfigureAwait(false);
-        }
-        finally
-        {
-            await scope.DisposeAsync().ConfigureAwait(false);
-        }
+        var incoming = new MessagingIncomingContext(headers, default);
+        await new UserContextIncomingStep(value => restored = value)
+            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
 
         restored!.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be("42");
-        restored.FindFirst(ClaimTypes.Email)!.Value.Should().Be("ada@example.test");
+        headers.Should().NotContainKey("ark-user-email");
+        restored.FindFirst(ClaimTypes.Email).Should().BeNull();
         restored.IsInRole("admin").Should().BeTrue();
     }
 
@@ -315,16 +327,25 @@ public sealed partial class MessagingRuntimeTests
     {
         private readonly string _name;
         private readonly IList<string> _order;
+        private readonly IList<CancellationToken> _cancellationTokens;
 
-        public RecordingOutgoingStep(string name, IList<string> order)
+        public RecordingOutgoingStep(
+            string name,
+            IList<string> order,
+            IList<CancellationToken> cancellationTokens)
         {
             _name = name;
             _order = order;
+            _cancellationTokens = cancellationTokens;
         }
 
-        public async Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next)
+        public async Task ProcessAsync(
+            MessagingOutgoingContext context,
+            Func<Task> next,
+            CancellationToken cancellationToken)
         {
             _order.Add(_name);
+            _cancellationTokens.Add(cancellationToken);
             await next().ConfigureAwait(false);
         }
     }
