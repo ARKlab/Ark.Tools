@@ -1431,7 +1431,8 @@
           "Google.Protobuf": "[3.35.1, )",
           "MessagePack": "[3.1.8, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.11, )",
-          "Microsoft.Extensions.Options": "[10.0.11, )"
+          "Microsoft.Extensions.Options": "[10.0.11, )",
+          "NodaTime": "[3.3.3, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {

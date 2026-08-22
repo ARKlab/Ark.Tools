@@ -397,11 +397,11 @@ application handler changes in this task.
 
 ## Acceptance
 
-- [ ] Transport contract with fixed PeekLock settlement and delivery-count
+- [x] Transport contract with fixed PeekLock settlement and delivery-count
   semantics is implemented and documented.
-- [ ] InMemory transport implements all capabilities and passes the full
+- [x] InMemory transport implements all capabilities and passes the full
   conformance suite.
-- [ ] Capability guards and startup validation are tested.
-- [ ] The [task board](../README.md) status for AZM-05 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Capability guards and startup validation are tested.
+- [x] The [task board](../README.md) status for AZM-05 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

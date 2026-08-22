@@ -1089,7 +1089,8 @@
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Google.Protobuf": "[3.35.1, )",
-          "MessagePack": "[3.1.8, )"
+          "MessagePack": "[3.1.8, )",
+          "NodaTime": "[3.3.3, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {

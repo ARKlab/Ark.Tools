@@ -5,6 +5,9 @@ task.
 
 ## API shape
 
+- **Revisit the `IMessagingTransport.MeasureNative` method.**
+  Confirm whether the transport contract needs to expose native byte-limit measurement.
+
 - **Rename `MessagingCapabilities.Receive` to `SendReceive`** so the flag name
   reflects that the capability covers both inbound and outbound point-to-point
   delivery, not just reception.

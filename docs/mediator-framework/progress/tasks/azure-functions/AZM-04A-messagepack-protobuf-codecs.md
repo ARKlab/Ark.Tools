@@ -220,11 +220,11 @@ all three protocols and multiple protocols coexist in one logical queue.
 
 ## Acceptance
 
-- [ ] MessagePack and protobuf codecs are registered, generics-only, and
+- [x] MessagePack and protobuf codecs are registered, generics-only, and
   `IBufferWriter`/`ReadOnlySequence`-based.
-- [ ] Cross-protocol reads are proven; no AZM-04 seam changed shape.
-- [ ] Startup validates installed codecs against declared serializer sets.
-- [ ] MessagePack applies the SEC-03 untrusted-data posture.
-- [ ] The [task board](../README.md) status for AZM-04A is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Cross-protocol reads are proven; no AZM-04 seam changed shape.
+- [x] Startup validates installed codecs against declared serializer sets.
+- [x] MessagePack applies the SEC-03 untrusted-data posture.
+- [x] The [task board](../README.md) status for AZM-04A is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

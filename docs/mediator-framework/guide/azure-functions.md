@@ -136,7 +136,24 @@ Accepting `ARKAPI002` records the reviewed contract decision only. It does not
 rename an existing event topic, move subscriptions, or migrate Azure resources;
 perform that topology migration separately.
 
-## 4. Configure local settings
+## 4. Compose a transport
+
+The transport-neutral package exposes `IMessagingTransport` and the locked
+receive contract without Azure SDK types. The first-class InMemory transport is
+appropriate for local development and tests:
+
+```csharp
+services.AddArkInMemoryMessaging(networkOptions);
+```
+
+It supports send, scheduled send, publish/subscription fan-out, PeekLock
+settlement, delivery counts, lock expiry, and a readable dead-letter store.
+`MessagingReceivePump` runs its receive loop for tests or custom hosts; it is
+not an Azure Functions hosting mechanism. Registration validates the transport
+capabilities against each network and fails immediately when a required
+capability is missing.
+
+## 5. Configure local settings
 
 Copy, do not commit:
 
@@ -169,7 +186,7 @@ Set an empty Functions route prefix when the generated route already includes
 }
 ```
 
-## 5. Understand the Rebus boundary
+## 6. Understand the Rebus boundary
 
 The Functions process:
 
