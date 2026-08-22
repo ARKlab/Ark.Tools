@@ -9,8 +9,10 @@ public sealed class MessagingReceivePump : IAsyncDisposable
     private readonly IMessagingReceiveTransport _transport;
     private readonly string _queue;
     private readonly Func<IMessagingLockedDelivery, CancellationToken, Task> _onDelivery;
+    private readonly Lock _gate = new();
     private CancellationTokenSource? _cts;
     private Task? _loop;
+    private bool _stopping;
 
     /// <summary>Creates a receive pump.</summary>
     /// <param name="transport">The receive-capable transport.</param>
@@ -35,13 +37,18 @@ public sealed class MessagingReceivePump : IAsyncDisposable
     public Task StartAsync(CancellationToken ctk)
     {
         var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
-        if (Interlocked.CompareExchange(ref _cts, cts, null) is not null)
+        lock (_gate)
         {
-            cts.Dispose();
-            throw new InvalidOperationException("The messaging receive pump has already been started.");
+            if (_cts is not null || _stopping)
+            {
+                cts.Dispose();
+                throw new InvalidOperationException("The messaging receive pump has already been started or is stopping.");
+            }
+
+            _cts = cts;
+            _loop = Task.Run(() => _runAsync(cts.Token), CancellationToken.None);
         }
 
-        _loop = Task.Run(() => _runAsync(cts.Token), CancellationToken.None);
         return Task.CompletedTask;
     }
 
@@ -49,26 +56,39 @@ public sealed class MessagingReceivePump : IAsyncDisposable
     /// <returns>A task completed when the loop has stopped.</returns>
     public async Task StopAsync()
     {
-        var cts = Interlocked.Exchange(ref _cts, null);
-        if (cts is null)
-            return;
+        CancellationTokenSource? cts;
+        Task? loop;
+        lock (_gate)
+        {
+            cts = _cts;
+            loop = _loop;
+            if (cts is null)
+                return;
 
+            _cts = null;
+            _loop = null;
+            _stopping = true;
+        }
+
+        using var ctsToDispose = cts;
         await cts.CancelAsync().ConfigureAwait(false);
         try
         {
-            if (_loop is not null)
+            if (loop is not null)
             {
 #pragma warning disable VSTHRD003 // The receive loop is intentionally started on the thread pool.
-                await _loop.ConfigureAwait(false);
+                await loop.ConfigureAwait(false);
 #pragma warning restore VSTHRD003
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
+            // Cancellation is expected when stopping the receive loop.
         }
         finally
         {
-            cts.Dispose();
+            lock (_gate)
+                _stopping = false;
         }
     }
 

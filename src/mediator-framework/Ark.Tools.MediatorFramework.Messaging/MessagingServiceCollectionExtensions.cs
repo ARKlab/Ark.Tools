@@ -24,7 +24,7 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddOptions<JsonSerializerOptions>();
-        services.AddSingleton<IMessagingCodec, JsonMessagingCodec>();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, JsonMessagingCodec>());
         services.AddSingleton<MessagingCodecRegistry>();
         services.AddSingleton<IMessagingCodecRegistry>(
             serviceProvider => serviceProvider.GetRequiredService<MessagingCodecRegistry>());
@@ -52,10 +52,11 @@ public static class MessagingServiceCollectionExtensions
         }
 
         services.AddArkMessaging();
-        services.AddSingleton(transport);
         services.AddSingleton<IMessagingTransport>(transport);
         if (transport is IMessagingReceiveTransport receiveTransport)
             services.AddSingleton(receiveTransport);
+        if (transport is IMessagingTransportManagement management)
+            services.AddSingleton(management);
         return services;
     }
 
