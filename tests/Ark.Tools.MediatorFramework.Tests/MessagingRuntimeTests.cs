@@ -280,8 +280,9 @@ public sealed partial class MessagingRuntimeTests
     public async Task UserContextStepsRoundTripClaims()
     {
         ClaimsPrincipal? restored = null;
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
         var outgoing = new MessagingOutgoingContext(
-            new Dictionary<string, string>(StringComparer.Ordinal),
+            headers,
             "books",
             default);
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
@@ -293,10 +294,17 @@ public sealed partial class MessagingRuntimeTests
         await new UserContextOutgoingStep(() => principal)
             .ProcessAsync(outgoing, () => Task.CompletedTask).ConfigureAwait(false);
 
-        using var scope = new ServiceCollection().BuildServiceProvider();
-        var incoming = new MessagingIncomingContext(outgoing.Headers, default, scope, default);
-        await new UserContextIncomingStep(value => restored = value)
-            .ProcessAsync(incoming, () => Task.CompletedTask).ConfigureAwait(false);
+        var scope = new ServiceCollection().BuildServiceProvider();
+        try
+        {
+            var incoming = new MessagingIncomingContext(headers, default, scope, default);
+            await new UserContextIncomingStep(value => restored = value)
+                .ProcessAsync(incoming, () => Task.CompletedTask).ConfigureAwait(false);
+        }
+        finally
+        {
+            await scope.DisposeAsync().ConfigureAwait(false);
+        }
 
         restored!.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be("42");
         restored.FindFirst(ClaimTypes.Email)!.Value.Should().Be("ada@example.test");

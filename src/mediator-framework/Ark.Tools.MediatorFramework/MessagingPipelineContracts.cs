@@ -98,7 +98,12 @@ public sealed class MessagingOutgoingContext
         public bool IsReadOnly => false;
         public void Add(string key, string value) { MessagingHeadersGuard.ThrowIfReserved(key); _inner.Add(key, value); }
         public void Add(KeyValuePair<string, string> item) => Add(item.Key, item.Value);
-        public void Clear() => _inner.Clear();
+        public void Clear()
+        {
+            if (_inner.Keys.Any(MessagingHeadersGuard.IsReserved))
+                throw new InvalidOperationException("Reserved messaging headers cannot be removed.");
+            _inner.Clear();
+        }
         public bool Contains(KeyValuePair<string, string> item) => _inner.Contains(item);
         public bool ContainsKey(string key) => _inner.ContainsKey(key);
         public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex) => _inner.CopyTo(array, arrayIndex);
@@ -126,4 +131,3 @@ public enum MessagingPipelineStage
     /// <summary>After incoming settlement.</summary>
     AfterSettlement
 }
-

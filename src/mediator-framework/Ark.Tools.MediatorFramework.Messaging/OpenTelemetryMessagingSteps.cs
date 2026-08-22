@@ -3,8 +3,6 @@
 
 using System.Diagnostics;
 
-using Ark.Tools.MediatorFramework;
-
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Creates a consumer activity from W3C message headers.</summary>
@@ -20,8 +18,19 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
     {
         context.Headers.TryGetValue("traceparent", out var traceparent);
         context.Headers.TryGetValue("tracestate", out var tracestate);
-        ActivityContext.TryParse(traceparent, tracestate, out var parent);
+        var hasParent = ActivityContext.TryParse(traceparent, tracestate, out var parent);
+        if (!hasParent)
+            parent = default;
         using var activity = _source.StartActivity("amf.message.process", ActivityKind.Consumer, parent);
+        if (activity is not null && context.Headers.TryGetValue("baggage", out var baggage))
+        {
+            foreach (var item in baggage.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var separator = item.IndexOf('=', StringComparison.Ordinal);
+                if (separator > 0)
+                    activity.AddBaggage(item[..separator].Trim(), item[(separator + 1)..].Trim());
+            }
+        }
         try
         {
             await next().ConfigureAwait(false);
@@ -29,11 +38,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
         }
         catch (Exception exception)
         {
-            activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
+            activity?.SetStatus(ActivityStatusCode.Error, exception.ToString());
             activity?.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
             {
                 ["exception.type"] = exception.GetType().FullName,
-                ["exception.message"] = exception.Message,
                 ["exception.stacktrace"] = exception.ToString()
             }));
             throw;

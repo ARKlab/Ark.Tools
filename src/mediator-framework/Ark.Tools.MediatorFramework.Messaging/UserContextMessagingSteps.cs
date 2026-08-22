@@ -3,8 +3,6 @@
 
 using System.Security.Claims;
 
-using Ark.Tools.MediatorFramework;
-
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Restores user claims from messaging headers.</summary>
@@ -57,10 +55,10 @@ public sealed class UserContextOutgoingStep : IMessagingOutgoingStep
         var principal = _getPrincipal();
         if (principal?.Identity?.IsAuthenticated == true)
         {
-            SetIfPresent(context, "ark-auth-type", principal.Identity.AuthenticationType);
-            SetIfPresent(context, "ark-user-id", principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            SetIfPresent(context, "ark-user-email", principal.FindFirst(ClaimTypes.Email)?.Value);
-            SetIfPresent(context, "ark-user-scopes", principal.FindFirst("scope")?.Value);
+            _setIfPresent(context, "ark-auth-type", principal.Identity.AuthenticationType);
+            _setIfPresent(context, "ark-user-id", principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            _setIfPresent(context, "ark-user-email", principal.FindFirst(ClaimTypes.Email)?.Value);
+            _setIfPresent(context, "ark-user-scopes", principal.FindFirst("scope")?.Value);
             var roles = principal.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
             if (roles.Length > 0)
                 context.Headers["ark-user-roles"] = string.Join(",", roles);
@@ -69,7 +67,7 @@ public sealed class UserContextOutgoingStep : IMessagingOutgoingStep
         await next().ConfigureAwait(false);
     }
 
-    private static void SetIfPresent(MessagingOutgoingContext context, string key, string? value)
+    private static void _setIfPresent(MessagingOutgoingContext context, string key, string? value)
     {
         if (value is not null)
             context.Headers[key] = value;

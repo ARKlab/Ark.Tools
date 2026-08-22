@@ -5,10 +5,15 @@ namespace Ark.Tools.MediatorFramework;
 
 internal static class MessagingHeadersGuard
 {
-    public static void ThrowIfReserved(string key)
+    public static bool IsReserved(string key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        if (key.StartsWith("amf1-", StringComparison.Ordinal))
+        return key.StartsWith("amf1-", StringComparison.Ordinal);
+    }
+
+    public static void ThrowIfReserved(string key)
+    {
+        if (IsReserved(key))
             throw new InvalidOperationException($"The messaging header '{key}' is reserved.");
     }
 }
