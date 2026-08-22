@@ -267,6 +267,25 @@ public abstract class MessagingTransportConformanceTests
         await enumerator.DisposeAsync().ConfigureAwait(false);
     }
 
+    [TestMethod]
+    public async Task RepeatedAbandonIncrementsDeliveryCount()
+    {
+        if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
+            return;
+
+        var transport = CreateTransport();
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(10), null, default).ConfigureAwait(false);
+        for (var expectedCount = 1; expectedCount <= 3; expectedCount++)
+        {
+            var delivery = await _receiveOnceAsync(transport, "queue").ConfigureAwait(false);
+            delivery.DeliveryCount.Should().Be(expectedCount);
+            if (expectedCount < 3)
+                await delivery.AbandonAsync(default).ConfigureAwait(false);
+            else
+                await delivery.CompleteAsync(default).ConfigureAwait(false);
+        }
+    }
+
     private static ReadOnlySequence<byte> _sequence(params byte[] bytes)
     {
         return new ReadOnlySequence<byte>(bytes);
@@ -282,5 +301,15 @@ public abstract class MessagingTransportConformanceTests
         {
             return false;
         }
+    }
+
+    private static async Task<IMessagingLockedDelivery> _receiveOnceAsync(
+        IMessagingReceiveTransport transport,
+        string queue)
+    {
+        await foreach (var delivery in transport.ReceiveAsync(queue, CancellationToken.None).ConfigureAwait(false))
+            return delivery;
+
+        throw new InvalidOperationException("The receive stream ended without a delivery.");
     }
 }
