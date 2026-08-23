@@ -355,6 +355,7 @@ public sealed partial class MessagingRuntimeTests
         headers.Should().NotContainKey("traceparent");
         headers.Should().NotContainKey("tracestate");
         headers["baggage"].Should().Be("tenant=a%2Cb%3Dvalue");
+        headers["baggage"] += ",invalid=%ZZ";
 
         Activity? received = null;
         using var listener = new ActivityListener
@@ -374,6 +375,7 @@ public sealed partial class MessagingRuntimeTests
         received!.ParentId.Should().Be(diagnosticId);
         received.TraceId.Should().Be(producerTraceId);
         received.Baggage.Should().Contain(x => x.Key == "tenant" && x.Value == "a,b=value");
+        received.Baggage.Should().NotContain(x => x.Key == "invalid");
     }
 
     [TestMethod]

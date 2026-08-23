@@ -35,9 +35,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
                 var separator = item.IndexOf('=', StringComparison.Ordinal);
                 if (separator > 0)
                 {
-                    var key = Uri.UnescapeDataString(item[..separator].Trim());
-                    var value = Uri.UnescapeDataString(item[(separator + 1)..].Trim());
-                    activity.AddBaggage(key, value);
+                    if (_tryDecodeBaggageComponent(item[..separator].Trim(), out var key)
+                        && _tryDecodeBaggageComponent(item[(separator + 1)..].Trim(), out var value)
+                        && key.Length > 0)
+                        activity.AddBaggage(key, value);
                 }
             }
         }
@@ -53,6 +54,39 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
             throw;
         }
 
+    }
+
+    private static bool _tryDecodeBaggageComponent(string value, out string decoded)
+    {
+        for (var index = 0; index < value.Length; index++)
+        {
+            if (value[index] == '%'
+                && (index + 2 >= value.Length
+                    || !_isHexDigit(value[index + 1])
+                    || !_isHexDigit(value[index + 2])))
+            {
+                decoded = string.Empty;
+                return false;
+            }
+        }
+
+        try
+        {
+            decoded = Uri.UnescapeDataString(value);
+            return true;
+        }
+        catch (UriFormatException)
+        {
+            decoded = string.Empty;
+            return false;
+        }
+    }
+
+    private static bool _isHexDigit(char value)
+    {
+        return value is >= '0' and <= '9'
+            or >= 'a' and <= 'f'
+            or >= 'A' and <= 'F';
     }
 }
 

@@ -74,6 +74,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
         }
         finally
         {
+            stopwatch.Stop();
             try
             {
                 Metrics._trackMessageProcessing(stopwatch.Elapsed, messageType, operationResult);
