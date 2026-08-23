@@ -31,6 +31,14 @@ public sealed class McpToolAttribute : Attribute
     public string? Title { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the tool permits anonymous calls.
+    /// When not explicitly supplied, the generator uses
+    /// <see cref="HttpEndpointAttribute.AllowAnonymous"/> when the contract has an HTTP
+    /// endpoint, otherwise the tool requires an authenticated user.
+    /// </summary>
+    public bool AllowAnonymous { get; set; }
+
+    /// <summary>
     /// Gets or sets whether the tool is read-only.
     /// When not explicitly supplied, the generator defaults this to
     /// <see langword="true"/> for <c>IQuery&lt;T&gt;</c> and <see langword="false"/>

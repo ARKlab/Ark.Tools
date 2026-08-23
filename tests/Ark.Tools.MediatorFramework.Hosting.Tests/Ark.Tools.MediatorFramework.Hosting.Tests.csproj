@@ -31,6 +31,7 @@
     <ProjectReference Include="../../src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Mcp/Ark.Tools.MediatorFramework.Mcp.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />

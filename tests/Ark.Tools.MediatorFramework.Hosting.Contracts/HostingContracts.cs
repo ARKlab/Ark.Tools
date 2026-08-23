@@ -7,6 +7,7 @@ global using Microsoft.AspNetCore.Http;
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
 using Ark.Tools.MediatorFramework.Grpc;
+using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.MediatorFramework.Rebus;
 
@@ -34,6 +35,12 @@ public sealed class HostingMarker
 /// </summary>
 [ArkGenerateMinimalApiForAssembly(typeof(HostingMarker))]
 public partial class HostingMinimalApiContext
+{
+}
+
+/// <summary>Explicit MCP source-generation context for the synthetic hosting contracts.</summary>
+[ArkGenerateMcpToolsForAssembly(typeof(HostingMarker))]
+public partial class HostingMcpContext
 {
 }
 
@@ -142,6 +149,7 @@ public sealed record HostingResponse
 [GrpcMethod("ExecuteHostingQuery")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.query")]
 public sealed record HostingQuery : Solid.IQuery<HostingQuery, HostingResponse>
 {
     /// <summary>Gets or sets the route identifier.</summary>
@@ -198,6 +206,7 @@ public sealed record HostingDeferredCommand : Solid.ICommand<HostingDeferredComm
 [GrpcMethod("ValidateHostingRequest")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.validation")]
 public sealed record HostingValidationRequest : Solid.IRequest<HostingValidationRequest, HostingResponse>
 {
     /// <summary>Gets or sets the value to validate.</summary>
@@ -234,6 +243,7 @@ public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingBus
 
 /// <summary>Request whose handler produces an unexpected exception.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/unexpected", AllowAnonymous = true)]
+[McpTool(Name = "hosting.unexpected")]
 public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingUnexpectedRequest, HostingResponse>
 {
     /// <summary>Gets or sets the request value.</summary>
