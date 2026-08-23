@@ -204,6 +204,7 @@ public sealed class McpHostingTests
         versionOneTools.Select(tool => tool.Name).Should().NotContain("hosting.versioned");
         versionTwoTools.Select(tool => tool.Name).Should().Contain("hosting.versioned");
         versionFourTools.Select(tool => tool.Name).Should().NotContain("hosting.versioned");
+        versionFourTools.Select(tool => tool.Name).Should().Contain("hosting.query");
     }
 
     private static async Task<McpClient> _createClientAsync(

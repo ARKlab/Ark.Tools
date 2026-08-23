@@ -430,7 +430,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     {
         var maxVersion = contracts.Length == 0
             ? 1
-            : contracts.Max(model => Math.Max(model.Introduced, model.Retired > 0 ? model.Retired - 1 : 1));
+            : contracts.Max(model => Math.Max(model.Introduced, model.Retired));
         builder.AppendLine("        builder.Services.AddSingleton<global::Ark.Tools.MediatorFramework.Mcp.IMcpToolVersionMap>(");
         builder.AppendLine("            new global::Ark.Tools.MediatorFramework.Mcp.McpToolVersionMap(");
         builder.AppendLine("                new global::System.Collections.Generic.Dictionary<int, string[]>");
