@@ -251,7 +251,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
         var remarks = XmlDocumentation(type, "remarks", documentationFiles)
             ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
-        var description = string.Join(" ", new[] { summary, remarks }.Where(value => value is not null));
+        var description = summary is null
+            ? remarks ?? string.Empty
+            : remarks is null
+                ? summary
+                : summary + " " + remarks;
         if (description.Length == 0)
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
 

@@ -14,13 +14,14 @@ internal sealed class McpToolVersionSessionFilter : IPostConfigureOptions<HttpSe
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<
         HttpServerTransportOptions,
         object> _configuredOptions = [];
+    private static readonly System.Threading.Lock _configuredOptionsLock = new();
 
     /// <inheritdoc />
     public void PostConfigure(string? name, HttpServerTransportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        lock (_configuredOptions)
+        lock (_configuredOptionsLock)
         {
             if (_configuredOptions.TryGetValue(options, out _))
                 return;
