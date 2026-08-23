@@ -243,8 +243,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
-        var description = XmlDocumentation(type, "remarks");
-        var title = XmlDocumentation(type, "summary");
+        var description = XmlDocumentation(type, "remarks") ?? XmlDocumentation(type.ContainingType, "remarks");
+        var title = XmlDocumentation(type, "summary") ?? XmlDocumentation(type.ContainingType, "summary");
         if (description is null && title is null)
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
 
@@ -295,8 +295,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return null;
     }
 
-    private static string? XmlDocumentation(ISymbol symbol, string element)
+    private static string? XmlDocumentation(ISymbol? symbol, string element)
     {
+        if (symbol is null)
+            return null;
+
         var xml = symbol.GetDocumentationCommentXml() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(xml))
             return null;
