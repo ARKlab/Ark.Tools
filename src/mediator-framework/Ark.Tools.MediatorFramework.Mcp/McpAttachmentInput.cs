@@ -25,9 +25,9 @@ public sealed class McpAttachmentInput
     public ArkAttachment ToAttachment(long maximumBytes = 10_000_000, IReadOnlySet<string>? allowedContentTypes = null)
     {
         if (string.IsNullOrWhiteSpace(Name))
-            throw new InvalidOperationException("Attachment name is required.");
+            throw new ArgumentException("Attachment name is required.");
         if (string.IsNullOrWhiteSpace(MimeType))
-            throw new InvalidOperationException("Attachment MIME type is required.");
+            throw new ArgumentException("Attachment MIME type is required.");
         if (allowedContentTypes is not null && !allowedContentTypes.Contains(MimeType))
             throw new InvalidOperationException("The attachment MIME type is not allowed.");
 

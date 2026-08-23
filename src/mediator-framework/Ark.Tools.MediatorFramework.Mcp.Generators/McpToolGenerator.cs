@@ -428,7 +428,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 properties.Any(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))))
             .Where(candidate => properties.Where(property => property.SetMethod is null).All(property =>
                 candidate.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
-            .OrderBy(candidate => candidate.Parameters.Length)
+            .OrderByDescending(candidate => candidate.Parameters.Length)
             .FirstOrDefault();
 
     private static string Escape(string value)
