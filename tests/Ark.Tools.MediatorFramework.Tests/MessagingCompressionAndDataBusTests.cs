@@ -216,23 +216,23 @@ public sealed class MessagingCompressionAndDataBusTests
                 + payload.Length;
         }
 
-        public Task SendAsync(
+        public async Task SendAsync(
             string queue,
             IReadOnlyDictionary<string, string> headers,
             ReadOnlySequence<byte> payload,
             DateTimeOffset? dueTime,
             CancellationToken ctk)
         {
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
-        public Task PublishAsync(
+        public async Task PublishAsync(
             string topic,
             IReadOnlyDictionary<string, string> headers,
             ReadOnlySequence<byte> payload,
             CancellationToken ctk)
         {
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
     }
 }

@@ -70,7 +70,6 @@ public static class MessagingServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(dataBus);
-        services.AddSingleton(dataBus);
         services.AddSingleton<IMessagingDataBus>(dataBus);
         return services;
     }
