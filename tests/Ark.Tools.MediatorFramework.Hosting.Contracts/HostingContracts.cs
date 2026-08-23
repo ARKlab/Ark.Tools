@@ -443,6 +443,7 @@ public sealed record HostingCircle : HostingShape
 [HttpEndpoint("GET", "/hosting/versioned/{id}", AllowAnonymous = true)]
 [GrpcMethod("GetHostingVersioned")]
 [GrpcService("Hosting")]
+[McpTool(Name = "hosting.versioned")]
 [Versioning(Introduced = 2, Retired = 4)]
 [ProtoBuf.ProtoContract]
 public sealed record HostingVersionedQuery : Solid.IQuery<HostingVersionedQuery, HostingResponse>

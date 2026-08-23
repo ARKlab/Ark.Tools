@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using ModelContextProtocol.Server;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
@@ -29,7 +30,12 @@ public static class McpServerBuilderExtensions
         where TContext : IMcpToolContext
     {
         ArgumentNullException.ThrowIfNull(builder);
-        return TContext.RegisterMcpTools(builder)
+        var result = TContext.RegisterMcpTools(builder);
+        result.Services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<
+                IPostConfigureOptions<ModelContextProtocol.AspNetCore.HttpServerTransportOptions>,
+                McpToolVersionSessionFilter>());
+        return result
             .AddAuthorizationFilters()
             .WithRequestFilters(filters => filters.AddCallToolFilter(McpToolErrors.CreateFilter()));
     }

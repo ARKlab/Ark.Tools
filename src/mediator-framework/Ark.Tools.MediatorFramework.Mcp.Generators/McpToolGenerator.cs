@@ -205,9 +205,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var version = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString()
                 == "Ark.Tools.MediatorFramework.VersioningAttribute");
-        var introduced = version is null ? 0 : GetInt(version, "Introduced");
-        if (introduced > 0)
-            name = name.EndsWith("v" + introduced, StringComparison.Ordinal) ? name : name + ".v" + introduced;
+        var introduced = version is null ? 1 : GetInt(version, "Introduced");
+        var retired = version is null ? 0 : GetInt(version, "Retired");
 
         if (name.Length is 0 or > 128 || name.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-' or '.')))
         {
@@ -248,11 +247,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
-        var description = XmlDocumentation(type, "remarks", documentationFiles)
-            ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
-        var title = XmlDocumentation(type, "summary", documentationFiles)
+        var summary = XmlDocumentation(type, "summary", documentationFiles)
             ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
-        if (description is null && title is null)
+        var remarks = XmlDocumentation(type, "remarks", documentationFiles)
+            ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
+        var description = string.Join(" ", new[] { summary, remarks }.Where(value => value is not null));
+        if (description.Length == 0)
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
 
         var propertyDescriptions = properties
@@ -263,8 +263,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return new ContractModel(
             type,
             name,
-            title,
-            description,
+            description.Length == 0 ? null : description,
+            introduced,
+            retired,
             GetBool(toolAttribute, "ReadOnly", kind == HandlerKind.Query),
             GetBool(toolAttribute, "Destructive", kind != HandlerKind.Query),
             GetBool(toolAttribute, "Idempotent", false),
@@ -437,13 +438,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
 
         builder.AppendLine();
+        builder.Append("    [global::Ark.Tools.MediatorFramework.Versioning(Introduced = ")
+            .Append(model.Introduced)
+            .Append(", Retired = ")
+            .Append(model.Retired)
+            .AppendLine(")]");
         builder.AppendLine("    [global::ModelContextProtocol.Server.McpServerToolType]");
         builder.Append("    public sealed class Tool").Append(index).AppendLine();
         builder.AppendLine("    {");
         builder.AppendLine("        [global::ModelContextProtocol.Server.McpServerTool(");
         builder.Append("            Name = \"").Append(Escape(model.Name)).AppendLine("\",");
-        if (model.Title is not null)
-            builder.Append("            Title = \"").Append(Escape(model.Title)).AppendLine("\",");
         builder.Append("            ReadOnly = ").Append(model.ReadOnly ? "true" : "false").AppendLine(",");
         builder.Append("            Destructive = ").Append(model.Destructive ? "true" : "false").AppendLine(",");
         builder.Append("            Idempotent = ").Append(model.Idempotent ? "true" : "false").AppendLine(",");
@@ -533,8 +537,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private sealed record ContractModel(
         INamedTypeSymbol Type,
         string Name,
-        string? Title,
         string? Description,
+        int Introduced,
+        int Retired,
         bool ReadOnly,
         bool Destructive,
         bool Idempotent,

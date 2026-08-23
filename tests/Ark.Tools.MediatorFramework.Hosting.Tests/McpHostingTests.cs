@@ -26,7 +26,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var tools = await client.ListToolsAsync(cancellationToken: app.Lifetime.ApplicationStopping)
             .ConfigureAwait(false);
@@ -53,7 +53,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app, "authenticated").ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, "authenticated", "1").ConfigureAwait(false);
 
         var tools = await client.ListToolsAsync(cancellationToken: app.Lifetime.ApplicationStopping)
             .ConfigureAwait(false);
@@ -67,7 +67,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var action = async () => await client.CallToolAsync(
             "hosting.authorized",
@@ -84,7 +84,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var result = await client.CallToolAsync(
             "hosting.query",
@@ -102,7 +102,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var result = await client.CallToolAsync(
             "hosting.validation",
@@ -123,7 +123,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var result = await client.CallToolAsync(
             "hosting.unexpected",
@@ -142,7 +142,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var result = await client.CallToolAsync(
             "hosting.attachment.upload",
@@ -168,7 +168,7 @@ public sealed class McpHostingTests
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
-        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var result = await client.CallToolAsync(
             "hosting.attachment.download",
@@ -184,9 +184,32 @@ public sealed class McpHostingTests
         blob.MimeType.Should().Be("text/plain");
     }
 
+    /// <summary>Verifies each MCP version exposes only contracts active in that version.</summary>
+    [TestMethod]
+    public async Task ListsToolsForContractVersion()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var versionOne = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+        await using var versionTwo = await _createClientAsync(app, version: "2").ConfigureAwait(false);
+        await using var versionFour = await _createClientAsync(app, version: "4").ConfigureAwait(false);
+
+        var versionOneTools = await versionOne.ListToolsAsync(
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var versionTwoTools = await versionTwo.ListToolsAsync(
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var versionFourTools = await versionFour.ListToolsAsync(
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        versionOneTools.Select(tool => tool.Name).Should().NotContain("hosting.versioned");
+        versionTwoTools.Select(tool => tool.Name).Should().Contain("hosting.versioned");
+        versionFourTools.Select(tool => tool.Name).Should().NotContain("hosting.versioned");
+    }
+
     private static async Task<McpClient> _createClientAsync(
         WebApplication app,
-        string? token = null)
+        string? token = null,
+        string version = "1")
     {
         var httpClient = app.GetTestServer().CreateClient();
         if (token is not null)
@@ -196,7 +219,7 @@ public sealed class McpHostingTests
         var transport = new HttpClientTransport(
             new HttpClientTransportOptions
             {
-                Endpoint = new Uri("http://localhost/mcp"),
+                Endpoint = new Uri("http://localhost/mcp/" + version),
                 TransportMode = HttpTransportMode.StreamableHttp,
             },
             httpClient,

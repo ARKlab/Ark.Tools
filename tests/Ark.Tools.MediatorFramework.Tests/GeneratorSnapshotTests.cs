@@ -143,6 +143,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.Solid;
             public sealed class ContractMarker { }
             /// <summary>Searches books.</summary>
+            /// <remarks>Returns matching books.</remarks>
             [McpTool(Name = "books.search")]
             [Versioning(Introduced = 2)]
             public sealed record SearchBooks : IQuery<SearchBooks, string>
@@ -163,8 +164,11 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        result.Generated.Should().Contain("Name = \"books.search.v2\"");
-        result.Generated.Should().Contain("Title = \"Searches books.\"");
+        result.Generated.Should().Contain("Name = \"books.search\"");
+        result.Generated.Should().Contain(
+            "Description(\"Searches books. Returns matching books.\")");
+        result.Generated.Should().NotContain("Title =");
+        result.Generated.Should().Contain("Versioning(Introduced = 2, Retired = 0)");
         result.Generated.Should().Contain("Description(\"Text to search for.\")");
         result.Generated.Should().Contain("Name = \"catalog.books.update\"");
         result.Generated.Should().Contain("ReadOnly = false");

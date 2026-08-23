@@ -20,8 +20,9 @@ public sealed record SearchBooksQuery : IQuery<IReadOnlyList<BookSummary>>
 }
 ```
 
-The contract summary becomes the tool title and its remarks become the tool
-description. A property summary becomes the description of that MCP argument.
+The contract summary and remarks become the concatenated tool description. The
+tool title is left unset by default. A property summary becomes the description
+of that MCP argument.
 HTTP placement attributes such as `[HttpRoute]`, `[HttpQuery]`, and `[HttpBody]`
 are ignored: every public bindable property is an MCP argument.
 
@@ -36,7 +37,7 @@ public partial class McpHostContext
 }
 ```
 
-Register the generated surface and map the endpoint:
+Register the generated surface and map one endpoint per API version:
 
 ```csharp
 builder.Services
@@ -47,13 +48,14 @@ builder.Services
     })
     .WithArkMcpTools<McpHostContext>();
 
-app.MapMcp("/mcp").RequireAuthorization();
+app.MapMcp("/mcp/{version}").RequireAuthorization();
 ```
 
 `MapMcp` remains host-owned. Configure authentication, authorization,
 `AllowedHosts`, CORS, rate limits, request limits, and the SimpleInjector scope
-in the host. Use stateful sessions only when the application needs
-server-to-client MCP requests.
+in the host. A request to `/mcp/1` exposes contracts active in version 1, and
+the same endpoint pattern can expose each subsequent version. Use stateful
+sessions only when the application needs server-to-client MCP requests.
 
 ## Attachments
 

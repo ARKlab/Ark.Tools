@@ -11,8 +11,8 @@ public sealed class McpToolAttribute : Attribute
     /// Gets or sets the base MCP tool name.
     /// When <see langword="null"/>, the generator uses the contract name. The resolved name
     /// is prefixed with the <see cref="ApiGroupAttribute"/> name when present, including when
-    /// this value is explicit, and appended with the <c>v{Introduced}</c> suffix when versioning
-    /// metadata introduces one.
+    /// this value is explicit. Versioning selects the tool on the corresponding MCP route
+    /// without changing its name.
     /// </summary>
     public string? Name { get; set; }
 
