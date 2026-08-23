@@ -4,9 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Xml;
+using System.Xml.Linq;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -78,6 +81,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
     private static void Emit(SourceProductionContext context, Compilation compilation, ImmutableArray<MarkerModel> markers)
     {
+        var documentationFiles = GetDocumentationFiles(compilation);
         var grouped = new Dictionary<INamedTypeSymbol, List<MarkerModel>>(SymbolEqualityComparer.Default);
         foreach (var marker in markers)
         {
@@ -105,7 +109,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .SelectMany(value => FindContracts(compilation, value.AssemblyName, context.CancellationToken))
                 .GroupBy(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
                 .Select(group => group.First())
-                .Select(contract => CreateModel(contract, compilation, context))
+                .Select(contract => CreateModel(contract, compilation, documentationFiles, context))
                 .Where(static model => model is not null)
                 .Select(static model => model!)
                 .OrderBy(static model => model.Name, StringComparer.Ordinal)
@@ -178,6 +182,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static ContractModel? CreateModel(
         INamedTypeSymbol type,
         Compilation compilation,
+        IReadOnlyDictionary<string, string> documentationFiles,
         SourceProductionContext context)
     {
         var toolAttribute = type.GetAttributes().First(attribute =>
@@ -243,10 +248,17 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
-        var description = XmlDocumentation(type, "remarks") ?? XmlDocumentation(type.ContainingType, "remarks");
-        var title = XmlDocumentation(type, "summary") ?? XmlDocumentation(type.ContainingType, "summary");
+        var description = XmlDocumentation(type, "remarks", documentationFiles)
+            ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
+        var title = XmlDocumentation(type, "summary", documentationFiles)
+            ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
         if (description is null && title is null)
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
+
+        var propertyDescriptions = properties
+            .Select(property => (property.Name, Description: XmlDocumentation(property, "summary", documentationFiles)))
+            .Where(item => item.Description is not null)
+            .ToImmutableDictionary(item => item.Name, item => item.Description!, StringComparer.Ordinal);
 
         return new ContractModel(
             type,
@@ -261,6 +273,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             kind.Value,
             responseType!,
             properties,
+            propertyDescriptions,
             location);
     }
 
@@ -295,12 +308,66 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return null;
     }
 
-    private static string? XmlDocumentation(ISymbol? symbol, string element)
+    private static IReadOnlyDictionary<string, string> GetDocumentationFiles(Compilation compilation)
+    {
+        var documentationFiles = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var reference in compilation.References)
+        {
+            if (reference is not PortableExecutableReference portableReference
+                || portableReference.FilePath is null
+                || compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assembly)
+                continue;
+
+            var directory = Path.GetDirectoryName(portableReference.FilePath);
+            if (directory is null)
+                continue;
+
+            var candidates = new[]
+            {
+                Path.ChangeExtension(portableReference.FilePath, ".xml"),
+                Path.Combine(directory, assembly.Name + ".xml"),
+                Path.Combine(directory, "..", assembly.Name + ".xml"),
+            };
+            var documentationFile = candidates.FirstOrDefault(File.Exists);
+            if (documentationFile is not null)
+                documentationFiles[assembly.Name] = Path.GetFullPath(documentationFile);
+        }
+
+        return documentationFiles;
+    }
+
+    private static string? XmlDocumentation(
+        ISymbol? symbol,
+        string element,
+        IReadOnlyDictionary<string, string> documentationFiles)
     {
         if (symbol is null)
             return null;
 
         var xml = symbol.GetDocumentationCommentXml() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(xml)
+            && documentationFiles.TryGetValue(symbol.ContainingAssembly.Name, out var documentationFile))
+        {
+            var documentationId = symbol.GetDocumentationCommentId();
+            if (documentationId is not null)
+            {
+                try
+                {
+                    var document = XDocument.Load(documentationFile);
+                    var member = document.Root?
+                        .Element("members")?
+                        .Elements("member")
+                        .FirstOrDefault(candidate => candidate.Attribute("name")?.Value == documentationId);
+                    xml = member?.ToString(SaveOptions.DisableFormatting) ?? string.Empty;
+                }
+                catch (IOException)
+                {
+                }
+                catch (XmlException)
+                {
+                }
+            }
+        }
         if (string.IsNullOrWhiteSpace(xml))
             return null;
         var start = "<" + element + ">";
@@ -363,7 +430,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 ? "global::System.Threading.Tasks.Task"
                 : "global::System.Threading.Tasks.Task<" + response + ">";
         var parameters = model.Properties.Select(property =>
-            "[global::System.ComponentModel.Description(\"" + Escape(XmlDocumentation(property, "summary") ?? string.Empty) + "\")] "
+            "[global::System.ComponentModel.Description(\""
+            + Escape(model.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
+                ? propertyDescription
+                : string.Empty) + "\")] "
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
         var delegateTypes = model.Properties.Select(property => ToInputType(property.Type))
             .Append("global::System.IServiceProvider")
@@ -478,6 +548,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         HandlerKind Kind,
         ITypeSymbol? ResponseType,
         ImmutableArray<IPropertySymbol> Properties,
+        ImmutableDictionary<string, string> PropertyDescriptions,
         Location? Location);
     private enum HandlerKind { Query, Request, Command }
 

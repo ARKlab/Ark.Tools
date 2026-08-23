@@ -142,9 +142,19 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.MediatorFramework.Mcp;
             using Ark.Tools.Solid;
             public sealed class ContractMarker { }
+            /// <summary>Searches books.</summary>
             [McpTool(Name = "books.search")]
             [Versioning(Introduced = 2)]
-            public sealed record SearchBooks(string Text) : IQuery<SearchBooks, string>;
+            public sealed record SearchBooks : IQuery<SearchBooks, string>
+            {
+                /// <summary>Text to search for.</summary>
+                public string Text { get; init; } = string.Empty;
+
+                public SearchBooks(string text)
+                {
+                    Text = text;
+                }
+            }
             [McpTool(Name = "books.update")]
             [ApiGroup("catalog")]
             public sealed record UpdateBook(int Id) : IRequest<UpdateBook, string>;
@@ -154,6 +164,8 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain("Name = \"books.search.v2\"");
+        result.Generated.Should().Contain("Title = \"Searches books.\"");
+        result.Generated.Should().Contain("Description(\"Text to search for.\")");
         result.Generated.Should().Contain("Name = \"catalog.books.update\"");
         result.Generated.Should().Contain("ReadOnly = false");
         result.Generated.Should().Contain("Destructive = true");
