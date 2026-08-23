@@ -180,7 +180,7 @@ public sealed class McpHostingTests
         var resource = ((EmbeddedResourceBlock)result.Content[0]).Resource;
         resource.Should().BeOfType<BlobResourceContents>();
         var blob = (BlobResourceContents)resource;
-        blob.Blob.SequenceEqual("downloaded content"u8.ToArray()).Should().BeTrue();
+        blob.Blob.Span.SequenceEqual("downloaded content"u8.ToArray()).Should().BeTrue();
         blob.MimeType.Should().Be("text/plain");
     }
 
