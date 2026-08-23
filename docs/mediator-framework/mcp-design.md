@@ -613,7 +613,7 @@ must be included in the same dependency change.
 - [Official MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)
 - [SDK getting started](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/getting-started.md)
 - [SDK tools](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/tools/tools.md)
-- [SDK embedded resources](https://csharp.sdk.modelcontextprotocol.io/v2/concepts/tools/tools.html#embedded-resources)
+- [SDK embedded resources](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/tools/tools.md#embedded-resources)
 - [SDK transports](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/transports/transports.md)
 - [MCP specification: tools](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
 - [Microsoft Learn: .NET AI and MCP](https://learn.microsoft.com/dotnet/ai/get-started-mcp)
