@@ -29,15 +29,20 @@ public static partial class McpToolErrors
         var detail = clientVisible
             ? mappedProblemDetails.Detail ?? "The tool call could not be completed."
             : "The tool call could not be completed.";
-        var problemDetails = clientVisible
-            ? mappedProblemDetails
-            : new Microsoft.AspNetCore.Mvc.ProblemDetails
+        var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Type = clientVisible ? mappedProblemDetails.Type : null,
+            Status = clientVisible ? mappedProblemDetails.Status : 500,
+            Title = title,
+            Detail = detail,
+        };
+        if (clientVisible)
+        {
+            foreach (var extension in mappedProblemDetails.Extensions)
             {
-                Type = mappedProblemDetails.Type,
-                Status = mappedProblemDetails.Status,
-                Title = title,
-                Detail = detail,
-            };
+                problemDetails.Extensions[extension.Key] = extension.Value;
+            }
+        }
         var structuredContent = JsonSerializer.SerializeToElement(
             problemDetails,
             McpToolErrorJsonSerializerContext.Default.ProblemDetails);

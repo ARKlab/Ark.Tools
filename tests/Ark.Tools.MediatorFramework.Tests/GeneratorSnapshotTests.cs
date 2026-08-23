@@ -196,6 +196,7 @@ public sealed class GeneratorSnapshotTests
             .Should().Be("An unexpected error occurred");
         result.StructuredContent.Value.GetProperty("detail").GetString()
             .Should().Be("The tool call could not be completed.");
+        result.StructuredContent.Value.GetProperty("status").GetInt32().Should().Be(500);
     }
 
     [TestMethod]
