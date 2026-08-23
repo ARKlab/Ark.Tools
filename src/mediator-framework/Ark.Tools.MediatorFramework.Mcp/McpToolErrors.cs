@@ -21,9 +21,23 @@ public static partial class McpToolErrors
     public static CallToolResult ToToolResult(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
-        var title = problemDetails.Title ?? "An unexpected error occurred";
-        var detail = problemDetails.Detail ?? "The tool call could not be completed.";
+        var mappedProblemDetails = ExceptionProblemDetailsMapper.Map(exception);
+        var clientVisible = mappedProblemDetails.Status is >= 400 and < 500;
+        var title = clientVisible
+            ? mappedProblemDetails.Title ?? "An unexpected error occurred"
+            : "An unexpected error occurred";
+        var detail = clientVisible
+            ? mappedProblemDetails.Detail ?? "The tool call could not be completed."
+            : "The tool call could not be completed.";
+        var problemDetails = clientVisible
+            ? mappedProblemDetails
+            : new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Type = mappedProblemDetails.Type,
+                Status = mappedProblemDetails.Status,
+                Title = title,
+                Detail = detail,
+            };
         var structuredContent = JsonSerializer.SerializeToElement(
             problemDetails,
             McpToolErrorJsonSerializerContext.Default.ProblemDetails);

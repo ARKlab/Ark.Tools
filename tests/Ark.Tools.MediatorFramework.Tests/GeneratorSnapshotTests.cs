@@ -186,6 +186,19 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpToolErrorsHideUnexpectedDetails()
+    {
+        var result = McpToolErrors.ToToolResult(new InvalidOperationException("secret"));
+
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .Be("An unexpected error occurred: The tool call could not be completed.");
+        result.StructuredContent!.Value.GetProperty("title").GetString()
+            .Should().Be("An unexpected error occurred");
+        result.StructuredContent.Value.GetProperty("detail").GetString()
+            .Should().Be("The tool call could not be completed.");
+    }
+
+    [TestMethod]
     public void McpToolResultsExposeStructuredContentAsText()
     {
         var result = McpToolResults.ToToolResult(new { Value = "ok" });
