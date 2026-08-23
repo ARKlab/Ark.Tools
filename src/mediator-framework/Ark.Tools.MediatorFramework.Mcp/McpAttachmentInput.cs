@@ -22,9 +22,26 @@ public sealed class McpAttachmentInput
 
     /// <summary>Converts the input to the transport-neutral attachment abstraction.</summary>
     /// <returns>An attachment backed by the decoded bytes.</returns>
-    public ArkAttachment ToAttachment()
+    public ArkAttachment ToAttachment(long maximumBytes = 10_000_000, IReadOnlySet<string>? allowedContentTypes = null)
     {
-        var bytes = Convert.FromBase64String(Blob);
+        if (string.IsNullOrWhiteSpace(Name))
+            throw new InvalidOperationException("Attachment name is required.");
+        if (string.IsNullOrWhiteSpace(MimeType))
+            throw new InvalidOperationException("Attachment MIME type is required.");
+        if (allowedContentTypes is not null && !allowedContentTypes.Contains(MimeType))
+            throw new InvalidOperationException("The attachment MIME type is not allowed.");
+
+        byte[] bytes;
+        try
+        {
+            bytes = Convert.FromBase64String(Blob);
+        }
+        catch (FormatException exception)
+        {
+            throw new ArgumentException("Attachment blob must be base64.", exception);
+        }
+        if (bytes.LongLength > maximumBytes)
+            throw new InvalidOperationException("The attachment exceeds the configured size limit.");
         return new ArkAttachment(Name, MimeType, () => new MemoryStream(bytes, writable: false));
     }
 }

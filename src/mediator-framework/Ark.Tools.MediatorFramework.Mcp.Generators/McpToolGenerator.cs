@@ -26,6 +26,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string Request2 = "Ark.Tools.Solid.IRequest`2";
     private const string Command = "Ark.Tools.Solid.ICommand";
     private const string GenericCommand = "Ark.Tools.Solid.ICommand`1";
+    private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
         "ARKMF030", "Invalid MCP tool name", "MCP tool name '{0}' is invalid",
@@ -42,10 +43,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor MissingDescription = new(
         "ARKMF037", "Missing MCP description", "MCP tool '{0}' has no XML or explicit description",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true);
-    private static readonly DiagnosticDescriptor InvalidAttachment = new(
-        "ARKMF039", "Unsupported MCP attachment", "MCP contract '{0}' has an unsupported attachment member '{1}'",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
-
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -76,8 +73,20 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
     private static void Emit(SourceProductionContext context, Compilation compilation, ImmutableArray<MarkerModel> markers)
     {
-        foreach (var marker in markers.Distinct(MarkerComparer.Instance))
+        var grouped = new Dictionary<INamedTypeSymbol, List<MarkerModel>>(SymbolEqualityComparer.Default);
+        foreach (var marker in markers)
         {
+            if (!grouped.TryGetValue(marker.Context, out var values))
+            {
+                values = [];
+                grouped.Add(marker.Context, values);
+            }
+            values.Add(marker);
+        }
+
+        foreach (var group in grouped)
+        {
+            var marker = group.Value[0];
             if (marker.InvalidLocation is not null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
@@ -87,7 +96,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 continue;
             }
 
-            var contracts = FindContracts(compilation, marker.AssemblyName, context.CancellationToken)
+            var contracts = group.Value
+                .SelectMany(value => FindContracts(compilation, value.AssemblyName, context.CancellationToken))
+                .GroupBy(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
+                .Select(group => group.First())
                 .Select(contract => CreateModel(contract, compilation, context))
                 .Where(static model => model is not null)
                 .Select(static model => model!)
@@ -102,9 +114,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             }
 
             var source = Render(marker.Context, contracts);
-            context.AddSource(marker.Context.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat) + ".Mcp.g.cs", source);
+            context.AddSource(GetHintName(marker.Context) + ".Mcp.g.cs", source);
         }
     }
+
+    private static string GetHintName(INamedTypeSymbol type)
+        => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+            .Replace("global::", string.Empty)
+            .Replace(".", "_")
+            .Replace("<", "_")
+            .Replace(">", "_");
 
     private static IEnumerable<INamedTypeSymbol> FindContracts(
         Compilation compilation,
@@ -185,13 +204,23 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
             .OrderBy(property => property.MetadataName, StringComparer.Ordinal)
             .ToImmutableArray();
+        var invalid = false;
         foreach (var property in properties)
         {
             if (property.IsIndexer || property.SetMethod is null && !HasConstructorParameter(type, property))
+            {
                 context.ReportDiagnostic(Diagnostic.Create(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
-            if (IsAttachment(property.Type))
-                context.ReportDiagnostic(Diagnostic.Create(InvalidAttachment, property.Locations.FirstOrDefault(), contractName, property.Name));
+                invalid = true;
+            }
+            if (property.GetAttributes().Any(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
+                invalid = true;
+            }
         }
+        if (invalid)
+            return null;
 
         var description = GetString(toolAttribute, "Description") ?? XmlDocumentation(type, "remarks");
         var title = GetString(toolAttribute, "Title") ?? XmlDocumentation(type, "summary");
@@ -218,8 +247,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)));
 
     private static bool IsAttachment(ITypeSymbol type)
-        => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-            .Contains("Ark.Tools.MediatorFramework.IArkAttachment", StringComparison.Ordinal);
+        => type is INamedTypeSymbol namedType
+            && namedType.Name == "IArkAttachment"
+            && namedType.ContainingNamespace.ToDisplayString() == "Ark.Tools.MediatorFramework";
 
     private static HandlerKind? GetHandlerKind(INamedTypeSymbol type, out ITypeSymbol? responseType)
     {
@@ -295,11 +325,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static void RenderTool(StringBuilder builder, ContractModel model, int index)
     {
         var response = model.ResponseType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var returnType = model.Kind == HandlerKind.Command ? "global::System.Threading.Tasks.Task" : "global::System.Threading.Tasks.Task<" + response + ">";
+        var attachmentResponse = model.ResponseType is not null && IsAttachment(model.ResponseType);
+        var returnType = model.Kind == HandlerKind.Command
+            ? "global::System.Threading.Tasks.Task"
+            : attachmentResponse
+                ? "global::System.Threading.Tasks.Task<global::ModelContextProtocol.Protocol.CallToolResult>"
+                : "global::System.Threading.Tasks.Task<" + response + ">";
         var parameters = model.Properties.Select(property =>
             "[global::System.ComponentModel.Description(\"" + Escape(XmlDocumentation(property, "summary") ?? string.Empty) + "\")] "
-            + property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) + " " + ToParameterName(property.Name));
-        var delegateTypes = model.Properties.Select(property => property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            + ToInputType(property.Type) + " " + ToParameterName(property.Name));
+        var delegateTypes = model.Properties.Select(property => ToInputType(property.Type))
             .Append("global::System.IServiceProvider")
             .Append("global::System.Threading.CancellationToken")
             .Append(returnType);
@@ -333,7 +368,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             builder.AppendLine();
             builder.AppendLine("        {");
             foreach (var property in settable)
-                builder.Append("            ").Append(property.Name).Append(" = ").Append(ToParameterName(property.Name)).AppendLine(",");
+                builder.Append("            ").Append(property.Name).Append(" = ").Append(ToInputValue(property)).AppendLine(",");
             builder.AppendLine("        };");
         }
         else
@@ -348,11 +383,23 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
         builder.Append("        var container = services.GetRequiredService<global::SimpleInjector.Container>();").AppendLine();
         if (model.Kind == HandlerKind.Query)
-            builder.Append("        return await container.GetInstance<global::Ark.Tools.Solid.IQueryProcessor>().ExecuteAsync<")
+        {
+            builder.Append("        var result = await container.GetInstance<global::Ark.Tools.Solid.IQueryProcessor>().ExecuteAsync<")
                 .Append(response).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
+            if (attachmentResponse)
+                builder.AppendLine("        return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToToolResultAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
+            else
+                builder.AppendLine("        return result;");
+        }
         else if (model.Kind == HandlerKind.Request)
-            builder.Append("        return await container.GetInstance<global::Ark.Tools.Solid.IRequestProcessor>().ExecuteAsync<")
+        {
+            builder.Append("        var result = await container.GetInstance<global::Ark.Tools.Solid.IRequestProcessor>().ExecuteAsync<")
                 .Append(response).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
+            if (attachmentResponse)
+                builder.AppendLine("        return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToToolResultAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
+            else
+                builder.AppendLine("        return result;");
+        }
         else
             builder.AppendLine("        await container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>().ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
         builder.AppendLine("    }");
@@ -360,6 +407,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
     private static string ToParameterName(string name)
         => char.ToLowerInvariant(name[0]) + name.Substring(1);
+
+    private static string ToInputType(ITypeSymbol type)
+        => IsAttachment(type)
+            ? "global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentInput"
+            : type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    private static string ToInputValue(IPropertySymbol property)
+        => IsAttachment(property.Type)
+            ? ToParameterName(property.Name) + ".ToAttachment()"
+            : ToParameterName(property.Name);
 
     private static string Escape(string value)
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -380,12 +437,4 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         Location? Location);
     private enum HandlerKind { Query, Request, Command }
 
-    private sealed class MarkerComparer : IEqualityComparer<MarkerModel>
-    {
-        public static MarkerComparer Instance { get; } = new();
-        public bool Equals(MarkerModel? x, MarkerModel? y)
-            => SymbolEqualityComparer.Default.Equals(x?.Context, y?.Context);
-        public int GetHashCode(MarkerModel obj)
-            => SymbolEqualityComparer.Default.GetHashCode(obj.Context);
-    }
 }
