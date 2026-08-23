@@ -119,7 +119,7 @@ public sealed class MessagingBus : IBus, IDisposable
 {
     private readonly IMessagingTransport _transport;
     private readonly MessagingNetworkOptions _network;
-    private readonly IReadOnlyList<IMessagingOutgoingStep> _outgoingSteps;
+    private readonly IReadOnlyList<Type> _outgoingStepTypes;
     private readonly MessagingPayloadSender _payloadSender;   // AZM-07 orchestration
 
     public async Task Send<T>(T message, Dictionary<string, string>? additionalHeaders = null,
@@ -203,10 +203,14 @@ public sealed class MessagingBus : IBus, IDisposable
         CancellationToken ctk) where T : class
     {
         var codec = _codecs.GetByProtocol(BookMessagingNetwork.GetWireProtocolFor<T>());  // owner protocol
-        var context = new MessagingOutgoingContext(destination, headers, ctk);
+        var context = new MessagingOutgoingContext(headers, destination);
 
         // Outgoing pipeline (AZM-06) runs around serialization and transport send.
-        await MessagingPipelineInvoker.InvokeOutgoingAsync(_outgoingSteps, context, async () =>
+        await MessagingPipelineInvoker.InvokeOutgoingAsync(
+            _outgoingStepTypes,
+            type => _container.GetInstance(type),
+            context,
+            async () =>
         {
             var payload = await _payloadSender
                 .BuildOutgoingPayloadAsync(message, codec, _transport, headers, ctk)
@@ -217,7 +221,8 @@ public sealed class MessagingBus : IBus, IDisposable
             else
                 await _transport.SendAsync(destination, headers, payload, dueTime, ctk)
                     .ConfigureAwait(false);
-        }).ConfigureAwait(false);
+        },
+            ctk).ConfigureAwait(false);
     }
 
     private void _requireCapability(MessagingCapabilities capability)

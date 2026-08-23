@@ -165,14 +165,7 @@ public abstract class OutboxProcessorBase
             return;
 
         activity.SetStatus(ActivityStatusCode.Error, exception.Message);
-        activity.AddEvent(new ActivityEvent(
-            "exception",
-            tags: new ActivityTagsCollection
-            {
-                ["exception.type"] = exception.GetType().FullName,
-                ["exception.message"] = exception.Message,
-                ["exception.stacktrace"] = exception.ToString()
-            }));
+        activity.AddException(exception);
     }
 
     private async Task<bool> _tryProcessMessagesAsync(CancellationToken ctk)

@@ -61,6 +61,12 @@ Queue time is emitted only after successful processing. Processing time is emitt
 success and failure. Missing or invalid sent-time headers do not affect message
 processing.
 
+MediatorFramework messaging exposes corresponding transport-neutral queue and
+processing measurements through
+`Ark.Tools.MediatorFramework.Messaging.OpenTelemetryProcessingMetricsStep`.
+Its instruments use the `ark.tools.mediatorframework` namespace, and its meter
+is registered alongside Rebus instrumentation by `AddArkAzureMonitorOpenTelemetry`.
+
 ### Outbox
 
 Outbox processors emit implementation-independent signals through

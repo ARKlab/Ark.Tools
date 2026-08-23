@@ -12,9 +12,15 @@ using MessagePack.Resolvers;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using NodaTime;
+using NodaTime.Testing;
+
 using System.Buffers;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -245,6 +251,223 @@ public sealed partial class MessagingRuntimeTests
         registry.IsInstalled(SerializationProtocol.Json).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.MessagePack).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.Protobuf).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task PipelineRunsStepsInDeclaredOrderAndProtectsReservedHeaders()
+    {
+        var order = new List<string>();
+        var context = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books");
+        var cancellationTokens = new List<CancellationToken>();
+        var resolvedCount = 0;
+        var stepTypes = new[] { typeof(RecordingOutgoingStep), typeof(RecordingOutgoingStep) };
+        using var cancellationSource = new CancellationTokenSource();
+        var cancellationToken = cancellationSource.Token;
+
+        async Task InvokeAsync()
+        {
+            await MessagingPipelineInvoker.InvokeOutgoingAsync(
+                stepTypes,
+                _ =>
+                {
+                    resolvedCount++;
+                    return new RecordingOutgoingStep(
+                        resolvedCount % 2 == 1 ? "first" : "second",
+                        order,
+                        cancellationTokens);
+                },
+                context,
+                () =>
+                {
+                    order.Add("terminal");
+                    return Task.CompletedTask;
+                },
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await InvokeAsync().ConfigureAwait(false);
+        await InvokeAsync().ConfigureAwait(false);
+
+        order.Should().Equal(
+            "first", "second", "terminal",
+            "first", "second", "terminal");
+        resolvedCount.Should().Be(4);
+        cancellationTokens.Should().HaveCount(4);
+        foreach (var token in cancellationTokens)
+            token.Should().Be(cancellationToken);
+        var action = () => context.Headers[MessagingHeaders.MessageType] = "spoofed";
+        action.Should().Throw<InvalidOperationException>();
+        var differentlyCasedAction = () => context.Headers["AMF1-message-type"] = "spoofed";
+        differentlyCasedAction.Should().Throw<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task UserContextStepsRoundTripClaims()
+    {
+        ClaimsPrincipal? restored = null;
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var outgoing = new MessagingOutgoingContext(
+            headers,
+            "books");
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.NameIdentifier, "42"),
+            new Claim(ClaimTypes.Email, "ada@example.test"),
+            new Claim(ClaimTypes.Role, "admin")
+        ], "test"));
+        await new UserContextOutgoingStep(() => principal)
+            .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
+
+        var incoming = new MessagingIncomingContext(headers, default);
+        await new UserContextIncomingStep(value => restored = value)
+            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
+
+        restored!.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be("42");
+        headers.Should().NotContainKey("ark-user-email");
+        restored.FindFirst(ClaimTypes.Email).Should().BeNull();
+        restored.IsInRole("admin").Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task OpenTelemetryStepsPropagateAzureDiagnosticId()
+    {
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var outgoing = new MessagingOutgoingContext(headers, "books");
+        string diagnosticId;
+        ActivityTraceId producerTraceId;
+        using (var producer = new Activity("producer"))
+        {
+            producer.SetIdFormat(ActivityIdFormat.W3C);
+            producer.Start();
+            producer.AddBaggage("tenant", "a,b=value");
+
+            await new OpenTelemetryOutgoingStep()
+                .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            diagnosticId = producer.Id!;
+            producerTraceId = producer.TraceId;
+        }
+
+        headers[MessagingHeaders.DiagnosticId].Should().Be(diagnosticId);
+        headers.Should().NotContainKey("traceparent");
+        headers.Should().NotContainKey("tracestate");
+        headers["baggage"].Should().Be("tenant=a%2Cb%3Dvalue");
+        headers["baggage"] += ",invalid=%ZZ";
+
+        Activity? received = null;
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == OpenTelemetryIncomingStep.ActivitySourceName,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ActivityStopped = activity => received = activity
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        var incoming = new MessagingIncomingContext(headers, default);
+        await new OpenTelemetryIncomingStep()
+            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        received.Should().NotBeNull();
+        received!.ParentId.Should().Be(diagnosticId);
+        received.TraceId.Should().Be(producerTraceId);
+        received.Baggage.Should().Contain(x => x.Key == "tenant" && x.Value == "a,b=value");
+        received.Baggage.Should().NotContain(x => x.Key == "invalid");
+    }
+
+    [TestMethod]
+    public async Task OpenTelemetryProcessingMetricsStepRecordsQueueAndProcessingMetrics()
+    {
+        var measurements = new List<(string Name, double Value, string? MessageType, string? OperationResult)>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == OpenTelemetryProcessingMetricsStep.MeterName)
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<double>((instrument, value, tags, _) =>
+        {
+            string? messageType = null;
+            string? operationResult = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "message.type")
+                    messageType = tag.Value?.ToString();
+                else if (tag.Key == "operation.result")
+                    operationResult = tag.Value?.ToString();
+            }
+
+            measurements.Add((instrument.Name, value, messageType, operationResult));
+        });
+        listener.Start();
+
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var sentTime = clock.GetCurrentInstant().ToDateTimeOffset().AddSeconds(-2);
+        var successContext = new MessagingIncomingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [MessagingHeaders.MessageType] = "tests.Message",
+                [MessagingHeaders.SentTime] = sentTime.ToString("O", CultureInfo.InvariantCulture)
+            },
+            default);
+        var step = new OpenTelemetryProcessingMetricsStep(clock);
+        await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        var failureContext = new MessagingIncomingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [MessagingHeaders.MessageType] = "tests.Message"
+            },
+            default);
+        Func<Task> processFailure = () => step.ProcessAsync(
+            failureContext,
+            () => throw new InvalidOperationException("handler failed"),
+            CancellationToken.None);
+        await processFailure.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
+
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.mediatorframework.message_time_in_queue_success"
+            && x.MessageType == "tests.Message"
+            && x.Value > 1500);
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.mediatorframework.message_processing_time"
+            && x.MessageType == "tests.Message"
+            && x.OperationResult == "success");
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.mediatorframework.message_processing_time"
+            && x.MessageType == "tests.Message"
+            && x.OperationResult == "failure");
+    }
+
+    private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
+    {
+        private readonly string _name;
+        private readonly IList<string> _order;
+        private readonly IList<CancellationToken> _cancellationTokens;
+
+        public RecordingOutgoingStep(
+            string name,
+            IList<string> order,
+            IList<CancellationToken> cancellationTokens)
+        {
+            _name = name;
+            _order = order;
+            _cancellationTokens = cancellationTokens;
+        }
+
+        public async Task ProcessAsync(
+            MessagingOutgoingContext context,
+            Func<Task> next,
+            CancellationToken cancellationToken)
+        {
+            _order.Add(_name);
+            _cancellationTokens.Add(cancellationToken);
+            await next().ConfigureAwait(false);
+        }
     }
 
     private sealed class MessagingRuntimeContract

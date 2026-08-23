@@ -140,6 +140,15 @@ Source and meter: `ark.tools.rebus`.
 Outgoing Rebus messages propagate the current W3C activity ID in the
 `Diagnostic-Id` header.
 
+### MediatorFramework messaging
+
+Source and meter: `Ark.MediatorFramework.Messaging`.
+
+| Instrument | Unit | Attributes | Emission |
+|---|---|---|---|
+| `ark.tools.mediatorframework.message_time_in_queue_success` | `ms` histogram | `message.type` | Success only; invalid/missing sent-time headers produce no queue-time measurement. |
+| `ark.tools.mediatorframework.message_processing_time` | `ms` histogram | `message.type`, `operation.result` | Always; `operation.result` is `success` or `failure`. |
+
 ### Outbox
 
 Source and meter: `ark.tools.outbox`.
@@ -292,5 +301,6 @@ Example:
 | Adaptive sampling | `src/common/Ark.Tools.OTel/ArkAdaptiveSampler.cs`, `ArkAdaptiveSamplerOptions.cs` |
 | Failure promotion and pre-filtering | `src/common/Ark.Tools.OTel/ArkFailurePromotionProcessor.cs`, `ArkPreFilterProcessor.cs` |
 | Rebus | `src/common/Ark.Tools.Rebus/OpenTelemetryStep.cs`, `OpenTelemetryProcessingMetricsStep.cs` |
+| MediatorFramework messaging | `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/OpenTelemetryMessagingSteps.cs`, `OpenTelemetryProcessingMetricsStep.cs` |
 | Outbox | `src/common/Ark.Tools.Outbox/OutboxProcessorBase.cs`, `src/common/Ark.Tools.Outbox.OTel/Ex.cs` |
 | ResourceWatcher | `src/resourcewatcher/Ark.Tools.ResourceWatcher/ResourceWatcherDiagnosticSource.cs`, `src/resourcewatcher/Ark.Tools.ResourceWatcher.OTel/Ex.cs` |

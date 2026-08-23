@@ -544,14 +544,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         if (activity is null)
             return;
 
-        activity.AddEvent(new ActivityEvent(
-            "exception",
-            tags: new ActivityTagsCollection
-            {
-                ["exception.type"] = exception.GetType().FullName,
-                ["exception.message"] = exception.Message,
-                ["exception.stacktrace"] = exception.ToString()
-            }));
+        activity.AddException(exception);
     }
 
     private static string _toSnakeCase(string value)
