@@ -11,6 +11,7 @@ using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 using FluentValidation;
+using ModelContextProtocol.Protocol;
 
 using System.Collections.Immutable;
 using System.Reflection;
@@ -145,6 +146,7 @@ public sealed class GeneratorSnapshotTests
             [Versioning(Introduced = 2)]
             public sealed record SearchBooks(string Text) : IQuery<SearchBooks, string>;
             [McpTool(Name = "books.update")]
+            [ApiGroup("catalog")]
             public sealed record UpdateBook(int Id) : IRequest<UpdateBook, string>;
             [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
             public partial class McpContext { }
@@ -152,28 +154,35 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain("Name = \"books.search.v2\"");
-        result.Generated.Should().Contain("Name = \"books.update\"");
+        result.Generated.Should().Contain("Name = \"catalog.books.update\"");
         result.Generated.Should().Contain("ReadOnly = false");
         result.Generated.Should().Contain("Destructive = true");
         result.Generated.Should().Contain(
             "partial class McpContext : global::Ark.Tools.MediatorFramework.Mcp.IMcpToolContext");
         result.Generated.Should().Contain(
-            "public global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
+            "public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
         result.Generated.Should().Contain("RegisterMcpTools");
         result.Generated.Should().Contain("IQueryProcessor");
+        result.Generated.Should().Contain("Task<global::ModelContextProtocol.Protocol.CallToolResult>");
     }
 
     [TestMethod]
     public void McpToolErrorsExposeSafeValidationProblemDetails()
     {
         var exception = new ValidationException(
-            [new ValidationFailure("Text", "Text is required.")]);
+            [new FluentValidation.Results.ValidationFailure("Text", "Text is required.")]);
 
-        var mcpException = McpToolErrors.ToMcpException(exception);
+        var result = McpToolErrors.ToToolResult(exception);
 
-        mcpException.Message.Should().Contain("\"title\":\"Validation failed\"");
-        mcpException.Message.Should().Contain("\"status\":400");
-        mcpException.Message.Should().Contain("\"Text\":[\"Text is required.\"]");
+        result.IsError.Should().BeTrue();
+        result.Content.Should().ContainSingle();
+        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Validation failed: ");
+        ((TextContentBlock)result.Content[0]).Text.Should().Contain("Text is required.");
+        result.StructuredContent.Should().NotBeNull();
+        result.StructuredContent!.Value.GetProperty("title").GetString().Should().Be("Validation failed");
+        result.StructuredContent.Value.GetProperty("status").GetInt32().Should().Be(400);
+        result.StructuredContent.Value.GetProperty("errors").GetProperty("Text")[0].GetString()
+            .Should().Be("Text is required.");
     }
 
     [TestMethod]

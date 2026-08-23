@@ -9,8 +9,9 @@ public sealed class McpToolAttribute : Attribute
 {
     /// <summary>
     /// Gets or sets the stable MCP tool name.
-    /// When <see langword="null"/>, the generator uses the contract name and appends
-    /// the <c>v{Introduced}</c> suffix when versioning metadata introduces one.
+    /// When <see langword="null"/>, the generator uses the contract name. The resolved name
+    /// is prefixed with the <see cref="ApiGroupAttribute"/> name when present and appended
+    /// with the <c>v{Introduced}</c> suffix when versioning metadata introduces one.
     /// </summary>
     public string? Name { get; set; }
 

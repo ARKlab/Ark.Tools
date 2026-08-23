@@ -11,5 +11,5 @@ public interface IMcpToolContext
     /// <summary>Registers the tools generated for this context.</summary>
     /// <param name="builder">The MCP server builder.</param>
     /// <returns>The supplied builder.</returns>
-    IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder);
+    static abstract IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder);
 }

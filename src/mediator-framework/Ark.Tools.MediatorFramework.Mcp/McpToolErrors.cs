@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.AspNetCore.ProblemDetails;
-using ModelContextProtocol;
+using ModelContextProtocol.Protocol;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,25 +12,27 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 public static partial class McpToolErrors
 {
     /// <summary>
-    /// Creates an MCP exception for a mediator failure.
-    /// Client-visible 4xx failures use the shared ProblemDetails JSON; other failures
+    /// Creates an MCP tool result for a mediator failure.
+    /// Client-visible failures use the shared ProblemDetails; unexpected failures
     /// use a generic message.
     /// </summary>
     /// <param name="exception">The mediator failure.</param>
-    /// <returns>An MCP exception safe to return to a client.</returns>
-    public static McpException ToMcpException(Exception exception)
+    /// <returns>An MCP error result safe to return to a client.</returns>
+    public static CallToolResult ToToolResult(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
-        if (problemDetails.Status is >= 400 and < 500)
+        var title = problemDetails.Title ?? "An unexpected error occurred.";
+        var detail = problemDetails.Detail ?? "The tool call could not be completed.";
+        var structuredContent = JsonSerializer.SerializeToElement(
+            problemDetails,
+            McpToolErrorJsonSerializerContext.Default.ProblemDetails);
+        return new CallToolResult
         {
-            var json = JsonSerializer.Serialize(
-                problemDetails,
-                McpToolErrorJsonSerializerContext.Default.ProblemDetails);
-            return new McpException(json, exception);
-        }
-
-        return new McpException("An unexpected error occurred.", exception);
+            IsError = true,
+            Content = [new TextContentBlock { Text = title + ": " + detail }],
+            StructuredContent = structuredContent,
+        };
     }
 
     [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]

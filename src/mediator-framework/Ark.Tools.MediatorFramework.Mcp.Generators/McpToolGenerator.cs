@@ -27,6 +27,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string Command = "Ark.Tools.Solid.ICommand";
     private const string GenericCommand = "Ark.Tools.Solid.ICommand`1";
     private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
+    private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
         "ARKMF030", "Invalid MCP tool name", "MCP tool name '{0}' is invalid",
@@ -190,6 +191,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
 
         var name = GetString(toolAttribute, "Name") ?? contractName;
+        var apiGroup = type.GetAttributes()
+            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == ApiGroupAttribute);
+        var groupName = apiGroup?.ConstructorArguments.FirstOrDefault().Value as string;
+        if (!string.IsNullOrWhiteSpace(groupName))
+            name = groupName + "." + name;
         var version = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString()
                 == "Ark.Tools.MediatorFramework.VersioningAttribute");
@@ -315,7 +321,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.Append("partial class ").Append(contextType.Name)
             .AppendLine(" : global::Ark.Tools.MediatorFramework.Mcp.IMcpToolContext");
         builder.AppendLine("{");
-        builder.AppendLine("    public global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
+        builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
         builder.AppendLine("    {");
         builder.AppendLine("        return builder");
         for (var index = 0; index < contracts.Length; index++)
@@ -333,11 +339,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     {
         var response = model.ResponseType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var attachmentResponse = model.ResponseType is not null && IsAttachment(model.ResponseType);
-        var returnType = model.Kind == HandlerKind.Command
-            ? "global::System.Threading.Tasks.Task"
-            : attachmentResponse
-                ? "global::System.Threading.Tasks.Task<global::ModelContextProtocol.Protocol.CallToolResult>"
-                : "global::System.Threading.Tasks.Task<" + response + ">";
+        var returnType = "global::System.Threading.Tasks.Task<global::ModelContextProtocol.Protocol.CallToolResult>";
         var parameters = model.Properties.Select(property =>
             "[global::System.ComponentModel.Description(\"" + Escape(XmlDocumentation(property, "summary") ?? string.Empty) + "\")] "
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
@@ -396,7 +398,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToToolResultAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
             else
-                builder.AppendLine("            return result;");
+                builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolResults.ToToolResult(result);");
         }
         else if (model.Kind == HandlerKind.Request)
         {
@@ -405,10 +407,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToToolResultAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
             else
-                builder.AppendLine("            return result;");
+                builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolResults.ToToolResult(result);");
         }
         else
+        {
             builder.AppendLine("            await container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>().ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolResults.Empty;");
+        }
         builder.AppendLine("        }");
         builder.AppendLine("        catch (global::ModelContextProtocol.McpException)");
         builder.AppendLine("        {");
@@ -420,7 +425,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine("        }");
         builder.AppendLine("        catch (global::System.Exception exception)");
         builder.AppendLine("        {");
-        builder.AppendLine("            throw global::Ark.Tools.MediatorFramework.Mcp.McpToolErrors.ToMcpException(exception);");
+        builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolErrors.ToToolResult(exception);");
         builder.AppendLine("        }");
         builder.AppendLine("    }");
     }

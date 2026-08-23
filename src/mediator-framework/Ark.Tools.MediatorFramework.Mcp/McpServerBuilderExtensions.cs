@@ -26,9 +26,9 @@ public static class McpServerBuilderExtensions
     /// <returns>The supplied builder.</returns>
     public static IMcpServerBuilder WithArkMcpTools<TContext>(
         this IMcpServerBuilder builder)
-        where TContext : class, IMcpToolContext, new()
+        where TContext : IMcpToolContext
     {
         ArgumentNullException.ThrowIfNull(builder);
-        return new TContext().RegisterMcpTools(builder);
+        return TContext.RegisterMcpTools(builder);
     }
 }

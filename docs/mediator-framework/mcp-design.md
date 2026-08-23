@@ -155,7 +155,7 @@ The first version supports these fields:
 
 | `McpToolAttribute` field | Meaning |
 | --- | --- |
-| `Name` | Optional stable MCP tool name; defaults to a normalized contract name and inherits the `v{Introduced}` suffix. |
+| `Name` | Optional stable MCP tool name; defaults to a normalized contract name. `[ApiGroup("group")]` prefixes the resolved name as `group.name`, and versioning inherits the `v{Introduced}` suffix. |
 | `Description` | Optional model-facing description; otherwise use the contract `<remarks>` XML documentation. |
 | `Title` | Optional human-readable display title; otherwise use the contract `<summary>` XML documentation. |
 | `ReadOnly` | MCP tool annotation; defaults to `true` for `IQuery<T>` and `false` for `IRequest<T>`/`ICommand`. |
@@ -318,9 +318,10 @@ referenced projects.
 The generator makes the decorated context implement
 `IMcpToolContext`, whose public `RegisterMcpTools` method is the generated
 registration sequence. `WithArkMcpTools<TContext>` requires
-`where TContext : class, IMcpToolContext, new()` and invokes that contract with
-`new TContext()`. No runtime method lookup, `MethodInfo`, or reflection-based
-fallback is used; a context that is not generated fails at compile time.
+`where TContext : IMcpToolContext` and invokes its static abstract
+`RegisterMcpTools` method. No context instance, runtime method lookup,
+`MethodInfo`, or reflection-based fallback is used; a context that is not
+generated fails at compile time.
 
 ## Generated artifacts
 
@@ -339,8 +340,9 @@ the decorated partial context:
    `WithArkMcpTools<TContext>` builder extension to invoke the registration
    method without reflection.
 6. Error boundaries that preserve cancellation and protocol exceptions, map
-   safe 4xx mediator failures to shared ProblemDetails JSON in an MCP error,
-   and return a generic message for unexpected failures.
+   mediator failures to `CallToolResult.IsError = true` with safe text and
+   shared ProblemDetails structured content, and return a generic message for
+   unexpected failures.
 
 The official SDK currently exposes `WithTools(IEnumerable<McpServerTool>)`, not
 a singular `WithTool`. The runtime package supplies the small `WithTool`
@@ -459,13 +461,13 @@ MCP has no HTTP status-code result for a tool call. The SDK represents ordinary
 tool failures as `CallToolResult.IsError = true`; protocol failures remain JSON-RPC
 errors. The generated wrapper therefore:
 
-- returns typed query/request values for the SDK to serialize;
+- returns structured `CallToolResult` values for query/request results;
 - maps a top-level `IArkAttachment` to an embedded binary resource and an
   attachment collection to multiple embedded resource blocks;
 - returns no content for a successful command;
 - does not translate domain exceptions into HTTP status codes;
-- does not expose exception messages unless the host's approved MCP error
-  policy permits them;
+- exposes the shared ProblemDetails title and detail for client-visible
+  failures, while unexpected failures use generic safe text;
 - lets cancellation propagate as cancellation;
 - leaves `McpProtocolException` behavior to the SDK.
 
@@ -483,8 +485,8 @@ The error boundary is explicit:
 | Invalid JSON/schema or missing required argument | SDK validation/protocol error |
 | `McpProtocolException` | JSON-RPC protocol error |
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
-| Validation or known domain failure | `CallToolResult.IsError = true` with approved safe text |
-| Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured server log |
+| Validation or known domain failure | `CallToolResult.IsError = true` with `{Title}: {Detail}` text and structured ProblemDetails |
+| Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
 
 The recommended filter maps known validation and domain exceptions to stable,
 client-safe text. It must not turn an authentication failure into a successful
