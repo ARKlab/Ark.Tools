@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.Runtime.InteropServices;
 using System.IO.Compression;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -37,10 +38,9 @@ public sealed class MessagingPayloadReceiver
         ctk.ThrowIfCancellationRequested();
         var payload = transportPayload;
 
-        if (headers.ContainsKey(MessagingHeaders.PayloadAttachmentId))
+        if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
         {
-            if (!headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId)
-                || string.IsNullOrEmpty(attachmentId)
+            if (string.IsNullOrEmpty(attachmentId)
                 || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentLength, out var lengthText)
                 || !long.TryParse(lengthText, NumberStyles.None, CultureInfo.InvariantCulture, out var expectedLength)
                 || expectedLength < 0
@@ -177,8 +177,24 @@ public sealed class MessagingPayloadReceiver
     private sealed class SequenceReadStream : MemoryStream
     {
         internal SequenceReadStream(ReadOnlySequence<byte> sequence)
-            : base(sequence.ToArray(), writable: false)
+            : this(_getSegment(sequence))
         {
+        }
+
+        private SequenceReadStream(ArraySegment<byte> segment)
+            : base(segment.Array ?? Array.Empty<byte>(), segment.Offset, segment.Count, writable: false)
+        {
+        }
+
+        private static ArraySegment<byte> _getSegment(ReadOnlySequence<byte> sequence)
+        {
+            if (sequence.IsSingleSegment
+                && MemoryMarshal.TryGetArray(sequence.First, out var segment))
+            {
+                return segment;
+            }
+
+            return new ArraySegment<byte>(sequence.ToArray());
         }
     }
 }
