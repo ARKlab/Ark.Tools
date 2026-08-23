@@ -40,6 +40,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor UnsupportedMember = new(
         "ARKMF033", "Unsupported MCP input member", "MCP contract '{0}' has unsupported input member '{1}'",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
+    private static readonly DiagnosticDescriptor MissingConstructor = new(
+        "ARKMF040", "Missing MCP contract constructor", "MCP contract '{0}' has no constructor matching its input members",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
     private static readonly DiagnosticDescriptor MissingDescription = new(
         "ARKMF037", "Missing MCP description", "MCP tool '{0}' has no XML or explicit description",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true);
@@ -221,6 +224,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
         if (invalid)
             return null;
+        if (FindConstructor(type, properties) is null)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(MissingConstructor, location, contractName));
+            return null;
+        }
 
         var description = GetString(toolAttribute, "Description") ?? XmlDocumentation(type, "remarks");
         var title = GetString(toolAttribute, "Title") ?? XmlDocumentation(type, "summary");
@@ -270,10 +278,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
 
         responseType = null;
-        return type.AllInterfaces.Any(@interface => @interface.OriginalDefinition.ContainingNamespace.ToDisplayString()
-            + "." + @interface.OriginalDefinition.MetadataName == Command)
-            ? HandlerKind.Command
-            : null;
+        return null;
     }
 
     private static string? XmlDocumentation(ISymbol symbol, string element)
@@ -361,26 +366,24 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .Append(string.Join(", ", parameters)).Append(model.Properties.Length > 0 ? ", " : string.Empty)
             .Append("global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken)").AppendLine();
         builder.AppendLine("    {");
-        builder.Append("        var request = new ").Append(model.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+        var constructor = FindConstructor(model.Type, model.Properties);
+        builder.Append("        var request = new ").Append(model.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).Append("(");
+        builder.Append(string.Join(", ", constructor!.Parameters.Select(parameter =>
+            ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).Name)
+            + (IsAttachment(model.Properties.First(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).Type)
+                ? ".ToAttachment()" : string.Empty))));
         var settable = model.Properties.Where(property => property.SetMethod is not null).ToImmutableArray();
         if (settable.Length > 0)
         {
-            builder.AppendLine();
+            builder.AppendLine(")");
             builder.AppendLine("        {");
             foreach (var property in settable)
-                builder.Append("            ").Append(property.Name).Append(" = ").Append(ToInputValue(property)).AppendLine(",");
+                if (!constructor.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)))
+                    builder.Append("            ").Append(property.Name).Append(" = ").Append(ToInputValue(property)).AppendLine(",");
             builder.AppendLine("        };");
         }
         else
-        {
-            var constructor = model.Type.Constructors
-                .OrderBy(candidate => candidate.Parameters.Length)
-                .FirstOrDefault(candidate => candidate.Parameters.All(parameter =>
-                    model.Properties.Any(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))));
-            builder.Append("(").Append(string.Join(", ", constructor?.Parameters.Select(parameter =>
-                ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).Name))
-                ?? [])).AppendLine(");");
-        }
+            builder.AppendLine(");");
         builder.Append("        var container = services.GetRequiredService<global::SimpleInjector.Container>();").AppendLine();
         if (model.Kind == HandlerKind.Query)
         {
@@ -417,6 +420,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         => IsAttachment(property.Type)
             ? ToParameterName(property.Name) + ".ToAttachment()"
             : ToParameterName(property.Name);
+
+    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties)
+        => type.Constructors
+            .Where(candidate => candidate.Parameters.All(parameter =>
+                properties.Any(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))))
+            .Where(candidate => properties.Where(property => property.SetMethod is null).All(property =>
+                candidate.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
+            .OrderBy(candidate => candidate.Parameters.Length)
+            .FirstOrDefault();
 
     private static string Escape(string value)
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
