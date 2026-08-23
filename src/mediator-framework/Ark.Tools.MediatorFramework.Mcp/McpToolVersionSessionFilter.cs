@@ -59,7 +59,9 @@ internal sealed class McpToolVersionSessionFilter : IPostConfigureOptions<HttpSe
             var filtered = new McpServerPrimitiveCollection<McpServerTool>(StringComparer.OrdinalIgnoreCase);
             foreach (var tool in tools)
             {
-                var versioning = tool.Metadata.OfType<VersioningAttribute>().FirstOrDefault();
+                var versioning = tool.Metadata
+                    .OfType<global::Ark.Tools.MediatorFramework.VersioningAttribute>()
+                    .FirstOrDefault();
                 var introduced = versioning?.Introduced ?? 1;
                 var retired = versioning?.Retired ?? 0;
                 if (version >= introduced && (retired == 0 || version < retired))
