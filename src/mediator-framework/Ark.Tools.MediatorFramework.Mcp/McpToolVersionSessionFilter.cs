@@ -1,14 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.MediatorFramework;
-
 using Microsoft.Extensions.Options;
 
 using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
-
-using System.Linq;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
 
@@ -30,7 +26,7 @@ internal sealed class McpToolVersionSessionFilter : IPostConfigureOptions<HttpSe
                 return;
 
             var routeVersion = Convert.ToString(rawVersion, System.Globalization.CultureInfo.InvariantCulture);
-            if (routeVersion?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
+            if (routeVersion?.Length > 0 && (routeVersion[0] is 'v' or 'V'))
                 routeVersion = routeVersion[1..];
 
             if (!int.TryParse(
