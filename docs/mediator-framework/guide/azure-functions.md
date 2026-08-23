@@ -172,7 +172,8 @@ cancellation pass through unchanged; settlement remains the dispatch layer's
 responsibility. `OpenTelemetryProcessingMetricsStep` is the corresponding
 incoming metrics step; it records success-only queue time and success/failure
 processing time using the same `message.type` and `operation.result` dimensions
-as the Rebus instrumentation.
+as the Rebus instrumentation, under the
+`ark.tools.mediatorframework` metric namespace.
 
 ## 6. Configure local settings
 

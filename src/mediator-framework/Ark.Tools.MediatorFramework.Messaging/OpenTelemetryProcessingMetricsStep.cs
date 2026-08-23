@@ -4,6 +4,8 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
+using NodaTime;
+
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Collects incoming message queue and processing metrics through OpenTelemetry.</summary>
@@ -12,24 +14,24 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
     /// <summary>The meter used by MediatorFramework messaging instrumentation.</summary>
     public const string MeterName = OpenTelemetryIncomingStep.ActivitySourceName;
 
-    private const string _messageTimeInQueueName = "ark.tools.rebus.message_time_in_queue_success";
-    private const string _messageProcessingTimeName = "ark.tools.rebus.message_processing_time";
+    private const string _messageTimeInQueueName = "ark.tools.mediatorframework.message_time_in_queue_success";
+    private const string _messageProcessingTimeName = "ark.tools.mediatorframework.message_processing_time";
     private const string _operationSuccess = "success";
     private const string _operationFailure = "failure";
 
-    private readonly TimeProvider _timeProvider;
+    private readonly IClock _clock;
 
-    /// <summary>Creates a metrics step using the system UTC clock.</summary>
+    /// <summary>Creates a metrics step using the system clock.</summary>
     public OpenTelemetryProcessingMetricsStep()
-        : this(TimeProvider.System)
+        : this(SystemClock.Instance)
     {
     }
 
-    /// <summary>Creates a metrics step using the supplied UTC clock.</summary>
-    /// <param name="timeProvider">The clock used to calculate queue time.</param>
-    public OpenTelemetryProcessingMetricsStep(TimeProvider timeProvider)
+    /// <summary>Creates a metrics step using the supplied clock.</summary>
+    /// <param name="clock">The clock used to calculate queue time.</param>
+    public OpenTelemetryProcessingMetricsStep(IClock clock)
     {
-        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     /// <inheritdoc />
@@ -58,7 +60,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
             {
                 if (_tryGetSentTime(context.Headers, out var sentTime))
                 {
-                    var timeInQueue = _timeProvider.GetUtcNow() - sentTime - stopwatch.Elapsed;
+                    var timeInQueue = _clock.GetCurrentInstant().ToDateTimeOffset() - sentTime - stopwatch.Elapsed;
                     Metrics._trackTimeInQueue(timeInQueue, messageType);
                 }
             }

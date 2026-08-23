@@ -140,6 +140,15 @@ Source and meter: `ark.tools.rebus`.
 Outgoing Rebus messages propagate the current W3C activity ID in the
 `Diagnostic-Id` header.
 
+### MediatorFramework messaging
+
+Source and meter: `Ark.MediatorFramework.Messaging`.
+
+| Instrument | Unit | Attributes | Emission |
+|---|---|---|---|
+| `ark.tools.mediatorframework.message_time_in_queue_success` | `ms` histogram | `message.type` | Success only; invalid/missing sent-time headers produce no queue-time measurement. |
+| `ark.tools.mediatorframework.message_processing_time` | `ms` histogram | `message.type`, `operation.result` | Always; `operation.result` is `success` or `failure`. |
+
 ### Outbox
 
 Source and meter: `ark.tools.outbox`.

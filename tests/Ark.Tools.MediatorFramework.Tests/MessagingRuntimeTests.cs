@@ -12,6 +12,9 @@ using MessagePack.Resolvers;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using NodaTime;
+using NodaTime.Testing;
+
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -394,7 +397,8 @@ public sealed partial class MessagingRuntimeTests
         });
         listener.Start();
 
-        var sentTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(2);
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var sentTime = clock.GetCurrentInstant().ToDateTimeOffset().AddSeconds(-2);
         var successContext = new MessagingIncomingContext(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
@@ -402,7 +406,7 @@ public sealed partial class MessagingRuntimeTests
                 [MessagingHeaders.SentTime] = sentTime.ToString("O", CultureInfo.InvariantCulture)
             },
             default);
-        var step = new OpenTelemetryProcessingMetricsStep();
+        var step = new OpenTelemetryProcessingMetricsStep(clock);
         await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
             .ConfigureAwait(false);
 
@@ -419,15 +423,15 @@ public sealed partial class MessagingRuntimeTests
         await processFailure.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
 
         measurements.Should().Contain(x =>
-            x.Name == "ark.tools.rebus.message_time_in_queue_success"
+            x.Name == "ark.tools.mediatorframework.message_time_in_queue_success"
             && x.MessageType == "tests.Message"
             && x.Value > 1500);
         measurements.Should().Contain(x =>
-            x.Name == "ark.tools.rebus.message_processing_time"
+            x.Name == "ark.tools.mediatorframework.message_processing_time"
             && x.MessageType == "tests.Message"
             && x.OperationResult == "success");
         measurements.Should().Contain(x =>
-            x.Name == "ark.tools.rebus.message_processing_time"
+            x.Name == "ark.tools.mediatorframework.message_processing_time"
             && x.MessageType == "tests.Message"
             && x.OperationResult == "failure");
     }
