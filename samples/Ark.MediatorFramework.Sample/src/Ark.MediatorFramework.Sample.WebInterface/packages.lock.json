@@ -1116,6 +1116,7 @@
       "ark.tools.mediatorframework.mcp": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "ModelContextProtocol.AspNetCore": "[2.2.0, )",

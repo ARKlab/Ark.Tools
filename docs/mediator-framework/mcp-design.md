@@ -315,6 +315,13 @@ are present, so a package reference alone does not change a host's surface.
 Assembly marker selection remains explicit and works for contracts in
 referenced projects.
 
+The generator makes the decorated context implement
+`IMcpToolContext`, whose public `RegisterMcpTools` method is the generated
+registration sequence. `WithArkMcpTools<TContext>` requires
+`where TContext : class, IMcpToolContext, new()` and invokes that contract with
+`new TContext()`. No runtime method lookup, `MethodInfo`, or reflection-based
+fallback is used; a context that is not generated fails at compile time.
+
 ## Generated artifacts
 
 For each selected valid contract, the generator emits nested artifacts inside
@@ -328,8 +335,12 @@ the decorated partial context:
    `IQueryProcessor`, `IRequestProcessor`, or `ICommandProcessor`.
 4. A generated `RegisterMcpTools` method on the context that chains one
    `.WithTool(...)` call per tool in deterministic order.
-5. A public `WithArkMcpTools<TContext>` builder extension that invokes the
-   context registration method exactly once.
+5. `IMcpToolContext` on the context, allowing the public
+   `WithArkMcpTools<TContext>` builder extension to invoke the registration
+   method without reflection.
+6. Error boundaries that preserve cancellation and protocol exceptions, map
+   safe 4xx mediator failures to shared ProblemDetails JSON in an MCP error,
+   and return a generic message for unexpected failures.
 
 The official SDK currently exposes `WithTools(IEnumerable<McpServerTool>)`, not
 a singular `WithTool`. The runtime package supplies the small `WithTool`
@@ -340,9 +351,9 @@ Conceptually, generated source has this shape (names and argument details are
 illustrative):
 
 ```csharp
-public partial class McpHostContext
+public partial class McpHostContext : IMcpToolContext
 {
-    internal static IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
+    public IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
     {
         return builder
             .WithTool(SearchBooksTool.Create());
@@ -394,6 +405,13 @@ conventions. It must not emit
 The context method and explicit one-tool registrations also prevent duplicate
 registration when another application tool assembly is registered separately by
 the host.
+
+The generated wrapper catches `OperationCanceledException` only when the MCP
+cancellation token is signaled, allowing cancellation to propagate. It
+rethrows MCP protocol exceptions. Other failures pass through
+`McpToolErrors`: a failure mapped by the shared HTTP ProblemDetails rules to a
+4xx status is serialized as safe JSON in an MCP exception message, while
+unexpected failures use a generic message.
 
 ## Incremental generator pipeline
 

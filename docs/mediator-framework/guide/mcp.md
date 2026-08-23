@@ -70,10 +70,15 @@ resource-link/download service.
 
 ## Errors and tests
 
-The SDK returns ordinary handler failures as `CallToolResult.IsError = true`,
-with generic text for unexpected exceptions. `McpProtocolException` remains a
-JSON-RPC protocol error and cancellation propagates. Do not expose stack traces,
-connection strings, or sensitive exception messages.
+Generated wrappers preserve cancellation and existing MCP protocol exceptions.
+For mediator failures whose equivalent HTTP endpoint returns a 4xx response,
+the wrapper maps the exception through the shared Ark `ProblemDetails` mapper
+and throws an MCP exception whose message is the safe ProblemDetails JSON.
+The SDK returns that message as an error result (`CallToolResult.IsError =
+true`), so clients can read `type`, `title`, `status`, `detail`, and validation
+or business-rule extensions. Unexpected failures remain a generic MCP error;
+stack traces, connection strings, and sensitive exception messages are never
+returned.
 
 The reference implementation is demonstrated in
 [`samples/Ark.MediatorFramework.Sample`](../../../samples/Ark.MediatorFramework.Sample/README.md).

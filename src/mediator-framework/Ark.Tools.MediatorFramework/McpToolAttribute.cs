@@ -7,24 +7,54 @@ namespace Ark.Tools.MediatorFramework;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class McpToolAttribute : Attribute
 {
-    /// <summary>Gets or sets the stable MCP tool name.</summary>
+    /// <summary>
+    /// Gets or sets the stable MCP tool name.
+    /// When <see langword="null"/>, the generator uses the contract name and appends
+    /// the <c>v{Introduced}</c> suffix when versioning metadata introduces one.
+    /// </summary>
     public string? Name { get; set; }
 
-    /// <summary>Gets or sets the model-facing description.</summary>
+    /// <summary>
+    /// Gets or sets the model-facing description.
+    /// When <see langword="null"/>, the generator uses the contract
+    /// <c>&lt;remarks&gt;</c> documentation, when present.
+    /// </summary>
     public string? Description { get; set; }
 
-    /// <summary>Gets or sets the human-readable title.</summary>
+    /// <summary>
+    /// Gets or sets the human-readable title.
+    /// When <see langword="null"/>, the generator uses the contract
+    /// <c>&lt;summary&gt;</c> documentation, when present.
+    /// </summary>
     public string? Title { get; set; }
 
-    /// <summary>Gets or sets whether the tool is read-only.</summary>
+    /// <summary>
+    /// Gets or sets whether the tool is read-only.
+    /// When not explicitly supplied, the generator defaults this to
+    /// <see langword="true"/> for <c>IQuery&lt;T&gt;</c> and <see langword="false"/>
+    /// for requests and commands.
+    /// </summary>
     public bool ReadOnly { get; set; } = true;
 
-    /// <summary>Gets or sets whether the tool is destructive.</summary>
+    /// <summary>
+    /// Gets or sets whether the tool is destructive.
+    /// When not explicitly supplied, the generator defaults this to
+    /// <see langword="false"/> for <c>IQuery&lt;T&gt;</c> and <see langword="true"/>
+    /// for requests and commands.
+    /// </summary>
     public bool Destructive { get; set; }
 
-    /// <summary>Gets or sets whether repeated calls are idempotent.</summary>
+    /// <summary>
+    /// Gets or sets whether repeated calls are idempotent.
+    /// When not explicitly supplied, the generator defaults this to
+    /// <see langword="false"/>.
+    /// </summary>
     public bool Idempotent { get; set; }
 
-    /// <summary>Gets or sets whether the tool can access open-world data.</summary>
+    /// <summary>
+    /// Gets or sets whether the tool can access open-world data.
+    /// When not explicitly supplied, the generator defaults this to
+    /// <see langword="true"/>.
+    /// </summary>
     public bool OpenWorld { get; set; } = true;
 }

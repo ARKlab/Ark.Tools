@@ -10,6 +10,7 @@ using Ark.Tools.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
 using AwesomeAssertions;
+using FluentValidation;
 
 using System.Collections.Immutable;
 using System.Reflection;
@@ -143,14 +144,50 @@ public sealed class GeneratorSnapshotTests
             [McpTool(Name = "books.search")]
             [Versioning(Introduced = 2)]
             public sealed record SearchBooks(string Text) : IQuery<SearchBooks, string>;
+            [McpTool(Name = "books.update")]
+            public sealed record UpdateBook(int Id) : IRequest<UpdateBook, string>;
             [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
             public partial class McpContext { }
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain("Name = \"books.search.v2\"");
+        result.Generated.Should().Contain("Name = \"books.update\"");
+        result.Generated.Should().Contain("ReadOnly = false");
+        result.Generated.Should().Contain("Destructive = true");
+        result.Generated.Should().Contain(
+            "partial class McpContext : global::Ark.Tools.MediatorFramework.Mcp.IMcpToolContext");
+        result.Generated.Should().Contain(
+            "public global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
         result.Generated.Should().Contain("RegisterMcpTools");
         result.Generated.Should().Contain("IQueryProcessor");
+    }
+
+    [TestMethod]
+    public void McpToolErrorsExposeSafeValidationProblemDetails()
+    {
+        var exception = new ValidationException(
+            [new ValidationFailure("Text", "Text is required.")]);
+
+        var mcpException = McpToolErrors.ToMcpException(exception);
+
+        mcpException.Message.Should().Contain("\"title\":\"Validation failed\"");
+        mcpException.Message.Should().Contain("\"status\":400");
+        mcpException.Message.Should().Contain("\"Text\":[\"Text is required.\"]");
+    }
+
+    [TestMethod]
+    public void McpToolAttributeUsesDeclaredDefaults()
+    {
+        var attribute = new McpToolAttribute();
+
+        attribute.Name.Should().BeNull();
+        attribute.Description.Should().BeNull();
+        attribute.Title.Should().BeNull();
+        attribute.ReadOnly.Should().BeTrue();
+        attribute.Destructive.Should().BeFalse();
+        attribute.Idempotent.Should().BeFalse();
+        attribute.OpenWorld.Should().BeTrue();
     }
 
     [TestMethod]
