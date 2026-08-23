@@ -41,7 +41,10 @@ Research snapshot: **2026-08-23**, against the official
 repository and its current `main` branch. The current stable package identified
 for HTTP hosting is `ModelContextProtocol.AspNetCore` **2.2.0**. The implementation
 must pin the selected stable version centrally and update the version and
-lockfiles together if a newer stable release is selected.
+lockfiles together if a newer stable release is selected. The 2.2.0 API used
+below was confirmed against a `net10.0` host; the first Ark package is therefore
+`net10.0` only. The SDK's 2.2.0 ASP.NET Core project itself targets
+`net10.0;net9.0;net8.0`.
 
 The SDK surface that this design relies on is:
 
@@ -212,16 +215,22 @@ tool arguments. This keeps the MCP input schema natural for model callers:
 ```
 
 The wrapper constructs the contract using its accessible `init`/`set`
-properties, then invokes the typed handler. `ServerSet`, write-only, indexer,
-pointer, ref, and unsupported member shapes are rejected rather than silently
-omitted. Nullable members and members with defaults remain optional according to
-the generated JSON schema. An `IArkAttachment` property is the one exception to
+properties, then invokes the typed handler. HTTP binding attributes do not change
+this shape: `[HttpRoute]`, `[HttpQuery]`, and `[HttpBody]` are ignored for MCP,
+and every public bindable contract property is an MCP argument. They are not
+interpreted as route, query-string, or body locations. `ServerSet`, write-only,
+indexer, pointer, ref, and unsupported member shapes remain rejected rather than
+silently omitted because server-owned values must not be supplied by a caller.
+Nullable members and members with defaults remain optional according to the
+generated JSON schema. An `IArkAttachment` property is the one exception to
 ordinary JSON member binding and is described in [Attachment mapping](#attachment-mapping).
 
-The first version does not map HTTP-only binding metadata such as
-`HttpRoute`, `HttpQuery`, `HttpBody`, or ETags. Those members are either ordinary
-MCP JSON properties or explicitly rejected when their semantics cannot be
-represented safely. MCP input is JSON and is not treated as an HTTP envelope.
+The first version does not interpret HTTP-only binding metadata such as
+`HttpRoute`, `HttpQuery`, or `HttpBody`; those annotations do not cause
+properties to be dropped or moved into an HTTP envelope. ETags are also ordinary
+MCP JSON properties. MCP input is JSON and every public bindable property is
+handled uniformly, subject only to the server-owned and unsupported-shape rules
+above.
 
 ### Attachment mapping
 
@@ -248,6 +257,11 @@ network locations; a host or application may define a separate trusted upload
 store when inline base64 is unsuitable. Upload size, decoded-size, file-count,
 MIME allow-list, and request-body limits are enforced before handler dispatch.
 Names are sanitized with the existing `ArkAttachmentName` rules.
+The limits use the same `MaxRequestBodySizeBytes`, `MaxFileCount`, and
+`AllowedContentTypes` policy shape as the existing attachment endpoint metadata.
+That policy is defined in the transport-neutral `Ark.Tools.MediatorFramework`
+layer; Minimal API and MCP generators consume it rather than defining
+transport-specific limits.
 
 For a top-level `IArkAttachment` response, the generated wrapper reads the
 attachment stream within the configured download limit and returns an
@@ -444,6 +458,21 @@ Unhandled exceptions must be logged with structured NLog integration and return
 generic client-safe text. Sensitive exception details, connection strings, and
 stack traces must not enter tool results.
 
+The error boundary is explicit:
+
+| Failure | MCP result |
+| --- | --- |
+| Invalid JSON/schema or missing required argument | SDK validation/protocol error |
+| `McpProtocolException` | JSON-RPC protocol error |
+| `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
+| Validation or known domain failure | `CallToolResult.IsError = true` with approved safe text |
+| Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured server log |
+
+The recommended filter maps known validation and domain exceptions to stable,
+client-safe text. It must not turn an authentication failure into a successful
+tool result, and it must not expose exception messages unless the exception is
+explicitly approved for MCP clients.
+
 ## ASP.NET Core host boundary
 
 The generator does not call `MapMcp`, configure Kestrel, or add middleware. A
@@ -596,17 +625,56 @@ under `obj/.../generated`, and API-surface review for every new public
 attribute/helper. The selected MCP package version and all affected lockfiles
 must be included in the same dependency change.
 
-## Decisions required before implementation
+The mediator sample is a mandatory integration gate, not a documentation-only
+example. Before the package is released, expand
+`samples/Ark.MediatorFramework.Sample` so its WebInterface host:
 
-1. Confirm the stable `ModelContextProtocol.AspNetCore` version and target
-   framework support at implementation time.
-2. Confirm whether the first release supports only property-based inputs or also
-   a single contract-object argument for immutable constructor-only records.
-3. Decide whether missing descriptions are warnings or errors for production
-   packages.
-4. Confirm the inline attachment input shape and host size limits.
-5. Provide a host integration sample before adding the package to the default
-   solution build.
+- references the selected `ModelContextProtocol.AspNetCore` and Ark MCP package;
+- registers `AddMcpServer().WithHttpTransport()` and the generated
+  `WithArkMcpTools<SampleMcpHostContext>()`;
+- maps an authenticated `MapMcp("/mcp")` endpoint;
+- exposes at least one query, one mutating request/command, and the existing
+  cover upload/download contracts;
+- is exercised by an ASP.NET Core test host using the official SDK client,
+  including tool listing, dispatch, structured output, error handling, and
+  embedded binary download assertions.
+
+The sample must remain transport-neutral in its API and application assemblies;
+only the WebInterface host receives the MCP dependency.
+
+## Decisions and alternatives
+
+The following decisions close the design questions for the first implementation:
+
+1. **SDK and target:** use `ModelContextProtocol.AspNetCore` 2.2.0 with a
+   `net10.0` Ark MCP package. Upgrade only as a coordinated package and
+   lockfile change.
+2. **Input model:** generate one argument per public bindable contract property.
+   HTTP binding metadata is ignored. Constructor-only immutable records are
+   supported by generated constructor binding; a single contract-object argument
+   is not generated.
+3. **Descriptions:** missing contract descriptions produce `ARKMF037` as a
+   warning. Explicit attribute metadata wins, then type `<summary>`/`<remarks>`;
+   property `<summary>` supplies the parameter description.
+4. **Attachments:** use the confirmed `{ name, mimeType, blob }` JSON upload
+   shape, the shared attachment policy limits, and SDK embedded resource blocks
+   for bounded downloads.
+5. **Sample:** the mediator sample integration above must pass before the package
+   is added to the default solution build.
+
+Alternatives considered:
+
+- **SDK assembly scanning** (`WithToolsFromAssembly`) is the smallest host
+  change, but makes contract selection, metadata, and dispatch runtime
+  reflection-based and cannot enforce Ark's marker boundary.
+- **Hand-written SDK tools** work immediately, but duplicate wrappers and drift
+  from mediator processors and contract versioning.
+- **Ark source-generated tools** provide deterministic selection, typed
+  processor dispatch, XML metadata, and a single explicit registration surface.
+
+The recommendation is the source-generated Ark bridge. It uses the official SDK
+for protocol and HTTP behavior, while keeping discovery, contract binding, and
+SimpleInjector processor dispatch in Ark code.
 
 ## References
 
