@@ -18,7 +18,7 @@ public sealed class McpToolVersionMap : IMcpToolVersionMap
 {
     private readonly Dictionary<int, HashSet<string>> _toolsByVersion = [];
     private readonly HashSet<string> _toolsActiveAfterLastVersion;
-    private int _lastVersion;
+    private readonly int _lastVersion;
 
     /// <summary>Initializes a new instance of the <see cref="McpToolVersionMap"/> class.</summary>
     /// <param name="toolsByVersion">The generated tool names grouped by API version.</param>
@@ -32,14 +32,16 @@ public sealed class McpToolVersionMap : IMcpToolVersionMap
             toolsActiveAfterLastVersion ?? [],
             StringComparer.OrdinalIgnoreCase);
 
+        var lastVersion = 0;
         foreach (var pair in toolsByVersion)
         {
             ArgumentNullException.ThrowIfNull(pair.Value);
             _toolsByVersion.Add(
                 pair.Key,
                 new HashSet<string>(pair.Value, StringComparer.OrdinalIgnoreCase));
-            _lastVersion = Math.Max(_lastVersion, pair.Key);
+            lastVersion = Math.Max(lastVersion, pair.Key);
         }
+        _lastVersion = lastVersion;
     }
 
     /// <inheritdoc />
