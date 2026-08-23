@@ -17,20 +17,6 @@ public sealed class McpToolAttribute : Attribute
     public string? Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the model-facing description.
-    /// When <see langword="null"/>, the generator uses the contract
-    /// <c>&lt;remarks&gt;</c> documentation, when present.
-    /// </summary>
-    public string? Description { get; set; }
-
-    /// <summary>
-    /// Gets or sets the human-readable title.
-    /// When <see langword="null"/>, the generator uses the contract
-    /// <c>&lt;summary&gt;</c> documentation, when present.
-    /// </summary>
-    public string? Title { get; set; }
-
-    /// <summary>
     /// Gets or sets whether the tool permits anonymous calls.
     /// When not explicitly supplied, the generator uses
     /// <see cref="HttpEndpointAttribute.AllowAnonymous"/> when the contract has an HTTP

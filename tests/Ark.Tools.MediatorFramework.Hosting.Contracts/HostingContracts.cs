@@ -256,6 +256,7 @@ public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingUnexpected
 [GrpcService("Hosting")]
 [PolicyAuthorize(typeof(HostingScopePolicy))]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.authorized")]
 public sealed record HostingAuthorizedQuery : Solid.IQuery<HostingAuthorizedQuery, HostingResponse>;
 
 /// <summary>Query returning the authenticated synthetic caller.</summary>

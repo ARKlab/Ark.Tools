@@ -46,7 +46,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         "ARKMF040", "Missing MCP contract constructor", "MCP contract '{0}' has no constructor matching its input members",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
     private static readonly DiagnosticDescriptor MissingDescription = new(
-        "ARKMF037", "Missing MCP description", "MCP tool '{0}' has no XML or explicit description",
+        "ARKMF037", "Missing MCP description", "MCP tool '{0}' has no XML description",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true);
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -354,7 +354,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     {
         var response = model.ResponseType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var attachmentResponse = model.ResponseType is not null && IsAttachment(model.ResponseType);
-        var returnType = "global::System.Threading.Tasks.Task<global::ModelContextProtocol.Protocol.CallToolResult>";
+        var returnType = attachmentResponse
+            ? "global::System.Threading.Tasks.Task<global::ModelContextProtocol.Protocol.CallToolResult>"
+            : model.Kind == HandlerKind.Command
+                ? "global::System.Threading.Tasks.Task"
+                : "global::System.Threading.Tasks.Task<" + response + ">";
         var parameters = model.Properties.Select(property =>
             "[global::System.ComponentModel.Description(\"" + Escape(XmlDocumentation(property, "summary") ?? string.Empty) + "\")] "
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
@@ -388,8 +392,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .Append(string.Join(", ", parameters)).Append(model.Properties.Length > 0 ? ", " : string.Empty)
             .Append("global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken)").AppendLine();
         builder.AppendLine("    {");
-        builder.AppendLine("        try");
-        builder.AppendLine("        {");
         var constructor = FindConstructor(model.Type, model.Properties);
         builder.Append("            var request = new ").Append(model.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).Append("(");
         builder.Append(string.Join(", ", constructor!.Parameters.Select(parameter =>
@@ -416,7 +418,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToToolResultAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
             else
-                builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolResults.ToToolResult(result);");
+                builder.AppendLine("            return result;");
         }
         else if (model.Kind == HandlerKind.Request)
         {
@@ -425,26 +427,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToToolResultAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
             else
-                builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolResults.ToToolResult(result);");
+                builder.AppendLine("            return result;");
         }
         else
         {
             builder.AppendLine("            await container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>().ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
-            builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolResults.Empty;");
         }
-        builder.AppendLine("        }");
-        builder.AppendLine("        catch (global::ModelContextProtocol.McpException)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            throw;");
-        builder.AppendLine("        }");
-        builder.AppendLine("        catch (global::System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            throw;");
-        builder.AppendLine("        }");
-        builder.AppendLine("        catch (global::System.Exception exception)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            return global::Ark.Tools.MediatorFramework.Mcp.McpToolErrors.ToToolResult(exception);");
-        builder.AppendLine("        }");
         builder.AppendLine("    }");
     }
 

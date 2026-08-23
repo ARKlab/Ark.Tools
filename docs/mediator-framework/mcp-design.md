@@ -156,8 +156,6 @@ The first version supports these fields:
 | `McpToolAttribute` field | Meaning |
 | --- | --- |
 | `Name` | Optional stable MCP tool name; defaults to a normalized contract name. `[ApiGroup("group")]` prefixes the resolved name as `group.name`, and versioning inherits the `v{Introduced}` suffix. |
-| `Description` | Optional model-facing description; otherwise use the contract `<remarks>` XML documentation. |
-| `Title` | Optional human-readable display title; otherwise use the contract `<summary>` XML documentation. |
 | `ReadOnly` | MCP tool annotation; defaults to `true` for `IQuery<T>` and `false` for `IRequest<T>`/`ICommand`. |
 | `Destructive` | MCP tool annotation; defaults to `false` for `IQuery<T>` and `true` for `IRequest<T>`/`ICommand`. |
 | `Idempotent` | MCP tool annotation; defaults to `false`. |
@@ -176,13 +174,13 @@ empty successful result.
 
 The generator reads documentation comments from the Roslyn symbols in the
 selected contract assemblies. XML documentation is not loaded from files at
-runtime and does not require reflection over an XML file. Explicit attribute
-values take precedence over XML documentation:
+runtime and does not require reflection over an XML file. The generator uses
+the XML documentation directly:
 
 | Contract symbol | XML element | Generated MCP metadata |
 | --- | --- | --- |
-| Contract type | `<summary>` | `McpServerToolCreateOptions.Title` when `Title` is not explicitly set. |
-| Contract type | `<remarks>` | `McpServerToolCreateOptions.Description` when `Description` is not explicitly set. |
+| Contract type | `<summary>` | `McpServerToolCreateOptions.Title`. |
+| Contract type | `<remarks>` | `McpServerToolCreateOptions.Description`. |
 | Input property | `<summary>` | `System.ComponentModel.DescriptionAttribute` on the generated delegate parameter, which the SDK copies to that input-schema property. |
 
 Property `<remarks>` elements are not copied to parameter descriptions. A

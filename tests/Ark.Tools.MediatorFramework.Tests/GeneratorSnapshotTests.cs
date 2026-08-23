@@ -214,8 +214,6 @@ public sealed class GeneratorSnapshotTests
         var attribute = new McpToolAttribute();
 
         attribute.Name.Should().BeNull();
-        attribute.Description.Should().BeNull();
-        attribute.Title.Should().BeNull();
         attribute.ReadOnly.Should().BeTrue();
         attribute.Destructive.Should().BeFalse();
         attribute.Idempotent.Should().BeFalse();

@@ -29,6 +29,8 @@ public static class McpServerBuilderExtensions
         where TContext : IMcpToolContext
     {
         ArgumentNullException.ThrowIfNull(builder);
-        return TContext.RegisterMcpTools(builder).AddAuthorizationFilters();
+        return TContext.RegisterMcpTools(builder)
+            .AddAuthorizationFilters()
+            .WithRequestFilters(filters => filters.AddCallToolFilter(McpToolErrors.CreateFilter()));
     }
 }
