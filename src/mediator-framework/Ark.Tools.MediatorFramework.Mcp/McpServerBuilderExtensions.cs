@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
+using System.Reflection;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
 
@@ -45,8 +46,18 @@ public static class McpServerBuilderExtensions
         {
             var method = typeof(TContext).GetMethod(
                 "RegisterMcpTools",
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-            return method?.Invoke(null, [builder]) as IMcpServerBuilder ?? builder;
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException($"Generated MCP registration was not found for {typeof(TContext).FullName}.");
+            try
+            {
+                return (IMcpServerBuilder)(method.Invoke(null, [builder])
+                    ?? throw new InvalidOperationException($"Generated MCP registration returned null for {typeof(TContext).FullName}."));
+            }
+            catch (TargetInvocationException exception) when (exception.InnerException is not null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+                throw;
+            }
         }
     }
 }

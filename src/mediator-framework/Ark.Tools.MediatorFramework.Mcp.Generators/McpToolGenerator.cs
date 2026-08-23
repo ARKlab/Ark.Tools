@@ -193,7 +193,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var version = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString()
                 == "Ark.Tools.MediatorFramework.VersioningAttribute");
-        if (version is not null && GetInt(version, "Introduced") is var introduced && introduced > 0)
+        var introduced = version is null ? 0 : GetInt(version, "Introduced");
+        if (introduced > 0)
             name = name.EndsWith("v" + introduced, StringComparison.Ordinal) ? name : name + ".v" + introduced;
 
         if (name.Length is 0 or > 128 || name.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-' or '.')))

@@ -35,7 +35,7 @@ public static class McpAttachmentResults
 
         var resource = new BlobResourceContents
         {
-            Uri = "ark://" + Guid.NewGuid().ToString("N") + "/" + attachment.Name,
+            Uri = "ark://" + Guid.NewGuid().ToString("N") + "/" + Uri.EscapeDataString(attachment.Name),
             MimeType = attachment.ContentType,
             Blob = output.ToArray(),
         };
