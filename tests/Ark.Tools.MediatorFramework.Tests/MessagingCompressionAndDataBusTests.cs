@@ -223,7 +223,7 @@ public sealed class MessagingCompressionAndDataBusTests
             DateTimeOffset? dueTime,
             CancellationToken ctk)
         {
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         public async Task PublishAsync(
@@ -232,7 +232,7 @@ public sealed class MessagingCompressionAndDataBusTests
             ReadOnlySequence<byte> payload,
             CancellationToken ctk)
         {
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 }
