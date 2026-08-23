@@ -104,7 +104,7 @@ public static class NLogConfigurer
         {
             @this
                 .WithDatabaseTarget(config.SQLTableName ?? @this.AppName, config.SQLConnectionString!, config.Async)
-                .WithDatabaseRule("*", LogLevel.Info);
+                .WithDatabaseRule("*", _isProduction() ? LogLevel.Warn : LogLevel.Info);
         }
 
         if (!string.IsNullOrWhiteSpace(config.SmtpConnectionString) && config.MailTo is not null)
