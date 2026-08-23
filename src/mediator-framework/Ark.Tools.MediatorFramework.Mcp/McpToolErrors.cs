@@ -22,7 +22,7 @@ public static partial class McpToolErrors
     {
         ArgumentNullException.ThrowIfNull(exception);
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
-        var title = problemDetails.Title ?? "An unexpected error occurred.";
+        var title = problemDetails.Title ?? "An unexpected error occurred";
         var detail = problemDetails.Detail ?? "The tool call could not be completed.";
         var structuredContent = JsonSerializer.SerializeToElement(
             problemDetails,

@@ -21,9 +21,11 @@ public static class McpToolResults
         Justification = "The MCP SDK serializes generated tool result types at the tool boundary.")]
     public static CallToolResult ToToolResult<T>(T value)
     {
+        var structuredContent = System.Text.Json.JsonSerializer.SerializeToElement(value);
         return new CallToolResult
         {
-            StructuredContent = System.Text.Json.JsonSerializer.SerializeToElement(value),
+            Content = [new TextContentBlock { Text = structuredContent.GetRawText() }],
+            StructuredContent = structuredContent,
         };
     }
 }
