@@ -11,10 +11,22 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 /// <summary>Filters generated MCP tools according to the version route value.</summary>
 internal sealed class McpToolVersionSessionFilter : IPostConfigureOptions<HttpServerTransportOptions>
 {
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<
+        HttpServerTransportOptions,
+        object> _configuredOptions = [];
+
     /// <inheritdoc />
     public void PostConfigure(string? name, HttpServerTransportOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+
+        lock (_configuredOptions)
+        {
+            if (_configuredOptions.TryGetValue(options, out _))
+                return;
+
+            _configuredOptions.Add(options, new object());
+        }
 
         var configureSessionOptions = options.ConfigureSessionOptions;
         options.ConfigureSessionOptions = async (httpContext, serverOptions, cancellationToken) =>
