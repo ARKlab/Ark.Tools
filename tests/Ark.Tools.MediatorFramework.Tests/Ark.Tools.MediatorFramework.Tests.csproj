@@ -24,6 +24,8 @@
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions.Generators/Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Rebus.Generators/Ark.Tools.MediatorFramework.Rebus.Generators.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Mcp/Ark.Tools.MediatorFramework.Mcp.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Mcp.Generators/Ark.Tools.MediatorFramework.Mcp.Generators.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj"
                       OutputItemType="Analyzer"

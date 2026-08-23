@@ -11,6 +11,7 @@ using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Rebus;
 using Ark.Tools.Nodatime;
@@ -37,6 +38,12 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 /// </summary>
 [ArkGenerateMinimalApiForAssembly(typeof(Book_CreateRequest.V1))]
 public partial class SampleEndpointContext
+{
+}
+
+/// <summary>Selects the sample API assembly for generated MCP tool discovery.</summary>
+[ArkGenerateMcpToolsForAssembly(typeof(Book_CreateRequest.V1))]
+public partial class SampleMcpHostContext
 {
 }
 
@@ -167,6 +174,9 @@ public sealed class SampleStartup
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
         services.AddArkMessaging();
+        services.AddMcpServer()
+            .WithHttpTransport()
+            .WithArkMcpTools<SampleMcpHostContext>();
 
         // RFC 7807 ProblemDetails: map semantic domain exceptions consistently across hosts.
         services.AddArkProblemDetailsExceptionHandler();
@@ -205,6 +215,7 @@ public sealed class SampleStartup
             endpoints.MapArkEndpoints<SampleEndpointContext>(
                 versionPrefix: "/api/v{version}");
             endpoints.MapArkMinimalApiHost();
+            endpoints.MapMcp("/mcp").RequireAuthorization();
             endpoints.MapArkGrpcServicesFromAssembly<Book_CreateRequest.V1>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();

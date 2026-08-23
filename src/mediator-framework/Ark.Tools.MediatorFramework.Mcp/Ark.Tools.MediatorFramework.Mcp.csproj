@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <Description>Source-generated MCP tools for Ark.Tools MediatorFramework.</Description>
+    <PackageTags>Ark;C#;.NET;Mediator;MCP;Source Generator</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <PackageReference Include="SimpleInjector" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Mcp.Generators\Ark.Tools.MediatorFramework.Mcp.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <None Include="buildTransitive/Ark.Tools.MediatorFramework.Mcp.props" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+  <Target Name="IncludeGeneratorInPackage" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Mcp.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Mcp.Generators.dll"
+            Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"
+            Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Mcp.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Mcp.Generators.dll')" />
+    </ItemGroup>
+  </Target>
+</Project>

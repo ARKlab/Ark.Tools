@@ -95,6 +95,7 @@ public static class Book
 public static class Book_CreateRequest
 {
     /// <summary>Version one of the book creation request.</summary>
+    [McpTool(Name = "books.create", ReadOnly = false, Destructive = false)]
     [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1([property: HttpBody] Book.V1.Create Data) :
         IRequest<V1, Book.V1.Output>;
@@ -134,6 +135,7 @@ public static class Book_DeleteRequest
 public static class Book_GetQuery
 {
     /// <summary>Version one of the book query.</summary>
+    [McpTool(Name = "books.get")]
     [RequireScopePolicy(ApplicationScopes.BookRead)]
     public sealed record V1(Guid Id) : IQuery<V1, Book.V1.Output>;
 }

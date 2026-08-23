@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <Analyzer Include="$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Mcp.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Mcp.Generators.dll"
+              Condition="Exists('$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Mcp.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.MediatorFramework.Mcp.Generators.dll')" />
+  </ItemGroup>
+</Project>

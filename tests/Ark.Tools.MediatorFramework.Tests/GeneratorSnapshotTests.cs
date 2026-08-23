@@ -4,6 +4,8 @@
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.MediatorFramework.Mcp;
+using Ark.Tools.MediatorFramework.Mcp.Generators;
 using Ark.Tools.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
@@ -127,6 +129,28 @@ public sealed class GeneratorSnapshotTests
             """);
         grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
         grpc.Should().Contain("returns (stream string)");
+    }
+
+    [TestMethod]
+    public void McpGeneratorEmitsExplicitVersionedToolRegistration()
+    {
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [McpTool(Name = "books.search")]
+            [Versioning(Introduced = 2)]
+            public sealed record SearchBooks(string Text) : IQuery<SearchBooks, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("Name = \"books.search.v2\"");
+        result.Generated.Should().Contain("RegisterMcpTools");
+        result.Generated.Should().Contain("IQueryProcessor");
     }
 
     [TestMethod]
@@ -913,6 +937,7 @@ public sealed class GeneratorSnapshotTests
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(ArkGenerateMcpToolsForAssemblyAttribute).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "Incrementality",
