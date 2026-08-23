@@ -12,8 +12,8 @@ public static class McpAttachmentResults
     /// <param name="attachment">The attachment to read.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="maximumBytes">The maximum number of bytes to materialize.</param>
-    /// <returns>The MCP tool result containing the attachment.</returns>
-    public static async Task<CallToolResult> ToToolResultAsync(
+    /// <returns>The MCP embedded resource containing the attachment.</returns>
+    public static async Task<EmbeddedResourceBlock> ToEmbeddedResourceAsync(
         IArkAttachment attachment,
         long maximumBytes = 10_000_000,
         CancellationToken cancellationToken = default)
@@ -39,9 +39,9 @@ public static class McpAttachmentResults
             MimeType = attachment.ContentType,
             Blob = output.ToArray(),
         };
-        return new CallToolResult
+        return new EmbeddedResourceBlock
         {
-            Content = [new EmbeddedResourceBlock { Resource = resource }],
+            Resource = resource,
         };
     }
 }

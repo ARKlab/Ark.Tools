@@ -53,20 +53,17 @@ The SDK surface that this design relies on is:
 | `ModelContextProtocol.AspNetCore` | HTTP transport package; references the core server package. |
 | `AddMcpServer()` | Host service registration; returns `IMcpServerBuilder`. |
 | `WithHttpTransport(...)` | Host registration for Streamable HTTP and session options. |
-| `WithTools(IEnumerable<McpServerTool>)` | Generated explicit tool registration; avoids assembly-wide tool scanning. |
-| `McpServerTool.Create(Delegate, McpServerToolCreateOptions?)` | Generated bridge from a typed wrapper delegate to the SDK tool adapter. |
-| `McpServerToolCreateOptions` | Generated tool name, description, title, structured-content, and output-schema metadata. |
+| `WithTools<TToolType>()` | Generated explicit registration of an attributed tool type using the SDK's generic, AOT-friendly path. |
+| `McpServerToolTypeAttribute` / `McpServerToolAttribute` | Generated tool classes and methods, including tool metadata and structured-content behavior. |
+| `DescriptionAttribute` | Generated method and parameter descriptions used for tool and input-schema documentation. |
 | `EmbeddedResourceBlock` / `BlobResourceContents` | Download result content for binary attachments; the SDK serializes the blob as base64 with a URI and MIME type. |
 | `MapMcp(pattern)` | Host-owned ASP.NET Core endpoint mapping. |
 | `WithRequestFilters(...)` / `AddCallToolFilter(...)` | Host/application composition point for MCP request policy and error handling. |
 | `AddAuthorizationFilters()` | Host opt-in for SDK support for ASP.NET Core authorization attributes on MCP primitives. |
 
-The SDK's attribute discovery path (`[McpServerToolType]`,
-`[McpServerTool]`, and `WithToolsFromAssembly()`) is valid native SDK usage, but
-is not the default for Ark-generated tools. It scans assemblies and reconstructs
-tool metadata at runtime. The generated path supplies an explicit
-`IEnumerable<McpServerTool>` so selected contracts, names, schemas, and dispatch
-are deterministic.
+The generated path uses the SDK's generic `WithTools<TToolType>()` registration
+for each generated tool type. It avoids assembly-wide scanning while preserving
+the official `[McpServerToolType]` and `[McpServerTool]` metadata model.
 
 The SDK's current HTTP integration maps Streamable HTTP at the route supplied to
 `MapMcp`. Stateless mode is recommended when tools do not need
@@ -166,9 +163,9 @@ names across the selected surface. Names are stable API identifiers: changing
 one is a breaking MCP surface change even if the C# contract name is unchanged.
 
 `UseStructuredContent` is not an `McpToolAttribute` option. Every generated tool
-sets `McpServerToolCreateOptions.UseStructuredContent = true`; the SDK infers the
-output schema from the generated delegate return type. Commands still use an
-empty successful result.
+sets `McpServerToolAttribute.UseStructuredContent = true`; the SDK infers the
+output schema from the generated method return type. Commands still use an empty
+successful result.
 
 ### XML documentation mapping
 
@@ -179,16 +176,15 @@ the XML documentation directly:
 
 | Contract symbol | XML element | Generated MCP metadata |
 | --- | --- | --- |
-| Contract type | `<summary>` | `McpServerToolCreateOptions.Title`. |
-| Contract type | `<remarks>` | `McpServerToolCreateOptions.Description`. |
-| Input property | `<summary>` | `System.ComponentModel.DescriptionAttribute` on the generated delegate parameter, which the SDK copies to that input-schema property. |
+| Contract type | `<summary>` | `McpServerToolAttribute.Title`. |
+| Contract type | `<remarks>` | `System.ComponentModel.DescriptionAttribute` on the generated tool method. |
+| Input property | `<summary>` | `System.ComponentModel.DescriptionAttribute` on the generated method parameter, which the SDK copies to that input-schema property. |
 
 Property `<remarks>` elements are not copied to parameter descriptions. A
 missing type summary or remarks leaves that metadata unset and produces
 `ARKMF037`; a missing property summary leaves the parameter description unset
-without changing its binding. The generated `[Description]` attributes are
-required because the official SDK uses them when it creates a tool schema from
-a delegate.
+without changing its binding. The generated `[Description]` attributes are required because the official SDK
+uses them when it creates the tool metadata and input schema from the method.
 
 ### Supported handler kinds
 
@@ -326,26 +322,22 @@ generated fails at compile time.
 For each selected valid contract, the generator emits nested artifacts inside
 the decorated partial context:
 
-1. A private tool class containing the typed wrapper delegate and
-   `McpServerTool.Create` call.
-2. Generated `[System.ComponentModel.Description]` attributes on wrapper
+1. A generated nested tool type marked `[McpServerToolType]`, with a static
+   method marked `[McpServerTool]`.
+2. Generated `[System.ComponentModel.Description]` attributes on the tool method
    parameters whose values come from property `<summary>` documentation.
-3. Typed contract construction and dispatch through the appropriate
+3. A method-level `[Description]` from the contract `<remarks>` documentation.
+4. Typed contract construction and dispatch through the appropriate
    `IQueryProcessor`, `IRequestProcessor`, or `ICommandProcessor`.
-4. A generated `RegisterMcpTools` method on the context that chains one
-   `.WithTool(...)` call per tool in deterministic order.
-5. `IMcpToolContext` on the context, allowing the public
+5. A generated `RegisterMcpTools` method on the context that chains one
+   `.WithTools<ToolType>()` call per tool in deterministic order.
+6. `IMcpToolContext` on the context, allowing the public
    `WithArkMcpTools<TContext>` builder extension to invoke the registration
    method without reflection.
-6. Error boundaries that preserve cancellation and protocol exceptions, map
+7. Error boundaries that preserve cancellation and protocol exceptions, map
    mediator failures to `CallToolResult.IsError = true` with safe text and
    shared ProblemDetails structured content, and return a generic message for
    unexpected failures.
-
-The official SDK currently exposes `WithTools(IEnumerable<McpServerTool>)`, not
-a singular `WithTool`. The runtime package supplies the small `WithTool`
-adapter used by the generated chain; it delegates directly to the official
-`WithTools` registration primitive and performs no discovery or dispatch.
 
 Conceptually, generated source has this shape (names and argument details are
 illustrative):
@@ -356,26 +348,23 @@ public partial class McpHostContext : IMcpToolContext
     public IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
     {
         return builder
-            .WithTool(SearchBooksTool.Create());
+            .WithTools<SearchBooksTool>();
     }
 
-    private static class SearchBooksTool
+    [McpServerToolType]
+    public sealed class SearchBooksTool
     {
-        internal static McpServerTool Create()
-        {
-            return McpServerTool.Create(
-                (Func<string?, int, IServiceProvider, CancellationToken,
-                    Task<IReadOnlyList<BookSummary>>>)InvokeSearchBooks,
-                new McpServerToolCreateOptions
-                {
-                    Name = "books.search.v1",
-                    Title = "Searches the book catalogue.",
-                    Description = "Returns matching books ordered by relevance.",
-                    UseStructuredContent = true
-                });
-        }
-
-        private static async Task<IReadOnlyList<BookSummary>> InvokeSearchBooks(
+        [McpServerTool(
+            Name = "books.search.v1",
+            Title = "Searches the book catalogue.",
+            ReadOnly = true,
+            Destructive = false,
+            Idempotent = true,
+            OpenWorld = true,
+            UseStructuredContent = true)]
+        [Description("Returns matching books ordered by relevance.")]
+        [Authorize]
+        public static async Task<IReadOnlyList<BookSummary>> ExecuteAsync(
             [Description("Free-text terms to search for.")] string? text,
             [Description("Maximum number of results.")] int limit,
             IServiceProvider services,
@@ -397,14 +386,14 @@ public partial class McpHostContext : IMcpToolContext
 }
 ```
 
-`Description` in the example is generated from the `SearchBooksQuery.Text` and
-`SearchBooksQuery.Limit` property summaries. The final emitted code must use
-fully qualified names where needed and preserve the repository's generated-code
-conventions. It must not emit
-`[McpServerToolType]`, `WithToolsFromAssembly()`, or an assembly reflection scan.
-The context method and explicit one-tool registrations also prevent duplicate
-registration when another application tool assembly is registered separately by
-the host.
+The method `Description` in the example is generated from the contract
+`<remarks>`, while parameter descriptions come from the
+`SearchBooksQuery.Text` and `SearchBooksQuery.Limit` property summaries. The
+final emitted code must use fully qualified names where needed and preserve the
+repository's generated-code conventions. It does not use
+`WithToolsFromAssembly()` or an assembly reflection scan. The context method and
+explicit one-tool registrations also prevent duplicate registration when another
+application tool assembly is registered separately by the host.
 
 The generated wrapper catches `OperationCanceledException` only when the MCP
 cancellation token is signaled, allowing cancellation to propagate. It
@@ -435,7 +424,7 @@ affect generated output.
 ## Dispatch and lifetime semantics
 
 The MCP SDK supplies `IServiceProvider` and the operation cancellation token to
-the generated delegate. The wrapper resolves the SimpleInjector `Container`
+the generated static method. The wrapper resolves the SimpleInjector `Container`
 from the host service provider and obtains the appropriate
 `IRequestProcessor`, `IQueryProcessor`, or `ICommandProcessor`. It calls the
 processor's closed generic `ExecuteAsync` overload where available, or its

@@ -176,6 +176,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("RegisterMcpTools");
         result.Generated.Should().Contain("IQueryProcessor");
         result.Generated.Should().Contain("Task<string>");
+        result.Generated.Should().Contain("McpServerToolType");
+        result.Generated.Should().Contain("McpServerTool(");
+        result.Generated.Should().NotContain("McpServerTool.Create");
     }
 
     [TestMethod]

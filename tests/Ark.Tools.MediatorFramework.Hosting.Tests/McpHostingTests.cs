@@ -32,7 +32,19 @@ public sealed class McpHostingTests
             .ConfigureAwait(false);
 
         tools.Select(tool => tool.Name).Should().BeEquivalentTo(
-            ["hosting.query", "hosting.unexpected", "hosting.validation"]);
+            [
+                "hosting.attachment.download",
+                "hosting.attachment.upload",
+                "hosting.query",
+                "hosting.unexpected",
+                "hosting.validation",
+            ]);
+
+        var query = tools.Single(tool => tool.Name == "hosting.query");
+        query.ProtocolTool.OutputSchema.Should().NotBeNull();
+        query.ProtocolTool.OutputSchema!.Value.GetProperty("type").GetString().Should().Be("object");
+        query.ProtocolTool.OutputSchema.Value.GetProperty("properties").GetProperty("message").GetProperty("type")
+            .GetString().Should().Be("string");
     }
 
     /// <summary>Verifies an authenticated MCP client sees the protected generated tool.</summary>
@@ -122,6 +134,54 @@ public sealed class McpHostingTests
         var text = ((TextContentBlock)result.Content[0]).Text;
         text.Should().NotContain("synthetic handler failed");
         result.StructuredContent!.Value.GetProperty("status").GetInt32().Should().Be(500);
+    }
+
+    /// <summary>Verifies MCP attachment uploads are converted before processor dispatch.</summary>
+    [TestMethod]
+    public async Task UploadsAttachment()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.attachment.upload",
+            new Dictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["attachment"] = new Dictionary<string, object?>(StringComparer.Ordinal)
+                {
+                    ["name"] = "hello.txt",
+                    ["mimeType"] = "text/plain",
+                    ["blob"] = Convert.ToBase64String("hello attachment"u8.ToArray()),
+                },
+            },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        fixture.State.LastAttachmentName.Should().Be("hello.txt");
+        fixture.State.LastAttachmentContent.Should().Be("hello attachment");
+    }
+
+    /// <summary>Verifies MCP attachment downloads are returned as embedded resources.</summary>
+    [TestMethod]
+    public async Task DownloadsAttachment()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.attachment.download",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = "download.txt" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        result.Content.Should().ContainSingle();
+        var resource = ((EmbeddedResourceBlock)result.Content[0]).Resource;
+        resource.Should().BeOfType<BlobResourceContents>();
+        var blob = (BlobResourceContents)resource;
+        blob.Blob.SequenceEqual("downloaded content"u8.ToArray()).Should().BeTrue();
+        blob.MimeType.Should().Be("text/plain");
     }
 
     private static async Task<McpClient> _createClientAsync(

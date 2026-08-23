@@ -342,6 +342,7 @@ public sealed record HostingStreamItem
 [GrpcMethod("UploadHostingAttachment")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.attachment.upload")]
 public sealed record HostingAttachmentUploadRequest : Solid.IRequest<HostingAttachmentUploadRequest, HostingResponse>
 {
     /// <summary>Gets or sets the uploaded attachment.</summary>
@@ -365,6 +366,7 @@ public sealed record HostingAttachmentCollectionUploadRequest : Solid.IRequest<H
 
 /// <summary>Query returning a downloadable synthetic attachment.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/attachments/{name}", AllowAnonymous = true)]
+[McpTool(Name = "hosting.attachment.download")]
 public sealed record HostingAttachmentDownloadQuery : Solid.IQuery<HostingAttachmentDownloadQuery, IArkAttachment>
 {
     /// <summary>Gets or sets the attachment name.</summary>
