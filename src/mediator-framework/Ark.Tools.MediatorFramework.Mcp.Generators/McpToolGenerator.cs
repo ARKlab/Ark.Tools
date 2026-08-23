@@ -182,7 +182,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static ContractModel? CreateModel(
         INamedTypeSymbol type,
         Compilation compilation,
-        IReadOnlyDictionary<string, string> documentationFiles,
+        IReadOnlyDictionary<string, XDocument> documentationFiles,
         SourceProductionContext context)
     {
         var toolAttribute = type.GetAttributes().First(attribute =>
@@ -308,9 +308,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return null;
     }
 
-    private static IReadOnlyDictionary<string, string> GetDocumentationFiles(Compilation compilation)
+    private static IReadOnlyDictionary<string, XDocument> GetDocumentationFiles(Compilation compilation)
     {
-        var documentationFiles = new Dictionary<string, string>(StringComparer.Ordinal);
+        var documentationFiles = new Dictionary<string, XDocument>(StringComparer.Ordinal);
         foreach (var reference in compilation.References)
         {
             if (reference is not PortableExecutableReference portableReference
@@ -329,8 +329,19 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 Path.Combine(directory, "..", assembly.Name + ".xml"),
             };
             var documentationFile = candidates.FirstOrDefault(File.Exists);
-            if (documentationFile is not null)
-                documentationFiles[assembly.Name] = Path.GetFullPath(documentationFile);
+            if (documentationFile is null)
+                continue;
+
+            try
+            {
+                documentationFiles[assembly.Name] = XDocument.Load(documentationFile);
+            }
+            catch (IOException)
+            {
+            }
+            catch (XmlException)
+            {
+            }
         }
 
         return documentationFiles;
@@ -339,7 +350,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static string? XmlDocumentation(
         ISymbol? symbol,
         string element,
-        IReadOnlyDictionary<string, string> documentationFiles)
+        IReadOnlyDictionary<string, XDocument> documentationFiles)
     {
         if (symbol is null)
             return null;
@@ -351,21 +362,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             var documentationId = symbol.GetDocumentationCommentId();
             if (documentationId is not null)
             {
-                try
-                {
-                    var document = XDocument.Load(documentationFile);
-                    var member = document.Root?
-                        .Element("members")?
-                        .Elements("member")
-                        .FirstOrDefault(candidate => candidate.Attribute("name")?.Value == documentationId);
-                    xml = member?.ToString(SaveOptions.DisableFormatting) ?? string.Empty;
-                }
-                catch (IOException)
-                {
-                }
-                catch (XmlException)
-                {
-                }
+                var member = documentationFile.Root?
+                    .Element("members")?
+                    .Elements("member")
+                    .FirstOrDefault(candidate => candidate.Attribute("name")?.Value == documentationId);
+                xml = member?.ToString(SaveOptions.DisableFormatting) ?? string.Empty;
             }
         }
         if (string.IsNullOrWhiteSpace(xml))
