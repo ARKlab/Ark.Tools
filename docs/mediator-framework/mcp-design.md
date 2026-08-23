@@ -580,7 +580,7 @@ generate.
 ## Versioning and compatibility
 
 MCP tool names are stable across hosted API versions. A host maps
-`/mcp/{version}`, and each session receives only tools whose contract lifetime
+`/mcp/v{version}`, and each session receives only tools whose contract lifetime
 matches the route version:
 `Introduced <= version` and (`Retired` is unset or `version < Retired`). The
 generator emits one tool per contract and does not append a version suffix.

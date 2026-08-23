@@ -220,7 +220,7 @@ public sealed class McpHostingTests
         var transport = new HttpClientTransport(
             new HttpClientTransportOptions
             {
-                Endpoint = new Uri("http://localhost/mcp/" + version),
+                Endpoint = new Uri("http://localhost/mcp/v" + version),
                 TransportMode = HttpTransportMode.StreamableHttp,
             },
             httpClient,

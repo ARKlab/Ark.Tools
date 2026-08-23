@@ -48,7 +48,7 @@ builder.Services
     })
     .WithArkMcpTools<McpHostContext>();
 
-app.MapMcp("/mcp/{version}").RequireAuthorization();
+app.MapMcp("/mcp/v{version}").RequireAuthorization();
 ```
 
 `MapMcp` remains host-owned. Configure authentication, authorization,

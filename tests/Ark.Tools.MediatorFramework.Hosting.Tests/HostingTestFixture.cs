@@ -245,7 +245,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         app.UseAuthentication();
         app.UseAuthorization();
         ((IApplicationBuilder)app).UseSimpleInjector(Container);
-        app.MapMcp("/mcp/{version}");
+        app.MapMcp("/mcp/v{version}");
         _hosts.Add(app);
         return app;
     }

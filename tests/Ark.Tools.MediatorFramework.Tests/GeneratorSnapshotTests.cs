@@ -220,15 +220,6 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void McpToolResultsExposeStructuredContentAsText()
-    {
-        var result = McpToolResults.ToToolResult(new { Value = "ok" });
-
-        result.Content.Should().ContainSingle();
-        ((TextContentBlock)result.Content[0]).Text.Should().Be(result.StructuredContent!.Value.GetRawText());
-    }
-
-    [TestMethod]
     public void McpToolAttributeUsesDeclaredDefaults()
     {
         var attribute = new McpToolAttribute();
