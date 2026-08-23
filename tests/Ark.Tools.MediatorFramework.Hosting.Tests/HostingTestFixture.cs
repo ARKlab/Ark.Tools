@@ -231,6 +231,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.WebHost.UseTestServer();
         builder.Services.AddSingleton(Container);
         builder.Services.AddSingleton(_principalProvider);
+        builder.Services.AddSimpleInjector(Container, simpleInjector => simpleInjector.AddAspNetCore());
         builder.Services
             .AddAuthentication(TestAuthenticationHandler._schemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
@@ -243,6 +244,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
+        ((IApplicationBuilder)app).UseSimpleInjector(Container);
         app.MapMcp("/mcp");
         _hosts.Add(app);
         return app;

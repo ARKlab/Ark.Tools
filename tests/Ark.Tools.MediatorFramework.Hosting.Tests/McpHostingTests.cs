@@ -79,10 +79,9 @@ public sealed class McpHostingTests
             new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = 7, ["value"] = "from-mcp" },
             cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
-        Console.WriteLine(((TextContentBlock)result.Content[0]).Text);
         result.IsError.Should().NotBe(true);
         result.StructuredContent.Should().NotBeNull();
-        result.StructuredContent!.Value.GetProperty("Message").GetString().Should().Be("7:from-mcp");
+        result.StructuredContent!.Value.GetProperty("message").GetString().Should().Be("7:from-mcp");
     }
 
     /// <summary>Verifies validation failures become safe structured MCP errors.</summary>
@@ -98,12 +97,11 @@ public sealed class McpHostingTests
             new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "invalid" },
             cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
-        Console.WriteLine(((TextContentBlock)result.Content[0]).Text);
-        Console.WriteLine(result.StructuredContent?.GetRawText());
         result.IsError.Should().BeTrue();
         result.Content.Should().ContainSingle();
-        ((TextContentBlock)result.Content[0]).Text.Should().Be(
-            "Validation failed: One or more validation errors occurred.");
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .StartWith("Validation failed: ")
+            .And.Contain("The synthetic value is invalid.");
         result.StructuredContent!.Value.GetProperty("title").GetString().Should().Be("Validation failed");
     }
 

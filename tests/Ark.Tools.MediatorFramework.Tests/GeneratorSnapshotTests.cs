@@ -163,7 +163,7 @@ public sealed class GeneratorSnapshotTests
             "public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
         result.Generated.Should().Contain("RegisterMcpTools");
         result.Generated.Should().Contain("IQueryProcessor");
-        result.Generated.Should().Contain("Task<global::ModelContextProtocol.Protocol.CallToolResult>");
+        result.Generated.Should().Contain("Task<string>");
     }
 
     [TestMethod]

@@ -459,7 +459,8 @@ MCP has no HTTP status-code result for a tool call. The SDK represents ordinary
 tool failures as `CallToolResult.IsError = true`; protocol failures remain JSON-RPC
 errors. The generated wrapper therefore:
 
-- returns structured `CallToolResult` values for query/request results;
+- returns the contract `TResult` for query/request tools so the SDK can
+  serialize the declared result schema;
 - maps a top-level `IArkAttachment` to an embedded binary resource and an
   attachment collection to multiple embedded resource blocks;
 - returns no content for a successful command;

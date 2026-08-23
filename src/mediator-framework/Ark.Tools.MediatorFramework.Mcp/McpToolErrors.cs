@@ -5,7 +5,6 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using NLog;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -14,8 +13,6 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 /// <summary>Maps mediator failures to safe MCP tool errors.</summary>
 public static partial class McpToolErrors
 {
-    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
     /// <summary>Creates a call-tool filter that maps mediator failures to safe MCP results.</summary>
     /// <returns>The MCP call-tool error filter.</returns>
     public static McpRequestFilter<CallToolRequestParams, CallToolResult> CreateFilter()
@@ -85,7 +82,6 @@ public static partial class McpToolErrors
             }
             catch (Exception exception)
             {
-                _logger.Error(exception, System.Globalization.CultureInfo.InvariantCulture, "MCP filter caught exception");
                 return ToToolResult(exception);
             }
         };
