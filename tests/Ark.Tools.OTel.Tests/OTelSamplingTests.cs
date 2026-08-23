@@ -551,8 +551,7 @@ public class ArkFailurePromotionProcessorTests
 
         using var act = pipeline.StartRoot("OP_EXCEPTION");
         act.Should().NotBeNull();
-        act!.AddEvent(new ActivityEvent("exception",
-            tags: new ActivityTagsCollection { ["exception.message"] = "boom" }));
+        act!.AddException(new InvalidOperationException("boom"));
         act.Stop();
 
         pipeline.Exported.Should().ContainSingle(

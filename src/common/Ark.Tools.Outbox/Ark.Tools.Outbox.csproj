@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="NLog" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
   </ItemGroup>
 

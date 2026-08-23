@@ -187,7 +187,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-04](azure-functions/AZM-04-envelope-and-serialization.md) | Message headers, payload model, and JSON serialization runtime | Complete |
 | [AZM-04A](azure-functions/AZM-04A-messagepack-protobuf-codecs.md) | MessagePack and protobuf codecs | Complete |
 | [AZM-05](azure-functions/AZM-05-transport-abstraction-and-inmemory.md) | Transport abstraction and first-class InMemory transport | Complete |
-| [AZM-06](azure-functions/AZM-06-pipeline-and-context-propagation.md) | Incoming/outgoing pipeline and context propagation | Pending |
+| [AZM-06](azure-functions/AZM-06-pipeline-and-context-propagation.md) | Incoming/outgoing pipeline and context propagation | Complete |
 | [AZM-07](azure-functions/AZM-07-compression-and-databus.md) | Compression and shared DataBus claim-check | Pending |
 | [AZM-07A](azure-functions/AZM-07A-azure-blob-databus.md) | Azure Blob DataBus provider and IaC lifecycle contract | Pending |
 | [AZM-08](azure-functions/AZM-08-restricted-bus.md) | Restricted `IBus` shim | Pending |

@@ -26,6 +26,8 @@ namespace Ark.Tools.AspNetCore.OTel;
 /// </summary>
 public static class Ex
 {
+    private const string _mediatorMessagingInstrumentationName = "Ark.MediatorFramework.Messaging";
+
     /// <summary>
     /// Adds Ark ASP.NET Core instrumentation to an exporter-agnostic OpenTelemetry builder.
     /// </summary>
@@ -78,6 +80,7 @@ public static class Ex
                     services.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
                     failedTraceRegistry))
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
+                .AddSource(_mediatorMessagingInstrumentationName)
                 .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -101,6 +104,7 @@ public static class Ex
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
             .WithMetrics(metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
+                .AddMeter(_mediatorMessagingInstrumentationName)
                 .AddSqlClientInstrumentation());
     }
 
