@@ -71,8 +71,23 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
     {
         ArgumentException.ThrowIfNullOrEmpty(attachmentId);
         ArgumentException.ThrowIfNullOrEmpty(expectedSha256);
-        if (expectedLength < 0)
-            throw new ArgumentOutOfRangeException(nameof(expectedLength));
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedLength);
+        byte[] expectedHash;
+        try
+        {
+            expectedHash = Convert.FromHexString(expectedSha256);
+        }
+        catch (FormatException)
+        {
+            expectedHash = [];
+        }
+
+        if (expectedHash.Length != 32)
+        {
+            throw new MessagingFailFastException(
+                MessagingFailFastReason.AttachmentIntegrityFailure,
+                "The payload attachment SHA-256 digest is invalid.");
+        }
 
         ctk.ThrowIfCancellationRequested();
         if (!_attachments.TryGetValue(attachmentId, out var attachment)
@@ -173,7 +188,9 @@ internal sealed class Sha256ValidatingReadStream : Stream
         int count,
         CancellationToken cancellationToken)
     {
-        var read = await _inner.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+        var read = await _inner.ReadAsync(
+            buffer.AsMemory(offset, count),
+            cancellationToken).ConfigureAwait(false);
         _validate(buffer.AsSpan(offset, read), read == 0);
         return read;
     }
@@ -207,6 +224,7 @@ internal sealed class Sha256ValidatingReadStream : Stream
         if (_validated)
             return;
 
+        byte[] expectedHash;
         _hash.AppendData(bytes);
         _read += bytes.Length;
         if (_read > _expectedLength)
@@ -214,10 +232,18 @@ internal sealed class Sha256ValidatingReadStream : Stream
         if (!endOfStream && _read != _expectedLength)
             return;
 
+        try
+        {
+            expectedHash = Convert.FromHexString(_expectedSha256);
+        }
+        catch (FormatException)
+        {
+            _fail("The payload attachment SHA-256 digest is invalid.");
+            return;
+        }
+
         if (_read != _expectedLength
-            || !CryptographicOperations.FixedTimeEquals(
-                Convert.FromHexString(_expectedSha256),
-                _hash.GetHashAndReset()))
+            || !CryptographicOperations.FixedTimeEquals(expectedHash, _hash.GetHashAndReset()))
         {
             _fail("The payload attachment SHA-256 digest does not match its envelope metadata.");
         }

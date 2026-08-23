@@ -53,10 +53,13 @@ public sealed class MessagingPayloadReceiver
                     "The payload attachment headers are invalid.");
             }
 
-            await using var stream = await _dataBus
+            var stream = await _dataBus
                 .OpenReadAsync(attachmentId, expectedLength, expectedSha256, ctk)
                 .ConfigureAwait(false);
-            payload = await _readBoundedAsync(stream, expectedLength, ctk).ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
+            {
+                payload = await _readBoundedAsync(stream, expectedLength, ctk).ConfigureAwait(false);
+            }
         }
 
         if (headers.TryGetValue(MessagingHeaders.ContentEncoding, out var encoding))
@@ -122,10 +125,20 @@ public sealed class MessagingPayloadReceiver
         bool useBrotli,
         CancellationToken ctk)
     {
-        await using var source = new SequenceReadStream(compressed);
-        await using var decompressor = useBrotli
+        using var source = new SequenceReadStream(compressed);
+        Stream decompressor = useBrotli
             ? new BrotliStream(source, CompressionMode.Decompress, leaveOpen: false)
             : new GZipStream(source, CompressionMode.Decompress, leaveOpen: false);
+        await using (decompressor.ConfigureAwait(false))
+        {
+            return await _decompressAsync(decompressor, ctk).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<ReadOnlySequence<byte>> _decompressAsync(
+        Stream decompressor,
+        CancellationToken ctk)
+    {
 
         var output = new ArrayBufferWriter<byte>();
         var rented = ArrayPool<byte>.Shared.Rent(

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -60,6 +61,10 @@ public sealed class MessagingPayloadSender
         ctk.ThrowIfCancellationRequested();
 
         headers[MessagingHeaders.ContentType] = codec.ContentType;
+        headers.Remove(MessagingHeaders.ContentEncoding);
+        headers.Remove(MessagingHeaders.PayloadAttachmentId);
+        headers.Remove(MessagingHeaders.PayloadAttachmentLength);
+        headers.Remove(MessagingHeaders.PayloadAttachmentSha256);
         var buffer = new ArrayBufferWriter<byte>();
         var writer = new CompressionSwitchingBufferWriter(
             buffer,
@@ -72,11 +77,11 @@ public sealed class MessagingPayloadSender
         if (writer.Compressed)
             headers[MessagingHeaders.ContentEncoding] =
                 _algorithm == CompressionAlgorithm.Brotli ? "br" : "gzip";
-        else
-            headers.Remove(MessagingHeaders.ContentEncoding);
 
         var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
-        var nativeSize = transport.MeasureNative(headers, payload);
+        var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
+            ?? new ReadOnlyDictionary<string, string>(headers);
+        var nativeSize = transport.MeasureNative(readOnlyHeaders, payload);
         var mustOffload = payload.Length > _network.DataBusOffloadThresholdBytes
             || (transport.MaximumInlineEnvelopeBytes is { } ceiling && nativeSize > ceiling);
         if (!mustOffload)
@@ -94,7 +99,7 @@ public sealed class MessagingPayloadSender
         headers[MessagingHeaders.PayloadAttachmentSha256] = _sha256Hex(payload);
 
         if (transport.MaximumInlineEnvelopeBytes is { } attachmentCeiling
-            && transport.MeasureNative(headers, ReadOnlySequence<byte>.Empty) > attachmentCeiling)
+            && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > attachmentCeiling)
         {
             throw new MessagingFailFastException(
                 MessagingFailFastReason.OversizedHeaders,

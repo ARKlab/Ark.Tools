@@ -297,14 +297,14 @@ transport coverage lands with AZM-10/AZM-11.
 
 ## Acceptance
 
-- [ ] Gzip and Brotli are implemented behind participant configuration, with
+- [x] Gzip and Brotli are implemented behind participant configuration, with
   header-driven reads that always decode both.
-- [ ] Final compressed bytes, not original bytes, determine DataBus offload;
+- [x] Final compressed bytes, not original bytes, determine DataBus offload;
   the complete inline envelope is also measured so headers and transport
   encoding cannot exceed a transport limit.
-- [ ] Claim-check is transport-neutral and proven over InMemory.
-- [ ] Consumers retrieve, validate, decompress, and deserialize transparently.
-- [ ] Provider lifecycle cleanup, not consumers, owns deletion.
-- [ ] The [task board](../README.md) status for AZM-07 is updated to this task's acceptance state.
+- [x] Claim-check is transport-neutral and proven over InMemory.
+- [x] Consumers retrieve, validate, decompress, and deserialize transparently.
+- [x] Provider lifecycle cleanup, not consumers, owns deletion.
+- [x] The [task board](../README.md) status for AZM-07 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

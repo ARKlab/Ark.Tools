@@ -153,6 +153,29 @@ not an Azure Functions hosting mechanism. Registration validates the transport
 capabilities against each network and fails immediately when a required
 capability is missing.
 
+### Compression and claim-check
+
+Compression is a participant-owned sender setting. Payloads below
+`CompressionMinimumSizeBytes` remain uncompressed; eligible payloads use the
+configured gzip or Brotli encoding and carry `amf1-content-encoding`. Receivers
+always select decompression from that header, not from their local defaults.
+
+The runtime serializes, compresses, measures the complete native envelope, and
+then performs the claim-check decision. If the compressed payload or measured
+transport envelope exceeds the network thresholds, the exact compressed bytes
+are stored in the shared `IMessagingDataBus`; the message carries the opaque
+attachment ID, byte length, and SHA-256 headers instead. Receivers fetch and
+validate the attachment before bounded decompression and deserialization.
+Consumers never delete attachments.
+
+Register one provider and store for every participant on a network. The
+first-class provider is `InMemoryMessagingDataBus` for tests and custom hosts;
+production providers own credentials and lifecycle cleanup. Configure the
+provider's minimum attachment lifetime to cover scheduled delivery and known
+retry/lock windows, plus entity TTL, backlog, outages, deployment delays, and
+outbox dwell time. A rolled-back enqueue can leave an orphan that provider
+lifecycle cleanup eventually removes.
+
 ## 5. Add messaging pipeline steps
 
 Incoming and outgoing steps are opt-in and host-local. Compose them around the
