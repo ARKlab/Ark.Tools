@@ -19,6 +19,7 @@ reviews — lives in [`progress/`](progress/README.md).
 | --- | --- |
 | [`design.md`](design.md) | Target architecture: pure handlers, Roslyn incremental generators, transports, DI, error handling, user context, attachments. |
 | [`azure-functions-design.md`](azure-functions-design.md) | Proposed .NET isolated Azure Functions HTTP hosting architecture and parity contract. |
+| [`mcp-design.md`](mcp-design.md) | Proposed source-generated MCP tool bridge using the official ASP.NET Core MCP SDK. |
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 
