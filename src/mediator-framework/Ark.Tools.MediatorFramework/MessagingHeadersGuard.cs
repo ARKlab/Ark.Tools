@@ -8,7 +8,7 @@ internal static class MessagingHeadersGuard
     public static bool IsReserved(string key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        return key.StartsWith("amf1-", StringComparison.Ordinal);
+        return key.StartsWith("amf1-", StringComparison.OrdinalIgnoreCase);
     }
 
     public static void ThrowIfReserved(string key)

@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 
 using NodaTime;
 
@@ -64,11 +65,13 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
                     Metrics._trackTimeInQueue(timeInQueue, messageType);
                 }
             }
-#pragma warning disable ERP022
-            catch
+            catch (Exception exception) when (
+                exception is not OutOfMemoryException
+                and not StackOverflowException
+                and not AccessViolationException)
             {
+                _ = exception;
             }
-#pragma warning restore ERP022
         }
         finally
         {
@@ -76,11 +79,13 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
             {
                 Metrics._trackMessageProcessing(stopwatch.Elapsed, messageType, operationResult);
             }
-#pragma warning disable ERP022
-            catch
+            catch (Exception exception) when (
+                exception is not OutOfMemoryException
+                and not StackOverflowException
+                and not AccessViolationException)
             {
+                _ = exception;
             }
-#pragma warning restore ERP022
         }
     }
 

@@ -299,6 +299,8 @@ public sealed partial class MessagingRuntimeTests
             token.Should().Be(cancellationToken);
         var action = () => context.Headers[MessagingHeaders.MessageType] = "spoofed";
         action.Should().Throw<InvalidOperationException>();
+        var differentlyCasedAction = () => context.Headers["AMF1-message-type"] = "spoofed";
+        differentlyCasedAction.Should().Throw<InvalidOperationException>();
     }
 
     [TestMethod]
@@ -339,6 +341,7 @@ public sealed partial class MessagingRuntimeTests
         {
             producer.SetIdFormat(ActivityIdFormat.W3C);
             producer.Start();
+            producer.AddBaggage("tenant", "a,b=value");
 
             await new OpenTelemetryOutgoingStep()
                 .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None)
@@ -351,6 +354,7 @@ public sealed partial class MessagingRuntimeTests
         headers[MessagingHeaders.DiagnosticId].Should().Be(diagnosticId);
         headers.Should().NotContainKey("traceparent");
         headers.Should().NotContainKey("tracestate");
+        headers["baggage"].Should().Be("tenant=a%2Cb%3Dvalue");
 
         Activity? received = null;
         using var listener = new ActivityListener
@@ -369,6 +373,7 @@ public sealed partial class MessagingRuntimeTests
         received.Should().NotBeNull();
         received!.ParentId.Should().Be(diagnosticId);
         received.TraceId.Should().Be(producerTraceId);
+        received.Baggage.Should().Contain(x => x.Key == "tenant" && x.Value == "a,b=value");
     }
 
     [TestMethod]

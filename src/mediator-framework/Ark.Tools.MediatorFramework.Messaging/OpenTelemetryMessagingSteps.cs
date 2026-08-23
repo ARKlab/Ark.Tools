@@ -34,7 +34,11 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
             {
                 var separator = item.IndexOf('=', StringComparison.Ordinal);
                 if (separator > 0)
-                    activity.AddBaggage(item[..separator].Trim(), item[(separator + 1)..].Trim());
+                {
+                    var key = Uri.UnescapeDataString(item[..separator].Trim());
+                    var value = Uri.UnescapeDataString(item[(separator + 1)..].Trim());
+                    activity.AddBaggage(key, value);
+                }
             }
         }
         try
@@ -44,7 +48,7 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
         }
         catch (Exception exception)
         {
-            activity?.SetStatus(ActivityStatusCode.Error, exception.ToString());
+            activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
             activity?.AddException(exception);
             throw;
         }
@@ -64,7 +68,10 @@ public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
         if (Activity.Current is { Id: not null } activity)
         {
             context.Headers[MessagingHeaders.DiagnosticId] = activity.Id;
-            var baggage = string.Join(",", activity.Baggage.Select(item => $"{item.Key}={item.Value}"));
+            var baggage = string.Join(
+                ",",
+                activity.Baggage.Select(item =>
+                    $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value ?? string.Empty)}"));
             if (baggage.Length > 0)
                 context.Headers["baggage"] = baggage;
         }
