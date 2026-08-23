@@ -60,6 +60,38 @@ public static class MessagingServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Registers the shared DataBus provider.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="dataBus">The provider shared by all network participants.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingDataBus(
+        this IServiceCollection services,
+        IMessagingDataBus dataBus)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(dataBus);
+        services.AddSingleton(dataBus);
+        services.AddSingleton<IMessagingDataBus>(dataBus);
+        return services;
+    }
+
+    /// <summary>Registers the in-memory DataBus provider.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="clock">The clock used for attachment expiry.</param>
+    /// <param name="lifetime">The attachment lifetime.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkInMemoryMessagingDataBus(
+        this IServiceCollection services,
+        NodaTime.IClock? clock = null,
+        NodaTime.Duration? lifetime = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        return services.AddArkMessagingDataBus(
+            new InMemoryMessagingDataBus(
+                clock ?? NodaTime.SystemClock.Instance,
+                lifetime ?? NodaTime.Duration.FromHours(1)));
+    }
+
     /// <summary>Registers the first-class in-memory messaging transport.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="networks">The resolved networks using the transport.</param>

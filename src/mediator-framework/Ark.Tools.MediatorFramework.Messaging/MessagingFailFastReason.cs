@@ -34,5 +34,8 @@ public enum MessagingFailFastReason
     AttachmentIntegrityFailure,
 
     /// <summary>The required second-level handler is missing.</summary>
-    MissingSecondLevelHandler
+    MissingSecondLevelHandler,
+
+    /// <summary>The configured payload compression or decompression failed.</summary>
+    InvalidCompressedPayload
 }
