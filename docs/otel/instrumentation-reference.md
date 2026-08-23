@@ -292,5 +292,6 @@ Example:
 | Adaptive sampling | `src/common/Ark.Tools.OTel/ArkAdaptiveSampler.cs`, `ArkAdaptiveSamplerOptions.cs` |
 | Failure promotion and pre-filtering | `src/common/Ark.Tools.OTel/ArkFailurePromotionProcessor.cs`, `ArkPreFilterProcessor.cs` |
 | Rebus | `src/common/Ark.Tools.Rebus/OpenTelemetryStep.cs`, `OpenTelemetryProcessingMetricsStep.cs` |
+| MediatorFramework messaging | `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/OpenTelemetryMessagingSteps.cs`, `OpenTelemetryProcessingMetricsStep.cs` |
 | Outbox | `src/common/Ark.Tools.Outbox/OutboxProcessorBase.cs`, `src/common/Ark.Tools.Outbox.OTel/Ex.cs` |
 | ResourceWatcher | `src/resourcewatcher/Ark.Tools.ResourceWatcher/ResourceWatcherDiagnosticSource.cs`, `src/resourcewatcher/Ark.Tools.ResourceWatcher.OTel/Ex.cs` |

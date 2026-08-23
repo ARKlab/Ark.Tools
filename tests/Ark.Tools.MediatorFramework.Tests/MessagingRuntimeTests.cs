@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
@@ -365,6 +366,70 @@ public sealed partial class MessagingRuntimeTests
         received.Should().NotBeNull();
         received!.ParentId.Should().Be(diagnosticId);
         received.TraceId.Should().Be(producerTraceId);
+    }
+
+    [TestMethod]
+    public async Task OpenTelemetryProcessingMetricsStepRecordsQueueAndProcessingMetrics()
+    {
+        var measurements = new List<(string Name, double Value, string? MessageType, string? OperationResult)>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == OpenTelemetryProcessingMetricsStep.MeterName)
+                meterListener.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<double>((instrument, value, tags, _) =>
+        {
+            string? messageType = null;
+            string? operationResult = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "message.type")
+                    messageType = tag.Value?.ToString();
+                else if (tag.Key == "operation.result")
+                    operationResult = tag.Value?.ToString();
+            }
+
+            measurements.Add((instrument.Name, value, messageType, operationResult));
+        });
+        listener.Start();
+
+        var sentTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(2);
+        var successContext = new MessagingIncomingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [MessagingHeaders.MessageType] = "tests.Message",
+                [MessagingHeaders.SentTime] = sentTime.ToString("O", CultureInfo.InvariantCulture)
+            },
+            default);
+        var step = new OpenTelemetryProcessingMetricsStep();
+        await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        var failureContext = new MessagingIncomingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [MessagingHeaders.MessageType] = "tests.Message"
+            },
+            default);
+        Func<Task> processFailure = () => step.ProcessAsync(
+            failureContext,
+            () => throw new InvalidOperationException("handler failed"),
+            CancellationToken.None);
+        await processFailure.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
+
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.rebus.message_time_in_queue_success"
+            && x.MessageType == "tests.Message"
+            && x.Value > 1500);
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.rebus.message_processing_time"
+            && x.MessageType == "tests.Message"
+            && x.OperationResult == "success");
+        measurements.Should().Contain(x =>
+            x.Name == "ark.tools.rebus.message_processing_time"
+            && x.MessageType == "tests.Message"
+            && x.OperationResult == "failure");
     }
 
     private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
