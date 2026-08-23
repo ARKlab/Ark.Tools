@@ -241,7 +241,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             title,
             description,
             GetBool(toolAttribute, "ReadOnly", kind == HandlerKind.Query),
-            GetBool(toolAttribute, "Destructive", kind != HandlerKind.Query),
+            GetBool(toolAttribute, "Destructive", false),
             GetBool(toolAttribute, "Idempotent", false),
             GetBool(toolAttribute, "OpenWorld", true),
             kind.Value,
@@ -313,7 +313,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine();
         builder.Append("partial class ").Append(contextType.Name).AppendLine();
         builder.AppendLine("{");
-        builder.AppendLine("    internal static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
+        builder.AppendLine("    internal static global::ModelContextProtocol.Server.IMcpServerBuilder RegisterMcpTools(global::ModelContextProtocol.Server.IMcpServerBuilder builder)");
         builder.AppendLine("    {");
         builder.AppendLine("        return builder");
         for (var index = 0; index < contracts.Length; index++)
