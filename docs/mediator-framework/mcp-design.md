@@ -16,6 +16,8 @@ Protocol (MCP) server. It is a design baseline, not an implementation commitment
   negotiation.
 - Preserve SimpleInjector as the handler container and the existing decorator
   pipeline.
+- Support transport-neutral attachment uploads and downloads without exposing
+  HTTP multipart or server file-system details to handlers.
 - Make the host responsible for authentication, authorization policy,
   middleware, endpoint routing, and MCP session mode.
 - Keep the design compatible with trimming and future Native AOT work.
@@ -24,7 +26,7 @@ Protocol (MCP) server. It is a design baseline, not an implementation commitment
 
 - Replacing `ModelContextProtocol.AspNetCore` or implementing an MCP transport.
 - Mapping an MCP endpoint from generated code.
-- Generating MCP resources or prompts in the first iteration.
+- Generating standalone MCP resources or prompts in the first iteration.
 - Making every mediator contract an MCP tool implicitly.
 - Adding MCP concepts such as `McpServer`, `HttpContext`, or
   `RequestContext<T>` to application handlers.
@@ -51,6 +53,7 @@ The SDK surface that this design relies on is:
 | `WithTools(IEnumerable<McpServerTool>)` | Generated explicit tool registration; avoids assembly-wide tool scanning. |
 | `McpServerTool.Create(Delegate, McpServerToolCreateOptions?)` | Generated bridge from a typed wrapper delegate to the SDK tool adapter. |
 | `McpServerToolCreateOptions` | Generated tool name, description, title, structured-content, and output-schema metadata. |
+| `EmbeddedResourceBlock` / `BlobResourceContents` | Download result content for binary attachments; the SDK serializes the blob as base64 with a URI and MIME type. |
 | `MapMcp(pattern)` | Host-owned ASP.NET Core endpoint mapping. |
 | `WithRequestFilters(...)` / `AddCallToolFilter(...)` | Host/application composition point for MCP request policy and error handling. |
 | `AddAuthorizationFilters()` | Host opt-in for SDK support for ASP.NET Core authorization attributes on MCP primitives. |
@@ -124,14 +127,18 @@ Add a transport-neutral `McpToolAttribute` to
 `Ark.Tools.MediatorFramework`:
 
 ```csharp
+/// <summary>Searches the book catalogue.</summary>
+/// <remarks>Returns matching books ordered by relevance.</remarks>
 [McpTool(
     Name = "books.search",
-    Description = "Searches the book catalogue.",
     ReadOnly = true,
     Idempotent = true)]
 public sealed record SearchBooksQuery : IQuery<IReadOnlyList<BookSummary>>
 {
+    /// <summary>Free-text terms to search for.</summary>
     public string? Text { get; init; }
+
+    /// <summary>Maximum number of results.</summary>
     public int Limit { get; init; } = 20;
 }
 ```
@@ -145,23 +152,42 @@ The first version supports these fields:
 
 | `McpToolAttribute` field | Meaning |
 | --- | --- |
-| `Name` | Optional stable MCP tool name; defaults to a normalized contract name. |
-| `Description` | Optional model-facing description; otherwise use contract XML documentation when available. |
-| `Title` | Optional human-readable display title. |
-| `ReadOnly` | MCP tool annotation; defaults conservatively to `false`. |
-| `Destructive` | MCP tool annotation; defaults conservatively to `true` for mutating tools. |
+| `Name` | Optional stable MCP tool name; defaults to a normalized contract name and inherits the `v{Introduced}` suffix. |
+| `Description` | Optional model-facing description; otherwise use the contract `<remarks>` XML documentation. |
+| `Title` | Optional human-readable display title; otherwise use the contract `<summary>` XML documentation. |
+| `ReadOnly` | MCP tool annotation; defaults to `true` for `IQuery<T>` and `false` for `IRequest<T>`/`ICommand`. |
+| `Destructive` | MCP tool annotation; defaults to `false` for `IQuery<T>` and `true` for `IRequest<T>`/`ICommand`. |
 | `Idempotent` | MCP tool annotation; defaults to `false`. |
 | `OpenWorld` | MCP tool annotation; defaults to `true`. |
-| `UseStructuredContent` | Requests an output schema and structured result content. |
 
 The generator validates names against MCP tool-name rules and reports duplicate
 names across the selected surface. Names are stable API identifiers: changing
 one is a breaking MCP surface change even if the C# contract name is unchanged.
 
-`UseStructuredContent` is recommended for request/query responses. It causes the
-generated `McpServerToolCreateOptions` to advertise the response type as the
-output schema. Commands use an empty successful result unless an explicit
-response contract is introduced in a later design.
+`UseStructuredContent` is not an `McpToolAttribute` option. Every generated tool
+sets `McpServerToolCreateOptions.UseStructuredContent = true`; the SDK infers the
+output schema from the generated delegate return type. Commands still use an
+empty successful result.
+
+### XML documentation mapping
+
+The generator reads documentation comments from the Roslyn symbols in the
+selected contract assemblies. XML documentation is not loaded from files at
+runtime and does not require reflection over an XML file. Explicit attribute
+values take precedence over XML documentation:
+
+| Contract symbol | XML element | Generated MCP metadata |
+| --- | --- | --- |
+| Contract type | `<summary>` | `McpServerToolCreateOptions.Title` when `Title` is not explicitly set. |
+| Contract type | `<remarks>` | `McpServerToolCreateOptions.Description` when `Description` is not explicitly set. |
+| Input property | `<summary>` | `System.ComponentModel.DescriptionAttribute` on the generated delegate parameter, which the SDK copies to that input-schema property. |
+
+Property `<remarks>` elements are not copied to parameter descriptions. A
+missing type summary or remarks leaves that metadata unset and produces
+`ARKMF037`; a missing property summary leaves the parameter description unset
+without changing its binding. The generated `[Description]` attributes are
+required because the official SDK uses them when it creates a tool schema from
+a delegate.
 
 ### Supported handler kinds
 
@@ -189,13 +215,55 @@ The wrapper constructs the contract using its accessible `init`/`set`
 properties, then invokes the typed handler. `ServerSet`, write-only, indexer,
 pointer, ref, and unsupported member shapes are rejected rather than silently
 omitted. Nullable members and members with defaults remain optional according to
-the generated JSON schema.
+the generated JSON schema. An `IArkAttachment` property is the one exception to
+ordinary JSON member binding and is described in [Attachment mapping](#attachment-mapping).
 
 The first version does not map HTTP-only binding metadata such as
-`HttpRoute`, `HttpQuery`, `HttpBody`, multipart attachments, or ETags. Those
-members are either ordinary MCP JSON properties or explicitly rejected when
-their semantics cannot be represented safely. MCP input is JSON and is not
-treated as an HTTP envelope.
+`HttpRoute`, `HttpQuery`, `HttpBody`, or ETags. Those members are either ordinary
+MCP JSON properties or explicitly rejected when their semantics cannot be
+represented safely. MCP input is JSON and is not treated as an HTTP envelope.
+
+### Attachment mapping
+
+`IArkAttachment` remains the handler-facing abstraction. MCP has no standardized
+binary upload parameter for `tools/call`; its `arguments` value is JSON. The
+generated bridge therefore exposes an attachment input as a bounded
+`McpAttachmentInput` object supplied by `Ark.Tools.MediatorFramework.Mcp`:
+
+```json
+{
+  "attachment": {
+    "name": "report.pdf",
+    "mimeType": "application/pdf",
+    "blob": "<base64-encoded bytes>"
+  }
+}
+```
+
+`McpAttachmentInput` accepts an opaque file name, MIME type, and base64 `blob`.
+The generated wrapper validates and converts it to `ArkAttachment` before
+assigning the contract property. A collection property accepts an array of the
+same objects. The bridge does not dereference client-supplied URIs, paths, or
+network locations; a host or application may define a separate trusted upload
+store when inline base64 is unsuitable. Upload size, decoded-size, file-count,
+MIME allow-list, and request-body limits are enforced before handler dispatch.
+Names are sanitized with the existing `ArkAttachmentName` rules.
+
+For a top-level `IArkAttachment` response, the generated wrapper reads the
+attachment stream within the configured download limit and returns an
+`EmbeddedResourceBlock` containing `BlobResourceContents`. A collection response
+returns one embedded resource content block per attachment. Each resource has
+an opaque `ark://` URI containing a generated attachment identifier and the
+sanitized file name, plus the attachment MIME type. The URI is an identifier,
+not a server file path or an implicit download endpoint.
+
+The official SDK serializes binary embedded resources as the MCP resource shape
+(`uri`, `mimeType`, and base64 `blob`). It does not convert PDFs or other binary
+formats to images; rendering is a client decision. The MCP specification allows
+embedded resources in tool results and recommends that servers using them
+implement the resources capability, but this design does not generate standalone
+`resources/list` or `resources/read` handlers. Large downloads should use a
+host-owned resource-link or download service instead of unbounded embedding.
 
 ## Host selection and generated API
 
@@ -218,7 +286,7 @@ builder.Services
     {
         options.SessionMode = HttpServerSessionMode.Stateless;
     })
-    .WithArkMcpToolsFromAssembly<McpHostContext>();
+    .WithArkMcpTools<McpHostContext>();
 ```
 
 `ArkGenerateMcpToolsForAssemblyAttribute` is applied to a partial context and
@@ -226,89 +294,105 @@ accepts a marker type declared by each contract assembly. Multiple markers
 compose one generated surface. A contract without `[McpTool]` is not exposed.
 
 The generated extension is an `IMcpServerBuilder` extension named
-`WithArkMcpToolsFromAssembly<TContext>`. It is emitted only when the invocation
-and marker are present, so a package reference alone does not change a host's
-surface. A second overload for direct current-assembly generation may be added
-only if an implementation need is demonstrated; assembly marker selection is
-the default because it is explicit and works for contracts in referenced
-projects.
+`WithArkMcpTools<TContext>`. It registers every generated MCP tool belonging to
+the selected `TContext`; there is no `FromAssembly` suffix because the context
+is the registration boundary. It is emitted only when the invocation and marker
+are present, so a package reference alone does not change a host's surface.
+Assembly marker selection remains explicit and works for contracts in
+referenced projects.
 
 ## Generated artifacts
 
-For each selected valid contract, the generator emits:
+For each selected valid contract, the generator emits nested artifacts inside
+the decorated partial context:
 
-1. A private static wrapper delegate with the contract's typed input arguments,
-   `IServiceProvider`, and `CancellationToken`.
-2. Typed contract construction and handler resolution through the existing
-   SimpleInjector container.
-3. One `McpServerTool` instance created with `McpServerTool.Create`.
-4. A deterministic registry passed to the SDK's
-   `WithTools(IEnumerable<McpServerTool>)`.
-5. A public builder extension that registers the complete registry exactly once.
+1. A private tool class containing the typed wrapper delegate and
+   `McpServerTool.Create` call.
+2. Generated `[System.ComponentModel.Description]` attributes on wrapper
+   parameters whose values come from property `<summary>` documentation.
+3. Typed contract construction and dispatch through the appropriate
+   `IQueryProcessor`, `IRequestProcessor`, or `ICommandProcessor`.
+4. A generated `RegisterMcpTools` method on the context that chains one
+   `.WithTool(...)` call per tool in deterministic order.
+5. A public `WithArkMcpTools<TContext>` builder extension that invokes the
+   context registration method exactly once.
+
+The official SDK currently exposes `WithTools(IEnumerable<McpServerTool>)`, not
+a singular `WithTool`. The runtime package supplies the small `WithTool`
+adapter used by the generated chain; it delegates directly to the official
+`WithTools` registration primitive and performs no discovery or dispatch.
 
 Conceptually, generated source has this shape (names and argument details are
 illustrative):
 
 ```csharp
-public static IMcpServerBuilder WithArkMcpToolsFromAssembly<TContext>(
-    this IMcpServerBuilder builder)
+public partial class McpHostContext
 {
-    return builder.WithTools(
-    [
-        McpServerTool.Create(
-            (Func<string?, int, IServiceProvider, CancellationToken,
-                Task<IReadOnlyList<BookSummary>>>)InvokeSearchBooks,
-            new McpServerToolCreateOptions
-            {
-                Name = "books.search",
-                Description = "Searches the book catalogue.",
-                UseStructuredContent = true,
-                OutputSchemaType = typeof(IReadOnlyList<BookSummary>)
-            })
-    ]);
-}
-```
-
-The wrapper itself is explicit:
-
-```csharp
-private static async Task<IReadOnlyList<BookSummary>> InvokeSearchBooks(
-    string? text,
-    int limit,
-    IServiceProvider services,
-    CancellationToken cancellationToken)
-{
-    var request = new SearchBooksQuery
+    internal static IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
     {
-        Text = text,
-        Limit = limit
-    };
-    var container = services.GetRequiredService<SimpleInjector.Container>();
-    var handler = container.GetInstance<IQueryHandler<SearchBooksQuery,
-        IReadOnlyList<BookSummary>>>();
-    return await handler.ExecuteAsync(request, cancellationToken)
-        .ConfigureAwait(false);
+        return builder
+            .WithTool(SearchBooksTool.Create());
+    }
+
+    private static class SearchBooksTool
+    {
+        internal static McpServerTool Create()
+        {
+            return McpServerTool.Create(
+                (Func<string?, int, IServiceProvider, CancellationToken,
+                    Task<IReadOnlyList<BookSummary>>>)InvokeSearchBooks,
+                new McpServerToolCreateOptions
+                {
+                    Name = "books.search.v1",
+                    Title = "Searches the book catalogue.",
+                    Description = "Returns matching books ordered by relevance.",
+                    UseStructuredContent = true
+                });
+        }
+
+        private static async Task<IReadOnlyList<BookSummary>> InvokeSearchBooks(
+            [Description("Free-text terms to search for.")] string? text,
+            [Description("Maximum number of results.")] int limit,
+            IServiceProvider services,
+            CancellationToken cancellationToken)
+        {
+            var request = new SearchBooksQuery
+            {
+                Text = text,
+                Limit = limit
+            };
+            var processor = services
+                .GetRequiredService<SimpleInjector.Container>()
+                .GetInstance<IQueryProcessor>();
+            return await processor
+                .ExecuteAsync<IReadOnlyList<BookSummary>>(request, cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
 }
 ```
 
-The final emitted code must use fully qualified names where needed and preserve
-the repository's generated-code conventions. It must not emit
+`Description` in the example is generated from the `SearchBooksQuery.Text` and
+`SearchBooksQuery.Limit` property summaries. The final emitted code must use
+fully qualified names where needed and preserve the repository's generated-code
+conventions. It must not emit
 `[McpServerToolType]`, `WithToolsFromAssembly()`, or an assembly reflection scan.
-The explicit SDK registry also prevents duplicate registration when another
-application tool assembly is registered separately by the host.
+The context method and explicit one-tool registrations also prevent duplicate
+registration when another application tool assembly is registered separately by
+the host.
 
 ## Incremental generator pipeline
 
 The generator follows the existing `IIncrementalGenerator` pattern:
 
-1. Discover invocations of `WithArkMcpToolsFromAssembly<TContext>`.
+1. Discover invocations of `WithArkMcpTools<TContext>`.
 2. Resolve each `ArkGenerateMcpToolsForAssemblyAttribute` marker to an assembly
    name.
 3. Discover `[McpTool]` contracts in the current and selected referenced
    assemblies.
-4. Resolve `IRequest<T>`, `IQuery<T>`, or `ICommand` and their exact typed
-   handler interfaces.
-5. Extract properties, descriptions, nullability, defaults, and MCP metadata.
+4. Resolve `IRequest<T>`, `IQuery<T>`, or `ICommand` and validate the
+   corresponding processor registration.
+5. Extract properties, XML descriptions, nullability, defaults, and MCP metadata.
 6. Validate names, shapes, handler registrations, and duplicate tools.
 7. Emit one deterministic registry and wrapper set.
 
@@ -320,14 +404,18 @@ affect generated output.
 
 The MCP SDK supplies `IServiceProvider` and the operation cancellation token to
 the generated delegate. The wrapper resolves the SimpleInjector `Container`
-from the host service provider and obtains the exact closed handler type. The
-host must establish the SimpleInjector async scope before MCP dispatch, using the
-same composition boundary as the Minimal API host.
+from the host service provider and obtains the appropriate
+`IRequestProcessor`, `IQueryProcessor`, or `ICommandProcessor`. It calls the
+processor's closed generic `ExecuteAsync` overload where available, or its
+ordinary dynamic overload for the standard `IRequest<T>`, `IQuery<T>`, and
+`ICommand` contracts. The host must establish the SimpleInjector async scope
+before MCP dispatch, using the same composition boundary as the other
+transports.
 
-The generator does not use `IRequestProcessor` or `IQueryProcessor`; those
-dynamic processors are the reflection path this transport is designed to avoid.
-Decorators, validation, authorization decorators, user context providers, and
-telemetry remain in the existing handler graph.
+The processors are the supported dynamic-dispatch path; generated code does not
+resolve handler types directly. Decorators, validation, authorization
+decorators, user context providers, and telemetry therefore remain in the
+existing handler graph.
 
 `CancellationToken` is never exposed as a tool argument. Cancellation from the
 MCP client must reach the handler and stop downstream work. No generated wrapper
@@ -340,6 +428,8 @@ tool failures as `CallToolResult.IsError = true`; protocol failures remain JSON-
 errors. The generated wrapper therefore:
 
 - returns typed query/request values for the SDK to serialize;
+- maps a top-level `IArkAttachment` to an embedded binary resource and an
+  attachment collection to multiple embedded resource blocks;
 - returns no content for a successful command;
 - does not translate domain exceptions into HTTP status codes;
 - does not expose exception messages unless the host's approved MCP error
@@ -375,7 +465,7 @@ Host responsibilities include:
 
 - calling `AddMcpServer().WithHttpTransport(...)`;
 - choosing stateless or stateful sessions;
-- calling the generated `WithArkMcpToolsFromAssembly<TContext>()`;
+- calling the generated `WithArkMcpTools<TContext>()`;
 - mapping `MapMcp("/mcp")` at the desired route;
 - applying authentication and authorization to the MCP endpoint;
 - calling `AddAuthorizationFilters()` when SDK per-tool authorization
@@ -385,7 +475,7 @@ Host responsibilities include:
 - establishing the SimpleInjector scope and registering the
   `IContextProvider<ClaimsPrincipal>` implementation;
 - composing NLog, OpenTelemetry, ProblemDetails-adjacent logging, rate limits,
-  request-size limits, and health checks;
+  request-size limits, attachment upload/download limits, and health checks;
 - deciding whether legacy SSE compatibility is required.
 
 `MapMcp` returns an endpoint convention builder. The host may apply
@@ -418,7 +508,11 @@ The implementation must:
 - avoid returning internal exception details;
 - avoid logging complete tool arguments when they may contain secrets or
   personal data;
-- preserve cancellation and request limits configured by the host.
+- preserve cancellation and request limits configured by the host;
+- bound inline attachment uploads and embedded attachment downloads before
+  materializing content;
+- validate attachment MIME types and content independently of client metadata;
+- never fetch a client-supplied attachment URI from the server.
 
 Icons, MCP Apps metadata, Tasks, resources, prompts, and custom protocol
 capabilities are not generated in the first version. They can be added as
@@ -436,11 +530,12 @@ The initial set should include:
 | `ARKMF031` | Error | Duplicate MCP tool name in one generated surface. |
 | `ARKMF032` | Error | Contract is not a supported request, query, or command. |
 | `ARKMF033` | Error | MCP contract has an unsupported input member shape. |
-| `ARKMF034` | Error | No exact handler registration can be resolved. |
+| `ARKMF034` | Error | No compatible mediator processor registration can be resolved. |
 | `ARKMF035` | Error | MCP metadata is contradictory or invalid. |
 | `ARKMF036` | Error | Marker context is not partial or assembly selection is invalid. |
 | `ARKMF037` | Warning | Tool has no description or XML documentation. |
 | `ARKMF038` | Error | MCP name collides with a generated tool from another marker. |
+| `ARKMF039` | Error | MCP attachment input or output has an unsupported shape. |
 
 Diagnostics point to the `[McpTool]` or marker attribute location. Invalid
 contracts are omitted from the registry; valid independent tools continue to
@@ -448,28 +543,36 @@ generate.
 
 ## Versioning and compatibility
 
-MCP tool names are not HTTP routes and do not inherit `{version}` expansion from
-`HttpEndpointAttribute`. One `[McpTool]` declaration produces one tool name.
-Breaking input or output changes require a new explicit tool name, such as
-`books.search.v2`, while the old declaration may remain during migration.
+MCP tool names are not HTTP routes and do not expand once per hosted API version.
+The effective name inherits the contract's introduction version:
+`Name = "books.search"` with `[Versioning(Introduced = 2)]` becomes
+`books.search.v2`; the default name also receives the suffix. The generator
+emits one tool for the introduction version only, not one tool for every later
+active version. `Retired` prevents a contract from being selected after its
+retirement, but does not create additional names.
 
-`VersioningAttribute`, `HttpRouteAttribute`, and HTTP status metadata do not
-control MCP tool exposure. If a future requirement needs version negotiation,
-the design should add an explicit MCP name/alias model rather than silently
-creating multiple tools with ambiguous schemas.
+Breaking input or output changes require a new contract and introduction
+version, while the old declaration may remain during migration. If an explicit
+name already ends in the matching `v{Introduced}` suffix, the generator does not
+append it twice. `HttpRouteAttribute` and HTTP status metadata do not control
+MCP tool exposure.
 
 ## Testing and release gates
 
 Implementation must add generator snapshot coverage for:
 
 - same-assembly and referenced-assembly marker selection;
-- deterministic names and descriptions;
+- deterministic versioned names and XML-derived descriptions;
+- XML property summaries copied to generated parameter descriptions;
 - query, request, and command wrappers;
 - nullable and defaulted input members;
 - structured output schema metadata;
+- inline attachment upload conversion, size/MIME limits, and rejected URI input;
+- single and collection attachment downloads as embedded text/binary resources;
 - duplicate names and invalid names;
 - unsupported properties and handler kinds;
-- missing handler registrations;
+- missing processor registrations;
+- generation only for the contract's `Introduced` version;
 - multiple marker composition without duplicate tools;
 - no output when no marker or `[McpTool]` is present.
 
@@ -477,14 +580,16 @@ Runtime/integration coverage must use the official SDK and an ASP.NET Core test
 host to verify:
 
 - `ListTools` exposes the generated names and input schemas;
-- `CallTool` dispatches through the exact SimpleInjector handler;
+- `CallTool` dispatches through the registered mediator processor;
 - decorators and cancellation are preserved;
 - structured results are emitted for query/request tools;
+- attachment downloads preserve sanitized names, MIME types, and binary bytes;
 - command calls return a successful empty result;
 - validation and domain failures become safe tool errors;
 - endpoint authorization and host policies remain host-owned;
 - stateless and stateful SDK transport setup are not conflated;
-- generated registration does not require `WithToolsFromAssembly`.
+- generated registration does not require `WithToolsFromAssembly`;
+- the generated context method chains one registration per tool.
 
 Release gates are `dotnet build`, `dotnet test`, generated-source inspection
 under `obj/.../generated`, and API-surface review for every new public
@@ -499,8 +604,7 @@ must be included in the same dependency change.
    a single contract-object argument for immutable constructor-only records.
 3. Decide whether missing descriptions are warnings or errors for production
    packages.
-4. Decide whether structured output is the default for all non-command tools or
-   an explicit opt-in.
+4. Confirm the inline attachment input shape and host size limits.
 5. Provide a host integration sample before adding the package to the default
    solution build.
 
@@ -509,6 +613,7 @@ must be included in the same dependency change.
 - [Official MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)
 - [SDK getting started](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/getting-started.md)
 - [SDK tools](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/tools/tools.md)
+- [SDK embedded resources](https://csharp.sdk.modelcontextprotocol.io/v2/concepts/tools/tools.html#embedded-resources)
 - [SDK transports](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/docs/concepts/transports/transports.md)
 - [MCP specification: tools](https://modelcontextprotocol.io/specification/2025-11-25/server/tools)
 - [Microsoft Learn: .NET AI and MCP](https://learn.microsoft.com/dotnet/ai/get-started-mcp)
