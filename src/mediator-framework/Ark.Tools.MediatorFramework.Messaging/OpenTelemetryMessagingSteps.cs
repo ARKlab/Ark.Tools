@@ -19,9 +19,12 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
         Func<Task> next,
         CancellationToken cancellationToken)
     {
-        context.Headers.TryGetValue("traceparent", out var traceparent);
-        context.Headers.TryGetValue("tracestate", out var tracestate);
-        var hasParent = ActivityContext.TryParse(traceparent, tracestate, out var parent);
+        context.Headers.TryGetValue(MessagingHeaders.DiagnosticId, out var diagnosticId);
+        var hasParent = ActivityContext.TryParse(
+            diagnosticId,
+            traceState: null,
+            isRemote: true,
+            out var parent);
         if (!hasParent)
             parent = default;
         using var activity = _source.StartActivity("amf.message.process", ActivityKind.Consumer, parent);
@@ -42,23 +45,10 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
         catch (Exception exception)
         {
             activity?.SetStatus(ActivityStatusCode.Error, exception.ToString());
-            _recordException(activity, exception);
+            activity?.AddException(exception);
             throw;
         }
 
-    }
-
-    private static void _recordException(Activity? activity, Exception exception)
-    {
-        if (activity is null)
-            return;
-
-        activity.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
-        {
-            ["exception.type"] = exception.GetType().FullName,
-            ["exception.message"] = exception.Message,
-            ["exception.stacktrace"] = exception.ToString()
-        }));
     }
 }
 
@@ -73,9 +63,7 @@ public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
     {
         if (Activity.Current is { Id: not null } activity)
         {
-            context.Headers["traceparent"] = activity.Id;
-            if (activity.TraceStateString is not null)
-                context.Headers["tracestate"] = activity.TraceStateString;
+            context.Headers[MessagingHeaders.DiagnosticId] = activity.Id;
             var baggage = string.Join(",", activity.Baggage.Select(item => $"{item.Key}={item.Value}"));
             if (baggage.Length > 0)
                 context.Headers["baggage"] = baggage;

@@ -13,6 +13,7 @@ using MessagePack.Resolvers;
 using Microsoft.Extensions.DependencyInjection;
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
@@ -321,6 +322,49 @@ public sealed partial class MessagingRuntimeTests
         headers.Should().NotContainKey("ark-user-email");
         restored.FindFirst(ClaimTypes.Email).Should().BeNull();
         restored.IsInRole("admin").Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task OpenTelemetryStepsPropagateAzureDiagnosticId()
+    {
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var outgoing = new MessagingOutgoingContext(headers, "books");
+        string diagnosticId;
+        ActivityTraceId producerTraceId;
+        using (var producer = new Activity("producer"))
+        {
+            producer.SetIdFormat(ActivityIdFormat.W3C);
+            producer.Start();
+
+            await new OpenTelemetryOutgoingStep()
+                .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            diagnosticId = producer.Id!;
+            producerTraceId = producer.TraceId;
+        }
+
+        headers[MessagingHeaders.DiagnosticId].Should().Be(diagnosticId);
+        headers.Should().NotContainKey("traceparent");
+        headers.Should().NotContainKey("tracestate");
+
+        Activity? received = null;
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == OpenTelemetryIncomingStep.ActivitySourceName,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ActivityStopped = activity => received = activity
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        var incoming = new MessagingIncomingContext(headers, default);
+        await new OpenTelemetryIncomingStep()
+            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        received.Should().NotBeNull();
+        received!.ParentId.Should().Be(diagnosticId);
+        received.TraceId.Should().Be(producerTraceId);
     }
 
     private sealed class RecordingOutgoingStep : IMessagingOutgoingStep

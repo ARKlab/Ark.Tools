@@ -61,7 +61,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         catch (Exception exception)
         {
             activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
-            _recordException(activity, exception);
+            activity?.AddException(exception);
             throw;
         }
     }
@@ -89,18 +89,4 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         return context;
     }
 
-    private static void _recordException(Activity? activity, Exception exception)
-    {
-        if (activity is null)
-            return;
-
-        activity.AddEvent(new ActivityEvent(
-            "exception",
-            tags: new ActivityTagsCollection
-            {
-                ["exception.type"] = exception.GetType().FullName,
-                ["exception.message"] = exception.Message,
-                ["exception.stacktrace"] = exception.ToString()
-            }));
-    }
 }

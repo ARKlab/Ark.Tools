@@ -71,4 +71,7 @@ public static class MessagingHeaders
 
     /// <summary>User roles header.</summary>
     public const string UserRoles = "ark-user-roles";
+
+    /// <summary>W3C-encoded activity identifier used for messaging trace propagation.</summary>
+    public const string DiagnosticId = "Diagnostic-Id";
 }

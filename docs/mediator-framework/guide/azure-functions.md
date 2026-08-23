@@ -166,9 +166,10 @@ and cannot be overridden.
 `ark-user-*` claims used by the existing Rebus integration; email claims are
 intentionally excluded. Register them only when the host provides a principal
 accessor. `OpenTelemetryIncomingStep` and
-`OpenTelemetryOutgoingStep` propagate W3C trace context and baggage and are also
-opt-in. Exceptions and cancellation pass through unchanged; settlement remains
-the dispatch layer's responsibility.
+`OpenTelemetryOutgoingStep` propagate the Azure SDK-compatible W3C-encoded
+`Diagnostic-Id` and baggage headers and are also opt-in. Exceptions and
+cancellation pass through unchanged; settlement remains the dispatch layer's
+responsibility.
 
 ## 6. Configure local settings
 

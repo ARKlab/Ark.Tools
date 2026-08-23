@@ -43,9 +43,9 @@ Rebus provides this through `IPipeline` and direction-specific steps.
    identifiers and contracts.
 4. Implement the existing `ark-user-*` propagation behavior as an opt-in
    built-in step.
-5. Implement an opt-in OpenTelemetry step that propagates W3C
-   `traceparent`, `tracestate`, and `baggage` and creates/continues an
-   activity around message processing.
+5. Implement an opt-in OpenTelemetry step that propagates a W3C-encoded
+   `Diagnostic-Id` and `baggage` and creates/continues an activity around
+   message processing.
 6. Ensure outgoing steps can add headers before serialization and incoming
    steps can restore context before handler resolution.
 7. Reject custom attempts to override reserved routing, content, encoding,
@@ -221,8 +221,8 @@ public sealed class UserContextIncomingStep : IMessagingIncomingStep
 }
 ```
 
-The opt-in OpenTelemetry step sketch — W3C `traceparent`/`tracestate`/`baggage`
-propagation with an `Activity` around processing:
+The opt-in OpenTelemetry step sketch — Azure SDK-compatible W3C
+`Diagnostic-Id`/`baggage` propagation with an `Activity` around processing:
 
 ```csharp
 namespace Ark.MediatorFramework.Messaging;
@@ -237,9 +237,9 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
         Func<Task> next,
         CancellationToken cancellationToken)
     {
-        context.Headers.TryGetValue("traceparent", out var traceparent);
-        ActivityContext.TryParse(traceparent,
-            context.Headers.GetValueOrDefault("tracestate"), out var parent);
+        context.Headers.TryGetValue(MessagingHeaders.DiagnosticId, out var diagnosticId);
+        ActivityContext.TryParse(
+            diagnosticId, traceState: null, isRemote: true, out var parent);
 
         using var activity = _source.StartActivity(
             "amf.message.process", ActivityKind.Consumer, parent);
@@ -257,7 +257,7 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
     }
 }
 
-/// <summary>Writes traceparent/tracestate/baggage headers from Activity.Current.</summary>
+/// <summary>Writes Diagnostic-Id/baggage headers from Activity.Current.</summary>
 public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
 {
     public async Task ProcessAsync(
@@ -267,9 +267,7 @@ public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
     {
         if (Activity.Current is { } current)
         {
-            context.Headers["traceparent"] = current.Id!;   // W3C format
-            if (current.TraceStateString is { } state)
-                context.Headers["tracestate"] = state;
+            context.Headers[MessagingHeaders.DiagnosticId] = current.Id!;
         }
 
         await next().ConfigureAwait(false);
