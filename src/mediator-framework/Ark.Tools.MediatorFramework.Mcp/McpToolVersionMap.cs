@@ -17,12 +17,20 @@ public interface IMcpToolVersionMap
 public sealed class McpToolVersionMap : IMcpToolVersionMap
 {
     private readonly Dictionary<int, HashSet<string>> _toolsByVersion = [];
+    private readonly HashSet<string> _toolsActiveAfterLastVersion;
+    private int _lastVersion;
 
     /// <summary>Initializes a new instance of the <see cref="McpToolVersionMap"/> class.</summary>
     /// <param name="toolsByVersion">The generated tool names grouped by API version.</param>
-    public McpToolVersionMap(IReadOnlyDictionary<int, string[]> toolsByVersion)
+    /// <param name="toolsActiveAfterLastVersion">Tools without a retirement version.</param>
+    public McpToolVersionMap(
+        IReadOnlyDictionary<int, string[]> toolsByVersion,
+        string[]? toolsActiveAfterLastVersion = null)
     {
         ArgumentNullException.ThrowIfNull(toolsByVersion);
+        _toolsActiveAfterLastVersion = new(
+            toolsActiveAfterLastVersion ?? [],
+            StringComparer.OrdinalIgnoreCase);
 
         foreach (var pair in toolsByVersion)
         {
@@ -30,6 +38,7 @@ public sealed class McpToolVersionMap : IMcpToolVersionMap
             _toolsByVersion.Add(
                 pair.Key,
                 new HashSet<string>(pair.Value, StringComparer.OrdinalIgnoreCase));
+            _lastVersion = Math.Max(_lastVersion, pair.Key);
         }
     }
 
@@ -37,6 +46,8 @@ public sealed class McpToolVersionMap : IMcpToolVersionMap
     public bool IsToolActive(string toolName, int version)
     {
         ArgumentNullException.ThrowIfNull(toolName);
-        return _toolsByVersion.TryGetValue(version, out var tools) && tools.Contains(toolName);
+        return _toolsByVersion.TryGetValue(version, out var tools)
+            ? tools.Contains(toolName)
+            : version > _lastVersion && _toolsActiveAfterLastVersion.Contains(toolName);
     }
 }

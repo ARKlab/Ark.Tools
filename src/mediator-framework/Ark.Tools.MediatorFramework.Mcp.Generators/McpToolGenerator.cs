@@ -446,7 +446,14 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     .Select(model => "\"" + Escape(model.Name) + "\"")));
             builder.AppendLine("],");
         }
-        builder.AppendLine("                }));");
+        builder.AppendLine("                },");
+        builder.Append("                [");
+        builder.Append(string.Join(
+            ", ",
+            contracts
+                .Where(model => model.Retired == 0)
+                .Select(model => "\"" + Escape(model.Name) + "\"")));
+        builder.AppendLine("]));");
     }
 
     private static void RenderTool(StringBuilder builder, ContractModel model, int index)
