@@ -584,6 +584,8 @@ MCP tool names are stable across hosted API versions. A host maps
 matches the route version:
 `Introduced <= version` and (`Retired` is unset or `version < Retired`). The
 generator emits one tool per contract and does not append a version suffix.
+It also emits the complete tool-name list for each known version, so runtime
+filtering uses generated lookups instead of reflecting over tool metadata.
 
 Breaking input or output changes require a new contract and introduction
 version, while the old declaration may remain during migration.

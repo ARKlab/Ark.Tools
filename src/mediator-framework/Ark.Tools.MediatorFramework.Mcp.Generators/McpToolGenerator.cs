@@ -413,6 +413,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine("{");
         builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
         builder.AppendLine("    {");
+        RenderVersionMap(builder, contracts);
         builder.AppendLine("        return builder");
         for (var index = 0; index < contracts.Length; index++)
             builder.Append("            .WithTools<Tool").Append(index).Append(">()").AppendLine(index == contracts.Length - 1 ? ";" : string.Empty);
@@ -423,6 +424,29 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             RenderTool(builder, contracts[index], index);
         builder.AppendLine("}");
         return builder.ToString();
+    }
+
+    private static void RenderVersionMap(StringBuilder builder, ImmutableArray<ContractModel> contracts)
+    {
+        var maxVersion = contracts.Length == 0
+            ? 1
+            : contracts.Max(model => Math.Max(model.Introduced, model.Retired > 0 ? model.Retired - 1 : 1));
+        builder.AppendLine("        builder.Services.AddSingleton<global::Ark.Tools.MediatorFramework.Mcp.IMcpToolVersionMap>(");
+        builder.AppendLine("            new global::Ark.Tools.MediatorFramework.Mcp.McpToolVersionMap(");
+        builder.AppendLine("                new global::System.Collections.Generic.Dictionary<int, string[]>");
+        builder.AppendLine("                {");
+        for (var version = 1; version <= maxVersion; version++)
+        {
+            builder.Append("                    [").Append(version).Append("] = [");
+            builder.Append(string.Join(
+                ", ",
+                contracts
+                    .Where(model => version >= model.Introduced
+                        && (model.Retired == 0 || version < model.Retired))
+                    .Select(model => "\"" + Escape(model.Name) + "\"")));
+            builder.AppendLine("],");
+        }
+        builder.AppendLine("                }));");
     }
 
     private static void RenderTool(StringBuilder builder, ContractModel model, int index)
@@ -442,11 +466,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
 
         builder.AppendLine();
-        builder.Append("    [global::Ark.Tools.MediatorFramework.Versioning(Introduced = ")
-            .Append(model.Introduced)
-            .Append(", Retired = ")
-            .Append(model.Retired)
-            .AppendLine(")]");
         builder.AppendLine("    [global::ModelContextProtocol.Server.McpServerToolType]");
         builder.Append("    public sealed class Tool").Append(index).AppendLine();
         builder.AppendLine("    {");

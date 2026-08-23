@@ -168,7 +168,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain(
             "Description(\"Searches books. Returns matching books.\")");
         result.Generated.Should().NotContain("Title =");
-        result.Generated.Should().Contain("Versioning(Introduced = 2, Retired = 0)");
+        result.Generated.Should().Contain("[1] = [\"catalog.books.update\"]");
+        result.Generated.Should().Contain("[2] = [\"books.search\", \"catalog.books.update\"]");
         result.Generated.Should().Contain("Description(\"Text to search for.\")");
         result.Generated.Should().Contain("Name = \"catalog.books.update\"");
         result.Generated.Should().Contain("ReadOnly = false");

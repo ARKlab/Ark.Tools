@@ -9,12 +9,14 @@ using ModelContextProtocol.Server;
 namespace Ark.Tools.MediatorFramework.Mcp;
 
 /// <summary>Filters generated MCP tools according to the version route value.</summary>
-internal sealed class McpToolVersionSessionFilter : IPostConfigureOptions<HttpServerTransportOptions>
+internal sealed class McpToolVersionSessionFilter(
+    IEnumerable<IMcpToolVersionMap> versionMaps) : IPostConfigureOptions<HttpServerTransportOptions>
 {
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<
         HttpServerTransportOptions,
         object> _configuredOptions = [];
     private static readonly System.Threading.Lock _configuredOptionsLock = new();
+    private readonly IMcpToolVersionMap[] _versionMaps = versionMaps.ToArray();
 
     /// <inheritdoc />
     public void PostConfigure(string? name, HttpServerTransportOptions options)
@@ -60,12 +62,7 @@ internal sealed class McpToolVersionSessionFilter : IPostConfigureOptions<HttpSe
             var filtered = new McpServerPrimitiveCollection<McpServerTool>(StringComparer.OrdinalIgnoreCase);
             foreach (var tool in tools)
             {
-                var versioning = tool.Metadata
-                    .OfType<global::Ark.Tools.MediatorFramework.VersioningAttribute>()
-                    .FirstOrDefault();
-                var introduced = versioning?.Introduced ?? 1;
-                var retired = versioning?.Retired ?? 0;
-                if (version >= introduced && (retired == 0 || version < retired))
+                if (_versionMaps.Any(map => map.IsToolActive(tool.ProtocolTool.Name, version)))
                     filtered.Add(tool);
             }
 
