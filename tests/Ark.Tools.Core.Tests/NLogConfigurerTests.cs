@@ -16,11 +16,12 @@ public class NLogConfigurerTests
 {
     /// <summary>Verifies the database target threshold for each environment.</summary>
     [TestMethod]
-    [DataRow("Production", "Warn")]
-    [DataRow("Test", "Info")]
-    public void WithArkDefaultTargetsAndRules_UsesExpectedDatabaseThreshold(string environment, string expectedLevelName)
+    [DataRow("Production", "Warn", "Info")]
+    [DataRow("Test", "Info", "Debug")]
+    public void WithArkDefaultTargetsAndRules_UsesExpectedDatabaseThreshold(string environment, string expectedLevelName, string disabledLevelName)
     {
         var expectedLevel = LogLevel.FromString(expectedLevelName);
+        var disabledLevel = LogLevel.FromString(disabledLevelName);
         var originalEnvironment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
         var originalConfiguration = LogManager.Configuration;
 
@@ -39,7 +40,7 @@ public class NLogConfigurerTests
                 .Single(rule => rule.RuleName == $"{NLogConfigurer.DatabaseTarget}-*");
 
             databaseRule.IsLoggingEnabledForLevel(expectedLevel).Should().BeTrue();
-            databaseRule.IsLoggingEnabledForLevel(expectedLevel == LogLevel.Warn ? LogLevel.Info : LogLevel.Debug).Should().BeFalse();
+            databaseRule.IsLoggingEnabledForLevel(disabledLevel).Should().BeFalse();
         }
         finally
         {
