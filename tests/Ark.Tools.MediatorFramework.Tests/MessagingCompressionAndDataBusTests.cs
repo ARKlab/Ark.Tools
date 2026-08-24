@@ -76,28 +76,37 @@ public sealed class MessagingCompressionAndDataBusTests
         var dataBus = new InMemoryMessagingDataBus();
         var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.Gzip, 1);
         var receiver = new MessagingPayloadReceiver(dataBus, network);
+        var transport = new InMemoryMessagingTransport();
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 
         var payload = await sender.BuildOutgoingPayloadAsync(
             new PayloadContract(new string('a', 1_000)),
             new TextCodec(),
-            new InMemoryMessagingTransport(),
+            transport,
             headers,
             default).ConfigureAwait(false);
+        await transport.SendAsync("payloads", headers, payload, null, default).ConfigureAwait(false);
+        await using var deliveries = transport
+            .ReceiveAsync("payloads", default)
+            .ConfigureAwait(false)
+            .GetAsyncEnumerator();
+        (await deliveries.MoveNextAsync()).Should().BeTrue();
+        var delivery = deliveries.Current;
         var prepared = await receiver
-            .PreparePayloadAsync(headers, payload, default)
+            .PreparePayloadAsync(delivery.Headers, delivery.Payload, default)
             .ConfigureAwait(false);
         await using (prepared.ConfigureAwait(false))
         {
             payload.IsEmpty.Should().BeTrue();
             dataBus.Count.Should().Be(1);
             int.Parse(
-                    headers[MessagingHeaders.PayloadAttachmentLength],
+                    delivery.Headers[MessagingHeaders.PayloadAttachmentLength],
                     CultureInfo.InvariantCulture)
                 .Should().BeLessThan(1_000);
             using var reader = new StreamReader(prepared, Encoding.UTF8);
             (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(new string('a', 1_000));
         }
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -196,6 +205,92 @@ public sealed class MessagingCompressionAndDataBusTests
     }
 
     [TestMethod]
+    public async Task MissingAttachmentFailsIntegrity()
+    {
+        var network = _network(maxDecompressed: 10_000);
+        var receiver = new MessagingPayloadReceiver(new InMemoryMessagingDataBus(), network);
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [MessagingHeaders.PayloadAttachmentId] = "missing",
+            [MessagingHeaders.PayloadAttachmentLength] = "1",
+            [MessagingHeaders.PayloadAttachmentSha256] = new string('0', 64)
+        };
+
+        var action = () => receiver.PreparePayloadAsync(headers, default, default);
+        (await action.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+            .Which.Reason.Should().Be(MessagingFailFastReason.AttachmentIntegrityFailure);
+    }
+
+    [TestMethod]
+    public async Task AttachmentDigestMismatchFailsIntegrity()
+    {
+        var network = _network(offloadThreshold: 1, maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
+            .BuildOutgoingPayloadAsync(
+                new PayloadContract("payload"),
+                new TextCodec(),
+                new InMemoryMessagingTransport(),
+                headers,
+                default).ConfigureAwait(false);
+        headers[MessagingHeaders.PayloadAttachmentSha256] =
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("different")));
+        var receiver = new MessagingPayloadReceiver(dataBus, network);
+
+        var action = () => receiver.PreparePayloadAsync(headers, payload, default);
+        (await action.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+            .Which.Reason.Should().Be(MessagingFailFastReason.AttachmentIntegrityFailure);
+    }
+
+    [TestMethod]
+    public async Task SharedAttachmentRemainsReadableAcrossDeliveries()
+    {
+        var network = _network(offloadThreshold: 1, maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0);
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var payload = await sender.BuildOutgoingPayloadAsync(
+            new PayloadContract("payload"),
+            new TextCodec(),
+            new InMemoryMessagingTransport(),
+            headers,
+            default).ConfigureAwait(false);
+        var receiver = new MessagingPayloadReceiver(dataBus, network);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var prepared = await receiver
+                .PreparePayloadAsync(headers, payload, default)
+                .ConfigureAwait(false);
+            await using (prepared.ConfigureAwait(false))
+            {
+                using var reader = new StreamReader(prepared, Encoding.UTF8);
+                (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be("payload");
+            }
+        }
+
+        dataBus.Count.Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task StorePurgesExpiredAttachments()
+    {
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var dataBus = new InMemoryMessagingDataBus(clock, Duration.FromMinutes(1));
+        await dataBus.StoreAsync(
+            new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("expired")),
+            default).ConfigureAwait(false);
+        clock.Advance(Duration.FromMinutes(1));
+
+        await dataBus.StoreAsync(
+            new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("current")),
+            default).ConfigureAwait(false);
+
+        dataBus.Count.Should().Be(1);
+    }
+
+    [TestMethod]
     public async Task PartialOrMalformedAttachmentMetadataFailsFast()
     {
         var network = _network(maxDecompressed: 10_000);
@@ -236,7 +331,7 @@ public sealed class MessagingCompressionAndDataBusTests
             default).ConfigureAwait(false);
         var receiver = new MessagingPayloadReceiver(dataBus, network);
 
-        var reader = (MessagingStreamPayloadReader)await receiver
+        var reader = await receiver
             .PreparePayloadReaderAsync(headers, payload, new TextCodec(), default)
             .ConfigureAwait(false);
         await using (reader.ConfigureAwait(false))

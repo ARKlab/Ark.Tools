@@ -152,7 +152,9 @@ public sealed class MessagingPayloadSender
         var buffer = new ArrayBufferWriter<byte>();        // transport-owned buffered form
         var writer = new CompressionSwitchingBufferWriter(
             buffer, _algorithm, _compressionMinimumSizeBytes,
-            _network.MaximumTransportPayloadBytes);
+            Math.Max(
+                _network.MaximumTransportPayloadBytes,
+                _network.DataBusMaximumAttachmentBytes));
         codec.Serialize(message, writer);
         writer.Complete();                                 // flush final compressor frame
 
@@ -255,9 +257,10 @@ reads, and the network-wide provider/store compatibility requirement.
 
 ## Sample extension
 
-Extend the Book sample with a large background payload fixture that exercises
-compression and DataBus claim-check over the InMemory transport. Azure
-transport coverage lands with AZM-10/AZM-11.
+The Book sample does not yet compose the AZM-08 messaging bus or AZM-09
+dispatcher, so compression and DataBus claim-check are not enabled there.
+Sample transport coverage lands with those runtime tasks and Azure transport
+coverage lands with AZM-10/AZM-11.
 
 ## Required test coverage
 
