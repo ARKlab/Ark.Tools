@@ -327,11 +327,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             if (directory is null)
                 continue;
 
+            var assemblyXmlFileName = Path.GetFileName(assembly.Name) + ".xml";
             var candidates = new[]
             {
                 Path.ChangeExtension(portableReference.FilePath, ".xml"),
-                Path.Combine(directory, assembly.Name + ".xml"),
-                Path.Combine(directory, "..", assembly.Name + ".xml"),
+                Path.Combine(directory, assemblyXmlFileName),
+                Path.GetFullPath(Path.Combine(directory, "..", assemblyXmlFileName)),
             };
             var documentationFile = candidates.FirstOrDefault(File.Exists);
             if (documentationFile is null)
@@ -343,9 +344,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             }
             catch (IOException)
             {
+                continue;
             }
             catch (XmlException)
             {
+                continue;
             }
         }
 

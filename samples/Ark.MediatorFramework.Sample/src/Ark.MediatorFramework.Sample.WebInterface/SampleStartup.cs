@@ -215,7 +215,7 @@ public sealed class SampleStartup
             endpoints.MapArkEndpoints<SampleEndpointContext>(
                 versionPrefix: "/api/v{version}");
             endpoints.MapArkMinimalApiHost();
-            endpoints.MapMcp("/mcp").RequireAuthorization();
+            endpoints.MapMcp("/mcp/v{version}").RequireAuthorization();
             endpoints.MapArkGrpcServicesFromAssembly<Book_CreateRequest.V1>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
             endpoints.MapControllers();

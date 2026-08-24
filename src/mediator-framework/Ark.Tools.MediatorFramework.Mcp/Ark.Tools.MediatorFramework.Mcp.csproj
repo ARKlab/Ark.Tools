@@ -17,6 +17,7 @@
     <ProjectReference Include="..\..\aspnetcore\Ark.Tools.AspNetCore.ProblemDetails\Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.NLog\Ark.Tools.NLog.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.Mcp.Generators\Ark.Tools.MediatorFramework.Mcp.Generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.Mcp.props" Pack="true" PackagePath="buildTransitive" />

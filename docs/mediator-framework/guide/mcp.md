@@ -53,11 +53,16 @@ app.MapMcp("/mcp/v{version}").RequireAuthorization();
 
 `MapMcp` remains host-owned. Configure authentication, authorization,
 `AllowedHosts`, CORS, rate limits, request limits, and the SimpleInjector scope
-in the host. A request to `/mcp/1` exposes contracts active in version 1, and
+in the host. A request to `/mcp/v1` exposes contracts active in version 1, and
 the same endpoint pattern can expose each subsequent version. The generator
 emits the per-version tool lists, so filtering does not inspect contract
 metadata at runtime. Use stateful
 sessions only when the application needs server-to-client MCP requests.
+
+Endpoint-level `RequireAuthorization()` runs before tool selection. If it is
+configured, anonymous clients cannot reach the MCP endpoint, including tools
+generated with `[AllowAnonymous]`; omit the endpoint requirement when relying
+on per-tool anonymous access.
 
 ## Attachments
 

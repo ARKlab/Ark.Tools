@@ -3,6 +3,9 @@
 
 using ModelContextProtocol.Protocol;
 
+using FluentValidation;
+using FluentValidation.Results;
+
 namespace Ark.Tools.MediatorFramework.Mcp;
 
 /// <summary>Converts mediator attachments to bounded MCP embedded resources.</summary>
@@ -10,8 +13,8 @@ public static class McpAttachmentResults
 {
     /// <summary>Reads an attachment and returns it as one MCP embedded resource.</summary>
     /// <param name="attachment">The attachment to read.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
     /// <param name="maximumBytes">The maximum number of bytes to materialize.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The MCP embedded resource containing the attachment.</returns>
     public static async Task<EmbeddedResourceBlock> ToEmbeddedResourceAsync(
         IArkAttachment attachment,
@@ -29,7 +32,8 @@ public static class McpAttachmentResults
         {
             total += read;
             if (total > maximumBytes)
-                throw new InvalidOperationException("The attachment exceeds the configured download limit.");
+                throw new ValidationException(
+                    [new ValidationFailure(nameof(maximumBytes), "The attachment exceeds the configured download limit.")]);
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
 

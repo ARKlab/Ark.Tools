@@ -5,14 +5,18 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using NLog;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Globalization;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
 
 /// <summary>Maps mediator failures to safe MCP tool errors.</summary>
 public static partial class McpToolErrors
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
     /// <summary>Creates a call-tool filter that maps mediator failures to safe MCP results.</summary>
     /// <returns>The MCP call-tool error filter.</returns>
     public static McpRequestFilter<CallToolRequestParams, CallToolResult> CreateFilter()
@@ -32,6 +36,8 @@ public static partial class McpToolErrors
         ArgumentNullException.ThrowIfNull(exception);
         var mappedProblemDetails = ExceptionProblemDetailsMapper.Map(exception);
         var clientVisible = mappedProblemDetails.Status is >= 400 and < 500;
+        if (!clientVisible)
+            _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an MCP tool call.");
         var title = clientVisible
             ? mappedProblemDetails.Title ?? "An unexpected error occurred"
             : "An unexpected error occurred";

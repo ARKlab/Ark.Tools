@@ -3,6 +3,9 @@
 
 using System.Text.Json.Serialization;
 
+using FluentValidation;
+using FluentValidation.Results;
+
 namespace Ark.Tools.MediatorFramework.Mcp;
 
 /// <summary>Represents an inline, bounded MCP attachment upload.</summary>
@@ -25,11 +28,11 @@ public sealed class McpAttachmentInput
     public ArkAttachment ToAttachment(long maximumBytes = 10_000_000, IReadOnlySet<string>? allowedContentTypes = null)
     {
         if (string.IsNullOrWhiteSpace(Name))
-            throw new ArgumentException("Attachment name is required.");
+            throw new ValidationException([new ValidationFailure(nameof(Name), "Attachment name is required.")]);
         if (string.IsNullOrWhiteSpace(MimeType))
-            throw new ArgumentException("Attachment MIME type is required.");
+            throw new ValidationException([new ValidationFailure(nameof(MimeType), "Attachment MIME type is required.")]);
         if (allowedContentTypes is not null && !allowedContentTypes.Contains(MimeType))
-            throw new InvalidOperationException("The attachment MIME type is not allowed.");
+            throw new ValidationException([new ValidationFailure(nameof(MimeType), "The attachment MIME type is not allowed.")]);
 
         byte[] bytes;
         try
@@ -38,10 +41,12 @@ public sealed class McpAttachmentInput
         }
         catch (FormatException exception)
         {
-            throw new ArgumentException("Attachment blob must be base64.", exception);
+            throw new ValidationException(
+                [new ValidationFailure(nameof(Blob), "Attachment blob must be base64.")],
+                exception);
         }
         if (bytes.LongLength > maximumBytes)
-            throw new InvalidOperationException("The attachment exceeds the configured size limit.");
+            throw new ValidationException([new ValidationFailure(nameof(Blob), "The attachment exceeds the configured size limit.")]);
         return new ArkAttachment(Name, MimeType, () => new MemoryStream(bytes, writable: false));
     }
 }
