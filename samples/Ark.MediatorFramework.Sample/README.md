@@ -24,6 +24,10 @@ generated JSON, generated transport endpoints, and Reqnroll behavior tests.
 - The sample supports SQL Server and an explicit in-memory test profile.
 - The framework generates HTTP endpoints, gRPC services, exported `.proto` files,
   OpenAPI documents, and Rebus routing/handlers from contract metadata.
+- MCP is a planned release-gate integration: the WebInterface host must expose
+  source-generated MCP tools through the official
+  `ModelContextProtocol.AspNetCore` 2.2.0 SDK without adding MCP references to
+  the API or application assemblies.
 
 ## Architecture
 
@@ -143,6 +147,13 @@ dotnet run \
 The web host exposes generated routes under `/api/v1`, OpenAPI at
 `/openapi/v1.json` and `/openapi/v2.json`, Scalar at `/scalar/v1`, and gRPC
 reflection when configured.
+
+The MCP release gate extends this host with an authenticated `/mcp` endpoint.
+It must expose a generated query, mutation, and the existing cover
+upload/download operations, and test them through the official SDK client.
+See the [MCP user guide](../../docs/mediator-framework/guide/mcp.md) and the
+[MCP design](../../docs/mediator-framework/mcp-design.md) for the required
+composition and attachment/error assertions.
 
 ## Persistence profiles
 
@@ -272,5 +283,5 @@ Start with the canonical incremental
 [`Mediator Framework guide`](../../docs/mediator-framework/guide/README.md).
 Its table is the source of truth for the complete order: Ping hello-world,
 composition, contract design/versioning, validation/authorization, HTTP, gRPC,
-Rebus, streaming, serialization, OpenAPI, Azure Functions, testing, and
-advanced review/escape hatches.
+Rebus, streaming, serialization, OpenAPI, Azure Functions, testing, advanced
+review/escape hatches, and MCP.

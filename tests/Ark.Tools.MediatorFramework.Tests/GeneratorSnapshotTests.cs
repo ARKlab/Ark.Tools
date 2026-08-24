@@ -4,10 +4,14 @@
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
+using Ark.Tools.MediatorFramework.Mcp;
+using Ark.Tools.MediatorFramework.Mcp.Generators;
 using Ark.Tools.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
 using AwesomeAssertions;
+using FluentValidation;
+using ModelContextProtocol.Protocol;
 
 using System.Collections.Immutable;
 using System.Reflection;
@@ -127,6 +131,104 @@ public sealed class GeneratorSnapshotTests
             """);
         grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
         grpc.Should().Contain("returns (stream string)");
+    }
+
+    [TestMethod]
+    public void McpGeneratorEmitsExplicitVersionedToolRegistration()
+    {
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Searches books.</summary>
+            /// <remarks>Returns matching books.</remarks>
+            [McpTool(Name = "books.search")]
+            [Versioning(Introduced = 2)]
+            public sealed record SearchBooks : IQuery<SearchBooks, string>
+            {
+                /// <summary>Text to search for.</summary>
+                public string Text { get; init; } = string.Empty;
+
+                public SearchBooks(string text)
+                {
+                    Text = text;
+                }
+            }
+            [McpTool(Name = "books.update")]
+            [ApiGroup("catalog")]
+            public sealed record UpdateBook(int Id) : IRequest<UpdateBook, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("Name = \"books.search\"");
+        result.Generated.Should().Contain(
+            "Description(\"Searches books. Returns matching books.\")");
+        result.Generated.Should().NotContain("Title =");
+        result.Generated.Should().Contain("[1] = [\"catalog.books.update\"]");
+        result.Generated.Should().Contain("[2] = [\"books.search\", \"catalog.books.update\"]");
+        result.Generated.Should().Contain("Description(\"Text to search for.\")");
+        result.Generated.Should().Contain("Name = \"catalog.books.update\"");
+        result.Generated.Should().Contain("ReadOnly = false");
+        result.Generated.Should().Contain("Destructive = true");
+        result.Generated.Should().Contain(
+            "partial class McpContext : global::Ark.Tools.MediatorFramework.Mcp.IMcpToolContext");
+        result.Generated.Should().Contain(
+            "public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
+        result.Generated.Should().Contain("RegisterMcpTools");
+        result.Generated.Should().Contain("IQueryProcessor");
+        result.Generated.Should().Contain("Task<string>");
+        result.Generated.Should().Contain("McpServerToolType");
+        result.Generated.Should().Contain("McpServerTool(");
+        result.Generated.Should().NotContain("McpServerTool.Create");
+    }
+
+    [TestMethod]
+    public void McpToolErrorsExposeSafeValidationProblemDetails()
+    {
+        var exception = new ValidationException(
+            [new FluentValidation.Results.ValidationFailure("Text", "Text is required.")]);
+
+        var result = McpToolErrors.ToToolResult(exception);
+
+        result.IsError.Should().BeTrue();
+        result.Content.Should().ContainSingle();
+        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Validation failed: ");
+        ((TextContentBlock)result.Content[0]).Text.Should().Contain("Text is required.");
+        result.StructuredContent.Should().NotBeNull();
+        result.StructuredContent!.Value.GetProperty("title").GetString().Should().Be("Validation failed");
+        result.StructuredContent.Value.GetProperty("status").GetInt32().Should().Be(400);
+        result.StructuredContent.Value.GetProperty("errors").GetProperty("Text")[0].GetString()
+            .Should().Be("Text is required.");
+    }
+
+    [TestMethod]
+    public void McpToolErrorsHideUnexpectedDetails()
+    {
+        var result = McpToolErrors.ToToolResult(new InvalidOperationException("secret"));
+
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .Be("An unexpected error occurred: The tool call could not be completed.");
+        result.StructuredContent!.Value.GetProperty("title").GetString()
+            .Should().Be("An unexpected error occurred");
+        result.StructuredContent.Value.GetProperty("detail").GetString()
+            .Should().Be("The tool call could not be completed.");
+        result.StructuredContent.Value.GetProperty("status").GetInt32().Should().Be(500);
+    }
+
+    [TestMethod]
+    public void McpToolAttributeUsesDeclaredDefaults()
+    {
+        var attribute = new McpToolAttribute();
+
+        attribute.Name.Should().BeNull();
+        attribute.ReadOnly.Should().BeTrue();
+        attribute.Destructive.Should().BeFalse();
+        attribute.Idempotent.Should().BeFalse();
+        attribute.OpenWorld.Should().BeTrue();
     }
 
     [TestMethod]
@@ -913,6 +1015,7 @@ public sealed class GeneratorSnapshotTests
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(ArkGenerateMcpToolsForAssemblyAttribute).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
             "Incrementality",

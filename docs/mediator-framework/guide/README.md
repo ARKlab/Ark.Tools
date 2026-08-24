@@ -34,6 +34,7 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | 12 | Reqnroll application and host-boundary testing | [Testing](testing.md), [DOC-01 testing guidance](../progress/tasks/testing/DOC-01-testing-guidance.md) |
 | 13 | API-surface review and custom transport adapters | [API-surface snapshots](api-surface-snapshots.md), [Escape hatches](escape-hatches.md) |
 | 14 | Generator diagnostics, fallback behavior, and troubleshooting | [Diagnostics and troubleshooting](diagnostics-and-troubleshooting.md) |
+| 15 | MCP tools, host composition, and embedded attachments | [MCP](mcp.md) |
 
 ## Capability map
 
@@ -48,6 +49,7 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | Streaming | `IAsyncEnumerable<T>` response | Incremental HTTP JSON and gRPC server stream |
 | OpenAPI | XML docs and host options | Versioned documents, schemas, OAuth metadata |
 | Serialization | source-generated `JsonSerializerContext` | Explicit JSON metadata and stable transport shapes |
+| MCP | `[McpTool]`, assembly marker | Source-generated tools over the official ASP.NET Core MCP SDK |
 
 ## What the framework does not hide
 

@@ -28,6 +28,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string ApiGroup = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string Versioning = "Ark.Tools.MediatorFramework.VersioningAttribute";
+    private const string McpTool = "Ark.Tools.MediatorFramework.McpToolAttribute";
 
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
@@ -99,13 +100,18 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 static (_, _) => true,
                 static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
             .Collect();
+        var mcpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                McpTool,
+                static (_, _) => true,
+                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+            .Collect();
         var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
-            .Combine(messageTypes).Combine(eventTypes).Combine(participantTypes).Combine(networkTypes)
+            .Combine(messageTypes).Combine(eventTypes).Combine(participantTypes).Combine(networkTypes).Combine(mcpTypes)
             .Select(static (pair, _) =>
             {
-                var ((((((http, grpc), rebus), messages), events), participants), networks) = pair;
+                var (((((((http, grpc), rebus), messages), events), participants), networks), mcp) = pair;
                 return http.AddRange(grpc).AddRange(rebus)
-                    .AddRange(messages).AddRange(events).AddRange(participants).AddRange(networks);
+                    .AddRange(messages).AddRange(events).AddRange(participants).AddRange(networks).AddRange(mcp);
             });
         var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
             BuildSurface(types, cancellationToken));
