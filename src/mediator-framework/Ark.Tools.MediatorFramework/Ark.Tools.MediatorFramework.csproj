@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.Messaging" />
     <PackageReference Include="protobuf-net" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.Generators\Ark.Tools.MediatorFramework.Generators.csproj"
                       OutputItemType="Analyzer"

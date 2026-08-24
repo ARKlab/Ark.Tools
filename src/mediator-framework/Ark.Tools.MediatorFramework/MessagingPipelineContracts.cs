@@ -26,7 +26,7 @@ public interface IMessagingOutgoingStep
 }
 
 /// <summary>Provides framework-owned mutation of reserved outgoing headers.</summary>
-public interface IMessagingFrameworkHeaders
+internal interface IMessagingFrameworkHeaders
 {
     /// <summary>Sets a reserved framework header.</summary>
     /// <param name="key">The reserved header name.</param>
