@@ -42,6 +42,9 @@ public static class MessagingHeaders
     /// <summary>Correlation identifier.</summary>
     public const string CorrelationId = "amf1-corr-id";
 
+    /// <summary>Causation identifier.</summary>
+    public const string CausationId = "amf1-causation-id";
+
     /// <summary>Message sent time.</summary>
     public const string SentTime = "amf1-senttime";
 

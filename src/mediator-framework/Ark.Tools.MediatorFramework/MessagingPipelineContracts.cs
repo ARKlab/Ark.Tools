@@ -78,6 +78,11 @@ public sealed class MessagingOutgoingContext
     /// <summary>Gets mutable, validated headers.</summary>
     public IDictionary<string, string> Headers { get; }
 
+    internal void _setReservedHeader(string key, string value)
+    {
+        ((IMessagingFrameworkHeaders)Headers).SetReserved(key, value);
+    }
+
     /// <summary>Gets the resolved destination.</summary>
     public string Destination { get; }
 

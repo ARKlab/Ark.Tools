@@ -101,13 +101,13 @@ public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
     {
         if (Activity.Current is { Id: not null } activity)
         {
-            context.Headers[MessagingHeaders.DiagnosticId] = activity.Id;
+            context._setReservedHeader(MessagingHeaders.DiagnosticId, activity.Id);
             var baggage = string.Join(
                 ",",
                 activity.Baggage.Select(item =>
                     $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value ?? string.Empty)}"));
             if (baggage.Length > 0)
-                context.Headers["baggage"] = baggage;
+                context._setReservedHeader("baggage", baggage);
         }
 
         await next().ConfigureAwait(false);

@@ -29,6 +29,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _payloadSender = "Ark.Tools.MediatorFramework.Messaging.MessagingPayloadSender";
     private const string _dataBus = "Ark.Tools.MediatorFramework.IMessagingDataBus";
     private const string _networkOptions = "Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions";
+    private const string _contractRegistry = "Ark.Tools.MediatorFramework.Messaging.MessagingContractRegistry";
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
@@ -195,7 +196,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         _validateContractNames(context, allContracts.Keys);
         _emitMetadata(context, networks);
         foreach (var network in networks)
-            _emitNetwork(context, network);
+            _emitNetwork(context, network, compilation);
 
         foreach (var participant in participantSymbols
             .OrderBy(symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
@@ -537,7 +538,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static void _emitNetwork(
         SourceProductionContext context,
-        Network network)
+        Network network,
+        Compilation compilation)
     {
         if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
             return;
@@ -597,6 +599,32 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         source.AppendLine("        }.ToFrozenDictionary();")
             .AppendLine()
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static readonly FrozenDictionary<Type, string> _processors =")
+            .AppendLine("        new Dictionary<Type, string>")
+            .AppendLine("        {");
+        foreach (var contract in processors.Keys.Cast<INamedTypeSymbol>()
+            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal))
+        {
+            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+               .Append(_escape(processors[contract].Identity)).AppendLine("\",");
+        }
+
+        source.AppendLine("        }.ToFrozenDictionary();")
+            .AppendLine()
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static readonly FrozenDictionary<Type, string> _publishers =")
+            .AppendLine("        new Dictionary<Type, string>")
+            .AppendLine("        {");
+        foreach (var contract in publishers.Keys.Cast<INamedTypeSymbol>()
+            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal))
+        {
+            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+               .Append(_escape(publishers[contract].Identity)).AppendLine("\",");
+        }
+
+        source.AppendLine("        }.ToFrozenDictionary();")
+            .AppendLine()
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    private static readonly FrozenDictionary<Type, global::Ark.Tools.MediatorFramework.SerializationProtocol> _wireProtocols =")
             .AppendLine("        new Dictionary<Type, global::Ark.Tools.MediatorFramework.SerializationProtocol>")
             .AppendLine("        {");
@@ -629,9 +657,40 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    public static string GetDestinationFor<T>() where T : class")
             .AppendLine("    {")
-            .AppendLine("        if (_destinations.TryGetValue(typeof(T), out var destination))")
+            .AppendLine("        return GetDestination(typeof(T));")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the destination for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
+            .AppendLine("    /// <returns>The participant queue or event topic.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static string GetDestination(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_destinations.TryGetValue(contractType, out var destination))")
             .AppendLine("            return destination;")
-            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the processing participant for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The message contract type.</param>")
+            .AppendLine("    /// <returns>The processing participant identity.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static string GetProcessorIdentity(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_processors.TryGetValue(contractType, out var processor))")
+            .AppendLine("            return processor;")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the publishing participant for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The event contract type.</param>")
+            .AppendLine("    /// <returns>The publishing participant identity.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static string GetPublisherIdentity(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_publishers.TryGetValue(contractType, out var publisher))")
+            .AppendLine("            return publisher;")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
             .AppendLine("    }")
             .AppendLine()
             .AppendLine("    /// <summary>Gets the owner-selected wire protocol for a declared contract.</summary>")
@@ -640,9 +699,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    public static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocolFor<T>() where T : class")
             .AppendLine("    {")
-            .AppendLine("        if (_wireProtocols.TryGetValue(typeof(T), out var protocol))")
+            .AppendLine("        return GetWireProtocol(typeof(T));")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the owner-selected protocol for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
+            .AppendLine("    /// <returns>The owner-selected serialization protocol.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_wireProtocols.TryGetValue(contractType, out var protocol))")
             .AppendLine("            return protocol;")
-            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
             .AppendLine("    }")
             .AppendLine()
             .AppendLine("    /// <summary>Gets the current logical wire name for a declared contract.</summary>")
@@ -651,10 +719,33 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    public static string GetLogicalNameFor<T>() where T : class")
             .AppendLine("    {")
-            .AppendLine("        if (_logicalNames.TryGetValue(typeof(T), out var logicalName))")
-            .AppendLine("            return logicalName;")
-            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);")
+            .AppendLine("        return GetLogicalName(typeof(T));")
             .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the current logical name for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
+            .AppendLine("    /// <returns>The normalized logical contract name.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static string GetLogicalName(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_logicalNames.TryGetValue(contractType, out var logicalName))")
+            .AppendLine("            return logicalName;")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
+            .AppendLine("    }");
+
+        if (compilation.GetTypeByMetadataName(_contractRegistry) is not null)
+        {
+            source.AppendLine()
+               .AppendLine("    /// <summary>Creates the generated transport-neutral contract registry.</summary>")
+               .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+               .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.MessagingContractRegistry CreateRegistry()")
+               .AppendLine("    {")
+               .AppendLine("        return new global::Ark.Tools.MediatorFramework.Messaging.MessagingContractRegistry(")
+               .AppendLine("            NetworkIdentity, GetDestination, GetProcessorIdentity, GetPublisherIdentity, GetWireProtocol, GetLogicalName);")
+               .AppendLine("    }");
+        }
+
+        source
             .AppendLine("}");
 
         context.AddSource(
