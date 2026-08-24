@@ -392,6 +392,8 @@ legacy Hellang middleware:
   development, the ProblemDetails payload also includes the exception message
   and stack trace; production returns the generic 500 payload unless the host
   explicitly opts in with `ArkProblemDetailsOptions.IncludeExceptionDetails`.
+- The host logs only failures mapped to 5xx statuses. Expected client failures
+  mapped to 4xx statuses are returned without exception logging.
 
 ### gRPC: BusinessRuleViolation over `Google.Rpc.Status`
 
@@ -431,6 +433,8 @@ message ArkBusinessRuleViolation {
   the exception message and a `google.rpc.DebugInfo` stack trace detail;
   production returns only the generic `Internal` status message unless the
   host opts in with `ArkGrpcErrorOptions.IncludeExceptionDetails`.
+- Client-error mappings are not logged as exceptions; server-error mappings are
+  logged before they are converted to the gRPC error representation.
 
 ## User context
 

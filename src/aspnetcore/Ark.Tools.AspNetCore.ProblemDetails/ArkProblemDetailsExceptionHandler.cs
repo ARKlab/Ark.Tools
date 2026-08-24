@@ -35,8 +35,11 @@ public sealed class ArkProblemDetailsExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
+        if (problemDetails.Status is null or >= 500)
+        {
+            _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an HTTP request.");
+        }
         if (_includeExceptionDetails)
         {
             problemDetails.Detail = exception.Message;

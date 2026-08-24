@@ -136,9 +136,12 @@ accept. Include a safe error code and client-actionable details; never include
 connection strings, credentials, access tokens, stack traces, or unreviewed
 exception messages.
 
-Unhandled exceptions become generic server errors. Log their full details on the
-server with structured logging and correlate them through the host's normal
-telemetry. Add a dedicated mapper only when a domain failure needs a documented,
-different public representation.
+Unhandled exceptions become generic server errors. All mapped 5xx failures are
+logged as exceptions with their full details on the server and correlated
+through the host's normal telemetry. Expected client failures (4xx) are
+mapped without exception logging. This rule applies to Minimal API,
+Azure Functions, gRPC, and MCP host representations. Add a dedicated mapper
+only when a domain failure needs a documented, different public
+representation.
 
 Architecture rationale: [design.md](../design.md).

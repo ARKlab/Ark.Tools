@@ -5,11 +5,15 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 
 using Microsoft.AspNetCore.Http;
 
+using NLog;
+
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Creates HTTP results for generated Azure Functions endpoints.</summary>
 public static class ArkAzureFunctionsResults
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
     /// <summary>Reads the first HTTP ETag precondition.</summary>
     /// <param name="context">The current HTTP context.</param>
     /// <returns>The unquoted token, the wildcard, or <see langword="null"/>.</returns>
@@ -29,6 +33,10 @@ public static class ArkAzureFunctionsResults
     {
         ArgumentNullException.ThrowIfNull(exception);
         var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
+        if (problemDetails.Status is null or >= 500)
+        {
+            _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an Azure Functions request.");
+        }
         return Results.Problem(
             statusCode: problemDetails.Status ?? StatusCodes.Status500InternalServerError,
             title: problemDetails.Title,
