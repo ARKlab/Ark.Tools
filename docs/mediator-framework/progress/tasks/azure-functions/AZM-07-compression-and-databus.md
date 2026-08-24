@@ -147,12 +147,14 @@ public sealed class MessagingPayloadSender
         //    running count crosses the minimum, the buffered prefix is re-piped into a
         //    BrotliStream/GZipStream over the buffer writer and writing continues
         //    compressed (the mid-serialization switch). The counter throws
-        //    MessagingFailFastException(OversizedPayload) past
-        //    _network.MaximumTransportPayloadBytes.
+        //    MessagingFailFastException(OversizedPayload) past the larger of
+        //    the transport and attachment limits.
         var buffer = new ArrayBufferWriter<byte>();        // transport-owned buffered form
         var writer = new CompressionSwitchingBufferWriter(
             buffer, _algorithm, _compressionMinimumSizeBytes,
-            _network.MaximumTransportPayloadBytes);
+            Math.Max(
+                _network.MaximumTransportPayloadBytes,
+                _network.DataBusMaximumAttachmentBytes));
         codec.Serialize(message, writer);
         writer.Complete();                                 // flush final compressor frame
 
@@ -196,8 +198,8 @@ public sealed class MessagingPayloadSender
 ```
 
 The receive-side skeleton — attachment fetch with length/SHA-256 verification,
-then bounded decompression; runs in the header phase before the generated
-typed binder:
+then a bounded decompression stream; the generated sequence-based codec adapter
+materializes the bounded stream only at the existing codec boundary:
 
 ```csharp
 namespace Ark.MediatorFramework.Messaging;
@@ -209,11 +211,11 @@ public sealed class MessagingPayloadReceiver
     private readonly IMessagingDataBus _dataBus;
     private readonly MessagingNetworkOptions _network;
 
-    public async Task<ReadOnlySequence<byte>> PreparePayloadAsync(
+    public async Task<Stream> PreparePayloadAsync(
         IReadOnlyDictionary<string, string> headers, ReadOnlySequence<byte> transportPayload,
         CancellationToken ctk)
     {
-        var payload = transportPayload;
+        Stream payload = new SequenceReadStream(transportPayload);
 
         if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
         {
@@ -224,37 +226,24 @@ public sealed class MessagingPayloadReceiver
             // The provider verifies length and SHA-256 while streaming; missing, expired,
             // or mismatched attachments throw
             // MessagingFailFastException(AttachmentIntegrityFailure).
-            var stream = await _dataBus
+            await payload.DisposeAsync();
+            payload = await _dataBus
                 .OpenReadAsync(attachmentId, expectedLength, expectedSha256, ctk)
                 .ConfigureAwait(false);
-            await using (stream.ConfigureAwait(false))
-            {
-                payload = await _bufferAsync(stream, ctk).ConfigureAwait(false);
-            }
         }
 
         if (headers.TryGetValue(MessagingHeaders.ContentEncoding, out var encoding))
         {
             payload = encoding switch
             {
-                "gzip" => _decompressBounded(payload, useBrotli: false),
-                "br" => _decompressBounded(payload, useBrotli: true),
+                "gzip" => new GZipStream(payload, CompressionMode.Decompress),
+                "br" => new BrotliStream(payload, CompressionMode.Decompress),
                 _ => throw new MessagingFailFastException(
                     MessagingFailFastReason.UnsupportedContentEncoding, encoding),
             };
         }
 
-        return payload;   // handed to the generated binder through IMessagingPayloadReader
-    }
-
-    private ReadOnlySequence<byte> _decompressBounded(
-        ReadOnlySequence<byte> compressed, bool useBrotli)
-    {
-        // Bounded decompression reader over GZipStream/BrotliStream: counts output bytes
-        // while reading and throws MessagingFailFastException(OversizedPayload) as soon as
-        // _network.MaximumDecompressedPayloadBytes is exceeded — never buffers past the
-        // bound and never trusts the compressed length.
-        // ...
+        return new BoundedPayloadReadStream(payload);   // handed to the generated binder through IMessagingPayloadReader
     }
 }
 ```
@@ -268,9 +257,10 @@ reads, and the network-wide provider/store compatibility requirement.
 
 ## Sample extension
 
-Extend the Book sample with a large background payload fixture that exercises
-compression and DataBus claim-check over the InMemory transport. Azure
-transport coverage lands with AZM-10/AZM-11.
+The Book sample does not yet compose the AZM-08 messaging bus or AZM-09
+dispatcher, so compression and DataBus claim-check are not enabled there.
+Sample transport coverage lands with those runtime tasks and Azure transport
+coverage lands with AZM-10/AZM-11.
 
 ## Required test coverage
 
@@ -297,14 +287,14 @@ transport coverage lands with AZM-10/AZM-11.
 
 ## Acceptance
 
-- [ ] Gzip and Brotli are implemented behind participant configuration, with
+- [x] Gzip and Brotli are implemented behind participant configuration, with
   header-driven reads that always decode both.
-- [ ] Final compressed bytes, not original bytes, determine DataBus offload;
+- [x] Final compressed bytes, not original bytes, determine DataBus offload;
   the complete inline envelope is also measured so headers and transport
   encoding cannot exceed a transport limit.
-- [ ] Claim-check is transport-neutral and proven over InMemory.
-- [ ] Consumers retrieve, validate, decompress, and deserialize transparently.
-- [ ] Provider lifecycle cleanup, not consumers, owns deletion.
-- [ ] The [task board](../README.md) status for AZM-07 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Claim-check is transport-neutral and proven over InMemory.
+- [x] Consumers retrieve, validate, decompress, and deserialize transparently.
+- [x] Provider lifecycle cleanup, not consumers, owns deletion.
+- [x] The [task board](../README.md) status for AZM-07 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

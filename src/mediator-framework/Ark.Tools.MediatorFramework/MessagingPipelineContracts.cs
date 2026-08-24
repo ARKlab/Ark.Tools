@@ -25,6 +25,20 @@ public interface IMessagingOutgoingStep
     Task ProcessAsync(MessagingOutgoingContext context, Func<Task> next, CancellationToken cancellationToken);
 }
 
+/// <summary>Provides framework-owned mutation of reserved outgoing headers.</summary>
+internal interface IMessagingFrameworkHeaders
+{
+    /// <summary>Sets a reserved framework header.</summary>
+    /// <param name="key">The reserved header name.</param>
+    /// <param name="value">The header value.</param>
+    void SetReserved(string key, string value);
+
+    /// <summary>Removes a reserved framework header.</summary>
+    /// <param name="key">The reserved header name.</param>
+    /// <returns><see langword="true"/> when the header was present.</returns>
+    bool RemoveReserved(string key);
+}
+
 /// <summary>Per-delivery incoming context.</summary>
 public sealed class MessagingIncomingContext
 {
@@ -73,11 +87,23 @@ public sealed class MessagingOutgoingContext
     /// <summary>Gets step-local state.</summary>
     public IDictionary<string, object> Items { get; } = new Dictionary<string, object>(StringComparer.Ordinal);
 
-    private sealed class MessagingOutgoingHeaders : IDictionary<string, string>
+    private sealed class MessagingOutgoingHeaders : IDictionary<string, string>, IMessagingFrameworkHeaders
     {
         private readonly IDictionary<string, string> _inner;
 
         public MessagingOutgoingHeaders(IDictionary<string, string> inner) => _inner = inner;
+        public void SetReserved(string key, string value)
+        {
+            if (!MessagingHeadersGuard.IsReserved(key))
+                throw new ArgumentException("Only reserved headers can use the framework mutation path.", nameof(key));
+            _inner[key] = value;
+        }
+        public bool RemoveReserved(string key)
+        {
+            if (!MessagingHeadersGuard.IsReserved(key))
+                throw new ArgumentException("Only reserved headers can use the framework mutation path.", nameof(key));
+            return _inner.Remove(key);
+        }
         public string this[string key]
         {
             get => _inner[key];
