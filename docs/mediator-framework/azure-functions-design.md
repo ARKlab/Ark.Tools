@@ -157,8 +157,9 @@ Each generated method delegates in this order:
 6. execute it with the Functions invocation cancellation token using `async` and
    `await`;
 7. translate the result, status, headers and body;
-8. map exceptions with `ExceptionProblemDetailsMapper`, log the exception
-   server-side and emit the same safe ProblemDetails contract;
+8. map exceptions with `ExceptionProblemDetailsMapper`, log mapped 5xx
+   exceptions server-side without logging expected 4xx failures, and emit the
+   same safe ProblemDetails contract;
 9. dispose attachment streams and the invocation scope according to the same
    ownership rules as the Minimal API host.
 
