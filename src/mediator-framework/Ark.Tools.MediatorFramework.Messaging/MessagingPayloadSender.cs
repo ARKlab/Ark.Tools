@@ -60,11 +60,11 @@ public sealed class MessagingPayloadSender
         ArgumentNullException.ThrowIfNull(headers);
         ctk.ThrowIfCancellationRequested();
 
-        headers[MessagingHeaders.ContentType] = codec.ContentType;
-        headers.Remove(MessagingHeaders.ContentEncoding);
-        headers.Remove(MessagingHeaders.PayloadAttachmentId);
-        headers.Remove(MessagingHeaders.PayloadAttachmentLength);
-        headers.Remove(MessagingHeaders.PayloadAttachmentSha256);
+        _setReservedHeader(headers, MessagingHeaders.ContentType, codec.ContentType);
+        _removeReservedHeader(headers, MessagingHeaders.ContentEncoding);
+        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentId);
+        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentLength);
+        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256);
         var buffer = new ArrayBufferWriter<byte>();
         var writer = new CompressionSwitchingBufferWriter(
             buffer,
@@ -75,14 +75,18 @@ public sealed class MessagingPayloadSender
         writer.Complete();
 
         if (writer.Compressed)
-            headers[MessagingHeaders.ContentEncoding] =
-                _algorithm == CompressionAlgorithm.Brotli ? "br" : "gzip";
+            _setReservedHeader(
+                headers,
+                MessagingHeaders.ContentEncoding,
+                _algorithm == CompressionAlgorithm.Brotli ? "br" : "gzip");
+            );
 
         var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
             ?? new ReadOnlyDictionary<string, string>(headers);
         var nativeSize = transport.MeasureNative(readOnlyHeaders, payload);
-        var mustOffload = payload.Length > _network.DataBusOffloadThresholdBytes
+        var mustOffload = payload.Length > _network.MaximumTransportPayloadBytes
+            || payload.Length > _network.DataBusOffloadThresholdBytes
             || (transport.MaximumInlineEnvelopeBytes is { } ceiling && nativeSize > ceiling);
         if (!mustOffload)
             return payload;
@@ -93,10 +97,12 @@ public sealed class MessagingPayloadSender
                 "Payload exceeds the maximum DataBus attachment size.");
 
         var attachmentId = await _dataBus.StoreAsync(payload, ctk).ConfigureAwait(false);
-        headers[MessagingHeaders.PayloadAttachmentId] = attachmentId;
-        headers[MessagingHeaders.PayloadAttachmentLength] =
-            payload.Length.ToString(CultureInfo.InvariantCulture);
-        headers[MessagingHeaders.PayloadAttachmentSha256] = _sha256Hex(payload);
+        _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentId, attachmentId);
+        _setReservedHeader(
+            headers,
+            MessagingHeaders.PayloadAttachmentLength,
+            payload.Length.ToString(CultureInfo.InvariantCulture));
+        _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, _sha256Hex(payload));
 
         if (transport.MaximumInlineEnvelopeBytes is { } attachmentCeiling
             && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > attachmentCeiling)
@@ -107,6 +113,25 @@ public sealed class MessagingPayloadSender
         }
 
         return ReadOnlySequence<byte>.Empty;
+    }
+
+    private static void _setReservedHeader(
+        IDictionary<string, string> headers,
+        string key,
+        string value)
+    {
+        if (headers is IMessagingFrameworkHeaders frameworkHeaders)
+            frameworkHeaders.SetReserved(key, value);
+        else
+            headers[key] = value;
+    }
+
+    private static void _removeReservedHeader(IDictionary<string, string> headers, string key)
+    {
+        if (headers is IMessagingFrameworkHeaders frameworkHeaders)
+            frameworkHeaders.RemoveReserved(key);
+        else
+            headers.Remove(key);
     }
 
     private static string _sha256Hex(in ReadOnlySequence<byte> payload)

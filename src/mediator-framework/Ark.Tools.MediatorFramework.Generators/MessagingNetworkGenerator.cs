@@ -344,6 +344,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             ? symbol.Name.Substring(0, symbol.Name.Length - "Participant".Length)
             : symbol.Name);
         var serializers = _enums(attribute, "Serializers");
+        var compression = _enum(attribute, "Compression");
+        var compressionMinimumSizeBytes = _int(attribute, "CompressionMinimumSizeBytes");
         var retryType = _type(attribute, "Retry");
         var retry = retryType is null ? null : _readRetry(retryType);
         var processes = _types(attribute, "Processes");
@@ -357,6 +359,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             subscribes,
             serializers,
             _enum(attribute, "DefaultSerializer"),
+            compression,
+            compressionMinimumSizeBytes,
             retry,
             processes.Concat(publishes).Concat(subscribes)
                 .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>().ToImmutableArray());
@@ -674,7 +678,15 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("{")
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging participant.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append("    public const string Identity = \"").Append(_escape(participant.Identity)).AppendLine("\";");
+            .Append("    public const string Identity = \"").Append(_escape(participant.Identity)).AppendLine("\";")
+            .AppendLine("    /// <summary>Gets the sender-side compression algorithm.</summary>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .Append("    public const global::Ark.Tools.MediatorFramework.CompressionAlgorithm Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.")
+            .Append(_compressionName(participant.Compression)).AppendLine(";")
+            .AppendLine("    /// <summary>Gets the minimum payload size eligible for compression.</summary>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .Append("    public const int CompressionMinimumSizeBytes = ")
+            .Append(participant.CompressionMinimumSizeBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
 
         var commandInterface = compilation.GetTypeByMetadataName(_commandInterface);
         var canEmitBinder = compilation.GetTypeByMetadataName(_payloadReader) is not null
@@ -785,6 +797,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         };
     }
 
+    private static string _compressionName(int compression)
+    {
+        return compression switch
+        {
+            1 => "Gzip",
+            2 => "Brotli",
+            _ => "None"
+        };
+    }
+
     private static void _emitMetadata(SourceProductionContext context, IReadOnlyList<Network> networks)
     {
         var source = new StringBuilder()
@@ -884,6 +906,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return value.Value is null ? default : (int)value.Value;
     }
 
+    private static int _int(AttributeData attribute, string name)
+    {
+        var value = _named(attribute, name);
+        return value.Value is int integer ? integer : default;
+    }
+
     private static string? _string(AttributeData? attribute, string name)
     {
         var value = attribute is null ? default : _named(attribute, name);
@@ -931,6 +959,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             ImmutableArray<INamedTypeSymbol> subscribes,
             ImmutableArray<int> serializers,
             int defaultSerializer,
+            int compression,
+            int compressionMinimumSizeBytes,
             RetryPolicy? retry,
             ImmutableArray<INamedTypeSymbol> contracts)
         {
@@ -941,6 +971,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             Subscribes = subscribes;
             Serializers = serializers;
             DefaultSerializer = defaultSerializer;
+            Compression = compression;
+            CompressionMinimumSizeBytes = compressionMinimumSizeBytes;
             Retry = retry;
             Contracts = contracts;
         }
@@ -952,6 +984,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         public ImmutableArray<INamedTypeSymbol> Subscribes { get; }
         public ImmutableArray<int> Serializers { get; }
         public int DefaultSerializer { get; }
+        public int Compression { get; }
+        public int CompressionMinimumSizeBytes { get; }
         public RetryPolicy? Retry { get; }
         public ImmutableArray<INamedTypeSymbol> Contracts { get; }
     }

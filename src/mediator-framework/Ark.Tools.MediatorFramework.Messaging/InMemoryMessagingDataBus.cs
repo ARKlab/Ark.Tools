@@ -161,6 +161,9 @@ internal sealed class Sha256ValidatingReadStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
+        if (count == 0)
+            return 0;
+
         var read = _inner.Read(buffer, offset, count);
         _validate(buffer.AsSpan(offset, read), read == 0);
         return read;
@@ -168,6 +171,9 @@ internal sealed class Sha256ValidatingReadStream : Stream
 
     public override int Read(Span<byte> buffer)
     {
+        if (buffer.IsEmpty)
+            return 0;
+
         var read = _inner.Read(buffer);
         _validate(buffer[..read], read == 0);
         return read;
@@ -177,6 +183,9 @@ internal sealed class Sha256ValidatingReadStream : Stream
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
+        if (buffer.IsEmpty)
+            return 0;
+
         var read = await _inner.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
         _validate(buffer[..read].Span, read == 0);
         return read;
@@ -188,6 +197,9 @@ internal sealed class Sha256ValidatingReadStream : Stream
         int count,
         CancellationToken cancellationToken)
     {
+        if (count == 0)
+            return 0;
+
         var read = await _inner.ReadAsync(
             buffer.AsMemory(offset, count),
             cancellationToken).ConfigureAwait(false);

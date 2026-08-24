@@ -54,13 +54,21 @@ public sealed class MessagingPayloadReceiver
 #pragma warning restore CA2000
         try
         {
-            if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
+            var hasAttachmentId = headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId);
+            var hasAttachmentLength = headers.TryGetValue(
+                MessagingHeaders.PayloadAttachmentLength,
+                out var lengthText);
+            var hasAttachmentSha256 = headers.TryGetValue(
+                MessagingHeaders.PayloadAttachmentSha256,
+                out var expectedSha256);
+            if (hasAttachmentId || hasAttachmentLength || hasAttachmentSha256)
             {
-                if (string.IsNullOrEmpty(attachmentId)
-                    || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentLength, out var lengthText)
+                if (!hasAttachmentId
+                    || !hasAttachmentLength
+                    || !hasAttachmentSha256
+                    || string.IsNullOrEmpty(attachmentId)
                     || !long.TryParse(lengthText, NumberStyles.None, CultureInfo.InvariantCulture, out var expectedLength)
                     || expectedLength < 0
-                    || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentSha256, out var expectedSha256)
                     || string.IsNullOrEmpty(expectedSha256)
                     || expectedLength > _network.DataBusMaximumAttachmentBytes)
                 {
@@ -94,6 +102,23 @@ public sealed class MessagingPayloadReceiver
             if (payload is not null)
                 await payload.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Prepares a stream-backed payload reader for generated dispatch.</summary>
+    /// <param name="headers">The received framework headers.</param>
+    /// <param name="transportPayload">The inline transport payload.</param>
+    /// <param name="codec">The codec selected for the payload.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>A payload reader that owns the prepared stream.</returns>
+    public async Task<IMessagingPayloadReader> PreparePayloadReaderAsync(
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> transportPayload,
+        IMessagingCodec codec,
+        CancellationToken ctk)
+    {
+        ArgumentNullException.ThrowIfNull(codec);
+        var payload = await PreparePayloadAsync(headers, transportPayload, ctk).ConfigureAwait(false);
+        return new MessagingStreamPayloadReader(payload, codec);
     }
 
     private sealed class BoundedPayloadReadStream : Stream
@@ -139,7 +164,8 @@ public sealed class MessagingPayloadReceiver
 
             try
             {
-                var read = _inner.Read(buffer);
+                var remaining = _maximumBytes - _read;
+                var read = _inner.Read(buffer[..(int)Math.Min(buffer.Length, Math.Max(1, remaining))]);
                 _validate(read);
                 return read;
             }
@@ -158,8 +184,9 @@ public sealed class MessagingPayloadReceiver
 
             try
             {
+                var remaining = _maximumBytes - _read;
                 var read = await _inner
-                    .ReadAsync(buffer, cancellationToken)
+                    .ReadAsync(buffer[..(int)Math.Min(buffer.Length, Math.Max(1, remaining))], cancellationToken)
                     .ConfigureAwait(false);
                 _validate(read);
                 return read;
