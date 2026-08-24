@@ -6,8 +6,10 @@ using System.Text.Json;
 using MessagePack;
 using MessagePack.Resolvers;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -78,6 +80,34 @@ public static class MessagingServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers the Azure Blob DataBus provider and validates its data-plane
+    /// configuration when the host starts.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="options">The Azure Blob provider options.</param>
+    /// <param name="configuration">The host configuration containing the endpoint.</param>
+    /// <param name="networks">The networks that use the provider.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkAzureBlobMessagingDataBus(
+        this IServiceCollection services,
+        AzureBlobDataBusOptions options,
+        IConfiguration configuration,
+        params MessagingNetworkOptions[] networks)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(networks);
+
+        var dataBus = new AzureBlobMessagingDataBus(options, configuration);
+        _validateDataBusLifetime(dataBus, networks);
+        services.AddSingleton(dataBus);
+        services.AddSingleton<IMessagingDataBus>(dataBus);
+        services.AddSingleton<IHostedService, AzureBlobMessagingDataBusStartupValidator>();
+        return services;
+    }
+
     /// <summary>Registers the in-memory DataBus provider.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="clock">The clock used for attachment expiry.</param>
@@ -128,7 +158,14 @@ public static class MessagingServiceCollectionExtensions
         IMessagingDataBus dataBus,
         IEnumerable<MessagingNetworkOptions> networks)
     {
-        if (dataBus is not InMemoryMessagingDataBus inMemory)
+        var lifetime = dataBus switch
+        {
+            InMemoryMessagingDataBus inMemory =>
+                inMemory.MinimumAttachmentLifetime.ToTimeSpan(),
+            AzureBlobMessagingDataBus azureBlob => azureBlob.MinimumAttachmentLifetime,
+            _ => TimeSpan.Zero
+        };
+        if (lifetime <= TimeSpan.Zero)
             return;
 
         foreach (var network in networks)
@@ -137,8 +174,7 @@ public static class MessagingServiceCollectionExtensions
             if (network.MaximumSchedulingDelay <= TimeSpan.Zero)
                 continue;
 
-            var required = NodaTime.Duration.FromTimeSpan(network.MaximumSchedulingDelay);
-            if (inMemory.MinimumAttachmentLifetime <= required)
+            if (lifetime <= network.MaximumSchedulingDelay)
                 throw new ArgumentOutOfRangeException(
                     nameof(dataBus),
                     $"The DataBus attachment lifetime must cover network '{network.NetworkIdentity}' maximum scheduling delay.");
