@@ -98,6 +98,20 @@ public static class MessagingServiceCollectionExtensions
             networks);
     }
 
+    /// <summary>Registers the default-lifetime in-memory DataBus provider.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="networks">The networks that use the provider.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkInMemoryMessagingDataBus(
+        this IServiceCollection services,
+        params MessagingNetworkOptions[] networks)
+    {
+        return services.AddArkInMemoryMessagingDataBus(
+            clock: null,
+            lifetime: null,
+            networks);
+    }
+
     /// <summary>Registers the first-class in-memory messaging transport.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="networks">The resolved networks using the transport.</param>
@@ -124,7 +138,7 @@ public static class MessagingServiceCollectionExtensions
                 continue;
 
             var required = NodaTime.Duration.FromTimeSpan(network.MaximumSchedulingDelay);
-            if (inMemory.MinimumAttachmentLifetime < required)
+            if (inMemory.MinimumAttachmentLifetime <= required)
                 throw new ArgumentOutOfRangeException(
                     nameof(dataBus),
                     $"The DataBus attachment lifetime must cover network '{network.NetworkIdentity}' maximum scheduling delay.");

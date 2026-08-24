@@ -52,6 +52,7 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
     public Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk)
     {
         ctk.ThrowIfCancellationRequested();
+        _removeExpired();
         var bytes = content.ToArray();
         var id = Guid.NewGuid().ToString("N");
         var hash = Convert.ToHexString(SHA256.HashData(bytes));
@@ -241,7 +242,7 @@ internal sealed class Sha256ValidatingReadStream : Stream
         _read += bytes.Length;
         if (_read > _expectedLength)
             _fail("The payload attachment is longer than its envelope metadata.");
-        if (!endOfStream && _read != _expectedLength)
+        if (!endOfStream)
             return;
 
         try

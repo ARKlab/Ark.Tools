@@ -64,6 +64,9 @@ public sealed class CompressionSwitchingBufferWriter : IBufferWriter<byte>
         }
 
         var pending = _pending!;
+        if (count > _maximumPayloadBytes - pending.WrittenCount)
+            throw _oversized();
+
         pending.Advance(count);
         if (_algorithm != CompressionAlgorithm.None
             && pending.WrittenCount >= _minimumSizeBytes)

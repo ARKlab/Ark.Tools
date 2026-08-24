@@ -110,7 +110,7 @@ public sealed class MessagingPayloadReceiver
     /// <param name="codec">The codec selected for the payload.</param>
     /// <param name="ctk">The cancellation token.</param>
     /// <returns>A payload reader that owns the prepared stream.</returns>
-    public async Task<IMessagingPayloadReader> PreparePayloadReaderAsync(
+    public async Task<MessagingStreamPayloadReader> PreparePayloadReaderAsync(
         IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> transportPayload,
         IMessagingCodec codec,

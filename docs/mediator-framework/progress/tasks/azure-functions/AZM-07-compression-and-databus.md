@@ -147,8 +147,8 @@ public sealed class MessagingPayloadSender
         //    running count crosses the minimum, the buffered prefix is re-piped into a
         //    BrotliStream/GZipStream over the buffer writer and writing continues
         //    compressed (the mid-serialization switch). The counter throws
-        //    MessagingFailFastException(OversizedPayload) past
-        //    _network.MaximumTransportPayloadBytes.
+        //    MessagingFailFastException(OversizedPayload) past the larger of
+        //    the transport and attachment limits.
         var buffer = new ArrayBufferWriter<byte>();        // transport-owned buffered form
         var writer = new CompressionSwitchingBufferWriter(
             buffer, _algorithm, _compressionMinimumSizeBytes,
@@ -196,8 +196,8 @@ public sealed class MessagingPayloadSender
 ```
 
 The receive-side skeleton — attachment fetch with length/SHA-256 verification,
-then a bounded decompression stream; the returned stream is consumed by the
-typed binder without materializing an intermediate payload:
+then a bounded decompression stream; the generated sequence-based codec adapter
+materializes the bounded stream only at the existing codec boundary:
 
 ```csharp
 namespace Ark.MediatorFramework.Messaging;

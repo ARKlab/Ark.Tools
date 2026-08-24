@@ -70,7 +70,9 @@ public sealed class MessagingPayloadSender
             buffer,
             _algorithm,
             _compressionMinimumSizeBytes,
-            _network.DataBusMaximumAttachmentBytes);
+            Math.Max(
+                _network.MaximumTransportPayloadBytes,
+                _network.DataBusMaximumAttachmentBytes));
         codec.Serialize(message, writer);
         writer.Complete();
 
