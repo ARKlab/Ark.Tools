@@ -845,15 +845,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var member = enumType?.GetMembers()
             .OfType<IFieldSymbol>()
             .FirstOrDefault(field => field.HasConstantValue && field.ConstantValue is int value && value == compression);
-        if (member is not null)
-            return member.Name;
-
-        return compression switch
-        {
-            1 => "Gzip",
-            2 => "Brotli",
-            _ => "None"
-        };
+        return member?.Name ?? "None";
     }
 
     private static void _emitMetadata(SourceProductionContext context, IReadOnlyList<Network> networks)
