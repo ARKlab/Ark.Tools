@@ -33,7 +33,7 @@ public static class McpAttachmentResults
             total += read;
             if (total > maximumBytes)
                 throw new ValidationException(
-                    [new ValidationFailure(nameof(maximumBytes), "The attachment exceeds the configured download limit.")]);
+                    [new ValidationFailure("attachment", "The attachment exceeds the configured download limit.")]);
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
 
