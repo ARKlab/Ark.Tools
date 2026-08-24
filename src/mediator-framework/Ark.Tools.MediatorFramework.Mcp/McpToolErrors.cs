@@ -8,7 +8,6 @@ using ModelContextProtocol.Server;
 using NLog;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Globalization;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
 

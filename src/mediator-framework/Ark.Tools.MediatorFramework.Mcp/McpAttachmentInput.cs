@@ -39,11 +39,9 @@ public sealed class McpAttachmentInput
         {
             bytes = Convert.FromBase64String(Blob);
         }
-        catch (FormatException exception)
+        catch (FormatException)
         {
-            throw new ValidationException(
-                [new ValidationFailure(nameof(Blob), "Attachment blob must be base64.")],
-                exception);
+            throw new ValidationException([new ValidationFailure(nameof(Blob), "Attachment blob must be base64.")]);
         }
         if (bytes.LongLength > maximumBytes)
             throw new ValidationException([new ValidationFailure(nameof(Blob), "The attachment exceeds the configured size limit.")]);
