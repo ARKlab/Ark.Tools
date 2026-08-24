@@ -218,6 +218,7 @@ public sealed class MessagingPayloadReceiver
 
         public override async ValueTask DisposeAsync()
         {
+            GC.SuppressFinalize(this);
             try
             {
                 if (!_disposed)
@@ -230,8 +231,6 @@ public sealed class MessagingPayloadReceiver
             {
                 await base.DisposeAsync().ConfigureAwait(false);
             }
-
-            GC.SuppressFinalize(this);
         }
 
         private void _validate(int read)
@@ -239,7 +238,7 @@ public sealed class MessagingPayloadReceiver
             if (read == 0)
                 return;
 
-            if (read > _maximumBytes - _read)
+            if (_read + read > _maximumBytes)
                 throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload);
 
             _read += read;
