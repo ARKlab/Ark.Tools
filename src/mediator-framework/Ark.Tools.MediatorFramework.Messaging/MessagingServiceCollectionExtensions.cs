@@ -173,14 +173,14 @@ public static class MessagingServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrEmpty(participantIdentity);
 
         services.AddSingleton<IBus>(serviceProvider => new MessagingBus(
-        serviceProvider.GetRequiredService<IMessagingTransport>(),
-        network,
-        registry,
-        serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
-        payloadSender,
-        participantIdentity,
-        outgoingStepTypes,
-        serviceProvider.GetRequiredService));
+            serviceProvider.GetRequiredService<IMessagingTransport>(),
+            network,
+            registry,
+            serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
+            payloadSender,
+            participantIdentity,
+            outgoingStepTypes,
+            serviceProvider.GetRequiredService));
         return services;
     }
 
