@@ -7,6 +7,7 @@ global using Microsoft.AspNetCore.Http;
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
 using Ark.Tools.MediatorFramework.Grpc;
+using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.MediatorFramework.Rebus;
 
@@ -34,6 +35,12 @@ public sealed class HostingMarker
 /// </summary>
 [ArkGenerateMinimalApiForAssembly(typeof(HostingMarker))]
 public partial class HostingMinimalApiContext
+{
+}
+
+/// <summary>Explicit MCP source-generation context for the synthetic hosting contracts.</summary>
+[ArkGenerateMcpToolsForAssembly(typeof(HostingMarker))]
+public partial class HostingMcpContext
 {
 }
 
@@ -142,6 +149,7 @@ public sealed record HostingResponse
 [GrpcMethod("ExecuteHostingQuery")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.query")]
 public sealed record HostingQuery : Solid.IQuery<HostingQuery, HostingResponse>
 {
     /// <summary>Gets or sets the route identifier.</summary>
@@ -198,6 +206,7 @@ public sealed record HostingDeferredCommand : Solid.ICommand<HostingDeferredComm
 [GrpcMethod("ValidateHostingRequest")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.validation")]
 public sealed record HostingValidationRequest : Solid.IRequest<HostingValidationRequest, HostingResponse>
 {
     /// <summary>Gets or sets the value to validate.</summary>
@@ -234,6 +243,7 @@ public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingBus
 
 /// <summary>Request whose handler produces an unexpected exception.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/unexpected", AllowAnonymous = true)]
+[McpTool(Name = "hosting.unexpected")]
 public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingUnexpectedRequest, HostingResponse>
 {
     /// <summary>Gets or sets the request value.</summary>
@@ -246,6 +256,7 @@ public sealed record HostingUnexpectedRequest : Solid.IRequest<HostingUnexpected
 [GrpcService("Hosting")]
 [PolicyAuthorize(typeof(HostingScopePolicy))]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.authorized")]
 public sealed record HostingAuthorizedQuery : Solid.IQuery<HostingAuthorizedQuery, HostingResponse>;
 
 /// <summary>Query returning the authenticated synthetic caller.</summary>
@@ -331,6 +342,7 @@ public sealed record HostingStreamItem
 [GrpcMethod("UploadHostingAttachment")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
+[McpTool(Name = "hosting.attachment.upload")]
 public sealed record HostingAttachmentUploadRequest : Solid.IRequest<HostingAttachmentUploadRequest, HostingResponse>
 {
     /// <summary>Gets or sets the uploaded attachment.</summary>
@@ -354,6 +366,7 @@ public sealed record HostingAttachmentCollectionUploadRequest : Solid.IRequest<H
 
 /// <summary>Query returning a downloadable synthetic attachment.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/attachments/{name}", AllowAnonymous = true)]
+[McpTool(Name = "hosting.attachment.download")]
 public sealed record HostingAttachmentDownloadQuery : Solid.IQuery<HostingAttachmentDownloadQuery, IArkAttachment>
 {
     /// <summary>Gets or sets the attachment name.</summary>
@@ -430,6 +443,7 @@ public sealed record HostingCircle : HostingShape
 [HttpEndpoint("GET", "/hosting/versioned/{id}", AllowAnonymous = true)]
 [GrpcMethod("GetHostingVersioned")]
 [GrpcService("Hosting")]
+[McpTool(Name = "hosting.versioned")]
 [Versioning(Introduced = 2, Retired = 4)]
 [ProtoBuf.ProtoContract]
 public sealed record HostingVersionedQuery : Solid.IQuery<HostingVersionedQuery, HostingResponse>

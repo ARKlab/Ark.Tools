@@ -6,6 +6,7 @@ using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
+using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.Rebus;
@@ -217,6 +218,43 @@ public sealed class HostingTestFixture : IAsyncDisposable
     public async Task<WebApplication> StartMinimalApiHostAsync()
     {
         var app = BuildMinimalApiHost();
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        return app;
+    }
+
+    /// <summary>Builds and maps an independent MCP host.</summary>
+    /// <returns>The unstarted MCP application.</returns>
+    public WebApplication BuildMcpHost()
+    {
+        _throwIfDisposed();
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton(Container);
+        builder.Services.AddSingleton(_principalProvider);
+        builder.Services.AddSimpleInjector(Container, simpleInjector => simpleInjector.AddAspNetCore());
+        builder.Services
+            .AddAuthentication(TestAuthenticationHandler._schemeName)
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                TestAuthenticationHandler._schemeName,
+                static _ => { });
+        builder.Services.AddAuthorization();
+        builder.Services.AddMcpServer()
+            .WithHttpTransport()
+            .WithArkMcpTools<HostingMcpContext>();
+        var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        ((IApplicationBuilder)app).UseSimpleInjector(Container);
+        app.MapMcp("/mcp/v{version}");
+        _hosts.Add(app);
+        return app;
+    }
+
+    /// <summary>Builds and starts an independent MCP test host.</summary>
+    /// <returns>The started MCP application.</returns>
+    public async Task<WebApplication> StartMcpHostAsync()
+    {
+        var app = BuildMcpHost();
         await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }

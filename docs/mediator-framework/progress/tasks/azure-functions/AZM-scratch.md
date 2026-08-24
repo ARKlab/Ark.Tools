@@ -27,6 +27,13 @@ task.
 
 ## Serialization
 
+- **Consider moving MCP error `ProblemDetails` serialization to host JSON options.**
+  The current MCP adapter owns a source-generated serializer for its safe error
+  payload. A future AZM integration should evaluate using the host's configured
+  `JsonOptions` instead, so naming policies, converters, and other contract
+  serialization settings are applied consistently. Preserve the sanitized
+  error boundary when changing the serializer.
+
 - **Validate MessagePack and Protobuf decorations at compile time.** When a
   participant declares `SerializationProtocol.MessagePack` or
   `SerializationProtocol.Protobuf` in its `Serializers`, the analyzer should

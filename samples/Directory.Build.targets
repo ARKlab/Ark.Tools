@@ -66,6 +66,10 @@
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
                           Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.MinimalApi' And '$(UsingMicrosoftNETSdkWeb)' == 'true'" />
+        <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Mcp.Generators\Ark.Tools.MediatorFramework.Mcp.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Mcp' And '$(UsingMicrosoftNETSdkWeb)' == 'true'" />
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
