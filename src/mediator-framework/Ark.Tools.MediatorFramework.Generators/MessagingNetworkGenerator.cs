@@ -700,7 +700,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <summary>Gets the sender-side compression algorithm.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const global::Ark.Tools.MediatorFramework.CompressionAlgorithm Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.")
-            .Append(_compressionName(participant.Compression)).AppendLine(";")
+            .Append(_compressionName(compilation, participant.Compression)).AppendLine(";")
             .AppendLine("    /// <summary>Gets the minimum payload size eligible for compression.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const int CompressionMinimumSizeBytes = ")
@@ -839,8 +839,15 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         };
     }
 
-    private static string _compressionName(int compression)
+    private static string _compressionName(Compilation compilation, int compression)
     {
+        var enumType = compilation.GetTypeByMetadataName("Ark.Tools.MediatorFramework.CompressionAlgorithm");
+        var member = enumType?.GetMembers()
+            .OfType<IFieldSymbol>()
+            .FirstOrDefault(field => field.HasConstantValue && field.ConstantValue is int value && value == compression);
+        if (member is not null)
+            return member.Name;
+
         return compression switch
         {
             1 => "Gzip",
