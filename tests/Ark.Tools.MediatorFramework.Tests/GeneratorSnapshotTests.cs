@@ -2050,7 +2050,9 @@ public sealed class GeneratorSnapshotTests
                 Processes = new[] { typeof(PrintBook) },
                 Publishes = new[] { typeof(PrintCompleted) },
                 Serializers = new[] { SerializationProtocol.Json },
-                DefaultSerializer = SerializationProtocol.Json)]
+                DefaultSerializer = SerializationProtocol.Json,
+                Compression = CompressionAlgorithm.Gzip,
+                CompressionMinimumSizeBytes = 1024)]
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
@@ -2064,6 +2066,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
         result.Generated.Should().Contain("public const string Identity");
+        result.Generated.Should().Contain("Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.Gzip");
+        result.Generated.Should().Contain("CompressionMinimumSizeBytes = 1024");
         result.Generated.Should().Contain("books.print_completed");
         result.Generated.Should().NotContain("Type.GetType");
         result.Generated.Should().NotContain("Activator.");

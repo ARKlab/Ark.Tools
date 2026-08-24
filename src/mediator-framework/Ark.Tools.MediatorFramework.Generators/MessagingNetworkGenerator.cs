@@ -24,6 +24,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _requestNamespace = "Ark.Tools.Solid";
     private const string _commandInterface = "Ark.Tools.Solid.ICommand`1";
     private const string _payloadReader = "Ark.Tools.MediatorFramework.Messaging.IMessagingPayloadReader";
+    private const string _streamPayloadReader = "Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader";
+    private const string _codec = "Ark.Tools.MediatorFramework.Messaging.IMessagingCodec";
+    private const string _payloadSender = "Ark.Tools.MediatorFramework.Messaging.MessagingPayloadSender";
+    private const string _dataBus = "Ark.Tools.MediatorFramework.IMessagingDataBus";
+    private const string _networkOptions = "Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions";
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
@@ -673,6 +678,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine();
         }
 
+        var commandInterface = compilation.GetTypeByMetadataName(_commandInterface);
+        var canEmitBinder = compilation.GetTypeByMetadataName(_payloadReader) is not null
+            && compilation.GetTypeByMetadataName(_commandProcessor) is not null
+            && compilation.GetTypeByMetadataName(_failFastException) is not null
+            && compilation.GetTypeByMetadataName(_failFastReason) is not null
+            && commandInterface is not null;
+        var canEmitStreamBinder = canEmitBinder
+            && compilation.GetTypeByMetadataName(_streamPayloadReader) is not null
+            && compilation.GetTypeByMetadataName(_codec) is not null;
+        var canEmitPayloadSender = compilation.GetTypeByMetadataName(_payloadSender) is not null
+            && compilation.GetTypeByMetadataName(_dataBus) is not null
+            && compilation.GetTypeByMetadataName(_networkOptions) is not null;
+
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name).AppendLine()
             .AppendLine("{")
@@ -687,13 +705,20 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const int CompressionMinimumSizeBytes = ")
             .Append(participant.CompressionMinimumSizeBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
+        if (canEmitPayloadSender)
+        {
+            source.AppendLine()
+                .AppendLine("    /// <summary>Creates a payload sender using this participant's compression settings.</summary>")
+                .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.MessagingPayloadSender CreatePayloadSender(")
+                .AppendLine("        global::Ark.Tools.MediatorFramework.IMessagingDataBus dataBus,")
+                .AppendLine("        global::Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions network)")
+                .AppendLine("    {")
+                .AppendLine("        return new global::Ark.Tools.MediatorFramework.Messaging.MessagingPayloadSender(")
+                .AppendLine("            dataBus, network, Compression, CompressionMinimumSizeBytes);")
+                .AppendLine("    }");
+        }
 
-        var commandInterface = compilation.GetTypeByMetadataName(_commandInterface);
-        var canEmitBinder = compilation.GetTypeByMetadataName(_payloadReader) is not null
-            && compilation.GetTypeByMetadataName(_commandProcessor) is not null
-            && compilation.GetTypeByMetadataName(_failFastException) is not null
-            && compilation.GetTypeByMetadataName(_failFastReason) is not null
-            && commandInterface is not null;
         var contracts = participant.Processes
             .Concat(participant.Subscribes)
             .Distinct(SymbolEqualityComparer.Default)
@@ -733,6 +758,23 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine("                    logicalName);")
                 .AppendLine("        }")
                 .AppendLine("    }");
+
+            if (canEmitStreamBinder)
+            {
+                source.AppendLine()
+                    .AppendLine("    /// <summary>Dispatches a prepared stream through the generated contract binder.</summary>")
+                    .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                    .AppendLine("    public static async global::System.Threading.Tasks.Task DispatchAsync(")
+                    .AppendLine("        string logicalName,")
+                    .AppendLine("        global::System.IO.Stream payload,")
+                    .AppendLine("        global::Ark.Tools.MediatorFramework.Messaging.IMessagingCodec codec,")
+                    .AppendLine("        global::Ark.Tools.Solid.ICommandProcessor processor,")
+                    .AppendLine("        global::System.Threading.CancellationToken ctk)")
+                    .AppendLine("    {")
+                    .AppendLine("        await using var reader = new global::Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader(payload, codec);")
+                    .AppendLine("        await DispatchAsync(logicalName, reader, processor, ctk).ConfigureAwait(false);")
+                    .AppendLine("    }");
+            }
         }
 
         source.AppendLine("}");

@@ -79,7 +79,6 @@ public sealed class MessagingPayloadSender
                 headers,
                 MessagingHeaders.ContentEncoding,
                 _algorithm == CompressionAlgorithm.Brotli ? "br" : "gzip");
-            );
 
         var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>

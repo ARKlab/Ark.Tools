@@ -8,6 +8,8 @@ using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using NodaTime;
 using NodaTime.Testing;
 
@@ -119,6 +121,49 @@ public sealed class MessagingCompressionAndDataBusTests
     }
 
     [TestMethod]
+    public async Task PayloadAboveNetworkLimitUsesClaimCheck()
+    {
+        var network = _network(
+            offloadThreshold: 1_000,
+            maximumTransportPayload: 10,
+            maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
+            .BuildOutgoingPayloadAsync(
+                new PayloadContract(new string('a', 100)),
+                new TextCodec(),
+                new InMemoryMessagingTransport(),
+                headers,
+                default).ConfigureAwait(false);
+
+        payload.IsEmpty.Should().BeTrue();
+        dataBus.Count.Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task PayloadSenderCanWriteReservedHeadersThroughOutgoingContext()
+    {
+        var network = _network(maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var context = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books");
+
+        var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
+            .BuildOutgoingPayloadAsync(
+                new PayloadContract("payload"),
+                new TextCodec(),
+                new InMemoryMessagingTransport(),
+                context.Headers,
+                default).ConfigureAwait(false);
+
+        payload.IsEmpty.Should().BeFalse();
+        context.Headers[MessagingHeaders.ContentType].Should().Be("text/plain");
+    }
+
+    [TestMethod]
     public async Task InvalidAttachmentMetadataAndExpiryFailFast()
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
@@ -148,6 +193,71 @@ public sealed class MessagingCompressionAndDataBusTests
         (await expiredAction
             .Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
             .Which.Reason.Should().Be(MessagingFailFastReason.AttachmentIntegrityFailure);
+    }
+
+    [TestMethod]
+    public async Task PartialOrMalformedAttachmentMetadataFailsFast()
+    {
+        var network = _network(maxDecompressed: 10_000);
+        var receiver = new MessagingPayloadReceiver(new InMemoryMessagingDataBus(), network);
+        var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [MessagingHeaders.PayloadAttachmentId] = "attachment",
+            [MessagingHeaders.PayloadAttachmentLength] = "1",
+            [MessagingHeaders.PayloadAttachmentSha256] = "not-a-sha256"
+        };
+
+        foreach (var key in metadata.Keys.ToArray())
+        {
+            var partial = new Dictionary<string, string>(metadata, StringComparer.Ordinal);
+            partial.Remove(key);
+            var action = () => receiver.PreparePayloadAsync(partial, default, default);
+            (await action.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+                .Which.Reason.Should().Be(MessagingFailFastReason.MalformedHeaders);
+        }
+
+        var malformed = () => receiver.PreparePayloadAsync(metadata, default, default);
+        (await malformed.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+            .Which.Reason.Should().Be(MessagingFailFastReason.AttachmentIntegrityFailure);
+    }
+
+    [TestMethod]
+    public async Task StreamPayloadReaderBridgesPreparedPayloadToGeneratedDispatch()
+    {
+        var network = _network(maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.Gzip, 1);
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var payload = await sender.BuildOutgoingPayloadAsync(
+            new PayloadContract(new string('a', 100)),
+            new TextCodec(),
+            new InMemoryMessagingTransport(),
+            headers,
+            default).ConfigureAwait(false);
+        var receiver = new MessagingPayloadReceiver(dataBus, network);
+
+        var reader = (MessagingStreamPayloadReader)await receiver
+            .PreparePayloadReaderAsync(headers, payload, new TextCodec(), default)
+            .ConfigureAwait(false);
+        await using (reader.ConfigureAwait(false))
+        {
+            reader.Deserialize<PayloadContract>().Value.Should().Be(new string('a', 100));
+        }
+    }
+
+    [TestMethod]
+    public void InMemoryDataBusLifetimeMustCoverSchedulingDelay()
+    {
+        var network = _network();
+        var shortLifetime = () => new ServiceCollection()
+            .AddArkInMemoryMessagingDataBus(networks: [network]);
+        shortLifetime.Should().Throw<ArgumentOutOfRangeException>();
+
+        var longLifetime = () => new ServiceCollection()
+            .AddArkInMemoryMessagingDataBus(
+                lifetime: Duration.FromDays(8),
+                networks: [network]);
+        longLifetime.Should().NotThrow();
     }
 
     [TestMethod]
@@ -209,7 +319,8 @@ public sealed class MessagingCompressionAndDataBusTests
 
     private static MessagingNetworkOptions _network(
         int offloadThreshold = 200_000,
-        int maxDecompressed = 1_000_000)
+        int maxDecompressed = 1_000_000,
+        int maximumTransportPayload = 240_000)
     {
         return new MessagingNetworkOptions(
             typeof(MessagingCompressionAndDataBusTests),
@@ -217,6 +328,7 @@ public sealed class MessagingCompressionAndDataBusTests
             {
                 DataBusOffloadThresholdBytes = offloadThreshold,
                 DataBusMaximumAttachmentBytes = 50_000,
+                MaximumTransportPayloadBytes = maximumTransportPayload,
                 MaximumDecompressedPayloadBytes = maxDecompressed
             });
     }
