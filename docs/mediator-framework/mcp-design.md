@@ -337,7 +337,8 @@ the decorated partial context:
 7. Error boundaries that preserve cancellation and protocol exceptions, map
    mediator failures to `CallToolResult.IsError = true` with safe text and
    shared ProblemDetails structured content, and return a generic message for
-   unexpected failures.
+   unexpected failures. Mapped 5xx failures are logged as exceptions with
+   structured NLog data; expected 4xx failures are not logged.
 
 Conceptually, generated source has this shape (names and argument details are
 illustrative):
@@ -398,8 +399,9 @@ The generated wrapper catches `OperationCanceledException` only when the MCP
 cancellation token is signaled, allowing cancellation to propagate. It
 rethrows MCP protocol exceptions. Other failures pass through
 `McpToolErrors`: a failure mapped by the shared HTTP ProblemDetails rules to a
-4xx status is serialized as safe JSON in an MCP exception message, while
-unexpected failures use a generic message.
+4xx status is serialized as safe JSON in an MCP exception message without
+exception logging, while unexpected 5xx failures are logged and use a generic
+message.
 
 ## Incremental generator pipeline
 
