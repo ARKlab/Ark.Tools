@@ -220,6 +220,58 @@ host accepts a Service Bus connection string locally and uses
 `DefaultAzureCredential` for a namespace in managed environments. Do not commit
 credentials or `local.settings.json`.
 
+For claim-check payloads, the sample can use the production Azure Blob provider
+without changing message contracts:
+
+```csharp
+services.AddArkAzureBlobMessagingDataBus(
+    new AzureBlobDataBusOptions
+    {
+        ContainerName = "amf1-databus",
+        Prefix = "sample/",
+        MinimumAttachmentLifetime = TimeSpan.FromDays(7),
+        ConnectionString = configuration.GetConnectionString("AzureBlobDataBus")
+            ?? throw new InvalidOperationException(
+                "Azure Blob DataBus configuration is required.")
+    },
+    networkOptions);
+```
+
+Local tests may set that connection string to `UseDevelopmentStorage=true`.
+Production deployments can bind the Blob service URI, such as
+`https://<account>.blob.core.windows.net/`, to `ConnectionString`; the provider
+uses `DefaultAzureCredential` for it.
+Create the container and an IaC-managed lifecycle rule scoped to
+`amf1-databus/sample/`; the runtime never changes the account-wide lifecycle
+policy. The delete age must cover the configured minimum lifetime and the
+message TTL, backlog, outages, deployment delays, and outbox dwell time.
+
+The local `docker-compose.yml` includes Azurite. The production lifecycle rule
+for this sample is:
+
+```json
+{
+  "rules": [
+    {
+      "name": "amf1-databus-attachment-cleanup",
+      "enabled": true,
+      "type": "Lifecycle",
+      "definition": {
+        "filters": {
+          "blobTypes": [ "blockBlob" ],
+          "prefixMatch": [ "amf1-databus/sample/" ]
+        },
+        "actions": {
+          "baseBlob": {
+            "delete": { "daysAfterModificationGreaterThan": 7 }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
 ## Azure Functions
 
 The isolated-worker project exposes the same public API contract set through the

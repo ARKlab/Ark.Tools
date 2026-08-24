@@ -37,6 +37,15 @@ public sealed class MessagingFailFastException : Exception
         Reason = reason;
     }
 
+    internal MessagingFailFastException(
+        MessagingFailFastReason reason,
+        string detail,
+        Exception innerException)
+        : base(_bounded(detail), innerException)
+    {
+        Reason = reason;
+    }
+
     /// <summary>Gets the failure classification.</summary>
     public MessagingFailFastReason Reason { get; }
 

@@ -1363,15 +1363,16 @@ before the database transaction commits; a rolled-back transaction leaves an
 orphaned attachment that provider lifecycle cleanup eventually removes. This
 is accepted at-least-once hygiene, not an error path.
 
-The InMemory provider implements deterministic expiry for tests. The Azure
-Blob provider is implemented by AZM-07A. It writes attachments under a
-dedicated container/prefix and assumes an IaC-managed Azure Storage lifecycle
-rule performs retention cleanup. Runtime startup does not create or update the
-account-wide lifecycle policy: Azure requires the policy to be replaced as a
-whole, management-plane permissions are broader than data-plane access, shared
-accounts create ownership races, and policy execution is asynchronous. The
-task supplies the required lifecycle rule shape and validates Blob data-plane
-access, while lifecycle provisioning remains out of scope.
+The InMemory provider implements deterministic expiry for tests. The
+`AzureBlobMessagingDataBus` provider is implemented by AZM-07A. It writes
+attachments under a dedicated container/prefix and assumes an IaC-managed
+Azure Storage lifecycle rule performs retention cleanup. Runtime startup does
+not create or update the account-wide lifecycle policy: Azure requires the
+policy to be replaced as a whole, management-plane permissions are broader
+than data-plane access, shared accounts create ownership races, and policy
+execution is asynchronous. The task supplies the required lifecycle rule shape
+and validates Blob data-plane access, while lifecycle provisioning remains
+out of scope.
 
 ## 12. Sample proof
 

@@ -176,6 +176,68 @@ retry/lock windows, plus entity TTL, backlog, outages, deployment delays, and
 outbox dwell time. A rolled-back enqueue can leave an orphan that provider
 lifecycle cleanup eventually removes.
 
+### Azure Blob DataBus
+
+The production provider uses only Azure Blob data-plane APIs. Keep credentials
+out of attributes, resolve the connection string from host configuration, and
+bind it during service setup:
+
+```csharp
+var blobConnectionString = configuration.GetConnectionString("AzureBlobDataBus")
+    ?? throw new InvalidOperationException(
+        "Azure Blob DataBus configuration is required.");
+
+services.AddArkAzureBlobMessagingDataBus(
+    new AzureBlobDataBusOptions
+    {
+        ContainerName = "amf1-databus",
+        Prefix = "amf1/",
+        MinimumAttachmentLifetime = TimeSpan.FromDays(7),
+        ConnectionString = blobConnectionString,
+        EnsureContainer = false
+    },
+    networkOptions);
+```
+
+For managed identity, bind the Blob service URI to the same `ConnectionString`
+property, for example `https://<account>.blob.core.windows.net/`. The provider
+uses `DefaultAzureCredential`; the hosting identity needs Blob data permissions
+only. `EnsureContainer = true` creates the dedicated container when needed.
+Otherwise startup probes it and fails clearly when IaC has not created it.
+
+The storage account lifecycle policy is an infrastructure prerequisite. Runtime
+startup never reads or changes the account-wide policy. Apply a rule scoped to
+the configured container and prefix, for example:
+
+```json
+{
+  "rules": [
+    {
+      "name": "amf1-databus-attachment-cleanup",
+      "enabled": true,
+      "type": "Lifecycle",
+      "definition": {
+        "filters": {
+          "blobTypes": [ "blockBlob" ],
+          "prefixMatch": [ "amf1-databus/amf1/" ]
+        },
+        "actions": {
+          "baseBlob": {
+            "delete": { "daysAfterModificationGreaterThan": 7 }
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+Set the delete age to at least `MinimumAttachmentLifetime`, rounded up to the
+policy's unit. Azure lifecycle changes can take up to 24 hours to take effect,
+and deletion is asynchronous rather than an exact deadline. Include message
+TTL, backlog, outages, deployment delays, and outbox dwell time when sizing the
+minimum lifetime.
+
 ## 5. Add messaging pipeline steps
 
 Incoming and outgoing steps are opt-in and host-local. Compose them around the
