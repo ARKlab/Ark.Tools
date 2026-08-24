@@ -232,5 +232,5 @@ documentation. Do not require management-plane credentials for local tests.
 - [x] Runtime never mutates the storage-account lifecycle policy.
 - [x] IaC lifecycle requirements and minimum lifetime are explicit.
 - [x] The [task board](../README.md) status for AZM-07A is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
