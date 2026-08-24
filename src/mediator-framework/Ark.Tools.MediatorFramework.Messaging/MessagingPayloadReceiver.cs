@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
-using System.Runtime.InteropServices;
 using System.IO.Compression;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -24,177 +23,333 @@ public sealed class MessagingPayloadReceiver
             throw new ArgumentOutOfRangeException(nameof(network), "The maximum decompressed size must be positive.");
     }
 
-    /// <summary>Prepares a payload using header-selected attachment and encoding settings.</summary>
+    /// <summary>Opens a payload using header-selected attachment and encoding settings.</summary>
     /// <param name="headers">The received framework headers.</param>
     /// <param name="transportPayload">The inline transport payload.</param>
     /// <param name="ctk">The cancellation token.</param>
-    /// <returns>The bounded, decompressed payload.</returns>
-    public async Task<ReadOnlySequence<byte>> PreparePayloadAsync(
+    /// <returns>A bounded payload stream owned by the caller.</returns>
+    public async Task<Stream> PreparePayloadAsync(
         IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> transportPayload,
         CancellationToken ctk)
     {
         ArgumentNullException.ThrowIfNull(headers);
         ctk.ThrowIfCancellationRequested();
-        var payload = transportPayload;
-
-        if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
+        var contentEncoding = headers.TryGetValue(
+            MessagingHeaders.ContentEncoding,
+            out var encoding)
+            ? encoding
+            : null;
+        if (contentEncoding is not null
+            && contentEncoding is not "gzip"
+            && contentEncoding is not "br")
         {
-            if (string.IsNullOrEmpty(attachmentId)
-                || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentLength, out var lengthText)
-                || !long.TryParse(lengthText, NumberStyles.None, CultureInfo.InvariantCulture, out var expectedLength)
-                || expectedLength < 0
-                || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentSha256, out var expectedSha256)
-                || string.IsNullOrEmpty(expectedSha256)
-                || expectedLength > _network.DataBusMaximumAttachmentBytes)
-            {
-                throw new MessagingFailFastException(
-                    MessagingFailFastReason.MalformedHeaders,
-                    "The payload attachment headers are invalid.");
-            }
-
-            var stream = await _dataBus
-                .OpenReadAsync(attachmentId, expectedLength, expectedSha256, ctk)
-                .ConfigureAwait(false);
-            await using (stream.ConfigureAwait(false))
-            {
-                payload = await _readBoundedAsync(stream, expectedLength, ctk).ConfigureAwait(false);
-            }
+            throw new MessagingFailFastException(
+                MessagingFailFastReason.UnsupportedContentEncoding,
+                contentEncoding);
         }
 
-        if (headers.TryGetValue(MessagingHeaders.ContentEncoding, out var encoding))
-        {
-            payload = encoding switch
-            {
-                "gzip" => await _decompressBoundedAsync(payload, useBrotli: false, ctk).ConfigureAwait(false),
-                "br" => await _decompressBoundedAsync(payload, useBrotli: true, ctk).ConfigureAwait(false),
-                _ => throw new MessagingFailFastException(
-                    MessagingFailFastReason.UnsupportedContentEncoding,
-                    encoding)
-            };
-        }
-        else if (payload.Length > _network.MaximumDecompressedPayloadBytes)
-        {
-            throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload);
-        }
-
-        return payload;
-    }
-
-    private async Task<ReadOnlySequence<byte>> _readBoundedAsync(
-        Stream stream,
-        long expectedLength,
-        CancellationToken ctk)
-    {
-        if (expectedLength > _network.DataBusMaximumAttachmentBytes)
-            throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload);
-
-        var output = new ArrayBufferWriter<byte>(
-            checked((int)Math.Min(expectedLength, 81_920)));
-        var rented = ArrayPool<byte>.Shared.Rent(81_920);
+#pragma warning disable CA2000 // Ownership is transferred to the returned stream or released in the finally block.
+        Stream? payload = new SequenceReadStream(transportPayload);
+#pragma warning restore CA2000
         try
         {
-            while (true)
+            if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
             {
-                var read = await stream.ReadAsync(rented.AsMemory(), ctk).ConfigureAwait(false);
-                if (read == 0)
-                    break;
-
-                if (output.WrittenCount > expectedLength - read)
+                if (string.IsNullOrEmpty(attachmentId)
+                    || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentLength, out var lengthText)
+                    || !long.TryParse(lengthText, NumberStyles.None, CultureInfo.InvariantCulture, out var expectedLength)
+                    || expectedLength < 0
+                    || !headers.TryGetValue(MessagingHeaders.PayloadAttachmentSha256, out var expectedSha256)
+                    || string.IsNullOrEmpty(expectedSha256)
+                    || expectedLength > _network.DataBusMaximumAttachmentBytes)
+                {
                     throw new MessagingFailFastException(
-                        MessagingFailFastReason.AttachmentIntegrityFailure,
-                        "The payload attachment exceeded its envelope length.");
-                rented.AsSpan(0, read).CopyTo(output.GetSpan(read));
-                output.Advance(read);
+                        MessagingFailFastReason.MalformedHeaders,
+                        "The payload attachment headers are invalid.");
+                }
+
+                if (contentEncoding is null
+                    && expectedLength > _network.MaximumDecompressedPayloadBytes)
+                {
+                    throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload);
+                }
+
+                await payload.DisposeAsync().ConfigureAwait(false);
+                payload = null;
+                payload = await _dataBus
+                    .OpenReadAsync(attachmentId, expectedLength, expectedSha256, ctk)
+                    .ConfigureAwait(false);
             }
 
-            if (output.WrittenCount != expectedLength)
-                throw new MessagingFailFastException(
-                    MessagingFailFastReason.AttachmentIntegrityFailure,
-                    "The payload attachment ended before its envelope length.");
-            return new ReadOnlySequence<byte>(output.WrittenMemory);
+            var result = new BoundedPayloadReadStream(
+                payload,
+                contentEncoding,
+                _network.MaximumDecompressedPayloadBytes);
+            payload = null;
+            return result;
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(rented);
+            if (payload is not null)
+                await payload.DisposeAsync().ConfigureAwait(false);
         }
     }
 
-    private async Task<ReadOnlySequence<byte>> _decompressBoundedAsync(
-        ReadOnlySequence<byte> compressed,
-        bool useBrotli,
-        CancellationToken ctk)
+    private sealed class BoundedPayloadReadStream : Stream
     {
-        using var source = new SequenceReadStream(compressed);
-        Stream decompressor = useBrotli
-            ? new BrotliStream(source, CompressionMode.Decompress, leaveOpen: false)
-            : new GZipStream(source, CompressionMode.Decompress, leaveOpen: false);
-        await using (decompressor.ConfigureAwait(false))
-        {
-            return await _decompressAsync(decompressor, ctk).ConfigureAwait(false);
-        }
-    }
+        private readonly Stream _inner;
+        private readonly long _maximumBytes;
+        private long _read;
+        private bool _disposed;
 
-    private async Task<ReadOnlySequence<byte>> _decompressAsync(
-        Stream decompressor,
-        CancellationToken ctk)
-    {
-
-        var output = new ArrayBufferWriter<byte>();
-        var rented = ArrayPool<byte>.Shared.Rent(
-            Math.Min(81_920, _network.MaximumDecompressedPayloadBytes + 1));
-        try
+        internal BoundedPayloadReadStream(
+            Stream payload,
+            string? contentEncoding,
+            long maximumBytes)
         {
-            while (true)
+            _inner = contentEncoding switch
             {
-                var read = await decompressor.ReadAsync(rented.AsMemory(), ctk).ConfigureAwait(false);
-                if (read == 0)
-                    break;
-                if (output.WrittenCount > _network.MaximumDecompressedPayloadBytes - read)
-                    throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload);
-                rented.AsSpan(0, read).CopyTo(output.GetSpan(read));
-                output.Advance(read);
+                "gzip" => new GZipStream(payload, CompressionMode.Decompress, leaveOpen: false),
+                "br" => new BrotliStream(payload, CompressionMode.Decompress, leaveOpen: false),
+                _ => payload
+            };
+            _maximumBytes = maximumBytes;
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position
+        {
+            get => _read;
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            return Read(buffer.AsSpan(offset, count));
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            if (buffer.IsEmpty)
+                return 0;
+
+            try
+            {
+                var read = _inner.Read(buffer);
+                _validate(read);
+                return read;
+            }
+            catch (InvalidDataException exception)
+            {
+                throw _invalidCompressedPayload(exception);
+            }
+        }
+
+        public override async ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            if (buffer.IsEmpty)
+                return 0;
+
+            try
+            {
+                var read = await _inner
+                    .ReadAsync(buffer, cancellationToken)
+                    .ConfigureAwait(false);
+                _validate(read);
+                return read;
+            }
+            catch (InvalidDataException exception)
+            {
+                throw _invalidCompressedPayload(exception);
+            }
+        }
+
+        public override async Task<int> ReadAsync(
+            byte[] buffer,
+            int offset,
+            int count,
+            CancellationToken cancellationToken)
+        {
+            return await ReadAsync(
+                buffer.AsMemory(offset, count),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override Task FlushAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && !_disposed)
+            {
+                _disposed = true;
+                _inner.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        public override async ValueTask DisposeAsync()
+        {
+            try
+            {
+                if (!_disposed)
+                {
+                    _disposed = true;
+                    await _inner.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                await base.DisposeAsync().ConfigureAwait(false);
             }
 
-            return new ReadOnlySequence<byte>(output.WrittenMemory);
+            GC.SuppressFinalize(this);
         }
-        catch (MessagingFailFastException)
+
+        private void _validate(int read)
         {
-            throw;
+            if (read == 0)
+                return;
+
+            if (read > _maximumBytes - _read)
+                throw new MessagingFailFastException(MessagingFailFastReason.OversizedPayload);
+
+            _read += read;
         }
-        catch (InvalidDataException exception)
+
+        private static MessagingFailFastException _invalidCompressedPayload(InvalidDataException exception)
         {
-            throw new MessagingFailFastException(
+            return new MessagingFailFastException(
                 MessagingFailFastReason.InvalidCompressedPayload,
                 exception.Message);
         }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(rented);
-        }
     }
 
-    private sealed class SequenceReadStream : MemoryStream
+    private sealed class SequenceReadStream : Stream
     {
+        private readonly ReadOnlySequence<byte> _sequence;
+        private SequencePosition _position;
+        private ReadOnlyMemory<byte> _current;
+        private int _offset;
+        private bool _started;
+        private long _read;
+
         internal SequenceReadStream(ReadOnlySequence<byte> sequence)
-            : this(_getSegment(sequence))
         {
+            _sequence = sequence;
         }
 
-        private SequenceReadStream(ArraySegment<byte> segment)
-            : base(segment.Array ?? Array.Empty<byte>(), segment.Offset, segment.Count, writable: false)
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => _sequence.Length;
+        public override long Position
         {
+            get => _read;
+            set => throw new NotSupportedException();
         }
 
-        private static ArraySegment<byte> _getSegment(ReadOnlySequence<byte> sequence)
+        public override int Read(byte[] buffer, int offset, int count)
         {
-            if (sequence.IsSingleSegment
-                && MemoryMarshal.TryGetArray(sequence.First, out var segment))
+            return Read(buffer.AsSpan(offset, count));
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            if (buffer.IsEmpty)
+                return 0;
+
+            var written = 0;
+            while (written < buffer.Length && _moveNext())
             {
-                return segment;
+                var available = _current.Length - _offset;
+                var copy = Math.Min(available, buffer.Length - written);
+                _current.Span.Slice(_offset, copy).CopyTo(buffer.Slice(written, copy));
+                _offset += copy;
+                written += copy;
             }
 
-            return new ArraySegment<byte>(sequence.ToArray());
+            _read += written;
+            return written;
+        }
+
+        public override ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(Read(buffer.Span));
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override Task FlushAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+
+        private bool _moveNext()
+        {
+            if (_offset < _current.Length)
+                return true;
+
+            if (!_started)
+            {
+                _position = _sequence.Start;
+                _started = true;
+            }
+
+            if (!_sequence.TryGet(ref _position, out _current, advance: true))
+                return false;
+
+            _offset = 0;
+            return true;
         }
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.Security.Cryptography;
 
 using Ark.Tools.MediatorFramework.Messaging;
 
@@ -36,10 +37,15 @@ public sealed class MessagingCompressionAndDataBusTests
             new InMemoryMessagingTransport(),
             headers,
             default).ConfigureAwait(false);
-        var prepared = await receiver.PreparePayloadAsync(headers, payload, default).ConfigureAwait(false);
-
-        headers[MessagingHeaders.ContentEncoding].Should().Be(encoding);
-        new TextCodec().Deserialize<PayloadContract>(prepared).Value.Should().Be(message.Value);
+        var prepared = await receiver
+            .PreparePayloadAsync(headers, payload, default)
+            .ConfigureAwait(false);
+        await using (prepared.ConfigureAwait(false))
+        {
+            headers[MessagingHeaders.ContentEncoding].Should().Be(encoding);
+            using var reader = new StreamReader(prepared, Encoding.UTF8);
+            (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(message.Value);
+        }
     }
 
     [TestMethod]
@@ -76,15 +82,20 @@ public sealed class MessagingCompressionAndDataBusTests
             new InMemoryMessagingTransport(),
             headers,
             default).ConfigureAwait(false);
-        var prepared = await receiver.PreparePayloadAsync(headers, payload, default).ConfigureAwait(false);
-
-        payload.IsEmpty.Should().BeTrue();
-        dataBus.Count.Should().Be(1);
-        int.Parse(
-                headers[MessagingHeaders.PayloadAttachmentLength],
-                CultureInfo.InvariantCulture)
-            .Should().BeLessThan(1_000);
-        new TextCodec().Deserialize<PayloadContract>(prepared).Value.Should().Be(new string('a', 1_000));
+        var prepared = await receiver
+            .PreparePayloadAsync(headers, payload, default)
+            .ConfigureAwait(false);
+        await using (prepared.ConfigureAwait(false))
+        {
+            payload.IsEmpty.Should().BeTrue();
+            dataBus.Count.Should().Be(1);
+            int.Parse(
+                    headers[MessagingHeaders.PayloadAttachmentLength],
+                    CultureInfo.InvariantCulture)
+                .Should().BeLessThan(1_000);
+            using var reader = new StreamReader(prepared, Encoding.UTF8);
+            (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(new string('a', 1_000));
+        }
     }
 
     [TestMethod]
@@ -154,10 +165,46 @@ public sealed class MessagingCompressionAndDataBusTests
             default).ConfigureAwait(false);
         var receiver = new MessagingPayloadReceiver(dataBus, network);
 
-        var action = () => receiver.PreparePayloadAsync(headers, payload, default);
-        (await action
-            .Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
-            .Which.Reason.Should().Be(MessagingFailFastReason.OversizedPayload);
+        var prepared = await receiver
+            .PreparePayloadAsync(headers, payload, default)
+            .ConfigureAwait(false);
+        await using (prepared.ConfigureAwait(false))
+        {
+            Func<Task> action = () => prepared.CopyToAsync(Stream.Null);
+            (await action
+                .Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+                .Which.Reason.Should().Be(MessagingFailFastReason.OversizedPayload);
+        }
+    }
+
+    [TestMethod]
+    public async Task AttachmentPayloadIsReadLazilyThroughReturnedStream()
+    {
+        var content = Encoding.UTF8.GetBytes("payload");
+        var source = new TrackingReadStream(content);
+        var dataBus = new TrackingDataBus(source);
+        var network = _network(maxDecompressed: 100);
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [MessagingHeaders.PayloadAttachmentId] = "attachment",
+            [MessagingHeaders.PayloadAttachmentLength] =
+                content.Length.ToString(CultureInfo.InvariantCulture),
+            [MessagingHeaders.PayloadAttachmentSha256] =
+                Convert.ToHexString(SHA256.HashData(content))
+        };
+
+        var receiver = new MessagingPayloadReceiver(dataBus, network);
+        var payload = await receiver
+            .PreparePayloadAsync(headers, ReadOnlySequence<byte>.Empty, default)
+            .ConfigureAwait(false);
+        await using (payload.ConfigureAwait(false))
+        {
+            source.ReadCount.Should().Be(0);
+            using var reader = new StreamReader(payload, Encoding.UTF8);
+            (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be("payload");
+        }
+
+        source.ReadCount.Should().BeGreaterThan(0);
     }
 
     private static MessagingNetworkOptions _network(
@@ -194,6 +241,55 @@ public sealed class MessagingCompressionAndDataBusTests
             where T : class
         {
             return (T)(object)new PayloadContract(Encoding.UTF8.GetString(payload.ToArray()));
+        }
+    }
+
+    private sealed class TrackingDataBus : IMessagingDataBus
+    {
+        private readonly Stream _stream;
+
+        public TrackingDataBus(Stream stream)
+        {
+            _stream = stream;
+        }
+
+        public Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<Stream> OpenReadAsync(
+            string attachmentId,
+            long expectedLength,
+            string expectedSha256,
+            CancellationToken ctk)
+        {
+            ctk.ThrowIfCancellationRequested();
+            return Task.FromResult(_stream);
+        }
+    }
+
+    private sealed class TrackingReadStream : MemoryStream
+    {
+        public TrackingReadStream(byte[] content)
+            : base(content, writable: false)
+        {
+        }
+
+        public int ReadCount { get; private set; }
+
+        public override async ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            ReadCount++;
+            return await base.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            ReadCount++;
+            return base.Read(buffer);
         }
     }
 

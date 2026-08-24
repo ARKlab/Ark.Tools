@@ -196,8 +196,8 @@ public sealed class MessagingPayloadSender
 ```
 
 The receive-side skeleton — attachment fetch with length/SHA-256 verification,
-then bounded decompression; runs in the header phase before the generated
-typed binder:
+then a bounded decompression stream; the returned stream is consumed by the
+typed binder without materializing an intermediate payload:
 
 ```csharp
 namespace Ark.MediatorFramework.Messaging;
@@ -209,11 +209,11 @@ public sealed class MessagingPayloadReceiver
     private readonly IMessagingDataBus _dataBus;
     private readonly MessagingNetworkOptions _network;
 
-    public async Task<ReadOnlySequence<byte>> PreparePayloadAsync(
+    public async Task<Stream> PreparePayloadAsync(
         IReadOnlyDictionary<string, string> headers, ReadOnlySequence<byte> transportPayload,
         CancellationToken ctk)
     {
-        var payload = transportPayload;
+        Stream payload = new SequenceReadStream(transportPayload);
 
         if (headers.TryGetValue(MessagingHeaders.PayloadAttachmentId, out var attachmentId))
         {
@@ -224,37 +224,24 @@ public sealed class MessagingPayloadReceiver
             // The provider verifies length and SHA-256 while streaming; missing, expired,
             // or mismatched attachments throw
             // MessagingFailFastException(AttachmentIntegrityFailure).
-            var stream = await _dataBus
+            await payload.DisposeAsync();
+            payload = await _dataBus
                 .OpenReadAsync(attachmentId, expectedLength, expectedSha256, ctk)
                 .ConfigureAwait(false);
-            await using (stream.ConfigureAwait(false))
-            {
-                payload = await _bufferAsync(stream, ctk).ConfigureAwait(false);
-            }
         }
 
         if (headers.TryGetValue(MessagingHeaders.ContentEncoding, out var encoding))
         {
             payload = encoding switch
             {
-                "gzip" => _decompressBounded(payload, useBrotli: false),
-                "br" => _decompressBounded(payload, useBrotli: true),
+                "gzip" => new GZipStream(payload, CompressionMode.Decompress),
+                "br" => new BrotliStream(payload, CompressionMode.Decompress),
                 _ => throw new MessagingFailFastException(
                     MessagingFailFastReason.UnsupportedContentEncoding, encoding),
             };
         }
 
-        return payload;   // handed to the generated binder through IMessagingPayloadReader
-    }
-
-    private ReadOnlySequence<byte> _decompressBounded(
-        ReadOnlySequence<byte> compressed, bool useBrotli)
-    {
-        // Bounded decompression reader over GZipStream/BrotliStream: counts output bytes
-        // while reading and throws MessagingFailFastException(OversizedPayload) as soon as
-        // _network.MaximumDecompressedPayloadBytes is exceeded — never buffers past the
-        // bound and never trusts the compressed length.
-        // ...
+        return new BoundedPayloadReadStream(payload);   // handed to the generated binder through IMessagingPayloadReader
     }
 }
 ```
