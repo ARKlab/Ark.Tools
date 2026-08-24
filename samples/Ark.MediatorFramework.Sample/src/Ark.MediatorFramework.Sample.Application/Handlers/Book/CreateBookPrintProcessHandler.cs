@@ -8,7 +8,7 @@ using Ark.Tools.Outbox.Rebus;
 
 using NodaTime;
 
-using Rebus.Bus;
+using RebusBus = Rebus.Bus.IBus;
 
 using System.Security.Claims;
 
@@ -19,14 +19,14 @@ public sealed class CreateBookPrintProcessHandler :
     IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
-    private readonly IBus _bus;
+    private readonly RebusBus _bus;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessHandler"/> class.</summary>
     public CreateBookPrintProcessHandler(
         ISampleDataContextFactory factory,
-        IBus bus,
+        RebusBus bus,
         IContextProvider<ClaimsPrincipal> user,
         IClock clock)
     {

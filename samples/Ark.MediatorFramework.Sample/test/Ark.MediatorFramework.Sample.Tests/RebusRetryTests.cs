@@ -5,7 +5,7 @@ using Ark.MediatorFramework.Sample.RebusProcessor;
 
 using Ark.Tools.Rebus;
 
-using Rebus.Bus;
+using RebusBus = Rebus.Bus.IBus;
 using Rebus.Transport.InMem;
 
 namespace Ark.MediatorFramework.Sample.Tests;
@@ -30,7 +30,7 @@ public sealed class RebusRetryTests
 
         container.Verify();
         container.StartBus();
-        await container.GetInstance<IBus>().Send(new FailingRebusRequest { Reason = "sample failure" }).ConfigureAwait(false);
+        await container.GetInstance<RebusBus>().Send(new FailingRebusRequest { Reason = "sample failure" }).ConfigureAwait(false);
 
         await _waitForQueueAsync(network, "error").ConfigureAwait(false);
         Assert.AreEqual(1, network.GetCount("error"));
