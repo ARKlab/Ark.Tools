@@ -179,29 +179,31 @@ lifecycle cleanup eventually removes.
 ### Azure Blob DataBus
 
 The production provider uses only Azure Blob data-plane APIs. Keep credentials
-out of attributes and resolve either a connection string or a service URI from
-host configuration:
+out of attributes, resolve the connection string from host configuration, and
+bind it during service setup:
 
 ```csharp
+var blobConnectionString = configuration.GetConnectionString("AzureBlobDataBus")
+    ?? throw new InvalidOperationException(
+        "Azure Blob DataBus configuration is required.");
+
 services.AddArkAzureBlobMessagingDataBus(
     new AzureBlobDataBusOptions
     {
         ContainerName = "amf1-databus",
         Prefix = "amf1/",
         MinimumAttachmentLifetime = TimeSpan.FromDays(7),
-        ConnectionConfigurationKey = "AzureBlobDataBus:ConnectionString",
+        ConnectionString = blobConnectionString,
         EnsureContainer = false
     },
-    configuration,
     networkOptions);
 ```
 
-For managed identity, replace `ConnectionConfigurationKey` with
-`ManagedIdentityConfigurationKey = "AzureBlobDataBus:ServiceUri"`. The URI is
-used with `DefaultAzureCredential`; the hosting identity needs Blob data
-permissions only. `EnsureContainer = true` creates the dedicated container
-when needed. Otherwise startup probes it and fails clearly when IaC has not
-created it.
+For managed identity, bind the Blob service URI to the same `ConnectionString`
+property, for example `https://<account>.blob.core.windows.net/`. The provider
+uses `DefaultAzureCredential`; the hosting identity needs Blob data permissions
+only. `EnsureContainer = true` creates the dedicated container when needed.
+Otherwise startup probes it and fails clearly when IaC has not created it.
 
 The storage account lifecycle policy is an infrastructure prerequisite. Runtime
 startup never reads or changes the account-wide policy. Apply a rule scoped to

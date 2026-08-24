@@ -62,9 +62,8 @@ Attachment cleanup must coexist safely with storage accounts managed by IaC.
 Conceptual shapes — final public names are selected by this task; the
 signatures' invariants are fixed.
 
-The provider options (composition-owned; no secrets in attributes; connection
-resolution mirrors the network's `ConnectionConfigurationKey` /
-`ManagedIdentityConfigurationKey` patterns):
+The provider options (composition-owned; no secrets in attributes; the host
+binds the resolved connection string):
 
 ```csharp
 namespace Ark.MediatorFramework.Messaging;
@@ -85,12 +84,9 @@ public sealed record AzureBlobDataBusOptions
     /// cover entity TTL, backlog, outages, and deployment delays.</summary>
     public required TimeSpan MinimumAttachmentLifetime { get; init; }
 
-    /// <summary>Gets the configuration key for a connection string, when used.</summary>
-    public string? ConnectionConfigurationKey { get; init; }
-
-    /// <summary>Gets the configuration key for a service URI resolved with
-    /// DefaultAzureCredential, when used. Exactly one connection source must be set.</summary>
-    public string? ManagedIdentityConfigurationKey { get; init; }
+    /// <summary>Gets the Azure Blob Storage connection string or service URI.
+    /// A service URI uses DefaultAzureCredential.</summary>
+    public required string ConnectionString { get; init; }
 
     /// <summary>Gets whether startup ensures the container exists; when false, a missing
     /// container fails startup with a clear error. Never touches lifecycle policies.</summary>

@@ -10,7 +10,6 @@ using AwesomeAssertions;
 
 using Azure.Storage.Blobs;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.MediatorFramework.Tests;
@@ -94,43 +93,36 @@ public sealed class MessagingAzureBlobDataBusTests
     }
 
     [TestMethod]
-    public void ProviderRequiresExactlyOneConfiguredEndpoint()
+    public void ProviderRequiresConnectionStringAndSupportsManagedIdentity()
     {
-        using var configuration = new ConfigurationManager();
         var options = new AzureBlobDataBusOptions
         {
             ContainerName = "amf1-azm07a-options",
-            MinimumAttachmentLifetime = TimeSpan.FromDays(1)
+            MinimumAttachmentLifetime = TimeSpan.FromDays(1),
+            ConnectionString = string.Empty
         };
 
-        var missing = () => new AzureBlobMessagingDataBus(options, configuration);
+        var missing = () => new AzureBlobMessagingDataBus(options);
         missing.Should().Throw<ArgumentException>();
 
-        var both = () => new AzureBlobMessagingDataBus(
+        var managedIdentity = () => new AzureBlobMessagingDataBus(
             options with
             {
-                ConnectionConfigurationKey = "BlobConnection",
-                ManagedIdentityConfigurationKey = "BlobServiceUri"
-            },
-            configuration);
-        both.Should().Throw<ArgumentException>();
+                ConnectionString = "https://account.blob.core.windows.net/"
+            });
+        managedIdentity.Should().NotThrow();
     }
 
     [TestMethod]
     public async Task MissingContainerFailsWhenEnsureIsDisabled()
     {
-        using var configuration = new ConfigurationManager
-        {
-            ["BlobConnection"] = "UseDevelopmentStorage=true"
-        };
         var provider = new AzureBlobMessagingDataBus(
             new AzureBlobDataBusOptions
             {
                 ContainerName = "amf1-azm07a-missing",
                 MinimumAttachmentLifetime = TimeSpan.FromDays(1),
-                ConnectionConfigurationKey = "BlobConnection"
-            },
-            configuration);
+                ConnectionString = "UseDevelopmentStorage=true"
+            });
 
         var action = () => provider.ValidateAsync(default);
         await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
@@ -139,18 +131,13 @@ public sealed class MessagingAzureBlobDataBusTests
     [TestMethod]
     public void LifetimeMustCoverNetworkSchedulingWindow()
     {
-        using var configuration = new ConfigurationManager
-        {
-            ["BlobConnection"] = "UseDevelopmentStorage=true"
-        };
         var provider = new AzureBlobMessagingDataBus(
             new AzureBlobDataBusOptions
             {
                 ContainerName = "amf1-azm07a-lifetime",
                 MinimumAttachmentLifetime = TimeSpan.FromDays(1),
-                ConnectionConfigurationKey = "BlobConnection"
-            },
-            configuration);
+                ConnectionString = "UseDevelopmentStorage=true"
+            });
         var network = new MessagingNetworkOptions(
             typeof(MessagingAzureBlobDataBusTests),
             new MessagingNetworkAttribute
@@ -186,19 +173,14 @@ public sealed class MessagingAzureBlobDataBusTests
 
     private static AzureBlobMessagingDataBus _provider(string suffix, string prefix)
     {
-        using var configuration = new ConfigurationManager
-        {
-            ["BlobConnection"] = "UseDevelopmentStorage=true"
-        };
         return new AzureBlobMessagingDataBus(
             new AzureBlobDataBusOptions
             {
                 ContainerName = "amf1-azm07a-" + suffix,
                 Prefix = prefix,
                 MinimumAttachmentLifetime = TimeSpan.FromDays(8),
-                ConnectionConfigurationKey = "BlobConnection",
+                ConnectionString = "UseDevelopmentStorage=true",
                 EnsureContainer = true
-            },
-            configuration);
+            });
     }
 }

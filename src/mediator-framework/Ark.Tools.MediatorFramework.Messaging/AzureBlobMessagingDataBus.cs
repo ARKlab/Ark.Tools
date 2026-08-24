@@ -9,8 +9,6 @@ using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
-using Microsoft.Extensions.Configuration;
-
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Blob implementation of the shared DataBus provider contract.</summary>
@@ -26,16 +24,12 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
     /// Creates an Azure Blob DataBus provider from host configuration.
     /// </summary>
     /// <param name="options">The provider options.</param>
-    /// <param name="configuration">The host configuration containing the selected endpoint.</param>
-    public AzureBlobMessagingDataBus(
-        AzureBlobDataBusOptions options,
-        IConfiguration configuration)
+    public AzureBlobMessagingDataBus(AzureBlobDataBusOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(configuration);
 
         _options = _validateOptions(options);
-        _container = _createContainer(_options, configuration);
+        _container = _createContainer(_options);
     }
 
     /// <summary>Gets the configured minimum attachment lifetime.</summary>
@@ -78,28 +72,33 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
         var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
         long length = 0;
         using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (var segment in content)
+        {
+            ctk.ThrowIfCancellationRequested();
+            sha.AppendData(segment.Span);
+            length += segment.Length;
+        }
+
+        var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [_lengthMetadataName] = length.ToString(CultureInfo.InvariantCulture),
+            [_sha256MetadataName] = Convert.ToHexString(sha.GetHashAndReset())
+        };
         var stream = await blob.OpenWriteAsync(
                 overwrite: true,
+                options: new BlobOpenWriteOptions
+                {
+                    Metadata = metadata
+                },
                 cancellationToken: ctk)
             .ConfigureAwait(false);
         await using (stream.ConfigureAwait(false))
         {
             foreach (var segment in content)
             {
-                sha.AppendData(segment.Span);
-                length += segment.Length;
                 await stream.WriteAsync(segment, ctk).ConfigureAwait(false);
             }
         }
-
-        await blob.SetMetadataAsync(
-                new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    [_lengthMetadataName] = length.ToString(CultureInfo.InvariantCulture),
-                    [_sha256MetadataName] = Convert.ToHexString(sha.GetHashAndReset())
-                },
-                cancellationToken: ctk)
-            .ConfigureAwait(false);
 
         return attachmentId;
     }
@@ -155,6 +154,11 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
                 "A Blob container name is required.",
                 nameof(options));
 
+        if (string.IsNullOrWhiteSpace(options.ConnectionString))
+            throw new ArgumentException(
+                "An Azure Blob connection string is required.",
+                nameof(options));
+
         if (options.ContainerName.Length is < 3 or > 63
             || !string.Equals(
                 options.ContainerName,
@@ -180,45 +184,31 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
                 nameof(options),
                 "The attachment lifetime must be positive.");
 
-        var hasConnectionKey = !string.IsNullOrWhiteSpace(options.ConnectionConfigurationKey);
-        var hasManagedIdentityKey =
-            !string.IsNullOrWhiteSpace(options.ManagedIdentityConfigurationKey);
-        if (hasConnectionKey == hasManagedIdentityKey)
-        {
-            throw new ArgumentException(
-                "Exactly one Blob connection or managed-identity configuration key is required.",
-                nameof(options));
-        }
-
         return options;
     }
 
-    private static BlobContainerClient _createContainer(
-        AzureBlobDataBusOptions options,
-        IConfiguration configuration)
+    private static BlobContainerClient _createContainer(AzureBlobDataBusOptions options)
     {
-        if (!string.IsNullOrWhiteSpace(options.ConnectionConfigurationKey))
+        if (Uri.TryCreate(options.ConnectionString, UriKind.Absolute, out var serviceUri)
+            && serviceUri.Scheme == Uri.UriSchemeHttps)
         {
-            var connectionString = configuration[options.ConnectionConfigurationKey!];
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                throw new InvalidOperationException(
-                    "The configured Azure Blob connection string was not found.");
-            }
-
-            return new BlobContainerClient(connectionString, options.ContainerName);
+            return new BlobServiceClient(serviceUri, new DefaultAzureCredential())
+                .GetBlobContainerClient(options.ContainerName);
         }
 
-        var serviceUriValue = configuration[options.ManagedIdentityConfigurationKey!];
-        if (string.IsNullOrWhiteSpace(serviceUriValue)
-            || !Uri.TryCreate(serviceUriValue, UriKind.Absolute, out var serviceUri))
+        var client = new BlobServiceClient(options.ConnectionString);
+        if (client.Uri.Scheme != Uri.UriSchemeHttp
+            && !options.ConnectionString.Contains(
+                "AccountKey",
+                StringComparison.OrdinalIgnoreCase)
+            && !options.ConnectionString.Contains(
+                "SharedAccessSignature",
+                StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException(
-                "The configured Azure Blob service URI is missing or invalid.");
+            client = new BlobServiceClient(client.Uri, new DefaultAzureCredential());
         }
 
-        return new BlobServiceClient(serviceUri, new DefaultAzureCredential())
-            .GetBlobContainerClient(options.ContainerName);
+        return client.GetBlobContainerClient(options.ContainerName);
     }
 
     private static byte[] _parseHash(string value)

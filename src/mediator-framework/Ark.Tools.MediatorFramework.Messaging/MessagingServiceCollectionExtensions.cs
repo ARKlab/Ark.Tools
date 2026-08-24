@@ -6,7 +6,6 @@ using System.Text.Json;
 using MessagePack;
 using MessagePack.Resolvers;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -86,21 +85,18 @@ public static class MessagingServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="options">The Azure Blob provider options.</param>
-    /// <param name="configuration">The host configuration containing the endpoint.</param>
     /// <param name="networks">The networks that use the provider.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkAzureBlobMessagingDataBus(
         this IServiceCollection services,
         AzureBlobDataBusOptions options,
-        IConfiguration configuration,
         params MessagingNetworkOptions[] networks)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(networks);
 
-        var dataBus = new AzureBlobMessagingDataBus(options, configuration);
+        var dataBus = new AzureBlobMessagingDataBus(options);
         _validateDataBusLifetime(dataBus, networks);
         services.AddSingleton(dataBus);
         services.AddSingleton<IMessagingDataBus>(dataBus);

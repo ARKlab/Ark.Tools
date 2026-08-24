@@ -19,13 +19,11 @@ public sealed record AzureBlobDataBusOptions
     /// </summary>
     public required TimeSpan MinimumAttachmentLifetime { get; init; }
 
-    /// <summary>Gets the configuration key for a connection string, when used.</summary>
-    public string? ConnectionConfigurationKey { get; init; }
-
     /// <summary>
-    /// Gets the configuration key for a service URI resolved with DefaultAzureCredential.
+    /// Gets the Azure Blob Storage connection string or service URI. A service URI
+    /// uses DefaultAzureCredential.
     /// </summary>
-    public string? ManagedIdentityConfigurationKey { get; init; }
+    public required string ConnectionString { get; init; }
 
     /// <summary>
     /// Gets whether startup ensures the container exists instead of requiring IaC creation.
