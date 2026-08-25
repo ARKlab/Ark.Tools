@@ -487,6 +487,9 @@ public sealed class HostingTestState
     /// <summary>Gets the exception message supplied to the failed-message handler.</summary>
     public string? FailedMessageException => Volatile.Read(ref _failedMessageException);
 
+    /// <summary>Gets the number of exceptions supplied to the failed-message handler.</summary>
+    public int FailedMessageExceptionCount => Volatile.Read(ref _failedMessageExceptionCount);
+
     /// <summary>Gets the cancellation status observed by the Rebus handler.</summary>
     public bool RebusCancellationTokenWasCancelable => Volatile.Read(ref _rebusCancellationTokenWasCancelable);
 
@@ -509,6 +512,7 @@ public sealed class HostingTestState
     private int _retryAttempts;
     private int _secondLevelRetryAttempts;
     private int _failedMessageExecutions;
+    private int _failedMessageExceptionCount;
     private string? _failedMessageException;
     private bool _rebusCancellationTokenWasCancelable;
     private string? _rebusUserId;
@@ -524,7 +528,8 @@ public sealed class HostingTestState
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
-        Interlocked.Exchange(ref _failedMessageException, message.Exceptions?.FirstOrDefault()?.Message);
+        Volatile.Write(ref _failedMessageExceptionCount, message.Exceptions.Count);
+        Interlocked.Exchange(ref _failedMessageException, message.Exceptions.First().Message);
     }
 
     internal void _recordDeferredMessage()
