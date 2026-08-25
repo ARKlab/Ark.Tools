@@ -64,7 +64,7 @@ public sealed class UserContextOutgoingStep : IMessagingOutgoingStep
             _setIfPresent(context, MessagingHeaders.UserScopes, principal.FindFirst("scope")?.Value);
             var roles = principal.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
             if (roles.Length > 0)
-                context.Headers[MessagingHeaders.UserRoles] = string.Join(",", roles);
+                context._setReservedHeader(MessagingHeaders.UserRoles, string.Join(",", roles));
         }
 
         await next().ConfigureAwait(false);
@@ -73,6 +73,6 @@ public sealed class UserContextOutgoingStep : IMessagingOutgoingStep
     private static void _setIfPresent(MessagingOutgoingContext context, string key, string? value)
     {
         if (value is not null)
-            context.Headers[key] = value;
+            context._setReservedHeader(key, value);
     }
 }

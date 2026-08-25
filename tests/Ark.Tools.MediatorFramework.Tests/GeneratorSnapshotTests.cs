@@ -2159,8 +2159,16 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
-            public sealed partial class BookMessagingNetwork { }
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
+                MaximumTransportPayloadBytes = 123,
+                MaximumDecompressedPayloadBytes = 456,
+                DataBusOffloadThresholdBytes = 789,
+                DataBusMaximumAttachmentBytes = 987,
+                MaximumSchedulingDelaySeconds = 3600,
+                ResourceLifecycle = MessagingResourceLifecycle.External,
+                ConnectionConfigurationKey = "messaging:connection",
+                ManagedIdentityConfigurationKey = "messaging:identity")]
+            public static partial class BookMessagingNetwork { }
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
@@ -2168,6 +2176,23 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetDestinationFor<T>()");
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
+        result.Generated.Should().Contain("private static string GetProcessorIdentity(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetPublisherIdentity(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetDestination(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetLogicalName(global::System.Type contractType)");
+        result.Generated.Should().Contain("CreateOptions()");
+        result.Generated.Should().Contain("MaximumTransportPayloadBytes = 123");
+        result.Generated.Should().Contain("MaximumDecompressedPayloadBytes = 456");
+        result.Generated.Should().Contain("DataBusOffloadThresholdBytes = 789");
+        result.Generated.Should().Contain("DataBusMaximumAttachmentBytes = 987");
+        result.Generated.Should().Contain("MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(3600)");
+        result.Generated.Should().Contain("ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)1");
+        result.Generated.Should().Contain("ConnectionConfigurationKey = \"messaging:connection\"");
+        result.Generated.Should().Contain("ManagedIdentityConfigurationKey = \"messaging:identity\"");
+        result.Generated.Should().Contain("IMessagingContractRegistry Registry");
+        result.Generated.Should().Contain("IMessagingContractRegistry");
+        result.Generated.Should().NotContain("CreateRegistry()");
         result.Generated.Should().Contain("public const string Identity");
         result.Generated.Should().Contain("Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.Gzip");
         result.Generated.Should().Contain("CompressionMinimumSizeBytes = 1024");
@@ -2175,6 +2200,61 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("Type.GetType");
         result.Generated.Should().NotContain("Activator.");
         result.Generated.Should().NotContain("MakeGenericType");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorEmitsResolvedNetworkDefaults()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain(
+            "MaximumTransportPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumTransportPayloadBytes");
+        result.Generated.Should().Contain(
+            "MaximumDecompressedPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes");
+        result.Generated.Should().Contain(
+            "DataBusOffloadThresholdBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusOffloadThresholdBytes");
+        result.Generated.Should().Contain(
+            "DataBusMaximumAttachmentBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes");
+        result.Generated.Should().Contain(
+            "MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumSchedulingDelaySeconds)");
+        result.Generated.Should().Contain(
+            "ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle.CreateIfMissing");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorEmitsStaticRegistryWithoutNetworkConstruction()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [Message]
+            public sealed class PrintBook { }
+            [MessagingParticipant(Processes = new[] { typeof(PrintBook) })]
+            public sealed class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG024");
+        result.Generated.Should().Contain("public static partial class BookMessagingNetwork");
+        result.Generated.Should().Contain("IMessagingContractRegistry Registry");
+        result.Generated.Should().Contain("private sealed class GeneratedRegistry");
     }
 
     [TestMethod]
@@ -2206,7 +2286,7 @@ public sealed class GeneratorSnapshotTests
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
                 Requires = MessagingCapabilities.Receive)]
-            public sealed partial class BookMessagingNetwork { }
+            public static partial class BookMessagingNetwork { }
             """);
 
         result.Generated.Should().Contain("case \"books.print_book\":");
@@ -2232,7 +2312,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
+    public void MessagingNetworkGeneratorDiagnosesNonStaticNetworks()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
             """
@@ -2243,9 +2323,24 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG024");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
         result.Generated.Should().Contain("partial class PrintingParticipant");
-        result.Generated.Should().Contain("partial class BookMessagingNetwork");
+        result.Generated.Should().Contain("static partial class BookMessagingNetwork");
         result.Generated.Should().NotContain("namespace <global namespace>;");
     }
 

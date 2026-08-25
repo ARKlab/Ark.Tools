@@ -29,6 +29,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _payloadSender = "Ark.Tools.MediatorFramework.Messaging.MessagingPayloadSender";
     private const string _dataBus = "Ark.Tools.MediatorFramework.IMessagingDataBus";
     private const string _networkOptions = "Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions";
+    private const string _contractRegistry = "Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry";
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
@@ -104,6 +105,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor _nonPartialDeclaringType = _rule(
         "ARKMSG023", "Messaging declaring type must be partial",
         "Type '{0}' is marked with [{1}] but is not a non-nested, non-generic partial class, so its routing members cannot be generated",
+        DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _nonStaticNetwork = _rule(
+        "ARKMSG024", "Messaging network must be static",
+        "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
         DiagnosticSeverity.Error);
 
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
@@ -195,7 +200,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         _validateContractNames(context, allContracts.Keys);
         _emitMetadata(context, networks);
         foreach (var network in networks)
-            _emitNetwork(context, network);
+            _emitNetwork(context, network, compilation);
 
         foreach (var participant in participantSymbols
             .OrderBy(symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
@@ -334,7 +339,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var attribute = symbol.GetAttributes().First(attribute =>
             attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
         var members = _types(attribute, "Members");
-        return new Network(symbol, symbol.ToDisplayString(), members, _enum(attribute, "Requires"));
+        return new Network(
+            symbol,
+            symbol.ToDisplayString(),
+            members,
+            _enum(attribute, "Requires"),
+            _optionalInt(attribute, "MaximumTransportPayloadBytes"),
+            _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
+            _optionalInt(attribute, "DataBusOffloadThresholdBytes"),
+            _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
+            _optionalInt(attribute, "MaximumSchedulingDelaySeconds"),
+            _optionalInt(attribute, "ResourceLifecycle"),
+            _string(attribute, "ConnectionConfigurationKey"),
+            _string(attribute, "ManagedIdentityConfigurationKey"));
     }
 
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
@@ -537,9 +554,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static void _emitNetwork(
         SourceProductionContext context,
-        Network network)
+        Network network,
+        Compilation compilation)
     {
-        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
+        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork", requireStatic: true))
             return;
 
         var participants = network.MemberSymbols
@@ -574,12 +592,62 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(network.Symbol)).Append(" partial class ").Append(name).AppendLine()
-            .AppendLine("{")
+            .Append(_accessibility(network.Symbol)).Append(" static partial class ").Append(name)
+            .AppendLine("{");
+        source
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public static string NetworkIdentity => \"").Append(_escape(network.Name)).AppendLine("\";")
-            .AppendLine()
+            .AppendLine();
+
+        if (compilation.GetTypeByMetadataName(_networkOptions) is not null)
+        {
+            source
+                .AppendLine("    /// <summary>Creates the resolved options for this messaging network.</summary>")
+                .AppendLine("    /// <returns>The resolved messaging network options.</returns>")
+                .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions CreateOptions()")
+                .AppendLine("    {")
+                .AppendLine("        return new global::Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions(")
+                .Append("            typeof(").Append(name).AppendLine("),")
+                .AppendLine("            new global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute")
+                .AppendLine("            {")
+                .AppendLine("                Members = new global::System.Type[]");
+            source.AppendLine("                {");
+            foreach (var member in network.MemberSymbols)
+                source.Append("                    typeof(").Append(_typeName(member)).AppendLine("),");
+            source.AppendLine("                },")
+                .Append("                Requires = (global::Ark.Tools.MediatorFramework.MessagingCapabilities)")
+                .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+                .Append("                MaximumTransportPayloadBytes = ")
+                .Append(network.MaximumTransportPayloadBytes?.ToString(CultureInfo.InvariantCulture)
+                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumTransportPayloadBytes").AppendLine(",")
+                .Append("                MaximumDecompressedPayloadBytes = ")
+                .Append(network.MaximumDecompressedPayloadBytes?.ToString(CultureInfo.InvariantCulture)
+                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes").AppendLine(",")
+                .Append("                DataBusOffloadThresholdBytes = ")
+                .Append(network.DataBusOffloadThresholdBytes?.ToString(CultureInfo.InvariantCulture)
+                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusOffloadThresholdBytes").AppendLine(",")
+                .Append("                DataBusMaximumAttachmentBytes = ")
+                .Append(network.DataBusMaximumAttachmentBytes?.ToString(CultureInfo.InvariantCulture)
+                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes").AppendLine(",")
+                .Append("                MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(")
+                .Append(network.MaximumSchedulingDelaySeconds?.ToString(CultureInfo.InvariantCulture)
+                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumSchedulingDelaySeconds").AppendLine("),")
+                .Append("                ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
+                .Append(network.ResourceLifecycle?.ToString(CultureInfo.InvariantCulture)
+                    ?? "global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle.CreateIfMissing").AppendLine(",");
+            if (network.ConnectionConfigurationKey is not null)
+                source.Append("                ConnectionConfigurationKey = \"").Append(_escape(network.ConnectionConfigurationKey)).AppendLine("\",");
+            if (network.ManagedIdentityConfigurationKey is not null)
+                source.Append("                ManagedIdentityConfigurationKey = \"").Append(_escape(network.ManagedIdentityConfigurationKey)).AppendLine("\",");
+            source
+                .AppendLine("            });")
+                .AppendLine("    }")
+                .AppendLine();
+        }
+
+        source
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    private static readonly FrozenDictionary<Type, string> _destinations =")
             .AppendLine("        new Dictionary<Type, string>")
@@ -592,6 +660,32 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 : publishers[contract].Identity + "-" + _contractName(contract);
             source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
                 .Append(_escape(destination)).AppendLine("\",");
+        }
+
+        source.AppendLine("        }.ToFrozenDictionary();")
+            .AppendLine()
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static readonly FrozenDictionary<Type, string> _processors =")
+            .AppendLine("        new Dictionary<Type, string>")
+            .AppendLine("        {");
+        foreach (var contract in processors.Keys.Cast<INamedTypeSymbol>()
+            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal))
+        {
+            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+               .Append(_escape(processors[contract].Identity)).AppendLine("\",");
+        }
+
+        source.AppendLine("        }.ToFrozenDictionary();")
+            .AppendLine()
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static readonly FrozenDictionary<Type, string> _publishers =")
+            .AppendLine("        new Dictionary<Type, string>")
+            .AppendLine("        {");
+        foreach (var contract in publishers.Keys.Cast<INamedTypeSymbol>()
+            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal))
+        {
+            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+               .Append(_escape(publishers[contract].Identity)).AppendLine("\",");
         }
 
         source.AppendLine("        }.ToFrozenDictionary();")
@@ -629,9 +723,58 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    public static string GetDestinationFor<T>() where T : class")
             .AppendLine("    {")
-            .AppendLine("        if (_destinations.TryGetValue(typeof(T), out var destination))")
+            .AppendLine("        return GetDestination(typeof(T));")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the processing participant for a declared contract.</summary>")
+            .AppendLine("    /// <typeparam name=\"T\">The message contract type.</typeparam>")
+            .AppendLine("    /// <returns>The processing participant identity.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static string GetProcessorIdentityFor<T>() where T : class")
+            .AppendLine("    {")
+            .AppendLine("        return GetProcessorIdentity(typeof(T));")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the publishing participant for a declared contract.</summary>")
+            .AppendLine("    /// <typeparam name=\"T\">The event contract type.</typeparam>")
+            .AppendLine("    /// <returns>The publishing participant identity.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    public static string GetPublisherIdentityFor<T>() where T : class")
+            .AppendLine("    {")
+            .AppendLine("        return GetPublisherIdentity(typeof(T));")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the destination for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
+            .AppendLine("    /// <returns>The participant queue or event topic.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static string GetDestination(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_destinations.TryGetValue(contractType, out var destination))")
             .AppendLine("            return destination;")
-            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the processing participant for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The message contract type.</param>")
+            .AppendLine("    /// <returns>The processing participant identity.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static string GetProcessorIdentity(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_processors.TryGetValue(contractType, out var processor))")
+            .AppendLine("            return processor;")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the publishing participant for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The event contract type.</param>")
+            .AppendLine("    /// <returns>The publishing participant identity.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static string GetPublisherIdentity(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_publishers.TryGetValue(contractType, out var publisher))")
+            .AppendLine("            return publisher;")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
             .AppendLine("    }")
             .AppendLine()
             .AppendLine("    /// <summary>Gets the owner-selected wire protocol for a declared contract.</summary>")
@@ -640,9 +783,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    public static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocolFor<T>() where T : class")
             .AppendLine("    {")
-            .AppendLine("        if (_wireProtocols.TryGetValue(typeof(T), out var protocol))")
+            .AppendLine("        return GetWireProtocol(typeof(T));")
+            .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the owner-selected protocol for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
+            .AppendLine("    /// <returns>The owner-selected serialization protocol.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_wireProtocols.TryGetValue(contractType, out var protocol))")
             .AppendLine("            return protocol;")
-            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
             .AppendLine("    }")
             .AppendLine()
             .AppendLine("    /// <summary>Gets the current logical wire name for a declared contract.</summary>")
@@ -651,10 +803,39 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    public static string GetLogicalNameFor<T>() where T : class")
             .AppendLine("    {")
-            .AppendLine("        if (_logicalNames.TryGetValue(typeof(T), out var logicalName))")
-            .AppendLine("            return logicalName;")
-            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);")
+            .AppendLine("        return GetLogicalName(typeof(T));")
             .AppendLine("    }")
+            .AppendLine()
+            .AppendLine("    /// <summary>Gets the current logical name for a runtime contract type.</summary>")
+            .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
+            .AppendLine("    /// <returns>The normalized logical contract name.</returns>")
+            .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+            .AppendLine("    private static string GetLogicalName(global::System.Type contractType)")
+            .AppendLine("    {")
+            .AppendLine("        if (_logicalNames.TryGetValue(contractType, out var logicalName))")
+            .AppendLine("            return logicalName;")
+            .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
+            .AppendLine("    }");
+
+        if (compilation.GetTypeByMetadataName(_contractRegistry) is not null)
+        {
+            source.AppendLine()
+                .AppendLine("    private sealed class GeneratedRegistry : global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry")
+                .AppendLine("    {")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.NetworkIdentity => ").Append(name).AppendLine(".NetworkIdentity;")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetDestination<T>() where T : class => ").Append(name).AppendLine(".GetDestinationFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetProcessorIdentity<T>() where T : class => ").Append(name).AppendLine(".GetProcessorIdentityFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetPublisherIdentity<T>() where T : class => ").Append(name).AppendLine(".GetPublisherIdentityFor<T>();")
+                .Append("        global::Ark.Tools.MediatorFramework.SerializationProtocol global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetWireProtocol<T>() where T : class => ").Append(name).AppendLine(".GetWireProtocolFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetLogicalName<T>() where T : class => ").Append(name).AppendLine(".GetLogicalNameFor<T>();")
+                .AppendLine("    }")
+                .AppendLine()
+                .AppendLine("    /// <summary>Gets the generated transport-neutral contract registry.</summary>")
+                .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry Registry { get; } = new GeneratedRegistry();");
+        }
+
+        source
             .AppendLine("}");
 
         context.AddSource(
@@ -786,7 +967,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static bool _validateDeclaringType(
         SourceProductionContext context,
         INamedTypeSymbol symbol,
-        string attributeName)
+        string attributeName,
+        bool requireStatic = false)
     {
         #pragma warning disable MA0040, MA0045
         var isPartial = symbol.DeclaringSyntaxReferences
@@ -799,6 +981,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             || !isPartial)
         {
             _report(context, _nonPartialDeclaringType, symbol, symbol.ToDisplayString(), attributeName);
+            return false;
+        }
+        if (requireStatic && !symbol.IsStatic)
+        {
+            _report(context, _nonStaticNetwork, symbol, symbol.ToDisplayString());
             return false;
         }
         return true;
@@ -953,6 +1140,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return value.Value is int integer ? integer : default;
     }
 
+    private static int? _optionalInt(AttributeData attribute, string name)
+    {
+        var value = _named(attribute, name);
+        return value.Value is int integer ? integer : null;
+    }
+
     private static string? _string(AttributeData? attribute, string name)
     {
         var value = attribute is null ? default : _named(attribute, name);
@@ -976,18 +1169,46 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private readonly struct Network
     {
-        public Network(INamedTypeSymbol symbol, string name, ImmutableArray<INamedTypeSymbol> memberSymbols, int requires)
+        public Network(
+            INamedTypeSymbol symbol,
+            string name,
+            ImmutableArray<INamedTypeSymbol> memberSymbols,
+            int requires,
+            int? maximumTransportPayloadBytes,
+            int? maximumDecompressedPayloadBytes,
+            int? dataBusOffloadThresholdBytes,
+            int? dataBusMaximumAttachmentBytes,
+            int? maximumSchedulingDelaySeconds,
+            int? resourceLifecycle,
+            string? connectionConfigurationKey,
+            string? managedIdentityConfigurationKey)
         {
             Symbol = symbol;
             Name = name;
             MemberSymbols = memberSymbols;
             Requires = requires;
+            MaximumTransportPayloadBytes = maximumTransportPayloadBytes;
+            MaximumDecompressedPayloadBytes = maximumDecompressedPayloadBytes;
+            DataBusOffloadThresholdBytes = dataBusOffloadThresholdBytes;
+            DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
+            MaximumSchedulingDelaySeconds = maximumSchedulingDelaySeconds;
+            ResourceLifecycle = resourceLifecycle;
+            ConnectionConfigurationKey = connectionConfigurationKey;
+            ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
         }
 
         public INamedTypeSymbol Symbol { get; }
         public string Name { get; }
         public ImmutableArray<INamedTypeSymbol> MemberSymbols { get; }
         public int Requires { get; }
+        public int? MaximumTransportPayloadBytes { get; }
+        public int? MaximumDecompressedPayloadBytes { get; }
+        public int? DataBusOffloadThresholdBytes { get; }
+        public int? DataBusMaximumAttachmentBytes { get; }
+        public int? MaximumSchedulingDelaySeconds { get; }
+        public int? ResourceLifecycle { get; }
+        public string? ConnectionConfigurationKey { get; }
+        public string? ManagedIdentityConfigurationKey { get; }
     }
 
     private readonly struct Participant

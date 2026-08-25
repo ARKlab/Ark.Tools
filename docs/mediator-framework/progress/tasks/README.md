@@ -190,7 +190,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-06](azure-functions/AZM-06-pipeline-and-context-propagation.md) | Incoming/outgoing pipeline and context propagation | Complete |
 | [AZM-07](azure-functions/AZM-07-compression-and-databus.md) | Compression and shared DataBus claim-check | Complete |
 | [AZM-07A](azure-functions/AZM-07A-azure-blob-databus.md) | Azure Blob DataBus provider and IaC lifecycle contract | Complete |
-| [AZM-08](azure-functions/AZM-08-restricted-bus.md) | Restricted `IBus` shim | Pending |
+| [AZM-08](azure-functions/AZM-08-restricted-bus.md) | Restricted `IBus` shim | Complete |
 | [AZM-09](azure-functions/AZM-09-dispatch-retry-and-failure.md) | Scoped dispatch, settlement, retries, and second-level failure | Pending |
 | [AZM-10](azure-functions/AZM-10-servicebus-transport-and-trigger-generation.md) | Azure Service Bus transport and trigger source generation | Pending |
 | [AZM-11](azure-functions/AZM-11-storage-queue-transport.md) | Azure Storage Queue transport and trigger generation | Pending |

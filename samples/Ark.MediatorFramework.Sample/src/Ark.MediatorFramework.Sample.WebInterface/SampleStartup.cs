@@ -174,6 +174,20 @@ public sealed class SampleStartup
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
         services.AddArkMessaging();
+        var messagingNetwork =
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.CreateOptions();
+        var dataBus = new InMemoryMessagingDataBus(
+            NodaTime.SystemClock.Instance,
+            NodaTime.Duration.FromHours(2));
+        services.AddArkInMemoryMessaging(messagingNetwork);
+        services.AddArkMessagingDataBus(dataBus, messagingNetwork);
+        services.AddArkMessagingBus(
+            messagingNetwork,
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant.CreatePayloadSender(
+                dataBus,
+                messagingNetwork),
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant.Identity);
         services.AddMcpServer()
             .WithHttpTransport()
             .WithArkMcpTools<SampleMcpHostContext>();

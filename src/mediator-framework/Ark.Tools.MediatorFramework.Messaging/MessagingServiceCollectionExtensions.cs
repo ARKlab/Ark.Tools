@@ -150,6 +150,40 @@ public static class MessagingServiceCollectionExtensions
         return services.AddArkMessaging(new InMemoryMessagingTransport(), networks);
     }
 
+    /// <summary>Registers the native restricted bus for one messaging participant.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="network">The resolved network options.</param>
+    /// <param name="registry">The generated contract registry.</param>
+    /// <param name="payloadSender">The participant-configured payload sender.</param>
+    /// <param name="participantIdentity">The sending participant identity.</param>
+    /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingBus(
+        this IServiceCollection services,
+        MessagingNetworkOptions network,
+        IMessagingContractRegistry registry,
+        MessagingPayloadSender payloadSender,
+        string participantIdentity,
+        IReadOnlyList<Type>? outgoingStepTypes = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(network);
+        ArgumentNullException.ThrowIfNull(registry);
+        ArgumentNullException.ThrowIfNull(payloadSender);
+        ArgumentException.ThrowIfNullOrEmpty(participantIdentity);
+
+        services.AddSingleton<IBus>(serviceProvider => new MessagingBus(
+            serviceProvider.GetRequiredService<IMessagingTransport>(),
+            network,
+            registry,
+            serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
+            payloadSender,
+            participantIdentity,
+            outgoingStepTypes,
+            serviceProvider.GetRequiredService));
+        return services;
+    }
+
     private static void _validateDataBusLifetime(
         IMessagingDataBus dataBus,
         IEnumerable<MessagingNetworkOptions> networks)

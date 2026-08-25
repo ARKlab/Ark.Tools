@@ -13,5 +13,6 @@ public sealed partial class SampleMessagingParticipant;
 /// <summary>Declares the sample messaging network.</summary>
 [MessagingNetwork(
     Members = new[] { typeof(SampleMessagingParticipant) },
-    Requires = MessagingCapabilities.Receive)]
-public sealed partial class SampleMessagingNetwork;
+    Requires = MessagingCapabilities.Receive,
+    MaximumSchedulingDelaySeconds = 3600)]
+public static partial class SampleMessagingNetwork;

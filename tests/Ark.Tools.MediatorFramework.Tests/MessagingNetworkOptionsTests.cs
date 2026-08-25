@@ -54,6 +54,7 @@ public sealed class MessagingNetworkOptionsTests
                 "DataBusOffloadThresholdBytes",
                 "DataBusMaximumAttachmentBytes",
                 "MaximumSchedulingDelay",
+                "MaximumSchedulingDelaySeconds",
                 "ResourceLifecycle",
                 "ConnectionConfigurationKey",
                 "ManagedIdentityConfigurationKey");
@@ -71,6 +72,18 @@ public sealed class MessagingNetworkOptionsTests
         declaration.DataBusOffloadThresholdBytes.Should().Be(200_000);
         declaration.DataBusMaximumAttachmentBytes.Should().Be(50_000_000);
         declaration.MaximumSchedulingDelay.Should().Be(TimeSpan.FromDays(7));
+        declaration.MaximumSchedulingDelaySeconds.Should().Be(604_800);
+        declaration.MaximumSchedulingDelaySeconds = 3_600;
+        declaration.MaximumSchedulingDelay.Should().Be(TimeSpan.FromHours(1));
+        declaration.MaximumSchedulingDelay = TimeSpan.FromMinutes(12);
+        declaration.MaximumSchedulingDelaySeconds.Should().Be(720);
+
+        Action setNegative = () => declaration.MaximumSchedulingDelaySeconds = -1;
+        setNegative.Should().Throw<ArgumentOutOfRangeException>();
+        Action setNegativeTimeSpan = () => declaration.MaximumSchedulingDelay = TimeSpan.FromSeconds(-1);
+        setNegativeTimeSpan.Should().Throw<ArgumentOutOfRangeException>();
+        Action setTooLarge = () => declaration.MaximumSchedulingDelay = TimeSpan.MaxValue;
+        setTooLarge.Should().Throw<ArgumentOutOfRangeException>();
         declaration.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.CreateIfMissing);
         declaration.ConnectionConfigurationKey.Should().BeNull();
         declaration.ManagedIdentityConfigurationKey.Should().BeNull();

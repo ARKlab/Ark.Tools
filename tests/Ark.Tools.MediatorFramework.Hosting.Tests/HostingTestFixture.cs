@@ -31,7 +31,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using ProtoBuf.Grpc.Server;
 using ProtoBuf.Meta;
 
-using Rebus.Bus;
+using RebusBus = Rebus.Bus.IBus;
 using Rebus.Handlers;
 using Rebus.Pipeline;
 using Rebus.Retry.Simple;
@@ -321,7 +321,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// <summary>Builds an isolated in-memory Rebus bus for the synthetic messages.</summary>
     /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="IFailed{TMessage}"/>.</param>
     /// <returns>The started Rebus bus.</returns>
-    public IBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
+    public RebusBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
     {
         _throwIfDisposed();
         if (_rebusConfigured)
@@ -329,7 +329,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
             if (_secondLevelRetriesEnabled != secondLevelRetriesEnabled)
                 throw new InvalidOperationException("The Rebus host was already configured with a different second-level retry setting.");
 
-            var existingBus = Container.GetInstance<IBus>();
+            var existingBus = Container.GetInstance<RebusBus>();
             State._bus = existingBus;
             return existingBus;
         }
@@ -352,7 +352,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         });
         _rebusConfigured = true;
 
-        var bus = Container.GetInstance<IBus>();
+        var bus = Container.GetInstance<RebusBus>();
         State._bus = bus;
         return bus;
     }
@@ -497,7 +497,7 @@ public sealed class HostingTestState
     /// <summary>Gets the number of deferred messages scheduled by handlers.</summary>
     public int DeferredMessages => Volatile.Read(ref _deferredMessages);
 
-    internal IBus? _bus { get; set; }
+    internal RebusBus? _bus { get; set; }
 
     /// <summary>Gets the scope identifiers observed by Rebus handlers.</summary>
     public ConcurrentBag<Guid> RebusScopeIds { get; } = [];

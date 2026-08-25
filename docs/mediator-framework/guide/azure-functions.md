@@ -168,6 +168,34 @@ attachment ID, byte length, and SHA-256 headers instead. Receivers fetch and
 validate the attachment before bounded decompression and deserialization.
 Consumers never delete attachments.
 
+### Restricted application bus
+
+Handlers can depend on the transport-neutral `Ark.Tools.MediatorFramework.IBus`.
+It exposes only one-way `Send` (immediate or scheduled) and `Publish`; receive,
+request/reply, and local-send operations are intentionally absent:
+
+```csharp
+await bus.Send(message, cancellationToken: cancellationToken);
+await bus.Send(message, TimeSpan.FromMinutes(5), cancellationToken: cancellationToken);
+await bus.Publish(@event, new Dictionary<string, string> { ["tenant"] = tenant });
+```
+
+The generated network registry resolves message ownership to the processor's
+identity queue and event ownership to the publisher's
+`<publisher-identity>-<contract-name>` topic. `Publish` requires both the
+network `PubSub` capability and the current participant to declare the event in
+`Publishes`. Scheduled `Send` requires `ScheduledSend`; unsupported operations
+fail before enqueue.
+
+Additional headers are application-only and bounded. Framework routing,
+serialization, attachment, tracing, and user-context headers are reserved.
+The bus writes the logical contract name, message ID, sent time, network, and
+sender identity, then runs the participant's outgoing pipeline before the
+shared serialization, compression, claim-check, and transport stages. The same
+bus implementation is used with InMemory, Service Bus, and Storage Queue
+transports; transport selection is composition, not part of the network
+declaration.
+
 Register one provider and store for every participant on a network. The
 first-class provider is `InMemoryMessagingDataBus` for tests and custom hosts;
 production providers own credentials and lifecycle cleanup. Configure the

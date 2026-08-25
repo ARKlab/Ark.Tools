@@ -7,6 +7,23 @@ namespace Ark.Tools.MediatorFramework;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class MessagingNetworkAttribute : Attribute
 {
+    /// <summary>The default maximum transport payload size in bytes.</summary>
+    public const int DefaultMaximumTransportPayloadBytes = 240_000;
+
+    /// <summary>The default maximum decompressed payload size in bytes.</summary>
+    public const int DefaultMaximumDecompressedPayloadBytes = 1_000_000;
+
+    /// <summary>The default size at which payloads are offloaded to DataBus.</summary>
+    public const int DefaultDataBusOffloadThresholdBytes = 200_000;
+
+    /// <summary>The default maximum DataBus attachment size in bytes.</summary>
+    public const int DefaultDataBusMaximumAttachmentBytes = 50_000_000;
+
+    /// <summary>The default maximum scheduled-send delay in seconds.</summary>
+    public const int DefaultMaximumSchedulingDelaySeconds = 604_800;
+
+    private TimeSpan _maximumSchedulingDelay = TimeSpan.FromSeconds(DefaultMaximumSchedulingDelaySeconds);
+
     /// <summary>Gets or sets the participant types belonging to the network.</summary>
     public Type[] Members { get; set; } = Array.Empty<Type>();
 
@@ -14,19 +31,47 @@ public sealed class MessagingNetworkAttribute : Attribute
     public MessagingCapabilities Requires { get; set; }
 
     /// <summary>Gets or sets the maximum transport payload size in bytes.</summary>
-    public int MaximumTransportPayloadBytes { get; set; } = 240_000;
+    public int MaximumTransportPayloadBytes { get; set; } = DefaultMaximumTransportPayloadBytes;
 
     /// <summary>Gets or sets the maximum decompressed payload size in bytes.</summary>
-    public int MaximumDecompressedPayloadBytes { get; set; } = 1_000_000;
+    public int MaximumDecompressedPayloadBytes { get; set; } = DefaultMaximumDecompressedPayloadBytes;
 
     /// <summary>Gets or sets the size at which payloads are offloaded to DataBus.</summary>
-    public int DataBusOffloadThresholdBytes { get; set; } = 200_000;
+    public int DataBusOffloadThresholdBytes { get; set; } = DefaultDataBusOffloadThresholdBytes;
 
     /// <summary>Gets or sets the maximum DataBus attachment size in bytes.</summary>
-    public int DataBusMaximumAttachmentBytes { get; set; } = 50_000_000;
+    public int DataBusMaximumAttachmentBytes { get; set; } = DefaultDataBusMaximumAttachmentBytes;
 
     /// <summary>Gets or sets the maximum scheduled-send delay.</summary>
-    public TimeSpan MaximumSchedulingDelay { get; set; } = TimeSpan.FromDays(7);
+    public TimeSpan MaximumSchedulingDelay
+    {
+        get
+        {
+            return _maximumSchedulingDelay;
+        }
+        set
+        {
+            if (value < TimeSpan.Zero || value > TimeSpan.FromSeconds(int.MaxValue))
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    "The maximum scheduling delay must fit in a non-negative integer number of seconds.");
+
+            _maximumSchedulingDelay = value;
+        }
+    }
+
+    /// <summary>Gets or sets the maximum scheduled-send delay in seconds for generated options.</summary>
+    public int MaximumSchedulingDelaySeconds
+    {
+        get
+        {
+            return checked((int)_maximumSchedulingDelay.TotalSeconds);
+        }
+        set
+        {
+            MaximumSchedulingDelay = TimeSpan.FromSeconds(value);
+        }
+    }
 
     /// <summary>Gets or sets the resource lifecycle policy.</summary>
     public MessagingResourceLifecycle ResourceLifecycle { get; set; } = MessagingResourceLifecycle.CreateIfMissing;

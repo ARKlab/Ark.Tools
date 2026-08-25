@@ -277,13 +277,13 @@ send-and-inspect fixture (receive dispatch arrives in AZM-09).
 
 ## Acceptance
 
-- [ ] Restricted bus API is public, documented, and contains no receive or
+- [x] Restricted bus API is public, documented, and contains no receive or
   reply operation.
-- [ ] Queue/topic routing, scheduling, and capability guards are tested over
+- [x] Queue/topic routing, scheduling, and capability guards are tested over
   InMemory.
-- [ ] Serialization and headers are delegated to the shared envelope runtime.
-- [ ] Invalid routing and capability violations fail explicitly.
-- [ ] No worker or processor starts during bus composition.
-- [ ] The [task board](../README.md) status for AZM-08 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Serialization and headers are delegated to the shared envelope runtime.
+- [x] Invalid routing and capability violations fail explicitly.
+- [x] No worker or processor starts during bus composition.
+- [x] The [task board](../README.md) status for AZM-08 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -14,7 +14,7 @@ using NodaTime;
 using NodaTime.Testing;
 
 using Rebus.Transport.InMem;
-using Rebus.Bus;
+using RebusBus = Rebus.Bus.IBus;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -286,7 +286,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(message);
         StartOutboundBus();
-        await _container.GetInstance<IBus>().Send(message).ConfigureAwait(false);
+        await _container.GetInstance<RebusBus>().Send(message).ConfigureAwait(false);
     }
 
     /// <summary>Gets the number of pending outbox messages.</summary>

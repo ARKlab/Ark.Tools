@@ -5,6 +5,10 @@ task.
 
 ## API shape
 
+- **Revisit the complete `IBus` registration and setup design.**
+  Evaluate a builder-based composition model to make network, transport, DataBus,
+  participant, and pipeline setup easier to discover and configure.
+
 - **Revisit the `IMessagingTransport.MeasureNative` method.**
   Confirm whether the transport contract needs to expose native byte-limit measurement.
 
