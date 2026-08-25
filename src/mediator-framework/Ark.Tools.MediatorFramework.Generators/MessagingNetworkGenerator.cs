@@ -618,21 +618,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 source.Append("                    typeof(").Append(_typeName(member)).AppendLine("),");
             source.AppendLine("                },")
                 .Append("                Requires = (global::Ark.Tools.MediatorFramework.MessagingCapabilities)")
-                .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
-            if (network.MaximumTransportPayloadBytes is int maximumTransportPayloadBytes)
-                source.Append("                MaximumTransportPayloadBytes = ").Append(maximumTransportPayloadBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
-            if (network.MaximumDecompressedPayloadBytes is int maximumDecompressedPayloadBytes)
-                source.Append("                MaximumDecompressedPayloadBytes = ").Append(maximumDecompressedPayloadBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
-            if (network.DataBusOffloadThresholdBytes is int dataBusOffloadThresholdBytes)
-                source.Append("                DataBusOffloadThresholdBytes = ").Append(dataBusOffloadThresholdBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
-            if (network.DataBusMaximumAttachmentBytes is int dataBusMaximumAttachmentBytes)
-                source.Append("                DataBusMaximumAttachmentBytes = ").Append(dataBusMaximumAttachmentBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
-            if (network.MaximumSchedulingDelaySeconds is int maximumSchedulingDelaySeconds)
-                source.Append("                MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(")
-                    .Append(maximumSchedulingDelaySeconds.ToString(CultureInfo.InvariantCulture)).AppendLine("),");
-            if (network.ResourceLifecycle is int resourceLifecycle)
-                source.Append("                ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
-                    .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+                .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+                .Append("                MaximumTransportPayloadBytes = ")
+                .Append((network.MaximumTransportPayloadBytes ?? 240_000).ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+                .Append("                MaximumDecompressedPayloadBytes = ")
+                .Append((network.MaximumDecompressedPayloadBytes ?? 1_000_000).ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+                .Append("                DataBusOffloadThresholdBytes = ")
+                .Append((network.DataBusOffloadThresholdBytes ?? 200_000).ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+                .Append("                DataBusMaximumAttachmentBytes = ")
+                .Append((network.DataBusMaximumAttachmentBytes ?? 50_000_000).ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+                .Append("                MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(")
+                .Append((network.MaximumSchedulingDelaySeconds ?? 604_800).ToString(CultureInfo.InvariantCulture)).AppendLine("),")
+                .Append("                ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
+                .Append((network.ResourceLifecycle ?? 0).ToString(CultureInfo.InvariantCulture)).AppendLine(",");
             if (network.ConnectionConfigurationKey is not null)
                 source.Append("                ConnectionConfigurationKey = \"").Append(_escape(network.ConnectionConfigurationKey)).AppendLine("\",");
             if (network.ManagedIdentityConfigurationKey is not null)

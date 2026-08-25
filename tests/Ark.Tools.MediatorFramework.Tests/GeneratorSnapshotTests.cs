@@ -2203,6 +2203,35 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorEmitsResolvedNetworkDefaults()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("MaximumTransportPayloadBytes = 240000");
+        result.Generated.Should().Contain("MaximumDecompressedPayloadBytes = 1000000");
+        result.Generated.Should().Contain("DataBusOffloadThresholdBytes = 200000");
+        result.Generated.Should().Contain("DataBusMaximumAttachmentBytes = 50000000");
+        result.Generated.Should().Contain("MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(604800)");
+        result.Generated.Should().Contain("ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)0");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorEmitsStaticRegistryWithoutNetworkConstruction()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
