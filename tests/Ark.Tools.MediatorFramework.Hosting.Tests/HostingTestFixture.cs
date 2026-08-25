@@ -528,7 +528,7 @@ public sealed class HostingTestState
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
-        Volatile.Write(ref _failedMessageExceptionCount, message.Exceptions.Count);
+        Interlocked.Exchange(ref _failedMessageExceptionCount, message.Exceptions.Count());
         Interlocked.Exchange(ref _failedMessageException, message.Exceptions.First().Message);
     }
 
