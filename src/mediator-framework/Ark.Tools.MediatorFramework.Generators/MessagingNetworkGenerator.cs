@@ -348,7 +348,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
             _optionalInt(attribute, "DataBusOffloadThresholdBytes"),
             _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
-            _optionalEnum(attribute, "ResourceLifecycle"),
+            _optionalInt(attribute, "MaximumSchedulingDelaySeconds"),
+            _optionalInt(attribute, "ResourceLifecycle"),
             _string(attribute, "ConnectionConfigurationKey"),
             _string(attribute, "ManagedIdentityConfigurationKey"));
     }
@@ -626,6 +627,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 source.Append("                DataBusOffloadThresholdBytes = ").Append(dataBusOffloadThresholdBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
             if (network.DataBusMaximumAttachmentBytes is int dataBusMaximumAttachmentBytes)
                 source.Append("                DataBusMaximumAttachmentBytes = ").Append(dataBusMaximumAttachmentBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.MaximumSchedulingDelaySeconds is int maximumSchedulingDelaySeconds)
+                source.Append("                MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(")
+                    .Append(maximumSchedulingDelaySeconds.ToString(CultureInfo.InvariantCulture)).AppendLine("),");
             if (network.ResourceLifecycle is int resourceLifecycle)
                 source.Append("                ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
                     .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
@@ -1138,12 +1142,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return value.Value is int integer ? integer : null;
     }
 
-    private static int? _optionalEnum(AttributeData attribute, string name)
-    {
-        var value = _named(attribute, name);
-        return value.Value is int integer ? integer : null;
-    }
-
     private static string? _string(AttributeData? attribute, string name)
     {
         var value = attribute is null ? default : _named(attribute, name);
@@ -1176,6 +1174,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             int? maximumDecompressedPayloadBytes,
             int? dataBusOffloadThresholdBytes,
             int? dataBusMaximumAttachmentBytes,
+            int? maximumSchedulingDelaySeconds,
             int? resourceLifecycle,
             string? connectionConfigurationKey,
             string? managedIdentityConfigurationKey)
@@ -1188,6 +1187,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             MaximumDecompressedPayloadBytes = maximumDecompressedPayloadBytes;
             DataBusOffloadThresholdBytes = dataBusOffloadThresholdBytes;
             DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
+            MaximumSchedulingDelaySeconds = maximumSchedulingDelaySeconds;
             ResourceLifecycle = resourceLifecycle;
             ConnectionConfigurationKey = connectionConfigurationKey;
             ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
@@ -1201,6 +1201,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         public int? MaximumDecompressedPayloadBytes { get; }
         public int? DataBusOffloadThresholdBytes { get; }
         public int? DataBusMaximumAttachmentBytes { get; }
+        public int? MaximumSchedulingDelaySeconds { get; }
         public int? ResourceLifecycle { get; }
         public string? ConnectionConfigurationKey { get; }
         public string? ManagedIdentityConfigurationKey { get; }

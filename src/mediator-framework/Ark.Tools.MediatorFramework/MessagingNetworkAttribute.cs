@@ -28,6 +28,9 @@ public sealed class MessagingNetworkAttribute : Attribute
     /// <summary>Gets or sets the maximum scheduled-send delay.</summary>
     public TimeSpan MaximumSchedulingDelay { get; set; } = TimeSpan.FromDays(7);
 
+    /// <summary>Gets or sets the maximum scheduled-send delay in seconds for generated options.</summary>
+    public int MaximumSchedulingDelaySeconds { get; set; } = 604_800;
+
     /// <summary>Gets or sets the resource lifecycle policy.</summary>
     public MessagingResourceLifecycle ResourceLifecycle { get; set; } = MessagingResourceLifecycle.CreateIfMissing;
 

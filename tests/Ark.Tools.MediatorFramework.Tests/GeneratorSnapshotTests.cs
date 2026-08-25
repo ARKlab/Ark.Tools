@@ -2164,6 +2164,7 @@ public sealed class GeneratorSnapshotTests
                 MaximumDecompressedPayloadBytes = 456,
                 DataBusOffloadThresholdBytes = 789,
                 DataBusMaximumAttachmentBytes = 987,
+                MaximumSchedulingDelaySeconds = 3600,
                 ResourceLifecycle = MessagingResourceLifecycle.External,
                 ConnectionConfigurationKey = "messaging:connection",
                 ManagedIdentityConfigurationKey = "messaging:identity")]
@@ -2185,6 +2186,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("MaximumDecompressedPayloadBytes = 456");
         result.Generated.Should().Contain("DataBusOffloadThresholdBytes = 789");
         result.Generated.Should().Contain("DataBusMaximumAttachmentBytes = 987");
+        result.Generated.Should().Contain("MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(3600)");
         result.Generated.Should().Contain("ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)1");
         result.Generated.Should().Contain("ConnectionConfigurationKey = \"messaging:connection\"");
         result.Generated.Should().Contain("ManagedIdentityConfigurationKey = \"messaging:identity\"");
