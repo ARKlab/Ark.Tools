@@ -16,6 +16,9 @@ public interface IFailed<out T>
 
     /// <summary>Gets the bounded error description.</summary>
     string ErrorDescription { get; }
+
+    /// <summary>Gets the serializable exception snapshots, when available.</summary>
+    IReadOnlyList<MessagingExceptionInfo>? Exceptions { get; }
 }
 
 /// <summary>Serializable, bounded information about a messaging exception.</summary>

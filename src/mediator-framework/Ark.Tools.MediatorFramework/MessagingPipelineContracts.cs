@@ -51,8 +51,7 @@ public sealed class MessagingIncomingContext
     {
         Headers = headers ?? throw new ArgumentNullException(nameof(headers));
         Payload = payload;
-        if (deliveryCount < 0)
-            throw new ArgumentOutOfRangeException(nameof(deliveryCount));
+        ArgumentOutOfRangeException.ThrowIfNegative(deliveryCount);
         DeliveryCount = deliveryCount;
         CancellationToken = cancellationToken;
     }

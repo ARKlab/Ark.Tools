@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.MediatorFramework;
-
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Classifies an exception raised while processing a delivery.</summary>
@@ -46,8 +44,7 @@ public static class MessagingSettlement
         MessagingExceptionClassification classification,
         bool isSecondLevelStage)
     {
-        if (deliveryCount < 1)
-            throw new ArgumentOutOfRangeException(nameof(deliveryCount));
+        ArgumentOutOfRangeException.ThrowIfLessThan(deliveryCount, 1);
         MessagingRetryPolicyValidation.Validate(retryPolicy);
 
         if (classification == MessagingExceptionClassification.None)

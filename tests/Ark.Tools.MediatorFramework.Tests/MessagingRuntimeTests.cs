@@ -500,23 +500,6 @@ public sealed partial class MessagingRuntimeTests
             _cancellationTokens = cancellationTokens;
         }
 
-        private sealed class TestRetryPolicy : IMessagingRetryPolicy
-        {
-            public TestRetryPolicy(int maximumDeliveryCount, bool secondLevelRetriesEnabled)
-            {
-                MaximumDeliveryCount = maximumDeliveryCount;
-                SecondLevelRetriesEnabled = secondLevelRetriesEnabled;
-            }
-
-            public int MaximumDeliveryCount { get; }
-
-            public bool SecondLevelRetriesEnabled { get; }
-
-            public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
-
-            public TimeSpan RetryDelay => TimeSpan.Zero;
-        }
-
         public async Task ProcessAsync(
             MessagingOutgoingContext context,
             Func<Task> next,
@@ -526,6 +509,23 @@ public sealed partial class MessagingRuntimeTests
             _cancellationTokens.Add(cancellationToken);
             await next().ConfigureAwait(false);
         }
+    }
+
+    private sealed class TestRetryPolicy : IMessagingRetryPolicy
+    {
+        public TestRetryPolicy(int maximumDeliveryCount, bool secondLevelRetriesEnabled)
+        {
+            MaximumDeliveryCount = maximumDeliveryCount;
+            SecondLevelRetriesEnabled = secondLevelRetriesEnabled;
+        }
+
+        public int MaximumDeliveryCount { get; }
+
+        public bool SecondLevelRetriesEnabled { get; }
+
+        public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+
+        public TimeSpan RetryDelay => TimeSpan.Zero;
     }
 
     private sealed class MessagingRuntimeContract
