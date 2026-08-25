@@ -45,7 +45,6 @@ public static class MessagingSettlement
         bool isSecondLevelStage)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(deliveryCount, 1);
-        MessagingRetryPolicyValidation.Validate(retryPolicy);
 
         if (classification == MessagingExceptionClassification.None)
             return MessagingSettlementDecision.Complete;
