@@ -7,6 +7,8 @@ namespace Ark.Tools.MediatorFramework;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class MessagingNetworkAttribute : Attribute
 {
+    private TimeSpan _maximumSchedulingDelay = TimeSpan.FromDays(7);
+
     /// <summary>Gets or sets the participant types belonging to the network.</summary>
     public Type[] Members { get; set; } = Array.Empty<Type>();
 
@@ -26,10 +28,30 @@ public sealed class MessagingNetworkAttribute : Attribute
     public int DataBusMaximumAttachmentBytes { get; set; } = 50_000_000;
 
     /// <summary>Gets or sets the maximum scheduled-send delay.</summary>
-    public TimeSpan MaximumSchedulingDelay { get; set; } = TimeSpan.FromDays(7);
+    public TimeSpan MaximumSchedulingDelay
+    {
+        get
+        {
+            return _maximumSchedulingDelay;
+        }
+        set
+        {
+            _maximumSchedulingDelay = value;
+        }
+    }
 
     /// <summary>Gets or sets the maximum scheduled-send delay in seconds for generated options.</summary>
-    public int MaximumSchedulingDelaySeconds { get; set; } = 604_800;
+    public int MaximumSchedulingDelaySeconds
+    {
+        get
+        {
+            return checked((int)_maximumSchedulingDelay.TotalSeconds);
+        }
+        set
+        {
+            _maximumSchedulingDelay = TimeSpan.FromSeconds(value);
+        }
+    }
 
     /// <summary>Gets or sets the resource lifecycle policy.</summary>
     public MessagingResourceLifecycle ResourceLifecycle { get; set; } = MessagingResourceLifecycle.CreateIfMissing;

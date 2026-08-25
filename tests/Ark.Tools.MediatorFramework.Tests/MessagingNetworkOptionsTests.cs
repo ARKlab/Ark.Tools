@@ -73,6 +73,10 @@ public sealed class MessagingNetworkOptionsTests
         declaration.DataBusMaximumAttachmentBytes.Should().Be(50_000_000);
         declaration.MaximumSchedulingDelay.Should().Be(TimeSpan.FromDays(7));
         declaration.MaximumSchedulingDelaySeconds.Should().Be(604_800);
+        declaration.MaximumSchedulingDelaySeconds = 3_600;
+        declaration.MaximumSchedulingDelay.Should().Be(TimeSpan.FromHours(1));
+        declaration.MaximumSchedulingDelay = TimeSpan.FromMinutes(12);
+        declaration.MaximumSchedulingDelaySeconds.Should().Be(720);
         declaration.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.CreateIfMissing);
         declaration.ConnectionConfigurationKey.Should().BeNull();
         declaration.ManagedIdentityConfigurationKey.Should().BeNull();
