@@ -29,7 +29,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _payloadSender = "Ark.Tools.MediatorFramework.Messaging.MessagingPayloadSender";
     private const string _dataBus = "Ark.Tools.MediatorFramework.IMessagingDataBus";
     private const string _networkOptions = "Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions";
-    private const string _contractRegistry = "Ark.Tools.MediatorFramework.Messaging.MessagingContractRegistry";
+    private const string _contractRegistry = "Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry";
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
@@ -339,7 +339,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var attribute = symbol.GetAttributes().First(attribute =>
             attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
         var members = _types(attribute, "Members");
-        return new Network(symbol, symbol.ToDisplayString(), members, _enum(attribute, "Requires"));
+        return new Network(
+            symbol,
+            symbol.ToDisplayString(),
+            members,
+            _enum(attribute, "Requires"),
+            _optionalInt(attribute, "MaximumTransportPayloadBytes"),
+            _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
+            _optionalInt(attribute, "DataBusOffloadThresholdBytes"),
+            _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
+            _optionalEnum(attribute, "ResourceLifecycle"),
+            _string(attribute, "ConnectionConfigurationKey"),
+            _string(attribute, "ManagedIdentityConfigurationKey"));
     }
 
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
@@ -586,7 +597,49 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public static string NetworkIdentity => \"").Append(_escape(network.Name)).AppendLine("\";")
-            .AppendLine()
+            .AppendLine();
+
+        if (compilation.GetTypeByMetadataName(_networkOptions) is not null)
+        {
+            source
+                .AppendLine("    /// <summary>Creates the resolved options for this messaging network.</summary>")
+                .AppendLine("    /// <returns>The resolved messaging network options.</returns>")
+                .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions CreateOptions()")
+                .AppendLine("    {")
+                .AppendLine("        return new global::Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions(")
+                .Append("            typeof(").Append(name).AppendLine("),")
+                .AppendLine("            new global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute")
+                .AppendLine("            {")
+                .AppendLine("                Members = new global::System.Type[]");
+            source.AppendLine("                {");
+            foreach (var member in network.MemberSymbols)
+                source.Append("                    typeof(").Append(_typeName(member)).AppendLine("),");
+            source.AppendLine("                },")
+                .Append("                Requires = (global::Ark.Tools.MediatorFramework.MessagingCapabilities)")
+                .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.MaximumTransportPayloadBytes is int maximumTransportPayloadBytes)
+                source.Append("                MaximumTransportPayloadBytes = ").Append(maximumTransportPayloadBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.MaximumDecompressedPayloadBytes is int maximumDecompressedPayloadBytes)
+                source.Append("                MaximumDecompressedPayloadBytes = ").Append(maximumDecompressedPayloadBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.DataBusOffloadThresholdBytes is int dataBusOffloadThresholdBytes)
+                source.Append("                DataBusOffloadThresholdBytes = ").Append(dataBusOffloadThresholdBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.DataBusMaximumAttachmentBytes is int dataBusMaximumAttachmentBytes)
+                source.Append("                DataBusMaximumAttachmentBytes = ").Append(dataBusMaximumAttachmentBytes.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.ResourceLifecycle is int resourceLifecycle)
+                source.Append("                ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
+                    .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine(",");
+            if (network.ConnectionConfigurationKey is not null)
+                source.Append("                ConnectionConfigurationKey = \"").Append(_escape(network.ConnectionConfigurationKey)).AppendLine("\",");
+            if (network.ManagedIdentityConfigurationKey is not null)
+                source.Append("                ManagedIdentityConfigurationKey = \"").Append(_escape(network.ManagedIdentityConfigurationKey)).AppendLine("\",");
+            source
+                .AppendLine("            });")
+                .AppendLine("    }")
+                .AppendLine();
+        }
+
+        source
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .AppendLine("    private static readonly FrozenDictionary<Type, string> _destinations =")
             .AppendLine("        new Dictionary<Type, string>")
@@ -687,7 +740,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
             .AppendLine("    /// <returns>The participant queue or event topic.</returns>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .AppendLine("    public static string GetDestination(global::System.Type contractType)")
+            .AppendLine("    private static string GetDestination(global::System.Type contractType)")
             .AppendLine("    {")
             .AppendLine("        if (_destinations.TryGetValue(contractType, out var destination))")
             .AppendLine("            return destination;")
@@ -698,7 +751,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <param name=\"contractType\">The message contract type.</param>")
             .AppendLine("    /// <returns>The processing participant identity.</returns>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .AppendLine("    public static string GetProcessorIdentity(global::System.Type contractType)")
+            .AppendLine("    private static string GetProcessorIdentity(global::System.Type contractType)")
             .AppendLine("    {")
             .AppendLine("        if (_processors.TryGetValue(contractType, out var processor))")
             .AppendLine("            return processor;")
@@ -709,7 +762,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <param name=\"contractType\">The event contract type.</param>")
             .AppendLine("    /// <returns>The publishing participant identity.</returns>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .AppendLine("    public static string GetPublisherIdentity(global::System.Type contractType)")
+            .AppendLine("    private static string GetPublisherIdentity(global::System.Type contractType)")
             .AppendLine("    {")
             .AppendLine("        if (_publishers.TryGetValue(contractType, out var publisher))")
             .AppendLine("            return publisher;")
@@ -729,7 +782,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
             .AppendLine("    /// <returns>The owner-selected serialization protocol.</returns>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .AppendLine("    public static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)")
+            .AppendLine("    private static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)")
             .AppendLine("    {")
             .AppendLine("        if (_wireProtocols.TryGetValue(contractType, out var protocol))")
             .AppendLine("            return protocol;")
@@ -749,7 +802,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <param name=\"contractType\">The declared contract type.</param>")
             .AppendLine("    /// <returns>The normalized logical contract name.</returns>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .AppendLine("    public static string GetLogicalName(global::System.Type contractType)")
+            .AppendLine("    private static string GetLogicalName(global::System.Type contractType)")
             .AppendLine("    {")
             .AppendLine("        if (_logicalNames.TryGetValue(contractType, out var logicalName))")
             .AppendLine("            return logicalName;")
@@ -1079,6 +1132,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return value.Value is int integer ? integer : default;
     }
 
+    private static int? _optionalInt(AttributeData attribute, string name)
+    {
+        var value = _named(attribute, name);
+        return value.Value is int integer ? integer : null;
+    }
+
+    private static int? _optionalEnum(AttributeData attribute, string name)
+    {
+        var value = _named(attribute, name);
+        return value.Value is int integer ? integer : null;
+    }
+
     private static string? _string(AttributeData? attribute, string name)
     {
         var value = attribute is null ? default : _named(attribute, name);
@@ -1102,18 +1167,43 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private readonly struct Network
     {
-        public Network(INamedTypeSymbol symbol, string name, ImmutableArray<INamedTypeSymbol> memberSymbols, int requires)
+        public Network(
+            INamedTypeSymbol symbol,
+            string name,
+            ImmutableArray<INamedTypeSymbol> memberSymbols,
+            int requires,
+            int? maximumTransportPayloadBytes,
+            int? maximumDecompressedPayloadBytes,
+            int? dataBusOffloadThresholdBytes,
+            int? dataBusMaximumAttachmentBytes,
+            int? resourceLifecycle,
+            string? connectionConfigurationKey,
+            string? managedIdentityConfigurationKey)
         {
             Symbol = symbol;
             Name = name;
             MemberSymbols = memberSymbols;
             Requires = requires;
+            MaximumTransportPayloadBytes = maximumTransportPayloadBytes;
+            MaximumDecompressedPayloadBytes = maximumDecompressedPayloadBytes;
+            DataBusOffloadThresholdBytes = dataBusOffloadThresholdBytes;
+            DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
+            ResourceLifecycle = resourceLifecycle;
+            ConnectionConfigurationKey = connectionConfigurationKey;
+            ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
         }
 
         public INamedTypeSymbol Symbol { get; }
         public string Name { get; }
         public ImmutableArray<INamedTypeSymbol> MemberSymbols { get; }
         public int Requires { get; }
+        public int? MaximumTransportPayloadBytes { get; }
+        public int? MaximumDecompressedPayloadBytes { get; }
+        public int? DataBusOffloadThresholdBytes { get; }
+        public int? DataBusMaximumAttachmentBytes { get; }
+        public int? ResourceLifecycle { get; }
+        public string? ConnectionConfigurationKey { get; }
+        public string? ManagedIdentityConfigurationKey { get; }
     }
 
     private readonly struct Participant

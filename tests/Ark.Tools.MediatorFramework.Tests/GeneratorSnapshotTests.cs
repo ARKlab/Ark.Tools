@@ -2159,7 +2159,14 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
+                MaximumTransportPayloadBytes = 123,
+                MaximumDecompressedPayloadBytes = 456,
+                DataBusOffloadThresholdBytes = 789,
+                DataBusMaximumAttachmentBytes = 987,
+                ResourceLifecycle = MessagingResourceLifecycle.External,
+                ConnectionConfigurationKey = "messaging:connection",
+                ManagedIdentityConfigurationKey = "messaging:identity")]
             public static partial class BookMessagingNetwork { }
             """);
 
@@ -2168,8 +2175,19 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetDestinationFor<T>()");
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
-        result.Generated.Should().Contain("GetProcessorIdentity(global::System.Type contractType)");
-        result.Generated.Should().Contain("GetPublisherIdentity(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetProcessorIdentity(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetPublisherIdentity(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetDestination(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)");
+        result.Generated.Should().Contain("private static string GetLogicalName(global::System.Type contractType)");
+        result.Generated.Should().Contain("CreateOptions()");
+        result.Generated.Should().Contain("MaximumTransportPayloadBytes = 123");
+        result.Generated.Should().Contain("MaximumDecompressedPayloadBytes = 456");
+        result.Generated.Should().Contain("DataBusOffloadThresholdBytes = 789");
+        result.Generated.Should().Contain("DataBusMaximumAttachmentBytes = 987");
+        result.Generated.Should().Contain("ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)1");
+        result.Generated.Should().Contain("ConnectionConfigurationKey = \"messaging:connection\"");
+        result.Generated.Should().Contain("ManagedIdentityConfigurationKey = \"messaging:identity\"");
         result.Generated.Should().Contain("IMessagingContractRegistry Registry");
         result.Generated.Should().Contain("IMessagingContractRegistry");
         result.Generated.Should().NotContain("CreateRegistry()");
