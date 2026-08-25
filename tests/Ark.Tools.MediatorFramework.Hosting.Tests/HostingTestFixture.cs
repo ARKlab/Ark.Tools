@@ -530,7 +530,7 @@ public sealed class HostingTestState
         Interlocked.Increment(ref _failedMessageExecutions);
         var exceptions = message.Exceptions.ToList();
         Interlocked.Exchange(ref _failedMessageExceptionCount, exceptions.Count);
-        Interlocked.Exchange(ref _failedMessageException, exceptions.First().Message);
+        Interlocked.Exchange(ref _failedMessageException, exceptions.FirstOrDefault()?.Message);
     }
 
     internal void _recordDeferredMessage()

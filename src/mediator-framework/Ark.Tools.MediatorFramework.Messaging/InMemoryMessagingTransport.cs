@@ -297,9 +297,10 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
             }
             else if (settlement == Settlement.Abandon)
             {
-                var due = _clock.GetCurrentInstant()
+                var now = _clock.GetCurrentInstant();
+                var due = now
                     + Duration.FromTimeSpan(queue._retryDelay);
-                if (due <= _clock.GetCurrentInstant())
+                if (due <= now)
                     queue._visible.Enqueue(locked._envelope);
                 else
                     queue._scheduled.Enqueue(
