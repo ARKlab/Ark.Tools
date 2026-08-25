@@ -2,8 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Text;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
