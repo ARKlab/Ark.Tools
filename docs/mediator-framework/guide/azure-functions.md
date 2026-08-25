@@ -153,6 +153,16 @@ not an Azure Functions hosting mechanism. Registration validates the transport
 capabilities against each network and fails immediately when a required
 capability is missing.
 
+### Delivery settlement and retries
+
+The transport reports the native `DeliveryCount`; handlers must not copy or
+increment it in message headers. `MessagingSettlement.Decide` maps successful
+handling to completion, fail-fast failures to dead-letter, and other failures
+to abandon. When second-level retries are enabled, delivery `N` is the single
+inline `IFailed<T>` boundary and the transport maximum is `2N`; otherwise the
+normal message runs through `N`. `IFailed<T>` is an in-memory diagnostic
+dispatch and is never persisted as a separate message.
+
 ### Compression and claim-check
 
 Compression is a participant-owned sender setting. Payloads below

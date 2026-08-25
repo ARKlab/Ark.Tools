@@ -239,6 +239,47 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public void SettlementUsesNativeDeliveryCountAndSecondLevelBoundary()
+    {
+        var policy = new TestRetryPolicy(3, secondLevelRetriesEnabled: true);
+
+        MessagingSettlement.Decide(1, policy, MessagingExceptionClassification.Other, false)
+            .Should().Be(MessagingSettlementDecision.Abandon);
+        MessagingSettlement.Decide(3, policy, MessagingExceptionClassification.Other, false)
+            .Should().Be(MessagingSettlementDecision.RunSecondLevel);
+        MessagingSettlement.Decide(4, policy, MessagingExceptionClassification.Other, false)
+            .Should().Be(MessagingSettlementDecision.Abandon);
+        MessagingSettlement.Decide(3, policy, MessagingExceptionClassification.FailFast, false)
+            .Should().Be(MessagingSettlementDecision.DeadLetter);
+        MessagingSettlement.Decide(3, policy, MessagingExceptionClassification.Other, true)
+            .Should().Be(MessagingSettlementDecision.Abandon);
+    }
+
+    [TestMethod]
+    public void RetryPolicyValidationRejectsInvalidSecondLevelCount()
+    {
+        var action = () => MessagingRetryPolicyValidation.Validate(
+            new TestRetryPolicy(1, secondLevelRetriesEnabled: true));
+
+        action.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [TestMethod]
+    public void ExceptionInfoIsBoundedAndRetainsInnerExceptions()
+    {
+        var exception = new InvalidOperationException(
+            new string('m', 300),
+            new ArgumentException(new string('i', 300)));
+
+        var info = MessagingExceptionInfo.From(exception);
+
+        info.ExceptionType.Should().Be(typeof(InvalidOperationException).FullName);
+        info.Message.Length.Should().Be(256);
+        info.Inner.Should().NotBeNull();
+        info.Inner!.Message.Length.Should().Be(256);
+    }
+
+    [TestMethod]
     public void CodecRegistrationInstallsAllDeclaredProtocols()
     {
         using var services = new ServiceCollection()
@@ -457,6 +498,23 @@ public sealed partial class MessagingRuntimeTests
             _name = name;
             _order = order;
             _cancellationTokens = cancellationTokens;
+        }
+
+        private sealed class TestRetryPolicy : IMessagingRetryPolicy
+        {
+            public TestRetryPolicy(int maximumDeliveryCount, bool secondLevelRetriesEnabled)
+            {
+                MaximumDeliveryCount = maximumDeliveryCount;
+                SecondLevelRetriesEnabled = secondLevelRetriesEnabled;
+            }
+
+            public int MaximumDeliveryCount { get; }
+
+            public bool SecondLevelRetriesEnabled { get; }
+
+            public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+
+            public TimeSpan RetryDelay => TimeSpan.Zero;
         }
 
         public async Task ProcessAsync(
