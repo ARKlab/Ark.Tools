@@ -139,7 +139,7 @@ public sealed partial class MessagingBusTests
         {
             TypeInfoResolver = TestJsonContext.Default
         });
-        var registry = new MessagingContractRegistry(new TestContractRegistry(network.NetworkIdentity));
+        var registry = new TestContractRegistry(network.NetworkIdentity);
         return new MessagingBus(
             transport,
             network,

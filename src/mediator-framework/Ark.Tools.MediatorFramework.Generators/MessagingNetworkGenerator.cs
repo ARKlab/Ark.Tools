@@ -106,6 +106,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "ARKMSG023", "Messaging declaring type must be partial",
         "Type '{0}' is marked with [{1}] but is not a non-nested, non-generic partial class, so its routing members cannot be generated",
         DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _nonStaticNetwork = _rule(
+        "ARKMSG024", "Messaging network must be static",
+        "Type '{0}' is marked with [MessagingNetwork] but is not a static class",
+        DiagnosticSeverity.Error);
 
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
@@ -541,7 +545,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         Network network,
         Compilation compilation)
     {
-        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
+        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork", requireStatic: true))
             return;
 
         var participants = network.MemberSymbols
@@ -576,11 +580,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(network.Symbol)).Append(" partial class ").Append(name)
-            .AppendLine(" : global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry")
+            .Append(_accessibility(network.Symbol)).Append(" static partial class ").Append(name)
             .AppendLine("{");
-        if (!network.Symbol.InstanceConstructors.Any(static constructor => constructor.Parameters.Length == 0))
-            source.Append("    private ").Append(name).AppendLine("() { }");
         source
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
@@ -753,23 +754,24 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("        if (_logicalNames.TryGetValue(contractType, out var logicalName))")
             .AppendLine("            return logicalName;")
             .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
-            .AppendLine("    }")
-            .AppendLine()
-            .AppendLine("    string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.NetworkIdentity => NetworkIdentity;")
-            .AppendLine("    string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetDestination<T>() => GetDestinationFor<T>();")
-            .AppendLine("    string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetProcessorIdentity<T>() => GetProcessorIdentityFor<T>();")
-            .AppendLine("    string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetPublisherIdentity<T>() => GetPublisherIdentityFor<T>();")
-            .AppendLine("    global::Ark.Tools.MediatorFramework.SerializationProtocol global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetWireProtocol<T>() => GetWireProtocolFor<T>();")
-            .AppendLine("    string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetLogicalName<T>() => GetLogicalNameFor<T>();");
+            .AppendLine("    }");
 
         if (compilation.GetTypeByMetadataName(_contractRegistry) is not null)
         {
             source.AppendLine()
-               .AppendLine("    /// <summary>Gets the generated transport-neutral contract registry.</summary>")
-               .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-               .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.MessagingContractRegistry Registry { get; } =")
-               .Append("        new global::Ark.Tools.MediatorFramework.Messaging.MessagingContractRegistry(new ")
-               .Append(name).AppendLine("());");
+                .AppendLine("    private sealed class GeneratedRegistry : global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry")
+                .AppendLine("    {")
+                .Append("        public string NetworkIdentity => ").Append(name).AppendLine(".NetworkIdentity;")
+                .Append("        public string GetDestination<T>() where T : class => ").Append(name).AppendLine(".GetDestinationFor<T>();")
+                .Append("        public string GetProcessorIdentity<T>() where T : class => ").Append(name).AppendLine(".GetProcessorIdentityFor<T>();")
+                .Append("        public string GetPublisherIdentity<T>() where T : class => ").Append(name).AppendLine(".GetPublisherIdentityFor<T>();")
+                .Append("        public global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol<T>() where T : class => ").Append(name).AppendLine(".GetWireProtocolFor<T>();")
+                .Append("        public string GetLogicalName<T>() where T : class => ").Append(name).AppendLine(".GetLogicalNameFor<T>();")
+                .AppendLine("    }")
+                .AppendLine()
+                .AppendLine("    /// <summary>Gets the generated transport-neutral contract registry.</summary>")
+                .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                .AppendLine("    public static global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry Registry { get; } = new GeneratedRegistry();");
         }
 
         source
@@ -904,7 +906,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static bool _validateDeclaringType(
         SourceProductionContext context,
         INamedTypeSymbol symbol,
-        string attributeName)
+        string attributeName,
+        bool requireStatic = false)
     {
         #pragma warning disable MA0040, MA0045
         var isPartial = symbol.DeclaringSyntaxReferences
@@ -917,6 +920,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             || !isPartial)
         {
             _report(context, _nonPartialDeclaringType, symbol, symbol.ToDisplayString(), attributeName);
+            return false;
+        }
+        if (requireStatic && !symbol.IsStatic)
+        {
+            _report(context, _nonStaticNetwork, symbol, symbol.ToDisplayString());
             return false;
         }
         return true;

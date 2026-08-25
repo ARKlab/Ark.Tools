@@ -161,7 +161,7 @@ public static class MessagingServiceCollectionExtensions
     public static IServiceCollection AddArkMessagingBus(
         this IServiceCollection services,
         MessagingNetworkOptions network,
-        MessagingContractRegistry registry,
+        IMessagingContractRegistry registry,
         MessagingPayloadSender payloadSender,
         string participantIdentity,
         IReadOnlyList<Type>? outgoingStepTypes = null)

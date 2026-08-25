@@ -14,7 +14,7 @@ public sealed class MessagingBus : IBus, IDisposable
 
     private readonly IMessagingTransport _transport;
     private readonly MessagingNetworkOptions _network;
-    private readonly MessagingContractRegistry _registry;
+    private readonly IMessagingContractRegistry _registry;
     private readonly IMessagingCodecRegistry _codecs;
     private readonly MessagingPayloadSender _payloadSender;
     private readonly string _participantIdentity;
@@ -36,7 +36,7 @@ public sealed class MessagingBus : IBus, IDisposable
     public MessagingBus(
         IMessagingTransport transport,
         MessagingNetworkOptions network,
-        MessagingContractRegistry registry,
+        IMessagingContractRegistry registry,
         IMessagingCodecRegistry codecs,
         MessagingPayloadSender payloadSender,
         string participantIdentity,

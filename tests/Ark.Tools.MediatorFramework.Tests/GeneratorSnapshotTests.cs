@@ -2160,7 +2160,7 @@ public sealed class GeneratorSnapshotTests
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
                 Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
-            public sealed partial class BookMessagingNetwork { }
+            public static partial class BookMessagingNetwork { }
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
@@ -2170,7 +2170,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
         result.Generated.Should().Contain("GetProcessorIdentity(global::System.Type contractType)");
         result.Generated.Should().Contain("GetPublisherIdentity(global::System.Type contractType)");
-        result.Generated.Should().Contain("MessagingContractRegistry Registry");
+        result.Generated.Should().Contain("IMessagingContractRegistry Registry");
         result.Generated.Should().Contain("IMessagingContractRegistry");
         result.Generated.Should().NotContain("CreateRegistry()");
         result.Generated.Should().Contain("public const string Identity");
@@ -2183,7 +2183,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MessagingNetworkGeneratorAddsDefaultConstructorForRegistry()
+    public void MessagingNetworkGeneratorEmitsStaticRegistryWithoutNetworkConstruction()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
             """
@@ -2193,13 +2193,13 @@ public sealed class GeneratorSnapshotTests
             [MessagingParticipant(Processes = new[] { typeof(PrintBook) })]
             public sealed class PrintingParticipant { }
             [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
-            public sealed partial class BookMessagingNetwork
-            {
-                public BookMessagingNetwork(string value) { }
-            }
+            public static partial class BookMessagingNetwork { }
             """);
 
-        result.Generated.Should().Contain("private BookMessagingNetwork() { }");
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG024");
+        result.Generated.Should().Contain("public static partial class BookMessagingNetwork");
+        result.Generated.Should().Contain("IMessagingContractRegistry Registry");
+        result.Generated.Should().Contain("private sealed class GeneratedRegistry");
     }
 
     [TestMethod]
@@ -2231,7 +2231,7 @@ public sealed class GeneratorSnapshotTests
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
                 Requires = MessagingCapabilities.Receive)]
-            public sealed partial class BookMessagingNetwork { }
+            public static partial class BookMessagingNetwork { }
             """);
 
         result.Generated.Should().Contain("case \"books.print_book\":");
@@ -2257,7 +2257,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
+    public void MessagingNetworkGeneratorDiagnosesNonStaticNetworks()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
             """
@@ -2268,9 +2268,24 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG024");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
         result.Generated.Should().Contain("partial class PrintingParticipant");
-        result.Generated.Should().Contain("partial class BookMessagingNetwork");
+        result.Generated.Should().Contain("static partial class BookMessagingNetwork");
         result.Generated.Should().NotContain("namespace <global namespace>;");
     }
 

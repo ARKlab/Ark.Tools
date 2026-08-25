@@ -16,7 +16,7 @@ public sealed partial class SampleMessagingParticipant;
 [MessagingNetwork(
     Members = new[] { typeof(SampleMessagingParticipant) },
     Requires = MessagingCapabilities.Receive)]
-public sealed partial class SampleMessagingNetwork
+public static partial class SampleMessagingNetwork
 {
     /// <summary>Creates the in-memory network options used by the sample bus.</summary>
     /// <returns>The sample messaging network options.</returns>

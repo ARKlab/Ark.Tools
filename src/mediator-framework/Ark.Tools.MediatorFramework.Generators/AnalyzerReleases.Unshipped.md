@@ -28,3 +28,4 @@ ARKMSG020 | Ark.Tools.MediatorFramework | Error | Duplicate messaging contract n
 ARKMSG021 | Ark.Tools.MediatorFramework | Error | Duplicate messaging contract alias
 ARKMSG022 | Ark.Tools.MediatorFramework | Error | Messaging contract alias collision
 ARKMSG023 | Ark.Tools.MediatorFramework | Error | Messaging declaring type must be a non-nested, non-generic partial class
+ARKMSG024 | Ark.Tools.MediatorFramework | Error | Messaging network must be a static class
