@@ -54,6 +54,7 @@ public sealed class MessagingNetworkOptionsTests
                 "DataBusOffloadThresholdBytes",
                 "DataBusMaximumAttachmentBytes",
                 "MaximumSchedulingDelay",
+                "MaximumSchedulingDelaySeconds",
                 "ResourceLifecycle",
                 "ConnectionConfigurationKey",
                 "ManagedIdentityConfigurationKey");
@@ -71,6 +72,7 @@ public sealed class MessagingNetworkOptionsTests
         declaration.DataBusOffloadThresholdBytes.Should().Be(200_000);
         declaration.DataBusMaximumAttachmentBytes.Should().Be(50_000_000);
         declaration.MaximumSchedulingDelay.Should().Be(TimeSpan.FromDays(7));
+        declaration.MaximumSchedulingDelaySeconds.Should().Be(604_800);
         declaration.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.CreateIfMissing);
         declaration.ConnectionConfigurationKey.Should().BeNull();
         declaration.ManagedIdentityConfigurationKey.Should().BeNull();
