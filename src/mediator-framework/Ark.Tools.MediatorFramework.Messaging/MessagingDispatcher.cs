@@ -1,0 +1,271 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.Tools.Solid;
+
+using SimpleInjector;
+using SimpleInjector.Lifestyles;
+
+namespace Ark.Tools.MediatorFramework.Messaging;
+
+/// <summary>Dispatches locked deliveries with explicit settlement and retry semantics.</summary>
+public sealed class MessagingDispatcher
+{
+    private readonly Container _container;
+    private readonly MessagingHeaderProcessor _headerProcessor;
+    private readonly MessagingPayloadReceiver _payloadReceiver;
+    private readonly IMessagingRetryPolicy _retryPolicy;
+    private readonly Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> _dispatch;
+    private readonly Func<
+        string,
+        IMessagingPayloadReader,
+        int,
+        MessagingExceptionInfo,
+        Func<Type, object?>,
+        CancellationToken,
+        Task>? _dispatchFailed;
+    private readonly IReadOnlyList<Type> _incomingStepTypes;
+    private readonly Func<Type, object> _resolveStep;
+    private readonly TimeSpan _lockRenewalInterval;
+
+    /// <summary>Creates a receive dispatcher for one participant.</summary>
+    /// <param name="container">The participant's SimpleInjector container.</param>
+    /// <param name="headerProcessor">The bounded header classifier.</param>
+    /// <param name="payloadReceiver">The payload preparation runtime.</param>
+    /// <param name="retryPolicy">The participant retry policy.</param>
+    /// <param name="dispatch">The generated normal-message binder.</param>
+    /// <param name="dispatchFailed">The generated inline failure binder, when installed.</param>
+    /// <param name="incomingStepTypes">The incoming pipeline steps in execution order.</param>
+    /// <param name="resolveStep">The pipeline step resolver.</param>
+    /// <param name="lockRenewalInterval">The bounded interval between lock renewals.</param>
+    public MessagingDispatcher(
+        Container container,
+        MessagingHeaderProcessor headerProcessor,
+        MessagingPayloadReceiver payloadReceiver,
+        IMessagingRetryPolicy retryPolicy,
+        Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
+        Func<
+            string,
+            IMessagingPayloadReader,
+            int,
+            MessagingExceptionInfo,
+            Func<Type, object?>,
+            CancellationToken,
+            Task>? dispatchFailed = null,
+        IReadOnlyList<Type>? incomingStepTypes = null,
+        Func<Type, object>? resolveStep = null,
+        TimeSpan? lockRenewalInterval = null)
+    {
+        _container = container ?? throw new ArgumentNullException(nameof(container));
+        _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
+        _payloadReceiver = payloadReceiver ?? throw new ArgumentNullException(nameof(payloadReceiver));
+        MessagingRetryPolicyValidation.Validate(retryPolicy);
+        _retryPolicy = retryPolicy;
+        _dispatch = dispatch ?? throw new ArgumentNullException(nameof(dispatch));
+        _dispatchFailed = dispatchFailed;
+        _incomingStepTypes = new ReadOnlyCollection<Type>(
+            (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
+        _resolveStep = resolveStep ?? container.GetInstance;
+        _lockRenewalInterval = lockRenewalInterval ?? TimeSpan.FromSeconds(15);
+        if (_lockRenewalInterval <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(lockRenewalInterval));
+    }
+
+    /// <summary>Processes one locked delivery and applies exactly one settlement.</summary>
+    /// <param name="delivery">The locked transport delivery.</param>
+    /// <param name="cancellationToken">The host cancellation token.</param>
+    /// <returns>A task that completes after processing and settlement.</returns>
+    public async Task OnDeliveryAsync(
+        IMessagingLockedDelivery delivery,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(delivery);
+
+        try
+        {
+            var (codec, logicalName) = _headerProcessor.Classify(delivery.Headers);
+            await using var payload = await _payloadReceiver
+                .PreparePayloadReaderAsync(delivery.Headers, delivery.Payload, codec, cancellationToken)
+                .ConfigureAwait(false);
+            var error = await _dispatchNormalAsync(
+                delivery,
+                logicalName,
+                payload,
+                cancellationToken).ConfigureAwait(false);
+            var classification = error is null
+                ? MessagingExceptionClassification.None
+                : error.ExceptionType == typeof(MessagingFailFastException).FullName
+                    ? MessagingExceptionClassification.FailFast
+                    : MessagingExceptionClassification.Other;
+            var decision = MessagingSettlement.Decide(
+                delivery.DeliveryCount,
+                _retryPolicy,
+                classification,
+                isSecondLevelStage: false);
+
+            if (decision == MessagingSettlementDecision.RunSecondLevel)
+                decision = await _dispatchSecondLevelAsync(
+                    delivery,
+                    logicalName,
+                    payload,
+                    error!,
+                    cancellationToken).ConfigureAwait(false);
+
+            await _settleAsync(delivery, decision, error, cancellationToken).ConfigureAwait(false);
+        }
+        catch (MessagingFailFastException exception)
+        {
+            await delivery.DeadLetterAsync(
+                exception.Reason.ToString(),
+                exception.Message ?? string.Empty,
+                cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<MessagingExceptionInfo?> _dispatchNormalAsync(
+        IMessagingLockedDelivery delivery,
+        string logicalName,
+        IMessagingPayloadReader payload,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _invokeStageAsync(
+                delivery,
+                async stageToken =>
+                {
+                    await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+                    var context = new MessagingIncomingContext(
+                        delivery.Headers,
+                        delivery.Payload,
+                        delivery.DeliveryCount,
+                        stageToken);
+                    var processor = scope.GetInstance<ICommandProcessor>();
+                    await MessagingPipelineInvoker.InvokeIncomingAsync(
+                        _incomingStepTypes,
+                        _resolveStep,
+                        context,
+                        () => _dispatch(logicalName, payload, processor, stageToken),
+                        stageToken).ConfigureAwait(false);
+                },
+                cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+        catch (Exception exception)
+        {
+            return MessagingExceptionInfo.From(exception);
+        }
+    }
+
+    private async Task<MessagingSettlementDecision> _dispatchSecondLevelAsync(
+        IMessagingLockedDelivery delivery,
+        string logicalName,
+        IMessagingPayloadReader payload,
+        MessagingExceptionInfo error,
+        CancellationToken cancellationToken)
+    {
+        if (_dispatchFailed is null)
+            return MessagingSettlementDecision.DeadLetter;
+
+        try
+        {
+            await _invokeStageAsync(
+                delivery,
+                async stageToken =>
+                {
+                    await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+                    var resolveHandler = new Func<Type, object?>(type =>
+                        _container.GetRegistration(type) is null
+                            ? null
+                            : scope.GetInstance(type));
+                    await _dispatchFailed(
+                        logicalName,
+                        payload,
+                        delivery.DeliveryCount,
+                        error,
+                        resolveHandler,
+                        stageToken).ConfigureAwait(false);
+                },
+                cancellationToken).ConfigureAwait(false);
+            return MessagingSettlementDecision.Complete;
+        }
+        catch (MessagingFailFastException)
+        {
+            return MessagingSettlementDecision.DeadLetter;
+        }
+        catch (Exception)
+        {
+            return MessagingSettlementDecision.Abandon;
+        }
+    }
+
+    private async Task _invokeStageAsync(
+        IMessagingLockedDelivery delivery,
+        Func<CancellationToken, Task> stage,
+        CancellationToken cancellationToken)
+    {
+        using var stageCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        stageCancellation.CancelAfter(_retryPolicy.MaximumHandlerDuration);
+        using var renewalCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var renewal = _renewLockAsync(delivery, renewalCancellation.Token);
+        Exception? renewalFailure = null;
+        try
+        {
+            await stage(stageCancellation.Token).ConfigureAwait(false);
+        }
+        finally
+        {
+            await renewalCancellation.CancelAsync().ConfigureAwait(false);
+            try
+            {
+                await renewal.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (renewalCancellation.IsCancellationRequested)
+            {
+            }
+            catch (Exception exception)
+            {
+                renewalFailure = exception;
+            }
+        }
+
+        if (renewalFailure is not null)
+            throw renewalFailure;
+    }
+
+    private async Task _renewLockAsync(
+        IMessagingLockedDelivery delivery,
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            await Task.Delay(_lockRenewalInterval, cancellationToken).ConfigureAwait(false);
+            await delivery.RenewLockAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task _settleAsync(
+        IMessagingLockedDelivery delivery,
+        MessagingSettlementDecision decision,
+        MessagingExceptionInfo? error,
+        CancellationToken cancellationToken)
+    {
+        switch (decision)
+        {
+            case MessagingSettlementDecision.Complete:
+                await delivery.CompleteAsync(cancellationToken).ConfigureAwait(false);
+                break;
+            case MessagingSettlementDecision.Abandon:
+                await delivery.AbandonAsync(cancellationToken).ConfigureAwait(false);
+                break;
+            case MessagingSettlementDecision.DeadLetter:
+                await delivery.DeadLetterAsync(
+                    error?.ExceptionType ?? "fail-fast",
+                    error?.Message ?? string.Empty,
+                    cancellationToken).ConfigureAwait(false);
+                break;
+            default:
+                throw new InvalidOperationException("Second-level dispatch must be resolved before settlement.");
+        }
+    }
+}

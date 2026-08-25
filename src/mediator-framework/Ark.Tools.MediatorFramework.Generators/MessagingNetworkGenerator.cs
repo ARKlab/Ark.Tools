@@ -33,6 +33,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
+    private const string _failedHandler = "Ark.Tools.MediatorFramework.IMessagingFailedHandler`1";
+    private const string _failedMessage = "Ark.Tools.MediatorFramework.MessagingFailed`1";
+    private const string _exceptionInfo = "Ark.Tools.MediatorFramework.MessagingExceptionInfo";
     private const int _receive = 1;
     private const int _pubSub = 2;
 
@@ -868,6 +871,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var canEmitStreamBinder = canEmitBinder
             && compilation.GetTypeByMetadataName(_streamPayloadReader) is not null
             && compilation.GetTypeByMetadataName(_codec) is not null;
+        var canEmitFailedBinder = canEmitBinder
+            && compilation.GetTypeByMetadataName(_failedHandler) is not null
+            && compilation.GetTypeByMetadataName(_failedMessage) is not null
+            && compilation.GetTypeByMetadataName(_exceptionInfo) is not null;
         var canEmitPayloadSender = compilation.GetTypeByMetadataName(_payloadSender) is not null
             && compilation.GetTypeByMetadataName(_dataBus) is not null
             && compilation.GetTypeByMetadataName(_networkOptions) is not null;
@@ -954,6 +961,50 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .AppendLine("    {")
                     .AppendLine("        await using var reader = new global::Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader(payload, codec);")
                     .AppendLine("        await DispatchAsync(logicalName, reader, processor, ctk).ConfigureAwait(false);")
+                    .AppendLine("    }");
+            }
+
+            if (canEmitFailedBinder)
+            {
+                source.AppendLine()
+                    .AppendLine("    /// <summary>Dispatches an inline second-level failure by logical name.</summary>")
+                    .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
+                    .AppendLine("    public static async global::System.Threading.Tasks.Task DispatchFailedAsync(")
+                    .AppendLine("        string logicalName,")
+                    .AppendLine("        global::Ark.Tools.MediatorFramework.Messaging.IMessagingPayloadReader payload,")
+                    .AppendLine("        int deliveryCount,")
+                    .AppendLine("        global::Ark.Tools.MediatorFramework.MessagingExceptionInfo error,")
+                    .AppendLine("        global::System.Func<global::System.Type, object?> resolveHandler,")
+                    .AppendLine("        global::System.Threading.CancellationToken ctk)")
+                    .AppendLine("    {")
+                    .AppendLine("        switch (logicalName)")
+                    .AppendLine("        {");
+                foreach (var contract in contracts)
+                {
+                    var names = new[] { _contractName(contract) }
+                        .Concat(_contractAttributes(contract).FormerNames)
+                        .Distinct(StringComparer.Ordinal);
+                    foreach (var wireName in names)
+                        source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
+                    source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine("();")
+                        .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
+                        .Append(_typeName(contract)).AppendLine(">(message, deliveryCount, new[] { error });")
+                        .Append("                var handler = resolveHandler(typeof(global::Ark.Tools.MediatorFramework.IMessagingFailedHandler<")
+                        .Append(_typeName(contract)).AppendLine(">)) as global::Ark.Tools.MediatorFramework.IMessagingFailedHandler<")
+                        .Append(_typeName(contract)).AppendLine(">;")
+                        .AppendLine("                if (handler is null)")
+                        .AppendLine("                    throw new global::Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException(")
+                        .AppendLine("                        global::Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason.MissingSecondLevelHandler,")
+                        .AppendLine("                        logicalName);")
+                        .AppendLine("                await handler.HandleAsync(failed, ctk).ConfigureAwait(false);")
+                        .AppendLine("                return;");
+                }
+
+                source.AppendLine("            default:")
+                    .AppendLine("                throw new global::Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException(")
+                    .AppendLine("                    global::Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason.UnknownContractName,")
+                    .AppendLine("                    logicalName);")
+                    .AppendLine("        }")
                     .AppendLine("    }");
             }
         }
