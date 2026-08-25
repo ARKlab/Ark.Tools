@@ -528,8 +528,9 @@ public sealed class HostingTestState
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
-        Interlocked.Exchange(ref _failedMessageExceptionCount, message.Exceptions.Count());
-        Interlocked.Exchange(ref _failedMessageException, message.Exceptions.First().Message);
+        var exceptions = message.Exceptions.ToList();
+        Interlocked.Exchange(ref _failedMessageExceptionCount, exceptions.Count);
+        Interlocked.Exchange(ref _failedMessageException, exceptions.First().Message);
     }
 
     internal void _recordDeferredMessage()
