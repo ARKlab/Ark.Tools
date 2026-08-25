@@ -34,6 +34,7 @@ using ProtoBuf.Meta;
 using RebusBus = Rebus.Bus.IBus;
 using Rebus.Handlers;
 using Rebus.Pipeline;
+using Rebus.Retry.Simple;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -71,7 +72,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container.RegisterAuthorization();
         Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
         HostingEndpointMappings.RegisterRebusHandlers(Container);
-        Container.Collection.Append<IHandleMessages<IFailed<HostingSecondLevelRetryCommand>>, HostingSecondLevelRetryFailedHandler>();
+        Container.Collection.Append<IHandleMessages<Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand>>, HostingSecondLevelRetryFailedHandler>();
         Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
     }
 
@@ -520,7 +521,7 @@ public sealed class HostingTestState
         Interlocked.Increment(ref _secondLevelRetryAttempts);
     }
 
-    internal void _recordFailedMessage(IFailed<HostingSecondLevelRetryCommand> message)
+    internal void _recordFailedMessage(Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand> message)
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
@@ -743,7 +744,7 @@ internal sealed class HostingSecondLevelRetryCommandHandler : ICommandHandler<Ho
     }
 }
 
-internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFailed<HostingSecondLevelRetryCommand>>
+internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand>>
 {
     private readonly HostingTestState _state;
 
@@ -752,7 +753,7 @@ internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFa
         _state = state;
     }
 
-    public async Task Handle(IFailed<HostingSecondLevelRetryCommand> message)
+    public async Task Handle(Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand> message)
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state._recordFailedMessage(message);
