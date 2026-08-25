@@ -80,6 +80,10 @@ public sealed class MessagingNetworkOptionsTests
 
         Action setNegative = () => declaration.MaximumSchedulingDelaySeconds = -1;
         setNegative.Should().Throw<ArgumentOutOfRangeException>();
+        Action setNegativeTimeSpan = () => declaration.MaximumSchedulingDelay = TimeSpan.FromSeconds(-1);
+        setNegativeTimeSpan.Should().Throw<ArgumentOutOfRangeException>();
+        Action setTooLarge = () => declaration.MaximumSchedulingDelay = TimeSpan.MaxValue;
+        setTooLarge.Should().Throw<ArgumentOutOfRangeException>();
         declaration.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.CreateIfMissing);
         declaration.ConnectionConfigurationKey.Should().BeNull();
         declaration.ManagedIdentityConfigurationKey.Should().BeNull();

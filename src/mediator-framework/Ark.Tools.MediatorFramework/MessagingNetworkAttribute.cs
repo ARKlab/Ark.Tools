@@ -51,6 +51,11 @@ public sealed class MessagingNetworkAttribute : Attribute
         }
         set
         {
+            if (value < TimeSpan.Zero || value > TimeSpan.FromSeconds(int.MaxValue))
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    "The maximum scheduling delay must fit in a non-negative integer number of seconds.");
+
             _maximumSchedulingDelay = value;
         }
     }
@@ -64,10 +69,7 @@ public sealed class MessagingNetworkAttribute : Attribute
         }
         set
         {
-            if (value < 0)
-                throw new ArgumentOutOfRangeException(nameof(value), "The maximum scheduling delay cannot be negative.");
-
-            _maximumSchedulingDelay = TimeSpan.FromSeconds(value);
+            MaximumSchedulingDelay = TimeSpan.FromSeconds(value);
         }
     }
 
