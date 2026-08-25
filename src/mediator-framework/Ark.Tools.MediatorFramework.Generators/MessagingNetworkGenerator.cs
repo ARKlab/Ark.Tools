@@ -108,7 +108,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonStaticNetwork = _rule(
         "ARKMSG024", "Messaging network must be static",
-        "Type '{0}' is marked with [MessagingNetwork] but is not a static class",
+        "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
         DiagnosticSeverity.Error);
 
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
@@ -761,12 +761,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             source.AppendLine()
                 .AppendLine("    private sealed class GeneratedRegistry : global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry")
                 .AppendLine("    {")
-                .Append("        public string NetworkIdentity => ").Append(name).AppendLine(".NetworkIdentity;")
-                .Append("        public string GetDestination<T>() where T : class => ").Append(name).AppendLine(".GetDestinationFor<T>();")
-                .Append("        public string GetProcessorIdentity<T>() where T : class => ").Append(name).AppendLine(".GetProcessorIdentityFor<T>();")
-                .Append("        public string GetPublisherIdentity<T>() where T : class => ").Append(name).AppendLine(".GetPublisherIdentityFor<T>();")
-                .Append("        public global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol<T>() where T : class => ").Append(name).AppendLine(".GetWireProtocolFor<T>();")
-                .Append("        public string GetLogicalName<T>() where T : class => ").Append(name).AppendLine(".GetLogicalNameFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.NetworkIdentity => ").Append(name).AppendLine(".NetworkIdentity;")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetDestination<T>() where T : class => ").Append(name).AppendLine(".GetDestinationFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetProcessorIdentity<T>() where T : class => ").Append(name).AppendLine(".GetProcessorIdentityFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetPublisherIdentity<T>() where T : class => ").Append(name).AppendLine(".GetPublisherIdentityFor<T>();")
+                .Append("        global::Ark.Tools.MediatorFramework.SerializationProtocol global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetWireProtocol<T>() where T : class => ").Append(name).AppendLine(".GetWireProtocolFor<T>();")
+                .Append("        string global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry.GetLogicalName<T>() where T : class => ").Append(name).AppendLine(".GetLogicalNameFor<T>();")
                 .AppendLine("    }")
                 .AppendLine()
                 .AppendLine("    /// <summary>Gets the generated transport-neutral contract registry.</summary>")
