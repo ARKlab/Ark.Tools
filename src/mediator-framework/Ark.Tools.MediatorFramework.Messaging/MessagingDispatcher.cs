@@ -274,7 +274,7 @@ public sealed class MessagingDispatcher
         }
 
         if (renewalFailure is not null)
-            throw renewalFailure;
+            global::System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(renewalFailure).Throw();
     }
 
     private async Task _renewLockAsync(

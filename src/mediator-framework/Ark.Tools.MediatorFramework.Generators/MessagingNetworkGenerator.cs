@@ -986,7 +986,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                         .Distinct(StringComparer.Ordinal);
                     foreach (var wireName in names)
                         source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                    source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine("();")
+                    source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine(">();")
                         .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(_typeName(contract)).AppendLine(">(message, deliveryCount, new[] { error });")
                         .Append("                var handler = resolveHandler(typeof(global::Ark.Tools.MediatorFramework.IMessagingFailedHandler<")
