@@ -14,7 +14,7 @@ public interface IBus
     /// <returns>A task that completes when the message is accepted.</returns>
     Task Send<T>(
         T message,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class;
 
@@ -28,7 +28,7 @@ public interface IBus
     Task Send<T>(
         T message,
         TimeSpan delay,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class;
 
@@ -42,7 +42,7 @@ public interface IBus
     Task Send<T>(
         T message,
         DateTimeOffset dueTime,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class;
 
@@ -54,7 +54,7 @@ public interface IBus
     /// <returns>A task that completes when the event is accepted.</returns>
     Task Publish<T>(
         T @event,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class;
 }

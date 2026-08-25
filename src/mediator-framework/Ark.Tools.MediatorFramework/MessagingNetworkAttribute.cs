@@ -22,7 +22,7 @@ public sealed class MessagingNetworkAttribute : Attribute
     /// <summary>The default maximum scheduled-send delay in seconds.</summary>
     public const int DefaultMaximumSchedulingDelaySeconds = 604_800;
 
-    private TimeSpan _maximumSchedulingDelay = TimeSpan.FromDays(7);
+    private TimeSpan _maximumSchedulingDelay = TimeSpan.FromSeconds(DefaultMaximumSchedulingDelaySeconds);
 
     /// <summary>Gets or sets the participant types belonging to the network.</summary>
     public Type[] Members { get; set; } = Array.Empty<Type>();
@@ -64,6 +64,9 @@ public sealed class MessagingNetworkAttribute : Attribute
         }
         set
         {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), "The maximum scheduling delay cannot be negative.");
+
             _maximumSchedulingDelay = TimeSpan.FromSeconds(value);
         }
     }

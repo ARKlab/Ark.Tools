@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Text;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -65,7 +67,7 @@ public sealed class MessagingBus : IBus, IDisposable
     /// <inheritdoc />
     public async Task Send<T>(
         T message,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class
     {
@@ -76,7 +78,7 @@ public sealed class MessagingBus : IBus, IDisposable
     public async Task Send<T>(
         T message,
         TimeSpan delay,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class
     {
@@ -92,7 +94,7 @@ public sealed class MessagingBus : IBus, IDisposable
     public async Task Send<T>(
         T message,
         DateTimeOffset dueTime,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class
     {
@@ -109,7 +111,7 @@ public sealed class MessagingBus : IBus, IDisposable
     /// <inheritdoc />
     public async Task Publish<T>(
         T @event,
-        Dictionary<string, string>? additionalHeaders = null,
+        IReadOnlyDictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default)
         where T : class
     {
@@ -144,7 +146,7 @@ public sealed class MessagingBus : IBus, IDisposable
     private async Task _sendCoreAsync<T>(
         T message,
         DateTimeOffset? dueTime,
-        Dictionary<string, string>? additionalHeaders,
+        IReadOnlyDictionary<string, string>? additionalHeaders,
         CancellationToken cancellationToken)
         where T : class
     {
@@ -163,7 +165,7 @@ public sealed class MessagingBus : IBus, IDisposable
     private async Task _runOutgoingAsync<T>(
         T message,
         string destination,
-        Dictionary<string, string>? additionalHeaders,
+        IReadOnlyDictionary<string, string>? additionalHeaders,
         bool publish,
         DateTimeOffset? dueTime,
         CancellationToken cancellationToken)
@@ -207,7 +209,7 @@ public sealed class MessagingBus : IBus, IDisposable
     }
 
     private Dictionary<string, string> _createHeaders<T>(
-        Dictionary<string, string>? additionalHeaders)
+        IReadOnlyDictionary<string, string>? additionalHeaders)
         where T : class
     {
         var headers = new Dictionary<string, string>(StringComparer.Ordinal)
