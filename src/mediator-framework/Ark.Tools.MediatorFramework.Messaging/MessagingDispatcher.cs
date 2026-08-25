@@ -5,6 +5,7 @@ using Ark.Tools.Solid;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+using System.Collections.ObjectModel;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -84,9 +85,11 @@ public sealed class MessagingDispatcher
         try
         {
             var (codec, logicalName) = _headerProcessor.Classify(delivery.Headers);
+#pragma warning disable MA0004 // The reader is disposed after the delivery stage completes.
             await using var payload = await _payloadReceiver
                 .PreparePayloadReaderAsync(delivery.Headers, delivery.Payload, codec, cancellationToken)
                 .ConfigureAwait(false);
+#pragma warning restore MA0004
             var error = await _dispatchNormalAsync(
                 delivery,
                 logicalName,
@@ -104,12 +107,16 @@ public sealed class MessagingDispatcher
                 isSecondLevelStage: false);
 
             if (decision == MessagingSettlementDecision.RunSecondLevel)
-                decision = await _dispatchSecondLevelAsync(
+            {
+                var secondLevel = await _dispatchSecondLevelAsync(
                     delivery,
                     logicalName,
                     payload,
                     error!,
                     cancellationToken).ConfigureAwait(false);
+                decision = secondLevel.Decision;
+                error = secondLevel.Error ?? error;
+            }
 
             await _settleAsync(delivery, decision, error, cancellationToken).ConfigureAwait(false);
         }
@@ -134,7 +141,9 @@ public sealed class MessagingDispatcher
                 delivery,
                 async stageToken =>
                 {
+#pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
                     await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+#pragma warning restore MA0004
                     var context = new MessagingIncomingContext(
                         delivery.Headers,
                         delivery.Payload,
@@ -157,7 +166,7 @@ public sealed class MessagingDispatcher
         }
     }
 
-    private async Task<MessagingSettlementDecision> _dispatchSecondLevelAsync(
+    private async Task<(MessagingSettlementDecision Decision, MessagingExceptionInfo? Error)> _dispatchSecondLevelAsync(
         IMessagingLockedDelivery delivery,
         string logicalName,
         IMessagingPayloadReader payload,
@@ -165,7 +174,7 @@ public sealed class MessagingDispatcher
         CancellationToken cancellationToken)
     {
         if (_dispatchFailed is null)
-            return MessagingSettlementDecision.DeadLetter;
+            return (MessagingSettlementDecision.DeadLetter, null);
 
         try
         {
@@ -173,7 +182,9 @@ public sealed class MessagingDispatcher
                 delivery,
                 async stageToken =>
                 {
+#pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
                     await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+#pragma warning restore MA0004
                     var resolveHandler = new Func<Type, object?>(type =>
                         _container.GetRegistration(type) is null
                             ? null
@@ -189,14 +200,16 @@ public sealed class MessagingDispatcher
                 cancellationToken).ConfigureAwait(false);
             return MessagingSettlementDecision.Complete;
         }
-        catch (MessagingFailFastException)
+        catch (MessagingFailFastException exception)
         {
-            return MessagingSettlementDecision.DeadLetter;
+            return (MessagingSettlementDecision.DeadLetter, MessagingExceptionInfo.From(exception));
         }
+#pragma warning disable ERP022 // Second-level failures intentionally map to normal retry.
         catch (Exception)
         {
-            return MessagingSettlementDecision.Abandon;
+            return (MessagingSettlementDecision.Abandon, null);
         }
+#pragma warning restore ERP022
     }
 
     private async Task _invokeStageAsync(

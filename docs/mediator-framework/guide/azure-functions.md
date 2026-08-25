@@ -163,6 +163,23 @@ inline `IFailed<T>` boundary and the transport maximum is `2N`; otherwise the
 normal message runs through `N`. `IFailed<T>` is an in-memory diagnostic
 dispatch and is never persisted as a separate message.
 
+Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into
+`MessagingReceivePump` (or an equivalent locked trigger) with the participant's
+generated normal and `DispatchFailedAsync` binders. Each stage gets a fresh
+`AsyncScopedLifestyle` scope, and the dispatcher renews the transport lock
+while the bounded handler-duration token is active. A successful stage is
+completed
+explicitly; fail-fast header, decoding, and handler errors are dead-lettered.
+Other handler or pipeline errors are abandoned and retried. A second-level
+handler runs inline once at delivery `N` in its own scope; missing or fail-fast
+second-level handlers are dead-lettered, while other second-level failures are
+abandoned so normal `T` processing resumes.
+
+Abandon visibility is transport-specific: InMemory uses the configured
+`RetryDelay`, Storage Queue uses its visibility timeout, and Service Bus
+abandon is immediate. Lock loss or settlement failure is surfaced as an
+unsuccessful delivery, preserving at-least-once behavior.
+
 ### Compression and claim-check
 
 Compression is a participant-owned sender setting. Payloads below

@@ -65,8 +65,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
-        if (retryDelay < TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(retryDelay));
+        ArgumentOutOfRangeException.ThrowIfLessThan(retryDelay.Ticks, TimeSpan.Zero.Ticks, nameof(retryDelay));
 
         lock (_gate)
         {
@@ -395,7 +394,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         }
 
         internal InMemoryEnvelope _envelope { get; }
-        internal Instant _lockedUntil { get; }
+        internal Instant _lockedUntil { get; set; }
     }
 
     private enum Settlement
