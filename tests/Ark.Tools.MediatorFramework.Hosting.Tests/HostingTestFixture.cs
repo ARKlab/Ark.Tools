@@ -34,7 +34,6 @@ using ProtoBuf.Meta;
 using RebusBus = Rebus.Bus.IBus;
 using Rebus.Handlers;
 using Rebus.Pipeline;
-using Rebus.Retry.Simple;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -525,7 +524,9 @@ public sealed class HostingTestState
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
-        Interlocked.Exchange(ref _failedMessageException, message.Exceptions?.FirstOrDefault()?.Message);
+        Interlocked.Exchange(
+            ref _failedMessageException,
+            message.Exceptions is { Count: > 0 } ? message.Exceptions[0].Message : null);
     }
 
     internal void _recordDeferredMessage()
