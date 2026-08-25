@@ -301,7 +301,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
         if (resultType == ResultType.NoNewData)
         {
-            _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} No payload retrived, so no new state. Generally due to a same-checksum", index, total, resourceId);
+            _logger.Info(CultureInfo.InvariantCulture, "({Index}/{Total}) ResourceId={ResourceId} No payload retrieved, so no new state. Generally due to a same-checksum", index, total, resourceId);
         }
         else if (resultType == ResultType.NoAction)
         {
@@ -404,7 +404,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     public void ThrowDuplicateResourceIdRetrived(string duplicateId)
     {
-        var ex = new InvalidOperationException($"Found multiple entries for ResouceId: {duplicateId}");
+        var ex = new InvalidOperationException($"Found multiple entries for ResourceId: {duplicateId}");
 
         _reportException("ThrowDuplicateResourceIdRetrived", ex, _tenant);
 
