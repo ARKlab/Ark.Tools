@@ -175,8 +175,8 @@ public class ArkDefaultRetryStep : IRetryStep
         Func<Task> next,
         Exception exception)
     {
-        var exceptions = await _errorTracker.GetExceptions(messageId).ConfigureAwait(false);
-        if (exceptions.Count == 0)
+        var trackedExceptions = await _errorTracker.GetExceptions(messageId).ConfigureAwait(false);
+        if (trackedExceptions.Count == 0)
             await _errorTracker.RegisterError(messageId, exception).ConfigureAwait(false);
 
         try
