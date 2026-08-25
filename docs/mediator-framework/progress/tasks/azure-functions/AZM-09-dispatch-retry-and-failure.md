@@ -374,16 +374,16 @@ dispatcher. The existing Rebus processor path remains untouched and green.
 
 ## Acceptance
 
-- [ ] Normal and second-level handling use separate SimpleInjector scopes.
-- [ ] Fail-fast and unsupported-read paths go directly to DLQ.
-- [ ] With second-level enabled, delivery `N` runs `IFailed<T>` or immediate
+- [x] Normal and second-level handling use separate SimpleInjector scopes.
+- [x] Fail-fast and unsupported-read paths go directly to DLQ.
+- [x] With second-level enabled, delivery `N` runs `IFailed<T>` or immediate
   DLQ and max delivery is `2N`.
-- [ ] Participant retry policy, not handler discovery, selects `N` or
+- [x] Participant retry policy, not handler discovery, selects `N` or
   `2N` behavior.
-- [ ] Native delivery count controls retry exhaustion.
-- [ ] Failure metadata is serializable, bounded, and tested.
-- [ ] Structured logging contains no interpolated messages or raw bodies.
-- [ ] Book scenarios run end-to-end over InMemory.
-- [ ] The [task board](../README.md) status for AZM-09 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Native delivery count controls retry exhaustion.
+- [x] Failure metadata is serializable, bounded, and tested.
+- [x] Structured logging contains no interpolated messages or raw bodies.
+- [x] Book scenarios run end-to-end over InMemory.
+- [x] The [task board](../README.md) status for AZM-09 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

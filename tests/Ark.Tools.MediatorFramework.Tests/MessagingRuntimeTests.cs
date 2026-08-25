@@ -375,7 +375,7 @@ public sealed partial class MessagingRuntimeTests
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(0);
         delivery._deadLetters.Should().ContainSingle();
-        delivery._deadLetterReason.Should().Be(MessagingFailFastReason.MissingSecondLevelHandler.ToString());
+        delivery._deadLetterReason.Should().Be(typeof(MessagingFailFastException).FullName);
     }
 
     [TestMethod]

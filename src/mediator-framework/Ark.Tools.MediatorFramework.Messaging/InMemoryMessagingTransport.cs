@@ -357,7 +357,19 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
                     continue;
 
                 _locked.Remove(pair.Key);
-                _visible.Enqueue(pair.Value._envelope);
+                if (pair.Value._envelope._deliveryCount >= _maximumDeliveryCount)
+                {
+                    _deadLetters.Add(new InMemoryDeadLetter(
+                        pair.Value._envelope._headers,
+                        pair.Value._envelope._payload,
+                        pair.Value._envelope._deliveryCount,
+                        _maximumDeliveryReason,
+                        _maximumDeliveryDescription));
+                }
+                else
+                {
+                    _visible.Enqueue(pair.Value._envelope);
+                }
             }
         }
 

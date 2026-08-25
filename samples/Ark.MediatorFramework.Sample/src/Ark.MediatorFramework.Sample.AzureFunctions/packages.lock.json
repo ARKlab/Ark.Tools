@@ -1429,6 +1429,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.SimpleInjector": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Storage.Blobs": "[12.29.1, )",
           "Google.Protobuf": "[3.35.1, )",

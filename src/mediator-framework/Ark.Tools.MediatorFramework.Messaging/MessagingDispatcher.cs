@@ -7,11 +7,14 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 using System.Collections.ObjectModel;
 
+using NLog;
+
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Dispatches locked deliveries with explicit settlement and retry semantics.</summary>
 public sealed class MessagingDispatcher
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly Container _container;
     private readonly MessagingHeaderProcessor _headerProcessor;
     private readonly MessagingPayloadReceiver _payloadReceiver;
@@ -119,9 +122,20 @@ public sealed class MessagingDispatcher
             }
 
             await _settleAsync(delivery, decision, error, cancellationToken).ConfigureAwait(false);
+            _logger.Debug(
+                CultureInfo.InvariantCulture,
+                "Messaging delivery {MessageType} at count {DeliveryCount} settled as {Settlement}",
+                logicalName,
+                delivery.DeliveryCount,
+                decision);
         }
         catch (MessagingFailFastException exception)
         {
+            _logger.Warn(
+                CultureInfo.InvariantCulture,
+                "Messaging delivery failed fast with {Reason}: {Description}",
+                exception.Reason,
+                exception.Message ?? string.Empty);
             await delivery.DeadLetterAsync(
                 exception.Reason.ToString(),
                 exception.Message ?? string.Empty,
@@ -162,7 +176,13 @@ public sealed class MessagingDispatcher
         }
         catch (Exception exception)
         {
-            return MessagingExceptionInfo.From(exception);
+            var error = MessagingExceptionInfo.From(exception);
+            _logger.Warn(
+                CultureInfo.InvariantCulture,
+                "Messaging delivery failed with {ExceptionType}: {Message}",
+                error.ExceptionType,
+                error.Message);
+            return error;
         }
     }
 
@@ -198,15 +218,26 @@ public sealed class MessagingDispatcher
                         stageToken).ConfigureAwait(false);
                 },
                 cancellationToken).ConfigureAwait(false);
-            return MessagingSettlementDecision.Complete;
+            return (MessagingSettlementDecision.Complete, null);
         }
         catch (MessagingFailFastException exception)
         {
+            _logger.Warn(
+                CultureInfo.InvariantCulture,
+                "Messaging second-level delivery failed fast with {Reason}: {Description}",
+                exception.Reason,
+                exception.Message ?? string.Empty);
             return (MessagingSettlementDecision.DeadLetter, MessagingExceptionInfo.From(exception));
         }
 #pragma warning disable ERP022 // Second-level failures intentionally map to normal retry.
-        catch (Exception)
+        catch (Exception exception)
         {
+            var failureInfo = MessagingExceptionInfo.From(exception);
+            _logger.Warn(
+                CultureInfo.InvariantCulture,
+                "Messaging second-level delivery failed with {ExceptionType}: {Message}",
+                failureInfo.ExceptionType,
+                failureInfo.Message);
             return (MessagingSettlementDecision.Abandon, null);
         }
 #pragma warning restore ERP022

@@ -96,6 +96,25 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     [TestMethod]
+    public async Task ExpiredDeliveryAtMaximumIsDeadLettered()
+    {
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
+        transport.ConfigureRetry("queue", 1, TimeSpan.Zero);
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(1), null, default).ConfigureAwait(false);
+
+        _ = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        clock.Advance(Duration.FromMinutes(1));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
+        Func<Task> receive = () => enumerator.MoveNextAsync().AsTask();
+        await receive.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+
+        transport.GetDeadLetters("queue").Should().ContainSingle();
+        await enumerator.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task ExpiredLockRequeuesAndDeadLetterPreservesMetadata()
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
