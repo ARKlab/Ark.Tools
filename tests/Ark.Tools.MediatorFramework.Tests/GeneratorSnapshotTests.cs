@@ -2183,6 +2183,26 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorAddsDefaultConstructorForRegistry()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [Message]
+            public sealed class PrintBook { }
+            [MessagingParticipant(Processes = new[] { typeof(PrintBook) })]
+            public sealed class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed partial class BookMessagingNetwork
+            {
+                public BookMessagingNetwork(string value) { }
+            }
+            """);
+
+        result.Generated.Should().Contain("private BookMessagingNetwork() { }");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorEmitsAliasesAndTypedBinder()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(

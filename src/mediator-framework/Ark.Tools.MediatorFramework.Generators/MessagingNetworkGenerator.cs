@@ -578,7 +578,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append(_accessibility(network.Symbol)).Append(" partial class ").Append(name)
             .AppendLine(" : global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry")
-            .AppendLine("{")
+            .AppendLine("{");
+        if (!network.Symbol.InstanceConstructors.Any(static constructor => constructor.Parameters.Length == 0))
+            source.Append("    private ").Append(name).AppendLine("() { }");
+        source
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public static string NetworkIdentity => \"").Append(_escape(network.Name)).AppendLine("\";")

@@ -6,7 +6,9 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Contract routing metadata implemented by a generated messaging network.</summary>
 public interface IMessagingContractRegistry
 {
-    /// <summary>Gets the generated network identity.</summary>
+    /// <summary>
+    /// Gets the generated network identity, which must remain stable for the lifetime of the implementation.
+    /// </summary>
     string NetworkIdentity { get; }
 
     /// <summary>Gets the destination for a contract.</summary>
