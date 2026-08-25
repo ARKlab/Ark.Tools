@@ -2223,12 +2223,18 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        result.Generated.Should().Contain("MaximumTransportPayloadBytes = 240000");
-        result.Generated.Should().Contain("MaximumDecompressedPayloadBytes = 1000000");
-        result.Generated.Should().Contain("DataBusOffloadThresholdBytes = 200000");
-        result.Generated.Should().Contain("DataBusMaximumAttachmentBytes = 50000000");
-        result.Generated.Should().Contain("MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(604800)");
-        result.Generated.Should().Contain("ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)0");
+        result.Generated.Should().Contain(
+            "MaximumTransportPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumTransportPayloadBytes");
+        result.Generated.Should().Contain(
+            "MaximumDecompressedPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes");
+        result.Generated.Should().Contain(
+            "DataBusOffloadThresholdBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusOffloadThresholdBytes");
+        result.Generated.Should().Contain(
+            "DataBusMaximumAttachmentBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes");
+        result.Generated.Should().Contain(
+            "MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumSchedulingDelaySeconds)");
+        result.Generated.Should().Contain(
+            "ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle.CreateIfMissing");
     }
 
     [TestMethod]
