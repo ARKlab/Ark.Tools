@@ -117,19 +117,18 @@ public sealed class MessagingBus : IBus, IDisposable
         ArgumentNullException.ThrowIfNull(@event);
         _requireNetworkCapability(MessagingCapabilities.PubSub);
 
-        var contractType = typeof(T);
-        var publisher = _registry.GetPublisherIdentity(contractType);
+        var publisher = _registry.GetPublisherIdentity<T>();
         if (!string.Equals(publisher, _participantIdentity, StringComparison.Ordinal))
             throw new NotSupportedException(
                 string.Format(
                     CultureInfo.InvariantCulture,
                     "Participant '{0}' does not publish contract '{1}'.",
                     _participantIdentity,
-                    _registry.GetLogicalName(contractType)));
+                    _registry.GetLogicalName<T>()));
 
         await _runOutgoingAsync(
             @event,
-            _registry.GetDestination(contractType),
+            _registry.GetDestination<T>(),
             additionalHeaders,
             publish: true,
             dueTime: null,
@@ -151,7 +150,7 @@ public sealed class MessagingBus : IBus, IDisposable
     {
         _throwIfDisposed();
         ArgumentNullException.ThrowIfNull(message);
-        var queue = _registry.GetProcessorIdentity(typeof(T));
+        var queue = _registry.GetProcessorIdentity<T>();
         await _runOutgoingAsync(
             message,
             queue,
@@ -171,7 +170,7 @@ public sealed class MessagingBus : IBus, IDisposable
         where T : class
     {
         _throwIfDisposed();
-        var headers = _createHeaders(typeof(T), additionalHeaders);
+        var headers = _createHeaders<T>(additionalHeaders);
         var context = new MessagingOutgoingContext(headers, destination);
         await MessagingPipelineInvoker.InvokeOutgoingAsync(
             _outgoingStepTypes,
@@ -179,7 +178,7 @@ public sealed class MessagingBus : IBus, IDisposable
             context,
             async () =>
             {
-                var codec = _codecs.GetByProtocol(_registry.GetWireProtocol(typeof(T)));
+                var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
                 var payload = await _payloadSender
                     .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
                     .ConfigureAwait(false);
@@ -207,13 +206,13 @@ public sealed class MessagingBus : IBus, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
-    private Dictionary<string, string> _createHeaders(
-        Type contractType,
+    private Dictionary<string, string> _createHeaders<T>(
         Dictionary<string, string>? additionalHeaders)
+        where T : class
     {
         var headers = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            [MessagingHeaders.MessageType] = _registry.GetLogicalName(contractType),
+            [MessagingHeaders.MessageType] = _registry.GetLogicalName<T>(),
             [MessagingHeaders.MessageId] = Guid.NewGuid().ToString("N"),
             [MessagingHeaders.SentTime] = _utcNow().ToString("O", CultureInfo.InvariantCulture),
             [MessagingHeaders.Network] = _network.NetworkIdentity,

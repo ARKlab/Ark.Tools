@@ -27,7 +27,7 @@ public sealed class MessagingBusSampleTests
         using var bus = new MessagingBus(
             transport,
             network,
-            SampleMessagingNetwork.CreateRegistry(),
+            SampleMessagingNetwork.Registry,
             new MessagingCodecRegistry([codec]),
             SampleMessagingParticipant.CreatePayloadSender(dataBus, network),
             SampleMessagingParticipant.Identity);

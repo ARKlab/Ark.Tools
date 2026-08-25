@@ -139,25 +139,7 @@ public sealed partial class MessagingBusTests
         {
             TypeInfoResolver = TestJsonContext.Default
         });
-        var registry = new MessagingContractRegistry(
-            network.NetworkIdentity,
-            type => type == typeof(TestMessage)
-                ? "processor"
-                : type == typeof(TestEvent)
-                    ? "publisher-test_event"
-                    : throw new MessagingContractNotInNetworkException(type, network.NetworkIdentity),
-            type => type == typeof(TestMessage)
-                ? "processor"
-                : throw new MessagingContractNotInNetworkException(type, network.NetworkIdentity),
-            type => type == typeof(TestEvent)
-                ? "publisher"
-                : throw new MessagingContractNotInNetworkException(type, network.NetworkIdentity),
-            _ => SerializationProtocol.Json,
-            type => type == typeof(TestMessage)
-                ? "test_message"
-                : type == typeof(TestEvent)
-                    ? "test_event"
-                    : throw new MessagingContractNotInNetworkException(type, network.NetworkIdentity));
+        var registry = new MessagingContractRegistry(new TestContractRegistry(network.NetworkIdentity));
         return new MessagingBus(
             transport,
             network,
@@ -167,6 +149,53 @@ public sealed partial class MessagingBusTests
             participantIdentity,
             utcNow: () => (clock ?? new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0)))
                 .GetCurrentInstant().ToDateTimeOffset());
+    }
+
+    private sealed class TestContractRegistry : IMessagingContractRegistry
+    {
+        public TestContractRegistry(string networkIdentity)
+        {
+            NetworkIdentity = networkIdentity;
+        }
+
+        public string NetworkIdentity { get; }
+
+        public string GetDestination<T>() where T : class
+        {
+            return typeof(T) == typeof(TestMessage)
+                ? "processor"
+                : typeof(T) == typeof(TestEvent)
+                    ? "publisher-test_event"
+                    : throw new MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);
+        }
+
+        public string GetProcessorIdentity<T>() where T : class
+        {
+            return typeof(T) == typeof(TestMessage)
+                ? "processor"
+                : throw new MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);
+        }
+
+        public string GetPublisherIdentity<T>() where T : class
+        {
+            return typeof(T) == typeof(TestEvent)
+                ? "publisher"
+                : throw new MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);
+        }
+
+        public SerializationProtocol GetWireProtocol<T>() where T : class
+        {
+            return SerializationProtocol.Json;
+        }
+
+        public string GetLogicalName<T>() where T : class
+        {
+            return typeof(T) == typeof(TestMessage)
+                ? "test_message"
+                : typeof(T) == typeof(TestEvent)
+                    ? "test_event"
+                    : throw new MessagingContractNotInNetworkException(typeof(T), NetworkIdentity);
+        }
     }
 
     private static async Task<IMessagingLockedDelivery> _receiveOnce(

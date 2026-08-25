@@ -3,74 +3,77 @@
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
+/// <summary>Contract routing metadata implemented by a generated messaging network.</summary>
+public interface IMessagingContractRegistry
+{
+    /// <summary>Gets the generated network identity.</summary>
+    string NetworkIdentity { get; }
+
+    /// <summary>Gets the destination for a contract.</summary>
+    /// <typeparam name="T">The contract type.</typeparam>
+    string GetDestination<T>() where T : class;
+
+    /// <summary>Gets the processing participant identity for a message.</summary>
+    /// <typeparam name="T">The message contract type.</typeparam>
+    string GetProcessorIdentity<T>() where T : class;
+
+    /// <summary>Gets the publishing participant identity for an event.</summary>
+    /// <typeparam name="T">The event contract type.</typeparam>
+    string GetPublisherIdentity<T>() where T : class;
+
+    /// <summary>Gets the owner-selected protocol for a contract.</summary>
+    /// <typeparam name="T">The contract type.</typeparam>
+    SerializationProtocol GetWireProtocol<T>() where T : class;
+
+    /// <summary>Gets the current logical name for a contract.</summary>
+    /// <typeparam name="T">The contract type.</typeparam>
+    string GetLogicalName<T>() where T : class;
+}
+
 /// <summary>Generated routing and ownership metadata for one messaging network.</summary>
 public sealed class MessagingContractRegistry
 {
-    private readonly Func<Type, string> _destination;
-    private readonly Func<Type, string> _processor;
-    private readonly Func<Type, string> _publisher;
-    private readonly Func<Type, SerializationProtocol> _protocol;
-    private readonly Func<Type, string> _logicalName;
+    private readonly IMessagingContractRegistry _registry;
 
-    /// <summary>Creates a routing registry from generated lookup functions.</summary>
-    /// <param name="networkIdentity">The generated network identity.</param>
-    /// <param name="destination">Gets the destination for a contract.</param>
-    /// <param name="processor">Gets the processing participant identity.</param>
-    /// <param name="publisher">Gets the publishing participant identity.</param>
-    /// <param name="protocol">Gets the owner-selected serialization protocol.</param>
-    /// <param name="logicalName">Gets the current logical contract name.</param>
-    public MessagingContractRegistry(
-        string networkIdentity,
-        Func<Type, string> destination,
-        Func<Type, string> processor,
-        Func<Type, string> publisher,
-        Func<Type, SerializationProtocol> protocol,
-        Func<Type, string> logicalName)
+    /// <summary>Creates a routing registry from generated network metadata.</summary>
+    /// <param name="registry">The generated network metadata.</param>
+    public MessagingContractRegistry(IMessagingContractRegistry registry)
     {
-        ArgumentException.ThrowIfNullOrEmpty(networkIdentity);
-        NetworkIdentity = networkIdentity;
-        _destination = destination ?? throw new ArgumentNullException(nameof(destination));
-        _processor = processor ?? throw new ArgumentNullException(nameof(processor));
-        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-        _protocol = protocol ?? throw new ArgumentNullException(nameof(protocol));
-        _logicalName = logicalName ?? throw new ArgumentNullException(nameof(logicalName));
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        ArgumentException.ThrowIfNullOrEmpty(registry.NetworkIdentity);
+        NetworkIdentity = registry.NetworkIdentity;
     }
 
     /// <summary>Gets the generated network identity.</summary>
     public string NetworkIdentity { get; }
 
     /// <summary>Gets the destination for a contract.</summary>
-    public string GetDestination(Type contractType)
+    public string GetDestination<T>() where T : class
     {
-        ArgumentNullException.ThrowIfNull(contractType);
-        return _destination(contractType);
+        return _registry.GetDestination<T>();
     }
 
     /// <summary>Gets the processing participant identity for a message.</summary>
-    public string GetProcessorIdentity(Type contractType)
+    public string GetProcessorIdentity<T>() where T : class
     {
-        ArgumentNullException.ThrowIfNull(contractType);
-        return _processor(contractType);
+        return _registry.GetProcessorIdentity<T>();
     }
 
     /// <summary>Gets the publishing participant identity for an event.</summary>
-    public string GetPublisherIdentity(Type contractType)
+    public string GetPublisherIdentity<T>() where T : class
     {
-        ArgumentNullException.ThrowIfNull(contractType);
-        return _publisher(contractType);
+        return _registry.GetPublisherIdentity<T>();
     }
 
     /// <summary>Gets the owner-selected protocol for a contract.</summary>
-    public SerializationProtocol GetWireProtocol(Type contractType)
+    public SerializationProtocol GetWireProtocol<T>() where T : class
     {
-        ArgumentNullException.ThrowIfNull(contractType);
-        return _protocol(contractType);
+        return _registry.GetWireProtocol<T>();
     }
 
     /// <summary>Gets the current logical name for a contract.</summary>
-    public string GetLogicalName(Type contractType)
+    public string GetLogicalName<T>() where T : class
     {
-        ArgumentNullException.ThrowIfNull(contractType);
-        return _logicalName(contractType);
+        return _registry.GetLogicalName<T>();
     }
 }

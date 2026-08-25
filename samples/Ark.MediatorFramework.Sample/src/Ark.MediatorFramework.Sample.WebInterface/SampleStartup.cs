@@ -183,7 +183,7 @@ public sealed class SampleStartup
         services.AddArkMessagingDataBus(dataBus, messagingNetwork);
         services.AddArkMessagingBus(
             messagingNetwork,
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.CreateRegistry(),
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant.CreatePayloadSender(
                 dataBus,
                 messagingNetwork),

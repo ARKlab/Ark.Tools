@@ -2170,7 +2170,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
         result.Generated.Should().Contain("GetProcessorIdentity(global::System.Type contractType)");
         result.Generated.Should().Contain("GetPublisherIdentity(global::System.Type contractType)");
-        result.Generated.Should().Contain("CreateRegistry()");
+        result.Generated.Should().Contain("MessagingContractRegistry Registry");
+        result.Generated.Should().Contain("IMessagingContractRegistry");
+        result.Generated.Should().NotContain("CreateRegistry()");
         result.Generated.Should().Contain("public const string Identity");
         result.Generated.Should().Contain("Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.Gzip");
         result.Generated.Should().Contain("CompressionMinimumSizeBytes = 1024");
