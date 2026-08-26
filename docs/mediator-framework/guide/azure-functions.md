@@ -153,6 +153,56 @@ not an Azure Functions hosting mechanism. Registration validates the transport
 capabilities against each network and fails immediately when a required
 capability is missing.
 
+### Generate a Service Bus receive trigger
+
+Reference `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus` and bind the
+Functions assembly to exactly one receive participant:
+
+```csharp
+[assembly: MessagingFunctionsHost(
+    typeof(PrintingParticipant),
+    MessagingFunctionsTriggerBinding.ServiceBus)]
+```
+
+The participant must belong to exactly one `[MessagingNetwork]`. A participant
+with `Processes` or `Subscribes` produces one Service Bus trigger for its
+identity queue. A sender-only participant produces the desired-resource
+manifest but no receive trigger. Multiple host bindings, unsupported trigger
+bindings, missing networks, and subscriptions without exactly one publisher
+are compile-time diagnostics.
+
+The generated trigger uses PeekLock, disables automatic completion, binds
+`ServiceBusMessageActions`, and awaits `MessagingFunctionsDispatcher`. The
+runtime adapter exposes the native body and application properties without
+changing the transport-neutral envelope, renews the message lock during bounded
+processing, and maps completion, retry, and fail-fast outcomes to complete,
+abandon, and dead-letter actions. Service Bus abandon is immediate, so the
+participant's `RetryDelay` does not delay redelivery.
+
+`ArkGeneratedMessagingFunctions.Manifest` describes the selected participant,
+network, connection configuration key, identity queue, trigger binding, retry
+limits, host-local steps, and forwarding subscriptions. Each subscription
+forwards the publisher-owned topic into the participant identity queue. Resource
+creation and validation consume this manifest in the lifecycle layer; generated
+trigger code never creates entities.
+
+The API-surface snapshot includes `MESSAGING-TRIGGER` and `MESSAGING-ROUTE`
+entries. Review queue, topic, subscription, and forwarding changes before
+accepting an updated baseline because they can require an infrastructure
+migration.
+
+Service Bus transport conformance tests require explicit infrastructure:
+
+```text
+ARK_SERVICEBUS_CONNECTION_STRING
+ARK_SERVICEBUS_QUEUE
+ARK_SERVICEBUS_EMPTY_QUEUE
+```
+
+The two queues must be isolated test entities. When these values are absent,
+the tests report the missing infrastructure explicitly rather than silently
+passing.
+
 ### Delivery settlement and retries
 
 The transport reports the native `DeliveryCount`; handlers must not copy or

@@ -439,14 +439,14 @@ generated `.g.cs` is inspected; live Azure execution is optional and explicit.
 
 ## Acceptance
 
-- [ ] Service Bus transport implements the AZM-05 contract including
+- [x] Service Bus transport implements the AZM-05 contract including
   settlement and delivery count.
-- [ ] Identity-queue triggers and forwarding subscription manifests are
+- [x] Identity-queue triggers and forwarding subscription manifests are
   deterministic and typed.
-- [ ] Generated source awaits runtime dispatch and contains no serializer or
+- [x] Generated source awaits runtime dispatch and contains no serializer or
   retry logic.
-- [ ] Diagnostics cover all invalid routing and participant-selection cases.
-- [ ] API-surface snapshots record generated messaging routes.
-- [ ] The [task board](../README.md) status for AZM-10 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Diagnostics cover all invalid routing and participant-selection cases.
+- [x] API-surface snapshots record generated messaging routes.
+- [x] The [task board](../README.md) status for AZM-10 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
