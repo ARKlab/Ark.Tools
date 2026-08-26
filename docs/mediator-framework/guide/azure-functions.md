@@ -163,8 +163,8 @@ inline `MessagingFailed<T>` boundary and the transport maximum is `2N`; otherwis
 normal message runs through `N`. `MessagingFailed<T>` is an in-memory diagnostic
 dispatch and is never persisted as a separate message.
 
-Applications register second-level handlers as
-`ICommandHandler<MessagingFailed<T>>`. InMemory custom hosts map the participant policy
+Applications register second-level handlers as regular
+`ICommandHandler` implementations that handle `MessagingFailed<T>`. InMemory custom hosts map the participant policy
 to the native queue limit and delay before starting the pump:
 
 ```csharp

@@ -7,7 +7,10 @@ using System.Collections.ObjectModel;
 
 namespace Ark.Tools.MediatorFramework;
 
-/// <summary>Represents an immutable inline messaging failure command.</summary>
+/// <summary>
+/// Represents an immutable inline messaging failure command handled through the
+/// standard <see cref="ICommandHandler{TCommand}"/> pipeline.
+/// </summary>
 /// <typeparam name="T">The original message type.</typeparam>
 public sealed class MessagingFailed<T> : ICommand<MessagingFailed<T>>
     where T : class
