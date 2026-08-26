@@ -318,7 +318,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds an isolated in-memory Rebus bus for the synthetic messages.</summary>
-    /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="IFailed{TMessage}"/>.</param>
+    /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="global::Rebus.Retry.Simple.IFailed{TMessage}"/>.</param>
     /// <returns>The started Rebus bus.</returns>
     public RebusBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
     {
