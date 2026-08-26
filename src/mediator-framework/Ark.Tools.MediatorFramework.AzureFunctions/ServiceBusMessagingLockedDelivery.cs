@@ -38,7 +38,7 @@ internal sealed class ServiceBusMessagingLockedDelivery : IMessagingLockedDelive
 
     public ReadOnlySequence<byte> Payload => new(_message.Body.ToMemory());
 
-    public int DeliveryCount => checked((int)_message.DeliveryCount);
+    public int DeliveryCount => _message.DeliveryCount;
 
     public async Task RenewLockAsync(CancellationToken ctk)
     {
