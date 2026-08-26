@@ -192,7 +192,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
 
         public ReadOnlySequence<byte> Payload => new(_message.Body.ToMemory());
 
-        public int DeliveryCount => checked((int)_message.DeliveryCount);
+        public int DeliveryCount => checked(_message.DeliveryCount);
 
         public async Task RenewLockAsync(CancellationToken ctk)
         {
