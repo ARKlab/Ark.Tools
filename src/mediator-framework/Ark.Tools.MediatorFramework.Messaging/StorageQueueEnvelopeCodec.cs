@@ -44,7 +44,13 @@ public static class StorageQueueEnvelopeCodec
         return _decodeCanonical(canonical.AsMemory(0, written));
     }
 
-    internal static string _encodePoison(
+    /// <summary>Adds bounded poison metadata while preserving a decodable original envelope.</summary>
+    /// <param name="rawBody">The original raw queue body.</param>
+    /// <param name="originalMessageId">The original native queue message identifier.</param>
+    /// <param name="reason">The bounded poison reason.</param>
+    /// <param name="description">The bounded poison description.</param>
+    /// <returns>The single-Base64 encoded poison envelope.</returns>
+    public static string EncodePoison(
         BinaryData rawBody,
         string originalMessageId,
         string reason,

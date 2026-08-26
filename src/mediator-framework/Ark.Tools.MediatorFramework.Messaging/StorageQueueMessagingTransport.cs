@@ -271,7 +271,7 @@ public sealed class StorageQueueMessagingTransport :
         string description,
         CancellationToken ctk)
     {
-        var body = StorageQueueEnvelopeCodec._encodePoison(
+        var body = StorageQueueEnvelopeCodec.EncodePoison(
             message.Body,
             message.MessageId,
             reason,

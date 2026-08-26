@@ -42,4 +42,7 @@ public sealed class MessagingFunctionsHostAttribute : Attribute
 
     /// <summary>Gets or sets host-local outgoing pipeline step types.</summary>
     public Type[] OutgoingSteps { get; set; } = Array.Empty<Type>();
+
+    /// <summary>Gets or sets whether Storage Queue host-setting mismatches fail startup.</summary>
+    public bool StrictStorageQueueHostSettings { get; set; }
 }
