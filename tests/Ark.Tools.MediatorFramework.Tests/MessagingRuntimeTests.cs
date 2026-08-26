@@ -359,7 +359,7 @@ public sealed partial class MessagingRuntimeTests
         await using var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
-        container.Register<ICommandHandler<IFailed<DispatchCommand>>, RecordingFailedHandler>(Lifestyle.Scoped);
+        container.Register<ICommandHandler<MessagingFailed<DispatchCommand>>, RecordingFailedHandler>(Lifestyle.Scoped);
         var failureHandled = new List<MessagingFailed<DispatchCommand>>();
         var delivery = new TestLockedDelivery(2);
         var dispatcher = _createDispatcher(
@@ -371,7 +371,7 @@ public sealed partial class MessagingRuntimeTests
                 var message = payload.Deserialize<DispatchCommand>();
                 var failure = new MessagingFailed<DispatchCommand>(message, count, [error]);
                 failureHandled.Add(failure);
-                await processor.ExecuteAsync<IFailed<DispatchCommand>>(failure, token).ConfigureAwait(false);
+                await processor.ExecuteAsync<MessagingFailed<DispatchCommand>>(failure, token).ConfigureAwait(false);
             });
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
@@ -382,7 +382,7 @@ public sealed partial class MessagingRuntimeTests
         failureHandled.Should().ContainSingle();
         failureHandled[0].DeliveryCount.Should().Be(2);
         failureHandled[0].ErrorDescription.Should().Contain("handler failed");
-        container.GetRegistration<ICommandHandler<IFailed<DispatchCommand>>>().Should().NotBeNull();
+        container.GetRegistration<ICommandHandler<MessagingFailed<DispatchCommand>>>().Should().NotBeNull();
     }
 
     [TestMethod]
@@ -743,9 +743,9 @@ public sealed partial class MessagingRuntimeTests
         }
     }
 
-    private sealed class RecordingFailedHandler : ICommandHandler<IFailed<DispatchCommand>>
+    private sealed class RecordingFailedHandler : ICommandHandler<MessagingFailed<DispatchCommand>>
     {
-        public Task ExecuteAsync(IFailed<DispatchCommand> command, CancellationToken ctk = default)
+        public Task ExecuteAsync(MessagingFailed<DispatchCommand> command, CancellationToken ctk = default)
         {
             ctk.ThrowIfCancellationRequested();
             return Task.CompletedTask;

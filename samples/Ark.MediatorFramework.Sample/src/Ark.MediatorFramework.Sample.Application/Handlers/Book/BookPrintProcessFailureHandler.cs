@@ -13,7 +13,7 @@ namespace Ark.MediatorFramework.Sample.Application.Handlers;
 /// <summary>Persists the outcome of an exhausted print-completion notification.</summary>
 public sealed class BookPrintProcessFailureHandler :
     IHandleMessages<Rebus.Retry.Simple.IFailed<ProcessBookPrintProcessRequest>>,
-    ICommandHandler<Ark.Tools.MediatorFramework.IFailed<ProcessBookPrintProcessRequest>>
+    ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IClock _clock;
@@ -45,7 +45,7 @@ public sealed class BookPrintProcessFailureHandler :
 
     /// <inheritdoc />
     public async Task ExecuteAsync(
-        Ark.Tools.MediatorFramework.IFailed<ProcessBookPrintProcessRequest> command,
+        MessagingFailed<ProcessBookPrintProcessRequest> command,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(command);

@@ -73,7 +73,7 @@ public sealed class MessagingBusSampleTests
         container.RegisterInstance(state);
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
         container.Register<ICommandHandler<ProcessBookPrintProcessRequest>, FailingBookCommandHandler>(Lifestyle.Scoped);
-        container.Register<ICommandHandler<IFailed<ProcessBookPrintProcessRequest>>, RecordingBookFailureHandler>(Lifestyle.Scoped);
+        container.Register<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>, RecordingBookFailureHandler>(Lifestyle.Scoped);
         var dispatcher = new MessagingDispatcher(
             container,
             new MessagingHeaderProcessor(
@@ -154,7 +154,7 @@ public sealed class MessagingBusSampleTests
     }
 
     private sealed class RecordingBookFailureHandler :
-        ICommandHandler<IFailed<ProcessBookPrintProcessRequest>>
+        ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>
     {
         private readonly DispatchState _state;
 
@@ -164,7 +164,7 @@ public sealed class MessagingBusSampleTests
         }
 
         public async Task ExecuteAsync(
-            IFailed<ProcessBookPrintProcessRequest> command,
+            MessagingFailed<ProcessBookPrintProcessRequest> command,
             CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(command);

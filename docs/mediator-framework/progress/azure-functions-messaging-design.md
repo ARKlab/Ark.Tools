@@ -450,12 +450,12 @@ public sealed class BookMessagingNetwork;
 /// <summary>Retry/delivery policy owned by the declaring participant.</summary>
 public sealed class BookRetryPolicy : IMessagingRetryPolicy
 {
-    /// <summary>First IFailed attempt (N). Entity/host maximum delivery
-    /// is 2N so an IFailed throw can be followed by normal-T redeliveries
+    /// <summary>First MessagingFailed attempt (N). Entity/host maximum delivery
+    /// is 2N so a MessagingFailed throw can be followed by normal-T redeliveries
     /// before broker/Functions DLQ.</summary>
     public int MaximumDeliveryCount => 5;
 
-    /// <summary>Whether delivery N invokes IFailed&lt;T&gt;. When disabled,
+    /// <summary>Whether delivery N invokes MessagingFailed&lt;T&gt;. When disabled,
     /// the entity/host maximum is N; when enabled it is 2N.</summary>
     public bool SecondLevelRetriesEnabled => true;
 
@@ -912,7 +912,7 @@ except for immediate poison:
 | --- | --- |
 | Complete | Return successfully. The host deletes the message. |
 | Abandon (retry) | Throw. Do not catch. The host applies `visibilityTimeout` = the participant's `RetryDelay`. |
-| Immediate DLQ (fail-fast, malformed envelope, foreign `amf1-network`, missing `IFailed<T>` at delivery N) | `QueueClient`: send the envelope plus bounded failure metadata to `<queue>-poison`, `DeleteMessage` with the current pop receipt, then **return successfully** so the host does not also retry. |
+| Immediate DLQ (fail-fast, malformed envelope, foreign `amf1-network`, missing `MessagingFailed<T>` at delivery N) | `QueueClient`: send the envelope plus bounded failure metadata to `<queue>-poison`, `DeleteMessage` with the current pop receipt, then **return successfully** so the host does not also retry. |
 
 AZM-11 must verify against the installed Worker Storage Queues extension that
 a successful return after the SDK delete is treated as a completed
@@ -1101,17 +1101,17 @@ when they are enabled, so delivery 1 always has a normal-handler attempt.
 | Native delivery | Handler | On failure |
 | --- | --- | --- |
 | `1 .. N-1` | Normal `T` | Fail-fast → immediate DLQ. Otherwise abandon. |
-| `N` | Inline `IFailed<T>` in a fresh SimpleInjector scope, or immediate DLQ if no handler is registered | `IFailed` success → complete. `IFailed` throws fail-fast → immediate DLQ. `IFailed` throws otherwise → abandon. Missing handler → immediate DLQ. |
+| `N` | Inline `MessagingFailed<T>` in a fresh SimpleInjector scope, or immediate DLQ if no handler is registered | `MessagingFailed` success → complete. `MessagingFailed` throws fail-fast → immediate DLQ. `MessagingFailed` throws otherwise → abandon. Missing handler → immediate DLQ. |
 | `N+1 .. 2N` | Normal `T` again | Same as `1 .. N-1`. Broker/Functions DLQ at `2N`. |
 
-`IFailed<T>` is in-memory only: no failure message is persisted. It wraps
+`MessagingFailed<T>` is in-memory only: no failure message is persisted. It wraps
 the original message, serializable exception information, and a read-only
 native delivery-count snapshot. The failure handler should be idempotent
-because a later delivery can run `T` again; `IFailed` itself runs once, at
+because a later delivery can run `T` again; `MessagingFailed` itself runs once, at
 delivery `N`. The participant's retry policy enables the second-level stage;
 handler presence is
 not part of `MessagingParticipant` metadata. If the dispatcher cannot resolve
-`IFailed<T>` at delivery `N`, that absence is a fail-fast condition and the
+`MessagingFailed<T>` at delivery `N`, that absence is a fail-fast condition and the
 original envelope is dead-lettered immediately.
 
 ### Retry strategy decision and alternatives
@@ -1124,7 +1124,7 @@ inline `IFailed<T>` handler throws. Neither behavior is a transparent delayed
 first-level retry.
 
 The selected Mediator Framework strategy remains the table above: invoke
-`IFailed<T>` once at delivery `N`; if it throws a non-fail-fast exception,
+`MessagingFailed<T>` once at delivery `N`; if it throws a non-fail-fast exception,
 abandon the locked delivery and resume normal `T` deliveries through `2N`.
 This differs deliberately from Ark Rebus, but keeps native broker delivery
 count as the only retry state and never persists a failure wrapper.
@@ -1399,7 +1399,7 @@ non-interoperable topology modes:
 1. Rebus sender and standalone Rebus processor.
 2. Mediator Framework sender and generated Azure Functions receiver.
 
-Both modes reuse the new transport-neutral `IBus`, `IFailed<T>`, contract
+Both modes reuse the new transport-neutral `IBus`, `MessagingFailed<T>`, contract
 registry and participant ownership metadata, and application handlers. Rebus
 registers adapters to its
 native bus and failed-message API. The Rebus publisher-only and consumer

@@ -1,13 +1,15 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Solid;
+
 using System.Collections.ObjectModel;
 
 namespace Ark.Tools.MediatorFramework;
 
-/// <summary>Default immutable implementation of an inline messaging failure.</summary>
+/// <summary>Represents an immutable inline messaging failure command.</summary>
 /// <typeparam name="T">The original message type.</typeparam>
-public sealed class MessagingFailed<T> : IFailed<T>
+public sealed class MessagingFailed<T> : ICommand<MessagingFailed<T>>
     where T : class
 {
     /// <summary>Creates an inline failure snapshot.</summary>
@@ -31,15 +33,15 @@ public sealed class MessagingFailed<T> : IFailed<T>
         ErrorDescription = Exceptions[0].Message;
     }
 
-    /// <inheritdoc />
+    /// <summary>Gets the original message.</summary>
     public T Message { get; }
 
-    /// <inheritdoc />
+    /// <summary>Gets the native delivery count when the failure was captured.</summary>
     public int DeliveryCount { get; }
 
-    /// <inheritdoc />
+    /// <summary>Gets the bounded error description.</summary>
     public string ErrorDescription { get; }
 
-    /// <inheritdoc />
+    /// <summary>Gets the serializable exception snapshots.</summary>
     public IReadOnlyList<MessagingExceptionInfo> Exceptions { get; }
 }

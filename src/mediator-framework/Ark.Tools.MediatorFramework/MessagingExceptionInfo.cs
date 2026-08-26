@@ -1,27 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Solid;
-
 namespace Ark.Tools.MediatorFramework;
-
-/// <summary>Describes an in-memory second-level failure.</summary>
-/// <typeparam name="T">The original message type.</typeparam>
-public interface IFailed<T> : ICommand<IFailed<T>>
-    where T : class
-{
-    /// <summary>Gets the original message.</summary>
-    T Message { get; }
-
-    /// <summary>Gets the native delivery count when the failure was captured.</summary>
-    int DeliveryCount { get; }
-
-    /// <summary>Gets the bounded error description.</summary>
-    string ErrorDescription { get; }
-
-    /// <summary>Gets the serializable exception snapshots. The collection always contains at least one exception.</summary>
-    IReadOnlyList<MessagingExceptionInfo> Exceptions { get; }
-}
 
 /// <summary>Serializable, bounded information about a messaging exception.</summary>
 public sealed record MessagingExceptionInfo(

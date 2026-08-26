@@ -987,7 +987,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine(">();")
                         .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(_typeName(contract)).AppendLine(">(message, deliveryCount, new[] { error });")
-                        .Append("                await processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.IFailed<")
+                        .Append("                await processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(_typeName(contract)).AppendLine(">>(failed, ctk).ConfigureAwait(false);")
                         .AppendLine("                return;");
                 }

@@ -18,7 +18,7 @@ explicit guidance and the public API must be reviewable before release.
 - **Sample docs**: update `samples/Ark.MediatorFramework.Sample/README.md` with
   exact commands and the separate Rebus/AMF topology diagrams.
 - **API baseline**: update repository API-surface snapshots for every public
-  attribute, enum, option, `IBus`, `IFailed<T>`, pipeline, DataBus, outbox,
+  attribute, enum, option, `IBus`, `MessagingFailed<T>`, pipeline, DataBus, outbox,
   processor-hosting, and context member; verify the AZM-03 `MESSAGE`/`EVENT`
   name and alias entries plus the `PARTICIPANT`/`NETWORK` ownership and
   membership entries.
@@ -57,7 +57,7 @@ explicit guidance and the public API must be reviewable before release.
    conflict diagnostics.
 4. Document at-least-once delivery, fail-fast DLQ, retry exhaustion, native
    delivery-count semantics, PeekLock requirements, inline second-level
-   dispatch, no persisted `IFailed<T>` message, and separate scopes.
+   dispatch, no persisted `MessagingFailed<T>` message, and separate scopes.
 5. Document resource lifecycle, IaC coexistence, ownership-safe subscription
    removal, and local testing limitations.
 6. Document the host-local incoming/outgoing pipeline (registered on the host
@@ -145,7 +145,7 @@ sections):
 | --- | --- | --- |
 | `guide/azure-functions.md` | Trigger model, host binding attribute, Storage Queue host.json contract, resource lifecycle | AZM-10/11/12/13 |
 | `guide/host-setup-and-composition.md` | Functions/sender-only composition, outbox hosting split | AZM-13/14A |
-| `guide/rebus.md` | Generated Rebus assistance, adapter `IBus`/`IFailed<T>`, non-interoperability | AZM-14 |
+| `guide/rebus.md` | Generated Rebus assistance, adapter `IBus`/`MessagingFailed<T>`, non-interoperability | AZM-14 |
 | `guide/api-surface-snapshots.md` | MESSAGE/EVENT/PARTICIPANT/NETWORK lines, generated trigger entries | AZM-03/16 |
 | `samples/Ark.MediatorFramework.Sample/README.md` | Three-participant topology, two topology modes, `outbox-processor` host commands | AZM-15/16 |
 

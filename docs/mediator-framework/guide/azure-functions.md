@@ -159,12 +159,12 @@ The transport reports the native `DeliveryCount`; handlers must not copy or
 increment it in message headers. `MessagingSettlement.Decide` maps successful
 handling to completion, fail-fast failures to dead-letter, and other failures
 to abandon. When second-level retries are enabled, delivery `N` is the single
-inline `IFailed<T>` boundary and the transport maximum is `2N`; otherwise the
-normal message runs through `N`. `IFailed<T>` is an in-memory diagnostic
+inline `MessagingFailed<T>` boundary and the transport maximum is `2N`; otherwise the
+normal message runs through `N`. `MessagingFailed<T>` is an in-memory diagnostic
 dispatch and is never persisted as a separate message.
 
 Applications register second-level handlers as
-`ICommandHandler<IFailed<T>>`. InMemory custom hosts map the participant policy
+`ICommandHandler<MessagingFailed<T>>`. InMemory custom hosts map the participant policy
 to the native queue limit and delay before starting the pump:
 
 ```csharp

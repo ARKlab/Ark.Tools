@@ -102,7 +102,7 @@ dispatcher-less trigger code.
    `CompleteMessageAsync`. Abandon maps to immediate `AbandonMessageAsync`
    — Service Bus cannot delay abandon beyond the five-minute PeekLock cap,
    so `RetryDelay` is ignored and a retry storm is accepted. Fail-fast and
-   missing-`IFailed` DLQ map to `DeadLetterMessageAsync` with bounded
+   missing-`MessagingFailed` DLQ map to `DeadLetterMessageAsync` with bounded
    reason and description. Apply entity `MaxDeliveryCount = 2N` when the
    participant's retry policy enables second-level retries, otherwise `N`.
    `maxAutoLockRenewalDuration` must cover `MaximumHandlerDuration`.
@@ -331,7 +331,7 @@ public static class MessagingFunctionsDispatcher
         //    await PrintingParticipant.DispatchAsync(logicalName, payloadReader, processor, ctk)
         //    where logicalName = Headers[MessagingHeaders.MessageType] (e.g. "books.print_book").
         // 3. Settlement: success -> CompleteAsync; MessagingFailFastException and missing
-        //    IFailed<T> at delivery N -> DeadLetterAsync; any other failure -> AbandonAsync.
+        //    MessagingFailed<T> at delivery N -> DeadLetterAsync; any other failure -> AbandonAsync.
         await MessagingReceivePipeline.ProcessAsync(delivery, ctk).ConfigureAwait(false);
     }
 

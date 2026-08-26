@@ -58,8 +58,8 @@ their infrastructure.
 
 ## Implementation steps
 
-1. Move the restricted `IBus` and `IFailed<T>` contracts to a
-   transport-neutral Mediator Framework package.
+1. Move the restricted `IBus` contract and define the `MessagingFailed<T>`
+   command in a transport-neutral Mediator Framework package.
 2. Make the Rebus generator consume the network's member-derived contract
    registry
    and the participant declaration bound to the current assembly's host while
@@ -121,7 +121,7 @@ their infrastructure.
    same declaration-based publish rule through the bound participant; a
    participant that does not declare the event in `Publishes` cannot publish
    it.
-10. Map Rebus `IFailed<T>` to the framework `IFailed<T>` so application failure
+10. Map Rebus `IFailed<T>` to the framework `MessagingFailed<T>` so application failure
    handlers contain no Rebus types.
 11. Keep Rebus headers, wire serialization, pipeline implementations,
     transport, worker, DataBus provider, and outbox runtime independent from
@@ -263,7 +263,7 @@ subscriptions run after bus start while infrastructure remains explicit.
 ## Sample extension
 
 Update the Book application handlers to depend only on the framework `IBus`
-and `IFailed<T>`. Keep the existing WebInterface and RebusProcessor durable
+and `MessagingFailed<T>`. Keep the existing WebInterface and RebusProcessor durable
 Rebus outbox registrations as-is behind the Rebus adapter. Bind both Rebus
 hosts to participants of the shared network:
 
@@ -309,7 +309,7 @@ Native SQL outbox integration is owned by AZM-14A.
   subscription storage, and provider credentials are not silently generated.
 - Rebus adapter preserves supported send, publish, delay, additional headers,
   sender identity, and cancellation.
-- Rebus and Mediator Framework `IFailed<T>` reach the same application failure
+- Rebus `IFailed<T>` and Mediator Framework `MessagingFailed<T>` reach the same application failure
   handler.
 - WebInterface keeps the real Rebus outbox with no local outbox processor.
 - RebusProcessor keeps the real Rebus outbox with its processor enabled.
