@@ -163,6 +163,14 @@ inline `IFailed<T>` boundary and the transport maximum is `2N`; otherwise the
 normal message runs through `N`. `IFailed<T>` is an in-memory diagnostic
 dispatch and is never persisted as a separate message.
 
+Applications register second-level handlers as
+`ICommandHandler<IFailed<T>>`. InMemory custom hosts map the participant policy
+to the native queue limit and delay before starting the pump:
+
+```csharp
+transport.ConfigureRetry(participantIdentity, retryPolicy);
+```
+
 Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into
 `MessagingReceivePump` (or an equivalent locked trigger) with the participant's
 generated normal and `DispatchFailedAsync` binders. Each stage gets a fresh

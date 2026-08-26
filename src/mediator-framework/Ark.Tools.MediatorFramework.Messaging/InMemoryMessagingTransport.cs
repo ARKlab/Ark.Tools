@@ -75,6 +75,19 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         }
     }
 
+    /// <summary>Configures native retry behavior from a participant policy.</summary>
+    /// <param name="queue">The participant queue name.</param>
+    /// <param name="retryPolicy">The participant retry policy.</param>
+    public void ConfigureRetry(string queue, IMessagingRetryPolicy retryPolicy)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+        MessagingRetryPolicyValidation.Validate(retryPolicy);
+        var maximumDeliveryCount = checked(
+            retryPolicy.MaximumDeliveryCount
+            * (retryPolicy.SecondLevelRetriesEnabled ? 2 : 1));
+        ConfigureRetry(queue, maximumDeliveryCount, retryPolicy.RetryDelay);
+    }
+
     /// <inheritdoc />
     public long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
     {

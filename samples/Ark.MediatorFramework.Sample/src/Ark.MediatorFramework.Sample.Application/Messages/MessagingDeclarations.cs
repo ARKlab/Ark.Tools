@@ -7,8 +7,25 @@ namespace Ark.MediatorFramework.Sample.Application.Messages;
 [MessagingParticipant(
     Processes = new[] { typeof(ProcessBookPrintProcessRequest) },
     Serializers = new[] { SerializationProtocol.Json },
-    DefaultSerializer = SerializationProtocol.Json)]
+    DefaultSerializer = SerializationProtocol.Json,
+    Retry = typeof(SampleMessagingRetryPolicy))]
 public sealed partial class SampleMessagingParticipant;
+
+/// <summary>Defines retry behavior for the sample messaging participant.</summary>
+public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
+{
+    /// <inheritdoc />
+    public int MaximumDeliveryCount => 2;
+
+    /// <inheritdoc />
+    public bool SecondLevelRetriesEnabled => true;
+
+    /// <inheritdoc />
+    public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+
+    /// <inheritdoc />
+    public TimeSpan RetryDelay => TimeSpan.Zero;
+}
 
 /// <summary>Declares the sample messaging network.</summary>
 [MessagingNetwork(

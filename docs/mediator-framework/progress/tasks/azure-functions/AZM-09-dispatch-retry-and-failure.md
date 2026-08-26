@@ -94,7 +94,7 @@ namespace Ark.MediatorFramework;
 
 /// <summary>In-memory second-level failure wrapper. Never sent or persisted on the bus;
 /// dispatched inline at delivery N only, in a fresh scope.</summary>
-public interface IFailed<out T> where T : class
+public interface IFailed<T> : ICommand<IFailed<T>> where T : class
 {
     /// <summary>Gets the original deserialized message.</summary>
     T Message { get; }

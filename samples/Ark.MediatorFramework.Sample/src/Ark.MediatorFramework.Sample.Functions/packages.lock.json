@@ -1044,6 +1044,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Solid": "[1.0.0, )",
           "protobuf-net": "[3.3.21, )"
         }
       },

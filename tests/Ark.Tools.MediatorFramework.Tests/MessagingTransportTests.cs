@@ -80,6 +80,29 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     [TestMethod]
+    public async Task RetryPolicyDoublesNativeLimitForSecondLevelRetries()
+    {
+        var transport = new InMemoryMessagingTransport();
+        transport.ConfigureRetry("queue", new SecondLevelRetryPolicy());
+        await transport.SendAsync(
+            "queue",
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            _sequence(1),
+            null,
+            default).ConfigureAwait(false);
+
+        for (var deliveryCount = 1; deliveryCount <= 4; deliveryCount++)
+        {
+            var delivery = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+            delivery.DeliveryCount.Should().Be(deliveryCount);
+            await delivery.AbandonAsync(default).ConfigureAwait(false);
+        }
+
+        transport.GetDeadLetters("queue").Should().ContainSingle()
+            .Which.DeliveryCount.Should().Be(4);
+    }
+
+    [TestMethod]
     public async Task LockRenewalExtendsInMemoryDelivery()
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
@@ -290,6 +313,17 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class SecondLevelRetryPolicy : IMessagingRetryPolicy
+    {
+        public int MaximumDeliveryCount => 2;
+
+        public bool SecondLevelRetriesEnabled => true;
+
+        public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+
+        public TimeSpan RetryDelay => TimeSpan.Zero;
     }
 }
 
