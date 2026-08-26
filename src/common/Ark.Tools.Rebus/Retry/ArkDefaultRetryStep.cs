@@ -134,7 +134,7 @@ public class ArkDefaultRetryStep : IRetryStep
             {
                 await _errorTracker.MarkAsFinal(messageId).ConfigureAwait(false);
                 await _errorTracker.RegisterError(messageId, exception).ConfigureAwait(false);
-                await _dispatchSecondLevelRetry(transactionContext, messageId, context, next, exception).ConfigureAwait(false);
+                await _dispatchSecondLevelRetry(transactionContext, messageId, context, next).ConfigureAwait(false);
                 return;
             }
 
@@ -156,7 +156,7 @@ public class ArkDefaultRetryStep : IRetryStep
 
         if (_retryStrategySettings.SecondLevelRetriesEnabled)
         {
-            await _dispatchSecondLevelRetry(transactionContext, messageId, context, next, exception).ConfigureAwait(false);
+            await _dispatchSecondLevelRetry(transactionContext, messageId, context, next).ConfigureAwait(false);
             return;
         }
 
@@ -168,17 +168,8 @@ public class ArkDefaultRetryStep : IRetryStep
         transactionContext.SetResult(commit: false, ack: true);
     }
 
-    async Task _dispatchSecondLevelRetry(
-        ITransactionContext transactionContext,
-        string messageId,
-        IncomingStepContext context,
-        Func<Task> next,
-        Exception exception)
+    async Task _dispatchSecondLevelRetry(ITransactionContext transactionContext, string messageId, IncomingStepContext context, Func<Task> next)
     {
-        var trackedExceptions = await _errorTracker.GetExceptions(messageId).ConfigureAwait(false);
-        if (trackedExceptions.Count == 0)
-            await _errorTracker.RegisterError(messageId, exception).ConfigureAwait(false);
-
         try
         {
             await _dispatchSecondLevelRetry(transactionContext, context, next).ConfigureAwait(false);

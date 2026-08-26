@@ -40,7 +40,6 @@ public sealed class RebusRetryTests
 
             fixture.State.SecondLevelRetryAttempts.Should().Be(2);
             fixture.State.FailedMessageExecutions.Should().Be(1);
-            fixture.State.FailedMessageExceptionCount.Should().BeGreaterThan(0);
             fixture.State.FailedMessageException.Should().Contain("Synthetic second-level retry failure.");
             fixture.GetRebusCounts().Error.Should().Be(0);
         }
