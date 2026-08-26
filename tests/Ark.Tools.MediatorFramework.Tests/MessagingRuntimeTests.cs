@@ -410,6 +410,30 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public async Task DispatcherAbandonsWhenHandlerExceedsMaximumDuration()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        var delivery = new TestLockedDelivery(1);
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(
+                3,
+                secondLevelRetriesEnabled: false,
+                maximumHandlerDuration: TimeSpan.FromMilliseconds(30)),
+            async (_, _, _, _) =>
+                await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false),
+            lockRenewalInterval: TimeSpan.FromMilliseconds(5));
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(0);
+        delivery._abandoned.Should().Be(1);
+        delivery._renewals.Should().BeGreaterThan(0).And.BeLessThan(15);
+    }
+
+    [TestMethod]
     public async Task PipelineRunsStepsInDeclaredOrderAndProtectsReservedHeaders()
     {
         var order = new List<string>();
@@ -611,7 +635,8 @@ public sealed partial class MessagingRuntimeTests
             ICommandProcessor,
             Func<System.Type, bool>,
             CancellationToken,
-            Task>? dispatchFailed = null)
+            Task>? dispatchFailed = null,
+        TimeSpan? lockRenewalInterval = null)
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
@@ -631,7 +656,7 @@ public sealed partial class MessagingRuntimeTests
             retryPolicy,
             dispatch,
             dispatchFailed,
-            lockRenewalInterval: TimeSpan.FromHours(1));
+            lockRenewalInterval: lockRenewalInterval ?? TimeSpan.FromHours(1));
     }
 
     private sealed class TestLockedDelivery : IMessagingLockedDelivery
@@ -670,9 +695,12 @@ public sealed partial class MessagingRuntimeTests
 
         internal string? _deadLetterReason { get; private set; }
 
+        internal int _renewals { get; private set; }
+
         public Task RenewLockAsync(CancellationToken ctk)
         {
             ctk.ThrowIfCancellationRequested();
+            _renewals++;
             return Task.CompletedTask;
         }
 
@@ -757,17 +785,21 @@ public sealed partial class MessagingRuntimeTests
 
     private sealed class TestRetryPolicy : IMessagingRetryPolicy
     {
-        public TestRetryPolicy(int maximumDeliveryCount, bool secondLevelRetriesEnabled)
+        public TestRetryPolicy(
+            int maximumDeliveryCount,
+            bool secondLevelRetriesEnabled,
+            TimeSpan? maximumHandlerDuration = null)
         {
             MaximumDeliveryCount = maximumDeliveryCount;
             SecondLevelRetriesEnabled = secondLevelRetriesEnabled;
+            MaximumHandlerDuration = maximumHandlerDuration ?? TimeSpan.FromMinutes(1);
         }
 
         public int MaximumDeliveryCount { get; }
 
         public bool SecondLevelRetriesEnabled { get; }
 
-        public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+        public TimeSpan MaximumHandlerDuration { get; }
 
         public TimeSpan RetryDelay => TimeSpan.Zero;
     }

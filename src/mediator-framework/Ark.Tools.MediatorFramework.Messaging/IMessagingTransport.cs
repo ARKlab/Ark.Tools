@@ -72,11 +72,7 @@ public interface IMessagingLockedDelivery
     /// <summary>Renews the native lock for this delivery.</summary>
     /// <param name="ctk">The cancellation token.</param>
     /// <returns>A task that completes after the lock is renewed.</returns>
-    Task RenewLockAsync(CancellationToken ctk)
-    {
-        ctk.ThrowIfCancellationRequested();
-        return Task.CompletedTask;
-    }
+    Task RenewLockAsync(CancellationToken ctk);
 
     /// <summary>Completes and removes the delivery.</summary>
     /// <param name="ctk">The cancellation token.</param>

@@ -163,7 +163,7 @@ public sealed class MessagingDispatcher
 #pragma warning restore MA0004
                     var context = new MessagingIncomingContext(
                         delivery.Headers,
-                        delivery.Payload,
+                        payload.ReadPayload(),
                         delivery.DeliveryCount,
                         stageToken);
                     var processor = scope.GetInstance<ICommandProcessor>();
@@ -254,12 +254,15 @@ public sealed class MessagingDispatcher
     {
         using var stageCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         stageCancellation.CancelAfter(_retryPolicy.MaximumHandlerDuration);
-        using var renewalCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var renewalCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            stageCancellation.Token);
         var renewal = _renewLockAsync(delivery, renewalCancellation.Token);
         Exception? renewalFailure = null;
         try
         {
             await stage(stageCancellation.Token).ConfigureAwait(false);
+            stageCancellation.Token.ThrowIfCancellationRequested();
         }
         finally
         {

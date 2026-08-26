@@ -23,7 +23,7 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
     }
 
     /// <inheritdoc />
-    public T Deserialize<T>() where T : class
+    public ReadOnlySequence<byte> ReadPayload()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (_payload is not { } payload)
@@ -43,6 +43,13 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
             _payload = payload;
         }
 
+        return payload;
+    }
+
+    /// <inheritdoc />
+    public T Deserialize<T>() where T : class
+    {
+        var payload = ReadPayload();
         try
         {
             return _codec.Deserialize<T>(payload);
