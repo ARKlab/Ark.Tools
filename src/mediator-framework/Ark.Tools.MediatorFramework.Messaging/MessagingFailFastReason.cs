@@ -37,5 +37,8 @@ public enum MessagingFailFastReason
     MissingSecondLevelHandler,
 
     /// <summary>The configured payload compression or decompression failed.</summary>
-    InvalidCompressedPayload
+    InvalidCompressedPayload,
+
+    /// <summary>The payload cannot be deserialized as its declared contract.</summary>
+    MalformedPayload
 }

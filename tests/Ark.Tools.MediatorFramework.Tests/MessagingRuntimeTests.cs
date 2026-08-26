@@ -322,6 +322,38 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public async Task DispatcherDeadLettersMalformedPayloadWithoutSecondLevelDispatch()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        var delivery = new TestLockedDelivery(
+            2,
+            new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("{")));
+        var secondLevelDispatched = false;
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
+            (_, payload, _, _) =>
+            {
+                payload.Deserialize<DispatchCommand>();
+                return Task.CompletedTask;
+            },
+            (_, _, _, _, _, _, _) =>
+            {
+                secondLevelDispatched = true;
+                return Task.CompletedTask;
+            });
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(0);
+        delivery._abandoned.Should().Be(0);
+        delivery._deadLetters.Should().ContainSingle();
+        secondLevelDispatched.Should().BeFalse();
+    }
+
+    [TestMethod]
     public async Task DispatcherRunsFailureHandlerOnceAtRetryBoundary()
     {
         await using var container = new Container();
@@ -604,7 +636,9 @@ public sealed partial class MessagingRuntimeTests
 
     private sealed class TestLockedDelivery : IMessagingLockedDelivery
     {
-        internal TestLockedDelivery(int deliveryCount)
+        internal TestLockedDelivery(
+            int deliveryCount,
+            ReadOnlySequence<byte>? payload = null)
         {
             DeliveryCount = deliveryCount;
             var codec = new JsonMessagingCodec(new JsonSerializerOptions
@@ -613,7 +647,7 @@ public sealed partial class MessagingRuntimeTests
             });
             var writer = new ArrayBufferWriter<byte>();
             codec.Serialize(new DispatchCommand { Value = "test" }, writer);
-            Payload = new ReadOnlySequence<byte>(writer.WrittenMemory);
+            Payload = payload ?? new ReadOnlySequence<byte>(writer.WrittenMemory);
             Headers = new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 [MessagingHeaders.MessageType] = "tests.dispatch",

@@ -43,7 +43,21 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
             _payload = payload;
         }
 
-        return _codec.Deserialize<T>(payload);
+        try
+        {
+            return _codec.Deserialize<T>(payload);
+        }
+        catch (MessagingFailFastException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw new MessagingFailFastException(
+                MessagingFailFastReason.MalformedPayload,
+                exception.Message,
+                exception);
+        }
     }
 
     /// <inheritdoc />
