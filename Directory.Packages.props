@@ -1,13 +1,15 @@
 ﻿<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <!-- The generated Functions extension host must preserve extension-compatible transitive versions. -->
+    <CentralPackageTransitivePinningEnabled Condition="'$(MSBuildProjectName)' != 'WorkerExtensions'">true</CentralPackageTransitivePinningEnabled>
+    <CentralPackageTransitivePinningEnabled Condition="'$(MSBuildProjectName)' == 'WorkerExtensions'">false</CentralPackageTransitivePinningEnabled>
     <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
   </PropertyGroup>
   <ItemGroup>
     <!-- COMMON -->
     <PackageVersion Include="Azure.Storage.Queues" Version="12.27.1" />
-    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.5" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.4" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />

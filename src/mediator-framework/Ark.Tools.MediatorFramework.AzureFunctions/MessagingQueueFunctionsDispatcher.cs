@@ -33,7 +33,6 @@ public static class MessagingQueueFunctionsDispatcher
         ArgumentNullException.ThrowIfNull(functionContext);
 
         var services = functionContext.InstanceServices;
-        var dispatcher = services.GetRequiredService<MessagingDispatcher>();
         var queueService = services.GetRequiredService<QueueServiceClient>();
         var source = queueService.GetQueueClient(queue);
         var poison = queueService.GetQueueClient(queue + "-poison");
@@ -55,6 +54,7 @@ public static class MessagingQueueFunctionsDispatcher
             return;
         }
 
+        var dispatcher = services.GetRequiredService<MessagingDispatcher>();
         await dispatcher.OnDeliveryAsync(
             new StorageQueueFunctionsLockedDelivery(source, poison, message, envelope),
             cancellationToken).ConfigureAwait(false);

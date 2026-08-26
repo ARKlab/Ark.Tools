@@ -3,6 +3,11 @@
   "extensions": {
     "http": {
       "routePrefix": ""
+    },
+    "queues": {
+      "messageEncoding": "none",
+      "visibilityTimeout": "00:00:30",
+      "maxDequeueCount": 3
     }
   }
 }

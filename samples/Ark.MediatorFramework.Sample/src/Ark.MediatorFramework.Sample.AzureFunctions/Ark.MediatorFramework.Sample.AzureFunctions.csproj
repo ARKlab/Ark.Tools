@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" OutputItemType="Analyzer" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
@@ -23,10 +23,6 @@
     <ProjectReference Include="../../../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions.Generators/Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.RebusProcessor\Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Functions\Ark.MediatorFramework.Sample.Functions.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="host.json" />
   </ItemGroup>
 
 </Project>
