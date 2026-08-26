@@ -1,11 +1,13 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Solid;
+
 namespace Ark.Tools.MediatorFramework;
 
 /// <summary>Describes an in-memory second-level failure.</summary>
 /// <typeparam name="T">The original message type.</typeparam>
-public interface IFailed<out T>
+public interface IFailed<T> : ICommand<IFailed<T>>
     where T : class
 {
     /// <summary>Gets the original message.</summary>

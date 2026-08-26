@@ -2178,6 +2178,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
         result.Generated.Should().Contain("DispatchFailedAsync");
         result.Generated.Should().Contain("MissingSecondLevelHandler");
+        result.Generated.Should().Contain("ICommandHandler<global::Ark.Tools.MediatorFramework.IFailed<global::PrintBook>>");
+        result.Generated.Should().Contain("processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.IFailed<global::PrintBook>>");
+        result.Generated.Should().NotContain("IMessagingFailedHandler");
         result.Generated.Should().Contain("private static string GetProcessorIdentity(global::System.Type contractType)");
         result.Generated.Should().Contain("private static string GetPublisherIdentity(global::System.Type contractType)");
         result.Generated.Should().Contain("private static string GetDestination(global::System.Type contractType)");

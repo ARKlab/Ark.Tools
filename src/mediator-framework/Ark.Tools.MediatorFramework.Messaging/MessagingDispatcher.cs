@@ -25,7 +25,8 @@ public sealed class MessagingDispatcher
         IMessagingPayloadReader,
         int,
         MessagingExceptionInfo,
-        Func<Type, object?>,
+        ICommandProcessor,
+        Func<Type, bool>,
         CancellationToken,
         Task>? _dispatchFailed;
     private readonly IReadOnlyList<Type> _incomingStepTypes;
@@ -53,7 +54,8 @@ public sealed class MessagingDispatcher
             IMessagingPayloadReader,
             int,
             MessagingExceptionInfo,
-            Func<Type, object?>,
+            ICommandProcessor,
+            Func<Type, bool>,
             CancellationToken,
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
@@ -207,16 +209,14 @@ public sealed class MessagingDispatcher
 #pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
                     await using var scope = AsyncScopedLifestyle.BeginScope(_container);
 #pragma warning restore MA0004
-                    var resolveHandler = new Func<Type, object?>(type =>
-                        _container.GetRegistration(type) is null
-                            ? null
-                            : scope.GetInstance(type));
+                    var processor = scope.GetInstance<ICommandProcessor>();
                     await _dispatchFailed(
                         logicalName,
                         payload,
                         delivery.DeliveryCount,
                         error,
-                        resolveHandler,
+                        processor,
+                        type => _container.GetRegistration(type) is not null,
                         stageToken).ConfigureAwait(false);
                 },
                 cancellationToken).ConfigureAwait(false);

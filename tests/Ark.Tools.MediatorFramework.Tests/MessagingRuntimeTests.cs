@@ -327,21 +327,20 @@ public sealed partial class MessagingRuntimeTests
         await using var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
-        container.Register<IMessagingFailedHandler<DispatchCommand>, RecordingFailedHandler>(Lifestyle.Scoped);
+        container.Register<ICommandHandler<IFailed<DispatchCommand>>, RecordingFailedHandler>(Lifestyle.Scoped);
         var failureHandled = new List<MessagingFailed<DispatchCommand>>();
         var delivery = new TestLockedDelivery(2);
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             (_, _, _, _) => throw new InvalidOperationException("handler failed"),
-            async (_, payload, count, error, resolveHandler, token) =>
+            async (_, payload, count, error, processor, isHandlerRegistered, token) =>
             {
+                isHandlerRegistered(typeof(ICommandHandler<IFailed<DispatchCommand>>)).Should().BeTrue();
                 var message = payload.Deserialize<DispatchCommand>();
                 var failure = new MessagingFailed<DispatchCommand>(message, count, [error]);
                 failureHandled.Add(failure);
-                var handler = (RecordingFailedHandler)resolveHandler(
-                    typeof(IMessagingFailedHandler<DispatchCommand>))!;
-                await handler.HandleAsync(failure, token).ConfigureAwait(false);
+                await processor.ExecuteAsync<IFailed<DispatchCommand>>(failure, token).ConfigureAwait(false);
             });
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
@@ -352,7 +351,7 @@ public sealed partial class MessagingRuntimeTests
         failureHandled.Should().ContainSingle();
         failureHandled[0].DeliveryCount.Should().Be(2);
         failureHandled[0].ErrorDescription.Should().Contain("handler failed");
-        container.GetRegistration<IMessagingFailedHandler<DispatchCommand>>().Should().NotBeNull();
+        container.GetRegistration<ICommandHandler<IFailed<DispatchCommand>>>().Should().NotBeNull();
     }
 
     [TestMethod]
@@ -366,7 +365,7 @@ public sealed partial class MessagingRuntimeTests
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             (_, _, _, _) => throw new InvalidOperationException("handler failed"),
-            (_, _, _, _, _, _) => throw new MessagingFailFastException(
+            (_, _, _, _, _, _, _) => throw new MessagingFailFastException(
                 MessagingFailFastReason.MissingSecondLevelHandler,
                 "tests.dispatch"));
 
@@ -577,7 +576,8 @@ public sealed partial class MessagingRuntimeTests
             IMessagingPayloadReader,
             int,
             MessagingExceptionInfo,
-            Func<System.Type, object?>,
+            ICommandProcessor,
+            Func<System.Type, bool>,
             CancellationToken,
             Task>? dispatchFailed = null)
     {
@@ -685,11 +685,11 @@ public sealed partial class MessagingRuntimeTests
         }
     }
 
-    private sealed class RecordingFailedHandler : IMessagingFailedHandler<DispatchCommand>
+    private sealed class RecordingFailedHandler : ICommandHandler<IFailed<DispatchCommand>>
     {
-        public Task HandleAsync(IFailed<DispatchCommand> failure, CancellationToken cancellationToken)
+        public Task ExecuteAsync(IFailed<DispatchCommand> command, CancellationToken ctk = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            ctk.ThrowIfCancellationRequested();
             return Task.CompletedTask;
         }
     }
