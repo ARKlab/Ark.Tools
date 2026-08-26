@@ -2139,6 +2139,45 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorEmitsMessagingTriggerAndRoute()
+    {
+        var result = _runApiSurfaceGeneratorResult(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(Sample.PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+
+            namespace Sample;
+
+            [Event(Name = "invoice.created")]
+            public sealed class InvoiceCreated { }
+
+            [MessagingParticipant(Publishes = new[] { typeof(InvoiceCreated) })]
+            public sealed partial class BillingParticipant { }
+
+            [MessagingParticipant(Subscribes = new[] { typeof(InvoiceCreated) })]
+            public sealed partial class PrintingParticipant { }
+
+            [MessagingNetwork(
+                Members = new[] { typeof(BillingParticipant), typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public sealed partial class BusinessNetwork { }
+            """,
+            baseline: null,
+            enabled: false);
+
+        result.Generated.Should().Contain(
+            "MESSAGING-TRIGGER Sample.PrintingParticipant"
+            + " -> binding:service_bus queue:printing network:Sample.BusinessNetwork");
+        result.Generated.Should().Contain(
+            "MESSAGING-ROUTE Sample.PrintingParticipant"
+            + " -> event:invoice.created topic:billing-invoice.created"
+            + " subscription:printing-853840d4 forward:printing");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorEmitsReflectionFreeRegistries()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
@@ -2433,6 +2472,21 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MessagingFunctionsGeneratorDiagnosesInvalidHostSelection()
     {
+        var multipleHosts = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
         var missingNetwork = _runGeneratorResult<MessagingFunctionsGenerator>(
             """
             using Ark.Tools.MediatorFramework;
@@ -2456,6 +2510,8 @@ public sealed class GeneratorSnapshotTests
             public static partial class BookMessagingNetwork { }
             """);
 
+        multipleHosts.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF033");
+        multipleHosts.Generated.Should().BeEmpty();
         missingNetwork.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF035");
         missingNetwork.Generated.Should().BeEmpty();
         unsupported.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF038");

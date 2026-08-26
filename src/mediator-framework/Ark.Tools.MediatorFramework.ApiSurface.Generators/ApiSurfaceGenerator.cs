@@ -24,6 +24,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string Event = "Ark.Tools.MediatorFramework.EventAttribute";
     private const string Participant = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
     private const string Network = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
+    private const string MessagingHost = "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute";
     private const string GeneratedSurface = "Ark.Tools.MediatorFramework.MessagingGeneratedSurfaceAttribute";
     private const string ApiGroup = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string ServerSet = "Ark.Tools.MediatorFramework.ServerSetAttribute";
@@ -100,6 +101,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 static (_, _) => true,
                 static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
             .Collect();
+        var messagingHosts = context.SyntaxProvider.ForAttributeWithMetadataName(
+                MessagingHost,
+                static (_, _) => true,
+                static (attributeContext, _) => ReadMessagingHosts(attributeContext))
+            .Collect();
         var mcpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 McpTool,
                 static (_, _) => true,
@@ -113,8 +119,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 return http.AddRange(grpc).AddRange(rebus)
                     .AddRange(messages).AddRange(events).AddRange(participants).AddRange(networks).AddRange(mcp);
             });
-        var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
-            BuildSurface(types, cancellationToken));
+        var surfaceProvider = contractTypes.Combine(messagingHosts)
+            .Select(static (input, cancellationToken) =>
+                BuildSurface(
+                    input.Left,
+                    input.Right.SelectMany(static hosts => hosts).ToImmutableArray(),
+                    cancellationToken));
 
         // Emit the .g.cs snapshot file (unchanged behaviour)
         context.RegisterSourceOutput(surfaceProvider, static (spc, surface) =>
@@ -194,6 +204,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     // Builds the sorted, deduplicated surface lines and a contract-name → Location index.
     private static (ImmutableArray<string> Lines, ImmutableDictionary<string, Location> Locations) BuildSurface(
         ImmutableArray<INamedTypeSymbol> contractTypes,
+        ImmutableArray<MessagingHostInfo> messagingHosts,
         CancellationToken cancellationToken)
     {
         var lines = new List<string>();
@@ -217,6 +228,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
             AddType(lines, type, networkMemberships);
         }
+        foreach (var host in messagingHosts
+            .OrderBy(static host => host.Participant.ToDisplayString(), StringComparer.Ordinal))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AddMessagingHostLines(lines, host);
+        }
 
         var ordered = lines.Distinct(StringComparer.Ordinal)
             .OrderBy(l => l, StringComparer.Ordinal)
@@ -239,7 +256,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             && !line.StartsWith("MESSAGE ", StringComparison.Ordinal)
             && !line.StartsWith("EVENT ", StringComparison.Ordinal)
             && !line.StartsWith("PARTICIPANT ", StringComparison.Ordinal)
-            && !line.StartsWith("NETWORK ", StringComparison.Ordinal));
+            && !line.StartsWith("NETWORK ", StringComparison.Ordinal)
+            && !line.StartsWith("MESSAGING-TRIGGER ", StringComparison.Ordinal)
+            && !line.StartsWith("MESSAGING-ROUTE ", StringComparison.Ordinal));
         return invalidLine is null
             ? new SnapshotParseResult(new HashSet<string>(lines, StringComparer.Ordinal), true, string.Empty)
             : new SnapshotParseResult(new HashSet<string>(StringComparer.Ordinal), false, invalidLine);
@@ -393,6 +412,118 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         }
     }
 
+    private static ImmutableArray<MessagingHostInfo> ReadMessagingHosts(
+        GeneratorAttributeSyntaxContext context)
+        {
+            var hosts = ImmutableArray.CreateBuilder<MessagingHostInfo>();
+            foreach (var attribute in context.Attributes)
+            {
+                if (attribute.ConstructorArguments.Length < 2
+                    || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol participant
+                    || attribute.ConstructorArguments[1].Value is not int binding)
+                    continue;
+                var syntax = attribute.ApplicationSyntaxReference;
+                hosts.Add(new MessagingHostInfo(
+                    participant,
+                    binding,
+                    syntax is null ? Location.None : Location.Create(syntax.SyntaxTree, syntax.Span)));
+            }
+            return hosts.ToImmutable();
+        }
+
+        private static void AddMessagingHostLines(List<string> lines, MessagingHostInfo host)
+        {
+            var participant = Attribute(host.Participant, Participant);
+            if (participant is null)
+                return;
+
+            var identity = StringNamed(participant, "Identity") ?? NormalizeIdentity(
+                host.Participant.Name.EndsWith("Participant", StringComparison.Ordinal)
+                    ? host.Participant.Name[..^"Participant".Length]
+                    : host.Participant.Name);
+            var network = AllTypes(host.Participant.ContainingAssembly.GlobalNamespace)
+                .Select(type => (Type: type, Attribute: Attribute(type, Network)))
+                .FirstOrDefault(item => item.Attribute is not null
+                    && TypeSymbols(item.Attribute, "Members").Any(member =>
+                        SymbolEqualityComparer.Default.Equals(member, host.Participant)));
+            var networkName = network.Type?.ToDisplayString() ?? "-";
+            var binding = host.Binding switch
+            {
+                0 => "service_bus",
+                1 => "storage_queue",
+                _ => host.Binding.ToString(CultureInfo.InvariantCulture),
+            };
+            if (TypeSymbols(participant, "Processes").Any()
+                || TypeSymbols(participant, "Subscribes").Any())
+            {
+                lines.Add($"MESSAGING-TRIGGER {host.Participant.ToDisplayString()}"
+                    + $" -> binding:{binding} queue:{identity} network:{networkName}");
+            }
+
+            if (network.Attribute is null)
+                return;
+            var members = TypeSymbols(network.Attribute, "Members")
+                .Select(member => (Type: member, Attribute: Attribute(member, Participant)))
+                .Where(static item => item.Attribute is not null)
+                .ToArray();
+            foreach (var subscribedEvent in TypeSymbols(participant, "Subscribes")
+                .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
+            {
+                var publisher = members.SingleOrDefault(item =>
+                    TypeSymbols(item.Attribute!, "Publishes").Any(contract =>
+                        SymbolEqualityComparer.Default.Equals(contract, subscribedEvent)));
+                if (publisher.Attribute is null)
+                    continue;
+                var publisherIdentity = StringNamed(publisher.Attribute, "Identity") ?? NormalizeIdentity(
+                    publisher.Type.Name.EndsWith("Participant", StringComparison.Ordinal)
+                        ? publisher.Type.Name[..^"Participant".Length]
+                        : publisher.Type.Name);
+                var logicalName = ContractName(
+                    subscribedEvent,
+                    Attribute(subscribedEvent, Message) ?? Attribute(subscribedEvent, Event));
+                var topic = publisherIdentity + "-" + logicalName;
+                var prefix = identity[..Math.Min(identity.Length, 41)];
+                var subscription = prefix + "-" + StableHash(topic);
+                lines.Add($"MESSAGING-ROUTE {host.Participant.ToDisplayString()}"
+                    + $" -> event:{logicalName} topic:{topic} subscription:{subscription} forward:{identity}");
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol @namespace)
+        {
+            foreach (var type in @namespace.GetTypeMembers())
+            {
+                yield return type;
+                foreach (var nested in NestedTypes(type))
+                    yield return nested;
+            }
+            foreach (var child in @namespace.GetNamespaceMembers())
+            {
+                foreach (var type in AllTypes(child))
+                    yield return type;
+            }
+        }
+
+        private static IEnumerable<INamedTypeSymbol> NestedTypes(INamedTypeSymbol type)
+        {
+            foreach (var nested in type.GetTypeMembers())
+            {
+                yield return nested;
+                foreach (var descendant in NestedTypes(nested))
+                    yield return descendant;
+            }
+        }
+
+        private static string StableHash(string value)
+        {
+            unchecked
+            {
+                var hash = 2166136261u;
+                foreach (var character in value)
+                    hash = (hash ^ character) * 16777619u;
+                return hash.ToString("x8", CultureInfo.InvariantCulture);
+            }
+        }
     private static string ContractName(INamedTypeSymbol type, AttributeData? attribute)
         => attribute is null
             ? NormalizeSnake(type.ToDisplayString())
@@ -646,4 +777,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         HashSet<string> Lines,
         bool IsValid,
         string InvalidLine);
+
+    private readonly record struct MessagingHostInfo(
+        INamedTypeSymbol Participant,
+        int Binding,
+        Location Location);
 }
