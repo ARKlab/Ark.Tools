@@ -5,5 +5,5 @@ using Ark.MediatorFramework.Sample.Application.Messages;
 
 [assembly: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHost(
     typeof(SampleMessagingParticipant),
-    Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.ServiceBus,
-    ConnectionConfigurationKey = "AzureServiceBus:ConnectionString")]
+    Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.StorageQueue,
+    ConnectionConfigurationKey = "AzureWebJobsStorage")]

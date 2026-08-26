@@ -8,9 +8,12 @@ using Ark.Tools.Solid.SimpleInjector;
 
 using AwesomeAssertions;
 
+using Azure.Storage.Queues;
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.Tests;
@@ -110,6 +113,76 @@ public sealed class MessagingBusSampleTests
         state._normalExecutionCount.Should().Be(2);
         state._failureExecutionCount.Should().Be(1);
         transport.GetDeadLetters(SampleMessagingParticipant.Identity).Should().BeEmpty();
+    }
+
+    [TestMethod]
+    [TestCategory("integration")]
+    public async Task StorageQueueRoutesScheduledBookMessageAndMovesPoison()
+    {
+        const string connectionString = "UseDevelopmentStorage=true";
+        var options = new QueueClientOptions
+        {
+            MessageEncoding = QueueMessageEncoding.None
+        };
+        var service = new QueueServiceClient(connectionString, options);
+        var queue = service.GetQueueClient(SampleMessagingParticipant.Identity);
+        var poison = service.GetQueueClient(SampleMessagingParticipant.Identity + "-poison");
+        await queue.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+        await poison.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+        var transport = new StorageQueueMessagingTransport(
+            service,
+            receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
+            retryDelay: new SampleMessagingRetryPolicy().RetryDelay);
+        await transport.EnsureQueueAsync(SampleMessagingParticipant.Identity, default)
+            .ConfigureAwait(false);
+        var network = SampleMessagingNetwork.CreateOptions();
+        var dataBus = new InMemoryMessagingDataBus();
+        var codec = new JsonMessagingCodec(new JsonSerializerOptions
+        {
+            TypeInfoResolver = ApplicationJsonSerializerContext.Default
+        });
+        using var bus = new MessagingBus(
+            transport,
+            network,
+            SampleMessagingNetwork.Registry,
+            new MessagingCodecRegistry([codec]),
+            SampleMessagingParticipant.CreatePayloadSender(dataBus, network),
+            SampleMessagingParticipant.Identity);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        try
+        {
+            var stopwatch = Stopwatch.StartNew();
+            await bus.Send(
+                new ProcessBookPrintProcessRequest { Id = Guid.NewGuid() },
+                TimeSpan.FromSeconds(2),
+                cancellationToken: timeout.Token).ConfigureAwait(false);
+#pragma warning disable MA0004 // The test disposes the enumerator at the end of the method.
+            await using var enumerator = transport
+                .ReceiveAsync(SampleMessagingParticipant.Identity, timeout.Token)
+                .GetAsyncEnumerator(timeout.Token);
+#pragma warning restore MA0004
+            (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
+            stopwatch.Elapsed.Should().BeGreaterThan(TimeSpan.FromSeconds(1));
+            codec.Deserialize<ProcessBookPrintProcessRequest>(enumerator.Current.Payload)
+                .Id.Should().NotBe(Guid.Empty);
+
+            await enumerator.Current.DeadLetterAsync(
+                "sample-failure",
+                "Book sample poison proof",
+                timeout.Token).ConfigureAwait(false);
+            var poisonMessage = await poison.ReceiveMessageAsync(cancellationToken: timeout.Token)
+                .ConfigureAwait(false);
+            var envelope = StorageQueueEnvelopeCodec.Decode(poisonMessage.Value.Body);
+            envelope.Headers[StorageQueuePoisonHeaders.Reason].Should().Be("sample-failure");
+            codec.Deserialize<ProcessBookPrintProcessRequest>(envelope.Payload)
+                .Id.Should().NotBe(Guid.Empty);
+        }
+        finally
+        {
+            await queue.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+            await poison.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+        }
     }
 
     private sealed class DispatchState

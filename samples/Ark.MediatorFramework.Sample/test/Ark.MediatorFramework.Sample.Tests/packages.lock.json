@@ -712,14 +712,17 @@
           "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0"
         }
       },
-      "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": {
+      "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": {
         "type": "Transitive",
-        "resolved": "5.5.5",
-        "contentHash": "GxoTrs+FXJP6paliWUT+hipnGi625U6x2gHY7WoYfFy5X3XL4If8FR9ORlGDEylPO/IEkMsfjpUS/8fdFglfwQ==",
+        "resolved": "5.24.0",
+        "contentHash": "Y/gh+CrbHbe1OhCGMoYX86z/Fk9q+bb2gg+S7BtWeKijt7BtY+i4CI8/Z009RxF3oP0FTgHl3fcv+rALgyRYOg==",
         "dependencies": {
-          "Azure.Storage.Queues": "12.21.0",
-          "Microsoft.Azure.Functions.Worker.Core": "1.20.0",
-          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0"
+          "Azure.Identity": "1.16.0",
+          "Azure.Messaging.ServiceBus": "7.20.1",
+          "Google.Protobuf": "3.32.1",
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Rpc": "1.0.1",
+          "Microsoft.Extensions.Azure": "1.13.0"
         }
       },
       "Microsoft.Azure.Functions.Worker.Grpc": {
@@ -1968,7 +1971,7 @@
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.11, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )"
+          "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": "[5.5.5, )"
         }
       },
       "ark.mediatorframework.sample.functions": {
@@ -2480,18 +2483,15 @@
           "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore.Analyzers": "1.0.4"
         }
       },
-      "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": {
+      "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": {
         "type": "CentralTransitive",
-        "requested": "[5.24.0, )",
-        "resolved": "5.24.0",
-        "contentHash": "Y/gh+CrbHbe1OhCGMoYX86z/Fk9q+bb2gg+S7BtWeKijt7BtY+i4CI8/Z009RxF3oP0FTgHl3fcv+rALgyRYOg==",
+        "requested": "[5.5.5, )",
+        "resolved": "5.5.5",
+        "contentHash": "GxoTrs+FXJP6paliWUT+hipnGi625U6x2gHY7WoYfFy5X3XL4If8FR9ORlGDEylPO/IEkMsfjpUS/8fdFglfwQ==",
         "dependencies": {
-          "Azure.Identity": "1.16.0",
-          "Azure.Messaging.ServiceBus": "7.20.1",
-          "Google.Protobuf": "3.32.1",
-          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
-          "Microsoft.Azure.Functions.Worker.Extensions.Rpc": "1.0.1",
-          "Microsoft.Extensions.Azure": "1.13.0"
+          "Azure.Storage.Queues": "12.21.0",
+          "Microsoft.Azure.Functions.Worker.Core": "1.20.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0"
         }
       },
       "Microsoft.Identity.Web": {
