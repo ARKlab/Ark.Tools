@@ -45,6 +45,14 @@ public sealed class MessagingIncomingContext
     /// <summary>Creates an incoming context.</summary>
     public MessagingIncomingContext(
         IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload)
+        : this(headers, payload, 0, default)
+    {
+    }
+
+    /// <summary>Creates an incoming context with delivery metadata.</summary>
+    public MessagingIncomingContext(
+        IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> payload,
         int deliveryCount = 0,
         CancellationToken cancellationToken = default)

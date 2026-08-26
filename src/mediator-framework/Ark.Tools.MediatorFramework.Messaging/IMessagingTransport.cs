@@ -69,10 +69,10 @@ public interface IMessagingLockedDelivery
     /// <summary>Gets the native delivery count, starting at one.</summary>
     int DeliveryCount { get; }
 
-    /// <summary>Renews the native lock for this delivery.</summary>
+    /// <summary>Renews the native lock for this delivery when supported.</summary>
     /// <param name="ctk">The cancellation token.</param>
     /// <returns>A task that completes after the lock is renewed.</returns>
-    Task RenewLockAsync(CancellationToken ctk);
+    Task RenewLockAsync(CancellationToken ctk) => Task.CompletedTask;
 
     /// <summary>Completes and removes the delivery.</summary>
     /// <param name="ctk">The cancellation token.</param>

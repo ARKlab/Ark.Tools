@@ -67,6 +67,10 @@ public sealed class MessagingDispatcher
         _retryPolicy = retryPolicy;
         _dispatch = dispatch ?? throw new ArgumentNullException(nameof(dispatch));
         _dispatchFailed = dispatchFailed;
+        if (_retryPolicy.SecondLevelRetriesEnabled && _dispatchFailed is null)
+            throw new ArgumentNullException(
+                nameof(dispatchFailed),
+                "Second-level retries require a generated failure binder.");
         _incomingStepTypes = new ReadOnlyCollection<Type>(
             (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
         _resolveStep = resolveStep ?? container.GetInstance;
@@ -175,6 +179,14 @@ public sealed class MessagingDispatcher
                 cancellationToken).ConfigureAwait(false);
             return null;
         }
+        catch (MessagingFailFastException)
+        {
+            throw;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             var error = MessagingExceptionInfo.From(exception);
@@ -242,6 +254,10 @@ public sealed class MessagingDispatcher
                 exception.Message ?? string.Empty);
             return (MessagingSettlementDecision.DeadLetter, MessagingExceptionInfo.From(exception));
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
 #pragma warning disable ERP022 // Second-level failures intentionally map to normal retry.
         catch (Exception exception)
         {
@@ -281,8 +297,10 @@ public sealed class MessagingDispatcher
             {
                 await renewal.ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (renewalCancellation.IsCancellationRequested)
+            catch (OperationCanceledException exception)
             {
+                if (!renewalCancellation.IsCancellationRequested)
+                    renewalFailure = exception;
             }
             catch (Exception exception)
             {

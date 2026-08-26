@@ -307,7 +307,7 @@ public sealed partial class MessagingRuntimeTests
         var delivery = new TestLockedDelivery(1);
         var dispatcher = _createDispatcher(
             container,
-            new TestRetryPolicy(3, secondLevelRetriesEnabled: true),
+            new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
             (_, payload, _, _) =>
             {
                 payload.Deserialize<DispatchCommand>();
@@ -350,6 +350,7 @@ public sealed partial class MessagingRuntimeTests
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(0);
         delivery._deadLetters.Should().ContainSingle();
+        delivery._deadLetterReason.Should().Be(MessagingFailFastReason.MalformedPayload.ToString());
         secondLevelDispatched.Should().BeFalse();
     }
 
@@ -428,6 +429,26 @@ public sealed partial class MessagingRuntimeTests
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(1);
         delivery._renewals.Should().BeGreaterThan(0).And.BeLessThan(15);
+    }
+
+    [TestMethod]
+    public void DispatcherRequiresFailureBinderWhenSecondLevelIsEnabled()
+    {
+        using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+
+        var act = () => _createDispatcher(
+            container,
+            new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
+            (_, payload, _, _) =>
+            {
+                payload.Deserialize<DispatchCommand>();
+                return Task.CompletedTask;
+            });
+
+        act.Should().Throw<ArgumentNullException>()
+            .Which.ParamName.Should().Be("dispatchFailed");
     }
 
     [TestMethod]
@@ -736,10 +757,11 @@ public sealed partial class MessagingRuntimeTests
             throw new NotSupportedException();
         }
 
-        public Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
+        public async Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
             where TCommand : class, ICommand<TCommand>
         {
-            return Task.CompletedTask;
+            ctk.ThrowIfCancellationRequested();
+            await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 
