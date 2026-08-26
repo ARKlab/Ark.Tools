@@ -414,116 +414,117 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static ImmutableArray<MessagingHostInfo> ReadMessagingHosts(
         GeneratorAttributeSyntaxContext context)
+    {
+        var hosts = ImmutableArray.CreateBuilder<MessagingHostInfo>();
+        foreach (var attribute in context.Attributes)
         {
-            var hosts = ImmutableArray.CreateBuilder<MessagingHostInfo>();
-            foreach (var attribute in context.Attributes)
-            {
-                if (attribute.ConstructorArguments.Length < 2
-                    || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol participant
-                    || attribute.ConstructorArguments[1].Value is not int binding)
-                    continue;
-                var syntax = attribute.ApplicationSyntaxReference;
-                hosts.Add(new MessagingHostInfo(
-                    participant,
-                    binding,
-                    syntax is null ? Location.None : Location.Create(syntax.SyntaxTree, syntax.Span)));
-            }
-            return hosts.ToImmutable();
+            if (attribute.ConstructorArguments.Length < 2
+                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol participant
+                || attribute.ConstructorArguments[1].Value is not int binding)
+                continue;
+            var syntax = attribute.ApplicationSyntaxReference;
+            hosts.Add(new MessagingHostInfo(
+                participant,
+                binding,
+                syntax is null ? Location.None : Location.Create(syntax.SyntaxTree, syntax.Span)));
+        }
+        return hosts.ToImmutable();
+    }
+
+    private static void AddMessagingHostLines(List<string> lines, MessagingHostInfo host)
+    {
+        var participant = Attribute(host.Participant, Participant);
+        if (participant is null)
+            return;
+
+        var identity = StringNamed(participant, "Identity") ?? NormalizeIdentity(
+            host.Participant.Name.EndsWith("Participant", StringComparison.Ordinal)
+                ? host.Participant.Name[..^"Participant".Length]
+                : host.Participant.Name);
+        var network = AllTypes(host.Participant.ContainingAssembly.GlobalNamespace)
+            .Select(type => (Type: type, Attribute: Attribute(type, Network)))
+            .FirstOrDefault(item => item.Attribute is not null
+                && TypeSymbols(item.Attribute, "Members").Any(member =>
+                    SymbolEqualityComparer.Default.Equals(member, host.Participant)));
+        var networkName = network.Type?.ToDisplayString() ?? "-";
+        var binding = host.Binding switch
+        {
+            0 => "service_bus",
+            1 => "storage_queue",
+            _ => host.Binding.ToString(CultureInfo.InvariantCulture),
+        };
+        if (TypeSymbols(participant, "Processes").Any()
+            || TypeSymbols(participant, "Subscribes").Any())
+        {
+            lines.Add($"MESSAGING-TRIGGER {host.Participant.ToDisplayString()}"
+                + $" -> binding:{binding} queue:{identity} network:{networkName}");
         }
 
-        private static void AddMessagingHostLines(List<string> lines, MessagingHostInfo host)
+        if (network.Attribute is null)
+            return;
+        var members = TypeSymbols(network.Attribute, "Members")
+            .Select(member => (Type: member, Attribute: Attribute(member, Participant)))
+            .Where(static item => item.Attribute is not null)
+            .ToArray();
+        foreach (var subscribedEvent in TypeSymbols(participant, "Subscribes")
+            .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
         {
-            var participant = Attribute(host.Participant, Participant);
-            if (participant is null)
-                return;
-
-            var identity = StringNamed(participant, "Identity") ?? NormalizeIdentity(
-                host.Participant.Name.EndsWith("Participant", StringComparison.Ordinal)
-                    ? host.Participant.Name[..^"Participant".Length]
-                    : host.Participant.Name);
-            var network = AllTypes(host.Participant.ContainingAssembly.GlobalNamespace)
-                .Select(type => (Type: type, Attribute: Attribute(type, Network)))
-                .FirstOrDefault(item => item.Attribute is not null
-                    && TypeSymbols(item.Attribute, "Members").Any(member =>
-                        SymbolEqualityComparer.Default.Equals(member, host.Participant)));
-            var networkName = network.Type?.ToDisplayString() ?? "-";
-            var binding = host.Binding switch
-            {
-                0 => "service_bus",
-                1 => "storage_queue",
-                _ => host.Binding.ToString(CultureInfo.InvariantCulture),
-            };
-            if (TypeSymbols(participant, "Processes").Any()
-                || TypeSymbols(participant, "Subscribes").Any())
-            {
-                lines.Add($"MESSAGING-TRIGGER {host.Participant.ToDisplayString()}"
-                    + $" -> binding:{binding} queue:{identity} network:{networkName}");
-            }
-
-            if (network.Attribute is null)
-                return;
-            var members = TypeSymbols(network.Attribute, "Members")
-                .Select(member => (Type: member, Attribute: Attribute(member, Participant)))
-                .Where(static item => item.Attribute is not null)
-                .ToArray();
-            foreach (var subscribedEvent in TypeSymbols(participant, "Subscribes")
-                .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
-            {
-                var publisher = members.SingleOrDefault(item =>
-                    TypeSymbols(item.Attribute!, "Publishes").Any(contract =>
-                        SymbolEqualityComparer.Default.Equals(contract, subscribedEvent)));
-                if (publisher.Attribute is null)
-                    continue;
-                var publisherIdentity = StringNamed(publisher.Attribute, "Identity") ?? NormalizeIdentity(
-                    publisher.Type.Name.EndsWith("Participant", StringComparison.Ordinal)
-                        ? publisher.Type.Name[..^"Participant".Length]
-                        : publisher.Type.Name);
-                var logicalName = ContractName(
-                    subscribedEvent,
-                    Attribute(subscribedEvent, Message) ?? Attribute(subscribedEvent, Event));
-                var topic = publisherIdentity + "-" + logicalName;
-                var prefix = identity[..Math.Min(identity.Length, 41)];
-                var subscription = prefix + "-" + StableHash(topic);
-                lines.Add($"MESSAGING-ROUTE {host.Participant.ToDisplayString()}"
-                    + $" -> event:{logicalName} topic:{topic} subscription:{subscription} forward:{identity}");
-            }
+            var publisher = members.SingleOrDefault(item =>
+                TypeSymbols(item.Attribute!, "Publishes").Any(contract =>
+                    SymbolEqualityComparer.Default.Equals(contract, subscribedEvent)));
+            if (publisher.Attribute is null)
+                continue;
+            var publisherIdentity = StringNamed(publisher.Attribute, "Identity") ?? NormalizeIdentity(
+                publisher.Type.Name.EndsWith("Participant", StringComparison.Ordinal)
+                    ? publisher.Type.Name[..^"Participant".Length]
+                    : publisher.Type.Name);
+            var logicalName = ContractName(
+                subscribedEvent,
+                Attribute(subscribedEvent, Message) ?? Attribute(subscribedEvent, Event));
+            var topic = publisherIdentity + "-" + logicalName;
+            var prefix = identity[..Math.Min(identity.Length, 41)];
+            var subscription = prefix + "-" + StableHash(topic);
+            lines.Add($"MESSAGING-ROUTE {host.Participant.ToDisplayString()}"
+                + $" -> event:{logicalName} topic:{topic} subscription:{subscription} forward:{identity}");
         }
+    }
 
-        private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol @namespace)
+    private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol @namespace)
+    {
+        foreach (var type in @namespace.GetTypeMembers())
         {
-            foreach (var type in @namespace.GetTypeMembers())
-            {
-                yield return type;
-                foreach (var nested in NestedTypes(type))
-                    yield return nested;
-            }
-            foreach (var child in @namespace.GetNamespaceMembers())
-            {
-                foreach (var type in AllTypes(child))
-                    yield return type;
-            }
-        }
-
-        private static IEnumerable<INamedTypeSymbol> NestedTypes(INamedTypeSymbol type)
-        {
-            foreach (var nested in type.GetTypeMembers())
-            {
+            yield return type;
+            foreach (var nested in NestedTypes(type))
                 yield return nested;
-                foreach (var descendant in NestedTypes(nested))
-                    yield return descendant;
-            }
         }
-
-        private static string StableHash(string value)
+        foreach (var child in @namespace.GetNamespaceMembers())
         {
-            unchecked
-            {
-                var hash = 2166136261u;
-                foreach (var character in value)
-                    hash = (hash ^ character) * 16777619u;
-                return hash.ToString("x8", CultureInfo.InvariantCulture);
-            }
+            foreach (var type in AllTypes(child))
+                yield return type;
         }
+    }
+
+    private static IEnumerable<INamedTypeSymbol> NestedTypes(INamedTypeSymbol type)
+    {
+        foreach (var nested in type.GetTypeMembers())
+        {
+            yield return nested;
+            foreach (var descendant in NestedTypes(nested))
+                yield return descendant;
+        }
+    }
+
+    private static string StableHash(string value)
+    {
+        unchecked
+        {
+            var hash = 2166136261u;
+            foreach (var character in value)
+                hash = (hash ^ character) * 16777619u;
+            return hash.ToString("x8", CultureInfo.InvariantCulture);
+        }
+    }
+
     private static string ContractName(INamedTypeSymbol type, AttributeData? attribute)
         => attribute is null
             ? NormalizeSnake(type.ToDisplayString())
