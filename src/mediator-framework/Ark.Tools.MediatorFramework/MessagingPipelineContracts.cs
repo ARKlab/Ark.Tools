@@ -46,9 +46,22 @@ public sealed class MessagingIncomingContext
     public MessagingIncomingContext(
         IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> payload)
+        : this(headers, payload, 0, default)
+    {
+    }
+
+    /// <summary>Creates an incoming context with delivery metadata.</summary>
+    public MessagingIncomingContext(
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload,
+        int deliveryCount = 0,
+        CancellationToken cancellationToken = default)
     {
         Headers = headers ?? throw new ArgumentNullException(nameof(headers));
         Payload = payload;
+        ArgumentOutOfRangeException.ThrowIfNegative(deliveryCount);
+        DeliveryCount = deliveryCount;
+        CancellationToken = cancellationToken;
     }
 
     /// <summary>Gets received headers.</summary>
@@ -56,6 +69,12 @@ public sealed class MessagingIncomingContext
 
     /// <summary>Gets the prepared payload.</summary>
     public ReadOnlySequence<byte> Payload { get; }
+
+    /// <summary>Gets the native delivery count, or zero when not supplied by a host.</summary>
+    public int DeliveryCount { get; }
+
+    /// <summary>Gets the cancellation token for this delivery.</summary>
+    public CancellationToken CancellationToken { get; }
 
     /// <summary>Gets step-local state.</summary>
     public IDictionary<string, object> Items { get; } = new Dictionary<string, object>(StringComparer.Ordinal);

@@ -9,7 +9,8 @@ namespace Ark.MediatorFramework.Sample.Application.Messages;
 [Message]
 [RebusMessage(OwnerQueue = "ark.mediator.sample")]
 public sealed record ProcessBookPrintProcessRequest :
-    IRequest<ProcessBookPrintProcessRequest, BookPrintProcessResponse>
+    IRequest<ProcessBookPrintProcessRequest, BookPrintProcessResponse>,
+    ICommand<ProcessBookPrintProcessRequest>
 {
     /// <summary>Gets the print-process identifier.</summary>
     public Guid Id { get; init; }

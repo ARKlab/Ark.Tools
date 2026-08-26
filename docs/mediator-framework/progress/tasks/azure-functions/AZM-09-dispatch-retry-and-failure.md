@@ -15,7 +15,7 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 
 ## Execution map
 
-- **Public API**: define framework `IFailed<T>`, exception DTO, and incoming
+- **Public API**: define framework `MessagingFailed<T>`, exception DTO, and incoming
   message context in `Ark.Tools.MediatorFramework`.
 - **Runtime**: implement manual settlement and scoped dispatch in
   `Ark.Tools.MediatorFramework.Messaging` against the transport receive
@@ -26,11 +26,11 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
   When disabled,
   deliveries `1..N` run normal `T` and max delivery is `N`. When enabled,
   deliveries `1..N-1` run normal `T` (fail-fast → immediate DLQ, otherwise
-  abandon). Delivery `N` runs inline `IFailed<T>` in a fresh scope, or
-  immediate DLQ if no handler is registered. Missing `IFailed<T>` is a
-  fail-fast condition. `IFailed` success completes; fail-fast throw
+  abandon). Delivery `N` runs inline `MessagingFailed<T>` in a fresh scope, or
+  immediate DLQ if no handler is registered. Missing `MessagingFailed<T>` is a
+  fail-fast condition. `MessagingFailed` success completes; fail-fast throw
   dead-letters; any other throw abandons. Deliveries `N+1..2N` run normal `T`
-  again until the transport max (`2N`) dead-letters. `IFailed` runs once, at
+  again until the transport max (`2N`) dead-letters. `MessagingFailed` runs once, at
   `N`.
 - **Lock discipline**: automatic completion is forbidden; configure bounded
   automatic lock renewal; treat lock loss/completion failure as unsuccessful
@@ -38,7 +38,7 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
 - **Runnable state**: at task end, Book messages sent via AZM-08 are received,
   dispatched, retried, and failure-handled over the InMemory transport; full
   solution builds and tests green.
-- **Stop condition**: never send or persist `IFailed<T>` and never perform
+- **Stop condition**: never send or persist `MessagingFailed<T>` and never perform
   second-level dispatch for malformed/unsupported envelopes or fail-fast
   exceptions.
 
@@ -56,15 +56,15 @@ InMemory pump now and under generated Service Bus triggers in AZM-10.
    retry exhaustion. Never copy or increment it in message
    headers. Configure InMemory max delivery to `2N` when second-level retries
    are enabled and `N` otherwise.
-6. Define the public transport-neutral `IFailed<T>` containing the original
+6. Define the public `MessagingFailed<T>` command containing the original
    message, serializable exception info, and a read-only native
    delivery-count snapshot. Do not require failure headers on the live
    envelope; attach bounded details only when dead-lettering if the
    transport can carry them.
 7. Dispatch the failure wrapper inline in a fresh SimpleInjector scope from the
    catch path at delivery `N` only. Do not enqueue a separate second-level
-   message; no `IFailed<T>` is persisted on the bus.
-8. If no `IFailed<T>` handler is registered at delivery `N`, dead-letter
+   message; no `MessagingFailed<T>` is persisted on the bus.
+8. If no `MessagingFailed<T>` handler is registered at delivery `N`, dead-letter
    immediately as fail-fast. If the handler throws fail-fast, dead-letter.
    Otherwise abandon and allow normal `T` on later deliveries through `2N`.
 9. Make malformed/unsupported envelopes fail fast and prevent second-level
@@ -94,7 +94,7 @@ namespace Ark.MediatorFramework;
 
 /// <summary>In-memory second-level failure wrapper. Never sent or persisted on the bus;
 /// dispatched inline at delivery N only, in a fresh scope.</summary>
-public interface IFailed<out T> where T : class
+public sealed class MessagingFailed<T> : ICommand<MessagingFailed<T>> where T : class
 {
     /// <summary>Gets the original deserialized message.</summary>
     T Message { get; }
@@ -107,7 +107,7 @@ public interface IFailed<out T> where T : class
 }
 
 /// <summary>Serializable, bounded snapshot of the exception that failed first-level
-/// handling. Used for IFailed diagnostics and bounded dead-letter metadata.</summary>
+/// handling. Used for MessagingFailed diagnostics and bounded dead-letter metadata.</summary>
 public sealed record MessagingExceptionInfo(
     string ExceptionType,
     string Message,
@@ -167,11 +167,11 @@ public static class MessagingSettlement
             return MessagingSettlementDecision.DeadLetter;      // any delivery, any stage
 
         if (isSecondLevelStage)
-            return MessagingSettlementDecision.Abandon;         // IFailed threw non-fail-fast
+            return MessagingSettlementDecision.Abandon;         // MessagingFailed threw non-fail-fast
 
         var n = retryPolicy.MaximumDeliveryCount;
         if (retryPolicy.SecondLevelRetriesEnabled && deliveryCount == n)
-            return MessagingSettlementDecision.RunSecondLevel;  // inline IFailed<T>, once, at N
+            return MessagingSettlementDecision.RunSecondLevel;  // inline MessagingFailed<T>, once, at N
 
         // Deliveries 1..N-1 and N+1..2N (enabled), or 1..N (disabled): abandon and let the
         // transport/host dead-letter at its configured maximum (2N or N).
@@ -256,9 +256,9 @@ public sealed class MessagingDispatcher
 }
 ```
 
-The second-level invocation and settlement mapping. `IFailed<T>` runs in a
+The second-level invocation and settlement mapping. `MessagingFailed<T>` runs in a
 FRESH SimpleInjector scope, separate from the normal handling scope; a missing
-`IFailed<T>` handler at delivery `N` surfaces as
+`MessagingFailed<T>` handler at delivery `N` surfaces as
 `MessagingFailFastException(MessagingFailFastReason.MissingSecondLevelHandler)`
 and dead-letters immediately:
 
@@ -275,9 +275,9 @@ and dead-letters immediately:
             var processor = scope.GetInstance<ICommandProcessor>();
 
             // Generated second-level binder: switches on logicalName, deserializes T,
-            // wraps it into the framework Failed<T> (IFailed<T>) with the delivery-count
+            // wraps it into MessagingFailed<T> with the delivery-count
             // snapshot and error info, and dispatches the participant's
-            // ICommandHandler<IFailed<T>>-style handler through the processor. When no
+            // ICommandHandler<MessagingFailed<T>> handler through the processor. When no
             // handler is registered for T, it throws
             // MessagingFailFastException(MissingSecondLevelHandler).
             await BookParticipantBinder
@@ -285,7 +285,7 @@ and dead-letters immediately:
                     error, processor, ctk)
                 .ConfigureAwait(false);
 
-            return MessagingSettlementDecision.Complete;        // IFailed success → complete
+            return MessagingSettlementDecision.Complete;        // MessagingFailed success → complete
         }
         catch (MessagingFailFastException)
         {
@@ -328,7 +328,7 @@ and dead-letters immediately:
 
 Update [`guide/azure-functions.md`](../../../guide/azure-functions.md) with
 scope, settlement, the `N`/`2N` delivery table, fail-fast DLQ, and inline
-`IFailed<T>` at delivery `N`. Document that abandon delay is transport-
+`MessagingFailed<T>` at delivery `N`. Document that abandon delay is transport-
 specific: InMemory/`RetryDelay` and Storage Queue `visibilityTimeout` wait;
 Service Bus abandon is immediate.
 
@@ -345,9 +345,9 @@ dispatcher. The existing Rebus processor path remains untouched and green.
 - Handler failure followed by retry and eventual success.
 - Pipeline-step failure follows the same tested settlement policy as a handler
   failure.
-- Delivery `N` with no `IFailed<T>` handler dead-letters immediately.
+- Delivery `N` with no `MessagingFailed<T>` handler dead-letters immediately.
 - Second-level disabled runs normal `T` through `N` and never resolves
-  `IFailed<T>`.
+  `MessagingFailed<T>`.
 - Participant retry policy validation rejects `N = 1` when second-level
   retries are enabled.
 - Fail-fast exception goes directly to DLQ at any delivery.
@@ -355,8 +355,8 @@ dispatcher. The existing Rebus processor path remains untouched and green.
   info at delivery `N` only.
 - Second-level dispatch is inline and uses a separate SimpleInjector scope;
   no failure message is persisted.
-- `IFailed` fail-fast throw dead-letters; other throw abandons and the next
-  delivery is normal `T`, not `IFailed` again.
+- `MessagingFailed` fail-fast throw dead-letters; other throw abandons and the next
+  delivery is normal `T`, not `MessagingFailed` again.
 - InMemory abandon waits `RetryDelay` on the test clock.
 - Lock loss or failed completion is surfaced and permits duplicate delivery.
 - Unsupported protocol/type never enters second-level dispatch.
@@ -374,16 +374,16 @@ dispatcher. The existing Rebus processor path remains untouched and green.
 
 ## Acceptance
 
-- [ ] Normal and second-level handling use separate SimpleInjector scopes.
-- [ ] Fail-fast and unsupported-read paths go directly to DLQ.
-- [ ] With second-level enabled, delivery `N` runs `IFailed<T>` or immediate
+- [x] Normal and second-level handling use separate SimpleInjector scopes.
+- [x] Fail-fast and unsupported-read paths go directly to DLQ.
+- [x] With second-level enabled, delivery `N` runs `MessagingFailed<T>` or immediate
   DLQ and max delivery is `2N`.
-- [ ] Participant retry policy, not handler discovery, selects `N` or
+- [x] Participant retry policy, not handler discovery, selects `N` or
   `2N` behavior.
-- [ ] Native delivery count controls retry exhaustion.
-- [ ] Failure metadata is serializable, bounded, and tested.
-- [ ] Structured logging contains no interpolated messages or raw bodies.
-- [ ] Book scenarios run end-to-end over InMemory.
-- [ ] The [task board](../README.md) status for AZM-09 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Native delivery count controls retry exhaustion.
+- [x] Failure metadata is serializable, bounded, and tested.
+- [x] Structured logging contains no interpolated messages or raw bodies.
+- [x] Book scenarios run end-to-end over InMemory.
+- [x] The [task board](../README.md) status for AZM-09 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

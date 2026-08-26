@@ -14,6 +14,8 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 {
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
+    private const string _maximumDeliveryReason = "maximum-delivery-count";
+    private const string _maximumDeliveryDescription = "The transport maximum delivery count was reached.";
 
     private readonly Lock _gate = new();
     private readonly Dictionary<string, InMemoryQueue> _queues = new(StringComparer.Ordinal);
@@ -54,6 +56,37 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 
     /// <inheritdoc />
     public long? MaximumInlineEnvelopeBytes => null;
+
+    /// <summary>Configures the native retry limit and delay for a queue.</summary>
+    /// <param name="queue">The queue name.</param>
+    /// <param name="maximumDeliveryCount">The maximum native delivery count.</param>
+    /// <param name="retryDelay">The delay before an abandoned delivery becomes visible.</param>
+    public void ConfigureRetry(string queue, int maximumDeliveryCount, TimeSpan retryDelay)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(retryDelay.Ticks, TimeSpan.Zero.Ticks, nameof(retryDelay));
+
+        lock (_gate)
+        {
+            var target = _getOrAddQueue(queue);
+            target._maximumDeliveryCount = maximumDeliveryCount;
+            target._retryDelay = retryDelay;
+        }
+    }
+
+    /// <summary>Configures native retry behavior from a participant policy.</summary>
+    /// <param name="queue">The participant queue name.</param>
+    /// <param name="retryPolicy">The participant retry policy.</param>
+    public void ConfigureRetry(string queue, IMessagingRetryPolicy retryPolicy)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+        MessagingRetryPolicyValidation.Validate(retryPolicy);
+        var maximumDeliveryCount = checked(
+            retryPolicy.MaximumDeliveryCount
+            * (retryPolicy.SecondLevelRetriesEnabled ? 2 : 1));
+        ConfigureRetry(queue, maximumDeliveryCount, retryPolicy.RetryDelay);
+    }
 
     /// <inheritdoc />
     public long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
@@ -265,9 +298,27 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
             if (!queue._locked.Remove(lockId, out var locked))
                 throw new InvalidOperationException("The messaging delivery has already been settled or expired.");
 
-            if (settlement == Settlement.Abandon)
+            if (settlement == Settlement.Abandon
+                && locked._envelope._deliveryCount >= queue._maximumDeliveryCount)
             {
-                queue._visible.Enqueue(locked._envelope);
+                queue._deadLetters.Add(new InMemoryDeadLetter(
+                    locked._envelope._headers,
+                    locked._envelope._payload,
+                    locked._envelope._deliveryCount,
+                    _maximumDeliveryReason,
+                    _maximumDeliveryDescription));
+            }
+            else if (settlement == Settlement.Abandon)
+            {
+                var now = _clock.GetCurrentInstant();
+                var due = now
+                    + Duration.FromTimeSpan(queue._retryDelay);
+                if (due <= now)
+                    queue._visible.Enqueue(locked._envelope);
+                else
+                    queue._scheduled.Enqueue(
+                        locked._envelope,
+                        (due, _scheduleSequence++));
             }
             else if (settlement == Settlement.DeadLetter)
             {
@@ -283,12 +334,28 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         return Task.CompletedTask;
     }
 
+    private Task _renew(InMemoryQueue queue, Guid lockId, CancellationToken ctk)
+    {
+        ctk.ThrowIfCancellationRequested();
+        lock (_gate)
+        {
+            queue._expireLocks(_clock.GetCurrentInstant());
+            if (!queue._locked.TryGetValue(lockId, out var locked))
+                throw new InvalidOperationException("The messaging delivery has already been settled or expired.");
+            locked._lockedUntil = _clock.GetCurrentInstant() + _lockDuration;
+        }
+
+        return Task.CompletedTask;
+    }
+
     private sealed class InMemoryQueue
     {
         internal Queue<InMemoryEnvelope> _visible { get; } = new();
         internal PriorityQueue<InMemoryEnvelope, (Instant Due, long Sequence)> _scheduled { get; } = new();
         internal Dictionary<Guid, InMemoryLock> _locked { get; } = [];
         internal List<InMemoryDeadLetter> _deadLetters { get; } = [];
+        internal int _maximumDeliveryCount { get; set; } = int.MaxValue;
+        internal TimeSpan _retryDelay { get; set; }
 
         internal void _promoteDue(Instant now)
         {
@@ -304,7 +371,19 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
                     continue;
 
                 _locked.Remove(pair.Key);
-                _visible.Enqueue(pair.Value._envelope);
+                if (pair.Value._envelope._deliveryCount >= _maximumDeliveryCount)
+                {
+                    _deadLetters.Add(new InMemoryDeadLetter(
+                        pair.Value._envelope._headers,
+                        pair.Value._envelope._payload,
+                        pair.Value._envelope._deliveryCount,
+                        _maximumDeliveryReason,
+                        _maximumDeliveryDescription));
+                }
+                else
+                {
+                    _visible.Enqueue(pair.Value._envelope);
+                }
             }
         }
 
@@ -341,7 +420,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         }
 
         internal InMemoryEnvelope _envelope { get; }
-        internal Instant _lockedUntil { get; }
+        internal Instant _lockedUntil { get; set; }
     }
 
     private enum Settlement
@@ -381,6 +460,11 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
             return _transport._settle(_queue, _lockId, Settlement.Complete, null, null, ctk);
         }
 
+        public Task RenewLockAsync(CancellationToken ctk)
+        {
+            return _transport._renew(_queue, _lockId, ctk);
+        }
+
         public Task AbandonAsync(CancellationToken ctk)
         {
             return _transport._settle(_queue, _lockId, Settlement.Abandon, null, null, ctk);
@@ -397,6 +481,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 
             return _transport._settle(_queue, _lockId, Settlement.DeadLetter, reason, description, ctk);
         }
+
     }
 }
 

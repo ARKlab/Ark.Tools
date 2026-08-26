@@ -237,7 +237,7 @@ Extend the existing Book sample, not a parallel demo, with a publisher and two
 subscriber Functions hosts. Demonstrate the Book printing/background event
 flow through Azure Functions and retain the standalone Rebus processor as an
 alternative receiver in a separate non-interoperable topology mode. Use the
-framework `IBus` and `IFailed<T>` in application code and Rebus adapters in
+framework `IBus` and `MessagingFailed<T>` in application code and Rebus adapters in
 Rebus mode. Native Mediator Framework mode uses the SQL outbox and the
 dedicated `outbox-processor` custom host from AZM-14A. The existing WebInterface
 and RebusProcessor hosts must retain their real Rebus outbox registrations,

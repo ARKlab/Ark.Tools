@@ -256,6 +256,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Solid": "[1.0.0, )",
           "protobuf-net": "[3.3.21, )"
         }
       },
@@ -285,6 +286,13 @@
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
+        }
+      },
+      "ark.tools.solid": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.systemtextjson": {

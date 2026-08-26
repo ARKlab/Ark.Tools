@@ -6,14 +6,14 @@ using Ark.Tools.Solid;
 using NodaTime;
 
 using Rebus.Handlers;
-using Rebus.Retry.Simple;
-
 using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Persists the outcome of an exhausted print-completion notification.</summary>
-public sealed class BookPrintProcessFailureHandler : IHandleMessages<IFailed<ProcessBookPrintProcessRequest>>
+public sealed class BookPrintProcessFailureHandler :
+    IHandleMessages<Rebus.Retry.Simple.IFailed<ProcessBookPrintProcessRequest>>,
+    ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IClock _clock;
@@ -34,25 +34,48 @@ public sealed class BookPrintProcessFailureHandler : IHandleMessages<IFailed<Pro
     }
 
     /// <inheritdoc />
-    public async Task Handle(IFailed<ProcessBookPrintProcessRequest> message)
+    public async Task Handle(Rebus.Retry.Simple.IFailed<ProcessBookPrintProcessRequest> message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        var context = await _factory.CreateAsync().ConfigureAwait(false);
+        await _handleAsync(
+            message.Message,
+            message.Exceptions?.FirstOrDefault()?.Message,
+            CancellationToken.None).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task ExecuteAsync(
+        MessagingFailed<ProcessBookPrintProcessRequest> command,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        await _handleAsync(
+            command.Message,
+            command.Exceptions[0].Message,
+            ctk).ConfigureAwait(false);
+    }
+
+    private async Task _handleAsync(
+        ProcessBookPrintProcessRequest message,
+        string? errorMessage,
+        CancellationToken ctk)
+    {
+        var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
         var process = await context.ReadBookPrintProcessAsync(
-            message.Message.Id,
-            forUpdate: true).ConfigureAwait(false);
+            message.Id,
+            forUpdate: true,
+            ctk: ctk).ConfigureAwait(false);
         if (process is null)
         {
-            await context.CommitAsync().ConfigureAwait(false);
+            await context.CommitAsync(ctk).ConfigureAwait(false);
             return;
         }
 
-        var exception = message.Exceptions?.FirstOrDefault();
         process = process with
         {
             Status = BookPrintProcessStatus.Error,
-            ErrorMessage = exception?.Message ?? "The print-completion notification was exhausted.",
+            ErrorMessage = errorMessage ?? "The print-completion notification was exhausted.",
         };
         await context.WriteAuditAsync(new AuditEntry
         {
@@ -62,8 +85,8 @@ public sealed class BookPrintProcessFailureHandler : IHandleMessages<IFailed<Pro
             Identifier = process.Id.ToString("D"),
             Operation = nameof(BookPrintProcessFailureHandler),
             Timestamp = _clock.GetCurrentInstant(),
-        }).ConfigureAwait(false);
-        await context.UpdateBookPrintProcessAsync(process).ConfigureAwait(false);
-        await context.CommitAsync().ConfigureAwait(false);
+        }, ctk).ConfigureAwait(false);
+        await context.UpdateBookPrintProcessAsync(process, ctk).ConfigureAwait(false);
+        await context.CommitAsync(ctk).ConfigureAwait(false);
     }
 }

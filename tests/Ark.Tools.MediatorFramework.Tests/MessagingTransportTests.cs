@@ -40,6 +40,104 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     [TestMethod]
+    public async Task AbandonHonorsConfiguredRetryDelay()
+    {
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
+        transport.ConfigureRetry("queue", 3, TimeSpan.FromMinutes(1));
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(1), null, default).ConfigureAwait(false);
+
+        var first = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        await first.AbandonAsync(default).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
+        var move = enumerator.MoveNextAsync().AsTask();
+        await Task.Delay(25, cts.Token).ConfigureAwait(false);
+        move.IsCompleted.Should().BeFalse();
+
+        clock.Advance(Duration.FromMinutes(1));
+        (await move.ConfigureAwait(false)).Should().BeTrue();
+        enumerator.Current.DeliveryCount.Should().Be(2);
+        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
+        await enumerator.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task AbandonDeadLettersAtConfiguredMaximumDeliveryCount()
+    {
+        var transport = new InMemoryMessagingTransport();
+        transport.ConfigureRetry("queue", 2, TimeSpan.Zero);
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(1), null, default).ConfigureAwait(false);
+
+        var first = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        await first.AbandonAsync(default).ConfigureAwait(false);
+        var second = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        await second.AbandonAsync(default).ConfigureAwait(false);
+
+        var deadLetter = transport.GetDeadLetters("queue").Should().ContainSingle().Which;
+        deadLetter.DeliveryCount.Should().Be(2);
+        deadLetter.Reason.Should().Be("maximum-delivery-count");
+    }
+
+    [TestMethod]
+    public async Task RetryPolicyDoublesNativeLimitForSecondLevelRetries()
+    {
+        var transport = new InMemoryMessagingTransport();
+        transport.ConfigureRetry("queue", new SecondLevelRetryPolicy());
+        await transport.SendAsync(
+            "queue",
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            _sequence(1),
+            null,
+            default).ConfigureAwait(false);
+
+        for (var deliveryCount = 1; deliveryCount <= 4; deliveryCount++)
+        {
+            var delivery = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+            delivery.DeliveryCount.Should().Be(deliveryCount);
+            await delivery.AbandonAsync(default).ConfigureAwait(false);
+        }
+
+        transport.GetDeadLetters("queue").Should().ContainSingle()
+            .Which.DeliveryCount.Should().Be(4);
+    }
+
+    [TestMethod]
+    public async Task LockRenewalExtendsInMemoryDelivery()
+    {
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(1), null, default).ConfigureAwait(false);
+
+        var delivery = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        clock.Advance(Duration.FromSeconds(45));
+        await delivery.RenewLockAsync(default).ConfigureAwait(false);
+        clock.Advance(Duration.FromSeconds(45));
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
+
+        transport.GetDeadLetters("queue").Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task ExpiredDeliveryAtMaximumIsDeadLettered()
+    {
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
+        transport.ConfigureRetry("queue", 1, TimeSpan.Zero);
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(1), null, default).ConfigureAwait(false);
+
+        _ = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        clock.Advance(Duration.FromMinutes(1));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
+        Func<Task> receive = () => enumerator.MoveNextAsync().AsTask();
+        await receive.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+
+        transport.GetDeadLetters("queue").Should().ContainSingle();
+        await enumerator.DisposeAsync().ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task ExpiredLockRequeuesAndDeadLetterPreservesMetadata()
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
@@ -215,6 +313,17 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class SecondLevelRetryPolicy : IMessagingRetryPolicy
+    {
+        public int MaximumDeliveryCount => 2;
+
+        public bool SecondLevelRetriesEnabled => true;
+
+        public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
+
+        public TimeSpan RetryDelay => TimeSpan.Zero;
     }
 }
 

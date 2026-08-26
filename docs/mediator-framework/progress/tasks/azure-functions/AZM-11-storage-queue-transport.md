@@ -36,7 +36,7 @@ generated Azure Functions QueueTrigger.
 - **Poison ownership**: two actors can write `<queue>-poison` — the
   framework SDK move (metadata) and the Functions host after
   `queues.maxDequeueCount` failed throws (no metadata). Fail-fast,
-  malformed envelopes, foreign `amf1-network`, and missing `IFailed<T>` at
+  malformed envelopes, foreign `amf1-network`, and missing `MessagingFailed<T>` at
   delivery `N` always use the SDK move. `maxDequeueCount` is `2N` when the
   participant enables second-level retries, otherwise `N`. A Functions app
   hosts exactly one messaging participant, so its host-wide queue settings
@@ -90,7 +90,7 @@ generated Azure Functions QueueTrigger.
    both may be IaC-precreated, ensure is idempotent, and queues are never
    auto-deleted. Immediate DLQ uses a `QueueClient` configured with
    `QueueMessageEncoding.None` to send + delete + return as specified above.
-5. Wire the retry policy: AZM-09 runs `IFailed<T>` at `DequeueCount == N`
+5. Wire the retry policy: AZM-09 runs `MessagingFailed<T>` at `DequeueCount == N`
    only when the participant's retry policy enables second-level retries.
    `host.json`
    `visibilityTimeout` equals the participant's `RetryDelay`.

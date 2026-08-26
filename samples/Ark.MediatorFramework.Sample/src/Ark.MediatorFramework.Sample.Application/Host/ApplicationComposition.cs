@@ -201,6 +201,8 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>, CreateBookPrintProcessHandler>();
         container.Register<IRequestHandler<CancelBookPrintProcessRequest, BookPrintProcessResponse>, CancelBookPrintProcessHandler>();
         container.Register<IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
+        container.Register<ICommandHandler<ProcessBookPrintProcessRequest>, ProcessBookPrintProcessHandler>();
+        container.Register<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>, BookPrintProcessFailureHandler>();
         container.Register<IQueryHandler<Book_GetQuery.V1, Book.V1.Output>, GetBookHandler>();
         container.Register<IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>, GetBookPrintProcessHandler>();
         container.Register<IQueryHandler<Book_SearchQuery.V1, Book.V1.Page>, SearchBooksHandler>();

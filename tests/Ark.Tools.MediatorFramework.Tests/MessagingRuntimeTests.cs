@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
@@ -14,6 +15,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
 using NodaTime.Testing;
+
+using SimpleInjector;
+using SimpleInjector.Lifestyles;
 
 using System.Buffers;
 using System.Diagnostics;
@@ -239,6 +243,47 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public void SettlementUsesNativeDeliveryCountAndSecondLevelBoundary()
+    {
+        var policy = new TestRetryPolicy(3, secondLevelRetriesEnabled: true);
+
+        MessagingSettlement.Decide(1, policy, MessagingExceptionClassification.Other, false)
+            .Should().Be(MessagingSettlementDecision.Abandon);
+        MessagingSettlement.Decide(3, policy, MessagingExceptionClassification.Other, false)
+            .Should().Be(MessagingSettlementDecision.RunSecondLevel);
+        MessagingSettlement.Decide(4, policy, MessagingExceptionClassification.Other, false)
+            .Should().Be(MessagingSettlementDecision.Abandon);
+        MessagingSettlement.Decide(3, policy, MessagingExceptionClassification.FailFast, false)
+            .Should().Be(MessagingSettlementDecision.DeadLetter);
+        MessagingSettlement.Decide(3, policy, MessagingExceptionClassification.Other, true)
+            .Should().Be(MessagingSettlementDecision.Abandon);
+    }
+
+    [TestMethod]
+    public void RetryPolicyValidationRejectsInvalidSecondLevelCount()
+    {
+        var action = () => MessagingRetryPolicyValidation.Validate(
+            new TestRetryPolicy(1, secondLevelRetriesEnabled: true));
+
+        action.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [TestMethod]
+    public void ExceptionInfoIsBoundedAndRetainsInnerExceptions()
+    {
+        var exception = new InvalidOperationException(
+            new string('m', 300),
+            new ArgumentException(new string('i', 300)));
+
+        var info = MessagingExceptionInfo.From(exception);
+
+        info.ExceptionType.Should().Be(typeof(InvalidOperationException).FullName);
+        info.Message.Length.Should().Be(256);
+        info.Inner.Should().NotBeNull();
+        info.Inner!.Message.Length.Should().Be(256);
+    }
+
+    [TestMethod]
     public void CodecRegistrationInstallsAllDeclaredProtocols()
     {
         using var services = new ServiceCollection()
@@ -251,6 +296,159 @@ public sealed partial class MessagingRuntimeTests
         registry.IsInstalled(SerializationProtocol.Json).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.MessagePack).Should().BeTrue();
         registry.IsInstalled(SerializationProtocol.Protobuf).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task DispatcherCompletesSuccessfulDelivery()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        var delivery = new TestLockedDelivery(1);
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
+            (_, payload, _, _) =>
+            {
+                payload.Deserialize<DispatchCommand>();
+                return Task.CompletedTask;
+            });
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(1);
+        delivery._abandoned.Should().Be(0);
+        delivery._deadLetters.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task DispatcherDeadLettersMalformedPayloadWithoutSecondLevelDispatch()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        var delivery = new TestLockedDelivery(
+            2,
+            new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("{")));
+        var secondLevelDispatched = false;
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
+            (_, payload, _, _) =>
+            {
+                payload.Deserialize<DispatchCommand>();
+                return Task.CompletedTask;
+            },
+            (_, _, _, _, _, _) =>
+            {
+                secondLevelDispatched = true;
+                return Task.CompletedTask;
+            });
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(0);
+        delivery._abandoned.Should().Be(0);
+        delivery._deadLetters.Should().ContainSingle();
+        delivery._deadLetterReason.Should().Be(MessagingFailFastReason.MalformedPayload.ToString());
+        secondLevelDispatched.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task DispatcherRunsFailureHandlerOnceAtRetryBoundary()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        container.Register<ICommandHandler<MessagingFailed<DispatchCommand>>, RecordingFailedHandler>(Lifestyle.Scoped);
+        var failureHandled = new List<MessagingFailed<DispatchCommand>>();
+        var delivery = new TestLockedDelivery(2);
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
+            (_, _, _, _) => throw new InvalidOperationException("handler failed"),
+            async (_, payload, count, error, processor, token) =>
+            {
+                var message = payload.Deserialize<DispatchCommand>();
+                var failure = new MessagingFailed<DispatchCommand>(message, count, [error]);
+                failureHandled.Add(failure);
+                await processor.ExecuteAsync<MessagingFailed<DispatchCommand>>(failure, token).ConfigureAwait(false);
+            });
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(1);
+        delivery._abandoned.Should().Be(0);
+        delivery._deadLetters.Should().BeEmpty();
+        failureHandled.Should().ContainSingle();
+        failureHandled[0].DeliveryCount.Should().Be(2);
+        failureHandled[0].ErrorDescription.Should().Contain("handler failed");
+        container.GetRegistration<ICommandHandler<MessagingFailed<DispatchCommand>>>().Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task DispatcherDeadLettersWhenFailureHandlerIsMissing()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        var delivery = new TestLockedDelivery(2);
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
+            (_, _, _, _) => throw new InvalidOperationException("handler failed"),
+            (_, _, _, _, _, _) => throw new ActivationException("missing handler"));
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(0);
+        delivery._abandoned.Should().Be(0);
+        delivery._deadLetters.Should().ContainSingle().Which.Should().Be("tests.dispatch");
+        delivery._deadLetterReason.Should().Be(typeof(MessagingFailFastException).FullName);
+    }
+
+    [TestMethod]
+    public async Task DispatcherAbandonsWhenHandlerExceedsMaximumDuration()
+    {
+        await using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        var delivery = new TestLockedDelivery(1);
+        var dispatcher = _createDispatcher(
+            container,
+            new TestRetryPolicy(
+                3,
+                secondLevelRetriesEnabled: false,
+                maximumHandlerDuration: TimeSpan.FromMilliseconds(30)),
+            async (_, _, _, _) =>
+                await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false),
+            lockRenewalInterval: TimeSpan.FromMilliseconds(5));
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(0);
+        delivery._abandoned.Should().Be(1);
+        delivery._renewals.Should().BeGreaterThan(0).And.BeLessThan(15);
+    }
+
+    [TestMethod]
+    public void DispatcherRequiresFailureBinderWhenSecondLevelIsEnabled()
+    {
+        using var container = new Container();
+        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+
+        var act = () => _createDispatcher(
+            container,
+            new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
+            (_, payload, _, _) =>
+            {
+                payload.Deserialize<DispatchCommand>();
+                return Task.CompletedTask;
+            });
+
+        act.Should().Throw<ArgumentNullException>()
+            .Which.ParamName.Should().Be("dispatchFailed");
     }
 
     [TestMethod]
@@ -443,6 +641,139 @@ public sealed partial class MessagingRuntimeTests
             && x.OperationResult == "failure");
     }
 
+    private static MessagingDispatcher _createDispatcher(
+        Container container,
+        IMessagingRetryPolicy retryPolicy,
+        Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
+        Func<
+            string,
+            IMessagingPayloadReader,
+            int,
+            MessagingExceptionInfo,
+            ICommandProcessor,
+            CancellationToken,
+            Task>? dispatchFailed = null,
+        TimeSpan? lockRenewalInterval = null)
+    {
+        var codec = new JsonMessagingCodec(new JsonSerializerOptions
+        {
+            TypeInfoResolver = MessagingTestJsonContext.Default
+        });
+        var registry = new MessagingCodecRegistry([codec]);
+        var network = new MessagingNetworkOptions(
+            typeof(MessagingRuntimeTests),
+            new MessagingNetworkAttribute());
+        var payloadReceiver = new MessagingPayloadReceiver(
+            new InMemoryMessagingDataBus(),
+            network);
+        return new MessagingDispatcher(
+            container,
+            new MessagingHeaderProcessor(registry, "tests"),
+            payloadReceiver,
+            retryPolicy,
+            dispatch,
+            dispatchFailed,
+            lockRenewalInterval: lockRenewalInterval ?? TimeSpan.FromHours(1));
+    }
+
+    private sealed class TestLockedDelivery : IMessagingLockedDelivery
+    {
+        internal TestLockedDelivery(
+            int deliveryCount,
+            ReadOnlySequence<byte>? payload = null)
+        {
+            DeliveryCount = deliveryCount;
+            var codec = new JsonMessagingCodec(new JsonSerializerOptions
+            {
+                TypeInfoResolver = MessagingTestJsonContext.Default
+            });
+            var writer = new ArrayBufferWriter<byte>();
+            codec.Serialize(new DispatchCommand { Value = "test" }, writer);
+            Payload = payload ?? new ReadOnlySequence<byte>(writer.WrittenMemory);
+            Headers = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [MessagingHeaders.MessageType] = "tests.dispatch",
+                [MessagingHeaders.ContentType] = codec.ContentType,
+                [MessagingHeaders.Network] = "tests"
+            };
+        }
+
+        public IReadOnlyDictionary<string, string> Headers { get; }
+
+        public ReadOnlySequence<byte> Payload { get; }
+
+        public int DeliveryCount { get; }
+
+        internal int _completed { get; private set; }
+
+        internal int _abandoned { get; private set; }
+
+        internal List<string> _deadLetters { get; } = [];
+
+        internal string? _deadLetterReason { get; private set; }
+
+        internal int _renewals { get; private set; }
+
+        public Task RenewLockAsync(CancellationToken ctk)
+        {
+            ctk.ThrowIfCancellationRequested();
+            _renewals++;
+            return Task.CompletedTask;
+        }
+
+        public Task CompleteAsync(CancellationToken ctk)
+        {
+            ctk.ThrowIfCancellationRequested();
+            _completed++;
+            return Task.CompletedTask;
+        }
+
+        public Task AbandonAsync(CancellationToken ctk)
+        {
+            ctk.ThrowIfCancellationRequested();
+            _abandoned++;
+            return Task.CompletedTask;
+        }
+
+        public Task DeadLetterAsync(string reason, string description, CancellationToken ctk)
+        {
+            ctk.ThrowIfCancellationRequested();
+            _deadLetterReason = reason;
+            _deadLetters.Add(description);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class TestCommandProcessor : ICommandProcessor
+    {
+        [Obsolete("Test seam.", error: true)]
+        public void Execute(ICommand command)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public async Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
+            where TCommand : class, ICommand<TCommand>
+        {
+            ctk.ThrowIfCancellationRequested();
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+    }
+
+    private sealed class RecordingFailedHandler : ICommandHandler<MessagingFailed<DispatchCommand>>
+    {
+        public async Task ExecuteAsync(MessagingFailed<DispatchCommand> command, CancellationToken ctk = default)
+        {
+            ctk.ThrowIfCancellationRequested();
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+    }
+
     private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
     {
         private readonly string _name;
@@ -470,11 +801,37 @@ public sealed partial class MessagingRuntimeTests
         }
     }
 
+    private sealed class TestRetryPolicy : IMessagingRetryPolicy
+    {
+        public TestRetryPolicy(
+            int maximumDeliveryCount,
+            bool secondLevelRetriesEnabled,
+            TimeSpan? maximumHandlerDuration = null)
+        {
+            MaximumDeliveryCount = maximumDeliveryCount;
+            SecondLevelRetriesEnabled = secondLevelRetriesEnabled;
+            MaximumHandlerDuration = maximumHandlerDuration ?? TimeSpan.FromMinutes(1);
+        }
+
+        public int MaximumDeliveryCount { get; }
+
+        public bool SecondLevelRetriesEnabled { get; }
+
+        public TimeSpan MaximumHandlerDuration { get; }
+
+        public TimeSpan RetryDelay => TimeSpan.Zero;
+    }
+
     private sealed class MessagingRuntimeContract
     {
         public string Name { get; init; } = string.Empty;
 
         public byte[] Data { get; init; } = [];
+    }
+
+    private sealed class DispatchCommand : ICommand<DispatchCommand>
+    {
+        public string Value { get; init; } = string.Empty;
     }
 
     [MessagePackObject(false)]
@@ -486,6 +843,7 @@ public sealed partial class MessagingRuntimeTests
 
     [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
     [JsonSerializable(typeof(MessagingRuntimeContract))]
+    [JsonSerializable(typeof(DispatchCommand))]
     private sealed partial class MessagingTestJsonContext : JsonSerializerContext
     {
     }

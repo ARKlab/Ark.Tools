@@ -336,6 +336,8 @@ public sealed class MessagingCompressionAndDataBusTests
             .ConfigureAwait(false);
         await using (reader.ConfigureAwait(false))
         {
+            new TextCodec().Deserialize<PayloadContract>(reader.ReadPayload()).Value
+                .Should().Be(new string('a', 100));
             reader.Deserialize<PayloadContract>().Value.Should().Be(new string('a', 100));
         }
     }

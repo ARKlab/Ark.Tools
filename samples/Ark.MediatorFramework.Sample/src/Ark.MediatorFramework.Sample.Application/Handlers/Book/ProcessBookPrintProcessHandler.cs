@@ -13,7 +13,8 @@ namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Completes a queued book print process through Rebus.</summary>
 public sealed class ProcessBookPrintProcessHandler :
-    IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>
+    IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>,
+    ICommandHandler<ProcessBookPrintProcessRequest>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -54,6 +55,7 @@ public sealed class ProcessBookPrintProcessHandler :
             await _printCompletedNotificationService.NotifyAsync(process, ctk).ConfigureAwait(false);
             return process;
         }
+
         if (process.Status != BookPrintProcessStatus.Pending && process.Status != BookPrintProcessStatus.Running)
             return process;
 
@@ -86,6 +88,13 @@ public sealed class ProcessBookPrintProcessHandler :
         activity?.SetTag("book_print_process.status", process.Status.ToString());
         activity?.SetStatus(ActivityStatusCode.Ok);
         return process;
+    }
+
+    async Task ICommandHandler<ProcessBookPrintProcessRequest>.ExecuteAsync(
+        ProcessBookPrintProcessRequest command,
+        CancellationToken ctk)
+    {
+        _ = await ExecuteAsync(command, ctk).ConfigureAwait(false);
     }
 
     private async Task<BookPrintProcessResponse> _persistAsync(

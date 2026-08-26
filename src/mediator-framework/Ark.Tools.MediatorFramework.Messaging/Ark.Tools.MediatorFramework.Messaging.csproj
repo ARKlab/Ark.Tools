@@ -20,5 +20,7 @@
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="MessagePack" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.SimpleInjector\Ark.Tools.SimpleInjector.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
   </ItemGroup>
 </Project>

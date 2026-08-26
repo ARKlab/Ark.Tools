@@ -153,6 +153,41 @@ not an Azure Functions hosting mechanism. Registration validates the transport
 capabilities against each network and fails immediately when a required
 capability is missing.
 
+### Delivery settlement and retries
+
+The transport reports the native `DeliveryCount`; handlers must not copy or
+increment it in message headers. `MessagingSettlement.Decide` maps successful
+handling to completion, fail-fast failures to dead-letter, and other failures
+to abandon. When second-level retries are enabled, delivery `N` is the single
+inline `MessagingFailed<T>` boundary and the transport maximum is `2N`; otherwise the
+normal message runs through `N`. `MessagingFailed<T>` is an in-memory diagnostic
+dispatch and is never persisted as a separate message.
+
+Applications register second-level handlers as regular
+`ICommandHandler` implementations that handle `MessagingFailed<T>`. InMemory custom hosts map the participant policy
+to the native queue limit and delay before starting the pump:
+
+```csharp
+transport.ConfigureRetry(participantIdentity, retryPolicy);
+```
+
+Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into
+`MessagingReceivePump` (or an equivalent locked trigger) with the participant's
+generated normal and `DispatchFailedAsync` binders. Each stage gets a fresh
+`AsyncScopedLifestyle` scope, and the dispatcher renews the transport lock
+while the bounded handler-duration token is active. A successful stage is
+completed
+explicitly; fail-fast header, decoding, and handler errors are dead-lettered.
+Other handler or pipeline errors are abandoned and retried. A second-level
+handler runs inline once at delivery `N` in its own scope; missing or fail-fast
+second-level handlers are dead-lettered, while other second-level failures are
+abandoned so normal `T` processing resumes.
+
+Abandon visibility is transport-specific: InMemory uses the configured
+`RetryDelay`, Storage Queue uses its visibility timeout, and Service Bus
+abandon is immediate. Lock loss or settlement failure is surfaced as an
+unsuccessful delivery, preserving at-least-once behavior.
+
 ### Compression and claim-check
 
 Compression is a participant-owned sender setting. Payloads below

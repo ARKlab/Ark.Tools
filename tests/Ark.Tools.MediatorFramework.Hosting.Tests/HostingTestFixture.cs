@@ -34,7 +34,6 @@ using ProtoBuf.Meta;
 using RebusBus = Rebus.Bus.IBus;
 using Rebus.Handlers;
 using Rebus.Pipeline;
-using Rebus.Retry.Simple;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -72,7 +71,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         Container.RegisterAuthorization();
         Container.RegisterAuthorizationPolicy<HostingScopePolicy>();
         HostingEndpointMappings.RegisterRebusHandlers(Container);
-        Container.Collection.Append<IHandleMessages<IFailed<HostingSecondLevelRetryCommand>>, HostingSecondLevelRetryFailedHandler>();
+        Container.Collection.Append<IHandleMessages<global::Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand>>, HostingSecondLevelRetryFailedHandler>();
         Container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
     }
 
@@ -319,7 +318,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds an isolated in-memory Rebus bus for the synthetic messages.</summary>
-    /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="IFailed{TMessage}"/>.</param>
+    /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="global::Rebus.Retry.Simple.IFailed{TMessage}"/>.</param>
     /// <returns>The started Rebus bus.</returns>
     public RebusBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
     {
@@ -521,7 +520,7 @@ public sealed class HostingTestState
         Interlocked.Increment(ref _secondLevelRetryAttempts);
     }
 
-    internal void _recordFailedMessage(IFailed<HostingSecondLevelRetryCommand> message)
+    internal void _recordFailedMessage(global::Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand> message)
     {
         ArgumentNullException.ThrowIfNull(message);
         Interlocked.Increment(ref _failedMessageExecutions);
@@ -742,7 +741,7 @@ internal sealed class HostingSecondLevelRetryCommandHandler : ICommandHandler<Ho
     }
 }
 
-internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFailed<HostingSecondLevelRetryCommand>>
+internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<global::Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand>>
 {
     private readonly HostingTestState _state;
 
@@ -751,7 +750,7 @@ internal sealed class HostingSecondLevelRetryFailedHandler : IHandleMessages<IFa
         _state = state;
     }
 
-    public async Task Handle(IFailed<HostingSecondLevelRetryCommand> message)
+    public async Task Handle(global::Rebus.Retry.Simple.IFailed<HostingSecondLevelRetryCommand> message)
     {
         await Task.CompletedTask.ConfigureAwait(false);
         _state._recordFailedMessage(message);
