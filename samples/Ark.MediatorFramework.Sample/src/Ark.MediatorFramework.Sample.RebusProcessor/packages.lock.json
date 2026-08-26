@@ -89,6 +89,15 @@
           "System.IO.Hashing": "10.0.3"
         }
       },
+      "Azure.Storage.Queues": {
+        "type": "Transitive",
+        "resolved": "12.27.1",
+        "contentHash": "uQgZ9bzwVJ8bqsWywzwkRt1lfusYPXJAPSb9yVlTsSmZtH+bnDb/RfQuHiuUmk3nlQbCOUGFdD0cRXn8uMiOHg==",
+        "dependencies": {
+          "Azure.Core": "1.55.0",
+          "Azure.Storage.Common": "12.28.0"
+        }
+      },
       "Ben.Demystifier": {
         "type": "Transitive",
         "resolved": "0.4.1",
@@ -981,6 +990,7 @@
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
           "Azure.Storage.Blobs": "[12.29.1, )",
+          "Azure.Storage.Queues": "[12.27.1, )",
           "Google.Protobuf": "[3.35.1, )",
           "MessagePack": "[3.1.8, )",
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
