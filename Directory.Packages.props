@@ -169,6 +169,7 @@
 	  <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
 	  <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.1.0" />
 	  <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />
+	  <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
 	  
 	  <!-- REBUS -->
 	  <PackageVersion Include="Rebus" Version="8.9.2" />
