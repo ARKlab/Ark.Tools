@@ -31,7 +31,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _networkOptions = "Ark.Tools.MediatorFramework.Messaging.MessagingNetworkOptions";
     private const string _contractRegistry = "Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry";
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
-    private const string _commandHandler = "Ark.Tools.Solid.ICommandHandler`1";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
     private const string _failedMessage = "Ark.Tools.MediatorFramework.MessagingFailed`1";
@@ -872,7 +871,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             && compilation.GetTypeByMetadataName(_streamPayloadReader) is not null
             && compilation.GetTypeByMetadataName(_codec) is not null;
         var canEmitFailedBinder = canEmitBinder
-            && compilation.GetTypeByMetadataName(_commandHandler) is not null
             && compilation.GetTypeByMetadataName(_failedMessage) is not null
             && compilation.GetTypeByMetadataName(_exceptionInfo) is not null;
         var canEmitPayloadSender = compilation.GetTypeByMetadataName(_payloadSender) is not null
@@ -975,7 +973,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .AppendLine("        int deliveryCount,")
                     .AppendLine("        global::Ark.Tools.MediatorFramework.MessagingExceptionInfo error,")
                     .AppendLine("        global::Ark.Tools.Solid.ICommandProcessor processor,")
-                    .AppendLine("        global::System.Func<global::System.Type, bool> isHandlerRegistered,")
                     .AppendLine("        global::System.Threading.CancellationToken ctk)")
                     .AppendLine("    {")
                     .AppendLine("        switch (logicalName)")
@@ -987,12 +984,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                         .Distinct(StringComparer.Ordinal);
                     foreach (var wireName in names)
                         source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                    source.Append("                if (!isHandlerRegistered(typeof(global::Ark.Tools.Solid.ICommandHandler<global::Ark.Tools.MediatorFramework.IFailed<")
-                        .Append(_typeName(contract)).AppendLine(">>)))")
-                        .AppendLine("                    throw new global::Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException(")
-                        .AppendLine("                        global::Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason.MissingSecondLevelHandler,")
-                        .AppendLine("                        logicalName);")
-                        .Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine(">();")
+                    source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine(">();")
                         .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(_typeName(contract)).AppendLine(">(message, deliveryCount, new[] { error });")
                         .Append("                await processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.IFailed<")

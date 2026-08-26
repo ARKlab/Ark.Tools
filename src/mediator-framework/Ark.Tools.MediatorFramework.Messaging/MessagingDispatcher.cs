@@ -26,7 +26,6 @@ public sealed class MessagingDispatcher
         int,
         MessagingExceptionInfo,
         ICommandProcessor,
-        Func<Type, bool>,
         CancellationToken,
         Task>? _dispatchFailed;
     private readonly IReadOnlyList<Type> _incomingStepTypes;
@@ -55,7 +54,6 @@ public sealed class MessagingDispatcher
             int,
             MessagingExceptionInfo,
             ICommandProcessor,
-            Func<Type, bool>,
             CancellationToken,
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
@@ -216,11 +214,23 @@ public sealed class MessagingDispatcher
                         delivery.DeliveryCount,
                         error,
                         processor,
-                        type => _container.GetRegistration(type) is not null,
                         stageToken).ConfigureAwait(false);
                 },
                 cancellationToken).ConfigureAwait(false);
             return (MessagingSettlementDecision.Complete, null);
+        }
+        catch (ActivationException exception)
+        {
+            var failFast = new MessagingFailFastException(
+                MessagingFailFastReason.MissingSecondLevelHandler,
+                logicalName,
+                exception);
+            _logger.Warn(
+                exception,
+                CultureInfo.InvariantCulture,
+                "Messaging second-level handler activation failed for {MessageType}",
+                logicalName);
+            return (MessagingSettlementDecision.DeadLetter, MessagingExceptionInfo.From(failFast));
         }
         catch (MessagingFailFastException exception)
         {

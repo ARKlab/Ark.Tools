@@ -339,7 +339,7 @@ public sealed partial class MessagingRuntimeTests
                 payload.Deserialize<DispatchCommand>();
                 return Task.CompletedTask;
             },
-            (_, _, _, _, _, _, _) =>
+            (_, _, _, _, _, _) =>
             {
                 secondLevelDispatched = true;
                 return Task.CompletedTask;
@@ -366,9 +366,8 @@ public sealed partial class MessagingRuntimeTests
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             (_, _, _, _) => throw new InvalidOperationException("handler failed"),
-            async (_, payload, count, error, processor, isHandlerRegistered, token) =>
+            async (_, payload, count, error, processor, token) =>
             {
-                isHandlerRegistered(typeof(ICommandHandler<IFailed<DispatchCommand>>)).Should().BeTrue();
                 var message = payload.Deserialize<DispatchCommand>();
                 var failure = new MessagingFailed<DispatchCommand>(message, count, [error]);
                 failureHandled.Add(failure);
@@ -397,15 +396,13 @@ public sealed partial class MessagingRuntimeTests
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             (_, _, _, _) => throw new InvalidOperationException("handler failed"),
-            (_, _, _, _, _, _, _) => throw new MessagingFailFastException(
-                MessagingFailFastReason.MissingSecondLevelHandler,
-                "tests.dispatch"));
+            (_, _, _, _, _, _) => throw new ActivationException("missing handler"));
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
 
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(0);
-        delivery._deadLetters.Should().ContainSingle();
+        delivery._deadLetters.Should().ContainSingle().Which.Should().Be("tests.dispatch");
         delivery._deadLetterReason.Should().Be(typeof(MessagingFailFastException).FullName);
     }
 
@@ -633,7 +630,6 @@ public sealed partial class MessagingRuntimeTests
             int,
             MessagingExceptionInfo,
             ICommandProcessor,
-            Func<System.Type, bool>,
             CancellationToken,
             Task>? dispatchFailed = null,
         TimeSpan? lockRenewalInterval = null)

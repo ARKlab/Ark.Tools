@@ -2177,9 +2177,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
         result.Generated.Should().Contain("GetLogicalNameFor<T>()");
         result.Generated.Should().Contain("DispatchFailedAsync");
-        result.Generated.Should().Contain("MissingSecondLevelHandler");
-        result.Generated.Should().Contain("ICommandHandler<global::Ark.Tools.MediatorFramework.IFailed<global::PrintBook>>");
         result.Generated.Should().Contain("processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.IFailed<global::PrintBook>>");
+        result.Generated.Should().NotContain("isHandlerRegistered");
+        result.Generated.Should().NotContain("MissingSecondLevelHandler");
+        result.Generated.Should().NotContain("ICommandHandler<global::Ark.Tools.MediatorFramework.IFailed<global::PrintBook>>");
         result.Generated.Should().NotContain("IMessagingFailedHandler");
         result.Generated.Should().Contain("private static string GetProcessorIdentity(global::System.Type contractType)");
         result.Generated.Should().Contain("private static string GetPublisherIdentity(global::System.Type contractType)");
