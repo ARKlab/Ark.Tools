@@ -110,7 +110,7 @@ dotnet build <project>.csproj -p:EmitCompilerGeneratedFiles=true
 
 # 2. Review obj/Debug/<tfm>/ArkApiSurface.current.txt, including the deterministic
 #    MESSAGE / EVENT / PARTICIPANT / NETWORK entries (AZM-03) and generated
-#    messaging trigger/route lines (AZM-10/11).
+#    messaging contract/interaction lines; host trigger details stay excluded.
 
 # 3. Only after approval, copy the snapshot over the committed baseline:
 copy obj\Debug\net10.0\ArkApiSurface.current.txt ArkApiSurface.txt

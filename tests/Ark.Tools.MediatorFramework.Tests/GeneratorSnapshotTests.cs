@@ -2350,6 +2350,135 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("namespace <global namespace>;");
     }
 
+    [TestMethod]
+    public void MessagingFunctionsGeneratorEmitsServiceBusTriggerAndManifest()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            using Ark.Tools.Solid;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                ConnectionConfigurationKey = "BookMessaging",
+                IncomingSteps = new[] { typeof(IncomingStep) })]
+            [Event(Name = "books_printed")]
+            public sealed class BookPrinted : IRequest<BookPrinted, string> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [MessagingParticipant(
+                Subscribes = new[] { typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json,
+                Retry = typeof(TestRetryPolicy))]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PublishingParticipant), typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+            public static partial class BookMessagingNetwork { }
+            public sealed class IncomingStep { }
+            public sealed class TestRetryPolicy : IMessagingRetryPolicy
+            {
+                public int MaximumDeliveryCount => 3;
+                public bool SecondLevelRetriesEnabled => true;
+                public System.TimeSpan MaximumHandlerDuration => System.TimeSpan.FromMinutes(2);
+                public System.TimeSpan RetryDelay => System.TimeSpan.Zero;
+            }
+            """;
+
+        var first = _runGeneratorResult<MessagingFunctionsGenerator>(source);
+        var second = _runGeneratorResult<MessagingFunctionsGenerator>(source);
+
+        first.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        first.Generated.Should().Be(second.Generated);
+        first.Generated.Should().Contain("ServiceBusTrigger(");
+        first.Generated.Should().Contain("AutoCompleteMessages = false");
+        first.Generated.Should().Contain("ServiceBusMessageActions messageActions");
+        first.Generated.Should().Contain("FunctionContext functionContext");
+        first.Generated.Should().Contain(".DispatchAsync(message, messageActions, functionContext, cancellationToken)");
+        first.Generated.Should().Contain("class ArkGeneratedMessagingFunctions");
+        first.Generated.Should().Contain("MessagingFunctionsManifest Manifest");
+        first.Generated.Should().Contain("\"publishing-books_printed\"");
+        first.Generated.Should().Contain("\"printing\"");
+        first.Generated.Should().Contain("typeof(global::IncomingStep)");
+        first.Generated.Should().Contain("new global::TestRetryPolicy().MaximumDeliveryCount");
+        first.Generated.Split("ServiceBusTrigger(", StringSplitOptions.None).Should().HaveCount(2);
+    }
+
+    [TestMethod]
+    public void MessagingFunctionsGeneratorReportsSenderOnlyParticipant()
+    {
+        var result = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(SenderParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [MessagingParticipant]
+            public sealed partial class SenderParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(SenderParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF037");
+        result.Generated.Should().Contain("MessagingFunctionsManifest Manifest");
+        result.Generated.Should().NotContain("ServiceBusTrigger(");
+    }
+
+    [TestMethod]
+    public void MessagingFunctionsGeneratorDiagnosesInvalidHostSelection()
+    {
+        var multipleHosts = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+        var missingNetwork = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            """);
+        var unsupported = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.StorageQueue)]
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        multipleHosts.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF033");
+        multipleHosts.Generated.Should().BeEmpty();
+        missingNetwork.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF035");
+        missingNetwork.Generated.Should().BeEmpty();
+        unsupported.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF038");
+        unsupported.Generated.Should().BeEmpty();
+    }
+
     private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runApiSurfaceGeneratorResult(
         string source,
         string? baseline,
@@ -2361,6 +2490,7 @@ public sealed class GeneratorSnapshotTests
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(MessagingFunctionsHostAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),

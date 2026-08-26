@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
                       OutputItemType="Analyzer"
                       PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
@@ -21,6 +22,9 @@
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
+    <ProjectReference Include="../../../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions.Generators/Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.RebusProcessor\Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Functions\Ark.MediatorFramework.Sample.Functions.csproj" />
   </ItemGroup>

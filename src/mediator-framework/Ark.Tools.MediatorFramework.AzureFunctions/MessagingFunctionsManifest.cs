@@ -1,0 +1,110 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using System.Collections.ObjectModel;
+
+namespace Ark.Tools.MediatorFramework.AzureFunctions;
+
+/// <summary>Describes one desired Service Bus event subscription.</summary>
+public sealed class MessagingFunctionsSubscription
+{
+    /// <summary>Creates one desired forwarding subscription.</summary>
+    /// <param name="topic">The event topic.</param>
+    /// <param name="name">The deterministic subscription name.</param>
+    /// <param name="forwardToQueue">The participant identity queue.</param>
+    public MessagingFunctionsSubscription(string topic, string name, string forwardToQueue)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(forwardToQueue);
+        Topic = topic;
+        Name = name;
+        ForwardToQueue = forwardToQueue;
+    }
+
+    /// <summary>Gets the event topic.</summary>
+    public string Topic { get; }
+
+    /// <summary>Gets the deterministic subscription name.</summary>
+    public string Name { get; }
+
+    /// <summary>Gets the participant identity queue receiving forwarded copies.</summary>
+    public string ForwardToQueue { get; }
+}
+
+/// <summary>Describes the generated Azure Functions messaging host resources.</summary>
+public sealed class MessagingFunctionsManifest
+{
+    /// <summary>Creates a generated messaging host manifest.</summary>
+    /// <param name="participant">The bound participant type.</param>
+    /// <param name="network">The participant network type.</param>
+    /// <param name="triggerBinding">The selected trigger binding.</param>
+    /// <param name="queue">The participant identity queue.</param>
+    /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
+    /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
+    /// <param name="subscriptions">The desired forwarding subscriptions.</param>
+    /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
+    /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
+    public MessagingFunctionsManifest(
+        Type participant,
+        Type network,
+        MessagingFunctionsTriggerBinding triggerBinding,
+        string queue,
+        string connectionConfigurationKey,
+        int maximumDeliveryCount,
+        TimeSpan maximumHandlerDuration,
+        IEnumerable<MessagingFunctionsSubscription> subscriptions,
+        IEnumerable<Type> incomingSteps,
+        IEnumerable<Type> outgoingSteps)
+    {
+        Participant = participant ?? throw new ArgumentNullException(nameof(participant));
+        Network = network ?? throw new ArgumentNullException(nameof(network));
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+        ArgumentException.ThrowIfNullOrEmpty(connectionConfigurationKey);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maximumHandlerDuration, TimeSpan.Zero);
+        ArgumentNullException.ThrowIfNull(subscriptions);
+        ArgumentNullException.ThrowIfNull(incomingSteps);
+        ArgumentNullException.ThrowIfNull(outgoingSteps);
+
+        TriggerBinding = triggerBinding;
+        Queue = queue;
+        ConnectionConfigurationKey = connectionConfigurationKey;
+        MaximumDeliveryCount = maximumDeliveryCount;
+        MaximumHandlerDuration = maximumHandlerDuration;
+        Subscriptions = new ReadOnlyCollection<MessagingFunctionsSubscription>(subscriptions.ToArray());
+        IncomingSteps = new ReadOnlyCollection<Type>(incomingSteps.ToArray());
+        OutgoingSteps = new ReadOnlyCollection<Type>(outgoingSteps.ToArray());
+    }
+
+    /// <summary>Gets the bound participant type.</summary>
+    public Type Participant { get; }
+
+    /// <summary>Gets the messaging network type.</summary>
+    public Type Network { get; }
+
+    /// <summary>Gets the compile-time trigger binding.</summary>
+    public MessagingFunctionsTriggerBinding TriggerBinding { get; }
+
+    /// <summary>Gets the participant identity queue.</summary>
+    public string Queue { get; }
+
+    /// <summary>Gets the Functions connection setting name.</summary>
+    public string ConnectionConfigurationKey { get; }
+
+    /// <summary>Gets the native entity maximum delivery count.</summary>
+    public int MaximumDeliveryCount { get; }
+
+    /// <summary>Gets the maximum handler duration covered by lock renewal.</summary>
+    public TimeSpan MaximumHandlerDuration { get; }
+
+    /// <summary>Gets the desired forwarding subscriptions.</summary>
+    public IReadOnlyList<MessagingFunctionsSubscription> Subscriptions { get; }
+
+    /// <summary>Gets the host-local incoming pipeline step types.</summary>
+    public IReadOnlyList<Type> IncomingSteps { get; }
+
+    /// <summary>Gets the host-local outgoing pipeline step types.</summary>
+    public IReadOnlyList<Type> OutgoingSteps { get; }
+}
