@@ -92,6 +92,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             hosts.Add(new Host(
                 participant,
                 binding,
+                _string(attribute, "ConnectionConfigurationKey"),
                 _types(attribute, "IncomingSteps"),
                 _types(attribute, "OutgoingSteps"),
                 attribute.ApplicationSyntaxReference is { } syntax
@@ -173,7 +174,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         if (subscriptions is null)
             return;
 
-        var connection = _string(network.Attribute, "ConnectionConfigurationKey")
+        var connection = host.ConnectionConfigurationKey
             ?? network.Type.Name;
         var retryType = _type(participantAttribute, "Retry");
         var source = new StringBuilder()
@@ -485,12 +486,14 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         public Host(
             INamedTypeSymbol participant,
             int binding,
+            string? connectionConfigurationKey,
             ImmutableArray<INamedTypeSymbol> incomingSteps,
             ImmutableArray<INamedTypeSymbol> outgoingSteps,
             Location location)
         {
             Participant = participant;
             Binding = binding;
+            ConnectionConfigurationKey = connectionConfigurationKey;
             IncomingSteps = incomingSteps;
             OutgoingSteps = outgoingSteps;
             Location = location;
@@ -499,6 +502,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         public INamedTypeSymbol Participant { get; }
 
         public int Binding { get; }
+
+        public string? ConnectionConfigurationKey { get; }
 
         public ImmutableArray<INamedTypeSymbol> IncomingSteps { get; }
 

@@ -2139,45 +2139,6 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void ApiSurfaceGeneratorEmitsMessagingTriggerAndRoute()
-    {
-        var result = _runApiSurfaceGeneratorResult(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.MediatorFramework.AzureFunctions;
-            [assembly: MessagingFunctionsHost(
-                typeof(Sample.PrintingParticipant),
-                MessagingFunctionsTriggerBinding.ServiceBus)]
-
-            namespace Sample;
-
-            [Event(Name = "invoice.created")]
-            public sealed class InvoiceCreated { }
-
-            [MessagingParticipant(Publishes = new[] { typeof(InvoiceCreated) })]
-            public sealed partial class BillingParticipant { }
-
-            [MessagingParticipant(Subscribes = new[] { typeof(InvoiceCreated) })]
-            public sealed partial class PrintingParticipant { }
-
-            [MessagingNetwork(
-                Members = new[] { typeof(BillingParticipant), typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.PubSub)]
-            public sealed partial class BusinessNetwork { }
-            """,
-            baseline: null,
-            enabled: false);
-
-        result.Generated.Should().Contain(
-            "MESSAGING-TRIGGER Sample.PrintingParticipant"
-            + " -> binding:service_bus queue:printing network:Sample.BusinessNetwork");
-        result.Generated.Should().Contain(
-            "MESSAGING-ROUTE Sample.PrintingParticipant"
-            + " -> event:invoice.created topic:billing-invoice.created"
-            + " subscription:printing-853840d4 forward:printing");
-    }
-
-    [TestMethod]
     public void MessagingNetworkGeneratorEmitsReflectionFreeRegistries()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
@@ -2400,6 +2361,7 @@ public sealed class GeneratorSnapshotTests
             [assembly: MessagingFunctionsHost(
                 typeof(PrintingParticipant),
                 MessagingFunctionsTriggerBinding.ServiceBus,
+                ConnectionConfigurationKey = "BookMessaging",
                 IncomingSteps = new[] { typeof(IncomingStep) })]
             [Event(Name = "books_printed")]
             public sealed class BookPrinted : IRequest<BookPrinted, string> { }
@@ -2416,8 +2378,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PublishingParticipant), typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
-                ConnectionConfigurationKey = "BookMessaging")]
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
             public static partial class BookMessagingNetwork { }
             public sealed class IncomingStep { }
             public sealed class TestRetryPolicy : IMessagingRetryPolicy

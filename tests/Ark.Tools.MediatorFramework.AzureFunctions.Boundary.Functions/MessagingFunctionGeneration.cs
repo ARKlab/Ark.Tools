@@ -7,7 +7,8 @@ using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
 [assembly: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHost(
     typeof(BoundaryMessagingParticipant),
-    Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.ServiceBus)]
+    Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.ServiceBus,
+    ConnectionConfigurationKey = "BoundaryMessaging")]
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
@@ -29,8 +30,7 @@ public sealed partial class BoundaryMessagingParticipant
 /// <summary>Compile fixture network for the generated Service Bus trigger.</summary>
 [MessagingNetwork(
     Members = new[] { typeof(BoundaryMessagingParticipant) },
-    Requires = MessagingCapabilities.Receive,
-    ConnectionConfigurationKey = "BoundaryMessaging")]
+    Requires = MessagingCapabilities.Receive)]
 public static partial class BoundaryMessagingNetwork
 {
 }

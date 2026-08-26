@@ -34,6 +34,9 @@ public sealed class MessagingFunctionsHostAttribute : Attribute
     /// <summary>Gets the compile-time trigger binding selection.</summary>
     public MessagingFunctionsTriggerBinding Binding { get; }
 
+    /// <summary>Gets or sets the host configuration key containing the transport connection.</summary>
+    public string? ConnectionConfigurationKey { get; set; }
+
     /// <summary>Gets or sets host-local incoming pipeline step types.</summary>
     public Type[] IncomingSteps { get; set; } = Array.Empty<Type>();
 

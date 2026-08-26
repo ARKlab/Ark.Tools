@@ -62,17 +62,18 @@ Declare a messaging network as an attributed class. List every participant in
 subscriptions, and `ScheduledSend` for delayed delivery. `Send` is always
 available and is not a capability flag.
 
-All members share payload limits, DataBus offload and integrity limits, resource
-lifecycle policy, and configuration key names. Serialization, compression, and
-retry belong to each participant. Pipeline steps are host-local because their
-dependencies and environment-specific choices may differ. Receivers accept
-installed codecs selected by message headers.
+All members share payload limits and DataBus offload and integrity limits.
+Serialization, compression, and retry belong to each participant. Transport
+connections, resource lifecycle, and pipeline steps are host-local because
+their dependencies and environment-specific choices may differ. Receivers
+accept installed codecs selected by message headers.
 
-Do not store secrets or provider-specific values in the network attribute. Use
-configuration key names and resolve connection strings or managed identity in
-the host. All participants on one network must use the same runtime transport
-and physical resources. Service Bus supports the default 240,000-byte transport
-threshold; networks intended for Storage Queue should use 46,080 bytes or less.
+Do not store secrets or provider-specific values in the network attribute.
+Declare configuration key names on the concrete host and resolve connection
+strings or managed identity there. All participants on one network must use the
+same runtime transport and physical resources. Service Bus supports the default
+240,000-byte transport threshold; networks intended for Storage Queue should
+use 46,080 bytes or less.
 
 ### Transport-neutral contracts and participants
 
@@ -161,7 +162,8 @@ Functions assembly to exactly one receive participant:
 ```csharp
 [assembly: MessagingFunctionsHost(
     typeof(PrintingParticipant),
-    MessagingFunctionsTriggerBinding.ServiceBus)]
+    MessagingFunctionsTriggerBinding.ServiceBus,
+    ConnectionConfigurationKey = "AzureServiceBus:ConnectionString")]
 ```
 
 The participant must belong to exactly one `[MessagingNetwork]`. A participant
@@ -185,11 +187,6 @@ limits, host-local steps, and forwarding subscriptions. Each subscription
 forwards the publisher-owned topic into the participant identity queue. Resource
 creation and validation consume this manifest in the lifecycle layer; generated
 trigger code never creates entities.
-
-The API-surface snapshot includes `MESSAGING-TRIGGER` and `MESSAGING-ROUTE`
-entries. Review queue, topic, subscription, and forwarding changes before
-accepting an updated baseline because they can require an infrastructure
-migration.
 
 Service Bus transport conformance tests require explicit infrastructure:
 
