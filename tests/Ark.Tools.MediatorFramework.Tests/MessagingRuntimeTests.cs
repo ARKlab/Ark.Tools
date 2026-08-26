@@ -745,10 +745,10 @@ public sealed partial class MessagingRuntimeTests
 
     private sealed class RecordingFailedHandler : ICommandHandler<MessagingFailed<DispatchCommand>>
     {
-        public Task ExecuteAsync(MessagingFailed<DispatchCommand> command, CancellationToken ctk = default)
+        public async Task ExecuteAsync(MessagingFailed<DispatchCommand> command, CancellationToken ctk = default)
         {
             ctk.ThrowIfCancellationRequested();
-            return Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 
