@@ -7,6 +7,8 @@ using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
 
+using Azure.Messaging.ServiceBus;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
@@ -208,6 +210,29 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 
         transport.MeasureNative(headers, _sequence(1, 2))
             .Should().Be(2 + 2 + 3);
+    }
+
+    [TestMethod]
+    public async Task ServiceBusTransportMeasuresPropertiesAndRejectsOversizedMessages()
+    {
+#pragma warning disable CA2000 // The transport owns and disposes the client.
+        await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(
+            "Endpoint=sb://localhost/;SharedAccessKeyName=test;SharedAccessKey=dGVzdA=="));
+#pragma warning restore CA2000
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["é"] = "値" };
+
+        transport.Capabilities.Should().Be(
+            MessagingCapabilities.Receive
+            | MessagingCapabilities.PubSub
+            | MessagingCapabilities.ScheduledSend);
+        transport.MaximumInlineEnvelopeBytes.Should().Be(256 * 1024);
+        transport.MeasureNative(headers, _sequence(1, 2)).Should().Be(2 + 2 + 3 + 8);
+
+        var oversized = new ReadOnlySequence<byte>(new byte[(256 * 1024) + 1]);
+        Func<Task> send = async () => await transport
+            .SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), oversized, null, default)
+            .ConfigureAwait(false);
+        await send.Should().ThrowAsync<ArgumentOutOfRangeException>().ConfigureAwait(false);
     }
 
     [TestMethod]
