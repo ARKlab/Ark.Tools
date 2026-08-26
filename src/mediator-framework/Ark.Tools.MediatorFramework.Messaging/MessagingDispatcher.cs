@@ -132,6 +132,7 @@ public sealed class MessagingDispatcher
         catch (MessagingFailFastException exception)
         {
             _logger.Warn(
+                exception,
                 CultureInfo.InvariantCulture,
                 "Messaging delivery failed fast with {Reason}: {Description}",
                 exception.Reason,
@@ -178,6 +179,7 @@ public sealed class MessagingDispatcher
         {
             var error = MessagingExceptionInfo.From(exception);
             _logger.Warn(
+                exception,
                 CultureInfo.InvariantCulture,
                 "Messaging delivery failed with {ExceptionType}: {Message}",
                 error.ExceptionType,
@@ -223,6 +225,7 @@ public sealed class MessagingDispatcher
         catch (MessagingFailFastException exception)
         {
             _logger.Warn(
+                exception,
                 CultureInfo.InvariantCulture,
                 "Messaging second-level delivery failed fast with {Reason}: {Description}",
                 exception.Reason,
@@ -234,6 +237,7 @@ public sealed class MessagingDispatcher
         {
             var failureInfo = MessagingExceptionInfo.From(exception);
             _logger.Warn(
+                exception,
                 CultureInfo.InvariantCulture,
                 "Messaging second-level delivery failed with {ExceptionType}: {Message}",
                 failureInfo.ExceptionType,
