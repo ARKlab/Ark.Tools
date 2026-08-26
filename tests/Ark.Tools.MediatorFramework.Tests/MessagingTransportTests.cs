@@ -358,6 +358,12 @@ public abstract class MessagingTransportConformanceTests
     /// <summary>Creates the transport under test.</summary>
     protected abstract IMessagingReceiveTransport CreateTransport();
 
+    /// <summary>Gets the queue used for conformance messages.</summary>
+    protected virtual string QueueName => "queue";
+
+    /// <summary>Gets an empty queue used for cancellation checks.</summary>
+    protected virtual string EmptyQueueName => "empty";
+
     /// <summary>Gets the capabilities exercised by the conformance checks.</summary>
     protected virtual MessagingCapabilities Capabilities =>
         MessagingCapabilities.Receive;
@@ -369,10 +375,10 @@ public abstract class MessagingTransportConformanceTests
             return;
 
         var transport = CreateTransport();
-        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(9), null, default).ConfigureAwait(false);
+        await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(9), null, default).ConfigureAwait(false);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var first = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
-        var second = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
+        var first = transport.ReceiveAsync(QueueName, cts.Token).GetAsyncEnumerator(cts.Token);
+        var second = transport.ReceiveAsync(QueueName, cts.Token).GetAsyncEnumerator(cts.Token);
         var results = await Task.WhenAll(
             _tryMoveNextAsync(first),
             _tryMoveNextAsync(second)).ConfigureAwait(false);
@@ -394,7 +400,7 @@ public abstract class MessagingTransportConformanceTests
 
         var transport = CreateTransport();
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-        var enumerator = transport.ReceiveAsync("empty", cts.Token).GetAsyncEnumerator(cts.Token);
+        var enumerator = transport.ReceiveAsync(EmptyQueueName, cts.Token).GetAsyncEnumerator(cts.Token);
         Func<Task> action = async () => await enumerator.MoveNextAsync().AsTask().ConfigureAwait(false);
 
         await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
@@ -408,10 +414,10 @@ public abstract class MessagingTransportConformanceTests
             return;
 
         var transport = CreateTransport();
-        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(10), null, default).ConfigureAwait(false);
+        await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(10), null, default).ConfigureAwait(false);
         for (var expectedCount = 1; expectedCount <= 3; expectedCount++)
         {
-            var delivery = await _receiveOnceAsync(transport, "queue").ConfigureAwait(false);
+            var delivery = await _receiveOnceAsync(transport, QueueName).ConfigureAwait(false);
             delivery.DeliveryCount.Should().Be(expectedCount);
             if (expectedCount < 3)
                 await delivery.AbandonAsync(default).ConfigureAwait(false);
