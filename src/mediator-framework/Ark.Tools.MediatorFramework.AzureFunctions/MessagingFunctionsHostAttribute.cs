@@ -7,10 +7,10 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions;
 public enum MessagingFunctionsTriggerBinding
 {
     /// <summary>Azure Service Bus PeekLock trigger.</summary>
-    ServiceBus,
+    ServiceBus = 0,
 
     /// <summary>Azure Storage Queue trigger.</summary>
-    StorageQueue
+    StorageQueue = 1
 }
 
 /// <summary>Binds an Azure Functions app to one messaging participant.</summary>
