@@ -92,8 +92,17 @@ public sealed class AzureFunctionsBoundaryTests
             var envelope = StorageQueueEnvelopeCodec.Decode(moved!.Body);
             envelope.Headers[StorageQueuePoisonHeaders.Reason]
                 .Should().Be(MessagingFailFastReason.MalformedHeaders.ToString());
+            var deletionDeadline = DateTimeOffset.UtcNow.AddSeconds(10);
             var properties = await source.GetPropertiesAsync(TestContext.CancellationToken)
                 .ConfigureAwait(false);
+            while (properties.Value.ApproximateMessagesCount != 0
+                && DateTimeOffset.UtcNow < deletionDeadline)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.CancellationToken)
+                    .ConfigureAwait(false);
+                properties = await source.GetPropertiesAsync(TestContext.CancellationToken)
+                    .ConfigureAwait(false);
+            }
             properties.Value.ApproximateMessagesCount.Should().Be(0);
         }
         finally
