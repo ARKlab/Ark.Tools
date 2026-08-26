@@ -31,5 +31,6 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
 [MessagingNetwork(
     Members = new[] { typeof(SampleMessagingParticipant) },
     Requires = MessagingCapabilities.Receive,
-    MaximumSchedulingDelaySeconds = 3600)]
+    MaximumSchedulingDelaySeconds = 3600,
+    ConnectionConfigurationKey = "AzureServiceBus:ConnectionString")]
 public static partial class SampleMessagingNetwork;
