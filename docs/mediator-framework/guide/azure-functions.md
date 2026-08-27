@@ -200,6 +200,79 @@ The two queues must be isolated test entities. When these values are absent,
 the tests report the missing infrastructure explicitly rather than silently
 passing.
 
+### Generate a Storage Queue receive trigger
+
+Reference `Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues`, bind the
+Functions assembly to one receive participant, and keep the connection setting
+on the host:
+
+```csharp
+[assembly: MessagingFunctionsHost(
+    typeof(PrintingParticipant),
+    MessagingFunctionsTriggerBinding.StorageQueue,
+    ConnectionConfigurationKey = "AzureWebJobsStorage",
+    StrictStorageQueueHostSettings = true)]
+```
+
+Storage Queue provides `Send`, `Receive`, and visibility-delay
+`ScheduledSend`; it does not provide `PubSub`. Networks requiring `PubSub` fail
+capability validation, and direct publish or subscription operations throw
+`NotSupportedException`. Scheduled visibility delay cannot exceed seven days.
+
+The generated function binds an Azure `QueueMessage` from the participant
+identity queue and awaits `MessagingQueueFunctionsDispatcher`. Successful
+handling returns so the Functions host completes the trigger. Retry abandons by
+throwing, leaving the source message for visibility-timeout redelivery.
+Fail-fast or malformed delivery is copied to `<participant>-poison` with the
+failure reason and original message ID, deleted from the source queue, and then
+returns successfully. This move is not transactional: a failure between poison
+send and source delete can create duplicate poison copies. Consumers that
+require deduplication must use the preserved original message ID.
+
+Queue triggers use host-wide retry and encoding settings. A messaging Functions
+app therefore binds exactly one messaging participant and must not include
+unrelated QueueTriggers whose requirements conflict. Supply `host.json` as an
+`AdditionalFiles` item so the generator can diagnose the effective contract:
+
+```json
+{
+  "version": "2.0",
+  "extensions": {
+    "queues": {
+      "messageEncoding": "none",
+      "visibilityTimeout": "00:00:30",
+      "maxDequeueCount": 6
+    }
+  }
+}
+```
+
+`messageEncoding` must be the literal `none`. The framework packs headers and
+the opaque binary payload into a canonical binary envelope and performs exactly
+one Base64 pass; the Functions extension must not add another. Normal envelopes
+are limited to 46,080 canonical bytes, leaving bounded metadata capacity for a
+49,152-byte poison envelope under Azure Queue Storage's 64-KiB encoded limit.
+Use a network transport threshold of 46,080 bytes or less so larger payloads
+claim-check before encoding.
+
+`visibilityTimeout` must equal the participant's positive `RetryDelay`.
+`maxDequeueCount` must equal the generated manifest maximum: `N` when
+second-level handling is disabled and `2N` when it is enabled. The generator
+warns when these values are missing or malformed. Register
+`StorageQueueFunctionsHostSettingsValidator` with the effective values to
+compare them exactly at startup; strict mode fails startup, while the default
+emits a structured expected-versus-actual warning.
+
+Compose `QueueServiceClient` with `QueueMessageEncoding.None`; the trigger
+dispatcher uses it for immediate poison movement and source deletion. Resource
+provisioning creates both the identity and poison queues when enabled, coexists
+with IaC-created queues, and never auto-deletes them.
+
+Azurite exercises the same wire format and visibility behavior locally. Start
+the repository Azurite service, use `UseDevelopmentStorage=true`, and run the
+`integration` tests. The real Functions boundary test additionally verifies
+that SDK source deletion followed by a successful trigger return is benign.
+
 ### Delivery settlement and retries
 
 The transport reports the native `DeliveryCount`; handlers must not copy or

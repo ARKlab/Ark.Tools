@@ -15,3 +15,8 @@ ARKMF036 | Ark.Tools.MediatorFramework | Error | Functions messaging participant
 ARKMF037 | Ark.Tools.MediatorFramework | Info | Functions messaging participant is sender-only
 ARKMF038 | Ark.Tools.MediatorFramework | Error | Functions messaging trigger binding is not implemented
 ARKMF039 | Ark.Tools.MediatorFramework | Error | Functions messaging subscription has no publisher
+ARKMF040 | Ark.Tools.MediatorFramework | Info | Storage Queue host settings are not inspectable
+ARKMF041 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue message encoding
+ARKMF042 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue maximum dequeue count
+ARKMF043 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue visibility timeout
+ARKMF044 | Ark.Tools.MediatorFramework | Error | Storage Queue consumer has no retry policy

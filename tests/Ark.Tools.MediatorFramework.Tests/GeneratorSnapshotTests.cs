@@ -1943,7 +1943,9 @@ public sealed class GeneratorSnapshotTests
         where TGenerator : IIncrementalGenerator, new()
         => _runGeneratorResult<TGenerator>(source).Generated;
 
-    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runGeneratorResult<TGenerator>(string source)
+    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runGeneratorResult<TGenerator>(
+        string source,
+        string? hostJson = null)
         where TGenerator : IIncrementalGenerator, new()
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
@@ -1962,7 +1964,12 @@ public sealed class GeneratorSnapshotTests
             [CSharpSyntaxTree.ParseText(source)],
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(new TGenerator());
+        AdditionalText[] additionalTexts = hostJson is null
+            ? []
+            : [new TestAdditionalText("host.json", hostJson)];
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new TGenerator().AsSourceGenerator()],
+            additionalTexts: additionalTexts);
 
         driver = driver.RunGenerators(compilation);
         var result = driver.GetRunResult();
@@ -2410,6 +2417,76 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingFunctionsGeneratorEmitsStorageQueueTriggerAndValidatesHostJson()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            using Ark.Tools.Solid;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.StorageQueue,
+                ConnectionConfigurationKey = "BookMessaging",
+                StrictStorageQueueHostSettings = true)]
+            [Message(Name = "books_print")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json,
+                Retry = typeof(TestRetryPolicy))]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend)]
+            public static partial class BookMessagingNetwork { }
+            public sealed class TestRetryPolicy : IMessagingRetryPolicy
+            {
+                public int MaximumDeliveryCount => 3;
+                public bool SecondLevelRetriesEnabled => true;
+                public System.TimeSpan MaximumHandlerDuration => System.TimeSpan.FromMinutes(2);
+                public System.TimeSpan RetryDelay => System.TimeSpan.FromSeconds(30);
+            }
+            """;
+        const string hostJson =
+            """
+            {
+              "version": "2.0",
+              "extensions": {
+                "queues": {
+                  "messageEncoding": "none",
+                  "visibilityTimeout": "00:00:30",
+                  "maxDequeueCount": 6
+                }
+              }
+            }
+            """;
+
+        var first = _runGeneratorResult<MessagingFunctionsGenerator>(source, hostJson);
+        var second = _runGeneratorResult<MessagingFunctionsGenerator>(source, hostJson);
+
+        first.Diagnostics.Should().NotContain(diagnostic =>
+            diagnostic.Severity == DiagnosticSeverity.Error
+            || diagnostic.Severity == DiagnosticSeverity.Warning);
+        first.Generated.Should().Be(second.Generated);
+        first.Generated.Should().Contain("QueueTrigger(");
+        first.Generated.Should().Contain("Azure.Storage.Queues.Models.QueueMessage message");
+        first.Generated.Should().Contain("MessagingQueueFunctionsDispatcher");
+        first.Generated.Should().Contain(
+            ".DispatchAsync(message, \"printing\", functionContext, cancellationToken)");
+        first.Generated.Should().Contain("MessagingFunctionsTriggerBinding.StorageQueue");
+        first.Generated.Should().Contain("new global::TestRetryPolicy().RetryDelay");
+        first.Generated.Should().Contain("            true);");
+
+        var invalid = _runGeneratorResult<MessagingFunctionsGenerator>(
+            source,
+            """{"extensions":{"queues":{"messageEncoding":"base64"}}}""");
+        invalid.Diagnostics.Select(static diagnostic => diagnostic.Id)
+            .Should().Contain(["ARKMF041", "ARKMF042", "ARKMF043"]);
+    }
+
+    [TestMethod]
     public void MessagingFunctionsGeneratorReportsSenderOnlyParticipant()
     {
         var result = _runGeneratorResult<MessagingFunctionsGenerator>(
@@ -2464,7 +2541,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.MediatorFramework.AzureFunctions;
             [assembly: MessagingFunctionsHost(
                 typeof(PrintingParticipant),
-                MessagingFunctionsTriggerBinding.StorageQueue)]
+                (MessagingFunctionsTriggerBinding)99)]
             [MessagingParticipant]
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]

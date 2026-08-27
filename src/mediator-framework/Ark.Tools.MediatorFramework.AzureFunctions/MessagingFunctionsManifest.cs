@@ -46,6 +46,8 @@ public sealed class MessagingFunctionsManifest
     /// <param name="subscriptions">The desired forwarding subscriptions.</param>
     /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
     /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
+    /// <param name="retryDelay">The participant retry visibility delay.</param>
+    /// <param name="strictStorageQueueHostSettings">Whether Storage Queue setting mismatches fail startup.</param>
     public MessagingFunctionsManifest(
         Type participant,
         Type network,
@@ -56,7 +58,9 @@ public sealed class MessagingFunctionsManifest
         TimeSpan maximumHandlerDuration,
         IEnumerable<MessagingFunctionsSubscription> subscriptions,
         IEnumerable<Type> incomingSteps,
-        IEnumerable<Type> outgoingSteps)
+        IEnumerable<Type> outgoingSteps,
+        TimeSpan? retryDelay = null,
+        bool strictStorageQueueHostSettings = false)
     {
         Participant = participant ?? throw new ArgumentNullException(nameof(participant));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -76,6 +80,8 @@ public sealed class MessagingFunctionsManifest
         Subscriptions = new ReadOnlyCollection<MessagingFunctionsSubscription>(subscriptions.ToArray());
         IncomingSteps = new ReadOnlyCollection<Type>(incomingSteps.ToArray());
         OutgoingSteps = new ReadOnlyCollection<Type>(outgoingSteps.ToArray());
+        RetryDelay = retryDelay ?? TimeSpan.Zero;
+        StrictStorageQueueHostSettings = strictStorageQueueHostSettings;
     }
 
     /// <summary>Gets the bound participant type.</summary>
@@ -107,4 +113,10 @@ public sealed class MessagingFunctionsManifest
 
     /// <summary>Gets the host-local outgoing pipeline step types.</summary>
     public IReadOnlyList<Type> OutgoingSteps { get; }
+
+    /// <summary>Gets the participant retry visibility delay.</summary>
+    public TimeSpan RetryDelay { get; }
+
+    /// <summary>Gets whether Storage Queue host-setting mismatches fail startup.</summary>
+    public bool StrictStorageQueueHostSettings { get; }
 }

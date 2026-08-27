@@ -282,6 +282,13 @@ MessagePack contracts because the Functions binding does not provide that
 formatter. It is outbound-only for Rebus: the separate processor owns message
 consumption.
 
+The production Functions host remains bound to Service Bus. The focused
+`MessagingBusSampleTests` fixture separately composes the Book messaging
+participant with `StorageQueueMessagingTransport` over Azurite and verifies
+scheduled send, receive, and poison-queue movement without changing the
+production topology. Start the repository Azurite service before running this
+fixture.
+
 ```bash
 cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
 cp local.settings.json.example local.settings.json

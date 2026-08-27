@@ -6,6 +6,8 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
+using Azure.Storage.Queues;
+
 using FluentValidation;
 
 using Microsoft.AspNetCore.Authorization;
@@ -37,6 +39,13 @@ public static class Program
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(container);
         builder.Services.AddArkHealthChecks();
+        builder.Services.AddSingleton(
+            new QueueServiceClient(
+                builder.Configuration["BoundaryMessaging"] ?? "UseDevelopmentStorage=true",
+                new QueueClientOptions
+                {
+                    MessageEncoding = QueueMessageEncoding.None
+                }));
         builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
             .AddAuthentication()
             .AddJwtBearer("IntegrationTests", options =>

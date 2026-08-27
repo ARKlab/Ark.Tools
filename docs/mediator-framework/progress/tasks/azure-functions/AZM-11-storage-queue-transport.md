@@ -426,19 +426,19 @@ network declaration.
 
 ## Acceptance
 
-- [ ] Storage Queue transport implements the AZM-05 contract including receive
+- [x] Storage Queue transport implements the AZM-05 contract including receive
   settlement, `DequeueCount`, and the poison-queue DLQ.
-- [ ] QueueTrigger complete=return, abandon=throw, immediate DLQ=SDK
+- [x] QueueTrigger complete=return, abandon=throw, immediate DLQ=SDK
   poison+delete+return, verified against the installed extension.
-- [ ] Generator presence/shape diagnostics and startup exact validation cover
+- [x] Generator presence/shape diagnostics and startup exact validation cover
   the `host.json` `messageEncoding`, `visibilityTimeout`, and `N`/`2N`
   contract.
-- [ ] Text-safe encoding preserves binary payloads and headers.
-- [ ] The single-Base64 `messageEncoding: none` contract and final encoded
+- [x] Text-safe encoding preserves binary payloads and headers.
+- [x] The single-Base64 `messageEncoding: none` contract and final encoded
   envelope-size boundaries are verified against Azurite.
-- [ ] Generated QueueTriggers dispatch through the AZM-09 runtime.
-- [ ] Capability rejection and `NotSupportedException` behavior are tested.
-- [ ] Conformance groups pass against Azurite.
-- [ ] The [task board](../README.md) status for AZM-11 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Generated QueueTriggers dispatch through the AZM-09 runtime.
+- [x] Capability rejection and `NotSupportedException` behavior are tested.
+- [x] Conformance groups pass against Azurite.
+- [x] The [task board](../README.md) status for AZM-11 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

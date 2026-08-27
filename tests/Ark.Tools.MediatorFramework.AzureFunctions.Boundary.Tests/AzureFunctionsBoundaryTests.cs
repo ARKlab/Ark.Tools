@@ -10,6 +10,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Channels;
 
 using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
+using Ark.Tools.MediatorFramework.Messaging;
+
+using Azure.Storage.Queues;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 
@@ -46,6 +49,67 @@ public sealed class AzureFunctionsBoundaryTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task MalformedQueueDeliveryIsMovedAndHostAcceptsManualDelete()
+    {
+        const string connectionString = "UseDevelopmentStorage=true";
+        const string queueName = "boundary-messaging";
+        var service = new QueueServiceClient(
+            connectionString,
+            new QueueClientOptions
+            {
+                MessageEncoding = QueueMessageEncoding.None
+            });
+        var source = service.GetQueueClient(queueName);
+        var poison = service.GetQueueClient(queueName + "-poison");
+        await source.DeleteIfExistsAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        await poison.DeleteIfExistsAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        await source.CreateIfNotExistsAsync(cancellationToken: TestContext.CancellationToken)
+            .ConfigureAwait(false);
+        await poison.CreateIfNotExistsAsync(cancellationToken: TestContext.CancellationToken)
+            .ConfigureAwait(false);
+
+        try
+        {
+            await source.SendMessageAsync(
+                BinaryData.FromString("malformed"),
+                cancellationToken: TestContext.CancellationToken).ConfigureAwait(false);
+            var deadline = DateTimeOffset.UtcNow.AddSeconds(10);
+            Azure.Storage.Queues.Models.QueueMessage? moved = null;
+            while (moved is null && DateTimeOffset.UtcNow < deadline)
+            {
+                moved = (await poison.ReceiveMessageAsync(
+                    cancellationToken: TestContext.CancellationToken).ConfigureAwait(false)).Value;
+                if (moved is null)
+                    await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.CancellationToken)
+                        .ConfigureAwait(false);
+            }
+
+            moved.Should().NotBeNull();
+            var envelope = StorageQueueEnvelopeCodec.Decode(moved!.Body);
+            envelope.Headers[StorageQueuePoisonHeaders.Reason]
+                .Should().Be(MessagingFailFastReason.MalformedHeaders.ToString());
+            var deletionDeadline = DateTimeOffset.UtcNow.AddSeconds(10);
+            var properties = await source.GetPropertiesAsync(TestContext.CancellationToken)
+                .ConfigureAwait(false);
+            while (properties.Value.ApproximateMessagesCount != 0
+                && DateTimeOffset.UtcNow < deletionDeadline)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.CancellationToken)
+                    .ConfigureAwait(false);
+                properties = await source.GetPropertiesAsync(TestContext.CancellationToken)
+                    .ConfigureAwait(false);
+            }
+            properties.Value.ApproximateMessagesCount.Should().Be(0);
+        }
+        finally
+        {
+            await source.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+            await poison.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+        }
     }
 
     [TestMethod]
@@ -240,6 +304,7 @@ public sealed class AzureFunctionsBoundaryTests
             };
             process.StartInfo.Environment["AzureWebJobsScriptRoot"] = appDirectory;
             process.StartInfo.Environment["AzureWebJobsStorage"] = "UseDevelopmentStorage=true";
+            process.StartInfo.Environment["BoundaryMessaging"] = "UseDevelopmentStorage=true";
             process.StartInfo.Environment["AzureFunctionsJobHost__Logging__Console__IsEnabled"] = "true";
             process.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "IntegrationTests";
 

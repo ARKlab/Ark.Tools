@@ -24,12 +24,12 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
     public TimeSpan MaximumHandlerDuration => TimeSpan.FromMinutes(1);
 
     /// <inheritdoc />
-    public TimeSpan RetryDelay => TimeSpan.Zero;
+    public TimeSpan RetryDelay => TimeSpan.FromSeconds(1);
 }
 
 /// <summary>Declares the sample messaging network.</summary>
 [MessagingNetwork(
     Members = new[] { typeof(SampleMessagingParticipant) },
-    Requires = MessagingCapabilities.Receive,
+    Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend,
     MaximumSchedulingDelaySeconds = 3600)]
 public static partial class SampleMessagingNetwork;

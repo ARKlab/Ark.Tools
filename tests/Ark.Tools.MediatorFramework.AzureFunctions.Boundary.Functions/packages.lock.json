@@ -14,18 +14,15 @@
         "resolved": "3.0.160",
         "contentHash": "CtK/wbHVsFsb/mc3ijuu7yGmgWpfZ8L7CwSms+5vd81eTo8+66LNFdASb8fO0PJjoaI9fgMnVSNmNqyTTVUZPA=="
       },
-      "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": {
+      "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": {
         "type": "Direct",
-        "requested": "[5.24.0, )",
-        "resolved": "5.24.0",
-        "contentHash": "Y/gh+CrbHbe1OhCGMoYX86z/Fk9q+bb2gg+S7BtWeKijt7BtY+i4CI8/Z009RxF3oP0FTgHl3fcv+rALgyRYOg==",
+        "requested": "[5.5.4, )",
+        "resolved": "5.5.4",
+        "contentHash": "/JZMukCWT9F1VZAggd0Yyx+/FAWxxG4ConEP4MMIYfihyt75UcnXnMjvL/Z6yq11nNWaXmwigYyFwWPH67RhRQ==",
         "dependencies": {
-          "Azure.Identity": "1.16.0",
-          "Azure.Messaging.ServiceBus": "7.20.1",
-          "Google.Protobuf": "3.32.1",
-          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
-          "Microsoft.Azure.Functions.Worker.Extensions.Rpc": "1.0.1",
-          "Microsoft.Extensions.Azure": "1.13.0"
+          "Azure.Storage.Queues": "12.21.0",
+          "Microsoft.Azure.Functions.Worker.Core": "1.20.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0"
         }
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
@@ -542,6 +539,7 @@
           "Microsoft.Azure.Functions.Worker": "[2.52.0, )",
           "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore": "[2.1.1, )",
           "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )",
+          "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": "[5.5.4, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },
@@ -554,6 +552,7 @@
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
           "Azure.Storage.Blobs": "[12.29.1, )",
+          "Azure.Storage.Queues": "[12.27.1, )",
           "Google.Protobuf": "[3.35.1, )",
           "MessagePack": "[3.1.8, )",
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
@@ -673,6 +672,16 @@
           "Azure.Storage.Common": "12.28.0"
         }
       },
+      "Azure.Storage.Queues": {
+        "type": "CentralTransitive",
+        "requested": "[12.27.1, )",
+        "resolved": "12.27.1",
+        "contentHash": "uQgZ9bzwVJ8bqsWywzwkRt1lfusYPXJAPSb9yVlTsSmZtH+bnDb/RfQuHiuUmk3nlQbCOUGFdD0cRXn8uMiOHg==",
+        "dependencies": {
+          "Azure.Core": "1.55.0",
+          "Azure.Storage.Common": "12.28.0"
+        }
+      },
       "Ben.Demystifier": {
         "type": "CentralTransitive",
         "requested": "[0.4.1, )",
@@ -753,6 +762,20 @@
           "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
           "Microsoft.Azure.Functions.Worker.Extensions.Http": "3.3.0",
           "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore.Analyzers": "1.0.4"
+        }
+      },
+      "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": {
+        "type": "CentralTransitive",
+        "requested": "[5.24.0, )",
+        "resolved": "5.24.0",
+        "contentHash": "Y/gh+CrbHbe1OhCGMoYX86z/Fk9q+bb2gg+S7BtWeKijt7BtY+i4CI8/Z009RxF3oP0FTgHl3fcv+rALgyRYOg==",
+        "dependencies": {
+          "Azure.Identity": "1.16.0",
+          "Azure.Messaging.ServiceBus": "7.20.1",
+          "Google.Protobuf": "3.32.1",
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Rpc": "1.0.1",
+          "Microsoft.Extensions.Azure": "1.13.0"
         }
       },
       "Microsoft.Data.SqlClient": {

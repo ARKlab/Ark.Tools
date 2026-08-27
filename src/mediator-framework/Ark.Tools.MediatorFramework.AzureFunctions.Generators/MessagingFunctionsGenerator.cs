@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using Microsoft.CodeAnalysis;
 
@@ -27,6 +29,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     private const string _eventAttribute =
         "Ark.Tools.MediatorFramework.EventAttribute";
     private const int _serviceBusBinding = 0;
+    private const int _storageQueueBinding = 1;
 
     private static readonly DiagnosticDescriptor _multipleHosts = _rule(
         "ARKMF033",
@@ -63,6 +66,31 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Functions messaging subscription has no publisher",
         "Subscribed event '{0}' does not have exactly one publisher in network '{1}'",
         DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _hostJsonNotInspectable = _rule(
+        "ARKMF040",
+        "Storage Queue host settings are not inspectable",
+        "Add host.json to AdditionalFiles so Storage Queue messaging settings can be validated",
+        DiagnosticSeverity.Info);
+    private static readonly DiagnosticDescriptor _invalidMessageEncoding = _rule(
+        "ARKMF041",
+        "Invalid Storage Queue message encoding",
+        "host.json extensions.queues.messageEncoding must be the literal 'none'",
+        DiagnosticSeverity.Warning);
+    private static readonly DiagnosticDescriptor _invalidMaximumDequeueCount = _rule(
+        "ARKMF042",
+        "Invalid Storage Queue maximum dequeue count",
+        "host.json extensions.queues.maxDequeueCount must be a positive integer",
+        DiagnosticSeverity.Warning);
+    private static readonly DiagnosticDescriptor _invalidVisibilityTimeout = _rule(
+        "ARKMF043",
+        "Invalid Storage Queue visibility timeout",
+        "host.json extensions.queues.visibilityTimeout must be a positive TimeSpan",
+        DiagnosticSeverity.Warning);
+    private static readonly DiagnosticDescriptor _missingStorageQueueRetry = _rule(
+        "ARKMF044",
+        "Storage Queue consumer has no retry policy",
+        "Storage Queue participant '{0}' must declare a retry policy with a positive RetryDelay",
+        DiagnosticSeverity.Error);
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -72,11 +100,22 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 static (_, _) => true,
                 static (attributeContext, _) => _readHosts(attributeContext))
             .Collect();
+        var hostJson = context.AdditionalTextsProvider
+            .Where(static text => string.Equals(
+                Path.GetFileName(text.Path),
+                "host.json",
+                StringComparison.OrdinalIgnoreCase))
+            .Select(static (text, cancellationToken) =>
+                text.GetText(cancellationToken)?.ToString())
+            .Collect();
 
         context.RegisterSourceOutput(
-            hosts,
-            static (productionContext, hostGroups) =>
-                _emit(productionContext, hostGroups.SelectMany(static group => group).ToImmutableArray()));
+            hosts.Combine(hostJson),
+            static (productionContext, input) =>
+                _emit(
+                    productionContext,
+                    input.Left.SelectMany(static group => group).ToImmutableArray(),
+                    input.Right));
     }
 
     private static ImmutableArray<Host> _readHosts(GeneratorAttributeSyntaxContext context)
@@ -95,6 +134,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 _string(attribute, "ConnectionConfigurationKey"),
                 _types(attribute, "IncomingSteps"),
                 _types(attribute, "OutgoingSteps"),
+                _bool(attribute, "StrictStorageQueueHostSettings"),
                 attribute.ApplicationSyntaxReference is { } syntax
                     ? Location.Create(syntax.SyntaxTree, syntax.Span)
                     : Location.None));
@@ -103,7 +143,10 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         return hosts.ToImmutable();
     }
 
-    private static void _emit(SourceProductionContext context, ImmutableArray<Host> hosts)
+    private static void _emit(
+        SourceProductionContext context,
+        ImmutableArray<Host> hosts,
+        ImmutableArray<string?> hostJson)
     {
         if (hosts.IsDefaultOrEmpty)
             return;
@@ -148,7 +191,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 host.Participant.ToDisplayString()));
             return;
         }
-        if (host.Binding != _serviceBusBinding)
+        if (host.Binding is not (_serviceBusBinding or _storageQueueBinding))
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 _unsupportedBinding,
@@ -164,6 +207,21 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 : host.Participant.Name);
         var processes = _types(participantAttribute, "Processes");
         var subscribes = _types(participantAttribute, "Subscribes");
+        var retryType = _type(participantAttribute, "Retry");
+        if (host.Binding == _storageQueueBinding
+            && (!processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty))
+        {
+            if (retryType is null)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    _missingStorageQueueRetry,
+                    host.Location,
+                    host.Participant.ToDisplayString()));
+                return;
+            }
+
+            _validateHostJson(context, host, hostJson);
+        }
         var subscriptions = _createSubscriptions(
             context,
             network.Type,
@@ -176,7 +234,6 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
         var connection = host.ConnectionConfigurationKey
             ?? network.Type.Name;
-        var retryType = _type(participantAttribute, "Retry");
         var source = new StringBuilder()
             .AppendLine("// <auto-generated />")
             .AppendLine("#nullable enable")
@@ -203,7 +260,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         }
         else
         {
-            _emitTrigger(source, identity, connection);
+            _emitTrigger(source, host.Binding, identity, connection);
         }
 
         source.AppendLine("}");
@@ -272,7 +329,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("        new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest(")
             .Append("            typeof(").Append(_typeName(host.Participant)).AppendLine("),")
             .Append("            typeof(").Append(_typeName(network)).AppendLine("),")
-            .AppendLine("            global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.ServiceBus,")
+            .Append("            global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.")
+            .AppendLine(host.Binding == _serviceBusBinding ? "ServiceBus," : "StorageQueue,")
             .Append("            \"").Append(_escape(identity)).AppendLine("\",")
             .Append("            \"").Append(_escape(connection)).AppendLine("\",");
 
@@ -304,6 +362,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         _emitTypes(source, host.IncomingSteps);
         source.AppendLine(",");
         _emitTypes(source, host.OutgoingSteps);
+        source.AppendLine(",");
+        if (retryType is null)
+            source.AppendLine("            global::System.TimeSpan.Zero,");
+        else
+            source.Append("            new ").Append(_typeName(retryType)).AppendLine("().RetryDelay,");
+        source.Append("            ").Append(host.StrictStorageQueueHostSettings ? "true" : "false");
         source.AppendLine(");")
             .AppendLine();
     }
@@ -317,7 +381,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         source.Append("            }");
     }
 
-    private static void _emitTrigger(StringBuilder source, string identity, string connection)
+    private static void _emitTrigger(
+        StringBuilder source,
+        int binding,
+        string identity,
+        string connection)
     {
         var methodName = _functionName(identity);
         source.Append("    /// <summary>Receives the \"").Append(_escape(identity))
@@ -325,18 +393,35 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
             .Append(_escape(identity)).AppendLine("\")]")
             .Append("    public static async global::System.Threading.Tasks.Task ")
-            .Append(methodName).AppendLine("(")
-            .AppendLine("        [global::Microsoft.Azure.Functions.Worker.ServiceBusTrigger(")
+            .Append(methodName).AppendLine("(");
+        if (binding == _serviceBusBinding)
+        {
+            source.AppendLine("        [global::Microsoft.Azure.Functions.Worker.ServiceBusTrigger(")
+                .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+                .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\",")
+                .AppendLine("            AutoCompleteMessages = false)]")
+                .AppendLine("        global::Azure.Messaging.ServiceBus.ServiceBusReceivedMessage message,")
+                .AppendLine("        global::Microsoft.Azure.Functions.Worker.ServiceBusMessageActions messageActions,")
+                .AppendLine("        global::Microsoft.Azure.Functions.Worker.FunctionContext functionContext,")
+                .AppendLine("        global::System.Threading.CancellationToken cancellationToken)")
+                .AppendLine("    {")
+                .AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDispatcher")
+                .AppendLine("            .DispatchAsync(message, messageActions, functionContext, cancellationToken)")
+                .AppendLine("            .ConfigureAwait(false);")
+                .AppendLine("    }");
+            return;
+        }
+
+        source.AppendLine("        [global::Microsoft.Azure.Functions.Worker.QueueTrigger(")
             .Append("            \"").Append(_escape(identity)).AppendLine("\",")
-            .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\",")
-            .AppendLine("            AutoCompleteMessages = false)]")
-            .AppendLine("        global::Azure.Messaging.ServiceBus.ServiceBusReceivedMessage message,")
-            .AppendLine("        global::Microsoft.Azure.Functions.Worker.ServiceBusMessageActions messageActions,")
+            .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\")]")
+            .AppendLine("        global::Azure.Storage.Queues.Models.QueueMessage message,")
             .AppendLine("        global::Microsoft.Azure.Functions.Worker.FunctionContext functionContext,")
             .AppendLine("        global::System.Threading.CancellationToken cancellationToken)")
             .AppendLine("    {")
-            .AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDispatcher")
-            .AppendLine("            .DispatchAsync(message, messageActions, functionContext, cancellationToken)")
+            .AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingQueueFunctionsDispatcher")
+            .Append("            .DispatchAsync(message, \"").Append(_escape(identity))
+            .AppendLine("\", functionContext, cancellationToken)")
             .AppendLine("            .ConfigureAwait(false);")
             .AppendLine("    }");
     }
@@ -349,11 +434,68 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             foreach (var nested in _nestedTypes(type))
                 yield return nested;
         }
+
         foreach (var child in @namespace.GetNamespaceMembers())
         {
             foreach (var type in _allTypes(child))
                 yield return type;
         }
+    }
+
+    private static void _validateHostJson(
+        SourceProductionContext context,
+        Host host,
+        ImmutableArray<string?> hostJson)
+    {
+        var content = hostJson.FirstOrDefault(static value => value is not null);
+        if (content is null)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(_hostJsonNotInspectable, host.Location));
+            return;
+        }
+
+        // ponytail: Build-time checks inspect three fixed literal properties; use a JSON parser
+        // if the host contract grows beyond this flat Functions queues settings object.
+        if (!_regexIsMatch(
+                content,
+                "\"messageEncoding\"\\s*:\\s*\"none\""))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(_invalidMessageEncoding, host.Location));
+        }
+        if (!_regexIsMatch(
+                content,
+                "\"maxDequeueCount\"\\s*:\\s*[1-9][0-9]*"))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                _invalidMaximumDequeueCount,
+                host.Location));
+        }
+
+        var visibility = Regex.Match(
+            content,
+            "\"visibilityTimeout\"\\s*:\\s*\"(?<value>[^\"]+)\"",
+            RegexOptions.CultureInvariant,
+            TimeSpan.FromSeconds(1));
+        if (!visibility.Success
+            || !TimeSpan.TryParse(
+                visibility.Groups["value"].Value,
+                CultureInfo.InvariantCulture,
+                out var delay)
+            || delay <= TimeSpan.Zero)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                _invalidVisibilityTimeout,
+                host.Location));
+        }
+    }
+
+    private static bool _regexIsMatch(string value, string pattern)
+    {
+        return Regex.IsMatch(
+            value,
+            pattern,
+            RegexOptions.CultureInvariant,
+            TimeSpan.FromSeconds(1));
     }
 
     private static IEnumerable<INamedTypeSymbol> _nestedTypes(INamedTypeSymbol type)
@@ -383,6 +525,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
             as INamedTypeSymbol;
+    }
+
+    private static bool _bool(AttributeData attribute, string name)
+    {
+        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
+            is true;
     }
 
     private static string? _string(AttributeData? attribute, string name)
@@ -489,6 +637,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             string? connectionConfigurationKey,
             ImmutableArray<INamedTypeSymbol> incomingSteps,
             ImmutableArray<INamedTypeSymbol> outgoingSteps,
+            bool strictStorageQueueHostSettings,
             Location location)
         {
             Participant = participant;
@@ -496,6 +645,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             ConnectionConfigurationKey = connectionConfigurationKey;
             IncomingSteps = incomingSteps;
             OutgoingSteps = outgoingSteps;
+            StrictStorageQueueHostSettings = strictStorageQueueHostSettings;
             Location = location;
         }
 
@@ -508,6 +658,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         public ImmutableArray<INamedTypeSymbol> IncomingSteps { get; }
 
         public ImmutableArray<INamedTypeSymbol> OutgoingSteps { get; }
+
+        public bool StrictStorageQueueHostSettings { get; }
 
         public Location Location { get; }
     }
