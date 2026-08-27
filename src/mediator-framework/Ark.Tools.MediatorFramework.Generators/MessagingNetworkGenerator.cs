@@ -1045,13 +1045,36 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .Append(participant.Retry?.SecondLevelRetriesEnabled == true
                         ? "DispatchFailedAsync"
                         : "null")
-                    .AppendLine(");");
+                    .AppendLine(",")
+                    .AppendLine("            new global::System.Type[]")
+                    .AppendLine("            {");
+                foreach (var contract in contracts)
+                {
+                    source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<")
+                        .Append(_typeName(contract)).AppendLine(">),");
+                    if (participant.Retry?.SecondLevelRetriesEnabled == true)
+                    {
+                        source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<global::Ark.Tools.MediatorFramework.MessagingFailed<")
+                            .Append(_typeName(contract)).AppendLine(">>),");
+                    }
+                }
+                source.AppendLine("            },");
             }
             else
             {
                 source.AppendLine("            null,")
-                    .AppendLine("            null);");
+                    .AppendLine("            null,")
+                    .AppendLine("            global::System.Array.Empty<global::System.Type>(),");
             }
+            source.AppendLine("            new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource[]")
+                .AppendLine("            {");
+            foreach (var contract in participant.Publishes)
+            {
+                source.Append("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(\"")
+                    .Append(_escape(participant.Identity + "-" + _contractName(contract)))
+                    .Append("\", \"").Append(_escape(participant.Identity)).AppendLine("\"),");
+            }
+            source.AppendLine("            });");
             source.AppendLine("    }");
         }
 

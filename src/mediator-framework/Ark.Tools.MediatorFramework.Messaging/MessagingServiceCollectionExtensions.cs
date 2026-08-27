@@ -173,6 +173,31 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="payloadSender">The participant-configured payload sender.</param>
     /// <param name="participantIdentity">The sending participant identity.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingBus(
+        this IServiceCollection services,
+        MessagingNetworkOptions network,
+        IMessagingContractRegistry registry,
+        MessagingPayloadSender payloadSender,
+        string participantIdentity,
+        IReadOnlyList<Type>? outgoingStepTypes = null)
+    {
+        return services.AddArkMessagingBus(
+            network,
+            registry,
+            payloadSender,
+            participantIdentity,
+            outgoingStepTypes,
+            null);
+    }
+
+    /// <summary>Registers the native restricted bus for one messaging participant.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="network">The resolved network options.</param>
+    /// <param name="registry">The generated contract registry.</param>
+    /// <param name="payloadSender">The participant-configured payload sender.</param>
+    /// <param name="participantIdentity">The sending participant identity.</param>
+    /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
     /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingBus(
@@ -181,8 +206,8 @@ public static class MessagingServiceCollectionExtensions
         IMessagingContractRegistry registry,
         MessagingPayloadSender payloadSender,
         string participantIdentity,
-        IReadOnlyList<Type>? outgoingStepTypes = null,
-        Func<Type, object>? resolveStep = null)
+        IReadOnlyList<Type>? outgoingStepTypes,
+        Func<Type, object>? resolveStep)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(network);
@@ -221,10 +246,57 @@ public static class MessagingServiceCollectionExtensions
         IReadOnlyList<Type>? outgoingStepTypes = null,
         Func<Type, object>? resolveStep = null)
     {
+        var resources = participant.Network.ResourceLifecycle == MessagingResourceLifecycle.CreateIfMissing
+            && participant.PublishedTopics.Count > 0
+                ? new MessagingResourceManifest(
+                    participant.Identity,
+                    identityQueue: null,
+                    participant.RetryPolicy.MaximumDeliveryCount,
+                    participant.PublishedTopics,
+                    Array.Empty<MessagingSubscriptionResource>(),
+                    participant.PublishedTopics.Select(static topic => topic.Name),
+                    participant.Network.ResourceLifecycle)
+                : null;
+        return services.AddArkMessagingParticipant(
+            participant,
+            transport,
+            dataBus,
+            resources,
+            transport as IMessagingTransportManagement,
+            outgoingStepTypes,
+            resolveStep);
+    }
+
+    /// <summary>Registers one generated participant with explicit resource lifecycle services.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="participant">The generated participant descriptor.</param>
+    /// <param name="transport">The selected runtime transport.</param>
+    /// <param name="dataBus">The shared network DataBus.</param>
+    /// <param name="resources">Optional generated desired-resource manifest.</param>
+    /// <param name="management">Optional resource-management seam.</param>
+    /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
+    /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingParticipant(
+        this IServiceCollection services,
+        MessagingParticipantDescriptor participant,
+        IMessagingTransport transport,
+        IMessagingDataBus dataBus,
+        MessagingResourceManifest? resources,
+        IMessagingTransportManagement? management,
+        IReadOnlyList<Type>? outgoingStepTypes,
+        Func<Type, object>? resolveStep)
+    {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(participant);
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (resources?.Lifecycle == MessagingResourceLifecycle.CreateIfMissing
+            && management is null)
+        {
+            throw new InvalidOperationException(
+                "The selected messaging transport does not provide resource lifecycle management.");
+        }
         if (services.Any(static service => service.ServiceType == typeof(MessagingParticipantDescriptor)))
             throw new InvalidOperationException("A messaging participant is already registered in this host.");
 
@@ -244,6 +316,11 @@ public static class MessagingServiceCollectionExtensions
             outgoingStepTypes,
             resolveStep);
         services.AddSingleton<IHostedService, MessagingParticipantStartupValidator>();
+        if (resources?.Lifecycle == MessagingResourceLifecycle.CreateIfMissing)
+        {
+            services.AddSingleton(management!);
+            services.AddArkMessagingResourceLifecycle(resources);
+        }
         return services;
     }
 

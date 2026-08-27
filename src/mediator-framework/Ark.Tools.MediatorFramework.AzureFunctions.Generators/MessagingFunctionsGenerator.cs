@@ -462,7 +462,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         source.AppendLine("            new global::System.Type[]")
             .AppendLine("            {");
-        foreach (var type in types.OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
+        foreach (var type in types)
             source.Append("                typeof(").Append(_typeName(type)).AppendLine("),");
         source.Append("            }");
     }

@@ -30,6 +30,8 @@ public enum MessagingFunctionsRuntimeTransport
 /// <summary>Composes generated messaging participants in Azure Functions hosts.</summary>
 public static class MessagingFunctionsServiceCollectionExtensions
 {
+    private const string _rebusBusServiceType = "Rebus.Bus.IBus";
+
     /// <summary>
     /// Composes the generated participant with an Azure transport selected from configuration.
     /// </summary>
@@ -56,27 +58,17 @@ public static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(dataBus);
 
-        var connection = configuration[manifest.ConnectionConfigurationKey];
-        if (string.IsNullOrWhiteSpace(connection))
-        {
-            throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Messaging transport configuration '{0}' is required.",
-                    manifest.ConnectionConfigurationKey));
-        }
-
         return transport switch
         {
             MessagingFunctionsRuntimeTransport.AzureServiceBus =>
-                _addServiceBus(services, container, manifest, dataBus, connection),
+                _addServiceBus(services, container, configuration, manifest, dataBus),
             MessagingFunctionsRuntimeTransport.AzureStorageQueue =>
                 _addStorageQueue(
                     services,
                     container,
+                    configuration,
                     manifest,
                     dataBus,
-                    connection,
                     storageQueueHostSettings),
             _ => throw new ArgumentOutOfRangeException(nameof(transport))
         };
@@ -110,14 +102,19 @@ public static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
 
+        _validateExclusiveBus(container);
         _validateManifest(manifest, transport);
         var descriptor = manifest.Descriptor!;
+        _validateHandlers(container, descriptor);
         _registerSteps(container, manifest.IncomingSteps);
         _registerSteps(container, manifest.OutgoingSteps);
+        management ??= transport as IMessagingTransportManagement;
         services.AddArkMessagingParticipant(
             descriptor,
             transport,
             dataBus,
+            manifest.Resources,
+            management,
             manifest.OutgoingSteps,
             container.GetInstance);
         services.AddSingleton(manifest);
@@ -169,70 +166,101 @@ public static class MessagingFunctionsServiceCollectionExtensions
             manifest.IncomingSteps,
             container.GetInstance));
 
-        if (manifest.Resources.Lifecycle == MessagingResourceLifecycle.CreateIfMissing)
-        {
-            management ??= transport as IMessagingTransportManagement;
-            if (management is null)
-                throw new InvalidOperationException(
-                    "The selected messaging transport does not provide resource lifecycle management.");
-            services.AddSingleton(management);
-            services.AddArkMessagingResourceLifecycle(manifest.Resources);
-        }
-
         return services;
     }
 
     private static IServiceCollection _addServiceBus(
         IServiceCollection services,
         Container container,
+        IConfiguration configuration,
         MessagingFunctionsManifest manifest,
-        IMessagingDataBus dataBus,
-        string connection)
+        IMessagingDataBus dataBus)
     {
+        var connection = configuration[manifest.ConnectionConfigurationKey];
+        var fullyQualifiedNamespace = configuration[
+            string.Concat(manifest.ConnectionConfigurationKey, ":fullyQualifiedNamespace")];
 #pragma warning disable CA2000 // The registered transport owns the client and the service provider owns the transport.
         ServiceBusClient client;
         ServiceBusAdministrationClient administration;
-        if (_isConnectionString(connection))
+        if (!string.IsNullOrWhiteSpace(connection) && _isConnectionString(connection))
         {
             client = new ServiceBusClient(connection);
             administration = new ServiceBusAdministrationClient(connection);
         }
         else
         {
-            var credential = new DefaultAzureCredential();
-            client = new ServiceBusClient(connection, credential);
-            administration = new ServiceBusAdministrationClient(connection, credential);
+            var serviceNamespace = !string.IsNullOrWhiteSpace(fullyQualifiedNamespace)
+                ? fullyQualifiedNamespace
+                : connection;
+            if (string.IsNullOrWhiteSpace(serviceNamespace))
+                throw _missingConfiguration(
+                    manifest.ConnectionConfigurationKey,
+                    "fullyQualifiedNamespace");
+            var credential = _createCredential(configuration, manifest.ConnectionConfigurationKey);
+            client = new ServiceBusClient(serviceNamespace, credential);
+            administration = new ServiceBusAdministrationClient(serviceNamespace, credential);
         }
 
         var transport = new ServiceBusMessagingTransport(client);
-        return services.AddArkMessagingFunctionsHost(
+        services.AddArkMessagingFunctionsHost(
             container,
             manifest,
             transport,
             dataBus,
             new ServiceBusTransportManagement(administration));
+        services.AddSingleton<IHostedService>(_ => new ServiceBusTransportLifetime(transport));
+        return services;
 #pragma warning restore CA2000
     }
 
     private static IServiceCollection _addStorageQueue(
         IServiceCollection services,
         Container container,
+        IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
-        string connection,
         StorageQueueFunctionsHostSettings? hostSettings)
     {
+        var connection = configuration[manifest.ConnectionConfigurationKey];
+        var queueServiceUri = configuration[
+            string.Concat(manifest.ConnectionConfigurationKey, ":queueServiceUri")];
         QueueServiceClient client;
         StorageQueueMessagingTransport transport;
-        if (Uri.TryCreate(connection, UriKind.Absolute, out var serviceUri))
+        if (!string.IsNullOrWhiteSpace(queueServiceUri))
         {
-            TokenCredential credential = new DefaultAzureCredential();
+            if (!Uri.TryCreate(queueServiceUri, UriKind.Absolute, out var serviceUri))
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Messaging transport configuration '{0}:queueServiceUri' must be an absolute URI.",
+                        manifest.ConnectionConfigurationKey));
+            TokenCredential credential = _createCredential(
+                configuration,
+                manifest.ConnectionConfigurationKey);
             client = new QueueServiceClient(serviceUri, credential);
             transport = new StorageQueueMessagingTransport(
                 serviceUri,
                 credential,
                 manifest.Descriptor!.RetryPolicy.MaximumHandlerDuration,
                 manifest.Descriptor.RetryPolicy.RetryDelay);
+        }
+        else if (Uri.TryCreate(connection, UriKind.Absolute, out var serviceUri))
+        {
+            TokenCredential credential = _createCredential(
+                configuration,
+                manifest.ConnectionConfigurationKey);
+            client = new QueueServiceClient(serviceUri, credential);
+            transport = new StorageQueueMessagingTransport(
+                serviceUri,
+                credential,
+                manifest.Descriptor!.RetryPolicy.MaximumHandlerDuration,
+                manifest.Descriptor.RetryPolicy.RetryDelay);
+        }
+        else if (string.IsNullOrWhiteSpace(connection))
+        {
+            throw _missingConfiguration(
+                manifest.ConnectionConfigurationKey,
+                "queueServiceUri");
         }
         else
         {
@@ -307,6 +335,37 @@ public static class MessagingFunctionsServiceCollectionExtensions
         }
     }
 
+    private static void _validateHandlers(
+        Container container,
+        MessagingParticipantDescriptor descriptor)
+    {
+        foreach (var handlerServiceType in descriptor.HandlerServiceTypes)
+        {
+            if (container.GetRegistration(handlerServiceType, throwOnFailure: false) is null)
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Messaging handler service '{0}' is not registered in the application container.",
+                        handlerServiceType));
+            }
+        }
+    }
+
+    private static void _validateExclusiveBus(Container container)
+    {
+        // ponytail: Avoid a Rebus package dependency; replace this with shared topology markers when adapters expose them.
+        if (container.GetCurrentRegistrations().Any(registration =>
+                string.Equals(
+                    registration.ServiceType.FullName,
+                    _rebusBusServiceType,
+                    StringComparison.Ordinal)))
+        {
+            throw new InvalidOperationException(
+                "Rebus and Mediator Framework messaging buses cannot be composed for the same Functions topology.");
+        }
+    }
+
     private static void _registerSteps(Container container, IEnumerable<Type> stepTypes)
     {
         foreach (var stepType in stepTypes)
@@ -320,5 +379,58 @@ public static class MessagingFunctionsServiceCollectionExtensions
     private static bool _isConnectionString(string value)
     {
         return value.Contains('=', StringComparison.Ordinal);
+    }
+
+    private static TokenCredential _createCredential(
+        IConfiguration configuration,
+        string connectionConfigurationKey)
+    {
+        var clientId = configuration[
+            string.Concat(connectionConfigurationKey, ":clientId")];
+        return new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ManagedIdentityClientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId
+        });
+    }
+
+    private static InvalidOperationException _missingConfiguration(
+        string connectionConfigurationKey,
+        string identitySetting)
+    {
+        return new InvalidOperationException(
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "Messaging transport configuration '{0}' or '{0}:{1}' is required.",
+                connectionConfigurationKey,
+                identitySetting));
+    }
+
+    private sealed class ServiceBusTransportLifetime : IHostedService, IAsyncDisposable
+    {
+        private readonly ServiceBusMessagingTransport _transport;
+        private int _disposed;
+
+        public ServiceBusTransportLifetime(ServiceBusMessagingTransport transport)
+        {
+            _transport = transport;
+        }
+
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await DisposeAsync().ConfigureAwait(false);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
+            await _transport.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }

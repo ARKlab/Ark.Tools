@@ -239,11 +239,11 @@ handlers while selecting their own receiver host.
 
 ## Acceptance
 
-- [ ] Package and analyzer assets are correct and locked.
-- [ ] Startup composition is documented and validates configuration.
-- [ ] No Rebus receiver or outbox processor starts in the Functions process.
-- [ ] Existing HTTP and outbound Rebus behavior remains compatible in Rebus
+- [x] Package and analyzer assets are correct and locked.
+- [x] Startup composition is documented and validates configuration.
+- [x] No Rebus receiver or outbox processor starts in the Functions process.
+- [x] Existing HTTP and outbound Rebus behavior remains compatible in Rebus
   mode.
-- [ ] The [task board](../README.md) status for AZM-13 is updated to this task's acceptance state.
+- [x] The [task board](../README.md) status for AZM-13 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

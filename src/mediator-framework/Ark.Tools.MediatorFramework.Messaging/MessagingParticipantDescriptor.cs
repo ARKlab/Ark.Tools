@@ -50,6 +50,8 @@ public sealed class MessagingParticipantDescriptor
     /// <param name="receives">Whether the participant receives contracts.</param>
     /// <param name="dispatch">The generated normal dispatch binder.</param>
     /// <param name="dispatchFailed">The generated second-level failure binder.</param>
+    /// <param name="handlerServiceTypes">The generated consumed-contract handler service types.</param>
+    /// <param name="publishedTopics">The generated participant-owned topic resources.</param>
     public MessagingParticipantDescriptor(
         Type participantType,
         MessagingNetworkOptions network,
@@ -61,7 +63,9 @@ public sealed class MessagingParticipantDescriptor
         int compressionMinimumSizeBytes,
         bool receives,
         MessagingDispatch? dispatch,
-        MessagingFailedDispatch? dispatchFailed)
+        MessagingFailedDispatch? dispatchFailed,
+        IEnumerable<Type>? handlerServiceTypes = null,
+        IEnumerable<MessagingTopicResource>? publishedTopics = null)
     {
         ParticipantType = participantType ?? throw new ArgumentNullException(nameof(participantType));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -84,6 +88,10 @@ public sealed class MessagingParticipantDescriptor
         Receives = receives;
         Dispatch = dispatch;
         DispatchFailed = dispatchFailed;
+        HandlerServiceTypes = new ReadOnlyCollection<Type>(
+            (handlerServiceTypes ?? Array.Empty<Type>()).ToArray());
+        PublishedTopics = new ReadOnlyCollection<MessagingTopicResource>(
+            (publishedTopics ?? Array.Empty<MessagingTopicResource>()).ToArray());
     }
 
     /// <summary>Gets the participant declaration type.</summary>
@@ -118,6 +126,12 @@ public sealed class MessagingParticipantDescriptor
 
     /// <summary>Gets the generated second-level failure binder.</summary>
     public MessagingFailedDispatch? DispatchFailed { get; }
+
+    /// <summary>Gets the generated consumed-contract handler service types.</summary>
+    public IReadOnlyList<Type> HandlerServiceTypes { get; }
+
+    /// <summary>Gets the generated participant-owned topic resources.</summary>
+    public IReadOnlyList<MessagingTopicResource> PublishedTopics { get; }
 
     /// <summary>Creates the participant payload sender over the shared DataBus.</summary>
     /// <param name="dataBus">The shared network DataBus.</param>

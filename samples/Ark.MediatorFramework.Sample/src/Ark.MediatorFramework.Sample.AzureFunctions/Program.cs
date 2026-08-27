@@ -36,16 +36,14 @@ public static class Program
             builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
-            var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
             var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];
-            var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(
-                serviceBusConnectionString,
+            var applicationContainer = AzureFunctionsNativeComposition.BuildContainer(
                 useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
-            builder.Services.AddArkAzureFunctions(rebusContainer);
+            builder.Services.AddArkAzureFunctions(applicationContainer);
             builder.Services.AddArkMessagingFunctionsHost(
-                rebusContainer,
+                applicationContainer,
                 builder.Configuration,
                 ArkGeneratedMessagingFunctions.Manifest,
                 new InMemoryMessagingDataBus(
@@ -77,7 +75,8 @@ public static class Program
                     .RequireAuthenticatedUser()
                     .Build();
             });
-            builder.Services.AddHostedService(_ => new AzureFunctionsRebusHostedService(rebusContainer));
+            builder.Services.AddHostedService(_ =>
+                new AzureFunctionsContainerHostedService(applicationContainer));
 
             await builder.Build().RunAsync().ConfigureAwait(false);
         }

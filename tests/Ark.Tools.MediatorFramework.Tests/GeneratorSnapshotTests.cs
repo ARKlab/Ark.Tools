@@ -2205,6 +2205,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("ManagedIdentityConfigurationKey = \"messaging:identity\"");
         result.Generated.Should().Contain("IMessagingContractRegistry Registry");
         result.Generated.Should().Contain("MessagingParticipantDescriptor CreateDescriptor");
+        result.Generated.Should().Contain(
+            "typeof(global::Ark.Tools.Solid.ICommandHandler<global::PrintBook>)");
         result.Generated.Should().Contain("IMessagingContractRegistry");
         result.Generated.Should().NotContain("CreateRegistry()");
         result.Generated.Should().Contain("public const string Identity");
@@ -2370,7 +2372,7 @@ public sealed class GeneratorSnapshotTests
                 typeof(PrintingParticipant),
                 MessagingFunctionsTriggerBinding.ServiceBus,
                 ConnectionConfigurationKey = "BookMessaging",
-                IncomingSteps = new[] { typeof(IncomingStep) })]
+                IncomingSteps = new[] { typeof(ZIncomingStep), typeof(AIncomingStep) })]
             [Event(Name = "books_printed")]
             public sealed class BookPrinted : IRequest<BookPrinted, string> { }
             [MessagingParticipant(
@@ -2388,7 +2390,8 @@ public sealed class GeneratorSnapshotTests
                 Members = new[] { typeof(PublishingParticipant), typeof(PrintingParticipant) },
                 Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
             public static partial class BookMessagingNetwork { }
-            public sealed class IncomingStep { }
+            public sealed class ZIncomingStep { }
+            public sealed class AIncomingStep { }
             public sealed class TestRetryPolicy : IMessagingRetryPolicy
             {
                 public int MaximumDeliveryCount => 3;
@@ -2416,7 +2419,12 @@ public sealed class GeneratorSnapshotTests
         first.Generated.Should().Contain("\"publishing-books_printed\"");
         first.Generated.Should().Contain("\"printing\"");
         first.Generated.Should().NotContain("\"printing-");
-        first.Generated.Should().Contain("typeof(global::IncomingStep)");
+        first.Generated.IndexOf(
+                "typeof(global::ZIncomingStep)",
+                StringComparison.Ordinal)
+            .Should().BeLessThan(first.Generated.IndexOf(
+                "typeof(global::AIncomingStep)",
+                StringComparison.Ordinal));
         first.Generated.Should().Contain("new global::TestRetryPolicy().MaximumDeliveryCount");
         first.Generated.Split("ServiceBusTrigger(", StringSplitOptions.None).Should().HaveCount(2);
     }

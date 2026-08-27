@@ -170,6 +170,8 @@ services.AddArkMessagingParticipant(
 
 This registers only the restricted bus and its outgoing runtime. It does not
 register dispatch, triggers, queues, subscriptions, or a receive pump.
+Publisher-owned topics are still reconciled when lifecycle management is
+enabled.
 
 ### Generate a Service Bus receive trigger
 
@@ -213,10 +215,14 @@ builder.Services.AddArkMessagingFunctionsHost(
 ```
 
 The connection setting can contain a connection string or a fully qualified
-namespace for `DefaultAzureCredential`. Startup validates the participant,
-network, transport capabilities, serializers, and trigger binding before
-registering the bus and dispatcher. A receive-capable Functions participant
-cannot select InMemory, because its receive pump is a long-running worker.
+namespace for `DefaultAzureCredential`. It can instead use standard
+identity-based Functions settings beneath the configured prefix:
+`fullyQualifiedNamespace` and the optional user-assigned-identity `clientId`
+(environment variables use `__` separators). Startup validates the participant,
+network, transport capabilities, serializers, consumed-message handlers, and
+trigger binding before registering the bus and dispatcher. A receive-capable
+Functions participant cannot select InMemory, because its receive pump is a
+long-running worker.
 
 Each subscription
 forwards the publisher-owned topic into the participant identity queue. Resource
@@ -291,6 +297,9 @@ Storage Queue provides `Send`, `Receive`, and visibility-delay
 `ScheduledSend`; it does not provide `PubSub`. Networks requiring `PubSub` fail
 capability validation, and direct publish or subscription operations throw
 `NotSupportedException`. Scheduled visibility delay cannot exceed seven days.
+For identity-based configuration, set `queueServiceUri` and optional `clientId`
+beneath `ConnectionConfigurationKey`; environment variables use `__`
+separators.
 
 The generated function binds an Azure `QueueMessage` from the participant
 identity queue and awaits `MessagingQueueFunctionsDispatcher`. Successful
