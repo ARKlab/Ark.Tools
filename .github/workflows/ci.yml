@@ -18,6 +18,8 @@ jobs:
   build:
     name: 'Build'
     runs-on: 'ubuntu-latest'
+    env:
+      ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING: 'Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;'
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2025-latest

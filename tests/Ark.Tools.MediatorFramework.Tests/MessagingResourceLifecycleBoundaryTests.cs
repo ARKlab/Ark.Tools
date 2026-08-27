@@ -136,9 +136,15 @@ public sealed class MessagingResourceLifecycleBoundaryTests
 
     private static string _serviceBusConnectionString()
     {
-        return Environment.GetEnvironmentVariable("ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING")
-            ?? "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;"
-            + "SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+        var connectionString = Environment.GetEnvironmentVariable(
+            "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+
+        Assert.Inconclusive(
+            "Set ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING to run the Service Bus "
+            + "resource reconciliation boundary test.");
+        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
     }
 
     private static async Task _deleteServiceBusResourcesAsync(
