@@ -238,8 +238,9 @@ ARK_SERVICEBUS_EMPTY_QUEUE
 ```
 
 The two queues must be isolated test entities. When these values are absent,
-the tests report the missing infrastructure explicitly rather than silently
-passing.
+the tests use `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` and provision isolated
+queues for each test. If neither configuration is present, the tests report the
+missing infrastructure explicitly rather than silently passing.
 
 ### Reconcile messaging resources
 
