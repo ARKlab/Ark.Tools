@@ -4,7 +4,7 @@
     <NoWarn>$(NoWarn);NU5104</NoWarn>
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
-    <Description>Azure Functions isolated-worker HTTP transport runtime for Ark.Tools MediatorFramework.</Description>
+    <Description>Azure Functions isolated-worker HTTP and messaging hosting for Ark.Tools MediatorFramework.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;Source Generator</PackageTags>
     <Version>$(ArkToolsCoreVersion)</Version>
     <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>

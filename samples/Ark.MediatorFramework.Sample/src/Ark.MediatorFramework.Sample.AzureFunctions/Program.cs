@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Azure.Messaging.ServiceBus.Administration;
+using NodaTime;
 using NLog;
 using NLog.Extensions.Logging;
 
@@ -44,14 +44,14 @@ public static class Program
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(rebusContainer);
-            if (!string.IsNullOrWhiteSpace(serviceBusConnectionString))
-            {
-                builder.Services.AddSingleton<IMessagingTransportManagement>(
-                    new ServiceBusTransportManagement(
-                        new ServiceBusAdministrationClient(serviceBusConnectionString)));
-                builder.Services.AddArkMessagingResourceLifecycle(
-                    ArkGeneratedMessagingFunctions.Manifest.Resources);
-            }
+            builder.Services.AddArkMessagingFunctionsHost(
+                rebusContainer,
+                builder.Configuration,
+                ArkGeneratedMessagingFunctions.Manifest,
+                new InMemoryMessagingDataBus(
+                    SystemClock.Instance,
+                    Duration.FromHours(2)),
+                MessagingFunctionsRuntimeTransport.AzureServiceBus);
             builder.Services.AddArkHealthChecks();
             if (builder.Environment.IsEnvironment("IntegrationTests"))
             {

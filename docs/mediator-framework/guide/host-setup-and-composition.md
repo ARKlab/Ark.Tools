@@ -19,7 +19,7 @@ and the web seam in
 | Application assembly | Handlers, validators, authorization handlers, services, DAL, internal messages, application JSON context | `HttpContext`, `ServerCallContext`, transport setup |
 | Web host | ASP.NET Core auth, JSON, MessagePack, OpenAPI, gRPC, endpoint mapping | Business transactions |
 | Rebus processor | Input queue, generated message handlers, retries, outbox processor | HTTP route binding |
-| Functions host | Isolated-worker HTTP boundary and outbound bus client | Rebus receiving |
+| Functions host | Isolated-worker HTTP boundary, generated messaging triggers, and outbound bus client | Rebus workers or outbox polling |
 
 ## Register the application graph
 
@@ -190,6 +190,38 @@ await Task.Delay(Timeout.InfiniteTimeSpan).ConfigureAwait(false);
 The web host can share an in-memory network in tests, but it must not share a
 SimpleInjector container or message scope with the processor. In production,
 replace the network with Azure Service Bus.
+
+## Compose Azure Functions messaging
+
+`Ark.Tools.MediatorFramework.AzureFunctions` packages the Functions trigger
+generator under `analyzers/dotnet/cs` and depends on the transport-neutral
+`Ark.Tools.MediatorFramework.Messaging` runtime. The generated manifest carries
+the network and participant descriptor used by startup:
+
+```csharp
+builder.Services.AddArkMessagingFunctionsHost(
+    container,
+    builder.Configuration,
+    ArkGeneratedMessagingFunctions.Manifest,
+    dataBus,
+    MessagingFunctionsRuntimeTransport.AzureServiceBus);
+```
+
+Startup resolves the connection from the generated host binding, validates
+network capabilities and the generated trigger binding, registers the native
+restricted `IBus`, codecs, host-local pipeline steps, dispatcher, settlement,
+and resource lifecycle against the existing application container. It rejects
+receive-capable InMemory composition and transport/manifest drift.
+
+Use `AddArkMessagingParticipant` from the messaging package for producer-only
+Minimal API, console, and client processes. That path registers routing,
+serialization, DataBus, outgoing steps, and the restricted bus only; it does not
+register a dispatcher, trigger, queue, subscription, or receive worker.
+
+Functions composition never starts a Rebus receiver, Rebus outbox processor, or
+native SQL outbox processor. An outbound-only Rebus client remains a separate
+composition mode and must not register a second framework `IBus` for the same
+logical topology.
 
 ## Startup checklist
 
