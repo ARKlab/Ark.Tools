@@ -31,6 +31,17 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+      servicebus:
+        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+        ports:
+          - 5672:5672
+          - 5300:5300
+        env:
+          ACCEPT_EULA: 'Y'
+          SQL_SERVER: sqlserver
+          MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
+          EMULATOR_HTTP_PORT: 5300
+          SQL_WAIT_INTERVAL: 5
 
     # You can define any steps you want, and they will run before the agent starts.
     # If you do not check out your code, Copilot will do this for you.
@@ -49,6 +60,9 @@ jobs:
             mcr.microsoft.com/azure-storage/azurite:latest \
             azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
+      - name: 'Wait for Service Bus emulator'
+        run: timeout 120s bash -c 'until curl --fail --silent http://localhost:5300/health; do sleep 2; done'
+
       - name: Install dotnet
         uses: actions/setup-dotnet@v6
         with:
@@ -56,4 +70,3 @@ jobs:
 
       - name: 'Install Azure Functions Core Tools'
         run: npm install --global azure-functions-core-tools@4.12.1
-

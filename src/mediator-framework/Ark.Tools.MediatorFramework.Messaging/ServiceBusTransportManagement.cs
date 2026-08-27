@@ -111,7 +111,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
             {
                 subscriptions.Add(new MessagingTransportSubscription(
                     existing.SubscriptionName,
-                    _ownerIdentity(existing.UserMetadata)));
+                    _ownerIdentity(existing.UserMetadata) ?? existing.SubscriptionName));
             }
         }
         catch (ServiceBusException ex)
@@ -162,26 +162,10 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
                     desired.Name));
         }
 
-        var forwardMatches = string.Equals(
-            existing.ForwardTo,
-            desired.ForwardToQueue,
-            StringComparison.Ordinal);
+        var forwardMatches = _forwardMatches(existing.ForwardTo, desired.ForwardToQueue);
         var deliveryMatches = existing.MaxDeliveryCount == desired.MaximumDeliveryCount;
         if (forwardMatches && deliveryMatches)
             return;
-
-        if (!string.Equals(
-            _ownerIdentity(existing.UserMetadata),
-            desired.OwnerIdentity,
-            StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Existing foreign subscription '{0}/{1}' has incompatible settings.",
-                    desired.Topic,
-                    desired.Name));
-        }
 
         existing.ForwardTo = desired.ForwardToQueue;
         existing.MaxDeliveryCount = desired.MaximumDeliveryCount;
@@ -208,20 +192,20 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         if (existing.MaxDeliveryCount == maximumDeliveryCount)
             return;
 
-        if (!string.Equals(
-            _ownerIdentity(existing.UserMetadata),
-            ownerIdentity,
-            StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Existing foreign queue '{0}' has incompatible settings.",
-                    existing.Name));
-        }
-
         existing.MaxDeliveryCount = maximumDeliveryCount;
         _ = await _administration.UpdateQueueAsync(existing, ctk).ConfigureAwait(false);
+    }
+
+    private static bool _forwardMatches(string? existing, string desired)
+    {
+        if (string.Equals(existing, desired, StringComparison.Ordinal))
+            return true;
+
+        return Uri.TryCreate(existing, UriKind.Absolute, out var uri)
+            && string.Equals(
+                uri.GetComponents(UriComponents.Path, UriFormat.Unescaped),
+                desired,
+                StringComparison.Ordinal);
     }
 
     private static string _owner(string ownerIdentity)

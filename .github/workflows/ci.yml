@@ -35,6 +35,17 @@ jobs:
           --health-timeout=5s
           --health-retries=5
           --health-start-period=30s
+      servicebus:
+        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+        ports:
+          - 5672:5672
+          - 5300:5300
+        env:
+          ACCEPT_EULA: 'Y'
+          SQL_SERVER: sqlserver
+          MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
+          EMULATOR_HTTP_PORT: 5300
+          SQL_WAIT_INTERVAL: 5
 
     steps:
     - name: 'Checkout'
@@ -50,6 +61,9 @@ jobs:
           -p 10002:10002 \
           mcr.microsoft.com/azure-storage/azurite:latest \
           azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+
+    - name: 'Wait for Service Bus emulator'
+      run: timeout 120s bash -c 'until curl --fail --silent http://localhost:5300/health; do sleep 2; done'
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v6

@@ -227,13 +227,13 @@ properties identify the failed management call.
 
 Create and delete races from concurrent host instances are idempotent.
 Subscriber startup does not depend on publisher startup because either side may
-create a missing declared topic. Existing topics are never changed. Existing
-IaC-created queues and subscriptions are accepted when their settings are
-compatible; set `MessagingResourceLifecycle.External` when runtime management
-permissions are intentionally absent. Queues and topics are never deleted, and
-foreign or IaC subscriptions without the current participant ownership marker
-are preserved. Rebus-managed resources belong to the separate Rebus topology
-and must not carry this ownership marker.
+create a missing declared topic. Existing topics are never changed. Managed
+lifecycle updates mutable settings on desired queues and subscriptions, including
+IaC-precreated entities, when the generated delivery policy changes; set
+`MessagingResourceLifecycle.External` when IaC must remain the sole writer.
+Queues and topics are never deleted, and foreign subscriptions whose names do not
+match the participant identity are preserved. Rebus-managed resources belong to
+the separate Rebus topology and must not carry this ownership marker.
 
 Subscription cleanup also runs in production. It is not a deployment
 orchestrator: removing a subscription can race with an old processor that still

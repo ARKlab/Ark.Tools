@@ -1229,8 +1229,10 @@ The concrete implementation uses the generated `MessagingResourceManifest`,
 `AddArkMessagingResourceLifecycle` runs reconciliation as a startup hosted
 service. Service Bus resources created by the framework carry
 `ark.tools.mediator-framework:<participant>` user metadata; obsolete
-subscription deletion requires that exact owner marker. Existing foreign or
-IaC entities are never relabeled, and incompatible settings fail startup through
+subscription deletion requires that exact owner marker or the transport-reserved
+subscription name matching the participant identity. Existing entities are never
+relabeled; managed lifecycle updates mutable settings on desired queues and
+subscriptions, while incompatible immutable settings fail startup through
 `MessagingResourceManagementException` with structured operation and resource
 properties.
 

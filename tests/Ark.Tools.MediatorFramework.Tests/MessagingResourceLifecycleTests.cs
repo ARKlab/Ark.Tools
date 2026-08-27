@@ -135,7 +135,7 @@ public sealed class MessagingResourceLifecycleTests
     }
 
     [TestMethod]
-    public async Task ServiceBusManagementUpdatesOwnedDeliverySettings()
+    public async Task ServiceBusManagementUpdatesExistingDeliverySettings()
     {
         var administration = new ExistingAdministrationClient();
         var management = new ServiceBusTransportManagement(administration);
@@ -316,7 +316,7 @@ public sealed class MessagingResourceLifecycleTests
             duplicateDetectionHistoryTimeWindow: TimeSpan.FromMinutes(10),
             maxDeliveryCount: 2,
             status: EntityStatus.Active,
-            userMetadata: "ark.tools.mediator-framework:consumer-a");
+            userMetadata: "iac");
         private readonly SubscriptionProperties _subscription =
             ServiceBusModelFactory.SubscriptionProperties(
                 "publisher-current",
@@ -328,7 +328,7 @@ public sealed class MessagingResourceLifecycleTests
                 maxDeliveryCount: 2,
                 status: EntityStatus.Active,
                 forwardTo: "consumer-a",
-                userMetadata: "ark.tools.mediator-framework:consumer-a");
+                userMetadata: "iac");
 
         public QueueProperties? UpdatedQueue { get; private set; }
 
