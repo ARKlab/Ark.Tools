@@ -18,6 +18,7 @@
     <PackageReference Include="Rebus.Protobuf" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Outbox.Rebus\Ark.Tools.Outbox.Rebus.csproj" />
     <!-- Runtime dependencies used by the generated Rebus handlers. -->
     <ProjectReference Include="..\..\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.Rebus.props" Pack="true"

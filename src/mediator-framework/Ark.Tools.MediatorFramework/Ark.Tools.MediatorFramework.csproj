@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.Outbox\Ark.Tools.Outbox.csproj" />
     <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.Messaging" />
     <PackageReference Include="protobuf-net" />
     <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
