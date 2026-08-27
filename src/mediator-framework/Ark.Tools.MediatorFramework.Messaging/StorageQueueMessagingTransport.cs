@@ -39,7 +39,7 @@ public sealed class StorageQueueMessagingTransport :
         _validateVisibility(_retryDelay, nameof(retryDelay));
     }
 
-    /// <summary>Creates a connection-string transport with exactly one framework Base64 pass.</summary>
+    /// <summary>Creates a connection-string transport with Azure Queue message encoding disabled.</summary>
     /// <param name="connectionString">The Queue Storage connection string.</param>
     /// <param name="receiveVisibilityTimeout">The visibility window used by the custom receive pump.</param>
     /// <param name="retryDelay">The delay applied when the custom receive pump abandons a delivery.</param>
@@ -55,7 +55,7 @@ public sealed class StorageQueueMessagingTransport :
         ArgumentException.ThrowIfNullOrEmpty(connectionString);
     }
 
-    /// <summary>Creates a managed-identity transport with exactly one framework Base64 pass.</summary>
+    /// <summary>Creates a managed-identity transport with Azure Queue message encoding disabled.</summary>
     /// <param name="serviceUri">The Queue Storage service endpoint.</param>
     /// <param name="credential">The managed identity or token credential.</param>
     /// <param name="receiveVisibilityTimeout">The visibility window used by the custom receive pump.</param>

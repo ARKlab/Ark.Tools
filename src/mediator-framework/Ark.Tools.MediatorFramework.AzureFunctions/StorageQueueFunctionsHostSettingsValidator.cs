@@ -68,8 +68,10 @@ public sealed class StorageQueueFunctionsHostSettingsValidator : IHostedService
             return;
         }
         if (_manifest.RetryDelay <= TimeSpan.Zero)
-            throw new InvalidOperationException(
-                "Storage Queue messaging participants require a positive RetryDelay.");
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+            return;
+        }
 
         var encodingMatches = string.Equals(
             _settings.MessageEncoding,

@@ -97,6 +97,27 @@ public sealed class MessagingStorageQueueFunctionsTests
             .ConfigureAwait(false);
     }
 
+    [TestMethod]
+    public async Task HostSettingsValidatorSkipsSenderOnlyManifest()
+    {
+        var manifest = new MessagingFunctionsManifest(
+            typeof(MessagingStorageQueueFunctionsTests),
+            typeof(MessagingStorageQueueFunctionsTests),
+            MessagingFunctionsTriggerBinding.StorageQueue,
+            "printing",
+            "BookMessaging",
+            1,
+            TimeSpan.FromMinutes(5),
+            Array.Empty<MessagingFunctionsSubscription>(),
+            Array.Empty<Type>(),
+            Array.Empty<Type>());
+        var settings = new StorageQueueFunctionsHostSettings("base64", 1, TimeSpan.Zero);
+        var validator = new StorageQueueFunctionsHostSettingsValidator(manifest, settings);
+
+        await validator.StartAsync(default).ConfigureAwait(false);
+        await validator.StopAsync(default).ConfigureAwait(false);
+    }
+
     private sealed class RecordingQueueClient : QueueClient
     {
         public BinaryData? SentBody { get; private set; }
