@@ -133,7 +133,11 @@ public sealed class MessagingBusSampleTests
             service,
             receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
             retryDelay: new SampleMessagingRetryPolicy().RetryDelay);
-        await transport.EnsureQueueAsync(SampleMessagingParticipant.Identity, default)
+        await transport.EnsureQueueAsync(
+                SampleMessagingParticipant.Identity,
+                4,
+                SampleMessagingParticipant.Identity,
+                default)
             .ConfigureAwait(false);
         var network = SampleMessagingNetwork.CreateOptions();
         var dataBus = new InMemoryMessagingDataBus();
