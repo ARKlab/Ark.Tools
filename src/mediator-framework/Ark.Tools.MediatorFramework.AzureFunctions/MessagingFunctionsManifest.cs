@@ -3,6 +3,8 @@
 
 using System.Collections.ObjectModel;
 
+using Ark.Tools.MediatorFramework.Messaging;
+
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Describes one desired Service Bus event subscription.</summary>
@@ -48,6 +50,7 @@ public sealed class MessagingFunctionsManifest
     /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
     /// <param name="retryDelay">The participant retry visibility delay.</param>
     /// <param name="strictStorageQueueHostSettings">Whether Storage Queue setting mismatches fail startup.</param>
+    /// <param name="resources">The generated transport-neutral desired resources.</param>
     public MessagingFunctionsManifest(
         Type participant,
         Type network,
@@ -60,7 +63,8 @@ public sealed class MessagingFunctionsManifest
         IEnumerable<Type> incomingSteps,
         IEnumerable<Type> outgoingSteps,
         TimeSpan? retryDelay = null,
-        bool strictStorageQueueHostSettings = false)
+        bool strictStorageQueueHostSettings = false,
+        MessagingResourceManifest? resources = null)
     {
         Participant = participant ?? throw new ArgumentNullException(nameof(participant));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -82,6 +86,14 @@ public sealed class MessagingFunctionsManifest
         OutgoingSteps = new ReadOnlyCollection<Type>(outgoingSteps.ToArray());
         RetryDelay = retryDelay ?? TimeSpan.Zero;
         StrictStorageQueueHostSettings = strictStorageQueueHostSettings;
+        Resources = resources ?? new MessagingResourceManifest(
+            queue,
+            queue,
+            maximumDeliveryCount,
+            Array.Empty<MessagingTopicResource>(),
+            Array.Empty<MessagingSubscriptionResource>(),
+            Array.Empty<string>(),
+            MessagingResourceLifecycle.External);
     }
 
     /// <summary>Gets the bound participant type.</summary>
@@ -119,4 +131,7 @@ public sealed class MessagingFunctionsManifest
 
     /// <summary>Gets whether Storage Queue host-setting mismatches fail startup.</summary>
     public bool StrictStorageQueueHostSettings { get; }
+
+    /// <summary>Gets the generated transport-neutral desired resources.</summary>
+    public MessagingResourceManifest Resources { get; }
 }

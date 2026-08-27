@@ -2409,8 +2409,12 @@ public sealed class GeneratorSnapshotTests
         first.Generated.Should().Contain(".DispatchAsync(message, messageActions, functionContext, cancellationToken)");
         first.Generated.Should().Contain("class ArkGeneratedMessagingFunctions");
         first.Generated.Should().Contain("MessagingFunctionsManifest Manifest");
+        first.Generated.Should().Contain("MessagingResourceManifest(");
+        first.Generated.Should().Contain("MessagingTopicResource(");
+        first.Generated.Should().Contain("MessagingSubscriptionResource(");
         first.Generated.Should().Contain("\"publishing-books_printed\"");
         first.Generated.Should().Contain("\"printing\"");
+        first.Generated.Should().NotContain("\"printing-");
         first.Generated.Should().Contain("typeof(global::IncomingStep)");
         first.Generated.Should().Contain("new global::TestRetryPolicy().MaximumDeliveryCount");
         first.Generated.Split("ServiceBusTrigger(", StringSplitOptions.None).Should().HaveCount(2);

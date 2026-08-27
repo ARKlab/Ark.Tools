@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.AzureFunctions;
+using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
+using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.NLog;
@@ -12,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Azure.Messaging.ServiceBus.Administration;
 using NLog;
 using NLog.Extensions.Logging;
 
@@ -34,13 +37,21 @@ public static class Program
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
             var serviceBusConnectionString = builder.Configuration["AzureServiceBus:ConnectionString"];
-var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];
-var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(
-    serviceBusConnectionString,
-    useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
-    connectionString: sqlConnectionString);
+            var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];
+            var rebusContainer = AzureFunctionsRebusComposition.BuildContainer(
+                serviceBusConnectionString,
+                useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
+                connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(rebusContainer);
+            if (!string.IsNullOrWhiteSpace(serviceBusConnectionString))
+            {
+                builder.Services.AddSingleton<IMessagingTransportManagement>(
+                    new ServiceBusTransportManagement(
+                        new ServiceBusAdministrationClient(serviceBusConnectionString)));
+                builder.Services.AddArkMessagingResourceLifecycle(
+                    ArkGeneratedMessagingFunctions.Manifest.Resources);
+            }
             builder.Services.AddArkHealthChecks();
             if (builder.Environment.IsEnvironment("IntegrationTests"))
             {

@@ -1224,6 +1224,16 @@ subscription sets. Deployments must stop/drain incompatible old processors or
 use versioned participant identities/contracts when zero-overlap rollout is
 required.
 
+The concrete implementation uses the generated `MessagingResourceManifest`,
+`MessagingResourceReconciler`, and `ServiceBusTransportManagement`.
+`AddArkMessagingResourceLifecycle` runs reconciliation as a startup hosted
+service. Service Bus resources created by the framework carry
+`ark.tools.mediator-framework:<participant>` user metadata; obsolete
+subscription deletion requires that exact owner marker. Existing foreign or
+IaC entities are never relabeled, and incompatible settings fail startup through
+`MessagingResourceManagementException` with structured operation and resource
+properties.
+
 ## 9. Restricted bus shim
 
 The Functions composition registers a restricted `IBus` implementation. It is
