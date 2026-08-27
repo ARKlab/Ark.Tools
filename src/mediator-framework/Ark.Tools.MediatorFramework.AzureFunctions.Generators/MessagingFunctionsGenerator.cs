@@ -231,6 +231,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             subscribes);
         if (subscriptions is null)
             return;
+        var topics = _createTopics(network.Attribute!);
+        var desiredTopics = topics.Where(topic =>
+                string.Equals(topic.OwnerIdentity, identity, StringComparison.Ordinal)
+                || subscribes.Any(contract =>
+                    SymbolEqualityComparer.Default.Equals(contract, topic.Contract)))
+            .ToImmutableArray();
 
         var connection = host.ConnectionConfigurationKey
             ?? network.Type.Name;
@@ -249,7 +255,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             identity,
             connection,
             retryType,
-            subscriptions.Value);
+            subscriptions.Value,
+            desiredTopics,
+            topics,
+            !processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty,
+            _int(network.Attribute!, "ResourceLifecycle"));
 
         if (processes.IsDefaultOrEmpty && subscribes.IsDefaultOrEmpty)
         {
@@ -305,14 +315,35 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                         publishers[0].Type.Name.Length - "Participant".Length)
                     : publishers[0].Type.Name);
             var topic = publisherIdentity + "-" + _contractName(subscribedEvent);
-            var prefixLength = Math.Min(participantIdentity.Length, 41);
-            var subscriptionName = participantIdentity.Substring(0, prefixLength)
-                + "-"
-                + _stableHash(topic);
-            subscriptions.Add(new Subscription(topic, subscriptionName, participantIdentity));
+            subscriptions.Add(new Subscription(topic, participantIdentity, participantIdentity));
         }
 
         return subscriptions.ToImmutable();
+    }
+
+    private static ImmutableArray<Topic> _createTopics(AttributeData networkAttribute)
+    {
+        var topics = ImmutableArray.CreateBuilder<Topic>();
+        foreach (var member in _types(networkAttribute, "Members"))
+        {
+            var participant = member.GetAttributes().FirstOrDefault(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            if (participant is null)
+                continue;
+            var ownerIdentity = _string(participant, "Identity")
+                ?? _normalizeIdentity(member.Name.EndsWith("Participant", StringComparison.Ordinal)
+                    ? member.Name.Substring(0, member.Name.Length - "Participant".Length)
+                    : member.Name);
+            foreach (var contract in _types(participant, "Publishes"))
+            {
+                topics.Add(new Topic(
+                    contract,
+                    ownerIdentity + "-" + _contractName(contract),
+                    ownerIdentity));
+            }
+        }
+
+        return topics.ToImmutable();
     }
 
     private static void _emitManifest(
@@ -322,7 +353,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         string identity,
         string connection,
         INamedTypeSymbol? retryType,
-        ImmutableArray<Subscription> subscriptions)
+        ImmutableArray<Subscription> subscriptions,
+        ImmutableArray<Topic> desiredTopics,
+        ImmutableArray<Topic> knownTopics,
+        bool hasIdentityQueue,
+        int resourceLifecycle)
     {
         source.AppendLine("    /// <summary>Gets the deterministic desired-resource manifest for this messaging host.</summary>")
             .AppendLine("    public static global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest Manifest { get; } =")
@@ -334,20 +369,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Append("            \"").Append(_escape(identity)).AppendLine("\",")
             .Append("            \"").Append(_escape(connection)).AppendLine("\",");
 
-        if (retryType is null)
-        {
-            source.AppendLine("            1,")
-                .AppendLine("            global::System.TimeSpan.FromMinutes(5),");
-        }
-        else
-        {
-            source.Append("            checked(new ").Append(_typeName(retryType))
-                .AppendLine("().MaximumDeliveryCount")
-                .Append("                * (new ").Append(_typeName(retryType))
-                .AppendLine("().SecondLevelRetriesEnabled ? 2 : 1)),")
-                .Append("            new ").Append(_typeName(retryType))
-                .AppendLine("().MaximumHandlerDuration,");
-        }
+        _emitMaximumDeliveryCount(source, retryType, "            ", appendComma: true);
+        source.AppendLine();
+        source.Append(retryType is null
+                ? "            global::System.TimeSpan.FromMinutes(5),"
+                : "            new " + _typeName(retryType) + "().MaximumHandlerDuration,")
+            .AppendLine();
 
         source.AppendLine("            new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription[]")
             .AppendLine("            {");
@@ -367,9 +394,65 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             source.AppendLine("            global::System.TimeSpan.Zero,");
         else
             source.Append("            new ").Append(_typeName(retryType)).AppendLine("().RetryDelay,");
-        source.Append("            ").Append(host.StrictStorageQueueHostSettings ? "true" : "false");
-        source.AppendLine(");")
+        source.Append("            ").Append(host.StrictStorageQueueHostSettings ? "true" : "false")
+            .AppendLine(",")
+            .AppendLine("            new global::Ark.Tools.MediatorFramework.Messaging.MessagingResourceManifest(")
+            .Append("                \"").Append(_escape(identity)).AppendLine("\",")
+            .Append("                ").Append(hasIdentityQueue ? "\"" + _escape(identity) + "\"" : "null")
+            .AppendLine(",");
+        _emitMaximumDeliveryCount(source, retryType, "                ", appendComma: true);
+        source.AppendLine()
+            .AppendLine("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource[]")
+            .AppendLine("                {");
+        foreach (var topic in desiredTopics.OrderBy(static topic => topic.Name, StringComparer.Ordinal))
+        {
+            source.AppendLine("                    new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(")
+                .Append("                        \"").Append(_escape(topic.Name)).AppendLine("\",")
+                .Append("                        \"").Append(_escape(topic.OwnerIdentity)).AppendLine("\"),");
+        }
+        source.AppendLine("                },")
+            .AppendLine("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingSubscriptionResource[]")
+            .AppendLine("                {");
+        foreach (var subscription in subscriptions)
+        {
+            source.AppendLine("                    new global::Ark.Tools.MediatorFramework.Messaging.MessagingSubscriptionResource(")
+                .Append("                        \"").Append(_escape(subscription.Topic)).AppendLine("\",")
+                .Append("                        \"").Append(_escape(subscription.Name)).AppendLine("\",")
+                .Append("                        \"").Append(_escape(subscription.ForwardToQueue)).AppendLine("\",");
+            _emitMaximumDeliveryCount(source, retryType, "                        ", appendComma: true);
+            source.AppendLine()
+                .Append("                        \"").Append(_escape(identity)).AppendLine("\"),");
+        }
+        source.AppendLine("                },")
+            .AppendLine("                new string[]")
+            .AppendLine("                {");
+        foreach (var topic in knownTopics.OrderBy(static topic => topic.Name, StringComparer.Ordinal))
+            source.Append("                    \"").Append(_escape(topic.Name)).AppendLine("\",");
+        source.AppendLine("                },")
+            .Append("                (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
+            .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine("));")
             .AppendLine();
+    }
+
+    private static void _emitMaximumDeliveryCount(
+        StringBuilder source,
+        INamedTypeSymbol? retryType,
+        string indentation,
+        bool appendComma)
+    {
+        source.Append(indentation);
+        if (retryType is null)
+        {
+            source.Append('1');
+        }
+        else
+        {
+            source.Append("checked(new ").Append(_typeName(retryType))
+                .Append("().MaximumDeliveryCount * (new ").Append(_typeName(retryType))
+                .Append("().SecondLevelRetriesEnabled ? 2 : 1))");
+        }
+        if (appendComma)
+            source.Append(',');
     }
 
     private static void _emitTypes(StringBuilder source, ImmutableArray<INamedTypeSymbol> types)
@@ -533,6 +616,14 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             is true;
     }
 
+    private static int _int(AttributeData attribute, string name)
+    {
+        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
+            is int value
+            ? value
+            : 0;
+    }
+
     private static string? _string(AttributeData? attribute, string name)
     {
         return attribute?.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
@@ -603,17 +694,6 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 
-    private static string _stableHash(string value)
-    {
-        unchecked
-        {
-            var hash = 2166136261u;
-            foreach (var character in value)
-                hash = (hash ^ character) * 16777619u;
-            return hash.ToString("x8", CultureInfo.InvariantCulture);
-        }
-    }
-
     private static DiagnosticDescriptor _rule(
         string id,
         string title,
@@ -678,5 +758,21 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         public string Name { get; }
 
         public string ForwardToQueue { get; }
+    }
+
+    private readonly struct Topic
+    {
+        public Topic(INamedTypeSymbol contract, string name, string ownerIdentity)
+        {
+            Contract = contract;
+            Name = name;
+            OwnerIdentity = ownerIdentity;
+        }
+
+        public INamedTypeSymbol Contract { get; }
+
+        public string Name { get; }
+
+        public string OwnerIdentity { get; }
     }
 }

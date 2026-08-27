@@ -82,7 +82,7 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
     public async Task DeadLetterMovesEnvelopeAndPreservesOriginalMessageId()
     {
         var transport = (StorageQueueMessagingTransport)CreateTransport();
-        await transport.EnsureQueueAsync(_queue, default).ConfigureAwait(false);
+        await transport.EnsureQueueAsync(_queue, 1, _queue, default).ConfigureAwait(false);
         await transport.SendAsync(
             _queue,
             new Dictionary<string, string>(StringComparer.Ordinal),

@@ -133,17 +133,28 @@ public sealed class StorageQueueMessagingTransport :
     }
 
     /// <inheritdoc />
-    public async Task EnsureQueueAsync(string queue, CancellationToken ctk)
+    public async Task EnsureQueueAsync(
+        string queue,
+        int maximumDeliveryCount,
+        string ownerIdentity,
+        CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
+        ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         await _queue(queue).CreateIfNotExistsAsync(cancellationToken: ctk).ConfigureAwait(false);
         await _queue(_poisonQueue(queue)).CreateIfNotExistsAsync(cancellationToken: ctk)
             .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task EnsureTopicAsync(string topic, CancellationToken ctk)
+    public async Task EnsureTopicAsync(
+        string topic,
+        string ownerIdentity,
+        CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
+        ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         await Task.CompletedTask.ConfigureAwait(false);
         throw new NotSupportedException(
             "Azure Storage Queue does not support the PubSub messaging capability.");
@@ -151,11 +162,21 @@ public sealed class StorageQueueMessagingTransport :
 
     /// <inheritdoc />
     public async Task EnsureSubscriptionAsync(
-        string topic,
-        string subscription,
-        string forwardToQueue,
+        MessagingSubscriptionResource subscription,
         CancellationToken ctk)
     {
+        ArgumentNullException.ThrowIfNull(subscription);
+        await Task.CompletedTask.ConfigureAwait(false);
+        throw new NotSupportedException(
+            "Azure Storage Queue does not support the PubSub messaging capability.");
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<MessagingTransportSubscription>> GetSubscriptionsAsync(
+        string topic,
+        CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
         await Task.CompletedTask.ConfigureAwait(false);
         throw new NotSupportedException(
             "Azure Storage Queue does not support the PubSub messaging capability.");

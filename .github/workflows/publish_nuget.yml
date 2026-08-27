@@ -19,6 +19,8 @@ jobs:
     name: 'Nuget Push'
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: 'ubuntu-latest'
+    env:
+      ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING: 'Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;'
     services:
       sqlserver:
         image: mcr.microsoft.com/mssql/server:2025-latest
@@ -30,6 +32,17 @@ jobs:
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
           # Azure Sql is Enterprise - match it
           MSSQL_PID: EnterpriseDeveloper
+      servicebus:
+        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+        ports:
+          - 5672:5672
+          - 5300:5300
+        env:
+          ACCEPT_EULA: 'Y'
+          SQL_SERVER: sqlserver
+          MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
+          EMULATOR_HTTP_PORT: 5300
+          SQL_WAIT_INTERVAL: 5
 
     steps:
     - name: 'Checkout'
@@ -45,6 +58,14 @@ jobs:
           -p 10002:10002 \
           mcr.microsoft.com/azure-storage/azurite:latest \
           azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+
+    - name: 'Wait for Service Bus emulator'
+      run: |
+        timeout 120s bash -c '
+          until docker logs "${{ job.services.servicebus.id }}" 2>&1 | grep --quiet "Successfully Up"; do
+            sleep 2
+          done
+        '
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v6

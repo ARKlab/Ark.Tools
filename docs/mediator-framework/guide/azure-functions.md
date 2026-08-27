@@ -62,9 +62,9 @@ Declare a messaging network as an attributed class. List every participant in
 subscriptions, and `ScheduledSend` for delayed delivery. `Send` is always
 available and is not a capability flag.
 
-All members share payload limits and DataBus offload and integrity limits.
-Serialization, compression, and retry belong to each participant. Transport
-connections, resource lifecycle, and pipeline steps are host-local because
+All members share payload limits, DataBus offload and integrity limits, and the
+resource lifecycle policy. Serialization, compression, and retry belong to each
+participant. Transport connections and pipeline steps are host-local because
 their dependencies and environment-specific choices may differ. Receivers
 accept installed codecs selected by message headers.
 
@@ -199,6 +199,49 @@ ARK_SERVICEBUS_EMPTY_QUEUE
 The two queues must be isolated test entities. When these values are absent,
 the tests report the missing infrastructure explicitly rather than silently
 passing.
+
+### Reconcile messaging resources
+
+`ArkGeneratedMessagingFunctions.Manifest.Resources` is the generated,
+transport-neutral desired state for the selected participant. Register the
+Service Bus administration seam and the startup reconciler:
+
+```csharp
+builder.Services.AddSingleton<IMessagingTransportManagement>(
+    new ServiceBusTransportManagement(
+        new ServiceBusAdministrationClient(serviceBusConnectionString)));
+builder.Services.AddArkMessagingResourceLifecycle(
+    ArkGeneratedMessagingFunctions.Manifest.Resources);
+```
+
+With `MessagingResourceLifecycle.CreateIfMissing`, startup validates the
+manifest, ensures the consumer identity queue, ensures topics published by or
+subscribed to by this participant, ensures forwarding subscriptions, and then
+removes obsolete subscriptions carrying this participant's framework ownership
+metadata. Subscription names equal the subscriber identity within each topic.
+The queue and subscriptions use the participant's native maximum delivery
+count (`N`, or `2N` with second-level retries). Session-enabled, disabled, or
+otherwise incompatible existing entities fail startup with
+`MessagingResourceManagementException`, whose `Operation` and `Resource`
+properties identify the failed management call.
+
+Create and delete races from concurrent host instances are idempotent.
+Subscriber startup does not depend on publisher startup because either side may
+create a missing declared topic. Existing topics are never changed. Managed
+lifecycle updates mutable settings on desired queues and subscriptions, including
+IaC-precreated entities, when the generated delivery policy changes; set
+`MessagingResourceLifecycle.External` when IaC must remain the sole writer.
+Queues and topics are never deleted, and foreign subscriptions whose names do not
+match the participant identity are preserved. Rebus-managed resources belong to
+the separate Rebus topology and must not carry this ownership marker.
+
+Subscription cleanup also runs in production. It is not a deployment
+orchestrator: removing a subscription can race with an old processor that still
+expects the event, while adding one can deliver an event to an old processor
+that cannot handle it. Stop and drain incompatible processors before changing
+topology, or use versioned participant identities/contracts. Changing an event
+logical name is an explicit topology migration; `FormerNames` affects
+deserialization only and does not rename or remove the old topic.
 
 ### Generate a Storage Queue receive trigger
 

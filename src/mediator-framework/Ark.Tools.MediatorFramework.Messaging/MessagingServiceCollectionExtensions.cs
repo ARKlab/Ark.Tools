@@ -150,6 +150,22 @@ public static class MessagingServiceCollectionExtensions
         return services.AddArkMessaging(new InMemoryMessagingTransport(), networks);
     }
 
+    /// <summary>Registers startup reconciliation for a generated resource manifest.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="manifest">The generated desired resources.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingResourceLifecycle(
+        this IServiceCollection services,
+        MessagingResourceManifest manifest)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(manifest);
+        services.AddSingleton(manifest);
+        services.AddSingleton<MessagingResourceReconciler>();
+        services.AddSingleton<IHostedService, MessagingResourceStartupService>();
+        return services;
+    }
+
     /// <summary>Registers the native restricted bus for one messaging participant.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="network">The resolved network options.</param>

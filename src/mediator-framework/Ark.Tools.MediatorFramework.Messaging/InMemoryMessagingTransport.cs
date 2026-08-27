@@ -19,7 +19,8 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 
     private readonly Lock _gate = new();
     private readonly Dictionary<string, InMemoryQueue> _queues = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Dictionary<string, string>> _subscriptions = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Dictionary<string, (string ForwardToQueue, string OwnerIdentity)>> _subscriptions =
+        new(StringComparer.Ordinal);
     private readonly IClock _clock;
     private readonly Duration _lockDuration;
     private long _scheduleSequence;
@@ -150,8 +151,11 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         {
             if (_subscriptions.TryGetValue(topic, out var subscriptions))
             {
-                foreach (var queue in subscriptions.Values)
-                    _getOrAddQueue(queue)._visible.Enqueue(InMemoryEnvelope._create(headers, payload));
+                foreach (var subscription in subscriptions.Values)
+                {
+                    _getOrAddQueue(subscription.ForwardToQueue)._visible.Enqueue(
+                        InMemoryEnvelope._create(headers, payload));
+                }
             }
         }
 
@@ -215,51 +219,87 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     }
 
     /// <inheritdoc />
-    public Task EnsureQueueAsync(string queue, CancellationToken ctk)
+    public async Task EnsureQueueAsync(
+        string queue,
+        int maximumDeliveryCount,
+        string ownerIdentity,
+        CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
+        ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         ctk.ThrowIfCancellationRequested();
         lock (_gate)
-            _getOrAddQueue(queue);
-        return Task.CompletedTask;
+            _getOrAddQueue(queue)._maximumDeliveryCount = maximumDeliveryCount;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public Task EnsureTopicAsync(string topic, CancellationToken ctk)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(topic);
-        ctk.ThrowIfCancellationRequested();
-        lock (_gate)
-            _subscriptions.TryAdd(topic, new Dictionary<string, string>(StringComparer.Ordinal));
-        return Task.CompletedTask;
-    }
-
-    /// <inheritdoc />
-    public Task EnsureSubscriptionAsync(
+    public async Task EnsureTopicAsync(
         string topic,
-        string subscription,
-        string forwardToQueue,
+        string ownerIdentity,
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(topic);
-        ArgumentException.ThrowIfNullOrEmpty(subscription);
-        ArgumentException.ThrowIfNullOrEmpty(forwardToQueue);
+        ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
+        ctk.ThrowIfCancellationRequested();
+        lock (_gate)
+        {
+            _subscriptions.TryAdd(
+                topic,
+                new Dictionary<string, (string ForwardToQueue, string OwnerIdentity)>(StringComparer.Ordinal));
+        }
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task EnsureSubscriptionAsync(
+        MessagingSubscriptionResource subscription,
+        CancellationToken ctk)
+    {
+        ArgumentNullException.ThrowIfNull(subscription);
         ctk.ThrowIfCancellationRequested();
 
         lock (_gate)
         {
-            var subscriptions = _subscriptions.TryGetValue(topic, out var existing)
+            var subscriptions = _subscriptions.TryGetValue(subscription.Topic, out var existing)
                 ? existing
-                : (_subscriptions[topic] = new Dictionary<string, string>(StringComparer.Ordinal));
-            subscriptions[subscription] = forwardToQueue;
-            _getOrAddQueue(forwardToQueue);
+                : (_subscriptions[subscription.Topic] =
+                    new Dictionary<string, (string ForwardToQueue, string OwnerIdentity)>(StringComparer.Ordinal));
+            subscriptions[subscription.Name] = (
+                subscription.ForwardToQueue,
+                subscription.OwnerIdentity);
+            _getOrAddQueue(subscription.ForwardToQueue)._maximumDeliveryCount =
+                subscription.MaximumDeliveryCount;
         }
 
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public Task DeleteSubscriptionAsync(string topic, string subscription, CancellationToken ctk)
+    public async Task<IReadOnlyList<MessagingTransportSubscription>> GetSubscriptionsAsync(
+        string topic,
+        CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
+        ctk.ThrowIfCancellationRequested();
+        IReadOnlyList<MessagingTransportSubscription> result;
+        lock (_gate)
+        {
+            result = _subscriptions.TryGetValue(topic, out var subscriptions)
+                ? subscriptions.Select(static pair =>
+                    new MessagingTransportSubscription(pair.Key, pair.Value.OwnerIdentity)).ToArray()
+                : Array.Empty<MessagingTransportSubscription>();
+        }
+
+        return await Task.FromResult(result).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteSubscriptionAsync(
+        string topic,
+        string subscription,
+        CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(topic);
         ArgumentException.ThrowIfNullOrEmpty(subscription);
@@ -270,7 +310,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
                 subscriptions.Remove(subscription);
         }
 
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private InMemoryQueue _getOrAddQueue(string name)

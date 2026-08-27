@@ -4,6 +4,8 @@
 using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.MediatorFramework.Sample.RebusProcessor;
 
+using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
+using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
@@ -13,7 +15,10 @@ using Rebus.Config;
 using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
 using System.Text.Json;
+using System.Buffers;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using SimpleInjector;
 
 using System.Security.Claims;
@@ -73,6 +78,41 @@ public sealed class AzureFunctionsRebusTests
 
         var message = await received.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.AreNotEqual(Guid.Empty, message.Id);
+    }
+
+    /// <summary>Consumes the generated desired-resource manifest through startup reconciliation.</summary>
+    [TestMethod]
+    public async Task GeneratedMessagingResourcesAreReconciledAtStartup()
+    {
+        var transport = new InMemoryMessagingTransport();
+        var services = new ServiceCollection();
+        services.AddSingleton<IMessagingTransportManagement>(transport);
+        services.AddArkMessagingResourceLifecycle(
+            ArkGeneratedMessagingFunctions.Manifest.Resources);
+        await using var provider = services.BuildServiceProvider();
+
+        await provider.GetRequiredService<IHostedService>().StartAsync(default)
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(
+            SampleMessagingParticipant.Identity,
+            ArkGeneratedMessagingFunctions.Manifest.Resources.IdentityQueue,
+            ignoreCase: false,
+            CultureInfo.InvariantCulture);
+        await transport.SendAsync(
+            SampleMessagingParticipant.Identity,
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            new ReadOnlySequence<byte>(new byte[] { 1 }),
+            null,
+            default).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+#pragma warning disable MA0004 // The test disposes the enumerator at the end of the method.
+        await using var enumerator = transport.ReceiveAsync(
+            SampleMessagingParticipant.Identity,
+            cts.Token).GetAsyncEnumerator(cts.Token);
+#pragma warning restore MA0004
+        Assert.IsTrue(await enumerator.MoveNextAsync().ConfigureAwait(false));
+        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
     }
 
     private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>

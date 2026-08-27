@@ -9,6 +9,11 @@ task.
   Evaluate a builder-based composition model to make network, transport, DataBus,
   participant, and pipeline setup easier to discover and configure.
 
+- **Keep common messaging names human-readable and transport-neutral.**
+  Relax common framework naming rules so logical names can retain separators such
+  as `.`; each transport should normalize names only where its native restrictions
+  require it.
+
 - **Revisit the `IMessagingTransport.MeasureNative` method.**
   Confirm whether the transport contract needs to expose native byte-limit measurement.
 
@@ -28,6 +33,11 @@ task.
   concrete host attribute** (e.g., the Azure Service Bus host attribute introduced
   in AZM-10). These properties are transport-specific and do not belong on the
   transport-neutral network declaration.
+
+- **Revisit Service Bus subscription forwarding.**
+  Re-evaluate forwarding every subscription into one participant identity queue.
+  Service Bus subscriptions already provide queue-like delivery, locking, and
+  dead-letter behavior, so the advantage of the extra queue remains to be proven.
 
 ## Serialization
 

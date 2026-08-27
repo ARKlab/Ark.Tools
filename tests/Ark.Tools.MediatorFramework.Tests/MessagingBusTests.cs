@@ -48,9 +48,12 @@ public sealed partial class MessagingBusTests
     {
         var transport = new InMemoryMessagingTransport();
         await transport.EnsureSubscriptionAsync(
-            "publisher-test_event",
-            "subscription",
-            "subscriber",
+            new MessagingSubscriptionResource(
+                "publisher-test_event",
+                "subscription",
+                "subscriber",
+                1,
+                "subscriber"),
             default).ConfigureAwait(false);
         using var bus = _createBus(
             transport,

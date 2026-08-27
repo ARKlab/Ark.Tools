@@ -102,7 +102,7 @@ public sealed class StorageQueueEnvelopeCodecTests
 
         var management = (IMessagingTransportManagement)transport;
         var ensureTopic = async () =>
-            await management.EnsureTopicAsync("topic", default).ConfigureAwait(false);
+            await management.EnsureTopicAsync("topic", "publisher", default).ConfigureAwait(false);
         await ensureTopic.Should().ThrowAsync<NotSupportedException>()
             .WithMessage("*PubSub*").ConfigureAwait(false);
     }

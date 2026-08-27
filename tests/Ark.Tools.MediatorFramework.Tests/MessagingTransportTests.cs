@@ -169,8 +169,12 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     public async Task PublishFansOutToEachSubscription()
     {
         var transport = new InMemoryMessagingTransport();
-        await transport.EnsureSubscriptionAsync("topic", "one", "queue-one", default).ConfigureAwait(false);
-        await transport.EnsureSubscriptionAsync("topic", "two", "queue-two", default).ConfigureAwait(false);
+        await transport.EnsureSubscriptionAsync(
+            new MessagingSubscriptionResource("topic", "one", "queue-one", 1, "one"),
+            default).ConfigureAwait(false);
+        await transport.EnsureSubscriptionAsync(
+            new MessagingSubscriptionResource("topic", "two", "queue-two", 1, "two"),
+            default).ConfigureAwait(false);
         await transport.PublishAsync("topic", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(3), default).ConfigureAwait(false);
 
         var first = await _receiveOnce(transport, "queue-one").ConfigureAwait(false);

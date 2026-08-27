@@ -96,14 +96,44 @@ public interface IMessagingLockedDelivery
 public interface IMessagingTransportManagement
 {
     /// <summary>Ensures that a queue exists.</summary>
-    Task EnsureQueueAsync(string queue, CancellationToken ctk);
+    /// <param name="queue">The queue name.</param>
+    /// <param name="maximumDeliveryCount">The native maximum delivery count.</param>
+    /// <param name="ownerIdentity">The participant that owns the queue.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>A task that completes after the queue is ensured.</returns>
+    Task EnsureQueueAsync(
+        string queue,
+        int maximumDeliveryCount,
+        string ownerIdentity,
+        CancellationToken ctk);
 
     /// <summary>Ensures that a topic exists.</summary>
-    Task EnsureTopicAsync(string topic, CancellationToken ctk);
+    /// <param name="topic">The topic name.</param>
+    /// <param name="ownerIdentity">The publishing participant identity.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>A task that completes after the topic is ensured.</returns>
+    Task EnsureTopicAsync(string topic, string ownerIdentity, CancellationToken ctk);
 
     /// <summary>Ensures a topic subscription forwarding to a queue.</summary>
-    Task EnsureSubscriptionAsync(string topic, string subscription, string forwardToQueue, CancellationToken ctk);
+    /// <param name="subscription">The desired subscription.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>A task that completes after the subscription is ensured.</returns>
+    Task EnsureSubscriptionAsync(
+        MessagingSubscriptionResource subscription,
+        CancellationToken ctk);
+
+    /// <summary>Gets the existing subscriptions for a topic.</summary>
+    /// <param name="topic">The topic name.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The existing subscription descriptors.</returns>
+    Task<IReadOnlyList<MessagingTransportSubscription>> GetSubscriptionsAsync(
+        string topic,
+        CancellationToken ctk);
 
     /// <summary>Deletes a topic subscription.</summary>
+    /// <param name="topic">The topic name.</param>
+    /// <param name="subscription">The subscription name.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>A task that completes after deletion.</returns>
     Task DeleteSubscriptionAsync(string topic, string subscription, CancellationToken ctk);
 }
