@@ -195,7 +195,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-10](azure-functions/AZM-10-servicebus-transport-and-trigger-generation.md) | Azure Service Bus transport and trigger source generation | Complete |
 | [AZM-11](azure-functions/AZM-11-storage-queue-transport.md) | Azure Storage Queue transport and trigger generation | Complete |
 | [AZM-12](azure-functions/AZM-12-resource-lifecycle.md) | Concurrency-safe Service Bus resource lifecycle | Complete |
-| [AZM-13](azure-functions/AZM-13-package-and-composition.md) | Functions messaging package and composition | In progress |
+| [AZM-13](azure-functions/AZM-13-package-and-composition.md) | Functions messaging package and composition | Complete |
 | [AZM-14](azure-functions/AZM-14-rebus-compatibility.md) | Rebus compatibility and generated Rebus host setup | Pending |
 | [AZM-14A](azure-functions/AZM-14A-native-sql-outbox.md) | Native SQL outbox and hosted processor | Pending |
 | [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-participant publish/subscribe sample | Pending |
