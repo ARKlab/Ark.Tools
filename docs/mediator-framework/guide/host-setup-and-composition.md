@@ -19,7 +19,7 @@ and the web seam in
 | Application assembly | Handlers, validators, authorization handlers, services, DAL, internal messages, application JSON context | `HttpContext`, `ServerCallContext`, transport setup |
 | Web host | ASP.NET Core auth, JSON, MessagePack, OpenAPI, gRPC, endpoint mapping | Business transactions |
 | Rebus processor | Input queue, generated message handlers, retries, outbox processor | HTTP route binding |
-| Functions host | Isolated-worker HTTP boundary and outbound bus client | Rebus receiving |
+| Functions host | Isolated-worker HTTP boundary, generated messaging triggers, and outbound bus client | Rebus workers or outbox polling |
 
 ## Register the application graph
 
@@ -190,6 +190,46 @@ await Task.Delay(Timeout.InfiniteTimeSpan).ConfigureAwait(false);
 The web host can share an in-memory network in tests, but it must not share a
 SimpleInjector container or message scope with the processor. In production,
 replace the network with Azure Service Bus.
+
+## Compose Azure Functions messaging
+
+`Ark.Tools.MediatorFramework.AzureFunctions` packages the Functions trigger
+generator under `analyzers/dotnet/cs` and depends on the transport-neutral
+`Ark.Tools.MediatorFramework.Messaging` runtime. The generated manifest carries
+the network and participant descriptor used by startup:
+
+```csharp
+builder.Services.AddArkMessagingFunctionsHost(
+    container,
+    builder.Configuration,
+    ArkGeneratedMessagingFunctions.Manifest,
+    dataBus,
+    MessagingFunctionsRuntimeTransport.AzureServiceBus);
+```
+
+Startup resolves the connection from the generated host binding, validates
+network capabilities, consumed-message handlers, and the generated trigger
+binding, then registers the native restricted `IBus`, codecs, host-local
+pipeline steps, dispatcher, settlement, and resource lifecycle against the
+existing application container. It rejects receive-capable InMemory composition
+and transport/manifest drift.
+
+The connection key accepts either a scalar connection string/namespace or the
+standard Functions identity-based child settings
+`fullyQualifiedNamespace` (Service Bus) and `queueServiceUri` (Storage Queue).
+Set the optional `clientId` child for a user-assigned managed identity.
+
+Use `AddArkMessagingParticipant` from the messaging package for producer-only
+Minimal API, console, and client processes. That path registers routing,
+serialization, DataBus, outgoing steps, and the restricted bus only; it does not
+register a dispatcher, trigger, queue, subscription, or receive worker.
+Publisher-owned topics are still reconciled when lifecycle management is
+enabled.
+
+Functions composition never starts a Rebus receiver, Rebus outbox processor, or
+native SQL outbox processor. The sample Functions host selects the native
+composition; its separately tested outbound-only Rebus composition remains
+available as a mutually exclusive compatibility path.
 
 ## Startup checklist
 

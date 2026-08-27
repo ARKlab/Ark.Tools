@@ -364,6 +364,9 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("        new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest(")
             .Append("            typeof(").Append(_typeName(host.Participant)).AppendLine("),")
             .Append("            typeof(").Append(_typeName(network)).AppendLine("),")
+            .Append("            ").Append(_typeName(host.Participant)).Append(".CreateDescriptor(")
+            .Append(_typeName(network)).Append(".CreateOptions(), ")
+            .Append(_typeName(network)).AppendLine(".Registry),")
             .Append("            global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.")
             .AppendLine(host.Binding == _serviceBusBinding ? "ServiceBus," : "StorageQueue,")
             .Append("            \"").Append(_escape(identity)).AppendLine("\",")
@@ -459,7 +462,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         source.AppendLine("            new global::System.Type[]")
             .AppendLine("            {");
-        foreach (var type in types.OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
+        foreach (var type in types)
             source.Append("                typeof(").Append(_typeName(type)).AppendLine("),");
         source.Append("            }");
     }

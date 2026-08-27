@@ -139,7 +139,9 @@ perform that topology migration separately.
 
 ## 4. Compose a transport
 
-The transport-neutral package exposes `IMessagingTransport` and the locked
+The transport-neutral `Ark.Tools.MediatorFramework.Messaging` package exposes
+`IMessagingTransport`, generated participant descriptors, producer composition,
+and the locked
 receive contract without Azure SDK types. The first-class InMemory transport is
 appropriate for local development and tests:
 
@@ -153,6 +155,23 @@ settlement, delivery counts, lock expiry, and a readable dead-letter store.
 not an Azure Functions hosting mechanism. Registration validates the transport
 capabilities against each network and fails immediately when a required
 capability is missing.
+
+Producer-only hosts compose the generated descriptor without taking a Functions
+dependency:
+
+```csharp
+services.AddArkMessagingParticipant(
+    WebFrontendParticipant.CreateDescriptor(
+        BookMessagingNetwork.CreateOptions(),
+        BookMessagingNetwork.Registry),
+    transport,
+    dataBus);
+```
+
+This registers only the restricted bus and its outgoing runtime. It does not
+register dispatch, triggers, queues, subscriptions, or a receive pump.
+Publisher-owned topics are still reconciled when lifecycle management is
+enabled.
 
 ### Generate a Service Bus receive trigger
 
@@ -183,7 +202,29 @@ participant's `RetryDelay` does not delay redelivery.
 
 `ArkGeneratedMessagingFunctions.Manifest` describes the selected participant,
 network, connection configuration key, identity queue, trigger binding, retry
-limits, host-local steps, and forwarding subscriptions. Each subscription
+limits, host-local steps, forwarding subscriptions, and generated runtime
+descriptor. Compose it into the existing application container:
+
+```csharp
+builder.Services.AddArkMessagingFunctionsHost(
+    container,
+    builder.Configuration,
+    ArkGeneratedMessagingFunctions.Manifest,
+    dataBus,
+    MessagingFunctionsRuntimeTransport.AzureServiceBus);
+```
+
+The connection setting can contain a connection string or a fully qualified
+namespace for `DefaultAzureCredential`. It can instead use standard
+identity-based Functions settings beneath the configured prefix:
+`fullyQualifiedNamespace` and the optional user-assigned-identity `clientId`
+(environment variables use `__` separators). Startup validates the participant,
+network, transport capabilities, serializers, consumed-message handlers, and
+trigger binding before registering the bus and dispatcher. A receive-capable
+Functions participant cannot select InMemory, because its receive pump is a
+long-running worker.
+
+Each subscription
 forwards the publisher-owned topic into the participant identity queue. Resource
 creation and validation consume this manifest in the lifecycle layer; generated
 trigger code never creates entities.
@@ -203,16 +244,11 @@ passing.
 ### Reconcile messaging resources
 
 `ArkGeneratedMessagingFunctions.Manifest.Resources` is the generated,
-transport-neutral desired state for the selected participant. Register the
-Service Bus administration seam and the startup reconciler:
-
-```csharp
-builder.Services.AddSingleton<IMessagingTransportManagement>(
-    new ServiceBusTransportManagement(
-        new ServiceBusAdministrationClient(serviceBusConnectionString)));
-builder.Services.AddArkMessagingResourceLifecycle(
-    ArkGeneratedMessagingFunctions.Manifest.Resources);
-```
+transport-neutral desired state for the selected participant.
+`AddArkMessagingFunctionsHost` registers the matching Service Bus administration
+seam and startup reconciler. Application-created transports can instead use the
+overload accepting `IMessagingTransport` and
+`IMessagingTransportManagement`.
 
 With `MessagingResourceLifecycle.CreateIfMissing`, startup validates the
 manifest, ensures the consumer identity queue, ensures topics published by or
@@ -261,6 +297,9 @@ Storage Queue provides `Send`, `Receive`, and visibility-delay
 `ScheduledSend`; it does not provide `PubSub`. Networks requiring `PubSub` fail
 capability validation, and direct publish or subscription operations throw
 `NotSupportedException`. Scheduled visibility delay cannot exceed seven days.
+For identity-based configuration, set `queueServiceUri` and optional `clientId`
+beneath `ConnectionConfigurationKey`; environment variables use `__`
+separators.
 
 The generated function binds an Azure `QueueMessage` from the participant
 identity queue and awaits `MessagingQueueFunctionsDispatcher`. Successful
@@ -526,7 +565,10 @@ The Functions process:
 - receives HTTP-triggered requests;
 - executes the application pipeline;
 - sends owned messages through one-way Service Bus;
-- does not register an input queue, workers, subscriptions, or request/reply.
+- receives native messaging through generated Functions triggers when composed
+  for a messaging participant;
+- does not start a Rebus worker, Rebus outbox processor, native SQL outbox
+  processor, or request/reply endpoint.
 
 The standalone processor receives `CompleteGreetingCompositionRequest` and
 updates durable state. This separation lets Functions scale independently from

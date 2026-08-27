@@ -37,7 +37,7 @@ public sealed class MessagingFunctionsSubscription
 /// <summary>Describes the generated Azure Functions messaging host resources.</summary>
 public sealed class MessagingFunctionsManifest
 {
-    /// <summary>Creates a generated messaging host manifest.</summary>
+    /// <summary>Creates a host manifest without generated runtime composition metadata.</summary>
     /// <param name="participant">The bound participant type.</param>
     /// <param name="network">The participant network type.</param>
     /// <param name="triggerBinding">The selected trigger binding.</param>
@@ -65,9 +65,58 @@ public sealed class MessagingFunctionsManifest
         TimeSpan? retryDelay = null,
         bool strictStorageQueueHostSettings = false,
         MessagingResourceManifest? resources = null)
+        : this(
+            participant,
+            network,
+            descriptor: null,
+            triggerBinding,
+            queue,
+            connectionConfigurationKey,
+            maximumDeliveryCount,
+            maximumHandlerDuration,
+            subscriptions,
+            incomingSteps,
+            outgoingSteps,
+            retryDelay,
+            strictStorageQueueHostSettings,
+            resources)
+    {
+    }
+
+    /// <summary>Creates a generated messaging host manifest.</summary>
+    /// <param name="participant">The bound participant type.</param>
+    /// <param name="network">The participant network type.</param>
+    /// <param name="descriptor">The generated participant runtime descriptor.</param>
+    /// <param name="triggerBinding">The selected trigger binding.</param>
+    /// <param name="queue">The participant identity queue.</param>
+    /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
+    /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
+    /// <param name="subscriptions">The desired forwarding subscriptions.</param>
+    /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
+    /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
+    /// <param name="retryDelay">The participant retry visibility delay.</param>
+    /// <param name="strictStorageQueueHostSettings">Whether Storage Queue setting mismatches fail startup.</param>
+    /// <param name="resources">The generated transport-neutral desired resources.</param>
+    public MessagingFunctionsManifest(
+        Type participant,
+        Type network,
+        MessagingParticipantDescriptor? descriptor,
+        MessagingFunctionsTriggerBinding triggerBinding,
+        string queue,
+        string connectionConfigurationKey,
+        int maximumDeliveryCount,
+        TimeSpan maximumHandlerDuration,
+        IEnumerable<MessagingFunctionsSubscription> subscriptions,
+        IEnumerable<Type> incomingSteps,
+        IEnumerable<Type> outgoingSteps,
+        TimeSpan? retryDelay = null,
+        bool strictStorageQueueHostSettings = false,
+        MessagingResourceManifest? resources = null)
     {
         Participant = participant ?? throw new ArgumentNullException(nameof(participant));
         Network = network ?? throw new ArgumentNullException(nameof(network));
+        Descriptor = descriptor;
         ArgumentException.ThrowIfNullOrEmpty(queue);
         ArgumentException.ThrowIfNullOrEmpty(connectionConfigurationKey);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
@@ -101,6 +150,9 @@ public sealed class MessagingFunctionsManifest
 
     /// <summary>Gets the messaging network type.</summary>
     public Type Network { get; }
+
+    /// <summary>Gets the generated participant runtime descriptor.</summary>
+    public MessagingParticipantDescriptor? Descriptor { get; }
 
     /// <summary>Gets the compile-time trigger binding.</summary>
     public MessagingFunctionsTriggerBinding TriggerBinding { get; }

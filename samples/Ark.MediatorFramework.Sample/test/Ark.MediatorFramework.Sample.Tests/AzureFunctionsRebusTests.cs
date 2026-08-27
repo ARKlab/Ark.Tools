@@ -29,6 +29,20 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class AzureFunctionsRebusTests
 {
+    /// <summary>Uses the native Functions composition without registering a Rebus bus.</summary>
+    [TestMethod]
+    public async Task NativeCompositionDoesNotRegisterRebus()
+    {
+        await using var container = AzureFunctionsNativeComposition.BuildContainer();
+
+        Assert.IsNull(container.GetRegistration<Rebus.Bus.IBus>(throwOnFailure: false));
+        Assert.IsNotNull(container.GetRegistration<ICommandHandler<ProcessBookPrintProcessRequest>>(
+            throwOnFailure: false));
+        Assert.IsNotNull(
+            container.GetRegistration<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>>(
+                throwOnFailure: false));
+    }
+
     /// <summary>Rejects a Function host without its required outbound bus configuration.</summary>
     [TestMethod]
     public void MissingOutboundBusConfigurationFailsClearly()
