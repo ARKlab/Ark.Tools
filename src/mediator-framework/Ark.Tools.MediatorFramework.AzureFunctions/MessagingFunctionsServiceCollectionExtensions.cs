@@ -30,8 +30,6 @@ public enum MessagingFunctionsRuntimeTransport
 /// <summary>Composes generated messaging participants in Azure Functions hosts.</summary>
 public static class MessagingFunctionsServiceCollectionExtensions
 {
-    private const string _rebusBusServiceType = "Rebus.Bus.IBus";
-
     /// <summary>
     /// Composes the generated participant with an Azure transport selected from configuration.
     /// </summary>
@@ -102,7 +100,6 @@ public static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
 
-        _validateExclusiveBus(container);
         _validateManifest(manifest, transport);
         var descriptor = manifest.Descriptor!;
         _validateHandlers(container, descriptor);
@@ -349,20 +346,6 @@ public static class MessagingFunctionsServiceCollectionExtensions
                         "Messaging handler service '{0}' is not registered in the application container.",
                         handlerServiceType));
             }
-        }
-    }
-
-    private static void _validateExclusiveBus(Container container)
-    {
-        // ponytail: Avoid a Rebus package dependency; replace this with shared topology markers when adapters expose them.
-        if (container.GetCurrentRegistrations().Any(registration =>
-                string.Equals(
-                    registration.ServiceType.FullName,
-                    _rebusBusServiceType,
-                    StringComparison.Ordinal)))
-        {
-            throw new InvalidOperationException(
-                "Rebus and Mediator Framework messaging buses cannot be composed for the same Functions topology.");
         }
     }
 

@@ -22,8 +22,6 @@ using NodaTime;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-using RebusBus = Rebus.Bus.IBus;
-
 namespace Ark.Tools.MediatorFramework.Tests;
 
 /// <summary>Verifies generated participant and Azure Functions host composition.</summary>
@@ -247,28 +245,6 @@ public sealed class MessagingFunctionsCompositionTests
 
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*ICommandHandler*CompositionConsumedMessage*not registered*");
-        services.Should().BeEmpty();
-    }
-
-    /// <summary>Verifies Rebus and native messaging cannot own the same Functions topology.</summary>
-    [TestMethod]
-    public async Task RebusAndNativeBusCompositionFails()
-    {
-        var services = new ServiceCollection();
-        await using var container = _container();
-        container.Register<RebusBus>(
-            () => throw new InvalidOperationException("The test bus must not resolve."),
-            Lifestyle.Singleton);
-        await using var transport = _serviceBus();
-
-        var action = () => services.AddArkMessagingFunctionsHost(
-            container,
-            _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
-            transport,
-            _dataBus());
-
-        action.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Rebus*Mediator Framework*same Functions topology*");
         services.Should().BeEmpty();
     }
 
