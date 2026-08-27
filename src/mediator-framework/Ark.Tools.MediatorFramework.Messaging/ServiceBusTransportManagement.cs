@@ -42,8 +42,11 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         catch (ServiceBusException ex)
             when (ex.Reason == ServiceBusFailureReason.MessagingEntityAlreadyExists)
         {
-            var existing = await _administration.GetQueueAsync(queue, ctk).ConfigureAwait(false);
-            _validateQueue(existing.Value, maximumDeliveryCount);
+            await _reconcileExistingQueueAsync(
+                queue,
+                maximumDeliveryCount,
+                ownerIdentity,
+                ctk).ConfigureAwait(false);
         }
     }
 
@@ -185,21 +188,40 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         _ = await _administration.UpdateSubscriptionAsync(existing, ctk).ConfigureAwait(false);
     }
 
-    private static void _validateQueue(
-        QueueProperties existing,
-        int maximumDeliveryCount)
+    private async Task _reconcileExistingQueueAsync(
+        string queue,
+        int maximumDeliveryCount,
+        string ownerIdentity,
+        CancellationToken ctk)
     {
-        if (existing.RequiresSession
-            || existing.Status != EntityStatus.Active
-            || existing.MaxDeliveryCount != maximumDeliveryCount)
+        var response = await _administration.GetQueueAsync(queue, ctk).ConfigureAwait(false);
+        var existing = response.Value;
+        if (existing.RequiresSession || existing.Status != EntityStatus.Active)
         {
             throw new InvalidOperationException(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    "Existing queue '{0}' is not compatible with PeekLock processing and maximum delivery count {1}.",
-                    existing.Name,
-                    maximumDeliveryCount));
+                    "Existing queue '{0}' is not compatible with PeekLock processing.",
+                    existing.Name));
         }
+
+        if (existing.MaxDeliveryCount == maximumDeliveryCount)
+            return;
+
+        if (!string.Equals(
+            _ownerIdentity(existing.UserMetadata),
+            ownerIdentity,
+            StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Existing foreign queue '{0}' has incompatible settings.",
+                    existing.Name));
+        }
+
+        existing.MaxDeliveryCount = maximumDeliveryCount;
+        _ = await _administration.UpdateQueueAsync(existing, ctk).ConfigureAwait(false);
     }
 
     private static string _owner(string ownerIdentity)

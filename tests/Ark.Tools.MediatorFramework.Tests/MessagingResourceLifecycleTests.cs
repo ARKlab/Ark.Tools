@@ -6,6 +6,7 @@ using Ark.Tools.MediatorFramework.Messaging;
 using AwesomeAssertions;
 
 using Azure;
+using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 
 namespace Ark.Tools.MediatorFramework.Tests;
@@ -131,6 +132,24 @@ public sealed class MessagingResourceLifecycleTests
         administration.Subscription.MaxDeliveryCount.Should().Be(4);
         administration.Subscription.UserMetadata.Should()
             .Be("ark.tools.mediator-framework:consumer-a");
+    }
+
+    [TestMethod]
+    public async Task ServiceBusManagementUpdatesOwnedDeliverySettings()
+    {
+        var administration = new ExistingAdministrationClient();
+        var management = new ServiceBusTransportManagement(administration);
+
+        await management.EnsureQueueAsync("consumer-a", 4, "consumer-a", default)
+            .ConfigureAwait(false);
+        await management.EnsureSubscriptionAsync(
+            _subscription("publisher-current", "consumer-a", "consumer-a"),
+            default).ConfigureAwait(false);
+
+        administration.UpdatedQueue.Should().NotBeNull();
+        administration.UpdatedQueue!.MaxDeliveryCount.Should().Be(4);
+        administration.UpdatedSubscription.Should().NotBeNull();
+        administration.UpdatedSubscription!.MaxDeliveryCount.Should().Be(4);
     }
 
     private static MessagingResourceManifest _manifest(
@@ -282,6 +301,90 @@ public sealed class MessagingResourceLifecycleTests
         {
             Subscription = options;
             return await Task.FromResult<Response<SubscriptionProperties>>(null!).ConfigureAwait(false);
+        }
+    }
+
+    private sealed class ExistingAdministrationClient : ServiceBusAdministrationClient
+    {
+        private readonly QueueProperties _queue = ServiceBusModelFactory.QueueProperties(
+            "consumer-a",
+            lockDuration: TimeSpan.FromMinutes(1),
+            maxSizeInMegabytes: 1024,
+            requiresSession: false,
+            defaultMessageTimeToLive: TimeSpan.FromDays(14),
+            autoDeleteOnIdle: TimeSpan.MaxValue,
+            duplicateDetectionHistoryTimeWindow: TimeSpan.FromMinutes(10),
+            maxDeliveryCount: 2,
+            status: EntityStatus.Active,
+            userMetadata: "ark.tools.mediator-framework:consumer-a");
+        private readonly SubscriptionProperties _subscription =
+            ServiceBusModelFactory.SubscriptionProperties(
+                "publisher-current",
+                "consumer-a",
+                lockDuration: TimeSpan.FromMinutes(1),
+                requiresSession: false,
+                defaultMessageTimeToLive: TimeSpan.FromDays(14),
+                autoDeleteOnIdle: TimeSpan.MaxValue,
+                maxDeliveryCount: 2,
+                status: EntityStatus.Active,
+                forwardTo: "consumer-a",
+                userMetadata: "ark.tools.mediator-framework:consumer-a");
+
+        public QueueProperties? UpdatedQueue { get; private set; }
+
+        public SubscriptionProperties? UpdatedSubscription { get; private set; }
+
+        public override async Task<Response<QueueProperties>> CreateQueueAsync(
+            CreateQueueOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+            throw new ServiceBusException(
+                "Queue exists.",
+                ServiceBusFailureReason.MessagingEntityAlreadyExists);
+        }
+
+        public override async Task<Response<QueueProperties>> GetQueueAsync(
+            string queueName,
+            CancellationToken cancellationToken = default)
+        {
+            return await Task.FromResult(Response.FromValue(_queue, null!)).ConfigureAwait(false);
+        }
+
+        public override async Task<Response<QueueProperties>> UpdateQueueAsync(
+            QueueProperties queue,
+            CancellationToken cancellationToken = default)
+        {
+            UpdatedQueue = queue;
+            return await Task.FromResult(Response.FromValue(queue, null!)).ConfigureAwait(false);
+        }
+
+        public override async Task<Response<SubscriptionProperties>> CreateSubscriptionAsync(
+            CreateSubscriptionOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+            throw new ServiceBusException(
+                "Subscription exists.",
+                ServiceBusFailureReason.MessagingEntityAlreadyExists);
+        }
+
+        public override async Task<Response<SubscriptionProperties>> GetSubscriptionAsync(
+            string topicName,
+            string subscriptionName,
+            CancellationToken cancellationToken = default)
+        {
+            return await Task.FromResult(Response.FromValue(_subscription, null!))
+                .ConfigureAwait(false);
+        }
+
+        public override async Task<Response<SubscriptionProperties>> UpdateSubscriptionAsync(
+            SubscriptionProperties subscription,
+            CancellationToken cancellationToken = default)
+        {
+            UpdatedSubscription = subscription;
+            return await Task.FromResult(Response.FromValue(subscription, null!))
+                .ConfigureAwait(false);
         }
     }
 }
