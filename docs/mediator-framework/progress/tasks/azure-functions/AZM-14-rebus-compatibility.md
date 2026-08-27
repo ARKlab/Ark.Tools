@@ -328,20 +328,20 @@ Native SQL outbox integration is owned by AZM-14A.
 
 ## Acceptance
 
-- [ ] Application code contains no Rebus `IBus` or Rebus `IFailed<T>` dependency.
-- [ ] Rebus adapters preserve existing behavior and legacy metadata.
-- [ ] Sender-only/publisher and consumer Rebus setup is generated from
+- [x] Application code contains no Rebus `IBus` or Rebus `IFailed<T>` dependency.
+- [x] Rebus adapters preserve existing behavior and legacy metadata.
+- [x] Sender-only/publisher and consumer Rebus setup is generated from
   network/participant
   definitions, including routing, filtered dispatch adapters, subscriptions,
   and exact retry mapping.
-- [ ] Generators see only contracts and dispatch through processors; application
+- [x] Generators see only contracts and dispatch through processors; application
   handlers are registered explicitly by developers.
-- [ ] Non-equivalent/provider-specific settings remain explicit and are
+- [x] Non-equivalent/provider-specific settings remain explicit and are
   validated through generated requirements.
-- [ ] Existing WebInterface and RebusProcessor Rebus outbox registrations and
+- [x] Existing WebInterface and RebusProcessor Rebus outbox registrations and
   processing behavior remain unchanged.
-- [ ] Tests prove the two topology modes separately; non-interoperability is
+- [x] Tests prove the two topology modes separately; non-interoperability is
   documented, not tested.
-- [ ] The [task board](../README.md) status for AZM-14 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-14 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
