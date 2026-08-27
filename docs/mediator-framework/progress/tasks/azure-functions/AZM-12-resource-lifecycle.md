@@ -315,11 +315,11 @@ participate in this lifecycle.
 
 ## Acceptance
 
-- [ ] Desired resources are generated and consumed at startup.
-- [ ] Concurrent lifecycle operations are idempotent and tested.
-- [ ] Only participant-owned obsolete subscriptions are removed.
-- [ ] Management failures are explicit and diagnosable.
-- [ ] IaC-precreated resources remain supported.
-- [ ] The [task board](../README.md) status for AZM-12 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Desired resources are generated and consumed at startup.
+- [x] Concurrent lifecycle operations are idempotent and tested.
+- [x] Only participant-owned obsolete subscriptions are removed.
+- [x] Management failures are explicit and diagnosable.
+- [x] IaC-precreated resources remain supported.
+- [x] The [task board](../README.md) status for AZM-12 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
