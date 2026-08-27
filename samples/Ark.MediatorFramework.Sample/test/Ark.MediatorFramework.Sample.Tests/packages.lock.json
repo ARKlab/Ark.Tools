@@ -1960,7 +1960,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework.Sample.Functions": "[6.6.6, )",
-          "Ark.MediatorFramework.Sample.RebusProcessor": "[6.6.6, )",
           "Ark.Tools.AspNetCore.ApplicationInsights": "[1.0.0, )",
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
@@ -2004,6 +2003,7 @@
           "Ark.Tools.MediatorFramework.Mcp": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.1, )",
           "Azure.Identity": "[1.21.0, )",
@@ -2120,6 +2120,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "protobuf-net": "[3.3.21, )"
         }
@@ -2203,6 +2204,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Rebus.Protobuf": "[5.0.0, )"
         }

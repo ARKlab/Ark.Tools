@@ -3,7 +3,6 @@
 
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.Rebus;
-using Ark.Tools.Rebus.Retry;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 
@@ -18,6 +17,8 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
+
+[assembly: Ark.Tools.MediatorFramework.Rebus.ArkRebusHost(typeof(SampleMessagingParticipant))]
 
 namespace Ark.MediatorFramework.Sample.RebusProcessor;
 
@@ -34,9 +35,6 @@ public static class RebusProcessorComposition
     /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory factory is created.
     /// </param>
     /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
-    /// <param name="secondLevelRetriesEnabled">
-    /// Whether failed messages should be dispatched as <see cref="Rebus.Retry.Simple.IFailed{TMessage}"/>.
-    /// </param>
     /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
     /// <param name="configureOptions">Configures optional Rebus processor options.</param>
     /// <param name="configureTimeouts">Configures optional Rebus timeout storage.</param>
@@ -49,7 +47,6 @@ public static class RebusProcessorComposition
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,
         Action<Container>? registerHandlers = null,
-        bool secondLevelRetriesEnabled = false,
         Action<OptionsConfigurer>? configureOptions = null,
         Action<StandardConfigurer<ITimeoutManager>>? configureTimeouts = null)
     {
@@ -68,22 +65,29 @@ public static class RebusProcessorComposition
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
 
-        (registerHandlers ?? ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<ProcessBookPrintProcessRequest>)(container);
+        if (registerHandlers is null)
+        {
+            ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForParticipant<Program>(container);
+            ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<ProcessBookPrintProcessRequest>(container);
+        }
+        else
+        {
+            registerHandlers(container);
+        }
+        ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<Program>(container);
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
         container.ConfigureRebus(cfg =>
         {
             cfg.Transport(transport =>
             {
-                transport.UseInMemoryTransport(network, "ark.mediator.sample");
+                transport.UseInMemoryTransport(network, "ark-mediator-sample");
                 ApplicationComposition.ConfigureRebusOutbox(transport, container, startProcessor: true);
             });
-            ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<ProcessBookPrintProcessRequest>, options =>
+            ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<Program>, options =>
             {
                 options.SetNumberOfWorkers(1);
-                options.ArkRetryStrategy(
-                    maxDeliveryAttempts: 2,
-                    secondLevelRetriesEnabled: secondLevelRetriesEnabled);
+                ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<Program>(options);
                 configureOptions?.Invoke(options);
             });
             if (configureTimeouts is not null)

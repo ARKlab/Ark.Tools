@@ -46,7 +46,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             {
                 SampleRebusEndpoints.RegisterHandlers(container);
             },
-            secondLevelRetriesEnabled: true,
             configureOptions: options => options.AddInProcessMessageInspector(),
             configureTimeouts: timeouts => timeouts.StoreInMemoryTests());
         _receiver.Verify();

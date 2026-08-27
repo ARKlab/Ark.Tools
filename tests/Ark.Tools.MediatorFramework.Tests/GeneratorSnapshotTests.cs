@@ -1266,8 +1266,8 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("RegisterArkRebusHandlers<TContext>");
         generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
-        generated.Should().Contain("GetRegistration(handlerType)");
-        generated.Should().Contain("Missing mediator handler registrations");
+        generated.Should().NotContain("GetRegistration(handlerType)");
+        generated.Should().NotContain("Missing mediator handler registrations");
     }
 
     [TestMethod]
@@ -1283,9 +1283,71 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("ICommandHandler<global::RebuildOrder>");
+        generated.Should().Contain("ICommandProcessor");
         generated.Should().Contain("RebuildOrderRebusHandler");
         generated.Should().Contain("MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorEmitsParticipantHostAssistance()
+    {
+        var generated = _runGenerator<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            using Ark.Tools.Solid;
+
+            [assembly: ArkRebusHost(typeof(ConsumerParticipant))]
+
+            [Message]
+            public sealed class ProcessOrder : ICommand;
+
+            [MessagingParticipant(
+                Identity = "orders",
+                Processes = new[] { typeof(ProcessOrder) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json,
+                Retry = typeof(OrderRetryPolicy))]
+            public sealed class ConsumerParticipant;
+
+            public sealed class OrderRetryPolicy : IMessagingRetryPolicy
+            {
+                public int MaximumDeliveryCount => 3;
+                public bool SecondLevelRetriesEnabled => true;
+                public System.TimeSpan MaximumHandlerDuration => System.TimeSpan.FromMinutes(1);
+                public System.TimeSpan RetryDelay => System.TimeSpan.Zero;
+            }
+
+            [MessagingNetwork(Members = new[] { typeof(ConsumerParticipant) })]
+            public sealed class OrdersNetwork;
+            """);
+
+        generated.Should().Contain("Map<global::ProcessOrder>(\"orders\")");
+        generated.Should().Contain("RegisterArkRebusDispatchAdaptersForParticipant");
+        generated.Should().Contain("RebusMessagingFailedHandler<global::ProcessOrder>");
+        generated.Should().Contain("ConfigureArkRebusOptionsForParticipant");
+        generated.Should().Contain("SubscribeArkRebusEventsForParticipantAsync");
+        generated.Should().Contain("GetArkRebusParticipantRequirements");
+        generated.Should().Contain("RegisterArkRebusBusForParticipant");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorRejectsHostBindingWithoutNetwork()
+    {
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+
+            [assembly: ArkRebusHost(typeof(OrphanParticipant))]
+
+            [MessagingParticipant(
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class OrphanParticipant;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]

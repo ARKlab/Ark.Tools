@@ -25,8 +25,7 @@ public sealed class RebusRetryTests
             registerHandlers: processorContainer =>
             {
                 SampleRebusEndpoints.RegisterHandlers(processorContainer);
-            },
-            secondLevelRetriesEnabled: true);
+            });
 
         container.Verify();
         container.StartBus();

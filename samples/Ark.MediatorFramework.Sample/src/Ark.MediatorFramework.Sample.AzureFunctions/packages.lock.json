@@ -1373,18 +1373,6 @@
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )"
         }
       },
-      "ark.mediatorframework.sample.rebusprocessor": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.MediatorFramework.Sample.Application": "[6.6.6, )",
-          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
-          "Ark.Tools.Outbox": "[1.0.0, )",
-          "Ark.Tools.Rebus": "[1.0.0, )",
-          "Ark.Tools.Solid.Authorization": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )"
-        }
-      },
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
@@ -1454,6 +1442,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "protobuf-net": "[3.3.21, )"
         }
@@ -1526,6 +1515,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Rebus.Protobuf": "[5.0.0, )"
         }

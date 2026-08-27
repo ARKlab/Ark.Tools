@@ -78,7 +78,7 @@ public sealed class AzureFunctionsRebusTests
             return Task.CompletedTask;
         });
         using var receiver = Configure.With(activator)
-            .Transport(transport => transport.UseInMemoryTransport(network, "ark.mediator.sample"))
+            .Transport(transport => transport.UseInMemoryTransport(network, "ark-mediator-sample"))
             .Serialization(serialization => serialization.UseSystemTextJson(
                 new JsonSerializerOptions().ConfigureArkDefaults()))
             .Start();

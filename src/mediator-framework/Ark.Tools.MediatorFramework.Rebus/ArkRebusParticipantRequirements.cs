@@ -12,19 +12,20 @@ public sealed class ArkRebusParticipantRequirements
     public ArkRebusParticipantRequirements(
         string identity,
         string? inputQueueName,
-        bool publishes,
+        IEnumerable<Type> publishedEventTypes,
         IEnumerable<Type> subscribedEventTypes,
         TimeSpan maximumHandlerDuration,
         bool requiresCompression,
         bool requiresDataBus)
     {
         ArgumentException.ThrowIfNullOrEmpty(identity);
+        ArgumentNullException.ThrowIfNull(publishedEventTypes);
         ArgumentNullException.ThrowIfNull(subscribedEventTypes);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maximumHandlerDuration, TimeSpan.Zero);
 
         Identity = identity;
         InputQueueName = inputQueueName;
-        Publishes = publishes;
+        PublishedEventTypes = new ReadOnlyCollection<Type>(publishedEventTypes.ToArray());
         SubscribedEventTypes = new ReadOnlyCollection<Type>(subscribedEventTypes.ToArray());
         MaximumHandlerDuration = maximumHandlerDuration;
         RequiresCompression = requiresCompression;
@@ -37,8 +38,8 @@ public sealed class ArkRebusParticipantRequirements
     /// <summary>Gets the input queue name, or <see langword="null"/> for a non-receiving host.</summary>
     public string? InputQueueName { get; }
 
-    /// <summary>Gets whether the participant publishes events.</summary>
-    public bool Publishes { get; }
+    /// <summary>Gets the published event contract types.</summary>
+    public IReadOnlyList<Type> PublishedEventTypes { get; }
 
     /// <summary>Gets the subscribed event contract types.</summary>
     public IReadOnlyList<Type> SubscribedEventTypes { get; }

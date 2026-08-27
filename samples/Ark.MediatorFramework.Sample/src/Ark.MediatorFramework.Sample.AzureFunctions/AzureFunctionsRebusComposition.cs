@@ -1,8 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.RebusProcessor;
+using Ark.MediatorFramework.Sample.Application.Messages;
 
+using Ark.Tools.MediatorFramework.Generated;
+using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Solid.Authorization;
 
 using Azure.Identity;
@@ -12,6 +14,8 @@ using Rebus.Transport;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
+
+[assembly: ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
 
 namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
@@ -44,12 +48,15 @@ public static class AzureFunctionsRebusComposition
             connectionString);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+        ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<RebusHostMarker>(container);
         ApplicationComposition.RegisterOutboundRebus(
             container,
             transport => _configureTransport(transport, serviceBusConnectionString),
-            SampleRebusEndpoints.ConfigureRouting);
+            ArkGeneratedEndpoints.ConfigureArkRebusRouting<RebusHostMarker>);
         return container;
     }
+
+    internal sealed class RebusHostMarker;
 
     private static void _configureTransport(
         StandardConfigurer<ITransport> transport,

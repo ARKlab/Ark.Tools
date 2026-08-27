@@ -1,8 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.RebusProcessor;
+using Ark.MediatorFramework.Sample.Application.Messages;
 
+using Ark.Tools.MediatorFramework.Generated;
+using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
@@ -15,6 +17,8 @@ using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
 using NodaTime;
+
+[assembly: ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -62,6 +66,7 @@ public static class SampleComposition
         // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the
         // SimpleInjector container locks, after ASP.NET Core has built its service provider.
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
+        ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<SampleStartup>(container);
 
         container.ConfigureRebus(cfg =>
         {
@@ -70,7 +75,10 @@ public static class SampleComposition
                 t.UseDrainableInMemoryTransportAsOneWayClient(network);
                 ApplicationComposition.ConfigureRebusOutbox(t, container, startProcessor: false);
             });
-            ApplicationComposition.ConfigureRebusCommon(cfg, container, SampleRebusEndpoints.ConfigureRouting);
+            ApplicationComposition.ConfigureRebusCommon(
+                cfg,
+                container,
+                ArkGeneratedEndpoints.ConfigureArkRebusRouting<SampleStartup>);
         });
 
         return container;

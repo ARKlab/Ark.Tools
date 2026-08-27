@@ -1,11 +1,14 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+extern alias ProcessorHost;
+
 using Ark.Tools.Rebus;
-using Ark.MediatorFramework.Sample.RebusProcessor;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
+
+using RebusProcessorComposition = ProcessorHost::Ark.MediatorFramework.Sample.RebusProcessor.RebusProcessorComposition;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -38,8 +41,7 @@ internal sealed class SampleBusHostedService : IHostedService
             network,
             useSqlStore: useSqlStore,
             connectionString: connectionString,
-            dataContextFactory: sharedDataContextFactory,
-            registerHandlers: SampleRebusEndpoints.RegisterHandlers);
+            dataContextFactory: sharedDataContextFactory);
     }
 
     /// <inheritdoc />

@@ -5,14 +5,12 @@ using Ark.Tools.Solid;
 
 using NodaTime;
 
-using Rebus.Handlers;
 using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Persists the outcome of an exhausted print-completion notification.</summary>
 public sealed class BookPrintProcessFailureHandler :
-    IHandleMessages<Rebus.Retry.Simple.IFailed<ProcessBookPrintProcessRequest>>,
     ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>
 {
     private readonly ISampleDataContextFactory _factory;
@@ -31,16 +29,6 @@ public sealed class BookPrintProcessFailureHandler :
         _factory = factory;
         _clock = clock;
         _user = user;
-    }
-
-    /// <inheritdoc />
-    public async Task Handle(Rebus.Retry.Simple.IFailed<ProcessBookPrintProcessRequest> message)
-    {
-        ArgumentNullException.ThrowIfNull(message);
-        await _handleAsync(
-            message.Message,
-            message.Exceptions?.FirstOrDefault()?.Message,
-            CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

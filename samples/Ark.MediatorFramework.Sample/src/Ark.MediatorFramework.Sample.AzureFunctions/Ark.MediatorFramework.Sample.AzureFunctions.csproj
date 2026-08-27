@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ArkToolsMediatorFrameworkRebusHost>true</ArkToolsMediatorFrameworkRebusHost>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +21,6 @@
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
-    <ProjectReference Include="..\Ark.MediatorFramework.Sample.RebusProcessor\Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Functions\Ark.MediatorFramework.Sample.Functions.csproj" />
   </ItemGroup>
 
