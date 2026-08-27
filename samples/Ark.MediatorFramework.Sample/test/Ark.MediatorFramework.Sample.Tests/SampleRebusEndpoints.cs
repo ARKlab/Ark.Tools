@@ -18,6 +18,9 @@ internal static class SampleRebusEndpoints
     {
         container.Collection.Append<IHandleMessages<ProcessBookPrintProcessRequest>, ProcessHandler>();
         container.Collection.Append<IHandleMessages<FailingRebusRequest>, FailingHandler>();
+        container.Collection.Append<
+            IHandleMessages<Rebus.Retry.Simple.IFailed<ProcessBookPrintProcessRequest>>,
+            Ark.Tools.MediatorFramework.Rebus.RebusMessagingFailedHandler<ProcessBookPrintProcessRequest>>();
     }
 
     public static void ConfigureRouting(StandardConfigurer<IRouter> routing)

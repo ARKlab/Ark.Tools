@@ -48,7 +48,6 @@ public static class AzureFunctionsRebusComposition
             connectionString);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
-        ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<RebusHostMarker>(container);
         ApplicationComposition.RegisterOutboundRebus(
             container,
             transport => _configureTransport(transport, serviceBusConnectionString),

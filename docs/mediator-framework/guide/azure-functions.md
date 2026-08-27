@@ -574,6 +574,13 @@ The standalone processor receives `CompleteGreetingCompositionRequest` and
 updates durable state. This separation lets Functions scale independently from
 background processing.
 
+Application handlers use `Ark.Tools.MediatorFramework.IBus` and
+`MessagingFailed<T>` in both modes. A Rebus host binds its assembly with
+`ArkRebusHostAttribute` and uses the generated routing, filtered dispatch
+adapters, retry options, requirements, and post-start subscriptions. A native
+Functions messaging host uses generated triggers instead. The modes are not
+wire-interoperable and must not share one logical topology.
+
 ## 6. Authentication and supported features
 
 Every generated trigger is `AuthorizationLevel.Anonymous`; ASP.NET Core
