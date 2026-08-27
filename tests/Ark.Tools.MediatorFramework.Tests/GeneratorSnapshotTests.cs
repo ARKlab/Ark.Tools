@@ -2204,6 +2204,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("ConnectionConfigurationKey = \"messaging:connection\"");
         result.Generated.Should().Contain("ManagedIdentityConfigurationKey = \"messaging:identity\"");
         result.Generated.Should().Contain("IMessagingContractRegistry Registry");
+        result.Generated.Should().Contain("MessagingParticipantDescriptor CreateDescriptor");
         result.Generated.Should().Contain("IMessagingContractRegistry");
         result.Generated.Should().NotContain("CreateRegistry()");
         result.Generated.Should().Contain("public const string Identity");

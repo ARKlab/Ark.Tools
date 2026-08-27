@@ -173,6 +173,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="payloadSender">The participant-configured payload sender.</param>
     /// <param name="participantIdentity">The sending participant identity.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
+    /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingBus(
         this IServiceCollection services,
@@ -180,7 +181,8 @@ public static class MessagingServiceCollectionExtensions
         IMessagingContractRegistry registry,
         MessagingPayloadSender payloadSender,
         string participantIdentity,
-        IReadOnlyList<Type>? outgoingStepTypes = null)
+        IReadOnlyList<Type>? outgoingStepTypes = null,
+        Func<Type, object>? resolveStep = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(network);
@@ -196,7 +198,52 @@ public static class MessagingServiceCollectionExtensions
             payloadSender,
             participantIdentity,
             outgoingStepTypes,
-            serviceProvider.GetRequiredService));
+            resolveStep ?? serviceProvider.GetRequiredService));
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the transport-neutral producer runtime for one generated participant.
+    /// This path does not register receive dispatch or start a receive worker.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="participant">The generated participant descriptor.</param>
+    /// <param name="transport">The selected runtime transport.</param>
+    /// <param name="dataBus">The shared network DataBus.</param>
+    /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
+    /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingParticipant(
+        this IServiceCollection services,
+        MessagingParticipantDescriptor participant,
+        IMessagingTransport transport,
+        IMessagingDataBus dataBus,
+        IReadOnlyList<Type>? outgoingStepTypes = null,
+        Func<Type, object>? resolveStep = null)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(participant);
+        ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(dataBus);
+        if (services.Any(static service => service.ServiceType == typeof(MessagingParticipantDescriptor)))
+            throw new InvalidOperationException("A messaging participant is already registered in this host.");
+
+        services.AddArkMessaging(transport, participant.Network);
+        services.AddArkMessagingDataBus(dataBus, participant.Network);
+        services.AddSingleton(participant);
+        services.AddSingleton(participant.Network);
+        services.AddSingleton(participant.Registry);
+        services.AddSingleton(participant.RetryPolicy);
+        var payloadSender = participant.CreatePayloadSender(dataBus);
+        services.AddSingleton(payloadSender);
+        services.AddArkMessagingBus(
+            participant.Network,
+            participant.Registry,
+            payloadSender,
+            participant.Identity,
+            outgoingStepTypes,
+            resolveStep);
+        services.AddSingleton<IHostedService, MessagingParticipantStartupValidator>();
         return services;
     }
 
@@ -225,6 +272,7 @@ public static class MessagingServiceCollectionExtensions
                     nameof(dataBus),
                     $"The DataBus attachment lifetime must cover network '{network.NetworkIdentity}' maximum scheduling delay.");
         }
+
     }
 
     /// <summary>Registers the MessagePack and protobuf messaging codecs.</summary>
@@ -295,5 +343,34 @@ public static class MessagingServiceCollectionExtensions
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, ProtobufMessagingCodec>());
         return services;
+    }
+}
+
+internal sealed class MessagingParticipantStartupValidator : IHostedService
+{
+    private readonly MessagingParticipantDescriptor _participant;
+    private readonly IMessagingCodecRegistry _codecs;
+
+    public MessagingParticipantStartupValidator(
+        MessagingParticipantDescriptor participant,
+        IMessagingCodecRegistry codecs)
+    {
+        _participant = participant;
+        _codecs = codecs;
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        MessagingJsonStartupValidation.ValidateDeclaredSerializers(
+            _codecs,
+            _participant.Serializers,
+            _participant.Identity);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 }
