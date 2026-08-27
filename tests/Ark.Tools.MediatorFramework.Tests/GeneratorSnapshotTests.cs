@@ -2481,7 +2481,8 @@ public sealed class GeneratorSnapshotTests
             ".DispatchAsync(message, \"printing\", functionContext, cancellationToken)");
         first.Generated.Should().Contain("MessagingFunctionsTriggerBinding.StorageQueue");
         first.Generated.Should().Contain("new global::TestRetryPolicy().RetryDelay");
-        first.Generated.Should().Contain("            true);");
+        first.Generated.Should().Contain("            true,");
+        first.Generated.Should().Contain("MessagingResourceManifest(");
 
         var invalid = _runGeneratorResult<MessagingFunctionsGenerator>(
             source,
