@@ -60,7 +60,12 @@ jobs:
           azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
     - name: 'Wait for Service Bus emulator'
-      run: timeout 120s bash -c 'until curl --fail --silent http://localhost:5300/health; do sleep 2; done'
+      run: |
+        timeout 120s bash -c '
+          until docker logs "${{ job.services.servicebus.id }}" 2>&1 | grep --quiet "Successfully Up"; do
+            sleep 2
+          done
+        '
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v6
