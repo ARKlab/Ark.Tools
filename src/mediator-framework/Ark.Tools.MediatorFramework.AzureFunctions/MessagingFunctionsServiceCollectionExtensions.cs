@@ -104,8 +104,8 @@ public static class MessagingFunctionsServiceCollectionExtensions
             throw new InvalidOperationException(
                 "Azure Functions cannot host the native messaging outbox processor.");
         }
-        if (container.GetRegistration(typeof(IBus), throwOnFailure: false) is not null
-            || container.GetRegistration(typeof(IBusOutboxEnlistment), throwOnFailure: false) is not null)
+        if (container.GetRegistration<IBus>(throwOnFailure: false) is not null
+            || container.GetRegistration<IBusOutboxEnlistment>(throwOnFailure: false) is not null)
         {
             throw new InvalidOperationException(
                 "Azure Functions native messaging cannot be mixed with another bus outbox adapter.");
