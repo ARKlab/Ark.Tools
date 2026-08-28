@@ -22,7 +22,7 @@ namespace Ark.MediatorFramework.Sample.RebusProcessor;
 
 /// <summary>Generated Rebus host for the sample background processor.</summary>
 [ArkRebusHost(typeof(SampleMessagingParticipant))]
-public static partial class RebusProcessorHost;
+public sealed partial class RebusProcessorHost;
 
 /// <summary>Builds the isolated full Rebus processor composition.</summary>
 public static class RebusProcessorComposition

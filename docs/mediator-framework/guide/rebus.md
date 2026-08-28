@@ -112,7 +112,7 @@ container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
 [ArkRebusHost(typeof(GreetingProcessorParticipant))]
-public static partial class GreetingRebusHost;
+public sealed partial class GreetingRebusHost;
 
 var requirements = GreetingRebusHost.GetRequirements();
 GreetingRebusHost.Register(container);

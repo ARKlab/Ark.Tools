@@ -3,7 +3,7 @@
 
 namespace Ark.Tools.MediatorFramework.Rebus;
 
-/// <summary>Binds a Rebus host class to one messaging participant.</summary>
+/// <summary>Binds a sealed partial Rebus host class to one messaging participant.</summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class ArkRebusHostAttribute : Attribute
 {

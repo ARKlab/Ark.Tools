@@ -21,7 +21,7 @@ namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>Generated Rebus host for the sample web application.</summary>
 [ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
-public static partial class SampleRebusHost;
+public sealed partial class SampleRebusHost;
 
 /// <summary>
 /// Hosting composition root. It layers the transport concerns (user context, Rebus, the

@@ -141,8 +141,8 @@ their infrastructure.
 ## Core code shapes
 
 Conceptual shapes — final public names are selected by this task; the
-signatures' invariants are fixed. The generated members extend the static partial
-class marked with `ArkRebusHostAttribute`.
+signatures' invariants are fixed. The generated members extend the sealed partial
+class marked with `ArkRebusHostAttribute` and implement `IArkRebusHost`.
 
 The conceptual generated Rebus-assistance API (from the design, verbatim):
 

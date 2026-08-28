@@ -1326,15 +1326,16 @@ public sealed class GeneratorSnapshotTests
             public sealed class OrdersNetwork;
 
             [ArkRebusHost(typeof(ConsumerParticipant))]
-            public static partial class OrdersRebusHost;
+            public sealed partial class OrdersRebusHost;
 
             [ArkRebusHost(typeof(PublisherParticipant))]
-            internal static partial class PublisherRebusHost;
+            internal sealed partial class PublisherRebusHost;
             """);
 
         generated.Should().Contain("Map<global::ProcessOrder>(\"orders\")");
-        generated.Should().Contain("public static partial class OrdersRebusHost");
-        generated.Should().Contain("internal static partial class PublisherRebusHost");
+        generated.Should().Contain("public sealed partial class OrdersRebusHost");
+        generated.Should().Contain("internal sealed partial class PublisherRebusHost");
+        generated.Should().Contain(": global::Ark.Tools.MediatorFramework.Rebus.IArkRebusHost");
         generated.Should().Contain("public static void Register(");
         generated.Should().Contain("RebusMessagingFailedHandler<global::ProcessOrder>");
         generated.Should().Contain("public static void ConfigureOptions(");
@@ -1357,14 +1358,14 @@ public sealed class GeneratorSnapshotTests
             public sealed class OrphanParticipant;
 
             [ArkRebusHost(typeof(OrphanParticipant))]
-            public static partial class OrphanRebusHost;
+            public sealed partial class OrphanRebusHost;
             """);
 
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
-    public void RebusGeneratorRejectsNonStaticHost()
+    public void RebusGeneratorRejectsNonSealedHost()
     {
         var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """

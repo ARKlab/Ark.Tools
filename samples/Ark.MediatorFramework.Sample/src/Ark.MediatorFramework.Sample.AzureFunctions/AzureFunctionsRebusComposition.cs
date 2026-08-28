@@ -18,7 +18,7 @@ namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
 /// <summary>Generated outbound Rebus host for the sample Function application.</summary>
 [ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
-public static partial class AzureFunctionsRebusHost;
+public sealed partial class AzureFunctionsRebusHost;
 
 /// <summary>Builds the sample Function host's outbound-only Rebus client.</summary>
 public static class AzureFunctionsRebusComposition

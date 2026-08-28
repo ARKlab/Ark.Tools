@@ -16,7 +16,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 {
     /// <summary>
     /// Incremental generator that emits legacy <c>[RebusMessage]</c> endpoints and participant-bound
-    /// Rebus host helpers. Participant handlers are nested in the static partial class marked with
+    /// Rebus host helpers. Participant handlers are nested in the sealed partial class marked with
     /// <c>ArkRebusHostAttribute</c>. Only the Rebus transport is emitted by this generator; add
     /// <c>Ark.Tools.MediatorFramework.MinimalApi.Generators</c> for HTTP and
     /// <c>Ark.Tools.MediatorFramework.Grpc.Generators</c> for gRPC.
@@ -328,7 +328,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                     hostAttribute is null ? Location.None : GetLocation(hostAttribute));
 
             cancellationToken.ThrowIfCancellationRequested();
-            if (!hostType.IsStatic
+            if (!hostType.IsSealed
+                || hostType.IsStatic
                 || hostType.ContainingType is not null
                 || hostType.Arity != 0
                 || !hostType.DeclaringSyntaxReferences.Any(reference =>
@@ -336,7 +337,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     && declaration.Modifiers.Any(modifier => modifier.ValueText == "partial")))
             {
                 return HostModel.Invalid(
-                    "ArkRebusHostAttribute must target a top-level, non-generic static partial class.",
+                    "ArkRebusHostAttribute must target a top-level, non-generic sealed partial class.",
                     GetLocation(hostAttribute));
             }
             var participantAttribute = participant.GetAttributes().FirstOrDefault(
@@ -665,7 +666,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 sb.Append("namespace ").Append(host.Namespace).AppendLine();
                 sb.AppendLine("{");
             }
-            sb.Append("    ").Append(host.Accessibility).Append(" static partial class ").Append(host.Name).AppendLine();
+            sb.Append("    ").Append(host.Accessibility).Append(" sealed partial class ").Append(host.Name)
+                .AppendLine(" : global::Ark.Tools.MediatorFramework.Rebus.IArkRebusHost");
             sb.AppendLine("    {");
             sb.AppendLine("        /// <summary>Registers the generated Rebus handlers and transport-neutral bus for this host.</summary>");
             sb.AppendLine("        public static void Register(global::SimpleInjector.Container container)");

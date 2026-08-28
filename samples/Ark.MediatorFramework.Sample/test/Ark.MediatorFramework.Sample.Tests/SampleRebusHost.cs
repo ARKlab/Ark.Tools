@@ -6,4 +6,4 @@ using Ark.Tools.MediatorFramework.Rebus;
 namespace Ark.MediatorFramework.Sample.RebusProcessor;
 
 [ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
-internal static partial class SampleRebusPublisherHost;
+internal sealed partial class SampleRebusPublisherHost;
