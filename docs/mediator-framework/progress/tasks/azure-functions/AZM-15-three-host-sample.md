@@ -284,5 +284,5 @@ registered by each application composition root.
 - [x] The native SQL outbox is drained by the separate `outbox-processor`
   custom host.
 - [ ] The [task board](../README.md) status for AZM-15 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
