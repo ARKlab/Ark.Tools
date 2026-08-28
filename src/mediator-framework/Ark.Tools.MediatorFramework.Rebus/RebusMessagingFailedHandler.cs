@@ -4,6 +4,7 @@
 using Ark.Tools.Solid;
 
 using Rebus.Handlers;
+using Rebus.Messages;
 using Rebus.Retry.Simple;
 
 namespace Ark.Tools.MediatorFramework.Rebus;
@@ -45,7 +46,17 @@ public sealed class RebusMessagingFailedHandler<T> : IHandleMessages<IFailed<T>>
             ];
         }
 
-        var failed = new MessagingFailed<T>(message.Message, 1, exceptions);
+        var deliveryCount = message.Headers.TryGetValue(
+            Headers.DeliveryCount,
+            out var deliveryCountValue)
+            && int.TryParse(
+                deliveryCountValue,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var parsedDeliveryCount)
+            ? Math.Max(parsedDeliveryCount, 1)
+            : 1;
+        var failed = new MessagingFailed<T>(message.Message, deliveryCount, exceptions);
         await _processor.ExecuteAsync(failed, CancellationToken.None).ConfigureAwait(false);
     }
 }

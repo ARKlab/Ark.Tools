@@ -14,8 +14,8 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [DoNotParallelize]
 public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTransportConformanceTests
 {
-    private const string _administrationConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
-    private const string _connectionString = "Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    private static readonly string _administrationConnectionString = _serviceBusConnectionString();
+    private static readonly string _connectionString = _dataPlaneConnectionString(_administrationConnectionString);
     private const string _queueName = "ark-mf-conformance";
     private const string _emptyQueueName = "ark-mf-conformance-empty";
     private readonly List<ServiceBusMessagingTransport> _transports = new();
@@ -66,5 +66,29 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
             await _administration.DeleteQueueAsync(_queueName).ConfigureAwait(false);
         if ((await _administration.QueueExistsAsync(_emptyQueueName).ConfigureAwait(false)).Value)
             await _administration.DeleteQueueAsync(_emptyQueueName).ConfigureAwait(false);
+    }
+
+    private static string _serviceBusConnectionString()
+    {
+        var connectionString = Environment.GetEnvironmentVariable(
+            "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+
+        Assert.Inconclusive(
+            "Set ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING to run Service Bus emulator tests.");
+        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
+    }
+
+    private static string _dataPlaneConnectionString(string connectionString)
+    {
+        const string endpointPrefix = "Endpoint=";
+        var endpointStart = connectionString.IndexOf(endpointPrefix, StringComparison.Ordinal)
+            + endpointPrefix.Length;
+        var endpointEnd = connectionString.IndexOf(';', endpointStart);
+        var endpoint = new Uri(connectionString[endpointStart..endpointEnd]);
+        var dataPlaneEndpoint = new UriBuilder(endpoint) { Port = -1 }.Uri
+            .AbsoluteUri.TrimEnd('/');
+        return connectionString[..endpointStart] + dataPlaneEndpoint + connectionString[endpointEnd..];
     }
 }

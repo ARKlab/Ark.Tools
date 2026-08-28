@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Solid;
 
@@ -26,9 +27,10 @@ public sealed class RebusMessagingFailedHandlerTests
             "failure details",
             DateTimeOffset.UtcNow);
 
-        await handler.Handle(new FailedMessage(new FailedContract(), [exception])).ConfigureAwait(false);
+        await handler.Handle(new FailedMessage(new FailedContract(), [exception], "3")).ConfigureAwait(false);
 
         processor.Failure.Should().NotBeNull();
+        processor.Failure.DeliveryCount.Should().Be(3);
         processor.Failure.Exceptions.Should().ContainSingle()
             .Which.Should().BeEquivalentTo(new MessagingExceptionInfo(
                 exception.Type,
@@ -41,10 +43,14 @@ public sealed class RebusMessagingFailedHandlerTests
 
     private sealed class FailedMessage : IFailed<FailedContract>
     {
-        public FailedMessage(FailedContract message, IEnumerable<ExceptionInfo> exceptions)
+        public FailedMessage(
+            FailedContract message,
+            IEnumerable<ExceptionInfo> exceptions,
+            string deliveryCount)
         {
             Message = message;
             Exceptions = exceptions;
+            Headers[MessagingHeaders.RebusDeliveryCount] = deliveryCount;
         }
 
         public FailedContract Message { get; }
