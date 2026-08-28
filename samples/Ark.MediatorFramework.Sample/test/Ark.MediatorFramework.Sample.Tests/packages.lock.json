@@ -1956,6 +1956,17 @@
           "Polly": "[8.7.0, )"
         }
       },
+      "ark.mediatorframework.sample.auditfunctions": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Application": "[6.6.6, )",
+          "Ark.Tools.AspNetCore.ApplicationInsights": "[1.0.0, )",
+          "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
+          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
+          "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )"
+        }
+      },
       "ark.mediatorframework.sample.azurefunctions": {
         "type": "Project",
         "dependencies": {

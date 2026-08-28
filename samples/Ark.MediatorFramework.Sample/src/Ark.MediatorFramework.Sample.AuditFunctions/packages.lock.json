@@ -1357,27 +1357,6 @@
           "Polly": "[8.7.0, )"
         }
       },
-      "ark.mediatorframework.sample.azurefunctions": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.MediatorFramework.Sample.Functions": "[6.6.6, )",
-          "Ark.Tools.AspNetCore.ApplicationInsights": "[1.0.0, )",
-          "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
-          "Ark.Tools.Rebus": "[1.0.0, )",
-          "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.11, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )"
-        }
-      },
-      "ark.mediatorframework.sample.functions": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.MediatorFramework.Sample.Application": "[6.6.6, )",
-          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )"
-        }
-      },
       "ark.tools.applicationinsights": {
         "type": "Project",
         "dependencies": {
@@ -1729,15 +1708,6 @@
           "MessagePack.Annotations": "3.1.8",
           "MessagePackAnalyzer": "3.1.8",
           "Microsoft.NET.StringTools": "17.11.4"
-        }
-      },
-      "Microsoft.AspNetCore.Authentication.JwtBearer": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "Dy9yElSej0rVQL8LBpCLatWTKXNH6h6VBVFmGndTCf1Wge0jSvH9U8mml6ddVDAQ089q1/fDYlhyukHSgx8unQ==",
-        "dependencies": {
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
       "Microsoft.Azure.Functions.Worker": {
