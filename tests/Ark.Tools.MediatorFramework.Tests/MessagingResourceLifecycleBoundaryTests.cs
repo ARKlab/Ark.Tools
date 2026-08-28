@@ -15,6 +15,7 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestCategory("integration")]
 public sealed class MessagingResourceLifecycleBoundaryTests
 {
+    private const string _defaultServiceBusConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
     private const string _ownerPrefix = "ark.tools.mediator-framework:";
     private const string _storageParticipant = "azm12-reconcile-consumer";
     private const string _serviceBusParticipant = "azm12.reconcile.consumer";
@@ -151,9 +152,6 @@ public sealed class MessagingResourceLifecycleBoundaryTests
         if (!string.IsNullOrWhiteSpace(connectionString))
             return connectionString;
 
-        Assert.Inconclusive(
-            "Set ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING to run the Service Bus "
-            + "resource reconciliation boundary test.");
-        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
+        return _defaultServiceBusConnectionString;
     }
 }

@@ -14,6 +14,7 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [DoNotParallelize]
 public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTransportConformanceTests
 {
+    private const string _defaultAdministrationConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
     private static readonly string _administrationConnectionString = _serviceBusConnectionString();
     private static readonly string _connectionString = _dataPlaneConnectionString(_administrationConnectionString);
     private const string _queueName = "ark-mf-conformance";
@@ -75,9 +76,7 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
         if (!string.IsNullOrWhiteSpace(connectionString))
             return connectionString;
 
-        Assert.Inconclusive(
-            "Set ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING to run Service Bus emulator tests.");
-        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
+        return _defaultAdministrationConnectionString;
     }
 
     private static string _dataPlaneConnectionString(string connectionString)
