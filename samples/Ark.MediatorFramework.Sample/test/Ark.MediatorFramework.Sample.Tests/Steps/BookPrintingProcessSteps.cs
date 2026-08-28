@@ -121,8 +121,8 @@ public sealed class BookPrintingProcessSteps
     public async Task ResumeCurrentBookPrintProcess()
     {
         Current.Should().NotBeNull();
-        Current = await _context.DispatchRequestAsync<ProcessBookPrintProcessRequest, BookPrintProcessResponse>(
-            new ProcessBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
+        Current = await _context.DispatchRequestAsync<ResumeBookPrintProcessRequest, BookPrintProcessResponse>(
+            new ResumeBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
     }
 
     /// <summary>Cancels the active print process through its application request.</summary>

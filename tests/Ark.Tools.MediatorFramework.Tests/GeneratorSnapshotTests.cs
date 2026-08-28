@@ -2266,10 +2266,12 @@ public sealed class GeneratorSnapshotTests
             [Message(Name = "books.print_book")]
             public sealed class PrintBook : ICommand<PrintBook> { }
             [Event(Name = "books.print_completed")]
-            public sealed class PrintCompleted : IRequest<PrintCompleted, string> { }
+            public sealed class PrintCompleted : ICommand<PrintCompleted> { }
+            [Event(Name = "books.print_completed_request")]
+            public sealed class PrintCompletedRequest : IRequest<PrintCompletedRequest, string> { }
             [MessagingParticipant(
                 Processes = new[] { typeof(PrintBook) },
-                Publishes = new[] { typeof(PrintCompleted) },
+                Publishes = new[] { typeof(PrintCompleted), typeof(PrintCompletedRequest) },
                 Serializers = new[] { SerializationProtocol.Json },
                 DefaultSerializer = SerializationProtocol.Json,
                 Compression = CompressionAlgorithm.Gzip,
@@ -2290,6 +2292,7 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG018");
         result.Generated.Should().Contain("FrozenDictionary");
         result.Generated.Should().Contain("GetDestinationFor<T>()");
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
@@ -2327,6 +2330,56 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("Type.GetType");
         result.Generated.Should().NotContain("Activator.");
         result.Generated.Should().NotContain("MakeGenericType");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsQueryEventShape()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Event(Name = "books.print_query")]
+            public sealed class PrintQuery : IQuery<PrintQuery> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(PrintQuery) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic =>
+            diagnostic.Id == "ARKMSG018"
+            && diagnostic.GetMessage().Contains("ICommand<TSelf> or IRequest<TSelf, TResponse>"));
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsContractsWithMultipleSolidKinds()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook>, IQuery<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.Receive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic =>
+            diagnostic.Id == "ARKMSG025"
+            && diagnostic.GetMessage().Contains("can implement only one of IQuery, IRequest, or ICommand"));
     }
 
     [TestMethod]
