@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Application.JsonContext;
 using Ark.Tools.MediatorFramework.Messaging;
-using Ark.Tools.MediatorFramework;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
