@@ -2454,6 +2454,21 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorRejectsReservedOutboxProcessorIdentity()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant(Identity = "outbox-processor")]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG015");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(

@@ -215,6 +215,15 @@ declarations, but not persisted envelopes, headers, serializers, queues, or
 subscriptions. Never point both stacks at one logical bus or translate messages
 between their wire formats.
 
+Native mode uses `AddArkMessagingOutboxEnqueue` in transaction-owning senders and
+`AddArkMessagingOutboxProcessor` in a separate always-running process. The
+processor dispatches the already validated AMF envelope and preserves the
+original sender identity and message ID. Rebus mode instead keeps
+`Ark.Tools.Outbox.Rebus`, generated Rebus host setup, and the Rebus-owned outbox
+processor. Do not register both durable adapters for one topology or let either
+processor drain the other's rows. Functions may enqueue native messages, but may
+not host either polling processor.
+
 ## 8. Do not use Rebus for streams
 
 Rebus has no streaming response. Store durable progress and send a command if
