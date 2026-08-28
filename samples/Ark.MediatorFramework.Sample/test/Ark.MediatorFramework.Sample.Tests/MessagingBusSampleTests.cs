@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Application.JsonContext;
+using Ark.MediatorFramework.Sample.AuditFunctions;
+using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
@@ -167,8 +169,12 @@ public sealed class MessagingBusSampleTests
         var notifications = new SubscriberState();
         var audits = new SubscriberState();
         #pragma warning disable MA0004 // Test-owned resources are disposed after the bounded run.
-        await using var notificationContainer = _createSubscriberContainer<NotificationSubscriberHandler>(notifications);
-        await using var auditContainer = _createSubscriberContainer<AuditSubscriberHandler>(audits);
+        await using var notificationSink = new RecordingNotificationSink(notifications);
+        await using var auditSink = new RecordingAuditSink(audits);
+        await using var notificationContainer = AzureFunctionsNativeComposition.BuildContainer(
+            bookPrintNotificationSink: notificationSink);
+        await using var auditContainer = AuditFunctionsComposition.BuildContainer(
+            bookPrintAuditSink: auditSink);
         var notificationDispatcher = _createDispatcher(
             notificationContainer,
             dataBus,
@@ -325,22 +331,6 @@ public sealed class MessagingBusSampleTests
         }
     }
 
-    private static Container _createSubscriberContainer<THandler>(SubscriberState state)
-        where THandler : class, ICommandHandler<BookPrintCompleted>
-    {
-        var container = new Container
-        {
-            Options =
-            {
-                DefaultScopedLifestyle = new AsyncScopedLifestyle(),
-            },
-        };
-        container.RegisterInstance(state);
-        container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
-        container.Register<ICommandHandler<BookPrintCompleted>, THandler>(Lifestyle.Scoped);
-        return container;
-    }
-
     private static MessagingDispatcher _createDispatcher(
         Container container,
         InMemoryMessagingDataBus dataBus,
@@ -377,38 +367,46 @@ public sealed class MessagingBusSampleTests
         }
     }
 
-    private sealed class NotificationSubscriberHandler : ICommandHandler<BookPrintCompleted>
+    private sealed class RecordingNotificationSink : IBookPrintNotificationSink, IAsyncDisposable
     {
         private readonly SubscriberState _state;
 
-        public NotificationSubscriberHandler(SubscriberState state)
+        public RecordingNotificationSink(SubscriberState state)
         {
             _state = state;
         }
 
-        public async Task ExecuteAsync(BookPrintCompleted command, CancellationToken ctk = default)
+        public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
         {
-            ArgumentNullException.ThrowIfNull(command);
             ctk.ThrowIfCancellationRequested();
-            _state._record(command.BookId);
+            _state._record(bookId);
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
             await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 
-    private sealed class AuditSubscriberHandler : ICommandHandler<BookPrintCompleted>
+    private sealed class RecordingAuditSink : IBookPrintAuditSink, IAsyncDisposable
     {
         private readonly SubscriberState _state;
 
-        public AuditSubscriberHandler(SubscriberState state)
+        public RecordingAuditSink(SubscriberState state)
         {
             _state = state;
         }
 
-        public async Task ExecuteAsync(BookPrintCompleted command, CancellationToken ctk = default)
+        public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
         {
-            ArgumentNullException.ThrowIfNull(command);
             ctk.ThrowIfCancellationRequested();
-            _state._record(command.BookId);
+            _state._record(bookId);
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
             await Task.CompletedTask.ConfigureAwait(false);
         }
     }

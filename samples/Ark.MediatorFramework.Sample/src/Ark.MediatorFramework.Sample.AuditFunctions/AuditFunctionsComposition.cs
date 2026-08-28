@@ -20,10 +20,12 @@ public static class AuditFunctionsComposition
     /// <summary>Builds the audit subscriber container without Rebus.</summary>
     /// <param name="useSqlStore">Whether to use the shared SQL persistence profile.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
+    /// <param name="bookPrintAuditSink">Optional audit sink for the subscriber.</param>
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
         bool useSqlStore = false,
-        string? connectionString = null)
+        string? connectionString = null,
+        IBookPrintAuditSink? bookPrintAuditSink = null)
     {
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
@@ -31,7 +33,8 @@ public static class AuditFunctionsComposition
             container,
             useSqlStore,
             connectionString,
-            registerBookPrintNotificationHandler: false);
+            registerBookPrintNotificationHandler: false,
+            bookPrintAuditSink: bookPrintAuditSink);
         container.Register<ICommandHandler<BookPrintCompleted>, BookPrintAuditHandler>();
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();

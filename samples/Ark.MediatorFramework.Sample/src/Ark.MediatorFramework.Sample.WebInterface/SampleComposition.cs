@@ -59,7 +59,8 @@ public static class SampleComposition
             useSqlStore,
             connectionString,
             clock,
-            dataContextFactory);
+            dataContextFactory,
+            registerBookPrintNotificationHandler: false);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 

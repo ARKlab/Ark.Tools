@@ -184,10 +184,10 @@ public sealed class SampleStartup
         services.AddArkMessagingBus(
             messagingNetwork,
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant.CreatePayloadSender(
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant.CreatePayloadSender(
                 dataBus,
                 messagingNetwork),
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant.Identity);
+            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant.Identity);
         services.AddMcpServer()
             .WithHttpTransport()
             .WithArkMcpTools<SampleMcpHostContext>();

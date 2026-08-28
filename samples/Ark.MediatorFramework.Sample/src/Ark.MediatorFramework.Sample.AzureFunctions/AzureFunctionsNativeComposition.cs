@@ -21,12 +21,14 @@ public static class AzureFunctionsNativeComposition
     /// <param name="registerBookPrintNotificationHandler">
     /// Whether to register the notification subscriber handler.
     /// </param>
+    /// <param name="bookPrintNotificationSink">Optional notification sink for the notification subscriber.</param>
     /// <param name="bookPrintAuditSink">Optional audit sink for an audit subscriber.</param>
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
         bool useSqlStore = false,
         string? connectionString = null,
         bool registerBookPrintNotificationHandler = true,
+        IBookPrintNotificationSink? bookPrintNotificationSink = null,
         IBookPrintAuditSink? bookPrintAuditSink = null)
     {
         var container = new Container();
@@ -36,6 +38,7 @@ public static class AzureFunctionsNativeComposition
             useSqlStore,
             connectionString,
             registerBookPrintNotificationHandler: registerBookPrintNotificationHandler,
+            bookPrintNotificationSink: bookPrintNotificationSink,
             bookPrintAuditSink: bookPrintAuditSink);
         if (!registerBookPrintNotificationHandler)
             container.Register<ICommandHandler<BookPrintCompleted>, BookPrintAuditHandler>();
