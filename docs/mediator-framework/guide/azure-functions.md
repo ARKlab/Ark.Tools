@@ -459,10 +459,11 @@ lifecycle cleanup eventually removes.
 The `Ark.MediatorFramework.Sample` solution demonstrates one publisher and two
 independent subscribers over the same contract assembly. `WebInterface` owns
 the `BookPrintCompleted` event topic, `AzureFunctions` owns the
-`ark-mediator-sample` notification queue, and `AuditFunctions` owns the
-`sample_messaging_audit` audit queue. Each subscriber has a forwarding
-subscription named after its participant identity; neither Functions host
-starts a Rebus receiver or an outbox processor.
+`sample-messaging-notification` notification queue, and `AuditFunctions` owns
+the `sample-messaging-audit` audit queue. The generated event topic is
+`sample-messaging-publisher-books_book_print_completed`. Each subscriber has a
+forwarding subscription named after its participant identity; neither Functions
+host starts a Rebus receiver or an outbox processor.
 
 Run the two subscriber hosts separately after copying each local settings
 example:

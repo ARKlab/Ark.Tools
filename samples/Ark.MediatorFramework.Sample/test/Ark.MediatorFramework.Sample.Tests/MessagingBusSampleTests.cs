@@ -5,6 +5,7 @@ extern alias AuditFunctions;
 
 using Ark.MediatorFramework.Sample.Application.JsonContext;
 using Ark.MediatorFramework.Sample.AzureFunctions;
+using Ark.MediatorFramework.Sample.WebInterface;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
@@ -12,6 +13,8 @@ using Ark.Tools.Solid.SimpleInjector;
 using AwesomeAssertions;
 
 using Azure.Storage.Queues;
+
+using Rebus.Transport.InMem;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -26,6 +29,15 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class MessagingBusSampleTests
 {
+    [TestMethod]
+    public void WebInterfaceCompositionIsPublisherOnly()
+    {
+        using var container = SampleComposition.BuildContainer(new InMemNetwork(), useSqlStore: false);
+
+        container.GetRegistration<ICommandHandler<BookPrintCompleted>>(throwOnFailure: false)
+            .Should().BeNull();
+    }
+
     [TestMethod]
     public async Task SendRoutesBookPrintMessageToSampleParticipant()
     {

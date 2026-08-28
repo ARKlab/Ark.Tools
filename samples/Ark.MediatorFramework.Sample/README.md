@@ -248,9 +248,10 @@ do not point their processors at the same outbox rows.
 WebInterface is a publisher-only participant; the existing Azure Functions host
 records notification effects; and the separate AuditFunctions host records
 audit effects. The publisher-owned topic forwards independent copies to the
-`ark-mediator-sample` and `sample_messaging_audit` queues.
+`sample-messaging-notification` and `sample-messaging-audit` queues.
 
 ```bash
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface
 dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
 dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
 ```

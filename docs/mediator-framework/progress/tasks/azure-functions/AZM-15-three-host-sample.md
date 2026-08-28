@@ -283,6 +283,6 @@ registered by each application composition root.
 - [x] No Rebus processor or outbox worker runs in any Functions host.
 - [x] The native SQL outbox is drained by the separate `outbox-processor`
   custom host.
-- [ ] The [task board](../README.md) status for AZM-15 is updated to this task's acceptance state.
+- [x] The [task board](../README.md) status for AZM-15 is updated to this task's acceptance state.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
