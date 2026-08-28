@@ -6,8 +6,10 @@ using Ark.Tools.Solid;
 namespace Ark.MediatorFramework.Sample.Application.Messages;
 
 /// <summary>Notifies messaging participants that a book print completed.</summary>
-[Event(Name = "books.book_print_completed")]
-public sealed record BookPrintCompleted : ICommand<BookPrintCompleted>
+[Event(Name = "books_book_print_completed")]
+public sealed record BookPrintCompleted :
+    IRequest<BookPrintCompleted, BookPrintCompleted>,
+    ICommand<BookPrintCompleted>
 {
     /// <summary>Gets the identifier of the printed book.</summary>
     public Guid BookId { get; init; }

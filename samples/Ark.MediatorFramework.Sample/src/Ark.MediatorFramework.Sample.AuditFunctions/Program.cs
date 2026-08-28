@@ -1,10 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.AzureFunctions;
-
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
+using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
@@ -41,10 +40,9 @@ public static class Program
 
             var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.
-            var applicationContainer = AzureFunctionsNativeComposition.BuildContainer(
+            var applicationContainer = AuditFunctionsComposition.BuildContainer(
                 useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
-                connectionString: sqlConnectionString,
-                registerBookPrintNotificationHandler: false);
+                connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(applicationContainer);
             builder.Services.AddArkMessagingFunctionsHost(

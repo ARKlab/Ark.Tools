@@ -4,6 +4,6 @@
 using Ark.MediatorFramework.Sample.Application.Messages;
 
 [assembly: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHost(
-    typeof(SampleMessagingParticipant),
+    typeof(SampleMessagingNotificationParticipant),
     Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.ServiceBus,
     ConnectionConfigurationKey = "AzureServiceBus:ConnectionString")]

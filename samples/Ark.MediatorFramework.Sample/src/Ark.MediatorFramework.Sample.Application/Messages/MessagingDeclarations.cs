@@ -10,15 +10,22 @@ namespace Ark.MediatorFramework.Sample.Application.Messages;
     DefaultSerializer = SerializationProtocol.Json)]
 public sealed partial class SampleMessagingPublisherParticipant;
 
-/// <summary>Declares the sample notification subscriber participant.</summary>
+/// <summary>Declares the sample background message consumer participant.</summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
     Processes = new[] { typeof(ProcessBookPrintProcessRequest) },
-    Subscribes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
     Retry = typeof(SampleMessagingRetryPolicy))]
 public sealed partial class SampleMessagingParticipant;
+
+/// <summary>Declares the sample notification subscriber participant.</summary>
+[MessagingParticipant(
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json,
+    Retry = typeof(SampleMessagingRetryPolicy))]
+public sealed partial class SampleMessagingNotificationParticipant;
 
 /// <summary>Declares the sample audit subscriber participant.</summary>
 [MessagingParticipant(
@@ -50,6 +57,7 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
     {
         typeof(SampleMessagingPublisherParticipant),
         typeof(SampleMessagingParticipant),
+        typeof(SampleMessagingNotificationParticipant),
         typeof(SampleMessagingAuditParticipant),
     },
     Requires = MessagingCapabilities.Receive
