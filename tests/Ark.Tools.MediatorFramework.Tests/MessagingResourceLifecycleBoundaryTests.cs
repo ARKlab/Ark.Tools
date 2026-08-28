@@ -21,6 +21,7 @@ public sealed class MessagingResourceLifecycleBoundaryTests
     private const string _currentTopic = "azm12.reconcile.current";
     private const string _formerTopic = "azm12.reconcile.former";
     private const string _foreignSubscription = "azm12.reconcile.foreign";
+    private const string _serviceBusConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
 
     [TestMethod]
     public async Task StorageQueueReconcileCreatesIdentityAndPoisonQueues()
@@ -57,7 +58,7 @@ public sealed class MessagingResourceLifecycleBoundaryTests
     [TestMethod]
     public async Task ServiceBusReconcileUpdatesOwnedResourcesAndPreservesForeignResources()
     {
-        var administration = new ServiceBusAdministrationClient(_serviceBusConnectionString());
+        var administration = new ServiceBusAdministrationClient(_serviceBusConnectionString);
         await _deleteServiceBusResourcesAsync(administration).ConfigureAwait(false);
         try
         {
@@ -132,19 +133,6 @@ public sealed class MessagingResourceLifecycleBoundaryTests
         {
             await _deleteServiceBusResourcesAsync(administration).ConfigureAwait(false);
         }
-    }
-
-    private static string _serviceBusConnectionString()
-    {
-        var connectionString = Environment.GetEnvironmentVariable(
-            "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING");
-        if (!string.IsNullOrWhiteSpace(connectionString))
-            return connectionString;
-
-        Assert.Inconclusive(
-            "Set ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING to run the Service Bus "
-            + "resource reconciliation boundary test.");
-        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
     }
 
     private static async Task _deleteServiceBusResourcesAsync(

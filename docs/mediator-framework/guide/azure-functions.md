@@ -229,18 +229,9 @@ forwards the publisher-owned topic into the participant identity queue. Resource
 creation and validation consume this manifest in the lifecycle layer; generated
 trigger code never creates entities.
 
-Service Bus transport conformance tests require explicit infrastructure:
-
-```text
-ARK_SERVICEBUS_CONNECTION_STRING
-ARK_SERVICEBUS_QUEUE
-ARK_SERVICEBUS_EMPTY_QUEUE
-```
-
-The two queues must be isolated test entities. When these values are absent,
-the tests use `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` and provision isolated
-queues for each test. If neither configuration is present, the tests report the
-missing infrastructure explicitly rather than silently passing.
+Service Bus transport conformance tests target the local emulator and create
+their fixed test queues during setup. The tests remove both queues during
+cleanup, matching the SQL Server and Azurite integration-test conventions.
 
 ### Reconcile messaging resources
 

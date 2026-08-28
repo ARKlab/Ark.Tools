@@ -11,17 +11,15 @@ namespace Ark.Tools.MediatorFramework.Tests;
 /// <summary>Runs the transport conformance suite against an explicitly configured Service Bus namespace.</summary>
 [TestClass]
 [TestCategory("integration")]
+[DoNotParallelize]
 public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTransportConformanceTests
 {
-    private const string _connectionVariable = "ARK_SERVICEBUS_CONNECTION_STRING";
-    private const string _emulatorConnectionVariable = "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING";
-    private const string _queueVariable = "ARK_SERVICEBUS_QUEUE";
-    private const string _emptyQueueVariable = "ARK_SERVICEBUS_EMPTY_QUEUE";
+    private const string _administrationConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    private const string _connectionString = "Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    private const string _queueName = "ark-mf-conformance";
+    private const string _emptyQueueName = "ark-mf-conformance-empty";
     private readonly List<ServiceBusMessagingTransport> _transports = new();
-    private ServiceBusAdministrationClient? _administration;
-    private string _connectionString = string.Empty;
-    private string _queueName = string.Empty;
-    private string _emptyQueueName = string.Empty;
+    private readonly ServiceBusAdministrationClient _administration = new(_administrationConnectionString);
 
     protected override string QueueName => _queueName;
 
@@ -39,21 +37,7 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
     [TestInitialize]
     public async Task InitializeQueues()
     {
-        var connectionString = Environment.GetEnvironmentVariable(_connectionVariable);
-        if (!string.IsNullOrWhiteSpace(connectionString))
-        {
-            _connectionString = connectionString;
-            _queueName = _requiredEnvironmentVariable(_queueVariable);
-            _emptyQueueName = _requiredEnvironmentVariable(_emptyQueueVariable);
-            return;
-        }
-
-        var emulatorConnectionString = _requiredEnvironmentVariable(_emulatorConnectionVariable);
-        _connectionString = _withoutEndpointPort(emulatorConnectionString);
-        var suffix = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
-        _queueName = "ark-mf-conformance-" + suffix;
-        _emptyQueueName = _queueName + "-empty";
-        _administration = new ServiceBusAdministrationClient(emulatorConnectionString);
+        await _deleteQueuesAsync().ConfigureAwait(false);
         await _administration.CreateQueueAsync(_queueName).ConfigureAwait(false);
         try
         {
@@ -73,41 +57,14 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
             await transport.DisposeAsync().ConfigureAwait(false);
         _transports.Clear();
 
-        if (_administration is null)
-            return;
-
-        await _administration.DeleteQueueAsync(_queueName).ConfigureAwait(false);
-        await _administration.DeleteQueueAsync(_emptyQueueName).ConfigureAwait(false);
+        await _deleteQueuesAsync().ConfigureAwait(false);
     }
 
-    private static string _requiredEnvironmentVariable(string name)
+    private async Task _deleteQueuesAsync()
     {
-        var value = Environment.GetEnvironmentVariable(name);
-        if (!string.IsNullOrWhiteSpace(value))
-            return value;
-
-        Assert.Inconclusive(
-            $"Set {_emulatorConnectionVariable}, or set {_connectionVariable} and provision the queues "
-            + $"named by {_queueVariable} and {_emptyQueueVariable}, to run Azure Service Bus conformance tests.");
-        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
-    }
-
-    private static string _withoutEndpointPort(string connectionString)
-    {
-        const string endpointPrefix = "Endpoint=";
-        var endpointStart = connectionString.IndexOf(endpointPrefix, StringComparison.Ordinal);
-        if (endpointStart < 0)
-            throw new FormatException("The Service Bus emulator connection string has no Endpoint.");
-
-        endpointStart += endpointPrefix.Length;
-        var endpointEnd = connectionString.IndexOf(';', endpointStart);
-        if (endpointEnd < 0)
-            endpointEnd = connectionString.Length;
-
-        var endpoint = new UriBuilder(connectionString[endpointStart..endpointEnd])
-        {
-            Port = -1
-        };
-        return connectionString[..endpointStart] + endpoint.Uri.AbsoluteUri + connectionString[endpointEnd..];
+        if ((await _administration.QueueExistsAsync(_queueName).ConfigureAwait(false)).Value)
+            await _administration.DeleteQueueAsync(_queueName).ConfigureAwait(false);
+        if ((await _administration.QueueExistsAsync(_emptyQueueName).ConfigureAwait(false)).Value)
+            await _administration.DeleteQueueAsync(_emptyQueueName).ConfigureAwait(false);
     }
 }

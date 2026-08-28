@@ -6,6 +6,8 @@ using Ark.Tools.Outbox.Rebus;
 
 using RebusBus = Rebus.Bus.IBus;
 
+using System.Collections.Frozen;
+
 namespace Ark.Tools.MediatorFramework.Rebus;
 
 /// <summary>Adapts a Rebus bus to the transport-neutral one-way messaging API.</summary>
@@ -14,7 +16,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     private const string _senderIdentityHeader = "ark-sender-identity";
     private readonly RebusBus _bus;
     private readonly string _senderIdentity;
-    private readonly HashSet<Type> _publishedTypes;
+    private readonly FrozenSet<Type> _publishedTypes;
 
     /// <summary>Creates a transport-neutral adapter over Rebus.</summary>
     public RebusMessagingBus(RebusBus bus, string senderIdentity, IEnumerable<Type> publishedTypes)
@@ -23,7 +25,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
         ArgumentException.ThrowIfNullOrEmpty(senderIdentity);
         ArgumentNullException.ThrowIfNull(publishedTypes);
         _senderIdentity = senderIdentity;
-        _publishedTypes = publishedTypes.ToHashSet();
+        _publishedTypes = publishedTypes.ToFrozenSet();
     }
 
     /// <inheritdoc />
