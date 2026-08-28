@@ -168,6 +168,39 @@ public sealed class MessagingFunctionsCompositionTests
         services.Should().BeEmpty();
     }
 
+    /// <summary>Verifies Functions composition cannot be mixed with the native polling processor.</summary>
+    [TestMethod]
+    public void NativeOutboxProcessorIsRejectedBeforeOrAfterFunctionsComposition()
+    {
+        var factory = new Ark.Tools.Outbox.InMemoryOutboxContextFactory();
+        var processorFirst = new ServiceCollection();
+        processorFirst.AddSingleton<IMessagingTransport>(new InMemoryMessagingTransport());
+        processorFirst.AddArkMessagingOutboxProcessor(factory);
+        using var firstContainer = _container();
+
+        var addFunctions = () => processorFirst.AddArkMessagingFunctionsHost(
+            firstContainer,
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
+            new InMemoryMessagingTransport(),
+            _dataBus());
+        addFunctions.Should().Throw<InvalidOperationException>()
+            .WithMessage("*cannot host*native messaging outbox processor*");
+
+        var functionsFirst = new ServiceCollection();
+        using var secondContainer = _container();
+        functionsFirst.AddArkMessagingFunctionsHost(
+            secondContainer,
+            _manifest(
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                _descriptor(receives: false)),
+            new InMemoryMessagingTransport(),
+            _dataBus());
+
+        var addProcessor = () => functionsFirst.AddArkMessagingOutboxProcessor(factory);
+        addProcessor.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Azure Functions composition is active*");
+    }
+
     /// <summary>Verifies a matching Functions host resolves native bus and dispatch services.</summary>
     [TestMethod]
     public async Task MatchingServiceBusHostResolvesBusAndDispatcher()

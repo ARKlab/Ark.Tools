@@ -6,6 +6,8 @@ using System.Text.Json;
 using MessagePack;
 using MessagePack.Resolvers;
 
+using Ark.Tools.Outbox;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -58,6 +60,49 @@ public static class MessagingServiceCollectionExtensions
             services.AddSingleton(receiveTransport);
         if (transport is IMessagingTransportManagement management)
             services.AddSingleton(management);
+        return services;
+    }
+
+    /// <summary>Registers native transactional outbox enqueue support.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingOutboxEnqueue(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.TryAddSingleton<MessagingOutboxEnqueueRegistration>();
+        return services;
+    }
+
+    /// <summary>Registers the always-running native messaging outbox processor.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="contextFactory">The durable outbox context factory.</param>
+    /// <param name="batchSize">The maximum number of messages processed per poll.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddArkMessagingOutboxProcessor(
+        this IServiceCollection services,
+        IOutboxAsyncContextFactory contextFactory,
+        int batchSize = 10)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(contextFactory);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
+        if (services.Any(static service =>
+                service.ServiceType == typeof(MessagingOutboxProcessor)
+                || service.ServiceType.FullName
+                    == "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest"))
+        {
+            throw new InvalidOperationException(
+                "A native messaging outbox processor is already registered or Azure Functions composition is active.");
+        }
+
+        services.AddArkMessagingOutboxEnqueue();
+        services.AddSingleton(contextFactory);
+        services.AddSingleton(serviceProvider => new MessagingOutboxProcessor(
+            serviceProvider.GetRequiredService<IOutboxAsyncContextFactory>(),
+            serviceProvider.GetRequiredService<IMessagingTransport>(),
+            batchSize));
+        services.AddSingleton<IHostedService>(
+            serviceProvider => serviceProvider.GetRequiredService<MessagingOutboxProcessor>());
         return services;
     }
 
@@ -291,12 +336,15 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(participant);
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (string.Equals(participant.Identity, MessagingOutboxProcessor.Identity, StringComparison.Ordinal))
+            throw new InvalidOperationException("The participant identity 'outbox-processor' is reserved.");
         if (resources?.Lifecycle == MessagingResourceLifecycle.CreateIfMissing
             && management is null)
         {
             throw new InvalidOperationException(
                 "The selected messaging transport does not provide resource lifecycle management.");
         }
+
         if (services.Any(static service => service.ServiceType == typeof(MessagingParticipantDescriptor)))
             throw new InvalidOperationException("A messaging participant is already registered in this host.");
 
@@ -451,3 +499,5 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
         await Task.CompletedTask.ConfigureAwait(false);
     }
 }
+
+internal sealed class MessagingOutboxEnqueueRegistration;

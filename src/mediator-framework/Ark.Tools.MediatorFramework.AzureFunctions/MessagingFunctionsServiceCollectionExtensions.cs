@@ -99,6 +99,11 @@ public static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (services.Any(static service => service.ServiceType == typeof(MessagingOutboxProcessor)))
+        {
+            throw new InvalidOperationException(
+                "Azure Functions cannot host the native messaging outbox processor.");
+        }
 
         _validateManifest(manifest, transport);
         var descriptor = manifest.Descriptor!;
