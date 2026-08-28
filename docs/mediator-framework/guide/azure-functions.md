@@ -454,6 +454,30 @@ retry/lock windows, plus entity TTL, backlog, outages, deployment delays, and
 outbox dwell time. A rolled-back enqueue can leave an orphan that provider
 lifecycle cleanup eventually removes.
 
+### Three-participant Book sample
+
+The `Ark.MediatorFramework.Sample` solution demonstrates one publisher and two
+independent subscribers over the same contract assembly. `WebInterface` owns
+the `BookPrintCompleted` event topic, `AzureFunctions` owns the
+`ark-mediator-sample` notification queue, and `AuditFunctions` owns the
+`sample_messaging_audit` audit queue. Each subscriber has a forwarding
+subscription named after its participant identity; neither Functions host
+starts a Rebus receiver or an outbox processor.
+
+Run the two subscriber hosts separately after copying each local settings
+example:
+
+```bash
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
+```
+
+For local Service Bus runs, provision the publisher-owned topic, the two
+subscriber queues, and one forwarding subscription per queue. The existing
+`outbox-processor` remains a separate always-running process when native SQL
+outbox mode is selected. The sample tests use the InMemory transport and
+bounded completion waits to prove one publication reaches both handlers.
+
 ### Azure Blob DataBus
 
 The production provider uses only Azure Blob data-plane APIs. Keep credentials

@@ -198,7 +198,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-13](azure-functions/AZM-13-package-and-composition.md) | Functions messaging package and composition | Complete |
 | [AZM-14](azure-functions/AZM-14-rebus-compatibility.md) | Rebus compatibility and generated Rebus host setup | Complete |
 | [AZM-14A](azure-functions/AZM-14A-native-sql-outbox.md) | Native SQL outbox and hosted processor | Complete |
-| [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-participant publish/subscribe sample | Pending |
+| [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-participant publish/subscribe sample | In progress |
 | [AZM-16](azure-functions/AZM-16-documentation-and-api-baseline.md) | User documentation, migration guidance, and API baseline | Pending |
 
 ## Testing redesign

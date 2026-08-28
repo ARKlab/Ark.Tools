@@ -116,6 +116,107 @@ public sealed class MessagingBusSampleTests
     }
 
     [TestMethod]
+    public async Task InMemoryPublishReachesDistinctBookPrintSubscribers()
+    {
+        var network = SampleMessagingNetwork.CreateOptions();
+        var transport = new InMemoryMessagingTransport();
+        var dataBus = new InMemoryMessagingDataBus();
+        var codec = new JsonMessagingCodec(new JsonSerializerOptions
+        {
+            TypeInfoResolver = ApplicationJsonSerializerContext.Default
+        });
+        var retryPolicy = new SampleMessagingRetryPolicy();
+        var maximumDeliveryCount = retryPolicy.MaximumDeliveryCount * 2;
+        var topic = SampleMessagingNetwork.Registry.GetDestination<BookPrintCompleted>();
+        await transport.EnsureQueueAsync(
+                SampleMessagingParticipant.Identity,
+                maximumDeliveryCount,
+                SampleMessagingParticipant.Identity,
+                default)
+            .ConfigureAwait(false);
+        await transport.EnsureQueueAsync(
+                SampleMessagingAuditParticipant.Identity,
+                maximumDeliveryCount,
+                SampleMessagingAuditParticipant.Identity,
+                default)
+            .ConfigureAwait(false);
+        await transport.EnsureTopicAsync(
+                topic,
+                SampleMessagingPublisherParticipant.Identity,
+                default)
+            .ConfigureAwait(false);
+        await transport.EnsureSubscriptionAsync(
+                new MessagingSubscriptionResource(
+                    topic,
+                    SampleMessagingParticipant.Identity,
+                    SampleMessagingParticipant.Identity,
+                    maximumDeliveryCount,
+                    SampleMessagingParticipant.Identity),
+                default)
+            .ConfigureAwait(false);
+        await transport.EnsureSubscriptionAsync(
+                new MessagingSubscriptionResource(
+                    topic,
+                    SampleMessagingAuditParticipant.Identity,
+                    SampleMessagingAuditParticipant.Identity,
+                    maximumDeliveryCount,
+                    SampleMessagingAuditParticipant.Identity),
+                default)
+            .ConfigureAwait(false);
+
+        var notifications = new SubscriberState();
+        var audits = new SubscriberState();
+        await using var notificationContainer = _createSubscriberContainer<NotificationSubscriberHandler>(notifications);
+        await using var auditContainer = _createSubscriberContainer<AuditSubscriberHandler>(audits);
+        var notificationDispatcher = _createDispatcher(
+            notificationContainer,
+            dataBus,
+            network,
+            codec,
+            retryPolicy,
+            SampleMessagingParticipant.DispatchAsync,
+            SampleMessagingParticipant.DispatchFailedAsync);
+        var auditDispatcher = _createDispatcher(
+            auditContainer,
+            dataBus,
+            network,
+            codec,
+            retryPolicy,
+            SampleMessagingAuditParticipant.DispatchAsync,
+            SampleMessagingAuditParticipant.DispatchFailedAsync);
+        await using var notificationPump = new MessagingReceivePump(
+            transport,
+            SampleMessagingParticipant.Identity,
+            notificationDispatcher.OnDeliveryAsync);
+        await using var auditPump = new MessagingReceivePump(
+            transport,
+            SampleMessagingAuditParticipant.Identity,
+            auditDispatcher.OnDeliveryAsync);
+        using var bus = new MessagingBus(
+            transport,
+            network,
+            SampleMessagingNetwork.Registry,
+            new MessagingCodecRegistry([codec]),
+            SampleMessagingPublisherParticipant.CreatePayloadSender(dataBus, network),
+            SampleMessagingPublisherParticipant.Identity);
+
+        await notificationPump.StartAsync(default).ConfigureAwait(false);
+        await auditPump.StartAsync(default).ConfigureAwait(false);
+        await bus.Publish(new BookPrintCompleted { BookId = Guid.Parse("00000000-0000-0000-0000-000000000042") })
+            .ConfigureAwait(false);
+        await Task.WhenAll(
+                notifications.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5)),
+                audits.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5)))
+            .ConfigureAwait(false);
+        await notificationPump.StopAsync().ConfigureAwait(false);
+        await auditPump.StopAsync().ConfigureAwait(false);
+
+        notifications.BookIds.Should().ContainSingle();
+        audits.BookIds.Should().ContainSingle();
+        notifications.BookIds[0].Should().Be(audits.BookIds[0]);
+    }
+
+    [TestMethod]
     [TestCategory("integration")]
     public async Task StorageQueueRoutesScheduledBookMessageAndMovesPoison()
     {
@@ -201,6 +302,94 @@ public sealed class MessagingBusSampleTests
         internal void _recordNormal()
         {
             Interlocked.Increment(ref _normalExecutions);
+        }
+
+        private static Container _createSubscriberContainer<THandler>(SubscriberState state)
+            where THandler : class, ICommandHandler<BookPrintCompleted>
+        {
+            var container = new Container
+            {
+                Options =
+                {
+                    DefaultScopedLifestyle = new AsyncScopedLifestyle(),
+                },
+            };
+            container.RegisterInstance(state);
+            container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+            container.Register<ICommandHandler<BookPrintCompleted>, THandler>(Lifestyle.Scoped);
+            return container;
+        }
+
+        private static MessagingDispatcher _createDispatcher(
+            Container container,
+            InMemoryMessagingDataBus dataBus,
+            MessagingNetworkOptions network,
+            JsonMessagingCodec codec,
+            IMessagingRetryPolicy retryPolicy,
+            MessagingDispatch dispatch,
+            MessagingFailedDispatch dispatchFailed)
+        {
+            return new MessagingDispatcher(
+                container,
+                new MessagingHeaderProcessor(
+                    new MessagingCodecRegistry([codec]),
+                    network.NetworkIdentity),
+                new MessagingPayloadReceiver(dataBus, network),
+                retryPolicy,
+                dispatch,
+                dispatchFailed);
+        }
+
+        private sealed class SubscriberState
+        {
+            internal List<Guid> BookIds { get; } = [];
+
+            internal TaskCompletionSource Completed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            internal void Record(Guid bookId)
+            {
+                lock (BookIds)
+                {
+                    BookIds.Add(bookId);
+                    Completed.TrySetResult();
+                }
+            }
+        }
+
+        private sealed class NotificationSubscriberHandler : ICommandHandler<BookPrintCompleted>
+        {
+            private readonly SubscriberState _state;
+
+            public NotificationSubscriberHandler(SubscriberState state)
+            {
+                _state = state;
+            }
+
+            public async Task ExecuteAsync(BookPrintCompleted command, CancellationToken ctk = default)
+            {
+                ArgumentNullException.ThrowIfNull(command);
+                ctk.ThrowIfCancellationRequested();
+                _state.Record(command.BookId);
+                await Task.CompletedTask.ConfigureAwait(false);
+            }
+        }
+
+        private sealed class AuditSubscriberHandler : ICommandHandler<BookPrintCompleted>
+        {
+            private readonly SubscriberState _state;
+
+            public AuditSubscriberHandler(SubscriberState state)
+            {
+                _state = state;
+            }
+
+            public async Task ExecuteAsync(BookPrintCompleted command, CancellationToken ctk = default)
+            {
+                ArgumentNullException.ThrowIfNull(command);
+                ctk.ThrowIfCancellationRequested();
+                _state.Record(command.BookId);
+                await Task.CompletedTask.ConfigureAwait(false);
+            }
         }
 
         internal void _recordFailure()

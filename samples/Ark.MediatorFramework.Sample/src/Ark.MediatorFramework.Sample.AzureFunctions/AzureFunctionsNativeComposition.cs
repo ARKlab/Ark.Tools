@@ -14,17 +14,27 @@ public static class AzureFunctionsNativeComposition
     /// <summary>Builds an application container without registering Rebus.</summary>
     /// <param name="useSqlStore">Whether to use the shared SQL persistence profile.</param>
     /// <param name="connectionString">Optional SQL Server connection string.</param>
+    /// <param name="registerBookPrintNotificationHandler">
+    /// Whether to register the notification subscriber handler.
+    /// </param>
+    /// <param name="bookPrintAuditSink">Optional audit sink for an audit subscriber.</param>
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
         bool useSqlStore = false,
-        string? connectionString = null)
+        string? connectionString = null,
+        bool registerBookPrintNotificationHandler = true,
+        IBookPrintAuditSink? bookPrintAuditSink = null)
     {
         var container = new Container();
         container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
         ApplicationComposition.Register(
             container,
             useSqlStore,
-            connectionString);
+            connectionString,
+            registerBookPrintNotificationHandler: registerBookPrintNotificationHandler,
+            bookPrintAuditSink: bookPrintAuditSink);
+        if (!registerBookPrintNotificationHandler)
+            container.Register<ICommandHandler<BookPrintCompleted>, BookPrintAuditHandler>();
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         return container;
