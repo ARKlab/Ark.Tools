@@ -7,6 +7,7 @@
       <Deploy />
     </Project>
     <Project Path="src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
+    <Project Path="src/Ark.MediatorFramework.Sample.OutboxProcessor/Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
     <Project Path="src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
     <Project Path="src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </Folder>

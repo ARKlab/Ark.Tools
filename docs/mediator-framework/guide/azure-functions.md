@@ -212,6 +212,7 @@ builder.Services.AddArkMessagingFunctionsHost(
     ArkGeneratedMessagingFunctions.Manifest,
     dataBus,
     MessagingFunctionsRuntimeTransport.AzureServiceBus);
+builder.Services.AddArkMessagingOutboxEnqueue();
 ```
 
 The connection setting can contain a connection string or a fully qualified
@@ -223,6 +224,26 @@ network, transport capabilities, serializers, consumed-message handlers, and
 trigger binding before registering the bus and dispatcher. A receive-capable
 Functions participant cannot select InMemory, because its receive pump is a
 long-running worker.
+
+`AddArkMessagingOutboxEnqueue` enables the native transaction boundary without
+starting background work. A handler enlists its `IOutboxContextCore`, sends or
+publishes through `IBus`, completes the bus scope, and then commits the
+application context. Serialization, outgoing pipeline steps, compression,
+claim-check, ownership, scheduling, and reserved-header validation all finish
+before the outbox row is staged. Disposing the scope without completing it
+stages nothing. Calls made without an enlisted scope continue to send directly.
+
+The persisted row contains the exact validated payload and original envelope
+headers, including `amf1-msg-id` and `amf1-sender-identity`. Routing and optional
+due-time metadata use reserved `amf1-outbox-*` headers in the existing
+`Ark.Tools.Outbox` schema. The processor removes only those routing headers and
+sends the remaining envelope unchanged; it does not deserialize the contract or
+rerun outgoing steps.
+
+Never call `AddArkMessagingOutboxProcessor` in a Functions process. Functions
+composition rejects that combination in either registration order. Deploy the
+processor as a separate always-running host; `outbox-processor` is reserved for
+that operational role and cannot be a declared or composed participant identity.
 
 Each subscription
 forwards the publisher-owned topic into the participant identity queue. Resource

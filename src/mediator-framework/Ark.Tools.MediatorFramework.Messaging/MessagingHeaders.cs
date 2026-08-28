@@ -77,4 +77,13 @@ public static class MessagingHeaders
 
     /// <summary>W3C-encoded activity identifier used for messaging trace propagation.</summary>
     public const string DiagnosticId = "Diagnostic-Id";
+
+    /// <summary>Outbox destination kind used by the native durable outbox.</summary>
+    public const string OutboxDestinationKind = "amf1-outbox-destination-kind";
+
+    /// <summary>Outbox destination used by the native durable outbox.</summary>
+    public const string OutboxDestination = "amf1-outbox-destination";
+
+    /// <summary>Optional outbox due time used by the native durable outbox.</summary>
+    public const string OutboxDueTime = "amf1-outbox-due-time";
 }

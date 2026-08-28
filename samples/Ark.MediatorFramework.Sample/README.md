@@ -21,6 +21,8 @@ generated JSON, generated transport endpoints, and Reqnroll behavior tests.
   message handling, retries, and dead-letter behavior.
 - A separate processor can receive work while the web host remains responsible
   for HTTP/gRPC.
+- Native messaging can commit validated envelopes with application state and
+  drain them from a dedicated always-running outbox host.
 - The sample supports SQL Server and an explicit in-memory test profile.
 - The framework generates HTTP endpoints, gRPC services, exported `.proto` files,
   OpenAPI documents, and Rebus routing/handlers from contract metadata.
@@ -45,7 +47,7 @@ generated JSON, generated transport endpoints, and Reqnroll behavior tests.
              |                         |       |                        |
              +-------------+---------+       +----+-------------------+
                            |                      |
-                    generated endpoints      Rebus processor
+                    generated endpoints      Rebus/native processors
 ```
 
 The application layer is composed first. Each host adds only its transport and
@@ -60,6 +62,8 @@ process concerns:
    and the outbox processor.
 4. `AzureFunctions` is an outbound-only HTTP host. It sends owned messages to
    Service Bus; the processor consumes them.
+5. `OutboxProcessor` owns native SQL outbox polling and raw-envelope dispatch;
+   it is never hosted by Azure Functions.
 
 ## Projects and folders
 
@@ -84,6 +88,7 @@ Ark.MediatorFramework.Sample/
 │   │   ├── Messages/             # internal Rebus contracts
 │   │   └── Services/             # decorators and application services
 │   ├── Ark.MediatorFramework.Sample.Database/
+│   ├── Ark.MediatorFramework.Sample.OutboxProcessor/
 │   ├── Ark.MediatorFramework.Sample.RebusProcessor/
 │   ├── Ark.MediatorFramework.Sample.AzureFunctions/
 │   └── Ark.MediatorFramework.Sample.WebInterface/
@@ -214,6 +219,27 @@ Run the standalone in-memory processor:
 dotnet run \
   --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor
 ```
+
+Run the native SQL outbox processor as a separate always-running process:
+
+```bash
+ARK_SAMPLE_SQL_CONNECTION='...' \
+ARK_SAMPLE_SERVICEBUS_CONNECTION='...' \
+dotnet run \
+  --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.OutboxProcessor
+```
+
+Native senders call `AddArkMessagingOutboxEnqueue`; this only enables
+transactional enqueue. `Ark.MediatorFramework.Sample.OutboxProcessor` registers
+the single `MessagingOutboxProcessor` hosted service under the reserved
+`outbox-processor` identity. Successful broker acceptance commits deletion of a
+peek-locked batch. Failures roll the SQL transaction back so the batch remains
+retryable. The original sender identity, message ID, serialized payload,
+compression, and claim-check headers remain unchanged.
+
+The WebInterface and RebusProcessor keep their existing Rebus outbox
+registrations. Rebus and native outbox adapters are alternative topology modes;
+do not point their processors at the same outbox rows.
 
 Production Service Bus setup belongs in external configuration. The Functions
 host accepts a Service Bus connection string locally and uses

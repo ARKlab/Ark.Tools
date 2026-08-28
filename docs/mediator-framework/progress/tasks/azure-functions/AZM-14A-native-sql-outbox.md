@@ -247,13 +247,13 @@ WebInterface and RebusProcessor outbox registrations unchanged.
 
 ## Acceptance
 
-- [ ] Native `Send` and `Publish` support transactional SQL outbox enqueue.
-- [ ] The processor is an `IHostedService` with reserved identity
+- [x] Native `Send` and `Publish` support transactional SQL outbox enqueue.
+- [x] The processor is an `IHostedService` with reserved identity
   `outbox-processor`; participant declarations and compositions using that
   identity are rejected.
-- [ ] No outbox processor starts in Azure Functions composition.
-- [ ] Original sender identity and envelope bytes survive durable dispatch.
-- [ ] SQL locking, retry, cancellation, and failure behavior are tested.
-- [ ] The [task board](../README.md) status for AZM-14A is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] No outbox processor starts in Azure Functions composition.
+- [x] Original sender identity and envelope bytes survive durable dispatch.
+- [x] SQL locking, retry, cancellation, and failure behavior are tested.
+- [x] The [task board](../README.md) status for AZM-14A is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

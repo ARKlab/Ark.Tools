@@ -20,6 +20,7 @@ and the web seam in
 | Web host | ASP.NET Core auth, JSON, MessagePack, OpenAPI, gRPC, endpoint mapping | Business transactions |
 | Rebus processor | Input queue, generated message handlers, retries, outbox processor | HTTP route binding |
 | Functions host | Isolated-worker HTTP boundary, generated messaging triggers, and outbound bus client | Rebus workers or outbox polling |
+| Native outbox processor | Existing SQL outbox polling and raw-envelope dispatch | Receive queue, subscriptions, application handlers |
 
 ## Register the application graph
 
@@ -219,6 +220,7 @@ builder.Services.AddArkMessagingFunctionsHost(
     ArkGeneratedMessagingFunctions.Manifest,
     dataBus,
     MessagingFunctionsRuntimeTransport.AzureServiceBus);
+builder.Services.AddArkMessagingOutboxEnqueue();
 ```
 
 Startup resolves the connection from the generated host binding, validates
@@ -244,6 +246,32 @@ Functions composition never starts a Rebus receiver, Rebus outbox processor, or
 native SQL outbox processor. The sample Functions host selects the native
 composition; its separately tested outbound-only Rebus composition remains
 available as a mutually exclusive compatibility path.
+
+## Host the native SQL outbox processor separately
+
+Native `IBus` send and publish calls can enlist the application's existing
+`IOutboxContextCore`. `AddArkMessagingOutboxEnqueue` is safe in sender and
+Functions processes because it starts no polling loop. The application
+transaction commits both state and validated envelopes, or rolls both back.
+
+An always-running custom process owns the complementary registration:
+
+```csharp
+services.AddSingleton<IMessagingTransport>(transport);
+services.AddArkMessagingOutboxProcessor(outboxContextFactory, batchSize: 10);
+```
+
+The registered `MessagingOutboxProcessor` is the single `IHostedService` for the
+reserved `outbox-processor` identity. It uses the existing
+`OutboxProcessorBase` bounded polling, SQL peek-lock, commit-after-acceptance,
+error backoff, and cooperative cancellation behavior. It owns no participant
+queue or subscriptions. Registering it twice, composing it with Functions, or
+using `outbox-processor` as an application participant fails composition.
+
+Choose one durable adapter for a topology. A Rebus host keeps
+`Ark.Tools.Outbox.Rebus` and its Rebus processor; a native host uses the validated
+AMF envelope producer and `MessagingOutboxProcessor`. They may use the same
+application context contract, but must not drain each other's rows.
 
 ## Startup checklist
 

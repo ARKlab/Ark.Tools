@@ -50,6 +50,7 @@ public static class Program
                     SystemClock.Instance,
                     Duration.FromHours(2)),
                 MessagingFunctionsRuntimeTransport.AzureServiceBus);
+            builder.Services.AddArkMessagingOutboxEnqueue();
             builder.Services.AddArkHealthChecks();
             if (builder.Environment.IsEnvironment("IntegrationTests"))
             {

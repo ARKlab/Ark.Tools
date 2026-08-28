@@ -1,12 +1,15 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Buffers;
 using System.Collections.ObjectModel;
+
+using Ark.Tools.Outbox;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Transport-neutral native implementation of the restricted one-way bus.</summary>
-public sealed class MessagingBus : IBus, IDisposable
+public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
 {
     private const int _maximumHeaderCount = 32;
     private const int _maximumHeaderKeyBytes = 128;
@@ -21,6 +24,7 @@ public sealed class MessagingBus : IBus, IDisposable
     private readonly IReadOnlyList<Type> _outgoingStepTypes;
     private readonly Func<Type, object> _resolveStep;
     private readonly Func<DateTimeOffset> _utcNow;
+    private readonly AsyncLocal<MessagingOutboxScope?> _outboxScope = new();
     private int _disposed;
 
     /// <summary>Creates a native bus over a composed messaging transport.</summary>
@@ -50,6 +54,10 @@ public sealed class MessagingBus : IBus, IDisposable
         _codecs = codecs ?? throw new ArgumentNullException(nameof(codecs));
         _payloadSender = payloadSender ?? throw new ArgumentNullException(nameof(payloadSender));
         ArgumentException.ThrowIfNullOrEmpty(participantIdentity);
+        if (string.Equals(participantIdentity, MessagingOutboxProcessor.Identity, StringComparison.Ordinal))
+            throw new ArgumentException(
+                "The participant identity 'outbox-processor' is reserved.",
+                nameof(participantIdentity));
         if (!string.Equals(network.NetworkIdentity, registry.NetworkIdentity, StringComparison.Ordinal))
             throw new ArgumentException("The registry and network identities must match.", nameof(registry));
 
@@ -136,6 +144,16 @@ public sealed class MessagingBus : IBus, IDisposable
     }
 
     /// <inheritdoc />
+    public IBusOutboxScope Enlist(IOutboxContextCore context)
+    {
+        _throwIfDisposed();
+        ArgumentNullException.ThrowIfNull(context);
+        var scope = new MessagingOutboxScope(this, context, _outboxScope.Value);
+        _outboxScope.Value = scope;
+        return scope;
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         Interlocked.Exchange(ref _disposed, 1);
@@ -185,7 +203,28 @@ public sealed class MessagingBus : IBus, IDisposable
                 _validateHeaders(context.Headers);
                 var transportHeaders = new ReadOnlyDictionary<string, string>(
                     new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
-                if (publish)
+                var outboxScope = _outboxScope.Value;
+                if (outboxScope is not null)
+                {
+                    var outboxHeaders = new Dictionary<string, string>(context.Headers, StringComparer.Ordinal)
+                    {
+                        [MessagingHeaders.OutboxDestinationKind] = publish ? "topic" : "queue",
+                        [MessagingHeaders.OutboxDestination] = destination,
+                    };
+                    if (dueTime is not null)
+                    {
+                        outboxHeaders[MessagingHeaders.OutboxDueTime] =
+                            dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
+                    }
+                    _validateHeaders(outboxHeaders);
+
+                    outboxScope.Add(new OutboxMessage
+                    {
+                        Headers = outboxHeaders,
+                        Body = payload.ToArray(),
+                    });
+                }
+                else if (publish)
                 {
                     await _transport.PublishAsync(
                         destination,
@@ -283,5 +322,52 @@ public sealed class MessagingBus : IBus, IDisposable
     private void _throwIfDisposed()
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    }
+
+    private sealed class MessagingOutboxScope : IBusOutboxScope
+    {
+        private readonly MessagingBus _bus;
+        private readonly IOutboxContextCore _context;
+        private readonly MessagingOutboxScope? _parent;
+        private readonly List<OutboxMessage> _messages = [];
+        private bool _completed;
+        private bool _disposed;
+
+        public MessagingOutboxScope(
+            MessagingBus bus,
+            IOutboxContextCore context,
+            MessagingOutboxScope? parent)
+        {
+            _bus = bus;
+            _context = context;
+            _parent = parent;
+        }
+
+        public void Add(OutboxMessage message)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_completed)
+                throw new InvalidOperationException("The messaging outbox scope has already completed.");
+            _messages.Add(message);
+        }
+
+        public async Task CompleteAsync(CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_completed)
+                throw new InvalidOperationException("The messaging outbox scope has already completed.");
+
+            await _context.SendAsync(_messages, cancellationToken).ConfigureAwait(false);
+            _completed = true;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+            if (ReferenceEquals(_bus._outboxScope.Value, this))
+                _bus._outboxScope.Value = _parent;
+            _disposed = true;
+        }
     }
 }
