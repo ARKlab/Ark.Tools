@@ -30,6 +30,12 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+        options: >-
+          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          --health-start-period=30s
           # Azure Sql is Enterprise - match it
           MSSQL_PID: EnterpriseDeveloper
       servicebus:
