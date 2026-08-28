@@ -6,7 +6,6 @@
     <IsTestProject>true</IsTestProject>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ArkToolsMediatorFrameworkRebusHost>true</ArkToolsMediatorFrameworkRebusHost>
   </PropertyGroup>
 
   <ItemGroup>

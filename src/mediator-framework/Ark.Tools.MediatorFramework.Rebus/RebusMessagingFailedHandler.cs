@@ -28,9 +28,9 @@ public sealed class RebusMessagingFailedHandler<T> : IHandleMessages<IFailed<T>>
         ArgumentNullException.ThrowIfNull(message);
         var exceptions = message.Exceptions?
             .Select(static exception => new MessagingExceptionInfo(
-                "Rebus.Retry.Simple.ExceptionInfo",
+                exception.Type,
                 exception.Message,
-                null,
+                exception.Details,
                 null))
             .ToArray() ?? Array.Empty<MessagingExceptionInfo>();
         if (exceptions.Length == 0)

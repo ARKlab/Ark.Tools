@@ -1,8 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.RebusProcessor;
 using Ark.MediatorFramework.Sample.Tests.Fakes;
+using Ark.MediatorFramework.Sample.WebInterface;
 
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus;
@@ -91,11 +91,11 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         _container.Register<IRequestHandler<ScopeProbeRequest, Guid>, ScopeProbeHandler>();
         _container.Register<IRequestHandler<NestedScopeRequest, ScopeObservation>, NestedScopeHandler>();
         _container.Register<IRequestHandler<FailingScopeRequest, bool>, FailingScopeHandler>();
-        SampleRebusPublisherHost.Register(_container);
+        SampleRebusHost.Register(_container);
         ApplicationComposition.RegisterOutboundRebus(
             _container,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(Network),
-            SampleRebusPublisherHost.ConfigureRouting);
+            SampleRebusHost.ConfigureRouting);
         SetAuthenticatedUser();
     }
 

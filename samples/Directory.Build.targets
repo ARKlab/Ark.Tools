@@ -6,7 +6,6 @@
 
    <PropertyGroup>
       <_ArkToolsImportGrpc Condition="'$(ArkToolsMediatorFrameworkGrpcHost)' == 'true' And Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\Ark.Tools.MediatorFramework.Grpc.csproj')">true</_ArkToolsImportGrpc>
-      <_ArkToolsImportRebus Condition="'$(ArkToolsMediatorFrameworkRebusHost)' == 'true' And Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus\Ark.Tools.MediatorFramework.Rebus.csproj')">true</_ArkToolsImportRebus>
       <_ArkToolsImportMediatorFramework Condition="Exists('$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj')">true</_ArkToolsImportMediatorFramework>
       <_ArkToolsImportSolid Condition="Exists('$(ArkToolsSourceRoot)common\Ark.Tools.Solid\Ark.Tools.Solid.csproj')">true</_ArkToolsImportSolid>
       <_ArkToolsImportCore Condition="Exists('$(ArkToolsSourceRoot)common\Ark.Tools.Core\Ark.Tools.Core.csproj')">true</_ArkToolsImportCore>
@@ -73,7 +72,7 @@
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus.Generators\Ark.Tools.MediatorFramework.Rebus.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
-                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus' And '$(ArkToolsMediatorFrameworkRebusHost)' == 'true'" />
+                          Condition="'%(_ArkToolsToReplace.Identity)' == 'Ark.Tools.MediatorFramework.Rebus'" />
         <ProjectReference Include="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc.Generators\Ark.Tools.MediatorFramework.Grpc.Generators.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
@@ -95,8 +94,6 @@
 
    <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
             Condition="'$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
-   <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Rebus\buildTransitive\Ark.Tools.MediatorFramework.Rebus.props"
-            Condition="'$(ArkToolsMediatorFrameworkRebusHost)' == 'true'" />
    <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
             Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true'" />
    <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
