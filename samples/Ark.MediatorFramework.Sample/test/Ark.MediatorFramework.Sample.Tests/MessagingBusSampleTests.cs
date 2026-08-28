@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application.JsonContext;
 using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.MediatorFramework;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
@@ -242,7 +243,20 @@ public sealed class MessagingBusSampleTests
                 SampleMessagingParticipant.Identity,
                 default)
             .ConfigureAwait(false);
-        var network = SampleMessagingNetwork.CreateOptions();
+        var network = new MessagingNetworkOptions(
+            typeof(SampleMessagingNetwork),
+            new MessagingNetworkAttribute
+            {
+                Members =
+                [
+                    typeof(SampleMessagingPublisherParticipant),
+                    typeof(SampleMessagingParticipant),
+                    typeof(SampleMessagingNotificationParticipant),
+                    typeof(SampleMessagingAuditParticipant),
+                ],
+                Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend,
+                MaximumSchedulingDelaySeconds = 3600,
+            });
         var dataBus = new InMemoryMessagingDataBus();
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {

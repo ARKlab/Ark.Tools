@@ -110,7 +110,7 @@ public sealed class AzureFunctionsRebusTests
             .ConfigureAwait(false);
 
         Assert.AreEqual(
-            SampleMessagingParticipant.Identity,
+            SampleMessagingNotificationParticipant.Identity,
             ArkGeneratedMessagingFunctions.Manifest.Resources.IdentityQueue,
             ignoreCase: false,
             CultureInfo.InvariantCulture);
