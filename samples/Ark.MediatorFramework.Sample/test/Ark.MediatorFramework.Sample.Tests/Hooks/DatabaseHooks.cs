@@ -13,17 +13,25 @@ namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 public sealed class DatabaseHooks
 {
     /// <summary>Gets the SQL connection string used by the sample integration database.</summary>
-    public static string ConnectionString =>
-        Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION")
-        ?? new SqlConnectionStringBuilder
+    public static string ConnectionString
+    {
+        get
         {
-            DataSource = "localhost,1433",
-            InitialCatalog = "Ark.MediatorFramework.Sample",
-            UserID = "sa",
-            Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
-            TrustServerCertificate = true,
-            Encrypt = false,
-        }.ConnectionString;
+            var configured = Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION");
+            if (!string.IsNullOrWhiteSpace(configured))
+                return new SqlConnectionStringBuilder(configured).ConnectionString;
+
+            return new SqlConnectionStringBuilder
+            {
+                DataSource = "localhost,1433",
+                InitialCatalog = "Ark.MediatorFramework.Sample",
+                UserID = "sa",
+                Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
+                TrustServerCertificate = true,
+                Encrypt = false,
+            }.ConnectionString;
+        }
+    }
 
     /// <summary>Creates the sample schema when SQL integration tests are enabled.</summary>
     [BeforeTestRun(Order = HooksOrder.DatabaseSetup)]
