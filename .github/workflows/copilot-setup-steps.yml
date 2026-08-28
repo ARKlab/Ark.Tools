@@ -51,7 +51,7 @@ jobs:
           EMULATOR_HTTP_PORT: 5300
           SQL_WAIT_INTERVAL: 5
         options: >-
-          --health-cmd="bash -c 'cat < /dev/null > /dev/tcp/localhost/5300 && cat < /dev/null > /dev/tcp/localhost/5672'"
+          --health-cmd="dotnet --info"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=30
