@@ -1364,6 +1364,29 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void RebusGeneratorRejectsNonStaticHost()
+    {
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+
+            [MessagingParticipant(
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class Participant;
+
+            [MessagingNetwork(Members = new[] { typeof(Participant) })]
+            public sealed class Network;
+
+            [ArkRebusHost(typeof(Participant))]
+            public partial class RebusHost;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
+    }
+
+    [TestMethod]
     public void RebusMessageAllowsOnlyOneDeclaration()
     {
         var usage = (AttributeUsageAttribute)typeof(RebusMessageAttribute)

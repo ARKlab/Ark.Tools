@@ -328,14 +328,15 @@ namespace Ark.Tools.MediatorFramework.Generators
                     hostAttribute is null ? Location.None : GetLocation(hostAttribute));
 
             cancellationToken.ThrowIfCancellationRequested();
-            if (hostType is null
-                || !hostType.IsStatic
+            if (!hostType.IsStatic
+                || hostType.ContainingType is not null
+                || hostType.Arity != 0
                 || !hostType.DeclaringSyntaxReferences.Any(reference =>
                     reference.GetSyntax(cancellationToken) is TypeDeclarationSyntax declaration
                     && declaration.Modifiers.Any(modifier => modifier.ValueText == "partial")))
             {
                 return HostModel.Invalid(
-                    "ArkRebusHostAttribute must target a static partial class.",
+                    "ArkRebusHostAttribute must target a top-level, non-generic static partial class.",
                     GetLocation(hostAttribute));
             }
             var participantAttribute = participant.GetAttributes().FirstOrDefault(

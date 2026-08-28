@@ -21,11 +21,7 @@ public sealed class RebusRetryTests
         var network = new InMemNetwork();
         await using var container = RebusProcessorComposition.BuildContainer(
             network,
-            useSqlStore: false,
-            registerHandlers: processorContainer =>
-            {
-                SampleRebusHost.Register(processorContainer);
-            });
+            useSqlStore: false);
 
         container.Verify();
         container.StartBus();

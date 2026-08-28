@@ -37,7 +37,6 @@ public static class RebusProcessorComposition
     /// and <paramref name="useSqlStore"/> is <see langword="false"/>, a new in-memory factory is created.
     /// </param>
     /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
-    /// <param name="registerHandlers">Registers generated Rebus message handlers.</param>
     /// <param name="configureOptions">Configures optional Rebus processor options.</param>
     /// <param name="configureTimeouts">Configures optional Rebus timeout storage.</param>
     /// <returns>An isolated processor container.</returns>
@@ -48,7 +47,6 @@ public static class RebusProcessorComposition
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,
-        Action<Container>? registerHandlers = null,
         Action<OptionsConfigurer>? configureOptions = null,
         Action<StandardConfigurer<ITimeoutManager>>? configureTimeouts = null)
     {
@@ -67,14 +65,7 @@ public static class RebusProcessorComposition
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
 
-        if (registerHandlers is null)
-        {
-            RebusProcessorHost.Register(container);
-        }
-        else
-        {
-            registerHandlers(container);
-        }
+        RebusProcessorHost.Register(container);
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
         container.ConfigureRebus(cfg =>
