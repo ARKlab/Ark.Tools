@@ -1,8 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+extern alias AuditFunctions;
+
 using Ark.MediatorFramework.Sample.Application.JsonContext;
-using Ark.MediatorFramework.Sample.AuditFunctions;
 using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Solid;
@@ -16,6 +17,7 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
 using System.Diagnostics;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Ark.MediatorFramework.Sample.Tests;
@@ -173,8 +175,11 @@ public sealed class MessagingBusSampleTests
         await using var auditSink = new RecordingAuditSink(audits);
         await using var notificationContainer = AzureFunctionsNativeComposition.BuildContainer(
             bookPrintNotificationSink: notificationSink);
-        await using var auditContainer = AuditFunctionsComposition.BuildContainer(
+        await using var auditContainer =
+            AuditFunctions::Ark.MediatorFramework.Sample.AuditFunctions.AuditFunctionsComposition.BuildContainer(
             bookPrintAuditSink: auditSink);
+        notificationContainer.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
+        auditContainer.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
         var notificationDispatcher = _createDispatcher(
             notificationContainer,
             dataBus,
@@ -349,6 +354,11 @@ public sealed class MessagingBusSampleTests
             retryPolicy,
             dispatch,
             dispatchFailed);
+    }
+
+    private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>
+    {
+        public ClaimsPrincipal Current => new(new ClaimsIdentity());
     }
 
     private sealed class SubscriberState
