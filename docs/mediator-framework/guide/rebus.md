@@ -45,7 +45,7 @@ The worker message is not part of the public API assembly:
 ```csharp
 namespace MyApp.Application.Messages;
 
-[RebusMessage(OwnerQueue = "greetings")]
+[Message]
 public sealed record CompleteGreetingCompositionRequest :
     IRequest<CompleteGreetingCompositionRequest, GreetingResponse>
 {
@@ -54,8 +54,21 @@ public sealed record CompleteGreetingCompositionRequest :
 }
 ```
 
-`OwnerQueue` is operational contract metadata. Changing it changes deployment
-topology and must be reviewed with the application.
+The processing participant owns the queue:
+
+```csharp
+[MessagingParticipant(
+    Identity = "greetings",
+    Processes = new[] { typeof(CompleteGreetingCompositionRequest) })]
+public sealed class GreetingProcessorParticipant;
+
+[MessagingNetwork(Members = new[] { typeof(GreetingProcessorParticipant) })]
+public sealed class GreetingNetwork;
+```
+
+`[RebusMessage(OwnerQueue = "greetings")]` remains supported for legacy
+contracts. When both models are present, the generated participant owner and
+legacy owner must match.
 
 The sample follows this boundary:
 
@@ -63,8 +76,8 @@ The sample follows this boundary:
   [`API/`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API);
 - internal messages:
   [`Application/Messages/`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Messages);
-- processor registration:
-  [`SampleRebusEndpoints.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/SampleRebusEndpoints.cs).
+- processor composition:
+  [`RebusProcessorComposition.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs).
 
 ## 3. Implement the same application handler
 
@@ -98,8 +111,11 @@ ApplicationComposition.Register(container, useSqlStore: true);
 container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
-ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly
-    <CompleteGreetingCompositionRequest>(container);
+[ArkRebusHost(typeof(GreetingProcessorParticipant))]
+public sealed partial class GreetingRebusHost;
+
+var requirements = GreetingRebusHost.GetRequirements();
+GreetingRebusHost.Register(container);
 container.RegisterDecorator(
     typeof(IHandleMessages<>),
     typeof(RebusScopeDecorator<>));
@@ -110,7 +126,7 @@ container.ConfigureRebus(config =>
     {
         transport.UseAzureServiceBus(
             connectionString,
-            "greetings");
+            requirements.InputQueueName!);
         ApplicationComposition.ConfigureRebusOutbox(
             transport,
             container,
@@ -119,9 +135,15 @@ container.ConfigureRebus(config =>
     ApplicationComposition.ConfigureRebusCommon(
         config,
         container,
-        ArkGeneratedEndpoints.ConfigureArkRebusRouting
-            <CompleteGreetingCompositionRequest>);
+        GreetingRebusHost.ConfigureRouting,
+        GreetingRebusHost.ConfigureOptions);
 });
+
+await GreetingRebusHost
+    .SubscribeAsync(
+        container.GetInstance<Rebus.Bus.IBus>(),
+        cancellationToken)
+    .ConfigureAwait(false);
 ```
 
 For local tests, use the sample's `InMemNetwork`. It still exercises routing,
@@ -138,8 +160,7 @@ ApplicationComposition.RegisterOutboundRebus(
     transport => transport.UseAzureServiceBusAsOneWayClient(
         serviceBusConnectionString,
         new DefaultAzureCredential()),
-    ArkGeneratedEndpoints.ConfigureArkRebusRouting
-        <CompleteGreetingCompositionRequest>);
+    GreetingRebusHost.ConfigureRouting);
 ```
 
 Azure Functions uses this pattern. The processor is a separate deployment.
@@ -167,9 +188,7 @@ web host's private JSON context.
 ## 7. Configure retries and failure behavior
 
 ```csharp
-options.ArkRetryStrategy(
-    maxDeliveryAttempts: 3,
-    secondLevelRetriesEnabled: true);
+GreetingRebusHost.ConfigureOptions(options);
 ```
 
 Decide what is transient and what is final. Test:
@@ -177,11 +196,24 @@ Decide what is transient and what is final. Test:
 - successful delivery;
 - retry followed by success;
 - exhausted delivery to the error queue;
-- an `IFailed<T>` application handler when the workflow owns one;
+- a `MessagingFailed<T>` application handler when the workflow owns one;
 - a failure in the failure handler itself.
 
 Wait with a bounded timeout and include queue, outbox, and error-queue
 diagnostics in timeout messages. Never use an infinite test wait.
+
+The generated setup maps only maximum delivery attempts and second-level retry
+enablement. Transport, serializer, subscription storage, error queue details,
+workers, timeout storage, Rebus pipeline, compression, DataBus provider, and
+outbox processor ownership remain explicit host configuration. Validate
+`ArkRebusParticipantRequirements` before startup when compression or DataBus is
+required.
+
+Rebus and native Mediator Framework messaging are separate topology modes.
+They share application `IBus`, `MessagingFailed<T>`, network, and participant
+declarations, but not persisted envelopes, headers, serializers, queues, or
+subscriptions. Never point both stacks at one logical bus or translate messages
+between their wire formats.
 
 ## 8. Do not use Rebus for streams
 

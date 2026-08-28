@@ -42,11 +42,6 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             clock: application.Clock,
             dataContextFactory: application.UsesSqlStore ? null : application.DataContextFactory,
             printCompletedNotificationService: application.PrintCompletedNotificationService,
-            registerHandlers: container =>
-            {
-                SampleRebusEndpoints.RegisterHandlers(container);
-            },
-            secondLevelRetriesEnabled: true,
             configureOptions: options => options.AddInProcessMessageInspector(),
             configureTimeouts: timeouts => timeouts.StoreInMemoryTests());
         _receiver.Verify();

@@ -2,10 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Rebus;
-using Ark.MediatorFramework.Sample.RebusProcessor;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
+
+using Ark.MediatorFramework.Sample.RebusProcessor;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
@@ -38,8 +39,7 @@ internal sealed class SampleBusHostedService : IHostedService
             network,
             useSqlStore: useSqlStore,
             connectionString: connectionString,
-            dataContextFactory: sharedDataContextFactory,
-            registerHandlers: SampleRebusEndpoints.RegisterHandlers);
+            dataContextFactory: sharedDataContextFactory);
     }
 
     /// <inheritdoc />

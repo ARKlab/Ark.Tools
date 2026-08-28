@@ -5,6 +5,10 @@ task.
 
 ## API shape
 
+- **Replace type-valued Mediator Framework attributes with generic attributes.**
+  Constrain network, participant, and host type parameters to sealed declaration
+  interfaces containing only the required static-abstract members.
+
 - **Revisit the complete `IBus` registration and setup design.**
   Evaluate a builder-based composition model to make network, transport, DataBus,
   participant, and pipeline setup easier to discover and configure.
@@ -20,6 +24,12 @@ task.
 - **Rename `MessagingCapabilities.Receive` to `SendReceive`** so the flag name
   reflects that the capability covers both inbound and outbound point-to-point
   delivery, not just reception.
+
+- **Rename scheduled send on `IBus` to `Defer`.**
+  Align the transport-neutral API with Rebus terminology. Also let a host defer
+  the current message for deferred retries: use native deferral when supported
+  and reset its delivery count, otherwise schedule an identical payload and
+  headers to the host's own queue and complete the current delivery.
 
 - **Reduce `MaximumTransportPayloadBytes` default from 240,000 to 50,000** in
   `MessagingNetworkAttribute`. The 240 KB value is the Service Bus maximum; 50 KB

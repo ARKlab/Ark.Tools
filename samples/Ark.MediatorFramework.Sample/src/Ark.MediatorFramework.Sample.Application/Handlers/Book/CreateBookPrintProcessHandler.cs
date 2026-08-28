@@ -4,11 +4,8 @@
 using Ark.Tools.Solid;
 using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
-using Ark.Tools.Outbox.Rebus;
 
 using NodaTime;
-
-using RebusBus = Rebus.Bus.IBus;
 
 using System.Security.Claims;
 
@@ -19,14 +16,14 @@ public sealed class CreateBookPrintProcessHandler :
     IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
-    private readonly RebusBus _bus;
+    private readonly IBus _bus;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
 
     /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessHandler"/> class.</summary>
     public CreateBookPrintProcessHandler(
         ISampleDataContextFactory factory,
-        RebusBus bus,
+        IBus bus,
         IContextProvider<ClaimsPrincipal> user,
         IClock clock)
     {
@@ -57,9 +54,13 @@ public sealed class CreateBookPrintProcessHandler :
         if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
         await context.WriteAuditAsync(_createAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
-        using var scope = _bus.Enlist(context.OutboxContext);
-        await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }).ConfigureAwait(false);
-        await scope.CompleteAsync().ConfigureAwait(false);
+        var enlistment = _bus as IBusOutboxEnlistment
+            ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
+        using var scope = enlistment.Enlist(context.OutboxContext);
+        await _bus.Send(
+            new ProcessBookPrintProcessRequest { Id = process.Id },
+            cancellationToken: ctk).ConfigureAwait(false);
+        await scope.CompleteAsync(ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return process;
     }

@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.AzureFunctions;
-using Ark.MediatorFramework.Sample.RebusProcessor;
+using Ark.MediatorFramework.Sample.WebInterface;
 
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.MediatorFramework.Messaging;
@@ -64,10 +64,11 @@ public sealed class AzureFunctionsRebusTests
         await using var sender = new Container();
         ApplicationComposition.Register(sender, useSqlStore: false);
         sender.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
+        SampleRebusHost.Register(sender);
         ApplicationComposition.RegisterOutboundRebus(
             sender,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
-            SampleRebusEndpoints.ConfigureRouting);
+            SampleRebusHost.ConfigureRouting);
 
         var received = new TaskCompletionSource<ProcessBookPrintProcessRequest>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -78,7 +79,7 @@ public sealed class AzureFunctionsRebusTests
             return Task.CompletedTask;
         });
         using var receiver = Configure.With(activator)
-            .Transport(transport => transport.UseInMemoryTransport(network, "ark.mediator.sample"))
+            .Transport(transport => transport.UseInMemoryTransport(network, "ark-mediator-sample"))
             .Serialization(serialization => serialization.UseSystemTextJson(
                 new JsonSerializerOptions().ConfigureArkDefaults()))
             .Start();

@@ -15,10 +15,9 @@ using Microsoft.CodeAnalysis.Text;
 namespace Ark.Tools.MediatorFramework.Generators
 {
     /// <summary>
-    /// Incremental generator that discovers <c>Ark.Tools.Solid</c> requests decorated with
-    /// <c>[RebusMessage]</c> and emits <c>RegisterArkRebusHandlersFromAssembly</c> plus the per-request
-    /// <c>IHandleMessages&lt;T&gt;</c> wrapper classes inside a <c>partial ArkGeneratedEndpoints</c>
-    /// class. Only the Rebus transport is emitted by this generator; add
+    /// Incremental generator that emits legacy <c>[RebusMessage]</c> endpoints and participant-bound
+    /// Rebus host helpers. Participant handlers are nested in the sealed partial class marked with
+    /// <c>ArkRebusHostAttribute</c>. Only the Rebus transport is emitted by this generator; add
     /// <c>Ark.Tools.MediatorFramework.MinimalApi.Generators</c> for HTTP and
     /// <c>Ark.Tools.MediatorFramework.Grpc.Generators</c> for gRPC.
     /// </summary>
@@ -27,6 +26,9 @@ namespace Ark.Tools.MediatorFramework.Generators
     {
         private const string RebusMessageAttribute = "Ark.Tools.MediatorFramework.RebusMessageAttribute";
         private const string ArkGenerateRebusForAssemblyAttribute = "Ark.Tools.MediatorFramework.Rebus.ArkGenerateRebusForAssemblyAttribute";
+        private const string ArkRebusHostAttribute = "Ark.Tools.MediatorFramework.Rebus.ArkRebusHostAttribute";
+        private const string MessagingNetworkAttribute = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
+        private const string MessagingParticipantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
@@ -54,20 +56,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .SelectMany(static (pair, cancellationToken) =>
                     GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
-            var sourceWithFailedHandlers = context.CompilationProvider
-                .Combine(sourceEndpoints.Collect())
-                .Select(static (pair, cancellationToken) =>
-                {
-                    var failedHandlers = FailedHandlers(pair.Left.Assembly, cancellationToken);
-                    return pair.Right
-                        .Select(endpoint => endpoint.WithFailedHandlers(failedHandlers))
-                        .ToImmutableArray();
-                });
-            var collected = sourceWithFailedHandlers.Combine(referencedEndpoints.Collect());
+            var hosts = context.CompilationProvider.Select(
+                static (compilation, cancellationToken) => ReadHosts(compilation, cancellationToken));
+            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect()).Combine(hosts);
 
             context.RegisterSourceOutput(
                 collected,
-                static (spc, pair) => Emit(spc, pair.Left.AddRange(pair.Right)));
+                static (spc, item) => Emit(spc, item.Left.Left.AddRange(item.Left.Right), item.Right));
         }
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
@@ -161,7 +156,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(assembly => requestedAssemblies.Contains(assembly.Name)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var failedHandlers = FailedHandlers(assembly, cancellationToken);
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -173,44 +167,11 @@ namespace Ark.Tools.MediatorFramework.Generators
 
                     var model = Extract(type, rebus);
                     if (model is not null)
-                        builder.Add(model.Value.WithFailedHandlers(failedHandlers));
+                        builder.Add(model.Value);
                 }
             }
 
             return builder.ToImmutable();
-        }
-
-        private static IReadOnlyList<FailedHandlerModel> FailedHandlers(
-            IAssemblySymbol assembly,
-            CancellationToken cancellationToken)
-        {
-            var handlers = new List<FailedHandlerModel>();
-            foreach (var type in _allTypes(assembly.GlobalNamespace))
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (type.TypeKind != TypeKind.Class
-                    || type.IsAbstract
-                    || type.DeclaredAccessibility != Accessibility.Public)
-                    continue;
-
-                foreach (var iface in type.AllInterfaces)
-                {
-                    if (!IsType(iface.OriginalDefinition, "IHandleMessages`1", "Rebus.Handlers")
-                        || iface.TypeArguments.Length != 1)
-                        continue;
-
-                    if (iface.TypeArguments[0] is not INamedTypeSymbol failed
-                        || !IsType(failed.OriginalDefinition, "IFailed`1", "Rebus.Retry.Simple")
-                        || failed.TypeArguments.Length != 1)
-                        continue;
-
-                    handlers.Add(new FailedHandlerModel(
-                        iface.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)));
-                }
-            }
-
-            return handlers;
         }
 
         private static bool IsType(INamedTypeSymbol type, string name, string @namespace)
@@ -343,33 +304,258 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
 
-        private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
+        private static ImmutableArray<HostModel> ReadHosts(
+            Compilation compilation,
+            CancellationToken cancellationToken)
         {
-            if (items.IsDefaultOrEmpty)
+            return _allTypes(compilation.Assembly.GlobalNamespace)
+                .Where(type => type.GetAttributes().Any(attribute =>
+                    attribute.AttributeClass?.ToDisplayString() == ArkRebusHostAttribute))
+                .Select(type => ReadHost(compilation, type, cancellationToken))
+                .ToImmutableArray();
+        }
+
+        private static HostModel ReadHost(
+            Compilation compilation,
+            INamedTypeSymbol hostType,
+            CancellationToken cancellationToken)
+        {
+            var hostAttribute = hostType.GetAttributes().FirstOrDefault(
+                attribute => attribute.AttributeClass?.ToDisplayString() == ArkRebusHostAttribute);
+            if (hostAttribute?.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol participant)
+                return HostModel.Invalid(
+                    "ArkRebusHostAttribute must reference a messaging participant.",
+                    hostAttribute is null ? Location.None : GetLocation(hostAttribute));
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!hostType.IsSealed
+                || hostType.IsStatic
+                || hostType.ContainingType is not null
+                || hostType.Arity != 0
+                || !hostType.DeclaringSyntaxReferences.Any(reference =>
+                    reference.GetSyntax(cancellationToken) is TypeDeclarationSyntax declaration
+                    && declaration.Modifiers.Any(modifier => modifier.ValueText == "partial")))
+            {
+                return HostModel.Invalid(
+                    "ArkRebusHostAttribute must target a top-level, non-generic sealed partial class.",
+                    GetLocation(hostAttribute));
+            }
+            var participantAttribute = participant.GetAttributes().FirstOrDefault(
+                attribute => attribute.AttributeClass?.ToDisplayString() == MessagingParticipantAttribute);
+            if (participantAttribute is null)
+                return HostModel.Invalid("The Rebus host binding must reference a messaging participant.", GetLocation(hostAttribute));
+
+            var networks = _assemblies(compilation)
+                .SelectMany(assembly => _allTypes(assembly.GlobalNamespace))
+                .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
+                    attribute => attribute.AttributeClass?.ToDisplayString() == MessagingNetworkAttribute)))
+                .Where(item => item.Attribute is not null && _types(item.Attribute!, "Members")
+                    .Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
+                .ToArray();
+            if (networks.Length != 1)
+            {
+                return HostModel.Invalid(
+                    networks.Length == 0
+                        ? "The bound messaging participant is not listed in a messaging network."
+                        : "The bound messaging participant is listed in more than one messaging network.",
+                    GetLocation(hostAttribute));
+            }
+
+            var identity = _string(participantAttribute, "Identity")
+                ?? NormalizeIdentity(participant.Name.EndsWith("Participant", StringComparison.Ordinal)
+                    ? participant.Name.Substring(0, participant.Name.Length - "Participant".Length)
+                    : participant.Name);
+            var processes = _types(participantAttribute, "Processes");
+            var publishes = _types(participantAttribute, "Publishes");
+            var subscribes = _types(participantAttribute, "Subscribes");
+            var retryType = _type(participantAttribute, "Retry");
+            var compression = _enum(participantAttribute, "Compression");
+            var networkAttribute = networks[0].Attribute!;
+            var routes = ImmutableArray.CreateBuilder<EndpointModel>();
+            foreach (var member in _types(networkAttribute, "Members"))
+            {
+                var declaration = member.GetAttributes().FirstOrDefault(
+                    attribute => attribute.AttributeClass?.ToDisplayString() == MessagingParticipantAttribute);
+                if (declaration is null)
+                    continue;
+                var owner = _string(declaration, "Identity")
+                    ?? NormalizeIdentity(member.Name.EndsWith("Participant", StringComparison.Ordinal)
+                        ? member.Name.Substring(0, member.Name.Length - "Participant".Length)
+                        : member.Name);
+                foreach (var contract in _types(declaration, "Processes"))
+                {
+                    var endpoint = ExtractParticipantContract(contract, owner, GetLocation(declaration));
+                    if (endpoint is not null)
+                        routes.Add(endpoint.Value);
+                }
+            }
+            var adapters = processes.Concat(subscribes)
+                .Select(contract => ExtractParticipantContract(contract, null, GetLocation(participantAttribute)))
+                .Where(static endpoint => endpoint is not null)
+                .Select(static endpoint => endpoint!.Value)
+                .ToImmutableArray();
+            var legacyEndpoints = adapters.IsDefaultOrEmpty
+                ? ImmutableArray<EndpointModel>.Empty
+                : _allTypes(participant.ContainingAssembly.GlobalNamespace)
+                    .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
+                        attribute => attribute.AttributeClass?.ToDisplayString() == RebusMessageAttribute)))
+                    .Where(static item => item.Attribute is not null)
+                    .Select(static item => Extract(item.Type, item.Attribute!))
+                    .Where(static endpoint => endpoint is not null)
+                    .Select(static endpoint => endpoint!.Value)
+                    .ToImmutableArray();
+
+            return new HostModel(
+                hostType.ContainingNamespace.IsGlobalNamespace
+                    ? string.Empty
+                    : hostType.ContainingNamespace.ToDisplayString(),
+                hostType.Name,
+                hostType.DeclaredAccessibility == Accessibility.Public ? "public" : "internal",
+                participant.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                identity,
+                processes.Select(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToImmutableArray(),
+                publishes.Select(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToImmutableArray(),
+                subscribes.Select(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToImmutableArray(),
+                retryType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                compression != 0,
+                _int(networkAttribute, "DataBusOffloadThresholdBytes") > 0,
+                routes.ToImmutable(),
+                adapters,
+                legacyEndpoints,
+                null,
+                GetLocation(hostAttribute));
+        }
+
+        private static EndpointModel? ExtractParticipantContract(
+            INamedTypeSymbol type,
+            string? ownerQueue,
+            Location location)
+        {
+            foreach (var iface in type.AllInterfaces)
+            {
+                if (IsType(iface.OriginalDefinition, "ICommand", "Ark.Tools.Solid"))
+                {
+                    return new EndpointModel(
+                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        GeneratedName(type),
+                        null,
+                        ownerQueue,
+                        Array.Empty<DiagnosticInfo>(),
+                        isCommand: true,
+                        location);
+                }
+                if (IsType(iface.OriginalDefinition, "IRequest`1", "Ark.Tools.Solid"))
+                {
+                    return new EndpointModel(
+                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        GeneratedName(type),
+                        iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        ownerQueue,
+                        Array.Empty<DiagnosticInfo>(),
+                        isCommand: false,
+                        location);
+                }
+            }
+            return null;
+        }
+
+        private static IEnumerable<IAssemblySymbol> _assemblies(Compilation compilation)
+        {
+            yield return compilation.Assembly;
+            foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+                yield return assembly;
+        }
+
+        private static ImmutableArray<INamedTypeSymbol> _types(AttributeData attribute, string name)
+        {
+            var argument = attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name).Value;
+            if (argument.Kind != TypedConstantKind.Array)
+                return ImmutableArray<INamedTypeSymbol>.Empty;
+            return argument.Values
+                .Select(value => value.Value)
+                .OfType<INamedTypeSymbol>()
+                .ToImmutableArray();
+        }
+
+        private static INamedTypeSymbol? _type(AttributeData attribute, string name)
+            => attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name).Value.Value as INamedTypeSymbol;
+
+        private static string? _string(AttributeData attribute, string name)
+            => attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name).Value.Value as string;
+
+        private static int _int(AttributeData attribute, string name)
+            => attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name).Value.Value is int value ? value : 0;
+
+        private static int _enum(AttributeData attribute, string name)
+            => attribute.NamedArguments.FirstOrDefault(pair => pair.Key == name).Value.Value is int value ? value : 0;
+
+        private static string NormalizeIdentity(string value)
+        {
+            var builder = new StringBuilder();
+            for (var index = 0; index < value.Length; index++)
+            {
+                var character = value[index];
+                if (index > 0 && char.IsUpper(character))
+                    builder.Append('-');
+                builder.Append(char.ToLowerInvariant(character));
+            }
+            return builder.ToString();
+        }
+
+        private static void Emit(
+            SourceProductionContext spc,
+            ImmutableArray<EndpointModel> items,
+            ImmutableArray<HostModel> hosts)
+        {
+            if (items.IsDefaultOrEmpty && hosts.IsDefaultOrEmpty)
                 return;
 
-            items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
-            foreach (var item in items)
+            foreach (var invalidHost in hosts.Where(static host => host.Error is not null))
+            {
+                spc.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor(
+                        "ARKMF020",
+                        "Invalid Rebus participant host binding",
+                        "{0}",
+                        "Ark.Tools.MediatorFramework",
+                        DiagnosticSeverity.Error,
+                        isEnabledByDefault: true),
+                    invalidHost.Location,
+                    invalidHost.Error));
+            }
+            hosts = hosts.Where(static host => host.Error is null).ToImmutableArray();
+
+            var legacyRegistrationItems = items;
+            var validationItems = items.AddRange(hosts.SelectMany(static host =>
+                host.Routes.AddRange(host.Adapters).AddRange(host.LegacyEndpoints)));
+            validationItems = validationItems.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
+            foreach (var item in validationItems)
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
                 foreach (var diagnostic in item.Diagnostics)
                     spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
             }
-            foreach (var group in items.Where(static item => item.IsValid).GroupBy(static item => item.TypeFullName))
+            foreach (var group in validationItems.Where(static item => item.IsValid).GroupBy(static item => item.TypeFullName))
             {
                 var validItems = group.ToArray();
                 if (validItems.Length < 2)
                     continue;
 
-                var queues = validItems.Select(static item => item.OwnerQueue).Distinct(StringComparer.Ordinal).ToArray();
-                var descriptor = queues.Length > 1
-                    ? DiagnosticDescriptors.ConflictingOwnerQueue
-                    : DiagnosticDescriptors.DuplicateRegistration;
+                var queues = validItems
+                    .Select(static item => item.OwnerQueue)
+                    .Where(static queue => queue is not null)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                if (queues.Length <= 1)
+                    continue;
                 foreach (var item in validItems)
                 {
-                    var diagnostic = queues.Length > 1
-                        ? new DiagnosticInfo(descriptor, item.TypeName, item.Location, queues[0]!, queues[1]!)
-                        : new DiagnosticInfo(descriptor, item.TypeName, item.Location);
+                    var diagnostic = new DiagnosticInfo(
+                        DiagnosticDescriptors.ConflictingOwnerQueue,
+                        item.TypeName,
+                        item.Location,
+                        queues[0]!,
+                        queues[1]!);
                     spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
                 }
             }
@@ -392,45 +578,19 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator. TAssemblyMarker selects the assembly scanned for attributed handlers.</summary>");
             sb.AppendLine("        public static void RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>(global::SimpleInjector.Container container)");
             sb.AppendLine("        {");
-            if (!items.IsDefaultOrEmpty)
+            if (!legacyRegistrationItems.IsDefaultOrEmpty)
             {
-                foreach (var e in items)
+                foreach (var e in legacyRegistrationItems)
                 {
                     sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
                 }
             }
-            foreach (var handler in items
-                .SelectMany(static item => item.FailedHandlers)
-                .Distinct()
-                .OrderBy(static handler => handler.HandlerTypeFullName, StringComparer.Ordinal))
-            {
-                spc.CancellationToken.ThrowIfCancellationRequested();
-                sb.AppendLine("            container.Collection.Append(typeof(" + handler.InterfaceTypeFullName + "), typeof(" + handler.HandlerTypeFullName + "));");
-            }
-            sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
-            foreach (var handler in items
-                .Select(HandlerService)
-                .Distinct(StringComparer.Ordinal))
-            {
-                var contract = items
-                    .First(item => HandlerService(item) == handler)
-                    .TypeFullName;
-                sb.AppendLine("            VerifyRebusHandlerRegistration(container, typeof(" + handler + "), " + StringLiteral(contract) + ", missingHandlers);");
-            }
-            sb.AppendLine("            if (missingHandlers.Count > 0)");
-            sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Registers handlers selected by ArkGenerateRebusForAssemblyAttribute on TContext.</summary>");
             sb.AppendLine("        public static void RegisterArkRebusHandlers<TContext>(global::SimpleInjector.Container container)");
             sb.AppendLine("        {");
             sb.AppendLine("            RegisterArkRebusHandlersFromAssembly<TContext>(container);");
-            sb.AppendLine("        }");
-            sb.AppendLine();
-            sb.AppendLine("        private static void VerifyRebusHandlerRegistration(global::SimpleInjector.Container container, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            if (container.GetRegistration(handlerType) is null)");
-            sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Registers generated owner queues with Rebus type-based routing.</summary>");
@@ -475,16 +635,184 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("}");
 
             spc.AddSource("ArkGeneratedEndpoints.Rebus.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+            foreach (var host in hosts)
+                EmitHost(spc, host);
         }
 
-        private static string HandlerService(EndpointModel item)
+        private static void EmitHost(SourceProductionContext spc, HostModel host)
         {
-            return item.IsCommand
-                ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
-                : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
+            var retryExpression = host.RetryTypeFullName is null
+                ? "global::Ark.Tools.MediatorFramework.Messaging.MessagingDefaultRetryPolicy.Instance"
+                : "new " + host.RetryTypeFullName + "()";
+            var handlers = host.Adapters
+                .AddRange(host.LegacyEndpoints)
+                .Where(static endpoint => endpoint.IsValid)
+                .GroupBy(static endpoint => endpoint.TypeFullName)
+                .Select(static group => group.First())
+                .OrderBy(static endpoint => endpoint.TypeFullName, StringComparer.Ordinal)
+                .ToImmutableArray();
+            var routes = host.Routes
+                .AddRange(host.LegacyEndpoints)
+                .Where(static endpoint => endpoint.OwnerQueue is not null)
+                .GroupBy(static endpoint => endpoint.TypeFullName)
+                .Select(static group => group.First())
+                .OrderBy(static endpoint => endpoint.TypeFullName, StringComparer.Ordinal)
+                .ToImmutableArray();
+            var sb = new StringBuilder();
+            sb.AppendLine("// <auto-generated/>");
+            sb.AppendLine("#nullable enable");
+            if (!string.IsNullOrEmpty(host.Namespace))
+            {
+                sb.Append("namespace ").Append(host.Namespace).AppendLine();
+                sb.AppendLine("{");
+            }
+            sb.Append("    ").Append(host.Accessibility).Append(" sealed partial class ").Append(host.Name)
+                .AppendLine(" : global::Ark.Tools.MediatorFramework.Rebus.IArkRebusHost");
+            sb.AppendLine("    {");
+            sb.AppendLine("        /// <summary>Registers the generated Rebus handlers and transport-neutral bus for this host.</summary>");
+            sb.AppendLine("        public static void Register(global::SimpleInjector.Container container)");
+            sb.AppendLine("        {");
+            foreach (var handler in handlers)
+                sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + handler.TypeFullName + ">), typeof(" + handler.TypeName + "RebusHandler));");
+            foreach (var contract in host.Processes)
+                sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<global::Rebus.Retry.Simple.IFailed<" + contract + ">>), typeof(global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingFailedHandler<" + contract + ">));");
+            sb.AppendLine("            container.RegisterSingleton<global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>");
+            sb.AppendLine("                new global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(");
+            sb.AppendLine("                    container.GetInstance<global::Rebus.Bus.IBus>(),");
+            sb.AppendLine("                    " + StringLiteral(host.Identity) + ",");
+            sb.AppendLine("                    new global::System.Type[]");
+            sb.AppendLine("                    {");
+            foreach (var contract in host.Publishes)
+                sb.AppendLine("                        typeof(" + contract + "),");
+            sb.AppendLine("                    }));");
+            sb.AppendLine("            container.RegisterSingleton<global::Ark.Tools.MediatorFramework.IBus>(() => container.GetInstance<global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());");
+            sb.AppendLine("            container.RegisterSingleton<global::Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(() => container.GetInstance<global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Configures owner queues for this host.</summary>");
+            sb.AppendLine("        public static void ConfigureRouting(global::Rebus.Config.StandardConfigurer<global::Rebus.Routing.IRouter> routing)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var typeBased = global::Rebus.Routing.TypeBased.TypeBasedRouterConfigurationExtensions.TypeBased(routing);");
+            foreach (var route in routes)
+                sb.AppendLine("            typeBased.Map<" + route.TypeFullName + ">(" + StringLiteral(route.OwnerQueue!) + ");");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Maps this host's retry policy to Rebus options.</summary>");
+            sb.AppendLine("        public static void ConfigureOptions(global::Rebus.Config.OptionsConfigurer options)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var retry = " + retryExpression + ";");
+            sb.AppendLine("            global::Ark.Tools.Rebus.Retry.ArkRetryStrategyConfigurationExtensions.ArkRetryStrategy(");
+            sb.AppendLine("                options,");
+            sb.AppendLine("                maxDeliveryAttempts: retry.MaximumDeliveryCount,");
+            sb.AppendLine("                secondLevelRetriesEnabled: retry.SecondLevelRetriesEnabled);");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Subscribes this host to its declared Rebus events.</summary>");
+            sb.AppendLine("        public static async global::System.Threading.Tasks.Task SubscribeAsync(");
+            sb.AppendLine("            global::Rebus.Bus.IBus bus,");
+            sb.AppendLine("            global::System.Threading.CancellationToken cancellationToken = default)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+            foreach (var contract in host.Subscribes)
+            {
+                sb.AppendLine("            await global::Rebus.Bus.BusExtensions.Subscribe<" + contract + ">(bus).ConfigureAwait(false);");
+                sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+            }
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>Gets immutable infrastructure requirements for this host.</summary>");
+            sb.AppendLine("        public static global::Ark.Tools.MediatorFramework.Rebus.ArkRebusParticipantRequirements GetRequirements()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var retry = " + retryExpression + ";");
+            sb.AppendLine("            return new global::Ark.Tools.MediatorFramework.Rebus.ArkRebusParticipantRequirements(");
+            sb.AppendLine("                " + StringLiteral(host.Identity) + ",");
+            sb.AppendLine("                " + (host.Adapters.IsDefaultOrEmpty ? "null" : StringLiteral(host.Identity)) + ",");
+            sb.AppendLine("                new global::System.Type[]");
+            sb.AppendLine("                {");
+            foreach (var contract in host.Publishes)
+                sb.AppendLine("                    typeof(" + contract + "),");
+            sb.AppendLine("                },");
+            sb.AppendLine("                new global::System.Type[]");
+            sb.AppendLine("                {");
+            foreach (var contract in host.Subscribes)
+                sb.AppendLine("                    typeof(" + contract + "),");
+            sb.AppendLine("                },");
+            sb.AppendLine("                retry.MaximumHandlerDuration,");
+            sb.AppendLine("                " + (host.RequiresCompression ? "true" : "false") + ",");
+            sb.AppendLine("                " + (host.RequiresDataBus ? "true" : "false") + ");");
+            sb.AppendLine("        }");
+
+            foreach (var handler in handlers)
+            {
+                var processorService = handler.IsCommand
+                    ? "global::Ark.Tools.Solid.ICommandProcessor"
+                    : "global::Ark.Tools.Solid.IRequestProcessor";
+                sb.AppendLine();
+                sb.AppendLine("        /// <summary>Generated Rebus wrapper dispatching to the pure application handler.</summary>");
+                sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.Tools.MediatorFramework.Rebus.Generators\", \"1.0.0\")]");
+                sb.AppendLine("        private sealed class " + handler.TypeName + "RebusHandler : global::Rebus.Handlers.IHandleMessages<" + handler.TypeFullName + ">");
+                sb.AppendLine("        {");
+                sb.AppendLine("            private readonly " + processorService + " _processor;");
+                sb.AppendLine("            public " + handler.TypeName + "RebusHandler(" + processorService + " processor) { _processor = processor; }");
+                sb.AppendLine("            public async global::System.Threading.Tasks.Task Handle(" + handler.TypeFullName + " message)");
+                var dispatch = handler.IsCommand
+                    ? "_processor.ExecuteAsync<" + handler.TypeFullName + ">(message, "
+                    : "_processor.ExecuteAsync<" + handler.TypeFullName + ", " + handler.Response + ">(message, ";
+                sb.AppendLine("                => await " + dispatch + "global::Rebus.Extensions.MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)).ConfigureAwait(false);");
+                sb.AppendLine("        }");
+            }
+
+            sb.AppendLine("    }");
+            if (!string.IsNullOrEmpty(host.Namespace))
+                sb.AppendLine("}");
+            spc.AddSource(
+                (string.IsNullOrEmpty(host.Namespace)
+                    ? host.Name
+                    : host.Namespace.Replace('.', '_') + "_" + host.Name) + ".Rebus.g.cs",
+                SourceText.From(sb.ToString(), Encoding.UTF8));
         }
 
         private readonly record struct AssemblyMapping(ImmutableArray<string> AssemblyNames);
+
+        private sealed record HostModel(
+            string Namespace,
+            string Name,
+            string Accessibility,
+            string ParticipantTypeFullName,
+            string Identity,
+            ImmutableArray<string> Processes,
+            ImmutableArray<string> Publishes,
+            ImmutableArray<string> Subscribes,
+            string? RetryTypeFullName,
+            bool RequiresCompression,
+            bool RequiresDataBus,
+            ImmutableArray<EndpointModel> Routes,
+            ImmutableArray<EndpointModel> Adapters,
+            ImmutableArray<EndpointModel> LegacyEndpoints,
+            string? Error,
+            Location Location)
+        {
+            public static HostModel Invalid(string error, Location location)
+            {
+                return new HostModel(
+                    string.Empty,
+                    string.Empty,
+                    "internal",
+                    string.Empty,
+                    string.Empty,
+                    ImmutableArray<string>.Empty,
+                    ImmutableArray<string>.Empty,
+                    ImmutableArray<string>.Empty,
+                    null,
+                    false,
+                    false,
+                    ImmutableArray<EndpointModel>.Empty,
+                    ImmutableArray<EndpointModel>.Empty,
+                    ImmutableArray<EndpointModel>.Empty,
+                    error,
+                    location);
+            }
+        }
 
         private readonly record struct EndpointModel
         {
@@ -495,8 +823,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 string? ownerQueue,
                 IReadOnlyList<DiagnosticInfo> diagnostics,
                 bool isCommand,
-                Location location,
-                IReadOnlyList<FailedHandlerModel>? failedHandlers = null)
+                Location location)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -506,7 +833,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 IsCommand = isCommand;
                 Location = location;
                 IsValid = diagnostics.Count == 0;
-                FailedHandlers = failedHandlers ?? Array.Empty<FailedHandlerModel>();
             }
 
             private EndpointModel(INamedTypeSymbol type, DiagnosticInfo diagnostic)
@@ -517,22 +843,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                 IsCommand = false;
                 Location = diagnostic.Location;
                 IsValid = false;
-                FailedHandlers = Array.Empty<FailedHandlerModel>();
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, DiagnosticInfo diagnostic)
                 => new(type, diagnostic);
-
-            public EndpointModel WithFailedHandlers(IReadOnlyList<FailedHandlerModel> failedHandlers)
-                => new(
-                    TypeFullName,
-                    TypeName,
-                    Response,
-                    OwnerQueue,
-                    Diagnostics,
-                    IsCommand,
-                    Location,
-                    failedHandlers);
 
             public string TypeFullName { get; }
             public string TypeName { get; }
@@ -542,12 +856,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public bool IsCommand { get; }
             public Location Location { get; }
             public bool IsValid { get; }
-            public IReadOnlyList<FailedHandlerModel> FailedHandlers { get; }
         }
-
-        private readonly record struct FailedHandlerModel(
-            string InterfaceTypeFullName,
-            string HandlerTypeFullName);
 
         private readonly record struct DiagnosticInfo
         {

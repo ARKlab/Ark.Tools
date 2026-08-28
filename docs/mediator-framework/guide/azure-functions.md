@@ -229,17 +229,9 @@ forwards the publisher-owned topic into the participant identity queue. Resource
 creation and validation consume this manifest in the lifecycle layer; generated
 trigger code never creates entities.
 
-Service Bus transport conformance tests require explicit infrastructure:
-
-```text
-ARK_SERVICEBUS_CONNECTION_STRING
-ARK_SERVICEBUS_QUEUE
-ARK_SERVICEBUS_EMPTY_QUEUE
-```
-
-The two queues must be isolated test entities. When these values are absent,
-the tests report the missing infrastructure explicitly rather than silently
-passing.
+Service Bus transport conformance tests target the local emulator and create
+their fixed test queues during setup. The tests remove both queues during
+cleanup, matching the SQL Server and Azurite integration-test conventions.
 
 ### Reconcile messaging resources
 
@@ -573,6 +565,13 @@ The Functions process:
 The standalone processor receives `CompleteGreetingCompositionRequest` and
 updates durable state. This separation lets Functions scale independently from
 background processing.
+
+Application handlers use `Ark.Tools.MediatorFramework.IBus` and
+`MessagingFailed<T>` in both modes. A Rebus host marks a sealed partial class with
+`ArkRebusHostAttribute` and uses the generated routing, filtered dispatch
+adapters, retry options, requirements, and post-start subscriptions. A native
+Functions messaging host uses generated triggers instead. The modes are not
+wire-interoperable and must not share one logical topology.
 
 ## 6. Authentication and supported features
 

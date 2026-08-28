@@ -958,6 +958,7 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "protobuf-net": "[3.3.21, )"
         }
@@ -1014,6 +1015,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Rebus.Protobuf": "[5.0.0, )"
         }

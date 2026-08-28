@@ -3,8 +3,15 @@
 
 namespace Ark.MediatorFramework.Sample.Application.Messages;
 
-/// <summary>Declares the sample background message participant.</summary>
+/// <summary>Declares the sample Web host sender participant.</summary>
 [MessagingParticipant(
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json)]
+public sealed partial class SampleMessagingPublisherParticipant;
+
+/// <summary>Declares the sample background message consumer participant.</summary>
+[MessagingParticipant(
+    Identity = "ark-mediator-sample",
     Processes = new[] { typeof(ProcessBookPrintProcessRequest) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
@@ -29,7 +36,11 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
 
 /// <summary>Declares the sample messaging network.</summary>
 [MessagingNetwork(
-    Members = new[] { typeof(SampleMessagingParticipant) },
+    Members = new[]
+    {
+        typeof(SampleMessagingPublisherParticipant),
+        typeof(SampleMessagingParticipant),
+    },
     Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend,
     MaximumSchedulingDelaySeconds = 3600)]
 public static partial class SampleMessagingNetwork;

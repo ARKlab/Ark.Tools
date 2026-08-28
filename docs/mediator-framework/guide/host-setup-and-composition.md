@@ -76,6 +76,20 @@ The source-generated application context includes application-owned Rebus
 messages and the public payload types nested inside them. This avoids silently
 falling back to reflection-based JSON metadata in a worker.
 
+Bind each Rebus host class to one shared-network participant with
+`[ArkRebusHost(typeof(MyParticipant))]` on a sealed partial class implementing
+`IArkRebusHost`. Generated host assistance
+provides participant-derived routing, receive adapters, exact retry mapping,
+post-start event subscriptions, the transport-neutral bus adapter, and an
+immutable requirements descriptor. Application handlers remain explicitly
+registered by the application composition.
+
+Keep transport and credentials, serializer, subscription storage, workers,
+timeouts, Rebus pipeline steps, compression/DataBus providers, and outbox
+processor ownership in host code. Rebus and native messaging may share
+application contracts and handlers, but their persisted messages and topology
+are not interoperable.
+
 ## Configure ASP.NET Core
 
 The web host performs these steps:

@@ -4,31 +4,51 @@
 using Ark.Tools.MediatorFramework.Messaging;
 
 using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
-/// <summary>Runs the transport conformance suite against an explicitly configured Service Bus namespace.</summary>
+/// <summary>Runs the transport conformance suite against the local Service Bus emulator.</summary>
 [TestClass]
 [TestCategory("integration")]
+[DoNotParallelize]
 public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTransportConformanceTests
 {
-    private const string _connectionVariable = "ARK_SERVICEBUS_CONNECTION_STRING";
-    private const string _queueVariable = "ARK_SERVICEBUS_QUEUE";
-    private const string _emptyQueueVariable = "ARK_SERVICEBUS_EMPTY_QUEUE";
+    private const string _defaultAdministrationConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    private static readonly string _administrationConnectionString = _serviceBusConnectionString();
+    private static readonly string _connectionString = _dataPlaneConnectionString(_administrationConnectionString);
+    private const string _queueName = "ark-mf-conformance";
+    private const string _emptyQueueName = "ark-mf-conformance-empty";
     private readonly List<ServiceBusMessagingTransport> _transports = new();
+    private readonly ServiceBusAdministrationClient _administration = new(_administrationConnectionString);
 
-    protected override string QueueName => _requiredEnvironmentVariable(_queueVariable);
+    protected override string QueueName => _queueName;
 
-    protected override string EmptyQueueName => _requiredEnvironmentVariable(_emptyQueueVariable);
+    protected override string EmptyQueueName => _emptyQueueName;
 
     protected override IMessagingReceiveTransport CreateTransport()
     {
-        var connectionString = _requiredEnvironmentVariable(_connectionVariable);
 #pragma warning disable CA2000 // The tracked transport owns and disposes the client during test cleanup.
-        var transport = new ServiceBusMessagingTransport(new ServiceBusClient(connectionString));
+        var transport = new ServiceBusMessagingTransport(new ServiceBusClient(_connectionString));
 #pragma warning restore CA2000
         _transports.Add(transport);
         return transport;
+    }
+
+    [TestInitialize]
+    public async Task InitializeQueues()
+    {
+        await _deleteQueuesAsync().ConfigureAwait(false);
+        await _administration.CreateQueueAsync(_queueName).ConfigureAwait(false);
+        try
+        {
+            await _administration.CreateQueueAsync(_emptyQueueName).ConfigureAwait(false);
+        }
+        catch
+        {
+            await _administration.DeleteQueueAsync(_queueName).ConfigureAwait(false);
+            throw;
+        }
     }
 
     [TestCleanup]
@@ -37,17 +57,37 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
         foreach (var transport in _transports)
             await transport.DisposeAsync().ConfigureAwait(false);
         _transports.Clear();
+
+        await _deleteQueuesAsync().ConfigureAwait(false);
     }
 
-    private static string _requiredEnvironmentVariable(string name)
+    private async Task _deleteQueuesAsync()
     {
-        var value = Environment.GetEnvironmentVariable(name);
-        if (!string.IsNullOrWhiteSpace(value))
-            return value;
+        if ((await _administration.QueueExistsAsync(_queueName).ConfigureAwait(false)).Value)
+            await _administration.DeleteQueueAsync(_queueName).ConfigureAwait(false);
+        if ((await _administration.QueueExistsAsync(_emptyQueueName).ConfigureAwait(false)).Value)
+            await _administration.DeleteQueueAsync(_emptyQueueName).ConfigureAwait(false);
+    }
 
-        Assert.Inconclusive(
-            $"Set {name} and provision the queues named by {_queueVariable} and {_emptyQueueVariable} "
-            + "to run Azure Service Bus conformance tests.");
-        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
+    private static string _serviceBusConnectionString()
+    {
+        var connectionString = Environment.GetEnvironmentVariable(
+            "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+
+        return _defaultAdministrationConnectionString;
+    }
+
+    private static string _dataPlaneConnectionString(string connectionString)
+    {
+        const string endpointPrefix = "Endpoint=";
+        var endpointStart = connectionString.IndexOf(endpointPrefix, StringComparison.Ordinal)
+            + endpointPrefix.Length;
+        var endpointEnd = connectionString.IndexOf(';', endpointStart);
+        var endpoint = new Uri(connectionString[endpointStart..endpointEnd]);
+        var dataPlaneEndpoint = new UriBuilder(endpoint) { Port = -1 }.Uri
+            .AbsoluteUri.TrimEnd('/');
+        return connectionString[..endpointStart] + dataPlaneEndpoint + connectionString[endpointEnd..];
     }
 }

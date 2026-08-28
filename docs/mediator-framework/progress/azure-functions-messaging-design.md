@@ -391,16 +391,15 @@ provider-specific behavior.
 The conceptual generated API is:
 
 ```csharp
-ArkGeneratedEndpoints.ConfigureArkRebusRouting<TAssemblyMarker>(routing);
-ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForParticipant<TAssemblyMarker>(
-    container);
-ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<TAssemblyMarker>(options);
-await ArkGeneratedEndpoints
-    .SubscribeArkRebusEventsForParticipantAsync<TAssemblyMarker>(bus, cancellationToken)
+RebusHost.ConfigureRouting(routing);
+RebusHost.Register(container);
+RebusHost.ConfigureOptions(options);
+await RebusHost
+    .SubscribeAsync(bus, cancellationToken)
     .ConfigureAwait(false);
 
 var requirements =
-    ArkGeneratedEndpoints.GetArkRebusParticipantRequirements<TAssemblyMarker>();
+    RebusHost.GetRequirements();
 ```
 
 The generator sees only contracts plus network/participant declarations. It

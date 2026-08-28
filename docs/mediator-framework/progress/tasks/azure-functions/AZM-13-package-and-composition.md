@@ -245,5 +245,5 @@ handlers while selecting their own receiver host.
 - [x] Existing HTTP and outbound Rebus behavior remains compatible in Rebus
   mode.
 - [x] The [task board](../README.md) status for AZM-13 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

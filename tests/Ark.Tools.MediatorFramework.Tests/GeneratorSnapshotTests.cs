@@ -6,6 +6,7 @@ using Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.Mcp.Generators;
+using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
@@ -1266,8 +1267,8 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("RegisterArkRebusHandlers<TContext>");
         generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
-        generated.Should().Contain("GetRegistration(handlerType)");
-        generated.Should().Contain("Missing mediator handler registrations");
+        generated.Should().NotContain("GetRegistration(handlerType)");
+        generated.Should().NotContain("Missing mediator handler registrations");
     }
 
     [TestMethod]
@@ -1283,9 +1284,107 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("ICommandHandler<global::RebuildOrder>");
+        generated.Should().Contain("ICommandProcessor");
         generated.Should().Contain("RebuildOrderRebusHandler");
         generated.Should().Contain("MessageContextExtensions.GetCancellationToken(global::Rebus.Pipeline.MessageContext.Current)");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorEmitsParticipantHostAssistance()
+    {
+        var generated = _runGenerator<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            using Ark.Tools.Solid;
+
+            [Message]
+            public sealed class ProcessOrder : ICommand;
+
+            [MessagingParticipant(
+                Identity = "orders",
+                Processes = new[] { typeof(ProcessOrder) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json,
+                Retry = typeof(OrderRetryPolicy))]
+            public sealed class ConsumerParticipant;
+
+            [MessagingParticipant(
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class PublisherParticipant;
+
+            public sealed class OrderRetryPolicy : IMessagingRetryPolicy
+            {
+                public int MaximumDeliveryCount => 3;
+                public bool SecondLevelRetriesEnabled => true;
+                public System.TimeSpan MaximumHandlerDuration => System.TimeSpan.FromMinutes(1);
+                public System.TimeSpan RetryDelay => System.TimeSpan.Zero;
+            }
+
+            [MessagingNetwork(Members = new[] { typeof(ConsumerParticipant), typeof(PublisherParticipant) })]
+            public sealed class OrdersNetwork;
+
+            [ArkRebusHost(typeof(ConsumerParticipant))]
+            public sealed partial class OrdersRebusHost;
+
+            [ArkRebusHost(typeof(PublisherParticipant))]
+            internal sealed partial class PublisherRebusHost;
+            """);
+
+        generated.Should().Contain("Map<global::ProcessOrder>(\"orders\")");
+        generated.Should().Contain("public sealed partial class OrdersRebusHost");
+        generated.Should().Contain("internal sealed partial class PublisherRebusHost");
+        generated.Should().Contain(": global::Ark.Tools.MediatorFramework.Rebus.IArkRebusHost");
+        generated.Should().Contain("public static void Register(");
+        generated.Should().Contain("RebusMessagingFailedHandler<global::ProcessOrder>");
+        generated.Should().Contain("public static void ConfigureOptions(");
+        generated.Should().Contain("public static async global::System.Threading.Tasks.Task SubscribeAsync(");
+        generated.Should().Contain("public static global::Ark.Tools.MediatorFramework.Rebus.ArkRebusParticipantRequirements GetRequirements()");
+        generated.Should().Contain("private sealed class ProcessOrderRebusHandler");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorRejectsHostBindingWithoutNetwork()
+    {
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+
+            [MessagingParticipant(
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class OrphanParticipant;
+
+            [ArkRebusHost(typeof(OrphanParticipant))]
+            public sealed partial class OrphanRebusHost;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
+    }
+
+    [TestMethod]
+    public void RebusGeneratorRejectsNonSealedHost()
+    {
+        var result = _runGeneratorResult<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+
+            [MessagingParticipant(
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class Participant;
+
+            [MessagingNetwork(Members = new[] { typeof(Participant) })]
+            public sealed class Network;
+
+            [ArkRebusHost(typeof(Participant))]
+            public partial class RebusHost;
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
@@ -1296,6 +1395,18 @@ public sealed class GeneratorSnapshotTests
             .Single();
 
         usage.AllowMultiple.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void RebusHostTargetsOneClass()
+    {
+        var usage = (AttributeUsageAttribute)typeof(ArkRebusHostAttribute)
+            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+            .Single();
+
+        usage.ValidOn.Should().Be(AttributeTargets.Class);
+        usage.AllowMultiple.Should().BeFalse();
+        usage.Inherited.Should().BeFalse();
     }
 
     [TestMethod]

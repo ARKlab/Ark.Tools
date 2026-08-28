@@ -15,13 +15,13 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestCategory("integration")]
 public sealed class MessagingResourceLifecycleBoundaryTests
 {
+    private const string _defaultServiceBusConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
     private const string _ownerPrefix = "ark.tools.mediator-framework:";
     private const string _storageParticipant = "azm12-reconcile-consumer";
     private const string _serviceBusParticipant = "azm12.reconcile.consumer";
     private const string _currentTopic = "azm12.reconcile.current";
     private const string _formerTopic = "azm12.reconcile.former";
     private const string _foreignSubscription = "azm12.reconcile.foreign";
-
     [TestMethod]
     public async Task StorageQueueReconcileCreatesIdentityAndPoisonQueues()
     {
@@ -134,19 +134,6 @@ public sealed class MessagingResourceLifecycleBoundaryTests
         }
     }
 
-    private static string _serviceBusConnectionString()
-    {
-        var connectionString = Environment.GetEnvironmentVariable(
-            "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING");
-        if (!string.IsNullOrWhiteSpace(connectionString))
-            return connectionString;
-
-        Assert.Inconclusive(
-            "Set ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING to run the Service Bus "
-            + "resource reconciliation boundary test.");
-        throw new InvalidOperationException("Assert.Inconclusive did not terminate the test.");
-    }
-
     private static async Task _deleteServiceBusResourcesAsync(
         ServiceBusAdministrationClient administration)
     {
@@ -156,5 +143,15 @@ public sealed class MessagingResourceLifecycleBoundaryTests
             await administration.DeleteTopicAsync(_formerTopic).ConfigureAwait(false);
         if ((await administration.QueueExistsAsync(_serviceBusParticipant).ConfigureAwait(false)).Value)
             await administration.DeleteQueueAsync(_serviceBusParticipant).ConfigureAwait(false);
+    }
+
+    private static string _serviceBusConnectionString()
+    {
+        var connectionString = Environment.GetEnvironmentVariable(
+            "ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            return connectionString;
+
+        return _defaultServiceBusConnectionString;
     }
 }
