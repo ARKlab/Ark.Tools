@@ -43,6 +43,7 @@ public sealed class MessagingFunctionsCompositionTests
         await using var provider = services.BuildServiceProvider();
 
         var bus = provider.GetRequiredService<IBus>();
+        provider.GetRequiredService<IBusOutboxEnlistment>().Should().BeSameAs(bus);
         await bus.Send(new CompositionMessage(), default, default).ConfigureAwait(false);
 
         provider.GetService<MessagingDispatcher>().Should().BeNull();
@@ -53,6 +54,29 @@ public sealed class MessagingFunctionsCompositionTests
 #pragma warning restore MA0004
         (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
         await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    /// <summary>Verifies Functions cross-wires the native bus into the application container.</summary>
+    [TestMethod]
+    public async Task SenderOnlyCompositionCrossWiresBusAndOutboxEnlistment()
+    {
+        var services = new ServiceCollection();
+        await using var container = _container();
+        services.AddArkMessagingFunctionsHost(
+            container,
+            _manifest(
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                _descriptor(receives: false)),
+            new InMemoryMessagingTransport(),
+            _dataBus());
+        await using var provider = services.BuildServiceProvider();
+        var bridge = provider.GetServices<IHostedService>()
+            .Single(service => service.GetType().Name == "MessagingFunctionsBusBridge");
+        await bridge.StartAsync(default).ConfigureAwait(false);
+
+        container.GetInstance<IBus>().Should().BeSameAs(provider.GetRequiredService<IBus>());
+        container.GetInstance<IBusOutboxEnlistment>().Should()
+            .BeSameAs(provider.GetRequiredService<IBusOutboxEnlistment>());
     }
 
     /// <summary>Verifies missing host transport configuration fails before registration.</summary>

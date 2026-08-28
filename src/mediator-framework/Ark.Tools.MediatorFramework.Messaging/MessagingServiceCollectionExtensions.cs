@@ -260,15 +260,19 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(payloadSender);
         ArgumentException.ThrowIfNullOrEmpty(participantIdentity);
 
-        services.AddSingleton<IBus>(serviceProvider => new MessagingBus(
-            serviceProvider.GetRequiredService<IMessagingTransport>(),
-            network,
-            registry,
-            serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
-            payloadSender,
-            participantIdentity,
-            outgoingStepTypes,
-            resolveStep ?? serviceProvider.GetRequiredService));
+        services.AddSingleton<MessagingBus>(serviceProvider => new MessagingBus(
+                serviceProvider.GetRequiredService<IMessagingTransport>(),
+                network,
+                registry,
+                serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
+                payloadSender,
+                participantIdentity,
+                outgoingStepTypes,
+                resolveStep ?? serviceProvider.GetRequiredService));
+        services.AddSingleton<IBus>(
+            serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
+        services.AddSingleton<IBusOutboxEnlistment>(
+            serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         return services;
     }
 

@@ -88,6 +88,16 @@ public sealed partial class MessagingOutboxTests
     }
 
     [TestMethod]
+    public void ReservedProcessorIdentityIsRejectedByDirectBusComposition()
+    {
+        var transport = new RecordingTransport();
+        var action = () => _createBus(transport, "outbox-processor");
+
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("*outbox-processor*reserved*");
+    }
+
+    [TestMethod]
     public async Task ProcessorDispatchesRawEnvelopeAndDeletesCommittedBatch()
     {
         var factory = new InMemoryOutboxContextFactory();
@@ -144,7 +154,9 @@ public sealed partial class MessagingOutboxTests
             .ContainSingle(service => service is MessagingOutboxProcessor);
     }
 
-    private static MessagingBus _createBus(IMessagingTransport transport)
+    private static MessagingBus _createBus(
+        IMessagingTransport transport,
+        string participantIdentity = "sender")
     {
         var network = new MessagingNetworkOptions(
             typeof(MessagingOutboxTests),
@@ -169,7 +181,7 @@ public sealed partial class MessagingOutboxTests
                 network,
                 CompressionAlgorithm.None,
                 0),
-            "sender",
+            participantIdentity,
             utcNow: () => DateTimeOffset.Parse(
                 "2024-01-01T00:00:00Z",
                 CultureInfo.InvariantCulture));

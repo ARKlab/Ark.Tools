@@ -104,6 +104,12 @@ public static class MessagingFunctionsServiceCollectionExtensions
             throw new InvalidOperationException(
                 "Azure Functions cannot host the native messaging outbox processor.");
         }
+        if (container.GetRegistration(typeof(IBus), throwOnFailure: false) is not null
+            || container.GetRegistration(typeof(IBusOutboxEnlistment), throwOnFailure: false) is not null)
+        {
+            throw new InvalidOperationException(
+                "Azure Functions native messaging cannot be mixed with another bus outbox adapter.");
+        }
 
         _validateManifest(manifest, transport);
         var descriptor = manifest.Descriptor!;
@@ -119,6 +125,7 @@ public static class MessagingFunctionsServiceCollectionExtensions
             management,
             manifest.OutgoingSteps,
             container.GetInstance);
+        _registerBusBridge(services, container);
         services.AddSingleton(manifest);
 
         if (!descriptor.Receives)
@@ -171,6 +178,19 @@ public static class MessagingFunctionsServiceCollectionExtensions
         return services;
     }
 
+    private static void _registerBusBridge(IServiceCollection services, Container container)
+    {
+        var bridge = new MessagingFunctionsBusBridge();
+        container.RegisterInstance(bridge);
+        container.RegisterSingleton<IBus>(() => bridge.GetBus());
+        container.RegisterSingleton<IBusOutboxEnlistment>(() => bridge.GetEnlistment());
+        services.AddSingleton<IHostedService>(_ =>
+        {
+            bridge.SetServiceProvider(_);
+            return bridge;
+        });
+    }
+
     private static IServiceCollection _addServiceBus(
         IServiceCollection services,
         Container container,
@@ -189,6 +209,7 @@ public static class MessagingFunctionsServiceCollectionExtensions
             client = new ServiceBusClient(connection);
             administration = new ServiceBusAdministrationClient(connection);
         }
+
         else
         {
             var serviceNamespace = !string.IsNullOrWhiteSpace(fullyQualifiedNamespace)
@@ -419,6 +440,41 @@ public static class MessagingFunctionsServiceCollectionExtensions
                 return;
 
             await _transport.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    internal sealed class MessagingFunctionsBusBridge : IHostedService
+    {
+        private IServiceProvider? _serviceProvider;
+
+        public void SetServiceProvider(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public IBus GetBus()
+        {
+            return (_serviceProvider
+                ?? throw new InvalidOperationException("The Functions service provider is not initialized."))
+                .GetRequiredService<IBus>();
+        }
+
+        public IBusOutboxEnlistment GetEnlistment()
+        {
+            return (_serviceProvider
+                ?? throw new InvalidOperationException("The Functions service provider is not initialized."))
+                .GetRequiredService<IBusOutboxEnlistment>();
+        }
+
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 }

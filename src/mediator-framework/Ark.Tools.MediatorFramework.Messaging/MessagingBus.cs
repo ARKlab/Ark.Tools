@@ -54,6 +54,10 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         _codecs = codecs ?? throw new ArgumentNullException(nameof(codecs));
         _payloadSender = payloadSender ?? throw new ArgumentNullException(nameof(payloadSender));
         ArgumentException.ThrowIfNullOrEmpty(participantIdentity);
+        if (string.Equals(participantIdentity, MessagingOutboxProcessor.Identity, StringComparison.Ordinal))
+            throw new ArgumentException(
+                "The participant identity 'outbox-processor' is reserved.",
+                nameof(participantIdentity));
         if (!string.Equals(network.NetworkIdentity, registry.NetworkIdentity, StringComparison.Ordinal))
             throw new ArgumentException("The registry and network identities must match.", nameof(registry));
 
@@ -212,6 +216,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                         outboxHeaders[MessagingHeaders.OutboxDueTime] =
                             dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
                     }
+                    _validateHeaders(outboxHeaders);
 
                     outboxScope.Add(new OutboxMessage
                     {
