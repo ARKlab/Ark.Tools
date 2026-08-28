@@ -64,10 +64,11 @@ public sealed class AzureFunctionsRebusTests
         await using var sender = new Container();
         ApplicationComposition.Register(sender, useSqlStore: false);
         sender.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
+        SampleRebusPublisherHost.Register(sender);
         ApplicationComposition.RegisterOutboundRebus(
             sender,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
-            SampleRebusEndpoints.ConfigureRouting);
+            SampleRebusPublisherHost.ConfigureRouting);
 
         var received = new TaskCompletionSource<ProcessBookPrintProcessRequest>(
             TaskCreationOptions.RunContinuationsAsynchronously);

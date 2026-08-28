@@ -9,7 +9,6 @@ using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
 using Ark.Tools.Rebus;
-using Ark.Tools.MediatorFramework.Rebus;
 using FluentValidation;
 
 using NodaTime;
@@ -118,12 +117,6 @@ public static class ApplicationComposition
             config.Transport(configureTransport);
             ConfigureRebusCommon(config, container, configureRouting);
         });
-        container.RegisterSingleton<RebusMessagingBus>(() => new RebusMessagingBus(
-            container.GetInstance<Rebus.Bus.IBus>(),
-            SampleMessagingPublisherParticipant.Identity,
-            Array.Empty<Type>()));
-        container.RegisterSingleton<IBus>(() => container.GetInstance<RebusMessagingBus>());
-        container.RegisterSingleton<IBusOutboxEnlistment>(() => container.GetInstance<RebusMessagingBus>());
     }
 
     /// <summary>Registers the pure domain graph into the given container.</summary>

@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Application.Messages;
 
-using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Solid.Authorization;
 
@@ -15,9 +14,11 @@ using Rebus.Transport;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
-[assembly: ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
-
 namespace Ark.MediatorFramework.Sample.AzureFunctions;
+
+/// <summary>Generated outbound Rebus host for the sample Function application.</summary>
+[ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
+public static partial class AzureFunctionsRebusHost;
 
 /// <summary>Builds the sample Function host's outbound-only Rebus client.</summary>
 public static class AzureFunctionsRebusComposition
@@ -48,14 +49,13 @@ public static class AzureFunctionsRebusComposition
             connectionString);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+        AzureFunctionsRebusHost.Register(container);
         ApplicationComposition.RegisterOutboundRebus(
             container,
             transport => _configureTransport(transport, serviceBusConnectionString),
-            ArkGeneratedEndpoints.ConfigureArkRebusRouting<RebusHostMarker>);
+            AzureFunctionsRebusHost.ConfigureRouting);
         return container;
     }
-
-    internal sealed class RebusHostMarker;
 
     private static void _configureTransport(
         StandardConfigurer<ITransport> transport,

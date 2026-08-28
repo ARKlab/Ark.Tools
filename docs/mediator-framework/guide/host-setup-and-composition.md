@@ -76,8 +76,8 @@ The source-generated application context includes application-owned Rebus
 messages and the public payload types nested inside them. This avoids silently
 falling back to reflection-based JSON metadata in a worker.
 
-Bind each Rebus host assembly to one shared-network participant with
-`[assembly: ArkRebusHost(typeof(MyParticipant))]`. Generated host assistance
+Bind each Rebus host class to one shared-network participant with
+`[ArkRebusHost(typeof(MyParticipant))]` on a static partial class. Generated host assistance
 provides participant-derived routing, receive adapters, exact retry mapping,
 post-start event subscriptions, the transport-neutral bus adapter, and an
 immutable requirements descriptor. Application handlers remain explicitly

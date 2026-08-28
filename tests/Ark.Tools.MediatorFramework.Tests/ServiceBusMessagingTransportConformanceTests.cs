@@ -8,7 +8,7 @@ using Azure.Messaging.ServiceBus.Administration;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
-/// <summary>Runs the transport conformance suite against an explicitly configured Service Bus namespace.</summary>
+/// <summary>Runs the transport conformance suite against the local Service Bus emulator.</summary>
 [TestClass]
 [TestCategory("integration")]
 [DoNotParallelize]

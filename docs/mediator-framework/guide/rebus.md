@@ -111,13 +111,11 @@ ApplicationComposition.Register(container, useSqlStore: true);
 container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
-[assembly: ArkRebusHost(typeof(GreetingProcessorParticipant))]
+[ArkRebusHost(typeof(GreetingProcessorParticipant))]
+public static partial class GreetingRebusHost;
 
-var requirements =
-    ArkGeneratedEndpoints.GetArkRebusParticipantRequirements<Program>();
-ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForParticipant<Program>(
-    container);
-ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<Program>(container);
+var requirements = GreetingRebusHost.GetRequirements();
+GreetingRebusHost.Register(container);
 container.RegisterDecorator(
     typeof(IHandleMessages<>),
     typeof(RebusScopeDecorator<>));
@@ -137,12 +135,12 @@ container.ConfigureRebus(config =>
     ApplicationComposition.ConfigureRebusCommon(
         config,
         container,
-        ArkGeneratedEndpoints.ConfigureArkRebusRouting<Program>,
-        ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<Program>);
+        GreetingRebusHost.ConfigureRouting,
+        GreetingRebusHost.ConfigureOptions);
 });
 
-await ArkGeneratedEndpoints
-    .SubscribeArkRebusEventsForParticipantAsync<Program>(
+await GreetingRebusHost
+    .SubscribeAsync(
         container.GetInstance<Rebus.Bus.IBus>(),
         cancellationToken)
     .ConfigureAwait(false);
@@ -162,7 +160,7 @@ ApplicationComposition.RegisterOutboundRebus(
     transport => transport.UseAzureServiceBusAsOneWayClient(
         serviceBusConnectionString,
         new DefaultAzureCredential()),
-    ArkGeneratedEndpoints.ConfigureArkRebusRouting<Program>);
+    GreetingRebusHost.ConfigureRouting);
 ```
 
 Azure Functions uses this pattern. The processor is a separate deployment.
@@ -190,7 +188,7 @@ web host's private JSON context.
 ## 7. Configure retries and failure behavior
 
 ```csharp
-ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<Program>(options);
+GreetingRebusHost.ConfigureOptions(options);
 ```
 
 Decide what is transient and what is final. Test:

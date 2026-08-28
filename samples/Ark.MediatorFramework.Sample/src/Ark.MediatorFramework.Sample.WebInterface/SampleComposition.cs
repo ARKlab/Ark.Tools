@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Application.Messages;
 
-using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
@@ -18,9 +17,11 @@ using SimpleInjector.Lifestyles;
 using System.Security.Claims;
 using NodaTime;
 
-[assembly: ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
-
 namespace Ark.MediatorFramework.Sample.WebInterface;
+
+/// <summary>Generated Rebus host for the sample web application.</summary>
+[ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
+public static partial class SampleRebusHost;
 
 /// <summary>
 /// Hosting composition root. It layers the transport concerns (user context, Rebus, the
@@ -66,7 +67,7 @@ public static class SampleComposition
         // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the
         // SimpleInjector container locks, after ASP.NET Core has built its service provider.
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
-        ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<SampleStartup>(container);
+        SampleRebusHost.Register(container);
 
         container.ConfigureRebus(cfg =>
         {
@@ -78,7 +79,7 @@ public static class SampleComposition
             ApplicationComposition.ConfigureRebusCommon(
                 cfg,
                 container,
-                ArkGeneratedEndpoints.ConfigureArkRebusRouting<SampleStartup>);
+                SampleRebusHost.ConfigureRouting);
         });
 
         return container;

@@ -141,24 +141,21 @@ their infrastructure.
 ## Core code shapes
 
 Conceptual shapes — final public names are selected by this task; the
-signatures' invariants are fixed. The generated members extend the existing
-`Ark.MediatorFramework.Generated.ArkGeneratedEndpoints` static partial class
-emitted by `Ark.Tools.MediatorFramework.Rebus.Generators`, which already
-exposes `ConfigureArkRebusRouting<TAssemblyMarker>`.
+signatures' invariants are fixed. The generated members extend the static partial
+class marked with `ArkRebusHostAttribute`.
 
 The conceptual generated Rebus-assistance API (from the design, verbatim):
 
 ```csharp
-ArkGeneratedEndpoints.ConfigureArkRebusRouting<TAssemblyMarker>(routing);
-ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForParticipant<TAssemblyMarker>(
-    container);
-ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<TAssemblyMarker>(options);
-await ArkGeneratedEndpoints
-    .SubscribeArkRebusEventsForParticipantAsync<TAssemblyMarker>(bus, cancellationToken)
+RebusHost.ConfigureRouting(routing);
+RebusHost.Register(container);
+RebusHost.ConfigureOptions(options);
+await RebusHost
+    .SubscribeAsync(bus, cancellationToken)
     .ConfigureAwait(false);
 
 var requirements =
-    ArkGeneratedEndpoints.GetArkRebusParticipantRequirements<TAssemblyMarker>();
+    RebusHost.GetRequirements();
 ```
 
 Composing a Rebus consumer host with the generated assistance — every
@@ -167,10 +164,10 @@ storage, workers, outbox) stays explicit host code:
 
 ```csharp
 // RebusProcessor composition root: binds the consumer participant of the shared network.
-var requirements = ArkGeneratedEndpoints.GetArkRebusParticipantRequirements<Program>();
+var requirements = RebusHost.GetRequirements();
 
 // Framework-owned dispatch adapters for exactly the participant's declared contracts.
-ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForParticipant<Program>(container);
+RebusHost.Register(container);
 
 // Application handlers remain developer-registered; the generator never sees them.
 container.Register<ICommandHandler<PrintBook>, PrintBookHandler>();
@@ -178,11 +175,11 @@ container.Register<ICommandHandler<BookPrintCompleted>, RecordPrintCompletionHan
 
 var bus = Configure.With(activator)
     .Transport(t => t.UseAzureServiceBus(connectionString, requirements.InputQueueName))
-    .Routing(r => ArkGeneratedEndpoints.ConfigureArkRebusRouting<Program>(r))
+    .Routing(RebusHost.ConfigureRouting)
     .Options(o =>
     {
         // Exact N / second-level mapping generated from the participant's retry policy.
-        ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<Program>(o);
+        RebusHost.ConfigureOptions(o);
         // Rebus-only options that do not alter mapped attempt counts stay explicit here.
     })
     .Subscriptions(s => /* explicit subscription storage */ s.StoreInSqlServer(...))
@@ -190,8 +187,8 @@ var bus = Configure.With(activator)
 
 // Subscriptions are an explicit post-start async operation; no-op for
 // sender-only/publisher participants.
-await ArkGeneratedEndpoints
-    .SubscribeArkRebusEventsForParticipantAsync<Program>(bus, cancellationToken)
+await RebusHost
+    .SubscribeAsync(bus, cancellationToken)
     .ConfigureAwait(false);
 
 // requirements.MaximumHandlerDuration, requirements.RequiresCompression, and
@@ -235,10 +232,10 @@ Generated retry mapping onto the real `Ark.Tools.Rebus`
 `ArkRetryStrategyConfigurationExtensions.ArkRetryStrategy` extension:
 
 ```csharp
-// Generated body of ConfigureArkRebusOptionsForParticipant<TAssemblyMarker> (conceptual),
+// Generated body of RebusHost.ConfigureOptions (conceptual),
 // for a participant whose IMessagingRetryPolicy declares
 // MaximumDeliveryCount = 5 and SecondLevelRetriesEnabled = true:
-public static void ConfigureArkRebusOptionsForParticipant<TAssemblyMarker>(
+public static void ConfigureOptions(
     global::Rebus.Config.OptionsConfigurer options)
 {
     options.ArkRetryStrategy(

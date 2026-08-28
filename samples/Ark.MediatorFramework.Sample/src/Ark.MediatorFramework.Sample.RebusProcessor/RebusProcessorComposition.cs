@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.MediatorFramework.Generated;
+using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
@@ -18,9 +18,11 @@ using SimpleInjector.Lifestyles;
 
 using System.Security.Claims;
 
-[assembly: Ark.Tools.MediatorFramework.Rebus.ArkRebusHost(typeof(SampleMessagingParticipant))]
-
 namespace Ark.MediatorFramework.Sample.RebusProcessor;
+
+/// <summary>Generated Rebus host for the sample background processor.</summary>
+[ArkRebusHost(typeof(SampleMessagingParticipant))]
+public static partial class RebusProcessorHost;
 
 /// <summary>Builds the isolated full Rebus processor composition.</summary>
 public static class RebusProcessorComposition
@@ -67,14 +69,12 @@ public static class RebusProcessorComposition
 
         if (registerHandlers is null)
         {
-            ArkGeneratedEndpoints.RegisterArkRebusDispatchAdaptersForParticipant<Program>(container);
-            ArkGeneratedEndpoints.RegisterArkRebusHandlersFromAssembly<ProcessBookPrintProcessRequest>(container);
+            RebusProcessorHost.Register(container);
         }
         else
         {
             registerHandlers(container);
         }
-        ArkGeneratedEndpoints.RegisterArkRebusBusForParticipant<Program>(container);
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
         container.ConfigureRebus(cfg =>
@@ -84,10 +84,10 @@ public static class RebusProcessorComposition
                 transport.UseInMemoryTransport(network, "ark-mediator-sample");
                 ApplicationComposition.ConfigureRebusOutbox(transport, container, startProcessor: true);
             });
-            ApplicationComposition.ConfigureRebusCommon(cfg, container, ArkGeneratedEndpoints.ConfigureArkRebusRouting<Program>, options =>
+            ApplicationComposition.ConfigureRebusCommon(cfg, container, RebusProcessorHost.ConfigureRouting, options =>
             {
                 options.SetNumberOfWorkers(1);
-                ArkGeneratedEndpoints.ConfigureArkRebusOptionsForParticipant<Program>(options);
+                RebusProcessorHost.ConfigureOptions(options);
                 configureOptions?.Invoke(options);
             });
             if (configureTimeouts is not null)

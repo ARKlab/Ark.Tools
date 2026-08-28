@@ -44,7 +44,7 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             printCompletedNotificationService: application.PrintCompletedNotificationService,
             registerHandlers: container =>
             {
-                SampleRebusEndpoints.RegisterHandlers(container);
+                SampleRebusHost.Register(container);
             },
             configureOptions: options => options.AddInProcessMessageInspector(),
             configureTimeouts: timeouts => timeouts.StoreInMemoryTests());

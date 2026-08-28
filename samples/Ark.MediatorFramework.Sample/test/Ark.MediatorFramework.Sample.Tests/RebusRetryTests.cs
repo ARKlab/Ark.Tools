@@ -24,7 +24,7 @@ public sealed class RebusRetryTests
             useSqlStore: false,
             registerHandlers: processorContainer =>
             {
-                SampleRebusEndpoints.RegisterHandlers(processorContainer);
+                SampleRebusHost.Register(processorContainer);
             });
 
         container.Verify();

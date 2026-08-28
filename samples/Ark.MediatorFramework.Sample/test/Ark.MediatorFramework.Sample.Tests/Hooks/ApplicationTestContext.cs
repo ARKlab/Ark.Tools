@@ -91,10 +91,11 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         _container.Register<IRequestHandler<ScopeProbeRequest, Guid>, ScopeProbeHandler>();
         _container.Register<IRequestHandler<NestedScopeRequest, ScopeObservation>, NestedScopeHandler>();
         _container.Register<IRequestHandler<FailingScopeRequest, bool>, FailingScopeHandler>();
+        SampleRebusPublisherHost.Register(_container);
         ApplicationComposition.RegisterOutboundRebus(
             _container,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(Network),
-            SampleRebusEndpoints.ConfigureRouting);
+            SampleRebusPublisherHost.ConfigureRouting);
         SetAuthenticatedUser();
     }
 

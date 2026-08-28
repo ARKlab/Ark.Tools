@@ -6,6 +6,7 @@ using Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.Mcp.Generators;
+using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.MediatorFramework.Generators;
 using Ark.Tools.Solid;
 
@@ -1297,8 +1298,6 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.MediatorFramework.Rebus;
             using Ark.Tools.Solid;
 
-            [assembly: ArkRebusHost(typeof(ConsumerParticipant))]
-
             [Message]
             public sealed class ProcessOrder : ICommand;
 
@@ -1310,6 +1309,11 @@ public sealed class GeneratorSnapshotTests
                 Retry = typeof(OrderRetryPolicy))]
             public sealed class ConsumerParticipant;
 
+            [MessagingParticipant(
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class PublisherParticipant;
+
             public sealed class OrderRetryPolicy : IMessagingRetryPolicy
             {
                 public int MaximumDeliveryCount => 3;
@@ -1318,17 +1322,25 @@ public sealed class GeneratorSnapshotTests
                 public System.TimeSpan RetryDelay => System.TimeSpan.Zero;
             }
 
-            [MessagingNetwork(Members = new[] { typeof(ConsumerParticipant) })]
+            [MessagingNetwork(Members = new[] { typeof(ConsumerParticipant), typeof(PublisherParticipant) })]
             public sealed class OrdersNetwork;
+
+            [ArkRebusHost(typeof(ConsumerParticipant))]
+            public static partial class OrdersRebusHost;
+
+            [ArkRebusHost(typeof(PublisherParticipant))]
+            internal static partial class PublisherRebusHost;
             """);
 
         generated.Should().Contain("Map<global::ProcessOrder>(\"orders\")");
-        generated.Should().Contain("RegisterArkRebusDispatchAdaptersForParticipant");
+        generated.Should().Contain("public static partial class OrdersRebusHost");
+        generated.Should().Contain("internal static partial class PublisherRebusHost");
+        generated.Should().Contain("public static void Register(");
         generated.Should().Contain("RebusMessagingFailedHandler<global::ProcessOrder>");
-        generated.Should().Contain("ConfigureArkRebusOptionsForParticipant");
-        generated.Should().Contain("SubscribeArkRebusEventsForParticipantAsync");
-        generated.Should().Contain("GetArkRebusParticipantRequirements");
-        generated.Should().Contain("RegisterArkRebusBusForParticipant");
+        generated.Should().Contain("public static void ConfigureOptions(");
+        generated.Should().Contain("public static async global::System.Threading.Tasks.Task SubscribeAsync(");
+        generated.Should().Contain("public static global::Ark.Tools.MediatorFramework.Rebus.ArkRebusParticipantRequirements GetRequirements()");
+        generated.Should().Contain("private sealed class ProcessOrderRebusHandler");
     }
 
     [TestMethod]
@@ -1339,12 +1351,13 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.MediatorFramework.Rebus;
 
-            [assembly: ArkRebusHost(typeof(OrphanParticipant))]
-
             [MessagingParticipant(
                 Serializers = new[] { SerializationProtocol.Json },
                 DefaultSerializer = SerializationProtocol.Json)]
             public sealed class OrphanParticipant;
+
+            [ArkRebusHost(typeof(OrphanParticipant))]
+            public static partial class OrphanRebusHost;
             """);
 
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
@@ -1358,6 +1371,18 @@ public sealed class GeneratorSnapshotTests
             .Single();
 
         usage.AllowMultiple.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void RebusHostTargetsOneClass()
+    {
+        var usage = (AttributeUsageAttribute)typeof(ArkRebusHostAttribute)
+            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+            .Single();
+
+        usage.ValidOn.Should().Be(AttributeTargets.Class);
+        usage.AllowMultiple.Should().BeFalse();
+        usage.Inherited.Should().BeFalse();
     }
 
     [TestMethod]
