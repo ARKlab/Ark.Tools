@@ -521,6 +521,10 @@ cp local.settings.json.example local.settings.json
 func start --port 7072
 ```
 
+In `local.settings.json`, `AzureServiceBus__ConnectionString` uses the
+environment-variable `__` separator and resolves to the generated
+`AzureServiceBus:ConnectionString` configuration key.
+
 These commands start the subscribers, not a complete cross-transport demo. The
 publisher must use the native AMF Service Bus composition; a Rebus or InMemory
 publisher cannot feed these queues. The existing `outbox-processor` remains a
