@@ -1,15 +1,16 @@
 # Ark.Tools SDK
 
-This folder contains the research and proposed design for distributing the
-Ark.Tools solution build conventions as a versioned package.
+This folder contains the accepted design and delivery plan for distributing the
+Ark.Tools solution build conventions as versioned packages.
 
 ## Documents
 
 | Document | Purpose |
 | --- | --- |
-| [`design.md`](design.md) | Current Ark.Tools defaults, packaging alternatives, upstream research, and proposed architecture. |
-| [`progress/README.md`](progress/README.md) | Index for temporary planning and decision documents. |
-| [`progress/decisions.md`](progress/decisions.md) | Open product and compatibility decisions for review in PR comments. |
+| [`design.md`](design.md) | Current Ark.Tools defaults, packaging alternatives, upstream research, and accepted architecture. |
+| [`progress/README.md`](progress/README.md) | Delivery tracking rules and document index. |
+| [`progress/decisions.md`](progress/decisions.md) | Accepted product and compatibility decisions. |
+| [`progress/tasks/README.md`](progress/tasks/README.md) | Canonical implementation task board. |
 
-The design is not an implementation commitment until the open decisions are
-resolved.
+Implementation is split into independently reviewable tasks; each task owns its
+execution map, tests, outcomes, and acceptance criteria.

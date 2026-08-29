@@ -1,15 +1,13 @@
 # Ark.Tools SDK — decision log
 
-Status: **public `Ark.Tools.Build` baseline awaiting cross-check**.
+Status: **design decisions complete; ready for implementation planning**.
 
 ## How to review
 
-- Review SDK-25 and identify anything that should move between
-  `Ark.Tools.Build`, `Ark.Tools.Sdk`, and the excluded set.
 - Accepted decisions are recorded in
   [`../design.md`](../design.md#accepted-decisions); reopen one only with a new
   constraint.
-- Package implementation remains blocked only by the SDK-25 cross-check.
+- Use this log as implementation input; no design decision remains open.
 
 ## Decision status
 
@@ -39,7 +37,7 @@ Status: **public `Ark.Tools.Build` baseline awaiting cross-check**.
 | SDK-22 | DECIDED | A — build-breaking policy changes follow semantic versioning. |
 | SDK-23 | DECIDED | B — migrate ReferenceProject category by category. |
 | SDK-24 | DECIDED | A — public transitive policy, limited to sane defaults. |
-| SDK-25 | REVIEW REQUESTED | Cross-check the exact `Ark.Tools.Build` baseline. |
+| SDK-25 | DECIDED | A — narrow public safety baseline with project opt-outs. |
 
 ## SDK-01 — Distribution model
 
@@ -263,12 +261,12 @@ referenced and isolated projects do not inherit policy from their consumers.
 
 ## SDK-25 — `Ark.Tools.Build` baseline cross-check
 
-**Status:** REVIEW REQUESTED.
+**Status:** DECIDED — A.
 
-The complete proposed classification and rationale are in
-[`../design.md`](../design.md#proposed-public-transitive-baseline).
+The complete selected classification and rationale are in
+[`../design.md`](../design.md#selected-public-transitive-baseline).
 
-### Proposed `Ark.Tools.Build`
+### Selected `Ark.Tools.Build`
 
 - Set-when-empty for non-SQL C# projects: `Nullable=enable`,
   `ImplicitUsings=enable`, `GenerateDocumentationFile=true`,
@@ -294,7 +292,7 @@ The complete proposed classification and rationale are in
 - No dependencies, project-type inference, test/output/publish/pack behavior,
   global usings, restore policy, or environment workaround.
 
-### Proposed `Ark.Tools.Sdk`
+### Selected `Ark.Tools.Sdk`
 
 - Restore/CI policy, `AnalysisLevel=latest-all`, `LangVersion=14.0`, and all
   exact implicit package references.
@@ -303,7 +301,7 @@ The complete proposed classification and rationale are in
   properties/content, application/test settings files, packaging behavior, the
   three Ark global usings, and the Copilot SourceLink workaround.
 
-### Proposed exclusions
+### Selected exclusions
 
 - TFMs/versions, global packability, warning suppressions, unsafe blocks,
   assembly/organization identity, icon, Application Insights dummy resource,
@@ -324,25 +322,17 @@ The complete proposed classification and rationale are in
   coverage but changes unknown external consumers and violates the selected
   “sane defaults” constraint.
 
-### Requested answer
+### Decision
 
-- Confirm the three groups or list movements.
-- Specifically cross-check whether XML documentation and
-  `ImplicitUsings=enable` are appropriate at the public transitive boundary.
-  The design includes both but keeps Ark's explicit global usings in the SDK.
-- Confirm the package should rely on native `DebugType`, `DebugSymbols`,
-  `Deterministic`, `EmbedUntrackedSources`, and `EnableNETAnalyzers` defaults
-  instead of repeating them.
-- Confirm `AnalysisLevel=latest-all` and `LangVersion=14.0` stay SDK-only so a
-  public package dependency cannot force an evolving diagnostic set or C# 14 on
-  a consumer using an older .NET SDK.
-
-### Recommendation
-
-**A.** Keep the proposed narrow classification. It gives a forgotten-SDK consumer the
+**A.** Keep the narrow classification. It gives a forgotten-SDK consumer the
 compiler safety and analyzer configuration baseline without selecting
 dependencies, inferring project roles, changing output/pack topology, or
 overriding defaults already maintained by the .NET SDK.
+
+XML documentation and standard implicit usings remain public defaults. A
+project can opt out directly with `GenerateDocumentationFile=false` or
+`ImplicitUsings=disable`; project properties evaluate after NuGet package props
+and therefore override these set-when-empty defaults.
 
 ## Accepted implementation details
 

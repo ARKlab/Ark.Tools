@@ -1,7 +1,6 @@
 # Standardized .NET solution setup
 
-Status: **proposed; public transitive baseline awaiting cross-check in
-[`progress/decisions.md`](progress/decisions.md#sdk-25--arktoolsbuild-baseline-cross-check)**.
+Status: **design accepted; ready for implementation planning**.
 
 ## Problem
 
@@ -119,12 +118,15 @@ Ark.Tools.Sdk.nupkg
 ```xml
 <PackageReference Include="Ark.Tools.Build"
                   Version="$(ArkToolsSdkVersion)"
+                  Condition="'$(EnableArkToolsBuild)' != 'false'"
                   IsImplicitlyDefined="true" />
 ```
 
 The production implementation must use an SDK-owned constant version rather
 than deriving it from consumer CPM. The reference remains public so
 `Ark.Tools.Build` flows through project and package dependencies.
+`EnableArkToolsBuild=false`, set before SDK props evaluation, removes the
+implicit package and its imports.
 
 The SDK is additional to the project's primary SDK:
 
@@ -196,7 +198,7 @@ A local restore experiment with .NET SDK 10.0.100 verified:
 This is a safety net, not a complete substitute for adding the SDK to every
 project. SDK-presence validation remains required.
 
-### Proposed public transitive baseline
+### Selected public transitive baseline
 
 `Ark.Tools.Build` is public under SDK-24 option A. A setting belongs in it only
 when all of these are true:
@@ -217,6 +219,10 @@ disables the whole package baseline.
 The whole-package switch must be set before NuGet props import, normally in
 `Directory.Build.props` or as a global property; feature switches used by late
 items/targets can also be set in the project.
+Individual properties can be overridden in the project body because it
+evaluates after NuGet package props. For example,
+`GenerateDocumentationFile=false` disables XML documentation and
+`ImplicitUsings=disable` disables standard implicit usings for that project.
 
 “Non-SQL C#” means
 `$(MSBuildProjectExtension) == '.csproj'` and
@@ -400,8 +406,7 @@ The inventory below was verified against:
 - the root analyzer configuration and banned-symbol files; and
 - `/Directory.Packages.props` for package versions.
 
-`Disposition` identifies the selected owner. SDK-25 requests a cross-check of
-that exact boundary.
+`Disposition` identifies the owner selected by SDK-25.
 
 ### Early properties
 
