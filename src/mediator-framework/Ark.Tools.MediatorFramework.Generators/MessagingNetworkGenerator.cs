@@ -21,6 +21,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _participantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
     private const string _messageAttribute = "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute = "Ark.Tools.MediatorFramework.EventAttribute";
+    private const string _apiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string _requestNamespace = "Ark.Tools.Solid";
     private const string _commandInterface = "Ark.Tools.Solid.ICommand`1";
     private const string _commandInterfaceName = "ICommand`1";
@@ -79,7 +80,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Contract '{0}' is declared by participants in more than one messaging network", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidIdentity = _rule(
         "ARKMSG013", "Invalid participant identity",
-        "Participant '{0}' has identity '{1}', which is not a valid portable queue name", DiagnosticSeverity.Error);
+        "Participant '{0}' has identity '{1}', which is not a valid logical name", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _duplicateIdentity = _rule(
         "ARKMSG014", "Duplicate participant identity",
         "Network '{0}' contains more than one participant with identity '{1}'", DiagnosticSeverity.Error);
@@ -97,7 +98,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Event contract '{0}' must implement ICommand<TSelf> or IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonNormalizedName = _rule(
         "ARKMSG019", "Non-normalized contract name",
-        "Contract '{0}' has explicit name or alias '{1}', which is not lowercase snake_case", DiagnosticSeverity.Error);
+        "Contract '{0}' has explicit name or alias '{1}', which is not a valid logical name", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _duplicateName = _rule(
         "ARKMSG020", "Duplicate messaging contract name",
         "Messaging contract name '{0}' is used by more than one contract", DiagnosticSeverity.Error);
@@ -228,7 +229,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         {
             if (!identities.Add(participant.Identity))
                 _report(context, _duplicateIdentity, participant.Symbol, network.Name, participant.Identity);
-            if (!_isPortableName(participant.Identity))
+            if (!_isLogicalName(participant.Identity))
                 _report(context, _invalidIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
             if (participant.Identity == "outbox-processor" || participant.Identity.EndsWith("-poison", StringComparison.Ordinal))
                 _report(context, _reservedIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
@@ -258,9 +259,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         {
             if (publisher.Value.Count > 1)
                 _report(context, _multiplePublisher, publisher.Key, _contractName(publisher.Key), network.Name);
-            var topic = publisher.Value[0].Identity + "-" + _contractName(publisher.Key);
-            if (topic.Length > 260)
-                _report(context, _longTopic, publisher.Key, topic);
         }
 
         foreach (var participant in participants)
@@ -494,8 +492,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
-        var fullName = symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
-        return _normalizeSnake(fullName);
+        var group = symbol.GetAttributes()
+            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
+        return _normalizeLogical(group) + "." + _normalizeLogical(symbol.Name);
     }
 
     private static string _normalizeIdentity(string value)
@@ -506,6 +506,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _normalizeSnake(string value)
     {
         return string.Join("_", value.Split('.').SelectMany(_words).Select(word => word.ToLowerInvariant()));
+    }
+
+    private static string _normalizeLogical(string value)
+    {
+        return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
+            .Select(segment => string.Join("-", _words(segment).Select(word => word.ToLowerInvariant()))));
     }
 
     private static IEnumerable<string> _words(string value)
@@ -535,15 +541,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             yield return word.ToString();
     }
 
-    private static bool _isPortableName(string value)
+    private static bool _isLogicalName(string value)
     {
-        if (value.Length < 3 || value.Length > 50 || value[0] == '-' || value[value.Length - 1] == '-')
+        if (value.Length == 0 || value[0] is '-' or '_' or '.' or '/' || value[^1] is '-' or '_' or '.' or '/')
             return false;
         for (var index = 0; index < value.Length; index++)
         {
             var character = value[index];
-            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-')
-                || (character == '-' && index > 0 && value[index - 1] == '-'))
+            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_' or '.' or '/')
+                || ((character is '-' or '_' or '.' or '/') && index > 0
+                    && (value[index - 1] is '-' or '_' or '.' or '/')))
                 return false;
         }
         return true;
@@ -551,16 +558,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static bool _isNormalized(string value)
     {
-        if (value.Length == 0 || value[0] == '_' || value[value.Length - 1] == '_')
-            return false;
-        for (var index = 0; index < value.Length; index++)
-        {
-            var character = value[index];
-            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')
-                || (character == '_' && index > 0 && value[index - 1] == '_'))
-                return false;
-        }
-        return true;
+        return _isLogicalName(value);
     }
 
     private static void _emitNetwork(

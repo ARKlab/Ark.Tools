@@ -99,7 +99,7 @@ public sealed class StorageQueueMessagingTransport :
         DateTimeOffset? dueTime,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = MessagingEntityNameMapper.ToStorageQueue(queue);
         ArgumentNullException.ThrowIfNull(headers);
 
         var encoded = StorageQueueEnvelopeCodec.Encode(headers, payload);
@@ -128,7 +128,7 @@ public sealed class StorageQueueMessagingTransport :
         string queue,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = MessagingEntityNameMapper.ToStorageQueue(queue);
         return _receiveAsync(queue, ctk);
     }
 
@@ -139,7 +139,7 @@ public sealed class StorageQueueMessagingTransport :
         string ownerIdentity,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = MessagingEntityNameMapper.ToStorageQueue(queue);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         await _queue(queue).CreateIfNotExistsAsync(cancellationToken: ctk).ConfigureAwait(false);

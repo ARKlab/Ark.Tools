@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -28,6 +29,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute =
         "Ark.Tools.MediatorFramework.EventAttribute";
+    private const string _apiGroupAttribute =
+        "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const int _serviceBusBinding = 0;
     private const int _storageQueueBinding = 1;
 
@@ -474,6 +477,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         string connection)
     {
         var methodName = _functionName(identity);
+        var nativeIdentity = _nativeName(identity, binding == _storageQueueBinding ? 63 : 260,
+            binding == _storageQueueBinding);
         source.Append("    /// <summary>Receives the \"").Append(_escape(identity))
             .AppendLine("\" participant identity queue.</summary>")
             .Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
@@ -483,7 +488,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         if (binding == _serviceBusBinding)
         {
             source.AppendLine("        [global::Microsoft.Azure.Functions.Worker.ServiceBusTrigger(")
-                .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+                .Append("            \"").Append(_escape(nativeIdentity)).AppendLine("\",")
                 .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\",")
                 .AppendLine("            AutoCompleteMessages = false)]")
                 .AppendLine("        global::Azure.Messaging.ServiceBus.ServiceBusReceivedMessage message,")
@@ -499,7 +504,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("        [global::Microsoft.Azure.Functions.Worker.QueueTrigger(")
-            .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+            .Append("            \"").Append(_escape(nativeIdentity)).AppendLine("\",")
             .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\")]")
             .AppendLine("        global::Azure.Storage.Queues.Models.QueueMessage message,")
             .AppendLine("        global::Microsoft.Azure.Functions.Worker.FunctionContext functionContext,")
@@ -510,6 +515,34 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("\", functionContext, cancellationToken)")
             .AppendLine("            .ConfigureAwait(false);")
             .AppendLine("    }");
+    }
+
+    private static string _nativeName(string value, int maximumLength, bool storage)
+    {
+        var valid = value.Length <= maximumLength && value.All(character =>
+            (storage
+                ? character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
+                : _isAsciiLetterOrDigit(character) || character is '-' or '_' or '.'));
+        if (valid && value[0] != '-' && value[^1] != '-')
+            return value;
+        using var sha256 = SHA256.Create();
+        var hash = BitConverter.ToString(sha256.ComputeHash(Encoding.UTF8.GetBytes(value)))
+            .Replace("-", string.Empty)
+            .ToLowerInvariant();
+        var prefixLength = Math.Max(1, maximumLength - hash.Length - 1);
+        var prefix = new string(value.Take(prefixLength).Select(character =>
+            (storage
+                ? character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
+                : _isAsciiLetterOrDigit(character) || character is '-' or '_' or '.')
+                ? character : '-').ToArray()).Trim('-');
+        return $"{(prefix.Length == 0 ? "entity" : prefix)}-{hash}"[..maximumLength];
+    }
+
+    private static bool _isAsciiLetterOrDigit(char character)
+    {
+        return character is >= 'a' and <= 'z'
+            or >= 'A' and <= 'Z'
+            or >= '0' and <= '9';
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)
@@ -637,8 +670,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         var attribute = contract.GetAttributes().FirstOrDefault(candidate =>
             candidate.AttributeClass?.ToDisplayString() is _messageAttribute or _eventAttribute);
-        return _string(attribute, "Name") ?? _normalizeSnake(
-            contract.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+        if (_string(attribute, "Name") is { } explicitName)
+            return explicitName;
+        var group = contract.GetAttributes()
+            .FirstOrDefault(candidate => candidate.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
+        return _normalizeLogical(group) + "." + _normalizeLogical(contract.Name);
     }
 
     private static string _normalizeIdentity(string value)
@@ -651,6 +688,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         return string.Join("_", value.Split('.')
             .SelectMany(_words)
             .Select(static word => word.ToLowerInvariant()));
+    }
+
+    private static string _normalizeLogical(string value)
+    {
+        return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
+            .Select(segment => string.Join("-", _words(segment).Select(static word => word.ToLowerInvariant()))));
     }
 
     private static IEnumerable<string> _words(string value)

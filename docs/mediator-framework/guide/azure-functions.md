@@ -699,3 +699,14 @@ The repository boundary project is
 `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`; the sample
 also covers its sender composition in
 [`AzureFunctionsRebusTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).
+# Logical names and provider entities
+
+Messaging contracts, participants, networks, topics, and subscriptions use
+lowercase logical names. Names are non-empty and may contain letters, digits,
+`-`, `_`, `.`, and `/`; separators may not be repeated or appear at either
+edge. Logical names are retained in `amf1-msg-type`, registries, and API
+snapshots. Azure Service Bus and Storage Queue adapters map them
+deterministically to provider names, preserving supported characters when
+possible and otherwise appending a SHA-256 suffix to a readable prefix.
+`FormerNames` are receive-only aliases and never create topology resources;
+renaming a publisher or current contract name requires explicit migration.

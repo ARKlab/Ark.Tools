@@ -27,7 +27,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string ownerIdentity,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = MessagingEntityNameMapper.ToServiceBus(queue);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         var options = new CreateQueueOptions(queue)
@@ -56,7 +56,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string ownerIdentity,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(topic);
+        topic = MessagingEntityNameMapper.ToServiceBus(topic);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         var options = new CreateTopicOptions(topic)
         {
@@ -79,9 +79,12 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         CancellationToken ctk)
     {
         ArgumentNullException.ThrowIfNull(subscription);
-        var options = new CreateSubscriptionOptions(subscription.Topic, subscription.Name)
+        var topic = MessagingEntityNameMapper.ToServiceBus(subscription.Topic);
+        var name = MessagingEntityNameMapper.ToServiceBus(subscription.Name);
+        var forwardToQueue = MessagingEntityNameMapper.ToServiceBus(subscription.ForwardToQueue);
+        var options = new CreateSubscriptionOptions(topic, name)
         {
-            ForwardTo = subscription.ForwardToQueue,
+            ForwardTo = forwardToQueue,
             MaxDeliveryCount = subscription.MaximumDeliveryCount,
             UserMetadata = _owner(subscription.OwnerIdentity)
         };
@@ -92,7 +95,14 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         catch (ServiceBusException ex)
             when (ex.Reason == ServiceBusFailureReason.MessagingEntityAlreadyExists)
         {
-            await _reconcileExistingSubscriptionAsync(subscription, ctk).ConfigureAwait(false);
+            await _reconcileExistingSubscriptionAsync(
+                new MessagingSubscriptionResource(
+                    topic,
+                    name,
+                    forwardToQueue,
+                    subscription.MaximumDeliveryCount,
+                    subscription.OwnerIdentity),
+                ctk).ConfigureAwait(false);
         }
     }
 
@@ -101,7 +111,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string topic,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(topic);
+        topic = MessagingEntityNameMapper.ToServiceBus(topic);
         var subscriptions = new List<MessagingTransportSubscription>();
         try
         {
@@ -129,8 +139,8 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string subscription,
         CancellationToken ctk)
     {
-        ArgumentException.ThrowIfNullOrEmpty(topic);
-        ArgumentException.ThrowIfNullOrEmpty(subscription);
+        topic = MessagingEntityNameMapper.ToServiceBus(topic);
+        subscription = MessagingEntityNameMapper.ToServiceBus(subscription);
         try
         {
             _ = await _administration.DeleteSubscriptionAsync(topic, subscription, ctk)
