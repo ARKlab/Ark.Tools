@@ -1,14 +1,15 @@
 # Ark.Tools SDK — decision log
 
-Status: **third feedback round requested for one propagation boundary**.
+Status: **public `Ark.Tools.Build` baseline awaiting cross-check**.
 
 ## How to review
 
-- Reply to SDK-24 with the option letter and amendments.
+- Review SDK-25 and identify anything that should move between
+  `Ark.Tools.Build`, `Ark.Tools.Sdk`, and the excluded set.
 - Accepted decisions are recorded in
   [`../design.md`](../design.md#accepted-decisions); reopen one only with a new
   constraint.
-- Package implementation remains blocked only by SDK-24.
+- Package implementation remains blocked only by the SDK-25 cross-check.
 
 ## Decision status
 
@@ -37,7 +38,8 @@ Status: **third feedback round requested for one propagation boundary**.
 | SDK-21 | DECIDED | B — SDK bans plus consumer `AdditionalFiles` and suppressions. |
 | SDK-22 | DECIDED | A — build-breaking policy changes follow semantic versioning. |
 | SDK-23 | DECIDED | B — migrate ReferenceProject category by category. |
-| SDK-24 | OPEN | Decide whether transitive policy may enter packed package dependencies. |
+| SDK-24 | DECIDED | A — public transitive policy, limited to sane defaults. |
+| SDK-25 | REVIEW REQUESTED | Cross-check the exact `Ark.Tools.Build` baseline. |
 
 ## SDK-01 — Distribution model
 
@@ -69,8 +71,9 @@ MTP command-line properties, and test-build analyzer suppression.
 
 ### Accepted hybrid
 
-- `Ark.Tools.Build` contains every non-restore property, target, analyzer
-  configuration, and additional file that can operate from `buildTransitive`.
+- `Ark.Tools.Build` contains the sane, public subset of non-restore properties,
+  targets, analyzer configuration, and additional files that can operate from
+  `buildTransitive`.
 - `Ark.Tools.Sdk` contains conditional package-reference injection and other
   SDK-only behavior.
 - `Ark.Tools.Sdk/Sdk.props` injects an exact, implicit `PackageReference` to the
@@ -85,8 +88,7 @@ MTP command-line properties, and test-build analyzer suppression.
   the SDK injects it.
 
 The feasibility spike is recorded in
-[`../design.md`](../design.md#propagation-limits). SDK-24 asks the remaining
-question exposed by the experiment.
+[`../design.md`](../design.md#propagation-limits).
 
 ## SDK-02 — Activation and project-SDK composition
 
@@ -236,7 +238,7 @@ lock-file updates.
 
 ## SDK-24 — Transitive publication boundary
 
-**Status:** OPEN.
+**Status:** DECIDED — A, with a deliberately limited public baseline.
 
 ### Verified constraint
 
@@ -251,40 +253,105 @@ Neither option protects a referenced project that omitted the SDK, because
 NuGet dependency assets flow from dependencies to consumers, never backwards.
 An isolated project also receives nothing.
 
+`Ark.Tools.Build` remains a public dependency of packed libraries. Its
+`buildTransitive` assets therefore reach downstream package consumers. The
+package is restricted by the SDK-25 safety criteria and every included default
+has an override or escape hatch.
+
+SDK activation is still validated because transitive flow is directional:
+referenced and isolated projects do not inherit policy from their consumers.
+
+## SDK-25 — `Ark.Tools.Build` baseline cross-check
+
+**Status:** REVIEW REQUESTED.
+
+The complete proposed classification and rationale are in
+[`../design.md`](../design.md#proposed-public-transitive-baseline).
+
+### Proposed `Ark.Tools.Build`
+
+- Set-when-empty for non-SQL C# projects: `Nullable=enable`,
+  `ImplicitUsings=enable`, `GenerateDocumentationFile=true`,
+  `Features=strict`, `ReportAnalyzer=true`, and
+  `EnforceCodeStyleInBuild=true`.
+- Set-when-empty for all projects: `TreatWarningsAsErrors=true` and
+  `MSBuildTreatWarningsAsErrors=true`.
+- Set-when-empty only when `UsingMicrosoftBuildSqlSdk=true`:
+  `TreatTSqlWarningsAsErrors=true` and `RunSqlCodeAnalysis=true`.
+- Separately packaged configuration assets:
+  `Ark.Tools.CodingStyle.editorconfig`,
+  `Ark.Tools.NetAnalyzers.globalconfig`,
+  `Ark.Tools.MeziantouAnalyzer.globalconfig`,
+  `Ark.Tools.ErrorProne.globalconfig`,
+  `Ark.Tools.VisualStudioThreading.globalconfig`,
+  `Ark.Tools.IdentityModel.globalconfig`,
+  `Ark.Tools.Core.globalconfig`, and
+  `Ark.Tools.BannedApi.BannedSymbols.txt`.
+- Consumer `.*.globalconfig` discovery rooted at
+  `ArkToolsLocalAnalyzerConfigRoot` (the imported `Directory.Build.props`
+  directory by default) and removal of only the `DevLooped.SponsorLink` and
+  `Moq.CodeAnalysis` analyzers.
+- No dependencies, project-type inference, test/output/publish/pack behavior,
+  global usings, restore policy, or environment workaround.
+
+### Proposed `Ark.Tools.Sdk`
+
+- Restore/CI policy, `AnalysisLevel=latest-all`, `LangVersion=14.0`, and all
+  exact implicit package references.
+- Visual Studio acceleration for validated primary SDKs, package-backed
+  settings, project classification, test and MTP behavior, Reqnroll
+  properties/content, application/test settings files, packaging behavior, the
+  three Ark global usings, and the Copilot SourceLink workaround.
+
+### Proposed exclusions
+
+- TFMs/versions, global packability, warning suppressions, unsafe blocks,
+  assembly/organization identity, icon, Application Insights dummy resource,
+  exact dependency rewriting, static-graph workaround, local Ark.Tools.Core
+  interceptor wiring, sample project-reference replacement, and properties
+  already defaulted appropriately by the .NET SDK.
+
 ### Solution alternatives
 
-- **A — Public transitive policy.** Keep `Ark.Tools.Build` flowing. Accept it as
-  a dependency of packed libraries and document that downstream projects can
-  opt out of individual features.
-- **B — Repository-private policy.** Set `PrivateAssets="all"`. Require the SDK
-  in every project and validate its presence centrally; do not promise the
-  forgotten-project safety net.
-- **C — Explicit publication switch.** Default to B, but let selected projects
-  publish `Ark.Tools.Build` with an opt-in property. This avoids accidental
-  public policy while supporting deliberate policy carrier packages, at the
-  cost of two propagation modes.
-
-### Recommendation
-
-**C.** Private-by-default avoids surprising external consumers. A named,
-documented opt-in supports a deliberate policy carrier for ARK-only package
-graphs. Regardless of the choice, validate SDK activation because transitive
-flow is directional and incomplete.
+- **A — Narrow safety baseline above.** Public compiler safety, analyzer
+  configuration, SQL properties behind explicit SQL capability, and no
+  topology or restore changes.
+- **B — Configuration only.** Move every property to the SDK; Build contains
+  analyzer configuration, banned symbols, local overrides, and SponsorLink
+  removal only. Forgotten-SDK projects lose the compiler safety defaults.
+- **C — Broad non-restore baseline.** Also move content, test, packaging, global
+  using, and native-default properties into Build. This maximizes forgotten-SDK
+  coverage but changes unknown external consumers and violates the selected
+  “sane defaults” constraint.
 
 ### Requested answer
 
-- A, B, or C.
-- If A or C: are external NuGet consumers expected to receive Ark build policy,
-  or must publication be restricted to an internal feed?
+- Confirm the three groups or list movements.
+- Specifically cross-check whether XML documentation and
+  `ImplicitUsings=enable` are appropriate at the public transitive boundary.
+  The design includes both but keeps Ark's explicit global usings in the SDK.
+- Confirm the package should rely on native `DebugType`, `DebugSymbols`,
+  `Deterministic`, `EmbedUntrackedSources`, and `EnableNETAnalyzers` defaults
+  instead of repeating them.
+- Confirm `AnalysisLevel=latest-all` and `LangVersion=14.0` stay SDK-only so a
+  public package dependency cannot force an evolving diagnostic set or C# 14 on
+  a consumer using an older .NET SDK.
+
+### Recommendation
+
+**A.** Keep the proposed narrow classification. It gives a forgotten-SDK consumer the
+compiler safety and analyzer configuration baseline without selecting
+dependencies, inferring project roles, changing output/pack topology, or
+overriding defaults already maintained by the .NET SDK.
 
 ## Accepted implementation details
 
 These details refine the accepted decisions and remain subject to executable
 tests:
 
-- **Overrides:** properties use `Condition="'$(Property)' == ''"`. Package
-  features use named `EnableArkSdk*` switches that remove the package,
-  configuration, and targets together.
+- **Overrides:** properties use `Condition="'$(Property)' == ''"`. Named
+  `EnableArkTools*` switches suppress Build assets. When the SDK is active, the
+  same switch also removes the corresponding implicit package.
 - **EditorConfig:** package files are included directly as
   `EditorConfigFiles`, matching Meziantou.NET.Sdk. Every analyzer configuration
   is a separate named package file, including `IDX00001` and `ARKCORE005`
