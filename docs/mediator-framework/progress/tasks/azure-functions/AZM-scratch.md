@@ -13,6 +13,11 @@ task.
   Evaluate a builder-based composition model to make network, transport, DataBus,
   participant, and pipeline setup easier to discover and configure.
 
+- **Split messaging `ArkApiSurface.txt` entries across multiple lines.**
+  The current one-line messaging entries hide small incremental changes in diffs.
+  Revisit the generator output so contract names, identities, and routing details
+  can evolve with reviewable line-by-line diffs.
+
 - **Keep common messaging names human-readable and transport-neutral.**
   Relax common framework naming rules so logical names can retain separators such
   as `.`; each transport should normalize names only where its native restrictions

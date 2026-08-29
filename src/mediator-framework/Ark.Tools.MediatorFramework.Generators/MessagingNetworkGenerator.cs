@@ -25,7 +25,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _commandInterface = "Ark.Tools.Solid.ICommand`1";
     private const string _commandInterfaceName = "ICommand`1";
     private const string _requestInterfaceName = "IRequest`2";
-    private const string _queryInterfaceName = "IQuery`";
     private const string _payloadReader = "Ark.Tools.MediatorFramework.Messaging.IMessagingPayloadReader";
     private const string _streamPayloadReader = "Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader";
     private const string _codec = "Ark.Tools.MediatorFramework.Messaging.IMessagingCodec";
@@ -116,10 +115,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "ARKMSG024", "Messaging network must be static",
         "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
         DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _multipleSolidKinds = _rule(
-        "ARKMSG025", "Contract has multiple Solid kinds",
-        "Contract '{0}' can implement only one of IQuery, IRequest, or ICommand", DiagnosticSeverity.Error);
-
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
         return new DiagnosticDescriptor(id, title, message, "Ark.Tools.MediatorFramework", severity, true);
@@ -293,8 +288,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             var attribute = _contractAttributes(contract);
             if (attribute.Message is not null && attribute.Event is not null)
                 _report(context, _dualContract, contract, contract.ToDisplayString());
-            if (_solidKinds(contract).Count > 1)
-                _report(context, _multipleSolidKinds, contract, contract.ToDisplayString());
             if (attribute.Event is not null && !_isEventShape(contract))
                 _report(context, _invalidEventShape, contract, contract.ToDisplayString());
             if (!hasProcessor && !hasPublisher)
@@ -491,25 +484,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             return (isCommand || isRequest)
                 && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], symbol);
         });
-    }
-
-    private static HashSet<string> _solidKinds(INamedTypeSymbol symbol)
-    {
-        var kinds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var @interface in symbol.AllInterfaces)
-        {
-            if (@interface.OriginalDefinition.ContainingNamespace.ToDisplayString() != _requestNamespace)
-                continue;
-
-            var metadataName = @interface.OriginalDefinition.MetadataName;
-            if (metadataName == "ICommand" || metadataName == _commandInterfaceName)
-                kinds.Add("ICommand");
-            else if (metadataName == "IRequest`1" || metadataName == _requestInterfaceName)
-                kinds.Add("IRequest");
-            else if (metadataName.StartsWith(_queryInterfaceName, StringComparison.Ordinal))
-                kinds.Add("IQuery");
-        }
-        return kinds;
     }
 
     private static string _contractName(INamedTypeSymbol symbol)
