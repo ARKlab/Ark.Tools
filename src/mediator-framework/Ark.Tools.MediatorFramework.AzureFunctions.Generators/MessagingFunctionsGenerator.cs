@@ -535,7 +535,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 ? character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
                 : _isAsciiLetterOrDigit(character) || character is '-' or '_' or '.')
                 ? character : '-').ToArray()).Trim('-');
-        return $"{(prefix.Length == 0 ? "entity" : prefix)}-{hash}"[..maximumLength];
+        var result = $"{(prefix.Length == 0 ? "entity" : prefix)}-{hash}";
+        return result[..Math.Min(maximumLength, result.Length)];
     }
 
     private static bool _isAsciiLetterOrDigit(char character)
