@@ -229,7 +229,7 @@ public sealed class JsonMessagingCodec : IMessagingCodec
 
 *Counting `IBufferWriter<byte>` skeleton: sizes are counted while writing —
 never a separate measuring pass — and the writer throws the typed oversize
-fail-fast at the `MessagingNetworkOptions.MaximumPayloadBytes`
+fail-fast at the `IMessagingTransport.MaximumPayloadBytes`
 threshold mid-write:*
 
 ```csharp
@@ -242,7 +242,7 @@ public sealed class CountingBufferWriter : IBufferWriter<byte>
     private long _written;
 
     /// <summary>Wraps the transport-owned writer with the network threshold
-    /// (<see cref="MessagingNetworkOptions.MaximumPayloadBytes"/>).</summary>
+    /// (<see cref="IMessagingTransport.MaximumPayloadBytes"/>).</summary>
     public CountingBufferWriter(IBufferWriter<byte> inner, int maximumPayloadBytes)
     {
         _inner = inner;

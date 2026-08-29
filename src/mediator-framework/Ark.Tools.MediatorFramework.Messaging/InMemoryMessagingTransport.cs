@@ -58,7 +58,6 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    /// <inheritdoc />
     public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
     /// <summary>Configures the native retry limit and delay for a queue.</summary>

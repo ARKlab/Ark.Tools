@@ -81,7 +81,6 @@ public sealed class StorageQueueMessagingTransport :
         MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    /// <inheritdoc />
     public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
     /// <inheritdoc />

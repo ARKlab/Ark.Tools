@@ -113,7 +113,7 @@ public interface IMessagingTransport
     /// <summary>Measures the completed native representation of an envelope, including
     /// headers and transport encoding. Claim-check decisions use this measurement, never
     /// payload bytes alone.</summary>
-    long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload);
+    long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers);
 
     /// <summary>Sends to a named queue. A non-null dueTime requires ScheduledSend.</summary>
     Task SendAsync(string queue, IReadOnlyDictionary<string, string> headers,
@@ -189,8 +189,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     /// <summary>No hard inline-envelope ceiling: the network payload threshold applies alone.</summary>
     public long? MaximumPayloadBytes => null;
 
-    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers,
-        in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
         var total = payload.Length;
         foreach (var (key, value) in headers)

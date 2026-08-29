@@ -18,7 +18,7 @@ measurement, and point-to-point messaging must be one explicit capability.
 
 - **Public capability API**: rename `MessagingCapabilities.SendReceive` to
   `SendReceive`; a network without it is publish-only.
-- **Public bus API**: rename delayed `Defer` overloads to `Defer`; current-message
+- **Public bus API**: delayed `Send` overloads are renamed to `Defer`; current-message
   deferral remains future work and is not implemented here.
 - **Network declarations/options**: remove maximum transport payload and DataBus
   offload threshold members and defaults.
