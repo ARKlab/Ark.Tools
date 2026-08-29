@@ -19,7 +19,7 @@
     <None Include="$(IntermediateOutputPath)Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
   </ItemGroup>
 
-  <Target Name="GenerateSdkProps" BeforeTargets="Pack">
+  <Target Name="GenerateSdkProps" BeforeTargets="GenerateNuspec">
     <WriteLinesToFile
       File="$(IntermediateOutputPath)Sdk.props"
       Lines="&lt;Project&gt;&#xA;  &lt;ItemGroup Condition=&quot;'$(EnableArkToolsBuild)' != 'false'&quot;&gt;&#xA;    &lt;PackageReference Include=&quot;Ark.Tools.Build&quot; Version=&quot;$(PackageVersion)&quot; IsImplicitlyDefined=&quot;true&quot; /&gt;&#xA;  &lt;/ItemGroup&gt;&#xA;&lt;/Project&gt;"

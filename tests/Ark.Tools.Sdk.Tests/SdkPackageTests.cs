@@ -31,10 +31,15 @@ public sealed class SdkPackageTests
         var sdkProps = new StreamReader(sdk.GetEntry("Sdk/Sdk.props")!.Open()).ReadToEnd();
         StringAssert.Contains(sdkProps, "Version=\"999.9.9\"");
         StringAssert.Contains(sdkProps, "IsImplicitlyDefined=\"true\"");
+        Assert.IsNull(sdk.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
+        using (var nuspec = new StreamReader(build.GetEntry("Ark.Tools.Build.nuspec")!.Open()))
+        {
+            Assert.IsFalse(nuspec.ReadToEnd().Contains("<dependencies>", StringComparison.Ordinal));
+        }
 
         var consumer = Path.Combine(root, "artifacts", "sdk-consumer");
         Directory.CreateDirectory(consumer);
-        File.WriteAllText(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>");
+        File.WriteAllText(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsPackageProject>true</ArkToolsPackageProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>");
         File.WriteAllText(Path.Combine(consumer, "Directory.Build.targets"), "<Project />");
         File.WriteAllText(Path.Combine(consumer, "global.json"), """{"sdk":{"version":"10.0.400"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""");
         File.WriteAllText(Path.Combine(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /></packageSources></configuration>");
@@ -52,10 +57,36 @@ public sealed class SdkPackageTests
             ["NUGET_HTTP_CACHE_PATH"] = Path.Combine(consumer, "http-cache")
         };
         Run("dotnet", $"restore \"{Path.Combine(consumer, "Consumer.csproj")}\" --configfile \"{Path.Combine(consumer, "NuGet.Config")}\"", environment);
-        Run("dotnet", $"msbuild \"{Path.Combine(consumer, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported", environment);
+        var properties = Run("dotnet", $"msbuild \"{Path.Combine(consumer, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported -getProperty:ArkToolsBuildImportCount", environment);
+        StringAssert.Contains(properties, "\"ArkToolsBuildImported\": \"true\"");
+        StringAssert.Contains(properties, "\"ArkToolsBuildImportCount\": \"1\"");
+
+        var disabled = Path.Combine(root, "artifacts", "sdk-consumer-disabled");
+        Directory.CreateDirectory(disabled);
+        File.Copy(Path.Combine(consumer, "global.json"), Path.Combine(disabled, "global.json"), true);
+        File.Copy(Path.Combine(consumer, "NuGet.Config"), Path.Combine(disabled, "NuGet.Config"), true);
+        File.Copy(Path.Combine(consumer, "Directory.Build.props"), Path.Combine(disabled, "Directory.Build.props"), true);
+        File.Delete(Path.Combine(disabled, "packages.lock.json"));
+        File.WriteAllText(Path.Combine(disabled, "Consumer.csproj"), """
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Ark.Tools.Sdk" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableArkToolsBuild>false</EnableArkToolsBuild>
+  </PropertyGroup>
+</Project>
+""");
+        var disabledEnvironment = new Dictionary<string, string>
+        {
+            ["NUGET_PACKAGES"] = Path.Combine(disabled, "packages"),
+            ["NUGET_HTTP_CACHE_PATH"] = Path.Combine(disabled, "http-cache")
+        };
+        Run("dotnet", $"restore \"{Path.Combine(disabled, "Consumer.csproj")}\" --configfile \"{Path.Combine(disabled, "NuGet.Config")}\"", disabledEnvironment);
+        var disabledProperties = Run("dotnet", $"msbuild \"{Path.Combine(disabled, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported", disabledEnvironment);
+        Assert.IsFalse(disabledProperties.Contains("\"ArkToolsBuildImported\": \"true\"", StringComparison.Ordinal));
     }
 
-    private static void Run(string fileName, string arguments, IDictionary<string, string>? environment = null)
+    private static string Run(string fileName, string arguments, IDictionary<string, string>? environment = null)
     {
         var startInfo = new System.Diagnostics.ProcessStartInfo(fileName, arguments)
         {
@@ -75,5 +106,6 @@ public sealed class SdkPackageTests
         var error = process.StandardError.ReadToEnd();
         var output = process.StandardOutput.ReadToEnd();
         Assert.AreEqual(0, process.ExitCode, $"{output}{Environment.NewLine}{error}");
+        return output;
     }
 }
