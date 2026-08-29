@@ -8,6 +8,16 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 
 internal static class MessagingNativeEntityNameMapper
 {
+    internal static bool IsServiceBusCharacter(char character)
+    {
+        return char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.';
+    }
+
+    internal static bool IsStorageQueueCharacter(char character)
+    {
+        return character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-';
+    }
+
     internal static string Map(string logicalName, int maximumLength, Func<char, bool> supported)
     {
         if (logicalName.Length <= maximumLength

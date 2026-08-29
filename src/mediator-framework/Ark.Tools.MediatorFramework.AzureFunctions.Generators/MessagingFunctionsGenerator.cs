@@ -522,8 +522,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             value,
             maximumLength,
             storage
-                ? static character => character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
-                : static character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.');
+                ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper.IsStorageQueueCharacter
+                : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper.IsServiceBusCharacter);
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)

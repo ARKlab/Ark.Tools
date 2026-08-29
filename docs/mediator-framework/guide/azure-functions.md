@@ -699,6 +699,7 @@ The repository boundary project is
 `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`; the sample
 also covers its sender composition in
 [`AzureFunctionsRebusTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).
+
 # Logical names and provider entities
 
 Messaging contracts, participants, networks, topics, and subscriptions use

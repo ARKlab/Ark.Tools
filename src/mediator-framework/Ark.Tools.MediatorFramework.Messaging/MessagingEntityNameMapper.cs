@@ -21,8 +21,7 @@ public static class MessagingEntityNameMapper
     public static string ToServiceBus(string logicalName)
     {
         ArgumentException.ThrowIfNullOrEmpty(logicalName);
-        return MessagingNativeEntityNameMapper.Map(logicalName, 260, static character =>
-            char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.');
+        return MessagingNativeEntityNameMapper.Map(logicalName, 260, MessagingNativeEntityNameMapper.IsServiceBusCharacter);
     }
 
     /// <summary>Maps a logical name to an Azure Storage Queue name.</summary>
@@ -31,7 +30,6 @@ public static class MessagingEntityNameMapper
     public static string ToStorageQueue(string logicalName)
     {
         ArgumentException.ThrowIfNullOrEmpty(logicalName);
-        return MessagingNativeEntityNameMapper.Map(logicalName, 63, static character =>
-            character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
+        return MessagingNativeEntityNameMapper.Map(logicalName, 63, MessagingNativeEntityNameMapper.IsStorageQueueCharacter);
     }
 }
