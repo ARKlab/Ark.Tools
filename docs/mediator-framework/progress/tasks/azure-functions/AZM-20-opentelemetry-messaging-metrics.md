@@ -3,7 +3,7 @@
 **Category**: azure-functions-messaging · **Priority**: pre-release
 **Depends on**: AZM-18, AZM-19
 **Scope**: RUNTIME + OBSERVABILITY + DOCUMENTATION
-**Design**: [Pipeline and context propagation](../../azure-functions-messaging-design.md#pipeline-and-context-propagation), [Test strategy and release gates](../../azure-functions-messaging-design.md#13-test-strategy-and-release-gates)
+**Design**: [Pipeline and propagation](../../azure-functions-messaging-design.md#10-pipeline-and-propagation), [Test strategy and release gates](../../azure-functions-messaging-design.md#13-test-strategy-and-release-gates)
 
 ## Problem
 

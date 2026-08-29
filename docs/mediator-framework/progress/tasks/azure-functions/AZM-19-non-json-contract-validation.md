@@ -3,7 +3,7 @@
 **Category**: azure-functions-messaging · **Priority**: pre-release
 **Depends on**: AZM-17, AZM-18
 **Scope**: GENERATORS + ANALYZERS + SERIALIZATION
-**Design**: [Serialization](../../azure-functions-messaging-design.md#serialization), [Envelope and compatibility model](../../azure-functions-messaging-design.md#4-envelope-and-compatibility-model)
+**Design**: [Headers, payload, and serialization runtime model](../../azure-functions-messaging-design.md#headers-payload-and-serialization-runtime-model), [Envelope and compatibility model](../../azure-functions-messaging-design.md#4-envelope-and-compatibility-model)
 
 ## Problem
 

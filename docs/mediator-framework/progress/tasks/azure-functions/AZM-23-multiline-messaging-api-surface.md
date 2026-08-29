@@ -3,7 +3,7 @@
 **Category**: azure-functions-messaging · **Priority**: pre-release
 **Depends on**: AZM-17, AZM-18, AZM-19, AZM-21, AZM-22
 **Scope**: API-SURFACE GENERATOR + BASELINES + DOCUMENTATION
-**Design**: [API surface and evolution](../../../design.md#api-surface-and-evolution), [API-surface guide](../../../guide/api-surface-snapshots.md)
+**Design**: [API surface snapshots](../../../design.md#api-surface-snapshots), [API-surface guide](../../../guide/api-surface-snapshots.md)
 
 ## Problem
 

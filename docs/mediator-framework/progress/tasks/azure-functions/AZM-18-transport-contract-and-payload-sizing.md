@@ -3,7 +3,7 @@
 **Category**: azure-functions-messaging · **Priority**: pre-release
 **Depends on**: AZM-17
 **Scope**: PUBLIC API + RUNTIME + TRANSPORTS
-**Design**: [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport), [Compression and DataBus](../../azure-functions-messaging-design.md#compression-and-databus-claim-check)
+**Design**: [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport), [DataBus claim-check](../../azure-functions-messaging-design.md#11-databus-claim-check)
 
 ## Problem
 
