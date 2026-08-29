@@ -9,6 +9,15 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Maps logical messaging names to deterministic provider entity names.</summary>
 public static class MessagingEntityNameMapper
 {
+    /// <summary>Returns an unchanged logical name for the InMemory transport.</summary>
+    /// <param name="logicalName">The complete logical name.</param>
+    /// <returns>The original logical name.</returns>
+    public static string ToInMemory(string logicalName)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(logicalName);
+        return logicalName;
+    }
+
     /// <summary>Maps a logical name to an Azure Service Bus entity name.</summary>
     /// <param name="logicalName">The complete logical name.</param>
     /// <returns>The deterministic native name.</returns>
