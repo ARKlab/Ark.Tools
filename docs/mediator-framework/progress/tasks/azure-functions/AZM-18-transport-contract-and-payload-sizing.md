@@ -1,22 +1,18 @@
-# AZM-18 — Transport contract and Service Bus topology
+# AZM-18 — Transport contract and payload sizing
 
 **Category**: azure-functions-messaging · **Priority**: pre-release
 **Depends on**: AZM-17
-**Scope**: PUBLIC API + RUNTIME + TRANSPORTS + FUNCTIONS GENERATOR
-**Design**: [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport), [Generated Functions surface](../../azure-functions-messaging-design.md#6-generated-functions-surface)
+**Scope**: PUBLIC API + RUNTIME + TRANSPORTS
+**Design**: [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport), [Compression and DataBus](../../azure-functions-messaging-design.md#compression-and-databus-claim-check)
 
 ## Problem
 
 The current transport contract mixes a network payload policy with native
 envelope measurement, treats point-to-point receive as if it were independent
-from send, and forwards every Service Bus subscription into one participant
-queue. These choices leak transport limits into network declarations and add an
-unnecessary broker hop.
+from send. These choices leak transport limits into network declarations.
 
 Before release, transports must own their physical payload limit and header
-measurement, point-to-point messaging must be one explicit capability, and
-Service Bus subscriptions must receive directly while retaining one shared
-participant concurrency and retry policy.
+measurement, and point-to-point messaging must be one explicit capability.
 
 ## Execution map
 
@@ -31,14 +27,8 @@ participant concurrency and retry policy.
 - **Payload runtime**: calculate headers plus body, compress before sizing, and
   transparently claim-check through DataBus when the selected transport limit is
   exceeded.
-- **Service Bus topology**: generate one direct command-queue trigger when
-  required and one direct trigger per subscription; remove subscription
-  forwarding.
-- **Participant policy**: all triggers for one participant share its configured
-  concurrency budget, retry policy, and DLQ semantics. No total ordering across
-  entities is promised.
-- **Conformance**: update every transport, outbox path, generated manifest,
-  lifecycle reconciler, sample host, and transport conformance suite together.
+- **Conformance**: update every transport, outbox path, generated descriptor,
+  sample host, and transport conformance suite together.
 
 ## Implementation steps
 
@@ -67,18 +57,7 @@ participant concurrency and retry policy.
 8. Apply identical final sizing before direct sends, publishes, scheduled sends,
    and native outbox persistence. The outbox processor sends an already validated
    representation without rerunning claim-check logic.
-9. Change Service Bus manifests so subscriptions target their topics directly
-   without `ForwardTo`. Provision retry and dead-letter settings on each
-   subscription.
-10. Generate a command-queue trigger only for processed point-to-point messages
-    and one subscription trigger for each subscribed event. A subscriber-only
-    participant has no identity queue.
-11. Coordinate all generated triggers through participant-level concurrency and
-    retry/DLQ configuration. Do not imply ordering between the command queue and
-    independent subscriptions.
-12. Remove obsolete forwarded-queue reconciliation and ownership logic while
-    preserving safe deletion of participant-owned subscriptions.
-13. Regenerate API baselines and inspect affected Functions `.g.cs` output.
+9. Regenerate API baselines and inspect affected emitted `.g.cs` output.
 
 ## Core code shapes
 
@@ -91,23 +70,17 @@ the transparent compression/DataBus decision.
 hosting. `PubSub` remains independent. Scheduled delivery remains separately
 gated, with delayed point-to-point delivery exposed as `Defer`.
 
-The generated Functions surface may contain several triggers for one
-participant. They all dispatch through the same participant descriptor and
-policy but settle against their own native queue or subscription.
-
 ## Guide contribution
 
 Update the transport matrix, bus API, DataBus, outbox, retry, resource
 lifecycle, and Azure Functions guides. Explain complete payload sizing,
-transparent offload, publish-only networks, direct subscription triggers,
-participant-wide concurrency, and the lack of cross-entity ordering.
+transparent offload, and publish-only networks.
 
 ## Sample extension
 
-Update the Book sample so one participant processes commands and consumes
-multiple direct Service Bus subscriptions. Demonstrate shared concurrency
-configuration, a publish-only participant, transparent DataBus offload under
-different transport limits, and the renamed delayed-send API.
+Update the Book sample to demonstrate a publish-only participant, transparent
+DataBus offload under different transport limits, and the renamed delayed-send
+API.
 
 ## Required test coverage
 
@@ -123,13 +96,6 @@ different transport limits, and the renamed delayed-send API.
   including header growth and attachment-reference recomputation.
 - Compression occurs before sizing and DataBus offload.
 - Direct send, publish, defer, and outbox enqueue apply the same validation.
-- Service Bus subscriptions have no forwarding destination.
-- Generated Functions contain the required command and subscription triggers;
-  subscriber-only participants have no identity queue.
-- Multiple triggers share participant concurrency/retry configuration and retain
-  independent settlement and DLQs.
-- Lifecycle reconciliation creates and removes only participant-owned direct
-  subscriptions.
 - InMemory, Storage Queue, and Service Bus conformance suites remain green.
 
 ## Outcomes
@@ -137,7 +103,6 @@ different transport limits, and the renamed delayed-send API.
 - Transport limits and header encoding are owned by transports.
 - Compression and DataBus offload are transparent to network declarations.
 - Point-to-point messaging has one accurate capability.
-- Service Bus subscriptions receive directly without an extra queue hop.
 
 ## Acceptance
 
@@ -148,8 +113,6 @@ different transport limits, and the renamed delayed-send API.
 - [ ] Every transport implements the static payload limit and header sizing
   contract.
 - [ ] Runtime claim-check uses complete headers-plus-body size.
-- [ ] Service Bus uses direct subscription triggers with shared participant
-  policy and no forwarding.
 - [ ] Sample, guides, API baselines, and generated-source inspections are
   updated.
 - [ ] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.

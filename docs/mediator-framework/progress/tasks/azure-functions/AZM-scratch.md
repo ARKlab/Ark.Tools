@@ -15,6 +15,7 @@ pre-release work is specified.
 ### Generic declaration attributes
 
 **Timing: pre-release.**
+**Assigned:** [AZM-21](AZM-21-generic-messaging-declarations.md).
 
 Replace only the host, network, and participant declaration attributes with
 generic attributes. Contract lists, pipeline-step lists, and the participant
@@ -23,12 +24,13 @@ change the existing requirement for generated declaration classes to be
 partial. Remove the corresponding non-generic attributes before release rather
 than supporting two declaration syntaxes.
 
-Open question: what are the exact declaration interfaces and minimum
-static-abstract members for hosts, networks, and participants?
+The declaration interfaces expose only the generated static members currently
+consumed by the messaging and host generators.
 
 ### `IBus` registration and setup
 
 **Timing: pre-release.**
+**Assigned:** [AZM-22](AZM-22-fluent-messaging-composition.md).
 
 Registration is currently split across transport, codec, DataBus, participant,
 bus, lifecycle, outbox, and Functions extensions. This does not fully realize
@@ -36,9 +38,10 @@ AZM-13's intended single discoverable composition entry point. Settle the
 canonical composition model before release. The builder replaces the current
 low-level public setup surface.
 
-Use one root builder for each hosting mode — Functions receiver, custom
-receiver, and producer-only host — with common naming and shared sub-builders
-where their concerns overlap.
+Start one fluent configuration flow from `IServiceCollection`, similar to
+`ConfigureRebus(...)`. It exposes related builders for Functions receiver,
+custom receiver, and producer-only modes, with common naming and shared
+sub-builders where their concerns overlap.
 
 Decisions:
 
@@ -47,15 +50,15 @@ Decisions:
   infrastructure.
 - Host-independent application concerns remain in SimpleInjector.
 
-Open questions:
-
-- Does one composition root support multiple networks or participants?
-- Which choices belong to the builder: transport, DataBus, codecs, pipelines,
-  lifecycle, and outbox?
+The flow guides all host decisions: network, participant, transport, DataBus,
+codecs, pipelines, lifecycle, and outbox. One top-level configuration call binds
+one network/participant/host; additional topologies use additional calls. Calls
+to generated registration extensions are implicit.
 
 ### Multiline messaging `ArkApiSurface.txt` entries
 
 **Timing: pre-release.**
+**Assigned:** [AZM-23](AZM-23-multiline-messaging-api-surface.md).
 
 The current one-line messaging records make the API-surface feature too
 difficult to use: any change replaces an entire dense line, obscuring the field
@@ -100,7 +103,7 @@ Decisions:
 ### Transport payload sizing
 
 **Timing: pre-release contract finalization.**
-**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
 
 Replace the current model:
 
@@ -122,7 +125,7 @@ remain transparent runtime concerns.
 ### `MessagingCapabilities.Receive` naming
 
 **Timing: pre-release.**
-**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
 
 Rename `Receive` to `SendReceive`. Point-to-point `Send` requires a receiving
 participant and is available only when this capability is declared. A network
@@ -134,7 +137,7 @@ declared.
 **Timing: pre-release for naming; future for current-message deferral unless a
 required use case is identified.**
 **Pre-release naming assigned:**
-[AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
+[AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
 
 If Rebus terminology is the target API, rename the two delayed `Send` overloads
 to `Defer` before release. Deferring the currently handled message is a separate
@@ -158,7 +161,7 @@ Open questions:
 ### Network maximum transport payload
 
 **Timing: pre-release.**
-**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
 
 Remove this network setting and its default. Each transport declares its actual
 complete payload limit at runtime. Compression runs from its static threshold;
@@ -190,18 +193,18 @@ Open questions:
 
 ### Service Bus subscription forwarding
 
-**Timing: pre-release topology decision.**
-**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
+**Timing: future — direct subscription triggers rejected for pre-release.**
 
-The single participant queue and single trigger are implementation
-conveniences, not requirements. Prefer direct Service Bus subscription triggers:
-they remove a broker hop and retain locking, delivery count, and DLQ behavior on
-the subscription itself. Generate a command-queue trigger plus one trigger per
-subscription. All triggers for one participant must share its concurrency
-budget and retry/DLQ policy through participant-level runtime configuration; a
-single generated trigger is not required. No total ordering across independent
-entities is promised. Changing this later would break manifests, generated
-triggers, lifecycle reconciliation, and deployed resources.
+Retain the current model in which every Service Bus subscription forwards into
+the participant identity queue and one generated trigger receives commands and
+events. The extra queue is an accepted implementation convenience that gives the
+participant one concurrency, retry, and DLQ policy.
+
+Direct subscription triggers remain in scratch only as a possible future
+topology redesign. Revisit them only with evidence that removing the broker hop
+outweighs the operational simplicity of one participant queue; such a change
+would require explicit migration of manifests, lifecycle ownership, triggers,
+and deployed resources.
 
 ## Serialization
 

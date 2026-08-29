@@ -23,6 +23,8 @@ physical names selected by each transport.
   and subscriptions.
 - **Shared generator model**: replace portable queue-name normalization with one
   logical-name validator and deterministic topic/subscription derivation.
+  Prefix default contract names with their resolved `ApiGroup`, separated from
+  the contract-local name by `.`.
 - **Wire contract**: keep the complete logical contract name in
   `amf1-msg-type`; current names and `FormerNames` remain registry values.
 - **Transport mapping**: add one deterministic logical-to-native entity-name
@@ -40,28 +42,32 @@ physical names selected by each transport.
    aliases must be lowercase, non-empty, contain only letters, digits, `-`,
    `_`, `.`, and `/`, and contain no empty or leading/trailing separator
    segments.
-2. Update default contract, participant, and network name generation to produce
-   valid readable logical names without applying transport restrictions.
-3. Keep `amf1-msg-type`, routing registries, aliases, participant ownership, and
+2. Update default contract names to compose the resolved `ApiGroup` and
+   contract-local name as `<api-group>.<contract-name>`. Normalize both
+   components to the logical-name grammar before joining them with one `.`.
+   Explicit contract names remain authoritative.
+3. Update default participant and network name generation to produce valid
+   readable logical names without applying transport restrictions.
+4. Keep `amf1-msg-type`, routing registries, aliases, participant ownership, and
    topology metadata keyed by logical names.
-4. Derive logical event topics from the publisher logical identity and current
+5. Derive logical event topics from the publisher logical identity and current
    contract logical name. Derive subscription logical names from the subscriber
    and event topology without applying native restrictions.
-5. Implement transport-specific native entity mapping:
+6. Implement transport-specific native entity mapping:
    preserve every supported character when the complete logical name fits;
    otherwise retain a readable prefix and append a stable hash of the complete
    logical name. Apply mapping exactly once.
-6. Make the hash algorithm, separator, casing, and truncation rules deterministic
+7. Make the hash algorithm, separator, casing, and truncation rules deterministic
    and version-stable. Include enough hash material to make accidental
    collisions impractical.
-7. Diagnose final native-name collisions and logical names that cannot produce
+8. Diagnose final native-name collisions and logical names that cannot produce
    a valid native name within the provider limit.
-8. Make generated Functions triggers and resource manifests use the same shared
+9. Make generated Functions triggers and resource manifests use the same shared
    mapping implementation as runtime send, publish, and lifecycle management.
-9. Keep `FormerNames` as receive-time aliases only. They do not create, rename,
+10. Keep `FormerNames` as receive-time aliases only. They do not create, rename,
    or alias topics and subscriptions; current-name or publisher changes require
    an explicit topology migration.
-10. Regenerate sample baselines and inspect all affected emitted `.g.cs` files.
+11. Regenerate sample baselines and inspect all affected emitted `.g.cs` files.
 
 ## Core code shapes
 
@@ -93,6 +99,8 @@ contract name.
 - Uppercase, unsupported characters, empty segments, and leading/trailing
   separators produce targeted diagnostics.
 - Defaults are deterministic and valid.
+- Default contract names use the dot-separated resolved `ApiGroup` prefix;
+  explicit names are unchanged.
 - `amf1-msg-type` preserves the complete logical contract name.
 - InMemory preserves logical entity names unchanged.
 - Service Bus and Storage Queue mappings preserve supported names and
