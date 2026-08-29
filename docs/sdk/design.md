@@ -400,7 +400,7 @@ one merged configuration.
   [`.editorconfig`](../../.editorconfig), including expression, pattern,
   namespace, modifier, `var`, and expression-body preferences.
 - Naming: interfaces start with `I`; types and protected members use PascalCase;
-  private/internal methods, fields, events, and properties start with `_`.
+  private/internal methods, fields, events, and properties use `_camelCase`.
 - Built-in naming diagnostic: `IDE1006` is an error.
 
 #### `Ark.Tools.IdentityModel.globalconfig`
