@@ -69,7 +69,7 @@ jobs:
     # If you do not check out your code, Copilot will do this for you.
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: 'Wait for Service Bus emulator'
         run: |
@@ -82,7 +82,7 @@ jobs:
           '
 
       - name: Install dotnet
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
 
