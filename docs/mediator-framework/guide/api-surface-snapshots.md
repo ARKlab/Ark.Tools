@@ -57,6 +57,7 @@ CONTRACT GreetingResponse.Message : string
 CONTRACT GreetingResponse.Status : EvolvableEnum<GreetingStatus>
 EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
 EVOLVABLE-ENUM GreetingStatus.Active=1
+REBUS CreateGreetingRequest -> queue:greetings
 MESSAGE MyApp.Messages.CompleteGreeting -> name:complete_greeting former:old_complete_greeting
 EVENT MyApp.Messages.GreetingCompleted -> name:greeting_completed former:-
 NETWORK MyApp.Messages.GreetingNetwork -> members:MyApp.Messages.GreetingProcessorParticipant|MyApp.Messages.GreetingPublisherParticipant requires:receive|pubsub
@@ -69,10 +70,12 @@ and version range. Following lines describe public members and protobuf tags.
 every member and numeric value of a plain enum or an
 `EvolvableEnum<TEnum>`-wrapped enum reached from a contract, so adding,
 removing, or renumbering a member is a visible diff. The `REBUS` line
-`MESSAGE` and `EVENT` record logical names and aliases. `PARTICIPANT` records
-network membership, portable identity,
-ownership, subscriptions, and serializers. `NETWORK` records the complete member
-list and required optional capabilities. The baseline covers:
+describes generated Rebus queue routing. `MESSAGE` and `EVENT` record native
+logical names and aliases. `PARTICIPANT` records membership, identity, ownership,
+subscriptions, and serializer declarations. `NETWORK` records the complete
+member list and required optional capabilities. These declaration entries may
+feed either Rebus or native generation, but do not imply wire compatibility.
+The baseline covers:
 
 | Change | Detected | Typical decision |
 | --- | --- | --- |
@@ -82,8 +85,9 @@ list and required optional capabilities. The baseline covers:
 | Change only a protobuf member number | No | Review generated proto/schema changes separately; snapshots record the public contract shape, not protobuf tag numbers. |
 | Add, remove, rename, or renumber an `enum`/`EvolvableEnum<TEnum>` member | Yes | For a strict enum this is a breaking wire change; for an evolvable enum, adding a member is safe for unknown-value-tolerant clients, but removing or renumbering one is not. |
 | Change the gRPC service/method name or API group | Yes | Treat it as a consumer-visible wire change. |
-| Change a logical message/event name or alias | Yes | Drain old messages; changing an event name also requires an explicit topic/subscription migration. |
-| Change a participant identity, owner, subscriber, serializer, or network member | Yes | Review queue/topic ownership, wire compatibility, and deployment order. |
+| Change a `RebusMessage` owner queue | Yes | Plan routing and consumer deployment together. |
+| Change a logical message/event name or alias | Yes | Drain old native messages; changing an event name also requires an explicit topic/subscription migration. |
+| Change a participant identity, owner, subscriber, serializer, or network member | Yes | Review the selected topology mode, resources, wire compatibility, and deployment order. |
 | Change handler implementation only | No | No public generated surface has changed. |
 
 ## Respond to diagnostics
@@ -122,18 +126,20 @@ same review gate applies to every build.
 
 ## Review generated host code and package APIs
 
-The contract snapshot intentionally excludes generated trigger implementation
-details marked with `MessagingGeneratedSurfaceAttribute`. After building with
-`EmitCompilerGeneratedFiles=true`, inspect the emitted Functions `.g.cs` files
-for the native trigger type, participant identity queue, dispatcher call, binding
-connection, and manual-settlement settings. Copy generated signatures into
-documentation only from that output.
+The contract snapshot intentionally represents generated trigger behavior
+through its contract and topology declarations rather than trigger
+implementation details. Build the consuming Functions project with
+`EmitCompilerGeneratedFiles=true`, then inspect the emitted `.g.cs` for the
+native trigger type, participant identity queue, connection setting, dispatcher
+call, and manual settlement. Copy generated signatures into documentation only
+from that output. Generated registry members marked with
+`MessagingGeneratedSurfaceAttribute` are omitted because the dedicated
+`MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` lines already represent them.
 
-This snapshot is not a replacement for .NET package API compatibility. Package
-validation separately reviews public attributes, enums, options, `IBus`,
-`MessagingFailed<T>`, pipeline contracts, DataBus abstractions, outbox APIs,
-processor hosting, and message context members against the previously released
-package. Both gates must pass: the snapshot protects application wire/topology
-metadata, while package validation protects the library's CLR surface.
+.NET package validation separately protects public attributes, enums, options,
+`IBus`, `MessagingFailed<T>`, pipeline contracts, DataBus abstractions, outbox
+APIs, processor hosting, and message-context members. Both gates must pass: the
+snapshot protects application wire/topology declarations, while package
+validation protects the library CLR surface.
 
 Architecture rationale: [design.md](../design.md).
