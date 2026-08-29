@@ -157,7 +157,7 @@
 		<EnableSourceLink>false</EnableSourceLink>
 	</PropertyGroup>
 
-	<ItemGroup Condition="$(IsPackable) != 'false'">
+	<ItemGroup Condition="$(IsPackable) != 'false' AND '$(ArkToolsPackageProject)' != 'true'">
 		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 		<PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
 	</ItemGroup>

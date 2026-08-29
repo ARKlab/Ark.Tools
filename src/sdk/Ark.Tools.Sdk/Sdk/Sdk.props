@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false'">
+    <PackageReference Include="Ark.Tools.Build" Version="999.9.9" IsImplicitlyDefined="true" />
+  </ItemGroup>
+</Project>
