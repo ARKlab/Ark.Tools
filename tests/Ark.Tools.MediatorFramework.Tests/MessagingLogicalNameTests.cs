@@ -13,6 +13,10 @@ public sealed class MessagingLogicalNameTests
 {
     [TestMethod]
     [DataRow("books-print_book.v1/events")]
+    [DataRow("books")]
+    [DataRow("books.v1")]
+    [DataRow("books_events")]
+    [DataRow("a/b/c")]
     public void ValidLogicalNamesAcceptSupportedSeparators(string value)
     {
         Ark.Tools.MediatorFramework.MessagingLogicalName.IsValid(value).Should().BeTrue();

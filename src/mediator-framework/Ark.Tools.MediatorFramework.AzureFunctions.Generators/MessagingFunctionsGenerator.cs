@@ -7,7 +7,6 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -519,31 +518,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
     private static string _nativeName(string value, int maximumLength, bool storage)
     {
-        var valid = value.Length <= maximumLength && value.All(character =>
-            (storage
-                ? character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
-                : _isAsciiLetterOrDigit(character) || character is '-' or '_' or '.'));
-        if (valid && value[0] != '-' && value[^1] != '-')
-            return value;
-        using var sha256 = SHA256.Create();
-        var hash = BitConverter.ToString(sha256.ComputeHash(Encoding.UTF8.GetBytes(value)))
-            .Replace("-", string.Empty)
-            .ToLowerInvariant();
-        var prefixLength = Math.Max(1, maximumLength - hash.Length - 1);
-        var prefix = new string(value.Take(prefixLength).Select(character =>
-            (storage
-                ? character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
-                : _isAsciiLetterOrDigit(character) || character is '-' or '_' or '.')
-                ? character : '-').ToArray()).Trim('-');
-        var result = $"{(prefix.Length == 0 ? "entity" : prefix)}-{hash}";
-        return result[..Math.Min(maximumLength, result.Length)];
-    }
-
-    private static bool _isAsciiLetterOrDigit(char character)
-    {
-        return character is >= 'a' and <= 'z'
-            or >= 'A' and <= 'Z'
-            or >= '0' and <= '9';
+        return global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper.Map(
+            value,
+            maximumLength,
+            storage
+                ? static character => character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-'
+                : static character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.');
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)
