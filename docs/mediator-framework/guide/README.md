@@ -42,7 +42,8 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | --- | --- | --- |
 | HTTP | `[HttpEndpoint]`, `[HttpBody]`, `[HttpQuery]`, `[HttpRoute]` | Minimal API route, binding, status code, multipart support |
 | gRPC | `[GrpcMethod]`, `[GrpcService]`, `[ProtoContract]` | Code-first service, protobuf schema, reflection |
-| Rebus | `[RebusMessage(OwnerQueue = "...")]` | Message wrapper, scoped handler, type routing |
+| Messaging | `[Message]`, `[Event]`, `[MessagingParticipant]`, `[MessagingNetwork]` | Participant-owned routing, transport-neutral send/publish, generated dispatch |
+| Rebus | `[ArkRebusHost(typeof(MyParticipant))]` | Generated routing, scoped dispatch adapters, retries, and subscriptions |
 | Validation | `IValidator<T>` | Validation decorator before the handler |
 | Authorization | `PolicyAuthorizeAttribute` | Shared policy evaluation for HTTP, gRPC, and messages |
 | Versioning | `[Versioning]`, `v{version}` route | Version-specific HTTP/OpenAPI/gRPC surfaces |

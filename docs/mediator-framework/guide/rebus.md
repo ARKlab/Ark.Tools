@@ -60,15 +60,15 @@ The processing participant owns the queue:
 [MessagingParticipant(
     Identity = "greetings",
     Processes = new[] { typeof(CompleteGreetingCompositionRequest) })]
-public sealed class GreetingProcessorParticipant;
+public sealed partial class GreetingProcessorParticipant;
 
 [MessagingNetwork(Members = new[] { typeof(GreetingProcessorParticipant) })]
-public sealed class GreetingNetwork;
+public sealed partial class GreetingNetwork;
 ```
 
-`[RebusMessage(OwnerQueue = "greetings")]` remains supported for legacy
-contracts. When both models are present, the generated participant owner and
-legacy owner must match.
+The participant declaration is the ownership source of truth. Contract metadata
+contains the logical name and aliases only; it does not select a queue or
+transport.
 
 The sample follows this boundary:
 
@@ -223,6 +223,25 @@ original sender identity and message ID. Rebus mode instead keeps
 processor. Do not register both durable adapters for one topology or let either
 processor drain the other's rows. Functions may enqueue native messages, but may
 not host either polling processor.
+
+### Migrate a Rebus-only receiver to Azure Functions
+
+1. Declare every message owner and event publisher/subscriber in one shared
+   network, then accept the generated messaging API-surface change.
+2. Bind the new Functions process to the receiving participant with
+   `MessagingFunctionsHostAttribute`; keep application handlers registered in
+   the application composition.
+3. Configure the native transport, codecs, retry policy, pipeline, DataBus, and
+   lifecycle policy explicitly in the Functions host.
+4. Provision a separate native topology and drain the Rebus input, subscription,
+   error, and outbox resources before switching producers.
+5. Remove the old Rebus receiver only after native delivery and failure handling
+   have been verified. Rebus remains supported for other participants.
+
+Do not point the Functions trigger at a Rebus queue. Shared contract and
+participant metadata does not make persisted messages interoperable. A rollback
+switches producers back to the drained Rebus topology; it does not replay native
+envelopes through Rebus.
 
 ## 8. Do not use Rebus for streams
 

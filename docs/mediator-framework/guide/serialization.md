@@ -119,8 +119,16 @@ a missing context fails before processing begins.
 Receive is two-phase: `MessagingHeaderProcessor` bounds and validates headers,
 checks the network identity, and resolves the codec from
 `amf1-content-type`; the generated participant binder then deserializes the
-selected contract. Content encoding and DataBus attachment headers remain
-opaque until the compression and claim-check task adds their processing.
+selected contract. Content encoding and DataBus attachment headers then select
+bounded decompression or claim-check retrieval before deserialization.
+
+Receivers read the protocol from each message header, not from their current
+default serializer. A participant may therefore retire a write protocol only
+after every message encoded with it has left queues, retries, scheduled storage,
+and outboxes. Keep the old codec installed for that drain window. Startup rejects
+duplicate content types, missing declared codecs, incompatible publisher and
+subscriber serializer sets, and a default serializer absent from the
+participant's declared set.
 
 ### Additional messaging codecs
 

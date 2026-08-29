@@ -40,19 +40,22 @@ builder.Logging.ClearProviders();
 builder.Logging.AddNLog();
 builder.ConfigureFunctionsWebApplication();
 
-var container = AzureFunctionsRebusComposition.BuildContainer(
-    builder.Configuration["AzureServiceBus:ConnectionString"]);
+var container = AzureFunctionsNativeComposition.BuildContainer(
+    useSqlStore: !string.IsNullOrWhiteSpace(
+        builder.Configuration["ConnectionStrings:Sample"]),
+    connectionString: builder.Configuration["ConnectionStrings:Sample"]);
 builder.Services.AddArkAzureFunctions(container);
 builder.Services.AddArkHealthChecks();
 builder.Services.AddHostedService(
-    _ => new AzureFunctionsRebusHostedService(container));
+    _ => new AzureFunctionsContainerHostedService(container));
 
 await builder.Build().RunAsync().ConfigureAwait(false);
 ```
 
-The sample uses the same `ApplicationComposition.RegisterOutboundRebus` path as
-other sender-only hosts. The Rebus setup includes source-generated application
-JSON and `logging.NLog()`.
+This composes the application and HTTP boundary only. Add exactly one messaging
+transport in step 4. The sample keeps a mutually exclusive outbound Rebus
+composition for migration tests, but the production Functions entry point uses
+native messaging and never starts a Rebus worker.
 
 ## 3. Declare a shared messaging network
 
