@@ -14,55 +14,54 @@ pre-release work is specified.
 
 ### Generic declaration attributes
 
-**Timing: pre-release, if approved.**
+**Timing: pre-release.**
 
-Replacing type-valued attributes is source-breaking. The current network,
-participant, Functions host, and Rebus host APIs expose participant, contract,
-retry-policy, and pipeline-step types through `Type` values. If declaration
-interfaces with static-abstract members are the intended model, introduce them
-before the first release rather than supporting two declaration models later.
+Replace only the host, network, and participant declaration attributes with
+generic attributes. Contract lists, pipeline-step lists, and the participant
+retry policy remain type-valued attribute properties. Generic attributes do not
+change the existing requirement for generated declaration classes to be
+partial. Remove the corresponding non-generic attributes before release rather
+than supporting two declaration syntaxes.
 
-Open questions:
-
-- Does this apply only to host-to-participant/network references, or also to the
-  variable-length `Members`, `Processes`, `Publishes`, `Subscribes`,
-  `IncomingSteps`, and `OutgoingSteps` lists?
-- Is `Retry` also a generic type argument?
-- What are the exact declaration interfaces and required static-abstract
-  members? Are declaration classes still required to be `sealed partial`?
-- Should the existing non-generic attributes be removed or retained as a
-  compatibility syntax?
+Open question: what are the exact declaration interfaces and minimum
+static-abstract members for hosts, networks, and participants?
 
 ### `IBus` registration and setup
 
-**Timing: pre-release for the canonical API; future for an additive facade.**
+**Timing: pre-release.**
 
 Registration is currently split across transport, codec, DataBus, participant,
 bus, lifecycle, outbox, and Functions extensions. This does not fully realize
 AZM-13's intended single discoverable composition entry point. Settle the
-canonical composition model before release. A builder that only wraps and
-retains all current public registration methods is incremental and may wait.
+canonical composition model before release. The builder replaces the current
+low-level public setup surface.
+
+Use one root builder for each hosting mode — Functions receiver, custom
+receiver, and producer-only host — with common naming and shared sub-builders
+where their concerns overlap.
+
+Decisions:
+
+- `IServiceCollection` is canonical for integration with an outside native
+  host, including ASP.NET Core, gRPC, Azure Functions, and transport
+  infrastructure.
+- Host-independent application concerns remain in SimpleInjector.
 
 Open questions:
 
-- Does the builder replace the low-level extensions or only provide a preferred
-  facade over them?
-- Must one model cover Functions receivers, custom receivers, and producer-only
-  hosts?
 - Does one composition root support multiple networks or participants?
 - Which choices belong to the builder: transport, DataBus, codecs, pipelines,
   lifecycle, and outbox?
-- Is `IServiceCollection` the canonical composition API, with SimpleInjector
-  integration layered on top?
 
 ### Multiline messaging `ArkApiSurface.txt` entries
 
-**Timing: future.**
+**Timing: pre-release.**
 
-This is diff-readability tooling, not a runtime or public API correction. The
-one-line grammar is deterministic and already enforced. A later change can
-remain non-breaking by accepting old one-line baselines while emitting a
-versioned block format during an explicit baseline migration.
+The current one-line messaging records make the API-surface feature too
+difficult to use: any change replaces an entire dense line, obscuring the field
+that developers must review. Change the emitted and accepted grammar before
+release. This is a soft breaking change because existing baselines fail and
+developers must explicitly review and accept the clearer generated diff.
 
 Before scheduling, define block delimiters, field ordering, ownership of
 diagnostics, and whether only set-valued fields or every field receives its own
@@ -79,42 +78,53 @@ registries should use stable logical names, while each transport maps logical
 entity names to its native restrictions. Changing this later would alter wire
 identities and deployed topology.
 
-Open questions:
+Decisions:
 
-- Which values are logical names: contracts, participants, networks, topics,
-  and subscriptions?
-- Are case and all separators preserved, or is only `.` added to the accepted
-  canonical syntax?
-- What deterministic transport mapping and collision diagnostic apply?
-- Does `amf1-msg-type` always retain the logical name?
-- How do `FormerNames` and the current
-  `<publisher-identity>-<contract-name>` topic derivation interact with native
-  normalization?
+- Contract, participant, network, topic, and subscription names are logical.
+- Logical names are lowercase and may contain `-`, `_`, `.`, and `/`
+  separators.
+- `amf1-msg-type` always contains the logical contract name.
+- InMemory uses the logical entity name unchanged.
+- A native transport preserves characters it supports. If replacement or
+  truncation is required, it appends a stable hash of the complete logical name
+  to the readable prefix. This prevents two logical names from collapsing to
+  one native entity; generation reports a diagnostic if the final names still
+  collide or cannot fit the native limit.
+- Topics are first derived from the logical publisher and current logical
+  contract name, then mapped once by the transport. `FormerNames` remain
+  receive-time aliases for `amf1-msg-type`; they do not create or alias native
+  topics. Changing the current contract or publisher name therefore still
+  requires an explicit topology migration.
 
-### `IMessagingTransport.MeasureNative`
+### Transport payload sizing
 
 **Timing: pre-release contract finalization.**
 
-Keep the capability. Claim-check decisions must include headers and native
-encoding; Storage Queue Base64 and Service Bus application properties cannot be
-derived from payload length alone. Rename it before release to a precise name
-such as `MeasureInlineEnvelopeBytes` and document whether the result is exact or
-a conservative upper bound.
+Replace the current model:
 
-Open question: is `MaximumTransportPayloadBytes` a payload-only policy
-threshold, while `MaximumInlineEnvelopeBytes` plus native measurement is the
-hard complete-envelope limit? The implementation currently treats them that
-way, but the public terminology does not make the distinction clear.
+1. The compression threshold remains statically declared.
+2. The transport contract exposes its maximum payload size in bytes through a
+   static interface member; the value is fixed for each transport type and used
+   by runtime composition.
+3. "Payload" means the complete headers plus body representation.
+4. The transport provides only its native header-size computation.
+5. The runtime adds serialized body size to the transport-computed header size
+   and transparently offloads the body to DataBus when the total exceeds the
+   transport maximum. It recomputes the attachment-reference headers before the
+   final limit check.
+
+Remove `MeasureNative`, the network-level maximum transport payload, and the
+network-level DataBus offload threshold. Compression and DataBus claim-check
+remain transparent runtime concerns.
 
 ### `MessagingCapabilities.Receive` naming
 
-**Timing: future — reject the proposed rename.**
+**Timing: pre-release.**
 
-Keep `Receive`. Sending is an implicit operation supported by every transport;
-`Receive` is the optional capability backed by `IMessagingReceiveTransport`.
-`SendReceive` would imply that send is unavailable without the flag and is less
-accurate than the current name. Do not retain this as future implementation
-debt unless the capability model itself changes.
+Rename `Receive` to `SendReceive`. Point-to-point `Send` requires a receiving
+participant and is available only when this capability is declared. A network
+without `SendReceive` is publish-only; it may publish events when `PubSub` is
+declared.
 
 ### Scheduled send and current-message deferral
 
@@ -123,13 +133,16 @@ required use case is identified.**
 
 If Rebus terminology is the target API, rename the two delayed `Send` overloads
 to `Defer` before release. Deferring the currently handled message is a separate
-feature, not merely a rename. Existing participant retry policies already cover
-handler retries, so this feature is not currently required and can be added
-incrementally later after its delivery guarantees are designed.
+feature, not merely a rename. Existing retry policies cover immediate
+redelivery but not "retry tomorrow." Without current-message deferral a
+consumer must define and send itself a new contract instead of reusing the
+current one. That is explicit and simple, but duplicates contracts, changes
+message identity, and does not work for a subscription consumer that cannot
+point-to-point send to itself. Current-message deferral remains relevant, but
+may be postponed until its delivery guarantees are designed.
 
 Open questions:
 
-- What use case is not covered by the existing retry policy?
 - Does "native deferral" mean scheduled re-enqueue? Service Bus deferred-message
   settlement is not scheduled delivery and does not reset delivery count.
 - Must schedule-copy-and-complete be atomic? Without a broker transaction or
@@ -137,20 +150,14 @@ Open questions:
 - Which message ID and framework/application headers are preserved, and which
   delivery metadata is removed?
 
-### Default maximum transport payload
+### Network maximum transport payload
 
 **Timing: pre-release.**
 
-Lower the default before release, but do not use `50,000` as a claimed
-cross-transport-safe value. Storage Queue's documented canonical inline limit
-is `46,080` bytes before Base64, while Service Bus separately enforces a
-256-KiB complete-message ceiling. Choose at most `46,080` for a portable
-payload policy, and keep native envelope measurement as the final hard-limit
-check.
-
-Open question: should the default optimize portability (`46,080`) or remain a
-payload-only policy independent of transport, requiring Storage Queue networks
-to override it explicitly?
+Remove this network setting and its default. Each transport declares its actual
+complete payload limit at runtime. Compression runs from its static threshold;
+body offload to DataBus happens transparently when the computed headers plus
+body exceed the selected transport's limit.
 
 ## Network and host configuration
 
@@ -179,21 +186,15 @@ Open questions:
 
 **Timing: pre-release topology decision.**
 
-Prefer direct Service Bus subscription triggers unless the single participant
-identity queue is an intentional cross-transport invariant. Direct triggers
-remove a broker hop and retain locking, delivery count, retry limits, and DLQ
-behavior on the subscription itself. Keeping forwarding is defensible only if
-one mixed command/event queue, one trigger, or cross-transport ordering is a
-required semantic guarantee. Changing later would break manifests, generated
+The single participant queue and single trigger are implementation
+conveniences, not requirements. Prefer direct Service Bus subscription triggers:
+they remove a broker hop and retain locking, delivery count, and DLQ behavior on
+the subscription itself. Generate a command-queue trigger plus one trigger per
+subscription. All triggers for one participant must share its concurrency
+budget and retry/DLQ policy through participant-level runtime configuration; a
+single generated trigger is not required. No total ordering across independent
+entities is promised. Changing this later would break manifests, generated
 triggers, lifecycle reconciliation, and deployed resources.
-
-Open questions:
-
-- Is one physical participant queue a required portability or ordering
-  guarantee, or an implementation convenience?
-- Must directly addressed messages and subscribed events share ordering,
-  concurrency, retry, and DLQ policy?
-- Is one generated trigger per participant a hard Functions-host requirement?
 
 ## Serialization
 
@@ -211,30 +212,30 @@ Open questions:
 
 - Which options are authoritative: ASP.NET Core `HttpJsonOptions`, MVC
   `JsonOptions`, or dedicated MCP `JsonSerializerOptions`?
-- Must MCP remain source-generation/AOT-only?
+- MCP remains source-generation/AOT-only.
 - How are custom `ProblemDetails.Extensions` values constrained or registered
   for serialization?
 
 ### MessagePack and Protobuf compile-time validation
 
-**Timing: pre-release, with corrected requirements.**
+**Timing: pre-release.**
 
 Add analyzer coverage before release so declared protocols do not defer contract
-failures to startup. Do not universally require `[MessagePackObject]`: the
-runtime supports host-supplied MessagePack resolvers. Do not check
-`[ProtoContract]`: the shipped codec uses Google.Protobuf and expects
-`IMessage` plus a registered parser. Validation must follow the actual resolver
-and parser model and the contract's read/write direction.
+failures to startup. This is contract-level topology validation, not validation
+of host serializer options:
 
-Open questions:
+- A participant publishing an event with MessagePack as its effective wire
+  serializer requires `[MessagePackObject]` on that event, and every subscriber
+  must declare MessagePack support.
+- A participant processing a message with MessagePack as its effective wire
+  serializer requires `[MessagePackObject]` on that message.
+- Apply the equivalent contract-shape check to each other effective non-JSON
+  wire serializer. For the shipped protobuf codec this means the Google.Protobuf
+  contract shape, not protobuf-net's `[ProtoContract]`.
+- Continue validating publisher/subscriber protocol compatibility.
 
-- Is attribute-based MessagePack the only supported policy, or are custom
-  resolvers first-class?
-- Is Google.Protobuf the sole supported protobuf model?
-- How does the analyzer recognize custom formatters and registered
-  `MessageParser<T>` instances?
-- Must every participant contract support every listed serializer, or only the
-  effective wire protocol used for that route?
+Custom resolver and parser registration remain host startup concerns and are
+not analyzed.
 
 ## Observability
 
@@ -246,15 +247,39 @@ enrichment.**
 The runtime already creates a consumer activity and propagates outgoing trace
 context, but it does not create producer send/publish activities. Establish
 stable activity names, producer/consumer boundaries, trace-state propagation,
-low-cardinality messaging attributes, and settlement-based status before the
-first release. Dispatch child spans, retry/settlement events, fan-out links,
-batch links, and broader framework instrumentation are incremental future
-improvements.
+messaging attributes, and settlement-based status before the first release.
+Follow the latest stable OpenTelemetry messaging semantic conventions available
+when implementing the task. Activities are emitted by default; registering an
+OpenTelemetry listener/exporter is opt-in. Network, participant, destination,
+and contract names are all acceptable attributes.
 
-Open questions:
+Dispatch child spans, retry/settlement events, fan-out links, batch links, and
+broader framework instrumentation are incremental future improvements.
 
-- Which OpenTelemetry messaging semantic-convention version is the baseline?
-- Are instrumentation steps opt-in or registered by default?
-- Does final settlement determine consumer activity status?
-- Which destination/network/participant values are safe as bounded-cardinality
-  tags?
+Open question: does final settlement determine consumer activity status?
+
+### OpenTelemetry metrics
+
+**Timing: pre-release for the metric contract; future for additional
+instruments.**
+
+The runtime currently exposes two custom histograms for processing time and
+successful queue time. Finalize their names, units, descriptions, outcome
+semantics, and attributes before release, following the latest stable
+OpenTelemetry messaging metrics conventions available at implementation time.
+Metrics are recorded by default; OpenTelemetry collection/export remains
+opt-in.
+
+The pre-release baseline should cover:
+
+- send, publish, and process duration;
+- time in queue when a valid sent timestamp is available;
+- processed-message outcomes based on final settlement;
+- delivery attempt count.
+
+Network, participant, destination, and contract names are acceptable metric
+attributes. Exception messages, message IDs, correlation IDs, and attachment
+IDs are not metric attributes. Additional payload-size, compression, DataBus,
+retry, dead-letter, and active-operation instruments are future incremental
+improvements after concrete operational questions and aggregation behavior are
+defined.
