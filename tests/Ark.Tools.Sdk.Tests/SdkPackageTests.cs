@@ -28,13 +28,17 @@ public sealed class SdkPackageTests
         Assert.IsNotNull(build.GetEntry("build/Ark.Tools.Build.props"));
         Assert.IsNotNull(build.GetEntry("buildTransitive/Ark.Tools.Build.props"));
         Assert.IsNull(build.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
-        using var sdkPropsStream = await sdk.GetEntry("Sdk/Sdk.props")!.OpenAsync();
+        var sdkPropsEntry = sdk.GetEntry("Sdk/Sdk.props");
+        Assert.IsNotNull(sdkPropsEntry);
+        using var sdkPropsStream = await sdkPropsEntry.OpenAsync();
         using var sdkPropsReader = new StreamReader(sdkPropsStream);
         var sdkProps = await sdkPropsReader.ReadToEndAsync();
         StringAssert.Contains(sdkProps, "Version=\"999.9.9\"");
         StringAssert.Contains(sdkProps, "IsImplicitlyDefined=\"true\"");
         Assert.IsNull(sdk.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
-        using (var nuspecStream = await build.GetEntry("Ark.Tools.Build.nuspec")!.OpenAsync())
+        var nuspecEntry = build.GetEntry("Ark.Tools.Build.nuspec");
+        Assert.IsNotNull(nuspecEntry);
+        using (var nuspecStream = await nuspecEntry.OpenAsync())
         using (var nuspec = new StreamReader(nuspecStream))
         {
             Assert.IsFalse((await nuspec.ReadToEndAsync()).Contains("<dependencies>", StringComparison.Ordinal));
