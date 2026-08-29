@@ -335,7 +335,7 @@ test-framework choice.
 
 ### Lessons from `Meziantou.DotNet.CodingStandard`
 
-The predecessor packages style/analyzer configuration and imports its
+The predecessor packages its style/analyzer configuration and imports its
 `build` props/targets again through `buildTransitive`. Its analyzer packages are
 unconditional nuspec dependencies. It supports reproducible builds, analyzer
 defaults, NuGet audit, global usings, packaging metadata, banned symbols,
