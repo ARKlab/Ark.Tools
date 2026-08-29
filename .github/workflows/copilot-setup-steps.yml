@@ -33,6 +33,8 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+          # Azure Sql is Enterprise - match it
+          MSSQL_PID: EnterpriseDeveloper
         options: >-
           --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
           --health-interval=10s
@@ -49,7 +51,7 @@ jobs:
           SQL_SERVER: sqlserver
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           EMULATOR_HTTP_PORT: 5300
-          SQL_WAIT_INTERVAL: 15
+          SQL_WAIT_INTERVAL: 30
       azurite:
         image: mcr.microsoft.com/azure-storage/azurite:latest
         ports:
