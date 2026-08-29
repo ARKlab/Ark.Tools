@@ -48,22 +48,25 @@ jobs:
           SQL_SERVER: sqlserver
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           EMULATOR_HTTP_PORT: 5300
-          SQL_WAIT_INTERVAL: 5
+          SQL_WAIT_INTERVAL: 15
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite:latest
+        ports:
+          - 10000:10000
+          - 10001:10001
+          - 10002:10002
+        env:
+          AZURITE_SKIP_API_VERSION_CHECK: 'true'
+        options: >-
+          --health-cmd="node -e \"require('net').connect(10000, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))\""
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+          --health-start-period=10s
 
     steps:
     - name: 'Checkout'
       uses: actions/checkout@v7
-
-    # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
-    # See: https://github.com/Azure/Azurite/issues/2623
-    - name: 'Start Azurite'
-      run: |
-        docker run -d \
-          -p 10000:10000 \
-          -p 10001:10001 \
-          -p 10002:10002 \
-          mcr.microsoft.com/azure-storage/azurite:latest \
-          azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
 
     - name: 'Wait for Service Bus emulator'
       run: |

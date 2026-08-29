@@ -41,6 +41,20 @@ stages:
       variables:
         NUGET_PACKAGES: '${{ parameters.workingDirectory }}/.nuget/packages'
       services:
+        azurite:
+          image: mcr.microsoft.com/azure-storage/azurite:latest
+          env:
+            AZURITE_SKIP_API_VERSION_CHECK: 'true'
+          ports:
+          - 10000:10000
+          - 10001:10001
+          - 10002:10002
+          options: >-
+            --health-cmd="node -e \"require('net').connect(10000, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))\""
+            --health-interval=10s
+            --health-timeout=5s
+            --health-retries=30
+            --health-start-period=10s
         sqlserver:
           image: mcr.microsoft.com/mssql/server:2022-latest
           env:
@@ -49,17 +63,6 @@ stages:
           ports:
           - 1433:1433
       steps:
-      # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
-      # See: https://github.com/Azure/Azurite/issues/2623
-      - script: |
-          docker run -d \
-            -p 10000:10000 \
-            -p 10001:10001 \
-            -p 10002:10002 \
-            mcr.microsoft.com/azure-storage/azurite:latest \
-            azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
-        displayName: 'Start Azurite'
-
       - task: NuGetToolInstaller@1
         displayName: 'Use NuGet 6.x'
         inputs:
