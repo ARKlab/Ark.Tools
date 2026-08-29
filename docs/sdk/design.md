@@ -1,8 +1,8 @@
 # Standardized .NET solution setup
 
-Status: **proposed; first feedback round incorporated; architecture remains
-blocked by the open decisions in
-[`progress/decisions.md`](progress/decisions.md)**.
+Status: **proposed; second feedback round incorporated; transitive publication
+boundary remains open in
+[`progress/decisions.md`](progress/decisions.md#sdk-24--transitive-publication-boundary)**.
 
 ## Problem
 
@@ -61,6 +61,12 @@ This confirms the important functional difference: both choices can carry
 props, targets, analyzer configuration, and additional files, but only an
 MSBuild SDK can own conditional implicit package references during restore.
 
+An SDK package's nuspec dependency is resolved only for the SDK resolver; it
+does not enter the consuming project's assets file and therefore does not
+activate the dependency's `buildTransitive` imports. The SDK must instead add an
+exact, implicit `PackageReference` to the standards package from `Sdk.props`.
+That reference participates in the consumer restore graph.
+
 ### Capabilities unavailable to `buildTransitive`
 
 The following requested or accepted capabilities cannot be implemented by a
@@ -76,6 +82,7 @@ single `buildTransitive` package with equivalent behavior:
 | Add SourceLink, SBOM, and Polyfill according to project type | Their package references are restore inputs. | Make all unconditional dependencies, split packages, or require consumer references. |
 | Give every injected package an SDK-owned implicit version | `IsImplicitlyDefined` applies to SDK-injected `PackageReference`; nuspec dependencies use ordinary NuGet dependency resolution. | Consumer CPM/nuspec versions, potentially with central transitive pinning. |
 | Default or validate restore inputs such as TFM and package versions | NuGet explicitly excludes restore-affecting properties/items from package build assets. | Source files, `Directory.Build.props`, `Directory.Packages.props`, or an SDK. |
+| Configure audit, lock-file generation, locked restore, or serialized restore globals | `NuGetAudit*`, `RestorePackagesWithLockFile`, `RestoreLockedMode`, and `RestoreSerializeGlobalProperties` alter restore. | Set and validate them in the SDK. |
 
 Everything else currently under consideration remains possible in
 `buildTransitive`: non-restore properties, targets, content item metadata,
@@ -86,149 +93,169 @@ application-settings copy/publish metadata. A package family could recover most
 dependency selection, but consumers would then reference the correct base,
 test, and optional-feature packages explicitly.
 
-## Solution alternatives
+## Selected hybrid architecture
 
-### Alternative A — additive MSBuild SDK
+The second feedback round selected an additional MSBuild SDK plus a separate
+`buildTransitive` package:
 
-Publish one `Ark.Tools.Sdk` package with this conceptual content:
+- `Ark.Tools.Build` carries every policy that does not alter restore inputs.
+  These policies can flow to a downstream project that omitted the SDK.
+- `Ark.Tools.Sdk` injects `Ark.Tools.Build` and owns conditional package
+  references and other SDK-only behavior.
+- `Ark.Tools.Sdk` and `Ark.Tools.Build` release together at the same version.
+  The SDK adds an exact `Ark.Tools.Build` reference; a nuspec dependency is not
+  sufficient.
+
+### `Ark.Tools.Sdk`
 
 ```text
 Ark.Tools.Sdk.nupkg
 ├── Sdk/
 │   ├── Sdk.props
 │   └── Sdk.targets
-├── build/
-│   ├── Ark.Tools.Sdk.props
-│   └── Ark.Tools.Sdk.targets
-└── configuration/
-    ├── Ark.Tools.editorconfig
-    ├── Ark.Tools.*.globalconfig
-    └── BannedSymbols.txt
 ```
 
-The SDK is additional to the project's Microsoft SDK. This avoids immediately
-creating wrappers for `Microsoft.NET.Sdk`, `.Web`, `.Razor`, and specialized
-SDKs. `Sdk.props` owns early properties and implicit package references;
-`Sdk.targets` owns build targets and late items. Project-type conditions select
-test, web, SQL, and pack behavior.
+`Sdk.props` adds this conceptual restore input:
 
-The `build` assets are optional compatibility assets, not a second activation
-model. They would only be included if a concrete tool requires the package to
-also expose build assets.
+```xml
+<PackageReference Include="Ark.Tools.Build"
+                  Version="$(ArkToolsSdkVersion)"
+                  IsImplicitlyDefined="true" />
+```
 
-**Advantages**
+The production implementation must use an SDK-owned constant version rather
+than deriving it from consumer CPM. Whether the reference deliberately remains
+public to packed downstream consumers is the remaining SDK-24 decision.
 
-- Can add analyzer, SourceLink, SBOM, Polyfill, and MTP packages conditionally.
-- Can set early defaults and compose with existing Microsoft or third-party
-  project SDKs.
-- One version in `global.json` can govern all projects in a solution.
-- Can expose explicit opt-out properties and project-type profiles.
-- Package references can be marked private and implicit.
-- Closely matches the actively maintained `Meziantou.NET.Sdk` architecture.
+The SDK is additional to the project's primary SDK:
 
-**Disadvantages**
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+```
 
-- Every project must activate the SDK; it does not flow through project or
-  package references.
-- SDK versions are not managed by `Directory.Packages.props`.
-- Import ordering and composition with non-Microsoft SDKs require tests.
-- IDEs and restore must resolve the SDK before the project can be fully loaded.
-- A single additive SDK needs careful conditions to avoid inappropriate
-  behavior in SQL, generated, and other non-C# projects.
+Its version is pinned under `msbuild-sdks` in consumer `global.json`. It
+conditionally injects SDK-owned, exact, implicit references for analyzers,
+SourceLink, SBOM, Polyfill, and MTP extensions. It detects test and SQL project
+types and owns all behavior that changes restore inputs, including NuGet audit
+and lock-file policy. Framework and assertion packages remain consumer-owned.
 
-### Alternative B — NuGet package with `buildTransitive`
+### `Ark.Tools.Build`
 
-Publish `Ark.Tools.Build.Standard` as a development dependency containing:
+Publish the transitive standards package with explicit per-analyzer
+configuration files:
 
 ```text
-Ark.Tools.Build.Standard.nupkg
+Ark.Tools.Build.nupkg
 ├── build/
-│   ├── Ark.Tools.Build.Standard.props
-│   └── Ark.Tools.Build.Standard.targets
+│   ├── Ark.Tools.Build.props
+│   └── Ark.Tools.Build.targets
 ├── buildTransitive/
-│   ├── Ark.Tools.Build.Standard.props
-│   └── Ark.Tools.Build.Standard.targets
+│   ├── Ark.Tools.Build.props
+│   └── Ark.Tools.Build.targets
 └── configuration/
-    ├── Ark.Tools.editorconfig
-    ├── Ark.Tools.*.globalconfig
-    └── BannedSymbols.txt
+    ├── coding-style/
+    │   └── Ark.Tools.CodingStyle.editorconfig
+    └── analyzers/
+        ├── Ark.Tools.NetAnalyzers.globalconfig
+        ├── Ark.Tools.MeziantouAnalyzer.globalconfig
+        ├── Ark.Tools.ErrorProne.globalconfig
+        ├── Ark.Tools.VisualStudioThreading.globalconfig
+        ├── Ark.Tools.IdentityModel.globalconfig
+        ├── Ark.Tools.Core.globalconfig
+        └── Ark.Tools.BannedApi.BannedSymbols.txt
 ```
 
-Analyzer and tool packages would have to be unconditional nuspec dependencies,
-separate optional packages, or explicit consumer references.
+`build` and `buildTransitive` expose the same implementation through one
+canonical import to prevent drift. This package contains no dependencies used
+to conditionally select analyzers or tools. It provides:
 
-**Advantages**
+- non-restore defaults, including warnings, language, documentation,
+  determinism, test, SQL, Reqnroll, and packaging properties;
+- all standard analyzer configuration and banned-symbol inputs, each included
+  only when its named feature is enabled;
+- global usings, application/test-settings metadata, SponsorLink removal,
+  analyzer suppression during `_MTPBuild`, and validation targets.
 
-- Familiar `PackageReference` adoption.
-- Version can be managed through CPM.
-- Build assets can flow transitively when that is intentionally allowed.
-- Coexists with every project SDK without wrapping or SDK resolver behavior.
-- Suitable for configuration and targets that do not affect restore.
+The configuration is useful when the corresponding analyzer is built in or
+already referenced; otherwise it is inert. A project reached transitively but
+missing `Ark.Tools.Sdk` does not receive SDK-injected analyzer or MTP packages.
 
-**Disadvantages**
+### Propagation limits
 
-- Cannot conditionally add or change restore-affecting items, including
-  `PackageReference`.
-- Fixed dependencies make test-only, SQL-excluded, and opt-out analyzer
-  profiles coarse or require a package family.
-- Imports are generated from a prior restore, which complicates first-restore
-  bootstrapping and changes to restore inputs.
-- Transitive flow can unexpectedly impose organization policy on downstream
-  package consumers unless assets are carefully made private.
-- Cannot replace all current `Directory.Build.props` responsibilities.
-- Mirrors the now-deprecated `Meziantou.DotNet.CodingStandard` model.
+A local restore experiment with .NET SDK 10.0.100 verified:
+
+1. `Sdk.props` can inject `Ark.Tools.Build` into the SDK-enabled project's
+   restore graph.
+2. Its `buildTransitive` props load in that project and in a downstream project
+   that references it.
+3. They do not flow backwards into a referenced project, or into an isolated
+   project. Every project still needs the SDK unless it has a downstream
+   dependency path carrying `Ark.Tools.Build`.
+4. Leaving the reference transitive also writes `Ark.Tools.Build` as a
+   dependency when the project is packed, so policy reaches external package
+   consumers. `PrivateAssets="all"` prevents that leakage but also removes the
+   requested forgotten-project fallback.
+5. Making `Ark.Tools.Build` an ordinary dependency of the SDK nuspec downloads
+   it only for SDK resolution; it does not place it in the project assets file
+   or import its build assets.
+6. A late `PackageReference Update` controlled by a project property can switch
+   the injected reference from private to public. The opt-in then restores
+   downstream propagation and emits the packed dependency.
+
+This is a safety net, not a complete substitute for adding the SDK to every
+project. SDK-presence validation remains required.
 
 ### Comparison
 
-| Dimension | MSBuild SDK | NuGet `buildTransitive` |
+| Dimension | `Ark.Tools.Sdk` | `Ark.Tools.Build` |
 | --- | --- | --- |
-| Activation | SDK reference in each project | `PackageReference` |
-| Central version | `global.json` `msbuild-sdks` | CPM or package version |
+| Activation | SDK reference in each project | SDK-injected `PackageReference`, then transitive package graph |
+| Central version | `global.json` `msbuild-sdks` | Exact matching version owned by the SDK |
 | Import points | Implicit top and bottom SDK imports | Generated NuGet props and targets |
 | Conditional package references | Supported | Restore-affecting items are excluded |
 | Conditional build properties/targets | Supported | Supported if they do not affect restore |
 | Configuration/additional files | Supported | Supported |
-| Transitive policy propagation | No | Yes, subject to asset metadata |
-| Multiple project profiles | Conditions or multiple SDKs | Conditions plus separate packages for dependency differences |
+| Transitive policy propagation | No | Downstream only; public package flow is SDK-24 |
+| Multiple project profiles | Restore-affecting conditions | Non-restore conditions only |
 | Existing SDK composition | Additional SDK or wrappers | Native |
-| Consumer project simplicity | Small after per-project SDK adoption | One package reference, plus explicit conditional dependencies |
-| CPM ownership of injected packages | SDK owns implicit versions | Dependencies or consumer CPM own versions |
-| Best fit | Complete solution standard | Analyzer/configuration-only standard |
+| Consumer project simplicity | One additional SDK | No explicit reference when injected by the SDK |
+| CPM ownership of injected packages | SDK owns implicit versions | SDK owns the exact injected version |
+| Responsibility | Restore inputs and project-type package selection | Static/transitive policy and configuration |
 
 ## Current recommendation
 
-The first-round recommendation remains **Alternative A, one additive
-`Ark.Tools.Sdk`**, pinned once in `global.json`. SDK-01 and SDK-02 remain open;
-the second feedback round must choose the distribution model and SDK activation
-shape after considering the capability gaps above.
-
-This is the only single-artifact alternative that can faithfully centralize the
-current conditional package references. It also avoids making build policy
-transitively leak through Ark.Tools runtime libraries. A `buildTransitive`
-package family remains viable if consumers explicitly select dependency-bearing
-feature packages.
+Implement the selected hybrid: one additional `Ark.Tools.Sdk`, pinned once in
+`global.json`, plus its exact `Ark.Tools.Build` package reference. Do not make
+Ark.Tools runtime libraries carry the policy package; only the SDK injects it.
+SDK-24 must decide whether packed libraries intentionally expose that injected
+dependency to their consumers.
 
 The accepted policy is strong defaults with escape hatches. Properties are set
-when empty so repository/project values override them. If SDK-01 selects the
-SDK, package-backed features also require a named opt-out that removes both the
-implicit package and related configuration or targets. A `buildTransitive`
-design can suppress build behavior but cannot remove an already restored nuspec
-dependency.
+when empty so repository/project values override them. Package-backed features
+also require a named opt-out that removes both the implicit package and related
+configuration or targets. A `buildTransitive` target can suppress build
+behavior but cannot remove an already restored package.
 
 ## Accepted decisions
 
-The first feedback round established the following baseline:
+The feedback rounds established the following baseline:
 
+- Distribution is hybrid: maximum non-restore policy in
+  `Ark.Tools.Build/buildTransitive`; an additional `Ark.Tools.Sdk` injects that
+  package and owns SDK-only behavior.
+- The SDK composes with, rather than wraps, the primary project SDK.
 - The audience is ARK-owned line-of-business repositories. The SDK has one
   policy set, not public/organization profiles.
 - Every default is consumer-overridable. Every independently useful feature has
-  an escape hatch; the SDK does not silently overwrite consumer values.
+  an escape hatch; neither package silently overwrites consumer values.
 - Test-project selection is explicit when present, with `.Tests` and
   `.UnitTests` suffix detection as migration fallback.
 - MTP and its current extension set are expected. Test-framework and assertion
-  packages are not automatically added. Reqnroll properties are configured
-  without adding Reqnroll; no AwesomeAssertions-specific property currently
-  exists to configure.
+  packages, including `Microsoft.NET.Test.Sdk`, are not automatically added.
+  Reqnroll properties are configured without adding Reqnroll; no
+  AwesomeAssertions-specific property currently exists to configure.
 - Packaged analyzer settings are added through `EditorConfigFiles` and
   `GlobalAnalyzerConfigFiles`, following Meziantou's mechanism. Local
   `.editorconfig` and `.globalconfig` files override package defaults. The SDK
@@ -240,6 +267,8 @@ The first feedback round established the following baseline:
   language version for the repository's .NET 10 SDK, when the consumer leaves
   them empty. `AllowUnsafeBlocks` is not set.
 - Every project generates a NuGet lock file and CI uses locked mode.
+  These restore-affecting defaults live in `Ark.Tools.Sdk`, not the transitive
+  package.
 - The full current MTP extension/default-settings profile is enabled for test
   projects: crash dump, code coverage, hang dump, hot reload, retry, TRX,
   Azure DevOps reporting, and empty-run protection. Each feature remains
@@ -259,6 +288,11 @@ The first feedback round established the following baseline:
 - SBOM, SourceLink, and Polyfill are baseline implicit dependencies, each with
   an escape hatch.
 - All current analyzers are baseline dependencies, including ErrorProne.
+- Analyzer, MTP extension, SourceLink, SBOM, Polyfill, and `Ark.Tools.Build`
+  package versions are exact and SDK-owned. Consumers remove matching CPM
+  entries and update lock files when the SDK changes.
+- All standard analyzer configurations are packaged separately by analyzer in
+  `Ark.Tools.Build`; no wildcard placeholder represents the configuration set.
 - The SDK banned-symbol list is combined with consumer `AdditionalFiles`;
   consumers use justified analyzer suppressions for exceptions.
 - New errors/bans, mandatory properties, and implicit-package major upgrades
@@ -277,8 +311,8 @@ The inventory below was verified against:
 - the root analyzer configuration and banned-symbol files; and
 - `/Directory.Packages.props` for package versions.
 
-`Disposition` incorporates the first feedback round. Items still tied to an
-open decision say so explicitly.
+`Disposition` incorporates both feedback rounds. SDK-24 affects only whether
+`Ark.Tools.Build` appears in packed dependency graphs.
 
 ### Early properties
 
@@ -321,7 +355,7 @@ open decision say so explicitly.
 | `WarningsNotAsErrors += NU1901;NU1905` | All current projects | Exclude. Warnings are errors by default; consumers can add explicit exceptions. |
 | `IsTestProject=true` for names ending `.Tests` or `.UnitTests` | Convention-based detection | Use explicit value first and suffix detection as migration fallback. |
 | Test `IsPackable=false` and `WarnOnPackingNonPackableProject=false` | Test projects | Include in the test profile. |
-| Test `OutputType=Exe` and `EnableMSTestRunner=true` | Test projects | Keep `OutputType=Exe` for MTP. Framework runner ownership remains open in SDK-05. |
+| Test `OutputType=Exe` and `EnableMSTestRunner=true` | Test projects | Keep `OutputType=Exe` for MTP; do not set framework-specific `EnableMSTestRunner`. |
 | Test `ExcludeByAttribute=Obsolete,GeneratedCodeAttribute` | Test projects | Include when empty as an inert test-platform setting. |
 | `ReqnrollUseIntermediateOutputPathForCodeBehind=true` | Test projects | Include when empty for test projects; inert without Reqnroll targets. |
 | `ReqnrollDeleteObsoleteCodeBehindFilesOnClean=true` | Test projects | Include when empty for test projects; inert without Reqnroll targets. |
@@ -333,7 +367,7 @@ open decision say so explicitly.
 
 | Current asset | Current behavior | Disposition |
 | --- | --- | --- |
-| `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | Include implicitly; whether the SDK or consumer owns versions remains open in SDK-07. |
+| `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | SDK-owned exact implicit reference. |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` 4.14.0 | Private analyzer reference for non-SQL projects | Include implicitly. |
 | `Meziantou.Analyzer` 3.0.160 | Private analyzer reference for non-SQL projects | Include implicitly. |
 | `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | Include implicitly. |
@@ -342,15 +376,87 @@ open decision say so explicitly.
 | `.meziantou.globalconfig` | 34 MA severity overrides | Package and load as a global analyzer config. |
 | `.errorprone.globalconfig` | 30 EPC/ERP severity overrides | Package with ErrorProne and load only when enabled. |
 | `.vsthreading.globalconfig` | 23 VSTHRD severity overrides | Package and load as a global analyzer config. |
-| `.editorconfig` | Formatting, code-style, naming rules, and three error severities | Package it and add it to `EditorConfigFiles`, as Meziantou does. Local source-tree config wins. Do not write consumer files. |
+| `.editorconfig` | Formatting, code-style, naming rules, and three error severities | Split coding style/`IDE1006`, `IDX00001`, and `ARKCORE005` by analyzer provenance. Package and load every result. Local source-tree config wins. Do not write consumer files. |
 | Consumer `.globalconfig` | ReferenceProject keeps a local override file | Preserve local override capability and document precedence. |
 | `BannedSymbols.txt` | 93 active bans: local time, ambiguous parsing/rounding/culture, reference tuples, implicit time-zone conversion, console logging, and blocking task/thread APIs | Package as `AdditionalFiles`; provide one opt-out property and support a consumer-owned additional banned-symbol file. |
 | `Disable_SponsorLink` target | Removes `DevLooped.SponsorLink` and `Moq.CodeAnalysis` analyzers | Include with an opt-out, matching current behavior. |
 | Root wildcard imports for `.*.globalconfig` and `.*.editorconfig` | Loads repository-local analyzer overrides for non-SQL projects | Keep local discovery in addition to packaged configs; avoid duplicate imports. |
 
-Analyzer versions shown are the versions pinned on 2026-08-29. The SDK package
-must test analyzer upgrades as product changes rather than inherit arbitrary
-consumer CPM versions.
+Analyzer versions shown are the versions pinned on 2026-08-29. The SDK owns
+them; consumers remove matching CPM entries. SDK updates require lock-file
+updates and analyzer upgrades are tested product changes.
+
+Every standard configuration is a separate `Ark.Tools.Build` asset. The
+following is the complete current rule inventory; an implementation copies the
+settings, comments, and rationale from the source files rather than generating
+one merged configuration.
+
+#### `Ark.Tools.CodingStyle.editorconfig`
+
+- Formatting: four-space indentation, spaces, CRLF, existing final-newline
+  behavior, using ordering, C# spacing, indentation, newline, and wrapping
+  preferences.
+- Code style: all current .NET and C# style options from the root
+  [`.editorconfig`](../../.editorconfig), including expression, pattern,
+  namespace, modifier, `var`, and expression-body preferences.
+- Naming: interfaces start with `I`; types and protected members use PascalCase;
+  private/internal methods, fields, events, and properties start with `_`.
+- Built-in naming diagnostic: `IDE1006` is an error.
+
+#### `Ark.Tools.IdentityModel.globalconfig`
+
+- `IDX00001` is an error. The configuration is inert when its analyzer is
+  absent.
+
+#### `Ark.Tools.Core.globalconfig`
+
+- `ARKCORE005` is an error. The configuration is inert when the Ark.Tools.Core
+  analyzer is absent.
+
+#### `Ark.Tools.NetAnalyzers.globalconfig`
+
+| Severity | Configured diagnostics |
+| --- | --- |
+| Error | `CA1001`, `CA1063`, `CA1068`, `CA1069`, `CA1821`, `CA1823`, `CA1827`, `CA1836`, `CA1854`, `CA2000`, `CA2002`, `CA2245`, `CA5351` |
+| Warning | `CA1018`, `CA1041`, `CA1047`, `CA1050`, `CA1051`, `CA1061`, `CA1067`, `CA1070`, `CA1304`, `CA1507`, `CA1816`, `CA1825`, `CA1828`, `CA1832`, `CA1833`, `CA1834`, `CA1835`, `CA1839`, `CA1841`, `CA1844`, `CA1845`, `CA1846`, `CA1847`, `CA1850`, `CA1853`, `CA1862`, `CA1864`, `CA1865`, `CA1866`, `CA1868`, `CA1869`, `CA1870`, `CA2011`, `CA2012`, `CA2016`, `CA2020`, `CA2201`, `CA2211`, `CA2213`, `CA2215`, `CA2219`, `CA2242`, `CA2250`, `CA2253`, `CA5350`, `CA5359`, `CA5360`, `CA5363`, `CA5364`, `CA5365`, `CA5379`, `CA5385`, `CA5397`, `IDE0005`, `IDE0161` |
+| Suggestion | `CA1019`, `CA1040`, `CA1054`, `CA1056`, `CA1062`, `CA1305`, `CA1308`, `CA1309`, `CA1310`, `CA1510`, `CA1515`, `CA1810`, `CA1819`, `CA1859`, `CA2007` |
+| None | `CA1000`, `CA1002`, `CA1024`, `CA1031`, `CA1033`, `CA1034`, `CA1707`, `CA1716`, `CA1720`, `CA1724`, `CA1812`, `CA1851`, `CA2227`, `IDE0160` |
+
+#### `Ark.Tools.MeziantouAnalyzer.globalconfig`
+
+| Severity | Configured diagnostics |
+| --- | --- |
+| Error | `MA0040`, `MA0042`, `MA0045`, `MA0078`, `MA0079`, `MA0133` |
+| Warning | `MA0004`, `MA0028`, `MA0029`, `MA0043`, `MA0044`, `MA0050`, `MA0053`, `MA0057`, `MA0058`, `MA0059`, `MA0063`, `MA0067`, `MA0080`, `MA0102`, `MA0113`, `MA0114`, `MA0152`, `MA0160` |
+| Suggestion | `MA0016`, `MA0051`, `MA0121` |
+| Silent | `MA0006`, `MA0007`, `MA0048`, `MA0056` |
+| None | `MA0015`, `MA0032`, `MA0049` |
+
+#### `Ark.Tools.ErrorProne.globalconfig`
+
+| Severity | Configured diagnostics |
+| --- | --- |
+| Error | `EPC17`, `EPC23`, `EPC25`, `EPC26`, `EPC27`, `EPC31`, `EPC33`, `EPC35`, `ERP022`, `ERP023` |
+| Warning | `EPC11`, `EPC12`, `EPC13`, `EPC16`, `EPC20`, `EPC22`, `EPC24`, `EPC28`, `EPC32`, `EPC36`, `ERP021`, `ERP031` |
+| Suggestion | `EPC14`, `EPC21`, `EPC29`, `EPC30`, `EPC34`, `EPC37` |
+| None | `EPC15` in favor of `MA0004`; `EPC18` to preserve async stack traces |
+
+#### `Ark.Tools.VisualStudioThreading.globalconfig`
+
+| Severity | Configured diagnostics |
+| --- | --- |
+| Error | `VSTHRD003`, `VSTHRD100`, `VSTHRD101`, `VSTHRD110`, `VSTHRD114` |
+| Warning | `VSTHRD001`, `VSTHRD002`, `VSTHRD004`, `VSTHRD010`, `VSTHRD103`, `VSTHRD105`, `VSTHRD106`, `VSTHRD107`, `VSTHRD109` |
+| Suggestion | `VSTHRD011`, `VSTHRD102`, `VSTHRD104`, `VSTHRD108`, `VSTHRD112`, `VSTHRD113` |
+| None | `VSTHRD012`, `VSTHRD111` in favor of `MA0004`, `VSTHRD200` |
+
+#### `Ark.Tools.BannedApi.BannedSymbols.txt`
+
+Package the complete current list, separately from the severity configurations.
+Its 93 active entries ban local-time APIs, ambiguous enum parsing and rounding,
+direct `CultureInfo` construction, reference tuples, implicit `DateTime` to
+`DateTimeOffset` conversion, console output, `Thread.Sleep`, `Task.Wait`, and
+`Task<T>.Result`. Consumer `AdditionalFiles` compose with this list.
 
 ### Late items and targets
 
@@ -364,7 +470,7 @@ consumer CPM versions.
 | `reqnroll*.json` | Always copied to test output | Preserve only for test projects; inert when no matching file exists. |
 | `testconfig.json` | Copied with `PreserveNewest` | Include only in the test profile. |
 | MTP extension package references | Crash dump, code coverage, hang dump, hot reload, retry, TRX, and Azure DevOps report | Include the full set for test projects, with an opt-out per extension/default setting. |
-| Test framework packages | `MSTest.TestAdapter`, `MSTest.TestFramework`, `MSTest.Analyzers`, `Microsoft.NET.Test.Sdk`, and `AwesomeAssertions` | Do not add framework/assertion packages; final runner ownership remains open in SDK-05. |
+| Test framework packages | `MSTest.TestAdapter`, `MSTest.TestFramework`, `MSTest.Analyzers`, `Microsoft.NET.Test.Sdk`, and `AwesomeAssertions` | Do not add any framework, assertion, or VSTest compatibility package. MTP remains framework-neutral. |
 | Exact project-reference version target | Rewrites packed project dependencies as exact versions | Exclude. Repositories own dependency-version policy. |
 | Ark icon and package metadata | Ark.Tools repository URL, project URL, MIT license, authors, copyright, symbols/snupkg | Exclude identity/license/icon/repository defaults and organization profiles; include SourceLink, symbols, and package validation only. |
 | `samples/Directory.Build.targets` | Replaces local Ark.Tools packages with project references and manually mirrors generated/analyzer assets | Exclude. This is monorepo sample-development infrastructure. |
@@ -436,13 +542,29 @@ consumer repository:
 
 ```xml
 <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-  <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/Ark.Tools.editorconfig" />
-  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/Ark.Tools.*.globalconfig" />
+  <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/coding-style/Ark.Tools.CodingStyle.editorconfig"
+                     Condition="'$(EnableArkSdkCodingStyle)' != 'false'" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig"
+                             Condition="'$(EnableArkSdkNetAnalyzers)' != 'false'" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.MeziantouAnalyzer.globalconfig"
+                             Condition="'$(EnableArkSdkMeziantouAnalyzer)' != 'false'" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.ErrorProne.globalconfig"
+                             Condition="'$(EnableArkSdkErrorProne)' != 'false'" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig"
+                             Condition="'$(EnableArkSdkVisualStudioThreading)' != 'false'" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.IdentityModel.globalconfig"
+                             Condition="'$(EnableArkSdkIdentityModelConfiguration)' != 'false'" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Core.globalconfig"
+                             Condition="'$(EnableArkSdkCoreConfiguration)' != 'false'" />
+  <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.BannedApi.BannedSymbols.txt"
+                   Condition="'$(EnableArkSdkBannedApi)' != 'false'" />
 </ItemGroup>
 ```
 
 The package's style and analyzer options are direct compiler/design-time
-inputs. Packaged global configs use a `global_level` below the default level
+inputs. Each analyzer has its own file and switch, including analyzer severities
+currently embedded in the root `.editorconfig`. Packaged global configs use a
+`global_level` below the default level
 `100` of a consumer `.globalconfig`, so an ordinary local global config wins.
 Source-tree `.editorconfig` entries win over global configs, and deeper local
 EditorConfig files win over shallower local files. The implementation must prove
@@ -468,12 +590,19 @@ An implementation is not complete until tests prove:
 
 - first restore with an empty global package cache;
 - versionless SDK resolution through `global.json`;
+- SDK injection of the exact matching `Ark.Tools.Build` version;
+- absence of `Ark.Tools.Build` imports when it is only an SDK nuspec dependency;
+- downstream project-reference and package-reference propagation, plus proof
+  that upstream and isolated projects are not covered;
+- the SDK-24 selected pack dependency/private-assets behavior;
 - additional-SDK composition with `Microsoft.NET.Sdk`,
-  `Microsoft.NET.Sdk.Web`, and `MSBuild.Sdk.SqlProj`;
+  `Microsoft.NET.Sdk.Web`, `Microsoft.NET.Sdk.Razor`, and
+  `Microsoft.Build.Sql` 2.2.0;
 - .NET 8 and .NET 10 single- and multi-target projects;
 - CPM with no duplicate `PackageVersion` for implicit packages;
 - package lock-file generation and locked CI restore;
-- local override precedence for every packaged analyzer config type;
+- local override precedence and independent opt-out for every explicitly named
+  packaged analyzer config;
 - banned symbols report at the consumer source location;
 - opt-outs remove both the analyzer package and its configuration;
 - test-profile MTP discovery, reporting, dumps, coverage, and empty-run failure;

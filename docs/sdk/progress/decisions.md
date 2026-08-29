@@ -1,27 +1,26 @@
 # Ark.Tools SDK — decision log
 
-Status: **second feedback round requested**.
+Status: **third feedback round requested for one propagation boundary**.
 
 ## How to review
 
-- Reply to each `OPEN` or `PARTIALLY DECIDED` item with the option letter and
-  amendments.
+- Reply to SDK-24 with the option letter and amendments.
 - Accepted decisions are recorded in
   [`../design.md`](../design.md#accepted-decisions); reopen one only with a new
   constraint.
-- Implementation remains blocked by SDK-01, SDK-02, SDK-05, and SDK-07.
+- Package implementation remains blocked only by SDK-24.
 
 ## Decision status
 
-| ID | Status | First-round answer |
+| ID | Status | Answer |
 | --- | --- | --- |
-| SDK-01 | OPEN | Need a precise list of `buildTransitive` limitations. |
-| SDK-02 | OPEN | No answer received. |
+| SDK-01 | DECIDED | A+C — hybrid `Ark.Tools.Sdk` and `Ark.Tools.Build` package. |
+| SDK-02 | DECIDED | A — additional SDK. |
 | SDK-03 | DECIDED | B — ARK-owned line-of-business repositories. |
 | SDK-04 | DECIDED | A — strong defaults, every feature disableable/overridable. |
-| SDK-05 | PARTIALLY DECIDED | MTP and extensions are expected; do not add Reqnroll or AwesomeAssertions packages. |
+| SDK-05 | DECIDED | A — framework-neutral MTP; no framework, assertion, or VSTest package. |
 | SDK-06 | DECIDED | C — explicit test selection, suffix fallback during migration. |
-| SDK-07 | OPEN | No answer received. |
+| SDK-07 | DECIDED | A — SDK-owned exact package versions. |
 | SDK-08 | DECIDED | Packaged config, local overrides, no consumer-file changes. |
 | SDK-09 | DECIDED | A — warnings as errors always by default; consumer can override. |
 | SDK-10 | DECIDED | B — remove all current blanket `NoWarn` entries. |
@@ -38,10 +37,11 @@ Status: **second feedback round requested**.
 | SDK-21 | DECIDED | B — SDK bans plus consumer `AdditionalFiles` and suppressions. |
 | SDK-22 | DECIDED | A — build-breaking policy changes follow semantic versioning. |
 | SDK-23 | DECIDED | B — migrate ReferenceProject category by category. |
+| SDK-24 | OPEN | Decide whether transitive policy may enter packed package dependencies. |
 
 ## SDK-01 — Distribution model
 
-**Status:** OPEN.
+**Status:** DECIDED — hybrid A+C.
 
 **Question:** Is the product an MSBuild SDK or a NuGet package family using
 `buildTransitive`?
@@ -67,41 +67,30 @@ It **can** still provide analyzer/global configuration, banned-symbol
 SponsorLink removal, package validation targets, SQL and Reqnroll properties,
 MTP command-line properties, and test-build analyzer suppression.
 
-### Solution alternatives
+### Accepted hybrid
 
-- **A — One additive MSBuild SDK.** It conditionally injects all required
-  packages. Every project references the SDK. Version is pinned in
-  `global.json`.
-- **B — One `buildTransitive` package plus explicit consumer package
-  references.** The standard carries configuration and targets; every consumer
-  separately declares analyzers, MTP extensions, SourceLink, SBOM, and Polyfill.
-  Feature opt-outs remove configuration but cannot remove nuspec dependencies.
-- **C — A `buildTransitive` package family.** At minimum:
-  `Ark.Tools.Build`, `.Analyzers`, `.Test`, and optional ErrorProne,
-  SourceLink/SBOM/Polyfill packages. Consumers compose the required references.
-- **D — SDK plus compatibility package.** Two supported activation/import paths
-  with equivalent-behavior and duplicate-import tests.
+- `Ark.Tools.Build` contains every non-restore property, target, analyzer
+  configuration, and additional file that can operate from `buildTransitive`.
+- `Ark.Tools.Sdk` contains conditional package-reference injection and other
+  SDK-only behavior.
+- `Ark.Tools.Sdk/Sdk.props` injects an exact, implicit `PackageReference` to the
+  matching `Ark.Tools.Build` version. An ordinary dependency in the SDK nuspec
+  is insufficient: it is restored for SDK resolution but does not enter the
+  consumer assets file or activate `buildTransitive`.
+- A downstream project can inherit `Ark.Tools.Build` through a project or
+  package dependency even if it omitted the SDK. A referenced project and an
+  isolated project cannot inherit policy backwards; this remains a safety net,
+  not a replacement for SDK activation.
+- Runtime Ark.Tools packages do not directly depend on `Ark.Tools.Build`; only
+  the SDK injects it.
 
-### Recommendation
-
-**A.** It is the only single-artifact solution that preserves conditional
-dependencies and per-feature escape hatches. C is viable if CPM-native
-`PackageReference` adoption is more important than one artifact. B does not
-fully standardize setup; D doubles the support matrix before a compatibility
-need exists.
-
-### Requested answer
-
-- A, B, C, or D.
-- If B or C: may dependency selection remain explicit in every consumer
-  project?
-- If C: is the minimum four-package family acceptable?
-- Must a runtime Ark.Tools package ever pull build policy transitively? The
-  recommendation is no.
+The feasibility spike is recorded in
+[`../design.md`](../design.md#propagation-limits). SDK-24 asks the remaining
+question exposed by the experiment.
 
 ## SDK-02 — Activation and project-SDK composition
 
-**Status:** OPEN.
+**Status:** DECIDED — A.
 
 **Question:** If SDK-01 selects an SDK, should Ark compose with or wrap primary
 project SDKs?
@@ -151,18 +140,14 @@ project SDKs?
 SDK choice. Move to C only if an executable import-order test proves Test or SQL
 cannot be safely selected from evaluated properties.
 
-### Requested answer
-
-- A, B, or C.
-- Confirm the launch matrix:
-  `Microsoft.NET.Sdk`, `Microsoft.NET.Sdk.Web`, `Microsoft.NET.Sdk.Razor`, and
-  `Microsoft.Build.Sql` 2.2.0.
-- Are WindowsDesktop, Worker, Blazor WebAssembly, Android/iOS, or another
-  third-party SDK required at launch?
+The launch compatibility matrix is `Microsoft.NET.Sdk`,
+`Microsoft.NET.Sdk.Web`, `Microsoft.NET.Sdk.Razor`, and `Microsoft.Build.Sql`
+2.2.0. Additional primary SDKs can be added after a concrete consumer requires
+them.
 
 ## SDK-05 — MTP baseline and framework ownership
 
-**Status:** PARTIALLY DECIDED.
+**Status:** DECIDED — A.
 
 ### Accepted constraints
 
@@ -180,13 +165,12 @@ cannot be safely selected from evaluated properties.
   package reference there is therefore no inert AwesomeAssertions setting to
   preserve.
 
-### Remaining package boundary
+### Resolved package boundary
 
 The current setup also adds `MSTest.TestAdapter`, `MSTest.TestFramework`,
 `MSTest.Analyzers`, `Microsoft.NET.Test.Sdk`, and `AwesomeAssertions`. A pure
-MTP profile should not inject the first three or AwesomeAssertions. The open
-point is `Microsoft.NET.Test.Sdk`: Meziantou's MTP-only SDK deliberately never
-adds it, while Ark currently does.
+MTP profile injects none of them. Like Meziantou's MTP-only SDK, Ark does not
+add `Microsoft.NET.Test.Sdk`.
 
 ### Solution alternatives
 
@@ -207,17 +191,14 @@ adds it, while Ark currently does.
 using `global.json` runner selection. Properties can configure packages already
 chosen by the consumer; the SDK should not choose the framework.
 
-### Requested answer
-
-- A, B, or C.
-- Should the SDK fail with guidance when a test project has no MTP-capable test
-  framework, or allow an intentionally empty test executable?
-- Confirm `global.json` remains consumer-owned but must select
-  `"runner": "Microsoft.Testing.Platform"`.
+The SDK adds the MTP extensions and settings only. It does not add
+`Microsoft.NET.Test.Sdk`, set `EnableMSTestRunner`, choose a test framework, or
+choose an assertion package. Consumer `global.json` remains consumer-owned and
+selects `"runner": "Microsoft.Testing.Platform"`.
 
 ## SDK-07 — Analyzer/tool version ownership
 
-**Status:** OPEN.
+**Status:** DECIDED — A.
 
 **Question:** Who owns versions for analyzers, MTP extensions, SourceLink, SBOM,
 and Polyfill?
@@ -249,13 +230,52 @@ configuration are tested together. CPM raises `NU1009` if a consumer declares a
 escape hatch disables its implicit reference; a version exception should
 normally use another SDK release rather than an untested property.
 
+Consumers remove matching entries from `Directory.Packages.props`. Implicit
+dependencies remain visible in `packages.lock.json`; SDK upgrades require
+lock-file updates.
+
+## SDK-24 — Transitive publication boundary
+
+**Status:** OPEN.
+
+### Verified constraint
+
+For the forgotten-project safety net to work, the injected `Ark.Tools.Build`
+reference must allow its `buildTransitive` assets to flow. The same metadata
+also causes `dotnet pack` to write `Ark.Tools.Build` as a dependency. That means
+an ARK library package can impose the build policy on external package
+consumers. Setting `PrivateAssets="all"` prevents the packed dependency, but it
+also prevents propagation to a downstream project that omitted the SDK.
+
+Neither option protects a referenced project that omitted the SDK, because
+NuGet dependency assets flow from dependencies to consumers, never backwards.
+An isolated project also receives nothing.
+
+### Solution alternatives
+
+- **A — Public transitive policy.** Keep `Ark.Tools.Build` flowing. Accept it as
+  a dependency of packed libraries and document that downstream projects can
+  opt out of individual features.
+- **B — Repository-private policy.** Set `PrivateAssets="all"`. Require the SDK
+  in every project and validate its presence centrally; do not promise the
+  forgotten-project safety net.
+- **C — Explicit publication switch.** Default to B, but let selected projects
+  publish `Ark.Tools.Build` with an opt-in property. This avoids accidental
+  public policy while supporting deliberate policy carrier packages, at the
+  cost of two propagation modes.
+
+### Recommendation
+
+**C.** Private-by-default avoids surprising external consumers. A named,
+documented opt-in supports a deliberate policy carrier for ARK-only package
+graphs. Regardless of the choice, validate SDK activation because transitive
+flow is directional and incomplete.
+
 ### Requested answer
 
-- A, B, C, or D.
-- If A: accept removing matching entries from consumer
-  `Directory.Packages.props`.
-- Confirm implicit dependencies remain visible in `packages.lock.json` and SDK
-  upgrades require lock-file updates.
+- A, B, or C.
+- If A or C: are external NuGet consumers expected to receive Ark build policy,
+  or must publication be restricted to an internal feed?
 
 ## Accepted implementation details
 
@@ -266,10 +286,12 @@ tests:
   features use named `EnableArkSdk*` switches that remove the package,
   configuration, and targets together.
 - **EditorConfig:** package files are included directly as
-  `EditorConfigFiles`, matching Meziantou.NET.Sdk. Analyzer/global settings
-  participate in build and design-time Roslyn analysis. A source-tree
-  `.editorconfig` wins over global config entries; deeper source-tree
-  EditorConfig files win over shallower ones. The SDK writes no files.
+  `EditorConfigFiles`, matching Meziantou.NET.Sdk. Every analyzer configuration
+  is a separate named package file, including `IDX00001` and `ARKCORE005`
+  severities split from coding style. Analyzer/global settings participate in
+  build and design-time Roslyn analysis. A source-tree `.editorconfig` wins over
+  global config entries; deeper source-tree EditorConfig files win over
+  shallower ones. Neither package writes consumer files.
 - **Warnings:** `TreatWarningsAsErrors`,
   `MSBuildTreatWarningsAsErrors`, and `EnforceCodeStyleInBuild` default to
   `true` in every configuration but remain overrideable. The SDK adds none of
@@ -293,6 +315,8 @@ tests:
   project-reference dependency rewrite.
 - **Baseline packages:** SBOM, SourceLink, Polyfill, .NET analyzers, Banned API,
   Meziantou, VS Threading, and ErrorProne are independently disableable.
+- **Version ownership:** the SDK injects exact, implicit versions; matching
+  consumer CPM entries are removed and SDK updates refresh lock files.
 - **Banned symbols:** SDK and consumer lists compose. Consumers suppress an
   individual diagnostic with justification rather than editing the SDK file.
 - **Compatibility:** newly enforced diagnostics, bans, mandatory properties,
