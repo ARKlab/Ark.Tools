@@ -15,26 +15,29 @@ public sealed class SdkPackageTests
     /// Ensures both package archives contain only their intended MSBuild assets.
     /// </summary>
     [TestMethod]
-    public void PackageArchivesContainExpectedAssets()
+    public async Task PackageArchivesContainExpectedAssets()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
         var feed = Path.Combine(root, "artifacts", "sdk-test-feed");
         Directory.CreateDirectory(feed);
-        Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" --no-restore -p:PackageVersion=999.9.9");
-        Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" --no-restore -p:PackageVersion=999.9.9");
+        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" --no-restore -p:PackageVersion=999.9.9");
+        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" --no-restore -p:PackageVersion=999.9.9");
 
-        using var build = ZipFile.OpenRead(Path.Combine(feed, "Ark.Tools.Build.999.9.9.nupkg"));
-        using var sdk = ZipFile.OpenRead(Path.Combine(feed, "Ark.Tools.Sdk.999.9.9.nupkg"));
+        using var build = await ZipFile.OpenReadAsync(Path.Combine(feed, "Ark.Tools.Build.999.9.9.nupkg"));
+        using var sdk = await ZipFile.OpenReadAsync(Path.Combine(feed, "Ark.Tools.Sdk.999.9.9.nupkg"));
         Assert.IsNotNull(build.GetEntry("build/Ark.Tools.Build.props"));
         Assert.IsNotNull(build.GetEntry("buildTransitive/Ark.Tools.Build.props"));
         Assert.IsNull(build.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
-        var sdkProps = new StreamReader(sdk.GetEntry("Sdk/Sdk.props")!.Open()).ReadToEnd();
+        using var sdkPropsStream = await sdk.GetEntry("Sdk/Sdk.props")!.OpenAsync();
+        using var sdkPropsReader = new StreamReader(sdkPropsStream);
+        var sdkProps = await sdkPropsReader.ReadToEndAsync();
         StringAssert.Contains(sdkProps, "Version=\"999.9.9\"");
         StringAssert.Contains(sdkProps, "IsImplicitlyDefined=\"true\"");
         Assert.IsNull(sdk.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
-        using (var nuspec = new StreamReader(build.GetEntry("Ark.Tools.Build.nuspec")!.Open()))
+        using (var nuspecStream = await build.GetEntry("Ark.Tools.Build.nuspec")!.OpenAsync())
+        using (var nuspec = new StreamReader(nuspecStream))
         {
-            Assert.IsFalse(nuspec.ReadToEnd().Contains("<dependencies>", StringComparison.Ordinal));
+            Assert.IsFalse((await nuspec.ReadToEndAsync()).Contains("<dependencies>", StringComparison.Ordinal));
         }
 
         var consumer = Path.Combine(root, "artifacts", "sdk-consumer");
@@ -56,8 +59,8 @@ public sealed class SdkPackageTests
             ["NUGET_PACKAGES"] = packages,
             ["NUGET_HTTP_CACHE_PATH"] = Path.Combine(consumer, "http-cache")
         };
-        Run("dotnet", $"restore \"{Path.Combine(consumer, "Consumer.csproj")}\" --configfile \"{Path.Combine(consumer, "NuGet.Config")}\"", environment);
-        var properties = Run("dotnet", $"msbuild \"{Path.Combine(consumer, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported -getProperty:ArkToolsBuildImportCount", environment);
+        await Run("dotnet", $"restore \"{Path.Combine(consumer, "Consumer.csproj")}\" --configfile \"{Path.Combine(consumer, "NuGet.Config")}\"", environment);
+        var properties = await Run("dotnet", $"msbuild \"{Path.Combine(consumer, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported -getProperty:ArkToolsBuildImportCount", environment);
         StringAssert.Contains(properties, "\"ArkToolsBuildImported\": \"true\"");
         StringAssert.Contains(properties, "\"ArkToolsBuildImportCount\": \"1\"");
 
@@ -81,12 +84,12 @@ public sealed class SdkPackageTests
             ["NUGET_PACKAGES"] = Path.Combine(disabled, "packages"),
             ["NUGET_HTTP_CACHE_PATH"] = Path.Combine(disabled, "http-cache")
         };
-        Run("dotnet", $"restore \"{Path.Combine(disabled, "Consumer.csproj")}\" --configfile \"{Path.Combine(disabled, "NuGet.Config")}\"", disabledEnvironment);
-        var disabledProperties = Run("dotnet", $"msbuild \"{Path.Combine(disabled, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported", disabledEnvironment);
+        await Run("dotnet", $"restore \"{Path.Combine(disabled, "Consumer.csproj")}\" --configfile \"{Path.Combine(disabled, "NuGet.Config")}\"", disabledEnvironment);
+        var disabledProperties = await Run("dotnet", $"msbuild \"{Path.Combine(disabled, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported", disabledEnvironment);
         Assert.IsFalse(disabledProperties.Contains("\"ArkToolsBuildImported\": \"true\"", StringComparison.Ordinal));
     }
 
-    private static string Run(string fileName, string arguments, IDictionary<string, string>? environment = null)
+    private static async Task<string> Run(string fileName, string arguments, IDictionary<string, string>? environment = null)
     {
         var startInfo = new System.Diagnostics.ProcessStartInfo(fileName, arguments)
         {
@@ -102,9 +105,11 @@ public sealed class SdkPackageTests
             }
         }
         using var process = System.Diagnostics.Process.Start(startInfo)!;
-        process.WaitForExit();
-        var error = process.StandardError.ReadToEnd();
-        var output = process.StandardOutput.ReadToEnd();
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        var error = await errorTask;
+        var output = await outputTask;
         Assert.AreEqual(0, process.ExitCode, $"{output}{Environment.NewLine}{error}");
         return output;
     }
