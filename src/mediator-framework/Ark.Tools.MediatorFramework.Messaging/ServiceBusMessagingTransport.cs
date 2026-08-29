@@ -67,6 +67,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         DateTimeOffset? dueTime,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
         queue = MessagingEntityNameMapper.ToServiceBus(queue);
         ArgumentNullException.ThrowIfNull(headers);
         _validateSize(headers, payload);
@@ -89,6 +90,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         ReadOnlySequence<byte> payload,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
         topic = MessagingEntityNameMapper.ToServiceBus(topic);
         ArgumentNullException.ThrowIfNull(headers);
         _validateSize(headers, payload);
@@ -105,6 +107,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         string queue,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
         queue = MessagingEntityNameMapper.ToServiceBus(queue);
         return _receiveAsync(queue, ctk);
     }

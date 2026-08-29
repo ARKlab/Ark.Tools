@@ -27,6 +27,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string ownerIdentity,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
         queue = MessagingEntityNameMapper.ToServiceBus(queue);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
@@ -56,6 +57,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string ownerIdentity,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
         topic = MessagingEntityNameMapper.ToServiceBus(topic);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         var options = new CreateTopicOptions(topic)
@@ -79,6 +81,9 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         CancellationToken ctk)
     {
         ArgumentNullException.ThrowIfNull(subscription);
+        ArgumentException.ThrowIfNullOrEmpty(subscription.Topic);
+        ArgumentException.ThrowIfNullOrEmpty(subscription.Name);
+        ArgumentException.ThrowIfNullOrEmpty(subscription.ForwardToQueue);
         var topic = MessagingEntityNameMapper.ToServiceBus(subscription.Topic);
         var name = MessagingEntityNameMapper.ToServiceBus(subscription.Name);
         var forwardToQueue = MessagingEntityNameMapper.ToServiceBus(subscription.ForwardToQueue);
@@ -111,6 +116,7 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string topic,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
         topic = MessagingEntityNameMapper.ToServiceBus(topic);
         var subscriptions = new List<MessagingTransportSubscription>();
         try
@@ -139,6 +145,8 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         string subscription,
         CancellationToken ctk)
     {
+        ArgumentException.ThrowIfNullOrEmpty(topic);
+        ArgumentException.ThrowIfNullOrEmpty(subscription);
         topic = MessagingEntityNameMapper.ToServiceBus(topic);
         subscription = MessagingEntityNameMapper.ToServiceBus(subscription);
         try

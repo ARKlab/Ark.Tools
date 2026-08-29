@@ -26,7 +26,6 @@ internal static class MessagingNativeEntityNameMapper
             .Trim('-');
         if (prefix.Length == 0)
             prefix = "entity";
-        var result = $"{prefix}-{hash}";
-        return result[..Math.Min(maximumLength, result.Length)];
+        return $"{prefix}-{hash}";
     }
 }
