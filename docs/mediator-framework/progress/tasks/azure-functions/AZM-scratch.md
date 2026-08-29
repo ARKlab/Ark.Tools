@@ -70,6 +70,7 @@ line.
 ### Human-readable transport-neutral names
 
 **Timing: pre-release.**
+**Assigned:** [AZM-17](AZM-17-logical-names-and-native-entity-mapping.md).
 
 The common model currently forces contract names to lowercase snake case and
 participant identities to portable queue syntax. That leaks native entity-name
@@ -99,6 +100,7 @@ Decisions:
 ### Transport payload sizing
 
 **Timing: pre-release contract finalization.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
 
 Replace the current model:
 
@@ -120,6 +122,7 @@ remain transparent runtime concerns.
 ### `MessagingCapabilities.Receive` naming
 
 **Timing: pre-release.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
 
 Rename `Receive` to `SendReceive`. Point-to-point `Send` requires a receiving
 participant and is available only when this capability is declared. A network
@@ -130,6 +133,8 @@ declared.
 
 **Timing: pre-release for naming; future for current-message deferral unless a
 required use case is identified.**
+**Pre-release naming assigned:**
+[AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
 
 If Rebus terminology is the target API, rename the two delayed `Send` overloads
 to `Defer` before release. Deferring the currently handled message is a separate
@@ -153,6 +158,7 @@ Open questions:
 ### Network maximum transport payload
 
 **Timing: pre-release.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
 
 Remove this network setting and its default. Each transport declares its actual
 complete payload limit at runtime. Compression runs from its static threshold;
@@ -185,6 +191,7 @@ Open questions:
 ### Service Bus subscription forwarding
 
 **Timing: pre-release topology decision.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-servicebus-topology.md).
 
 The single participant queue and single trigger are implementation
 conveniences, not requirements. Prefer direct Service Bus subscription triggers:
@@ -219,6 +226,7 @@ Open questions:
 ### MessagePack and Protobuf compile-time validation
 
 **Timing: pre-release.**
+**Assigned:** [AZM-19](AZM-19-non-json-contract-validation.md).
 
 Add analyzer coverage before release so declared protocols do not defer contract
 failures to startup. This is contract-level topology validation, not validation
@@ -262,6 +270,8 @@ Open question: does final settlement determine consumer activity status?
 
 **Timing: pre-release for the metric contract; future for additional
 instruments.**
+**Pre-release metric contract assigned:**
+[AZM-20](AZM-20-opentelemetry-messaging-metrics.md).
 
 The runtime currently exposes two custom histograms for processing time and
 successful queue time. Finalize their names, units, descriptions, outcome
