@@ -123,19 +123,19 @@ dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-t
 Release-gate documentation checklist (each item is verified, not assumed):
 
 ```text
-[ ] Every generated example is copied from inspected emitted .g.cs output
+[x] Every generated example is copied from inspected emitted .g.cs output
     (obj/<Configuration>/<tfm>/generated/...), never hand-invented.
-[ ] Wire identity examples use logical snake_case names ("books.print_book"),
+[x] Wire identity examples use logical snake_case names ("books.print_book"),
     never CLR type names.
-[ ] Retry examples use the N / 2N model and the fixed per-transport abandon
+[x] Retry examples use the N / 2N model and the fixed per-transport abandon
     semantics (Service Bus immediate; Storage Queue visibilityTimeout = RetryDelay).
-[ ] Storage Queue docs state the single-Base64 messageEncoding "none" contract
+[x] Storage Queue docs state the single-Base64 messageEncoding "none" contract
     and the 46 080 / 49 152 canonical caps.
-[ ] No stale terminology: MessagingHost, MessagingFunctionsTrigger, OwnerQueue,
+[x] No stale terminology: MessagingHost, MessagingFunctionsTrigger, OwnerQueue,
     OwnerPublisher, explicit Role declarations, "host identity" as participant.
-[ ] No Rebus wire-interoperability, direct-subscription, technology-typed
+[x] No Rebus wire-interoperability, direct-subscription, technology-typed
     network, or Functions-hosted outbox-processor claims.
-[ ] The design-preview banner is removed only after every example compiles.
+[x] The design-preview banner is removed only after every example compiles.
 ```
 
 Sample docs cross-link table (verified while integrating task-owned guide
@@ -184,11 +184,11 @@ receiver owns the queue in each mode.
 
 ## Acceptance
 
-- [ ] Guide and migration documentation cover all supported and unsupported paths.
-- [ ] API-surface snapshots are updated and reviewed.
-- [ ] Examples are consistent with generated code and sample behavior.
-- [ ] Rebus compatibility boundaries and the Rebus/native durable-outbox
+- [x] Guide and migration documentation cover all supported and unsupported paths.
+- [x] API-surface snapshots are updated and reviewed.
+- [x] Examples are consistent with generated code and sample behavior.
+- [x] Rebus compatibility boundaries and the Rebus/native durable-outbox
   hosting distinction are explicit.
-- [ ] The [task board](../README.md) status for AZM-16 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-16 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -61,6 +61,8 @@ CONTRACT UploadResponse.ContentType : string
 CONTRACT UploadResponse.Id : Guid
 CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
+CONTRACT V1 -> IReadOnlyList<Output> [group=Ark] [http=POST /api/v{version}/books/bulk] [version=1+]
+CONTRACT V1.Data : IReadOnlyList<Create>
 ENUM BookEditionKind.Digital=1
 ENUM BookEditionKind.Print=0
 EVOLVABLE-ENUM ReadingActivityKind.Finished=3

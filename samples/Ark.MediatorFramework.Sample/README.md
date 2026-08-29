@@ -25,7 +25,8 @@ generated JSON, generated transport endpoints, and Reqnroll behavior tests.
   drain them from a dedicated always-running outbox host.
 - The sample supports SQL Server and an explicit in-memory test profile.
 - The framework generates HTTP endpoints, gRPC services, exported `.proto` files,
-  OpenAPI documents, and Rebus routing/handlers from contract metadata.
+  OpenAPI documents, and messaging routing/handlers from contract plus
+  network/participant ownership declarations.
 - MCP is a planned release-gate integration: the WebInterface host must expose
   source-generated MCP tools through the official
   `ModelContextProtocol.AspNetCore` 2.2.0 SDK without adding MCP references to
@@ -60,8 +61,8 @@ process concerns:
    gRPC, generated endpoint mapping, and the API-side bus.
 3. `RebusProcessor` owns the receive queue, generated Rebus handlers, retries,
    and the outbox processor.
-4. `AzureFunctions` is an outbound-only HTTP host. It sends owned messages to
-   Service Bus; the processor consumes them.
+4. `AzureFunctions` is the native notification subscriber and HTTP host. It
+   consumes its participant queue through a generated Service Bus trigger.
 5. `OutboxProcessor` owns native SQL outbox polling and raw-envelope dispatch;
    it is never hosted by Azure Functions.
 
@@ -197,13 +198,24 @@ keeps the same atomic transition rules under its shared lock.
 
 ## Rebus topology
 
-The sample has two process roles:
+Rebus mode is one complete topology:
 
-- **API sender:** the web and Functions compositions use one-way transport when
-  they only enqueue work.
+- **API sender:** the web or compatibility Functions composition uses one-way
+  Rebus transport when it only enqueues work.
 - **Processor receiver:** `RebusProcessorComposition` registers generated message
   handlers, starts the input queue, enables the outbox processor, and applies
   retry/dead-letter settings.
+
+```text
+WebInterface / compatibility Functions
+        |
+        | Rebus headers + Rebus serialization/outbox
+        v
+ark-mediator-sample queue
+        |
+        v
+RebusProcessor ----> Rebus error queue
+```
 
 Common configuration in `ApplicationComposition` includes:
 
@@ -221,7 +233,70 @@ dotnet run \
   --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor
 ```
 
-Run the native SQL outbox processor as a separate always-running process:
+An `InMemNetwork` cannot cross process boundaries. Run the bounded sample tests
+to compose its matching sender and receiver together:
+
+```bash
+ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
+  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
+```
+
+The WebInterface and RebusProcessor keep their existing Rebus outbox
+registrations. Rebus and native outbox adapters are alternative topology modes;
+do not point their processors at the same outbox rows.
+
+## Native AMF topology
+
+`BookPrintCompleted` is declared once in the Application assembly. The
+publisher participant owns its topic; the Azure Functions host records
+notification effects; and the separate AuditFunctions host records audit
+effects. The topic forwards independent copies to the
+`sample-messaging-notification` and `sample-messaging-audit` queues:
+
+```text
+native publisher / native SQL outbox
+        |
+        | amf1-* headers + native envelope
+        v
+sample-messaging-publisher-books_book_print_completed topic
+        |
+        +---- forwarding subscription ----> sample-messaging-notification
+        |                                      |
+        |                                      v
+        |                                 AzureFunctions
+        |
+        +---- forwarding subscription ----> sample-messaging-audit
+                                               |
+                                               v
+                                          AuditFunctions
+```
+
+The executable three-participant proof composes the publisher and both
+subscribers on the same InMemory transport:
+
+```bash
+ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
+  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
+```
+
+For a Service Bus deployment, configure a native Service Bus publisher, create
+the publisher topic, both identity queues, and the two forwarding subscriptions,
+then copy local settings, replace the Service Bus placeholder, and start each
+subscriber:
+
+```bash
+cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+cp local.settings.json.example local.settings.json
+func start --port 7071
+```
+
+```bash
+cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
+cp local.settings.json.example local.settings.json
+func start --port 7072
+```
+
+Start the native SQL outbox processor as a separate always-running process:
 
 ```bash
 ARK_SAMPLE_SQL_CONNECTION='...' \
@@ -236,29 +311,13 @@ the single `MessagingOutboxProcessor` hosted service under the reserved
 `outbox-processor` identity. Successful broker acceptance commits deletion of a
 peek-locked batch. Failures roll the SQL transaction back so the batch remains
 retryable. The original sender identity, message ID, serialized payload,
-compression, and claim-check headers remain unchanged.
+compression, and claim-check headers remain unchanged. Neither Functions host
+runs a Rebus worker or an outbox processor.
 
-The WebInterface and RebusProcessor keep their existing Rebus outbox
-registrations. Rebus and native outbox adapters are alternative topology modes;
-do not point their processors at the same outbox rows.
-
-### Three-participant messaging sample
-
-`BookPrintCompleted` is declared once in the Application assembly. The
-WebInterface is a publisher-only participant; the existing Azure Functions host
-records notification effects; and the separate AuditFunctions host records
-audit effects. The publisher-owned topic forwards independent copies to the
-`sample-messaging-notification` and `sample-messaging-audit` queues.
-
-```bash
-dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface
-dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
-dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
-```
-
-For Service Bus IaC, create the publisher topic, both identity queues, and the
-two forwarding subscriptions. Start `OutboxProcessor` separately for native
-SQL outbox mode; neither Functions host runs a Rebus worker or outbox processor.
+The declaration types are reusable generator input, not a bridge. Do not combine
+a Rebus publisher with native subscribers, or a native publisher with a Rebus
+processor, on one active network. Rebus and AMF headers and persisted envelopes
+are incompatible; select one mode for every participant in the network.
 
 Production Service Bus setup belongs in external configuration. The Functions
 host accepts a Service Bus connection string locally and uses
@@ -324,8 +383,8 @@ generated HTTP host. It uses the in-memory profile when no
 `ConnectionStrings__Sample` value is configured; configure that value for the
 shared SQL profile in a deployed environment. It intentionally excludes
 MessagePack contracts because the Functions binding does not provide that
-formatter. It is outbound-only for Rebus: the separate processor owns message
-consumption.
+formatter. Its production entry point uses native Service Bus messaging. The
+outbound-only Rebus composition exists only for the separate all-Rebus mode.
 
 The production Functions host remains bound to Service Bus. The focused
 `MessagingBusSampleTests` fixture separately composes the Book messaging
@@ -335,9 +394,11 @@ production topology. Start the repository Azurite service before running this
 fixture.
 
 ```bash
-cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
-cp local.settings.json.example local.settings.json
-func start
+docker compose \
+  -f samples/Ark.MediatorFramework.Sample/docker-compose.yml \
+  up -d azurite
+ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
+  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
 ```
 
 Read the complete hosting walkthrough in

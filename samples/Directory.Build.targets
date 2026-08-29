@@ -95,9 +95,9 @@
    <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework.Grpc\buildTransitive\Ark.Tools.MediatorFramework.Grpc.targets"
             Condition="'$(ArkToolsMediatorFrameworkGrpcHost)' == 'true'" />
    <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.props"
-            Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true'" />
+            Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' Or Exists('$(MSBuildProjectDirectory)\ArkApiSurface.txt')" />
    <Import Project="$(ArkToolsSourceRoot)mediator-framework\Ark.Tools.MediatorFramework\buildTransitive\Ark.Tools.MediatorFramework.targets"
-            Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true'" />
+            Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true' Or Exists('$(MSBuildProjectDirectory)\ArkApiSurface.txt')" />
    <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets" />
    <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.props" />
    <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.targets" />

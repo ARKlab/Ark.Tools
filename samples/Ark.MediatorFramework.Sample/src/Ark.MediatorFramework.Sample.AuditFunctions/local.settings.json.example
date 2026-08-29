@@ -2,7 +2,7 @@
   "IsEncrypted": false,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "AzureServiceBus:ConnectionString": "UseDevelopmentStorage=true",
+    "AzureServiceBus__ConnectionString": "your-service-bus-connection-string",
     "ConnectionStrings:Sample": ""
   }
 }

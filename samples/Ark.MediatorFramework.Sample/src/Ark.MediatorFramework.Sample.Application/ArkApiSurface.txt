@@ -1,28 +1,15 @@
 ﻿/*
-CONTRACT BookPrintProcessResponse
-CONTRACT BookPrintProcessResponse.BookId : Guid
-CONTRACT BookPrintProcessResponse.ErrorMessage : string?
-CONTRACT BookPrintProcessResponse.Id : Guid
-CONTRACT BookPrintProcessResponse.Progress : double
-CONTRACT BookPrintProcessResponse.ShouldFail : bool
-CONTRACT BookPrintProcessResponse.Status : EvolvableEnum<BookPrintProcessStatus>
 CONTRACT DeadLetterAck
 CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark]
 CONTRACT FailingRebusRequest.Reason : string default="boom"
-CONTRACT ProcessBookPrintProcessRequest -> BookPrintProcessResponse [group=Ark]
+CONTRACT ProcessBookPrintProcessRequest -> ProcessBookPrintProcessRequest [group=Ark]
 CONTRACT ProcessBookPrintProcessRequest.Id : Guid
-EVOLVABLE-ENUM BookPrintProcessStatus.Cancelled=5
-EVOLVABLE-ENUM BookPrintProcessStatus.Completed=3
-EVOLVABLE-ENUM BookPrintProcessStatus.Error=4
-EVOLVABLE-ENUM BookPrintProcessStatus.NOT_SET=0
-EVOLVABLE-ENUM BookPrintProcessStatus.Pending=1
-EVOLVABLE-ENUM BookPrintProcessStatus.Running=2
-MESSAGE Ark.MediatorFramework.Sample.Application.Messages.ProcessBookPrintProcessRequest -> name:ark_mediator_framework_sample_application_messages_process_book_print_process_request former:-
 EVENT Ark.MediatorFramework.Sample.Application.Messages.BookPrintCompleted -> name:books_book_print_completed former:-
+MESSAGE Ark.MediatorFramework.Sample.Application.Messages.ProcessBookPrintProcessRequest -> name:books_process_book_print_process former:ark_mediator_framework_sample_application_messages_process_book_print_process_request
 NETWORK Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork -> members:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingAuditParticipant|Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNotificationParticipant|Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant|Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant requires:receive|pubsub|scheduled_send
 PARTICIPANT Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingAuditParticipant -> network:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork identity:sample-messaging-audit processes:- publishes:- subscribes:books_book_print_completed serializers:json default:json
 PARTICIPANT Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNotificationParticipant -> network:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork identity:sample-messaging-notification processes:- publishes:- subscribes:books_book_print_completed serializers:json default:json
-PARTICIPANT Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant -> network:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork identity:ark-mediator-sample processes:ark_mediator_framework_sample_application_messages_process_book_print_process_request publishes:- subscribes:- serializers:json default:json
+PARTICIPANT Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingParticipant -> network:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork identity:ark-mediator-sample processes:books_process_book_print_process publishes:- subscribes:- serializers:json default:json
 PARTICIPANT Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant -> network:Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork identity:sample-messaging-publisher processes:- publishes:books_book_print_completed subscribes:- serializers:json default:json
 REBUS FailingRebusRequest -> queue:ark-mediator-sample
 REBUS ProcessBookPrintProcessRequest -> queue:ark-mediator-sample

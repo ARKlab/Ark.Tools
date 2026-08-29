@@ -12,7 +12,8 @@ format explicitly where it needs metadata.
 | HTTP | JSON | none beyond normal JSON-serializable members | `application/json` request and response bodies |
 | HTTP + MessagePack | JSON plus MessagePack negotiation | `AcceptsMessagePack = true`, `[MessagePackObject]`, configured resolver | `application/x-msgpack` body and response when negotiated |
 | gRPC | protobuf | `[ProtoContract]`, stable `[ProtoMember(n)]` numbers | generated protobuf messages |
-| Rebus | host-selected serializer | no transport attribute beyond `[RebusMessage]`; optional protobuf/JSON host config | serialized bus payload |
+| Rebus | host-selected serializer | participant declaration for generated hosts; `[RebusMessage]` for the legacy path; optional protobuf/JSON host config | Rebus-serialized bus payload |
+| Native messaging | participant default, read from each envelope | `[Message]`/`[Event]`, participant serializer set, installed codecs | opaque payload plus separate `amf1-*` headers |
 
 ## Enable MessagePack deliberately
 
@@ -119,8 +120,19 @@ a missing context fails before processing begins.
 Receive is two-phase: `MessagingHeaderProcessor` bounds and validates headers,
 checks the network identity, and resolves the codec from
 `amf1-content-type`; the generated participant binder then deserializes the
-selected contract. Content encoding and DataBus attachment headers remain
-opaque until the compression and claim-check task adds their processing.
+selected contract. Content encoding and DataBus attachment headers then select
+bounded decompression or claim-check retrieval before deserialization.
+
+Receivers read the protocol from each native envelope, not from their current
+default serializer. Retire a write protocol only after messages using it have
+drained from queues, retries, schedules, and outboxes; keep the old codec
+installed throughout that window. Startup rejects duplicate content types,
+missing declared codecs, incompatible publisher/subscriber serializer sets, and
+a default serializer absent from the participant's declared set.
+
+Rebus uses different headers and its one host-selected serializer. Sharing CLR
+contracts or declaration types does not make Rebus and native envelopes
+compatible. Every deployed network must use one stack end to end.
 
 ### Additional messaging codecs
 

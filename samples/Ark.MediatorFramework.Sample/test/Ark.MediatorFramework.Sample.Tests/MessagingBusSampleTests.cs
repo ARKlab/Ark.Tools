@@ -63,7 +63,7 @@ public sealed class MessagingBusSampleTests
             .ConfigureAwait(false))
         {
             delivery.Headers[MessagingHeaders.MessageType]
-                .Should().Be("ark_mediator_framework_sample_application_messages_process_book_print_process_request");
+                .Should().Be("books_process_book_print_process");
             delivery.Headers[MessagingHeaders.SenderIdentity]
                 .Should().Be(SampleMessagingParticipant.Identity);
             codec.Deserialize<ProcessBookPrintProcessRequest>(delivery.Payload).Id.Should().NotBe(Guid.Empty);

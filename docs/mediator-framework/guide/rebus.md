@@ -60,15 +60,20 @@ The processing participant owns the queue:
 [MessagingParticipant(
     Identity = "greetings",
     Processes = new[] { typeof(CompleteGreetingCompositionRequest) })]
-public sealed class GreetingProcessorParticipant;
+public sealed partial class GreetingProcessorParticipant;
 
 [MessagingNetwork(Members = new[] { typeof(GreetingProcessorParticipant) })]
-public sealed class GreetingNetwork;
+public static partial class GreetingNetwork;
 ```
 
-`[RebusMessage(OwnerQueue = "greetings")]` remains supported for legacy
-contracts. When both models are present, the generated participant owner and
-legacy owner must match.
+For participant-bound Rebus hosts, the participant declaration is the ownership
+source of truth. `[RebusMessage]` remains only for the legacy assembly-scan path;
+do not add it to new participant-owned contracts.
+
+The network and participant declarations can generate either an all-Rebus
+deployment or an all-native deployment. They do not make the transports
+interoperable and cannot describe a live network that mixes Rebus and native
+participants.
 
 The sample follows this boundary:
 
@@ -104,15 +109,21 @@ handler does not know whether the sender is HTTP, Functions, or another worker.
 
 ## 4. Configure a receiver
 
+Declare the generated host in its own file:
+
+```csharp
+[ArkRebusHost(typeof(GreetingProcessorParticipant))]
+public sealed partial class GreetingRebusHost;
+```
+
+Then compose it in `Program.cs`:
+
 ```csharp
 var container = new Container();
 container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
 ApplicationComposition.Register(container, useSqlStore: true);
 container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
-
-[ArkRebusHost(typeof(GreetingProcessorParticipant))]
-public sealed partial class GreetingRebusHost;
 
 var requirements = GreetingRebusHost.GetRequirements();
 GreetingRebusHost.Register(container);
@@ -209,11 +220,14 @@ outbox processor ownership remain explicit host configuration. Validate
 `ArkRebusParticipantRequirements` before startup when compression or DataBus is
 required.
 
-Rebus and native Mediator Framework messaging are separate topology modes.
-They share application `IBus`, `MessagingFailed<T>`, network, and participant
-declarations, but not persisted envelopes, headers, serializers, queues, or
-subscriptions. Never point both stacks at one logical bus or translate messages
-between their wire formats.
+Rebus and native Mediator Framework messaging are mutually exclusive whole-
+network topology modes. They share application contracts, handlers, `IBus`, and
+`MessagingFailed<T>`. Separate compositions may reuse the same network and
+participant declaration types as generator input, including for different sample
+hosts. That reuse does not connect the physical topologies: every actual message
+path must be all-Rebus or all-native. Rebus and native headers, persisted
+envelopes, serializers, queues, topics, and subscriptions are incompatible.
+Never point both stacks at one logical bus or translate messages between them.
 
 Native mode uses `AddArkMessagingOutboxEnqueue` in transaction-owning senders and
 `AddArkMessagingOutboxProcessor` in a separate always-running process. The
@@ -223,6 +237,24 @@ original sender identity and message ID. Rebus mode instead keeps
 processor. Do not register both durable adapters for one topology or let either
 processor drain the other's rows. Functions may enqueue native messages, but may
 not host either polling processor.
+
+### Migrate a Rebus network to native Functions
+
+1. Reuse or add owner/publisher/subscriber declarations for every participant in
+   the network, then accept the generated messaging API-surface change.
+2. Bind native Functions hosts to all receiving participants and configure
+   native transports, codecs, retry policies, pipelines, DataBus, and lifecycle.
+3. Provision a separate native topology and deploy matching native producers.
+4. Stop Rebus producers, then drain the Rebus queues, subscriptions, error
+   storage, and Rebus outbox before switching the whole network.
+5. Verify native delivery and failure handling before removing the old Rebus
+   resources.
+
+Do not route between a migrated native participant and participants still
+producing or consuming Rebus messages. If Rebus must remain active, keep its
+message paths on a separate all-Rebus physical topology. `FormerNames` can
+deserialize earlier native logical names; it cannot convert Rebus messages or
+migrate topics.
 
 ## 8. Do not use Rebus for streams
 

@@ -40,19 +40,22 @@ builder.Logging.ClearProviders();
 builder.Logging.AddNLog();
 builder.ConfigureFunctionsWebApplication();
 
-var container = AzureFunctionsRebusComposition.BuildContainer(
-    builder.Configuration["AzureServiceBus:ConnectionString"]);
+var container = AzureFunctionsNativeComposition.BuildContainer(
+    useSqlStore: !string.IsNullOrWhiteSpace(
+        builder.Configuration["ConnectionStrings:Sample"]),
+    connectionString: builder.Configuration["ConnectionStrings:Sample"]);
 builder.Services.AddArkAzureFunctions(container);
 builder.Services.AddArkHealthChecks();
 builder.Services.AddHostedService(
-    _ => new AzureFunctionsRebusHostedService(container));
+    _ => new AzureFunctionsContainerHostedService(container));
 
 await builder.Build().RunAsync().ConfigureAwait(false);
 ```
 
-The sample uses the same `ApplicationComposition.RegisterOutboundRebus` path as
-other sender-only hosts. The Rebus setup includes source-generated application
-JSON and `logging.NLog()`.
+This composes the application and HTTP boundary only. Add the native messaging
+host in step 4. The sample retains a mutually exclusive outbound Rebus
+composition for the all-Rebus topology, but the production Functions entry point
+uses native messaging and never starts a Rebus worker.
 
 ## 3. Declare a shared messaging network
 
@@ -70,10 +73,13 @@ accept installed codecs selected by message headers.
 
 Do not store secrets or provider-specific values in the network attribute.
 Declare configuration key names on the concrete host and resolve connection
-strings or managed identity there. All participants on one network must use the
-same runtime transport and physical resources. Service Bus supports the default
-240,000-byte transport threshold; networks intended for Storage Queue should
-use 46,080 bytes or less.
+strings or managed identity there. In one deployed native network, every
+participant must use the same runtime transport and physical resources. A Rebus
+deployment may reuse the declarations as generator input, but it is a separate
+all-Rebus topology: never mix Rebus and native participants in one active
+network. Their headers, envelopes, serializers, queues, and subscriptions are
+incompatible. Service Bus supports the default 240,000-byte transport threshold;
+networks intended for Storage Queue should use 46,080 bytes or less.
 
 ### Transport-neutral contracts and participants
 
@@ -101,7 +107,8 @@ serializer supported by the subscriber. `DefaultSerializer` must be included in
 `Serializers`. Retry and compression are participant-owned and may differ
 between members.
 
-Network and participant declarations must be non-nested, non-generic `partial`
+Network declarations must be non-nested, non-generic `static partial` classes;
+participant declarations must be non-nested, non-generic `sealed partial`
 classes. The transport-neutral generator adds the participant identity and
 network registry members to those classes. Hosts and transports must use
 `GetDestinationFor<T>()`, `GetWireProtocolFor<T>()`, and
@@ -199,6 +206,27 @@ changing the transport-neutral envelope, renews the message lock during bounded
 processing, and maps completion, retry, and fail-fast outcomes to complete,
 abandon, and dead-letter actions. Service Bus abandon is immediate, so the
 participant's `RetryDelay` does not delay redelivery.
+
+The sample's emitted `ArkGeneratedMessagingFunctions.g.cs` contains this exact
+trigger shape:
+
+```csharp
+[global::Microsoft.Azure.Functions.Worker.Function("sample-messaging-notification")]
+public static async global::System.Threading.Tasks.Task SampleMessagingNotification(
+    [global::Microsoft.Azure.Functions.Worker.ServiceBusTrigger(
+        "sample-messaging-notification",
+        Connection = "AzureServiceBus:ConnectionString",
+        AutoCompleteMessages = false)]
+    global::Azure.Messaging.ServiceBus.ServiceBusReceivedMessage message,
+    global::Microsoft.Azure.Functions.Worker.ServiceBusMessageActions messageActions,
+    global::Microsoft.Azure.Functions.Worker.FunctionContext functionContext,
+    global::System.Threading.CancellationToken cancellationToken)
+{
+    await global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDispatcher
+        .DispatchAsync(message, messageActions, functionContext, cancellationToken)
+        .ConfigureAwait(false);
+}
+```
 
 `ArkGeneratedMessagingFunctions.Manifest` describes the selected participant,
 network, connection configuration key, identity queue, trigger binding, retry
@@ -430,6 +458,9 @@ await bus.Send(message, TimeSpan.FromMinutes(5), cancellationToken: cancellation
 await bus.Publish(@event, new Dictionary<string, string> { ["tenant"] = tenant });
 ```
 
+Only `Send` accepts a due time. Delayed publish and request/reply are outside the
+messaging contract.
+
 The generated network registry resolves message ownership to the processor's
 identity queue and event ownership to the publisher's
 `<publisher-identity>-<contract-name>` topic. `Publish` requires both the
@@ -457,27 +488,47 @@ lifecycle cleanup eventually removes.
 ### Three-participant Book sample
 
 The `Ark.MediatorFramework.Sample` solution demonstrates one publisher and two
-independent subscribers over the same contract assembly. `WebInterface` owns
-the `BookPrintCompleted` event topic, `AzureFunctions` owns the
+independent subscribers over the same contract assembly. The Web participant
+declaration owns the `BookPrintCompleted` event topic, `AzureFunctions` owns the
 `sample-messaging-notification` notification queue, and `AuditFunctions` owns
 the `sample-messaging-audit` audit queue. The generated event topic is
 `sample-messaging-publisher-books_book_print_completed`. Each subscriber has a
 forwarding subscription named after its participant identity; neither Functions
 host starts a Rebus receiver or an outbox processor.
 
-Run the two subscriber hosts separately after copying each local settings
-example:
+The executable local proof composes all three participants on one InMemory
+transport:
 
 ```bash
-dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
-dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
+ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
+  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
 ```
 
-For local Service Bus runs, provision the publisher-owned topic, the two
-subscriber queues, and one forwarding subscription per queue. The existing
-`outbox-processor` remains a separate always-running process when native SQL
-outbox mode is selected. The sample tests use the InMemory transport and
-bounded completion waits to prove one publication reaches both handlers.
+For a Service Bus deployment, first provision a native publisher, the
+publisher-owned topic, both subscriber queues, and one forwarding subscription
+per queue. Copy each host's `local.settings.json.example`, replace the Service
+Bus placeholder, then run the two subscribers in separate terminals:
+
+```bash
+cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+cp local.settings.json.example local.settings.json
+func start --port 7071
+```
+
+```bash
+cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
+cp local.settings.json.example local.settings.json
+func start --port 7072
+```
+
+In `local.settings.json`, `AzureServiceBus__ConnectionString` uses the
+environment-variable `__` separator and resolves to the generated
+`AzureServiceBus:ConnectionString` configuration key.
+
+These commands start the subscribers, not a complete cross-transport demo. The
+publisher must use the native AMF Service Bus composition; a Rebus or InMemory
+publisher cannot feed these queues. The existing `outbox-processor` remains a
+separate always-running process when native SQL outbox mode is selected.
 
 ### Azure Blob DataBus
 
@@ -613,11 +664,16 @@ updates durable state. This separation lets Functions scale independently from
 background processing.
 
 Application handlers use `Ark.Tools.MediatorFramework.IBus` and
-`MessagingFailed<T>` in both modes. A Rebus host marks a sealed partial class with
-`ArkRebusHostAttribute` and uses the generated routing, filtered dispatch
-adapters, retry options, requirements, and post-start subscriptions. A native
-Functions messaging host uses generated triggers instead. The modes are not
-wire-interoperable and must not share one logical topology.
+`MessagingFailed<T>` in both modes. Separate Rebus and native topology
+compositions may reuse the same declaration types as generator input. A Rebus
+host marks a sealed partial class with
+`ArkRebusHostAttribute`, and uses generated routing, filtered dispatch adapters,
+retry options, requirements, and post-start subscriptions. A native Functions
+messaging host uses generated triggers instead. Reuse does not join the physical
+topologies: every actual message path must be all-Rebus or all-native. Rebus and
+native participants cannot exchange messages because their headers and persisted
+wire formats are incompatible, and they must not share queues, topics,
+subscriptions, or outbox rows.
 
 ## 6. Authentication and supported features
 

@@ -85,6 +85,11 @@ post-start event subscriptions, the transport-neutral bus adapter, and an
 immutable requirements descriptor. Application handlers remain explicitly
 registered by the application composition.
 
+The declaration is shared generator input, not a wire bridge. A deployed network
+must be entirely Rebus or entirely native messaging; never bind some
+participants to Rebus and others to native Functions. The stacks use incompatible
+headers, envelopes, serializers, topology, and persisted outbox rows.
+
 Keep transport and credentials, serializer, subscription storage, workers,
 timeouts, Rebus pipeline steps, compression/DataBus providers, and outbox
 processor ownership in host code. Rebus and native messaging may share
