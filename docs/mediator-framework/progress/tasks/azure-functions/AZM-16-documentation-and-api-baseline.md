@@ -184,11 +184,11 @@ receiver owns the queue in each mode.
 
 ## Acceptance
 
-- [ ] Guide and migration documentation cover all supported and unsupported paths.
-- [ ] API-surface snapshots are updated and reviewed.
-- [ ] Examples are consistent with generated code and sample behavior.
-- [ ] Rebus compatibility boundaries and the Rebus/native durable-outbox
+- [x] Guide and migration documentation cover all supported and unsupported paths.
+- [x] API-surface snapshots are updated and reviewed.
+- [x] Examples are consistent with generated code and sample behavior.
+- [x] Rebus compatibility boundaries and the Rebus/native durable-outbox
   hosting distinction are explicit.
-- [ ] The [task board](../README.md) status for AZM-16 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-16 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -433,6 +433,9 @@ await bus.Send(message, TimeSpan.FromMinutes(5), cancellationToken: cancellation
 await bus.Publish(@event, new Dictionary<string, string> { ["tenant"] = tenant });
 ```
 
+Only `Send` accepts a due time. Delayed publish and request/reply are outside the
+messaging contract.
+
 The generated network registry resolves message ownership to the processor's
 identity queue and event ownership to the publisher's
 `<publisher-identity>-<contract-name>` topic. `Publish` requires both the
