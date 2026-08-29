@@ -1,0 +1,157 @@
+# AZM-18 — Transport contract and Service Bus topology
+
+**Category**: azure-functions-messaging · **Priority**: pre-release
+**Depends on**: AZM-17
+**Scope**: PUBLIC API + RUNTIME + TRANSPORTS + FUNCTIONS GENERATOR
+**Design**: [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport), [Generated Functions surface](../../azure-functions-messaging-design.md#6-generated-functions-surface)
+
+## Problem
+
+The current transport contract mixes a network payload policy with native
+envelope measurement, treats point-to-point receive as if it were independent
+from send, and forwards every Service Bus subscription into one participant
+queue. These choices leak transport limits into network declarations and add an
+unnecessary broker hop.
+
+Before release, transports must own their physical payload limit and header
+measurement, point-to-point messaging must be one explicit capability, and
+Service Bus subscriptions must receive directly while retaining one shared
+participant concurrency and retry policy.
+
+## Execution map
+
+- **Public capability API**: rename `MessagingCapabilities.Receive` to
+  `SendReceive`; a network without it is publish-only.
+- **Public bus API**: rename delayed `Send` overloads to `Defer`; current-message
+  deferral remains future work and is not implemented here.
+- **Network declarations/options**: remove maximum transport payload and DataBus
+  offload threshold members and defaults.
+- **Transport contract**: replace `MeasureNative` with a static per-transport
+  complete payload limit and native header-size computation.
+- **Payload runtime**: calculate headers plus body, compress before sizing, and
+  transparently claim-check through DataBus when the selected transport limit is
+  exceeded.
+- **Service Bus topology**: generate one direct command-queue trigger when
+  required and one direct trigger per subscription; remove subscription
+  forwarding.
+- **Participant policy**: all triggers for one participant share its configured
+  concurrency budget, retry policy, and DLQ semantics. No total ordering across
+  entities is promised.
+- **Conformance**: update every transport, outbox path, generated manifest,
+  lifecycle reconciler, sample host, and transport conformance suite together.
+
+## Implementation steps
+
+1. Rename the capability and generated API-surface value from `Receive` to
+   `SendReceive`. Reject point-to-point `Send` unless the network declares it;
+   allow a `PubSub`-only network to publish.
+2. Rename both delayed `IBus.Send` overloads and their implementations to
+   `Defer`. Keep immediate `Send` unchanged and do not add a current-delivery
+   deferral API.
+3. Remove `MaximumTransportPayloadBytes`,
+   `DataBusOffloadThresholdBytes`, their defaults, generated values, validation,
+   documentation, and configuration.
+4. Define the transport's maximum complete payload size as a static interface
+   contract. Runtime composition must retain that fixed value without reflection
+   or provider type switches.
+5. Replace complete native-envelope measurement with a method that computes only
+   the transport-native header representation size. Document whether each result
+   is exact or a conservative upper bound.
+6. Define complete payload size as native headers plus serialized body.
+   Serialization remains streaming/generic-only; compression completes before
+   final body sizing.
+7. When the complete inline payload exceeds the transport maximum, store the body
+   in DataBus, replace it with attachment-reference headers, recompute native
+   header size, and fail fast if the reference-only payload still exceeds the
+   transport maximum.
+8. Apply identical final sizing before direct sends, publishes, scheduled sends,
+   and native outbox persistence. The outbox processor sends an already validated
+   representation without rerunning claim-check logic.
+9. Change Service Bus manifests so subscriptions target their topics directly
+   without `ForwardTo`. Provision retry and dead-letter settings on each
+   subscription.
+10. Generate a command-queue trigger only for processed point-to-point messages
+    and one subscription trigger for each subscribed event. A subscriber-only
+    participant has no identity queue.
+11. Coordinate all generated triggers through participant-level concurrency and
+    retry/DLQ configuration. Do not imply ordering between the command queue and
+    independent subscriptions.
+12. Remove obsolete forwarded-queue reconciliation and ownership logic while
+    preserving safe deletion of participant-owned subscriptions.
+13. Regenerate API baselines and inspect affected Functions `.g.cs` output.
+
+## Core code shapes
+
+Each concrete transport type supplies a fixed maximum complete payload size
+through the static transport contract and computes the size of its native
+headers for a specific header set. The shared runtime adds body length and owns
+the transparent compression/DataBus decision.
+
+`SendReceive` gates both routing to a processing participant and receive
+hosting. `PubSub` remains independent. Scheduled delivery remains separately
+gated, with delayed point-to-point delivery exposed as `Defer`.
+
+The generated Functions surface may contain several triggers for one
+participant. They all dispatch through the same participant descriptor and
+policy but settle against their own native queue or subscription.
+
+## Guide contribution
+
+Update the transport matrix, bus API, DataBus, outbox, retry, resource
+lifecycle, and Azure Functions guides. Explain complete payload sizing,
+transparent offload, publish-only networks, direct subscription triggers,
+participant-wide concurrency, and the lack of cross-entity ordering.
+
+## Sample extension
+
+Update the Book sample so one participant processes commands and consumes
+multiple direct Service Bus subscriptions. Demonstrate shared concurrency
+configuration, a publish-only participant, transparent DataBus offload under
+different transport limits, and the renamed delayed-send API.
+
+## Required test coverage
+
+- Capability numeric values and generated strings use `SendReceive`.
+- Point-to-point sends fail without `SendReceive`; publish works with `PubSub`
+  alone.
+- Immediate `Send` and delayed `Defer` route and schedule correctly.
+- Network declarations and generated options expose no transport payload or
+  DataBus offload threshold.
+- Every transport reports its fixed complete payload limit and header size
+  consistently.
+- Boundary tests cover body exactly below, at, and above each transport limit,
+  including header growth and attachment-reference recomputation.
+- Compression occurs before sizing and DataBus offload.
+- Direct send, publish, defer, and outbox enqueue apply the same validation.
+- Service Bus subscriptions have no forwarding destination.
+- Generated Functions contain the required command and subscription triggers;
+  subscriber-only participants have no identity queue.
+- Multiple triggers share participant concurrency/retry configuration and retain
+  independent settlement and DLQs.
+- Lifecycle reconciliation creates and removes only participant-owned direct
+  subscriptions.
+- InMemory, Storage Queue, and Service Bus conformance suites remain green.
+
+## Outcomes
+
+- Transport limits and header encoding are owned by transports.
+- Compression and DataBus offload are transparent to network declarations.
+- Point-to-point messaging has one accurate capability.
+- Service Bus subscriptions receive directly without an extra queue hop.
+
+## Acceptance
+
+- [ ] `SendReceive` replaces `Receive` throughout public, generated, and
+  documented surfaces.
+- [ ] Delayed sends use `Defer`; current-message deferral remains out of scope.
+- [ ] Network payload/offload settings are removed.
+- [ ] Every transport implements the static payload limit and header sizing
+  contract.
+- [ ] Runtime claim-check uses complete headers-plus-body size.
+- [ ] Service Bus uses direct subscription triggers with shared participant
+  policy and no forwarding.
+- [ ] Sample, guides, API baselines, and generated-source inspections are
+  updated.
+- [ ] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.
+- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
