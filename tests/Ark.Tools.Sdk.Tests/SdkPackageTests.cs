@@ -20,8 +20,8 @@ public sealed class SdkPackageTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
         var feed = Path.Combine(root, "artifacts", "sdk-test-feed");
         Directory.CreateDirectory(feed);
-        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" --no-restore -p:PackageVersion=999.9.9");
-        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" --no-restore -p:PackageVersion=999.9.9");
+        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
+        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
 
         using var build = await ZipFile.OpenReadAsync(Path.Combine(feed, "Ark.Tools.Build.999.9.9.nupkg"));
         using var sdk = await ZipFile.OpenReadAsync(Path.Combine(feed, "Ark.Tools.Sdk.999.9.9.nupkg"));
@@ -48,7 +48,7 @@ public sealed class SdkPackageTests
         Directory.CreateDirectory(consumer);
         File.WriteAllText(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsPackageProject>true</ArkToolsPackageProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>");
         File.WriteAllText(Path.Combine(consumer, "Directory.Build.targets"), "<Project />");
-        File.WriteAllText(Path.Combine(consumer, "global.json"), """{"sdk":{"version":"10.0.400"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""");
+        File.WriteAllText(Path.Combine(consumer, "global.json"), """{"sdk":{"version":"10.0.400","rollForward":"latestFeature"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""");
         File.WriteAllText(Path.Combine(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /></packageSources></configuration>");
         File.WriteAllText(Path.Combine(consumer, "Consumer.csproj"), """
 <Project Sdk="Microsoft.NET.Sdk">
