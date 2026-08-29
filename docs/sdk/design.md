@@ -1,6 +1,7 @@
 # Standardized .NET solution setup
 
-Status: **proposed; blocked by the decisions in
+Status: **proposed; first feedback round incorporated; architecture remains
+blocked by the open decisions in
 [`progress/decisions.md`](progress/decisions.md)**.
 
 ## Problem
@@ -59,6 +60,31 @@ split into multiple packages, or declared by every consumer.
 This confirms the important functional difference: both choices can carry
 props, targets, analyzer configuration, and additional files, but only an
 MSBuild SDK can own conditional implicit package references during restore.
+
+### Capabilities unavailable to `buildTransitive`
+
+The following requested or accepted capabilities cannot be implemented by a
+single `buildTransitive` package with equivalent behavior:
+
+| Capability | Why it is unavailable | Required workaround |
+| --- | --- | --- |
+| Add analyzer packages only to non-SQL projects | Package build assets cannot add `PackageReference`; nuspec dependencies are unconditional. | Separate C#/SQL packages or require consumer references. |
+| Remove ErrorProne from restore when independently disabled | A nuspec dependency is already present before package props evaluate. A target can suppress its analyzer asset but cannot remove the restored dependency. | Separate optional package or consumer reference. |
+| Add MTP extensions only to test projects | A package dependency cannot be conditioned on consumer `IsTestProject`. | Separate test package referenced by each test project. |
+| Select GitHub or Azure DevOps MTP reporting packages from detected CI | Nuspec dependencies cannot vary from consumer environment variables. | Restore both reporters everywhere or require CI-specific references. |
+| Add Reqnroll, AwesomeAssertions, or another framework package only when selected | `PackageReference` cannot be injected after the package containing the props has been restored. | Explicit consumer references; inert properties remain possible. |
+| Add SourceLink, SBOM, and Polyfill according to project type | Their package references are restore inputs. | Make all unconditional dependencies, split packages, or require consumer references. |
+| Give every injected package an SDK-owned implicit version | `IsImplicitlyDefined` applies to SDK-injected `PackageReference`; nuspec dependencies use ordinary NuGet dependency resolution. | Consumer CPM/nuspec versions, potentially with central transitive pinning. |
+| Default or validate restore inputs such as TFM and package versions | NuGet explicitly excludes restore-affecting properties/items from package build assets. | Source files, `Directory.Build.props`, `Directory.Packages.props`, or an SDK. |
+
+Everything else currently under consideration remains possible in
+`buildTransitive`: non-restore properties, targets, content item metadata,
+global usings, packaged `EditorConfigFiles`/`GlobalAnalyzerConfigFiles`,
+`AdditionalFiles`, SponsorLink removal, banned-package validation, SQL
+properties, Reqnroll properties, analyzer suppression during test targets, and
+application-settings copy/publish metadata. A package family could recover most
+dependency selection, but consumers would then reference the correct base,
+test, and optional-feature packages explicitly.
 
 ## Solution alternatives
 
@@ -169,22 +195,76 @@ separate optional packages, or explicit consumer references.
 | CPM ownership of injected packages | SDK owns implicit versions | Dependencies or consumer CPM own versions |
 | Best fit | Complete solution standard | Analyzer/configuration-only standard |
 
-## Recommendation
+## Current recommendation
 
-Use **Alternative A, one additive `Ark.Tools.Sdk`**, and pin its version once in
-`global.json`. Keep the existing Microsoft SDK declaration so the first release
-does not need a family of wrapper SDKs. Add another Ark SDK only when a project
-type cannot be expressed safely by conditions.
+The first-round recommendation remains **Alternative A, one additive
+`Ark.Tools.Sdk`**, pinned once in `global.json`. SDK-01 and SDK-02 remain open;
+the second feedback round must choose the distribution model and SDK activation
+shape after considering the capability gaps above.
 
-This is the only alternative that can faithfully centralize the current
-conditional package references. It also avoids making build policy transitively
-leak through Ark.Tools runtime libraries. The traditional package remains a
-valid fallback if the accepted scope is reduced to analyzer configuration and
-non-restore build behavior.
+This is the only single-artifact alternative that can faithfully centralize the
+current conditional package references. It also avoids making build policy
+transitively leak through Ark.Tools runtime libraries. A `buildTransitive`
+package family remains viable if consumers explicitly select dependency-bearing
+feature packages.
 
-Defaults should use "set when empty" semantics unless a decision explicitly
-marks a policy as mandatory. Every behavior needs a documented opt-out, except
-for properties accepted as organization invariants.
+The accepted policy is strong defaults with escape hatches. Properties are set
+when empty so repository/project values override them. If SDK-01 selects the
+SDK, package-backed features also require a named opt-out that removes both the
+implicit package and related configuration or targets. A `buildTransitive`
+design can suppress build behavior but cannot remove an already restored nuspec
+dependency.
+
+## Accepted decisions
+
+The first feedback round established the following baseline:
+
+- The audience is ARK-owned line-of-business repositories. The SDK has one
+  policy set, not public/organization profiles.
+- Every default is consumer-overridable. Every independently useful feature has
+  an escape hatch; the SDK does not silently overwrite consumer values.
+- Test-project selection is explicit when present, with `.Tests` and
+  `.UnitTests` suffix detection as migration fallback.
+- MTP and its current extension set are expected. Test-framework and assertion
+  packages are not automatically added. Reqnroll properties are configured
+  without adding Reqnroll; no AwesomeAssertions-specific property currently
+  exists to configure.
+- Packaged analyzer settings are added through `EditorConfigFiles` and
+  `GlobalAnalyzerConfigFiles`, following Meziantou's mechanism. Local
+  `.editorconfig` and `.globalconfig` files override package defaults. The SDK
+  never creates or changes consumer files.
+- Compiler and MSBuild warnings are errors by default in every configuration,
+  but consumers can override the properties.
+- The SDK contributes none of the existing blanket `NoWarn` entries.
+- `Features=strict` is enabled and `LangVersion` is pinned to C# 14, the current
+  language version for the repository's .NET 10 SDK, when the consumer leaves
+  them empty. `AllowUnsafeBlocks` is not set.
+- Every project generates a NuGet lock file and CI uses locked mode.
+- The full current MTP extension/default-settings profile is enabled for test
+  projects: crash dump, code coverage, hang dump, hot reload, retry, TRX,
+  Azure DevOps reporting, and empty-run protection. Each feature remains
+  independently disableable.
+- Analyzers are disabled during `dotnet test` by default to optimize the MTP
+  build. Consumers can disable this optimization.
+- Current `appsettings*.json` copy/publish behavior applies to all projects,
+  with an escape hatch.
+- Reqnroll settings apply to test projects but add no Reqnroll packages and are
+  inert when Reqnroll is absent.
+- SQL projects are automatically detected through
+  `UsingMicrosoftBuildSqlSdk`; they receive T-SQL warnings-as-errors and SQL
+  code analysis while C# analyzer/configuration items are excluded.
+- Packaging adds safe public defaults only: SourceLink, symbols, and package
+  validation. It adds no identity, license, icon, repository URL, exact
+  dependency-version rewrite, or organization profile.
+- SBOM, SourceLink, and Polyfill are baseline implicit dependencies, each with
+  an escape hatch.
+- All current analyzers are baseline dependencies, including ErrorProne.
+- The SDK banned-symbol list is combined with consumer `AdditionalFiles`;
+  consumers use justified analyzer suppressions for exceptions.
+- New errors/bans, mandatory properties, and implicit-package major upgrades
+  are breaking SDK changes.
+- ReferenceProject migrates category by category with evaluated-project and
+  build snapshots.
 
 ## Current Ark.Tools feature inventory
 
@@ -197,23 +277,24 @@ The inventory below was verified against:
 - the root analyzer configuration and banned-symbol files; and
 - `/Directory.Packages.props` for package versions.
 
-`Proposed disposition` is a design recommendation, not an accepted decision.
+`Disposition` incorporates the first feedback round. Items still tied to an
+open decision say so explicitly.
 
 ### Early properties
 
-| Current feature/default | Current scope | Proposed disposition |
+| Current feature/default | Current scope | Disposition |
 | --- | --- | --- |
 | `TargetFrameworks=net8.0;net10.0` at root; `TargetFramework=net10.0` in ReferenceProject | Repository/sample choice | Exclude. A reusable standard must not silently choose consumer TFMs. |
 | Local `Version=999.9.9`; sample `Version=6.6.6` | Local package development | Exclude. Versioning remains repository-owned. |
 | `ArkCoreInterceptorsEnabled=true`, compiler-visible property, and `Ark.Tools.Core.Generated` interceptor namespace | Ark.Tools.Core local project-reference support | Exclude initially. Published `Ark.Tools.Core` already carries its consumer build assets. |
 | `ContinuousIntegrationBuild=true` for `TF_BUILD`, `GITHUB_ACTIONS`, or `CI`; `_IsGitHubActions=true` | All projects | Include, set only when detected and otherwise preserve an explicit value. |
-| `IsPackable=true` at root; `false` in ReferenceProject | Conflicting repository defaults | Do not set globally. Set `false` only for an accepted test profile. |
+| `IsPackable=true` at root; `false` in ReferenceProject | Conflicting repository defaults | Do not set globally; set `false` for detected test projects. |
 | `Nullable=enable` | Non-SQL projects | Include when empty. |
 | `ImplicitUsings=enable` | Non-SQL projects | Include when empty. |
-| `TreatWarningsAsErrors=true` | All current projects | Include only after deciding whether it is unconditional or CI/Release-only. |
-| `MSBuildTreatWarningsAsErrors=true` | All current projects | Same policy as compiler warnings. |
-| `NoWarn=NU1701;1591;CS1998;NU1605` | All current projects | Do not copy as one blanket list. Decide every suppression; preserve consumer `NoWarn` values when appending. |
-| `AllowUnsafeBlocks=true` | All current projects | Make opt-in or confirm as an organization default; it broadens the language surface. |
+| `TreatWarningsAsErrors=true` | All current projects | Include when empty in every configuration; consumer can override. |
+| `MSBuildTreatWarningsAsErrors=true` | All current projects | Include when empty in every configuration; consumer can override. |
+| `NoWarn=NU1701;1591;CS1998;NU1605` | All current projects | Exclude all four blanket suppressions. |
+| `AllowUnsafeBlocks=true` | All current projects | Exclude. Unsafe remains a consumer/project decision. |
 | `GenerateDocumentationFile=true` | All current projects | Include when empty. |
 | `GenerateAssemblyConfigurationAttribute=false` | All current projects | Include only if the generated attribute conflicts with established Ark metadata. |
 | `GenerateAssemblyCompanyAttribute=false` | All current projects | Keep package/repository-owned unless all consumers use external assembly metadata. |
@@ -221,47 +302,47 @@ The inventory below was verified against:
 | `EmbedUntrackedSources=true` | All current projects | Include when empty. |
 | `DebugType=portable` | All current projects | Include when empty; do not adopt Meziantou's `embedded` default without a compatibility decision. |
 | `DebugSymbols=true` | All current projects | Include when empty, or rely on the Microsoft SDK default if verified redundant. |
-| `RestorePackagesWithLockFile=true` | All current projects | Include when empty. |
+| `RestorePackagesWithLockFile=true` | All current projects | Include when empty for every project. |
 | `RestoreLockedMode=true` on CI | All current projects | Include when empty and `ContinuousIntegrationBuild=true`. |
-| `EnablePackageValidation=true` | All current projects | Restrict to packable projects unless validation proves no cost or failures for applications. |
+| `EnablePackageValidation=true` | All current projects | Include when empty as a safe packaging default. |
 | `RestoreUseStaticGraphEvaluation=false` | Workaround for NuGet audit suppression issue | Do not fossilize. Re-test NuGet/Home#14300 with supported SDKs before inclusion. |
 | `RestoreSerializeGlobalProperties=true` | All current projects | Include when empty. |
 | `Deterministic=true` | All current projects | Include when empty. |
 | `AccelerateBuildsInVisualStudio=true` | All current projects | Include when empty. |
-| `Features=strict` | All current projects | Include when empty after compatibility testing on .NET 8 and .NET 10. |
+| `Features=strict` | All current projects | Include when empty. |
 | `ReportAnalyzer=true` | Non-SQL projects | Include when empty. |
 | `EnableNETAnalyzers=true` | Non-SQL projects | Include when empty. |
 | `AnalysisLevel=latest-all` | Non-SQL projects | Include when empty; SDK upgrades can intentionally expose new diagnostics. |
-| `LangVersion=latest` | Non-SQL projects | Include only if consumers accept compiler behavior changing with SDK upgrades. |
-| `EnforceCodeStyleInBuild=true` | Non-SQL projects | Include when empty, with policy strength decided together with warnings-as-errors. |
-| `GenerateSBOM=true` | All current projects | Include for pack/publish outputs if `Microsoft.Sbom.Targets` remains an implicit dependency. |
-| `PolyUseEmbeddedAttribute=true` | All current projects | Include only with the Polyfill package profile. |
+| `LangVersion=latest` | Non-SQL projects | Replace with overridable `LangVersion=14.0`, pinned to the current C# version. |
+| `EnforceCodeStyleInBuild=true` | Non-SQL projects | Include when empty in every configuration. |
+| `GenerateSBOM=true` | All current projects | Include with an independently disableable implicit `Microsoft.Sbom.Targets` reference. |
+| `PolyUseEmbeddedAttribute=true` | All current projects | Include with an independently disableable implicit Polyfill reference. |
 | `NuGetAudit=true`, `NuGetAuditMode=all`, `NuGetAuditLevel=low` | All current projects | Include when empty. |
-| `WarningsNotAsErrors += NU1901;NU1905` | All current projects | Resolve the policy conflict with warnings-as-errors; do not silently preserve low-risk exceptions without review. |
-| `IsTestProject=true` for names ending `.Tests` or `.UnitTests` | Convention-based detection | Retain only as fallback; explicit test SDK/profile is less surprising. |
+| `WarningsNotAsErrors += NU1901;NU1905` | All current projects | Exclude. Warnings are errors by default; consumers can add explicit exceptions. |
+| `IsTestProject=true` for names ending `.Tests` or `.UnitTests` | Convention-based detection | Use explicit value first and suffix detection as migration fallback. |
 | Test `IsPackable=false` and `WarnOnPackingNonPackableProject=false` | Test projects | Include in the test profile. |
-| Test `OutputType=Exe` and `EnableMSTestRunner=true` | Test projects | Keep `OutputType=Exe` for MTP; decide framework-specific runner ownership separately. |
-| Test `ExcludeByAttribute=Obsolete,GeneratedCodeAttribute` | Test projects | Include only if this is an accepted cross-framework MTP filter. |
-| `ReqnrollUseIntermediateOutputPathForCodeBehind=true` | Test projects | Include in an optional Reqnroll profile, not every test project. |
-| `ReqnrollDeleteObsoleteCodeBehindFilesOnClean=true` | Test projects | Include with the Reqnroll profile. |
-| `TreatTSqlWarningsAsErrors=True`, `RunSqlCodeAnalysis=True` | ReferenceProject SQL projects | Add only through an explicit SQL-compatible profile; general C# analyzers remain excluded. |
+| Test `OutputType=Exe` and `EnableMSTestRunner=true` | Test projects | Keep `OutputType=Exe` for MTP. Framework runner ownership remains open in SDK-05. |
+| Test `ExcludeByAttribute=Obsolete,GeneratedCodeAttribute` | Test projects | Include when empty as an inert test-platform setting. |
+| `ReqnrollUseIntermediateOutputPathForCodeBehind=true` | Test projects | Include when empty for test projects; inert without Reqnroll targets. |
+| `ReqnrollDeleteObsoleteCodeBehindFilesOnClean=true` | Test projects | Include when empty for test projects; inert without Reqnroll targets. |
+| `TreatTSqlWarningsAsErrors=True`, `RunSqlCodeAnalysis=True` | ReferenceProject SQL projects | Include when empty for automatically detected SQL projects; exclude C# analyzers/configs. |
 | `EnableSourceControlManagerQueries=false`, `EnableSourceLink=false` when `COPILOT_AGENT_ACTION` is set | Copilot sandbox workaround | Include while the sandbox limitation remains reproducible. |
 | `ApplicationInsightsResourceId=/subscriptions/dummy` | Historical local telemetry workaround | Exclude unless a current failing scenario proves it is still required. |
 
 ### Analyzer and configuration assets
 
-| Current asset | Current behavior | Proposed disposition |
+| Current asset | Current behavior | Disposition |
 | --- | --- | --- |
-| `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | Include implicitly unless the platform analyzer is sufficient; version owned by the SDK. |
+| `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | Include implicitly; whether the SDK or consumer owns versions remains open in SDK-07. |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` 4.14.0 | Private analyzer reference for non-SQL projects | Include implicitly. |
 | `Meziantou.Analyzer` 3.0.160 | Private analyzer reference for non-SQL projects | Include implicitly. |
 | `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | Include implicitly. |
-| `ErrorProne.NET.CoreAnalyzers` 0.1.2 | Private reference; root supports `DisableErrorProneAnalyzers=true` | Include only if accepted, with the existing opt-out. |
+| `ErrorProne.NET.CoreAnalyzers` 0.1.2 | Private reference; root supports `DisableErrorProneAnalyzers=true` | Include with the existing independent opt-out. |
 | `.netanalyzers.globalconfig` | 97 CA/IDE severity overrides | Package and load as a global analyzer config. |
 | `.meziantou.globalconfig` | 34 MA severity overrides | Package and load as a global analyzer config. |
 | `.errorprone.globalconfig` | 30 EPC/ERP severity overrides | Package with ErrorProne and load only when enabled. |
 | `.vsthreading.globalconfig` | 23 VSTHRD severity overrides | Package and load as a global analyzer config. |
-| `.editorconfig` | Formatting, code-style, naming rules, and three error severities | Split build-enforced analyzer settings from source-tree editor formatting. Verify Visual Studio and Rider design-time behavior before removing the checked-in file. |
+| `.editorconfig` | Formatting, code-style, naming rules, and three error severities | Package it and add it to `EditorConfigFiles`, as Meziantou does. Local source-tree config wins. Do not write consumer files. |
 | Consumer `.globalconfig` | ReferenceProject keeps a local override file | Preserve local override capability and document precedence. |
 | `BannedSymbols.txt` | 93 active bans: local time, ambiguous parsing/rounding/culture, reference tuples, implicit time-zone conversion, console logging, and blocking task/thread APIs | Package as `AdditionalFiles`; provide one opt-out property and support a consumer-owned additional banned-symbol file. |
 | `Disable_SponsorLink` target | Removes `DevLooped.SponsorLink` and `Moq.CodeAnalysis` analyzers | Include with an opt-out, matching current behavior. |
@@ -273,19 +354,19 @@ consumer CPM versions.
 
 ### Late items and targets
 
-| Current feature | Current behavior | Proposed disposition |
+| Current feature | Current behavior | Disposition |
 | --- | --- | --- |
-| `Polyfill` private package reference | Added to all root projects | Include only if its generated embedded attributes are an accepted baseline; otherwise let libraries opt in. |
-| `Microsoft.SourceLink.GitHub` private package reference | Added to packable root projects | Include conditionally for packable GitHub-hosted projects. |
-| `Microsoft.Sbom.Targets` private package reference | Added to non-SQL projects | Include conditionally with `GenerateSBOM`; confirm whether applications and test projects need it. |
+| `Polyfill` private package reference | Added to all root projects | Include as a baseline implicit dependency with an independent opt-out. |
+| `Microsoft.SourceLink.GitHub` private package reference | Added to packable root projects | Include as a baseline implicit dependency with an independent opt-out. |
+| `Microsoft.Sbom.Targets` private package reference | Added to non-SQL projects | Include as a baseline implicit dependency with an independent opt-out. |
 | Global usings | Adds `System.Diagnostics.CodeAnalysis`, `System.Globalization`, and `System.Text` for C# with implicit usings | Include with an opt-out or decide that standards should not alter source name resolution. |
-| `appsettings*.json` | Base files always copied to output/publish; environment variants copied to output but never publish | Do not apply to every project. Restrict to an explicit application/web profile after publish semantics are confirmed. |
-| `reqnroll*.json` | Always copied to test output | Include only in the Reqnroll profile. |
+| `appsettings*.json` | Base files always copied to output/publish; environment variants copied to output but never publish | Preserve for all projects, with one escape hatch for the feature. |
+| `reqnroll*.json` | Always copied to test output | Preserve only for test projects; inert when no matching file exists. |
 | `testconfig.json` | Copied with `PreserveNewest` | Include only in the test profile. |
-| MTP extension package references | Crash dump, code coverage, hang dump, hot reload, retry, TRX, and Azure DevOps report | Include in the test profile, with individual feature switches where extensions have runtime or licensing implications. |
-| Test framework packages | `MSTest.TestAdapter`, `MSTest.TestFramework`, `MSTest.Analyzers`, `Microsoft.NET.Test.Sdk`, and `AwesomeAssertions` | Current behavior, but do not place in the base SDK. Resolve whether the test profile owns MSTest/Reqnroll or remains framework-neutral. |
-| Exact project-reference version target | Rewrites packed project dependencies as exact versions | Include only in a pack profile after package-validation tests. |
-| Ark icon and package metadata | Ark.Tools repository URL, project URL, MIT license, authors, copyright, symbols/snupkg | Never copy Ark.Tools repository URLs into consumers. A separate organization pack profile may supply safe author/license defaults. |
+| MTP extension package references | Crash dump, code coverage, hang dump, hot reload, retry, TRX, and Azure DevOps report | Include the full set for test projects, with an opt-out per extension/default setting. |
+| Test framework packages | `MSTest.TestAdapter`, `MSTest.TestFramework`, `MSTest.Analyzers`, `Microsoft.NET.Test.Sdk`, and `AwesomeAssertions` | Do not add framework/assertion packages; final runner ownership remains open in SDK-05. |
+| Exact project-reference version target | Rewrites packed project dependencies as exact versions | Exclude. Repositories own dependency-version policy. |
+| Ark icon and package metadata | Ark.Tools repository URL, project URL, MIT license, authors, copyright, symbols/snupkg | Exclude identity/license/icon/repository defaults and organization profiles; include SourceLink, symbols, and package validation only. |
 | `samples/Directory.Build.targets` | Replaces local Ark.Tools packages with project references and manually mirrors generated/analyzer assets | Exclude. This is monorepo sample-development infrastructure. |
 
 ## Meziantou research
@@ -347,6 +428,26 @@ Its repository now states that it is deprecated and replaced by
 project-type-aware dependencies and broader build orchestration are required.
 
 ## Configuration layering
+
+### Packaged configuration mechanism
+
+Follow the mechanism used by Meziantou.NET.Sdk rather than copying files into a
+consumer repository:
+
+```xml
+<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+  <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/Ark.Tools.editorconfig" />
+  <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/Ark.Tools.*.globalconfig" />
+</ItemGroup>
+```
+
+The package's style and analyzer options are direct compiler/design-time
+inputs. Packaged global configs use a `global_level` below the default level
+`100` of a consumer `.globalconfig`, so an ordinary local global config wins.
+Source-tree `.editorconfig` entries win over global configs, and deeper local
+EditorConfig files win over shallower local files. The implementation must prove
+the packaged-versus-local precedence with Roslyn build and IDE fixtures; it must
+not generate, copy, or update a consumer file.
 
 The proposed precedence, from lowest to highest, is:
 
