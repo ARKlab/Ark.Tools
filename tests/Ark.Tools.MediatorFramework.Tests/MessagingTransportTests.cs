@@ -212,8 +212,8 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         var transport = new InMemoryMessagingTransport();
         var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["é"] = "値" };
 
-        transport.MeasureNative(headers, _sequence(1, 2))
-            .Should().Be(2 + 2 + 3);
+        transport.MeasureNativeHeaders(headers)
+            .Should().Be(2 + 3);
     }
 
     [TestMethod]
@@ -226,11 +226,11 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         var headers = new Dictionary<string, string>(StringComparer.Ordinal) { ["é"] = "値" };
 
         transport.Capabilities.Should().Be(
-            MessagingCapabilities.Receive
+            MessagingCapabilities.SendReceive
             | MessagingCapabilities.PubSub
             | MessagingCapabilities.ScheduledSend);
-        transport.MaximumInlineEnvelopeBytes.Should().Be(256 * 1024);
-        transport.MeasureNative(headers, _sequence(1, 2)).Should().Be(2 + 2 + 3 + 8);
+        transport.MaximumPayloadBytes.Should().Be(256 * 1024);
+        transport.MeasureNativeHeaders(headers).Should().Be(2 + 2 + 3 + 8);
 
         var oversized = new ReadOnlySequence<byte>(new byte[(256 * 1024) + 1]);
         Func<Task> send = async () => await transport
@@ -313,15 +313,13 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 
     private sealed class ReceiveOnlyTransport : IMessagingTransport
     {
-        public MessagingCapabilities Capabilities => MessagingCapabilities.Receive;
+        public MessagingCapabilities Capabilities => MessagingCapabilities.SendReceive;
 
-        public long? MaximumInlineEnvelopeBytes => null;
+        public long MaximumPayloadBytes => long.MaxValue;
 
-        public long MeasureNative(
-            IReadOnlyDictionary<string, string> headers,
-            in ReadOnlySequence<byte> payload)
+        public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
         {
-            return payload.Length;
+            return 0;
         }
 
         public Task SendAsync(
@@ -370,12 +368,12 @@ public abstract class MessagingTransportConformanceTests
 
     /// <summary>Gets the capabilities exercised by the conformance checks.</summary>
     protected virtual MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive;
+        MessagingCapabilities.SendReceive;
 
     [TestMethod]
     public async Task CompetingConsumersReceiveEachMessageOnce()
     {
-        if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
             return;
 
         var transport = CreateTransport();
@@ -399,7 +397,7 @@ public abstract class MessagingTransportConformanceTests
     [TestMethod]
     public async Task ReceiveHonorsCancellation()
     {
-        if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
             return;
 
         var transport = CreateTransport();
@@ -414,7 +412,7 @@ public abstract class MessagingTransportConformanceTests
     [TestMethod]
     public async Task RepeatedAbandonIncrementsDeliveryCount()
     {
-        if (!Capabilities.HasFlag(MessagingCapabilities.Receive))
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
             return;
 
         var transport = CreateTransport();

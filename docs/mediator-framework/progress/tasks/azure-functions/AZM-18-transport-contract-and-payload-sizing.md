@@ -16,9 +16,9 @@ measurement, and point-to-point messaging must be one explicit capability.
 
 ## Execution map
 
-- **Public capability API**: rename `MessagingCapabilities.Receive` to
+- **Public capability API**: rename `MessagingCapabilities.SendReceive` to
   `SendReceive`; a network without it is publish-only.
-- **Public bus API**: rename delayed `Send` overloads to `Defer`; current-message
+- **Public bus API**: rename delayed `Defer` overloads to `Defer`; current-message
   deferral remains future work and is not implemented here.
 - **Network declarations/options**: remove maximum transport payload and DataBus
   offload threshold members and defaults.
@@ -106,13 +106,13 @@ API.
 
 ## Acceptance
 
-- [ ] `SendReceive` replaces `Receive` throughout public, generated, and
+- [x] `SendReceive` replaces `Receive` throughout public, generated, and
   documented surfaces.
-- [ ] Delayed sends use `Defer`; current-message deferral remains out of scope.
-- [ ] Network payload/offload settings are removed.
-- [ ] Every transport implements the static payload limit and header sizing
+- [x] Delayed sends use `Defer`; current-message deferral remains out of scope.
+- [x] Network payload/offload settings are removed.
+- [x] Every transport implements the static payload limit and header sizing
   contract.
-- [ ] Runtime claim-check uses complete headers-plus-body size.
+- [x] Runtime claim-check uses complete headers-plus-body size.
 - [ ] Sample, guides, API baselines, and generated-source inspections are
   updated.
 - [ ] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.

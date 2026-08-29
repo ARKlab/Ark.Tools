@@ -2239,7 +2239,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
             public sealed class BookMessagingNetwork { }
             """;
 
@@ -2300,10 +2300,8 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
-                MaximumTransportPayloadBytes = 123,
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub,
                 MaximumDecompressedPayloadBytes = 456,
-                DataBusOffloadThresholdBytes = 789,
                 DataBusMaximumAttachmentBytes = 987,
                 MaximumSchedulingDelaySeconds = 3600,
                 ResourceLifecycle = MessagingResourceLifecycle.External,
@@ -2330,9 +2328,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("private static global::Ark.Tools.MediatorFramework.SerializationProtocol GetWireProtocol(global::System.Type contractType)");
         result.Generated.Should().Contain("private static string GetLogicalName(global::System.Type contractType)");
         result.Generated.Should().Contain("CreateOptions()");
-        result.Generated.Should().Contain("MaximumTransportPayloadBytes = 123");
         result.Generated.Should().Contain("MaximumDecompressedPayloadBytes = 456");
-        result.Generated.Should().Contain("DataBusOffloadThresholdBytes = 789");
         result.Generated.Should().Contain("DataBusMaximumAttachmentBytes = 987");
         result.Generated.Should().Contain("MaximumSchedulingDelay = global::System.TimeSpan.FromSeconds(3600)");
         result.Generated.Should().Contain("ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)1");
@@ -2408,17 +2404,15 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive)]
+                Requires = MessagingCapabilities.SendReceive)]
             public static partial class BookMessagingNetwork { }
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain(
-            "MaximumTransportPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumTransportPayloadBytes");
         result.Generated.Should().Contain(
             "MaximumDecompressedPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes");
         result.Generated.Should().Contain(
-            "DataBusOffloadThresholdBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusOffloadThresholdBytes");
         result.Generated.Should().Contain(
             "DataBusMaximumAttachmentBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes");
         result.Generated.Should().Contain(
@@ -2475,7 +2469,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive)]
+                Requires = MessagingCapabilities.SendReceive)]
             public static partial class BookMessagingNetwork { }
             """);
 
@@ -2577,7 +2571,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PublishingParticipant), typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub)]
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
             public static partial class BookMessagingNetwork { }
             public sealed class ZIncomingStep { }
             public sealed class AIncomingStep { }
@@ -2641,7 +2635,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class PrintingParticipant { }
             [MessagingNetwork(
                 Members = new[] { typeof(PrintingParticipant) },
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend)]
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend)]
             public static partial class BookMessagingNetwork { }
             public sealed class TestRetryPolicy : IMessagingRetryPolicy
             {

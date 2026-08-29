@@ -276,7 +276,7 @@ public sealed class MessagingBusSampleTests
                     typeof(SampleMessagingNotificationParticipant),
                     typeof(SampleMessagingAuditParticipant),
                 ],
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend,
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend,
                 MaximumSchedulingDelaySeconds = 3600,
             });
         var dataBus = new InMemoryMessagingDataBus();

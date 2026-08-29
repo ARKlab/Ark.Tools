@@ -39,7 +39,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
     private const string _failedMessage = "Ark.Tools.MediatorFramework.MessagingFailed`1";
     private const string _exceptionInfo = "Ark.Tools.MediatorFramework.MessagingExceptionInfo";
-    private const int _receive = 1;
+    private const int _sendReceive = 1;
     private const int _pubSub = 2;
 
     private static readonly DiagnosticDescriptor _duplicateMember = _rule(
@@ -240,7 +240,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _report(context, _invalidRetry, participant.Symbol, participant.Identity, participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1);
 
             if (participant.Processes.Length > 0 || participant.Subscribes.Length > 0)
-                _requireCapability(context, network, participant, "Receive", _receive);
+                _requireCapability(context, network, participant, "SendReceive", _sendReceive);
             if (participant.Publishes.Length > 0 || participant.Subscribes.Length > 0)
                 _requireCapability(context, network, participant, "PubSub", _pubSub);
 
@@ -346,9 +346,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             symbol.ToDisplayString(),
             members,
             _enum(attribute, "Requires"),
-            _optionalInt(attribute, "MaximumTransportPayloadBytes"),
             _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
-            _optionalInt(attribute, "DataBusOffloadThresholdBytes"),
             _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
             _optionalInt(attribute, "MaximumSchedulingDelaySeconds"),
             _optionalInt(attribute, "ResourceLifecycle"),
@@ -628,15 +626,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             source.AppendLine("                },")
                 .Append("                Requires = (global::Ark.Tools.MediatorFramework.MessagingCapabilities)")
                 .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
-                .Append("                MaximumTransportPayloadBytes = ")
-                .Append(network.MaximumTransportPayloadBytes?.ToString(CultureInfo.InvariantCulture)
-                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumTransportPayloadBytes").AppendLine(",")
                 .Append("                MaximumDecompressedPayloadBytes = ")
                 .Append(network.MaximumDecompressedPayloadBytes?.ToString(CultureInfo.InvariantCulture)
                     ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes").AppendLine(",")
-                .Append("                DataBusOffloadThresholdBytes = ")
-                .Append(network.DataBusOffloadThresholdBytes?.ToString(CultureInfo.InvariantCulture)
-                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusOffloadThresholdBytes").AppendLine(",")
                 .Append("                DataBusMaximumAttachmentBytes = ")
                 .Append(network.DataBusMaximumAttachmentBytes?.ToString(CultureInfo.InvariantCulture)
                     ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes").AppendLine(",")
@@ -1299,9 +1291,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             string name,
             ImmutableArray<INamedTypeSymbol> memberSymbols,
             int requires,
-            int? maximumTransportPayloadBytes,
             int? maximumDecompressedPayloadBytes,
-            int? dataBusOffloadThresholdBytes,
             int? dataBusMaximumAttachmentBytes,
             int? maximumSchedulingDelaySeconds,
             int? resourceLifecycle,
@@ -1312,9 +1302,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             Name = name;
             MemberSymbols = memberSymbols;
             Requires = requires;
-            MaximumTransportPayloadBytes = maximumTransportPayloadBytes;
             MaximumDecompressedPayloadBytes = maximumDecompressedPayloadBytes;
-            DataBusOffloadThresholdBytes = dataBusOffloadThresholdBytes;
             DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
             MaximumSchedulingDelaySeconds = maximumSchedulingDelaySeconds;
             ResourceLifecycle = resourceLifecycle;
@@ -1326,9 +1314,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         public string Name { get; }
         public ImmutableArray<INamedTypeSymbol> MemberSymbols { get; }
         public int Requires { get; }
-        public int? MaximumTransportPayloadBytes { get; }
         public int? MaximumDecompressedPayloadBytes { get; }
-        public int? DataBusOffloadThresholdBytes { get; }
         public int? DataBusMaximumAttachmentBytes { get; }
         public int? MaximumSchedulingDelaySeconds { get; }
         public int? ResourceLifecycle { get; }

@@ -418,7 +418,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 subscribes.Select(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToImmutableArray(),
                 retryType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 compression != 0,
-                _int(networkAttribute, "DataBusOffloadThresholdBytes") > 0,
+                false,
                 routes.ToImmutable(),
                 adapters,
                 legacyEndpoints,

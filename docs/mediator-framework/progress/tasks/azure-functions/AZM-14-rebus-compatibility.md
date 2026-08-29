@@ -115,7 +115,7 @@ their infrastructure.
    acknowledgements when the generated requirements descriptor says they are
    needed, and fail composition with a targeted diagnostic when they are
    absent. Do not attempt to infer provider registration from Rebus internals.
-9. Register a Rebus `IBus` adapter that proxies `Send`, delayed `Send`,
+9. Register a Rebus `IBus` adapter that proxies `Send`, delayed `Defer`,
    `Publish`, optional `Dictionary<string, string>` additional headers, and
    cancellation to the supported Rebus APIs. Rebus composition enforces the
    same declaration-based publish rule through the bound participant; a

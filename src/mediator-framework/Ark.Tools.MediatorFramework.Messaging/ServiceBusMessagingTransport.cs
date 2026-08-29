@@ -13,10 +13,11 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
 public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, IAsyncDisposable
 {
+    /// <summary>Gets the Service Bus standard-tier maximum complete payload size.</summary>
+    public const long MaximumPayloadSizeBytes = 256 * 1024;
     private const int _amqpPropertyOverheadBytes = 8;
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
-    private const long _maximumMessageBytes = 256 * 1024;
 
     private readonly ServiceBusClient _client;
     private readonly ConcurrentDictionary<string, ServiceBusSender> _senders = new(StringComparer.Ordinal);
@@ -31,21 +32,20 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
 
     /// <inheritdoc />
     public MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive
+        MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    public long? MaximumInlineEnvelopeBytes => _maximumMessageBytes;
+    /// <inheritdoc />
+    public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
     /// <inheritdoc />
-    public long MeasureNative(
-        IReadOnlyDictionary<string, string> headers,
-        in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
         ArgumentNullException.ThrowIfNull(headers);
 
-        var size = payload.Length;
+        var size = 0L;
         checked
         {
             foreach (var pair in headers)
@@ -166,7 +166,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)
     {
-        if (MeasureNative(headers, payload) > _maximumMessageBytes)
+        if (MeasureNativeHeaders(headers) + payload.Length > MaximumPayloadSizeBytes)
             throw new ArgumentOutOfRangeException(
                 nameof(payload),
                 "The completed Service Bus message exceeds the 256 KB standard-tier limit.");

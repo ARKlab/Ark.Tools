@@ -108,12 +108,12 @@ public interface IMessagingTransport
 
     /// <summary>Gets the hard inline-envelope ceiling in bytes; null means no hard
     /// ceiling (InMemory).</summary>
-    long? MaximumInlineEnvelopeBytes { get; }
+    long? MaximumPayloadBytes { get; }
 
     /// <summary>Measures the completed native representation of an envelope, including
     /// headers and transport encoding. Claim-check decisions use this measurement, never
     /// payload bytes alone.</summary>
-    long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload);
+    long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload);
 
     /// <summary>Sends to a named queue. A non-null dueTime requires ScheduledSend.</summary>
     Task SendAsync(string queue, IReadOnlyDictionary<string, string> headers,
@@ -183,13 +183,13 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     private readonly Duration _lockDuration; // configurable PeekLock duration
 
     public MessagingCapabilities Capabilities
-        => MessagingCapabilities.Receive | MessagingCapabilities.PubSub
+        => MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub
          | MessagingCapabilities.ScheduledSend;
 
     /// <summary>No hard inline-envelope ceiling: the network payload threshold applies alone.</summary>
-    public long? MaximumInlineEnvelopeBytes => null;
+    public long? MaximumPayloadBytes => null;
 
-    public long MeasureNative(IReadOnlyDictionary<string, string> headers,
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)
     {
         var total = payload.Length;

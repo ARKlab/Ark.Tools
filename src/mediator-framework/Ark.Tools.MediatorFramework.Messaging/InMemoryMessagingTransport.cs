@@ -12,6 +12,8 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>First-class in-memory transport with scheduled delivery and PeekLock settlement.</summary>
 public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMessagingTransportManagement
 {
+    /// <summary>Gets the maximum complete payload size; in-memory transport is unbounded.</summary>
+    public const long MaximumPayloadSizeBytes = long.MaxValue;
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
     private const string _maximumDeliveryReason = "maximum-delivery-count";
@@ -53,10 +55,11 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 
     /// <inheritdoc />
     public MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
+        MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    public long? MaximumInlineEnvelopeBytes => null;
+    /// <inheritdoc />
+    public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
     /// <summary>Configures the native retry limit and delay for a queue.</summary>
     /// <param name="queue">The queue name.</param>
@@ -90,11 +93,11 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     }
 
     /// <inheritdoc />
-    public long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
         ArgumentNullException.ThrowIfNull(headers);
 
-        var total = payload.Length;
+        var total = 0L;
         checked
         {
             foreach (var pair in headers)

@@ -126,7 +126,7 @@ public sealed partial class PrintAuditParticipant;
         typeof(PrintNotificationsParticipant),
         typeof(PrintAuditParticipant)
     },
-    Requires = MessagingCapabilities.Receive
+    Requires = MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend)]
 public static partial class BookMessagingNetwork;

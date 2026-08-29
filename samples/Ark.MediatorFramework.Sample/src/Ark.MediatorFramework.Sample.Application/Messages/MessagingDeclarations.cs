@@ -60,7 +60,7 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
         typeof(SampleMessagingNotificationParticipant),
         typeof(SampleMessagingAuditParticipant),
     },
-    Requires = MessagingCapabilities.Receive
+    Requires = MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
     MaximumSchedulingDelaySeconds = 3600)]

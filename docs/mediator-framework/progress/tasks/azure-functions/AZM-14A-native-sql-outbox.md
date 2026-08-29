@@ -219,7 +219,7 @@ WebInterface and RebusProcessor outbox registrations unchanged.
 
 ## Required test coverage
 
-- `Send`, delayed `Send`, and `Publish` persist only after all validation and
+- `Send`, delayed `Defer`, and `Publish` persist only after all validation and
   preserve optional additional headers.
 - Application state and outbox records commit atomically in SQL.
 - Rollback persists neither application state nor outbox records.

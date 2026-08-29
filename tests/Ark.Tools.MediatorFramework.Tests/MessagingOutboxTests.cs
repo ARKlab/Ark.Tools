@@ -235,17 +235,15 @@ public sealed partial class MessagingOutboxTests
         public MessagingCapabilities Capabilities =>
             MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
 
-        public long? MaximumInlineEnvelopeBytes => null;
+        public long MaximumPayloadBytes => long.MaxValue;
 
         public List<SentEnvelope> Sends { get; } = [];
 
         public List<SentEnvelope> Publishes { get; } = [];
 
-        public long MeasureNative(
-            IReadOnlyDictionary<string, string> headers,
-            in ReadOnlySequence<byte> payload)
+        public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
         {
-            return payload.Length;
+            return 0;
         }
 
         public async Task SendAsync(

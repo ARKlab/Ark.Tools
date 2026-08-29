@@ -26,7 +26,7 @@ composition switch, while intentionally reducing the framework API surface.
   per-technology bus implementation.
 - **Routing source**: use only the generated registry (contract → owning
   participant → route); callers never pass queue/topic names.
-- **Capability guards**: delayed `Send` requires the network to declare
+- **Capability guards**: delayed `Defer` requires the network to declare
   `ScheduledSend`; `Publish` requires `PubSub` plus the current participant
   declaring the event in `Publishes`. Violations throw with the capability or
   participant named in the message.
@@ -39,7 +39,7 @@ composition switch, while intentionally reducing the framework API surface.
 ## Implementation steps
 
 1. Define the Mediator Framework transport-neutral restricted one-way `IBus`
-   contract for `Send`, `Publish`, and delayed `Send` variants using both
+   contract for `Send`, `Publish`, and delayed `Defer` variants using both
    `TimeSpan` and `DateTimeOffset`. Do not expose delayed `Publish`.
 2. Implement sending to the processing participant's identity queue through
    the composed transport, resolved through the generated registry. Sending a
@@ -89,7 +89,7 @@ public interface IBus
         CancellationToken cancellationToken = default) where T : class;
 
     /// <summary>Sends after a relative delay; requires the ScheduledSend capability.</summary>
-    Task Send<T>(T message, TimeSpan delay, Dictionary<string, string>? additionalHeaders = null,
+    Task Defer<T>(T message, TimeSpan delay, Dictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default) where T : class;
 
     /// <summary>Sends at an absolute due time; requires the ScheduledSend capability.</summary>
@@ -129,7 +129,7 @@ public sealed class MessagingBus : IBus, IDisposable
             .ConfigureAwait(false);
     }
 
-    public async Task Send<T>(T message, TimeSpan delay,
+    public async Task Defer<T>(T message, TimeSpan delay,
         Dictionary<string, string>? additionalHeaders = null,
         CancellationToken cancellationToken = default) where T : class
     {

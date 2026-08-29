@@ -17,7 +17,7 @@ public sealed class MessagingPayloadSender
 
     /// <summary>Creates a payload sender.</summary>
     /// <param name="dataBus">The shared DataBus provider.</param>
-    /// <param name="network">The network payload limits.</param>
+    /// <param name="network">The network payload safety limits.</param>
     /// <param name="algorithm">The participant's sender-side compression algorithm.</param>
     /// <param name="compressionMinimumSizeBytes">The minimum size eligible for compression.</param>
     public MessagingPayloadSender(
@@ -70,9 +70,7 @@ public sealed class MessagingPayloadSender
             buffer,
             _algorithm,
             _compressionMinimumSizeBytes,
-            Math.Max(
-                _network.MaximumTransportPayloadBytes,
-                _network.DataBusMaximumAttachmentBytes));
+            _network.DataBusMaximumAttachmentBytes);
         codec.Serialize(message, writer);
         writer.Complete();
 
@@ -85,10 +83,8 @@ public sealed class MessagingPayloadSender
         var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
             ?? new ReadOnlyDictionary<string, string>(headers);
-        var nativeSize = transport.MeasureNative(readOnlyHeaders, payload);
-        var mustOffload = payload.Length > _network.MaximumTransportPayloadBytes
-            || payload.Length > _network.DataBusOffloadThresholdBytes
-            || (transport.MaximumInlineEnvelopeBytes is { } ceiling && nativeSize > ceiling);
+        var nativeSize = checked(transport.MeasureNativeHeaders(readOnlyHeaders) + payload.Length);
+        var mustOffload = nativeSize > transport.MaximumPayloadBytes;
         if (!mustOffload)
             return payload;
 
@@ -105,8 +101,8 @@ public sealed class MessagingPayloadSender
             payload.Length.ToString(CultureInfo.InvariantCulture));
         _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, _sha256Hex(payload));
 
-        if (transport.MaximumInlineEnvelopeBytes is { } attachmentCeiling
-            && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > attachmentCeiling)
+        var attachmentEnvelopeSize = transport.MeasureNativeHeaders(readOnlyHeaders);
+        if (attachmentEnvelopeSize > transport.MaximumPayloadBytes)
         {
             throw new MessagingFailFastException(
                 MessagingFailFastReason.OversizedHeaders,

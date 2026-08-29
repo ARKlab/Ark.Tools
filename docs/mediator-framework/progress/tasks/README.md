@@ -201,7 +201,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-15](azure-functions/AZM-15-three-host-sample.md) | Three-participant publish/subscribe sample | Complete |
 | [AZM-16](azure-functions/AZM-16-documentation-and-api-baseline.md) | User documentation, migration guidance, and API baseline | Complete |
 | [AZM-17](azure-functions/AZM-17-logical-names-and-native-entity-mapping.md) | Logical names and native entity mapping | In progress |
-| [AZM-18](azure-functions/AZM-18-transport-contract-and-payload-sizing.md) | Transport contract and payload sizing | Pending |
+| [AZM-18](azure-functions/AZM-18-transport-contract-and-payload-sizing.md) | Transport contract and payload sizing | In progress |
 | [AZM-19](azure-functions/AZM-19-non-json-contract-validation.md) | Non-JSON messaging contract validation | Pending |
 | [AZM-20](azure-functions/AZM-20-opentelemetry-messaging-metrics.md) | OpenTelemetry messaging metrics | Pending |
 | [AZM-21](azure-functions/AZM-21-generic-messaging-declarations.md) | Generic messaging declarations | Pending |

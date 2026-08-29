@@ -11,14 +11,13 @@ public interface IMessagingTransport
     /// <summary>Gets the capabilities declared by this transport.</summary>
     MessagingCapabilities Capabilities { get; }
 
-    /// <summary>Gets the hard inline-envelope ceiling in bytes, or <see langword="null"/> when unbounded.</summary>
-    long? MaximumInlineEnvelopeBytes { get; }
+    /// <summary>Gets the hard maximum complete payload size in bytes.</summary>
+    long MaximumPayloadBytes { get; }
 
-    /// <summary>Measures the completed native representation of an envelope.</summary>
+    /// <summary>Measures the native header representation of an envelope.</summary>
     /// <param name="headers">The envelope headers.</param>
-    /// <param name="payload">The serialized payload.</param>
-    /// <returns>The native representation size in bytes.</returns>
-    long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload);
+    /// <returns>The native header representation size in bytes.</returns>
+    long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers);
 
     /// <summary>Sends an envelope to a queue.</summary>
     /// <param name="queue">The destination queue.</param>

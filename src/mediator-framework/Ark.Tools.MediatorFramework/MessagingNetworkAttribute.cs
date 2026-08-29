@@ -7,14 +7,8 @@ namespace Ark.Tools.MediatorFramework;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class MessagingNetworkAttribute : Attribute
 {
-    /// <summary>The default maximum transport payload size in bytes.</summary>
-    public const int DefaultMaximumTransportPayloadBytes = 240_000;
-
     /// <summary>The default maximum decompressed payload size in bytes.</summary>
     public const int DefaultMaximumDecompressedPayloadBytes = 1_000_000;
-
-    /// <summary>The default size at which payloads are offloaded to DataBus.</summary>
-    public const int DefaultDataBusOffloadThresholdBytes = 200_000;
 
     /// <summary>The default maximum DataBus attachment size in bytes.</summary>
     public const int DefaultDataBusMaximumAttachmentBytes = 50_000_000;
@@ -30,14 +24,8 @@ public sealed class MessagingNetworkAttribute : Attribute
     /// <summary>Gets or sets the optional capabilities required by the network.</summary>
     public MessagingCapabilities Requires { get; set; }
 
-    /// <summary>Gets or sets the maximum transport payload size in bytes.</summary>
-    public int MaximumTransportPayloadBytes { get; set; } = DefaultMaximumTransportPayloadBytes;
-
     /// <summary>Gets or sets the maximum decompressed payload size in bytes.</summary>
     public int MaximumDecompressedPayloadBytes { get; set; } = DefaultMaximumDecompressedPayloadBytes;
-
-    /// <summary>Gets or sets the size at which payloads are offloaded to DataBus.</summary>
-    public int DataBusOffloadThresholdBytes { get; set; } = DefaultDataBusOffloadThresholdBytes;
 
     /// <summary>Gets or sets the maximum DataBus attachment size in bytes.</summary>
     public int DataBusMaximumAttachmentBytes { get; set; } = DefaultDataBusMaximumAttachmentBytes;

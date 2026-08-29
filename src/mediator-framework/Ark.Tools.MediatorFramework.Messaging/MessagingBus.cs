@@ -81,7 +81,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     }
 
     /// <inheritdoc />
-    public async Task Send<T>(
+    public async Task Defer<T>(
         T message,
         TimeSpan delay,
         IReadOnlyDictionary<string, string>? additionalHeaders = null,
@@ -97,7 +97,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     }
 
     /// <inheritdoc />
-    public async Task Send<T>(
+    public async Task Defer<T>(
         T message,
         DateTimeOffset dueTime,
         IReadOnlyDictionary<string, string>? additionalHeaders = null,
@@ -168,6 +168,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     {
         _throwIfDisposed();
         ArgumentNullException.ThrowIfNull(message);
+        _requireNetworkCapability(MessagingCapabilities.SendReceive);
         var queue = _registry.GetProcessorIdentity<T>();
         await _runOutgoingAsync(
             message,

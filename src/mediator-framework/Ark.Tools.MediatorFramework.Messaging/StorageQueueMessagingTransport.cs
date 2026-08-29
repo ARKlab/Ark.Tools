@@ -17,6 +17,8 @@ public sealed class StorageQueueMessagingTransport :
     IMessagingReceiveTransport,
     IMessagingTransportManagement
 {
+    /// <summary>Gets the maximum complete Base64-encoded queue payload size.</summary>
+    public const long MaximumPayloadSizeBytes = 64 * 1024;
     private static readonly TimeSpan _maximumVisibilityDelay = TimeSpan.FromDays(7);
     private readonly QueueServiceClient _serviceClient;
     private readonly ConcurrentDictionary<string, QueueClient> _queues = new(StringComparer.Ordinal);
@@ -76,18 +78,16 @@ public sealed class StorageQueueMessagingTransport :
 
     /// <inheritdoc />
     public MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend;
+        MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    public long? MaximumInlineEnvelopeBytes =>
-        Base64.GetMaxEncodedToUtf8Length(StorageQueueLimits.MaximumNormalCanonicalBytes);
+    /// <inheritdoc />
+    public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
     /// <inheritdoc />
-    public long MeasureNative(
-        IReadOnlyDictionary<string, string> headers,
-        in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
-        var canonicalBytes = StorageQueueEnvelopeCodec._measureCanonical(headers, payload);
+        var canonicalBytes = StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty);
         return Base64.GetMaxEncodedToUtf8Length(canonicalBytes);
     }
 
@@ -104,6 +104,10 @@ public sealed class StorageQueueMessagingTransport :
         ArgumentNullException.ThrowIfNull(headers);
 
         var encoded = StorageQueueEnvelopeCodec.Encode(headers, payload);
+        if (Encoding.UTF8.GetByteCount(encoded) > MaximumPayloadSizeBytes)
+            throw new ArgumentOutOfRangeException(
+                nameof(payload),
+                "The completed Storage Queue message exceeds the 64 KiB limit.");
         var visibilityDelay = _scheduledDelay(dueTime);
         await _queue(queue).SendMessageAsync(
             BinaryData.FromString(encoded),

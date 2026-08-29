@@ -76,7 +76,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var dataBus = new InMemoryMessagingDataBus();
         var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.Gzip, 1);
         var receiver = new MessagingPayloadReceiver(dataBus, network);
-        var transport = new InMemoryMessagingTransport();
+        var transport = new CappedTransport(300);
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 
         var payload = await sender.BuildOutgoingPayloadAsync(
@@ -143,7 +143,7 @@ public sealed class MessagingCompressionAndDataBusTests
             .BuildOutgoingPayloadAsync(
                 new PayloadContract(new string('a', 100)),
                 new TextCodec(),
-                new InMemoryMessagingTransport(),
+                new CappedTransport(10),
                 headers,
                 default).ConfigureAwait(false);
 
@@ -164,7 +164,7 @@ public sealed class MessagingCompressionAndDataBusTests
             .BuildOutgoingPayloadAsync(
                 new PayloadContract("payload"),
                 new TextCodec(),
-                new InMemoryMessagingTransport(),
+                new CappedTransport(300),
                 context.Headers,
                 default).ConfigureAwait(false);
 
@@ -183,7 +183,7 @@ public sealed class MessagingCompressionAndDataBusTests
             .BuildOutgoingPayloadAsync(
                 new PayloadContract(new string('b', 100)),
                 new TextCodec(),
-                new InMemoryMessagingTransport(),
+                new CappedTransport(300),
                 headers,
                 default).ConfigureAwait(false);
         var receiver = new MessagingPayloadReceiver(dataBus, network);
@@ -231,7 +231,7 @@ public sealed class MessagingCompressionAndDataBusTests
             .BuildOutgoingPayloadAsync(
                 new PayloadContract("payload"),
                 new TextCodec(),
-                new InMemoryMessagingTransport(),
+                new CappedTransport(300),
                 headers,
                 default).ConfigureAwait(false);
         headers[MessagingHeaders.PayloadAttachmentSha256] =
@@ -253,7 +253,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var payload = await sender.BuildOutgoingPayloadAsync(
             new PayloadContract("payload"),
             new TextCodec(),
-            new InMemoryMessagingTransport(),
+            new CappedTransport(300),
             headers,
             default).ConfigureAwait(false);
         var receiver = new MessagingPayloadReceiver(dataBus, network);
@@ -423,9 +423,7 @@ public sealed class MessagingCompressionAndDataBusTests
             typeof(MessagingCompressionAndDataBusTests),
             new MessagingNetworkAttribute
             {
-                DataBusOffloadThresholdBytes = offloadThreshold,
                 DataBusMaximumAttachmentBytes = 50_000,
-                MaximumTransportPayloadBytes = maximumTransportPayload,
                 MaximumDecompressedPayloadBytes = maxDecompressed
             });
     }
@@ -506,19 +504,15 @@ public sealed class MessagingCompressionAndDataBusTests
     {
         public CappedTransport(long ceiling)
         {
-            MaximumInlineEnvelopeBytes = ceiling;
+            MaximumPayloadBytes = ceiling;
         }
 
         public MessagingCapabilities Capabilities => MessagingCapabilities.None;
-        public long? MaximumInlineEnvelopeBytes { get; }
+        public long MaximumPayloadBytes { get; }
 
-        public long MeasureNative(
-            IReadOnlyDictionary<string, string> headers,
-            in ReadOnlySequence<byte> payload)
+        public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
         {
-            return headers.Sum(pair => pair.Key.Length + pair.Value.Length)
-                + (payload.IsEmpty ? 0 : 500)
-                + payload.Length;
+            return headers.Sum(pair => pair.Key.Length + pair.Value.Length);
         }
 
         public async Task SendAsync(
