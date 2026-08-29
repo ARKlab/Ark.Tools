@@ -47,7 +47,7 @@ jobs:
           SQL_SERVER: sqlserver
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           EMULATOR_HTTP_PORT: 5300
-          SQL_WAIT_INTERVAL: 15
+          SQL_WAIT_INTERVAL: 30
       azurite:
         image: mcr.microsoft.com/azure-storage/azurite:latest
         ports:

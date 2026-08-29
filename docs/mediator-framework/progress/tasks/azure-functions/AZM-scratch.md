@@ -1,81 +1,298 @@
-# AZM scratch — future refinements
+# AZM scratch — reviewed refinements
 
-Unscheduled notes for future AZM tasks. Items here are not yet assigned to a
-task.
+Review date: 2026-08-29.
+
+The Mediator Framework has not been released. A **pre-release** item is a
+contract, wire-format, topology, or primary-composition decision that would be
+needlessly breaking after the first release. A **future** item is either not
+needed or can be added without breaking the released contract.
+
+Open questions below require an explicit decision before their related
+pre-release work is specified.
 
 ## API shape
 
-- **Replace type-valued Mediator Framework attributes with generic attributes.**
-  Constrain network, participant, and host type parameters to sealed declaration
-  interfaces containing only the required static-abstract members.
+### Generic declaration attributes
 
-- **Revisit the complete `IBus` registration and setup design.**
-  Evaluate a builder-based composition model to make network, transport, DataBus,
-  participant, and pipeline setup easier to discover and configure.
+**Timing: pre-release.**
+**Assigned:** [AZM-21](AZM-21-generic-messaging-declarations.md).
 
-- **Split messaging `ArkApiSurface.txt` entries across multiple lines.**
-  The current one-line messaging entries hide small incremental changes in diffs.
-  Revisit the generator output so contract names, identities, and routing details
-  can evolve with reviewable line-by-line diffs.
+Replace only the host, network, and participant declaration attributes with
+generic attributes. Contract lists, pipeline-step lists, and the participant
+retry policy remain type-valued attribute properties. Generic attributes do not
+change the existing requirement for generated declaration classes to be
+partial. Remove the corresponding non-generic attributes before release rather
+than supporting two declaration syntaxes.
 
-- **Keep common messaging names human-readable and transport-neutral.**
-  Relax common framework naming rules so logical names can retain separators such
-  as `.`; each transport should normalize names only where its native restrictions
-  require it.
+The declaration interfaces expose only the generated static members currently
+consumed by the messaging and host generators.
 
-- **Revisit the `IMessagingTransport.MeasureNative` method.**
-  Confirm whether the transport contract needs to expose native byte-limit measurement.
+### `IBus` registration and setup
 
-- **Rename `MessagingCapabilities.Receive` to `SendReceive`** so the flag name
-  reflects that the capability covers both inbound and outbound point-to-point
-  delivery, not just reception.
+**Timing: pre-release.**
+**Assigned:** [AZM-22](AZM-22-fluent-messaging-composition.md).
 
-- **Rename scheduled send on `IBus` to `Defer`.**
-  Align the transport-neutral API with Rebus terminology. Also let a host defer
-  the current message for deferred retries: use native deferral when supported
-  and reset its delivery count, otherwise schedule an identical payload and
-  headers to the host's own queue and complete the current delivery.
+Registration is currently split across transport, codec, DataBus, participant,
+bus, lifecycle, outbox, and Functions extensions. This does not fully realize
+AZM-13's intended single discoverable composition entry point. Settle the
+canonical composition model before release. The builder replaces the current
+low-level public setup surface.
 
-- **Reduce `MaximumTransportPayloadBytes` default from 240,000 to 50,000** in
-  `MessagingNetworkAttribute`. The 240 KB value is the Service Bus maximum; 50 KB
-  is a safer default that fits Storage Queue and leaves room for envelope
-  overhead. Hosts targeting Service Bus only can raise it explicitly.
+Start one fluent configuration flow from `IServiceCollection`, similar to
+`ConfigureRebus(...)`. It exposes related builders for Functions receiver,
+custom receiver, and producer-only modes, with common naming and shared
+sub-builders where their concerns overlap.
 
-## Network attribute
+Decisions:
 
-- **Move `ResourceLifecycle`, `ConnectionConfigurationKey`, and
-  `ManagedIdentityConfigurationKey` from `MessagingNetworkAttribute` to the
-  concrete host attribute** (e.g., the Azure Service Bus host attribute introduced
-  in AZM-10). These properties are transport-specific and do not belong on the
-  transport-neutral network declaration.
+- `IServiceCollection` is canonical for integration with an outside native
+  host, including ASP.NET Core, gRPC, Azure Functions, and transport
+  infrastructure.
+- Host-independent application concerns remain in SimpleInjector.
 
-- **Revisit Service Bus subscription forwarding.**
-  Re-evaluate forwarding every subscription into one participant identity queue.
-  Service Bus subscriptions already provide queue-like delivery, locking, and
-  dead-letter behavior, so the advantage of the extra queue remains to be proven.
+The flow guides all host decisions: network, participant, transport, DataBus,
+codecs, pipelines, lifecycle, and outbox. One top-level configuration call binds
+one network/participant/host; additional topologies use additional calls. Calls
+to generated registration extensions are implicit.
+
+### Multiline messaging `ArkApiSurface.txt` entries
+
+**Timing: pre-release.**
+**Assigned:** [AZM-23](AZM-23-multiline-messaging-api-surface.md).
+
+The current one-line messaging records make the API-surface feature too
+difficult to use: any change replaces an entire dense line, obscuring the field
+that developers must review. Change the emitted and accepted grammar before
+release. This is a soft breaking change because existing baselines fail and
+developers must explicitly review and accept the clearer generated diff.
+
+Before scheduling, define block delimiters, field ordering, ownership of
+diagnostics, and whether only set-valued fields or every field receives its own
+line.
+
+### Human-readable transport-neutral names
+
+**Timing: pre-release.**
+**Assigned:** [AZM-17](AZM-17-logical-names-and-native-entity-mapping.md).
+
+The common model currently forces contract names to lowercase snake case and
+participant identities to portable queue syntax. That leaks native entity-name
+constraints into logical names. Correct the layering now: wire headers and
+registries should use stable logical names, while each transport maps logical
+entity names to its native restrictions. Changing this later would alter wire
+identities and deployed topology.
+
+Decisions:
+
+- Contract, participant, network, topic, and subscription names are logical.
+- Logical names are lowercase and may contain `-`, `_`, `.`, and `/`
+  separators.
+- `amf1-msg-type` always contains the logical contract name.
+- InMemory uses the logical entity name unchanged.
+- A native transport preserves characters it supports. If replacement or
+  truncation is required, it appends a stable hash of the complete logical name
+  to the readable prefix. This prevents two logical names from collapsing to
+  one native entity; generation reports a diagnostic if the final names still
+  collide or cannot fit the native limit.
+- Topics are first derived from the logical publisher and current logical
+  contract name, then mapped once by the transport. `FormerNames` remain
+  receive-time aliases for `amf1-msg-type`; they do not create or alias native
+  topics. Changing the current contract or publisher name therefore still
+  requires an explicit topology migration.
+
+### Transport payload sizing
+
+**Timing: pre-release contract finalization.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
+
+Replace the current model:
+
+1. The compression threshold remains statically declared.
+2. The transport contract exposes its maximum payload size in bytes through a
+   static interface member; the value is fixed for each transport type and used
+   by runtime composition.
+3. "Payload" means the complete headers plus body representation.
+4. The transport provides only its native header-size computation.
+5. The runtime adds serialized body size to the transport-computed header size
+   and transparently offloads the body to DataBus when the total exceeds the
+   transport maximum. It recomputes the attachment-reference headers before the
+   final limit check.
+
+Remove `MeasureNative`, the network-level maximum transport payload, and the
+network-level DataBus offload threshold. Compression and DataBus claim-check
+remain transparent runtime concerns.
+
+### `MessagingCapabilities.Receive` naming
+
+**Timing: pre-release.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
+
+Rename `Receive` to `SendReceive`. Point-to-point `Send` requires a receiving
+participant and is available only when this capability is declared. A network
+without `SendReceive` is publish-only; it may publish events when `PubSub` is
+declared.
+
+### Scheduled send and current-message deferral
+
+**Timing: pre-release for naming; future for current-message deferral unless a
+required use case is identified.**
+**Pre-release naming assigned:**
+[AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
+
+If Rebus terminology is the target API, rename the two delayed `Send` overloads
+to `Defer` before release. Deferring the currently handled message is a separate
+feature, not merely a rename. Existing retry policies cover immediate
+redelivery but not "retry tomorrow." Without current-message deferral a
+consumer must define and send itself a new contract instead of reusing the
+current one. That is explicit and simple, but duplicates contracts, changes
+message identity, and does not work for a subscription consumer that cannot
+point-to-point send to itself. Current-message deferral remains relevant, but
+may be postponed until its delivery guarantees are designed.
+
+Open questions:
+
+- Does "native deferral" mean scheduled re-enqueue? Service Bus deferred-message
+  settlement is not scheduled delivery and does not reset delivery count.
+- Must schedule-copy-and-complete be atomic? Without a broker transaction or
+  outbox it can duplicate or lose a message.
+- Which message ID and framework/application headers are preserved, and which
+  delivery metadata is removed?
+
+### Network maximum transport payload
+
+**Timing: pre-release.**
+**Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
+
+Remove this network setting and its default. Each transport declares its actual
+complete payload limit at runtime. Compression runs from its static threshold;
+body offload to DataBus happens transparently when the computed headers plus
+body exceed the selected transport's limit.
+
+## Network and host configuration
+
+### Lifecycle and connection settings
+
+**Timing: pre-release.**
+
+Move deployment/host concerns out of `MessagingNetworkAttribute` and
+`MessagingNetworkOptions`. `ConnectionConfigurationKey` already has a
+Functions-host override. Put effective connection and lifecycle settings on a
+host/composition model so the same logical network can be hosted differently
+without changing its contract declaration. Remove
+`ManagedIdentityConfigurationKey` unless it represents configuration that
+cannot live below the connection prefix.
+
+Open questions:
+
+- Must lifecycle be identical across all hosts of one deployed network, or may
+  one reconciler use `CreateIfMissing` while other hosts use `External`?
+- What is the equivalent host-local model for Rebus and non-Functions
+  composition?
+- What distinct value does `ManagedIdentityConfigurationKey` carry beyond the
+  existing connection-prefix `clientId` convention?
+
+### Service Bus subscription forwarding
+
+**Timing: future — direct subscription triggers rejected for pre-release.**
+
+Retain the current model in which every Service Bus subscription forwards into
+the participant identity queue and one generated trigger receives commands and
+events. The extra queue is an accepted implementation convenience that gives the
+participant one concurrency, retry, and DLQ policy.
+
+Direct subscription triggers remain in scratch only as a possible future
+topology redesign. Revisit them only with evidence that removing the broker hop
+outweighs the operational simplicity of one participant queue; such a change
+would require explicit migration of manifests, lifecycle ownership, triggers,
+and deployed resources.
 
 ## Serialization
 
-- **Consider moving MCP error `ProblemDetails` serialization to host JSON options.**
-  The current MCP adapter owns a source-generated serializer for its safe error
-  payload. A future AZM integration should evaluate using the host's configured
-  `JsonOptions` instead, so naming policies, converters, and other contract
-  serialization settings are applied consistently. Preserve the sanitized
-  error boundary when changing the serializer.
+### MCP `ProblemDetails` JSON options
 
-- **Validate MessagePack and Protobuf decorations at compile time.** When a
-  participant declares `SerializationProtocol.MessagePack` or
-  `SerializationProtocol.Protobuf` in its `Serializers`, the analyzer should
-  verify that every contract the participant processes, publishes, or subscribes
-  to carries the matching wire-format attribute (e.g., `[MessagePackObject]` for
-  MessagePack, `[ProtoContract]` for Protobuf). Missing attributes should produce
-  a compile-time error diagnostic.
+**Timing: pre-release decision.**
+
+The MCP adapter currently owns a source-generated serializer context while
+other host surfaces use host-configured JSON behavior. Settle the ownership
+before release. If host options are used, preserve the current sanitized error
+copy and ensure arbitrary extension values cannot bypass the safe error
+boundary or fail unexpectedly under AOT.
+
+Open questions:
+
+- Which options are authoritative: ASP.NET Core `HttpJsonOptions`, MVC
+  `JsonOptions`, or dedicated MCP `JsonSerializerOptions`?
+- MCP remains source-generation/AOT-only.
+- How are custom `ProblemDetails.Extensions` values constrained or registered
+  for serialization?
+
+### MessagePack and Protobuf compile-time validation
+
+**Timing: pre-release.**
+**Assigned:** [AZM-19](AZM-19-non-json-contract-validation.md).
+
+Add analyzer coverage before release so declared protocols do not defer contract
+failures to startup. This is contract-level topology validation, not validation
+of host serializer options:
+
+- A participant publishing an event with MessagePack as its effective wire
+  serializer requires `[MessagePackObject]` on that event, and every subscriber
+  must declare MessagePack support.
+- A participant processing a message with MessagePack as its effective wire
+  serializer requires `[MessagePackObject]` on that message.
+- Apply the equivalent contract-shape check to each other effective non-JSON
+  wire serializer. For the shipped protobuf codec this means the Google.Protobuf
+  contract shape, not protobuf-net's `[ProtoContract]`.
+- Continue validating publisher/subscriber protocol compatibility.
+
+Custom resolver and parser registration remain host startup concerns and are
+not analyzed.
 
 ## Observability
 
-- **Analyze enhancing `Activity` usage for OTEL instrumentation.** Capture the
-  future capability need: the messaging runtime (and framework in general)
-  should be reviewed for richer OpenTelemetry instrumentation — proper
-  `ActivitySource` activities with messaging semantic conventions, links,
-  events, and status across send/publish/receive/dispatch. Needs analysis;
-  not yet assigned to a task.
+### OpenTelemetry activities
+
+**Timing: pre-release for the semantic baseline; future for incremental
+enrichment.**
+
+The runtime already creates a consumer activity and propagates outgoing trace
+context, but it does not create producer send/publish activities. Establish
+stable activity names, producer/consumer boundaries, trace-state propagation,
+messaging attributes, and settlement-based status before the first release.
+Follow the latest stable OpenTelemetry messaging semantic conventions available
+when implementing the task. Activities are emitted by default; registering an
+OpenTelemetry listener/exporter is opt-in. Network, participant, destination,
+and contract names are all acceptable attributes.
+
+Dispatch child spans, retry/settlement events, fan-out links, batch links, and
+broader framework instrumentation are incremental future improvements.
+
+Open question: does final settlement determine consumer activity status?
+
+### OpenTelemetry metrics
+
+**Timing: pre-release for the metric contract; future for additional
+instruments.**
+**Pre-release metric contract assigned:**
+[AZM-20](AZM-20-opentelemetry-messaging-metrics.md).
+
+The runtime currently exposes two custom histograms for processing time and
+successful queue time. Finalize their names, units, descriptions, outcome
+semantics, and attributes before release, following the latest stable
+OpenTelemetry messaging metrics conventions available at implementation time.
+Metrics are recorded by default; OpenTelemetry collection/export remains
+opt-in.
+
+The pre-release baseline should cover:
+
+- send, publish, and process duration;
+- time in queue when a valid sent timestamp is available;
+- processed-message outcomes based on final settlement;
+- delivery attempt count.
+
+Network, participant, destination, and contract names are acceptable metric
+attributes. Exception messages, message IDs, correlation IDs, and attachment
+IDs are not metric attributes. Additional payload-size, compression, DataBus,
+retry, dead-letter, and active-operation instruments are future incremental
+improvements after concrete operational questions and aggregation behavior are
+defined.
