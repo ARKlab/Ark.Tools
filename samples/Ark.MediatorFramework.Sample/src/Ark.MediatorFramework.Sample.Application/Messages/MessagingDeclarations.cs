@@ -3,8 +3,9 @@
 
 namespace Ark.MediatorFramework.Sample.Application.Messages;
 
-/// <summary>Declares the sample Web host sender participant.</summary>
+/// <summary>Declares the sample Web host publisher-only participant.</summary>
 [MessagingParticipant(
+    Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
 public sealed partial class SampleMessagingPublisherParticipant;
@@ -17,6 +18,22 @@ public sealed partial class SampleMessagingPublisherParticipant;
     DefaultSerializer = SerializationProtocol.Json,
     Retry = typeof(SampleMessagingRetryPolicy))]
 public sealed partial class SampleMessagingParticipant;
+
+/// <summary>Declares the sample notification subscriber participant.</summary>
+[MessagingParticipant(
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json,
+    Retry = typeof(SampleMessagingRetryPolicy))]
+public sealed partial class SampleMessagingNotificationParticipant;
+
+/// <summary>Declares the sample audit subscriber participant.</summary>
+[MessagingParticipant(
+    Subscribes = new[] { typeof(BookPrintCompleted) },
+    Serializers = new[] { SerializationProtocol.Json },
+    DefaultSerializer = SerializationProtocol.Json,
+    Retry = typeof(SampleMessagingRetryPolicy))]
+public sealed partial class SampleMessagingAuditParticipant;
 
 /// <summary>Defines retry behavior for the sample messaging participant.</summary>
 public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
@@ -40,7 +57,11 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
     {
         typeof(SampleMessagingPublisherParticipant),
         typeof(SampleMessagingParticipant),
+        typeof(SampleMessagingNotificationParticipant),
+        typeof(SampleMessagingAuditParticipant),
     },
-    Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend,
+    Requires = MessagingCapabilities.Receive
+        | MessagingCapabilities.PubSub
+        | MessagingCapabilities.ScheduledSend,
     MaximumSchedulingDelaySeconds = 3600)]
 public static partial class SampleMessagingNetwork;

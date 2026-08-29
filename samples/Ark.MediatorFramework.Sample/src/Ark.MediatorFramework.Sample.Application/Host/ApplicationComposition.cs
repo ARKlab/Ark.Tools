@@ -126,13 +126,21 @@ public static class ApplicationComposition
     /// <param name="clock">Optional clock override used by tests.</param>
     /// <param name="dataContextFactory">Optional context factory shared with another host container.</param>
     /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
+    /// <param name="registerBookPrintNotificationHandler">
+    /// Whether to register the notification subscriber handler.
+    /// </param>
+    /// <param name="bookPrintNotificationSink">Optional notification sink.</param>
+    /// <param name="bookPrintAuditSink">Optional audit sink.</param>
     public static void Register(
         Container container,
         bool useSqlStore = true,
         string? connectionString = null,
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
-        IPrintCompletedNotificationService? printCompletedNotificationService = null)
+        IPrintCompletedNotificationService? printCompletedNotificationService = null,
+        bool registerBookPrintNotificationHandler = true,
+        IBookPrintNotificationSink? bookPrintNotificationSink = null,
+        IBookPrintAuditSink? bookPrintAuditSink = null)
     {
         ArgumentNullException.ThrowIfNull(container);
         container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
@@ -177,6 +185,14 @@ public static class ApplicationComposition
                 () => container.GetInstance<InMemorySampleDataContextFactory>());
         }
         container.RegisterSingleton<DocumentStore>();
+        if (bookPrintNotificationSink is not null)
+            container.RegisterInstance(bookPrintNotificationSink);
+        else
+            container.RegisterSingleton<IBookPrintNotificationSink, NoOpBookPrintNotificationSink>();
+        if (bookPrintAuditSink is not null)
+            container.RegisterInstance(bookPrintAuditSink);
+        else
+            container.RegisterSingleton<IBookPrintAuditSink, NoOpBookPrintAuditSink>();
         if (printCompletedNotificationService is not null)
             container.RegisterInstance(printCompletedNotificationService);
         else
@@ -200,8 +216,9 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<RecordReadingActivityRequest, ReadingActivity>, RecordReadingActivityHandler>();
         container.Register<IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>, CreateBookPrintProcessHandler>();
         container.Register<IRequestHandler<CancelBookPrintProcessRequest, BookPrintProcessResponse>, CancelBookPrintProcessHandler>();
-        container.Register<IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
+        container.Register<ProcessBookPrintProcessHandler>();
         container.Register<ICommandHandler<ProcessBookPrintProcessRequest>, ProcessBookPrintProcessHandler>();
+        container.Register<IRequestHandler<ResumeBookPrintProcessRequest, BookPrintProcessResponse>, ProcessBookPrintProcessHandler>();
         container.Register<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>, BookPrintProcessFailureHandler>();
         container.Register<IQueryHandler<Book_GetQuery.V1, Book.V1.Output>, GetBookHandler>();
         container.Register<IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>, GetBookPrintProcessHandler>();
@@ -214,6 +231,8 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<UploadBookCoverRequest, UploadResponse>, UploadBookCoverHandler>();
         container.Register<IQueryHandler<DownloadBookCoverQuery, IArkAttachment>, DownloadBookCoverHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
+        if (registerBookPrintNotificationHandler)
+            container.Register<ICommandHandler<BookPrintCompleted>, BookPrintNotificationHandler>();
 
         // Cross-cutting concern applied transport-agnostically.
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(AuditRequestDecorator<,>));

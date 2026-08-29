@@ -5,11 +5,9 @@ using Ark.Tools.Solid;
 
 namespace Ark.MediatorFramework.Sample.Application.Messages;
 
-/// <summary>Processes a queued book print request in the background.</summary>
-[Message]
-[RebusMessage(OwnerQueue = "ark-mediator-sample")]
-public sealed record ProcessBookPrintProcessRequest :
-    ICommand<ProcessBookPrintProcessRequest>
+/// <summary>Resumes a book print process through the application request pipeline.</summary>
+public sealed record ResumeBookPrintProcessRequest :
+    IRequest<ResumeBookPrintProcessRequest, BookPrintProcessResponse>
 {
     /// <summary>Gets the print-process identifier.</summary>
     public Guid Id { get; init; }

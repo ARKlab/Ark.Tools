@@ -23,6 +23,7 @@ namespace Ark.MediatorFramework.Sample.Application.JsonContext;
         typeof(RoundtripPeriodConverter),
     })]
 [JsonSerializable(typeof(ProcessBookPrintProcessRequest))]
+[JsonSerializable(typeof(BookPrintCompleted))]
 [JsonSerializable(typeof(FailingRebusRequest))]
 [JsonSerializable(typeof(DeadLetterAck))]
 [JsonSerializable(typeof(BookPrintProcessResponse))]

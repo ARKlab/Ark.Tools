@@ -11,10 +11,10 @@ using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
-/// <summary>Completes a queued book print process through Rebus.</summary>
+/// <summary>Completes or resumes a queued book print process.</summary>
 public sealed class ProcessBookPrintProcessHandler :
-    IRequestHandler<ProcessBookPrintProcessRequest, BookPrintProcessResponse>,
-    ICommandHandler<ProcessBookPrintProcessRequest>
+    ICommandHandler<ProcessBookPrintProcessRequest>,
+    IRequestHandler<ResumeBookPrintProcessRequest, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -34,21 +34,43 @@ public sealed class ProcessBookPrintProcessHandler :
         _printCompletedNotificationService = printCompletedNotificationService;
     }
 
-    /// <inheritdoc />
+    /// <summary>Executes a queued book print process.</summary>
+    /// <param name="request">The process request.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The resulting book print process.</returns>
     public async Task<BookPrintProcessResponse> ExecuteAsync(
         ProcessBookPrintProcessRequest request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        return await _executeAsync(request.Id, ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Resumes a queued book print process through the request pipeline.</summary>
+    /// <param name="request">The resume request.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The resulting book print process.</returns>
+    public async Task<BookPrintProcessResponse> ExecuteAsync(
+        ResumeBookPrintProcessRequest request,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await _executeAsync(request.Id, ctk).ConfigureAwait(false);
+    }
+
+    private async Task<BookPrintProcessResponse> _executeAsync(
+        Guid id,
+        CancellationToken ctk)
+    {
         using var activity = SampleTelemetry._activitySource.StartActivity(
             "ark.mediator.sample.book_print_process",
             ActivityKind.Consumer);
-        activity?.SetTag("book_print_process.id", request.Id);
+        activity?.SetTag("book_print_process.id", id);
 
         var readContext = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = readContext.ConfigureAwait(false);
-        var process = await readContext.ReadBookPrintProcessAsync(request.Id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
-            ?? throw new EntityNotFoundException($"Book print process '{request.Id}' was not found.");
+        var process = await readContext.ReadBookPrintProcessAsync(id, forUpdate: true, ctk: ctk).ConfigureAwait(false)
+            ?? throw new EntityNotFoundException($"Book print process '{id}' was not found.");
         await readContext.CommitAsync(ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
         {

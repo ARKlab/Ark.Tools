@@ -2091,6 +2091,27 @@ public sealed class GeneratorSnapshotTests
             result.Diagnostics);
     }
 
+    private static async Task<ImmutableArray<Diagnostic>> _runAnalyzerResult<TAnalyzer>(string source)
+        where TAnalyzer : DiagnosticAnalyzer, new()
+    {
+        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(path => MetadataReference.CreateFromFile(path))
+            .Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]);
+        var compilation = CSharpCompilation.Create(
+            "AnalyzerSnapshot",
+            [CSharpSyntaxTree.ParseText(source)],
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        return await compilation
+            .WithAnalyzers([new TAnalyzer()])
+            .GetAnalyzerDiagnosticsAsync()
+            .ConfigureAwait(false);
+    }
+
     private static void _assertGeneratorCaches<TGenerator>(string source)
         where TGenerator : IIncrementalGenerator, new()
     {
@@ -2266,10 +2287,12 @@ public sealed class GeneratorSnapshotTests
             [Message(Name = "books.print_book")]
             public sealed class PrintBook : ICommand<PrintBook> { }
             [Event(Name = "books.print_completed")]
-            public sealed class PrintCompleted : IRequest<PrintCompleted, string> { }
+            public sealed class PrintCompleted : ICommand<PrintCompleted> { }
+            [Event(Name = "books.print_completed_request")]
+            public sealed class PrintCompletedRequest : IRequest<PrintCompletedRequest, string> { }
             [MessagingParticipant(
                 Processes = new[] { typeof(PrintBook) },
-                Publishes = new[] { typeof(PrintCompleted) },
+                Publishes = new[] { typeof(PrintCompleted), typeof(PrintCompletedRequest) },
                 Serializers = new[] { SerializationProtocol.Json },
                 DefaultSerializer = SerializationProtocol.Json,
                 Compression = CompressionAlgorithm.Gzip,
@@ -2290,6 +2313,7 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG018");
         result.Generated.Should().Contain("FrozenDictionary");
         result.Generated.Should().Contain("GetDestinationFor<T>()");
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
@@ -2327,6 +2351,45 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("Type.GetType");
         result.Generated.Should().NotContain("Activator.");
         result.Generated.Should().NotContain("MakeGenericType");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsQueryEventShape()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Event(Name = "books.print_query")]
+            public sealed class PrintQuery : IQuery<PrintQuery> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(PrintQuery) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic =>
+            diagnostic.Id == "ARKMSG018"
+            && diagnostic.GetMessage().Contains("ICommand<TSelf> or IRequest<TSelf, TResponse>"));
+    }
+
+    [TestMethod]
+    public async Task ContractSolidKindAnalyzerRejectsContractsWithMultipleSolidKinds()
+    {
+        var diagnostics = await _runAnalyzerResult<ContractSolidKindAnalyzer>(
+            """
+            using Ark.Tools.Solid;
+            public sealed class PrintBook : ICommand<PrintBook>, IQuery<PrintBook> { }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().Contain(diagnostic =>
+            diagnostic.Id == "ARKMF021"
+            && diagnostic.GetMessage().Contains("can implement only one of IQuery, IRequest, or ICommand"));
     }
 
     [TestMethod]

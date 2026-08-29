@@ -23,6 +23,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _eventAttribute = "Ark.Tools.MediatorFramework.EventAttribute";
     private const string _requestNamespace = "Ark.Tools.Solid";
     private const string _commandInterface = "Ark.Tools.Solid.ICommand`1";
+    private const string _commandInterfaceName = "ICommand`1";
+    private const string _requestInterfaceName = "IRequest`2";
     private const string _payloadReader = "Ark.Tools.MediatorFramework.Messaging.IMessagingPayloadReader";
     private const string _streamPayloadReader = "Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader";
     private const string _codec = "Ark.Tools.MediatorFramework.Messaging.IMessagingCodec";
@@ -92,7 +94,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Retry policy for participant '{0}' must have MaximumDeliveryCount >= {1}", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidEventShape = _rule(
         "ARKMSG018", "Invalid event contract",
-        "Event contract '{0}' must implement IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
+        "Event contract '{0}' must implement ICommand<TSelf> or IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonNormalizedName = _rule(
         "ARKMSG019", "Non-normalized contract name",
         "Contract '{0}' has explicit name or alias '{1}', which is not lowercase snake_case", DiagnosticSeverity.Error);
@@ -113,7 +115,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "ARKMSG024", "Messaging network must be static",
         "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
         DiagnosticSeverity.Error);
-
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
         return new DiagnosticDescriptor(id, title, message, "Ark.Tools.MediatorFramework", severity, true);
@@ -473,10 +474,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static bool _isEventShape(INamedTypeSymbol symbol)
     {
         return symbol.AllInterfaces.Any(@interface =>
-            @interface.OriginalDefinition.MetadataName == "IRequest`2"
-            && @interface.OriginalDefinition.ContainingNamespace.ToDisplayString() == _requestNamespace
-            && @interface.TypeArguments.Length == 2
-            && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], symbol));
+        {
+            if (@interface.OriginalDefinition.ContainingNamespace.ToDisplayString() != _requestNamespace)
+                return false;
+
+            var metadataName = @interface.OriginalDefinition.MetadataName;
+            var isCommand = metadataName == _commandInterfaceName && @interface.TypeArguments.Length == 1;
+            var isRequest = metadataName == _requestInterfaceName && @interface.TypeArguments.Length == 2;
+            return (isCommand || isRequest)
+                && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], symbol);
+        });
     }
 
     private static string _contractName(INamedTypeSymbol symbol)

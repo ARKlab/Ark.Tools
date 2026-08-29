@@ -34,6 +34,9 @@
           Link="Ark.MediatorFramework.Sample.Database.dacpac"
           CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AzureFunctions\Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
+    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AuditFunctions\Ark.MediatorFramework.Sample.AuditFunctions.csproj">
+      <Aliases>AuditFunctions</Aliases>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.OutboxProcessor\Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />

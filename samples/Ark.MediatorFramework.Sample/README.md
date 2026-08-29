@@ -88,6 +88,7 @@ Ark.MediatorFramework.Sample/
 │   │   ├── Messages/             # internal Rebus contracts
 │   │   └── Services/             # decorators and application services
 │   ├── Ark.MediatorFramework.Sample.Database/
+│   ├── Ark.MediatorFramework.Sample.AuditFunctions/ # independent audit subscriber
 │   ├── Ark.MediatorFramework.Sample.OutboxProcessor/
 │   ├── Ark.MediatorFramework.Sample.RebusProcessor/
 │   ├── Ark.MediatorFramework.Sample.AzureFunctions/
@@ -240,6 +241,24 @@ compression, and claim-check headers remain unchanged.
 The WebInterface and RebusProcessor keep their existing Rebus outbox
 registrations. Rebus and native outbox adapters are alternative topology modes;
 do not point their processors at the same outbox rows.
+
+### Three-participant messaging sample
+
+`BookPrintCompleted` is declared once in the Application assembly. The
+WebInterface is a publisher-only participant; the existing Azure Functions host
+records notification effects; and the separate AuditFunctions host records
+audit effects. The publisher-owned topic forwards independent copies to the
+`sample-messaging-notification` and `sample-messaging-audit` queues.
+
+```bash
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+dotnet run --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
+```
+
+For Service Bus IaC, create the publisher topic, both identity queues, and the
+two forwarding subscriptions. Start `OutboxProcessor` separately for native
+SQL outbox mode; neither Functions host runs a Rebus worker or outbox processor.
 
 Production Service Bus setup belongs in external configuration. The Functions
 host accepts a Service Bus connection string locally and uses
