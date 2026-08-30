@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
+using System.IO.Pipelines;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -14,15 +14,17 @@ public interface IMessagingCodec
     /// <summary>Gets the corresponding messaging protocol.</summary>
     SerializationProtocol Protocol { get; }
 
-    /// <summary>Serializes a contract into the supplied transport-owned writer.</summary>
+    /// <summary>Serializes a contract into the supplied pipeline writer.</summary>
     /// <typeparam name="T">The contract type.</typeparam>
     /// <param name="value">The contract value.</param>
-    /// <param name="writer">The transport-owned destination writer.</param>
-    void Serialize<T>(T value, IBufferWriter<byte> writer) where T : class;
+    /// <param name="writer">The destination writer.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    Task SerializeAsync<T>(T value, PipeWriter writer, CancellationToken ctk) where T : class;
 
-    /// <summary>Deserializes a contract from the supplied transport-owned sequence.</summary>
+    /// <summary>Deserializes a contract from the supplied pipeline reader.</summary>
     /// <typeparam name="T">The contract type.</typeparam>
-    /// <param name="payload">The transport-owned payload.</param>
+    /// <param name="reader">The prepared payload reader.</param>
+    /// <param name="ctk">The cancellation token.</param>
     /// <returns>The deserialized contract.</returns>
-    T Deserialize<T>(in ReadOnlySequence<byte> payload) where T : class;
+    Task<T> DeserializeAsync<T>(PipeReader reader, CancellationToken ctk) where T : class;
 }

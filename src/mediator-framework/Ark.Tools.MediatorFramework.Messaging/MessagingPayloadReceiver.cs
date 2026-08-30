@@ -117,8 +117,10 @@ public sealed class MessagingPayloadReceiver
         CancellationToken ctk)
     {
         ArgumentNullException.ThrowIfNull(codec);
-        var payload = await PreparePayloadAsync(headers, transportPayload, ctk).ConfigureAwait(false);
-        return new MessagingStreamPayloadReader(payload, codec);
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new MessagingStreamPayloadReader(
+            token => PreparePayloadAsync(headers, transportPayload, token),
+            codec);
     }
 
     private sealed class BoundedPayloadReadStream : Stream

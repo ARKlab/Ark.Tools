@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.IO.Pipelines;
 using System.Security.Cryptography;
 
 using Ark.Tools.MediatorFramework.Messaging;
@@ -123,6 +124,26 @@ public sealed class MessagingCompressionAndDataBusTests
     }
 
     [TestMethod]
+    public async Task RejectedClaimCheckDeletesCommittedAttachment()
+    {
+        var network = _network(offloadThreshold: 10_000, maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0);
+
+        var action = () => sender.BuildOutgoingPayloadAsync(
+            new PayloadContract(new string('a', 295)),
+            new TextCodec(),
+            new CappedTransport(100),
+            headers,
+            default);
+
+        (await action.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+            .Which.Reason.Should().Be(MessagingFailFastReason.OversizedHeaders);
+        dataBus.Count.Should().Be(0);
+    }
+
+    [TestMethod]
     public async Task PayloadAboveNetworkLimitUsesClaimCheck()
     {
         var network = _network(
@@ -195,6 +216,20 @@ public sealed class MessagingCompressionAndDataBusTests
         (await expiredAction
             .Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
             .Which.Reason.Should().Be(MessagingFailFastReason.AttachmentIntegrityFailure);
+    }
+
+    [TestMethod]
+    public async Task CompletedDataBusSessionRejectsFurtherWrites()
+    {
+        await using var session = await new InMemoryMessagingDataBus()
+            .OpenWriteAsync(default).ConfigureAwait(false);
+        await session.Stream.WriteAsync("payload"u8.ToArray()).ConfigureAwait(false);
+        await session.CompleteAsync(default).ConfigureAwait(false);
+
+        var action = async () => await session.Stream.WriteAsync("more"u8.ToArray())
+            .ConfigureAwait(false);
+
+        await action.Should().ThrowAsync<ObjectDisposedException>().ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -330,9 +365,8 @@ public sealed class MessagingCompressionAndDataBusTests
             .ConfigureAwait(false);
         await using (reader.ConfigureAwait(false))
         {
-            new TextCodec().Deserialize<PayloadContract>(reader.ReadPayload()).Value
+            (await reader.DeserializeAsync<PayloadContract>(default).ConfigureAwait(false)).Value
                 .Should().Be(new string('a', 100));
-            reader.Deserialize<PayloadContract>().Value.Should().Be(new string('a', 100));
         }
     }
 
@@ -429,19 +463,23 @@ public sealed class MessagingCompressionAndDataBusTests
         public string ContentType => "text/plain";
         public SerializationProtocol Protocol => SerializationProtocol.Json;
 
-        public void Serialize<T>(T value, IBufferWriter<byte> writer)
+        public async Task SerializeAsync<T>(T value, PipeWriter writer, CancellationToken ctk)
             where T : class
         {
             var contract = (PayloadContract)(object)value;
             var bytes = Encoding.UTF8.GetBytes(contract.Value);
-            bytes.CopyTo(writer.GetSpan(bytes.Length));
-            writer.Advance(bytes.Length);
+            await writer.WriteAsync(bytes, ctk).ConfigureAwait(false);
         }
 
-        public T Deserialize<T>(in ReadOnlySequence<byte> payload)
+        public async Task<T> DeserializeAsync<T>(PipeReader reader, CancellationToken ctk)
             where T : class
         {
-            return (T)(object)new PayloadContract(Encoding.UTF8.GetString(payload.ToArray()));
+#pragma warning disable MA0042 // The stream is a non-owning adapter over the PipeReader.
+            using var stream = reader.AsStream(leaveOpen: true);
+#pragma warning restore MA0042
+            using var text = new StreamReader(stream, Encoding.UTF8);
+            var value = await text.ReadToEndAsync(ctk).ConfigureAwait(false);
+            return (T)(object)new PayloadContract(value);
         }
     }
 
@@ -454,7 +492,7 @@ public sealed class MessagingCompressionAndDataBusTests
             _stream = stream;
         }
 
-        public Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk)
+        public Task<IMessagingDataBusWriteSession> OpenWriteAsync(CancellationToken ctk)
         {
             throw new NotSupportedException();
         }
@@ -467,6 +505,11 @@ public sealed class MessagingCompressionAndDataBusTests
         {
             ctk.ThrowIfCancellationRequested();
             return Task.FromResult(_stream);
+        }
+
+        public Task DeleteAsync(string attachmentId, CancellationToken ctk)
+        {
+            throw new NotSupportedException();
         }
     }
 

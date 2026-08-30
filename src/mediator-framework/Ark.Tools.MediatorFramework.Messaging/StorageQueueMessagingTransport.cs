@@ -110,6 +110,15 @@ public sealed class StorageQueueMessagingTransport :
     }
 
     /// <inheritdoc />
+    public long GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers)
+    {
+        return Math.Max(
+            0,
+            StorageQueueLimits.MaximumNormalCanonicalBytes
+                - StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty));
+    }
+
+    /// <inheritdoc />
     public long MeasureNativePayload(
         IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> payload)

@@ -2473,7 +2473,8 @@ public sealed class GeneratorSnapshotTests
             {
                 public interface IMessagingPayloadReader
                 {
-                    T Deserialize<T>() where T : class;
+                    System.Threading.Tasks.Task<T> DeserializeAsync<T>(
+                        System.Threading.CancellationToken ctk) where T : class;
                 }
                 public enum MessagingFailFastReason { UnknownContractName }
                 public sealed class MessagingFailFastException : System.Exception
@@ -2496,7 +2497,8 @@ public sealed class GeneratorSnapshotTests
 
         result.Generated.Should().Contain("case \"books.print_book\":");
         result.Generated.Should().Contain("case \"legacy_print_book\":");
-        result.Generated.Should().Contain("payload.Deserialize<global::PrintBook>()");
+        result.Generated.Should().Contain(
+            "await payload.DeserializeAsync<global::PrintBook>(ctk).ConfigureAwait(false)");
         result.Generated.Should().Contain("processor.ExecuteAsync<global::PrintBook>");
         result.Generated.Should().Contain("UnknownContractName");
     }

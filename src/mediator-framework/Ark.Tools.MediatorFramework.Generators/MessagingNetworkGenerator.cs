@@ -953,7 +953,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .Distinct(StringComparer.Ordinal);
                 foreach (var wireName in names)
                     source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine(">();")
+                source.Append("                var message = await payload.DeserializeAsync<").Append(_typeName(contract)).AppendLine(">(ctk).ConfigureAwait(false);")
                     .Append("                await processor.ExecuteAsync<").Append(_typeName(contract)).AppendLine(">(message, ctk).ConfigureAwait(false);")
                     .AppendLine("                break;");
             }
@@ -1004,7 +1004,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                         .Distinct(StringComparer.Ordinal);
                     foreach (var wireName in names)
                         source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                    source.Append("                var message = payload.Deserialize<").Append(_typeName(contract)).AppendLine(">();")
+                    source.Append("                var message = await payload.DeserializeAsync<").Append(_typeName(contract)).AppendLine(">(ctk).ConfigureAwait(false);")
                         .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(_typeName(contract)).AppendLine(">(message, deliveryCount, new[] { error });")
                         .Append("                await processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.MessagingFailed<")

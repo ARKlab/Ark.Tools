@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
-
 namespace Ark.Tools.MediatorFramework;
 
 /// <summary>Continuation-based incoming messaging step.</summary>
@@ -43,22 +41,18 @@ internal interface IMessagingFrameworkHeaders
 public sealed class MessagingIncomingContext
 {
     /// <summary>Creates an incoming context.</summary>
-    public MessagingIncomingContext(
-        IReadOnlyDictionary<string, string> headers,
-        ReadOnlySequence<byte> payload)
-        : this(headers, payload, 0, default)
+    public MessagingIncomingContext(IReadOnlyDictionary<string, string> headers)
+        : this(headers, 0, default)
     {
     }
 
     /// <summary>Creates an incoming context with delivery metadata.</summary>
     public MessagingIncomingContext(
         IReadOnlyDictionary<string, string> headers,
-        ReadOnlySequence<byte> payload,
         int deliveryCount = 0,
         CancellationToken cancellationToken = default)
     {
         Headers = headers ?? throw new ArgumentNullException(nameof(headers));
-        Payload = payload;
         ArgumentOutOfRangeException.ThrowIfNegative(deliveryCount);
         DeliveryCount = deliveryCount;
         CancellationToken = cancellationToken;
@@ -66,9 +60,6 @@ public sealed class MessagingIncomingContext
 
     /// <summary>Gets received headers.</summary>
     public IReadOnlyDictionary<string, string> Headers { get; }
-
-    /// <summary>Gets the prepared payload.</summary>
-    public ReadOnlySequence<byte> Payload { get; }
 
     /// <summary>Gets the native delivery count, or zero when not supplied by a host.</summary>
     public int DeliveryCount { get; }
@@ -104,9 +95,6 @@ public sealed class MessagingOutgoingContext
 
     /// <summary>Gets the resolved destination.</summary>
     public string Destination { get; }
-
-    /// <summary>Gets or sets the serialized payload.</summary>
-    public ReadOnlySequence<byte>? Payload { get; set; }
 
     /// <summary>Gets step-local state.</summary>
     public IDictionary<string, object> Items { get; } = new Dictionary<string, object>(StringComparer.Ordinal);

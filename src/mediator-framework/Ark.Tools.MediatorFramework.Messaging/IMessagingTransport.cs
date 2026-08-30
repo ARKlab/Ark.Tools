@@ -14,6 +14,14 @@ public interface IMessagingTransport
     /// <summary>Gets the hard maximum complete payload size in bytes.</summary>
     long MaximumPayloadBytes { get; }
 
+    /// <summary>Gets the maximum inline payload bytes after accounting for headers.</summary>
+    /// <param name="headers">The completed envelope headers known before serialization.</param>
+    /// <returns>The non-negative payload budget.</returns>
+    long GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers)
+    {
+        return Math.Max(0, MaximumPayloadBytes - MeasureNativeHeaders(headers));
+    }
+
     /// <summary>Measures the native header representation of an envelope.</summary>
     /// <param name="headers">The envelope headers.</param>
     /// <returns>The native header representation size in bytes.</returns>

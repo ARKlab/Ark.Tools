@@ -308,10 +308,9 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
-            (_, payload, _, _) =>
+            async (_, payload, _, token) =>
             {
-                payload.Deserialize<DispatchCommand>();
-                return Task.CompletedTask;
+                await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
@@ -334,10 +333,9 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            (_, payload, _, _) =>
+            async (_, payload, _, token) =>
             {
-                payload.Deserialize<DispatchCommand>();
-                return Task.CompletedTask;
+                await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             },
             (_, _, _, _, _, _) =>
             {
@@ -369,7 +367,7 @@ public sealed partial class MessagingRuntimeTests
             (_, _, _, _) => throw new InvalidOperationException("handler failed"),
             async (_, payload, count, error, processor, token) =>
             {
-                var message = payload.Deserialize<DispatchCommand>();
+                var message = await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
                 var failure = new MessagingFailed<DispatchCommand>(message, count, [error]);
                 failureHandled.Add(failure);
                 await processor.ExecuteAsync<MessagingFailed<DispatchCommand>>(failure, token).ConfigureAwait(false);
@@ -441,10 +439,9 @@ public sealed partial class MessagingRuntimeTests
         var act = () => _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            (_, payload, _, _) =>
+            async (_, payload, _, token) =>
             {
-                payload.Deserialize<DispatchCommand>();
-                return Task.CompletedTask;
+                await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
 
         act.Should().Throw<ArgumentNullException>()
@@ -610,7 +607,6 @@ public sealed partial class MessagingRuntimeTests
                 [MessagingHeaders.MessageType] = "tests.Message",
                 [MessagingHeaders.SentTime] = sentTime.ToString("O", CultureInfo.InvariantCulture)
             },
-            ReadOnlySequence<byte>.Empty,
             deliveryCount: 2);
         var step = new OpenTelemetryProcessingMetricsStep(clock);
         await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
@@ -621,7 +617,6 @@ public sealed partial class MessagingRuntimeTests
             {
                 [MessagingHeaders.MessageType] = "tests.Message"
             },
-            ReadOnlySequence<byte>.Empty,
             deliveryCount: 2);
         Func<Task> processFailure = () => step.ProcessAsync(
             failureContext,

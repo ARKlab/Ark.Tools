@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 
@@ -49,18 +48,13 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
     }
 
     /// <inheritdoc />
-    public Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk)
+    public async Task<IMessagingDataBusWriteSession> OpenWriteAsync(CancellationToken ctk)
     {
         ctk.ThrowIfCancellationRequested();
         _removeExpired();
-        var bytes = content.ToArray();
         var id = Guid.NewGuid().ToString("N");
-        var hash = Convert.ToHexString(SHA256.HashData(bytes));
-        _attachments[id] = new Attachment(
-            bytes,
-            hash,
-            _clock.GetCurrentInstant() + _lifetime);
-        return Task.FromResult(id);
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new WriteSession(this, id);
     }
 
     /// <inheritdoc />
@@ -100,7 +94,7 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
                 "The payload attachment is missing or expired.");
         }
 
-        if (attachment.Content.LongLength != expectedLength
+        if (attachment.Length != expectedLength
             || !string.Equals(attachment.Sha256, expectedSha256, StringComparison.OrdinalIgnoreCase))
         {
             throw new MessagingFailFastException(
@@ -109,10 +103,19 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
         }
 
         Stream stream = new Sha256ValidatingReadStream(
-            new MemoryStream(attachment.Content, writable: false),
+            new MemoryStream(attachment.Content, 0, attachment.Length, writable: false),
             expectedLength,
             expectedSha256);
         return Task.FromResult(stream);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAsync(string attachmentId, CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(attachmentId);
+        ctk.ThrowIfCancellationRequested();
+        _attachments.TryRemove(attachmentId, out _);
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>Removes expired attachments using the configured clock.</summary>
@@ -131,7 +134,48 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
         }
     }
 
-    private sealed record Attachment(byte[] Content, string Sha256, Instant ExpiresAt);
+    private sealed record Attachment(byte[] Content, int Length, string Sha256, Instant ExpiresAt);
+
+    private sealed class WriteSession : IMessagingDataBusWriteSession
+    {
+        private readonly InMemoryMessagingDataBus _owner;
+        private readonly string _id;
+        private readonly MemoryStream _buffer = new();
+        private readonly HashingWriteStream _stream;
+        private bool _completed;
+
+        internal WriteSession(InMemoryMessagingDataBus owner, string id)
+        {
+            _owner = owner;
+            _id = id;
+            _stream = new HashingWriteStream(_buffer);
+        }
+
+        public Stream Stream => _stream;
+
+        public async Task<MessagingDataBusAttachment> CompleteAsync(CancellationToken ctk)
+        {
+            ctk.ThrowIfCancellationRequested();
+            if (_completed)
+                throw new InvalidOperationException("The attachment write has already completed.");
+            _completed = true;
+            var hash = _stream._completeHash();
+            var content = _buffer.GetBuffer();
+            var length = checked((int)_buffer.Length);
+            _owner._attachments[_id] = new Attachment(
+                content,
+                length,
+                hash,
+                _owner._clock.GetCurrentInstant() + _owner._lifetime);
+            await Task.CompletedTask.ConfigureAwait(false);
+            return new MessagingDataBusAttachment(_id, length, hash);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await _stream.DisposeAsync().ConfigureAwait(false);
+        }
+    }
 }
 
 internal sealed class Sha256ValidatingReadStream : Stream

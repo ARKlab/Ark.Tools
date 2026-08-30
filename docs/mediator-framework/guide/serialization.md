@@ -109,9 +109,9 @@ selection:
 | `amf1-msg-id` / `amf1-corr-id` | Message and correlation identifiers |
 | `amf1-senttime` | Invariant sent-time value |
 
-`IMessagingCodec` is generic-only and writes through `IBufferWriter<byte>` or
-reads from `ReadOnlySequence<byte>`; the framework does not expose a buffered
-`byte[]` payload or an envelope object. JSON is registered with
+`IMessagingCodec` is generic-only and asynchronously writes through
+`PipeWriter` or reads from `PipeReader`; the framework does not expose a
+buffered `byte[]` payload or an envelope object. JSON is registered with
 `services.AddArkMessaging()` and uses host-configured `JsonSerializerOptions`,
 including a shared application `JsonSerializerContext`. Validate every
 declared messaging contract at startup with `MessagingJsonStartupValidation` so
@@ -120,8 +120,12 @@ a missing context fails before processing begins.
 Receive is two-phase: `MessagingHeaderProcessor` bounds and validates headers,
 checks the network identity, and resolves the codec from
 `amf1-content-type`; the generated participant binder then deserializes the
-selected contract. Content encoding and DataBus attachment headers then select
-bounded decompression or claim-check retrieval before deserialization.
+selected contract. Content encoding and DataBus attachment headers then select bounded,
+incremental decompression or claim-check retrieval before deserialization.
+Receive payloads flow directly into the selected codec. Send serialization
+buffers only the compression-decision prefix and the bounded inline prefix.
+When the inline threshold is crossed, that prefix is replayed to a
+transactional DataBus writer and remaining bytes flow directly to DataBus.
 
 Receivers read the protocol from each native envelope, not from their current
 default serializer. Retire a write protocol only after messages using it have

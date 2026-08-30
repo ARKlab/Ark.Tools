@@ -206,7 +206,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                 async () =>
                 {
                     var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
-                    var payload = await _payloadSender
+                    using var payload = await _payloadSender
                         .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
                         .ConfigureAwait(false);
                     _validateHeaders(context.Headers);
@@ -224,14 +224,26 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                             outboxHeaders[MessagingHeaders.OutboxDueTime] =
                                 dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
                         _validateHeaders(outboxHeaders);
-                        outboxScope.Add(new OutboxMessage { Headers = outboxHeaders, Body = payload.ToArray() });
+                        outboxScope.Add(new OutboxMessage
+                        {
+                            Headers = outboxHeaders,
+                            Body = payload.Sequence.ToArray(),
+                        });
                     }
                     else if (publish)
-                        await _transport.PublishAsync(destination, transportHeaders, payload, cancellationToken)
+                        await _transport.PublishAsync(
+                            destination,
+                            transportHeaders,
+                            payload.Sequence,
+                            cancellationToken)
                             .ConfigureAwait(false);
                     else
                         await _transport.SendAsync(
-                            destination, transportHeaders, payload, dueTime, cancellationToken).ConfigureAwait(false);
+                            destination,
+                            transportHeaders,
+                            payload.Sequence,
+                            dueTime,
+                            cancellationToken).ConfigureAwait(false);
                 },
                 cancellationToken).ConfigureAwait(false);
         }

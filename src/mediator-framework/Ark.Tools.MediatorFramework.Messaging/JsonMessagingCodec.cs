@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
+using System.IO.Pipelines;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
@@ -35,20 +35,30 @@ public sealed class JsonMessagingCodec : IMessagingCodec
     public SerializationProtocol Protocol => SerializationProtocol.Json;
 
     /// <inheritdoc />
-    public void Serialize<T>(T value, IBufferWriter<byte> writer) where T : class
+    public async Task SerializeAsync<T>(
+        T value,
+        PipeWriter writer,
+        CancellationToken ctk)
+        where T : class
     {
+        ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(writer);
         var typeInfo = _getTypeInfo<T>();
-        using var jsonWriter = new Utf8JsonWriter(writer);
-        JsonSerializer.Serialize(jsonWriter, value, typeInfo);
+        await JsonSerializer.SerializeAsync(writer.AsStream(leaveOpen: true), value, typeInfo, ctk)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public T Deserialize<T>(in ReadOnlySequence<byte> payload) where T : class
+    public async Task<T> DeserializeAsync<T>(
+        PipeReader reader,
+        CancellationToken ctk)
+        where T : class
     {
-        var reader = new Utf8JsonReader(payload);
+        ArgumentNullException.ThrowIfNull(reader);
         var typeInfo = _getTypeInfo<T>();
-        return JsonSerializer.Deserialize(ref reader, typeInfo)
+        return await JsonSerializer
+            .DeserializeAsync(reader.AsStream(leaveOpen: true), typeInfo, ctk)
+            .ConfigureAwait(false)
             ?? throw new JsonException($"Payload deserialized to null for contract '{typeof(T)}'.");
     }
 

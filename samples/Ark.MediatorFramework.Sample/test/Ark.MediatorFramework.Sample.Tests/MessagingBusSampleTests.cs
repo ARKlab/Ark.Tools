@@ -19,7 +19,9 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
+using System.Buffers;
 using System.Diagnostics;
+using System.IO.Pipelines;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -66,7 +68,8 @@ public sealed class MessagingBusSampleTests
                 .Should().Be("books_process_book_print_process");
             delivery.Headers[MessagingHeaders.SenderIdentity]
                 .Should().Be(SampleMessagingParticipant.Identity);
-            codec.Deserialize<ProcessBookPrintProcessRequest>(delivery.Payload).Id.Should().NotBe(Guid.Empty);
+            (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, delivery.Payload)
+                .ConfigureAwait(false)).Id.Should().NotBe(Guid.Empty);
             await delivery.CompleteAsync(default).ConfigureAwait(false);
             return;
         }
@@ -307,7 +310,8 @@ public sealed class MessagingBusSampleTests
 #pragma warning restore MA0004
             (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
             stopwatch.Elapsed.Should().BeGreaterThan(TimeSpan.FromSeconds(1));
-            codec.Deserialize<ProcessBookPrintProcessRequest>(enumerator.Current.Payload)
+            (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, enumerator.Current.Payload)
+                .ConfigureAwait(false))
                 .Id.Should().NotBe(Guid.Empty);
 
             await enumerator.Current.DeadLetterAsync(
@@ -318,13 +322,35 @@ public sealed class MessagingBusSampleTests
                 .ConfigureAwait(false);
             var envelope = StorageQueueEnvelopeCodec.Decode(poisonMessage.Value.Body);
             envelope.Headers[StorageQueuePoisonHeaders.Reason].Should().Be("sample-failure");
-            codec.Deserialize<ProcessBookPrintProcessRequest>(envelope.Payload)
+            (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, envelope.Payload)
+                .ConfigureAwait(false))
                 .Id.Should().NotBe(Guid.Empty);
         }
+
         finally
         {
             await queue.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
             await poison.DeleteIfExistsAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task<T> _deserializeAsync<T>(
+        IMessagingCodec codec,
+        ReadOnlySequence<byte> payload)
+        where T : class
+    {
+        var pipe = new Pipe();
+        foreach (var segment in payload)
+            pipe.Writer.Write(segment.Span);
+        await pipe.Writer.CompleteAsync().ConfigureAwait(false);
+
+        try
+        {
+            return await codec.DeserializeAsync<T>(pipe.Reader, default).ConfigureAwait(false);
+        }
+        finally
+        {
+            await pipe.Reader.CompleteAsync().ConfigureAwait(false);
         }
     }
 

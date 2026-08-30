@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
 using System.Security.Cryptography;
 
 using Azure;
@@ -62,45 +61,18 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
     }
 
     /// <inheritdoc />
-    public async Task<string> StoreAsync(
-        ReadOnlySequence<byte> content,
-        CancellationToken ctk)
+    public async Task<IMessagingDataBusWriteSession> OpenWriteAsync(CancellationToken ctk)
     {
         ctk.ThrowIfCancellationRequested();
 
         var attachmentId = Guid.NewGuid().ToString("N");
         var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
-        long length = 0;
-        using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        foreach (var segment in content)
-        {
-            ctk.ThrowIfCancellationRequested();
-            sha.AppendData(segment.Span);
-            length += segment.Length;
-        }
-
-        var metadata = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            [_lengthMetadataName] = length.ToString(CultureInfo.InvariantCulture),
-            [_sha256MetadataName] = Convert.ToHexString(sha.GetHashAndReset())
-        };
         var stream = await blob.OpenWriteAsync(
                 overwrite: true,
-                options: new BlobOpenWriteOptions
-                {
-                    Metadata = metadata
-                },
+                options: new BlobOpenWriteOptions(),
                 cancellationToken: ctk)
             .ConfigureAwait(false);
-        await using (stream.ConfigureAwait(false))
-        {
-            foreach (var segment in content)
-            {
-                await stream.WriteAsync(segment, ctk).ConfigureAwait(false);
-            }
-        }
-
-        return attachmentId;
+        return new WriteSession(blob, attachmentId, stream);
     }
 
     /// <inheritdoc />
@@ -144,6 +116,14 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
         {
             throw _attachmentFailure("The payload attachment is missing.", ex);
         }
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAsync(string attachmentId, CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(attachmentId);
+        var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
+        await blob.DeleteIfExistsAsync(cancellationToken: ctk).ConfigureAwait(false);
     }
 
     private static AzureBlobDataBusOptions _validateOptions(
@@ -267,5 +247,53 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
                 MessagingFailFastReason.AttachmentIntegrityFailure,
                 message,
                 innerException);
+    }
+
+    private sealed class WriteSession : IMessagingDataBusWriteSession
+    {
+        private readonly BlobClient _blob;
+        private readonly string _id;
+        private readonly HashingWriteStream _stream;
+        private bool _completed;
+        private bool _streamDisposed;
+
+        internal WriteSession(BlobClient blob, string id, Stream stream)
+        {
+            _blob = blob;
+            _id = id;
+            _stream = new HashingWriteStream(stream);
+        }
+
+        public Stream Stream => _stream;
+
+        public async Task<MessagingDataBusAttachment> CompleteAsync(CancellationToken ctk)
+        {
+            if (_completed)
+                throw new InvalidOperationException("The attachment write has already completed.");
+            var length = _stream._bytesWritten;
+            var hash = _stream._completeHash();
+            await _stream.DisposeAsync().ConfigureAwait(false);
+            _streamDisposed = true;
+            await _blob.SetMetadataAsync(
+                    new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        [_lengthMetadataName] = length.ToString(CultureInfo.InvariantCulture),
+                        [_sha256MetadataName] = hash
+                    },
+                    cancellationToken: ctk)
+                .ConfigureAwait(false);
+            _completed = true;
+            return new MessagingDataBusAttachment(_id, length, hash);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (!_completed)
+            {
+                if (!_streamDisposed)
+                    await _stream.DisposeAsync().ConfigureAwait(false);
+                await _blob.DeleteIfExistsAsync().ConfigureAwait(false);
+            }
+        }
     }
 }
