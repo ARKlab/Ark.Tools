@@ -15,10 +15,13 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Azure Storage Queue implementation of the messaging transport contract.</summary>
 public sealed class StorageQueueMessagingTransport :
     IMessagingReceiveTransport,
-    IMessagingTransportManagement
+    IMessagingTransportManagement,
+    IMessagingTransport<StorageQueueMessagingTransport>
 {
     /// <summary>Gets the conservative complete Base64-encoded queue payload size.</summary>
     public const long MaximumPayloadSizeBytes = 48 * 1024;
+    static long IMessagingTransport<StorageQueueMessagingTransport>.MaximumPayloadLimitBytes =>
+        MaximumPayloadSizeBytes;
     private static readonly TimeSpan _maximumVisibilityDelay = TimeSpan.FromDays(7);
     private readonly QueueServiceClient _serviceClient;
     private readonly ConcurrentDictionary<string, QueueClient> _queues = new(StringComparer.Ordinal);
@@ -87,6 +90,14 @@ public sealed class StorageQueueMessagingTransport :
     public static string ToNativeEntityName(string logicalName)
     {
         return MessagingEntityNameMapper.ToStorageQueue(logicalName);
+    }
+
+    static long IMessagingTransport<StorageQueueMessagingTransport>.GetNativeHeaderSize(
+        IReadOnlyDictionary<string, string> headers)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        return Base64.GetMaxEncodedToUtf8Length(
+            StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty));
     }
 
     /// <inheritdoc />

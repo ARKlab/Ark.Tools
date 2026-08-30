@@ -83,8 +83,9 @@ public sealed class MessagingPayloadSender
         var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
             ?? new ReadOnlyDictionary<string, string>(headers);
+        var maximumPayloadBytes = transport.MaximumPayloadBytes;
         var nativeSize = transport.MeasureNativePayload(readOnlyHeaders, payload);
-        var mustOffload = nativeSize > transport.MaximumPayloadBytes;
+        var mustOffload = nativeSize > maximumPayloadBytes;
         if (!mustOffload)
             return payload;
 
@@ -101,8 +102,10 @@ public sealed class MessagingPayloadSender
             payload.Length.ToString(CultureInfo.InvariantCulture));
         _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, _sha256Hex(payload));
 
+        readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
+            ?? new ReadOnlyDictionary<string, string>(headers);
         var attachmentEnvelopeSize = transport.MeasureNativeHeaders(readOnlyHeaders);
-        if (attachmentEnvelopeSize > transport.MaximumPayloadBytes)
+        if (attachmentEnvelopeSize > maximumPayloadBytes)
         {
             throw new MessagingFailFastException(
                 MessagingFailFastReason.OversizedHeaders,

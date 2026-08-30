@@ -10,10 +10,15 @@ using NodaTime;
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>First-class in-memory transport with scheduled delivery and PeekLock settlement.</summary>
-public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMessagingTransportManagement
+public sealed class InMemoryMessagingTransport :
+    IMessagingReceiveTransport,
+    IMessagingTransportManagement,
+    IMessagingTransport<InMemoryMessagingTransport>
 {
     /// <summary>Gets the default maximum complete payload size for in-memory messages.</summary>
     public const long DefaultMaximumPayloadSizeBytes = 32 * 1024;
+    static long IMessagingTransport<InMemoryMessagingTransport>.MaximumPayloadLimitBytes =>
+        DefaultMaximumPayloadSizeBytes;
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
     private const string _maximumDeliveryReason = "maximum-delivery-count";
@@ -71,6 +76,15 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     public static string ToNativeEntityName(string logicalName)
     {
         return MessagingEntityNameMapper.ToInMemory(logicalName);
+    }
+
+    static long IMessagingTransport<InMemoryMessagingTransport>.GetNativeHeaderSize(
+        IReadOnlyDictionary<string, string> headers)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        return headers.Sum(static pair =>
+            (long)System.Text.Encoding.UTF8.GetByteCount(pair.Key)
+            + System.Text.Encoding.UTF8.GetByteCount(pair.Value));
     }
 
     /// <summary>Configures the native retry limit and delay for a queue.</summary>

@@ -11,10 +11,15 @@ using Azure.Messaging.ServiceBus;
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
-public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, IAsyncDisposable
+public sealed class ServiceBusMessagingTransport :
+    IMessagingReceiveTransport,
+    IAsyncDisposable,
+    IMessagingTransport<ServiceBusMessagingTransport>
 {
     /// <summary>Gets the Service Bus standard-tier maximum complete payload size.</summary>
     public const long MaximumPayloadSizeBytes = 256 * 1024;
+    static long IMessagingTransport<ServiceBusMessagingTransport>.MaximumPayloadLimitBytes =>
+        MaximumPayloadSizeBytes;
     private const int _amqpPropertyOverheadBytes = 8;
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
@@ -44,6 +49,22 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
     public static string ToNativeEntityName(string logicalName)
     {
         return MessagingEntityNameMapper.ToServiceBus(logicalName);
+    }
+
+    static long IMessagingTransport<ServiceBusMessagingTransport>.GetNativeHeaderSize(
+        IReadOnlyDictionary<string, string> headers)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        var size = 0L;
+        checked
+        {
+            foreach (var pair in headers)
+                size += Encoding.UTF8.GetByteCount(pair.Key)
+                    + Encoding.UTF8.GetByteCount(pair.Value)
+                    + _amqpPropertyOverheadBytes;
+        }
+
+        return size;
     }
 
     /// <inheritdoc />

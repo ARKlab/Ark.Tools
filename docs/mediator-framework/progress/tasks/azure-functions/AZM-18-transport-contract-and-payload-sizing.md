@@ -64,8 +64,11 @@ measurement, and point-to-point messaging must be one explicit capability.
 
 Each concrete transport type supplies a fixed maximum complete payload size
 through the static transport contract and computes native size for a complete
-header/payload pair. The default implementation adds body length; encodings
-such as Storage Queue override it to measure the exact native representation.
+header/payload pair. Native header sizing and logical-name mapping are static
+abstract members of the generic transport contract; the non-generic transport
+seam remains available for DI. The default implementation adds body length;
+encodings such as Storage Queue override it to measure the exact native
+representation.
 Storage Queue advertises a conservative 48 KiB effective ceiling (three
 quarters of the native 64 KiB limit) to leave room for Base64 expansion.
 The shared runtime owns the transparent compression/DataBus decision.
