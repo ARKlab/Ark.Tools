@@ -42,7 +42,6 @@ public sealed class ServiceBusMessagingTransport :
         | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    /// <inheritdoc />
     public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
     /// <summary>Maps a logical name to a Service Bus entity name.</summary>

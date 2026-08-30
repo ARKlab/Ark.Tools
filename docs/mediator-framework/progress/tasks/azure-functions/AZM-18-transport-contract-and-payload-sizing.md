@@ -70,7 +70,8 @@ seam remains available for DI. The default implementation adds body length;
 encodings such as Storage Queue override it to measure the exact native
 representation.
 Storage Queue advertises a conservative 48 KiB effective ceiling (three
-quarters of the native 64 KiB limit) to leave room for Base64 expansion.
+quarters of the native 64 KiB limit) to account for envelope framing overhead
+after Base64 encoding.
 The shared runtime owns the transparent compression/DataBus decision.
 
 `SendReceive` gates both routing to a processing participant and receive
