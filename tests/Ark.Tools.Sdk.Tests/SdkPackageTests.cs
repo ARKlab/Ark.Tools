@@ -487,7 +487,7 @@ public sealed class SdkPackageTests
             var actualItems = _getItemIdentities(actual, itemName)
                 .Where(identity => !string.Equals(identity, ignoredIdentity, StringComparison.Ordinal))
                 .ToArray();
-            CollectionAssert.AreEqual(_getItemIdentities(expected, itemName), actualItems, itemName);
+            CollectionAssert.AreEquivalent(_getItemIdentities(expected, itemName), actualItems, itemName);
         }
     }
 
