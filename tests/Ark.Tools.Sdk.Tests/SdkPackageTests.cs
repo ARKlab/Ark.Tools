@@ -52,6 +52,14 @@ public sealed class SdkPackageTests
         "ArkToolsBuildImportCount"
     ];
 
+    private static readonly string[] _canonicalPropertyGroupLabels =
+    [
+        "Common Build Settings",
+        "C# Build Settings",
+        "SQL Build Settings",
+        "Analyzer Configuration"
+    ];
+
     private static readonly string[] _configurationAssets =
     [
         "configuration/coding-style/Ark.Tools.CodingStyle.editorconfig",
@@ -269,6 +277,9 @@ public sealed class SdkPackageTests
         CollectionAssert.AreEqual(
             _canonicalProperties,
             props.Descendants("PropertyGroup").Elements().Select(element => element.Name.LocalName).ToArray());
+        CollectionAssert.AreEqual(
+            _canonicalPropertyGroupLabels,
+            props.Descendants("PropertyGroup").Select(element => element.Attribute("Label")?.Value).ToArray());
         CollectionAssert.AreEqual(
             _canonicalTargetProperties,
             targets.Descendants("PropertyGroup").Elements().Select(element => element.Name.LocalName).ToArray());

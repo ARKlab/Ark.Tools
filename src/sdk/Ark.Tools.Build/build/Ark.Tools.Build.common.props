@@ -1,25 +1,36 @@
 <Project>
-  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
+  <PropertyGroup Label="Common Build Settings"
+                 Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
     <ArkToolsBuildImported>true</ArkToolsBuildImported>
     <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
     <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
-    <Nullable Condition="'$(Nullable)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</Nullable>
-    <ImplicitUsings Condition="'$(ImplicitUsings)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</ImplicitUsings>
-    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateDocumentationFile>
-    <Features Condition="'$(Features)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">strict</Features>
-    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</ReportAnalyzer>
-    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</EnforceCodeStyleInBuild>
-    <TreatTSqlWarningsAsErrors Condition="'$(TreatTSqlWarningsAsErrors)' == '' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">true</TreatTSqlWarningsAsErrors>
-    <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == '' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">true</RunSqlCodeAnalysis>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false'">
+  <PropertyGroup Label="C# Build Settings"
+                 Condition="'$(EnableArkToolsBuild)' != 'false' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
+    <ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
+    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">true</GenerateDocumentationFile>
+    <Features Condition="'$(Features)' == ''">strict</Features>
+    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == ''">true</ReportAnalyzer>
+    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Label="SQL Build Settings"
+                 Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">
+    <TreatTSqlWarningsAsErrors Condition="'$(TreatTSqlWarningsAsErrors)' == ''">true</TreatTSqlWarningsAsErrors>
+    <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == ''">true</RunSqlCodeAnalysis>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Analyzer Configuration"
+                 Condition="'$(EnableArkToolsBuild)' != 'false'">
     <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == '' and '$(DirectoryBuildPropsPath)' != ''">$([System.IO.Path]::GetDirectoryName('$(DirectoryBuildPropsPath)'))</ArkToolsLocalAnalyzerConfigRoot>
     <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == ''">$(MSBuildProjectDirectory)</ArkToolsLocalAnalyzerConfigRoot>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+  <ItemGroup Label="Analyzer Configuration"
+             Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/coding-style/Ark.Tools.CodingStyle.editorconfig"
                        KeepDuplicates="false"
                        Condition="'$(EnableArkToolsCodingStyle)' != 'false'" />
