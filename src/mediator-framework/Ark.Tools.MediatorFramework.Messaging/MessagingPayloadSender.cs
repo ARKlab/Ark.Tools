@@ -120,7 +120,6 @@ public sealed class MessagingPayloadSender
             _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, attachment.Sha256);
             if (transport.MeasureNativeHeaders(readOnlyHeaders) > transport.MaximumPayloadBytes)
             {
-                result.Dispose();
                 var exception = new MessagingFailFastException(
                     MessagingFailFastReason.OversizedHeaders,
                     "Attachment-reference envelope exceeds the transport inline ceiling.");
@@ -131,6 +130,10 @@ public sealed class MessagingPayloadSender
                 catch (Exception cleanupException) when (!_isCriticalException(cleanupException))
                 {
                     throw new AggregateException(exception, cleanupException);
+                }
+                finally
+                {
+                    result.Dispose();
                 }
                 throw exception;
             }
