@@ -71,13 +71,13 @@ consumer intent.
 
 ## Acceptance
 
-- [ ] Every selected Build property is implemented with its exact condition.
-- [ ] Project-level overrides and the whole-package escape hatch are tested.
-- [ ] Negative-boundary snapshots contain no SDK-only behavior.
-- [ ] SQL and non-C# fixtures prove capability-safe selection.
-- [ ] Native .NET SDK defaults remain platform-owned.
-- [ ] The [task board](README.md) status for SDK-IMP-02 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] Every selected Build property is implemented with its exact condition.
+- [x] Project-level overrides and the whole-package escape hatch are tested.
+- [x] Negative-boundary snapshots contain no SDK-only behavior.
+- [x] SQL and non-C# fixtures prove capability-safe selection.
+- [x] Native .NET SDK defaults remain platform-owned.
+- [x] The [task board](README.md) status for SDK-IMP-02 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
