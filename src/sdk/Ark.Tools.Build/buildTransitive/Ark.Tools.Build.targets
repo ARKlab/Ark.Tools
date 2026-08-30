@@ -1,0 +1,3 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)..\build\Ark.Tools.Build.common.targets" />
+</Project>

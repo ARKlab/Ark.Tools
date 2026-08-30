@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup Condition="'$(ArkToolsBuildImported)' != 'true'">
+    <ArkToolsBuildImported>true</ArkToolsBuildImported>
+    <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
+  </PropertyGroup>
+</Project>

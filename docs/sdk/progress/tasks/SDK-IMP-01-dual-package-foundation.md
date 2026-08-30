@@ -77,16 +77,16 @@ and stale global-package-cache content can hide packaging defects.
 
 ## Acceptance
 
-- [ ] Both package projects and the shared test project are in `Ark.Tools.slnx`.
-- [ ] Clean-consumer restore proves versionless SDK resolution and exact Build
+- [x] Both package projects and the shared test project are in `Ark.Tools.slnx`.
+- [x] Clean-consumer restore proves versionless SDK resolution and exact Build
   injection.
-- [ ] Package inspection proves the Build dependency is public and
+- [x] Package inspection proves the Build dependency is public and
   `Ark.Tools.Build` itself has no dependencies.
-- [ ] The canonical Build implementation evaluates once for direct and
+- [x] The canonical Build implementation evaluates once for direct and
   transitive imports.
-- [ ] No existing repository project activates `Ark.Tools.Sdk`.
-- [ ] The [task board](README.md) status for SDK-IMP-01 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] No existing repository project activates `Ark.Tools.Sdk`.
+- [x] The [task board](README.md) status for SDK-IMP-01 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
