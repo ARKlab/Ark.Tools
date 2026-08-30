@@ -143,6 +143,7 @@ public static class StorageQueueEnvelopeCodec
         }
         finally
         {
+            Array.Clear(rented, 0, canonicalSize);
             ArrayPool<byte>.Shared.Return(rented);
         }
     }

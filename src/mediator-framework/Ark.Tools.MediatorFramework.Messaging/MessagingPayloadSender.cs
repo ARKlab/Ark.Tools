@@ -93,7 +93,7 @@ public sealed class MessagingPayloadSender
                 {
                     await _deleteAttachmentAsync(completedPayload).ConfigureAwait(false);
                 }
-                catch (Exception cleanupException)
+                catch (Exception cleanupException) when (!_isCriticalException(cleanupException))
                 {
                     throw new AggregateException(exception, cleanupException);
                 }
@@ -121,7 +121,7 @@ public sealed class MessagingPayloadSender
                 {
                     await _deleteAttachmentAsync(result).ConfigureAwait(false);
                 }
-                catch (Exception cleanupException)
+                catch (Exception cleanupException) when (!_isCriticalException(cleanupException))
                 {
                     throw new AggregateException(exception, cleanupException);
                 }
@@ -140,6 +140,13 @@ public sealed class MessagingPayloadSender
     {
         if (payload.Attachment is { } attachment)
             await _dataBus.DeleteAsync(attachment.Id, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    private static bool _isCriticalException(Exception exception)
+    {
+        return exception is OutOfMemoryException
+            or StackOverflowException
+            or AccessViolationException;
     }
 
     private static async Task _serializeAsync<T>(
@@ -435,6 +442,9 @@ public sealed class MessagingOutgoingPayload : IDisposable
     {
         var buffer = Interlocked.Exchange(ref _buffer, null);
         if (buffer is not null)
+        {
+            Array.Clear(buffer, 0, _length);
             ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 }

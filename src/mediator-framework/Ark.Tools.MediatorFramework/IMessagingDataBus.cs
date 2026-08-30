@@ -11,7 +11,10 @@ public interface IMessagingDataBus
     /// <returns>A write session that commits or aborts the attachment.</returns>
     Task<IMessagingDataBusWriteSession> OpenWriteAsync(CancellationToken ctk);
 
-    /// <summary>Opens an attachment after validating its length and SHA-256 digest.</summary>
+    /// <summary>
+    /// Opens an attachment whose length and SHA-256 digest are validated while reading,
+    /// with validation completing at end-of-stream.
+    /// </summary>
     /// <param name="attachmentId">The opaque attachment identifier.</param>
     /// <param name="expectedLength">The expected stored byte length.</param>
     /// <param name="expectedSha256">The expected SHA-256 digest.</param>
