@@ -33,7 +33,7 @@
              Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/coding-style/Ark.Tools.CodingStyle.editorconfig"
                        KeepDuplicates="false"
-                       Condition="'$(EnableArkToolsCodingStyle)' != 'false'" />
+                       Condition="'$(EnableArkToolsCodingStyle)' != 'false' and '$(ArkToolsSdkSourceBuild)' != 'true'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig"
                                KeepDuplicates="false"
                                Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />

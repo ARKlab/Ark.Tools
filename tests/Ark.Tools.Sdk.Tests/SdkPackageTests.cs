@@ -274,6 +274,10 @@ public sealed class SdkPackageTests
         var buildRoot = Path.Join(root, "src", "sdk", "Ark.Tools.Build", "build");
         var props = XDocument.Load(Path.Join(buildRoot, "Ark.Tools.Build.common.props"));
         var targets = XDocument.Load(Path.Join(buildRoot, "Ark.Tools.Build.common.targets"));
+        var rootProps = XDocument.Load(Path.Join(root, "Directory.Build.props"));
+        var rootTargets = XDocument.Load(Path.Join(root, "Directory.Build.targets"));
+        var sdkDirectoryProps = XDocument.Load(Path.Join(root, "src", "sdk", "Directory.Build.props"));
+        var sdkDirectoryTargets = XDocument.Load(Path.Join(root, "src", "sdk", "Directory.Build.targets"));
         CollectionAssert.AreEqual(
             _canonicalProperties,
             props.Descendants("PropertyGroup").Elements().Select(element => element.Name.LocalName).ToArray());
@@ -293,6 +297,21 @@ public sealed class SdkPackageTests
                 .Select(element => _removedAnalyzerNames.Single(name =>
                     element.Attribute("Condition")?.Value.Contains(name, StringComparison.Ordinal) == true))
                 .ToArray());
+        Assert.AreEqual(
+            "$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props",
+            rootProps.Descendants("Import").Single().Attribute("Project")?.Value);
+        Assert.AreEqual(
+            "$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.targets",
+            rootTargets.Descendants("Import").Single().Attribute("Project")?.Value);
+        Assert.AreEqual(
+            "true",
+            sdkDirectoryProps.Descendants("ArkToolsSdkProject").Single().Value);
+        Assert.AreEqual(
+            "../../Directory.Build.props",
+            sdkDirectoryProps.Descendants("Import").Single().Attribute("Project")?.Value);
+        Assert.AreEqual(
+            "../../Directory.Build.targets",
+            sdkDirectoryTargets.Descendants("Import").Single().Attribute("Project")?.Value);
     }
 
     /// <summary>

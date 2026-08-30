@@ -43,12 +43,13 @@ compose with local overrides, and remain inert when an analyzer is absent.
 - **Safety target**: remove only analyzers whose file name is
   `DevLooped.SponsorLink` or `Moq.CodeAnalysis`, behind
   `EnableArkToolsSponsorLinkRemoval`.
-- **Transition**: update root `Directory.Build.props` to import the moved
-  four global configs plus the new IdentityModel/Core configs explicitly, and
-  update root `Directory.Build.targets` to include the moved banned-symbol
-  file. Pack the root `.editorconfig` under the accepted coding-style package
-  name. Do not add a Build `PackageReference` to runtime projects or duplicate
-  any configuration file.
+- **Transition**: import the source `Sdk.props` and `Sdk.targets` from the root
+  `Directory.Build.props` and `Directory.Build.targets`; the source SDK imports
+  the canonical Build assets without adding an `Ark.Tools.Build` package
+  reference. Add `src/sdk/Directory.Build.props` and
+  `src/sdk/Directory.Build.targets` boundaries to avoid recursive SDK imports.
+  Pack the root `.editorconfig` under the accepted coding-style package name.
+  Do not duplicate any configuration file.
 
 ## Implementation steps
 
