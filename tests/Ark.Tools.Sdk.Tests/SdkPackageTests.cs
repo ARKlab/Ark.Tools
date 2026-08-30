@@ -20,8 +20,8 @@ public sealed class SdkPackageTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../.."));
         var feed = Path.Combine(root, "artifacts", "sdk-test-feed");
         Directory.CreateDirectory(feed);
-        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
-        await Run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
+        await _run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
+        await _run("dotnet", $"pack \"{Path.Combine(root, "src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
 
         using var build = await ZipFile.OpenReadAsync(Path.Combine(feed, "Ark.Tools.Build.999.9.9.nupkg"));
         using var sdk = await ZipFile.OpenReadAsync(Path.Combine(feed, "Ark.Tools.Sdk.999.9.9.nupkg"));
@@ -30,27 +30,27 @@ public sealed class SdkPackageTests
         Assert.IsNull(build.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
         var sdkPropsEntry = sdk.GetEntry("Sdk/Sdk.props");
         Assert.IsNotNull(sdkPropsEntry);
-        using var sdkPropsStream = await sdkPropsEntry.OpenAsync();
+        await using var sdkPropsStream = await sdkPropsEntry.OpenAsync();
         using var sdkPropsReader = new StreamReader(sdkPropsStream);
-        var sdkProps = await sdkPropsReader.ReadToEndAsync();
-        StringAssert.Contains(sdkProps, "Version=\"999.9.9\"");
-        StringAssert.Contains(sdkProps, "IsImplicitlyDefined=\"true\"");
+        var sdkProps = await sdkPropsReader.ReadToEndAsync().ConfigureAwait(false);
+        StringAssert.Contains(sdkProps, "Version=\"999.9.9\"", StringComparison.Ordinal);
+        StringAssert.Contains(sdkProps, "IsImplicitlyDefined=\"true\"", StringComparison.Ordinal);
         Assert.IsNull(sdk.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
         var nuspecEntry = build.GetEntry("Ark.Tools.Build.nuspec");
         Assert.IsNotNull(nuspecEntry);
-        using (var nuspecStream = await nuspecEntry.OpenAsync())
+        await using (var nuspecStream = await nuspecEntry.OpenAsync())
         using (var nuspec = new StreamReader(nuspecStream))
         {
-            Assert.IsFalse((await nuspec.ReadToEndAsync()).Contains("<dependencies>", StringComparison.Ordinal));
+            Assert.IsFalse((await nuspec.ReadToEndAsync().ConfigureAwait(false)).Contains("<dependencies>", StringComparison.Ordinal));
         }
 
         var consumer = Path.Combine(root, "artifacts", "sdk-consumer");
         Directory.CreateDirectory(consumer);
-        File.WriteAllText(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsPackageProject>true</ArkToolsPackageProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>");
-        File.WriteAllText(Path.Combine(consumer, "Directory.Build.targets"), "<Project />");
-        File.WriteAllText(Path.Combine(consumer, "global.json"), """{"sdk":{"version":"10.0.400","rollForward":"latestFeature"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""");
-        File.WriteAllText(Path.Combine(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /></packageSources></configuration>");
-        File.WriteAllText(Path.Combine(consumer, "Consumer.csproj"), """
+        await File.WriteAllTextAsync(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsPackageProject>true</ArkToolsPackageProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(consumer, "Directory.Build.targets"), "<Project />").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(consumer, "global.json"), """{"sdk":{"version":"10.0.400","rollForward":"latestFeature"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /></packageSources></configuration>").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(consumer, "Consumer.csproj"), """
 <Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Ark.Tools.Sdk" />
   <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
@@ -63,10 +63,10 @@ public sealed class SdkPackageTests
             ["NUGET_PACKAGES"] = packages,
             ["NUGET_HTTP_CACHE_PATH"] = Path.Combine(consumer, "http-cache")
         };
-        await Run("dotnet", $"restore \"{Path.Combine(consumer, "Consumer.csproj")}\" --configfile \"{Path.Combine(consumer, "NuGet.Config")}\"", environment);
-        var properties = await Run("dotnet", $"msbuild \"{Path.Combine(consumer, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported -getProperty:ArkToolsBuildImportCount", environment);
-        StringAssert.Contains(properties, "\"ArkToolsBuildImported\": \"true\"");
-        StringAssert.Contains(properties, "\"ArkToolsBuildImportCount\": \"1\"");
+        await _run("dotnet", $"restore \"{Path.Combine(consumer, "Consumer.csproj")}\" --configfile \"{Path.Combine(consumer, "NuGet.Config")}\"", environment);
+        var properties = await _run("dotnet", $"msbuild \"{Path.Combine(consumer, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported -getProperty:ArkToolsBuildImportCount", environment);
+        StringAssert.Contains(properties, "\"ArkToolsBuildImported\": \"true\"", StringComparison.Ordinal);
+        StringAssert.Contains(properties, "\"ArkToolsBuildImportCount\": \"1\"", StringComparison.Ordinal);
 
         var disabled = Path.Combine(root, "artifacts", "sdk-consumer-disabled");
         Directory.CreateDirectory(disabled);
@@ -74,7 +74,7 @@ public sealed class SdkPackageTests
         File.Copy(Path.Combine(consumer, "NuGet.Config"), Path.Combine(disabled, "NuGet.Config"), true);
         File.Copy(Path.Combine(consumer, "Directory.Build.props"), Path.Combine(disabled, "Directory.Build.props"), true);
         File.Delete(Path.Combine(disabled, "packages.lock.json"));
-        File.WriteAllText(Path.Combine(disabled, "Consumer.csproj"), """
+        await File.WriteAllTextAsync(Path.Combine(disabled, "Consumer.csproj"), """
 <Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Ark.Tools.Sdk" />
   <PropertyGroup>
@@ -82,18 +82,18 @@ public sealed class SdkPackageTests
     <EnableArkToolsBuild>false</EnableArkToolsBuild>
   </PropertyGroup>
 </Project>
-""");
+""").ConfigureAwait(false);
         var disabledEnvironment = new Dictionary<string, string>
         {
             ["NUGET_PACKAGES"] = Path.Combine(disabled, "packages"),
             ["NUGET_HTTP_CACHE_PATH"] = Path.Combine(disabled, "http-cache")
         };
-        await Run("dotnet", $"restore \"{Path.Combine(disabled, "Consumer.csproj")}\" --configfile \"{Path.Combine(disabled, "NuGet.Config")}\"", disabledEnvironment);
-        var disabledProperties = await Run("dotnet", $"msbuild \"{Path.Combine(disabled, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported", disabledEnvironment);
+        await _run("dotnet", $"restore \"{Path.Combine(disabled, "Consumer.csproj")}\" --configfile \"{Path.Combine(disabled, "NuGet.Config")}\"", disabledEnvironment);
+        var disabledProperties = await _run("dotnet", $"msbuild \"{Path.Combine(disabled, "Consumer.csproj")}\" -getProperty:ArkToolsBuildImported", disabledEnvironment);
         Assert.IsFalse(disabledProperties.Contains("\"ArkToolsBuildImported\": \"true\"", StringComparison.Ordinal));
     }
 
-    private static async Task<string> Run(string fileName, string arguments, IDictionary<string, string>? environment = null)
+    private static async Task<string> _run(string fileName, string arguments, IDictionary<string, string>? environment = null)
     {
         var startInfo = new System.Diagnostics.ProcessStartInfo(fileName, arguments)
         {
@@ -111,9 +111,9 @@ public sealed class SdkPackageTests
         using var process = System.Diagnostics.Process.Start(startInfo)!;
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        var error = await errorTask;
-        var output = await outputTask;
+        await process.WaitForExitAsync().ConfigureAwait(false);
+        var error = await errorTask.ConfigureAwait(false);
+        var output = await outputTask.ConfigureAwait(false);
         Assert.AreEqual(0, process.ExitCode, $"{output}{Environment.NewLine}{error}");
         return output;
     }

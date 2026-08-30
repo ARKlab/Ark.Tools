@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks></TargetFrameworks>
     <IsPackable>true</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PackageId>Ark.Tools.Sdk</PackageId>
     <Description>Ark.Tools additional MSBuild SDK.</Description>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <NoWarn>$(NoWarn);NU5128;NU5017;CA1016</NoWarn>
+    <!-- NU5128 is expected because this package intentionally contains only MSBuild assets. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
     <IncludeSymbols>false</IncludeSymbols>
     <GenerateSBOM>false</GenerateSBOM>
     <ArkToolsPackageProject>true</ArkToolsPackageProject>
