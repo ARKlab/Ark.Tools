@@ -13,7 +13,10 @@ internal static class MessagingNativeEntityNameMapper
 {
     internal static bool _isServiceBusCharacter(char character)
     {
-        return char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.';
+        return (character >= 'A' && character <= 'Z')
+            || (character >= 'a' && character <= 'z')
+            || (character >= '0' && character <= '9')
+            || character is '-' or '_' or '.';
     }
 
     internal static bool _isStorageQueueCharacter(char character)
@@ -32,7 +35,7 @@ internal static class MessagingNativeEntityNameMapper
         var hashBytes = System.Text.Encoding.UTF8.GetBytes(logicalName);
 #if NETSTANDARD2_0
         using var sha256 = SHA256.Create();
-        var hash = Convert.ToHexString(sha256.ComputeHash(hashBytes)).ToLowerInvariant();
+        var hash = BitConverter.ToString(sha256.ComputeHash(hashBytes)).Replace("-", string.Empty).ToLowerInvariant();
 #else
         var hash = Convert.ToHexString(SHA256.HashData(hashBytes)).ToLowerInvariant();
 #endif

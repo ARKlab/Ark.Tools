@@ -79,8 +79,9 @@ public sealed class MessagingCompressionAndDataBusTests
         var transport = new CappedTransport(300);
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 
+        var value = string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()));
         var payload = await sender.BuildOutgoingPayloadAsync(
-            new PayloadContract(new string('a', 1_000)),
+            new PayloadContract(value),
             new TextCodec(),
             transport,
             headers,
@@ -95,9 +96,9 @@ public sealed class MessagingCompressionAndDataBusTests
             int.Parse(
                     headers[MessagingHeaders.PayloadAttachmentLength],
                     CultureInfo.InvariantCulture)
-                .Should().BeLessThan(1_000);
+                .Should().BeLessThan(value.Length);
             using var reader = new StreamReader(prepared, Encoding.UTF8);
-            (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(new string('a', 1_000));
+            (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(value);
         }
     }
 
@@ -111,7 +112,7 @@ public sealed class MessagingCompressionAndDataBusTests
 
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract("payload"),
+                new PayloadContract(new string('a', 295)),
                 new TextCodec(),
                 transport,
                 headers,
@@ -126,16 +127,16 @@ public sealed class MessagingCompressionAndDataBusTests
     {
         var network = _network(
             offloadThreshold: 1_000,
-            maximumTransportPayload: 10,
+            maximumTransportPayload: 500,
             maxDecompressed: 10_000);
         var dataBus = new InMemoryMessagingDataBus();
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract(new string('a', 100)),
+                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()))),
                 new TextCodec(),
-                new CappedTransport(10),
+                new CappedTransport(500),
                 headers,
                 default).ConfigureAwait(false);
 
@@ -173,7 +174,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract(new string('b', 100)),
+                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()))),
                 new TextCodec(),
                 new CappedTransport(300),
                 headers,
@@ -221,7 +222,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract("payload"),
+                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()))),
                 new TextCodec(),
                 new CappedTransport(300),
                 headers,
@@ -242,8 +243,9 @@ public sealed class MessagingCompressionAndDataBusTests
         var dataBus = new InMemoryMessagingDataBus();
         var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0);
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var value = string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()));
         var payload = await sender.BuildOutgoingPayloadAsync(
-            new PayloadContract("payload"),
+            new PayloadContract(value),
             new TextCodec(),
             new CappedTransport(300),
             headers,
@@ -258,7 +260,7 @@ public sealed class MessagingCompressionAndDataBusTests
             await using (prepared.ConfigureAwait(false))
             {
                 using var reader = new StreamReader(prepared, Encoding.UTF8);
-                (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be("payload");
+                (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(value);
             }
         }
 

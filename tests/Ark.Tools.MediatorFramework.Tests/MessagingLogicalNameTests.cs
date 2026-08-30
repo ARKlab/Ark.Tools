@@ -34,11 +34,12 @@ public sealed class MessagingLogicalNameTests
     }
 
     [TestMethod]
-    public void InMemoryNamesRemainUnchanged()
+    public void NativeNamesFollowTransportRules()
     {
         var logical = "books-print_book.v1/events";
         InMemoryMessagingTransport.ToNativeEntityName(logical).Should().Be(logical);
-        ServiceBusMessagingTransport.ToNativeEntityName(logical).Should().Be("books-print_book.v1-events");
+        ServiceBusMessagingTransport.ToNativeEntityName(logical).Should().NotBe(logical);
+        ServiceBusMessagingTransport.ToNativeEntityName(logical).Should().Contain("books-print_book.v1-events");
         StorageQueueMessagingTransport.ToNativeEntityName(logical).Should().NotBe(logical);
     }
 

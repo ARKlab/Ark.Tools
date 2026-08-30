@@ -141,9 +141,9 @@ public static class MessagingMetrics
     {
         try
         {
-            var attributes = _attributes(headers, "process", destination)
-                .Append(new KeyValuePair<string, object?>("messaging.process.result", outcome))
-                .ToArray();
+            var attributes = _attributes(headers, "process", destination);
+            Array.Resize(ref attributes, attributes.Length + 1);
+            attributes[^1] = new KeyValuePair<string, object?>("messaging.process.result", outcome);
             _processDuration.Record(Math.Max(0, duration.TotalSeconds), attributes);
             _processedMessages.Add(1, attributes);
             if (deliveryCount > 0)
@@ -153,6 +153,11 @@ public static class MessagingMetrics
         }
         catch (Exception exception) when (_isInstrumentationException(exception))
         {
+            LogManager.GetCurrentClassLogger().Warn(
+                exception,
+                System.Globalization.CultureInfo.InvariantCulture,
+                "Messaging processing metric recording failed: {Message}",
+                exception.Message);
         }
     }
 

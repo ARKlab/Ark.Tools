@@ -162,7 +162,9 @@ public sealed partial class MessagingOutboxTests
             typeof(MessagingOutboxTests),
             new MessagingNetworkAttribute
             {
-                Requires = MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend,
+                Requires = MessagingCapabilities.SendReceive
+                    | MessagingCapabilities.PubSub
+                    | MessagingCapabilities.ScheduledSend,
                 MaximumSchedulingDelay = TimeSpan.FromDays(1)
             });
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
@@ -233,7 +235,9 @@ public sealed partial class MessagingOutboxTests
         }
 
         public MessagingCapabilities Capabilities =>
-            MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
+            MessagingCapabilities.SendReceive
+            | MessagingCapabilities.PubSub
+            | MessagingCapabilities.ScheduledSend;
 
         public long MaximumPayloadBytes => long.MaxValue;
 

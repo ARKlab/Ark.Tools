@@ -96,7 +96,7 @@ public sealed class StorageQueueEnvelopeCodecTests
 
         transport.Capabilities.Should().Be(
             MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend);
-        transport.MaximumPayloadBytes.Should().Be(64 * 1024);
+        transport.MaximumPayloadBytes.Should().Be(48 * 1024);
         var network = new MessagingNetworkOptions(
             typeof(StorageQueueEnvelopeCodecTests),
             new MessagingNetworkAttribute

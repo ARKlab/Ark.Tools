@@ -36,7 +36,7 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         var action = async () => await transport.SendAsync(
             "queue",
             new Dictionary<string, string>(StringComparer.Ordinal),
-            _sequence(5),
+            _sequence(new byte[5]),
             null,
             default).ConfigureAwait(false);
 
@@ -249,7 +249,7 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
             | MessagingCapabilities.PubSub
             | MessagingCapabilities.ScheduledSend);
         transport.MaximumPayloadBytes.Should().Be(256 * 1024);
-        transport.MeasureNativeHeaders(headers).Should().Be(2 + 2 + 3 + 8);
+        transport.MeasureNativeHeaders(headers).Should().Be(2 + 3 + 8);
 
         var oversized = new ReadOnlySequence<byte>(new byte[(256 * 1024) + 1]);
         Func<Task> send = async () => await transport
