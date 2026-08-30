@@ -18,7 +18,7 @@ public sealed class StorageQueueMessagingTransport :
     IMessagingTransportManagement,
     IMessagingTransport<StorageQueueMessagingTransport>
 {
-    /// <summary>Gets the conservative complete Base64-encoded queue payload size.</summary>
+    /// <summary>Gets the conservative limit for the Base64-encoded queue payload.</summary>
     public const long MaximumPayloadSizeBytes = 48 * 1024;
     static long IMessagingTransport<StorageQueueMessagingTransport>.MaximumPayloadLimitBytes =>
         MaximumPayloadSizeBytes;

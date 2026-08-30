@@ -359,7 +359,7 @@ public sealed class InMemoryMessagingTransport :
         IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)
     {
-        if (MeasureNativeHeaders(headers) + payload.Length > _maximumPayloadBytes)
+        if (checked(MeasureNativeHeaders(headers) + payload.Length) > _maximumPayloadBytes)
             throw new ArgumentOutOfRangeException(
                 nameof(payload),
                 "The complete in-memory message exceeds the configured payload limit.");
