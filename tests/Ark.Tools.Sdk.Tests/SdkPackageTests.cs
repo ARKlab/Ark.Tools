@@ -108,6 +108,35 @@ public sealed class SdkPackageTests
         "Preserved.Analyzer.dll"
     ];
 
+    private static readonly IReadOnlyDictionary<string, string> _sdkAnalyzerVersions =
+        new Dictionary<string, string>
+        {
+            ["Microsoft.CodeAnalysis.NetAnalyzers"] = "10.0.400",
+            ["Microsoft.CodeAnalysis.BannedApiAnalyzers"] = "4.14.0",
+            ["Meziantou.Analyzer"] = "3.0.160",
+            ["Microsoft.VisualStudio.Threading.Analyzers"] = "18.7.23",
+            ["ErrorProne.NET.CoreAnalyzers"] = "0.1.2"
+        };
+
+    private static readonly string[] _excludedSdkPackages =
+    [
+        "AwesomeAssertions",
+        "Microsoft.NET.Test.Sdk",
+        "Microsoft.SourceLink.GitHub",
+        "Microsoft.Sbom.Targets",
+        "Polyfill",
+        "Reqnroll.MsTest",
+        "MSTest.TestFramework",
+        "xunit",
+        "NUnit",
+        "Microsoft.Testing.Extensions.CrashDump",
+        "Microsoft.Testing.Extensions.CodeCoverage",
+        "Microsoft.Testing.Extensions.HangDump",
+        "Microsoft.Testing.Extensions.HotReload",
+        "Microsoft.Testing.Extensions.Retry",
+        "Microsoft.Testing.Extensions.TrxReport"
+    ];
+
     private static readonly string[] _boundaryProperties =
     [
         "DebugType",
@@ -180,8 +209,9 @@ public sealed class SdkPackageTests
         Directory.CreateDirectory(consumer);
         await File.WriteAllTextAsync(Path.Join(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsSdkProject>true</ArkToolsSdkProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(consumer, "Directory.Build.targets"), "<Project />").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(consumer, "Directory.Packages.props"), "<Project><PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally></PropertyGroup></Project>").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(consumer, "global.json"), """{"sdk":{"version":"10.0.400","rollForward":"latestFeature"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""").ConfigureAwait(false);
-        await File.WriteAllTextAsync(Path.Join(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /></packageSources></configuration>").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /><add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" /></packageSources></configuration>").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(consumer, "Consumer.csproj"), """
 <Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Ark.Tools.Sdk" />
@@ -205,6 +235,7 @@ public sealed class SdkPackageTests
         File.Copy(Path.Join(consumer, "global.json"), Path.Join(disabled, "global.json"), true);
         File.Copy(Path.Join(consumer, "NuGet.Config"), Path.Join(disabled, "NuGet.Config"), true);
         File.Copy(Path.Join(consumer, "Directory.Build.props"), Path.Join(disabled, "Directory.Build.props"), true);
+        File.Copy(Path.Join(consumer, "Directory.Packages.props"), Path.Join(disabled, "Directory.Packages.props"), true);
         File.Delete(Path.Join(disabled, "packages.lock.json"));
         await File.WriteAllTextAsync(Path.Join(disabled, "Consumer.csproj"), """
 <Project Sdk="Microsoft.NET.Sdk">
@@ -489,6 +520,331 @@ public sealed class SdkPackageTests
     }
 
     /// <summary>
+    /// Ensures SDK restore, audit, compiler, CI, and test-classification policy is early and overrideable.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkRestoreAndCompilerPolicyIsEarlyAndOverrideable()
+    {
+        const string packageVersion = "999.9.14";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-restore-policy");
+        var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
+
+        using var local = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "local",
+            "Consumer.csproj",
+            _createSdkCSharpProject());
+        _assertProperties(local, new Dictionary<string, string>
+        {
+            ["_IsGitHubActions"] = "",
+            ["ContinuousIntegrationBuild"] = "",
+            ["RestorePackagesWithLockFile"] = "true",
+            ["RestoreSerializeGlobalProperties"] = "true",
+            ["RestoreLockedMode"] = "",
+            ["NuGetAudit"] = "true",
+            ["NuGetAuditMode"] = "all",
+            ["NuGetAuditLevel"] = "low",
+            ["AnalysisLevel"] = "latest-all",
+            ["LangVersion"] = "14.0",
+            ["IsTestProject"] = ""
+        });
+        var warningsNotAsErrors = _getProperty(local, "WarningsNotAsErrors");
+        Assert.IsFalse(warningsNotAsErrors.Contains("NU1901", StringComparison.Ordinal));
+        Assert.IsFalse(warningsNotAsErrors.Contains("NU1905", StringComparison.Ordinal));
+
+        foreach (var signal in new[] { "TF_BUILD", "GITHUB_ACTIONS", "CI" })
+        {
+            var environment = _createSdkEnvironment(fixtureRoot);
+            environment[signal] = "true";
+            using var detected = await _evaluateSdkAsync(
+                fixtureRoot,
+                feed,
+                $"ci-{signal}",
+                "Consumer.csproj",
+                _createSdkCSharpProject(),
+                environment: environment);
+            Assert.AreEqual("true", _getProperty(detected, "ContinuousIntegrationBuild"), signal);
+            Assert.AreEqual("true", _getProperty(detected, "RestoreLockedMode"), signal);
+            Assert.AreEqual(
+                signal == "GITHUB_ACTIONS" ? "true" : "",
+                _getProperty(detected, "_IsGitHubActions"),
+                signal);
+        }
+
+        var explicitEnvironment = _createSdkEnvironment(fixtureRoot);
+        explicitEnvironment["GITHUB_ACTIONS"] = "true";
+        using var explicitCi = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "explicit-ci",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            environment: explicitEnvironment,
+            directoryProperties: "<ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>");
+        _assertProperties(explicitCi, new Dictionary<string, string>
+        {
+            ["_IsGitHubActions"] = "true",
+            ["ContinuousIntegrationBuild"] = "false",
+            ["RestoreLockedMode"] = ""
+        });
+
+        var overrides = string.Join(
+            Environment.NewLine,
+            "<RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>",
+            "<RestoreSerializeGlobalProperties>false</RestoreSerializeGlobalProperties>",
+            "<RestoreLockedMode>false</RestoreLockedMode>",
+            "<NuGetAudit>false</NuGetAudit>",
+            "<NuGetAuditMode>direct</NuGetAuditMode>",
+            "<NuGetAuditLevel>high</NuGetAuditLevel>",
+            "<AnalysisLevel>9.0</AnalysisLevel>",
+            "<LangVersion>13.0</LangVersion>");
+        using var overridden = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "overridden",
+            "Consumer.csproj",
+            _createSdkCSharpProject(overrides));
+        _assertProperties(overridden, new Dictionary<string, string>
+        {
+            ["RestorePackagesWithLockFile"] = "false",
+            ["RestoreSerializeGlobalProperties"] = "false",
+            ["RestoreLockedMode"] = "false",
+            ["NuGetAudit"] = "false",
+            ["NuGetAuditMode"] = "direct",
+            ["NuGetAuditLevel"] = "high",
+            ["AnalysisLevel"] = "9.0",
+            ["LangVersion"] = "13.0"
+        });
+
+        using var tests = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "suffix-tests",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject());
+        Assert.AreEqual("true", _getProperty(tests, "IsTestProject"));
+        using var unitTests = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "suffix-unit-tests",
+            "Consumer.UnitTests.csproj",
+            _createSdkCSharpProject());
+        Assert.AreEqual("true", _getProperty(unitTests, "IsTestProject"));
+        using var explicitFalse = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "suffix-explicit-false",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject("<IsTestProject>false</IsTestProject>"));
+        Assert.AreEqual("false", _getProperty(explicitFalse, "IsTestProject"));
+        using var explicitTrue = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "explicit-test",
+            "Consumer.csproj",
+            _createSdkCSharpProject("<IsTestProject>true</IsTestProject>"));
+        Assert.AreEqual("true", _getProperty(explicitTrue, "IsTestProject"));
+    }
+
+    /// <summary>
+    /// Ensures exact analyzer references, opt-outs, SQL exclusion, and package boundaries compose with Build.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkAnalyzerReferencesAreExactSwitchableAndCapabilitySafe()
+    {
+        const string packageVersion = "999.9.15";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-analyzer-references");
+        var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
+
+        using var baseline = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "baseline",
+            "Consumer.csproj",
+            _createSdkCSharpProject());
+        var packageReferences = _getPackageReferences(baseline);
+        Assert.AreEqual(packageVersion, packageReferences["Ark.Tools.Build"]["Version"]);
+        Assert.AreEqual("true", packageReferences["Ark.Tools.Build"]["IsImplicitlyDefined"]);
+        foreach (var analyzer in _sdkAnalyzerVersions)
+        {
+            Assert.AreEqual(analyzer.Value, packageReferences[analyzer.Key]["Version"], analyzer.Key);
+            Assert.AreEqual("true", packageReferences[analyzer.Key]["IsImplicitlyDefined"], analyzer.Key);
+            Assert.AreEqual("all", packageReferences[analyzer.Key]["PrivateAssets"], analyzer.Key);
+            Assert.AreEqual(
+                "runtime;build;native;contentfiles;analyzers;buildtransitive",
+                packageReferences[analyzer.Key]["IncludeAssets"],
+                analyzer.Key);
+        }
+        foreach (var excludedPackage in _excludedSdkPackages)
+        {
+            Assert.IsFalse(packageReferences.ContainsKey(excludedPackage), excludedPackage);
+        }
+        Assert.IsFalse(packageReferences.Keys.Any(package =>
+            package.StartsWith("Reqnroll.", StringComparison.Ordinal) ||
+            package.StartsWith("Microsoft.Testing.Extensions.", StringComparison.Ordinal)));
+
+        var switches = new Dictionary<string, (string Package, string Item, string Asset)>
+        {
+            ["EnableArkToolsNetAnalyzers"] = ("Microsoft.CodeAnalysis.NetAnalyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.NetAnalyzers.globalconfig"),
+            ["EnableArkToolsBannedApi"] = ("Microsoft.CodeAnalysis.BannedApiAnalyzers", "AdditionalFiles", "BannedSymbols.Ark.Tools.txt"),
+            ["EnableArkToolsMeziantouAnalyzer"] = ("Meziantou.Analyzer", "GlobalAnalyzerConfigFiles", "Ark.Tools.MeziantouAnalyzer.globalconfig"),
+            ["EnableArkToolsVisualStudioThreading"] = ("Microsoft.VisualStudio.Threading.Analyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.VisualStudioThreading.globalconfig"),
+            ["EnableArkToolsErrorProne"] = ("ErrorProne.NET.CoreAnalyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.ErrorProne.globalconfig")
+        };
+        foreach (var feature in switches)
+        {
+            using var disabled = await _evaluateSdkAsync(
+                fixtureRoot,
+                feed,
+                $"disabled-{feature.Key}",
+                "Consumer.csproj",
+                _createSdkCSharpProject(),
+                directoryProperties: $"<{feature.Key}>false</{feature.Key}>");
+            Assert.IsFalse(_getPackageReferences(disabled).ContainsKey(feature.Value.Package), feature.Key);
+            CollectionAssert.DoesNotContain(
+                _getItemIdentities(disabled, feature.Value.Item)
+                    .Select(identity => Path.GetFileName(identity) ?? "")
+                    .ToArray(),
+                feature.Value.Asset,
+                feature.Key);
+        }
+
+        using var sql = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "sql",
+            "Consumer.sqlproj",
+            _createSdkSqlProject());
+        _assertProperties(sql, new Dictionary<string, string>
+        {
+            ["UsingMicrosoftBuildSqlSdk"] = "true",
+            ["AnalysisLevel"] = "",
+            ["LangVersion"] = ""
+        });
+        var sqlPackages = _getPackageReferences(sql);
+        Assert.IsTrue(sqlPackages.ContainsKey("Ark.Tools.Build"));
+        foreach (var analyzer in _sdkAnalyzerVersions.Keys)
+        {
+            Assert.IsFalse(sqlPackages.ContainsKey(analyzer), analyzer);
+        }
+        Assert.AreEqual(0, _getAllArkBuildConfigurationFileNames(sql).Length);
+        Assert.IsTrue(File.Exists(Path.Join(fixtureRoot, "sql", "packages.lock.json")));
+
+        using var fsharp = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "fsharp",
+            "Consumer.fsproj",
+            _createSdkFSharpProject());
+        _assertProperties(fsharp, new Dictionary<string, string>
+        {
+            ["AnalysisLevel"] = "",
+            ["LangVersion"] = ""
+        });
+        var fsharpPackages = _getPackageReferences(fsharp);
+        Assert.IsTrue(fsharpPackages.ContainsKey("Ark.Tools.Build"));
+        foreach (var analyzer in _sdkAnalyzerVersions.Keys)
+        {
+            Assert.IsFalse(fsharpPackages.ContainsKey(analyzer), analyzer);
+        }
+        Assert.IsTrue(File.Exists(Path.Join(fixtureRoot, "fsharp", "packages.lock.json")));
+    }
+
+    /// <summary>
+    /// Ensures generated lock files, locked CI restore, and CPM ownership boundaries are enforced.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkLockFileAndCpmBoundariesAreEnforced()
+    {
+        const string packageVersion = "999.9.16";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-lock-and-cpm");
+        var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
+
+        var lockedRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "locked",
+            "Consumer.csproj",
+            _createSdkCSharpProject());
+        var lockedEnvironment = _createSdkEnvironment(fixtureRoot);
+        await _run(
+            "dotnet",
+            $"restore \"{Path.Join(lockedRoot, "Consumer.csproj")}\" --configfile \"{Path.Join(lockedRoot, "NuGet.Config")}\"",
+            lockedEnvironment);
+        var lockFile = Path.Join(lockedRoot, "packages.lock.json");
+        Assert.IsTrue(File.Exists(lockFile));
+        using (var lockJson = JsonDocument.Parse(await File.ReadAllTextAsync(lockFile).ConfigureAwait(false)))
+        {
+            var dependencies = lockJson.RootElement.GetProperty("dependencies").GetProperty("net10.0");
+            foreach (var analyzer in _sdkAnalyzerVersions)
+            {
+                Assert.AreEqual(analyzer.Value, dependencies.GetProperty(analyzer.Key).GetProperty("resolved").GetString(), analyzer.Key);
+            }
+        }
+        lockedEnvironment["CI"] = "true";
+        Directory.Delete(Path.Join(lockedRoot, "obj"), true);
+        await _run(
+            "dotnet",
+            $"restore \"{Path.Join(lockedRoot, "Consumer.csproj")}\" --configfile \"{Path.Join(lockedRoot, "NuGet.Config")}\"",
+            lockedEnvironment);
+
+        await File.WriteAllTextAsync(
+            Path.Join(lockedRoot, "Consumer.csproj"),
+            _createSdkCSharpProject(targetFramework: "net8.0")).ConfigureAwait(false);
+        Directory.Delete(Path.Join(lockedRoot, "obj"), true);
+        var lockedFailure = await _runForExitCode(
+            "dotnet",
+            $"restore \"{Path.Join(lockedRoot, "Consumer.csproj")}\" --configfile \"{Path.Join(lockedRoot, "NuGet.Config")}\"",
+            lockedEnvironment);
+        Assert.AreNotEqual(0, lockedFailure.ExitCode);
+        StringAssert.Contains(lockedFailure.Output, "NU1004", StringComparison.Ordinal);
+
+        await File.WriteAllTextAsync(
+            Path.Join(lockedRoot, "Consumer.csproj"),
+            _createSdkCSharpProject("<RestoreLockedMode>false</RestoreLockedMode>", targetFramework: "net8.0")).ConfigureAwait(false);
+        await _run(
+            "dotnet",
+            $"restore \"{Path.Join(lockedRoot, "Consumer.csproj")}\" --configfile \"{Path.Join(lockedRoot, "NuGet.Config")}\"",
+            lockedEnvironment);
+
+        var cpmRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "cpm",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            """
+<Project>
+  <PropertyGroup><ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally></PropertyGroup>
+</Project>
+""");
+        await _run(
+            "dotnet",
+            $"restore \"{Path.Join(cpmRoot, "Consumer.csproj")}\" --configfile \"{Path.Join(cpmRoot, "NuGet.Config")}\"",
+            _createSdkEnvironment(fixtureRoot));
+        await File.WriteAllTextAsync(
+            Path.Join(cpmRoot, "Directory.Packages.props"),
+            """
+<Project>
+  <PropertyGroup><ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally></PropertyGroup>
+  <ItemGroup><PackageVersion Include="Meziantou.Analyzer" Version="3.0.160" /></ItemGroup>
+</Project>
+""").ConfigureAwait(false);
+        Directory.Delete(Path.Join(cpmRoot, "obj"), true);
+        var cpmFailure = await _runForExitCode(
+            "dotnet",
+            $"restore \"{Path.Join(cpmRoot, "Consumer.csproj")}\" --configfile \"{Path.Join(cpmRoot, "NuGet.Config")}\"",
+            _createSdkEnvironment(fixtureRoot));
+        Assert.AreNotEqual(0, cpmFailure.ExitCode);
+        StringAssert.Contains(cpmFailure.Output, "NU1009", StringComparison.Ordinal);
+        StringAssert.Contains(cpmFailure.Output, "Meziantou.Analyzer", StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Ensures SponsorLink removal is exact and independently switchable.
     /// </summary>
     [TestMethod]
@@ -700,6 +1056,166 @@ public sealed class SdkPackageTests
             ["Nullable", "ImplicitUsings", "GenerateDocumentationFile", "Features", "ReportAnalyzer", "EnforceCodeStyleInBuild", "TreatTSqlWarningsAsErrors", "RunSqlCodeAnalysis"]);
         _assertPropertiesMatch(fsharp, fsharpControl, _boundaryProperties);
         _assertItemsMatch(fsharp, fsharpControl, _boundaryItems, "Ark.Tools.Build");
+    }
+
+    private static string _createSdkCSharpProject(
+        string properties = "",
+        string targetFramework = "net10.0")
+    {
+        return $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>{targetFramework}</TargetFramework>
+    {properties}
+  </PropertyGroup>
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+""";
+    }
+
+    private static string _createSdkSqlProject()
+    {
+        return """
+<Project DefaultTargets="Build">
+  <Sdk Name="Microsoft.Build.Sql" Version="2.2.0" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
+  </PropertyGroup>
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+""";
+    }
+
+    private static string _createSdkFSharpProject()
+    {
+        return """
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+""";
+    }
+
+    private static async Task<string> _createSdkFeedAsync(
+        string root,
+        string fixtureRoot,
+        string packageVersion)
+    {
+        if (Directory.Exists(fixtureRoot))
+        {
+            Directory.Delete(fixtureRoot, true);
+        }
+        var feed = Path.Join(fixtureRoot, "feed");
+        Directory.CreateDirectory(feed);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion={packageVersion}");
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(root, "src", "sdk", "Ark.Tools.Sdk", "Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion={packageVersion}");
+        return feed;
+    }
+
+    private static async Task<string> _createSdkScenarioAsync(
+        string fixtureRoot,
+        string feed,
+        string scenario,
+        string projectFileName,
+        string project,
+        string directoryPackages = "<Project><PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally></PropertyGroup></Project>",
+        string directoryProperties = "")
+    {
+        var scenarioRoot = Path.Join(fixtureRoot, scenario);
+        Directory.CreateDirectory(scenarioRoot);
+        var packageVersion = Directory.GetFiles(feed, "Ark.Tools.Sdk.*.nupkg")
+            .Select(Path.GetFileNameWithoutExtension)
+            .Select(name => name?["Ark.Tools.Sdk.".Length..] ?? "")
+            .Single();
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Directory.Build.props"),
+            $"<Project><PropertyGroup>{directoryProperties}</PropertyGroup></Project>").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Directory.Build.targets"), "<Project />").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Directory.Packages.props"), directoryPackages).ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "global.json"),
+            $"{{\"sdk\":{{\"version\":\"10.0.400\",\"rollForward\":\"latestFeature\"}},\"msbuild-sdks\":{{\"Ark.Tools.Sdk\":\"{packageVersion}\"}}}}").ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "NuGet.Config"),
+            $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /><add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" /></packageSources></configuration>").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(scenarioRoot, projectFileName), project).ConfigureAwait(false);
+        return scenarioRoot;
+    }
+
+    private static async Task<JsonDocument> _evaluateSdkAsync(
+        string fixtureRoot,
+        string feed,
+        string scenario,
+        string projectFileName,
+        string project,
+        string? directoryPackages = null,
+        IDictionary<string, string>? environment = null,
+        string directoryProperties = "")
+    {
+        var scenarioRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            scenario,
+            projectFileName,
+            project,
+            directoryPackages ?? "<Project><PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally></PropertyGroup></Project>",
+            directoryProperties);
+        var processEnvironment = environment ?? _createSdkEnvironment(fixtureRoot);
+        var projectPath = Path.Join(scenarioRoot, projectFileName);
+        await _run(
+            "dotnet",
+            $"restore \"{projectPath}\" --configfile \"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
+            processEnvironment);
+        var properties = new[]
+        {
+            "_IsGitHubActions",
+            "ContinuousIntegrationBuild",
+            "RestorePackagesWithLockFile",
+            "RestoreSerializeGlobalProperties",
+            "RestoreLockedMode",
+            "NuGetAudit",
+            "NuGetAuditMode",
+            "NuGetAuditLevel",
+            "AnalysisLevel",
+            "LangVersion",
+            "IsTestProject",
+            "WarningsNotAsErrors",
+            "UsingMicrosoftBuildSqlSdk"
+        };
+        var output = await _run(
+            "dotnet",
+            $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", properties)} -getItem:PackageReference,EditorConfigFiles,GlobalAnalyzerConfigFiles,AdditionalFiles",
+            processEnvironment);
+        return JsonDocument.Parse(output);
+    }
+
+    private static Dictionary<string, string> _createSdkEnvironment(string fixtureRoot)
+    {
+        return new Dictionary<string, string>
+        {
+            ["NUGET_PACKAGES"] = Path.Join(fixtureRoot, "packages"),
+            ["NUGET_HTTP_CACHE_PATH"] = Path.Join(fixtureRoot, "http-cache"),
+            ["TF_BUILD"] = "",
+            ["GITHUB_ACTIONS"] = "",
+            ["CI"] = ""
+        };
+    }
+
+    private static Dictionary<string, Dictionary<string, string>> _getPackageReferences(JsonDocument evaluation)
+    {
+        return evaluation.RootElement.GetProperty("Items").GetProperty("PackageReference")
+            .EnumerateArray()
+            .ToDictionary(
+                item => item.GetProperty("Identity").GetString() ?? "",
+                item => item.EnumerateObject().ToDictionary(
+                    property => property.Name,
+                    property => property.Value.GetString() ?? ""),
+                StringComparer.OrdinalIgnoreCase);
     }
 
     private static string _createCSharpProject(
