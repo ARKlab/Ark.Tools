@@ -31,7 +31,9 @@ compose with local overrides, and remain inert when an analyzer is absent.
   diagnostic severities and all 93 active bans.
 - **Inputs**: add packaged files through `EditorConfigFiles`,
   `GlobalAnalyzerConfigFiles`, and `AdditionalFiles`; never write or copy a
-  consumer source file.
+  consumer source file. Project the canonical banned-symbol source as
+  `BannedSymbols.Ark.Tools.txt` for the analyzer, which only recognizes
+  `BannedSymbols*.txt`, while retaining the accepted package asset name.
 - **Precedence**: assign packaged global configs a level below the default local
   global-config level. Preserve normal source-tree EditorConfig hierarchy.
 - **Local discovery**: default `ArkToolsLocalAnalyzerConfigRoot` to the directory
@@ -88,13 +90,13 @@ compose with local overrides, and remain inert when an analyzer is absent.
 
 ## Acceptance
 
-- [ ] All configuration and ban inventories exactly match the accepted design.
-- [ ] Every asset and target has an independent tested escape hatch.
-- [ ] Compiler fixtures prove the complete precedence order.
-- [ ] SQL exclusion and absent-analyzer inertness are tested.
-- [ ] Root builds use the canonical assets without activating the SDK.
-- [ ] The [task board](README.md) status for SDK-IMP-03 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] All configuration and ban inventories exactly match the accepted design.
+- [x] Every asset and target has an independent tested escape hatch.
+- [x] Compiler fixtures prove the complete precedence order.
+- [x] SQL exclusion and absent-analyzer inertness are tested.
+- [x] Root builds use the canonical assets without activating the SDK.
+- [x] The [task board](README.md) status for SDK-IMP-03 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
