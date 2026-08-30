@@ -91,6 +91,15 @@ public sealed class StorageQueueMessagingTransport :
     }
 
     /// <inheritdoc />
+    public long MeasureNativePayload(
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload)
+    {
+        var canonicalBytes = StorageQueueEnvelopeCodec._measureCanonical(headers, payload);
+        return Base64.GetMaxEncodedToUtf8Length(canonicalBytes);
+    }
+
+    /// <inheritdoc />
     public async Task SendAsync(
         string queue,
         IReadOnlyDictionary<string, string> headers,

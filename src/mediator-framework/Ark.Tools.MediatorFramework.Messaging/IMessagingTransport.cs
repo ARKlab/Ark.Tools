@@ -19,6 +19,17 @@ public interface IMessagingTransport
     /// <returns>The native header representation size in bytes.</returns>
     long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers);
 
+    /// <summary>Measures the complete native envelope for a serialized payload.</summary>
+    /// <param name="headers">The envelope headers.</param>
+    /// <param name="payload">The serialized payload.</param>
+    /// <returns>The native envelope size in bytes.</returns>
+    long MeasureNativePayload(
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload)
+    {
+        return checked(MeasureNativeHeaders(headers) + payload.Length);
+    }
+
     /// <summary>Sends an envelope to a queue.</summary>
     /// <param name="queue">The destination queue.</param>
     /// <param name="headers">The envelope headers.</param>

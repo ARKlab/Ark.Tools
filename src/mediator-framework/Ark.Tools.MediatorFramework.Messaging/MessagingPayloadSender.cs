@@ -83,7 +83,7 @@ public sealed class MessagingPayloadSender
         var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
             ?? new ReadOnlyDictionary<string, string>(headers);
-        var nativeSize = checked(transport.MeasureNativeHeaders(readOnlyHeaders) + payload.Length);
+        var nativeSize = transport.MeasureNativePayload(readOnlyHeaders, payload);
         var mustOffload = nativeSize > transport.MaximumPayloadBytes;
         if (!mustOffload)
             return payload;

@@ -44,10 +44,11 @@ measurement, and point-to-point messaging must be one explicit capability.
 4. Define the transport's maximum complete payload size as a static interface
    contract. Runtime composition must retain that fixed value without reflection
    or provider type switches.
-5. Replace complete native-envelope measurement with a method that computes only
-   the transport-native header representation size. Document whether each result
-   is exact or a conservative upper bound.
-6. Define complete payload size as native headers plus serialized body.
+5. Keep native-header measurement for reference envelopes and add complete
+   native-payload measurement. Document whether each result is exact or a
+   conservative upper bound; Storage Queue must measure its single Base64
+   encoded canonical envelope, not raw header plus body lengths.
+6. Define complete payload size through the transport-native payload method.
    Serialization remains streaming/generic-only; compression completes before
    final body sizing.
 7. When the complete inline payload exceeds the transport maximum, store the body
@@ -62,9 +63,10 @@ measurement, and point-to-point messaging must be one explicit capability.
 ## Core code shapes
 
 Each concrete transport type supplies a fixed maximum complete payload size
-through the static transport contract and computes the size of its native
-headers for a specific header set. The shared runtime adds body length and owns
-the transparent compression/DataBus decision.
+through the static transport contract and computes native size for a complete
+header/payload pair. The default implementation adds body length; encodings
+such as Storage Queue override it to measure the exact native representation.
+The shared runtime owns the transparent compression/DataBus decision.
 
 `SendReceive` gates both routing to a processing participant and receive
 hosting. `PubSub` remains independent. Scheduled delivery remains separately

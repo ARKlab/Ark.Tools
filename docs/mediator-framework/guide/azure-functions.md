@@ -378,6 +378,12 @@ are limited to 46,080 canonical bytes, leaving bounded metadata capacity for a
 Use a network transport threshold of 46,080 bytes or less so larger payloads
 claim-check before encoding.
 
+The runtime sizes the complete native envelope before deciding whether to
+claim-check. Storage Queue overrides the common header-plus-body estimate and
+measures the exact UTF-8 size of its single Base64-encoded canonical envelope;
+this prevents raw binary payload lengths from underestimating Azure's 64-KiB
+encoded limit.
+
 `visibilityTimeout` must equal the participant's positive `RetryDelay`.
 `maxDequeueCount` must equal the generated manifest maximum: `N` when
 second-level handling is disabled and `2N` when it is enabled. The generator
