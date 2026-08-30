@@ -94,7 +94,12 @@ public static class MessagingMetrics
     private static readonly Histogram<double> _deliveryAttempts =
         _meter.CreateHistogram<double>(DeliveryAttemptsName, "{attempt}", "Native delivery attempts.");
 
-    internal static void RecordClientOperation(
+    /// <summary>Records a producer client operation duration.</summary>
+    /// <param name="duration">The elapsed operation duration.</param>
+    /// <param name="headers">The framework headers.</param>
+    /// <param name="operation">The low-cardinality operation name.</param>
+    /// <param name="destination">The destination name.</param>
+    public static void RecordClientOperation(
         TimeSpan duration,
         IReadOnlyDictionary<string, string> headers,
         string operation,
@@ -111,7 +116,14 @@ public static class MessagingMetrics
         }
     }
 
-    internal static void RecordProcessing(
+    /// <summary>Records processing duration, outcome, queue time, and delivery attempts.</summary>
+    /// <param name="duration">The elapsed processing duration.</param>
+    /// <param name="headers">The framework headers.</param>
+    /// <param name="outcome">The final settlement outcome.</param>
+    /// <param name="deliveryCount">The native delivery attempt count.</param>
+    /// <param name="destination">The optional destination name.</param>
+    /// <param name="now">The clock instant used for queue-time measurement.</param>
+    public static void RecordProcessing(
         TimeSpan duration,
         IReadOnlyDictionary<string, string> headers,
         string outcome,
@@ -173,7 +185,8 @@ public static class MessagingMetrics
         IReadOnlyDictionary<string, string> headers,
         out DateTimeOffset sentTime)
     {
-        return headers.TryGetValue(MessagingHeaders.SentTime, out var value)
+        return (headers.TryGetValue(MessagingHeaders.SentTime, out var value)
+                || headers.TryGetValue(MessagingHeaders.RebusSentTime, out value))
             && DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out sentTime);
     }
 
