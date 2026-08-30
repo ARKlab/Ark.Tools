@@ -31,7 +31,7 @@ public interface IMessagingTransport
     }
 
     /// <summary>Static transport contract for provider-native sizing and naming.</summary>
-    /// <typeparam name="TSelf">The concrete transport type.</typeparam>
+    /// <typeparam name="TSelf">The implementing transport class itself.</typeparam>
     public interface IMessagingTransport<TSelf>
         where TSelf : IMessagingTransport<TSelf>
     {
