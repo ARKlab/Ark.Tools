@@ -2579,7 +2579,7 @@ public sealed class GeneratorSnapshotTests
                 MessagingFunctionsTriggerBinding.ServiceBus,
                 ConnectionConfigurationKey = "BookMessaging",
                 IncomingSteps = new[] { typeof(ZIncomingStep), typeof(AIncomingStep) })]
-            [Event(Name = "books_printed")]
+            [Event(Name = "books/printed")]
             public sealed class BookPrinted : IRequest<BookPrinted, string> { }
             [MessagingParticipant(
                 Publishes = new[] { typeof(BookPrinted) },
@@ -2622,7 +2622,9 @@ public sealed class GeneratorSnapshotTests
         first.Generated.Should().Contain("MessagingResourceManifest(");
         first.Generated.Should().Contain("MessagingTopicResource(");
         first.Generated.Should().Contain("MessagingSubscriptionResource(");
-        first.Generated.Should().Contain("\"publishing-books_printed\"");
+        first.Generated.Should().Contain("\"publishing-books/printed\"");
+        first.Generated.Should().Contain(
+            "\"" + Ark.Tools.MediatorFramework.Messaging.ServiceBusMessagingTransport.ToNativeEntityName("publishing-books/printed") + "\"");
         first.Generated.Should().Contain("\"printing\"");
         first.Generated.Should().NotContain("\"printing-");
         first.Generated.IndexOf(

@@ -419,7 +419,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Append(_typeName(network)).AppendLine(".Registry),")
             .Append("            global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.")
             .AppendLine(host.Binding == _serviceBusBinding ? "ServiceBus," : "StorageQueue,")
-            .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+            .Append("            \"").Append(_escape(_nativeName(identity, host.Binding))).AppendLine("\",")
             .Append("            \"").Append(_escape(connection)).AppendLine("\",");
 
         _emitMaximumDeliveryCount(source, retryType, "            ", appendComma: true);
@@ -434,9 +434,9 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         foreach (var subscription in subscriptions)
         {
             source.AppendLine("                new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription(")
-                .Append("                    \"").Append(_escape(subscription.Topic)).AppendLine("\",")
-                .Append("                    \"").Append(_escape(subscription.Name)).AppendLine("\",")
-                .Append("                    \"").Append(_escape(subscription.ForwardToQueue)).AppendLine("\"),");
+                .Append("                    \"").Append(_escape(_nativeName(subscription.Topic, host.Binding))).AppendLine("\",")
+                .Append("                    \"").Append(_escape(_nativeName(subscription.Name, host.Binding))).AppendLine("\",")
+                .Append("                    \"").Append(_escape(_nativeName(subscription.ForwardToQueue, host.Binding))).AppendLine("\"),");
         }
         source.AppendLine("            },");
         _emitTypes(source, host.IncomingSteps);
@@ -572,6 +572,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             storage
                 ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isStorageQueueCharacter
                 : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isServiceBusCharacter);
+    }
+
+    private static string _nativeName(string value, int binding)
+    {
+        return _nativeName(value, binding == _storageQueueBinding ? 63 : 260, binding == _storageQueueBinding);
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)

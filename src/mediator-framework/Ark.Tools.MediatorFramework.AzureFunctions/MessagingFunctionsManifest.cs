@@ -41,11 +41,11 @@ public sealed class MessagingFunctionsManifest
     /// <param name="participant">The bound participant type.</param>
     /// <param name="network">The participant network type.</param>
     /// <param name="triggerBinding">The selected trigger binding.</param>
-    /// <param name="queue">The participant identity queue.</param>
+    /// <param name="queue">The provider-native participant identity queue.</param>
     /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
     /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
     /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
-    /// <param name="subscriptions">The desired forwarding subscriptions.</param>
+    /// <param name="subscriptions">The provider-native forwarding subscriptions.</param>
     /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
     /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
     /// <param name="retryDelay">The participant retry visibility delay.</param>
@@ -88,11 +88,11 @@ public sealed class MessagingFunctionsManifest
     /// <param name="network">The participant network type.</param>
     /// <param name="descriptor">The generated participant runtime descriptor.</param>
     /// <param name="triggerBinding">The selected trigger binding.</param>
-    /// <param name="queue">The participant identity queue.</param>
+    /// <param name="queue">The provider-native participant identity queue.</param>
     /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
     /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
     /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
-    /// <param name="subscriptions">The desired forwarding subscriptions.</param>
+    /// <param name="subscriptions">The provider-native forwarding subscriptions.</param>
     /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
     /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
     /// <param name="retryDelay">The participant retry visibility delay.</param>
@@ -157,7 +157,7 @@ public sealed class MessagingFunctionsManifest
     /// <summary>Gets the compile-time trigger binding.</summary>
     public MessagingFunctionsTriggerBinding TriggerBinding { get; }
 
-    /// <summary>Gets the participant identity queue.</summary>
+    /// <summary>Gets the provider-native participant identity queue.</summary>
     public string Queue { get; }
 
     /// <summary>Gets the Functions connection setting name.</summary>
@@ -169,7 +169,7 @@ public sealed class MessagingFunctionsManifest
     /// <summary>Gets the maximum handler duration covered by lock renewal.</summary>
     public TimeSpan MaximumHandlerDuration { get; }
 
-    /// <summary>Gets the desired forwarding subscriptions.</summary>
+    /// <summary>Gets the provider-native forwarding subscriptions.</summary>
     public IReadOnlyList<MessagingFunctionsSubscription> Subscriptions { get; }
 
     /// <summary>Gets the host-local incoming pipeline step types.</summary>

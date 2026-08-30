@@ -53,4 +53,14 @@ public sealed class MessagingLogicalNameTests
         first.Length.Should().Be(260);
         first.Should().Contain("-");
     }
+
+    [TestMethod]
+    public void StorageQueueNamesNeverExceedProviderLimit()
+    {
+        var logical = new string('a', 300);
+        var native = StorageQueueMessagingTransport.ToNativeEntityName(logical);
+
+        native.Length.Should().Be(63);
+        native.Should().MatchRegex("^[a-z0-9-]+$");
+    }
 }

@@ -42,7 +42,7 @@ internal static class MessagingNativeEntityNameMapper
         if (maximumLength <= hash.Length)
             return hash[..maximumLength];
 
-        var prefixLength = Math.Max(1, maximumLength - hash.Length - 1);
+        var prefixLength = maximumLength - hash.Length - 1;
         var prefix = new string(logicalName
             .Take(prefixLength)
             .Select(character => supported(character) && character != '-' ? character : '-')
