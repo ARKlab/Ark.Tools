@@ -191,7 +191,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
 
     public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
-        var total = payload.Length;
+        var total = 0L;
         foreach (var (key, value) in headers)
             total += Encoding.UTF8.GetByteCount(key) + Encoding.UTF8.GetByteCount(value);
         return total;   // deterministic; InMemory stores the envelope as-is
