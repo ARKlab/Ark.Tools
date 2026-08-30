@@ -504,6 +504,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         var nativeNames = new Dictionary<string, string>(StringComparer.Ordinal);
         var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
+        var hasCollision = false;
         var values = new List<string>
         {
             identity,
@@ -529,13 +530,13 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                    logical,
                    transportName,
                    native));
-               return false;
+               hasCollision = true;
             }
 
             nativeNames[native] = logical;
         }
 
-        return true;
+        return !hasCollision;
     }
 
     private static void _emitMaximumDeliveryCount(
