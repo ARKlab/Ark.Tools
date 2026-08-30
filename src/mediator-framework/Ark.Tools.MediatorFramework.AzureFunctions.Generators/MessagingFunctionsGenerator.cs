@@ -510,27 +510,27 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             identity,
         };
         values.AddRange(topics.Select(static topic => topic.Name));
-        values.AddRange(subscriptions.SelectMany(static subscription => new[]
+        foreach (var subscription in subscriptions)
         {
-            subscription.Topic,
-            subscription.Name,
-            subscription.ForwardToQueue,
-        }));
+            values.Add(subscription.Topic);
+            values.Add(subscription.Name);
+            values.Add(subscription.ForwardToQueue);
+        }
 
         foreach (var logical in values.Distinct(StringComparer.Ordinal))
         {
             var native = _nativeName(logical, host.Binding);
             if (nativeNames.TryGetValue(native, out var existing)
-               && !string.Equals(existing, logical, StringComparison.Ordinal))
+                && !string.Equals(existing, logical, StringComparison.Ordinal))
             {
-               context.ReportDiagnostic(Diagnostic.Create(
-                   _nativeNameCollision,
-                   host.Location,
-                   existing,
-                   logical,
-                   transportName,
-                   native));
-               hasCollision = true;
+                context.ReportDiagnostic(Diagnostic.Create(
+                    _nativeNameCollision,
+                    host.Location,
+                    existing,
+                    logical,
+                    transportName,
+                    native));
+                hasCollision = true;
             }
 
             nativeNames[native] = logical;
