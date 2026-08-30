@@ -446,48 +446,6 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 .Append("                    \"").Append(_escape(_nativeName(subscription.ForwardToQueue, host.Binding))).AppendLine("\"),");
         }
 
-        private static bool _validateNativeNames(
-            SourceProductionContext context,
-            Host host,
-            string identity,
-            ImmutableArray<Subscription> subscriptions,
-            ImmutableArray<Topic> topics)
-        {
-            var nativeNames = new Dictionary<string, string>(StringComparer.Ordinal);
-            var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
-            var values = new List<(string Logical, string Kind)>
-            {
-                (identity, "queue"),
-            };
-            values.AddRange(topics.Select(static topic => (topic.Name, "topic")));
-            values.AddRange(subscriptions.SelectMany(static subscription => new[]
-            {
-                (subscription.Topic, "topic"),
-                (subscription.Name, "subscription"),
-                (subscription.ForwardToQueue, "queue"),
-            }));
-
-            foreach (var value in values.Distinct())
-            {
-                var native = _nativeName(value.Logical, host.Binding);
-                if (nativeNames.TryGetValue(native, out var existing)
-                    && !string.Equals(existing, value.Logical, StringComparison.Ordinal))
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        _nativeNameCollision,
-                        host.Location,
-                        existing,
-                        value.Logical,
-                        transportName,
-                        native));
-                    return false;
-                }
-
-                nativeNames[native] = value.Logical;
-            }
-
-            return true;
-        }
         source.AppendLine("            },");
         _emitTypes(source, host.IncomingSteps);
         source.AppendLine(",");
@@ -535,6 +493,49 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Append("                (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
             .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine("));")
             .AppendLine();
+    }
+
+    private static bool _validateNativeNames(
+        SourceProductionContext context,
+        Host host,
+        string identity,
+        ImmutableArray<Subscription> subscriptions,
+        ImmutableArray<Topic> topics)
+    {
+        var nativeNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
+        var values = new List<string>
+        {
+            identity,
+        };
+        values.AddRange(topics.Select(static topic => topic.Name));
+        values.AddRange(subscriptions.SelectMany(static subscription => new[]
+        {
+            subscription.Topic,
+            subscription.Name,
+            subscription.ForwardToQueue,
+        }));
+
+        foreach (var logical in values.Distinct(StringComparer.Ordinal))
+        {
+            var native = _nativeName(logical, host.Binding);
+            if (nativeNames.TryGetValue(native, out var existing)
+               && !string.Equals(existing, logical, StringComparison.Ordinal))
+            {
+               context.ReportDiagnostic(Diagnostic.Create(
+                   _nativeNameCollision,
+                   host.Location,
+                   existing,
+                   logical,
+                   transportName,
+                   native));
+               return false;
+            }
+
+            nativeNames[native] = logical;
+        }
+
+        return true;
     }
 
     private static void _emitMaximumDeliveryCount(
