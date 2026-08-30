@@ -120,12 +120,12 @@ contract name.
 ## Acceptance
 
 - [x] Logical names support the approved lowercase separator grammar.
-- [ ] Every transport has deterministic, collision-checked native entity
+- [x] Every transport has deterministic, collision-checked native entity
   mapping.
 - [x] Wire headers and registries retain logical names.
-- [ ] Generated triggers, manifests, lifecycle, and runtime transport operations
+- [x] Generated triggers, manifests, lifecycle, and runtime transport operations
   share one mapping result.
-- [ ] Sample, guides, snapshots, and generated-source inspections are updated.
+- [x] Sample, guides, snapshots, and generated-source inspections are updated.
 - [ ] The [task board](../README.md) status for AZM-17 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -498,9 +498,18 @@ independent subscribers over the same contract assembly. The Web participant
 declaration owns the `BookPrintCompleted` event topic, `AzureFunctions` owns the
 `sample-messaging-notification` notification queue, and `AuditFunctions` owns
 the `sample-messaging-audit` audit queue. The generated event topic is
-`sample-messaging-publisher-books_book_print_completed`. Each subscriber has a
-forwarding subscription named after its participant identity; neither Functions
-host starts a Rebus receiver or an outbox processor.
+`sample-messaging-publisher-books/book-print.completed` logically. Each
+subscriber has a forwarding subscription named after its participant identity;
+neither Functions host starts a Rebus receiver or an outbox processor.
+
+The sample event's logical topic is
+`sample-messaging-publisher-books/book-print.completed`. Service Bus maps that
+logical value to
+`sample-messaging-publisher-books-book-print.completed-d320f7b71a7f80da8b35e92355395b14c45c7763a520b5aec672ad65d77b26aa`;
+the participant queues and subscription names remain `ark-mediator-sample`,
+`sample-messaging-notification`, and `sample-messaging-audit` because they
+already fit the provider grammar. The `amf1-msg-type` header remains the
+logical contract name.
 
 The executable local proof composes all three participants on one InMemory
 transport:
@@ -715,6 +724,11 @@ edge. Logical names are retained in `amf1-msg-type`, registries, and API
 snapshots. Azure Service Bus and Storage Queue adapters map them
 deterministically to provider names, preserving supported characters when
 possible and otherwise appending a SHA-256 suffix to a readable prefix.
+The mapping is deterministic and shared by generated trigger attributes,
+Functions metadata, resource operations, and runtime send/publish calls.
+Native names are length-limited (260 characters for Service Bus and 63 for
+Storage Queue); a complete logical name that cannot fit is shortened with the
+hash suffix, so distinct logical names do not silently share an address.
 `FormerNames` are receive-only aliases and never create topology resources;
 renaming a publisher or current contract name requires explicit migration.
 

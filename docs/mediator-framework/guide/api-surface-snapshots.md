@@ -70,8 +70,8 @@ and version range. Following lines describe public members and protobuf tags.
 every member and numeric value of a plain enum or an
 `EvolvableEnum<TEnum>`-wrapped enum reached from a contract, so adding,
 removing, or renumbering a member is a visible diff. The `REBUS` line
-describes generated Rebus queue routing. `MESSAGE` and `EVENT` record native
-logical names and aliases. `PARTICIPANT` records membership, identity, ownership,
+describes generated Rebus queue routing. `MESSAGE` and `EVENT` record logical names and aliases, never transport-mapped
+entity names. `PARTICIPANT` records membership, identity, ownership,
 subscriptions, and serializer declarations. `NETWORK` records the complete
 member list and required optional capabilities. These declaration entries may
 feed either Rebus or native generation, but do not imply wire compatibility.

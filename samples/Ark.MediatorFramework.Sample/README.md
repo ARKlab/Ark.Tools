@@ -247,8 +247,9 @@ do not point their processors at the same outbox rows.
 
 ## Native AMF topology
 
-`BookPrintCompleted` is declared once in the Application assembly. The
-publisher participant owns its topic; the Azure Functions host records
+`BookPrintCompleted` is declared once in the Application assembly. Its logical
+topic is `sample-messaging-publisher-books/book-print.completed`; Service Bus
+maps it to the native topic below. The publisher participant owns its topic; the Azure Functions host records
 notification effects; and the separate AuditFunctions host records audit
 effects. The topic forwards independent copies to the
 `sample-messaging-notification` and `sample-messaging-audit` queues:
@@ -258,7 +259,7 @@ native publisher / native SQL outbox
         |
         | amf1-* headers + native envelope
         v
-sample-messaging-publisher-books-book-print.completed topic
+sample-messaging-publisher-books-book-print.completed-d320f7b71a7f80da8b35e92355395b14c45c7763a520b5aec672ad65d77b26aa topic
         |
         +---- forwarding subscription ----> sample-messaging-notification
         |                                      |

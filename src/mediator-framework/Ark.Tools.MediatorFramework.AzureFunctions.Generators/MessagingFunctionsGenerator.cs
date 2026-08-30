@@ -99,6 +99,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Storage Queue consumer has no retry policy",
         "Storage Queue participant '{0}' must declare a retry policy with a positive RetryDelay",
         DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _nativeNameCollision = _rule(
+        "ARKMF046",
+        "Messaging native entity name collision",
+        "Logical messaging names '{0}' and '{1}' map to the same {2} entity name '{3}'",
+        DiagnosticSeverity.Error);
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -266,6 +271,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 || subscribes.Any(contract =>
                     SymbolEqualityComparer.Default.Equals(contract, topic.Contract)))
             .ToImmutableArray();
+        if (!_validateNativeNames(context, host, identity, subscriptions.Value, topics))
+            return;
 
         var connection = host.ConnectionConfigurationKey
             ?? network.Type.Name;
@@ -437,6 +444,49 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 .Append("                    \"").Append(_escape(_nativeName(subscription.Topic, host.Binding))).AppendLine("\",")
                 .Append("                    \"").Append(_escape(_nativeName(subscription.Name, host.Binding))).AppendLine("\",")
                 .Append("                    \"").Append(_escape(_nativeName(subscription.ForwardToQueue, host.Binding))).AppendLine("\"),");
+        }
+
+        private static bool _validateNativeNames(
+            SourceProductionContext context,
+            Host host,
+            string identity,
+            ImmutableArray<Subscription> subscriptions,
+            ImmutableArray<Topic> topics)
+        {
+            var nativeNames = new Dictionary<string, string>(StringComparer.Ordinal);
+            var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
+            var values = new List<(string Logical, string Kind)>
+            {
+                (identity, "queue"),
+            };
+            values.AddRange(topics.Select(static topic => (topic.Name, "topic")));
+            values.AddRange(subscriptions.SelectMany(static subscription => new[]
+            {
+                (subscription.Topic, "topic"),
+                (subscription.Name, "subscription"),
+                (subscription.ForwardToQueue, "queue"),
+            }));
+
+            foreach (var value in values.Distinct())
+            {
+                var native = _nativeName(value.Logical, host.Binding);
+                if (nativeNames.TryGetValue(native, out var existing)
+                    && !string.Equals(existing, value.Logical, StringComparison.Ordinal))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        _nativeNameCollision,
+                        host.Location,
+                        existing,
+                        value.Logical,
+                        transportName,
+                        native));
+                    return false;
+                }
+
+                nativeNames[native] = value.Logical;
+            }
+
+            return true;
         }
         source.AppendLine("            },");
         _emitTypes(source, host.IncomingSteps);
