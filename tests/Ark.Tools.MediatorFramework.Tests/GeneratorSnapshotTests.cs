@@ -2433,9 +2433,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain(
-        result.Generated.Should().Contain(
             "MaximumDecompressedPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes");
-        result.Generated.Should().Contain(
         result.Generated.Should().Contain(
             "DataBusMaximumAttachmentBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes");
         result.Generated.Should().Contain(

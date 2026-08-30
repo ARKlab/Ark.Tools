@@ -610,6 +610,7 @@ public sealed partial class MessagingRuntimeTests
                 [MessagingHeaders.MessageType] = "tests.Message",
                 [MessagingHeaders.SentTime] = sentTime.ToString("O", CultureInfo.InvariantCulture)
             },
+            ReadOnlySequence<byte>.Empty,
             deliveryCount: 2);
         var step = new OpenTelemetryProcessingMetricsStep(clock);
         await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
@@ -620,6 +621,7 @@ public sealed partial class MessagingRuntimeTests
             {
                 [MessagingHeaders.MessageType] = "tests.Message"
             },
+            ReadOnlySequence<byte>.Empty,
             deliveryCount: 2);
         Func<Task> processFailure = () => step.ProcessAsync(
             failureContext,
@@ -627,7 +629,7 @@ public sealed partial class MessagingRuntimeTests
             CancellationToken.None);
         await processFailure.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
 
-        var producerHeaders = new Dictionary<string, string>
+        var producerHeaders = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [MessagingHeaders.Network] = "tests-network",
             [MessagingHeaders.SenderIdentity] = "tests-sender",
@@ -652,10 +654,12 @@ public sealed partial class MessagingRuntimeTests
             x.Name == MessagingMetrics.ProcessDurationName
             && x.MessageType == "tests.Message"
             && x.Outcome == "error");
-        measurements.Should().Contain(x => x.Name == MessagingMetrics.DeliveryAttemptsName && x.Value == 2);
+        measurements.Should().Contain(x =>
+            x.Name == MessagingMetrics.DeliveryAttemptsName
+            && Math.Abs(x.Value - 2d) < 1e-9);
         measurements.Should().Contain(x =>
             x.Name == MessagingMetrics.ClientOperationDurationName
-            && x.Value == 0.25);
+            && Math.Abs(x.Value - 0.25d) < 1e-9);
     }
 
     private static MessagingDispatcher _createDispatcher(

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
+using Ark.Tools.MediatorFramework.Generators;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -444,7 +445,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             Location location)
         {
             var diagnostics = new List<DiagnosticInfo>();
-            MessagingContractTopologyValidator.Validate(
+            MessagingContractTopologyValidator._validate(
                 (descriptor, diagnosticLocation, arguments) =>
                     diagnostics.Add(new DiagnosticInfo(
                         descriptor,

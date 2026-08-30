@@ -1,24 +1,27 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+#if NETSTANDARD2_0
+using System;
+using System.Linq;
+#endif
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 internal static class MessagingNativeEntityNameMapper
 {
-    internal static bool IsServiceBusCharacter(char character)
+    internal static bool _isServiceBusCharacter(char character)
     {
         return char.IsAsciiLetterOrDigit(character) || character is '-' or '_' or '.';
     }
 
-    internal static bool IsStorageQueueCharacter(char character)
+    internal static bool _isStorageQueueCharacter(char character)
     {
         return character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-';
     }
 
-    internal static string Map(string logicalName, int maximumLength, Func<char, bool> supported)
+    internal static string _map(string logicalName, int maximumLength, Func<char, bool> supported)
     {
         if (logicalName.Length <= maximumLength
             && logicalName.All(supported)
@@ -26,8 +29,13 @@ internal static class MessagingNativeEntityNameMapper
             && logicalName[^1] != '-')
             return logicalName;
 
+        var hashBytes = System.Text.Encoding.UTF8.GetBytes(logicalName);
+#if NETSTANDARD2_0
         using var sha256 = SHA256.Create();
-        var hash = Convert.ToHexString(sha256.ComputeHash(Encoding.UTF8.GetBytes(logicalName))).ToLowerInvariant();
+        var hash = Convert.ToHexString(sha256.ComputeHash(hashBytes)).ToLowerInvariant();
+#else
+        var hash = Convert.ToHexString(SHA256.HashData(hashBytes)).ToLowerInvariant();
+#endif
         if (maximumLength <= hash.Length)
             return hash[..maximumLength];
 

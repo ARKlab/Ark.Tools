@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using Microsoft.CodeAnalysis;
+using Ark.Tools.MediatorFramework.Generators;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 
@@ -215,7 +216,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         var processes = _types(participantAttribute, "Processes");
         var subscribes = _types(participantAttribute, "Subscribes");
         foreach (var contract in processes)
-            MessagingContractTopologyValidator.Validate(
+            MessagingContractTopologyValidator._validate(
                 (descriptor, location, arguments) =>
                     context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
                 contract,
@@ -228,7 +229,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             if (memberAttribute is null)
                 continue;
             foreach (var contract in _types(memberAttribute, "Publishes"))
-                MessagingContractTopologyValidator.Validate(
+                MessagingContractTopologyValidator._validate(
                     (descriptor, location, arguments) =>
                         context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
                     contract,
@@ -565,12 +566,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
     private static string _nativeName(string value, int maximumLength, bool storage)
     {
-        return global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper.Map(
+        return global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._map(
             value,
             maximumLength,
             storage
-                ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper.IsStorageQueueCharacter
-                : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper.IsServiceBusCharacter);
+                ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isStorageQueueCharacter
+                : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isServiceBusCharacter);
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)

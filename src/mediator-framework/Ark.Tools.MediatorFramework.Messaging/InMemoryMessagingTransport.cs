@@ -4,7 +4,6 @@
 using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 using NodaTime;
 
@@ -87,8 +86,8 @@ public sealed class InMemoryMessagingTransport :
         checked
         {
             foreach (var pair in headers)
-                size += (long)Encoding.UTF8.GetByteCount(pair.Key)
-                    + Encoding.UTF8.GetByteCount(pair.Value);
+                size += (long)System.Text.Encoding.UTF8.GetByteCount(pair.Key)
+                    + System.Text.Encoding.UTF8.GetByteCount(pair.Value);
         }
 
         return size;

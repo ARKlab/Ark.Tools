@@ -3,6 +3,8 @@
 
 using NodaTime;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+using NLog;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -50,7 +52,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
         finally
         {
             stopwatch.Stop();
-            if (!context.Items.ContainsKey(MessagingMetrics.DispatcherManagedItem))
+            if (!context.Items.ContainsKey(MessagingMetrics._dispatcherManagedItem))
             {
                 MessagingMetrics.RecordProcessing(
                     stopwatch.Elapsed,
@@ -66,6 +68,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
 /// <summary>Defines the stable OpenTelemetry messaging metric contract.</summary>
 public static class MessagingMetrics
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     /// <summary>The semantic-conventions version used by this contract.</summary>
     public const string SemanticConventionVersion = "1.37.0";
     /// <summary>The client operation duration instrument.</summary>
@@ -79,8 +82,8 @@ public static class MessagingMetrics
     /// <summary>The native delivery-attempt instrument.</summary>
     public const string DeliveryAttemptsName = "messaging.process.attempts";
     /// <summary>The item key used to retain the processing start timestamp.</summary>
-    internal const string ProcessingStartItem = "ark.messaging.metrics.processing-start";
-    internal const string DispatcherManagedItem = "ark.messaging.metrics.dispatcher-managed";
+    internal const string _processingStartItem = "ark.messaging.metrics.processing-start";
+    internal const string _dispatcherManagedItem = "ark.messaging.metrics.dispatcher-managed";
 
     private static readonly Meter _meter = new(OpenTelemetryProcessingMetricsStep.MeterName);
     private static readonly Histogram<double> _clientOperationDuration =
@@ -113,6 +116,11 @@ public static class MessagingMetrics
         }
         catch (Exception exception) when (_isInstrumentationException(exception))
         {
+            _logger.Warn(
+                exception,
+                System.Globalization.CultureInfo.InvariantCulture,
+                "Messaging client metric recording failed: {Message}",
+                exception.Message);
         }
     }
 
@@ -185,9 +193,14 @@ public static class MessagingMetrics
         IReadOnlyDictionary<string, string> headers,
         out DateTimeOffset sentTime)
     {
+        sentTime = default;
         return (headers.TryGetValue(MessagingHeaders.SentTime, out var value)
                 || headers.TryGetValue(MessagingHeaders.RebusSentTime, out value))
-            && DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out sentTime);
+            && DateTimeOffset.TryParse(
+                value,
+                System.Globalization.CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out sentTime);
     }
 
     private static bool _isInstrumentationException(Exception exception)

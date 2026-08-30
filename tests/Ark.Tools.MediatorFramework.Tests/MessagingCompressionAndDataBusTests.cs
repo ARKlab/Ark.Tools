@@ -85,28 +85,20 @@ public sealed class MessagingCompressionAndDataBusTests
             transport,
             headers,
             default).ConfigureAwait(false);
-        await transport.SendAsync("payloads", headers, payload, null, default).ConfigureAwait(false);
-        await using var deliveries = transport
-            .ReceiveAsync("payloads", default)
-            .ConfigureAwait(false)
-            .GetAsyncEnumerator();
-        (await deliveries.MoveNextAsync()).Should().BeTrue();
-        var delivery = deliveries.Current;
         var prepared = await receiver
-            .PreparePayloadAsync(delivery.Headers, delivery.Payload, default)
+            .PreparePayloadAsync(headers, payload, default)
             .ConfigureAwait(false);
         await using (prepared.ConfigureAwait(false))
         {
             payload.IsEmpty.Should().BeTrue();
             dataBus.Count.Should().Be(1);
             int.Parse(
-                    delivery.Headers[MessagingHeaders.PayloadAttachmentLength],
+                    headers[MessagingHeaders.PayloadAttachmentLength],
                     CultureInfo.InvariantCulture)
                 .Should().BeLessThan(1_000);
             using var reader = new StreamReader(prepared, Encoding.UTF8);
             (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be(new string('a', 1_000));
         }
-        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]

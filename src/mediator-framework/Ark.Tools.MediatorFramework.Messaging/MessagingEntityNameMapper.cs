@@ -21,7 +21,7 @@ internal static class MessagingEntityNameMapper
     public static string ToServiceBus(string logicalName)
     {
         ArgumentException.ThrowIfNullOrEmpty(logicalName);
-        return MessagingNativeEntityNameMapper.Map(logicalName, 260, MessagingNativeEntityNameMapper.IsServiceBusCharacter);
+        return MessagingNativeEntityNameMapper._map(logicalName, 260, MessagingNativeEntityNameMapper._isServiceBusCharacter);
     }
 
     /// <summary>Maps a logical name to an Azure Storage Queue name.</summary>
@@ -30,6 +30,6 @@ internal static class MessagingEntityNameMapper
     public static string ToStorageQueue(string logicalName)
     {
         ArgumentException.ThrowIfNullOrEmpty(logicalName);
-        return MessagingNativeEntityNameMapper.Map(logicalName, 63, MessagingNativeEntityNameMapper.IsStorageQueueCharacter);
+        return MessagingNativeEntityNameMapper._map(logicalName, 63, MessagingNativeEntityNameMapper._isStorageQueueCharacter);
     }
 }

@@ -8,12 +8,12 @@ using Microsoft.CodeAnalysis;
 namespace Ark.Tools.MediatorFramework.Generators;
 
 /// <summary>Validates static contract facts required by native messaging codecs.</summary>
-internal static class MessagingContractTopologyValidator
+public static class MessagingContractTopologyValidator
 {
-    private const int MessagePackProtocol = 1;
-    private const int ProtobufProtocol = 2;
+    private const int _messagePackProtocol = 1;
+    private const int _protobufProtocol = 2;
 
-    internal static readonly DiagnosticDescriptor MissingMessagePackShape = new(
+    internal static readonly DiagnosticDescriptor _missingMessagePackShape = new(
         "ARKMSG025",
         "MessagePack contract shape is missing",
         "Contract '{0}' is used by participant '{1}' with effective protocol MessagePack and must declare MessagePack.MessagePackObjectAttribute",
@@ -21,7 +21,7 @@ internal static class MessagingContractTopologyValidator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    internal static readonly DiagnosticDescriptor MissingProtobufShape = new(
+    internal static readonly DiagnosticDescriptor _missingProtobufShape = new(
         "ARKMSG026",
         "Google.Protobuf contract shape is missing",
         "Contract '{0}' is used by participant '{1}' with effective protocol Protobuf and must implement Google.Protobuf.IMessage<T> and expose the generated parser shape",
@@ -29,39 +29,39 @@ internal static class MessagingContractTopologyValidator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    internal static void Validate(
+    internal static void _validate(
         Action<DiagnosticDescriptor, Location, object[]> report,
         INamedTypeSymbol contract,
         INamedTypeSymbol owner,
         int protocol)
     {
-        if (protocol == MessagePackProtocol && !HasMessagePackAttribute(contract))
+        if (protocol == _messagePackProtocol && !_hasMessagePackAttribute(contract))
         {
             report(
-                MissingMessagePackShape,
+                _missingMessagePackShape,
                 contract.Locations.FirstOrDefault() ?? Location.None,
                 new object[] { contract.ToDisplayString(), owner.ToDisplayString() });
         }
-        else if (protocol == ProtobufProtocol && !HasGoogleProtobufShape(contract))
+        else if (protocol == _protobufProtocol && !_hasGoogleProtobufShape(contract))
         {
             report(
-                MissingProtobufShape,
+                _missingProtobufShape,
                 contract.Locations.FirstOrDefault() ?? Location.None,
                 new object[] { contract.ToDisplayString(), owner.ToDisplayString() });
         }
     }
 
-    private static bool HasMessagePackAttribute(INamedTypeSymbol contract)
+    private static bool _hasMessagePackAttribute(INamedTypeSymbol contract)
     {
         return contract.GetAttributes().Any(attribute =>
             attribute.AttributeClass?.ToDisplayString() == "MessagePack.MessagePackObjectAttribute");
     }
 
-    private static bool HasGoogleProtobufShape(INamedTypeSymbol contract)
+    private static bool _hasGoogleProtobufShape(INamedTypeSymbol contract)
     {
-        var hasMessageInterface = contract.AllInterfaces.Any(IsGoogleProtobufMessage);
+        var hasMessageInterface = contract.AllInterfaces.Any(_isGoogleProtobufMessage);
         var hasTypedMessageInterface = contract.AllInterfaces.Any(@interface =>
-            IsGoogleProtobufMessage(@interface)
+            _isGoogleProtobufMessage(@interface)
             && @interface.OriginalDefinition.MetadataName == "IMessage`1"
             && @interface.TypeArguments.Length == 1
             && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], contract));
@@ -75,7 +75,7 @@ internal static class MessagingContractTopologyValidator
         return hasMessageInterface && hasTypedMessageInterface && parser;
     }
 
-    private static bool IsGoogleProtobufMessage(INamedTypeSymbol @interface)
+    private static bool _isGoogleProtobufMessage(INamedTypeSymbol @interface)
     {
         return @interface.OriginalDefinition.ContainingNamespace.ToDisplayString() == "Google.Protobuf"
             && @interface.OriginalDefinition.MetadataName is "IMessage" or "IMessage`1";

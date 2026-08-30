@@ -33,7 +33,7 @@ public sealed partial class MessagingOutboxTests
                 new TestMessage { Value = "send" },
                 new Dictionary<string, string>(StringComparer.Ordinal) { ["tenant"] = "books" })
                 .ConfigureAwait(false);
-            await bus.Send(
+            await bus.Defer(
                 new TestMessage { Value = "scheduled" },
                 DateTimeOffset.Parse("2024-01-01T00:05:00Z", CultureInfo.InvariantCulture),
                 cancellationToken: default).ConfigureAwait(false);

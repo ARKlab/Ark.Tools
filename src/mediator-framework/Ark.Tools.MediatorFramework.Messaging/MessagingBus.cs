@@ -78,7 +78,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         CancellationToken cancellationToken = default)
         where T : class
     {
-        await _sendCoreAsync(message, dueTime: null, additionalHeaders, cancellationToken, "send").ConfigureAwait(false);
+        await _sendCoreAsync(message, dueTime: null, additionalHeaders, "send", cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -94,7 +94,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             throw new ArgumentOutOfRangeException(nameof(delay));
 
         var now = _utcNow();
-        await _sendCoreAsync(message, now + delay, additionalHeaders, cancellationToken, "defer").ConfigureAwait(false);
+        await _sendCoreAsync(message, now + delay, additionalHeaders, "defer", cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -112,7 +112,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         if (dueTime - now > _network.MaximumSchedulingDelay)
             throw new ArgumentOutOfRangeException(nameof(dueTime));
 
-        await _sendCoreAsync(message, dueTime, additionalHeaders, cancellationToken, "defer").ConfigureAwait(false);
+        await _sendCoreAsync(message, dueTime, additionalHeaders, "defer", cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -165,8 +165,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         T message,
         DateTimeOffset? dueTime,
         IReadOnlyDictionary<string, string>? additionalHeaders,
-        CancellationToken cancellationToken,
-        string operation)
+        string operation,
+        CancellationToken cancellationToken)
         where T : class
     {
         _throwIfDisposed();
@@ -189,8 +189,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         IReadOnlyDictionary<string, string>? additionalHeaders,
         bool publish,
         DateTimeOffset? dueTime,
-        CancellationToken cancellationToken,
-        string operation)
+        string operation,
+        CancellationToken cancellationToken)
         where T : class
     {
         _throwIfDisposed();

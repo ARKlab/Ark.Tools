@@ -20,7 +20,6 @@ ARKMSG012 | Ark.Tools.MediatorFramework | Error | Contract belongs to multiple n
 ARKMSG013 | Ark.Tools.MediatorFramework | Error | Invalid participant identity
 ARKMSG014 | Ark.Tools.MediatorFramework | Error | Duplicate participant identity
 ARKMSG015 | Ark.Tools.MediatorFramework | Error | Reserved participant identity
-ARKMSG016 | Ark.Tools.MediatorFramework | Error | Event topic name is too long
 ARKMSG017 | Ark.Tools.MediatorFramework | Error | Invalid messaging retry policy
 ARKMSG018 | Ark.Tools.MediatorFramework | Error | Invalid event contract
 ARKMSG019 | Ark.Tools.MediatorFramework | Error | Non-normalized contract name

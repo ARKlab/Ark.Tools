@@ -45,6 +45,7 @@ public sealed class MessagingDispatcher
     /// <param name="incomingStepTypes">The incoming pipeline steps in execution order.</param>
     /// <param name="resolveStep">The pipeline step resolver.</param>
     /// <param name="lockRenewalInterval">The bounded interval between lock renewals.</param>
+    /// <param name="clock">The clock used for processing metrics.</param>
     public MessagingDispatcher(
         Container container,
         MessagingHeaderProcessor headerProcessor,
@@ -193,7 +194,7 @@ public sealed class MessagingDispatcher
                         payload.ReadPayload(),
                         delivery.DeliveryCount,
                         stageToken);
-                    context.Items[MessagingMetrics.DispatcherManagedItem] = true;
+                    context.Items[MessagingMetrics._dispatcherManagedItem] = true;
                     var processor = scope.GetInstance<ICommandProcessor>();
                     await MessagingPipelineInvoker.InvokeIncomingAsync(
                         _incomingStepTypes,

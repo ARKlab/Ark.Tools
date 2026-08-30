@@ -296,7 +296,7 @@ public sealed class MessagingBusSampleTests
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            await bus.Send(
+            await bus.Defer(
                 new ProcessBookPrintProcessRequest { Id = Guid.NewGuid() },
                 TimeSpan.FromSeconds(2),
                 cancellationToken: timeout.Token).ConfigureAwait(false);

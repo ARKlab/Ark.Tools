@@ -87,9 +87,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor _reservedIdentity = _rule(
         "ARKMSG015", "Reserved participant identity",
         "Participant '{0}' uses reserved identity '{1}'", DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _longTopic = _rule(
-        "ARKMSG016", "Event topic name is too long",
-        "Event topic '{0}' exceeds the Service Bus 260-character entity limit", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidRetry = _rule(
         "ARKMSG017", "Invalid messaging retry policy",
         "Retry policy for participant '{0}' must have MaximumDeliveryCount >= {1}", DiagnosticSeverity.Error);
@@ -251,14 +248,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         foreach (var processor in processors)
-            MessagingContractTopologyValidator.Validate(
+            MessagingContractTopologyValidator._validate(
                 (descriptor, location, arguments) =>
                     context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
                 processor.Key,
                 processor.Value[0].Symbol,
                 processor.Value[0].DefaultSerializer);
         foreach (var publisher in publishers)
-            MessagingContractTopologyValidator.Validate(
+            MessagingContractTopologyValidator._validate(
                 (descriptor, location, arguments) =>
                     context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
                 publisher.Key,
