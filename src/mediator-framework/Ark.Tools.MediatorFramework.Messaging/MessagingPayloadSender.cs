@@ -97,7 +97,10 @@ public sealed class MessagingPayloadSender
                 {
                     throw new AggregateException(exception, cleanupException);
                 }
-                completedPayload.Dispose();
+                finally
+                {
+                    completedPayload.Dispose();
+                }
             }
             throw;
         }
