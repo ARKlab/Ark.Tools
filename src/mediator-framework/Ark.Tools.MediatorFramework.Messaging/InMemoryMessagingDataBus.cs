@@ -109,6 +109,15 @@ public sealed class InMemoryMessagingDataBus : IMessagingDataBus
         return Task.FromResult(stream);
     }
 
+    /// <inheritdoc />
+    public async Task DeleteAsync(string attachmentId, CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(attachmentId);
+        ctk.ThrowIfCancellationRequested();
+        _attachments.TryRemove(attachmentId, out _);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
     /// <summary>Removes expired attachments using the configured clock.</summary>
     public void RemoveExpired()
     {

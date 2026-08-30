@@ -118,6 +118,14 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
         }
     }
 
+    /// <inheritdoc />
+    public async Task DeleteAsync(string attachmentId, CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(attachmentId);
+        var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
+        await blob.DeleteIfExistsAsync(cancellationToken: ctk).ConfigureAwait(false);
+    }
+
     private static AzureBlobDataBusOptions _validateOptions(
         AzureBlobDataBusOptions options)
     {
@@ -247,6 +255,7 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
         private readonly string _id;
         private readonly HashingWriteStream _stream;
         private bool _completed;
+        private bool _streamDisposed;
 
         internal WriteSession(BlobClient blob, string id, Stream stream)
         {
@@ -264,6 +273,7 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
             var length = _stream._bytesWritten;
             var hash = _stream._completeHash();
             await _stream.DisposeAsync().ConfigureAwait(false);
+            _streamDisposed = true;
             await _blob.SetMetadataAsync(
                     new Dictionary<string, string>(StringComparer.Ordinal)
                     {
@@ -280,7 +290,8 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
         {
             if (!_completed)
             {
-                await _stream.DisposeAsync().ConfigureAwait(false);
+                if (!_streamDisposed)
+                    await _stream.DisposeAsync().ConfigureAwait(false);
                 await _blob.DeleteIfExistsAsync().ConfigureAwait(false);
             }
         }

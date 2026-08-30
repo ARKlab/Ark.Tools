@@ -22,6 +22,11 @@ public interface IMessagingDataBus
         long expectedLength,
         string expectedSha256,
         CancellationToken ctk);
+
+    /// <summary>Deletes a committed attachment when its enclosing message cannot be sent.</summary>
+    /// <param name="attachmentId">The opaque attachment identifier.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    Task DeleteAsync(string attachmentId, CancellationToken ctk);
 }
 
 /// <summary>Writes one DataBus attachment and commits its integrity metadata.</summary>

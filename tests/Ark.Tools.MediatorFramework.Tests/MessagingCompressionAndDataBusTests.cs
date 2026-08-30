@@ -131,6 +131,26 @@ public sealed class MessagingCompressionAndDataBusTests
     }
 
     [TestMethod]
+    public async Task RejectedClaimCheckDeletesCommittedAttachment()
+    {
+        var network = _network(offloadThreshold: 10_000, maxDecompressed: 10_000);
+        var dataBus = new InMemoryMessagingDataBus();
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+        var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0);
+
+        var action = () => sender.BuildOutgoingPayloadAsync(
+            new PayloadContract("payload"),
+            new TextCodec(),
+            new CappedTransport(100),
+            headers,
+            default);
+
+        (await action.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+            .Which.Reason.Should().Be(MessagingFailFastReason.OversizedHeaders);
+        dataBus.Count.Should().Be(0);
+    }
+
+    [TestMethod]
     public async Task PayloadAboveNetworkLimitUsesClaimCheck()
     {
         var network = _network(
@@ -479,6 +499,11 @@ public sealed class MessagingCompressionAndDataBusTests
         {
             ctk.ThrowIfCancellationRequested();
             return Task.FromResult(_stream);
+        }
+
+        public Task DeleteAsync(string attachmentId, CancellationToken ctk)
+        {
+            throw new NotSupportedException();
         }
     }
 

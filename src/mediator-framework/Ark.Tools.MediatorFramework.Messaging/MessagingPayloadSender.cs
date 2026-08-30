@@ -84,11 +84,19 @@ public sealed class MessagingPayloadSender
         {
             await Task.WhenAll(serializeTask, compressTask, destinationTask).ConfigureAwait(false);
         }
-        catch
+        catch (Exception exception)
         {
             if (destinationTask.IsCompletedSuccessfully)
             {
                 var completedPayload = await destinationTask.ConfigureAwait(false);
+                try
+                {
+                    await _deleteAttachmentAsync(completedPayload).ConfigureAwait(false);
+                }
+                catch (Exception cleanupException)
+                {
+                    throw new AggregateException(exception, cleanupException);
+                }
                 completedPayload.Dispose();
             }
             throw;
@@ -106,9 +114,18 @@ public sealed class MessagingPayloadSender
                 && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > ceiling)
             {
                 result.Dispose();
-                throw new MessagingFailFastException(
+                var exception = new MessagingFailFastException(
                     MessagingFailFastReason.OversizedHeaders,
                     "Attachment-reference envelope exceeds the transport inline ceiling.");
+                try
+                {
+                    await _deleteAttachmentAsync(result).ConfigureAwait(false);
+                }
+                catch (Exception cleanupException)
+                {
+                    throw new AggregateException(exception, cleanupException);
+                }
+                throw exception;
             }
         }
 
@@ -117,6 +134,12 @@ public sealed class MessagingPayloadSender
             _removeReservedHeader(headers, MessagingHeaders.ContentEncoding);
 
         return result;
+    }
+
+    private async Task _deleteAttachmentAsync(MessagingOutgoingPayload payload)
+    {
+        if (payload.Attachment is { } attachment)
+            await _dataBus.DeleteAsync(attachment.Id, CancellationToken.None).ConfigureAwait(false);
     }
 
     private static async Task _serializeAsync<T>(
