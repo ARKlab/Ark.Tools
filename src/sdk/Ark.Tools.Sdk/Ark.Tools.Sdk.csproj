@@ -20,10 +20,10 @@
   </ItemGroup>
 
   <Target Name="GenerateSdkProps" BeforeTargets="GenerateNuspec">
-    <WriteLinesToFile
-      File="$(IntermediateOutputPath)Sdk.props"
-      Lines="&lt;Project&gt;&#xA;  &lt;ItemGroup Condition=&quot;'$(EnableArkToolsBuild)' != 'false'&quot;&gt;&#xA;    &lt;PackageReference Include=&quot;Ark.Tools.Build&quot; Version=&quot;$(PackageVersion)&quot; IsImplicitlyDefined=&quot;true&quot; /&gt;&#xA;  &lt;/ItemGroup&gt;&#xA;&lt;/Project&gt;"
-      Overwrite="true"
-      Encoding="UTF-8" />
+    <Copy SourceFiles="Sdk\Sdk.props" DestinationFiles="$(IntermediateOutputPath)Sdk.props" />
+    <XmlPoke
+      XmlInputPath="$(IntermediateOutputPath)Sdk.props"
+      Query="/Project/ItemGroup/PackageReference[@Include='Ark.Tools.Build']/@Version"
+      Value="$(PackageVersion)" />
   </Target>
 </Project>
