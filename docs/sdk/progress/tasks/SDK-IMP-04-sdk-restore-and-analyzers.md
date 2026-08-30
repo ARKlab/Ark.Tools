@@ -82,14 +82,14 @@ central package management.
 
 ## Acceptance
 
-- [ ] CI, lock-file, locked-restore, serialized-restore, and audit policy are
+- [x] CI, lock-file, locked-restore, serialized-restore, and audit policy are
   implemented and tested.
-- [ ] C# language/analysis defaults are SDK-only and overrideable.
-- [ ] Exact analyzer references and every package/config opt-out are tested.
-- [ ] SQL and CPM boundaries are covered by positive and negative fixtures.
-- [ ] No framework, assertion, Reqnroll, VSTest, or later-task package leaks.
-- [ ] The [task board](README.md) status for SDK-IMP-04 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] C# language/analysis defaults are SDK-only and overrideable.
+- [x] Exact analyzer references and every package/config opt-out are tested.
+- [x] SQL and CPM boundaries are covered by positive and negative fixtures.
+- [x] No framework, assertion, Reqnroll, VSTest, or later-task package leaks.
+- [x] The [task board](README.md) status for SDK-IMP-04 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
