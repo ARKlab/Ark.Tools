@@ -107,13 +107,13 @@ selection:
 | `amf1-network` | Resolved network identity |
 | `amf1-sender-identity` | Participant that sent or published |
 | `amf1-msg-id` / `amf1-corr-id` | Message and correlation identifiers |
+| `amf1-senttime` | Invariant sent-time value |
 
 Logical names are lowercase and may contain letters, digits, `-`, `_`, `.`, and
 `/`. Separators cannot lead, trail, or repeat. The wire header always carries
 this logical value; Service Bus and Storage Queue adapters apply deterministic
 native-name mapping only at their entity boundaries. `FormerNames` are
 receive-time aliases and do not create topology aliases.
-| `amf1-senttime` | Invariant sent-time value |
 
 `IMessagingCodec` is generic-only and asynchronously writes through
 `PipeWriter` or reads from `PipeReader`; the framework does not expose a
