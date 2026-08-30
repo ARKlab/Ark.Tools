@@ -15,8 +15,13 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Azure Storage Queue implementation of the messaging transport contract.</summary>
 public sealed class StorageQueueMessagingTransport :
     IMessagingReceiveTransport,
-    IMessagingTransportManagement
+    IMessagingTransportManagement,
+    IMessagingTransport<StorageQueueMessagingTransport>
 {
+    /// <summary>Gets the conservative post-Base64 UTF-8 byte limit for the queue message.</summary>
+    public const long MaximumPayloadSizeBytes = 48 * 1024;
+    static long IMessagingTransport<StorageQueueMessagingTransport>.MaximumPayloadLimitBytes =>
+        MaximumPayloadSizeBytes;
     private static readonly TimeSpan _maximumVisibilityDelay = TimeSpan.FromDays(7);
     private readonly QueueServiceClient _serviceClient;
     private readonly ConcurrentDictionary<string, QueueClient> _queues = new(StringComparer.Ordinal);
@@ -76,16 +81,38 @@ public sealed class StorageQueueMessagingTransport :
 
     /// <inheritdoc />
     public MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend;
+        MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    public long? MaximumInlineEnvelopeBytes =>
-        Base64.GetMaxEncodedToUtf8Length(StorageQueueLimits.MaximumNormalCanonicalBytes);
+    public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
+
+    /// <summary>Maps a logical name to a Storage Queue entity name.</summary>
+    public static string ToNativeEntityName(string logicalName)
+    {
+        return MessagingEntityNameMapper.ToStorageQueue(logicalName);
+    }
+
+    static long IMessagingTransport<StorageQueueMessagingTransport>.GetNativeHeaderSize(
+        IReadOnlyDictionary<string, string> headers)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        return Base64.GetMaxEncodedToUtf8Length(
+            StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty));
+    }
+
+    /// <summary>Measures the encoded native header framing for an empty payload.</summary>
+    /// <param name="headers">The envelope headers.</param>
+    /// <returns>The encoded native header framing size in bytes.</returns>
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
+    {
+        var canonicalBytes = StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty);
+        return Base64.GetMaxEncodedToUtf8Length(canonicalBytes);
+    }
 
     /// <inheritdoc />
-    public long MeasureNative(
+    public long MeasureNativePayload(
         IReadOnlyDictionary<string, string> headers,
-        in ReadOnlySequence<byte> payload)
+        ReadOnlySequence<byte> payload)
     {
         var canonicalBytes = StorageQueueEnvelopeCodec._measureCanonical(headers, payload);
         return Base64.GetMaxEncodedToUtf8Length(canonicalBytes);
@@ -100,9 +127,14 @@ public sealed class StorageQueueMessagingTransport :
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = ToNativeEntityName(queue);
         ArgumentNullException.ThrowIfNull(headers);
 
         var encoded = StorageQueueEnvelopeCodec.Encode(headers, payload);
+        if (Encoding.UTF8.GetByteCount(encoded) > MaximumPayloadSizeBytes)
+            throw new ArgumentOutOfRangeException(
+                nameof(payload),
+                "The completed Storage Queue message exceeds the conservative 48 KiB limit.");
         var visibilityDelay = _scheduledDelay(dueTime);
         await _queue(queue).SendMessageAsync(
             BinaryData.FromString(encoded),
@@ -129,6 +161,7 @@ public sealed class StorageQueueMessagingTransport :
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = ToNativeEntityName(queue);
         return _receiveAsync(queue, ctk);
     }
 
@@ -140,6 +173,7 @@ public sealed class StorageQueueMessagingTransport :
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = ToNativeEntityName(queue);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         await _queue(queue).CreateIfNotExistsAsync(cancellationToken: ctk).ConfigureAwait(false);

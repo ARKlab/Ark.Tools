@@ -229,10 +229,9 @@ public static class StorageQueueLimits
 }
 
 // On the transport (Capabilities = Receive | ScheduledSend; no PubSub):
-public long? MaximumInlineEnvelopeBytes => StorageQueueLimits.MaximumEncodedTextBytes;
+public long MaximumPayloadBytes => 48 * 1024;
 
-public long MeasureNative(
-    IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
+public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
 {
     // Measures the final encoded text of the complete candidate envelope. The bus
     // offloads to DataBus before encoding when the canonical size exceeds

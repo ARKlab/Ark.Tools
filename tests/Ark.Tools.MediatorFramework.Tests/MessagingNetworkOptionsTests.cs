@@ -22,13 +22,12 @@ public sealed class MessagingNetworkOptionsTests
             new MessagingNetworkAttribute
             {
                 Members = members,
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub
             });
 
         options.NetworkIdentity.Should().Be(typeof(BookNetwork).FullName);
         options.Members.Should().ContainSingle();
         (options.Members[0] == typeof(MemberMarker)).Should().BeTrue();
-        options.MaximumTransportPayloadBytes.Should().Be(240_000);
         members[0] = typeof(BookNetwork);
         (options.Members[0] == typeof(MemberMarker)).Should().BeTrue();
     }
@@ -49,9 +48,7 @@ public sealed class MessagingNetworkOptionsTests
             .Should().BeEquivalentTo(
                 "Members",
                 "Requires",
-                "MaximumTransportPayloadBytes",
                 "MaximumDecompressedPayloadBytes",
-                "DataBusOffloadThresholdBytes",
                 "DataBusMaximumAttachmentBytes",
                 "MaximumSchedulingDelay",
                 "MaximumSchedulingDelaySeconds",
@@ -67,9 +64,7 @@ public sealed class MessagingNetworkOptionsTests
 
         declaration.Members.Should().BeEmpty();
         declaration.Requires.Should().Be(MessagingCapabilities.None);
-        declaration.MaximumTransportPayloadBytes.Should().Be(240_000);
         declaration.MaximumDecompressedPayloadBytes.Should().Be(1_000_000);
-        declaration.DataBusOffloadThresholdBytes.Should().Be(200_000);
         declaration.DataBusMaximumAttachmentBytes.Should().Be(50_000_000);
         declaration.MaximumSchedulingDelay.Should().Be(TimeSpan.FromDays(7));
         declaration.MaximumSchedulingDelaySeconds.Should().Be(604_800);
@@ -95,10 +90,10 @@ public sealed class MessagingNetworkOptionsTests
         typeof(MessagingCapabilities).GetCustomAttribute<FlagsAttribute>().Should().NotBeNull();
 
         ((int)MessagingCapabilities.None).Should().Be(0);
-        ((int)MessagingCapabilities.Receive).Should().Be(1);
+        ((int)MessagingCapabilities.SendReceive).Should().Be(1);
         ((int)MessagingCapabilities.PubSub).Should().Be(2);
         ((int)MessagingCapabilities.ScheduledSend).Should().Be(4);
-        Enum.GetNames<MessagingCapabilities>().Should().Equal("None", "Receive", "PubSub", "ScheduledSend");
+        Enum.GetNames<MessagingCapabilities>().Should().Equal("None", "SendReceive", "PubSub", "ScheduledSend");
     }
 
     [TestMethod]
@@ -118,9 +113,7 @@ public sealed class MessagingNetworkOptionsTests
                 "NetworkIdentity",
                 "Members",
                 "Requires",
-                "MaximumTransportPayloadBytes",
                 "MaximumDecompressedPayloadBytes",
-                "DataBusOffloadThresholdBytes",
                 "DataBusMaximumAttachmentBytes",
                 "MaximumSchedulingDelay",
                 "ResourceLifecycle",
@@ -143,10 +136,8 @@ public sealed class MessagingNetworkOptionsTests
         var declaration = new MessagingNetworkAttribute
         {
             Members = [typeof(MemberMarker)],
-            Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend,
-            MaximumTransportPayloadBytes = 123,
+            Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend,
             MaximumDecompressedPayloadBytes = 456,
-            DataBusOffloadThresholdBytes = 789,
             DataBusMaximumAttachmentBytes = 987,
             MaximumSchedulingDelay = TimeSpan.FromMinutes(12),
             ResourceLifecycle = MessagingResourceLifecycle.External,
@@ -160,9 +151,7 @@ public sealed class MessagingNetworkOptionsTests
         options.NetworkIdentity.Should().Be(typeof(BookNetwork).FullName);
         options.Members.Should().Equal(typeof(MemberMarker));
         options.Requires.Should().Be(declaration.Requires);
-        options.MaximumTransportPayloadBytes.Should().Be(123);
         options.MaximumDecompressedPayloadBytes.Should().Be(456);
-        options.DataBusOffloadThresholdBytes.Should().Be(789);
         options.DataBusMaximumAttachmentBytes.Should().Be(987);
         options.MaximumSchedulingDelay.Should().Be(TimeSpan.FromMinutes(12));
         options.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.External);
@@ -177,7 +166,7 @@ public sealed class MessagingNetworkOptionsTests
             typeof(BookNetwork),
             new MessagingNetworkAttribute { Requires = MessagingCapabilities.PubSub });
 
-        var action = () => options.Validate(MessagingCapabilities.Receive);
+        var action = () => options.Validate(MessagingCapabilities.SendReceive);
 
         action.Should().Throw<InvalidOperationException>().Which.Message.Should()
             .Be($"Network '{typeof(BookNetwork).FullName}' requires unsupported capability 'PubSub'.");
@@ -190,11 +179,11 @@ public sealed class MessagingNetworkOptionsTests
             typeof(BookNetwork),
             new MessagingNetworkAttribute
             {
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.PubSub
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub
             });
 
         var action = () => options.Validate(
-            MessagingCapabilities.Receive
+            MessagingCapabilities.SendReceive
                 | MessagingCapabilities.PubSub
                 | MessagingCapabilities.ScheduledSend);
 
@@ -206,7 +195,7 @@ public sealed class MessagingNetworkOptionsTests
     {
         foreach (var capability in new[]
         {
-            MessagingCapabilities.Receive,
+            MessagingCapabilities.SendReceive,
             MessagingCapabilities.PubSub,
             MessagingCapabilities.ScheduledSend
         })

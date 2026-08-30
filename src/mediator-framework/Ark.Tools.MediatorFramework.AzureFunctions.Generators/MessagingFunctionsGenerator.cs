@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using Microsoft.CodeAnalysis;
+using Ark.Tools.MediatorFramework.Generators;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 
@@ -28,6 +29,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute =
         "Ark.Tools.MediatorFramework.EventAttribute";
+    private const string _apiGroupAttribute =
+        "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const int _serviceBusBinding = 0;
     private const int _storageQueueBinding = 1;
 
@@ -65,6 +68,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "ARKMF039",
         "Functions messaging subscription has no publisher",
         "Subscribed event '{0}' does not have exactly one publisher in network '{1}'",
+        DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _serializerMismatch = _rule(
+        "ARKMF045",
+        "Functions messaging subscriber cannot deserialize publisher protocol",
+        "Participant '{0}' does not support effective protocol '{1}' published by '{2}' for event '{3}'",
         DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _hostJsonNotInspectable = _rule(
         "ARKMF040",
@@ -207,6 +215,27 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 : host.Participant.Name);
         var processes = _types(participantAttribute, "Processes");
         var subscribes = _types(participantAttribute, "Subscribes");
+        foreach (var contract in processes)
+            MessagingContractTopologyValidator._validate(
+                (descriptor, location, arguments) =>
+                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                contract,
+                host.Participant,
+                _int(participantAttribute, "DefaultSerializer"));
+        foreach (var member in _types(network.Attribute!, "Members"))
+        {
+            var memberAttribute = member.GetAttributes().FirstOrDefault(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            if (memberAttribute is null)
+                continue;
+            foreach (var contract in _types(memberAttribute, "Publishes"))
+                MessagingContractTopologyValidator._validate(
+                    (descriptor, location, arguments) =>
+                        context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                    contract,
+                    member,
+                    _int(memberAttribute, "DefaultSerializer"));
+        }
         var retryType = _type(participantAttribute, "Retry");
         if (host.Binding == _storageQueueBinding
             && (!processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty))
@@ -291,6 +320,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Where(static item => item.Attribute is not null)
             .ToArray();
         var subscriptions = ImmutableArray.CreateBuilder<Subscription>();
+        var participantAttribute = participant.GetAttributes().First(attribute =>
+            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
         foreach (var subscribedEvent in subscribedEvents
             .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
         {
@@ -305,6 +336,25 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                     participant.Locations.FirstOrDefault() ?? Location.None,
                     subscribedEvent.ToDisplayString(),
                     network.ToDisplayString()));
+                return null;
+            }
+
+            var supportedProtocols = _ints(participantAttribute, "Serializers");
+            var publisherProtocol = _int(publishers[0].Attribute!, "DefaultSerializer");
+            if (!supportedProtocols.Contains(publisherProtocol))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    _serializerMismatch,
+                    participant.Locations.FirstOrDefault() ?? Location.None,
+                    participantIdentity,
+                    publisherProtocol switch
+                    {
+                        1 => "MessagePack",
+                        2 => "Protobuf",
+                        _ => "Json",
+                    },
+                    _string(publishers[0].Attribute, "Identity") ?? publishers[0].Type.ToDisplayString(),
+                    subscribedEvent.ToDisplayString()));
                 return null;
             }
 
@@ -474,6 +524,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         string connection)
     {
         var methodName = _functionName(identity);
+        var nativeIdentity = _nativeName(identity, binding == _storageQueueBinding ? 63 : 260,
+            binding == _storageQueueBinding);
         source.Append("    /// <summary>Receives the \"").Append(_escape(identity))
             .AppendLine("\" participant identity queue.</summary>")
             .Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
@@ -483,7 +535,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         if (binding == _serviceBusBinding)
         {
             source.AppendLine("        [global::Microsoft.Azure.Functions.Worker.ServiceBusTrigger(")
-                .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+                .Append("            \"").Append(_escape(nativeIdentity)).AppendLine("\",")
                 .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\",")
                 .AppendLine("            AutoCompleteMessages = false)]")
                 .AppendLine("        global::Azure.Messaging.ServiceBus.ServiceBusReceivedMessage message,")
@@ -499,7 +551,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("        [global::Microsoft.Azure.Functions.Worker.QueueTrigger(")
-            .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+            .Append("            \"").Append(_escape(nativeIdentity)).AppendLine("\",")
             .Append("            Connection = \"").Append(_escape(connection)).AppendLine("\")]")
             .AppendLine("        global::Azure.Storage.Queues.Models.QueueMessage message,")
             .AppendLine("        global::Microsoft.Azure.Functions.Worker.FunctionContext functionContext,")
@@ -510,6 +562,16 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("\", functionContext, cancellationToken)")
             .AppendLine("            .ConfigureAwait(false);")
             .AppendLine("    }");
+    }
+
+    private static string _nativeName(string value, int maximumLength, bool storage)
+    {
+        return global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._map(
+            value,
+            maximumLength,
+            storage
+                ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isStorageQueueCharacter
+                : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isServiceBusCharacter);
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)
@@ -627,6 +689,19 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             : 0;
     }
 
+    private static ImmutableArray<int> _ints(AttributeData? attribute, string name)
+    {
+        if (attribute is null)
+            return ImmutableArray<int>.Empty;
+        var value = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value;
+        return value.Kind == TypedConstantKind.Array
+            ? value.Values
+                .Where(static item => item.Value is int)
+                .Select(static item => (int)item.Value!)
+                .ToImmutableArray()
+            : ImmutableArray<int>.Empty;
+    }
+
     private static string? _string(AttributeData? attribute, string name)
     {
         return attribute?.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
@@ -637,8 +712,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         var attribute = contract.GetAttributes().FirstOrDefault(candidate =>
             candidate.AttributeClass?.ToDisplayString() is _messageAttribute or _eventAttribute);
-        return _string(attribute, "Name") ?? _normalizeSnake(
-            contract.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
+        if (_string(attribute, "Name") is { } explicitName)
+            return explicitName;
+        var group = contract.GetAttributes()
+            .FirstOrDefault(candidate => candidate.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
+        return _normalizeLogical(group) + "." + _normalizeLogical(contract.Name);
     }
 
     private static string _normalizeIdentity(string value)
@@ -651,6 +730,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         return string.Join("_", value.Split('.')
             .SelectMany(_words)
             .Select(static word => word.ToLowerInvariant()));
+    }
+
+    private static string _normalizeLogical(string value)
+    {
+        return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
+            .Select(segment => string.Join("-", _words(segment).Select(static word => word.ToLowerInvariant()))));
     }
 
     private static IEnumerable<string> _words(string value)

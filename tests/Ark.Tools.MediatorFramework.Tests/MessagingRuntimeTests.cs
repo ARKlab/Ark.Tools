@@ -579,7 +579,7 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public async Task OpenTelemetryProcessingMetricsStepRecordsQueueAndProcessingMetrics()
     {
-        var measurements = new List<(string Name, double Value, string? MessageType, string? OperationResult)>();
+        var measurements = new List<(string Name, double Value, string? MessageType, string? Outcome)>();
         using var listener = new MeterListener();
         listener.InstrumentPublished = (instrument, meterListener) =>
         {
@@ -592,9 +592,9 @@ public sealed partial class MessagingRuntimeTests
             string? operationResult = null;
             foreach (var tag in tags)
             {
-                if (tag.Key == "message.type")
+                if (tag.Key == "messaging.message.type")
                     messageType = tag.Value?.ToString();
-                else if (tag.Key == "operation.result")
+                else if (tag.Key == "messaging.process.result")
                     operationResult = tag.Value?.ToString();
             }
 
@@ -610,7 +610,8 @@ public sealed partial class MessagingRuntimeTests
                 [MessagingHeaders.MessageType] = "tests.Message",
                 [MessagingHeaders.SentTime] = sentTime.ToString("O", CultureInfo.InvariantCulture)
             },
-            default);
+            ReadOnlySequence<byte>.Empty,
+            deliveryCount: 2);
         var step = new OpenTelemetryProcessingMetricsStep(clock);
         await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
             .ConfigureAwait(false);
@@ -620,25 +621,45 @@ public sealed partial class MessagingRuntimeTests
             {
                 [MessagingHeaders.MessageType] = "tests.Message"
             },
-            default);
+            ReadOnlySequence<byte>.Empty,
+            deliveryCount: 2);
         Func<Task> processFailure = () => step.ProcessAsync(
             failureContext,
             () => throw new InvalidOperationException("handler failed"),
             CancellationToken.None);
         await processFailure.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
 
+        var producerHeaders = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [MessagingHeaders.Network] = "tests-network",
+            [MessagingHeaders.SenderIdentity] = "tests-sender",
+            [MessagingHeaders.MessageType] = "tests.Message",
+        };
+        MessagingMetrics.RecordClientOperation(
+            TimeSpan.FromSeconds(0.25), producerHeaders, "send", "tests-queue");
+        MessagingMetrics.RecordClientOperation(
+            TimeSpan.FromSeconds(0.25), producerHeaders, "publish", "tests-topic");
+        MessagingMetrics.RecordClientOperation(
+            TimeSpan.FromSeconds(0.25), producerHeaders, "defer", "tests-queue");
+
         measurements.Should().Contain(x =>
-            x.Name == "ark.tools.mediatorframework.message_time_in_queue_success"
+            x.Name == MessagingMetrics.TimeInQueueName
             && x.MessageType == "tests.Message"
-            && x.Value > 1500);
+            && x.Value > 1.5);
         measurements.Should().Contain(x =>
-            x.Name == "ark.tools.mediatorframework.message_processing_time"
+            x.Name == MessagingMetrics.ProcessDurationName
             && x.MessageType == "tests.Message"
-            && x.OperationResult == "success");
+            && x.Outcome == "complete");
         measurements.Should().Contain(x =>
-            x.Name == "ark.tools.mediatorframework.message_processing_time"
+            x.Name == MessagingMetrics.ProcessDurationName
             && x.MessageType == "tests.Message"
-            && x.OperationResult == "failure");
+            && x.Outcome == "error");
+        measurements.Should().Contain(x =>
+            x.Name == MessagingMetrics.DeliveryAttemptsName
+            && Math.Abs(x.Value - 2d) < 1e-9);
+        measurements.Should().Contain(x =>
+            x.Name == MessagingMetrics.ClientOperationDurationName
+            && Math.Abs(x.Value - 0.25d) < 1e-9);
     }
 
     private static MessagingDispatcher _createDispatcher(

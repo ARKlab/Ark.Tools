@@ -47,7 +47,7 @@ public sealed class BoundaryMessagingRetryPolicy : IMessagingRetryPolicy
 /// <summary>Compile fixture network for the generated Service Bus trigger.</summary>
 [MessagingNetwork(
     Members = new[] { typeof(BoundaryMessagingParticipant) },
-    Requires = MessagingCapabilities.Receive)]
+    Requires = MessagingCapabilities.SendReceive)]
 public static partial class BoundaryMessagingNetwork
 {
 }

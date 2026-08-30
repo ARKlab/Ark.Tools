@@ -143,6 +143,18 @@ accepting an `IFormatterResolver` uses the host's contract configuration; the
 parameterless overload uses the standard resolver. MessagePack reads use the
 `UntrustedData` security mode.
 
+Native messaging contract validation is performed from Roslyn symbols while the
+topology is generated. A route's effective protocol is the processing or
+publishing participant's `DefaultSerializer`; declaring additional readable
+protocols does not impose additional contract metadata. Effective MessagePack
+contracts must carry the exact `MessagePack.MessagePackObjectAttribute`.
+Effective protobuf contracts must be Google.Protobuf generated messages
+(`IMessage<T>` plus its generated parser shape); protobuf-net `[ProtoContract]`
+alone is not sufficient. Every event subscriber must include the publisher's
+effective protocol. Missing contract shape reports `ARKMSG025` or `ARKMSG026`
+at the contract declaration. Resolver composition and `MessageParser<T>`
+registration remain host startup concerns and are not inspected by generators.
+
 At startup, call `MessagingJsonStartupValidation.ValidateDeclaredSerializers`
 for every participant. It rejects a participant whose `Serializers` declaration
 contains a protocol without an installed codec, before any message is sent or

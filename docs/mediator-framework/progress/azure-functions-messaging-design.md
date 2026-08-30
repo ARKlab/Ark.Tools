@@ -340,7 +340,7 @@ Validation is split by binding time:
 - **Startup** validates the composed transport against the network
   declaration: registering a transport that does not support every declared
   capability fails startup with an explicit diagnostic.
-- **Runtime** guards remain for dynamic operations: delayed `Send` and
+- **Runtime** guards remain for dynamic operations: delayed `Defer` and
   `Publish` throw when the capability is absent from the network declaration.
 
 A network that only requires `Send` can therefore run on every transport; a
@@ -440,10 +440,10 @@ Conceptual shape:
         typeof(PrintingParticipant),
         typeof(WebFrontendParticipant)
     },
-    Requires = MessagingCapabilities.Receive
+    Requires = MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
-    MaximumTransportPayloadBytes = 240000)]
+    MaximumDecompressedPayloadBytes = 1000000)]
 public sealed class BookMessagingNetwork;
 
 /// <summary>Retry/delivery policy owned by the declaring participant.</summary>
@@ -848,7 +848,7 @@ SDK types. A transport implementation provides:
 - envelope send to a named queue, with optional scheduled delivery when
   `ScheduledSend` is declared;
 - envelope publish to a named topic when `PubSub` is declared;
-- for `Receive`-capable transports, a receive contract with PeekLock-style
+- for `SendReceive`-capable transports, a receive contract with PeekLock-style
   settlement: deliver a locked envelope plus a native delivery count, and
   accept exactly one of complete, abandon, or dead-letter per delivery. This
   settlement-plus-delivery-count contract is fixed; every receive-capable
@@ -1276,7 +1276,7 @@ The shim:
 - routes events to `<publisher-identity>-<contract-name>`;
 - permits `Publish` only when the network declares `PubSub` and the current
   participant declares the event in its `Publishes` set;
-- permits delayed `Send` only when the network declares `ScheduledSend`;
+- permits delayed `Defer` only when the network declares `ScheduledSend`;
 - selects and applies the write protocol of the contract's owner (the
   processing participant's default for messages, the publisher's default for
   events);

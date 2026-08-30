@@ -11,7 +11,7 @@ public enum MessagingCapabilities
     None = 0,
 
     /// <summary>Participants can receive messages.</summary>
-    Receive = 1,
+    SendReceive = 1,
 
     /// <summary>The network supports event publication and subscriptions.</summary>
     PubSub = 2,

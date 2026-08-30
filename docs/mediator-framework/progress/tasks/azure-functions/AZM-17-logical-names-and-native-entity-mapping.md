@@ -119,10 +119,10 @@ contract name.
 
 ## Acceptance
 
-- [ ] Logical names support the approved lowercase separator grammar.
+- [x] Logical names support the approved lowercase separator grammar.
 - [ ] Every transport has deterministic, collision-checked native entity
   mapping.
-- [ ] Wire headers and registries retain logical names.
+- [x] Wire headers and registries retain logical names.
 - [ ] Generated triggers, manifests, lifecycle, and runtime transport operations
   share one mapping result.
 - [ ] Sample, guides, snapshots, and generated-source inspections are updated.

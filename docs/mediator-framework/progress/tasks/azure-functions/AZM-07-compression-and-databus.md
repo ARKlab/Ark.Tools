@@ -152,9 +152,7 @@ public sealed class MessagingPayloadSender
         var buffer = new ArrayBufferWriter<byte>();        // transport-owned buffered form
         var writer = new CompressionSwitchingBufferWriter(
             buffer, _algorithm, _compressionMinimumSizeBytes,
-            Math.Max(
-                _network.MaximumTransportPayloadBytes,
-                _network.DataBusMaximumAttachmentBytes));
+            _network.DataBusMaximumAttachmentBytes);
         codec.Serialize(message, writer);
         writer.Complete();                                 // flush final compressor frame
 
@@ -167,9 +165,8 @@ public sealed class MessagingPayloadSender
 
         // 2. Threshold check on the FINAL compressed bytes plus the measured complete
         //    native envelope (headers and transport encoding included, AZM-05 seam).
-        var native = transport.MeasureNative(headers, payload);
-        var mustOffload = payload.Length > _network.DataBusOffloadThresholdBytes
-            || (transport.MaximumInlineEnvelopeBytes is { } ceiling && native > ceiling);
+        var native = transport.MeasureNativeHeaders(headers) + payload.Length;
+        var mustOffload = native > transport.MaximumPayloadBytes;
         if (!mustOffload)
             return payload;
 
@@ -188,8 +185,7 @@ public sealed class MessagingPayloadSender
         // 4. Re-measure the attachment-reference envelope and fail explicitly if it
         //    still cannot fit the transport's hard inline ceiling.
         var reference = ReadOnlySequence<byte>.Empty;
-        if (transport.MaximumInlineEnvelopeBytes is { } c
-            && transport.MeasureNative(headers, reference) > c)
+        if (transport.MeasureNativeHeaders(headers) + reference.Length > transport.MaximumPayloadBytes)
             throw new MessagingFailFastException(MessagingFailFastReason.OversizedHeaders,
                 "Attachment-reference envelope exceeds the transport inline ceiling.");
         return reference;

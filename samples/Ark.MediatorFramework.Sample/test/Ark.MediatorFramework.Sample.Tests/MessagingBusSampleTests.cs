@@ -276,7 +276,7 @@ public sealed class MessagingBusSampleTests
                     typeof(SampleMessagingNotificationParticipant),
                     typeof(SampleMessagingAuditParticipant),
                 ],
-                Requires = MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend,
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend,
                 MaximumSchedulingDelaySeconds = 3600,
             });
         var dataBus = new InMemoryMessagingDataBus();
@@ -296,7 +296,7 @@ public sealed class MessagingBusSampleTests
         try
         {
             var stopwatch = Stopwatch.StartNew();
-            await bus.Send(
+            await bus.Defer(
                 new ProcessBookPrintProcessRequest { Id = Guid.NewGuid() },
                 TimeSpan.FromSeconds(2),
                 cancellationToken: timeout.Token).ConfigureAwait(false);

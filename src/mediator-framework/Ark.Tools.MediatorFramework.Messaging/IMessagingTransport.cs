@@ -11,14 +11,24 @@ public interface IMessagingTransport
     /// <summary>Gets the capabilities declared by this transport.</summary>
     MessagingCapabilities Capabilities { get; }
 
-    /// <summary>Gets the hard inline-envelope ceiling in bytes, or <see langword="null"/> when unbounded.</summary>
-    long? MaximumInlineEnvelopeBytes { get; }
+    /// <summary>Gets the hard maximum complete payload size in bytes.</summary>
+    long MaximumPayloadBytes { get; }
 
-    /// <summary>Measures the completed native representation of an envelope.</summary>
+    /// <summary>Measures the native header representation of an envelope.</summary>
+    /// <param name="headers">The envelope headers.</param>
+    /// <returns>The native header representation size in bytes.</returns>
+    long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers);
+
+    /// <summary>Measures the complete native envelope for a serialized payload.</summary>
     /// <param name="headers">The envelope headers.</param>
     /// <param name="payload">The serialized payload.</param>
-    /// <returns>The native representation size in bytes.</returns>
-    long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload);
+    /// <returns>The native envelope size in bytes.</returns>
+    long MeasureNativePayload(
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload)
+    {
+        return checked(MeasureNativeHeaders(headers) + payload.Length);
+    }
 
     /// <summary>Sends an envelope to a queue.</summary>
     /// <param name="queue">The destination queue.</param>
@@ -45,6 +55,25 @@ public interface IMessagingTransport
         IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> payload,
         CancellationToken ctk);
+}
+
+/// <summary>Static transport contract for provider-native sizing and naming.</summary>
+/// <typeparam name="TSelf">The implementing transport class itself.</typeparam>
+public interface IMessagingTransport<TSelf>
+    where TSelf : IMessagingTransport<TSelf>
+{
+    /// <summary>Gets the fixed native payload limit for the transport.</summary>
+    static abstract long MaximumPayloadLimitBytes { get; }
+
+    /// <summary>Measures the native header representation.</summary>
+    /// <param name="headers">The envelope headers.</param>
+    /// <returns>The native header size in bytes.</returns>
+    static abstract long GetNativeHeaderSize(IReadOnlyDictionary<string, string> headers);
+
+    /// <summary>Maps a logical name to a provider-native entity name.</summary>
+    /// <param name="logicalName">The logical entity name.</param>
+    /// <returns>The provider-native entity name.</returns>
+    static abstract string ToNativeEntityName(string logicalName);
 }
 
 /// <summary>Receive seam for transports that provide locked deliveries.</summary>

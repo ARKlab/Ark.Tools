@@ -16,9 +16,9 @@ measurement, and point-to-point messaging must be one explicit capability.
 
 ## Execution map
 
-- **Public capability API**: rename `MessagingCapabilities.Receive` to
+- **Public capability API**: rename `MessagingCapabilities.SendReceive` to
   `SendReceive`; a network without it is publish-only.
-- **Public bus API**: rename delayed `Send` overloads to `Defer`; current-message
+- **Public bus API**: delayed `Send` overloads are renamed to `Defer`; current-message
   deferral remains future work and is not implemented here.
 - **Network declarations/options**: remove maximum transport payload and DataBus
   offload threshold members and defaults.
@@ -44,10 +44,11 @@ measurement, and point-to-point messaging must be one explicit capability.
 4. Define the transport's maximum complete payload size as a static interface
    contract. Runtime composition must retain that fixed value without reflection
    or provider type switches.
-5. Replace complete native-envelope measurement with a method that computes only
-   the transport-native header representation size. Document whether each result
-   is exact or a conservative upper bound.
-6. Define complete payload size as native headers plus serialized body.
+5. Keep native-header measurement for reference envelopes and add complete
+   native-payload measurement. Document whether each result is exact or a
+   conservative upper bound; Storage Queue must measure its single Base64
+   encoded canonical envelope, not raw header plus body lengths.
+6. Define complete payload size through the transport-native payload method.
    Serialization remains streaming/generic-only; compression completes before
    final body sizing.
 7. When the complete inline payload exceeds the transport maximum, store the body
@@ -62,9 +63,17 @@ measurement, and point-to-point messaging must be one explicit capability.
 ## Core code shapes
 
 Each concrete transport type supplies a fixed maximum complete payload size
-through the static transport contract and computes the size of its native
-headers for a specific header set. The shared runtime adds body length and owns
-the transparent compression/DataBus decision.
+through the static transport contract and computes native size for a complete
+header/payload pair. Native header sizing and logical-name mapping are static
+abstract members of the generic transport contract; the non-generic transport
+seam remains available for DI. The default implementation adds body length;
+encodings such as Storage Queue override it to measure the exact native
+representation.
+
+Storage Queue advertises a conservative 48 KiB effective ceiling (three
+quarters of the native 64 KiB limit) to account for envelope framing overhead
+after Base64 encoding.
+The shared runtime owns the transparent compression/DataBus decision.
 
 `SendReceive` gates both routing to a processing participant and receive
 hosting. `PubSub` remains independent. Scheduled delivery remains separately
@@ -106,15 +115,15 @@ API.
 
 ## Acceptance
 
-- [ ] `SendReceive` replaces `Receive` throughout public, generated, and
+- [x] `SendReceive` replaces `Receive` throughout public, generated, and
   documented surfaces.
-- [ ] Delayed sends use `Defer`; current-message deferral remains out of scope.
-- [ ] Network payload/offload settings are removed.
-- [ ] Every transport implements the static payload limit and header sizing
+- [x] Delayed sends use `Defer`; current-message deferral remains out of scope.
+- [x] Network payload/offload settings are removed.
+- [x] Every transport implements the static payload limit and header sizing
   contract.
-- [ ] Runtime claim-check uses complete headers-plus-body size.
-- [ ] Sample, guides, API baselines, and generated-source inspections are
+- [x] Runtime claim-check uses complete headers-plus-body size.
+- [x] Sample, guides, API baselines, and generated-source inspections are
   updated.
-- [ ] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.
+- [x] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

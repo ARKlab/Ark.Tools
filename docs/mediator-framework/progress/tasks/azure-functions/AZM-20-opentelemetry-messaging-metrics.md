@@ -125,14 +125,14 @@ requiring a specific exporter.
 
 ## Acceptance
 
-- [ ] The selected stable OpenTelemetry messaging metric convention is recorded.
-- [ ] Producer and consumer baseline instruments are implemented with stable
+- [x] The selected stable OpenTelemetry messaging metric convention is recorded.
+- [x] Producer and consumer baseline instruments are implemented with stable
   names, units, descriptions, and attributes.
-- [ ] Processing outcomes reflect final settlement.
-- [ ] Default instrumentation and opt-in collection/export are documented and
+- [x] Processing outcomes reflect final settlement.
+- [x] Default instrumentation and opt-in collection/export are documented and
   tested.
-- [ ] Forbidden high-cardinality attributes are absent.
-- [ ] Sample and observability guides are updated.
+- [x] Forbidden high-cardinality attributes are absent.
+- [x] Sample and observability guides are updated.
 - [ ] The [task board](../README.md) status for AZM-20 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

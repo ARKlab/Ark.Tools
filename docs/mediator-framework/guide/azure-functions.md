@@ -378,6 +378,12 @@ are limited to 46,080 canonical bytes, leaving bounded metadata capacity for a
 Use a network transport threshold of 46,080 bytes or less so larger payloads
 claim-check before encoding.
 
+The runtime sizes the complete native envelope before deciding whether to
+claim-check. Storage Queue overrides the common header-plus-body estimate and
+measures the exact UTF-8 size of its single Base64-encoded canonical envelope;
+this prevents raw binary payload lengths from underestimating Azure's 64-KiB
+encoded limit.
+
 `visibilityTimeout` must equal the participant's positive `RetryDelay`.
 `maxDequeueCount` must equal the generated manifest maximum: `N` when
 second-level handling is disabled and `2N` when it is enabled. The generator
@@ -699,3 +705,32 @@ The repository boundary project is
 `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`; the sample
 also covers its sender composition in
 [`AzureFunctionsRebusTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).
+
+# Logical names and provider entities
+
+Messaging contracts, participants, networks, topics, and subscriptions use
+lowercase logical names. Names are non-empty and may contain letters, digits,
+`-`, `_`, `.`, and `/`; separators may not be repeated or appear at either
+edge. Logical names are retained in `amf1-msg-type`, registries, and API
+snapshots. Azure Service Bus and Storage Queue adapters map them
+deterministically to provider names, preserving supported characters when
+possible and otherwise appending a SHA-256 suffix to a readable prefix.
+`FormerNames` are receive-only aliases and never create topology resources;
+renaming a publisher or current contract name requires explicit migration.
+
+# Messaging metrics
+
+Native messaging metrics use the stable OpenTelemetry messaging semantic
+conventions version 1.37.0 and the `Ark.MediatorFramework.Messaging` meter.
+The baseline records `messaging.client.operation.duration` (seconds) for
+send, publish, and defer; `messaging.process.duration` (seconds) through final
+settlement; `messaging.message.time_in_queue` (seconds) for valid timestamps;
+`messaging.process.messages` outcomes; and native
+`messaging.process.attempts`. Network, participant, contract, transport, and
+operation values are bounded topology attributes. Message IDs, correlation
+IDs, attachment IDs, and exception text are never recorded.
+
+Instrumentation is present and inert by default. Collection is opt-in:
+configure an OpenTelemetry meter provider with
+`AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)`; no exporter is
+required by the messaging runtime.
