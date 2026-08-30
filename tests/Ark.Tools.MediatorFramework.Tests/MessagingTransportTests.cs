@@ -26,6 +26,25 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     [TestMethod]
+    public async Task InMemoryTransportUsesConfigurableConservativePayloadLimit()
+    {
+        var transport = new InMemoryMessagingTransport(
+            SystemClock.Instance,
+            Duration.FromMinutes(1),
+            maximumPayloadBytes: 4);
+
+        var action = async () => await transport.SendAsync(
+            "queue",
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            _sequence(5),
+            null,
+            default).ConfigureAwait(false);
+
+        await action.Should().ThrowAsync<ArgumentOutOfRangeException>().ConfigureAwait(false);
+        transport.MaximumPayloadBytes.Should().Be(4);
+    }
+
+    [TestMethod]
     public async Task AbandonRequeuesAndIncrementsDeliveryCount()
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));

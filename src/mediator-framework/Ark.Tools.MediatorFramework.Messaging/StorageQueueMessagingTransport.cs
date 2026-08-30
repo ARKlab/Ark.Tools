@@ -17,8 +17,8 @@ public sealed class StorageQueueMessagingTransport :
     IMessagingReceiveTransport,
     IMessagingTransportManagement
 {
-    /// <summary>Gets the maximum complete Base64-encoded queue payload size.</summary>
-    public const long MaximumPayloadSizeBytes = 64 * 1024;
+    /// <summary>Gets the conservative complete Base64-encoded queue payload size.</summary>
+    public const long MaximumPayloadSizeBytes = 48 * 1024;
     private static readonly TimeSpan _maximumVisibilityDelay = TimeSpan.FromDays(7);
     private readonly QueueServiceClient _serviceClient;
     private readonly ConcurrentDictionary<string, QueueClient> _queues = new(StringComparer.Ordinal);
@@ -83,6 +83,12 @@ public sealed class StorageQueueMessagingTransport :
     /// <inheritdoc />
     public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
+    /// <summary>Maps a logical name to a Storage Queue entity name.</summary>
+    public static string ToNativeEntityName(string logicalName)
+    {
+        return MessagingEntityNameMapper.ToStorageQueue(logicalName);
+    }
+
     /// <inheritdoc />
     public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
@@ -108,14 +114,14 @@ public sealed class StorageQueueMessagingTransport :
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        queue = MessagingEntityNameMapper.ToStorageQueue(queue);
+        queue = ToNativeEntityName(queue);
         ArgumentNullException.ThrowIfNull(headers);
 
         var encoded = StorageQueueEnvelopeCodec.Encode(headers, payload);
         if (Encoding.UTF8.GetByteCount(encoded) > MaximumPayloadSizeBytes)
             throw new ArgumentOutOfRangeException(
                 nameof(payload),
-                "The completed Storage Queue message exceeds the 64 KiB limit.");
+                "The completed Storage Queue message exceeds the conservative 48 KiB limit.");
         var visibilityDelay = _scheduledDelay(dueTime);
         await _queue(queue).SendMessageAsync(
             BinaryData.FromString(encoded),
@@ -142,7 +148,7 @@ public sealed class StorageQueueMessagingTransport :
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        queue = MessagingEntityNameMapper.ToStorageQueue(queue);
+        queue = ToNativeEntityName(queue);
         return _receiveAsync(queue, ctk);
     }
 
@@ -154,7 +160,7 @@ public sealed class StorageQueueMessagingTransport :
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        queue = MessagingEntityNameMapper.ToStorageQueue(queue);
+        queue = ToNativeEntityName(queue);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumDeliveryCount, 1);
         ArgumentException.ThrowIfNullOrEmpty(ownerIdentity);
         await _queue(queue).CreateIfNotExistsAsync(cancellationToken: ctk).ConfigureAwait(false);

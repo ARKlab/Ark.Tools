@@ -37,17 +37,17 @@ public sealed class MessagingLogicalNameTests
     public void InMemoryNamesRemainUnchanged()
     {
         var logical = "books-print_book.v1/events";
-        MessagingEntityNameMapper.ToInMemory(logical).Should().Be(logical);
-        MessagingEntityNameMapper.ToServiceBus(logical).Should().Be("books-print_book.v1-events");
-        MessagingEntityNameMapper.ToStorageQueue(logical).Should().NotBe(logical);
+        InMemoryMessagingTransport.ToNativeEntityName(logical).Should().Be(logical);
+        ServiceBusMessagingTransport.ToNativeEntityName(logical).Should().Be("books-print_book.v1-events");
+        StorageQueueMessagingTransport.ToNativeEntityName(logical).Should().NotBe(logical);
     }
 
     [TestMethod]
     public void LongNamesUseStableHashSuffix()
     {
         var logical = new string('a', 300);
-        var first = MessagingEntityNameMapper.ToServiceBus(logical);
-        var second = MessagingEntityNameMapper.ToServiceBus(logical);
+        var first = ServiceBusMessagingTransport.ToNativeEntityName(logical);
+        var second = ServiceBusMessagingTransport.ToNativeEntityName(logical);
         first.Should().Be(second);
         first.Length.Should().Be(260);
         first.Should().Contain("-");

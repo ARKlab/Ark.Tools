@@ -68,8 +68,8 @@ infrastructure.
    - scheduled envelopes become visible at their due time;
    - thread-safe under concurrent senders, competing consumers, and
      settlement races;
-   - no hard inline-envelope ceiling (`long.MaxValue`-style unbounded): the
-     network payload threshold applies alone.
+   - a configurable conservative inline-envelope ceiling below the real cloud
+     transports, so oversized and DataBus paths are exercised in tests.
 4. Implement a runtime message pump for receive-capable transports: a
    start/stop async loop that takes locked deliveries and invokes a supplied
    callback. The pump is a long-running receive worker hosted only by test or

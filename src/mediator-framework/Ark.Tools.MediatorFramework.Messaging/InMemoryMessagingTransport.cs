@@ -12,8 +12,8 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>First-class in-memory transport with scheduled delivery and PeekLock settlement.</summary>
 public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMessagingTransportManagement
 {
-    /// <summary>Gets the maximum complete payload size; in-memory transport is unbounded.</summary>
-    public const long MaximumPayloadSizeBytes = long.MaxValue;
+    /// <summary>Gets the default maximum complete payload size for in-memory messages.</summary>
+    public const long DefaultMaximumPayloadSizeBytes = 32 * 1024;
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
     private const string _maximumDeliveryReason = "maximum-delivery-count";
@@ -25,32 +25,39 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         new(StringComparer.Ordinal);
     private readonly IClock _clock;
     private readonly Duration _lockDuration;
+    private readonly long _maximumPayloadBytes;
     private long _scheduleSequence;
 
     /// <summary>Creates an in-memory transport using the system clock and one-minute locks.</summary>
     public InMemoryMessagingTransport()
-        : this(SystemClock.Instance, Duration.FromMinutes(1))
+        : this(SystemClock.Instance, Duration.FromMinutes(1), DefaultMaximumPayloadSizeBytes)
     {
     }
 
     /// <summary>Creates an in-memory transport with a lock duration and the system clock.</summary>
     /// <param name="lockDuration">The PeekLock duration.</param>
     public InMemoryMessagingTransport(Duration lockDuration)
-        : this(SystemClock.Instance, lockDuration)
+        : this(SystemClock.Instance, lockDuration, DefaultMaximumPayloadSizeBytes)
     {
     }
 
     /// <summary>Creates an in-memory transport with a supplied clock and lock duration.</summary>
     /// <param name="clock">The clock used for scheduled delivery and lock expiry.</param>
     /// <param name="lockDuration">The PeekLock duration.</param>
-    public InMemoryMessagingTransport(IClock clock, Duration lockDuration)
+    /// <param name="maximumPayloadBytes">The conservative maximum complete payload size.</param>
+    public InMemoryMessagingTransport(
+        IClock clock,
+        Duration lockDuration,
+        long maximumPayloadBytes = DefaultMaximumPayloadSizeBytes)
     {
         ArgumentNullException.ThrowIfNull(clock);
         if (lockDuration <= Duration.Zero)
             throw new ArgumentOutOfRangeException(nameof(lockDuration), "The lock duration must be positive.");
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maximumPayloadBytes, 0);
 
         _clock = clock;
         _lockDuration = lockDuration;
+        _maximumPayloadBytes = maximumPayloadBytes;
     }
 
     /// <inheritdoc />
@@ -58,7 +65,13 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
+    public long MaximumPayloadBytes => _maximumPayloadBytes;
+
+    /// <summary>Maps a logical name to its in-memory entity name.</summary>
+    public static string ToNativeEntityName(string logicalName)
+    {
+        return MessagingEntityNameMapper.ToInMemory(logicalName);
+    }
 
     /// <summary>Configures the native retry limit and delay for a queue.</summary>
     /// <param name="queue">The queue name.</param>
@@ -118,6 +131,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         ArgumentException.ThrowIfNullOrEmpty(queue);
         ArgumentNullException.ThrowIfNull(headers);
         ctk.ThrowIfCancellationRequested();
+        _validateSize(headers, payload);
 
         var envelope = InMemoryEnvelope._create(headers, payload);
         lock (_gate)
@@ -148,6 +162,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         ArgumentException.ThrowIfNullOrEmpty(topic);
         ArgumentNullException.ThrowIfNull(headers);
         ctk.ThrowIfCancellationRequested();
+        _validateSize(headers, payload);
 
         lock (_gate)
         {
@@ -323,6 +338,16 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
         queue = new InMemoryQueue();
         _queues.Add(name, queue);
         return queue;
+    }
+
+    private void _validateSize(
+        IReadOnlyDictionary<string, string> headers,
+        in ReadOnlySequence<byte> payload)
+    {
+        if (MeasureNativeHeaders(headers) + payload.Length > _maximumPayloadBytes)
+            throw new ArgumentOutOfRangeException(
+                nameof(payload),
+                "The complete in-memory message exceeds the configured payload limit.");
     }
 
     private Task _settle(

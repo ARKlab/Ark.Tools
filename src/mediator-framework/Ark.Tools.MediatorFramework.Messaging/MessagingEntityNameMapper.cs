@@ -4,7 +4,7 @@
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Maps logical messaging names to deterministic provider entity names.</summary>
-public static class MessagingEntityNameMapper
+internal static class MessagingEntityNameMapper
 {
     /// <summary>Returns an unchanged logical name for the InMemory transport.</summary>
     /// <param name="logicalName">The complete logical name.</param>

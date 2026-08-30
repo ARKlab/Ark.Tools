@@ -66,6 +66,8 @@ Each concrete transport type supplies a fixed maximum complete payload size
 through the static transport contract and computes native size for a complete
 header/payload pair. The default implementation adds body length; encodings
 such as Storage Queue override it to measure the exact native representation.
+Storage Queue advertises a conservative 48 KiB effective ceiling (three
+quarters of the native 64 KiB limit) to leave room for Base64 expansion.
 The shared runtime owns the transparent compression/DataBus decision.
 
 `SendReceive` gates both routing to a processing participant and receive
@@ -115,8 +117,8 @@ API.
 - [x] Every transport implements the static payload limit and header sizing
   contract.
 - [x] Runtime claim-check uses complete headers-plus-body size.
-- [ ] Sample, guides, API baselines, and generated-source inspections are
+- [x] Sample, guides, API baselines, and generated-source inspections are
   updated.
-- [ ] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.
+- [x] The [task board](../README.md) status for AZM-18 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

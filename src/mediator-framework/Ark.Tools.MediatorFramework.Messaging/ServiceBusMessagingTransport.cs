@@ -40,6 +40,12 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
     /// <inheritdoc />
     public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
+    /// <summary>Maps a logical name to a Service Bus entity name.</summary>
+    public static string ToNativeEntityName(string logicalName)
+    {
+        return MessagingEntityNameMapper.ToServiceBus(logicalName);
+    }
+
     /// <inheritdoc />
     public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
@@ -68,7 +74,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        queue = MessagingEntityNameMapper.ToServiceBus(queue);
+        queue = ToNativeEntityName(queue);
         ArgumentNullException.ThrowIfNull(headers);
         _validateSize(headers, payload);
 
@@ -91,7 +97,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(topic);
-        topic = MessagingEntityNameMapper.ToServiceBus(topic);
+        topic = ToNativeEntityName(topic);
         ArgumentNullException.ThrowIfNull(headers);
         _validateSize(headers, payload);
 
@@ -108,7 +114,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        queue = MessagingEntityNameMapper.ToServiceBus(queue);
+        queue = ToNativeEntityName(queue);
         return _receiveAsync(queue, ctk);
     }
 
