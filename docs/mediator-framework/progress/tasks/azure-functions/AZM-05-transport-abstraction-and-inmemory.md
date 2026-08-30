@@ -108,7 +108,7 @@ public interface IMessagingTransport
 
     /// <summary>Gets the hard inline-envelope ceiling in bytes; null means no hard
     /// ceiling (InMemory).</summary>
-    long? MaximumPayloadBytes { get; }
+    long MaximumPayloadBytes { get; }
 
     /// <summary>Measures the completed native representation of an envelope, including
     /// headers and transport encoding. Claim-check decisions use this measurement, never
@@ -187,7 +187,7 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
          | MessagingCapabilities.ScheduledSend;
 
     /// <summary>No hard inline-envelope ceiling: the network payload threshold applies alone.</summary>
-    public long? MaximumPayloadBytes => null;
+    public long MaximumPayloadBytes => long.MaxValue;
 
     public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {

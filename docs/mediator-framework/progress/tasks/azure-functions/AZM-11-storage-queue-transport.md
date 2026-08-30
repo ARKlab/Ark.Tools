@@ -229,7 +229,7 @@ public static class StorageQueueLimits
 }
 
 // On the transport (Capabilities = Receive | ScheduledSend; no PubSub):
-public long? MaximumPayloadBytes => StorageQueueLimits.MaximumEncodedTextBytes;
+public long MaximumPayloadBytes => StorageQueueLimits.MaximumEncodedTextBytes;
 
 public long MeasureNativeHeaders(
     IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)

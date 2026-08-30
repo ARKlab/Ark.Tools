@@ -166,8 +166,7 @@ public sealed class MessagingPayloadSender
         // 2. Threshold check on the FINAL compressed bytes plus the measured complete
         //    native envelope (headers and transport encoding included, AZM-05 seam).
         var native = transport.MeasureNativeHeaders(headers) + payload.Length;
-        var mustOffload = payload.Length > _network.DataBusMaximumAttachmentBytes
-            || native > transport.MaximumPayloadBytes;
+        var mustOffload = native > transport.MaximumPayloadBytes;
         if (!mustOffload)
             return payload;
 
