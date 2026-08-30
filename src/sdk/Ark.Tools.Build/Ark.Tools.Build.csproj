@@ -7,6 +7,7 @@
     <PackageId>Ark.Tools.Build</PackageId>
     <Description>Ark.Tools MSBuild build assets.</Description>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
     <!-- NU5128 is expected because this package intentionally contains only MSBuild assets. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <IncludeSymbols>false</IncludeSymbols>
@@ -28,6 +29,8 @@
     <None Include="configuration\analyzers\Ark.Tools.VisualStudioThreading.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.VisualStudioThreading.globalconfig" />
     <None Include="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" />
     <None Include="configuration\analyzers\Ark.Tools.Core.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.Core.globalconfig" />
-    <None Include="configuration\analyzers\Ark.Tools.BannedApi.BannedSymbols.txt" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.BannedApi.BannedSymbols.txt" />
+    <None Include="configuration\analyzers\BannedSymbols.Ark.Tools.txt"
+          Pack="true"
+          PackagePath="configuration\analyzers\Ark.Tools.BannedApi.BannedSymbols.txt;configuration\analyzers\BannedSymbols.Ark.Tools.txt" />
   </ItemGroup>
 </Project>

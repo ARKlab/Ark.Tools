@@ -1,16 +1,16 @@
 <Project>
   <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildTargetsImported)' != 'true'">
     <ArkToolsBuildTargetsImported>true</ArkToolsBuildTargetsImported>
-    <_ArkToolsBuildTargetsImporting>true</_ArkToolsBuildTargetsImporting>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(_ArkToolsBuildTargetsImporting)' == 'true' and '$(ArkToolsBuildImported)' != 'true'">
+  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
     <ArkToolsBuildImported>true</ArkToolsBuildImported>
     <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(_ArkToolsBuildTargetsImporting)' == 'true' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.BannedApi.BannedSymbols.txt"
+  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.Tools.txt"
+                     KeepDuplicates="false"
                      Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
   </ItemGroup>
 
@@ -22,8 +22,4 @@
       <Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Moq.CodeAnalysis'" />
     </ItemGroup>
   </Target>
-
-  <PropertyGroup Condition="'$(_ArkToolsBuildTargetsImporting)' == 'true'">
-    <_ArkToolsBuildTargetsImporting>false</_ArkToolsBuildTargetsImporting>
-  </PropertyGroup>
 </Project>

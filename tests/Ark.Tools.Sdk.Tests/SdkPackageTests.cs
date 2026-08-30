@@ -40,13 +40,38 @@ public sealed class SdkPackageTests
         "ReportAnalyzer",
         "EnforceCodeStyleInBuild",
         "TreatTSqlWarningsAsErrors",
-        "RunSqlCodeAnalysis"
+        "RunSqlCodeAnalysis",
+        "ArkToolsLocalAnalyzerConfigRoot",
+        "ArkToolsLocalAnalyzerConfigRoot"
     ];
 
     private static readonly string[] _canonicalTargetProperties =
     [
+        "ArkToolsBuildTargetsImported",
         "ArkToolsBuildImported",
         "ArkToolsBuildImportCount"
+    ];
+
+    private static readonly string[] _configurationAssets =
+    [
+        "configuration/coding-style/Ark.Tools.CodingStyle.editorconfig",
+        "configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig",
+        "configuration/analyzers/Ark.Tools.MeziantouAnalyzer.globalconfig",
+        "configuration/analyzers/Ark.Tools.ErrorProne.globalconfig",
+        "configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig",
+        "configuration/analyzers/Ark.Tools.IdentityModel.globalconfig",
+        "configuration/analyzers/Ark.Tools.Core.globalconfig",
+        "configuration/analyzers/Ark.Tools.BannedApi.BannedSymbols.txt"
+    ];
+
+    private static readonly string[] _globalConfigurationAssets =
+    [
+        "Ark.Tools.NetAnalyzers.globalconfig",
+        "Ark.Tools.MeziantouAnalyzer.globalconfig",
+        "Ark.Tools.ErrorProne.globalconfig",
+        "Ark.Tools.VisualStudioThreading.globalconfig",
+        "Ark.Tools.IdentityModel.globalconfig",
+        "Ark.Tools.Core.globalconfig"
     ];
 
     private static readonly string[] _standardImplicitUsings =
@@ -61,6 +86,27 @@ public sealed class SdkPackageTests
     ];
 
     private static readonly string[] _buildPackageReference = ["Ark.Tools.Build"];
+
+    private static readonly string[] _removedAnalyzerNames = ["DevLooped.SponsorLink", "Moq.CodeAnalysis"];
+
+    private static readonly string[] _codingStyleAsset = ["Ark.Tools.CodingStyle.editorconfig"];
+
+    private static readonly string[] _bannedApiAsset = ["BannedSymbols.Ark.Tools.txt"];
+
+    private static readonly string[] _composedBannedApiAssets =
+    [
+        "BannedSymbols.Ark.Tools.txt",
+        "BannedSymbols.Consumer.txt"
+    ];
+
+    private static readonly string[] _preservedAnalyzer = ["Preserved.Analyzer.dll"];
+
+    private static readonly string[] _allSyntheticAnalyzers =
+    [
+        "DevLooped.SponsorLink.dll",
+        "Moq.CodeAnalysis.dll",
+        "Preserved.Analyzer.dll"
+    ];
 
     private static readonly string[] _boundaryProperties =
     [
@@ -109,6 +155,10 @@ public sealed class SdkPackageTests
         using var sdk = await ZipFile.OpenReadAsync(Path.Join(feed, "Ark.Tools.Sdk.999.9.9.nupkg"));
         Assert.IsNotNull(build.GetEntry("build/Ark.Tools.Build.props"));
         Assert.IsNotNull(build.GetEntry("buildTransitive/Ark.Tools.Build.props"));
+        foreach (var asset in _configurationAssets)
+        {
+            Assert.IsNotNull(build.GetEntry(asset), asset);
+        }
         Assert.IsNull(build.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
         var sdkPropsEntry = sdk.GetEntry("Sdk/Sdk.props");
         Assert.IsNotNull(sdkPropsEntry);
@@ -176,10 +226,10 @@ public sealed class SdkPackageTests
     }
 
     /// <summary>
-    /// Ensures the canonical Build assets contain only the accepted public property baseline.
+    /// Ensures the canonical Build assets contain only the accepted public baseline.
     /// </summary>
     [TestMethod]
-    public void CanonicalBuildAssetsContainOnlyAcceptedProperties()
+    public void CanonicalBuildAssetsContainOnlyAcceptedPolicy()
     {
         var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
         var buildRoot = Path.Join(root, "src", "sdk", "Ark.Tools.Build", "build");
@@ -191,9 +241,289 @@ public sealed class SdkPackageTests
         CollectionAssert.AreEqual(
             _canonicalTargetProperties,
             targets.Descendants("PropertyGroup").Elements().Select(element => element.Name.LocalName).ToArray());
-        Assert.IsFalse(props.Descendants("ItemGroup").Any());
-        Assert.IsFalse(targets.Descendants("ItemGroup").Any());
-        Assert.IsFalse(targets.Descendants("Target").Any());
+        Assert.AreEqual(8, props.Descendants("ItemGroup").Elements().Count());
+        Assert.AreEqual(1, targets.Descendants("ItemGroup").Elements("AdditionalFiles").Count());
+        var sponsorLinkTarget = targets.Descendants("Target").Single();
+        Assert.AreEqual("Disable_SponsorLink", sponsorLinkTarget.Attribute("Name")?.Value);
+        CollectionAssert.AreEquivalent(
+            _removedAnalyzerNames,
+            sponsorLinkTarget.Descendants("Analyzer")
+                .Select(element => _removedAnalyzerNames.Single(name =>
+                    element.Attribute("Condition")?.Value.Contains(name, StringComparison.Ordinal) == true))
+                .ToArray());
+    }
+
+    /// <summary>
+    /// Ensures analyzer inventories and split diagnostic ownership match the accepted design.
+    /// </summary>
+    [TestMethod]
+    public void AnalyzerConfigurationInventoriesMatchDesign()
+    {
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var configurationRoot = Path.Join(root, "src", "sdk", "Ark.Tools.Build", "configuration", "analyzers");
+        var files = new Dictionary<string, int>
+        {
+            ["Ark.Tools.NetAnalyzers.globalconfig"] = 97,
+            ["Ark.Tools.MeziantouAnalyzer.globalconfig"] = 34,
+            ["Ark.Tools.ErrorProne.globalconfig"] = 30,
+            ["Ark.Tools.VisualStudioThreading.globalconfig"] = 23,
+            ["Ark.Tools.IdentityModel.globalconfig"] = 1,
+            ["Ark.Tools.Core.globalconfig"] = 1
+        };
+
+        foreach (var file in files)
+        {
+            var path = Path.Join(configurationRoot, file.Key);
+            Assert.AreEqual(file.Value, _countConfiguredDiagnostics(path), file.Key);
+            StringAssert.Contains(File.ReadAllText(path), "global_level = 90", StringComparison.Ordinal);
+        }
+
+        var bannedSymbols = File.ReadAllLines(Path.Join(configurationRoot, "BannedSymbols.Ark.Tools.txt"))
+            .Count(line => !string.IsNullOrWhiteSpace(line) && !line.TrimStart().StartsWith('#'));
+        Assert.AreEqual(93, bannedSymbols);
+
+        var ownershipFiles = Directory.GetFiles(configurationRoot, "*.globalconfig")
+            .Append(Path.Join(root, ".editorconfig"))
+            .ToArray();
+        _assertDiagnosticOwner(ownershipFiles, "IDE1006", Path.Join(root, ".editorconfig"));
+        _assertDiagnosticOwner(
+            ownershipFiles,
+            "IDX00001",
+            Path.Join(configurationRoot, "Ark.Tools.IdentityModel.globalconfig"));
+        _assertDiagnosticOwner(
+            ownershipFiles,
+            "ARKCORE005",
+            Path.Join(configurationRoot, "Ark.Tools.Core.globalconfig"));
+    }
+
+    /// <summary>
+    /// Ensures every packaged configuration asset is independently switchable and capability safe.
+    /// </summary>
+    [TestMethod]
+    public async Task AnalyzerConfigurationAssetsAreSwitchableAndCapabilitySafe()
+    {
+        const string packageVersion = "999.9.11";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-analyzer-configuration");
+        if (Directory.Exists(fixtureRoot))
+        {
+            Directory.Delete(fixtureRoot, true);
+        }
+        var feed = Path.Join(fixtureRoot, "feed");
+        Directory.CreateDirectory(feed);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion={packageVersion}");
+
+        using var baseline = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            "assets-baseline",
+            "Consumer.csproj",
+            _createCSharpProject(packageVersion));
+        var editorConfigFiles = _getArkBuildItemFileNames(baseline, "EditorConfigFiles");
+        CollectionAssert.Contains(editorConfigFiles, _codingStyleAsset[0]);
+        Assert.AreEqual(1, editorConfigFiles.Count(file => file == _codingStyleAsset[0]));
+        CollectionAssert.AreEquivalent(
+            _globalConfigurationAssets,
+            _getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles"));
+        CollectionAssert.AreEqual(
+            _bannedApiAsset,
+            _getArkBuildItemFileNames(baseline, "AdditionalFiles"));
+
+        var switches = new Dictionary<string, string>
+        {
+            ["EnableArkToolsCodingStyle"] = "Ark.Tools.CodingStyle.editorconfig",
+            ["EnableArkToolsNetAnalyzers"] = "Ark.Tools.NetAnalyzers.globalconfig",
+            ["EnableArkToolsMeziantouAnalyzer"] = "Ark.Tools.MeziantouAnalyzer.globalconfig",
+            ["EnableArkToolsErrorProne"] = "Ark.Tools.ErrorProne.globalconfig",
+            ["EnableArkToolsVisualStudioThreading"] = "Ark.Tools.VisualStudioThreading.globalconfig",
+            ["EnableArkToolsIdentityModelConfiguration"] = "Ark.Tools.IdentityModel.globalconfig",
+            ["EnableArkToolsCoreConfiguration"] = "Ark.Tools.Core.globalconfig",
+            ["EnableArkToolsBannedApi"] = "BannedSymbols.Ark.Tools.txt"
+        };
+        var baselineFiles = _getAllArkBuildConfigurationFileNames(baseline);
+        foreach (var item in switches)
+        {
+            using var disabled = await _evaluateAsync(
+                fixtureRoot,
+                feed,
+                $"disabled-{item.Key}",
+                "Consumer.csproj",
+                _createCSharpProject(packageVersion),
+                $"<{item.Key}>false</{item.Key}>");
+            CollectionAssert.AreEquivalent(
+                baselineFiles.Where(file => !string.Equals(file, item.Value, StringComparison.Ordinal)).ToArray(),
+                _getAllArkBuildConfigurationFileNames(disabled),
+                item.Key);
+        }
+
+        var localConfigRoot = Path.Join(fixtureRoot, "local-config");
+        Directory.CreateDirectory(localConfigRoot);
+        var localConfig = Path.Join(localConfigRoot, ".consumer.globalconfig");
+        await File.WriteAllTextAsync(localConfig, "is_global = true\nglobal_level = 100\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
+        var localRootProperty = $"<ArkToolsLocalAnalyzerConfigRoot>{localConfigRoot}</ArkToolsLocalAnalyzerConfigRoot>";
+        using var local = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            "local-config-enabled",
+            "Consumer.csproj",
+            _createCSharpProject(packageVersion),
+            localRootProperty);
+        CollectionAssert.Contains(_getItemIdentities(local, "GlobalAnalyzerConfigFiles"), localConfig);
+        using var localDisabled = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            "local-config-disabled",
+            "Consumer.csproj",
+            _createCSharpProject(packageVersion),
+            $"{localRootProperty}<EnableArkToolsLocalAnalyzerConfigDiscovery>false</EnableArkToolsLocalAnalyzerConfigDiscovery>");
+        CollectionAssert.DoesNotContain(_getItemIdentities(localDisabled, "GlobalAnalyzerConfigFiles"), localConfig);
+
+        using var sql = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            "configuration-sql",
+            "Consumer.sqlproj",
+            _createSqlProject(packageVersion));
+        Assert.AreEqual(0, _getAllArkBuildConfigurationFileNames(sql).Length);
+
+        var scenarioRoot = Path.Join(fixtureRoot, "assets-baseline");
+        await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Consumer.cs"), "internal sealed class Consumer { }\n").ConfigureAwait(false);
+        await _run("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(scenarioRoot));
+        Assert.IsFalse(File.Exists(Path.Join(scenarioRoot, "Ark.Tools.CodingStyle.editorconfig")));
+        Assert.IsFalse(File.Exists(Path.Join(scenarioRoot, "Ark.Tools.NetAnalyzers.globalconfig")));
+    }
+
+    /// <summary>
+    /// Ensures compiler configuration precedence and packaged banned symbols work in consumer source.
+    /// </summary>
+    [TestMethod]
+    public async Task CompilerConfigurationPrecedenceAndBannedApiAreEnforced()
+    {
+        const string packageVersion = "999.9.12";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-analyzer-compiler");
+        if (Directory.Exists(fixtureRoot))
+        {
+            Directory.Delete(fixtureRoot, true);
+        }
+        var feed = Path.Join(fixtureRoot, "feed");
+        Directory.CreateDirectory(feed);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion={packageVersion}");
+
+        var source = "internal sealed class Consumer { ~Consumer() { } }\n";
+        var packagedRoot = await _createCompilerScenarioAsync(fixtureRoot, feed, "packaged", packageVersion, source);
+        var packagedError = await _runForExitCode(
+            "dotnet",
+            $"build \"{Path.Join(packagedRoot, "Consumer.csproj")}\" --no-restore",
+            _createEnvironment(packagedRoot));
+        Assert.AreNotEqual(0, packagedError.ExitCode);
+        StringAssert.Contains(packagedError.Output, "CA1821", StringComparison.Ordinal);
+
+        var globalRoot = await _createCompilerScenarioAsync(fixtureRoot, feed, "local-global", packageVersion, source);
+        await File.WriteAllTextAsync(
+            Path.Join(globalRoot, ".globalconfig"),
+            "is_global = true\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
+        await _run("dotnet", $"build \"{Path.Join(globalRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(globalRoot));
+
+        var editorRoot = await _createCompilerScenarioAsync(fixtureRoot, feed, "source-editor", packageVersion, source);
+        await File.WriteAllTextAsync(
+            Path.Join(editorRoot, ".globalconfig"),
+            "is_global = true\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(editorRoot, ".editorconfig"),
+            "root = true\n[*.cs]\ndotnet_diagnostic.CA1821.severity = error\n").ConfigureAwait(false);
+        var editorError = await _runForExitCode(
+            "dotnet",
+            $"build \"{Path.Join(editorRoot, "Consumer.csproj")}\" --no-restore",
+            _createEnvironment(editorRoot));
+        Assert.AreNotEqual(0, editorError.ExitCode);
+        StringAssert.Contains(editorError.Output, "CA1821", StringComparison.Ordinal);
+
+        var nestedRoot = await _createCompilerScenarioAsync(fixtureRoot, feed, "nested-editor", packageVersion, "");
+        var nested = Path.Join(nestedRoot, "Nested");
+        Directory.CreateDirectory(nested);
+        await File.WriteAllTextAsync(
+            Path.Join(nestedRoot, ".globalconfig"),
+            "is_global = true\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(nestedRoot, ".editorconfig"),
+            "root = true\n[*.cs]\ndotnet_diagnostic.CA1821.severity = error\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(nested, ".editorconfig"),
+            "[*.cs]\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(nested, "Consumer.cs"), source).ConfigureAwait(false);
+        await _run("dotnet", $"build \"{Path.Join(nestedRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(nestedRoot));
+
+        var bannedProject = _createCSharpProject(
+            packageVersion,
+            "",
+            """<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" PrivateAssets="all" />""",
+            """<AdditionalFiles Include="BannedSymbols.Consumer.txt" />""");
+        using var banned = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            "banned-api",
+            "Consumer.csproj",
+            bannedProject);
+        var bannedRoot = Path.Join(fixtureRoot, "banned-api");
+        await File.WriteAllTextAsync(
+            Path.Join(bannedRoot, "Consumer.cs"),
+            "internal static class Consumer { static Consumer() { _ = System.DateTime.Now; } }\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(bannedRoot, "BannedSymbols.Consumer.txt"),
+            "P:System.DateTime.Today;Use an explicit timezone\n").ConfigureAwait(false);
+        CollectionAssert.AreEquivalent(
+            _composedBannedApiAssets,
+            _getItemIdentities(banned, "AdditionalFiles").Select(identity => Path.GetFileName(identity) ?? "").ToArray());
+        var bannedError = await _runForExitCode(
+            "dotnet",
+            $"build \"{Path.Join(bannedRoot, "Consumer.csproj")}\" --no-restore",
+            _createEnvironment(bannedRoot));
+        Assert.AreNotEqual(0, bannedError.ExitCode);
+        StringAssert.Contains(bannedError.Output, "Consumer.cs", StringComparison.Ordinal);
+        StringAssert.Contains(bannedError.Output, "RS0030", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Ensures SponsorLink removal is exact and independently switchable.
+    /// </summary>
+    [TestMethod]
+    public async Task SponsorLinkRemovalIsExactAndSwitchable()
+    {
+        const string packageVersion = "999.9.13";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-sponsor-link");
+        if (Directory.Exists(fixtureRoot))
+        {
+            Directory.Delete(fixtureRoot, true);
+        }
+        var feed = Path.Join(fixtureRoot, "feed");
+        Directory.CreateDirectory(feed);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" -c Debug -o \"{feed}\" -p:PackageVersion={packageVersion}");
+
+        var analyzerItems = """
+<Analyzer Include="DevLooped.SponsorLink.dll" />
+<Analyzer Include="Moq.CodeAnalysis.dll" />
+<Analyzer Include="Preserved.Analyzer.dll" />
+""";
+        var project = _createCSharpProject(packageVersion, "", "", analyzerItems);
+        var enabled = await _evaluateTargetItemsAsync(fixtureRoot, feed, "sponsor-enabled", project, "");
+        CollectionAssert.AreEqual(_preservedAnalyzer, enabled);
+        var disabled = await _evaluateTargetItemsAsync(
+            fixtureRoot,
+            feed,
+            "sponsor-disabled",
+            project,
+            "<EnableArkToolsSponsorLinkRemoval>false</EnableArkToolsSponsorLinkRemoval>");
+        CollectionAssert.AreEquivalent(
+            _allSyntheticAnalyzers,
+            disabled);
     }
 
     /// <summary>
@@ -372,8 +702,15 @@ public sealed class SdkPackageTests
         _assertItemsMatch(fsharp, fsharpControl, _boundaryItems, "Ark.Tools.Build");
     }
 
-    private static string _createCSharpProject(string? packageVersion, string properties = "")
+    private static string _createCSharpProject(
+        string? packageVersion,
+        string properties = "",
+        string packageReferences = "",
+        string items = "")
     {
+        var additionalItems = string.IsNullOrWhiteSpace(packageReferences) && string.IsNullOrWhiteSpace(items)
+            ? ""
+            : $"<ItemGroup>{packageReferences}{items}</ItemGroup>";
         return $"""
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -381,6 +718,7 @@ public sealed class SdkPackageTests
     {properties}
   </PropertyGroup>
   {_createPackageReference(packageVersion)}
+  {additionalItems}
 </Project>
 """;
     }
@@ -442,11 +780,7 @@ public sealed class SdkPackageTests
             $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /><add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" /></packageSources></configuration>").ConfigureAwait(false);
         var projectPath = Path.Join(scenarioRoot, projectFileName);
         await File.WriteAllTextAsync(projectPath, project).ConfigureAwait(false);
-        var environment = new Dictionary<string, string>
-        {
-            ["NUGET_PACKAGES"] = Path.Join(scenarioRoot, "packages"),
-            ["NUGET_HTTP_CACHE_PATH"] = Path.Join(scenarioRoot, "http-cache")
-        };
+        var environment = _createEnvironment(scenarioRoot);
         var globalProperty = globalDisable ? " -p:EnableArkToolsBuild=false" : "";
         await _run(
             "dotnet",
@@ -455,9 +789,99 @@ public sealed class SdkPackageTests
         var propertyNames = _selectedProperties.Concat(_boundaryProperties).Append("ArkToolsBuildImported").Append("UsingMicrosoftBuildSqlSdk");
         var output = await _run(
             "dotnet",
-            $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", propertyNames)} -getItem:{string.Join(",", _boundaryItems.Append("Using"))}{globalProperty}",
+            $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", propertyNames)} -getItem:{string.Join(",", _boundaryItems.Append("Using").Append("EditorConfigFiles").Append("GlobalAnalyzerConfigFiles"))}{globalProperty}",
             environment);
         return JsonDocument.Parse(output);
+    }
+
+    private static async Task<string> _createCompilerScenarioAsync(
+        string fixtureRoot,
+        string feed,
+        string scenario,
+        string packageVersion,
+        string source)
+    {
+        using var evaluation = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            scenario,
+            "Consumer.csproj",
+            _createCSharpProject(packageVersion));
+        var scenarioRoot = Path.Join(fixtureRoot, scenario);
+        if (!string.IsNullOrEmpty(source))
+        {
+            await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Consumer.cs"), source).ConfigureAwait(false);
+        }
+        return scenarioRoot;
+    }
+
+    private static async Task<string[]> _evaluateTargetItemsAsync(
+        string fixtureRoot,
+        string feed,
+        string scenario,
+        string project,
+        string directoryProperties)
+    {
+        using var evaluation = await _evaluateAsync(
+            fixtureRoot,
+            feed,
+            scenario,
+            "Consumer.csproj",
+            project,
+            directoryProperties);
+        var scenarioRoot = Path.Join(fixtureRoot, scenario);
+        var output = await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -target:Disable_SponsorLink -getItem:Analyzer",
+            _createEnvironment(scenarioRoot));
+        using var targetEvaluation = JsonDocument.Parse(output);
+        return _getItemIdentities(targetEvaluation, "Analyzer")
+            .Select(identity => Path.GetFileName(identity) ?? "")
+            .Where(_allSyntheticAnalyzers.Contains)
+            .ToArray();
+    }
+
+    private static Dictionary<string, string> _createEnvironment(string scenarioRoot)
+    {
+        return new Dictionary<string, string>
+        {
+            ["NUGET_PACKAGES"] = Path.Join(scenarioRoot, "packages"),
+            ["NUGET_HTTP_CACHE_PATH"] = Path.Join(scenarioRoot, "http-cache")
+        };
+    }
+
+    private static int _countConfiguredDiagnostics(string path)
+    {
+        return File.ReadLines(path).Count(line =>
+            line.TrimStart().StartsWith("dotnet_diagnostic.", StringComparison.Ordinal) &&
+            line.Contains(".severity", StringComparison.Ordinal));
+    }
+
+    private static void _assertDiagnosticOwner(IEnumerable<string> paths, string diagnosticId, string expectedPath)
+    {
+        var owners = paths
+            .Where(path => File.ReadLines(path).Any(line =>
+                line.Contains($"dotnet_diagnostic.{diagnosticId}.severity", StringComparison.Ordinal)))
+            .ToArray();
+        Assert.HasCount(1, owners, diagnosticId);
+        Assert.AreEqual(expectedPath, owners[0], diagnosticId);
+    }
+
+    private static string[] _getAllArkBuildConfigurationFileNames(JsonDocument evaluation)
+    {
+        return _getArkBuildItemFileNames(evaluation, "EditorConfigFiles")
+            .Concat(_getArkBuildItemFileNames(evaluation, "GlobalAnalyzerConfigFiles"))
+            .Concat(_getArkBuildItemFileNames(evaluation, "AdditionalFiles"))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static string[] _getArkBuildItemFileNames(JsonDocument evaluation, string itemName)
+    {
+        return _getItemIdentities(evaluation, itemName)
+            .Where(identity => identity.Contains("ark.tools.build", StringComparison.OrdinalIgnoreCase))
+            .Select(identity => Path.GetFileName(identity) ?? "")
+            .ToArray();
     }
 
     private static void _assertProperties(JsonDocument evaluation, IReadOnlyDictionary<string, string> expected)
@@ -485,7 +909,7 @@ public sealed class SdkPackageTests
         foreach (var itemName in itemNames)
         {
             var actualItems = _getItemIdentities(actual, itemName)
-                .Where(identity => !string.Equals(identity, ignoredIdentity, StringComparison.Ordinal))
+                .Where(identity => !identity.Contains(ignoredIdentity, StringComparison.OrdinalIgnoreCase))
                 .ToArray();
             CollectionAssert.AreEquivalent(_getItemIdentities(expected, itemName), actualItems, itemName);
         }
@@ -506,6 +930,16 @@ public sealed class SdkPackageTests
 
     private static async Task<string> _run(string fileName, string arguments, IDictionary<string, string>? environment = null)
     {
+        var result = await _runForExitCode(fileName, arguments, environment);
+        Assert.AreEqual(0, result.ExitCode, result.Output);
+        return result.Output;
+    }
+
+    private static async Task<(int ExitCode, string Output)> _runForExitCode(
+        string fileName,
+        string arguments,
+        IDictionary<string, string>? environment = null)
+    {
         var startInfo = new System.Diagnostics.ProcessStartInfo(fileName, arguments)
         {
             RedirectStandardOutput = true,
@@ -525,7 +959,6 @@ public sealed class SdkPackageTests
         await process.WaitForExitAsync().ConfigureAwait(false);
         var error = await errorTask.ConfigureAwait(false);
         var output = await outputTask.ConfigureAwait(false);
-        Assert.AreEqual(0, process.ExitCode, $"{output}{Environment.NewLine}{error}");
-        return output;
+        return (process.ExitCode, $"{output}{Environment.NewLine}{error}");
     }
 }

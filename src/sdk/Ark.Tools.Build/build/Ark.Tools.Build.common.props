@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
-    <_ArkToolsBuildImporting>true</_ArkToolsBuildImporting>
     <ArkToolsBuildImported>true</ArkToolsBuildImported>
     <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
     <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
@@ -15,31 +14,35 @@
     <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == '' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">true</RunSqlCodeAnalysis>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(_ArkToolsBuildImporting)' == 'true'">
+  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false'">
     <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == '' and '$(DirectoryBuildPropsPath)' != ''">$([System.IO.Path]::GetDirectoryName('$(DirectoryBuildPropsPath)'))</ArkToolsLocalAnalyzerConfigRoot>
     <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == ''">$(MSBuildProjectDirectory)</ArkToolsLocalAnalyzerConfigRoot>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(_ArkToolsBuildImporting)' == 'true' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/coding-style/Ark.Tools.CodingStyle.editorconfig"
+                       KeepDuplicates="false"
                        Condition="'$(EnableArkToolsCodingStyle)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.MeziantouAnalyzer.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.ErrorProne.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.IdentityModel.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsIdentityModelConfiguration)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Core.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(ArkToolsLocalAnalyzerConfigRoot)/.*.globalconfig"
+                               KeepDuplicates="false"
                                Condition="'$(EnableArkToolsLocalAnalyzerConfigDiscovery)' != 'false'" />
   </ItemGroup>
-
-  <PropertyGroup Condition="'$(_ArkToolsBuildImporting)' == 'true'">
-    <_ArkToolsBuildImporting>false</_ArkToolsBuildImporting>
-  </PropertyGroup>
 </Project>
