@@ -165,7 +165,6 @@ public sealed class MessagingDispatcher
 #pragma warning restore MA0004
                     var context = new MessagingIncomingContext(
                         delivery.Headers,
-                        payload.ReadPayload(),
                         delivery.DeliveryCount,
                         stageToken);
                     var processor = scope.GetInstance<ICommandProcessor>();

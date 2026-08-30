@@ -121,30 +121,30 @@ public static class StorageQueueEnvelopeCodec
                 nameof(payload),
                 "The completed Storage Queue envelope exceeds its canonical size limit.");
 
-        var canonical = new ArrayBufferWriter<byte>(Math.Max(canonicalSize, 1));
-        _writeVarInt(canonical, headers.Count);
-        foreach (var pair in headers.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+        var rented = ArrayPool<byte>.Shared.Rent(Math.Max(canonicalSize, 1));
+        try
         {
-            _writeUtf8(canonical, pair.Key);
-            _writeUtf8(canonical, pair.Value);
+            var canonical = new FixedBufferWriter(rented);
+            _writeVarInt(canonical, headers.Count);
+            foreach (var pair in headers.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+            {
+                _writeUtf8(canonical, pair.Key);
+                _writeUtf8(canonical, pair.Value);
+            }
+            foreach (var segment in payload)
+                canonical.Write(segment.Span);
+
+            var encodedLength = Base64.GetMaxEncodedToUtf8Length(canonical._writtenCount);
+            if (encodedLength > StorageQueueLimits.MaximumEncodedTextBytes)
+                throw new ArgumentOutOfRangeException(
+                    nameof(payload),
+                    "The completed Storage Queue message exceeds 64 KiB.");
+            return Convert.ToBase64String(rented.AsSpan(0, canonical._writtenCount));
         }
-        foreach (var segment in payload)
-            canonical.Write(segment.Span);
-
-        var encoded = new byte[Base64.GetMaxEncodedToUtf8Length(canonical.WrittenCount)];
-        var status = Base64.EncodeToUtf8(
-            canonical.WrittenSpan,
-            encoded,
-            out var consumed,
-            out var written);
-        if (status != OperationStatus.Done || consumed != canonical.WrittenCount)
-            throw new InvalidOperationException("The Storage Queue envelope could not be Base64 encoded.");
-        if (written > StorageQueueLimits.MaximumEncodedTextBytes)
-            throw new ArgumentOutOfRangeException(
-                nameof(payload),
-                "The completed Storage Queue message exceeds 64 KiB.");
-
-        return Encoding.UTF8.GetString(encoded.AsSpan(0, written));
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rented);
+        }
     }
 
     private static StorageQueueEnvelope _decodeCanonical(ReadOnlyMemory<byte> canonical)
@@ -260,6 +260,45 @@ public static class StorageQueueEnvelopeCodec
     private static MessagingFailFastException _malformed(string message)
     {
         return new MessagingFailFastException(MessagingFailFastReason.MalformedHeaders, message);
+    }
+
+    private sealed class FixedBufferWriter : IBufferWriter<byte>
+    {
+        private readonly byte[] _buffer;
+
+        internal FixedBufferWriter(byte[] buffer)
+        {
+            _buffer = buffer;
+        }
+
+        internal int _writtenCount { get; private set; }
+
+        public void Advance(int count)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(count);
+            if (count > _buffer.Length - _writtenCount)
+                throw new InvalidOperationException("The measured Storage Queue envelope size was incorrect.");
+            _writtenCount += count;
+        }
+
+        public Memory<byte> GetMemory(int sizeHint = 0)
+        {
+            _validateSizeHint(sizeHint);
+            return _buffer.AsMemory(_writtenCount);
+        }
+
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            _validateSizeHint(sizeHint);
+            return _buffer.AsSpan(_writtenCount);
+        }
+
+        private void _validateSizeHint(int sizeHint)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
+            if (sizeHint > _buffer.Length - _writtenCount)
+                throw new InvalidOperationException("The measured Storage Queue envelope size was incorrect.");
+        }
     }
 }
 

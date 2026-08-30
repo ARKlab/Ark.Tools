@@ -58,6 +58,13 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     /// <inheritdoc />
     public long? MaximumInlineEnvelopeBytes => null;
 
+    /// <inheritdoc />
+    public long? GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        return null;
+    }
+
     /// <summary>Configures the native retry limit and delay for a queue.</summary>
     /// <param name="queue">The queue name.</param>
     /// <param name="maximumDeliveryCount">The maximum native delivery count.</param>

@@ -39,6 +39,12 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
     public long? MaximumInlineEnvelopeBytes => _maximumMessageBytes;
 
     /// <inheritdoc />
+    public long? GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers)
+    {
+        return _maximumMessageBytes - MeasureNative(headers, ReadOnlySequence<byte>.Empty);
+    }
+
+    /// <inheritdoc />
     public long MeasureNative(
         IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)
@@ -148,11 +154,10 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)
     {
-        var buffer = new ArrayBufferWriter<byte>(Math.Max(checked((int)payload.Length), 1));
-        foreach (var segment in payload)
-            buffer.Write(segment.Span);
-
-        var message = new ServiceBusMessage(BinaryData.FromBytes(buffer.WrittenMemory));
+        var body = payload.IsSingleSegment
+            ? BinaryData.FromBytes(payload.First)
+            : BinaryData.FromBytes(payload.ToArray());
+        var message = new ServiceBusMessage(body);
         foreach (var pair in headers)
             message.ApplicationProperties.Add(pair.Key, pair.Value);
 

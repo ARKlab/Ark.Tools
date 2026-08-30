@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
+using System.IO.Pipelines;
 
 using Google.Protobuf;
 
@@ -17,7 +17,11 @@ public sealed class ProtobufMessagingCodec : IMessagingCodec
     public SerializationProtocol Protocol => SerializationProtocol.Protobuf;
 
     /// <inheritdoc />
-    public void Serialize<T>(T value, IBufferWriter<byte> writer) where T : class
+    public async Task SerializeAsync<T>(
+        T value,
+        PipeWriter writer,
+        CancellationToken ctk)
+        where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(writer);
@@ -26,14 +30,22 @@ public sealed class ProtobufMessagingCodec : IMessagingCodec
                 $"Protobuf contract '{typeof(T)}' must implement Google.Protobuf.IMessage.");
 
         message.WriteTo(writer);
+        await writer.FlushAsync(ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public T Deserialize<T>(in ReadOnlySequence<byte> payload) where T : class
+    public async Task<T> DeserializeAsync<T>(
+        PipeReader reader,
+        CancellationToken ctk)
+        where T : class
     {
+        ArgumentNullException.ThrowIfNull(reader);
+        ctk.ThrowIfCancellationRequested();
         var parse = ProtobufContractRegistry<T>.Parse
             ?? throw new InvalidOperationException(
                 $"Protobuf contract '{typeof(T)}' has no registered MessageParser<T>.");
-        return parse(payload);
+        var result = parse(reader.AsStream(leaveOpen: true));
+        await Task.CompletedTask.ConfigureAwait(false);
+        return result;
     }
 }

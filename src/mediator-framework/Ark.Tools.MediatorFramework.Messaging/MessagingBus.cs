@@ -197,7 +197,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             async () =>
             {
                 var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
-                var payload = await _payloadSender
+                using var payload = await _payloadSender
                     .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
                     .ConfigureAwait(false);
                 _validateHeaders(context.Headers);
@@ -221,7 +221,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                     outboxScope.Add(new OutboxMessage
                     {
                         Headers = outboxHeaders,
-                        Body = payload.ToArray(),
+                        Body = payload.Sequence.ToArray(),
                     });
                 }
                 else if (publish)
@@ -229,7 +229,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                     await _transport.PublishAsync(
                         destination,
                         transportHeaders,
-                        payload,
+                        payload.Sequence,
                         cancellationToken).ConfigureAwait(false);
                 }
                 else
@@ -237,7 +237,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                     await _transport.SendAsync(
                         destination,
                         transportHeaders,
-                        payload,
+                        payload.Sequence,
                         dueTime,
                         cancellationToken).ConfigureAwait(false);
                 }

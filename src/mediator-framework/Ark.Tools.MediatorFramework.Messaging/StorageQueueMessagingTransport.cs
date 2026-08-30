@@ -83,6 +83,13 @@ public sealed class StorageQueueMessagingTransport :
         Base64.GetMaxEncodedToUtf8Length(StorageQueueLimits.MaximumNormalCanonicalBytes);
 
     /// <inheritdoc />
+    public long? GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers)
+    {
+        return StorageQueueLimits.MaximumNormalCanonicalBytes
+            - StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty);
+    }
+
+    /// <inheritdoc />
     public long MeasureNative(
         IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)

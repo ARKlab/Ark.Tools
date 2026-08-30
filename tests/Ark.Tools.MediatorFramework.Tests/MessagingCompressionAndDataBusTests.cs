@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.IO.Pipelines;
 using System.Security.Cryptography;
 
 using Ark.Tools.MediatorFramework.Messaging;
@@ -336,9 +337,8 @@ public sealed class MessagingCompressionAndDataBusTests
             .ConfigureAwait(false);
         await using (reader.ConfigureAwait(false))
         {
-            new TextCodec().Deserialize<PayloadContract>(reader.ReadPayload()).Value
+            (await reader.DeserializeAsync<PayloadContract>(default).ConfigureAwait(false)).Value
                 .Should().Be(new string('a', 100));
-            reader.Deserialize<PayloadContract>().Value.Should().Be(new string('a', 100));
         }
     }
 
@@ -437,19 +437,23 @@ public sealed class MessagingCompressionAndDataBusTests
         public string ContentType => "text/plain";
         public SerializationProtocol Protocol => SerializationProtocol.Json;
 
-        public void Serialize<T>(T value, IBufferWriter<byte> writer)
+        public async Task SerializeAsync<T>(T value, PipeWriter writer, CancellationToken ctk)
             where T : class
         {
             var contract = (PayloadContract)(object)value;
             var bytes = Encoding.UTF8.GetBytes(contract.Value);
-            bytes.CopyTo(writer.GetSpan(bytes.Length));
-            writer.Advance(bytes.Length);
+            await writer.WriteAsync(bytes, ctk).ConfigureAwait(false);
         }
 
-        public T Deserialize<T>(in ReadOnlySequence<byte> payload)
+        public async Task<T> DeserializeAsync<T>(PipeReader reader, CancellationToken ctk)
             where T : class
         {
-            return (T)(object)new PayloadContract(Encoding.UTF8.GetString(payload.ToArray()));
+#pragma warning disable MA0042 // The stream is a non-owning adapter over the PipeReader.
+            using var stream = reader.AsStream(leaveOpen: true);
+#pragma warning restore MA0042
+            using var text = new StreamReader(stream, Encoding.UTF8);
+            var value = await text.ReadToEndAsync(ctk).ConfigureAwait(false);
+            return (T)(object)new PayloadContract(value);
         }
     }
 
@@ -462,7 +466,7 @@ public sealed class MessagingCompressionAndDataBusTests
             _stream = stream;
         }
 
-        public Task<string> StoreAsync(ReadOnlySequence<byte> content, CancellationToken ctk)
+        public Task<IMessagingDataBusWriteSession> OpenWriteAsync(CancellationToken ctk)
         {
             throw new NotSupportedException();
         }

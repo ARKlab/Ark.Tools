@@ -3,7 +3,8 @@
 
 using System.Buffers;
 using System.Collections.ObjectModel;
-using System.Security.Cryptography;
+using System.IO.Compression;
+using System.IO.Pipelines;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -16,10 +17,6 @@ public sealed class MessagingPayloadSender
     private readonly int _compressionMinimumSizeBytes;
 
     /// <summary>Creates a payload sender.</summary>
-    /// <param name="dataBus">The shared DataBus provider.</param>
-    /// <param name="network">The network payload limits.</param>
-    /// <param name="algorithm">The participant's sender-side compression algorithm.</param>
-    /// <param name="compressionMinimumSizeBytes">The minimum size eligible for compression.</param>
     public MessagingPayloadSender(
         IMessagingDataBus dataBus,
         MessagingNetworkOptions network,
@@ -39,14 +36,7 @@ public sealed class MessagingPayloadSender
     }
 
     /// <summary>Serializes, optionally compresses, and claim-checks a message.</summary>
-    /// <typeparam name="T">The contract type.</typeparam>
-    /// <param name="message">The contract value.</param>
-    /// <param name="codec">The contract codec.</param>
-    /// <param name="transport">The target transport.</param>
-    /// <param name="headers">The mutable framework header map.</param>
-    /// <param name="ctk">The cancellation token.</param>
-    /// <returns>The inline payload, or an empty sequence when claim-check is used.</returns>
-    public async Task<ReadOnlySequence<byte>> BuildOutgoingPayloadAsync<T>(
+    public async Task<MessagingOutgoingPayload> BuildOutgoingPayloadAsync<T>(
         T message,
         IMessagingCodec codec,
         IMessagingTransport transport,
@@ -61,59 +51,298 @@ public sealed class MessagingPayloadSender
         ctk.ThrowIfCancellationRequested();
 
         _setReservedHeader(headers, MessagingHeaders.ContentType, codec.ContentType);
-        _removeReservedHeader(headers, MessagingHeaders.ContentEncoding);
-        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentId);
-        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentLength);
-        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256);
-        var buffer = new ArrayBufferWriter<byte>();
-        var writer = new CompressionSwitchingBufferWriter(
-            buffer,
-            _algorithm,
-            _compressionMinimumSizeBytes,
-            Math.Max(
-                _network.MaximumTransportPayloadBytes,
-                _network.DataBusMaximumAttachmentBytes));
-        codec.Serialize(message, writer);
-        writer.Complete();
-
-        if (writer.Compressed)
+        _removePayloadHeaders(headers);
+        if (_algorithm != CompressionAlgorithm.None)
+        {
             _setReservedHeader(
                 headers,
                 MessagingHeaders.ContentEncoding,
                 _algorithm == CompressionAlgorithm.Brotli ? "br" : "gzip");
-
-        var payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
+        }
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
             ?? new ReadOnlyDictionary<string, string>(headers);
-        var nativeSize = transport.MeasureNative(readOnlyHeaders, payload);
-        var mustOffload = payload.Length > _network.MaximumTransportPayloadBytes
-            || payload.Length > _network.DataBusOffloadThresholdBytes
-            || (transport.MaximumInlineEnvelopeBytes is { } ceiling && nativeSize > ceiling);
-        if (!mustOffload)
-            return payload;
+        var configuredInlineLimit = Math.Min(
+            _network.MaximumTransportPayloadBytes,
+            _network.DataBusOffloadThresholdBytes);
+        var transportInlineLimit = transport.GetMaximumInlinePayloadBytes(readOnlyHeaders);
+        var inlineLimit = checked((int)Math.Min(
+            configuredInlineLimit,
+            transportInlineLimit ?? int.MaxValue));
 
-        if (payload.Length > _network.DataBusMaximumAttachmentBytes)
-            throw new MessagingFailFastException(
-                MessagingFailFastReason.OversizedPayload,
-                "Payload exceeds the maximum DataBus attachment size.");
+        var serialization = new Pipe(_pipeOptions());
+        var finalPayload = new Pipe(_pipeOptions());
+        var serializeTask = _serializeAsync(codec, message, serialization.Writer, ctk);
+        var compressTask = _compressAsync(serialization.Reader, finalPayload.Writer, ctk);
+        var destinationTask = _writeDestinationAsync(
+            finalPayload.Reader,
+            inlineLimit,
+            transport,
+            readOnlyHeaders,
+            ctk);
 
-        var attachmentId = await _dataBus.StoreAsync(payload, ctk).ConfigureAwait(false);
-        _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentId, attachmentId);
-        _setReservedHeader(
-            headers,
-            MessagingHeaders.PayloadAttachmentLength,
-            payload.Length.ToString(CultureInfo.InvariantCulture));
-        _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, _sha256Hex(payload));
-
-        if (transport.MaximumInlineEnvelopeBytes is { } attachmentCeiling
-            && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > attachmentCeiling)
+        try
         {
-            throw new MessagingFailFastException(
-                MessagingFailFastReason.OversizedHeaders,
-                "Attachment-reference envelope exceeds the transport inline ceiling.");
+            await Task.WhenAll(serializeTask, compressTask, destinationTask).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (destinationTask.IsCompletedSuccessfully)
+            {
+                var completedPayload = await destinationTask.ConfigureAwait(false);
+                completedPayload.Dispose();
+            }
+            throw;
+        }
+        var result = await destinationTask.ConfigureAwait(false);
+        if (result.Attachment is { } attachment)
+        {
+            _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentId, attachment.Id);
+            _setReservedHeader(
+                headers,
+                MessagingHeaders.PayloadAttachmentLength,
+                attachment.Length.ToString(CultureInfo.InvariantCulture));
+            _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, attachment.Sha256);
+            if (transport.MaximumInlineEnvelopeBytes is { } ceiling
+                && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > ceiling)
+            {
+                result.Dispose();
+                throw new MessagingFailFastException(
+                    MessagingFailFastReason.OversizedHeaders,
+                    "Attachment-reference envelope exceeds the transport inline ceiling.");
+            }
         }
 
-        return ReadOnlySequence<byte>.Empty;
+        var compressed = await compressTask.ConfigureAwait(false);
+        if (!compressed)
+            _removeReservedHeader(headers, MessagingHeaders.ContentEncoding);
+
+        return result;
+    }
+
+    private static async Task _serializeAsync<T>(
+        IMessagingCodec codec,
+        T message,
+        PipeWriter writer,
+        CancellationToken ctk)
+        where T : class
+    {
+        Exception? failure = null;
+        try
+        {
+            await codec.SerializeAsync(message, writer, ctk).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
+        }
+        finally
+        {
+            await writer.CompleteAsync(failure).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<bool> _compressAsync(PipeReader input, PipeWriter output, CancellationToken ctk)
+    {
+        Exception? failure = null;
+        var prefix = ArrayPool<byte>.Shared.Rent(Math.Max(_compressionMinimumSizeBytes, 1));
+        var prefixLength = 0;
+        Stream? compressor = null;
+        var compressed = false;
+        try
+        {
+            while (true)
+            {
+                var result = await input.ReadAsync(ctk).ConfigureAwait(false);
+                var buffer = result.Buffer;
+                foreach (var segment in buffer)
+                {
+                    var remaining = segment;
+                    if (compressor is null && _algorithm != CompressionAlgorithm.None)
+                    {
+                        var copy = Math.Min(
+                            remaining.Length,
+                            _compressionMinimumSizeBytes - prefixLength);
+                        remaining.Span[..copy].CopyTo(prefix.AsSpan(prefixLength));
+                        prefixLength += copy;
+                        remaining = remaining[copy..];
+                        if (prefixLength >= _compressionMinimumSizeBytes)
+                        {
+#pragma warning disable CA2000 // The stream is disposed in this method's finally block.
+                            compressor = _createCompressionStream(output);
+#pragma warning restore CA2000
+                            compressed = true;
+                            await compressor.WriteAsync(prefix.AsMemory(0, prefixLength), ctk)
+                                .ConfigureAwait(false);
+                        }
+                    }
+
+                    if (remaining.IsEmpty)
+                        continue;
+                    if (compressor is not null)
+                        await compressor.WriteAsync(remaining, ctk).ConfigureAwait(false);
+                    else
+                        await output.WriteAsync(remaining, ctk).ConfigureAwait(false);
+                }
+
+                input.AdvanceTo(buffer.End);
+                if (result.IsCompleted)
+                    break;
+            }
+
+            if (compressor is null && prefixLength > 0)
+                await output.WriteAsync(prefix.AsMemory(0, prefixLength), ctk).ConfigureAwait(false);
+            if (compressor is not null)
+            {
+                await compressor.DisposeAsync().ConfigureAwait(false);
+                compressor = null;
+            }
+            return compressed;
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(prefix);
+            if (compressor is not null)
+                await compressor.DisposeAsync().ConfigureAwait(false);
+            await input.CompleteAsync(failure).ConfigureAwait(false);
+            await output.CompleteAsync(failure).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<MessagingOutgoingPayload> _writeDestinationAsync(
+        PipeReader input,
+        int inlineLimit,
+        IMessagingTransport transport,
+        IReadOnlyDictionary<string, string> headers,
+        CancellationToken ctk)
+    {
+        var rented = ArrayPool<byte>.Shared.Rent(Math.Max(inlineLimit, 1));
+        var buffered = 0;
+        long total = 0;
+        IMessagingDataBusWriteSession? session = null;
+        Exception? failure = null;
+        try
+        {
+            while (true)
+            {
+                var result = await input.ReadAsync(ctk).ConfigureAwait(false);
+                var source = result.Buffer;
+                foreach (var segment in source)
+                {
+                    total += segment.Length;
+                    if (session is not null && total > _network.DataBusMaximumAttachmentBytes)
+                        throw _oversized();
+                    if (session is null && segment.Length <= inlineLimit - buffered)
+                    {
+                        segment.Span.CopyTo(rented.AsSpan(buffered));
+                        buffered += segment.Length;
+                        continue;
+                    }
+
+                    session ??= await _openDataBusAsync(rented, buffered, ctk).ConfigureAwait(false);
+                    if (total > _network.DataBusMaximumAttachmentBytes)
+                        throw _oversized();
+                    await session.Stream.WriteAsync(segment, ctk).ConfigureAwait(false);
+                }
+
+                input.AdvanceTo(source.End);
+                if (result.IsCompleted)
+                    break;
+            }
+
+            if (session is null)
+            {
+                var payload = new ReadOnlySequence<byte>(rented.AsMemory(0, buffered));
+                if (transport.MaximumInlineEnvelopeBytes is not { } ceiling
+                    || transport.MeasureNative(headers, payload) <= ceiling)
+                {
+                    return new MessagingOutgoingPayload(rented, buffered, attachment: null);
+                }
+
+                session = await _openDataBusAsync(rented, buffered, ctk).ConfigureAwait(false);
+            }
+
+            var attachment = await session.CompleteAsync(ctk).ConfigureAwait(false);
+            await session.DisposeAsync().ConfigureAwait(false);
+            session = null;
+            ArrayPool<byte>.Shared.Return(rented);
+            return new MessagingOutgoingPayload(null, 0, attachment);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
+        }
+        finally
+        {
+            await input.CompleteAsync(failure).ConfigureAwait(false);
+            if (session is not null)
+                await session.DisposeAsync().ConfigureAwait(false);
+            if (failure is not null)
+                ArrayPool<byte>.Shared.Return(rented);
+        }
+    }
+
+    private async Task<IMessagingDataBusWriteSession> _openDataBusAsync(
+        byte[] prefix,
+        int prefixLength,
+        CancellationToken ctk)
+    {
+        var session = await _dataBus.OpenWriteAsync(ctk).ConfigureAwait(false);
+        try
+        {
+            if (prefixLength > 0)
+                await session.Stream.WriteAsync(prefix.AsMemory(0, prefixLength), ctk).ConfigureAwait(false);
+            return session;
+        }
+        catch
+        {
+            await session.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private Stream _createCompressionStream(PipeWriter output)
+    {
+        var stream = output.AsStream(leaveOpen: true);
+        return _algorithm switch
+        {
+            CompressionAlgorithm.Gzip => new GZipStream(stream, CompressionLevel.Fastest, leaveOpen: false),
+            CompressionAlgorithm.Brotli => new BrotliStream(stream, CompressionLevel.Fastest, leaveOpen: false),
+            _ => throw new InvalidOperationException("Compression is not configured.")
+        };
+    }
+
+    private static PipeOptions _pipeOptions()
+    {
+        return new PipeOptions(
+            pool: MemoryPool<byte>.Shared,
+            pauseWriterThreshold: 65_536,
+            resumeWriterThreshold: 32_768,
+            useSynchronizationContext: false);
+    }
+
+    private static void _removePayloadHeaders(IDictionary<string, string> headers)
+    {
+        _removeReservedHeader(headers, MessagingHeaders.ContentEncoding);
+        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentId);
+        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentLength);
+        _removeReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256);
+    }
+
+    private MessagingFailFastException _oversized()
+    {
+        return new MessagingFailFastException(
+            MessagingFailFastReason.OversizedPayload,
+            string.Format(
+                CultureInfo.InvariantCulture,
+                "Payload exceeded the {0}-byte attachment threshold.",
+                _network.DataBusMaximumAttachmentBytes));
     }
 
     private static void _setReservedHeader(
@@ -134,12 +363,55 @@ public sealed class MessagingPayloadSender
         else
             headers.Remove(key);
     }
+}
 
-    private static string _sha256Hex(in ReadOnlySequence<byte> payload)
+/// <summary>Owns an inline pooled payload or identifies a committed DataBus attachment.</summary>
+public sealed class MessagingOutgoingPayload : IDisposable
+{
+    private byte[]? _buffer;
+
+    internal MessagingOutgoingPayload(
+        byte[]? buffer,
+        int length,
+        MessagingDataBusAttachment? attachment)
     {
-        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        foreach (var segment in payload)
-            hash.AppendData(segment.Span);
-        return Convert.ToHexString(hash.GetHashAndReset());
+        _buffer = buffer;
+        _length = length;
+        Attachment = attachment;
+    }
+
+    /// <summary>Gets the inline payload, or an empty sequence when DataBus is used.</summary>
+    public ReadOnlySequence<byte> Sequence =>
+        _buffer is null ? ReadOnlySequence<byte>.Empty : new ReadOnlySequence<byte>(_buffer.AsMemory(0, _length));
+
+    /// <summary>Gets the inline payload length.</summary>
+    public long Length => _length;
+
+    /// <summary>Gets whether the inline payload is empty.</summary>
+    public bool IsEmpty => _length == 0;
+
+    /// <summary>Gets the committed attachment metadata when DataBus is used.</summary>
+    public MessagingDataBusAttachment? Attachment { get; }
+
+    private int _length { get; }
+
+    /// <summary>Returns the owned inline sequence for transport APIs.</summary>
+    public ReadOnlySequence<byte> ToReadOnlySequence()
+    {
+        return Sequence;
+    }
+
+    /// <summary>Returns the owned inline sequence for transport APIs.</summary>
+    public static implicit operator ReadOnlySequence<byte>(MessagingOutgoingPayload payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        return payload.Sequence;
+    }
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        var buffer = Interlocked.Exchange(ref _buffer, null);
+        if (buffer is not null)
+            ArrayPool<byte>.Shared.Return(buffer);
     }
 }

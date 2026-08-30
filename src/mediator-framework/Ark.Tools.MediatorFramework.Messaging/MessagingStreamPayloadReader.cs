@@ -1,16 +1,16 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Buffers;
+using System.IO.Pipelines;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
-/// <summary>Adapts a prepared payload stream to the generated sequence-based reader contract.</summary>
+/// <summary>Adapts a prepared payload stream to generated asynchronous dispatch.</summary>
 public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDisposable, IAsyncDisposable
 {
-    private readonly Stream _stream;
+    private readonly Func<CancellationToken, Task<Stream>> _openStream;
     private readonly IMessagingCodec _codec;
-    private ReadOnlySequence<byte>? _payload;
+    private Stream? _ownedStream;
     private bool _disposed;
 
     /// <summary>Creates a stream-backed payload reader.</summary>
@@ -18,41 +18,33 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
     /// <param name="codec">The codec used to deserialize contracts.</param>
     public MessagingStreamPayloadReader(Stream stream, IMessagingCodec codec)
     {
-        _stream = stream ?? throw new ArgumentNullException(nameof(stream));
+        ArgumentNullException.ThrowIfNull(stream);
+        _ownedStream = stream;
+        _openStream = _openOwnedStream;
+        _codec = codec ?? throw new ArgumentNullException(nameof(codec));
+    }
+
+    internal MessagingStreamPayloadReader(
+        Func<CancellationToken, Task<Stream>> openStream,
+        IMessagingCodec codec)
+    {
+        _openStream = openStream ?? throw new ArgumentNullException(nameof(openStream));
         _codec = codec ?? throw new ArgumentNullException(nameof(codec));
     }
 
     /// <inheritdoc />
-    public ReadOnlySequence<byte> ReadPayload()
+    public async Task<T> DeserializeAsync<T>(CancellationToken ctk) where T : class
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_payload is not { } payload)
-        {
-            var buffer = new ArrayBufferWriter<byte>();
-            var span = buffer.GetSpan(8_192);
-            while (true)
-            {
-                var read = _stream.Read(span);
-                if (read == 0)
-                    break;
-                buffer.Advance(read);
-                span = buffer.GetSpan(8_192);
-            }
-
-            payload = new ReadOnlySequence<byte>(buffer.WrittenMemory);
-            _payload = payload;
-        }
-
-        return payload;
-    }
-
-    /// <inheritdoc />
-    public T Deserialize<T>() where T : class
-    {
-        var payload = ReadPayload();
+        var stream = await _openStream(ctk).ConfigureAwait(false);
+        var reader = PipeReader.Create(
+            stream,
+            new StreamPipeReaderOptions(leaveOpen: true));
         try
         {
-            return _codec.Deserialize<T>(payload);
+            var result = await _codec.DeserializeAsync<T>(reader, ctk).ConfigureAwait(false);
+            await reader.CopyToAsync(Stream.Null, ctk).ConfigureAwait(false);
+            return result;
         }
         catch (MessagingFailFastException)
         {
@@ -65,6 +57,11 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
                 exception.Message,
                 exception);
         }
+        finally
+        {
+            await reader.CompleteAsync().ConfigureAwait(false);
+            await stream.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />
@@ -74,7 +71,8 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
             return;
 
         _disposed = true;
-        _stream.Dispose();
+        _ownedStream?.Dispose();
+        _ownedStream = null;
         GC.SuppressFinalize(this);
     }
 
@@ -85,7 +83,19 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
             return;
 
         _disposed = true;
-        await _stream.DisposeAsync().ConfigureAwait(false);
+        if (_ownedStream is not null)
+        {
+            await _ownedStream.DisposeAsync().ConfigureAwait(false);
+            _ownedStream = null;
+        }
         GC.SuppressFinalize(this);
+    }
+
+    private Task<Stream> _openOwnedStream(CancellationToken ctk)
+    {
+        ctk.ThrowIfCancellationRequested();
+        var stream = Interlocked.Exchange(ref _ownedStream, null)
+            ?? throw new InvalidOperationException("The supplied payload stream cannot be replayed.");
+        return Task.FromResult(stream);
     }
 }

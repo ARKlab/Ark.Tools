@@ -14,6 +14,12 @@ public interface IMessagingTransport
     /// <summary>Gets the hard inline-envelope ceiling in bytes, or <see langword="null"/> when unbounded.</summary>
     long? MaximumInlineEnvelopeBytes { get; }
 
+    /// <summary>Gets the maximum inline payload bytes after accounting for headers.</summary>
+    /// <param name="headers">The completed envelope headers known before serialization.</param>
+    /// <returns>The payload budget, or <see langword="null"/> when unbounded.</returns>
+    long? GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers) =>
+        MaximumInlineEnvelopeBytes;
+
     /// <summary>Measures the completed native representation of an envelope.</summary>
     /// <param name="headers">The envelope headers.</param>
     /// <param name="payload">The serialized payload.</param>
