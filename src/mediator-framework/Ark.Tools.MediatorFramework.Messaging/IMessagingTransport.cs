@@ -30,25 +30,6 @@ public interface IMessagingTransport
         return checked(MeasureNativeHeaders(headers) + payload.Length);
     }
 
-    /// <summary>Static transport contract for provider-native sizing and naming.</summary>
-    /// <typeparam name="TSelf">The implementing transport class itself.</typeparam>
-    public interface IMessagingTransport<TSelf>
-        where TSelf : IMessagingTransport<TSelf>
-    {
-        /// <summary>Gets the fixed native payload limit for the transport.</summary>
-        static abstract long MaximumPayloadLimitBytes { get; }
-
-        /// <summary>Measures the native header representation.</summary>
-        /// <param name="headers">The envelope headers.</param>
-        /// <returns>The native header size in bytes.</returns>
-        static abstract long GetNativeHeaderSize(IReadOnlyDictionary<string, string> headers);
-
-        /// <summary>Maps a logical name to a provider-native entity name.</summary>
-        /// <param name="logicalName">The logical entity name.</param>
-        /// <returns>The provider-native entity name.</returns>
-        static abstract string ToNativeEntityName(string logicalName);
-    }
-
     /// <summary>Sends an envelope to a queue.</summary>
     /// <param name="queue">The destination queue.</param>
     /// <param name="headers">The envelope headers.</param>
@@ -74,6 +55,25 @@ public interface IMessagingTransport
         IReadOnlyDictionary<string, string> headers,
         ReadOnlySequence<byte> payload,
         CancellationToken ctk);
+}
+
+/// <summary>Static transport contract for provider-native sizing and naming.</summary>
+/// <typeparam name="TSelf">The implementing transport class itself.</typeparam>
+public interface IMessagingTransport<TSelf>
+    where TSelf : IMessagingTransport<TSelf>
+{
+    /// <summary>Gets the fixed native payload limit for the transport.</summary>
+    static abstract long MaximumPayloadLimitBytes { get; }
+
+    /// <summary>Measures the native header representation.</summary>
+    /// <param name="headers">The envelope headers.</param>
+    /// <returns>The native header size in bytes.</returns>
+    static abstract long GetNativeHeaderSize(IReadOnlyDictionary<string, string> headers);
+
+    /// <summary>Maps a logical name to a provider-native entity name.</summary>
+    /// <param name="logicalName">The logical entity name.</param>
+    /// <returns>The provider-native entity name.</returns>
+    static abstract string ToNativeEntityName(string logicalName);
 }
 
 /// <summary>Receive seam for transports that provide locked deliveries.</summary>

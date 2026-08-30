@@ -100,7 +100,9 @@ public sealed class StorageQueueMessagingTransport :
             StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty));
     }
 
-    /// <inheritdoc />
+    /// <summary>Measures the encoded native header framing for an empty payload.</summary>
+    /// <param name="headers">The envelope headers.</param>
+    /// <returns>The encoded native header framing size in bytes.</returns>
     public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
         var canonicalBytes = StorageQueueEnvelopeCodec._measureCanonical(headers, ReadOnlySequence<byte>.Empty);
