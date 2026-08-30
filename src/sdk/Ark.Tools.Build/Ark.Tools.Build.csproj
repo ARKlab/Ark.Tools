@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks></TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageId>Ark.Tools.Build</PackageId>
+    <Description>Ark.Tools MSBuild build assets.</Description>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!-- NU5128 is expected because this package intentionally contains only MSBuild assets. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <IncludeSymbols>false</IncludeSymbols>
+    <GenerateSBOM>false</GenerateSBOM>
+    <ArkToolsSdkProject>true</ArkToolsSdkProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="build\Ark.Tools.Build.props" Pack="true" PackagePath="build\Ark.Tools.Build.props" />
+    <None Include="build\Ark.Tools.Build.targets" Pack="true" PackagePath="build\Ark.Tools.Build.targets" />
+    <None Include="build\Ark.Tools.Build.common.props" Pack="true" PackagePath="build\Ark.Tools.Build.common.props" />
+    <None Include="build\Ark.Tools.Build.common.targets" Pack="true" PackagePath="build\Ark.Tools.Build.common.targets" />
+    <None Include="buildTransitive\Ark.Tools.Build.props" Pack="true" PackagePath="buildTransitive\Ark.Tools.Build.props" />
+    <None Include="buildTransitive\Ark.Tools.Build.targets" Pack="true" PackagePath="buildTransitive\Ark.Tools.Build.targets" />
+  </ItemGroup>
+</Project>

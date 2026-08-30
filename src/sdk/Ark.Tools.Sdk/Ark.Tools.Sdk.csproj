@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks></TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageId>Ark.Tools.Sdk</PackageId>
+    <Description>Ark.Tools additional MSBuild SDK.</Description>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!-- NU5128 is expected because this package intentionally contains only MSBuild assets. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <IncludeSymbols>false</IncludeSymbols>
+    <GenerateSBOM>false</GenerateSBOM>
+    <ArkToolsSdkProject>true</ArkToolsSdkProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Sdk\Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
+    <None Include="$(IntermediateOutputPath)Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
+  </ItemGroup>
+
+  <Target Name="GenerateSdkProps" BeforeTargets="GenerateNuspec">
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)Sdk.props"
+      Lines="&lt;Project&gt;&#xA;  &lt;ItemGroup Condition=&quot;'$(EnableArkToolsBuild)' != 'false'&quot;&gt;&#xA;    &lt;PackageReference Include=&quot;Ark.Tools.Build&quot; Version=&quot;$(PackageVersion)&quot; IsImplicitlyDefined=&quot;true&quot; /&gt;&#xA;  &lt;/ItemGroup&gt;&#xA;&lt;/Project&gt;"
+      Overwrite="true"
+      Encoding="UTF-8" />
+  </Target>
+</Project>
