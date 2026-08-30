@@ -17,6 +17,10 @@ public sealed class MessagingPayloadSender
     private readonly int _compressionMinimumSizeBytes;
 
     /// <summary>Creates a payload sender.</summary>
+    /// <param name="dataBus">The shared DataBus provider.</param>
+    /// <param name="network">The network payload safety limits.</param>
+    /// <param name="algorithm">The participant's sender-side compression algorithm.</param>
+    /// <param name="compressionMinimumSizeBytes">The minimum size eligible for compression.</param>
     public MessagingPayloadSender(
         IMessagingDataBus dataBus,
         MessagingNetworkOptions network,
@@ -36,6 +40,12 @@ public sealed class MessagingPayloadSender
     }
 
     /// <summary>Serializes, optionally compresses, and claim-checks a message.</summary>
+    /// <param name="message">The message contract.</param>
+    /// <param name="codec">The selected message codec.</param>
+    /// <param name="transport">The destination transport.</param>
+    /// <param name="headers">The outgoing envelope headers.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>An owned outgoing payload that the caller must dispose.</returns>
     public async Task<MessagingOutgoingPayload> BuildOutgoingPayloadAsync<T>(
         T message,
         IMessagingCodec codec,
@@ -61,13 +71,8 @@ public sealed class MessagingPayloadSender
         }
         var readOnlyHeaders = headers as IReadOnlyDictionary<string, string>
             ?? new ReadOnlyDictionary<string, string>(headers);
-        var configuredInlineLimit = Math.Min(
-            _network.MaximumTransportPayloadBytes,
-            _network.DataBusOffloadThresholdBytes);
         var transportInlineLimit = transport.GetMaximumInlinePayloadBytes(readOnlyHeaders);
-        var inlineLimit = checked((int)Math.Min(
-            configuredInlineLimit,
-            transportInlineLimit ?? int.MaxValue));
+        var inlineLimit = checked((int)Math.Min(transportInlineLimit, int.MaxValue));
 
         var serialization = new Pipe(_pipeOptions());
         var finalPayload = new Pipe(_pipeOptions());
@@ -113,8 +118,7 @@ public sealed class MessagingPayloadSender
                 MessagingHeaders.PayloadAttachmentLength,
                 attachment.Length.ToString(CultureInfo.InvariantCulture));
             _setReservedHeader(headers, MessagingHeaders.PayloadAttachmentSha256, attachment.Sha256);
-            if (transport.MaximumInlineEnvelopeBytes is { } ceiling
-                && transport.MeasureNative(readOnlyHeaders, ReadOnlySequence<byte>.Empty) > ceiling)
+            if (transport.MeasureNativeHeaders(readOnlyHeaders) > transport.MaximumPayloadBytes)
             {
                 result.Dispose();
                 var exception = new MessagingFailFastException(
@@ -255,7 +259,7 @@ public sealed class MessagingPayloadSender
         IReadOnlyDictionary<string, string> headers,
         CancellationToken ctk)
     {
-        var rented = ArrayPool<byte>.Shared.Rent(Math.Max(inlineLimit, 1));
+        var rented = ArrayPool<byte>.Shared.Rent(Math.Max(Math.Min(inlineLimit, 65_536), 1));
         var buffered = 0;
         long total = 0;
         IMessagingDataBusWriteSession? session = null;
@@ -273,6 +277,7 @@ public sealed class MessagingPayloadSender
                         throw _oversized();
                     if (session is null && segment.Length <= inlineLimit - buffered)
                     {
+                        _ensureCapacity(ref rented, buffered, segment.Length, inlineLimit);
                         segment.Span.CopyTo(rented.AsSpan(buffered));
                         buffered += segment.Length;
                         continue;
@@ -292,8 +297,7 @@ public sealed class MessagingPayloadSender
             if (session is null)
             {
                 var payload = new ReadOnlySequence<byte>(rented.AsMemory(0, buffered));
-                if (transport.MaximumInlineEnvelopeBytes is not { } ceiling
-                    || transport.MeasureNative(headers, payload) <= ceiling)
+                if (transport.MeasureNativePayload(headers, payload) <= transport.MaximumPayloadBytes)
                 {
                     return new MessagingOutgoingPayload(rented, buffered, attachment: null);
                 }
@@ -324,6 +328,26 @@ public sealed class MessagingPayloadSender
                 ArrayPool<byte>.Shared.Return(rented);
             }
         }
+    }
+
+    private static void _ensureCapacity(
+        ref byte[] buffer,
+        int buffered,
+        int additional,
+        int maximum)
+    {
+        var required = checked(buffered + additional);
+        if (required <= buffer.Length)
+            return;
+
+        var replacementSize = (int)Math.Min(
+            maximum,
+            Math.Max((long)required, (long)buffer.Length * 2));
+        var replacement = ArrayPool<byte>.Shared.Rent(replacementSize);
+        buffer.AsSpan(0, buffered).CopyTo(replacement);
+        Array.Clear(buffer, 0, buffered);
+        ArrayPool<byte>.Shared.Return(buffer);
+        buffer = replacement;
     }
 
     private async Task<IMessagingDataBusWriteSession> _openDataBusAsync(

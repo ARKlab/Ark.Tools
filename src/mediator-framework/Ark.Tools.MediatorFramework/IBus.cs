@@ -25,7 +25,7 @@ public interface IBus
     /// <param name="additionalHeaders">Optional application headers.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that completes when the message is accepted.</returns>
-    Task Send<T>(
+    Task Defer<T>(
         T message,
         TimeSpan delay,
         IReadOnlyDictionary<string, string>? additionalHeaders = null,
@@ -39,7 +39,7 @@ public interface IBus
     /// <param name="additionalHeaders">Optional application headers.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task that completes when the message is accepted.</returns>
-    Task Send<T>(
+    Task Defer<T>(
         T message,
         DateTimeOffset dueTime,
         IReadOnlyDictionary<string, string>? additionalHeaders = null,

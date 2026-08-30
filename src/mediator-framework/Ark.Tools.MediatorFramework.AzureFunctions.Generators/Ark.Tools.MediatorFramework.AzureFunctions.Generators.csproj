@@ -26,6 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Ark.Tools.MediatorFramework.Messaging/MessagingNativeEntityNameMapper.cs" Link="MessagingNativeEntityNameMapper.cs" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/MessagingContractTopologyValidator.cs" Link="MessagingContractTopologyValidator.cs" />
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 

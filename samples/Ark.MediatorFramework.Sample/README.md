@@ -258,7 +258,7 @@ native publisher / native SQL outbox
         |
         | amf1-* headers + native envelope
         v
-sample-messaging-publisher-books_book_print_completed topic
+sample-messaging-publisher-books-book-print.completed topic
         |
         +---- forwarding subscription ----> sample-messaging-notification
         |                                      |

@@ -149,19 +149,18 @@ public sealed class ServiceBusMessagingTransport : IMessagingTransport, IAsyncDi
 
     /// <inheritdoc/>
     public MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive
+        MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend;
 
     /// <summary>Standard-tier total message ceiling, including application properties.</summary>
-    public long? MaximumInlineEnvelopeBytes => 256 * 1024;
+    public long MaximumPayloadBytes => 256 * 1024;
 
     /// <inheritdoc/>
-    public long MeasureNative(
-        IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
         // Complete native message: body bytes plus every application property.
-        var size = payload.Length;
+        var size = 0L;
         foreach (var (key, value) in headers)
         {
             size += Encoding.UTF8.GetByteCount(key)

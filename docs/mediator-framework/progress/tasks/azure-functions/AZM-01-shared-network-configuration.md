@@ -43,7 +43,7 @@ requires.
 ## Implementation steps
 
 1. Define the public `MessagingCapabilities` `[Flags]` enum:
-   `None = 0`, `Receive = 1`, `PubSub = 2`, `ScheduledSend = 4`. XML-document
+   `None = 0`, `SendReceive = 1`, `PubSub = 2`, `ScheduledSend = 4`. XML-document
    that `Send` is implicit and not a flag.
 2. Define the public network configuration attribute and immutable runtime
    options model. The class carrying the attribute supplies the network

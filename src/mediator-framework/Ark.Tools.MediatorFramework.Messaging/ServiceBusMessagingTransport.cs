@@ -11,12 +11,18 @@ using Azure.Messaging.ServiceBus;
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
-public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, IAsyncDisposable
+public sealed class ServiceBusMessagingTransport :
+    IMessagingReceiveTransport,
+    IAsyncDisposable,
+    IMessagingTransport<ServiceBusMessagingTransport>
 {
+    /// <summary>Gets the Service Bus standard-tier maximum complete payload size.</summary>
+    public const long MaximumPayloadSizeBytes = 256 * 1024;
+    static long IMessagingTransport<ServiceBusMessagingTransport>.MaximumPayloadLimitBytes =>
+        MaximumPayloadSizeBytes;
     private const int _amqpPropertyOverheadBytes = 8;
     private const int _maximumDeadLetterReasonLength = 256;
     private const int _maximumDeadLetterDescriptionLength = 1_024;
-    private const long _maximumMessageBytes = 256 * 1024;
 
     private readonly ServiceBusClient _client;
     private readonly ConcurrentDictionary<string, ServiceBusSender> _senders = new(StringComparer.Ordinal);
@@ -31,27 +37,41 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
 
     /// <inheritdoc />
     public MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive
+        MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend;
 
     /// <inheritdoc />
-    public long? MaximumInlineEnvelopeBytes => _maximumMessageBytes;
+    public long MaximumPayloadBytes => MaximumPayloadSizeBytes;
 
-    /// <inheritdoc />
-    public long? GetMaximumInlinePayloadBytes(IReadOnlyDictionary<string, string> headers)
+    /// <summary>Maps a logical name to a Service Bus entity name.</summary>
+    public static string ToNativeEntityName(string logicalName)
     {
-        return _maximumMessageBytes - MeasureNative(headers, ReadOnlySequence<byte>.Empty);
+        return MessagingEntityNameMapper.ToServiceBus(logicalName);
+    }
+
+    static long IMessagingTransport<ServiceBusMessagingTransport>.GetNativeHeaderSize(
+        IReadOnlyDictionary<string, string> headers)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        var size = 0L;
+        checked
+        {
+            foreach (var pair in headers)
+                size += Encoding.UTF8.GetByteCount(pair.Key)
+                    + Encoding.UTF8.GetByteCount(pair.Value)
+                    + _amqpPropertyOverheadBytes;
+        }
+
+        return size;
     }
 
     /// <inheritdoc />
-    public long MeasureNative(
-        IReadOnlyDictionary<string, string> headers,
-        in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
         ArgumentNullException.ThrowIfNull(headers);
 
-        var size = payload.Length;
+        var size = 0L;
         checked
         {
             foreach (var pair in headers)
@@ -74,6 +94,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = ToNativeEntityName(queue);
         ArgumentNullException.ThrowIfNull(headers);
         _validateSize(headers, payload);
 
@@ -96,6 +117,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(topic);
+        topic = ToNativeEntityName(topic);
         ArgumentNullException.ThrowIfNull(headers);
         _validateSize(headers, payload);
 
@@ -112,6 +134,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        queue = ToNativeEntityName(queue);
         return _receiveAsync(queue, ctk);
     }
 
@@ -168,7 +191,7 @@ public sealed class ServiceBusMessagingTransport : IMessagingReceiveTransport, I
         IReadOnlyDictionary<string, string> headers,
         in ReadOnlySequence<byte> payload)
     {
-        if (MeasureNative(headers, payload) > _maximumMessageBytes)
+        if (MeasureNativeHeaders(headers) + payload.Length > MaximumPayloadSizeBytes)
             throw new ArgumentOutOfRangeException(
                 nameof(payload),
                 "The completed Service Bus message exceeds the 256 KB standard-tier limit.");

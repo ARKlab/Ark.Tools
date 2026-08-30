@@ -365,6 +365,7 @@ public sealed class MessagingFunctionsCompositionTests
             new MessagingNetworkAttribute
             {
                 Members = new[] { typeof(CompositionParticipant) },
+                Requires = MessagingCapabilities.SendReceive,
                 MaximumSchedulingDelay = TimeSpan.Zero
             });
         return new MessagingParticipantDescriptor(

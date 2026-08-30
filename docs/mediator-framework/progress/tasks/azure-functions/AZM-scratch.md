@@ -122,7 +122,7 @@ Remove `MeasureNative`, the network-level maximum transport payload, and the
 network-level DataBus offload threshold. Compression and DataBus claim-check
 remain transparent runtime concerns.
 
-### `MessagingCapabilities.Receive` naming
+### `MessagingCapabilities.SendReceive` naming
 
 **Timing: pre-release.**
 **Assigned:** [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
@@ -139,7 +139,7 @@ required use case is identified.**
 **Pre-release naming assigned:**
 [AZM-18](AZM-18-transport-contract-and-payload-sizing.md).
 
-If Rebus terminology is the target API, rename the two delayed `Send` overloads
+If Rebus terminology is the target API, rename the two delayed `Defer` overloads
 to `Defer` before release. Deferring the currently handled message is a separate
 feature, not merely a rename. Existing retry policies cover immediate
 redelivery but not "retry tomorrow." Without current-message deferral a

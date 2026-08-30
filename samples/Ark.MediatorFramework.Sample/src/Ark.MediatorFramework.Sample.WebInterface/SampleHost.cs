@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
@@ -48,7 +49,8 @@ public static class SampleHost
 
         builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
         builder.Services.AddOpenTelemetry()
-            .WithTracing(tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName));
+            .WithTracing(tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName))
+            .WithMetrics(metrics => metrics.AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
         var startup = new SampleStartup(
             container,
             network,

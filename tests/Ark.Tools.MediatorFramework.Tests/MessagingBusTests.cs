@@ -24,7 +24,7 @@ public sealed partial class MessagingBusTests
         var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
         using var bus = _createBus(
             transport,
-            MessagingCapabilities.Receive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend,
+            MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend,
             clock);
 
         await bus.Send(
@@ -57,7 +57,7 @@ public sealed partial class MessagingBusTests
             default).ConfigureAwait(false);
         using var bus = _createBus(
             transport,
-            MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
+            MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub,
             null,
             "publisher");
 
@@ -69,7 +69,7 @@ public sealed partial class MessagingBusTests
 
         using var otherBus = _createBus(
             transport,
-            MessagingCapabilities.Receive | MessagingCapabilities.PubSub,
+            MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub,
             null,
             "sender");
         Func<Task> action = () => otherBus.Publish(new TestEvent { Value = "rejected" });
@@ -81,9 +81,9 @@ public sealed partial class MessagingBusTests
     {
         var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
         var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
-        using var bus = _createBus(transport, MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend, clock);
+        using var bus = _createBus(transport, MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend, clock);
 
-        await bus.Send(new TestMessage { Value = "scheduled" }, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
+        await bus.Defer(new TestMessage { Value = "scheduled" }, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
         var enumerator = transport.ReceiveAsync("processor", cts.Token).GetAsyncEnumerator(cts.Token);
         var move = enumerator.MoveNextAsync().AsTask();
@@ -94,8 +94,8 @@ public sealed partial class MessagingBusTests
         await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
         await enumerator.DisposeAsync().ConfigureAwait(false);
 
-        using var noSchedule = _createBus(transport, MessagingCapabilities.Receive, clock);
-        Func<Task> action = () => noSchedule.Send(new TestMessage(), TimeSpan.Zero, cancellationToken: cts.Token);
+        using var noSchedule = _createBus(transport, MessagingCapabilities.SendReceive, clock);
+        Func<Task> action = () => noSchedule.Defer(new TestMessage(), TimeSpan.Zero, cancellationToken: cts.Token);
         await action.Should().ThrowAsync<NotSupportedException>().WithMessage("*ScheduledSend*")
             .ConfigureAwait(false);
     }
@@ -104,7 +104,7 @@ public sealed partial class MessagingBusTests
     public async Task ReservedHeadersAndUnwiredRoutesFailExplicitly()
     {
         var transport = new InMemoryMessagingTransport();
-        using var bus = _createBus(transport, MessagingCapabilities.Receive);
+        using var bus = _createBus(transport, MessagingCapabilities.SendReceive);
 
         Func<Task> reserved = () => bus.Send(
             new TestMessage(),
@@ -119,7 +119,7 @@ public sealed partial class MessagingBusTests
     public void BusDoesNotExposeReceiveOrReplyOperations()
     {
         typeof(IBus).GetMethods().Select(method => method.Name).Should()
-            .BeEquivalentTo("Send", "Send", "Send", "Publish");
+            .BeEquivalentTo("Send", "Defer", "Defer", "Publish");
     }
 
     private static MessagingBus _createBus(

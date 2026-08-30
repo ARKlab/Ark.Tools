@@ -55,6 +55,22 @@ public sealed class StorageQueueEnvelopeCodecTests
     }
 
     [TestMethod]
+    public void TransportMeasuresCompleteBase64EncodedEnvelope()
+    {
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [MessagingHeaders.MessageType] = "books_print"
+        };
+        var payload = new ReadOnlySequence<byte>(new byte[1024]);
+        var transport = new StorageQueueMessagingTransport("UseDevelopmentStorage=true");
+        var encoded = StorageQueueEnvelopeCodec.Encode(headers, payload);
+
+        transport.MeasureNativePayload(headers, payload).Should().Be(Encoding.UTF8.GetByteCount(encoded));
+        transport.MeasureNativePayload(headers, payload).Should().BeGreaterThan(
+            transport.MeasureNativeHeaders(headers) + payload.Length);
+    }
+
+    [TestMethod]
     public void EnvelopeRejectsMalformedBase64AndDuplicateHeaders()
     {
         var malformed = () => StorageQueueEnvelopeCodec.Decode(BinaryData.FromString("not-base64"));
@@ -79,9 +95,8 @@ public sealed class StorageQueueEnvelopeCodecTests
         var transport = new StorageQueueMessagingTransport("UseDevelopmentStorage=true");
 
         transport.Capabilities.Should().Be(
-            MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend);
-        transport.MaximumInlineEnvelopeBytes.Should().Be(
-            Base64.GetMaxEncodedToUtf8Length(StorageQueueLimits.MaximumNormalCanonicalBytes));
+            MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend);
+        transport.MaximumPayloadBytes.Should().Be(48 * 1024);
         var network = new MessagingNetworkOptions(
             typeof(StorageQueueEnvelopeCodecTests),
             new MessagingNetworkAttribute

@@ -33,7 +33,7 @@ public sealed partial class MessagingOutboxTests
                 new TestMessage { Value = "send" },
                 new Dictionary<string, string>(StringComparer.Ordinal) { ["tenant"] = "books" })
                 .ConfigureAwait(false);
-            await bus.Send(
+            await bus.Defer(
                 new TestMessage { Value = "scheduled" },
                 DateTimeOffset.Parse("2024-01-01T00:05:00Z", CultureInfo.InvariantCulture),
                 cancellationToken: default).ConfigureAwait(false);
@@ -162,7 +162,9 @@ public sealed partial class MessagingOutboxTests
             typeof(MessagingOutboxTests),
             new MessagingNetworkAttribute
             {
-                Requires = MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend,
+                Requires = MessagingCapabilities.SendReceive
+                    | MessagingCapabilities.PubSub
+                    | MessagingCapabilities.ScheduledSend,
                 MaximumSchedulingDelay = TimeSpan.FromDays(1)
             });
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
@@ -233,19 +235,19 @@ public sealed partial class MessagingOutboxTests
         }
 
         public MessagingCapabilities Capabilities =>
-            MessagingCapabilities.PubSub | MessagingCapabilities.ScheduledSend;
+            MessagingCapabilities.SendReceive
+            | MessagingCapabilities.PubSub
+            | MessagingCapabilities.ScheduledSend;
 
-        public long? MaximumInlineEnvelopeBytes => null;
+        public long MaximumPayloadBytes => long.MaxValue;
 
         public List<SentEnvelope> Sends { get; } = [];
 
         public List<SentEnvelope> Publishes { get; } = [];
 
-        public long MeasureNative(
-            IReadOnlyDictionary<string, string> headers,
-            in ReadOnlySequence<byte> payload)
+        public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
         {
-            return payload.Length;
+            return 0;
         }
 
         public async Task SendAsync(

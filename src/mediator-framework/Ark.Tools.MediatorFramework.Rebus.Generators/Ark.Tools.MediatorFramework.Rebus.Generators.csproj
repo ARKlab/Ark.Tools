@@ -28,6 +28,7 @@
   <ItemGroup>
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/MessagingContractTopologyValidator.cs" Link="MessagingContractTopologyValidator.cs" />
   </ItemGroup>
 
 </Project>

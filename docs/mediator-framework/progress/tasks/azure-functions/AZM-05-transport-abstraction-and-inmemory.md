@@ -68,8 +68,8 @@ infrastructure.
    - scheduled envelopes become visible at their due time;
    - thread-safe under concurrent senders, competing consumers, and
      settlement races;
-   - no hard inline-envelope ceiling (`long.MaxValue`-style unbounded): the
-     network payload threshold applies alone.
+   - a configurable conservative inline-envelope ceiling below the real cloud
+     transports, so oversized and DataBus paths are exercised in tests.
 4. Implement a runtime message pump for receive-capable transports: a
    start/stop async loop that takes locked deliveries and invokes a supplied
    callback. The pump is a long-running receive worker hosted only by test or
@@ -108,12 +108,12 @@ public interface IMessagingTransport
 
     /// <summary>Gets the hard inline-envelope ceiling in bytes; null means no hard
     /// ceiling (InMemory).</summary>
-    long? MaximumInlineEnvelopeBytes { get; }
+    long MaximumPayloadBytes { get; }
 
     /// <summary>Measures the completed native representation of an envelope, including
     /// headers and transport encoding. Claim-check decisions use this measurement, never
     /// payload bytes alone.</summary>
-    long MeasureNative(IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload);
+    long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers);
 
     /// <summary>Sends to a named queue. A non-null dueTime requires ScheduledSend.</summary>
     Task SendAsync(string queue, IReadOnlyDictionary<string, string> headers,
@@ -183,16 +183,15 @@ public sealed class InMemoryMessagingTransport : IMessagingReceiveTransport, IMe
     private readonly Duration _lockDuration; // configurable PeekLock duration
 
     public MessagingCapabilities Capabilities
-        => MessagingCapabilities.Receive | MessagingCapabilities.PubSub
+        => MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub
          | MessagingCapabilities.ScheduledSend;
 
     /// <summary>No hard inline-envelope ceiling: the network payload threshold applies alone.</summary>
-    public long? MaximumInlineEnvelopeBytes => null;
+    public long MaximumPayloadBytes => long.MaxValue;
 
-    public long MeasureNative(IReadOnlyDictionary<string, string> headers,
-        in ReadOnlySequence<byte> payload)
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
     {
-        var total = payload.Length;
+        var total = 0L;
         foreach (var (key, value) in headers)
             total += Encoding.UTF8.GetByteCount(key) + Encoding.UTF8.GetByteCount(value);
         return total;   // deterministic; InMemory stores the envelope as-is

@@ -6,6 +6,8 @@ using Ark.Tools.Solid;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using NodaTime;
 
 using NLog;
 
@@ -31,6 +33,7 @@ public sealed class MessagingDispatcher
     private readonly IReadOnlyList<Type> _incomingStepTypes;
     private readonly Func<Type, object> _resolveStep;
     private readonly TimeSpan _lockRenewalInterval;
+    private readonly IClock _clock;
 
     /// <summary>Creates a receive dispatcher for one participant.</summary>
     /// <param name="container">The participant's SimpleInjector container.</param>
@@ -42,6 +45,7 @@ public sealed class MessagingDispatcher
     /// <param name="incomingStepTypes">The incoming pipeline steps in execution order.</param>
     /// <param name="resolveStep">The pipeline step resolver.</param>
     /// <param name="lockRenewalInterval">The bounded interval between lock renewals.</param>
+    /// <param name="clock">The clock used for processing metrics.</param>
     public MessagingDispatcher(
         Container container,
         MessagingHeaderProcessor headerProcessor,
@@ -58,7 +62,8 @@ public sealed class MessagingDispatcher
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
         Func<Type, object>? resolveStep = null,
-        TimeSpan? lockRenewalInterval = null)
+        TimeSpan? lockRenewalInterval = null,
+        IClock? clock = null)
     {
         _container = container ?? throw new ArgumentNullException(nameof(container));
         _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
@@ -75,6 +80,7 @@ public sealed class MessagingDispatcher
             (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
         _resolveStep = resolveStep ?? container.GetInstance;
         _lockRenewalInterval = lockRenewalInterval ?? TimeSpan.FromSeconds(15);
+        _clock = clock ?? SystemClock.Instance;
         if (_lockRenewalInterval <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(lockRenewalInterval));
     }
@@ -89,6 +95,8 @@ public sealed class MessagingDispatcher
     {
         ArgumentNullException.ThrowIfNull(delivery);
 
+        var stopwatch = Stopwatch.StartNew();
+        var outcome = "error";
         try
         {
             var (codec, logicalName) = _headerProcessor.Classify(delivery.Headers);
@@ -126,6 +134,13 @@ public sealed class MessagingDispatcher
             }
 
             await _settleAsync(delivery, decision, error, cancellationToken).ConfigureAwait(false);
+            outcome = decision switch
+            {
+                MessagingSettlementDecision.Complete => "complete",
+                MessagingSettlementDecision.Abandon => "abandon",
+                MessagingSettlementDecision.DeadLetter => "dead_letter",
+                _ => "error",
+            };
             _logger.Debug(
                 CultureInfo.InvariantCulture,
                 "Messaging delivery {MessageType} at count {DeliveryCount} settled as {Settlement}",
@@ -135,6 +150,7 @@ public sealed class MessagingDispatcher
         }
         catch (MessagingFailFastException exception)
         {
+            outcome = "dead_letter";
             _logger.Warn(
                 exception,
                 CultureInfo.InvariantCulture,
@@ -145,6 +161,16 @@ public sealed class MessagingDispatcher
                 exception.Reason.ToString(),
                 exception.Message ?? string.Empty,
                 cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            MessagingMetrics.RecordProcessing(
+                stopwatch.Elapsed,
+                delivery.Headers,
+                outcome,
+                delivery.DeliveryCount,
+                now: _clock.GetCurrentInstant().ToDateTimeOffset());
         }
     }
 
@@ -167,6 +193,7 @@ public sealed class MessagingDispatcher
                         delivery.Headers,
                         delivery.DeliveryCount,
                         stageToken);
+                    context.Items[MessagingMetrics._dispatcherManagedItem] = true;
                     var processor = scope.GetInstance<ICommandProcessor>();
                     await MessagingPipelineInvoker.InvokeIncomingAsync(
                         _incomingStepTypes,

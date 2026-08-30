@@ -288,3 +288,13 @@ application context contract, but must not drain each other's rows.
 - Map only the public API assembly for public transports.
 - Register internal message handlers only in the processor.
 - Add a focused host-boundary test for startup and generated endpoints.
+
+## Opt-in messaging metrics
+
+Native messaging instrumentation is always available through
+`System.Diagnostics.Metrics`, but collection and export remain host choices.
+Add `OpenTelemetryProcessingMetricsStep.MeterName` to the host's meter
+provider when producer latency, queue delay, processing duration, settlement
+outcomes, or native delivery attempts are needed. The stable metric contract
+uses OpenTelemetry messaging semantic conventions 1.37.0 and seconds for
+duration instruments; only bounded topology attributes are emitted.

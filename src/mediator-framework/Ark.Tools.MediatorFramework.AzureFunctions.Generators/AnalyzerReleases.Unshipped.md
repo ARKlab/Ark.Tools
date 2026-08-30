@@ -20,3 +20,6 @@ ARKMF041 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue message
 ARKMF042 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue maximum dequeue count
 ARKMF043 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue visibility timeout
 ARKMF044 | Ark.Tools.MediatorFramework | Error | Storage Queue consumer has no retry policy
+ARKMF045 | Ark.Tools.MediatorFramework | Error | Functions messaging subscriber cannot deserialize publisher protocol
+ARKMSG025 | Ark.Tools.MediatorFramework | Error | MessagePack contract shape is missing
+ARKMSG026 | Ark.Tools.MediatorFramework | Error | Google.Protobuf contract shape is missing

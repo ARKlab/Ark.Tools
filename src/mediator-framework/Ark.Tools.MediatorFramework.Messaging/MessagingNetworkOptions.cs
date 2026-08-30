@@ -18,9 +18,7 @@ public sealed class MessagingNetworkOptions
         NetworkIdentity = networkType.FullName ?? networkType.Name;
         Members = new ReadOnlyCollection<Type>((declaration.Members ?? Array.Empty<Type>()).ToArray());
         Requires = declaration.Requires;
-        MaximumTransportPayloadBytes = declaration.MaximumTransportPayloadBytes;
         MaximumDecompressedPayloadBytes = declaration.MaximumDecompressedPayloadBytes;
-        DataBusOffloadThresholdBytes = declaration.DataBusOffloadThresholdBytes;
         DataBusMaximumAttachmentBytes = declaration.DataBusMaximumAttachmentBytes;
         MaximumSchedulingDelay = declaration.MaximumSchedulingDelay;
         ResourceLifecycle = declaration.ResourceLifecycle;
@@ -40,14 +38,8 @@ public sealed class MessagingNetworkOptions
     /// <summary>Gets the capabilities required by the network.</summary>
     public MessagingCapabilities Requires { get; }
 
-    /// <summary>Gets the maximum transport payload size in bytes.</summary>
-    public int MaximumTransportPayloadBytes { get; }
-
     /// <summary>Gets the maximum decompressed payload size in bytes.</summary>
     public int MaximumDecompressedPayloadBytes { get; }
-
-    /// <summary>Gets the DataBus offload threshold in bytes.</summary>
-    public int DataBusOffloadThresholdBytes { get; }
 
     /// <summary>Gets the maximum DataBus attachment size in bytes.</summary>
     public int DataBusMaximumAttachmentBytes { get; }

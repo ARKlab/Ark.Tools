@@ -42,7 +42,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     }
 
     /// <inheritdoc />
-    public async Task Send<T>(
+    public async Task Defer<T>(
         T message,
         TimeSpan delay,
         IReadOnlyDictionary<string, string>? additionalHeaders = null,
@@ -57,7 +57,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     }
 
     /// <inheritdoc />
-    public async Task Send<T>(
+    public async Task Defer<T>(
         T message,
         DateTimeOffset dueTime,
         IReadOnlyDictionary<string, string>? additionalHeaders = null,
@@ -67,7 +67,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
         var delay = dueTime - DateTimeOffset.UtcNow;
         if (delay < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(dueTime), "The due time must not be in the past.");
-        await Send(message, delay, additionalHeaders, cancellationToken).ConfigureAwait(false);
+        await Defer(message, delay, additionalHeaders, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

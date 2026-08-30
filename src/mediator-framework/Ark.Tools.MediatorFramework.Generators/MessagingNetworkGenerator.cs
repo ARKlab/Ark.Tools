@@ -21,6 +21,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _participantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
     private const string _messageAttribute = "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute = "Ark.Tools.MediatorFramework.EventAttribute";
+    private const string _apiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string _requestNamespace = "Ark.Tools.Solid";
     private const string _commandInterface = "Ark.Tools.Solid.ICommand`1";
     private const string _commandInterfaceName = "ICommand`1";
@@ -38,7 +39,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
     private const string _failedMessage = "Ark.Tools.MediatorFramework.MessagingFailed`1";
     private const string _exceptionInfo = "Ark.Tools.MediatorFramework.MessagingExceptionInfo";
-    private const int _receive = 1;
+    private const int _sendReceive = 1;
     private const int _pubSub = 2;
 
     private static readonly DiagnosticDescriptor _duplicateMember = _rule(
@@ -67,7 +68,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Participant '{0}' subscribes to event '{1}', which is not published in network '{2}'", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _serializerMismatch = _rule(
         "ARKMSG009", "Subscriber cannot deserialize publisher protocol",
-        "Participant '{0}' does not support the default serializer of publisher '{1}' for event '{2}'", DiagnosticSeverity.Error);
+        "Participant '{0}' does not support effective protocol '{3}' of publisher '{1}' for event '{2}'", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _defaultSerializer = _rule(
         "ARKMSG010", "Default serializer is not supported",
         "Participant '{0}' has DefaultSerializer '{1}' outside its Serializers set", DiagnosticSeverity.Error);
@@ -79,16 +80,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Contract '{0}' is declared by participants in more than one messaging network", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidIdentity = _rule(
         "ARKMSG013", "Invalid participant identity",
-        "Participant '{0}' has identity '{1}', which is not a valid portable queue name", DiagnosticSeverity.Error);
+        "Participant '{0}' has identity '{1}', which is not a valid logical name", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _duplicateIdentity = _rule(
         "ARKMSG014", "Duplicate participant identity",
         "Network '{0}' contains more than one participant with identity '{1}'", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _reservedIdentity = _rule(
         "ARKMSG015", "Reserved participant identity",
         "Participant '{0}' uses reserved identity '{1}'", DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _longTopic = _rule(
-        "ARKMSG016", "Event topic name is too long",
-        "Event topic '{0}' exceeds the Service Bus 260-character entity limit", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidRetry = _rule(
         "ARKMSG017", "Invalid messaging retry policy",
         "Retry policy for participant '{0}' must have MaximumDeliveryCount >= {1}", DiagnosticSeverity.Error);
@@ -97,7 +95,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Event contract '{0}' must implement ICommand<TSelf> or IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonNormalizedName = _rule(
         "ARKMSG019", "Non-normalized contract name",
-        "Contract '{0}' has explicit name or alias '{1}', which is not lowercase snake_case", DiagnosticSeverity.Error);
+        "Contract '{0}' has explicit name or alias '{1}', which is not a valid logical name", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _duplicateName = _rule(
         "ARKMSG020", "Duplicate messaging contract name",
         "Messaging contract name '{0}' is used by more than one contract", DiagnosticSeverity.Error);
@@ -228,7 +226,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         {
             if (!identities.Add(participant.Identity))
                 _report(context, _duplicateIdentity, participant.Symbol, network.Name, participant.Identity);
-            if (!_isPortableName(participant.Identity))
+            if (!_isLogicalName(participant.Identity))
                 _report(context, _invalidIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
             if (participant.Identity == "outbox-processor" || participant.Identity.EndsWith("-poison", StringComparison.Ordinal))
                 _report(context, _reservedIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
@@ -239,7 +237,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _report(context, _invalidRetry, participant.Symbol, participant.Identity, participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1);
 
             if (participant.Processes.Length > 0 || participant.Subscribes.Length > 0)
-                _requireCapability(context, network, participant, "Receive", _receive);
+                _requireCapability(context, network, participant, "SendReceive", _sendReceive);
             if (participant.Publishes.Length > 0 || participant.Subscribes.Length > 0)
                 _requireCapability(context, network, participant, "PubSub", _pubSub);
 
@@ -250,6 +248,21 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         foreach (var processor in processors)
+            MessagingContractTopologyValidator._validate(
+                (descriptor, location, arguments) =>
+                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                processor.Key,
+                processor.Value[0].Symbol,
+                processor.Value[0].DefaultSerializer);
+        foreach (var publisher in publishers)
+            MessagingContractTopologyValidator._validate(
+                (descriptor, location, arguments) =>
+                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                publisher.Key,
+                publisher.Value[0].Symbol,
+                publisher.Value[0].DefaultSerializer);
+
+        foreach (var processor in processors)
         {
             if (processor.Value.Count > 1)
                 _report(context, _multipleProcessor, processor.Key, _contractName(processor.Key), network.Name);
@@ -258,9 +271,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         {
             if (publisher.Value.Count > 1)
                 _report(context, _multiplePublisher, publisher.Key, _contractName(publisher.Key), network.Name);
-            var topic = publisher.Value[0].Identity + "-" + _contractName(publisher.Key);
-            if (topic.Length > 260)
-                _report(context, _longTopic, publisher.Key, topic);
         }
 
         foreach (var participant in participants)
@@ -275,7 +285,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 if (eventPublishers.Count != 1)
                     continue;
                 if (!participant.Serializers.Contains(eventPublishers[0].DefaultSerializer))
-                    _report(context, _serializerMismatch, participant.Symbol, participant.Identity, eventPublishers[0].Identity, _contractName(subscription));
+                    _report(
+                        context,
+                        _serializerMismatch,
+                        participant.Symbol,
+                        participant.Identity,
+                        eventPublishers[0].Identity,
+                        _contractName(subscription),
+                        _protocolName(eventPublishers[0].DefaultSerializer));
             }
         }
 
@@ -348,9 +365,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             symbol.ToDisplayString(),
             members,
             _enum(attribute, "Requires"),
-            _optionalInt(attribute, "MaximumTransportPayloadBytes"),
             _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
-            _optionalInt(attribute, "DataBusOffloadThresholdBytes"),
             _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
             _optionalInt(attribute, "MaximumSchedulingDelaySeconds"),
             _optionalInt(attribute, "ResourceLifecycle"),
@@ -494,8 +509,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
-        var fullName = symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
-        return _normalizeSnake(fullName);
+        var group = symbol.GetAttributes()
+            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
+        return _normalizeLogical(group) + "." + _normalizeLogical(symbol.Name);
     }
 
     private static string _normalizeIdentity(string value)
@@ -506,6 +523,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _normalizeSnake(string value)
     {
         return string.Join("_", value.Split('.').SelectMany(_words).Select(word => word.ToLowerInvariant()));
+    }
+
+    private static string _normalizeLogical(string value)
+    {
+        return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
+            .Select(segment => string.Join("-", _words(segment).Select(word => word.ToLowerInvariant()))));
     }
 
     private static IEnumerable<string> _words(string value)
@@ -535,15 +558,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             yield return word.ToString();
     }
 
-    private static bool _isPortableName(string value)
+    private static bool _isLogicalName(string value)
     {
-        if (value.Length < 3 || value.Length > 50 || value[0] == '-' || value[value.Length - 1] == '-')
+        if (value.Length == 0 || value[0] is '-' or '_' or '.' or '/' || value[^1] is '-' or '_' or '.' or '/')
             return false;
         for (var index = 0; index < value.Length; index++)
         {
             var character = value[index];
-            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-')
-                || (character == '-' && index > 0 && value[index - 1] == '-'))
+            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_' or '.' or '/')
+                || ((character is '-' or '_' or '.' or '/') && index > 0
+                    && (value[index - 1] is '-' or '_' or '.' or '/')))
                 return false;
         }
         return true;
@@ -551,16 +575,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static bool _isNormalized(string value)
     {
-        if (value.Length == 0 || value[0] == '_' || value[value.Length - 1] == '_')
-            return false;
-        for (var index = 0; index < value.Length; index++)
-        {
-            var character = value[index];
-            if (!(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')
-                || (character == '_' && index > 0 && value[index - 1] == '_'))
-                return false;
-        }
-        return true;
+        return _isLogicalName(value);
     }
 
     private static void _emitNetwork(
@@ -630,15 +645,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             source.AppendLine("                },")
                 .Append("                Requires = (global::Ark.Tools.MediatorFramework.MessagingCapabilities)")
                 .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
-                .Append("                MaximumTransportPayloadBytes = ")
-                .Append(network.MaximumTransportPayloadBytes?.ToString(CultureInfo.InvariantCulture)
-                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumTransportPayloadBytes").AppendLine(",")
                 .Append("                MaximumDecompressedPayloadBytes = ")
                 .Append(network.MaximumDecompressedPayloadBytes?.ToString(CultureInfo.InvariantCulture)
                     ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes").AppendLine(",")
-                .Append("                DataBusOffloadThresholdBytes = ")
-                .Append(network.DataBusOffloadThresholdBytes?.ToString(CultureInfo.InvariantCulture)
-                    ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusOffloadThresholdBytes").AppendLine(",")
                 .Append("                DataBusMaximumAttachmentBytes = ")
                 .Append(network.DataBusMaximumAttachmentBytes?.ToString(CultureInfo.InvariantCulture)
                     ?? "global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultDataBusMaximumAttachmentBytes").AppendLine(",")
@@ -1301,9 +1310,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             string name,
             ImmutableArray<INamedTypeSymbol> memberSymbols,
             int requires,
-            int? maximumTransportPayloadBytes,
             int? maximumDecompressedPayloadBytes,
-            int? dataBusOffloadThresholdBytes,
             int? dataBusMaximumAttachmentBytes,
             int? maximumSchedulingDelaySeconds,
             int? resourceLifecycle,
@@ -1314,9 +1321,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             Name = name;
             MemberSymbols = memberSymbols;
             Requires = requires;
-            MaximumTransportPayloadBytes = maximumTransportPayloadBytes;
             MaximumDecompressedPayloadBytes = maximumDecompressedPayloadBytes;
-            DataBusOffloadThresholdBytes = dataBusOffloadThresholdBytes;
             DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
             MaximumSchedulingDelaySeconds = maximumSchedulingDelaySeconds;
             ResourceLifecycle = resourceLifecycle;
@@ -1328,9 +1333,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         public string Name { get; }
         public ImmutableArray<INamedTypeSymbol> MemberSymbols { get; }
         public int Requires { get; }
-        public int? MaximumTransportPayloadBytes { get; }
         public int? MaximumDecompressedPayloadBytes { get; }
-        public int? DataBusOffloadThresholdBytes { get; }
         public int? DataBusMaximumAttachmentBytes { get; }
         public int? MaximumSchedulingDelaySeconds { get; }
         public int? ResourceLifecycle { get; }

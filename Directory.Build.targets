@@ -1,6 +1,6 @@
 <Project>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(ArkToolsSdkProject)' != 'true'">
 		<PackageReference Include="Polyfill" PrivateAssets="All" />
 	</ItemGroup>
 
@@ -31,7 +31,7 @@
 		<Using Include="System.Text" />
 	</ItemGroup>
 		
-	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' AND '$(ArkToolsSdkProject)' != 'true'">
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" />
 		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
 		<PackageReference Include="Meziantou.Analyzer" PrivateAssets="All" />
@@ -40,7 +40,7 @@
 		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
 	</ItemGroup>
 
-	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' AND '$(ArkToolsSdkProject)' != 'true'">
 		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
 	</ItemGroup>
 

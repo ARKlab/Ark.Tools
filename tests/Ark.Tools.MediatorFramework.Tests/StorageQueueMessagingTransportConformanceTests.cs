@@ -32,7 +32,7 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
     protected override string EmptyQueueName => _emptyQueue;
 
     protected override MessagingCapabilities Capabilities =>
-        MessagingCapabilities.Receive | MessagingCapabilities.ScheduledSend;
+        MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend;
 
     protected override IMessagingReceiveTransport CreateTransport()
     {
