@@ -1,5 +1,5 @@
 <Project>
-  <PropertyGroup Condition="'$(ArkToolsBuildImported)' != 'true'">
+  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
     <ArkToolsBuildImported>true</ArkToolsBuildImported>
     <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
   </PropertyGroup>

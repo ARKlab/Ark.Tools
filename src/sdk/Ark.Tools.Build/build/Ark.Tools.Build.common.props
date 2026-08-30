@@ -1,6 +1,16 @@
 <Project>
-  <PropertyGroup Condition="'$(ArkToolsBuildImported)' != 'true'">
+  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
     <ArkToolsBuildImported>true</ArkToolsBuildImported>
     <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
+    <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
+    <MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
+    <Nullable Condition="'$(Nullable)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</Nullable>
+    <ImplicitUsings Condition="'$(ImplicitUsings)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</ImplicitUsings>
+    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateDocumentationFile>
+    <Features Condition="'$(Features)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">strict</Features>
+    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</ReportAnalyzer>
+    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</EnforceCodeStyleInBuild>
+    <TreatTSqlWarningsAsErrors Condition="'$(TreatTSqlWarningsAsErrors)' == '' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">true</TreatTSqlWarningsAsErrors>
+    <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == '' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">true</RunSqlCodeAnalysis>
   </PropertyGroup>
 </Project>
