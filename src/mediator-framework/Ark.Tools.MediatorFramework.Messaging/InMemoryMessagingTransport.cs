@@ -83,12 +83,15 @@ public sealed class InMemoryMessagingTransport :
         IReadOnlyDictionary<string, string> headers)
     {
         ArgumentNullException.ThrowIfNull(headers);
+        var size = 0L;
         checked
         {
-            return headers.Sum(static pair =>
-                (long)Encoding.UTF8.GetByteCount(pair.Key)
-                + (long)Encoding.UTF8.GetByteCount(pair.Value));
+            foreach (var pair in headers)
+                size += (long)Encoding.UTF8.GetByteCount(pair.Key)
+                    + Encoding.UTF8.GetByteCount(pair.Value);
         }
+
+        return size;
     }
 
     /// <summary>Configures the native retry limit and delay for a queue.</summary>
