@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 using NodaTime;
 
@@ -83,8 +84,8 @@ public sealed class InMemoryMessagingTransport :
     {
         ArgumentNullException.ThrowIfNull(headers);
         return headers.Sum(static pair =>
-            (long)System.Text.Encoding.UTF8.GetByteCount(pair.Key)
-            + (long)System.Text.Encoding.UTF8.GetByteCount(pair.Value));
+            (long)Encoding.UTF8.GetByteCount(pair.Key)
+            + (long)Encoding.UTF8.GetByteCount(pair.Value));
     }
 
     /// <summary>Configures the native retry limit and delay for a queue.</summary>
