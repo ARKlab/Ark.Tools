@@ -126,6 +126,6 @@ contract name.
 - [x] Generated triggers, manifests, lifecycle, and runtime transport operations
   share one mapping result.
 - [x] Sample, guides, snapshots, and generated-source inspections are updated.
-- [ ] The [task board](../README.md) status for AZM-17 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] The [task board](../README.md) status for AZM-17 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
