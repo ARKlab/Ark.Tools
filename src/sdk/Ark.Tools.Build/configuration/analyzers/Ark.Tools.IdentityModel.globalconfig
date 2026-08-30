@@ -1,0 +1,5 @@
+is_global = true
+global_level = 90
+
+# IDX00001: Log messages must be constant; arguments must be passed separately.
+dotnet_diagnostic.IDX00001.severity = error

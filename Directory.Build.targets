@@ -40,11 +40,11 @@
 		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
 	</ItemGroup>
 
-	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' AND '$(ArkToolsSdkProject)' != 'true'">
-		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+	<ItemGroup Label="Banned API Analyzer" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' AND '$(ArkToolsSdkProject)' != 'true' AND '$(EnableArkToolsBannedApi)' != 'false'">
+		<AdditionalFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.BannedApi.BannedSymbols.txt" />
 	</ItemGroup>
 
-	<Target Name="Disable_SponsorLink" BeforeTargets="CoreCompile">
+	<Target Name="Disable_SponsorLink" BeforeTargets="CoreCompile" Condition="'$(EnableArkToolsSponsorLinkRemoval)' != 'false'">
 		<ItemGroup>
 			<Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'DevLooped.SponsorLink' " />
 			<Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Moq.CodeAnalysis' " />

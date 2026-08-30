@@ -130,8 +130,18 @@
   
 
 	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
-		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig"
+								   Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.MeziantouAnalyzer.globalconfig"
+								   Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.ErrorProne.globalconfig"
+								   Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig"
+								   Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.IdentityModel.globalconfig"
+								   Condition="'$(EnableArkToolsIdentityModelConfiguration)' != 'false'" />
+		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.Core.globalconfig"
+								   Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
 	</ItemGroup>
 
 	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
