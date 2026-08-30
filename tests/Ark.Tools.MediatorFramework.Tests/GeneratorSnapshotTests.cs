@@ -2350,6 +2350,29 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorRejectsMissingEffectiveMessagePackShape()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.MessagePack },
+                DefaultSerializer = SerializationProtocol.MessagePack)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG025");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorRejectsQueryEventShape()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(

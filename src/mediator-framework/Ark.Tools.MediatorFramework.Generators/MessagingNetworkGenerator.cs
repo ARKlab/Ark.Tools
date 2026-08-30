@@ -68,7 +68,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Participant '{0}' subscribes to event '{1}', which is not published in network '{2}'", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _serializerMismatch = _rule(
         "ARKMSG009", "Subscriber cannot deserialize publisher protocol",
-        "Participant '{0}' does not support the default serializer of publisher '{1}' for event '{2}'", DiagnosticSeverity.Error);
+        "Participant '{0}' does not support effective protocol '{3}' of publisher '{1}' for event '{2}'", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _defaultSerializer = _rule(
         "ARKMSG010", "Default serializer is not supported",
         "Participant '{0}' has DefaultSerializer '{1}' outside its Serializers set", DiagnosticSeverity.Error);
@@ -251,6 +251,21 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         foreach (var processor in processors)
+            MessagingContractTopologyValidator.Validate(
+                (descriptor, location, arguments) =>
+                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                processor.Key,
+                processor.Value[0].Symbol,
+                processor.Value[0].DefaultSerializer);
+        foreach (var publisher in publishers)
+            MessagingContractTopologyValidator.Validate(
+                (descriptor, location, arguments) =>
+                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                publisher.Key,
+                publisher.Value[0].Symbol,
+                publisher.Value[0].DefaultSerializer);
+
+        foreach (var processor in processors)
         {
             if (processor.Value.Count > 1)
                 _report(context, _multipleProcessor, processor.Key, _contractName(processor.Key), network.Name);
@@ -273,7 +288,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 if (eventPublishers.Count != 1)
                     continue;
                 if (!participant.Serializers.Contains(eventPublishers[0].DefaultSerializer))
-                    _report(context, _serializerMismatch, participant.Symbol, participant.Identity, eventPublishers[0].Identity, _contractName(subscription));
+                    _report(
+                        context,
+                        _serializerMismatch,
+                        participant.Symbol,
+                        participant.Identity,
+                        eventPublishers[0].Identity,
+                        _contractName(subscription),
+                        _protocolName(eventPublishers[0].DefaultSerializer));
             }
         }
 

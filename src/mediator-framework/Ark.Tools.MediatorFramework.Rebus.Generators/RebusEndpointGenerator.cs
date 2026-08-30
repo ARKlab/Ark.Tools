@@ -384,13 +384,23 @@ namespace Ark.Tools.MediatorFramework.Generators
                         : member.Name);
                 foreach (var contract in _types(declaration, "Processes"))
                 {
-                    var endpoint = ExtractParticipantContract(contract, owner, GetLocation(declaration));
+                    var endpoint = ExtractParticipantContract(
+                        contract,
+                        owner,
+                        member,
+                        _enum(declaration, "DefaultSerializer"),
+                        GetLocation(declaration));
                     if (endpoint is not null)
                         routes.Add(endpoint.Value);
                 }
             }
             var adapters = processes.Concat(subscribes)
-                .Select(contract => ExtractParticipantContract(contract, null, GetLocation(participantAttribute)))
+                .Select(contract => ExtractParticipantContract(
+                    contract,
+                    null,
+                    participant,
+                    _enum(participantAttribute, "DefaultSerializer"),
+                    GetLocation(participantAttribute)))
                 .Where(static endpoint => endpoint is not null)
                 .Select(static endpoint => endpoint!.Value)
                 .ToImmutableArray();
@@ -429,8 +439,21 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static EndpointModel? ExtractParticipantContract(
             INamedTypeSymbol type,
             string? ownerQueue,
+            INamedTypeSymbol owner,
+            int protocol,
             Location location)
         {
+            var diagnostics = new List<DiagnosticInfo>();
+            MessagingContractTopologyValidator.Validate(
+                (descriptor, diagnosticLocation, arguments) =>
+                    diagnostics.Add(new DiagnosticInfo(
+                        descriptor,
+                        type.Name,
+                        diagnosticLocation,
+                        arguments)),
+                type,
+                owner,
+                protocol);
             foreach (var iface in type.AllInterfaces)
             {
                 if (IsType(iface.OriginalDefinition, "ICommand", "Ark.Tools.Solid"))
@@ -440,7 +463,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         GeneratedName(type),
                         null,
                         ownerQueue,
-                        Array.Empty<DiagnosticInfo>(),
+                        diagnostics,
                         isCommand: true,
                         location);
                 }
@@ -451,7 +474,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         GeneratedName(type),
                         iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         ownerQueue,
-                        Array.Empty<DiagnosticInfo>(),
+                        diagnostics,
                         isCommand: false,
                         location);
                 }

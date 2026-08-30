@@ -68,6 +68,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Functions messaging subscription has no publisher",
         "Subscribed event '{0}' does not have exactly one publisher in network '{1}'",
         DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _serializerMismatch = _rule(
+        "ARKMF045",
+        "Functions messaging subscriber cannot deserialize publisher protocol",
+        "Participant '{0}' does not support effective protocol '{1}' published by '{2}' for event '{3}'",
+        DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _hostJsonNotInspectable = _rule(
         "ARKMF040",
         "Storage Queue host settings are not inspectable",
@@ -209,6 +214,27 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 : host.Participant.Name);
         var processes = _types(participantAttribute, "Processes");
         var subscribes = _types(participantAttribute, "Subscribes");
+        foreach (var contract in processes)
+            MessagingContractTopologyValidator.Validate(
+                (descriptor, location, arguments) =>
+                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                contract,
+                host.Participant,
+                _int(participantAttribute, "DefaultSerializer"));
+        foreach (var member in _types(network.Attribute!, "Members"))
+        {
+            var memberAttribute = member.GetAttributes().FirstOrDefault(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            if (memberAttribute is null)
+                continue;
+            foreach (var contract in _types(memberAttribute, "Publishes"))
+                MessagingContractTopologyValidator.Validate(
+                    (descriptor, location, arguments) =>
+                        context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                    contract,
+                    member,
+                    _int(memberAttribute, "DefaultSerializer"));
+        }
         var retryType = _type(participantAttribute, "Retry");
         if (host.Binding == _storageQueueBinding
             && (!processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty))
@@ -293,6 +319,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Where(static item => item.Attribute is not null)
             .ToArray();
         var subscriptions = ImmutableArray.CreateBuilder<Subscription>();
+        var participantAttribute = participant.GetAttributes().First(attribute =>
+            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
         foreach (var subscribedEvent in subscribedEvents
             .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
         {
@@ -307,6 +335,25 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                     participant.Locations.FirstOrDefault() ?? Location.None,
                     subscribedEvent.ToDisplayString(),
                     network.ToDisplayString()));
+                return null;
+            }
+
+            var supportedProtocols = _ints(participantAttribute, "Serializers");
+            var publisherProtocol = _int(publishers[0].Attribute!, "DefaultSerializer");
+            if (!supportedProtocols.Contains(publisherProtocol))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    _serializerMismatch,
+                    participant.Locations.FirstOrDefault() ?? Location.None,
+                    participantIdentity,
+                    publisherProtocol switch
+                    {
+                        1 => "MessagePack",
+                        2 => "Protobuf",
+                        _ => "Json",
+                    },
+                    _string(publishers[0].Attribute, "Identity") ?? publishers[0].Type.ToDisplayString(),
+                    subscribedEvent.ToDisplayString()));
                 return null;
             }
 
@@ -639,6 +686,19 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             is int value
             ? value
             : 0;
+    }
+
+    private static ImmutableArray<int> _ints(AttributeData? attribute, string name)
+    {
+        if (attribute is null)
+            return ImmutableArray<int>.Empty;
+        var value = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value;
+        return value.Kind == TypedConstantKind.Array
+            ? value.Values
+                .Where(static item => item.Value is int)
+                .Select(static item => (int)item.Value!)
+                .ToImmutableArray()
+            : ImmutableArray<int>.Empty;
     }
 
     private static string? _string(AttributeData? attribute, string name)
