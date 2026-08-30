@@ -11,8 +11,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <IncludeSymbols>false</IncludeSymbols>
     <GenerateSBOM>false</GenerateSBOM>
-    <ArkToolsPackageProject>true</ArkToolsPackageProject>
-    <PackageIcon></PackageIcon>
+    <ArkToolsSdkProject>true</ArkToolsSdkProject>
   </PropertyGroup>
 
   <ItemGroup>

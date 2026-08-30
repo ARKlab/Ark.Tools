@@ -46,7 +46,7 @@ public sealed class SdkPackageTests
 
         var consumer = Path.Combine(root, "artifacts", "sdk-consumer");
         Directory.CreateDirectory(consumer);
-        await File.WriteAllTextAsync(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsPackageProject>true</ArkToolsPackageProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Combine(consumer, "Directory.Build.props"), "<Project><PropertyGroup><ArkToolsSdkProject>true</ArkToolsSdkProject><RestorePackagesWithLockFile>false</RestorePackagesWithLockFile><EnablePackageValidation>false</EnablePackageValidation></PropertyGroup></Project>").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Combine(consumer, "Directory.Build.targets"), "<Project />").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Combine(consumer, "global.json"), """{"sdk":{"version":"10.0.400","rollForward":"latestFeature"},"msbuild-sdks":{"Ark.Tools.Sdk":"999.9.9"}}""").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Combine(consumer, "NuGet.Config"), $"<configuration><packageSources><clear /><add key=\"local\" value=\"{feed}\" /></packageSources></configuration>").ConfigureAwait(false);
