@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using NodaTime;
+using System.Diagnostics;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -35,7 +36,30 @@ public sealed class OpenTelemetryProcessingMetricsStep : IMessagingIncomingStep
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(next);
 
-        await next().ConfigureAwait(false);
+        var stopwatch = Stopwatch.StartNew();
+        var outcome = "complete";
+        try
+        {
+            await next().ConfigureAwait(false);
+        }
+        catch
+        {
+            outcome = "error";
+            throw;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            if (!context.Items.ContainsKey(MessagingMetrics.DispatcherManagedItem))
+            {
+                MessagingMetrics.RecordProcessing(
+                    stopwatch.Elapsed,
+                    context.Headers,
+                    outcome,
+                    context.DeliveryCount,
+                    now: _clock.GetCurrentInstant().ToDateTimeOffset());
+            }
+        }
     }
 }
 
@@ -56,6 +80,7 @@ public static class MessagingMetrics
     public const string DeliveryAttemptsName = "messaging.process.attempts";
     /// <summary>The item key used to retain the processing start timestamp.</summary>
     internal const string ProcessingStartItem = "ark.messaging.metrics.processing-start";
+    internal const string DispatcherManagedItem = "ark.messaging.metrics.dispatcher-managed";
 
     private static readonly Meter _meter = new(OpenTelemetryProcessingMetricsStep.MeterName);
     private static readonly Histogram<double> _clientOperationDuration =
@@ -91,7 +116,8 @@ public static class MessagingMetrics
         IReadOnlyDictionary<string, string> headers,
         string outcome,
         int deliveryCount,
-        string? destination = null)
+        string? destination = null,
+        DateTimeOffset? now = null)
     {
         try
         {
@@ -102,8 +128,8 @@ public static class MessagingMetrics
             _processedMessages.Add(1, attributes);
             if (deliveryCount > 0)
                 _deliveryAttempts.Record(deliveryCount, attributes);
-            if (_tryGetSentTime(headers, out var sentTime))
-                _timeInQueue.Record(Math.Max(0, (DateTimeOffset.UtcNow - sentTime - duration).TotalSeconds), attributes);
+            if (_tryGetSentTime(headers, out var sentTime) && now is not null)
+                _timeInQueue.Record(Math.Max(0, (now.Value - sentTime - duration).TotalSeconds), attributes);
         }
         catch (Exception exception) when (_isInstrumentationException(exception))
         {

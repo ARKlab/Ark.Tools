@@ -7,6 +7,7 @@ using SimpleInjector;
 using SimpleInjector.Lifestyles;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using NodaTime;
 
 using NLog;
 
@@ -32,6 +33,7 @@ public sealed class MessagingDispatcher
     private readonly IReadOnlyList<Type> _incomingStepTypes;
     private readonly Func<Type, object> _resolveStep;
     private readonly TimeSpan _lockRenewalInterval;
+    private readonly IClock _clock;
 
     /// <summary>Creates a receive dispatcher for one participant.</summary>
     /// <param name="container">The participant's SimpleInjector container.</param>
@@ -59,7 +61,8 @@ public sealed class MessagingDispatcher
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
         Func<Type, object>? resolveStep = null,
-        TimeSpan? lockRenewalInterval = null)
+        TimeSpan? lockRenewalInterval = null,
+        IClock? clock = null)
     {
         _container = container ?? throw new ArgumentNullException(nameof(container));
         _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
@@ -76,6 +79,7 @@ public sealed class MessagingDispatcher
             (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
         _resolveStep = resolveStep ?? container.GetInstance;
         _lockRenewalInterval = lockRenewalInterval ?? TimeSpan.FromSeconds(15);
+        _clock = clock ?? SystemClock.Instance;
         if (_lockRenewalInterval <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(lockRenewalInterval));
     }
@@ -164,7 +168,8 @@ public sealed class MessagingDispatcher
                 stopwatch.Elapsed,
                 delivery.Headers,
                 outcome,
-                delivery.DeliveryCount);
+                delivery.DeliveryCount,
+                now: _clock.GetCurrentInstant().ToDateTimeOffset());
         }
     }
 
@@ -188,6 +193,7 @@ public sealed class MessagingDispatcher
                         payload.ReadPayload(),
                         delivery.DeliveryCount,
                         stageToken);
+                    context.Items[MessagingMetrics.DispatcherManagedItem] = true;
                     var processor = scope.GetInstance<ICommandProcessor>();
                     await MessagingPipelineInvoker.InvokeIncomingAsync(
                         _incomingStepTypes,
