@@ -226,6 +226,20 @@ public sealed class MessagingCompressionAndDataBusTests
     }
 
     [TestMethod]
+    public async Task CompletedDataBusSessionRejectsFurtherWrites()
+    {
+        await using var session = await new InMemoryMessagingDataBus()
+            .OpenWriteAsync(default).ConfigureAwait(false);
+        await session.Stream.WriteAsync("payload"u8.ToArray()).ConfigureAwait(false);
+        await session.CompleteAsync(default).ConfigureAwait(false);
+
+        var action = async () => await session.Stream.WriteAsync("more"u8.ToArray())
+            .ConfigureAwait(false);
+
+        await action.Should().ThrowAsync<ObjectDisposedException>().ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public async Task MissingAttachmentFailsIntegrity()
     {
         var network = _network(maxDecompressed: 10_000);

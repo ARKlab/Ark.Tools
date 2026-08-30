@@ -236,6 +236,7 @@ public sealed class MessagingPayloadSender
         }
         finally
         {
+            Array.Clear(prefix, 0, prefixLength);
             ArrayPool<byte>.Shared.Return(prefix);
             if (compressor is not null)
                 await compressor.DisposeAsync().ConfigureAwait(false);
@@ -300,6 +301,7 @@ public sealed class MessagingPayloadSender
             var attachment = await session.CompleteAsync(ctk).ConfigureAwait(false);
             await session.DisposeAsync().ConfigureAwait(false);
             session = null;
+            Array.Clear(rented, 0, buffered);
             ArrayPool<byte>.Shared.Return(rented);
             return new MessagingOutgoingPayload(null, 0, attachment);
         }
@@ -314,7 +316,10 @@ public sealed class MessagingPayloadSender
             if (session is not null)
                 await session.DisposeAsync().ConfigureAwait(false);
             if (failure is not null)
+            {
+                Array.Clear(rented, 0, buffered);
                 ArrayPool<byte>.Shared.Return(rented);
+            }
         }
     }
 

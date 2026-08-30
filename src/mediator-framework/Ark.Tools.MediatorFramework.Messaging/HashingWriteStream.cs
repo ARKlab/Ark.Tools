@@ -28,7 +28,7 @@ internal sealed class HashingWriteStream : Stream
 
     public override bool CanRead => false;
     public override bool CanSeek => false;
-    public override bool CanWrite => true;
+    public override bool CanWrite => !_completed;
     public override long Length => _bytesWritten;
     public override long Position
     {
@@ -38,6 +38,7 @@ internal sealed class HashingWriteStream : Stream
 
     public override void Write(ReadOnlySpan<byte> buffer)
     {
+        ObjectDisposedException.ThrowIf(_completed, this);
         _inner.Write(buffer);
         _hash.AppendData(buffer);
         _bytesWritten += buffer.Length;
@@ -52,6 +53,7 @@ internal sealed class HashingWriteStream : Stream
         ReadOnlyMemory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_completed, this);
         await _inner.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
         _hash.AppendData(buffer.Span);
         _bytesWritten += buffer.Length;
