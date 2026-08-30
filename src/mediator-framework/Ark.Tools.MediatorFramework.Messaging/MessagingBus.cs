@@ -3,6 +3,7 @@
 
 using System.Buffers;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using Ark.Tools.Outbox;
 
@@ -77,7 +78,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         CancellationToken cancellationToken = default)
         where T : class
     {
-        await _sendCoreAsync(message, dueTime: null, additionalHeaders, cancellationToken).ConfigureAwait(false);
+        await _sendCoreAsync(message, dueTime: null, additionalHeaders, cancellationToken, "send").ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -93,7 +94,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             throw new ArgumentOutOfRangeException(nameof(delay));
 
         var now = _utcNow();
-        await _sendCoreAsync(message, now + delay, additionalHeaders, cancellationToken).ConfigureAwait(false);
+        await _sendCoreAsync(message, now + delay, additionalHeaders, cancellationToken, "defer").ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -111,7 +112,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         if (dueTime - now > _network.MaximumSchedulingDelay)
             throw new ArgumentOutOfRangeException(nameof(dueTime));
 
-        await _sendCoreAsync(message, dueTime, additionalHeaders, cancellationToken).ConfigureAwait(false);
+        await _sendCoreAsync(message, dueTime, additionalHeaders, cancellationToken, "defer").ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -140,7 +141,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             additionalHeaders,
             publish: true,
             dueTime: null,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken: cancellationToken,
+            operation: "publish").ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -163,7 +165,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         T message,
         DateTimeOffset? dueTime,
         IReadOnlyDictionary<string, string>? additionalHeaders,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string operation)
         where T : class
     {
         _throwIfDisposed();
@@ -176,7 +179,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             additionalHeaders,
             publish: false,
             dueTime,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken: cancellationToken,
+            operation: operation).ConfigureAwait(false);
     }
 
     private async Task _runOutgoingAsync<T>(
@@ -185,65 +189,57 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         IReadOnlyDictionary<string, string>? additionalHeaders,
         bool publish,
         DateTimeOffset? dueTime,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string operation)
         where T : class
     {
         _throwIfDisposed();
         var headers = _createHeaders<T>(additionalHeaders);
         var context = new MessagingOutgoingContext(headers, destination);
-        await MessagingPipelineInvoker.InvokeOutgoingAsync(
-            _outgoingStepTypes,
-            _resolveStep,
-            context,
-            async () =>
-            {
-                var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
-                var payload = await _payloadSender
-                    .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
-                    .ConfigureAwait(false);
-                _validateHeaders(context.Headers);
-                var transportHeaders = new ReadOnlyDictionary<string, string>(
-                    new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
-                var outboxScope = _outboxScope.Value;
-                if (outboxScope is not null)
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            await MessagingPipelineInvoker.InvokeOutgoingAsync(
+                _outgoingStepTypes,
+                _resolveStep,
+                context,
+                async () =>
                 {
-                    var outboxHeaders = new Dictionary<string, string>(context.Headers, StringComparer.Ordinal)
+                    var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
+                    var payload = await _payloadSender
+                        .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
+                        .ConfigureAwait(false);
+                    _validateHeaders(context.Headers);
+                    var transportHeaders = new ReadOnlyDictionary<string, string>(
+                        new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
+                    var outboxScope = _outboxScope.Value;
+                    if (outboxScope is not null)
                     {
-                        [MessagingHeaders.OutboxDestinationKind] = publish ? "topic" : "queue",
-                        [MessagingHeaders.OutboxDestination] = destination,
-                    };
-                    if (dueTime is not null)
-                    {
-                        outboxHeaders[MessagingHeaders.OutboxDueTime] =
-                            dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
+                        var outboxHeaders = new Dictionary<string, string>(context.Headers, StringComparer.Ordinal)
+                        {
+                            [MessagingHeaders.OutboxDestinationKind] = publish ? "topic" : "queue",
+                            [MessagingHeaders.OutboxDestination] = destination,
+                        };
+                        if (dueTime is not null)
+                            outboxHeaders[MessagingHeaders.OutboxDueTime] =
+                                dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
+                        _validateHeaders(outboxHeaders);
+                        outboxScope.Add(new OutboxMessage { Headers = outboxHeaders, Body = payload.ToArray() });
                     }
-                    _validateHeaders(outboxHeaders);
-
-                    outboxScope.Add(new OutboxMessage
-                    {
-                        Headers = outboxHeaders,
-                        Body = payload.ToArray(),
-                    });
-                }
-                else if (publish)
-                {
-                    await _transport.PublishAsync(
-                        destination,
-                        transportHeaders,
-                        payload,
-                        cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    await _transport.SendAsync(
-                        destination,
-                        transportHeaders,
-                        payload,
-                        dueTime,
-                        cancellationToken).ConfigureAwait(false);
-                }
-            },
-            cancellationToken).ConfigureAwait(false);
+                    else if (publish)
+                        await _transport.PublishAsync(destination, transportHeaders, payload, cancellationToken)
+                            .ConfigureAwait(false);
+                    else
+                        await _transport.SendAsync(
+                            destination, transportHeaders, payload, dueTime, cancellationToken).ConfigureAwait(false);
+                },
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            MessagingMetrics.RecordClientOperation(stopwatch.Elapsed, headers, operation, destination);
+        }
     }
 
     private Dictionary<string, string> _createHeaders<T>(

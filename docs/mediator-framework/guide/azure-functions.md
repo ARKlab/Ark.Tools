@@ -711,3 +711,20 @@ deterministically to provider names, preserving supported characters when
 possible and otherwise appending a SHA-256 suffix to a readable prefix.
 `FormerNames` are receive-only aliases and never create topology resources;
 renaming a publisher or current contract name requires explicit migration.
+
+# Messaging metrics
+
+Native messaging metrics use the stable OpenTelemetry messaging semantic
+conventions version 1.37.0 and the `Ark.MediatorFramework.Messaging` meter.
+The baseline records `messaging.client.operation.duration` (seconds) for
+send, publish, and defer; `messaging.process.duration` (seconds) through final
+settlement; `messaging.message.time_in_queue` (seconds) for valid timestamps;
+`messaging.process.messages` outcomes; and native
+`messaging.process.attempts`. Network, participant, contract, transport, and
+operation values are bounded topology attributes. Message IDs, correlation
+IDs, attachment IDs, and exception text are never recorded.
+
+Instrumentation is present and inert by default. Collection is opt-in:
+configure an OpenTelemetry meter provider with
+`AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)`; no exporter is
+required by the messaging runtime.

@@ -6,6 +6,7 @@ using Ark.Tools.Solid;
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using NLog;
 
@@ -89,6 +90,8 @@ public sealed class MessagingDispatcher
     {
         ArgumentNullException.ThrowIfNull(delivery);
 
+        var stopwatch = Stopwatch.StartNew();
+        var outcome = "error";
         try
         {
             var (codec, logicalName) = _headerProcessor.Classify(delivery.Headers);
@@ -126,6 +129,13 @@ public sealed class MessagingDispatcher
             }
 
             await _settleAsync(delivery, decision, error, cancellationToken).ConfigureAwait(false);
+            outcome = decision switch
+            {
+                MessagingSettlementDecision.Complete => "complete",
+                MessagingSettlementDecision.Abandon => "abandon",
+                MessagingSettlementDecision.DeadLetter => "dead_letter",
+                _ => "error",
+            };
             _logger.Debug(
                 CultureInfo.InvariantCulture,
                 "Messaging delivery {MessageType} at count {DeliveryCount} settled as {Settlement}",
@@ -135,6 +145,7 @@ public sealed class MessagingDispatcher
         }
         catch (MessagingFailFastException exception)
         {
+            outcome = "dead_letter";
             _logger.Warn(
                 exception,
                 CultureInfo.InvariantCulture,
@@ -145,6 +156,15 @@ public sealed class MessagingDispatcher
                 exception.Reason.ToString(),
                 exception.Message ?? string.Empty,
                 cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            MessagingMetrics.RecordProcessing(
+                stopwatch.Elapsed,
+                delivery.Headers,
+                outcome,
+                delivery.DeliveryCount);
         }
     }
 
