@@ -698,10 +698,12 @@ trust a caller-supplied `X-MS-CLIENT-PRINCIPAL` header without validating its
 platform origin.
 
 The sample demonstrates JSON binding, validation, ProblemDetails, ETags,
-paging, uploads/downloads, and generated versioned routes. MessagePack contracts
-are excluded because the Functions binding does not provide the same formatter.
-Read [Serialization](serialization.md) before enabling a transport-specific
-format.
+paging, uploads/downloads, and generated versioned routes. Functions messaging
+also validates MessagePack and Google.Protobuf contract shapes at compile time;
+the host must still register the selected formatter or parser at startup.
+MessagePack HTTP contracts are excluded because the Functions binding does not
+provide the same formatter. Read [Serialization](serialization.md) before
+enabling a transport-specific format.
 
 ## 7. Test the boundary
 
