@@ -28,7 +28,7 @@
     <OutputType>Exe</OutputType>
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsDefaultTestSettings)' != 'false'">
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false' and '$(EnableArkToolsDefaultTestSettings)' != 'false'">
     <MinimumExpectedTests Condition="'$(MinimumExpectedTests)' == ''">1</MinimumExpectedTests>
     <_ArkMtpCoverageArguments Condition="'$(ContinuousIntegrationBuild)' == 'true'"> --coverage --coverage-output-format cobertura</_ArkMtpCoverageArguments>
     <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' == '1'"> --minimum-expected-tests 1</_ArkMtpMinimumExpectedTests>
