@@ -13,13 +13,10 @@
   <ItemGroup Condition="'$(EnableArkToolsAppSettings)' != 'false'">
     <Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
     <Content Remove="$(MSBuildProjectDirectory)/appsettings.*.json" />
-    <None Include="$(MSBuildProjectDirectory)/appsettings*.json">
+    <None Update="$(MSBuildProjectDirectory)/appsettings*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </None>
-    <None Include="$(MSBuildProjectDirectory)/appsettings.*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToPublishDirectory Condition="'%(Filename)' == 'appsettings'">Always</CopyToPublishDirectory>
+      <CopyToPublishDirectory Condition="'%(Filename)' != 'appsettings'">Never</CopyToPublishDirectory>
     </None>
   </ItemGroup>
 

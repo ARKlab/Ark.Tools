@@ -894,6 +894,10 @@ public sealed class SdkPackageTests
             _createSdkEnvironment(nonTestRoot)));
         Assert.AreEqual("", _getProperty(nonTestEvaluation, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
         Assert.AreEqual("", _getProperty(nonTestEvaluation, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+        var nonTestReqnroll = _findItem(nonTestEvaluation, "None", "reqnroll.json");
+        var nonTestTestConfig = _findItem(nonTestEvaluation, "None", "testconfig.json");
+        Assert.IsFalse(nonTestReqnroll is not null && nonTestReqnroll.ContainsKey("CopyToOutputDirectory"));
+        Assert.IsFalse(nonTestTestConfig is not null && nonTestTestConfig.ContainsKey("CopyToOutputDirectory"));
 
         var testRoot = await _createSdkScenarioAsync(
             fixtureRoot,
@@ -974,7 +978,9 @@ public sealed class SdkPackageTests
             "dotnet",
             $"msbuild \"{Path.Join(testConfigDisabledRoot, "Consumer.Tests.csproj")}\" -getItem:None",
             _createSdkEnvironment(testConfigDisabledRoot)));
-        Assert.IsFalse(_getItemIdentities(testConfigDisabledEvaluation, "None").Any(identity => identity.Contains("testconfig", StringComparison.OrdinalIgnoreCase)));
+        var testConfigDisabledItem = _findItem(testConfigDisabledEvaluation, "None", "testconfig.json");
+        Assert.IsFalse(testConfigDisabledItem is not null &&
+            string.Equals(testConfigDisabledItem.GetValueOrDefault("DefiningProjectName"), "Sdk", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -1789,9 +1795,19 @@ public sealed class SdkPackageTests
             .ToArray();
     }
 
-    private static Dictionary<string, string>? _findItem(JsonDocument evaluation, string itemName, string fileName)
+    private static string[] _getSdkItemIdentities(JsonDocument evaluation, string itemName)
     {
         return evaluation.RootElement.GetProperty("Items").GetProperty(itemName)
+            .EnumerateArray()
+            .Where(item => item.TryGetProperty("DefiningProjectName", out var definingProjectName) &&
+                string.Equals(definingProjectName.GetString(), "Sdk", StringComparison.Ordinal))
+            .Select(item => item.GetProperty("Identity").GetString() ?? "")
+            .ToArray();
+    }
+
+    private static Dictionary<string, string>? _findItem(JsonDocument evaluation, string itemName, string fileName)
+    {
+        var matches = evaluation.RootElement.GetProperty("Items").GetProperty(itemName)
             .EnumerateArray()
             .Select(item =>
             {
@@ -1802,10 +1818,20 @@ public sealed class SdkPackageTests
                         property => property.Name,
                         property => property.Value.GetString() ?? "",
                         StringComparer.Ordinal);
-                return new { Identity = identity, Metadata = metadata };
+                return new
+                {
+                    Identity = identity,
+                    DefiningProjectName = metadata.TryGetValue("DefiningProjectName", out var definingProjectName) ? definingProjectName : "",
+                    Metadata = metadata
+                };
             })
-            .SingleOrDefault(item => string.Equals(Path.GetFileName(item.Identity), fileName, StringComparison.OrdinalIgnoreCase))
-            ?.Metadata;
+            .Where(item => string.Equals(Path.GetFileName(item.Identity), fileName, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => string.Equals(item.DefiningProjectName, "Sdk", StringComparison.Ordinal))
+            .ThenByDescending(item => item.Metadata.ContainsKey("CopyToOutputDirectory"))
+            .ThenByDescending(item => item.Metadata.ContainsKey("CopyToPublishDirectory"))
+            .ToArray();
+
+        return matches.Length == 0 ? null : matches[0].Metadata;
     }
 
     private static async Task<string> _run(string fileName, string arguments, IDictionary<string, string>? environment = null)
