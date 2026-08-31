@@ -28,7 +28,7 @@ public enum MessagingFunctionsRuntimeTransport
 }
 
 /// <summary>Composes generated messaging participants in Azure Functions hosts.</summary>
-public static class MessagingFunctionsServiceCollectionExtensions
+internal static class MessagingFunctionsServiceCollectionExtensions
 {
     /// <summary>
     /// Composes the generated participant with an Azure transport selected from configuration.
