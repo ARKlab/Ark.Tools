@@ -18,7 +18,9 @@ namespace Ark.Tools.MediatorFramework.Generators;
 public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 {
     private const string _networkAttribute = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
+    private const string _networkAttributeGeneric = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute`1";
     private const string _participantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
+    private const string _participantAttributeGeneric = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute`1";
     private const string _messageAttribute = "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute = "Ark.Tools.MediatorFramework.EventAttribute";
     private const string _apiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
@@ -110,8 +112,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Type '{0}' is marked with [{1}] but is not a non-nested, non-generic partial class, so its routing members cannot be generated",
         DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonStaticNetwork = _rule(
-        "ARKMSG024", "Messaging network must be static",
-        "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
+        "ARKMSG024", "Messaging network must not be static",
+        "Type '{0}' is marked with [MessagingNetwork] but is declared as a static class. Remove the 'static' modifier so the generated partial can implement the network declaration contract.",
         DiagnosticSeverity.Error);
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
@@ -1129,6 +1131,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             || !isPartial)
         {
             _report(context, _nonPartialDeclaringType, symbol, symbol.ToDisplayString(), attributeName);
+            return false;
+        }
+        if (attributeName == "MessagingNetwork" && symbol.IsStatic)
+        {
+            _report(context, _nonStaticNetwork, symbol, symbol.ToDisplayString());
             return false;
         }
         if (requireStatic && !symbol.IsStatic)

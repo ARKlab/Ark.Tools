@@ -27,7 +27,7 @@ ARKMSG020 | Ark.Tools.MediatorFramework | Error | Duplicate messaging contract n
 ARKMSG021 | Ark.Tools.MediatorFramework | Error | Duplicate messaging contract alias
 ARKMSG022 | Ark.Tools.MediatorFramework | Error | Messaging contract alias collision
 ARKMSG023 | Ark.Tools.MediatorFramework | Error | Messaging declaring type must be a non-nested, non-generic partial class
-ARKMSG024 | Ark.Tools.MediatorFramework | Error | Messaging network must be a static class
+ARKMSG024 | Ark.Tools.MediatorFramework | Error | Messaging network must not be static
 ARKMSG025 | Ark.Tools.MediatorFramework | Error | MessagePack contract shape is missing
 ARKMSG026 | Ark.Tools.MediatorFramework | Error | Google.Protobuf contract shape is missing
 ARKMF021 | Ark.Tools.MediatorFramework | Error | Contract has multiple Solid kinds
