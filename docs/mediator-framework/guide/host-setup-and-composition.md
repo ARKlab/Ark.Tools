@@ -11,6 +11,29 @@ The sample keeps the first seam in
 and the web seam in
 [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
 
+## Fluent native messaging composition
+
+Native messaging hosts use one composition call for the generated network and
+participant. The callback must select exactly one hosting mode and explicitly
+choose its transport and DataBus:
+
+```csharp
+services.ConfigureArkMessaging<SampleMessagingNetwork>(messaging =>
+{
+    messaging.Producer<SampleMessagingPublisherParticipant>(producer => producer
+        .UseTransport(new ServiceBusMessagingTransport(client))
+        .UseDataBus(new InMemoryMessagingDataBus())
+        .UseMessagePack()
+        .UseOutbox());
+});
+```
+
+Use `Receiver<TParticipant>(container, ...)` for a custom receive host. Azure
+Functions hosts use `ConfigureArkMessagingFunctions` and select either Service
+Bus or Storage Queue. Generated network, participant, and Functions metadata are
+resolved by the composition layer; application handlers remain in Simple
+Injector.
+
 ## Layer responsibilities
 
 | Layer | Owns | Does not own |

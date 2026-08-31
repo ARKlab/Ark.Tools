@@ -68,6 +68,8 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
     private StorageQueueFunctionsHostSettings? _storageQueueSettings;
     private bool _messagePack;
     private bool _protobuf;
+    private MessagingResourceLifecycle? _lifecycle;
+    private bool _outboxEnqueue;
 
     internal MessagingFunctionsCompositionBuilder(
         IServiceCollection services,
@@ -122,6 +124,8 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
     /// <returns>This builder.</returns>
     public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseMessagePack()
     {
+        if (_messagePack)
+            throw new InvalidOperationException("The MessagePack codec is already selected.");
         _messagePack = true;
         return this;
     }
@@ -130,7 +134,21 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
     /// <returns>This builder.</returns>
     public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseProtobuf()
     {
+        if (_protobuf)
+            throw new InvalidOperationException("The protobuf codec is already selected.");
         _protobuf = true;
+        return this;
+    }
+
+    /// <summary>Selects the generated network resource lifecycle policy.</summary>
+    /// <param name="lifecycle">The lifecycle policy.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseResourceLifecycle(
+        MessagingResourceLifecycle lifecycle)
+    {
+        if (_lifecycle.HasValue)
+            throw new InvalidOperationException("A resource lifecycle is already selected.");
+        _lifecycle = lifecycle;
         return this;
     }
 
@@ -147,7 +165,21 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
             "Azure Functions cannot host the native messaging outbox processor.");
     }
 
+    /// <summary>Enables transactional outbox enlistment without hosting a processor.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseOutbox()
+    {
+        if (_outboxEnqueue)
+            throw new InvalidOperationException("A messaging outbox is already selected.");
+        _outboxEnqueue = true;
+        return this;
+    }
+
     /// <summary>Completes the Functions composition.</summary>
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2090",
+        Justification = "Generated Functions declarations are preserved by the consuming source generator.")]
     public void Build()
     {
         if (!_transport.HasValue)
@@ -165,11 +197,23 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
                     CultureInfo.InvariantCulture,
                     "Generated Functions host '{0}' does not provide Manifest.",
                     typeof(THost)));
+        if (manifest.Participant != typeof(TParticipant))
+            throw new InvalidOperationException(
+                "The fluent participant does not match the generated Functions host manifest.");
+        if (manifest.Network != typeof(TNetwork))
+            throw new InvalidOperationException(
+                "The fluent network does not match the generated Functions host manifest.");
+        if (_lifecycle.HasValue && manifest.Descriptor is not null
+            && _lifecycle.Value != manifest.Descriptor.Network.ResourceLifecycle)
+            throw new InvalidOperationException(
+                "The selected resource lifecycle does not match the generated network declaration.");
 
         if (_messagePack)
             _services.AddMessagePackMessagingCodec();
         if (_protobuf)
             _services.AddProtobufMessagingCodec();
+        if (_outboxEnqueue)
+            _services.AddArkMessagingOutboxEnqueue();
         _services.AddArkMessagingFunctionsHost(
             _container,
             _configuration,

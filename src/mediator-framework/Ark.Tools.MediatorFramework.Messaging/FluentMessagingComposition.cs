@@ -6,6 +6,7 @@ using System.Reflection;
 using Ark.Tools.Outbox;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 
@@ -68,7 +69,7 @@ public sealed class MessagingCompositionBuilder<TNetwork>
             _network,
             _registry);
         configure(builder);
-        _registration = builder.Register;
+        _registration = builder._register;
         return this;
     }
 
@@ -91,7 +92,7 @@ public sealed class MessagingCompositionBuilder<TNetwork>
             _registry,
             container);
         configure(builder);
-        _registration = builder.Register;
+        _registration = builder._register;
         return this;
     }
 
@@ -112,6 +113,10 @@ public sealed class MessagingCompositionBuilder<TNetwork>
         _modeSelected = true;
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2090",
+        Justification = "Generated messaging declarations are preserved by the consuming source generator.")]
     private static (MessagingNetworkOptions Network, IMessagingContractRegistry Registry) _resolveNetwork()
     {
         var networkType = typeof(TNetwork);
@@ -139,7 +144,11 @@ public sealed class MessagingCompositionBuilder<TNetwork>
         return (options, registry);
     }
 
-    internal static MessagingParticipantDescriptor ResolveParticipant<TParticipant>(
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2090",
+        Justification = "Generated messaging declarations are preserved by the consuming source generator.")]
+    internal static MessagingParticipantDescriptor _resolveParticipant<TParticipant>(
         MessagingNetworkOptions network,
         IMessagingContractRegistry registry)
         where TParticipant : class
@@ -174,13 +183,15 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private IMessagingTransport? _transport;
     private IMessagingDataBus? _dataBus;
     private IReadOnlyList<Type> _outgoingSteps = Array.Empty<Type>();
+    private IReadOnlyList<Type> _incomingSteps = Array.Empty<Type>();
     private bool _messagePack;
     private bool _protobuf;
     private MessagingResourceLifecycle? _lifecycle;
     private IOutboxAsyncContextFactory? _outboxFactory;
     private int _outboxBatchSize = 10;
+    private bool _outboxEnqueue;
 
-    internal MessagingModeBuilder(
+    protected MessagingModeBuilder(
         IServiceCollection services,
         MessagingNetworkOptions network,
         IMessagingContractRegistry registry)
@@ -209,6 +220,15 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return UseTransport(new InMemoryMessagingTransport());
     }
 
+    /// <summary>Uses an application-created transport.</summary>
+    /// <param name="transport">The transport.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseCustomTransport(
+        IMessagingTransport transport)
+    {
+        return UseTransport(transport);
+    }
+
     /// <summary>Uses the supplied DataBus.</summary>
     /// <param name="dataBus">The DataBus.</param>
     /// <returns>This builder.</returns>
@@ -234,10 +254,25 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
             lifetime ?? Duration.FromHours(1)));
     }
 
+    /// <summary>Uses an Azure Blob DataBus.</summary>
+    /// <param name="options">The Azure Blob DataBus options.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseAzureBlobDataBus(
+        AzureBlobDataBusOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (_dataBus is not null)
+            throw new InvalidOperationException("A messaging DataBus is already selected.");
+        _dataBus = new AzureBlobMessagingDataBus(options);
+        return this;
+    }
+
     /// <summary>Enables the MessagePack codec.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseMessagePack()
     {
+        if (_messagePack)
+            throw new InvalidOperationException("The MessagePack codec is already selected.");
         _messagePack = true;
         return this;
     }
@@ -246,6 +281,8 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseProtobuf()
     {
+        if (_protobuf)
+            throw new InvalidOperationException("The protobuf codec is already selected.");
         _protobuf = true;
         return this;
     }
@@ -259,7 +296,24 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         ArgumentNullException.ThrowIfNull(stepTypes);
         if (stepTypes.Any(static type => type is null))
             throw new ArgumentException("Pipeline step types cannot contain null.", nameof(stepTypes));
+        if (_outgoingSteps.Count > 0)
+            throw new InvalidOperationException("An outgoing pipeline is already selected.");
         _outgoingSteps = stepTypes.ToArray();
+        return this;
+    }
+
+    /// <summary>Uses the supplied incoming pipeline steps.</summary>
+    /// <param name="stepTypes">The step types in execution order.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseIncomingPipeline(
+        params Type[] stepTypes)
+    {
+        ArgumentNullException.ThrowIfNull(stepTypes);
+        if (stepTypes.Any(static type => type is null))
+            throw new ArgumentException("Pipeline step types cannot contain null.", nameof(stepTypes));
+        if (_incomingSteps.Count > 0)
+            throw new InvalidOperationException("An incoming pipeline is already selected.");
+        _incomingSteps = stepTypes.ToArray();
         return this;
     }
 
@@ -269,7 +323,28 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     public MessagingModeBuilder<TNetwork, TParticipant> UseResourceLifecycle(
         MessagingResourceLifecycle lifecycle)
     {
+        if (_lifecycle.HasValue)
+            throw new InvalidOperationException("A resource lifecycle is already selected.");
         _lifecycle = lifecycle;
+        return this;
+    }
+
+    /// <summary>Uses the generated network resource lifecycle policy.</summary>
+    /// <param name="lifecycle">The lifecycle policy.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseLifecycle(
+        MessagingResourceLifecycle lifecycle)
+    {
+        return UseResourceLifecycle(lifecycle);
+    }
+
+    /// <summary>Enables outbox enlistment without hosting a processor.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox()
+    {
+        if (_outboxFactory is not null || _outboxEnqueue)
+            throw new InvalidOperationException("A messaging outbox is already selected.");
+        _outboxEnqueue = true;
         return this;
     }
 
@@ -290,7 +365,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
-    internal void RegisterCommon(MessagingParticipantDescriptor participant)
+    internal void _registerCommon(MessagingParticipantDescriptor participant)
     {
         var transport = _transport
             ?? throw new InvalidOperationException("Messaging composition requires a transport.");
@@ -311,16 +386,20 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
             _services.AddProtobufMessagingCodec();
         if (_outboxFactory is not null)
             _services.AddArkMessagingOutboxProcessor(_outboxFactory, _outboxBatchSize);
+        else if (_outboxEnqueue)
+            _services.AddArkMessagingOutboxEnqueue();
     }
 
-    internal IMessagingTransport Transport =>
+    internal IMessagingTransport _transportValue =>
         _transport ?? throw new InvalidOperationException("Messaging composition requires a transport.");
 
-    internal MessagingNetworkOptions Network => _network;
+    internal MessagingNetworkOptions _networkOptions => _network;
 
-    internal IMessagingContractRegistry Registry => _registry;
+    internal IMessagingContractRegistry _registryValue => _registry;
 
-    internal IServiceCollection Services => _services;
+    internal IServiceCollection _servicesValue => _services;
+
+    protected IReadOnlyList<Type> IncomingSteps => _incomingSteps;
 }
 
 /// <summary>Configures a producer-only messaging participant.</summary>
@@ -340,12 +419,12 @@ public sealed class MessagingProducerBuilder<TNetwork, TParticipant>
     }
 
     /// <summary>Registers the configured producer participant.</summary>
-    internal void Register()
+    internal void _register()
     {
-        var participant = MessagingCompositionBuilder<TNetwork>.ResolveParticipant<TParticipant>(
-            Network,
-            Registry);
-        RegisterCommon(participant);
+        var participant = MessagingCompositionBuilder<TNetwork>._resolveParticipant<TParticipant>(
+            _networkOptions,
+            _registryValue);
+        _registerCommon(participant);
     }
 }
 
@@ -370,22 +449,25 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
     }
 
     /// <summary>Registers the configured receiver participant and dispatcher.</summary>
-    internal void Register()
+    internal void _register()
     {
-        var participant = MessagingCompositionBuilder<TNetwork>.ResolveParticipant<TParticipant>(
-            Network,
-            Registry);
+        var participant = MessagingCompositionBuilder<TNetwork>._resolveParticipant<TParticipant>(
+            _networkOptions,
+            _registryValue);
         if (!participant.Receives)
             throw new InvalidOperationException(
                 "The selected participant is producer-only and cannot host a receiver.");
-        RegisterCommon(participant);
-        Services.AddSingleton(serviceProvider => new MessagingHeaderProcessor(
+        if (_transportValue is not IMessagingReceiveTransport)
+            throw new InvalidOperationException(
+                "A custom receiver requires a receive-capable messaging transport.");
+        _registerCommon(participant);
+        _servicesValue.AddSingleton(serviceProvider => new MessagingHeaderProcessor(
             serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
             participant.Network.NetworkIdentity));
-        Services.AddSingleton(serviceProvider => new MessagingPayloadReceiver(
+        _servicesValue.AddSingleton(serviceProvider => new MessagingPayloadReceiver(
             serviceProvider.GetRequiredService<IMessagingDataBus>(),
             participant.Network));
-        Services.AddSingleton(serviceProvider => new MessagingDispatcher(
+        _servicesValue.AddSingleton(serviceProvider => new MessagingDispatcher(
             _container,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
@@ -402,8 +484,50 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
                         error,
                         processor,
                         ctk),
-            Array.Empty<Type>(),
+            IncomingSteps,
             _container.GetInstance));
+        _servicesValue.AddSingleton<IHostedService, MessagingReceiveHostedService>();
     }
 
+}
+
+internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisposable
+{
+    private readonly IMessagingReceiveTransport _transport;
+    private readonly MessagingDispatcher _dispatcher;
+    private readonly string _queue;
+    private MessagingReceivePump? _pump;
+
+    public MessagingReceiveHostedService(
+        IMessagingTransport transport,
+        MessagingDispatcher dispatcher,
+        MessagingParticipantDescriptor participant)
+    {
+        _transport = transport as IMessagingReceiveTransport
+            ?? throw new InvalidOperationException(
+                "A custom receiver requires a receive-capable messaging transport.");
+        _dispatcher = dispatcher;
+        _queue = participant.Identity;
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        _pump = new MessagingReceivePump(
+            _transport,
+            _queue,
+            _dispatcher.OnDeliveryAsync);
+        await _pump.StartAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        if (_pump is not null)
+            await _pump.DisposeAsync().ConfigureAwait(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_pump is not null)
+            await _pump.DisposeAsync().ConfigureAwait(false);
+    }
 }

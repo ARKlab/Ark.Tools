@@ -120,12 +120,12 @@ registration extension directly.
 
 ## Acceptance
 
-- [ ] One fluent `IServiceCollection` entry point configures messaging.
-- [ ] Related mode builders cover Functions receiver, custom receiver, and
+- [x] One fluent `IServiceCollection` entry point configures messaging.
+- [x] Related mode builders cover Functions receiver, custom receiver, and
   producer-only hosts.
-- [ ] All required transport, DataBus, codec, pipeline, lifecycle, and outbox
+- [x] All required transport, DataBus, codec, pipeline, lifecycle, and outbox
   decisions are represented.
-- [ ] Generated extensions are called implicitly.
+- [x] Generated extensions are called implicitly.
 - [ ] Superseded low-level public setup APIs are removed.
 - [ ] Samples, guides, snapshots, and composition tests are migrated.
 - [ ] The [task board](../README.md) status for AZM-22 is updated to this task's acceptance state.
