@@ -12,12 +12,4 @@
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MinimalApi/Ark.Tools.AspNetCore.MinimalApi.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <TestingPlatformBuilderHook Remove="031F8871-2660-4208-8F6B-FC142B40ABFF" />
-    <TestingPlatformBuilderHook Include="031F8871-2660-4208-8F6B-FC142B40ABFF">
-      <DisplayName>MSTest</DisplayName>
-      <TypeFullName>Microsoft.VisualStudio.TestTools.UnitTesting.TestingPlatformBuilderHook</TypeFullName>
-    </TestingPlatformBuilderHook>
-  </ItemGroup>
-
 </Project>

@@ -95,8 +95,8 @@
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
     
     <OutputType>Exe</OutputType>
-
     <EnableMSTestRunner>true</EnableMSTestRunner>
+    <IsTestingPlatformApplication>true</IsTestingPlatformApplication>
 
     <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
 

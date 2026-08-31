@@ -5,11 +5,4 @@
     <!-- The fixture intentionally uses framework collection APIs and awaits process/archive operations. -->
     <NoWarn>$(NoWarn);MA0002;MA0004;MA0042</NoWarn>
   </PropertyGroup>
-  <ItemGroup>
-    <TestingPlatformBuilderHook Remove="031F8871-2660-4208-8F6B-FC142B40ABFF" />
-    <TestingPlatformBuilderHook Include="031F8871-2660-4208-8F6B-FC142B40ABFF">
-      <DisplayName>MSTest</DisplayName>
-      <TypeFullName>Microsoft.VisualStudio.TestTools.UnitTesting.TestingPlatformBuilderHook</TypeFullName>
-    </TestingPlatformBuilderHook>
-  </ItemGroup>
 </Project>
