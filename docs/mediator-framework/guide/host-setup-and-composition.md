@@ -262,13 +262,14 @@ generator under `analyzers/dotnet/cs` and depends on the transport-neutral
 the network and participant descriptor used by startup:
 
 ```csharp
-builder.Services.AddArkMessagingFunctionsHost(
+builder.Services.ConfigureArkMessagingFunctions(
     container,
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
-    dataBus,
-    MessagingFunctionsRuntimeTransport.AzureServiceBus);
-builder.Services.AddArkMessagingOutboxEnqueue();
+    messaging => messaging
+        .UseAzureServiceBus()
+        .UseDataBus(dataBus)
+        .UseOutbox());
 ```
 
 Startup resolves the connection from the generated host binding, validates
@@ -283,10 +284,10 @@ standard Functions identity-based child settings
 `fullyQualifiedNamespace` (Service Bus) and `queueServiceUri` (Storage Queue).
 Set the optional `clientId` child for a user-assigned managed identity.
 
-Use `AddArkMessagingParticipant` from the messaging package for producer-only
-Minimal API, console, and client processes. That path registers routing,
-serialization, DataBus, outgoing steps, and the restricted bus only; it does not
-register a dispatcher, trigger, queue, subscription, or receive worker.
+Use `ConfigureArkMessaging` from the messaging package for producer-only
+Minimal API, console, and client processes. Its `Producer` path registers
+routing, serialization, DataBus, outgoing steps, and the restricted bus only; it
+does not register a dispatcher, trigger, queue, subscription, or receive worker.
 Publisher-owned topics are still reconciled when lifecycle management is
 enabled.
 
@@ -298,8 +299,8 @@ available as a mutually exclusive compatibility path.
 ## Host the native SQL outbox processor separately
 
 Native `IBus` send and publish calls can enlist the application's existing
-`IOutboxContextCore`. `AddArkMessagingOutboxEnqueue` is safe in sender and
-Functions processes because it starts no polling loop. The application
+`IOutboxContextCore`. `UseOutbox` is safe in sender and Functions processes
+because it starts no polling loop. The application
 transaction commits both state and validated envelopes, or rolls both back.
 
 An always-running custom process owns the complementary registration:
