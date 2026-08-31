@@ -76,14 +76,14 @@ must not leak Ark organization identity into consumer packages.
 
 ## Acceptance
 
-- [ ] Polyfill, SBOM, SourceLink, and packaging features have independent tested
+- [x] Polyfill, SBOM, SourceLink, and packaging features have independently tested
   opt-outs.
-- [ ] Global usings and Visual Studio acceleration are capability-gated.
-- [ ] Package inspection proves no Ark identity or excluded policy leaks.
-- [ ] Packable and non-packable fixtures preserve consumer topology.
-- [ ] The Copilot SourceLink workaround is isolated and overrideable.
-- [ ] The [task board](README.md) status for SDK-IMP-05 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] Global usings and Visual Studio acceleration are capability-gated.
+- [x] Package inspection proves no Ark identity or excluded policy leaks.
+- [x] Packable and non-packable fixtures preserve consumer topology.
+- [x] The Copilot SourceLink workaround is isolated and overrideable.
+- [x] The [task board](README.md) status for SDK-IMP-05 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

@@ -130,9 +130,6 @@ public sealed class SdkPackageTests
     [
         "AwesomeAssertions",
         "Microsoft.NET.Test.Sdk",
-        "Microsoft.SourceLink.GitHub",
-        "Microsoft.Sbom.Targets",
-        "Polyfill",
         "Reqnroll.MsTest",
         "MSTest.TestFramework",
         "xunit",
@@ -553,9 +550,113 @@ public sealed class SdkPackageTests
     /// Ensures SDK restore, audit, compiler, CI, and test-classification policy is early and overrideable.
     /// </summary>
     [TestMethod]
-    public async Task SdkRestoreAndCompilerPolicyIsEarlyAndOverrideable()
+    public async Task SdkPackagingProfileAddsPackageBackedToolingAndOptOuts()
     {
         const string packageVersion = "999.9.14";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-packaging-profile");
+        var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
+
+        using var baseline = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "baseline",
+            "Consumer.csproj",
+            _createSdkCSharpProject());
+        var packageReferences = _getPackageReferences(baseline);
+        Assert.AreEqual("11.2.0", packageReferences["Polyfill"]["Version"]);
+        Assert.AreEqual("4.1.5", packageReferences["Microsoft.Sbom.Targets"]["Version"]);
+        Assert.AreEqual("10.0.400", packageReferences["Microsoft.SourceLink.GitHub"]["Version"]);
+        _assertProperties(baseline, new Dictionary<string, string>
+        {
+            ["GenerateSBOM"] = "true",
+            ["PolyUseEmbeddedAttribute"] = "true",
+            ["AccelerateBuildsInVisualStudio"] = "true",
+            ["EnablePackageValidation"] = "true",
+            ["IncludeSymbols"] = "true",
+            ["SymbolPackageFormat"] = "snupkg"
+        });
+        CollectionAssert.Contains(_getItemIdentities(baseline, "Using"), "System.Diagnostics.CodeAnalysis");
+        CollectionAssert.Contains(_getItemIdentities(baseline, "Using"), "System.Globalization");
+        CollectionAssert.Contains(_getItemIdentities(baseline, "Using"), "System.Text");
+
+        using var disabledPolyfill = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "disabled-polyfill",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsPolyfill>false</EnableArkToolsPolyfill>");
+        Assert.IsFalse(_getPackageReferences(disabledPolyfill).ContainsKey("Polyfill"));
+        Assert.AreEqual("", _getProperty(disabledPolyfill, "PolyUseEmbeddedAttribute"));
+
+        using var disabledSbom = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "disabled-sbom",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsSbom>false</EnableArkToolsSbom>");
+        Assert.IsFalse(_getPackageReferences(disabledSbom).ContainsKey("Microsoft.Sbom.Targets"));
+        Assert.AreEqual("", _getProperty(disabledSbom, "GenerateSBOM"));
+
+        using var disabledSourceLink = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "disabled-sourcelink",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsSourceLink>false</EnableArkToolsSourceLink>");
+        Assert.IsFalse(_getPackageReferences(disabledSourceLink).ContainsKey("Microsoft.SourceLink.GitHub"));
+
+        using var disabledGlobalUsings = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "disabled-global-usings",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsGlobalUsings>false</EnableArkToolsGlobalUsings>");
+        CollectionAssert.DoesNotContain(_getItemIdentities(disabledGlobalUsings, "Using"), "System.Diagnostics.CodeAnalysis");
+
+        var copilotEnvironment = _createSdkEnvironment(fixtureRoot);
+        copilotEnvironment["COPILOT_AGENT_ACTION"] = "true";
+        using var copilot = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "copilot",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            environment: copilotEnvironment);
+        Assert.AreEqual("false", _getProperty(copilot, "EnableSourceControlManagerQueries"));
+        Assert.AreEqual("false", _getProperty(copilot, "EnableSourceLink"));
+        using var copilotOptOut = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "copilot-opt-out",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            environment: copilotEnvironment,
+            directoryProperties: "<EnableArkToolsCopilotSandboxWorkaround>false</EnableArkToolsCopilotSandboxWorkaround>");
+        Assert.AreEqual("true", _getProperty(copilotOptOut, "EnableSourceControlManagerQueries"));
+        Assert.AreEqual("true", _getProperty(copilotOptOut, "EnableSourceLink"));
+
+        using var sql = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "sql",
+            "Consumer.sqlproj",
+            _createSdkSqlProject());
+        Assert.IsFalse(_getPackageReferences(sql).ContainsKey("Microsoft.Sbom.Targets"));
+        Assert.AreEqual("", _getProperty(sql, "GenerateSBOM"));
+    }
+
+    /// <summary>
+    /// Ensures SDK restore, audit, compiler, CI, and test-classification policy is early and overrideable.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkRestoreAndCompilerPolicyIsEarlyAndOverrideable()
+    {
+        const string packageVersion = "999.9.15";
         var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
         var fixtureRoot = Path.Join(root, "artifacts", "sdk-restore-policy");
         var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
@@ -1215,11 +1316,19 @@ public sealed class SdkPackageTests
             "LangVersion",
             "IsTestProject",
             "WarningsNotAsErrors",
-            "UsingMicrosoftBuildSqlSdk"
+            "UsingMicrosoftBuildSqlSdk",
+            "GenerateSBOM",
+            "PolyUseEmbeddedAttribute",
+            "AccelerateBuildsInVisualStudio",
+            "EnablePackageValidation",
+            "IncludeSymbols",
+            "SymbolPackageFormat",
+            "EnableSourceControlManagerQueries",
+            "EnableSourceLink"
         };
         var output = await _run(
             "dotnet",
-            $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", properties)} -getItem:PackageReference,EditorConfigFiles,GlobalAnalyzerConfigFiles,AdditionalFiles",
+            $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", properties)} -getItem:PackageReference,Using,EditorConfigFiles,GlobalAnalyzerConfigFiles,AdditionalFiles",
             processEnvironment);
         return JsonDocument.Parse(output);
     }

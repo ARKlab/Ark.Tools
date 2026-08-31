@@ -15,9 +15,27 @@
     <AnalysisLevel Condition="'$(AnalysisLevel)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">latest-all</AnalysisLevel>
     <LangVersion Condition="'$(LangVersion)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">14.0</LangVersion>
     <IsTestProject Condition="'$(IsTestProject)' == '' and ($(MSBuildProjectName.EndsWith('.Tests')) or $(MSBuildProjectName.EndsWith('.UnitTests')))">true</IsTestProject>
+    <GenerateSBOM Condition="'$(GenerateSBOM)' == '' and '$(EnableArkToolsBuild)' != 'false' and '$(EnableArkToolsSbom)' != 'false' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateSBOM>
+    <PolyUseEmbeddedAttribute Condition="'$(PolyUseEmbeddedAttribute)' == '' and '$(EnableArkToolsBuild)' != 'false' and '$(EnableArkToolsPolyfill)' != 'false'">true</PolyUseEmbeddedAttribute>
+    <AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == '' and ('$(UsingMicrosoftNETSdk)' == 'true' or '$(UsingMicrosoftNETSdkWeb)' == 'true' or '$(UsingMicrosoftNETSdkRazor)' == 'true')">true</AccelerateBuildsInVisualStudio>
+    <EnablePackageValidation Condition="'$(EnablePackageValidation)' == '' and '$(IsPackable)' != 'false'">true</EnablePackageValidation>
+    <IncludeSymbols Condition="'$(IncludeSymbols)' == '' and '$(IsPackable)' != 'false'">true</IncludeSymbols>
+    <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false'">snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != '' and '$(EnableArkToolsCopilotSandboxWorkaround)' != 'false'">
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
   <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsSdkSourceBuild)' != 'true'">
     <PackageReference Include="Ark.Tools.Build" Version="0.0.0" IsImplicitlyDefined="true" />
+    <PackageReference Include="Polyfill" Version="11.2.0" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsPolyfill)' != 'false'" />
+    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.5" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsSbom)' != 'false' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsSourceLink)' != 'false' and '$(IsPackable)' != 'false'" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsSdkSourceBuild)' != 'true' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(ImplicitUsings)' != 'disable' and '$(EnableArkToolsGlobalUsings)' != 'false'">
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Text" />
   </ItemGroup>
   <ItemGroup Condition="'$(ArkToolsSdkSourceBuild)' != 'true' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.400" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
