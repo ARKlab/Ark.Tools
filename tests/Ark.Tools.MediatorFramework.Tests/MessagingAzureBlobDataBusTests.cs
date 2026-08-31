@@ -146,7 +146,7 @@ public sealed class MessagingAzureBlobDataBusTests
             });
 
         var action = () => new ServiceCollection()
-            ._AddArkMessagingDataBus(provider, network);
+            ._addArkMessagingDataBus(provider, network);
         action.Should().Throw<ArgumentOutOfRangeException>();
     }
 

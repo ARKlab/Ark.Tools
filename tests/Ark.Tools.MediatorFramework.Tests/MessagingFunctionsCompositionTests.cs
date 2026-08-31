@@ -121,7 +121,7 @@ public sealed class MessagingFunctionsCompositionTests
         services.Configure<JsonSerializerOptions>(
             options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
         var transport = new InMemoryMessagingTransport();
-        services._AddArkMessagingParticipant(
+        services._addArkMessagingParticipant(
             _descriptor(receives: false),
             transport,
             _dataBus());

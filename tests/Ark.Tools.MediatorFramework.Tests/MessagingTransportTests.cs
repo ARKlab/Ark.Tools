@@ -279,9 +279,9 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
             new MessagingNetworkAttribute { Requires = MessagingCapabilities.PubSub });
         var services = new ServiceCollection();
 
-        var action = () => services._AddArkMessaging(new ReceiveOnlyTransport(), network);
+        var action = () => services._addArkMessaging(new ReceiveOnlyTransport(), network);
         action.Should().Throw<InvalidOperationException>().Which.Message.Should().Contain("PubSub");
-        services._AddArkMessaging(new InMemoryMessagingTransport(), network);
+        services._addArkMessaging(new InMemoryMessagingTransport(), network);
 
         using var provider = services.BuildServiceProvider();
         provider.GetRequiredService<IMessagingReceiveTransport>().Should()
@@ -294,8 +294,8 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     public void MessagingRegistrationIsIdempotent()
     {
         var services = new ServiceCollection();
-        services._AddArkMessaging();
-        services._AddArkInMemoryMessaging();
+        services._addArkMessaging();
+        services._addArkInMemoryMessaging();
 
         using var provider = services.BuildServiceProvider();
         provider.GetServices<IMessagingCodec>().Should().ContainSingle(codec => codec is JsonMessagingCodec);

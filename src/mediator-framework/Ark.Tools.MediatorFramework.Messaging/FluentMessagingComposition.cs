@@ -396,19 +396,19 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
             throw new InvalidOperationException(
                 "The selected resource lifecycle does not match the generated network declaration.");
 
-        _services._AddArkMessagingParticipant(
+        _services._addArkMessagingParticipant(
             participant,
             transport,
             dataBus,
             _outgoingSteps);
         if (_messagePack)
-            _services._AddMessagePackMessagingCodec();
+            _services._addMessagePackMessagingCodec();
         if (_protobuf)
-            _services._AddProtobufMessagingCodec();
+            _services._addProtobufMessagingCodec();
         if (_outboxFactory is not null)
             _services.AddArkMessagingOutboxProcessor(_outboxFactory, _outboxBatchSize);
         else if (_outboxEnqueue)
-            _services._AddArkMessagingOutboxEnqueue();
+            _services._addArkMessagingOutboxEnqueue();
     }
 
     internal IMessagingTransport _transportValue =>
