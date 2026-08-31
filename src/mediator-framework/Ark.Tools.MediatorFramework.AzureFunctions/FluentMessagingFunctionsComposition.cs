@@ -156,6 +156,16 @@ public sealed class MessagingFunctionsCompositionBuilder
         return this;
     }
 
+    /// <summary>Selects the generated resource lifecycle policy.</summary>
+    /// <param name="lifecycle">The lifecycle policy.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder UseResourceLifecycle(
+        MessagingResourceLifecycle lifecycle)
+    {
+        _inner.UseResourceLifecycle(lifecycle);
+        return this;
+    }
+
     /// <summary>Enables transactional outbox enlistment without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingFunctionsCompositionBuilder UseOutbox()

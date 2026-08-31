@@ -18,7 +18,10 @@ participant. The callback must select exactly one hosting mode and explicitly
 choose its transport and DataBus:
 
 ```csharp
-services.ConfigureArkMessaging<SampleMessagingNetwork>(messaging =>
+services.ConfigureArkMessaging(
+    SampleMessagingNetwork.CreateOptions(),
+    SampleMessagingNetwork.Registry,
+    messaging =>
 {
     messaging.Producer<SampleMessagingPublisherParticipant>(producer => producer
         .UseTransport(new ServiceBusMessagingTransport(client))
