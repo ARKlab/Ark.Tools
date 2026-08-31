@@ -2,7 +2,8 @@ services:
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     restart: unless-stopped
-    command: azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+    environment:
+      AZURITE_SKIP_API_VERSION_CHECK: 'true'
     ports:
       - "10000:10000"
       - "10001:10001"
@@ -14,7 +15,27 @@ services:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: IntegrationTestsDbPassword85!
       MSSQL_COLLATION: Latin1_General_CI_AS_KS
-      # Azure Sql is Enterprise - match it
-      MSSQL_PID: EnterpriseDeveloper
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
     ports:
       - "1433:1433"
+
+  servicebus:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ACCEPT_EULA: 'Y'
+      SQL_SERVER: sqlserver
+      MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
+      EMULATOR_HTTP_PORT: 5300
+      SQL_WAIT_INTERVAL: 90
+    ports:
+      - "5300:5300"
+      - "5672:5672"

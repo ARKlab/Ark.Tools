@@ -1,0 +1,51 @@
+<Project>
+    
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <IsPackable>false</IsPackable>
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+    <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute</ExcludeByAttribute>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false' and '$(EnableArkToolsDefaultTestSettings)' != 'false'">
+    <OutputType>Exe</OutputType>
+    <MinimumExpectedTests Condition="'$(MinimumExpectedTests)' == ''">1</MinimumExpectedTests>
+    <_ArkMtpCoverageArguments Condition="'$(ContinuousIntegrationBuild)' == 'true'"> --coverage --coverage-output-format cobertura</_ArkMtpCoverageArguments>
+    <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' != '' and '$(MinimumExpectedTests)' != '0'"> --minimum-expected-tests $(MinimumExpectedTests)</_ArkMtpMinimumExpectedTests>
+    <TestingPlatformCommandLineArguments Condition="'$(TestingPlatformCommandLineArguments)' == ''">--report-trx --crashdump --crashdump-type mini --hangdump --hangdump-type mini --hangdump-timeout 10m$(_ArkMtpCoverageArguments)$(_ArkMtpMinimumExpectedTests)</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" Version="2.3.3" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpCrashDump)' != 'false'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpCodeCoverage)' != 'false'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" Version="2.3.3" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpHangDump)' != 'false'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" Version="2.3.3" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpHotReload)' != 'false'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Retry" Version="2.3.3" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpRetry)' != 'false'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpTrxReport)' != 'false'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.3.3" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpAzureDevOpsReport)' != 'false'" />
+  </ItemGroup>
+
+  
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
+    <None Include="$(MSBuildProjectDirectory)/reqnroll*.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsTestConfig)' != 'false'">
+    <None Update="$(MSBuildProjectDirectory)/testconfig.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="DisableAnalyzerWhenRunningTests" BeforeTargets="_MTPBuild" Condition="'$(IsTestProject)' == 'true' and '$(OptimizeTestRun)' != 'false'">
+    <PropertyGroup>
+      <RunAnalyzers>false</RunAnalyzers>
+    </PropertyGroup>
+  </Target>
+
+</Project>

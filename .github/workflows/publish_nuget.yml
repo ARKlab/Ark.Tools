@@ -36,8 +36,6 @@ jobs:
           --health-timeout=5s
           --health-retries=5
           --health-start-period=30s
-          # Azure Sql is Enterprise - match it
-          MSSQL_PID: EnterpriseDeveloper
       servicebus:
         image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
         ports:

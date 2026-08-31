@@ -1,45 +1,7 @@
 <Project>
   <Import Project="../../Ark.Tools.Build/build/Ark.Tools.Build.common.targets"
-          Condition="'$(ArkToolsSdkSourceBuild)' == 'true'" />
+          Condition="'$(_ArkToolsSdkSourceBuild)' == 'true'" />
 
-  <ItemGroup Condition="'$(ArkToolsSdkSourceBuild)' == 'true' and '$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(ArkToolsSdkProject)' != 'true'">
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
-    <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
-    <PackageReference Include="ErrorProne.NET.CoreAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsErrorProne)' != 'false' and '$(DisableErrorProneAnalyzers)' != 'true'" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(EnableArkToolsAppSettings)' != 'false'">
-    <Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
-    <Content Remove="$(MSBuildProjectDirectory)/appsettings.*.json" />
-    <None Update="$(MSBuildProjectDirectory)/appsettings*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <CopyToPublishDirectory Condition="'%(Filename)' == 'appsettings'">Always</CopyToPublishDirectory>
-      <CopyToPublishDirectory Condition="'%(Filename)' != 'appsettings'">Never</CopyToPublishDirectory>
-    </None>
-  </ItemGroup>
-
-  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
-    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
-    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
-    <None Include="$(MSBuildProjectDirectory)/reqnroll*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsTestConfig)' != 'false'">
-    <None Update="$(MSBuildProjectDirectory)/testconfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <Target Name="_ArkConfigureMtpTestRun" BeforeTargets="_MTPBuild" Condition="'$(IsTestProject)' == 'true' and '$(OptimizeTestRun)' != 'false'">
-    <PropertyGroup>
-      <RunAnalyzers>false</RunAnalyzers>
-    </PropertyGroup>
-  </Target>
+  <Import Project="$(MSBuildThisFileDirectory)../common/common.targets" Condition="'$(EnableArkToolsBuild)' != 'false'" />
+  
 </Project>

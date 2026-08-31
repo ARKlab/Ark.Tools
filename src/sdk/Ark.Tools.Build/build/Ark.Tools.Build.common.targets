@@ -1,22 +1,27 @@
 <Project>
-  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildTargetsImported)' != 'true'">
+  <PropertyGroup Condition="'$(ArkToolsBuildTargetsImported)' != 'true'">
     <ArkToolsBuildTargetsImported>true</ArkToolsBuildTargetsImported>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
-    <ArkToolsBuildImported>true</ArkToolsBuildImported>
-    <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
-  </PropertyGroup>
+  
+	<!-- Ensure application can run with newer frameworks -->
+	<PropertyGroup>
+		<RollForward Condition="'$(RollForward)' == '' AND '$(IsTestProject)' != 'true'">LatestMajor</RollForward>
+	</PropertyGroup>
 
-  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.Tools.txt"
+	<PropertyGroup>
+		<PackAsTool Condition="'$(PackAsTool)' == '' AND '$(OutputType)' == 'Exe' AND '$(IsTestProject)' != 'true'">true</PackAsTool>
+	</PropertyGroup>
+
+  <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.BannedSymbols.txt"
                      KeepDuplicates="false"
                      Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
   </ItemGroup>
 
   <Target Name="Disable_SponsorLink"
           BeforeTargets="CoreCompile"
-          Condition="'$(EnableArkToolsBuild)' != 'false' and '$(EnableArkToolsSponsorLinkRemoval)' != 'false'">
+          Condition="'$(EnableArkToolsSponsorLinkRemoval)' != 'false'">
     <ItemGroup>
       <Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'DevLooped.SponsorLink'" />
       <Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Moq.CodeAnalysis'" />

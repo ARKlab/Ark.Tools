@@ -1,52 +1,9 @@
 <Project>
 
-	<Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.targets"
-			Condition="'$(ArkToolsSdkProject)' != 'true'" />
+	<Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.targets" />
 
-	<ItemGroup Condition="'$(ArkToolsSdkProject)' != 'true'">
-		<PackageReference Include="Polyfill" PrivateAssets="All" />
-	</ItemGroup>
-
-	<ItemGroup Label="Settings Files">
-		<Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
-		<Content Remove="$(MSBuildProjectDirectory)/appsettings.*.json" />
-		<None Include="$(MSBuildProjectDirectory)/appsettings*.json" >
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
-		</None>
-		<None Include="$(MSBuildProjectDirectory)/appsettings.*.json" >
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
-		</None>
-
-		<None Include="$(MSBuildProjectDirectory)/reqnroll*.json" >
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-
-		<None Update="$(MSBuildProjectDirectory)/testconfig.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(Language)' == 'C#' AND ('$(ImplicitUsings)' == 'true' or '$(ImplicitUsings)' == 'enable')">
-		<Using Include="System.Diagnostics.CodeAnalysis" />
-		<Using Include="System.Globalization" />
-		<Using Include="System.Text" />
-	</ItemGroup>
 		
-	<ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' AND '$(ArkToolsSdkProject)' != 'true'">
-		<PackageReference Include="Microsoft.Sbom.Targets" PrivateAssets="All" />
-	</ItemGroup>
-
-
   <ItemGroup Label="Testing Platform Settings" Condition="'$(IsTestProject)' == 'true'">
-    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
-    <PackageReference Include="Microsoft.Testing.Extensions.HotReload" />
-    <PackageReference Include="Microsoft.Testing.Extensions.Retry" />
-    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" />
     <PackageReference Include="MSTest.TestAdapter" />
     <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="MSTest.Analyzers" />
