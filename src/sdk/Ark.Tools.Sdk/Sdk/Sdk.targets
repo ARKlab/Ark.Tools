@@ -9,4 +9,10 @@
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
     <PackageReference Include="ErrorProne.NET.CoreAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsErrorProne)' != 'false' and '$(DisableErrorProneAnalyzers)' != 'true'" />
   </ItemGroup>
+
+  <Target Name="_ArkConfigureMtpTestRun" BeforeTargets="_MTPBuild" Condition="'$(IsTestProject)' == 'true' and '$(OptimizeTestRun)' != 'false'">
+    <PropertyGroup>
+      <RunAnalyzers>false</RunAnalyzers>
+    </PropertyGroup>
+  </Target>
 </Project>

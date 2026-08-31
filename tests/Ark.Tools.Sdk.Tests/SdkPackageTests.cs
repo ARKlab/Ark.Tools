@@ -780,6 +780,92 @@ public sealed class SdkPackageTests
     }
 
     /// <summary>
+    /// Ensures the SDK adds only the accepted MTP test extensions and default safety settings for test projects.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkTestProfileAddsFrameworkNeutralMtpExtensionsAndDefaults()
+    {
+        const string packageVersion = "999.9.17";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-mtp-profile");
+        var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
+
+        using var baseline = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "baseline",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject());
+        var packageReferences = _getPackageReferences(baseline);
+        foreach (var package in new[]
+        {
+            ("Microsoft.Testing.Extensions.CrashDump", "2.3.3"),
+            ("Microsoft.Testing.Extensions.CodeCoverage", "18.10.0"),
+            ("Microsoft.Testing.Extensions.HangDump", "2.3.3"),
+            ("Microsoft.Testing.Extensions.HotReload", "2.3.3"),
+            ("Microsoft.Testing.Extensions.Retry", "2.3.3"),
+            ("Microsoft.Testing.Extensions.TrxReport", "2.3.3"),
+            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.3.3")
+        })
+        {
+            Assert.AreEqual(package.Item2, packageReferences[package.Item1]["Version"], package.Item1);
+            Assert.AreEqual("true", packageReferences[package.Item1]["IsImplicitlyDefined"], package.Item1);
+        }
+        Assert.AreEqual("false", _getProperty(baseline, "IsPackable"));
+        Assert.AreEqual("false", _getProperty(baseline, "WarnOnPackingNonPackableProject"));
+        Assert.AreEqual("Exe", _getProperty(baseline, "OutputType"));
+        Assert.AreEqual("Obsolete,GeneratedCodeAttribute", _getProperty(baseline, "ExcludeByAttribute"));
+        Assert.AreEqual("1", _getProperty(baseline, "MinimumExpectedTests"));
+        Assert.IsTrue(_getProperty(baseline, "TestingPlatformCommandLineArguments").Contains("--report-trx", StringComparison.Ordinal));
+        Assert.IsTrue(_getProperty(baseline, "TestingPlatformCommandLineArguments").Contains("--minimum-expected-tests 1", StringComparison.Ordinal));
+        Assert.IsFalse(packageReferences.ContainsKey("MSTest.TestFramework"));
+        Assert.IsFalse(packageReferences.ContainsKey("Microsoft.NET.Test.Sdk"));
+        Assert.IsFalse(packageReferences.ContainsKey("Reqnroll.MsTest"));
+
+        var ciEnvironment = _createSdkEnvironment(fixtureRoot);
+        ciEnvironment["CI"] = "true";
+        using var ci = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "ci-defaults",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject(),
+            environment: ciEnvironment);
+        var ciArguments = _getProperty(ci, "TestingPlatformCommandLineArguments");
+        Assert.IsTrue(ciArguments.Contains("--coverage", StringComparison.Ordinal));
+        Assert.IsTrue(ciArguments.Contains("--coverage-output-format cobertura", StringComparison.Ordinal));
+
+        using var disabled = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "disabled-mtp",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsMtpTestProfile>false</EnableArkToolsMtpTestProfile>");
+        Assert.IsFalse(_getPackageReferences(disabled).ContainsKey("Microsoft.Testing.Extensions.CrashDump"));
+        Assert.AreEqual("", _getProperty(disabled, "TestingPlatformCommandLineArguments"));
+
+        using var optOut = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "opt-out-coverage",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject(),
+            environment: ciEnvironment,
+            directoryProperties: "<EnableArkToolsMtpCodeCoverage>false</EnableArkToolsMtpCodeCoverage>");
+        Assert.IsFalse(_getPackageReferences(optOut).ContainsKey("Microsoft.Testing.Extensions.CodeCoverage"));
+
+        using var nonTest = await _evaluateSdkAsync(
+            fixtureRoot,
+            feed,
+            "non-test",
+            "Consumer.csproj",
+            _createSdkCSharpProject());
+        Assert.IsFalse(_getPackageReferences(nonTest).ContainsKey("Microsoft.Testing.Extensions.CrashDump"));
+        Assert.AreEqual("", _getProperty(nonTest, "TestingPlatformCommandLineArguments"));
+    }
+
+    /// <summary>
     /// Ensures exact analyzer references, opt-outs, SQL exclusion, and package boundaries compose with Build.
     /// </summary>
     [TestMethod]
@@ -1315,6 +1401,12 @@ public sealed class SdkPackageTests
             "AnalysisLevel",
             "LangVersion",
             "IsTestProject",
+            "IsPackable",
+            "WarnOnPackingNonPackableProject",
+            "OutputType",
+            "ExcludeByAttribute",
+            "MinimumExpectedTests",
+            "TestingPlatformCommandLineArguments",
             "WarningsNotAsErrors",
             "UsingMicrosoftBuildSqlSdk",
             "GenerateSBOM",
