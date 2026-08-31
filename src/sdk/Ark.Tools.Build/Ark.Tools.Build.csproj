@@ -7,6 +7,7 @@
     <PackageId>Ark.Tools.Build</PackageId>
     <Description>Ark.Tools MSBuild build assets.</Description>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
     <!-- NU5128 is expected because this package intentionally contains only MSBuild assets. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <IncludeSymbols>false</IncludeSymbols>
@@ -21,5 +22,15 @@
     <None Include="build\Ark.Tools.Build.common.targets" Pack="true" PackagePath="build\Ark.Tools.Build.common.targets" />
     <None Include="buildTransitive\Ark.Tools.Build.props" Pack="true" PackagePath="buildTransitive\Ark.Tools.Build.props" />
     <None Include="buildTransitive\Ark.Tools.Build.targets" Pack="true" PackagePath="buildTransitive\Ark.Tools.Build.targets" />
+    <None Include="..\..\..\.editorconfig" Pack="true" PackagePath="configuration\coding-style\Ark.Tools.CodingStyle.editorconfig" />
+    <None Include="configuration\analyzers\Ark.Tools.NetAnalyzers.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.NetAnalyzers.globalconfig" />
+    <None Include="configuration\analyzers\Ark.Tools.MeziantouAnalyzer.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.MeziantouAnalyzer.globalconfig" />
+    <None Include="configuration\analyzers\Ark.Tools.ErrorProne.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.ErrorProne.globalconfig" />
+    <None Include="configuration\analyzers\Ark.Tools.VisualStudioThreading.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.VisualStudioThreading.globalconfig" />
+    <None Include="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" />
+    <None Include="configuration\analyzers\Ark.Tools.Core.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.Core.globalconfig" />
+    <None Include="configuration\analyzers\BannedSymbols.Ark.Tools.txt"
+          Pack="true"
+          PackagePath="configuration\analyzers\Ark.Tools.BannedApi.BannedSymbols.txt;configuration\analyzers\BannedSymbols.Ark.Tools.txt" />
   </ItemGroup>
 </Project>

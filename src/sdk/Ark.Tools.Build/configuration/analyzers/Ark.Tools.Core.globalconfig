@@ -1,0 +1,5 @@
+is_global = true
+global_level = 90
+
+# ARKCORE005: Use an invariant-culture overload.
+dotnet_diagnostic.ARKCORE005.severity = error
