@@ -2505,7 +2505,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().Contain(diagnostic =>
             diagnostic.Id == "ARKMSG009"
-            && diagnostic.GetMessage().Contains("NotificationParticipant")
+            && diagnostic.GetMessage().Contains("notification")
             && diagnostic.GetMessage().Contains("MessagePack"));
     }
 
