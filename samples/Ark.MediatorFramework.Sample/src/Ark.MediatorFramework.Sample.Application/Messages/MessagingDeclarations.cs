@@ -10,20 +10,6 @@ namespace Ark.MediatorFramework.Sample.Application.Messages;
     DefaultSerializer = SerializationProtocol.Json)]
 public sealed partial class SampleMessagingPublisherParticipant;
 
-/// <summary>Declares the sample MessagePack event publisher.</summary>
-[MessagingParticipant(
-    Publishes = new[] { typeof(BookPrintMessagePackEvent) },
-    Serializers = new[] { SerializationProtocol.MessagePack },
-    DefaultSerializer = SerializationProtocol.MessagePack)]
-public sealed partial class SampleMessagePackPublisherParticipant;
-
-/// <summary>Declares the sample protobuf message publisher.</summary>
-[MessagingParticipant(
-    Publishes = new[] { typeof(BookPrintProtobufMessage) },
-    Serializers = new[] { SerializationProtocol.Protobuf },
-    DefaultSerializer = SerializationProtocol.Protobuf)]
-public sealed partial class SampleProtobufPublisherParticipant;
-
 /// <summary>Declares the sample background message consumer participant.</summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
@@ -70,8 +56,6 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
     Members = new[]
     {
         typeof(SampleMessagingPublisherParticipant),
-        typeof(SampleMessagePackPublisherParticipant),
-        typeof(SampleProtobufPublisherParticipant),
         typeof(SampleMessagingParticipant),
         typeof(SampleMessagingNotificationParticipant),
         typeof(SampleMessagingAuditParticipant),
