@@ -220,15 +220,6 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return UseTransport(new InMemoryMessagingTransport());
     }
 
-    /// <summary>Uses an application-created transport.</summary>
-    /// <param name="transport">The transport.</param>
-    /// <returns>This builder.</returns>
-    public MessagingModeBuilder<TNetwork, TParticipant> UseCustomTransport(
-        IMessagingTransport transport)
-    {
-        return UseTransport(transport);
-    }
-
     /// <summary>Uses the supplied DataBus.</summary>
     /// <param name="dataBus">The DataBus.</param>
     /// <returns>This builder.</returns>
@@ -522,7 +513,10 @@ internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisp
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         if (_pump is not null)
+        {
             await _pump.DisposeAsync().ConfigureAwait(false);
+            _pump = null;
+        }
     }
 
     public async ValueTask DisposeAsync()

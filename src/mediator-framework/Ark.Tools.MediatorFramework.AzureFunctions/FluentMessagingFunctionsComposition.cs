@@ -160,7 +160,6 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         Ark.Tools.Outbox.IOutboxAsyncContextFactory contextFactory,
         int batchSize = 10)
     {
-        ArgumentNullException.ThrowIfNull(contextFactory);
         throw new InvalidOperationException(
             "Azure Functions cannot host the native messaging outbox processor.");
     }
