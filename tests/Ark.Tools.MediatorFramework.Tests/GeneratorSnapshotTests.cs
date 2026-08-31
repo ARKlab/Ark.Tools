@@ -2392,7 +2392,7 @@ public sealed class GeneratorSnapshotTests
             public static partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id is "ARKMSG025" or "ARKMSG026");
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id != "ARKMSG025" && diagnostic.Id != "ARKMSG026");
     }
 
     [TestMethod]
