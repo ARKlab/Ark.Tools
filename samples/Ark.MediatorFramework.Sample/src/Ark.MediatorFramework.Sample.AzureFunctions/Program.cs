@@ -42,15 +42,16 @@ public static class Program
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(applicationContainer);
-            builder.Services.AddArkMessagingFunctionsHost(
+            builder.Services.ConfigureArkMessagingFunctions(
                 applicationContainer,
                 builder.Configuration,
                 ArkGeneratedMessagingFunctions.Manifest,
-                new InMemoryMessagingDataBus(
-                    SystemClock.Instance,
-                    Duration.FromHours(2)),
-                MessagingFunctionsRuntimeTransport.AzureServiceBus);
-            builder.Services.AddArkMessagingOutboxEnqueue();
+                messaging => messaging
+                    .UseAzureServiceBus()
+                    .UseDataBus(new InMemoryMessagingDataBus(
+                        SystemClock.Instance,
+                        Duration.FromHours(2)))
+                    .UseOutbox());
             builder.Services.AddArkHealthChecks();
             if (builder.Environment.IsEnvironment("IntegrationTests"))
             {
