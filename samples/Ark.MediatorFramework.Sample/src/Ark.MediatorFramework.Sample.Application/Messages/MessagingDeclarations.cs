@@ -4,14 +4,14 @@
 namespace Ark.MediatorFramework.Sample.Application.Messages;
 
 /// <summary>Declares the sample Web host publisher-only participant.</summary>
-[MessagingParticipant<SampleMessagingPublisherParticipant>(
+[MessagingParticipant(
     Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
 public sealed partial class SampleMessagingPublisherParticipant;
 
 /// <summary>Declares the sample background message consumer participant.</summary>
-[MessagingParticipant<SampleMessagingParticipant>(
+[MessagingParticipant(
     Identity = "ark-mediator-sample",
     Processes = new[] { typeof(ProcessBookPrintProcessRequest) },
     Serializers = new[] { SerializationProtocol.Json },
@@ -20,7 +20,7 @@ public sealed partial class SampleMessagingPublisherParticipant;
 public sealed partial class SampleMessagingParticipant;
 
 /// <summary>Declares the sample notification subscriber participant.</summary>
-[MessagingParticipant<SampleMessagingNotificationParticipant>(
+[MessagingParticipant(
     Subscribes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
@@ -28,7 +28,7 @@ public sealed partial class SampleMessagingParticipant;
 public sealed partial class SampleMessagingNotificationParticipant;
 
 /// <summary>Declares the sample audit subscriber participant.</summary>
-[MessagingParticipant<SampleMessagingAuditParticipant>(
+[MessagingParticipant(
     Subscribes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
@@ -52,7 +52,7 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
 }
 
 /// <summary>Declares the sample messaging network.</summary>
-[MessagingNetwork<SampleMessagingNetwork>(
+[MessagingNetwork(
     Members = new[]
     {
         typeof(SampleMessagingPublisherParticipant),
@@ -64,4 +64,4 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
     MaximumSchedulingDelaySeconds = 3600)]
-public sealed partial class SampleMessagingNetwork;
+public static partial class SampleMessagingNetwork;

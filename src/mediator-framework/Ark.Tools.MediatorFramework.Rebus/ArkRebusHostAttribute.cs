@@ -17,13 +17,3 @@ public sealed class ArkRebusHostAttribute : Attribute
     /// <summary>Gets the bound messaging participant declaration type.</summary>
     public Type ParticipantType { get; }
 }
-
-/// <summary>Generic Rebus host binding for a participant declaration.</summary>
-/// <typeparam name="TParticipant">The generated participant declaration type.</typeparam>
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class ArkRebusHostAttribute<TParticipant> : Attribute
-    where TParticipant : class, global::Ark.Tools.MediatorFramework.IMessagingParticipantDeclaration
-{
-    /// <summary>Gets the bound messaging participant declaration type.</summary>
-    public Type ParticipantType => typeof(TParticipant);
-}

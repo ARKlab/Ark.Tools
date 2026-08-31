@@ -18,9 +18,7 @@ namespace Ark.Tools.MediatorFramework.Generators;
 public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 {
     private const string _networkAttribute = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
-    private const string _networkAttributeGeneric = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute`1";
     private const string _participantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
-    private const string _participantAttributeGeneric = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute`1";
     private const string _messageAttribute = "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute = "Ark.Tools.MediatorFramework.EventAttribute";
     private const string _apiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
@@ -112,8 +110,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Type '{0}' is marked with [{1}] but is not a non-nested, non-generic partial class, so its routing members cannot be generated",
         DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonStaticNetwork = _rule(
-        "ARKMSG024", "Messaging network must not be static",
-        "Type '{0}' is marked with [MessagingNetwork] but is declared as a static class. Remove the 'static' modifier so the generated partial can implement the network declaration contract.",
+        "ARKMSG024", "Messaging network must be static",
+        "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
         DiagnosticSeverity.Error);
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
@@ -357,18 +355,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
     }
 
-    private static bool _matchesAttribute(AttributeData attribute, string @namespace, string name)
-    {
-        var attributeClass = attribute.AttributeClass;
-        return attributeClass is not null
-            && string.Equals(attributeClass.ContainingNamespace.ToDisplayString(), @namespace, StringComparison.Ordinal)
-            && string.Equals(attributeClass.Name, name, StringComparison.Ordinal);
-    }
-
     private static Network _readNetwork(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().First(attribute =>
-            _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingNetworkAttribute"));
+            attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
         var members = _types(attribute, "Members");
         return new Network(
             symbol,
@@ -386,7 +376,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(attribute =>
-            _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"));
+            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
         if (attribute is null)
             return null;
 
@@ -593,7 +583,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         Network network,
         Compilation compilation)
     {
-        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
+        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork", requireStatic: true))
             return;
 
         var participants = network.MemberSymbols
@@ -628,10 +618,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(network.Symbol)).Append(" partial class ").Append(name)
-            .Append(" : global::Ark.Tools.MediatorFramework.IMessagingNetworkDeclaration")
-            .AppendLine();
-        source.AppendLine("{");
+            .Append(_accessibility(network.Symbol)).Append(" static partial class ").Append(name)
+            .AppendLine("{");
         source
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
@@ -910,13 +898,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             && compilation.GetTypeByMetadataName(_contractRegistry) is not null;
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name)
-            .Append(" : global::Ark.Tools.MediatorFramework.IMessagingParticipantDeclaration")
-            .AppendLine()
+            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name).AppendLine()
             .AppendLine("{")
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging participant.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append("    public static string Identity => \"").Append(_escape(participant.Identity)).AppendLine("\";")
+            .Append("    public const string Identity = \"").Append(_escape(participant.Identity)).AppendLine("\";")
             .AppendLine("    /// <summary>Gets the sender-side compression algorithm.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const global::Ark.Tools.MediatorFramework.CompressionAlgorithm Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.")
@@ -1131,11 +1117,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             || !isPartial)
         {
             _report(context, _nonPartialDeclaringType, symbol, symbol.ToDisplayString(), attributeName);
-            return false;
-        }
-        if (attributeName == "MessagingNetwork" && symbol.IsStatic)
-        {
-            _report(context, _nonStaticNetwork, symbol, symbol.ToDisplayString());
             return false;
         }
         if (requireStatic && !symbol.IsStatic)

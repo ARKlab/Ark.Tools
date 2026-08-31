@@ -21,7 +21,7 @@ using System.Security.Claims;
 namespace Ark.MediatorFramework.Sample.RebusProcessor;
 
 /// <summary>Generated Rebus host for the sample background processor.</summary>
-[ArkRebusHost<SampleMessagingParticipant>]
+[ArkRebusHost(typeof(SampleMessagingParticipant))]
 public sealed partial class RebusProcessorHost;
 
 /// <summary>Builds the isolated full Rebus processor composition.</summary>

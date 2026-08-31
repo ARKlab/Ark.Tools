@@ -17,7 +17,7 @@ using SimpleInjector.Lifestyles;
 namespace Ark.MediatorFramework.Sample.AzureFunctions;
 
 /// <summary>Generated outbound Rebus host for the sample Function application.</summary>
-[ArkRebusHost<SampleMessagingPublisherParticipant>]
+[ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
 public sealed partial class AzureFunctionsRebusHost;
 
 /// <summary>Builds the sample Function host's outbound-only Rebus client.</summary>
