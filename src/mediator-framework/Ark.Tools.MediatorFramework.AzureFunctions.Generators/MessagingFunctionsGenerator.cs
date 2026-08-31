@@ -21,10 +21,6 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 {
     private const string _hostAttribute =
         "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute";
-    private const string _participantAttribute =
-        "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
-    private const string _networkAttribute =
-        "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
     private const string _messageAttribute =
         "Ark.Tools.MediatorFramework.MessageAttribute";
     private const string _eventAttribute =
@@ -131,14 +127,40 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                     input.Right));
     }
 
+    private static bool _matchesAttribute(AttributeData attribute, string @namespace, string name)
+    {
+        var attributeClass = attribute.AttributeClass;
+        return attributeClass is not null
+            && string.Equals(attributeClass.ContainingNamespace.ToDisplayString(), @namespace, StringComparison.Ordinal)
+            && string.Equals(attributeClass.Name, name, StringComparison.Ordinal);
+    }
+
+    private static INamedTypeSymbol? _participantType(AttributeData attribute)
+    {
+        if (attribute.AttributeClass is { TypeArguments: { Length: > 0 } }
+            && attribute.AttributeClass.TypeArguments[0] is INamedTypeSymbol participant)
+            return participant;
+
+        return attribute.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
+    }
+
     private static ImmutableArray<Host> _readHosts(GeneratorAttributeSyntaxContext context)
     {
         var hosts = ImmutableArray.CreateBuilder<Host>();
         foreach (var attribute in context.Attributes)
         {
-            if (attribute.ConstructorArguments.Length < 2
-                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol participant
-                || attribute.ConstructorArguments[1].Value is not int binding)
+            if (!_matchesAttribute(attribute, "Ark.Tools.MediatorFramework.AzureFunctions", "MessagingFunctionsHostAttribute"))
+                continue;
+
+            var participant = _participantType(attribute);
+            if (participant is null)
+                continue;
+
+            if (attribute.ConstructorArguments.Length == 0)
+                continue;
+
+            var bindingArgument = attribute.ConstructorArguments[^1];
+            if (bindingArgument.Value is not int binding)
                 continue;
 
             hosts.Add(new Host(
@@ -171,7 +193,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
         var host = hosts[0];
         var participantAttribute = host.Participant.GetAttributes().FirstOrDefault(attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"));
         if (participantAttribute is null)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -183,7 +205,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
         var networks = _allTypes(host.Participant.ContainingAssembly.GlobalNamespace)
             .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _networkAttribute)))
+                _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingNetworkAttribute"))))
             .Where(item => item.Attribute is not null
                 && _types(item.Attribute, "Members").Any(member =>
                     SymbolEqualityComparer.Default.Equals(member, host.Participant)))
@@ -230,7 +252,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         foreach (var member in _types(network.Attribute!, "Members"))
         {
             var memberAttribute = member.GetAttributes().FirstOrDefault(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+                _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"));
             if (memberAttribute is null)
                 continue;
             foreach (var contract in _types(memberAttribute, "Publishes"))
@@ -323,12 +345,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     {
         var members = _types(networkAttribute, "Members")
             .Select(member => (Type: member, Attribute: member.GetAttributes().FirstOrDefault(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute)))
+                _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"))))
             .Where(static item => item.Attribute is not null)
             .ToArray();
         var subscriptions = ImmutableArray.CreateBuilder<Subscription>();
         var participantAttribute = participant.GetAttributes().First(attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"));
         foreach (var subscribedEvent in subscribedEvents
             .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
         {
@@ -384,7 +406,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         foreach (var member in _types(networkAttribute, "Members"))
         {
             var participant = member.GetAttributes().FirstOrDefault(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+                _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"));
             if (participant is null)
                 continue;
             var ownerIdentity = _string(participant, "Identity")

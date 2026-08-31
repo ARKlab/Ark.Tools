@@ -46,3 +46,35 @@ public sealed class MessagingFunctionsHostAttribute : Attribute
     /// <summary>Gets or sets whether Storage Queue host-setting mismatches fail startup.</summary>
     public bool StrictStorageQueueHostSettings { get; set; }
 }
+
+/// <summary>Generic Azure Functions host binding for a participant declaration.</summary>
+/// <typeparam name="TParticipant">The generated participant declaration type.</typeparam>
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false)]
+public sealed class MessagingFunctionsHostAttribute<TParticipant> : Attribute
+    where TParticipant : class, global::Ark.Tools.MediatorFramework.IMessagingParticipantDeclaration
+{
+    /// <summary>Gets the bound participant declaration type.</summary>
+    public Type Participant => typeof(TParticipant);
+
+    /// <summary>Gets the compile-time trigger binding selection.</summary>
+    public MessagingFunctionsTriggerBinding Binding { get; }
+
+    /// <summary>Gets or sets the host configuration key containing the transport connection.</summary>
+    public string? ConnectionConfigurationKey { get; set; }
+
+    /// <summary>Gets or sets host-local incoming pipeline step types.</summary>
+    public Type[] IncomingSteps { get; set; } = Array.Empty<Type>();
+
+    /// <summary>Gets or sets host-local outgoing pipeline step types.</summary>
+    public Type[] OutgoingSteps { get; set; } = Array.Empty<Type>();
+
+    /// <summary>Gets or sets whether Storage Queue host-setting mismatches fail startup.</summary>
+    public bool StrictStorageQueueHostSettings { get; set; }
+
+    /// <summary>Creates the binding for a participant declaration and trigger selection.</summary>
+    /// <param name="binding">The compile-time trigger binding.</param>
+    public MessagingFunctionsHostAttribute(MessagingFunctionsTriggerBinding binding)
+    {
+        Binding = binding;
+    }
+}

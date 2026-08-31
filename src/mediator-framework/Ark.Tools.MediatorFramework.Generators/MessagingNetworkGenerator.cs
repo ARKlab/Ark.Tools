@@ -355,10 +355,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
     }
 
+    private static bool _matchesAttribute(AttributeData attribute, string @namespace, string name)
+    {
+        var attributeClass = attribute.AttributeClass;
+        return attributeClass is not null
+            && string.Equals(attributeClass.ContainingNamespace.ToDisplayString(), @namespace, StringComparison.Ordinal)
+            && string.Equals(attributeClass.Name, name, StringComparison.Ordinal);
+    }
+
     private static Network _readNetwork(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().First(attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
+            _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingNetworkAttribute"));
         var members = _types(attribute, "Members");
         return new Network(
             symbol,
@@ -376,7 +384,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            _matchesAttribute(attribute, "Ark.Tools.MediatorFramework", "MessagingParticipantAttribute"));
         if (attribute is null)
             return null;
 
@@ -583,7 +591,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         Network network,
         Compilation compilation)
     {
-        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork", requireStatic: true))
+        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
             return;
 
         var participants = network.MemberSymbols
@@ -618,8 +626,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(network.Symbol)).Append(" static partial class ").Append(name)
-            .AppendLine("{");
+            .Append(_accessibility(network.Symbol)).Append(" partial class ").Append(name)
+            .Append(" : global::Ark.Tools.MediatorFramework.IMessagingNetworkDeclaration")
+            .AppendLine();
+        source.AppendLine("{");
         source
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
@@ -898,11 +908,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             && compilation.GetTypeByMetadataName(_contractRegistry) is not null;
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name).AppendLine()
+            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name)
+            .Append(" : global::Ark.Tools.MediatorFramework.IMessagingParticipantDeclaration")
+            .AppendLine()
             .AppendLine("{")
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging participant.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append("    public const string Identity = \"").Append(_escape(participant.Identity)).AppendLine("\";")
+            .Append("    public static string Identity => \"").Append(_escape(participant.Identity)).AppendLine("\";")
             .AppendLine("    /// <summary>Gets the sender-side compression algorithm.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const global::Ark.Tools.MediatorFramework.CompressionAlgorithm Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.")
