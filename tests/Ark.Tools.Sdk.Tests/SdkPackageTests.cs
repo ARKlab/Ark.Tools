@@ -868,6 +868,116 @@ public sealed class SdkPackageTests
     }
 
     /// <summary>
+    /// Ensures application settings and Reqnroll content semantics stay project-type aware and independently disableable.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkContentAndReqnrollProfileAppliesOnlyToDetectedTestProjects()
+    {
+        const string packageVersion = "999.9.18";
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-content-reqnroll");
+        var feed = await _createSdkFeedAsync(root, fixtureRoot, packageVersion);
+
+        var nonTestRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "non-test",
+            "Consumer.csproj",
+            _createSdkCSharpProject());
+        await File.WriteAllTextAsync(Path.Join(nonTestRoot, "appsettings.json"), "{}\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(nonTestRoot, "appsettings.Development.json"), "{}\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(nonTestRoot, "reqnroll.json"), "{}\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(nonTestRoot, "testconfig.json"), "{}\n").ConfigureAwait(false);
+        var nonTestEvaluation = JsonDocument.Parse(await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(nonTestRoot, "Consumer.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
+            _createSdkEnvironment(nonTestRoot)));
+        Assert.AreEqual("", _getProperty(nonTestEvaluation, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+        Assert.AreEqual("", _getProperty(nonTestEvaluation, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+
+        var testRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "test-project",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject());
+        await File.WriteAllTextAsync(Path.Join(testRoot, "appsettings.json"), "{}\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(testRoot, "appsettings.Development.json"), "{}\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(testRoot, "reqnroll.json"), "{}\n").ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.Join(testRoot, "testconfig.json"), "{}\n").ConfigureAwait(false);
+        var testEvaluation = JsonDocument.Parse(await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(testRoot, "Consumer.Tests.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
+            _createSdkEnvironment(testRoot)));
+        Assert.AreEqual("true", _getProperty(testEvaluation, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+        Assert.AreEqual("true", _getProperty(testEvaluation, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+        var noneItems = _getItemIdentities(testEvaluation, "None");
+        var noneFileNames = noneItems.Select(Path.GetFileName).ToArray();
+        var appsettingsBase = _findItem(testEvaluation, "None", "appsettings.json");
+        var appsettingsEnvironment = _findItem(testEvaluation, "None", "appsettings.Development.json");
+        var reqnroll = _findItem(testEvaluation, "None", "reqnroll.json");
+        var testConfig = _findItem(testEvaluation, "None", "testconfig.json");
+        Assert.IsNotNull(appsettingsBase);
+        Assert.IsNotNull(appsettingsEnvironment);
+        Assert.IsNotNull(reqnroll);
+        Assert.IsNotNull(testConfig);
+        Assert.AreEqual("Always", appsettingsBase!["CopyToOutputDirectory"]);
+        Assert.AreEqual("Always", appsettingsBase["CopyToPublishDirectory"]);
+        Assert.AreEqual("Always", appsettingsEnvironment!["CopyToOutputDirectory"]);
+        Assert.AreEqual("Never", appsettingsEnvironment["CopyToPublishDirectory"]);
+        Assert.AreEqual("Always", reqnroll!["CopyToOutputDirectory"]);
+        Assert.AreEqual("PreserveNewest", testConfig!["CopyToOutputDirectory"]);
+        Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.json", StringComparison.Ordinal)));
+        Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.Development.json", StringComparison.Ordinal)));
+        CollectionAssert.Contains(noneFileNames, "reqnroll.json");
+        CollectionAssert.Contains(noneFileNames, "testconfig.json");
+
+        var appSettingsDisabledRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "appsettings-disabled",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsAppSettings>false</EnableArkToolsAppSettings>");
+        await File.WriteAllTextAsync(Path.Join(appSettingsDisabledRoot, "appsettings.json"), "{}\n").ConfigureAwait(false);
+        var appSettingsDisabledEvaluation = JsonDocument.Parse(await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(appSettingsDisabledRoot, "Consumer.Tests.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
+            _createSdkEnvironment(appSettingsDisabledRoot)));
+        Assert.AreEqual("true", _getProperty(appSettingsDisabledEvaluation, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+        Assert.AreEqual("true", _getProperty(appSettingsDisabledEvaluation, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+
+        var reqnrollDisabledRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "reqnroll-disabled",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsReqnroll>false</EnableArkToolsReqnroll>");
+        await File.WriteAllTextAsync(Path.Join(reqnrollDisabledRoot, "reqnroll.json"), "{}\n").ConfigureAwait(false);
+        var reqnrollDisabledEvaluation = JsonDocument.Parse(await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(reqnrollDisabledRoot, "Consumer.Tests.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
+            _createSdkEnvironment(reqnrollDisabledRoot)));
+        Assert.AreEqual("", _getProperty(reqnrollDisabledEvaluation, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+        Assert.AreEqual("", _getProperty(reqnrollDisabledEvaluation, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+
+        var testConfigDisabledRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "testconfig-disabled",
+            "Consumer.Tests.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsTestConfig>false</EnableArkToolsTestConfig>");
+        await File.WriteAllTextAsync(Path.Join(testConfigDisabledRoot, "testconfig.json"), "{}\n").ConfigureAwait(false);
+        var testConfigDisabledEvaluation = JsonDocument.Parse(await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(testConfigDisabledRoot, "Consumer.Tests.csproj")}\" -getItem:None",
+            _createSdkEnvironment(testConfigDisabledRoot)));
+        Assert.IsFalse(_getItemIdentities(testConfigDisabledEvaluation, "None").Any(identity => identity.Contains("testconfig", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    /// <summary>
     /// Ensures exact analyzer references, opt-outs, SQL exclusion, and package boundaries compose with Build.
     /// </summary>
     [TestMethod]
@@ -1408,6 +1518,8 @@ public sealed class SdkPackageTests
             "OutputType",
             "ExcludeByAttribute",
             "MinimumExpectedTests",
+            "ReqnrollUseIntermediateOutputPathForCodeBehind",
+            "ReqnrollDeleteObsoleteCodeBehindFilesOnClean",
             "TestingPlatformCommandLineArguments",
             "WarningsNotAsErrors",
             "UsingMicrosoftBuildSqlSdk",
@@ -1675,6 +1787,25 @@ public sealed class SdkPackageTests
             .EnumerateArray()
             .Select(item => item.GetProperty("Identity").GetString() ?? "")
             .ToArray();
+    }
+
+    private static Dictionary<string, string>? _findItem(JsonDocument evaluation, string itemName, string fileName)
+    {
+        return evaluation.RootElement.GetProperty("Items").GetProperty(itemName)
+            .EnumerateArray()
+            .Select(item =>
+            {
+                var identity = item.GetProperty("Identity").GetString() ?? "";
+                var metadata = item.EnumerateObject()
+                    .Where(property => !string.Equals(property.Name, "Identity", StringComparison.Ordinal))
+                    .ToDictionary(
+                        property => property.Name,
+                        property => property.Value.GetString() ?? "",
+                        StringComparer.Ordinal);
+                return new { Identity = identity, Metadata = metadata };
+            })
+            .SingleOrDefault(item => string.Equals(Path.GetFileName(item.Identity), fileName, StringComparison.OrdinalIgnoreCase))
+            ?.Metadata;
     }
 
     private static async Task<string> _run(string fileName, string arguments, IDictionary<string, string>? environment = null)
