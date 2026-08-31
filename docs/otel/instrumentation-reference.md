@@ -142,12 +142,21 @@ Outgoing Rebus messages propagate the current W3C activity ID in the
 
 ### MediatorFramework messaging
 
-Source and meter: `Ark.MediatorFramework.Messaging`.
+Meter: `Ark.MediatorFramework.Messaging`. The metric contract follows
+OpenTelemetry messaging semantic conventions 1.37.0. Instruments are created
+by default and remain inert until a listener or provider subscribes.
 
 | Instrument | Unit | Attributes | Emission |
 |---|---|---|---|
-| `ark.tools.mediatorframework.message_time_in_queue_success` | `ms` histogram | `message.type` | Success only; invalid/missing sent-time headers produce no queue-time measurement. |
-| `ark.tools.mediatorframework.message_processing_time` | `ms` histogram | `message.type`, `operation.result` | Always; `operation.result` is `success` or `failure`. |
+| `messaging.client.operation.duration` | `s` histogram | `messaging.system`, `messaging.operation.name`, `messaging.destination.name`, `messaging.destination.kind`, `messaging.network.name`, `messaging.source.name`, `messaging.message.type` | Send, publish, and defer, including rejected operations. |
+| `messaging.process.duration` | `s` histogram | Bounded topology attributes plus `messaging.process.result` | Complete receive processing, including final settlement. |
+| `messaging.message.time_in_queue` | `s` histogram | Bounded topology attributes plus `messaging.process.result` | Only when a valid sent timestamp is available; negative values are clamped to zero. |
+| `messaging.process.messages` | `{message}` counter | Bounded topology attributes plus `messaging.process.result` | One count for each final complete, abandon, or dead-letter outcome. |
+| `messaging.process.attempts` | `{attempt}` histogram | Bounded topology attributes plus `messaging.process.result` | Native delivery count only; absent when the transport does not provide a positive count. |
+
+Message IDs, correlation IDs, attachment IDs, exception messages, and stack
+traces are never metric attributes. The sample registers this meter only in its
+opt-in OpenTelemetry profile; an exporter is not required.
 
 ### Outbox
 
