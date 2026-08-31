@@ -5,6 +5,12 @@
 **Scope**: PUBLIC API + GENERATORS + HOST BINDINGS
 **Design**: [Participant declarations](../../azure-functions-messaging-design.md#participant-declarations), [Generated routing registry](../../azure-functions-messaging-design.md#generated-routing-registry)
 
+## Decision
+
+**Status**: Cancelled
+
+**REASON**: The generic declaration model is not feasible in C#. The compiler validates the generic constraint on the declaration type before source generation emits the generated partial implementation, and the intended pattern requires the same type to be both the generic argument and the generated partial declaration. That creates a self-referential static-abstract requirement and fails at compile time with `CS0311` / constraint errors. A separate declaration type would change the design and defeat the goal of a single constrained declaration boundary, so the task is rejected rather than partially implemented.
+
 ## Problem
 
 Messaging network, participant, and host bindings currently exchange declaration
