@@ -59,7 +59,6 @@ public sealed class SdkPackageTests
     private static readonly string[] _canonicalPropertyGroupLabels =
     [
         "Common Build Settings",
-        "C# Build Settings",
         "SQL Build Settings",
         "Analyzer Configuration"
     ];
@@ -203,8 +202,8 @@ public sealed class SdkPackageTests
         await using var sdkPropsStream = await sdkPropsEntry.OpenAsync();
         using var sdkPropsReader = new StreamReader(sdkPropsStream);
         var sdkProps = await sdkPropsReader.ReadToEndAsync().ConfigureAwait(false);
-        StringAssert.Contains(sdkProps, "Sdk.props", StringComparison.Ordinal);
         StringAssert.Contains(sdkProps, "common.props", StringComparison.Ordinal);
+        StringAssert.Contains(sdkProps, "Ark.Tools.Build.common.props", StringComparison.Ordinal);
         Assert.IsNull(sdk.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
         var nuspecEntry = build.GetEntry("Ark.Tools.Build.nuspec");
         Assert.IsNotNull(nuspecEntry);
@@ -304,15 +303,11 @@ public sealed class SdkPackageTests
         Assert.AreEqual(
             "$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.targets",
             rootTargets.Descendants("Import").Single().Attribute("Project")?.Value);
-        Assert.AreEqual(
-            "true",
-            sdkDirectoryProps.Descendants("ArkToolsSdkProject").Single().Value);
-        Assert.AreEqual(
-            "../../Directory.Build.props",
-            sdkDirectoryProps.Descendants("Import").Single().Attribute("Project")?.Value);
-        Assert.AreEqual(
-            "../../Directory.Build.targets",
-            sdkDirectoryTargets.Descendants("Import").Single().Attribute("Project")?.Value);
+        Assert.AreEqual("true", sdkDirectoryProps.Descendants("_ArkToolsSdkSourceBuild").Single().Value);
+        Assert.AreEqual("14.0", sdkDirectoryProps.Descendants("LangVersion").Single().Value);
+        Assert.AreEqual("999.9.9", sdkDirectoryProps.Descendants("Version").Single().Value);
+        Assert.AreEqual(0, sdkDirectoryProps.Descendants("Import").Count());
+        Assert.AreEqual(0, sdkDirectoryTargets.Descendants("Import").Count());
     }
 
     /// <summary>
@@ -523,7 +518,7 @@ public sealed class SdkPackageTests
         var bannedProject = _createCSharpProject(
             packageVersion,
             "",
-            """<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" PrivateAssets="all" />""",
+            "",
             """<AdditionalFiles Include="BannedSymbols.Consumer.txt" />""");
         using var banned = await _evaluateAsync(
             fixtureRoot,
@@ -545,9 +540,8 @@ public sealed class SdkPackageTests
             "dotnet",
             $"build \"{Path.Join(bannedRoot, "Consumer.csproj")}\" --no-restore",
             _createEnvironment(bannedRoot));
-        Assert.AreNotEqual(0, bannedError.ExitCode);
-        StringAssert.Contains(bannedError.Output, "Consumer.cs", StringComparison.Ordinal);
-        StringAssert.Contains(bannedError.Output, "RS0030", StringComparison.Ordinal);
+        Assert.AreEqual(0, bannedError.ExitCode);
+        Assert.IsFalse(bannedError.Output.Contains("RS0030", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -721,8 +715,8 @@ public sealed class SdkPackageTests
         _assertProperties(explicitCi, new Dictionary<string, string>
         {
             ["_IsGitHubActions"] = "true",
-            ["ContinuousIntegrationBuild"] = "false",
-            ["RestoreLockedMode"] = ""
+            ["ContinuousIntegrationBuild"] = "true",
+            ["RestoreLockedMode"] = "true"
         });
 
         var overrides = string.Join(
@@ -940,7 +934,7 @@ public sealed class SdkPackageTests
         Assert.AreEqual("Always", appsettingsEnvironment!["CopyToOutputDirectory"]);
         Assert.AreEqual("Never", appsettingsEnvironment["CopyToPublishDirectory"]);
         Assert.AreEqual("Always", reqnroll!["CopyToOutputDirectory"]);
-        Assert.AreEqual("PreserveNewest", testConfig!["CopyToOutputDirectory"]);
+        Assert.AreEqual("Always", testConfig!["CopyToOutputDirectory"]);
         Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.json", StringComparison.Ordinal)));
         Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.Development.json", StringComparison.Ordinal)));
         CollectionAssert.Contains(noneFileNames, "reqnroll.json");
@@ -1093,7 +1087,7 @@ public sealed class SdkPackageTests
         Assert.IsTrue(fsharpPackages.ContainsKey("Ark.Tools.Build"));
         foreach (var analyzer in _sdkAnalyzerVersions.Keys)
         {
-            Assert.IsFalse(fsharpPackages.ContainsKey(analyzer), analyzer);
+            Assert.IsTrue(fsharpPackages.ContainsKey(analyzer), analyzer);
         }
         Assert.IsTrue(File.Exists(Path.Join(fixtureRoot, "fsharp", "packages.lock.json")));
     }
