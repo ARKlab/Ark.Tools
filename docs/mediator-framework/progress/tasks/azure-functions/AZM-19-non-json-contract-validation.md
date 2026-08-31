@@ -116,5 +116,5 @@ subscriber that omits the publisher protocol.
 - [x] Host resolver and parser registration remain startup concerns.
 - [x] Sample, guides, diagnostics, and generated-source inspections are updated.
 - [x] The [task board](../README.md) status for AZM-19 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
