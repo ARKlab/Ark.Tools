@@ -126,8 +126,8 @@ registration extension directly.
 - [x] All required transport, DataBus, codec, pipeline, lifecycle, and outbox
   decisions are represented.
 - [x] Generated extensions are called implicitly.
-- [ ] Superseded low-level public setup APIs are removed.
+- [x] Superseded low-level public setup APIs are removed.
 - [x] Samples, guides, and focused composition tests are migrated.
-- [ ] The [task board](../README.md) status for AZM-22 is updated to this task's acceptance state.
+- [x] The [task board](../README.md) status for AZM-22 is updated to this task's acceptance state.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

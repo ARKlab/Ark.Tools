@@ -205,7 +205,7 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-19](azure-functions/AZM-19-non-json-contract-validation.md) | Non-JSON messaging contract validation | Complete |
 | [AZM-20](azure-functions/AZM-20-opentelemetry-messaging-metrics.md) | OpenTelemetry messaging metrics | Complete |
 | [AZM-21](azure-functions/AZM-21-generic-messaging-declarations.md) | Generic messaging declarations | Cancelled |
-| [AZM-22](azure-functions/AZM-22-fluent-messaging-composition.md) | Fluent messaging composition | In progress |
+| [AZM-22](azure-functions/AZM-22-fluent-messaging-composition.md) | Fluent messaging composition | Complete |
 | [AZM-23](azure-functions/AZM-23-multiline-messaging-api-surface.md) | Multiline messaging API surface | Pending |
 
 ## Testing redesign
