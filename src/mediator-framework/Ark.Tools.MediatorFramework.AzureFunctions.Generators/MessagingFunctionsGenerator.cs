@@ -502,7 +502,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         ImmutableArray<Subscription> subscriptions,
         ImmutableArray<Topic> topics)
     {
-        var nativeNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        var nativeNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
         var hasCollision = false;
         var values = new List<string>
