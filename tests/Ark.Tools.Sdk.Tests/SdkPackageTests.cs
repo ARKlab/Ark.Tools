@@ -33,12 +33,16 @@ public sealed class SdkPackageTests
         "ArkToolsBuildImportCount",
         "TreatWarningsAsErrors",
         "MSBuildTreatWarningsAsErrors",
-        "Nullable",
-        "ImplicitUsings",
         "GenerateDocumentationFile",
         "Features",
         "ReportAnalyzer",
         "EnforceCodeStyleInBuild",
+        "Deterministic",
+        "EmbedUntrackedSources",
+        "DebugType",
+        "DebugSymbols",
+        "Nullable",
+        "ImplicitUsings",
         "TreatTSqlWarningsAsErrors",
         "RunSqlCodeAnalysis",
         "ArkToolsLocalAnalyzerConfigRoot",
@@ -48,8 +52,8 @@ public sealed class SdkPackageTests
     private static readonly string[] _canonicalTargetProperties =
     [
         "ArkToolsBuildTargetsImported",
-        "ArkToolsBuildImported",
-        "ArkToolsBuildImportCount"
+        "RollForward",
+        "PackAsTool"
     ];
 
     private static readonly string[] _canonicalPropertyGroupLabels =
@@ -69,7 +73,7 @@ public sealed class SdkPackageTests
         "configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig",
         "configuration/analyzers/Ark.Tools.IdentityModel.globalconfig",
         "configuration/analyzers/Ark.Tools.Core.globalconfig",
-        "configuration/analyzers/Ark.Tools.BannedApi.BannedSymbols.txt"
+        "configuration/analyzers/Ark.Tools.BannedSymbols.txt"
     ];
 
     private static readonly string[] _globalConfigurationAssets =
@@ -99,11 +103,11 @@ public sealed class SdkPackageTests
 
     private static readonly string[] _codingStyleAsset = ["Ark.Tools.CodingStyle.editorconfig"];
 
-    private static readonly string[] _bannedApiAsset = ["BannedSymbols.Ark.Tools.txt"];
+    private static readonly string[] _bannedApiAsset = ["Ark.Tools.BannedSymbols.txt"];
 
     private static readonly string[] _composedBannedApiAssets =
     [
-        "BannedSymbols.Ark.Tools.txt",
+        "Ark.Tools.BannedSymbols.txt",
         "BannedSymbols.Consumer.txt"
     ];
 
@@ -199,8 +203,8 @@ public sealed class SdkPackageTests
         await using var sdkPropsStream = await sdkPropsEntry.OpenAsync();
         using var sdkPropsReader = new StreamReader(sdkPropsStream);
         var sdkProps = await sdkPropsReader.ReadToEndAsync().ConfigureAwait(false);
-        StringAssert.Contains(sdkProps, "Version=\"999.9.9\"", StringComparison.Ordinal);
-        StringAssert.Contains(sdkProps, "IsImplicitlyDefined=\"true\"", StringComparison.Ordinal);
+        StringAssert.Contains(sdkProps, "Sdk.props", StringComparison.Ordinal);
+        StringAssert.Contains(sdkProps, "common.props", StringComparison.Ordinal);
         Assert.IsNull(sdk.Entries.FirstOrDefault(entry => entry.FullName.StartsWith("lib/", StringComparison.Ordinal)));
         var nuspecEntry = build.GetEntry("Ark.Tools.Build.nuspec");
         Assert.IsNotNull(nuspecEntry);
@@ -336,7 +340,7 @@ public sealed class SdkPackageTests
             StringAssert.Contains(File.ReadAllText(path), "global_level = 90", StringComparison.Ordinal);
         }
 
-        var bannedSymbols = File.ReadAllLines(Path.Join(configurationRoot, "BannedSymbols.Ark.Tools.txt"))
+        var bannedSymbols = File.ReadAllLines(Path.Join(configurationRoot, "Ark.Tools.BannedSymbols.txt"))
             .Count(line => !string.IsNullOrWhiteSpace(line) && !line.TrimStart().StartsWith('#'));
         Assert.AreEqual(93, bannedSymbols);
 
@@ -398,7 +402,7 @@ public sealed class SdkPackageTests
             ["EnableArkToolsVisualStudioThreading"] = "Ark.Tools.VisualStudioThreading.globalconfig",
             ["EnableArkToolsIdentityModelConfiguration"] = "Ark.Tools.IdentityModel.globalconfig",
             ["EnableArkToolsCoreConfiguration"] = "Ark.Tools.Core.globalconfig",
-            ["EnableArkToolsBannedApi"] = "BannedSymbols.Ark.Tools.txt"
+            ["EnableArkToolsBannedApi"] = "Ark.Tools.BannedSymbols.txt"
         };
         var baselineFiles = _getAllArkBuildConfigurationFileNames(baseline);
         foreach (var item in switches)
@@ -1030,7 +1034,7 @@ public sealed class SdkPackageTests
         var switches = new Dictionary<string, (string Package, string Item, string Asset)>
         {
             ["EnableArkToolsNetAnalyzers"] = ("Microsoft.CodeAnalysis.NetAnalyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.NetAnalyzers.globalconfig"),
-            ["EnableArkToolsBannedApi"] = ("Microsoft.CodeAnalysis.BannedApiAnalyzers", "AdditionalFiles", "BannedSymbols.Ark.Tools.txt"),
+            ["EnableArkToolsBannedApi"] = ("Microsoft.CodeAnalysis.BannedApiAnalyzers", "AdditionalFiles", "Ark.Tools.BannedSymbols.txt"),
             ["EnableArkToolsMeziantouAnalyzer"] = ("Meziantou.Analyzer", "GlobalAnalyzerConfigFiles", "Ark.Tools.MeziantouAnalyzer.globalconfig"),
             ["EnableArkToolsVisualStudioThreading"] = ("Microsoft.VisualStudio.Threading.Analyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.VisualStudioThreading.globalconfig"),
             ["EnableArkToolsErrorProne"] = ("ErrorProne.NET.CoreAnalyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.ErrorProne.globalconfig")

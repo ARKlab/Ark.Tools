@@ -165,8 +165,15 @@ Ark.Tools.Build.nupkg
         ├── Ark.Tools.VisualStudioThreading.globalconfig
         ├── Ark.Tools.IdentityModel.globalconfig
         ├── Ark.Tools.Core.globalconfig
-        └── Ark.Tools.BannedApi.BannedSymbols.txt
+        └── Ark.Tools.BannedSymbols.txt
 ```
+
+The SDK package keeps the logical split between the thin `Sdk.props`/`Sdk.targets`
+entry points and the actual library-wide policy under
+`src/sdk/Ark.Tools.Sdk/common/*.props` and `*.targets`. The versioned
+`Ark.Tools.Build` reference is injected at pack time by copying the common props
+file into the intermediate output and replacing the `Version` attribute before
+packaging.
 
 `build` and `buildTransitive` expose the same implementation through one
 canonical import, guarded by `ArkToolsBuildImported`, to prevent drift and
@@ -260,7 +267,7 @@ upstream default changes.
 | `Ark.Tools.VisualStudioThreading.globalconfig` | Non-SQL; `EnableArkToolsVisualStudioThreading` | Inert if VS Threading analyzers are absent. |
 | `Ark.Tools.IdentityModel.globalconfig` | Non-SQL; `EnableArkToolsIdentityModelConfiguration` | Inert if the IdentityModel analyzer is absent. |
 | `Ark.Tools.Core.globalconfig` | Non-SQL; `EnableArkToolsCoreConfiguration` | Inert if the Ark.Tools.Core analyzer is absent. |
-| `Ark.Tools.BannedApi.BannedSymbols.txt` | Non-SQL; `EnableArkToolsBannedApi` | Inert if Banned API Analyzers is absent; consumer lists compose. |
+| `Ark.Tools.BannedSymbols.txt` | Non-SQL; `EnableArkToolsBannedApi` | Inert if Banned API Analyzers is absent; consumer lists compose. |
 | Consumer `.*.globalconfig` discovery | Non-SQL; `EnableArkToolsLocalAnalyzerConfigDiscovery` | Preserves local overrides without changing consumer files. |
 | SponsorLink analyzer removal | `EnableArkToolsSponsorLinkRemoval` | Removes only `DevLooped.SponsorLink` and `Moq.CodeAnalysis` before compilation. |
 
@@ -544,7 +551,7 @@ one merged configuration.
 | Suggestion | `VSTHRD011`, `VSTHRD102`, `VSTHRD104`, `VSTHRD108`, `VSTHRD112`, `VSTHRD113` |
 | None | `VSTHRD012`, `VSTHRD111` in favor of `MA0004`, `VSTHRD200` |
 
-#### `Ark.Tools.BannedApi.BannedSymbols.txt`
+#### `Ark.Tools.BannedSymbols.txt`
 
 Package the complete current list, separately from the severity configurations.
 Its 93 active entries ban local-time APIs, ambiguous enum parsing and rounding,
@@ -650,7 +657,7 @@ consumer repository:
                              Condition="'$(EnableArkToolsIdentityModelConfiguration)' != 'false'" />
   <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Core.globalconfig"
                              Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
-  <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.BannedApi.BannedSymbols.txt"
+  <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.BannedSymbols.txt"
                    Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
 </ItemGroup>
 ```
