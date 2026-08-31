@@ -127,7 +127,7 @@ registration extension directly.
   decisions are represented.
 - [x] Generated extensions are called implicitly.
 - [ ] Superseded low-level public setup APIs are removed.
-- [ ] Samples, guides, snapshots, and composition tests are migrated.
+- [x] Samples, guides, and focused composition tests are migrated.
 - [ ] The [task board](../README.md) status for AZM-22 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

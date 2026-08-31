@@ -37,6 +37,23 @@ Bus or Storage Queue. Generated network, participant, and Functions metadata are
 resolved by the composition layer; application handlers remain in Simple
 Injector.
 
+```csharp
+services.ConfigureArkMessagingFunctions(
+    applicationContainer,
+    configuration,
+    ArkGeneratedMessagingFunctions.Manifest,
+    messaging => messaging
+        .UseAzureServiceBus()
+        .UseDataBus(new InMemoryMessagingDataBus(
+            SystemClock.Instance,
+            Duration.FromHours(2)))
+        .UseOutbox());
+```
+
+The Functions entry point rejects in-memory receive transport and hosted native
+outbox processing. `UseOutbox()` enables enqueue enlistment only; polling remains
+owned by a separate native host.
+
 ## Layer responsibilities
 
 | Layer | Owns | Does not own |
