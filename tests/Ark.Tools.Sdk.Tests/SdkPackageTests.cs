@@ -815,6 +815,8 @@ public sealed class SdkPackageTests
         Assert.AreEqual("false", _getProperty(baseline, "WarnOnPackingNonPackableProject"));
         Assert.AreEqual("Exe", _getProperty(baseline, "OutputType"));
         Assert.AreEqual("Obsolete,GeneratedCodeAttribute", _getProperty(baseline, "ExcludeByAttribute"));
+        Assert.AreEqual("", _getProperty(baseline, "EnablePackageValidation"));
+        Assert.AreEqual("", _getProperty(baseline, "IncludeSymbols"));
         Assert.AreEqual("1", _getProperty(baseline, "MinimumExpectedTests"));
         Assert.IsTrue(_getProperty(baseline, "TestingPlatformCommandLineArguments").Contains("--report-trx", StringComparison.Ordinal));
         Assert.IsTrue(_getProperty(baseline, "TestingPlatformCommandLineArguments").Contains("--minimum-expected-tests 1", StringComparison.Ordinal));

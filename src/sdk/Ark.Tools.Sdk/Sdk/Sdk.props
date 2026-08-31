@@ -18,9 +18,9 @@
     <GenerateSBOM Condition="'$(GenerateSBOM)' == '' and '$(EnableArkToolsBuild)' != 'false' and '$(EnableArkToolsSbom)' != 'false' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateSBOM>
     <PolyUseEmbeddedAttribute Condition="'$(PolyUseEmbeddedAttribute)' == '' and '$(EnableArkToolsBuild)' != 'false' and '$(EnableArkToolsPolyfill)' != 'false'">true</PolyUseEmbeddedAttribute>
     <AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == '' and ('$(UsingMicrosoftNETSdk)' == 'true' or '$(UsingMicrosoftNETSdkWeb)' == 'true' or '$(UsingMicrosoftNETSdkRazor)' == 'true')">true</AccelerateBuildsInVisualStudio>
-    <EnablePackageValidation Condition="'$(EnablePackageValidation)' == '' and '$(IsPackable)' != 'false'">true</EnablePackageValidation>
-    <IncludeSymbols Condition="'$(IncludeSymbols)' == '' and '$(IsPackable)' != 'false'">true</IncludeSymbols>
-    <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false'">snupkg</SymbolPackageFormat>
+    <EnablePackageValidation Condition="'$(EnablePackageValidation)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</EnablePackageValidation>
+    <IncludeSymbols Condition="'$(IncludeSymbols)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</IncludeSymbols>
+    <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">snupkg</SymbolPackageFormat>
   </PropertyGroup>
   <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
     <IsPackable>false</IsPackable>
@@ -31,7 +31,7 @@
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false' and '$(EnableArkToolsDefaultTestSettings)' != 'false'">
     <MinimumExpectedTests Condition="'$(MinimumExpectedTests)' == ''">1</MinimumExpectedTests>
     <_ArkMtpCoverageArguments Condition="'$(ContinuousIntegrationBuild)' == 'true'"> --coverage --coverage-output-format cobertura</_ArkMtpCoverageArguments>
-    <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' == '1'"> --minimum-expected-tests 1</_ArkMtpMinimumExpectedTests>
+    <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' != '' and '$(MinimumExpectedTests)' != '0'"> --minimum-expected-tests $(MinimumExpectedTests)</_ArkMtpMinimumExpectedTests>
     <TestingPlatformCommandLineArguments Condition="'$(TestingPlatformCommandLineArguments)' == ''">--report-trx --crashdump-type mini --hangdump-type mini --hangdump-timeout 600$(_ArkMtpCoverageArguments)$(_ArkMtpMinimumExpectedTests)</TestingPlatformCommandLineArguments>
   </PropertyGroup>
   <PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != '' and '$(EnableArkToolsCopilotSandboxWorkaround)' != 'false'">
