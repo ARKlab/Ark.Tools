@@ -375,11 +375,11 @@ public sealed class MessagingCompressionAndDataBusTests
     {
         var network = _network();
         var shortLifetime = () => new ServiceCollection()
-            .AddArkInMemoryMessagingDataBus(networks: [network]);
+            ._AddArkInMemoryMessagingDataBus(networks: [network]);
         shortLifetime.Should().Throw<ArgumentOutOfRangeException>();
 
         var longLifetime = () => new ServiceCollection()
-            .AddArkInMemoryMessagingDataBus(
+            ._AddArkInMemoryMessagingDataBus(
                 lifetime: Duration.FromDays(8),
                 networks: [network]);
         longLifetime.Should().NotThrow();

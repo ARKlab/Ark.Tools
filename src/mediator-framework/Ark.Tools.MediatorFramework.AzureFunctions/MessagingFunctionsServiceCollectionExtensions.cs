@@ -117,7 +117,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         _registerSteps(container, manifest.IncomingSteps);
         _registerSteps(container, manifest.OutgoingSteps);
         management ??= transport as IMessagingTransportManagement;
-        services.AddArkMessagingParticipant(
+        services._AddArkMessagingParticipant(
             descriptor,
             transport,
             dataBus,

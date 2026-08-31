@@ -367,11 +367,11 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
                 "The selected resource lifecycle does not match the generated network declaration.");
 
         if (_messagePack)
-            _services.AddMessagePackMessagingCodec();
+            _services._AddMessagePackMessagingCodec();
         if (_protobuf)
-            _services.AddProtobufMessagingCodec();
+            _services._AddProtobufMessagingCodec();
         if (_outboxEnqueue)
-            _services.AddArkMessagingOutboxEnqueue();
+            _services._AddArkMessagingOutboxEnqueue();
         _services.AddArkMessagingFunctionsHost(
             _container,
             _configuration,
