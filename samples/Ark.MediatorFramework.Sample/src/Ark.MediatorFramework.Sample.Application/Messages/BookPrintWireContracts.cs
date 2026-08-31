@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Runtime.CompilerServices;
+
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 
@@ -20,7 +22,10 @@ public sealed record BookPrintMessagePackEvent : ICommand<BookPrintMessagePackEv
     public Guid BookId { get; init; }
 }
 
-/// <summary>Publishes a protobuf book-print message.</summary>
+/// <summary>
+/// Publishes a minimal protobuf-shaped book-print message for topology validation.
+/// Production contracts should be generated from a <c>.proto</c> schema.
+/// </summary>
 [Message(Name = "books/book-print.protobuf")]
 public sealed class BookPrintProtobufMessage : IMessage<BookPrintProtobufMessage>
 {
@@ -30,7 +35,8 @@ public sealed class BookPrintProtobufMessage : IMessage<BookPrintProtobufMessage
     public static MessageParser<BookPrintProtobufMessage> Parser => _parser;
 
     /// <inheritdoc />
-    public MessageDescriptor Descriptor => null!;
+    public MessageDescriptor Descriptor => throw new NotSupportedException(
+        "This sample contract exists only to exercise compile-time protobuf shape validation.");
 
     /// <inheritdoc />
     public BookPrintProtobufMessage Clone()
@@ -79,6 +85,6 @@ public sealed class BookPrintProtobufMessage : IMessage<BookPrintProtobufMessage
     /// <inheritdoc />
     public override int GetHashCode()
     {
-        return 0;
+        return RuntimeHelpers.GetHashCode(this);
     }
 }
