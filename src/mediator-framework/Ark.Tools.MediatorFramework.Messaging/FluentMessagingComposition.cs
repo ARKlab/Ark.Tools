@@ -320,15 +320,6 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
-    /// <summary>Uses the generated network resource lifecycle policy.</summary>
-    /// <param name="lifecycle">The lifecycle policy.</param>
-    /// <returns>This builder.</returns>
-    public MessagingModeBuilder<TNetwork, TParticipant> UseLifecycle(
-        MessagingResourceLifecycle lifecycle)
-    {
-        return UseResourceLifecycle(lifecycle);
-    }
-
     /// <summary>Enables outbox enlistment without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox()
@@ -514,7 +505,7 @@ internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisp
     {
         if (_pump is not null)
         {
-            await _pump.DisposeAsync().ConfigureAwait(false);
+            await _pump.StopAsync().ConfigureAwait(false);
             _pump = null;
         }
     }
