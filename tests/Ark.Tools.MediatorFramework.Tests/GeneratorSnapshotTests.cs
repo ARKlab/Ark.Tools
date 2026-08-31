@@ -2709,6 +2709,39 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingFunctionsGeneratorReportsNativeNameCollisions()
+    {
+        var result = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            using Ark.Tools.Solid;
+            [assembly: MessagingFunctionsHost(
+                typeof(PublishingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [Event(Name = "books")]
+            public sealed class PrintedBook : IRequest<PrintedBook, string> { }
+            [MessagingParticipant(
+                Identity = "Publisher",
+                Publishes = new[] { typeof(PrintedBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [MessagingParticipant(
+                Identity = "publisher",
+                Publishes = new[] { typeof(PrintedBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class OtherParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PublishingParticipant), typeof(OtherParticipant) })]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF046");
+        result.Generated.Should().BeEmpty();
+    }
+
+    [TestMethod]
     public void MessagingFunctionsGeneratorReportsSenderOnlyParticipant()
     {
         var result = _runGeneratorResult<MessagingFunctionsGenerator>(
