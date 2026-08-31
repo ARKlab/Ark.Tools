@@ -2373,6 +2373,143 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorAcceptsJsonRoutesWithoutNativeShape()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json, SerializationProtocol.MessagePack },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id is "ARKMSG025" or "ARKMSG026");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsLookalikeMessagePackAttribute()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace Lookalike;
+            public sealed class MessagePackObjectAttribute : System.Attribute { }
+            [MessagePackObject]
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.MessagePack },
+                DefaultSerializer = SerializationProtocol.MessagePack)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG025");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsMissingEffectiveProtobufShape()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ProtoContract]
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Protobuf },
+                DefaultSerializer = SerializationProtocol.Protobuf)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic =>
+            diagnostic.Id == "ARKMSG026"
+            && diagnostic.GetMessage().Contains("PrintingParticipant")
+            && diagnostic.GetMessage().Contains("Protobuf"));
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorAcceptsGoogleProtobufGeneratedShape()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Google.Protobuf;
+            [Message]
+            public sealed class PrintBook : ICommand<PrintBook>, IMessage<PrintBook>
+            {
+                public static MessageParser<PrintBook> Parser { get; } = null!;
+            }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Protobuf },
+                DefaultSerializer = SerializationProtocol.Protobuf)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG026");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsEventSubscriberProtocolMismatch()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using MessagePack;
+            [MessagePackObject]
+            [Event]
+            public sealed class PrintCompleted : ICommand<PrintCompleted> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.MessagePack },
+                DefaultSerializer = SerializationProtocol.MessagePack)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingParticipant(
+                Subscribes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class NotificationParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant), typeof(NotificationParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public static partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic =>
+            diagnostic.Id == "ARKMSG009"
+            && diagnostic.GetMessage().Contains("NotificationParticipant")
+            && diagnostic.GetMessage().Contains("MessagePack"));
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorRejectsQueryEventShape()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
@@ -2826,6 +2963,8 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(MessagePack.MessagePackObjectAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Google.Protobuf.IMessage).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
