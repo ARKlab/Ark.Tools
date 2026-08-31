@@ -99,6 +99,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Storage Queue consumer has no retry policy",
         "Storage Queue participant '{0}' must declare a retry policy with a positive RetryDelay",
         DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _nativeNameCollision = _rule(
+        "ARKMF046",
+        "Messaging native entity name collision",
+        "Logical messaging names '{0}' and '{1}' map to the same {2} entity name '{3}'",
+        DiagnosticSeverity.Error);
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -266,6 +271,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 || subscribes.Any(contract =>
                     SymbolEqualityComparer.Default.Equals(contract, topic.Contract)))
             .ToImmutableArray();
+        if (!_validateNativeNames(context, host, identity, subscriptions.Value, topics))
+            return;
 
         var connection = host.ConnectionConfigurationKey
             ?? network.Type.Name;
@@ -419,7 +426,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Append(_typeName(network)).AppendLine(".Registry),")
             .Append("            global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.")
             .AppendLine(host.Binding == _serviceBusBinding ? "ServiceBus," : "StorageQueue,")
-            .Append("            \"").Append(_escape(identity)).AppendLine("\",")
+            .Append("            \"").Append(_escape(_nativeName(identity, host.Binding))).AppendLine("\",")
             .Append("            \"").Append(_escape(connection)).AppendLine("\",");
 
         _emitMaximumDeliveryCount(source, retryType, "            ", appendComma: true);
@@ -434,10 +441,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         foreach (var subscription in subscriptions)
         {
             source.AppendLine("                new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription(")
-                .Append("                    \"").Append(_escape(subscription.Topic)).AppendLine("\",")
-                .Append("                    \"").Append(_escape(subscription.Name)).AppendLine("\",")
-                .Append("                    \"").Append(_escape(subscription.ForwardToQueue)).AppendLine("\"),");
+                .Append("                    \"").Append(_escape(_nativeName(subscription.Topic, host.Binding))).AppendLine("\",")
+                .Append("                    \"").Append(_escape(_nativeName(subscription.Name, host.Binding))).AppendLine("\",")
+                .Append("                    \"").Append(_escape(_nativeName(subscription.ForwardToQueue, host.Binding))).AppendLine("\"),");
         }
+
         source.AppendLine("            },");
         _emitTypes(source, host.IncomingSteps);
         source.AppendLine(",");
@@ -485,6 +493,52 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Append("                (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
             .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine("));")
             .AppendLine();
+    }
+
+    private static bool _validateNativeNames(
+        SourceProductionContext context,
+        Host host,
+        string identity,
+        ImmutableArray<Subscription> subscriptions,
+        ImmutableArray<Topic> topics)
+    {
+        var nativeNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
+        var hasCollision = false;
+        var values = new List<string>
+        {
+            identity,
+        };
+        values.AddRange(topics.Select(static topic => topic.Name));
+        foreach (var subscription in subscriptions)
+        {
+            values.Add(subscription.Topic);
+            values.Add(subscription.Name);
+            values.Add(subscription.ForwardToQueue);
+        }
+
+        foreach (var logical in values.Distinct(StringComparer.Ordinal))
+        {
+            var native = _nativeName(logical, host.Binding);
+            if (nativeNames.TryGetValue(native, out var existing)
+                && !string.Equals(existing, logical, StringComparison.Ordinal))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    _nativeNameCollision,
+                    host.Location,
+                    existing,
+                    logical,
+                    transportName,
+                    native));
+                hasCollision = true;
+            }
+            else
+            {
+                nativeNames[native] = logical;
+            }
+        }
+
+        return !hasCollision;
     }
 
     private static void _emitMaximumDeliveryCount(
@@ -572,6 +626,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             storage
                 ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isStorageQueueCharacter
                 : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isServiceBusCharacter);
+    }
+
+    private static string _nativeName(string value, int binding)
+    {
+        return _nativeName(value, binding == _storageQueueBinding ? 63 : 260, binding == _storageQueueBinding);
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)
