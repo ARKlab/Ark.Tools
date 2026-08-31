@@ -522,6 +522,9 @@ internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisp
     public async ValueTask DisposeAsync()
     {
         if (_pump is not null)
+        {
             await _pump.DisposeAsync().ConfigureAwait(false);
+            _pump = null;
+        }
     }
 }
