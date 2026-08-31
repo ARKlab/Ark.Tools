@@ -32,14 +32,16 @@ When the default profile is active, the SDK sets these defaults if the consumer 
 - `OutputType=Exe`
 - `ExcludeByAttribute=Obsolete,GeneratedCodeAttribute`
 - `MinimumExpectedTests=1`
-- `TestingPlatformCommandLineArguments=--report-trx --crashdump-type mini --hangdump-type mini --hangdump-timeout 600 ...`
+- `TestingPlatformCommandLineArguments=--report-trx --crashdump --crashdump-type mini --hangdump --hangdump-type mini --hangdump-timeout 10m ...`
 
 The command line is composed as:
 
 - `--report-trx`
+- `--crashdump`
 - `--crashdump-type mini`
+- `--hangdump`
 - `--hangdump-type mini`
-- `--hangdump-timeout 600`
+- `--hangdump-timeout 10m`
 - `--coverage --coverage-output-format cobertura` only when `ContinuousIntegrationBuild=true`
 - `--minimum-expected-tests 1` when `MinimumExpectedTests` is `1`
 

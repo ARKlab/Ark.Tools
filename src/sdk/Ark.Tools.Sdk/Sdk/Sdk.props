@@ -32,7 +32,7 @@
     <MinimumExpectedTests Condition="'$(MinimumExpectedTests)' == ''">1</MinimumExpectedTests>
     <_ArkMtpCoverageArguments Condition="'$(ContinuousIntegrationBuild)' == 'true'"> --coverage --coverage-output-format cobertura</_ArkMtpCoverageArguments>
     <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' != '' and '$(MinimumExpectedTests)' != '0'"> --minimum-expected-tests $(MinimumExpectedTests)</_ArkMtpMinimumExpectedTests>
-    <TestingPlatformCommandLineArguments Condition="'$(TestingPlatformCommandLineArguments)' == ''">--report-trx --crashdump-type mini --hangdump-type mini --hangdump-timeout 600$(_ArkMtpCoverageArguments)$(_ArkMtpMinimumExpectedTests)</TestingPlatformCommandLineArguments>
+    <TestingPlatformCommandLineArguments Condition="'$(TestingPlatformCommandLineArguments)' == ''">--report-trx --crashdump --crashdump-type mini --hangdump --hangdump-type mini --hangdump-timeout 10m$(_ArkMtpCoverageArguments)$(_ArkMtpMinimumExpectedTests)</TestingPlatformCommandLineArguments>
   </PropertyGroup>
   <PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != '' and '$(EnableArkToolsCopilotSandboxWorkaround)' != 'false'">
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>

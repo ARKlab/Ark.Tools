@@ -818,8 +818,14 @@ public sealed class SdkPackageTests
         Assert.AreEqual("", _getProperty(baseline, "EnablePackageValidation"));
         Assert.AreEqual("", _getProperty(baseline, "IncludeSymbols"));
         Assert.AreEqual("1", _getProperty(baseline, "MinimumExpectedTests"));
-        Assert.IsTrue(_getProperty(baseline, "TestingPlatformCommandLineArguments").Contains("--report-trx", StringComparison.Ordinal));
-        Assert.IsTrue(_getProperty(baseline, "TestingPlatformCommandLineArguments").Contains("--minimum-expected-tests 1", StringComparison.Ordinal));
+        var baselineArguments = _getProperty(baseline, "TestingPlatformCommandLineArguments");
+        Assert.IsTrue(baselineArguments.Contains("--report-trx", StringComparison.Ordinal));
+        Assert.IsTrue(baselineArguments.Contains("--crashdump", StringComparison.Ordinal));
+        Assert.IsTrue(baselineArguments.Contains("--crashdump-type mini", StringComparison.Ordinal));
+        Assert.IsTrue(baselineArguments.Contains("--hangdump", StringComparison.Ordinal));
+        Assert.IsTrue(baselineArguments.Contains("--hangdump-type mini", StringComparison.Ordinal));
+        Assert.IsTrue(baselineArguments.Contains("--hangdump-timeout 10m", StringComparison.Ordinal));
+        Assert.IsTrue(baselineArguments.Contains("--minimum-expected-tests 1", StringComparison.Ordinal));
         Assert.IsFalse(packageReferences.ContainsKey("MSTest.TestFramework"));
         Assert.IsFalse(packageReferences.ContainsKey("Microsoft.NET.Test.Sdk"));
         Assert.IsFalse(packageReferences.ContainsKey("Reqnroll.MsTest"));
