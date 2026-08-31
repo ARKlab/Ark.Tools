@@ -532,8 +532,10 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                     native));
                 hasCollision = true;
             }
-
-            nativeNames[native] = logical;
+            else
+            {
+                nativeNames[native] = logical;
+            }
         }
 
         return !hasCollision;
