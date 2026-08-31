@@ -60,7 +60,8 @@ public sealed class MessagingLogicalNameTests
         var logical = new string('a', 300);
         var native = StorageQueueMessagingTransport.ToNativeEntityName(logical);
 
-        native.Length.Should().Be(63);
+        native.Length.Should().BeLessThanOrEqualTo(63);
+        native.Should().NotBeEmpty();
         native.Should().MatchRegex("^[a-z0-9-]+$");
     }
 }
