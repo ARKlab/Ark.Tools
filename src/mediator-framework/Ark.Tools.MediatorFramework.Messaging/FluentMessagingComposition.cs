@@ -35,7 +35,36 @@ public static class FluentMessagingCompositionExtensions
         builder.Build();
         return services;
     }
+
+    /// <summary>Configures one generated messaging network from generated metadata.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="network">The generated network options.</param>
+    /// <param name="registry">The generated contract registry.</param>
+    /// <param name="configure">The composition callback.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection ConfigureArkMessaging(
+        this IServiceCollection services,
+        MessagingNetworkOptions network,
+        IMessagingContractRegistry registry,
+        Action<MessagingCompositionBuilder<MessagingCompositionNetwork>> configure)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(network);
+        ArgumentNullException.ThrowIfNull(registry);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        var builder = new MessagingCompositionBuilder<MessagingCompositionNetwork>(
+            services,
+            network,
+            registry);
+        configure(builder);
+        builder.Build();
+        return services;
+    }
 }
+
+/// <summary>Marker type used by the metadata-based fluent messaging entry point.</summary>
+public sealed class MessagingCompositionNetwork;
 
 /// <summary>Configures one generated network and exactly one native hosting mode.</summary>
 /// <typeparam name="TNetwork">The generated messaging network declaration.</typeparam>
@@ -52,6 +81,16 @@ public sealed class MessagingCompositionBuilder<TNetwork>
     {
         _services = services;
         (_network, _registry) = _resolveNetwork();
+    }
+
+    internal MessagingCompositionBuilder(
+        IServiceCollection services,
+        MessagingNetworkOptions network,
+        IMessagingContractRegistry registry)
+    {
+        _services = services;
+        _network = network;
+        _registry = registry;
     }
 
     /// <summary>Configures a producer-only participant.</summary>
