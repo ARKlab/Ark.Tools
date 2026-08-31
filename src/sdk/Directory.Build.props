@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <ArkToolsSdkProject>true</ArkToolsSdkProject>
+    <LangVersion>14.0</LangVersion>
+  </PropertyGroup>
+
+  <Import Project="../../Directory.Build.props" />
+</Project>

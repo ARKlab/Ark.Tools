@@ -1,4 +1,5 @@
 is_global = true
+global_level = 90
 
 #### Meziantou.Analyzer Rules (MA*) and Visual Studio Threading Analyzers (VSTHRD*) ####
 

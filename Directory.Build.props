@@ -6,7 +6,11 @@
 	<!-- Default version for local development - allows samples to use locally built packages -->
 	<!-- Override with -p:Version=x.y.z during release builds -->
 	<Version Condition="'$(Version)' == ''">999.9.9</Version>
+	<ArkToolsSdkSourceBuild>true</ArkToolsSdkSourceBuild>
   </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props"
+		  Condition="'$(ArkToolsSdkProject)' != 'true'" />
 
 	<PropertyGroup>
 		<ArkCoreInterceptorsEnabled Condition="'$(ArkCoreInterceptorsEnabled)' == ''">true</ArkCoreInterceptorsEnabled>
@@ -31,19 +35,6 @@
 		<InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
 	</PropertyGroup>
 
-	<PropertyGroup Label="Continuous Integration Build Detection">
-		<!-- Azure Pipelines / DevOpsServer -->
-		<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
-
-		<!-- GitHub Actions -->
-		<_IsGitHubActions Condition="'$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
-		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-
-		<!-- Set by many build agents -->
-		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
-	</PropertyGroup>
-
-
 	<PropertyGroup Label="Common Build Settings">
 		<IsPackable>true</IsPackable>
 		<Nullable>enable</Nullable>
@@ -64,9 +55,6 @@
 		<DebugType>portable</DebugType>
 		<DebugSymbols>true</DebugSymbols>
 
-		<!-- used to CACHE Hosted-agent packages: https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/caching-nuget?view=azure-devops -->
-		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-		<RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
 		<EnablePackageValidation>true</EnablePackageValidation>
 		
 		<!--
@@ -74,8 +62,6 @@
 		See: https://github.com/NuGet/Home/issues/14300
 		-->
 		<RestoreUseStaticGraphEvaluation>false</RestoreUseStaticGraphEvaluation>
-		<RestoreSerializeGlobalProperties>true</RestoreSerializeGlobalProperties>
-
 		<Deterministic>true</Deterministic>
 		
 		<AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == ''">true</AccelerateBuildsInVisualStudio>
@@ -83,8 +69,6 @@
 
 		<ReportAnalyzer>true</ReportAnalyzer>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisLevel>latest-all</AnalysisLevel>
-		<LangVersion>latest</LangVersion>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
 		<!--
@@ -97,20 +81,13 @@
 
 	</PropertyGroup>
 
-	<PropertyGroup Label="NuGet Audit">
-		<NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
-		<NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
-		<NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
+	<PropertyGroup Label="NuGet Audit Exceptions">
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Temporary NuGet Pack Workaround">
 		<!-- use this section for TEMPORARY workaround for Nuget Errors (prereleases or vulnerabilities with no fix) -->
 		<NoWarn>$(NoWarn)</NoWarn>
-	</PropertyGroup>
-
-	<PropertyGroup Label="Test Project" Condition="'$(IsTestProject)' == '' And ( $(MSBuildProjectName.EndsWith('.Tests')) Or $(MSBuildProjectName.EndsWith('.UnitTests')) )">
-    	<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 
   <PropertyGroup Label="Test Settings" Condition="'$(IsTestProject)' == 'true'">
@@ -128,11 +105,6 @@
 
   </PropertyGroup>
   
-
-	<ItemGroup Label="Global Config Files" Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-		<GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory).*.globalconfig" />
-		<EditorConfigFiles Include="$(MSBuildThisFileDirectory).*.editorconfig" />
-	</ItemGroup>
 
 	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
 

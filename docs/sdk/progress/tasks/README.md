@@ -40,9 +40,9 @@ choices and rejected alternatives are in
 | Task | Title | Category | Status |
 | --- | --- | --- | --- |
 | [SDK-IMP-01](SDK-IMP-01-dual-package-foundation.md) | Dual-package and clean-consumer test foundation | Foundation | Complete |
-| [SDK-IMP-02](SDK-IMP-02-public-build-baseline.md) | Public `Ark.Tools.Build` safety baseline | Build policy | Pending |
-| [SDK-IMP-03](SDK-IMP-03-analyzer-configuration-assets.md) | Analyzer configuration, banned APIs, and safety targets | Build policy | Pending |
-| [SDK-IMP-04](SDK-IMP-04-sdk-restore-and-analyzers.md) | SDK restore policy and analyzer ownership | SDK policy | Pending |
+| [SDK-IMP-02](SDK-IMP-02-public-build-baseline.md) | Public `Ark.Tools.Build` safety baseline | Build policy | Complete |
+| [SDK-IMP-03](SDK-IMP-03-analyzer-configuration-assets.md) | Analyzer configuration, banned APIs, and safety targets | Build policy | Complete |
+| [SDK-IMP-04](SDK-IMP-04-sdk-restore-and-analyzers.md) | SDK restore policy and analyzer ownership | SDK policy | Complete |
 | [SDK-IMP-05](SDK-IMP-05-source-and-packaging-profile.md) | Source, build, and packaging tool profile | SDK policy | Pending |
 | [SDK-IMP-06](SDK-IMP-06-mtp-test-profile.md) | Framework-neutral MTP test profile | Testing | Pending |
 | [SDK-IMP-07](SDK-IMP-07-content-and-reqnroll-profile.md) | Application settings and Reqnroll profile | Content | Pending |
