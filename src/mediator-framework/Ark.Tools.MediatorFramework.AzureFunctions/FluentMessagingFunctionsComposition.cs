@@ -174,6 +174,18 @@ public sealed class MessagingFunctionsCompositionBuilder
         return this;
     }
 
+    /// <summary>Rejects selection of a hosted native outbox processor.</summary>
+    /// <param name="contextFactory">The unsupported processor context factory.</param>
+    /// <param name="batchSize">The unsupported batch size.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder UseOutbox(
+        Ark.Tools.Outbox.IOutboxAsyncContextFactory contextFactory,
+        int batchSize = 10)
+    {
+        _inner.UseOutbox(contextFactory, batchSize);
+        return this;
+    }
+
     /// <summary>Completes the Functions composition.</summary>
     public void Build()
     {
