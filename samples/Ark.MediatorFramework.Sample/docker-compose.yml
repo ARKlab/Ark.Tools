@@ -8,7 +8,7 @@ services:
       - "10000:10000"
       - "10001:10001"
       - "10002:10002"
-  db:
+  sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
     restart: unless-stopped
     environment:
@@ -28,7 +28,7 @@ services:
     image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
     restart: unless-stopped
     depends_on:
-      db:
+      sqlserver:
         condition: service_healthy
     environment:
       ACCEPT_EULA: 'Y'

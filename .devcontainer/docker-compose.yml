@@ -11,10 +11,10 @@ services:
     command: sleep infinity
 
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    network_mode: service:sqlserver
 
 
-  db:
+  sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
     restart: unless-stopped
     environment:
@@ -32,7 +32,7 @@ services:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     restart: unless-stopped
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    network_mode: service:sqlserver
 
   servicebus:
     image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
@@ -47,4 +47,4 @@ services:
       SQL_WAIT_INTERVAL: 90
     restart: unless-stopped
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:db
+    network_mode: service:sqlserver
