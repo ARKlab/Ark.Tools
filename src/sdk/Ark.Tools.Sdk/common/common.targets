@@ -1,7 +1,7 @@
 <Project>
 
 
-	<Import Project="$(MSBuildThisFileDirectory)/tests.targets" Condition="'$(IsTestProject)' == 'true'" />
+	<Import Project="$(MSBuildThisFileDirectory)tests.targets" Condition="'$(IsTestProject)' == 'true'" />
 
   
   <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(ImplicitUsings)' != 'disable' and '$(EnableArkToolsGlobalUsings)' != 'false'">
@@ -43,7 +43,7 @@
     <_GitTagName Condition="'$(GITHUB_REF_TYPE)' == 'tag'">$(GITHUB_REF_NAME)</_GitTagName>
 		<_GitTagName Condition="'$(_GitTagName)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(_GitRef)', '^refs/tags/'))">$([System.Text.RegularExpressions.Regex]::Replace('$(_GitRef)', '^refs/tags/', ''))</_GitTagName>
 		
-    <_GitTagVersion Condition="'$(_GitTagName)' != ''">$([System.Text.RegularExpressions.Regex]::Replace('$(_GitHubTagName)', '^[vV](?=\d)', ''))</_GitTagVersion>
+    <_GitTagVersion Condition="'$(_GitTagName)' != ''">$([System.Text.RegularExpressions.Regex]::Replace('$(_GitTagName)', '^[vV](?=\d)', ''))</_GitTagVersion>
 		<_GitTagVersionIsValid Condition="'$(_GitTagVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(_GitTagVersion)', '^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'))</_GitTagVersionIsValid>
     <GitTagVersion Condition="'$(_GitTagVersionIsValid)' == 'true'">$(_GitTagVersion)</GitTagVersion>
     

@@ -10,7 +10,7 @@
   </PropertyGroup>
 
 
-	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
+	<PropertyGroup Label="NuGet Package Info" Condition="'$(IsPackable)' != 'false'">
 
 		<PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -26,7 +26,7 @@
    
 	<ItemGroup Condition="$(IsPackable) != 'false'">
 		<None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="README.md" Condition="'$(IsPackable)' == 'true'"/>
-		<None Include="$(MSBuildThisFileDirectory)../../ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
+		<None Include="$(MSBuildThisFileDirectory)../../ark-dark.png" Pack="true" PackagePath="ark-dark.png" Condition="'$(IsPackable)' == 'true'"/>
 	</ItemGroup>
 
 

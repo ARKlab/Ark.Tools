@@ -1,6 +1,6 @@
 <Project>
 
-  <Import Project="$(MSBuildThisFileDirectory)/ContinuousIntegrationBuild.props" />
+  <Import Project="$(MSBuildThisFileDirectory)ContinuousIntegrationBuild.props" />
 
   <PropertyGroup>
     <_IsGitHubActions Condition="'$(_IsGitHubActions)' == '' and '$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
@@ -14,14 +14,8 @@
     <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
     <NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
     <NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
-    
-    <AnalysisLevel Condition="'$(AnalysisLevel)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">latest-all</AnalysisLevel>
-    <LangVersion Condition="'$(LangVersion)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">14.0</LangVersion>
-    
+
     <IsTestProject Condition="'$(IsTestProject)' == '' and ($(MSBuildProjectName.EndsWith('.Tests')) or $(MSBuildProjectName.EndsWith('.UnitTests')))">true</IsTestProject>
-    
-    <GenerateSBOM Condition="'$(GenerateSBOM)' == '' and '$(EnableArkToolsSbom)' != 'false' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateSBOM>
-    
     <!-- Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
     <PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">true</PublishRepositoryUrl>
 
@@ -30,6 +24,15 @@
     <EnablePackageValidation Condition="'$(EnablePackageValidation)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</EnablePackageValidation>
     <IncludeSymbols Condition="'$(IncludeSymbols)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</IncludeSymbols>
     <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">snupkg</SymbolPackageFormat>
+
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    
+    <AnalysisLevel Condition="'$(AnalysisLevel)' == ''">latest-all</AnalysisLevel>
+    <LangVersion Condition="'$(LangVersion)' == ''">14.0</LangVersion>
+    
+    <GenerateSBOM Condition="'$(GenerateSBOM)' == '' and '$(EnableArkToolsSbom)' != 'false'">true</GenerateSBOM>
   </PropertyGroup>
 
   <PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != '' and '$(EnableArkToolsCopilotSandboxWorkaround)' != 'false'">

@@ -37,7 +37,7 @@
 
 	<PropertyGroup Label="Common Build Settings">
 
-		<NoWarn>NU1701;1591;CS1998;NU1605</NoWarn>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
 		<GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -70,19 +70,23 @@
   </PropertyGroup>
   
 
-	<PropertyGroup Label="NuGet Package Info" Condition="$(IsPackable) != 'false'">
+	<PropertyGroup Label="NuGet Package Info" Condition="'$(IsPackable)' != 'false'">
 
 		<PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>ark-dark.png</PackageIcon>
-		<RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
+		<RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
 		<Authors>ARK Labs</Authors>
-		<Copyright>Copyright (C) 2024 ARK S.r.l</Copyright>
+		<Company>ARK S.r.l</Company>
+		<Copyright>Copyright (C) 2026 ARK S.r.l</Copyright>
 
 	</PropertyGroup>
-  
+
+   
 	<ItemGroup Condition="$(IsPackable) != 'false'">
-		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
+		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="README.md" Condition="'$(IsPackable)' == 'true'"/>
+		<None Include="$(MSBuildThisFileDirectory)ark-dark.png" Pack="true" PackagePath="ark-dark.png" Condition="'$(IsPackable)' == 'true'"/>
 	</ItemGroup>
 
     <PropertyGroup>

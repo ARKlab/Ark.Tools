@@ -28,6 +28,7 @@
                  Condition="'$(UsingMicrosoftBuildSqlSdk)' == 'true'">
     <TreatTSqlWarningsAsErrors Condition="'$(TreatTSqlWarningsAsErrors)' == ''">true</TreatTSqlWarningsAsErrors>
     <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == ''">true</RunSqlCodeAnalysis>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="Analyzer Configuration">
