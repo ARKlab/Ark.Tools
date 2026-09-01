@@ -494,12 +494,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             source.Append("                    \"").Append(_escape(topic.Name)).AppendLine("\",");
         source.AppendLine("                },")
             .Append("                (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
-            .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+            .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine("),")
             .Append("            ")
             .Append(managedIdentityConfigurationKey is null
                 ? "null"
                 : "\"" + _escape(managedIdentityConfigurationKey) + "\"")
-            .AppendLine("));")
+            .AppendLine(");")
             .AppendLine();
     }
 
