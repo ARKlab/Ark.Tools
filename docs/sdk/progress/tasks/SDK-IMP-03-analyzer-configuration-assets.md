@@ -16,7 +16,7 @@ compose with local overrides, and remain inert when an analyzer is absent.
 
 - **Canonical assets**: keep the root `.editorconfig` as the canonical
   coding/naming file; move the four root analyzer global configs and
-  `Ark.Tools.BannedSymbols.txt` under `src/sdk/Ark.Tools.Build/configuration/`; add the
+  `BannedSymbols.txt` under `src/sdk/Ark.Tools.Build/configuration/`; add the
   two split analyzer-specific configs there; and package:
   `Ark.Tools.CodingStyle.editorconfig`,
   `Ark.Tools.NetAnalyzers.globalconfig`,
@@ -25,14 +25,14 @@ compose with local overrides, and remain inert when an analyzer is absent.
   `Ark.Tools.VisualStudioThreading.globalconfig`,
   `Ark.Tools.IdentityModel.globalconfig`,
   `Ark.Tools.Core.globalconfig`, and
-  `Ark.Tools.BannedSymbols.txt`.
+  `BannedSymbols.txt`.
 - **Split**: keep `IDE1006` with coding/naming style; move `IDX00001` and
   `ARKCORE005` into their analyzer-specific files. Preserve all current
   diagnostic severities and all 93 active bans.
 - **Inputs**: add packaged files through `EditorConfigFiles`,
   `GlobalAnalyzerConfigFiles`, and `AdditionalFiles`; never write or copy a
   consumer source file. The canonical banned-symbol source is packaged as
-  `Ark.Tools.BannedSymbols.txt` and is recognized by the analyzer through the
+  `BannedSymbols.txt` and is recognized by the analyzer through the
   accepted `AdditionalFiles` contract without creating consumer-side source files.
 - **Precedence**: assign packaged global configs a level below the default local
   global-config level. Preserve normal source-tree EditorConfig hierarchy.

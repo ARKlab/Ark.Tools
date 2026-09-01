@@ -24,7 +24,7 @@
 	</PropertyGroup>
 
    
-	<ItemGroup Condition="$(IsPackable) != 'false'">
+	<ItemGroup Condition="'$(IsPackable)' != 'false'">
 		<None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="README.md" Condition="'$(IsPackable)' == 'true'"/>
 		<None Include="$(MSBuildThisFileDirectory)../../ark-dark.png" Pack="true" PackagePath="ark-dark.png" Condition="'$(IsPackable)' == 'true'"/>
 	</ItemGroup>

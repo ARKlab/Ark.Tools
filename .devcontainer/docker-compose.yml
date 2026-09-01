@@ -37,11 +37,11 @@ services:
   servicebus:
     image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
     depends_on:
-      db:
+      sqlserver:
         condition: service_healthy
     environment:
       ACCEPT_EULA: 'Y'
-      SQL_SERVER: sqlserver
+      SQL_SERVER: localhost
       MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
       EMULATOR_HTTP_PORT: 5300
       SQL_WAIT_INTERVAL: 90

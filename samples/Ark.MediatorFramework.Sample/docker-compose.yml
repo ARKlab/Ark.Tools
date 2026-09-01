@@ -2,6 +2,7 @@ services:
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     restart: unless-stopped
+    command: azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
     environment:
       AZURITE_SKIP_API_VERSION_CHECK: 'true'
     ports:
