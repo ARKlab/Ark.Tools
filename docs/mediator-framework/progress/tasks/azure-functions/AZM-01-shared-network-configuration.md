@@ -9,7 +9,8 @@
 Transport settings currently appear as host-local defaults. Participants that
 communicate on one network must instead share one explicit declaration: the
 member list, the required capabilities, and the payload/DataBus thresholds,
-resource lifecycle, and connection key names. Serialization, compression, and
+resource lifecycle. Host-specific connection key names remain host metadata.
+Serialization, compression, and
 retry are participant-owned (AZM-02), not network settings.
 The network must not name a technology: the concrete transport is a runtime
 composition decision, and the network declares only the capabilities it

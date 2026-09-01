@@ -24,10 +24,10 @@ services.ConfigureArkMessaging(
     messaging =>
 {
     messaging.Producer<SampleMessagingPublisherParticipant>(producer => producer
-        .UseTransport(new ServiceBusMessagingTransport(client))
-        .UseDataBus(new InMemoryMessagingDataBus())
-        .UseMessagePack()
-        .UseOutbox());
+        .UseTransport(transport => transport.UseServiceBus(client))
+        .UseDataBus(dataBus => dataBus.UseInMemory())
+        .UseSerialization(serialization => serialization.UseMessagePack())
+        .UseOutbox(outbox => outbox.UseEnqueue()));
 });
 ```
 
@@ -43,11 +43,11 @@ services.ConfigureArkMessagingFunctions(
     configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
-        .UseAzureServiceBus()
-        .UseDataBus(new InMemoryMessagingDataBus(
+        .UseTransport(transport => transport.UseServiceBus())
+        .UseDataBus(dataBus => dataBus.UseInMemory(
             SystemClock.Instance,
             Duration.FromHours(2)))
-        .UseOutbox());
+        .UseOutbox(outbox => outbox.UseEnqueue()));
 ```
 
 The Functions entry point rejects in-memory receive transport and hosted native
@@ -267,9 +267,9 @@ builder.Services.ConfigureArkMessagingFunctions(
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
-        .UseAzureServiceBus()
-        .UseDataBus(dataBus)
-        .UseOutbox());
+        .UseTransport(transport => transport.UseServiceBus())
+        .UseDataBus(dataBus => dataBus.UseInMemory())
+        .UseOutbox(outbox => outbox.UseEnqueue()));
 ```
 
 Startup resolves the connection from the generated host binding, validates

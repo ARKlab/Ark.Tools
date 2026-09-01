@@ -159,8 +159,8 @@ services.ConfigureArkMessaging(
     BookMessagingNetwork.CreateOptions(),
     BookMessagingNetwork.Registry,
     messaging => messaging.Producer<WebFrontendParticipant>(producer => producer
-        .UseInMemoryTransport()
-        .UseDataBus(dataBus)));
+        .UseTransport(transport => transport.UseInMemory())
+        .UseDataBus(dataBus => dataBus.UseInMemory())));
 ```
 
 It supports send, scheduled send, publish/subscription fan-out, PeekLock
@@ -240,9 +240,9 @@ builder.Services.ConfigureArkMessagingFunctions(
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
-        .UseAzureServiceBus()
-        .UseDataBus(dataBus)
-        .UseOutbox());
+        .UseTransport(transport => transport.UseServiceBus())
+        .UseDataBus(dataBus => dataBus.UseInMemory())
+        .UseOutbox(outbox => outbox.UseEnqueue()));
 ```
 
 The connection setting can contain a connection string or a fully qualified

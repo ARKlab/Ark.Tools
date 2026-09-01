@@ -2589,7 +2589,6 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG024");
         result.Generated.Should().Contain("public sealed partial class BookMessagingNetwork");
         result.Generated.Should().Contain("IMessagingContractRegistry Registry");
         result.Generated.Should().Contain("private sealed class GeneratedRegistry");
@@ -2663,7 +2662,6 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG024");
     }
 
     [TestMethod]
@@ -2696,6 +2694,10 @@ public sealed class GeneratorSnapshotTests
         result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
         result.Generated.Should().Contain("partial class PrintingParticipant");
         result.Generated.Should().Contain("sealed partial class BookMessagingNetwork");
+        result.Generated.Should().Contain(
+            "IMessagingNetwork<BookMessagingNetwork>");
+        result.Generated.Should().Contain(
+            "IMessagingParticipant<global::PrintingParticipant>");
         result.Generated.Should().NotContain("namespace <global namespace>;");
     }
 
@@ -2711,6 +2713,7 @@ public sealed class GeneratorSnapshotTests
                 typeof(PrintingParticipant),
                 MessagingFunctionsTriggerBinding.ServiceBus,
                 ConnectionConfigurationKey = "BookMessaging",
+                ManagedIdentityConfigurationKey = "BookMessaging:ClientId",
                 IncomingSteps = new[] { typeof(ZIncomingStep), typeof(AIncomingStep) })]
             [Event(Name = "books/printed")]
             public sealed class BookPrinted : IRequest<BookPrinted, string> { }
@@ -2751,7 +2754,10 @@ public sealed class GeneratorSnapshotTests
         first.Generated.Should().Contain("FunctionContext functionContext");
         first.Generated.Should().Contain(".DispatchAsync(message, messageActions, functionContext, cancellationToken)");
         first.Generated.Should().Contain("class ArkGeneratedMessagingFunctions");
+        first.Generated.Should().Contain(
+            "IMessagingFunctionsHost<ArkGeneratedMessagingFunctions>");
         first.Generated.Should().Contain("MessagingFunctionsManifest Manifest");
+        first.Generated.Should().Contain("\"BookMessaging:ClientId\"");
         first.Generated.Should().Contain("MessagingResourceManifest(");
         first.Generated.Should().Contain("MessagingTopicResource(");
         first.Generated.Should().Contain("MessagingSubscriptionResource(");

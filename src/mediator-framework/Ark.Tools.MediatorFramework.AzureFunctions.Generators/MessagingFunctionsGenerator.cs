@@ -145,6 +145,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 participant,
                 binding,
                 _string(attribute, "ConnectionConfigurationKey"),
+                _string(attribute, "ManagedIdentityConfigurationKey"),
                 _types(attribute, "IncomingSteps"),
                 _types(attribute, "OutgoingSteps"),
                 _bool(attribute, "StrictStorageQueueHostSettings"),
@@ -290,6 +291,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             network.Type,
             identity,
             connection,
+            host.ManagedIdentityConfigurationKey,
             retryType,
             subscriptions.Value,
             desiredTopics,
@@ -409,6 +411,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         INamedTypeSymbol network,
         string identity,
         string connection,
+        string? managedIdentityConfigurationKey,
         INamedTypeSymbol? retryType,
         ImmutableArray<Subscription> subscriptions,
         ImmutableArray<Topic> desiredTopics,
@@ -491,7 +494,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             source.Append("                    \"").Append(_escape(topic.Name)).AppendLine("\",");
         source.AppendLine("                },")
             .Append("                (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
-            .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine("));")
+            .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
+            .Append("            ")
+            .Append(managedIdentityConfigurationKey is null
+                ? "null"
+                : "\"" + _escape(managedIdentityConfigurationKey) + "\"")
+            .AppendLine("));")
             .AppendLine();
     }
 
@@ -862,6 +870,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             INamedTypeSymbol participant,
             int binding,
             string? connectionConfigurationKey,
+            string? managedIdentityConfigurationKey,
             ImmutableArray<INamedTypeSymbol> incomingSteps,
             ImmutableArray<INamedTypeSymbol> outgoingSteps,
             bool strictStorageQueueHostSettings,
@@ -870,6 +879,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             Participant = participant;
             Binding = binding;
             ConnectionConfigurationKey = connectionConfigurationKey;
+            ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
             IncomingSteps = incomingSteps;
             OutgoingSteps = outgoingSteps;
             StrictStorageQueueHostSettings = strictStorageQueueHostSettings;
@@ -881,6 +891,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         public int Binding { get; }
 
         public string? ConnectionConfigurationKey { get; }
+
+        public string? ManagedIdentityConfigurationKey { get; }
 
         public ImmutableArray<INamedTypeSymbol> IncomingSteps { get; }
 

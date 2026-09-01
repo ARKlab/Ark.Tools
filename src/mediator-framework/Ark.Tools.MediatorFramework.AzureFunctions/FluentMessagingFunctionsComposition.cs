@@ -563,7 +563,7 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         Action<MessagingFunctionsOutboxBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
-        configure(new MessagingFunctionsOutboxBuilder(UseOutbox));
+        configure(new MessagingFunctionsOutboxBuilder(() => UseOutbox()));
         return this;
     }
 

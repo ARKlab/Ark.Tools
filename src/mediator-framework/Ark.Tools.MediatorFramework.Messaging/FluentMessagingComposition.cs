@@ -203,7 +203,9 @@ public sealed class MessagingTransportBuilder
     public MessagingTransportBuilder UseServiceBus(Azure.Messaging.ServiceBus.ServiceBusClient client)
     {
         ArgumentNullException.ThrowIfNull(client);
+#pragma warning disable CA2000 // Ownership is transferred to the composition service provider.
         _select(new ServiceBusMessagingTransport(client));
+#pragma warning restore CA2000
         return this;
     }
 

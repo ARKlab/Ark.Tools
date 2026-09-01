@@ -175,17 +175,16 @@ public sealed class SampleStartup
         });
         var messagingNetwork =
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.CreateOptions();
-        var dataBus = new InMemoryMessagingDataBus(
-            NodaTime.SystemClock.Instance,
-            NodaTime.Duration.FromHours(2));
         services.ConfigureArkMessaging(
             messagingNetwork,
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
             messaging => messaging.Producer<
                     Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant>(
                     producer => producer
-                        .UseInMemoryTransport()
-                        .UseDataBus(dataBus)));
+                        .UseTransport(transport => transport.UseInMemory())
+                        .UseDataBus(dataBus => dataBus.UseInMemory(
+                            NodaTime.SystemClock.Instance,
+                            NodaTime.Duration.FromHours(2)))));
         services.AddMcpServer()
             .WithHttpTransport()
             .WithArkMcpTools<SampleMcpHostContext>();

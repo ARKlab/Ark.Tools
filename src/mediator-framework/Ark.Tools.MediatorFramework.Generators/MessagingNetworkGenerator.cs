@@ -1096,8 +1096,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static bool _validateDeclaringType(
         SourceProductionContext context,
         INamedTypeSymbol symbol,
-        string attributeName,
-        bool requireStatic = false)
+        string attributeName)
     {
         #pragma warning disable MA0040, MA0045
         var isPartial = symbol.DeclaringSyntaxReferences
@@ -1110,11 +1109,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             || !isPartial)
         {
             _report(context, _nonPartialDeclaringType, symbol, symbol.ToDisplayString(), attributeName);
-            return false;
-        }
-        if (requireStatic && !symbol.IsStatic)
-        {
-            _report(context, _nonStaticNetwork, symbol, symbol.ToDisplayString());
             return false;
         }
         return true;
