@@ -52,9 +52,7 @@ public sealed class MessagingNetworkOptionsTests
                 "DataBusMaximumAttachmentBytes",
                 "MaximumSchedulingDelay",
                 "MaximumSchedulingDelaySeconds",
-                "ResourceLifecycle",
-                "ConnectionConfigurationKey",
-                "ManagedIdentityConfigurationKey");
+                "ResourceLifecycle");
     }
 
     [TestMethod]
@@ -80,8 +78,6 @@ public sealed class MessagingNetworkOptionsTests
         Action setTooLarge = () => declaration.MaximumSchedulingDelay = TimeSpan.MaxValue;
         setTooLarge.Should().Throw<ArgumentOutOfRangeException>();
         declaration.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.CreateIfMissing);
-        declaration.ConnectionConfigurationKey.Should().BeNull();
-        declaration.ManagedIdentityConfigurationKey.Should().BeNull();
     }
 
     [TestMethod]
@@ -116,9 +112,7 @@ public sealed class MessagingNetworkOptionsTests
                 "MaximumDecompressedPayloadBytes",
                 "DataBusMaximumAttachmentBytes",
                 "MaximumSchedulingDelay",
-                "ResourceLifecycle",
-                "ConnectionConfigurationKey",
-                "ManagedIdentityConfigurationKey");
+                "ResourceLifecycle");
 
         typeof(MessagingNetworkOptions).GetConstructor([typeof(Type), typeof(MessagingNetworkAttribute)])
             .Should().NotBeNull();
@@ -140,9 +134,7 @@ public sealed class MessagingNetworkOptionsTests
             MaximumDecompressedPayloadBytes = 456,
             DataBusMaximumAttachmentBytes = 987,
             MaximumSchedulingDelay = TimeSpan.FromMinutes(12),
-            ResourceLifecycle = MessagingResourceLifecycle.External,
-            ConnectionConfigurationKey = "Transport",
-            ManagedIdentityConfigurationKey = "Identity"
+            ResourceLifecycle = MessagingResourceLifecycle.External
         };
 
         var options = new MessagingNetworkOptions(typeof(BookNetwork), declaration);
@@ -155,8 +147,6 @@ public sealed class MessagingNetworkOptionsTests
         options.DataBusMaximumAttachmentBytes.Should().Be(987);
         options.MaximumSchedulingDelay.Should().Be(TimeSpan.FromMinutes(12));
         options.ResourceLifecycle.Should().Be(MessagingResourceLifecycle.External);
-        options.ConnectionConfigurationKey.Should().Be("Transport");
-        options.ManagedIdentityConfigurationKey.Should().Be("Identity");
     }
 
     [TestMethod]

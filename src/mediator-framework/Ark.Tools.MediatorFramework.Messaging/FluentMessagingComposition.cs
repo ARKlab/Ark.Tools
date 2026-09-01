@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Reflection;
-
 using Ark.Tools.Outbox;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +23,7 @@ public static class FluentMessagingCompositionExtensions
     public static IServiceCollection ConfigureArkMessaging<TNetwork>(
         this IServiceCollection services,
         Action<MessagingCompositionBuilder<TNetwork>> configure)
-        where TNetwork : class
+        where TNetwork : class, IMessagingNetwork<TNetwork>
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
@@ -64,12 +62,27 @@ public static class FluentMessagingCompositionExtensions
 }
 
 /// <summary>Marker type used by the metadata-based fluent messaging entry point.</summary>
-public sealed class MessagingCompositionNetwork;
+public sealed class MessagingCompositionNetwork :
+    IMessagingNetwork<MessagingCompositionNetwork>,
+    IMessagingParticipant<MessagingCompositionNetwork>
+{
+    static MessagingNetworkOptions IMessagingNetwork<MessagingCompositionNetwork>.CreateOptions() =>
+        throw new NotSupportedException();
+
+    static IMessagingContractRegistry IMessagingNetwork<MessagingCompositionNetwork>.Registry =>
+        throw new NotSupportedException();
+
+    static MessagingParticipantDescriptor
+        IMessagingParticipant<MessagingCompositionNetwork>.CreateDescriptor(
+            MessagingNetworkOptions network,
+            IMessagingContractRegistry registry) =>
+        throw new NotSupportedException();
+}
 
 /// <summary>Configures one generated network and exactly one native hosting mode.</summary>
 /// <typeparam name="TNetwork">The generated messaging network declaration.</typeparam>
 public sealed class MessagingCompositionBuilder<TNetwork>
-    where TNetwork : class
+    where TNetwork : class, IMessagingNetwork<TNetwork>
 {
     private readonly IServiceCollection _services;
     private readonly MessagingNetworkOptions _network;
@@ -99,7 +112,7 @@ public sealed class MessagingCompositionBuilder<TNetwork>
     /// <returns>This builder.</returns>
     public MessagingCompositionBuilder<TNetwork> Producer<TParticipant>(
         Action<MessagingProducerBuilder<TNetwork, TParticipant>> configure)
-        where TParticipant : class
+        where TParticipant : class, IMessagingParticipant<TParticipant>
     {
         _selectMode();
         ArgumentNullException.ThrowIfNull(configure);
@@ -120,7 +133,7 @@ public sealed class MessagingCompositionBuilder<TNetwork>
     public MessagingCompositionBuilder<TNetwork> Receiver<TParticipant>(
         Container container,
         Action<MessagingReceiverBuilder<TNetwork, TParticipant>> configure)
-        where TParticipant : class
+        where TParticipant : class, IMessagingParticipant<TParticipant>
     {
         _selectMode();
         ArgumentNullException.ThrowIfNull(container);
@@ -152,60 +165,179 @@ public sealed class MessagingCompositionBuilder<TNetwork>
         _modeSelected = true;
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2090",
-        Justification = "Generated messaging declarations are preserved by the consuming source generator.")]
     private static (MessagingNetworkOptions Network, IMessagingContractRegistry Registry) _resolveNetwork()
     {
-        var networkType = typeof(TNetwork);
-        var options = networkType.GetMethod(
-                "CreateOptions",
-                BindingFlags.Public | BindingFlags.Static,
-                binder: null,
-                Type.EmptyTypes,
-                modifiers: null)
-            ?.Invoke(null, null) as MessagingNetworkOptions
-            ?? throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Generated messaging network '{0}' does not provide CreateOptions().",
-                    networkType));
-        var registry = networkType.GetProperty(
-                "Registry",
-                BindingFlags.Public | BindingFlags.Static)
-            ?.GetValue(null) as IMessagingContractRegistry
-            ?? throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Generated messaging network '{0}' does not provide Registry.",
-                    networkType));
-        return (options, registry);
+        return (TNetwork.CreateOptions(), TNetwork.Registry);
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2090",
-        Justification = "Generated messaging declarations are preserved by the consuming source generator.")]
     internal static MessagingParticipantDescriptor _resolveParticipant<TParticipant>(
         MessagingNetworkOptions network,
         IMessagingContractRegistry registry)
-        where TParticipant : class
+        where TParticipant : class, IMessagingParticipant<TParticipant>
     {
-        var participantType = typeof(TParticipant);
-        var descriptor = participantType.GetMethod(
-                "CreateDescriptor",
-                BindingFlags.Public | BindingFlags.Static,
-                binder: null,
-                [typeof(MessagingNetworkOptions), typeof(IMessagingContractRegistry)],
-                modifiers: null)
-            ?.Invoke(null, [network, registry]) as MessagingParticipantDescriptor
-            ?? throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Generated messaging participant '{0}' does not provide CreateDescriptor().",
-                    participantType));
-        return descriptor;
+        return TParticipant.CreateDescriptor(network, registry);
+    }
+}
+
+/// <summary>Configures the transport implementation used by a messaging composition.</summary>
+public sealed class MessagingTransportBuilder
+{
+    private readonly Action<IMessagingTransport> _select;
+
+    internal MessagingTransportBuilder(Action<IMessagingTransport> select)
+    {
+        _select = select;
+    }
+
+    /// <summary>Uses an in-memory transport.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingTransportBuilder UseInMemory()
+    {
+        _select(new InMemoryMessagingTransport());
+        return this;
+    }
+
+    /// <summary>Uses Azure Service Bus.</summary>
+    /// <param name="client">The configured Service Bus client.</param>
+    /// <returns>This builder.</returns>
+    public MessagingTransportBuilder UseServiceBus(Azure.Messaging.ServiceBus.ServiceBusClient client)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        _select(new ServiceBusMessagingTransport(client));
+        return this;
+    }
+
+    /// <summary>Uses Azure Storage Queues.</summary>
+    /// <param name="client">The configured Queue Storage service client.</param>
+    /// <returns>This builder.</returns>
+    public MessagingTransportBuilder UseStorageQueue(Azure.Storage.Queues.QueueServiceClient client)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        _select(new StorageQueueMessagingTransport(client));
+        return this;
+    }
+
+    /// <summary>Uses a supplied transport.</summary>
+    /// <param name="transport">The transport.</param>
+    /// <returns>This builder.</returns>
+    public MessagingTransportBuilder Use(IMessagingTransport transport)
+    {
+        ArgumentNullException.ThrowIfNull(transport);
+        _select(transport);
+        return this;
+    }
+}
+
+/// <summary>Configures the DataBus implementation used by a messaging composition.</summary>
+public sealed class MessagingDataBusBuilder
+{
+    private readonly Action<IMessagingDataBus> _select;
+
+    internal MessagingDataBusBuilder(Action<IMessagingDataBus> select)
+    {
+        _select = select;
+    }
+
+    /// <summary>Uses an in-memory DataBus.</summary>
+    /// <param name="clock">The optional clock.</param>
+    /// <param name="lifetime">The optional attachment lifetime.</param>
+    /// <returns>This builder.</returns>
+    public MessagingDataBusBuilder UseInMemory(IClock? clock = null, Duration? lifetime = null)
+    {
+        _select(new InMemoryMessagingDataBus(
+            clock ?? SystemClock.Instance,
+            lifetime ?? Duration.FromHours(1)));
+        return this;
+    }
+
+    /// <summary>Uses Azure Blob Storage.</summary>
+    /// <param name="options">The Azure Blob DataBus options.</param>
+    /// <returns>This builder.</returns>
+    public MessagingDataBusBuilder UseAzureBlob(AzureBlobDataBusOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        _select(new AzureBlobMessagingDataBus(options));
+        return this;
+    }
+
+    /// <summary>Uses a supplied DataBus.</summary>
+    /// <param name="dataBus">The DataBus.</param>
+    /// <returns>This builder.</returns>
+    public MessagingDataBusBuilder Use(IMessagingDataBus dataBus)
+    {
+        ArgumentNullException.ThrowIfNull(dataBus);
+        _select(dataBus);
+        return this;
+    }
+}
+
+/// <summary>Configures serialization implementations used by a messaging composition.</summary>
+public sealed class MessagingSerializationBuilder
+{
+    private readonly Action<bool, bool> _select;
+
+    internal MessagingSerializationBuilder(Action<bool, bool> select)
+    {
+        _select = select;
+    }
+
+    /// <summary>Uses the JSON codec.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingSerializationBuilder UseJson()
+    {
+        _select(false, false);
+        return this;
+    }
+
+    /// <summary>Uses the MessagePack codec.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingSerializationBuilder UseMessagePack()
+    {
+        _select(true, false);
+        return this;
+    }
+
+    /// <summary>Uses the protobuf codec.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingSerializationBuilder UseProtobuf()
+    {
+        _select(false, true);
+        return this;
+    }
+}
+
+/// <summary>Configures outbox behavior for a messaging composition.</summary>
+public sealed class MessagingOutboxBuilder
+{
+    private readonly Action _enqueue;
+    private readonly Action<IOutboxAsyncContextFactory, int> _processor;
+
+    internal MessagingOutboxBuilder(
+        Action enqueue,
+        Action<IOutboxAsyncContextFactory, int> processor)
+    {
+        _enqueue = enqueue;
+        _processor = processor;
+    }
+
+    /// <summary>Enables outbox enlistment without hosting a processor.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingOutboxBuilder UseEnqueue()
+    {
+        _enqueue();
+        return this;
+    }
+
+    /// <summary>Enables outbox enqueue and processing.</summary>
+    /// <param name="contextFactory">The durable outbox context factory.</param>
+    /// <param name="batchSize">The maximum batch size.</param>
+    /// <returns>This builder.</returns>
+    public MessagingOutboxBuilder UseProcessor(
+        IOutboxAsyncContextFactory contextFactory,
+        int batchSize = 10)
+    {
+        _processor(contextFactory, batchSize);
+        return this;
     }
 }
 
@@ -213,8 +345,8 @@ public sealed class MessagingCompositionBuilder<TNetwork>
 /// <typeparam name="TNetwork">The generated messaging network declaration.</typeparam>
 /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
 public abstract class MessagingModeBuilder<TNetwork, TParticipant>
-    where TNetwork : class
-    where TParticipant : class
+    where TNetwork : class, IMessagingNetwork<TNetwork>
+    where TParticipant : class, IMessagingParticipant<TParticipant>
 {
     private readonly IServiceCollection _services;
     private readonly MessagingNetworkOptions _network;
@@ -229,6 +361,8 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private IOutboxAsyncContextFactory? _outboxFactory;
     private int _outboxBatchSize = 10;
     private bool _outboxEnqueue;
+    private bool _outgoingPipelineSelected;
+    private bool _incomingPipelineSelected;
 
     protected MessagingModeBuilder(
         IServiceCollection services,
@@ -252,6 +386,17 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
+    /// <summary>Configures the transport implementation.</summary>
+    /// <param name="configure">The transport configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseTransport(
+        Action<MessagingTransportBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingTransportBuilder(transport => UseTransport(transport)));
+        return this;
+    }
+
     /// <summary>Uses the in-memory transport.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseInMemoryTransport()
@@ -268,6 +413,17 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         _dataBus = _dataBus is null
             ? dataBus
             : throw new InvalidOperationException("A messaging DataBus is already selected.");
+        return this;
+    }
+
+    /// <summary>Configures the DataBus implementation.</summary>
+    /// <param name="configure">The DataBus configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseDataBus(
+        Action<MessagingDataBusBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingDataBusBuilder(dataBus => UseDataBus(dataBus)));
         return this;
     }
 
@@ -307,6 +463,23 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
+    /// <summary>Configures the serialization implementations.</summary>
+    /// <param name="configure">The serialization configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseSerialization(
+        Action<MessagingSerializationBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingSerializationBuilder((messagePack, protobuf) =>
+        {
+            if (messagePack)
+                UseMessagePack();
+            if (protobuf)
+                UseProtobuf();
+        }));
+        return this;
+    }
+
     /// <summary>Enables the protobuf codec.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseProtobuf()
@@ -324,11 +497,14 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         params Type[] stepTypes)
     {
         ArgumentNullException.ThrowIfNull(stepTypes);
+        if (stepTypes.Length == 0)
+            throw new ArgumentException("Pipeline must contain at least one step.", nameof(stepTypes));
         if (stepTypes.Any(static type => type is null))
             throw new ArgumentException("Pipeline step types cannot contain null.", nameof(stepTypes));
-        if (_outgoingSteps.Count > 0)
+        if (_outgoingPipelineSelected)
             throw new InvalidOperationException("An outgoing pipeline is already selected.");
         _outgoingSteps = stepTypes.ToArray();
+        _outgoingPipelineSelected = true;
         return this;
     }
 
@@ -339,11 +515,14 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         params Type[] stepTypes)
     {
         ArgumentNullException.ThrowIfNull(stepTypes);
+        if (stepTypes.Length == 0)
+            throw new ArgumentException("Pipeline must contain at least one step.", nameof(stepTypes));
         if (stepTypes.Any(static type => type is null))
             throw new ArgumentException("Pipeline step types cannot contain null.", nameof(stepTypes));
-        if (_incomingSteps.Count > 0)
+        if (_incomingPipelineSelected)
             throw new InvalidOperationException("An incoming pipeline is already selected.");
         _incomingSteps = stepTypes.ToArray();
+        _incomingPipelineSelected = true;
         return this;
     }
 
@@ -379,10 +558,23 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     {
         ArgumentNullException.ThrowIfNull(contextFactory);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
-        if (_outboxFactory is not null)
+        if (_outboxFactory is not null || _outboxEnqueue)
             throw new InvalidOperationException("A messaging outbox is already selected.");
         _outboxFactory = contextFactory;
         _outboxBatchSize = batchSize;
+        return this;
+    }
+
+    /// <summary>Configures outbox behavior.</summary>
+    /// <param name="configure">The outbox configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox(
+        Action<MessagingOutboxBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingOutboxBuilder(
+            () => UseOutbox(),
+            (factory, batchSize) => UseOutbox(factory, batchSize)));
         return this;
     }
 
@@ -428,8 +620,8 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
 /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
 public sealed class MessagingProducerBuilder<TNetwork, TParticipant>
     : MessagingModeBuilder<TNetwork, TParticipant>
-    where TNetwork : class
-    where TParticipant : class
+    where TNetwork : class, IMessagingNetwork<TNetwork>
+    where TParticipant : class, IMessagingParticipant<TParticipant>
 {
     internal MessagingProducerBuilder(
         IServiceCollection services,
@@ -454,8 +646,8 @@ public sealed class MessagingProducerBuilder<TNetwork, TParticipant>
 /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
 public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
     : MessagingModeBuilder<TNetwork, TParticipant>
-    where TNetwork : class
-    where TParticipant : class
+    where TNetwork : class, IMessagingNetwork<TNetwork>
+    where TParticipant : class, IMessagingParticipant<TParticipant>
 {
     private readonly Container _container;
 

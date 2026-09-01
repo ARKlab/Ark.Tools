@@ -109,10 +109,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "ARKMSG023", "Messaging declaring type must be partial",
         "Type '{0}' is marked with [{1}] but is not a non-nested, non-generic partial class, so its routing members cannot be generated",
         DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _nonStaticNetwork = _rule(
-        "ARKMSG024", "Messaging network must be static",
-        "Type '{0}' is marked with [MessagingNetwork] but is not declared as a static class. Add the 'static' modifier.",
-        DiagnosticSeverity.Error);
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
         return new DiagnosticDescriptor(id, title, message, "Ark.Tools.MediatorFramework", severity, true);
@@ -368,9 +364,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
             _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
             _optionalInt(attribute, "MaximumSchedulingDelaySeconds"),
-            _optionalInt(attribute, "ResourceLifecycle"),
-            _string(attribute, "ConnectionConfigurationKey"),
-            _string(attribute, "ManagedIdentityConfigurationKey"));
+            _optionalInt(attribute, "ResourceLifecycle"));
     }
 
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
@@ -583,7 +577,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         Network network,
         Compilation compilation)
     {
-        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork", requireStatic: true))
+        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
             return;
 
         var participants = network.MemberSymbols
@@ -618,7 +612,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(network.Symbol)).Append(" static partial class ").Append(name)
+            .Append(_accessibility(network.Symbol)).Append(" sealed partial class ").Append(name)
+            .Append(" : global::Ark.Tools.MediatorFramework.Messaging.IMessagingNetwork<").Append(name).AppendLine(">")
             .AppendLine("{");
         source
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging network.</summary>")
@@ -657,10 +652,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .Append("                ResourceLifecycle = (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
                 .Append(network.ResourceLifecycle?.ToString(CultureInfo.InvariantCulture)
                     ?? "global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle.CreateIfMissing").AppendLine(",");
-            if (network.ConnectionConfigurationKey is not null)
-                source.Append("                ConnectionConfigurationKey = \"").Append(_escape(network.ConnectionConfigurationKey)).AppendLine("\",");
-            if (network.ManagedIdentityConfigurationKey is not null)
-                source.Append("                ManagedIdentityConfigurationKey = \"").Append(_escape(network.ManagedIdentityConfigurationKey)).AppendLine("\",");
             source
                 .AppendLine("            });")
                 .AppendLine("    }")
@@ -898,7 +889,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             && compilation.GetTypeByMetadataName(_contractRegistry) is not null;
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name).AppendLine()
+            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name)
+            .Append(" : global::Ark.Tools.MediatorFramework.Messaging.IMessagingParticipant<")
+            .Append(_typeName(participant.Symbol)).AppendLine(">")
             .AppendLine("{")
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging participant.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
@@ -1313,9 +1306,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             int? maximumDecompressedPayloadBytes,
             int? dataBusMaximumAttachmentBytes,
             int? maximumSchedulingDelaySeconds,
-            int? resourceLifecycle,
-            string? connectionConfigurationKey,
-            string? managedIdentityConfigurationKey)
+            int? resourceLifecycle)
         {
             Symbol = symbol;
             Name = name;
@@ -1325,8 +1316,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
             MaximumSchedulingDelaySeconds = maximumSchedulingDelaySeconds;
             ResourceLifecycle = resourceLifecycle;
-            ConnectionConfigurationKey = connectionConfigurationKey;
-            ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
         }
 
         public INamedTypeSymbol Symbol { get; }
@@ -1337,8 +1326,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         public int? DataBusMaximumAttachmentBytes { get; }
         public int? MaximumSchedulingDelaySeconds { get; }
         public int? ResourceLifecycle { get; }
-        public string? ConnectionConfigurationKey { get; }
-        public string? ManagedIdentityConfigurationKey { get; }
     }
 
     private readonly struct Participant

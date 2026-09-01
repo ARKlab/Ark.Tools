@@ -22,8 +22,6 @@ public sealed class MessagingNetworkOptions
         DataBusMaximumAttachmentBytes = declaration.DataBusMaximumAttachmentBytes;
         MaximumSchedulingDelay = declaration.MaximumSchedulingDelay;
         ResourceLifecycle = declaration.ResourceLifecycle;
-        ConnectionConfigurationKey = declaration.ConnectionConfigurationKey;
-        ManagedIdentityConfigurationKey = declaration.ManagedIdentityConfigurationKey;
     }
 
     /// <summary>Gets the network declaration type.</summary>
@@ -49,12 +47,6 @@ public sealed class MessagingNetworkOptions
 
     /// <summary>Gets the resource lifecycle policy.</summary>
     public MessagingResourceLifecycle ResourceLifecycle { get; }
-
-    /// <summary>Gets the transport connection configuration key.</summary>
-    public string? ConnectionConfigurationKey { get; }
-
-    /// <summary>Gets the managed identity configuration key.</summary>
-    public string? ManagedIdentityConfigurationKey { get; }
 
     /// <summary>Validates that a composed transport supports every required capability.</summary>
     public void Validate(MessagingCapabilities transportCapabilities)

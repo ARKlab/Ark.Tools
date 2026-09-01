@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Reflection;
-
 using Ark.Tools.MediatorFramework.Messaging;
 
 using Microsoft.Extensions.Configuration;
@@ -62,9 +60,9 @@ public static class FluentMessagingFunctionsCompositionExtensions
         Container container,
         IConfiguration configuration,
         Action<MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost>> configure)
-        where TNetwork : class
-        where TParticipant : class
-        where THost : class
+        where TNetwork : class, IMessagingNetwork<TNetwork>
+        where TParticipant : class, IMessagingParticipant<TParticipant>
+        where THost : class, IMessagingFunctionsHost<THost>
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(container);
@@ -113,6 +111,16 @@ public sealed class MessagingFunctionsCompositionBuilder
         return this;
     }
 
+    /// <summary>Configures the Azure Functions transport.</summary>
+    /// <param name="configure">The transport configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder UseTransport(
+        Action<MessagingFunctionsTransportBuilder> configure)
+    {
+        _inner.UseTransport(configure);
+        return this;
+    }
+
     /// <summary>Uses the Azure Storage Queue Functions transport.</summary>
     /// <param name="settings">Optional effective host settings.</param>
     /// <returns>This builder.</returns>
@@ -129,6 +137,16 @@ public sealed class MessagingFunctionsCompositionBuilder
     public MessagingFunctionsCompositionBuilder UseDataBus(IMessagingDataBus dataBus)
     {
         _inner.UseDataBus(dataBus);
+        return this;
+    }
+
+    /// <summary>Configures the Azure Functions DataBus.</summary>
+    /// <param name="configure">The DataBus configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder UseDataBus(
+        Action<MessagingFunctionsDataBusBuilder> configure)
+    {
+        _inner.UseDataBus(configure);
         return this;
     }
 
@@ -156,6 +174,16 @@ public sealed class MessagingFunctionsCompositionBuilder
         return this;
     }
 
+    /// <summary>Configures serialization implementations.</summary>
+    /// <param name="configure">The serialization configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder UseSerialization(
+        Action<MessagingFunctionsSerializationBuilder> configure)
+    {
+        _inner.UseSerialization(configure);
+        return this;
+    }
+
     /// <summary>Selects the generated resource lifecycle policy.</summary>
     /// <param name="lifecycle">The lifecycle policy.</param>
     /// <returns>This builder.</returns>
@@ -171,6 +199,16 @@ public sealed class MessagingFunctionsCompositionBuilder
     public MessagingFunctionsCompositionBuilder UseOutbox()
     {
         _inner.UseOutbox();
+        return this;
+    }
+
+    /// <summary>Configures outbox behavior.</summary>
+    /// <param name="configure">The outbox configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder UseOutbox(
+        Action<MessagingFunctionsOutboxBuilder> configure)
+    {
+        _inner.UseOutbox(configure);
         return this;
     }
 
@@ -193,17 +231,162 @@ public sealed class MessagingFunctionsCompositionBuilder
     }
 }
 
+/// <summary>Configures an Azure Functions transport implementation.</summary>
+public sealed class MessagingFunctionsTransportBuilder
+{
+    private readonly Action<MessagingFunctionsRuntimeTransport> _select;
+    private readonly Action<StorageQueueFunctionsHostSettings?> _storageQueue;
+
+    internal MessagingFunctionsTransportBuilder(
+        Action<MessagingFunctionsRuntimeTransport> select,
+        Action<StorageQueueFunctionsHostSettings?> storageQueue)
+    {
+        _select = select;
+        _storageQueue = storageQueue;
+    }
+
+    /// <summary>Uses Azure Service Bus.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsTransportBuilder UseServiceBus()
+    {
+        _select(MessagingFunctionsRuntimeTransport.AzureServiceBus);
+        return this;
+    }
+
+    /// <summary>Uses Azure Storage Queues.</summary>
+    /// <param name="settings">Optional effective host settings.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsTransportBuilder UseStorageQueue(
+        StorageQueueFunctionsHostSettings? settings = null)
+    {
+        _select(MessagingFunctionsRuntimeTransport.AzureStorageQueue);
+        _storageQueue(settings);
+        return this;
+    }
+}
+
+/// <summary>Configures an Azure Functions DataBus implementation.</summary>
+public sealed class MessagingFunctionsDataBusBuilder
+{
+    private readonly Action<IMessagingDataBus> _select;
+
+    internal MessagingFunctionsDataBusBuilder(Action<IMessagingDataBus> select)
+    {
+        _select = select;
+    }
+
+    /// <summary>Uses an in-memory DataBus.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsDataBusBuilder UseInMemory()
+    {
+        _select(new InMemoryMessagingDataBus());
+        return this;
+    }
+
+    /// <summary>Uses Azure Blob Storage.</summary>
+    /// <param name="options">The Azure Blob DataBus options.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsDataBusBuilder UseAzureBlob(AzureBlobDataBusOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        _select(new AzureBlobMessagingDataBus(options));
+        return this;
+    }
+
+    /// <summary>Uses a supplied DataBus.</summary>
+    /// <param name="dataBus">The DataBus.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsDataBusBuilder Use(IMessagingDataBus dataBus)
+    {
+        ArgumentNullException.ThrowIfNull(dataBus);
+        _select(dataBus);
+        return this;
+    }
+}
+
+/// <summary>Configures serialization implementations for Azure Functions.</summary>
+public sealed class MessagingFunctionsSerializationBuilder
+{
+    private readonly Action<bool, bool> _select;
+
+    internal MessagingFunctionsSerializationBuilder(Action<bool, bool> select)
+    {
+        _select = select;
+    }
+
+    /// <summary>Uses the JSON codec.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsSerializationBuilder UseJson()
+    {
+        _select(false, false);
+        return this;
+    }
+
+    /// <summary>Uses the MessagePack codec.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsSerializationBuilder UseMessagePack()
+    {
+        _select(true, false);
+        return this;
+    }
+
+    /// <summary>Uses the protobuf codec.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsSerializationBuilder UseProtobuf()
+    {
+        _select(false, true);
+        return this;
+    }
+}
+
+/// <summary>Configures outbox behavior for Azure Functions.</summary>
+public sealed class MessagingFunctionsOutboxBuilder
+{
+    private readonly Action _enqueue;
+
+    internal MessagingFunctionsOutboxBuilder(Action enqueue)
+    {
+        _enqueue = enqueue;
+    }
+
+    /// <summary>Enables transactional outbox enlistment.</summary>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsOutboxBuilder UseEnqueue()
+    {
+        _enqueue();
+        return this;
+    }
+
+    /// <summary>Rejects native processor hosting in Azure Functions.</summary>
+    /// <param name="contextFactory">The unsupported processor context factory.</param>
+    /// <param name="batchSize">The unsupported batch size.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsOutboxBuilder UseProcessor(
+        Ark.Tools.Outbox.IOutboxAsyncContextFactory contextFactory,
+        int batchSize = 10)
+    {
+        ArgumentNullException.ThrowIfNull(contextFactory);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
+        throw new InvalidOperationException(
+            "Azure Functions cannot host the native messaging outbox processor.");
+    }
+}
+
 /// <summary>Marker type used by the metadata-based Functions fluent entry point.</summary>
-public sealed class MessagingCompositionHost;
+public sealed class MessagingCompositionHost : IMessagingFunctionsHost<MessagingCompositionHost>
+{
+    static MessagingFunctionsManifest IMessagingFunctionsHost<MessagingCompositionHost>.Manifest =>
+        throw new NotSupportedException();
+}
 
 /// <summary>Configures an Azure Functions generated messaging host.</summary>
 /// <typeparam name="TNetwork">The generated messaging network declaration.</typeparam>
 /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
 /// <typeparam name="THost">The generated Functions host declaration.</typeparam>
 public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost>
-    where TNetwork : class
-    where TParticipant : class
-    where THost : class
+    where TNetwork : class, IMessagingNetwork<TNetwork>
+    where TParticipant : class, IMessagingParticipant<TParticipant>
+    where THost : class, IMessagingFunctionsHost<THost>
 {
     private readonly IServiceCollection _services;
     private readonly Container _container;
@@ -247,6 +430,19 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         return this;
     }
 
+    /// <summary>Configures the Azure Functions transport.</summary>
+    /// <param name="configure">The transport configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseTransport(
+        Action<MessagingFunctionsTransportBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingFunctionsTransportBuilder(
+            _selectTransport,
+            settings => _storageQueueSettings = settings));
+        return this;
+    }
+
     /// <summary>Uses the Azure Storage Queue Functions transport.</summary>
     /// <param name="settings">Optional effective host settings.</param>
     /// <returns>This builder.</returns>
@@ -268,6 +464,17 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         if (_dataBus is not null)
             throw new InvalidOperationException("A messaging DataBus is already selected.");
         _dataBus = dataBus;
+        return this;
+    }
+
+    /// <summary>Configures the Azure Functions DataBus.</summary>
+    /// <param name="configure">The DataBus configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseDataBus(
+        Action<MessagingFunctionsDataBusBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingFunctionsDataBusBuilder(dataBus => UseDataBus(dataBus)));
         return this;
     }
 
@@ -295,6 +502,23 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         if (_protobuf)
             throw new InvalidOperationException("The protobuf codec is already selected.");
         _protobuf = true;
+        return this;
+    }
+
+    /// <summary>Configures serialization implementations.</summary>
+    /// <param name="configure">The serialization configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseSerialization(
+        Action<MessagingFunctionsSerializationBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingFunctionsSerializationBuilder((messagePack, protobuf) =>
+        {
+            if (messagePack)
+                UseMessagePack();
+            if (protobuf)
+                UseProtobuf();
+        }));
         return this;
     }
 
@@ -332,11 +556,18 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         return this;
     }
 
+    /// <summary>Configures outbox behavior.</summary>
+    /// <param name="configure">The outbox configuration callback.</param>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseOutbox(
+        Action<MessagingFunctionsOutboxBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        configure(new MessagingFunctionsOutboxBuilder(UseOutbox));
+        return this;
+    }
+
     /// <summary>Completes the Functions composition.</summary>
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2090",
-        Justification = "Generated Functions declarations are preserved by the consuming source generator.")]
     public void Build()
     {
         if (!_transport.HasValue)
@@ -345,16 +576,7 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         var dataBus = _dataBus
             ?? throw new InvalidOperationException(
                 "Functions messaging composition requires a DataBus.");
-        var manifest = _manifest
-            ?? typeof(THost).GetProperty(
-                    "Manifest",
-                    BindingFlags.Public | BindingFlags.Static)
-                ?.GetValue(null) as MessagingFunctionsManifest
-            ?? throw new InvalidOperationException(
-                string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Generated Functions host '{0}' does not provide Manifest.",
-                    typeof(THost)));
+        var manifest = _manifest ?? THost.Manifest;
         if (!_metadataManifest && manifest.Participant != typeof(TParticipant))
             throw new InvalidOperationException(
                 "The fluent participant does not match the generated Functions host manifest.");

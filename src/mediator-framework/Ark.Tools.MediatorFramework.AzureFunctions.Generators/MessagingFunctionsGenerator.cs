@@ -281,7 +281,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("#nullable enable")
             .AppendLine("namespace Ark.Tools.MediatorFramework.AzureFunctions.Generated;")
             .AppendLine()
-            .AppendLine("public static class ArkGeneratedMessagingFunctions")
+            .AppendLine("public sealed class ArkGeneratedMessagingFunctions : global::Ark.Tools.MediatorFramework.AzureFunctions.IMessagingFunctionsHost<ArkGeneratedMessagingFunctions>")
             .AppendLine("{");
 
         _emitManifest(
