@@ -1,7 +1,7 @@
 <Project>
   <Import Project="../../Ark.Tools.Build/build/Ark.Tools.Build.common.targets"
-          Condition="'$(_ArkToolsSdkSourceBuild)' == 'true'" />
+          Condition="'$(_ArkToolsSdkSourceBuild)' == 'true' and '$(EnableArkToolsBuild)' != 'false'" />
 
   <Import Project="$(MSBuildThisFileDirectory)../common/common.targets" Condition="'$(EnableArkToolsBuild)' != 'false'" />
-  
+   
 </Project>

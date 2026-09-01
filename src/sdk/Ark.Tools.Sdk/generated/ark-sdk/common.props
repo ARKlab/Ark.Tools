@@ -25,7 +25,7 @@
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
-  <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true'">
+  <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true' and '$(EnableArkToolsBuild)' != 'false'">
     <PackageReference Include="Ark.Tools.Build" Version="999.9.16" IsImplicitlyDefined="true" />
   </ItemGroup>
 </Project>

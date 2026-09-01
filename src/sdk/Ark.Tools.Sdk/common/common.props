@@ -37,7 +37,7 @@
     <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true'">
+  <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true' and '$(EnableArkToolsBuild)' != 'false'">
     <PackageReference Include="Ark.Tools.Build" Version="$(Version)" IsImplicitlyDefined="true" />
   </ItemGroup>
 

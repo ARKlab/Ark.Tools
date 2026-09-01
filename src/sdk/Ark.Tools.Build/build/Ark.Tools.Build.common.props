@@ -7,10 +7,10 @@
     <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
 
-    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">true</GenerateDocumentationFile>
-    <Features Condition="'$(Features)' == ''">strict</Features>
-    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == ''">true</ReportAnalyzer>
-    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateDocumentationFile>
+    <Features Condition="'$(Features)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">strict</Features>
+    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</ReportAnalyzer>
+    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</EnforceCodeStyleInBuild>
     <Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
 
 		<!-- Embed source files that are not tracked by the source control manager in the PDB -->
@@ -19,8 +19,8 @@
     <DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
   	<DebugSymbols Condition="'$(DebugSymbols)' == ''">true</DebugSymbols>
 
-    <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
-    <ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
+    <Nullable Condition="'$(Nullable)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</Nullable>
+    <ImplicitUsings Condition="'$(ImplicitUsings)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</ImplicitUsings>
 
   </PropertyGroup>
 
