@@ -46,12 +46,11 @@ choices and rejected alternatives are in
 | [SDK-IMP-05](SDK-IMP-05-source-and-packaging-profile.md) | Source, build, and packaging tool profile | SDK policy | Complete |
 | [SDK-IMP-06](SDK-IMP-06-mtp-test-profile.md) | Framework-neutral MTP test profile | Testing | Complete |
 | [SDK-IMP-07](SDK-IMP-07-content-and-reqnroll-profile.md) | Application settings and Reqnroll profile | Content | Complete |
-| [SDK-IMP-08](SDK-IMP-08-compatibility-and-release-gate.md) | Compatibility matrix and paired-package release gate | Validation | Pending |
+| [SDK-IMP-08](SDK-IMP-08-compatibility-and-release-gate.md) | Compatibility matrix and paired-package release gate | Validation | Cancelled |
 | [SDK-IMP-09](SDK-IMP-09-reference-project-migration.md) | ReferenceProject migration | Migration | Pending |
 | [SDK-IMP-10](SDK-IMP-10-documentation-and-adoption.md) | Consumer documentation and adoption guidance | Documentation | Pending |
 
 SDK-IMP-05, SDK-IMP-06, and SDK-IMP-07 can proceed in parallel after
 SDK-IMP-04.
-SDK-IMP-09 starts only after the same preview version of `Ark.Tools.Sdk` and
-`Ark.Tools.Build` is available from an Ark package source; MSBuild must resolve
-the SDK before project targets can build a local replacement.
+SDK-IMP-09 starts after SDK-IMP-07 and uses the repository source-build
+arrangement; it does not require a published preview pair.
