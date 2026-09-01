@@ -14,15 +14,18 @@
 
 		<PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>ark-dark.png</PackageIcon>
-		<RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>      
+		<RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
 		<Authors>ARK Labs</Authors>
+		<Company>ARK S.r.l</Company>
 		<Copyright>Copyright (C) 2026 ARK S.r.l</Copyright>
 
 	</PropertyGroup>
 
-  
+   
 	<ItemGroup Condition="$(IsPackable) != 'false'">
+		<None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="README.md" Condition="'$(IsPackable)' == 'true'"/>
 		<None Include="$(MSBuildThisFileDirectory)../../ark-dark.png" Pack="true" PackagePath="\" Condition="'$(IsPackable)' == 'true'"/>
 	</ItemGroup>
 
