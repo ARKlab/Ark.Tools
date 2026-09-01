@@ -116,10 +116,10 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
                     DateTimeStyles.RoundtripKind);
             var readOnlyHeaders = new ReadOnlyDictionary<string, string>(headers);
             var payload = new ReadOnlySequence<byte>(body);
-            var operation = dueTime is not null
-                ? "defer"
-                : string.Equals(destinationKind, "topic", StringComparison.Ordinal)
-                    ? "publish"
+            var operation = string.Equals(destinationKind, "topic", StringComparison.Ordinal)
+                ? "publish"
+                : dueTime is not null
+                    ? "defer"
                     : "send";
             var stopwatch = Stopwatch.StartNew();
 
