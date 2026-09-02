@@ -65,6 +65,8 @@
     <!-- Build tools -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.14.0" />
+    <!-- Keep BenchmarkDotNet and Microsoft.Testing.Extensions.HangDump on one diagnostics client assembly version. -->
+    <PackageVersion Include="Microsoft.Diagnostics.NETCore.Client" Version="0.2.607501" />
   </ItemGroup>
 
 </Project>

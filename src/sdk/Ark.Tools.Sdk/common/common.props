@@ -10,6 +10,8 @@
     <RestorePackagesWithLockFile Condition="'$(RestorePackagesWithLockFile)' == ''">true</RestorePackagesWithLockFile>
     <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
     <RestoreLockedMode Condition="'$(RestoreLockedMode)' == '' and '$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+    <RestoreUseStaticGraphEvaluation Condition="'$(RestoreUseStaticGraphEvaluation)' == ''">true</RestoreUseStaticGraphEvaluation>
+    <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
 
     <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
     <NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
