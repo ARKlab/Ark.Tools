@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.Reflection;
 
 using Ark.Tools.MediatorFramework.Messaging;
 
@@ -20,6 +21,18 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestClass]
 public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 {
+    /// <summary>Verifies low-level service registration is not part of the public messaging surface.</summary>
+    [TestMethod]
+    public void LegacyMessagingRegistrationExtensionsAreInternal()
+    {
+        var publicMethods = typeof(MessagingServiceCollectionExtensions)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Select(static method => method.Name)
+            .ToArray();
+
+        publicMethods.Should().ContainSingle().Which.Should().Be("AddArkMessagingOutboxProcessor");
+    }
+
     protected override IMessagingReceiveTransport CreateTransport()
     {
         return new InMemoryMessagingTransport();
@@ -266,9 +279,9 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
             new MessagingNetworkAttribute { Requires = MessagingCapabilities.PubSub });
         var services = new ServiceCollection();
 
-        var action = () => services.AddArkMessaging(new ReceiveOnlyTransport(), network);
+        var action = () => services._addArkMessaging(new ReceiveOnlyTransport(), network);
         action.Should().Throw<InvalidOperationException>().Which.Message.Should().Contain("PubSub");
-        services.AddArkMessaging(new InMemoryMessagingTransport(), network);
+        services._addArkMessaging(new InMemoryMessagingTransport(), network);
 
         using var provider = services.BuildServiceProvider();
         provider.GetRequiredService<IMessagingReceiveTransport>().Should()
@@ -281,8 +294,8 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     public void MessagingRegistrationIsIdempotent()
     {
         var services = new ServiceCollection();
-        services.AddArkMessaging();
-        services.AddArkInMemoryMessaging();
+        services._addArkMessaging();
+        services._addArkInMemoryMessaging();
 
         using var provider = services.BuildServiceProvider();
         provider.GetServices<IMessagingCodec>().Should().ContainSingle(codec => codec is JsonMessagingCodec);

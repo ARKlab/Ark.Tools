@@ -48,6 +48,6 @@ public sealed class BoundaryMessagingRetryPolicy : IMessagingRetryPolicy
 [MessagingNetwork(
     Members = new[] { typeof(BoundaryMessagingParticipant) },
     Requires = MessagingCapabilities.SendReceive)]
-public static partial class BoundaryMessagingNetwork
+public sealed partial class BoundaryMessagingNetwork
 {
 }

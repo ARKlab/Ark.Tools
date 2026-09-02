@@ -10,6 +10,9 @@
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.Tests" />
+    <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+    <InternalsVisibleTo Include="Ark.MediatorFramework.Sample.Tests" />
     <PackageReference Include="Azure.Storage.Queues" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />

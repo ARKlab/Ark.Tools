@@ -46,6 +46,7 @@ public sealed class MessagingFunctionsManifest
     /// used as the logical participant and queue name in the fallback resource manifest.
     /// </param>
     /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <param name="managedIdentityConfigurationKey">The optional managed identity client id setting name.</param>
     /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
     /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
     /// <param name="subscriptions">The provider-native forwarding subscriptions.</param>
@@ -67,7 +68,8 @@ public sealed class MessagingFunctionsManifest
         IEnumerable<Type> outgoingSteps,
         TimeSpan? retryDelay = null,
         bool strictStorageQueueHostSettings = false,
-        MessagingResourceManifest? resources = null)
+        MessagingResourceManifest? resources = null,
+        string? managedIdentityConfigurationKey = null)
         : this(
             participant,
             network,
@@ -82,7 +84,8 @@ public sealed class MessagingFunctionsManifest
             outgoingSteps,
             retryDelay,
             strictStorageQueueHostSettings,
-            resources)
+            resources,
+            managedIdentityConfigurationKey)
     {
     }
 
@@ -96,6 +99,7 @@ public sealed class MessagingFunctionsManifest
     /// used as the logical participant and queue name in the fallback resource manifest.
     /// </param>
     /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <param name="managedIdentityConfigurationKey">The optional managed identity client id setting name.</param>
     /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
     /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
     /// <param name="subscriptions">The provider-native forwarding subscriptions.</param>
@@ -118,7 +122,8 @@ public sealed class MessagingFunctionsManifest
         IEnumerable<Type> outgoingSteps,
         TimeSpan? retryDelay = null,
         bool strictStorageQueueHostSettings = false,
-        MessagingResourceManifest? resources = null)
+        MessagingResourceManifest? resources = null,
+        string? managedIdentityConfigurationKey = null)
     {
         Participant = participant ?? throw new ArgumentNullException(nameof(participant));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -134,6 +139,7 @@ public sealed class MessagingFunctionsManifest
         TriggerBinding = triggerBinding;
         Queue = queue;
         ConnectionConfigurationKey = connectionConfigurationKey;
+        ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
         MaximumDeliveryCount = maximumDeliveryCount;
         MaximumHandlerDuration = maximumHandlerDuration;
         Subscriptions = new ReadOnlyCollection<MessagingFunctionsSubscription>(subscriptions.ToArray());
@@ -171,6 +177,9 @@ public sealed class MessagingFunctionsManifest
 
     /// <summary>Gets the Functions connection setting name.</summary>
     public string ConnectionConfigurationKey { get; }
+
+    /// <summary>Gets the optional managed identity client id setting name.</summary>
+    public string? ManagedIdentityConfigurationKey { get; }
 
     /// <summary>Gets the native entity maximum delivery count.</summary>
     public int MaximumDeliveryCount { get; }

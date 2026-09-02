@@ -117,11 +117,12 @@ receive-time aliases and do not create topology aliases.
 
 `IMessagingCodec` is generic-only and asynchronously writes through
 `PipeWriter` or reads from `PipeReader`; the framework does not expose a
-buffered `byte[]` payload or an envelope object. JSON is registered with
-`services.AddArkMessaging()` and uses host-configured `JsonSerializerOptions`,
-including a shared application `JsonSerializerContext`. Validate every
-declared messaging contract at startup with `MessagingJsonStartupValidation` so
-a missing context fails before processing begins.
+buffered `byte[]` payload or an envelope object. JSON is the default codec for
+`ConfigureArkMessaging` and `ConfigureArkMessagingFunctions`, using
+host-configured `JsonSerializerOptions`, including a shared application
+`JsonSerializerContext`. Validate every declared messaging contract at startup
+with `MessagingJsonStartupValidation` so a missing context fails before
+processing begins.
 
 Receive is two-phase: `MessagingHeaderProcessor` bounds and validates headers,
 checks the network identity, and resolves the codec from
@@ -146,12 +147,11 @@ compatible. Every deployed network must use one stack end to end.
 
 ### Additional messaging codecs
 
-Register `AddMessagePackMessagingCodec()` and
-`AddProtobufMessagingCodec()` alongside `AddArkMessaging()` to install
-`application/x-msgpack` and `application/x-protobuf`. The MessagePack overload
-accepting an `IFormatterResolver` uses the host's contract configuration; the
-parameterless overload uses the standard resolver. MessagePack reads use the
-`UntrustedData` security mode.
+Call `UseMessagePack()` or `UseProtobuf()` on the fluent composition builder to
+install `application/x-msgpack` or `application/x-protobuf`. The MessagePack
+overload accepting an `IFormatterResolver` uses the host's contract
+configuration; the parameterless overload uses the standard resolver.
+MessagePack reads use the `UntrustedData` security mode.
 
 Native messaging contract validation is performed from Roslyn symbols while the
 topology is generated. A route's effective protocol is the processing or

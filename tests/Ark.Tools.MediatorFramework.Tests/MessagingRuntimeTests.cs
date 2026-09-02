@@ -287,8 +287,8 @@ public sealed partial class MessagingRuntimeTests
     public void CodecRegistrationInstallsAllDeclaredProtocols()
     {
         using var services = new ServiceCollection()
-            .AddArkMessaging()
-            .AddMessagePackAndProtobufMessagingCodecs()
+            ._addArkMessaging()
+            ._addMessagePackAndProtobufMessagingCodecs()
             .BuildServiceProvider();
 
         var registry = services.GetRequiredService<IMessagingCodecRegistry>();

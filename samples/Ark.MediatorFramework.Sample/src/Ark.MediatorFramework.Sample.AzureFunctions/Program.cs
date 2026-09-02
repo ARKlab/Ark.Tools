@@ -3,7 +3,6 @@
 
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
-using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.NLog;
@@ -14,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using NodaTime;
 using NLog;
 using NLog.Extensions.Logging;
 
@@ -42,15 +40,14 @@ public static class Program
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(applicationContainer);
-            builder.Services.AddArkMessagingFunctionsHost(
+            builder.Services.ConfigureArkMessagingFunctions(
                 applicationContainer,
                 builder.Configuration,
                 ArkGeneratedMessagingFunctions.Manifest,
-                new InMemoryMessagingDataBus(
-                    SystemClock.Instance,
-                    Duration.FromHours(2)),
-                MessagingFunctionsRuntimeTransport.AzureServiceBus);
-            builder.Services.AddArkMessagingOutboxEnqueue();
+                messaging => messaging
+                    .UseTransport(transport => transport.UseServiceBus())
+                    .UseDataBus(dataBus => dataBus.UseInMemory())
+                    .UseOutbox(outbox => outbox.UseEnqueue()));
             builder.Services.AddArkHealthChecks();
             if (builder.Environment.IsEnvironment("IntegrationTests"))
             {

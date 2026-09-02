@@ -152,8 +152,15 @@ and the locked
 receive contract without Azure SDK types. The first-class InMemory transport is
 appropriate for local development and tests:
 
+Native hosts use the fluent entry point:
+
 ```csharp
-services.AddArkInMemoryMessaging(networkOptions);
+services.ConfigureArkMessaging(
+    BookMessagingNetwork.CreateOptions(),
+    BookMessagingNetwork.Registry,
+    messaging => messaging.Producer<WebFrontendParticipant>(producer => producer
+        .UseTransport(transport => transport.UseInMemory())
+        .UseDataBus(dataBus => dataBus.UseInMemory())));
 ```
 
 It supports send, scheduled send, publish/subscription fan-out, PeekLock
@@ -166,14 +173,8 @@ capability is missing.
 Producer-only hosts compose the generated descriptor without taking a Functions
 dependency:
 
-```csharp
-services.AddArkMessagingParticipant(
-    WebFrontendParticipant.CreateDescriptor(
-        BookMessagingNetwork.CreateOptions(),
-        BookMessagingNetwork.Registry),
-    transport,
-    dataBus);
-```
+The producer mode is selected through the same fluent call and does not register
+dispatch, triggers, queues, subscriptions, or a receive pump.
 
 This registers only the restricted bus and its outgoing runtime. It does not
 register dispatch, triggers, queues, subscriptions, or a receive pump.
@@ -234,13 +235,14 @@ limits, host-local steps, forwarding subscriptions, and generated runtime
 descriptor. Compose it into the existing application container:
 
 ```csharp
-builder.Services.AddArkMessagingFunctionsHost(
+builder.Services.ConfigureArkMessagingFunctions(
     container,
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
-    dataBus,
-    MessagingFunctionsRuntimeTransport.AzureServiceBus);
-builder.Services.AddArkMessagingOutboxEnqueue();
+    messaging => messaging
+        .UseTransport(transport => transport.UseServiceBus())
+        .UseDataBus(dataBus => dataBus.UseInMemory())
+        .UseOutbox(outbox => outbox.UseEnqueue()));
 ```
 
 The connection setting can contain a connection string or a fully qualified
@@ -253,8 +255,8 @@ trigger binding before registering the bus and dispatcher. A receive-capable
 Functions participant cannot select InMemory, because its receive pump is a
 long-running worker.
 
-`AddArkMessagingOutboxEnqueue` enables the native transaction boundary without
-starting background work. A handler enlists its `IOutboxContextCore`, sends or
+`UseOutbox()` enables the native transaction boundary without starting
+background work. A handler enlists its `IOutboxContextCore`, sends or
 publishes through `IBus`, completes the bus scope, and then commits the
 application context. Serialization, outgoing pipeline steps, compression,
 claim-check, ownership, scheduling, and reserved-header validation all finish
@@ -286,10 +288,9 @@ cleanup, matching the SQL Server and Azurite integration-test conventions.
 
 `ArkGeneratedMessagingFunctions.Manifest.Resources` is the generated,
 transport-neutral desired state for the selected participant.
-`AddArkMessagingFunctionsHost` registers the matching Service Bus administration
-seam and startup reconciler. Application-created transports can instead use the
-overload accepting `IMessagingTransport` and
-`IMessagingTransportManagement`.
+`ConfigureArkMessagingFunctions` registers the matching Service Bus administration
+seam and startup reconciler. Application-created transports remain a custom-host
+concern; Functions composition only selects Service Bus or Storage Queue.
 
 With `MessagingResourceLifecycle.CreateIfMissing`, startup validates the
 manifest, ensures the consumer identity queue, ensures topics published by or
@@ -624,10 +625,17 @@ accessor. `OpenTelemetryIncomingStep` and
 `Diagnostic-Id` and baggage headers and are also opt-in. Exceptions and
 cancellation pass through unchanged; settlement remains the dispatch layer's
 responsibility. `OpenTelemetryProcessingMetricsStep` is the corresponding
-incoming metrics step; it records success-only queue time and success/failure
-processing time using the same `message.type` and `operation.result` dimensions
-as the Rebus instrumentation, under the
-`ark.tools.mediatorframework` metric namespace.
+incoming metrics step. Native messaging metrics use semantic-convention version
+1.37.0 and the `Ark.MediatorFramework.Messaging` meter. The baseline records
+`messaging.client.operation.duration` for send, publish, and defer;
+`messaging.process.duration` through final settlement;
+`messaging.message.time_in_queue` when a valid sent timestamp exists;
+`messaging.process.messages` with complete, abandon, or dead-letter outcomes;
+and native `messaging.process.attempts`. Only bounded topology attributes are
+emitted; message IDs, correlation IDs, attachment IDs, and exception text are
+excluded. Instruments exist by default but remain inert without a listener.
+Collection and export are opt-in through the host's OpenTelemetry meter
+provider.
 
 ## 6. Configure local settings
 

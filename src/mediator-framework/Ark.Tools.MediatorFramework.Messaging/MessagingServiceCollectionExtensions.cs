@@ -22,7 +22,7 @@ public static class MessagingServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessaging(this IServiceCollection services)
+    internal static IServiceCollection _addArkMessaging(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
@@ -39,7 +39,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="transport">The transport to register.</param>
     /// <param name="networks">The resolved networks using the transport.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessaging(
+    internal static IServiceCollection _addArkMessaging(
         this IServiceCollection services,
         IMessagingTransport transport,
         params MessagingNetworkOptions[] networks)
@@ -54,7 +54,7 @@ public static class MessagingServiceCollectionExtensions
             network.Validate(transport.Capabilities);
         }
 
-        services.AddArkMessaging();
+        services._addArkMessaging();
         services.AddSingleton<IMessagingTransport>(transport);
         if (transport is IMessagingReceiveTransport receiveTransport)
             services.AddSingleton(receiveTransport);
@@ -66,7 +66,7 @@ public static class MessagingServiceCollectionExtensions
     /// <summary>Registers native transactional outbox enqueue support.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingOutboxEnqueue(this IServiceCollection services)
+    internal static IServiceCollection _addArkMessagingOutboxEnqueue(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<MessagingOutboxEnqueueRegistration>();
@@ -95,7 +95,7 @@ public static class MessagingServiceCollectionExtensions
                 "A native messaging outbox processor is already registered or Azure Functions composition is active.");
         }
 
-        services.AddArkMessagingOutboxEnqueue();
+        services._addArkMessagingOutboxEnqueue();
         services.AddSingleton(contextFactory);
         services.AddSingleton(serviceProvider => new MessagingOutboxProcessor(
             serviceProvider.GetRequiredService<IOutboxAsyncContextFactory>(),
@@ -111,7 +111,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="dataBus">The provider shared by all network participants.</param>
     /// <param name="networks">The networks that use the provider.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingDataBus(
+    internal static IServiceCollection _addArkMessagingDataBus(
         this IServiceCollection services,
         IMessagingDataBus dataBus,
         params MessagingNetworkOptions[] networks)
@@ -132,7 +132,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="options">The Azure Blob provider options.</param>
     /// <param name="networks">The networks that use the provider.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkAzureBlobMessagingDataBus(
+    internal static IServiceCollection _addArkAzureBlobMessagingDataBus(
         this IServiceCollection services,
         AzureBlobDataBusOptions options,
         params MessagingNetworkOptions[] networks)
@@ -155,14 +155,14 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="lifetime">The attachment lifetime.</param>
     /// <param name="networks">The networks that use the provider.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkInMemoryMessagingDataBus(
+    internal static IServiceCollection _addArkInMemoryMessagingDataBus(
         this IServiceCollection services,
         NodaTime.IClock? clock = null,
         NodaTime.Duration? lifetime = null,
         params MessagingNetworkOptions[] networks)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.AddArkMessagingDataBus(
+        return services._addArkMessagingDataBus(
             new InMemoryMessagingDataBus(
                 clock ?? NodaTime.SystemClock.Instance,
                 lifetime ?? NodaTime.Duration.FromHours(1)),
@@ -173,11 +173,11 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <param name="networks">The networks that use the provider.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkInMemoryMessagingDataBus(
+    internal static IServiceCollection _addArkInMemoryMessagingDataBus(
         this IServiceCollection services,
         params MessagingNetworkOptions[] networks)
     {
-        return services.AddArkInMemoryMessagingDataBus(
+        return services._addArkInMemoryMessagingDataBus(
             clock: null,
             lifetime: null,
             networks);
@@ -187,19 +187,19 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <param name="networks">The resolved networks using the transport.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkInMemoryMessaging(
+    internal static IServiceCollection _addArkInMemoryMessaging(
         this IServiceCollection services,
         params MessagingNetworkOptions[] networks)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.AddArkMessaging(new InMemoryMessagingTransport(), networks);
+        return services._addArkMessaging(new InMemoryMessagingTransport(), networks);
     }
 
     /// <summary>Registers startup reconciliation for a generated resource manifest.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="manifest">The generated desired resources.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingResourceLifecycle(
+    internal static IServiceCollection _addArkMessagingResourceLifecycle(
         this IServiceCollection services,
         MessagingResourceManifest manifest)
     {
@@ -219,7 +219,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="participantIdentity">The sending participant identity.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingBus(
+    internal static IServiceCollection _addArkMessagingBus(
         this IServiceCollection services,
         MessagingNetworkOptions network,
         IMessagingContractRegistry registry,
@@ -227,7 +227,7 @@ public static class MessagingServiceCollectionExtensions
         string participantIdentity,
         IReadOnlyList<Type>? outgoingStepTypes = null)
     {
-        return services.AddArkMessagingBus(
+        return services._addArkMessagingBus(
             network,
             registry,
             payloadSender,
@@ -245,7 +245,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
     /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingBus(
+    internal static IServiceCollection _addArkMessagingBus(
         this IServiceCollection services,
         MessagingNetworkOptions network,
         IMessagingContractRegistry registry,
@@ -287,7 +287,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
     /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingParticipant(
+    internal static IServiceCollection _addArkMessagingParticipant(
         this IServiceCollection services,
         MessagingParticipantDescriptor participant,
         IMessagingTransport transport,
@@ -306,7 +306,7 @@ public static class MessagingServiceCollectionExtensions
                     participant.PublishedTopics.Select(static topic => topic.Name),
                     participant.Network.ResourceLifecycle)
                 : null;
-        return services.AddArkMessagingParticipant(
+        return services._addArkMessagingParticipant(
             participant,
             transport,
             dataBus,
@@ -326,7 +326,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
     /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkMessagingParticipant(
+    internal static IServiceCollection _addArkMessagingParticipant(
         this IServiceCollection services,
         MessagingParticipantDescriptor participant,
         IMessagingTransport transport,
@@ -352,15 +352,15 @@ public static class MessagingServiceCollectionExtensions
         if (services.Any(static service => service.ServiceType == typeof(MessagingParticipantDescriptor)))
             throw new InvalidOperationException("A messaging participant is already registered in this host.");
 
-        services.AddArkMessaging(transport, participant.Network);
-        services.AddArkMessagingDataBus(dataBus, participant.Network);
+        services._addArkMessaging(transport, participant.Network);
+        services._addArkMessagingDataBus(dataBus, participant.Network);
         services.AddSingleton(participant);
         services.AddSingleton(participant.Network);
         services.AddSingleton(participant.Registry);
         services.AddSingleton(participant.RetryPolicy);
         var payloadSender = participant.CreatePayloadSender(dataBus);
         services.AddSingleton(payloadSender);
-        services.AddArkMessagingBus(
+        services._addArkMessagingBus(
             participant.Network,
             participant.Registry,
             payloadSender,
@@ -371,7 +371,7 @@ public static class MessagingServiceCollectionExtensions
         if (resources?.Lifecycle == MessagingResourceLifecycle.CreateIfMissing)
         {
             services.AddSingleton(management!);
-            services.AddArkMessagingResourceLifecycle(resources);
+            services._addArkMessagingResourceLifecycle(resources);
         }
         return services;
     }
@@ -407,13 +407,13 @@ public static class MessagingServiceCollectionExtensions
     /// <summary>Registers the MessagePack and protobuf messaging codecs.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddMessagePackAndProtobufMessagingCodecs(
+    internal static IServiceCollection _addMessagePackAndProtobufMessagingCodecs(
         this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddMessagePackMessagingCodec();
-        services.AddProtobufMessagingCodec();
+        services._addMessagePackMessagingCodec();
+        services._addProtobufMessagingCodec();
         return services;
     }
 
@@ -421,22 +421,22 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <param name="resolver">The host MessagePack formatter resolver.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddMessagePackAndProtobufMessagingCodecs(
+    internal static IServiceCollection _addMessagePackAndProtobufMessagingCodecs(
         this IServiceCollection services,
         IFormatterResolver resolver)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(resolver);
 
-        services.AddMessagePackMessagingCodec(resolver);
-        services.AddProtobufMessagingCodec();
+        services._addMessagePackMessagingCodec(resolver);
+        services._addProtobufMessagingCodec();
         return services;
     }
 
     /// <summary>Registers the MessagePack messaging codec.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddMessagePackMessagingCodec(
+    internal static IServiceCollection _addMessagePackMessagingCodec(
         this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -450,7 +450,7 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <param name="resolver">The host MessagePack formatter resolver.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddMessagePackMessagingCodec(
+    internal static IServiceCollection _addMessagePackMessagingCodec(
         this IServiceCollection services,
         IFormatterResolver resolver)
     {
@@ -465,7 +465,7 @@ public static class MessagingServiceCollectionExtensions
     /// <summary>Registers the protobuf messaging codec.</summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddProtobufMessagingCodec(
+    internal static IServiceCollection _addProtobufMessagingCodec(
         this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);

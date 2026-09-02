@@ -11,6 +11,49 @@ The sample keeps the first seam in
 and the web seam in
 [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
 
+## Fluent native messaging composition
+
+Native messaging hosts use one composition call for the generated network and
+participant. The callback must select exactly one hosting mode and explicitly
+choose its transport and DataBus:
+
+```csharp
+services.ConfigureArkMessaging(
+    SampleMessagingNetwork.CreateOptions(),
+    SampleMessagingNetwork.Registry,
+    messaging =>
+{
+    messaging.Producer<SampleMessagingPublisherParticipant>(producer => producer
+        .UseTransport(transport => transport.UseServiceBus(client))
+        .UseDataBus(dataBus => dataBus.UseInMemory())
+        .UseSerialization(serialization => serialization.UseMessagePack())
+        .UseOutbox(outbox => outbox.UseEnqueue()));
+});
+```
+
+Use `Receiver<TParticipant>(container, ...)` for a custom receive host. Azure
+Functions hosts use `ConfigureArkMessagingFunctions` and select either Service
+Bus or Storage Queue. Generated network, participant, and Functions metadata are
+resolved by the composition layer; application handlers remain in Simple
+Injector.
+
+```csharp
+services.ConfigureArkMessagingFunctions(
+    applicationContainer,
+    configuration,
+    ArkGeneratedMessagingFunctions.Manifest,
+    messaging => messaging
+        .UseTransport(transport => transport.UseServiceBus())
+        .UseDataBus(dataBus => dataBus.UseInMemory(
+            SystemClock.Instance,
+            Duration.FromHours(2)))
+        .UseOutbox(outbox => outbox.UseEnqueue()));
+```
+
+The Functions entry point rejects in-memory receive transport and hosted native
+outbox processing. `UseOutbox()` enables enqueue enlistment only; polling remains
+owned by a separate native host.
+
 ## Layer responsibilities
 
 | Layer | Owns | Does not own |
@@ -219,13 +262,14 @@ generator under `analyzers/dotnet/cs` and depends on the transport-neutral
 the network and participant descriptor used by startup:
 
 ```csharp
-builder.Services.AddArkMessagingFunctionsHost(
+builder.Services.ConfigureArkMessagingFunctions(
     container,
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
-    dataBus,
-    MessagingFunctionsRuntimeTransport.AzureServiceBus);
-builder.Services.AddArkMessagingOutboxEnqueue();
+    messaging => messaging
+        .UseTransport(transport => transport.UseServiceBus())
+        .UseDataBus(dataBus => dataBus.UseInMemory())
+        .UseOutbox(outbox => outbox.UseEnqueue()));
 ```
 
 Startup resolves the connection from the generated host binding, validates
@@ -240,10 +284,10 @@ standard Functions identity-based child settings
 `fullyQualifiedNamespace` (Service Bus) and `queueServiceUri` (Storage Queue).
 Set the optional `clientId` child for a user-assigned managed identity.
 
-Use `AddArkMessagingParticipant` from the messaging package for producer-only
-Minimal API, console, and client processes. That path registers routing,
-serialization, DataBus, outgoing steps, and the restricted bus only; it does not
-register a dispatcher, trigger, queue, subscription, or receive worker.
+Use `ConfigureArkMessaging` from the messaging package for producer-only
+Minimal API, console, and client processes. Its `Producer` path registers
+routing, serialization, DataBus, outgoing steps, and the restricted bus only; it
+does not register a dispatcher, trigger, queue, subscription, or receive worker.
 Publisher-owned topics are still reconciled when lifecycle management is
 enabled.
 
@@ -255,8 +299,8 @@ available as a mutually exclusive compatibility path.
 ## Host the native SQL outbox processor separately
 
 Native `IBus` send and publish calls can enlist the application's existing
-`IOutboxContextCore`. `AddArkMessagingOutboxEnqueue` is safe in sender and
-Functions processes because it starts no polling loop. The application
+`IOutboxContextCore`. `UseOutbox` is safe in sender and Functions processes
+because it starts no polling loop. The application
 transaction commits both state and validated envelopes, or rolls both back.
 
 An always-running custom process owns the complementary registration:

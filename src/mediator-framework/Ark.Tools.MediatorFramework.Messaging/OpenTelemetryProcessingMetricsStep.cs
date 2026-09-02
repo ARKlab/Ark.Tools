@@ -108,6 +108,9 @@ public static class MessagingMetrics
         string operation,
         string destination)
     {
+        if (!_clientOperationDuration.Enabled)
+            return;
+
         try
         {
             _clientOperationDuration.Record(
@@ -139,6 +142,14 @@ public static class MessagingMetrics
         string? destination = null,
         DateTimeOffset? now = null)
     {
+        if (!_processDuration.Enabled
+            && !_processedMessages.Enabled
+            && !_deliveryAttempts.Enabled
+            && !_timeInQueue.Enabled)
+        {
+            return;
+        }
+
         try
         {
             var attributes = _attributes(headers, "process", destination);

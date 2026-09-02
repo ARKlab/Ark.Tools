@@ -271,7 +271,8 @@ participants communicating on that network use the same:
   store, and compatible provider options as a documented deployment
   assumption;
 - resource-management and subscription-lifecycle policy; and
-- connection/configuration key names, without placing secrets in attributes.
+- host-specific connection/configuration key names, without placing secrets in
+  network attributes.
 
 Serialization, compression, and retry are deliberately **not** network
 settings: serialization and compression reads are header-driven, and retry
@@ -422,7 +423,7 @@ processor, or application handler.
 
 | Term | Meaning |
 | --- | --- |
-| **Network** | The shared messaging boundary: an attributed class listing its member participants, the required transport capabilities, and the shared payload/DataBus thresholds, resource lifecycle, and connection key names. Its contract set is derived from member declarations. Also supplies portable setup metadata to Rebus generation. |
+| **Network** | The shared messaging boundary: an attributed class listing its member participants, the required transport capabilities, and the shared payload/DataBus thresholds and resource lifecycle. Its contract set is derived from member declarations. Also supplies portable setup metadata to Rebus generation. |
 | **Participant** | One logical member of a network, declared as an attributed class: which messages it processes, which events it publishes, which events it subscribes to, and which serializations it supports. A participant may produce only, consume through generated Azure Functions triggers, or consume through an assisted Rebus composition. |
 | **Host** | The deployable process and hosting technology that runs a participant: an Azure Functions app with generated triggers, a Rebus-based worker, or a test/custom host running the InMemory pump or the outbox processor. The host binds to the participant declaration and selects the concrete technology; the participant declaration never does. |
 | **Identity** | The portable logical name of a participant, defaulting to its normalized class name. For a consumer it is also the name of its single receive queue. Every participant has one, including sender-only participants (it feeds `amf1-sender-identity`). |
