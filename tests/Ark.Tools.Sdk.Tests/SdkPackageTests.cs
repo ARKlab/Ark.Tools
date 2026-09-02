@@ -67,7 +67,7 @@ public sealed class SdkPackageTests
 
     private static readonly string[] _codingStyleAsset = ["Ark.Tools.CodingStyle.editorconfig"];
 
-    private static readonly string[] _bannedApiAsset = ["BannedSymbols.txt"];
+    private static readonly string[] _bannedApiAsset = ["BannedSymbols.Ark.txt"];
 
     private static readonly string[] _standardImplicitUsings =
     [
@@ -84,7 +84,7 @@ public sealed class SdkPackageTests
 
     private static readonly string[] _composedBannedApiAssets =
     [
-        "BannedSymbols.txt",
+        "BannedSymbols.Ark.txt",
         "BannedSymbols.Consumer.txt"
     ];
 
@@ -193,7 +193,7 @@ public sealed class SdkPackageTests
             ["EnableArkToolsVisualStudioThreading"] = "Ark.Tools.VisualStudioThreading.globalconfig",
             ["EnableArkToolsIdentityModelConfiguration"] = "Ark.Tools.IdentityModel.globalconfig",
             ["EnableArkToolsCoreConfiguration"] = "Ark.Tools.Core.globalconfig",
-            ["EnableArkToolsBannedApi"] = "BannedSymbols.txt"
+            ["EnableArkToolsBannedApi"] = "BannedSymbols.Ark.txt"
         };
         var baselineFiles = _getAllArkBuildConfigurationFileNames(baseline);
         foreach (var item in switches)
@@ -816,7 +816,7 @@ public sealed class SdkPackageTests
         var switches = new Dictionary<string, (string Package, string Item, string Asset)>
         {
             ["EnableArkToolsNetAnalyzers"] = ("Microsoft.CodeAnalysis.NetAnalyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.NetAnalyzers.globalconfig"),
-            ["EnableArkToolsBannedApi"] = ("Microsoft.CodeAnalysis.BannedApiAnalyzers", "AdditionalFiles", "BannedSymbols.txt"),
+            ["EnableArkToolsBannedApi"] = ("Microsoft.CodeAnalysis.BannedApiAnalyzers", "AdditionalFiles", "BannedSymbols.Ark.txt"),
             ["EnableArkToolsMeziantouAnalyzer"] = ("Meziantou.Analyzer", "GlobalAnalyzerConfigFiles", "Ark.Tools.MeziantouAnalyzer.globalconfig"),
             ["EnableArkToolsVisualStudioThreading"] = ("Microsoft.VisualStudio.Threading.Analyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.VisualStudioThreading.globalconfig"),
             ["EnableArkToolsErrorProne"] = ("ErrorProne.NET.CoreAnalyzers", "GlobalAnalyzerConfigFiles", "Ark.Tools.ErrorProne.globalconfig")
