@@ -12,7 +12,8 @@ EVENT Ark.MediatorFramework.Sample.Application.Messages.BookPrintCompleted
 END
 MESSAGE Ark.MediatorFramework.Sample.Application.Messages.ProcessBookPrintProcessRequest
   name: books_process_book_print_process
-  former: ark_mediator_framework_sample_application_messages_process_book_print_process_request
+  former:
+    - ark_mediator_framework_sample_application_messages_process_book_print_process_request
 END
 NETWORK Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork
   members:
