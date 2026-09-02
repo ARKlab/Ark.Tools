@@ -23,9 +23,9 @@ dispatcher-less generated code is not.
 
 | Status | Meaning |
 | --- | --- |
-| Complete | Every acceptance checkbox in the task file is checked. |
-| In progress | The task file has both checked and unchecked acceptance items. |
-| Pending | The task file has no checked acceptance items. |
+| Complete | Every acceptance outcome has been verified in the implementation. |
+| In progress | Some acceptance outcomes are implemented and some remain unmet. |
+| Pending | No acceptance outcomes have been implemented. |
 | Cancelled | The task was explicitly cancelled in its task file. |
 | Deferred | The task is intentionally deferred by an accepted decision. |
 
@@ -38,32 +38,32 @@ are intentional and avoid treating the two tasks as one item.
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [SEC-01](security/SEC-01-secure-by-default-endpoints.md) | Secure-by-default generated endpoints | Pending |
-| [SEC-02](security/SEC-02-unconditional-authorization-middleware.md) | Unconditional authorization middleware | Pending |
-| [SEC-03](security/SEC-03-messagepack-untrusted-data.md) | MessagePack `UntrustedData` and startup resolver check | Pending |
-| [SEC-04](security/SEC-04-server-set-binding-protection.md) | `[ServerSet]` binding protection | Pending |
-| [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md) | Transport-agnostic policy authorization decorator | Pending |
-| [SEC-06](security/SEC-06-multipart-hardening.md) | Multipart upload hardening | Pending |
+| [SEC-01](security/SEC-01-secure-by-default-endpoints.md) | Secure-by-default generated endpoints | In progress |
+| [SEC-02](security/SEC-02-unconditional-authorization-middleware.md) | Unconditional authorization middleware | In progress |
+| [SEC-03](security/SEC-03-messagepack-untrusted-data.md) | MessagePack `UntrustedData` and startup resolver check | Complete |
+| [SEC-04](security/SEC-04-server-set-binding-protection.md) | `[ServerSet]` binding protection | Complete |
+| [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md) | Transport-agnostic policy authorization decorator | In progress |
+| [SEC-06](security/SEC-06-multipart-hardening.md) | Multipart upload hardening | Complete |
 | [SEC-07](security/SEC-07-error-serialization-hardening.md) | Error serialization hardening | Complete |
-| [SEC-08](security/SEC-08-test-auth-bearer-hardening.md) | Malformed bearer to 401 in the test auth scheme | Pending |
+| [SEC-08](security/SEC-08-test-auth-bearer-hardening.md) | Malformed bearer to 401 in the test auth scheme | In progress |
 
 ### Framework
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [FW-01](framework/FW-01-icommand-support.md) | `ICommand` support across all transports | Pending |
-| [FW-02](framework/FW-02-http-status-semantics.md) | HTTP status semantics via attribute customization | Pending |
-| [FW-03](framework/FW-03-shared-problemdetails-package.md) | Shared ProblemDetails package | Pending |
-| [FW-04](framework/FW-04-file-download.md) | File download support | Pending |
-| [FW-08](framework/FW-08-etag-preconditions.md) | `[ETag]` contract attribute and `If-Match` binding | Pending |
-| [FW-09](framework/FW-09-etag-response-emission.md) | `ETag` response header, 304, and gRPC error parity | Pending |
+| [FW-01](framework/FW-01-icommand-support.md) | `ICommand` support across all transports | In progress |
+| [FW-02](framework/FW-02-http-status-semantics.md) | HTTP status semantics via attribute customization | In progress |
+| [FW-03](framework/FW-03-shared-problemdetails-package.md) | Shared ProblemDetails package | In progress |
+| [FW-04](framework/FW-04-file-download.md) | File download support | In progress |
+| [FW-08](framework/FW-08-etag-preconditions.md) | `[ETag]` contract attribute and `If-Match` binding | In progress |
+| [FW-09](framework/FW-09-etag-response-emission.md) | `ETag` response header, 304, and gRPC error parity | In progress |
 
 ### Generator DX
 
 | Task | Title | Status |
 | --- | --- | --- |
 | [GEN-04](generator-dx/GEN-04-remove-hardcoded-documents-proto.md) | Remove sample `Documents.proto` from the framework generator | Complete |
-| [GEN-07](generator-dx/GEN-07-automatic-proto-export.md) | Automatic proto export without host entry-point wiring | Pending |
+| [GEN-07](generator-dx/GEN-07-automatic-proto-export.md) | Automatic proto export without host entry-point wiring | In progress |
 | [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md) | Name assembly-scanning APIs explicitly | Complete |
 
 ### Sample parity
@@ -74,8 +74,8 @@ are intentional and avoid treating the two tasks as one item.
 | [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper and transactional outbox | In progress |
 | [SMP-03](sample-parity/SMP-03-persisted-auditing.md) | Persisted auditing | Complete |
 | [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency and opaque ETag | Complete |
-| [SMP-05](sample-parity/SMP-05-paging.md) | Paging | Pending |
-| [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, configuration layering, clock, and test infrastructure | Pending |
+| [SMP-05](sample-parity/SMP-05-paging.md) | Paging | In progress |
+| [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, configuration layering, clock, and test infrastructure | In progress |
 
 ### Book sample migration
 
@@ -105,12 +105,12 @@ not stop at a contract, schema, host, or documentation change.
 | Task | Title | Status |
 | --- | --- | --- |
 | [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md) | OpenAPI tags and operation names from the contract | Complete |
-| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | Pending |
-| [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses | Pending |
+| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | In progress |
+| [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses | In progress |
 | [FW-06](framework/FW-06-async-enumerable-streaming.md) | `IAsyncEnumerable<T>` streaming responses | Complete |
 | [FW-07](framework/FW-07-multifile-uploads.md) | Multi-file uploads bound to an attachment collection | Complete |
-| [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md) | API-surface snapshot gate | Pending |
-| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started and feature guide | Pending |
+| [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md) | API-surface snapshot gate | In progress |
+| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started and feature guide | In progress |
 
 ## Non-blocking improvements
 
@@ -160,16 +160,16 @@ The architecture and accepted decisions are in
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | Pending |
-| [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing, and version expansion | Pending |
-| [AZF-03](azure-functions/AZF-03-binding-dispatch.md) | JSON/route/query binding and scoped dispatch | Pending |
+| [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | In progress |
+| [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing, and version expansion | In progress |
+| [AZF-03](azure-functions/AZF-03-binding-dispatch.md) | JSON/route/query binding and scoped dispatch | In progress |
 | [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization, and user context | In progress |
 | [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails, and ETags | In progress |
-| [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads, and JSON streaming | Pending |
+| [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads, and JSON streaming | In progress |
 | [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | In progress |
-| [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | Pending |
+| [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | In progress |
 | [AZF-09](azure-functions/AZF-09-openapi.md) | OpenAPI | Deferred |
-| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | Pending |
+| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | In progress |
 
 ## Azure Functions messaging
 
@@ -222,17 +222,17 @@ The architecture and accepted decisions are in
 | [TST-04](testing/TST-04-grpc-hosting.md) | Prove generated gRPC hosting | Complete |
 | [TST-05](testing/TST-05-rebus-hosting.md) | Prove generated Rebus hosting | Complete |
 | [TST-06](testing/TST-06-other-framework-hosts.md) | Keep other framework hosts under `tests/` | Complete |
-| [APP-01](testing/APP-01-application-test-seam.md) | Expose a direct application composition test seam | Pending |
-| [APP-02](testing/APP-02-reqnroll-dispatch.md) | Rewrite Reqnroll lifecycle and dispatch steps | Pending |
+| [APP-01](testing/APP-01-application-test-seam.md) | Expose a direct application composition test seam | In progress |
+| [APP-02](testing/APP-02-reqnroll-dispatch.md) | Rewrite Reqnroll lifecycle and dispatch steps | In progress |
 | [APP-03](testing/APP-03-synchronous-application-behavior.md) | Cover synchronous application behavior | Complete |
 | [APP-04](testing/APP-04-rebus-application-workflows.md) | Exercise asynchronous workflows through in-memory Rebus | Complete |
 | [APP-05](testing/APP-05-sql-and-inmemory-stores.md) | Run the application suite against SQL and in-memory stores | Complete |
 | [APP-06](testing/APP-06-remove-boundary-tests.md) | Remove obsolete application boundary tests and dependencies | Complete |
-| [APP-07](testing/APP-07-request-dto-composition.md) | Adopt composed request and DTO contracts | Pending |
-| [APP-08](testing/APP-08-context-factory-architecture.md) | Replace Stores with context factories and domain services | Pending |
+| [APP-07](testing/APP-07-request-dto-composition.md) | Adopt composed request and DTO contracts | In progress |
+| [APP-08](testing/APP-08-context-factory-architecture.md) | Replace Stores with context factories and domain services | In progress |
 | [APP-09](testing/APP-09-inmemory-outbox.md) | Keep transactional outbox parity in test profiles | Complete |
 | [APP-10](testing/APP-10-scenario-scoped-external-mocks.md) | Scenario-scoped external mocks and application failure observation | Complete |
-| [DOC-01](testing/DOC-01-testing-guidance.md) | Publish the revised testing and application guidance | Pending |
+| [DOC-01](testing/DOC-01-testing-guidance.md) | Publish the revised testing and application guidance | Complete |
 
 ## Task rules
 
