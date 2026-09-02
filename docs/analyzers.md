@@ -44,15 +44,18 @@ attribute location:
 | ARKAPI001 | Error | API surface baseline is missing |
 | ARKAPI002 | Error | API surface contract changed |
 | ARKAPI003 | Error | Multiple API surface baselines were found |
-| ARKAPI004 | Error | API surface baseline contains a malformed line |
+| ARKAPI004 | Error | API surface baseline contains a malformed entry or legacy one-line messaging record |
 
-Messaging contract snapshots use `MESSAGE`, `EVENT`, `PARTICIPANT`, and
-`NETWORK` lines. They record logical names, former-name aliases, ownership,
-participant membership, supported serializers, and network capabilities.
-Changing any of these persisted wire or routing identifiers requires accepting
-the generated `ArkApiSurface.current.txt` diff. Generated routing members marked
-with `MessagingGeneratedSurfaceAttribute` are excluded because their drift is
-already represented by those dedicated lines.
+Messaging contract snapshots use deterministic multiline `MESSAGE`, `EVENT`,
+`PARTICIPANT`, and `NETWORK` blocks. Each block has a fixed field order, uses
+ordinal-sorted set values, and terminates with `END`; malformed, reordered,
+duplicated, unknown, or legacy one-line entries produce `ARKAPI004`. They
+record logical names, former-name aliases, ownership, participant membership,
+supported serializers, and network capabilities. Changing any of these
+persisted wire or routing identifiers requires accepting the generated
+`ArkApiSurface.current.txt` diff. Generated routing members marked with
+`MessagingGeneratedSurfaceAttribute` are excluded because their drift is
+already represented by those dedicated blocks.
 
 ### Custom Ark.Tools analyzers
 

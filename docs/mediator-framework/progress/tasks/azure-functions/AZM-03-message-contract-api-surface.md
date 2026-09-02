@@ -43,14 +43,31 @@ introduced by AZM-02.
 
 ## Snapshot format
 
-Emit one deterministic line for each transport-neutral message or event, each
-participant, and each network:
+Emit one deterministic multiline block for each transport-neutral message or
+event, each participant, and each network:
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished|legacy_print_completed
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json,msgpack default:json
-NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
+EVENT Books.PrintCompleted
+  name: books_print_completed
+  former: books_print_finished|legacy_print_completed
+END
+MESSAGE Books.RecalculatePrint
+  name: books_recalculate_print
+  former: -
+END
+NETWORK BookTopology.BookMessagingNetwork
+  members: printing_participant|web_frontend_participant
+  requires: pubsub|receive|scheduled_send
+END
+PARTICIPANT BookTopology.PrintingParticipant
+  network: BookMessagingNetwork
+  identity: printing
+  processes: books_recalculate_print
+  publishes: -
+  subscribes: books_print_completed
+  serializers: json|messagepack
+  default: json
+END
 ```
 
 The rules are fixed:
@@ -62,14 +79,16 @@ The rules are fixed:
   when no explicit `Name` is set.
 - `former` is `-` when empty; otherwise aliases are distinct and
   ordinal-sorted, joined by `|`.
-- `PARTICIPANT` lines record the resolved network identity, the resolved
+- `PARTICIPANT` blocks record the resolved network identity, the resolved
   identity (explicit or normalized class-name default), and ordinal-sorted
   processes/publishes/subscribes wire names (`-` when empty), the
   ordinal-sorted serializer set, and the default serializer.
-- `NETWORK` lines record ordinal-sorted member type names and the declared
-  capability flags in flag-value order (`receive|pubsub|scheduled_send`,
+- `NETWORK` blocks record ordinal-sorted member type names and the declared
+  capability flags in ordinal order (`pubsub|receive|scheduled_send`,
   `-` when none).
-- Lines are ordinal-sorted with all other API-surface entries.
+- Blocks are sorted by kind and fully qualified CLR owner; their fields use a
+  fixed order and every block ends with `END`. Non-messaging entries retain
+  their existing line format.
 - A type carrying other supported transport attributes keeps those existing
   entries as well; message/event entries do not replace `CONTRACT` or `REBUS`
   lines.
@@ -172,14 +191,31 @@ var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
     BuildSurface(types, cancellationToken));
 ```
 
-*Exact emitted line formats (same examples as the Snapshot format section
+*Exact emitted block format (same examples as the Snapshot format section
 above — these strings are the wire-drift baseline, byte-for-byte):*
 
 ```text
-MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished|legacy_print_completed
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json,msgpack default:json
-NETWORK BookTopology.BookMessagingNetwork -> members:printing_participant|web_frontend_participant requires:receive|pubsub|scheduled_send
+EVENT Books.PrintCompleted
+  name: books_print_completed
+  former: books_print_finished|legacy_print_completed
+END
+MESSAGE Books.RecalculatePrint
+  name: books_recalculate_print
+  former: -
+END
+NETWORK BookTopology.BookMessagingNetwork
+  members: printing_participant|web_frontend_participant
+  requires: pubsub|receive|scheduled_send
+END
+PARTICIPANT BookTopology.PrintingParticipant
+  network: BookMessagingNetwork
+  identity: printing
+  processes: books_recalculate_print
+  publishes: -
+  subscribes: books_print_completed
+  serializers: json|messagepack
+  default: json
+END
 ```
 
 *Emission helper sketch, called from `AddType` beside the existing
@@ -189,7 +225,7 @@ delegated to the shared source-linked helper owned by
 here. All ordering and deduplication uses `StringComparer.Ordinal`:*
 
 ```csharp
-private static void AddMessagingLines(List<string> lines, INamedTypeSymbol type)
+private static void AddMessagingBlock(List<string> lines, INamedTypeSymbol type)
 {
     // Namespace-qualified CLR type name, no assembly qualification.
     var clrName = type.ToDisplayString();
@@ -199,7 +235,10 @@ private static void AddMessagingLines(List<string> lines, INamedTypeSymbol type)
     {
         var name = SharedNameResolver.ResolveCanonicalName(type, message);
         var former = FormatSet(SharedNameResolver.ResolveFormerNames(message));
-        lines.Add($"MESSAGE {clrName} -> name:{name} former:{former}");
+        lines.Add($"MESSAGE {clrName}");
+        lines.Add($"  name: {name}");
+        lines.Add($"  former: {former}");
+        lines.Add("END");
     }
 
     var @event = Attribute(type, Event);
@@ -207,13 +246,14 @@ private static void AddMessagingLines(List<string> lines, INamedTypeSymbol type)
     {
         var name = SharedNameResolver.ResolveCanonicalName(type, @event);
         var former = FormatSet(SharedNameResolver.ResolveFormerNames(@event));
-        lines.Add($"EVENT {clrName} -> name:{name} former:{former}");
+        lines.Add($"EVENT {clrName}");
+        lines.Add($"  name: {name}");
+        lines.Add($"  former: {former}");
+        lines.Add("END");
     }
 
-    // PARTICIPANT {clrName} -> network:{network} identity:{identity}
-    //   processes:{set} publishes:{set} subscribes:{set}
-    //   serializers:{set} default:{protocol}
-    // NETWORK {clrName} -> members:{set} requires:{flags-in-value-order or -}
+    // PARTICIPANT {clrName}, followed by fixed-order key/value fields and END.
+    // NETWORK {clrName}, followed by fixed-order key/value fields and END.
     // Both use the same shared resolution helper and FormatSet.
 }
 
