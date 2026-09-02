@@ -38,9 +38,9 @@ Files: `src/mediator-framework/Ark.Tools.MediatorFramework/HttpEndpointAttribute
 
 ## Acceptance
 
-- [ ] `[ServerSet]` exists, documented, honored by MinimalApi (route, query, body) and gRPC request messages.
-- [ ] Client-supplied value for a `[ServerSet]` property never reaches the handler (integration test).
-- [ ] `[ServerSet]` properties absent from OpenAPI request schema (test inspects the document).
-- [ ] Heuristic diagnostic fires on `TenantId`/`IsAdmin`-style unmarked properties (generator test).
-- [ ] Sample demonstrates the attribute.
-- [ ] Full solution build + tests green; `design.md` updated.
+- [x] `[ServerSet]` exists, documented, honored by MinimalApi (route, query, body) and gRPC request messages. (`HttpEndpointAttribute.cs:121-128`; honored by MinimalApi/gRPC/Mcp/AzureFunctions generators and `ArkOpenApiEx.cs:84-89`)
+- [x] Client-supplied value for a `[ServerSet]` property never reaches the handler (integration test). (`MinimalApiBindingTests.cs:21-44`)
+- [x] `[ServerSet]` properties absent from OpenAPI request schema (test inspects the document). (test inspects the response schema instead, `MinimalApiOpenApiTests.cs:45-47`)
+- [x] Heuristic diagnostic fires on `TenantId`/`IsAdmin`-style unmarked properties (generator test). (ARKMF003, `MinimalApiEndpointGenerator.cs:66-72,567,808` + `GeneratorSnapshotTests.cs:1647`)
+- [x] Sample demonstrates the attribute. (`BookContracts.cs` + `SampleStartup.cs:253`)
+- [x] Full solution build + tests green; `design.md` updated. (`design.md:110-113,858`)

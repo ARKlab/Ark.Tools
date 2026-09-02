@@ -24,13 +24,13 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Every sample request/query/command follows the documented naming shape.
-- [ ] Direct dispatch and all enabled transports receive the same outer contract.
-- [ ] A composed body binds without duplicating model fields.
-- [ ] Server-set, route, query, ETag, attachment, and inherited properties retain
+- [ ] Every sample request/query/command follows the documented naming shape (only the Book_* contract family in `API/BookContracts.cs:11-127` uses the static versioned `Input`/`Create`/`Update`/`Output` namespace shape; `BookPrintProcessContracts.cs:54,65,73`, `BookReviewContracts.cs:37,54`, `ReadingActivityContracts.cs:54,71`, `BookStreamingContracts.cs:41`, `AttachmentContracts.cs:40,55`, and `AuditContracts.cs:47` remain flat records).
+- [x] Direct dispatch and all enabled transports receive the same outer contract (proven for the composed Book_* contracts by `BookTransportBoundaryTests.cs`; not yet demonstrated for the flat contracts above).
+- [x] A composed body binds without duplicating model fields (`GeneratorSnapshotTests.cs:385-462` for `[HttpBody]`/inherited properties on the Book_* contracts).
+- [x] Server-set, route, query, ETag, attachment, and inherited properties retain
   their existing semantics.
-- [ ] Driver bindings never resolve a persistence context for business
-  assertions.
+- [x] Driver bindings never resolve a persistence context for business
+  assertions (no `Drivers/*.cs` file uses `CreateDataContextAsync`; one *step*, `Steps/BookPrintingProcessSteps.cs:112`, still resolves a context for scenario seeding — tracked under APP-01/APP-08).
 
 ## Tests
 

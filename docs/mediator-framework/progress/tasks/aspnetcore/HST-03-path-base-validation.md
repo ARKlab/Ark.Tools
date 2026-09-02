@@ -31,9 +31,9 @@ unvalidated forwarding header, while the mediator sample has no equivalent.
 ## Acceptance
 
 - [x] The default profile accepts a valid `X-Forwarded-Prefix` and prepends it to
-      `PathBase`, unless the application opts out.
+      `PathBase`, unless the application opts out (`ArkMinimalApiHostExtensions.cs:40-42,140-158`; no automated test).
 - [x] Invalid or multiple values produce a client error before downstream
-      middleware runs.
-- [x] No configured prefix or known proxy/network list is required.
-- [x] Prefix routing and generated OpenAPI paths work end to end.
+      middleware runs (`ArkMinimalApiHostExtensions.cs:146-150` returns 400 before `next()`; no automated test).
+- [x] No configured prefix or known proxy/network list is required (implementation reads only the header, no config/allow-list).
+- [ ] Prefix routing and generated OpenAPI paths work end to end. (no test anywhere references `X-Forwarded-Prefix`; end-to-end behavior unproven)
 - [ ] Full solution build and tests pass with zero warnings.

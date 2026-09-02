@@ -128,13 +128,13 @@ the graph produces a visible diff.
 
 ## Acceptance
 
-- [ ] Generator + MSBuild targets implemented, packed as build assets, no-op when not opted in.
-- [ ] `ARKAPI001`/`ARKAPI002` behave as specified and are unit-tested.
-- [ ] Nested type fields produce recursive `CONTRACT`/`GRPC-FIELD` entries; renaming a nested
-      field causes `ARKAPI002`.
-- [ ] Surface is deterministic across compilations (same input = same output, bit-for-bit).
-- [ ] Sample Application assembly opted in with committed `ArkApiSurface.txt`; solution build
-      is green with it.
-- [ ] Bootstrap workflow documented in `design.md` and referenced by the user guide task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Generator + MSBuild targets implemented, packed as build assets, no-op when not opted in (variation: comparison logic lives inside the `IIncrementalGenerator`/analyzer in `Ark.Tools.MediatorFramework.ApiSurface.Generators/ApiSurfaceGenerator.cs`, emitting diagnostics directly, rather than a separate MSBuild diff target; no-op-when-not-opted-in test `GeneratorSnapshotTests.cs:2209`).
+- [x] `ARKAPI001`/`ARKAPI002` behave as specified and are unit-tested (`GeneratorSnapshotTests.cs:2152,2169,2190`).
+- [x] Nested type fields produce recursive `CONTRACT`/`GRPC-FIELD` entries; renaming a nested
+      field causes `ARKAPI002` (nested entries `GeneratorSnapshotTests.cs:682`; drift/rename `:2291-2296`).
+- [x] Surface is deterministic across compilations (same input = same output, bit-for-bit) (`GeneratorSnapshotTests.cs:682-711`).
+- [x] Sample Application assembly opted in with committed `ArkApiSurface.txt`; solution build
+      is green with it (`samples/.../Sample.Application/ArkApiSurface.txt` and `Sample.API/ArkApiSurface.txt`).
+- [x] Bootstrap workflow documented in `design.md` and referenced by the user guide task (`design.md:885-910`).
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

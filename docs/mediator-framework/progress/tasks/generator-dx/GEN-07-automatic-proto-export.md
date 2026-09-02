@@ -61,13 +61,14 @@ ensure loading the target assembly does not leave it locked after the export pro
 
 ## Acceptance
 
-- [ ] Sample `Program.cs` contains no `ArkProtoExport.TryHandle` call or proto-export argument handling.
-- [ ] Building the sample exports all generated service protos, shared protos, and declared additional
-      protos without launching the sample entry point.
-- [ ] A consumer with generated gRPC services exports protos automatically with no startup changes.
-- [ ] A consumer with no generated gRPC services produces no automatic proto output and has no startup
-      side effects.
+- [x] Sample `Program.cs` contains no `ArkProtoExport.TryHandle` call or proto-export argument handling.
+- [x] Building the sample exports all generated service protos, shared protos, and declared additional
+      protos without launching the sample entry point (package-owned runner `Ark.Tools.MediatorFramework.Grpc.Export`, invoked from `buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets:11-16`).
+- [x] A consumer with generated gRPC services exports protos automatically with no startup changes
+      (`tests/Ark.Tools.MediatorFramework.Hosting.Contracts` + `GrpcProtoExportTests.cs:18-28`).
+- [x] A consumer with no generated gRPC services produces no automatic proto output and has no startup
+      side effects (gate is `Condition` on the target; opt-out proven via `Hosting.GrpcClient.csproj:8` `ArkExportProto=false`, though this is opt-out rather than a "zero gRPC methods" no-op case specifically).
 - [ ] Export destination override, opt-out, incremental rebuild, relative-path validation, and
-      `@(ArkAdditionalProto)` behavior have automated tests.
+      `@(ArkAdditionalProto)` behavior have automated tests. (destination override/opt-out exercised; no automated test for incremental rebuild, path validation, or `@(ArkAdditionalProto)`)
 - [ ] Full solution build + tests green; package/consumer tests exercise packed `buildTransitive`
-      assets rather than only project-reference behavior.
+      assets rather than only project-reference behavior. (build/tests green, but no automated verification that tests exercise the packed `buildTransitive` asset rather than project-reference behavior)

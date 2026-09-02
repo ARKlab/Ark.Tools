@@ -37,15 +37,15 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] No step definition in the application BDD suite references `HttpClient`,
+- [x] No step definition in the application BDD suite references `HttpClient`,
   `HttpResponseMessage`, `GrpcChannel`, `RpcException`, a URL, status code,
   ProblemDetails, or a serializer.
-- [ ] Every scenario dispatches through a handler interface resolved by the
-  context.
-- [ ] Validation and domain exceptions are asserted with typed exception
-  checks.
-- [ ] Scenario cleanup runs after both successful and failed steps.
-- [ ] The generated `.feature.cs` output builds under strict analyzers.
+- [x] Every scenario dispatches through a handler interface resolved by the
+  context (`Drivers/BookDriver.cs`, `Steps/BookSteps.cs:394,437`).
+- [x] Validation and domain exceptions are asserted with typed exception
+  checks (`BookSteps.cs:493`, `Features/Books.feature:34`).
+- [x] Scenario cleanup runs after both successful and failed steps (`Hooks/SampleTestContext.cs:57-61`, `DatabaseHooks.cs`).
+- [x] The generated `.feature.cs` output builds under strict analyzers (`dotnet build` succeeds with zero warnings).
 
 ## Tests
 

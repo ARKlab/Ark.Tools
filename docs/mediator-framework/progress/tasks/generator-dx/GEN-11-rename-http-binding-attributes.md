@@ -19,5 +19,5 @@ clear.
 - [x] Define `HttpQuery` and `HttpRoute` semantics and XML documentation.
 - [x] Update generators, diagnostics, samples, tests, and user documentation.
 - [x] Verify non-HTTP contracts do not gain ASP.NET Core dependencies.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

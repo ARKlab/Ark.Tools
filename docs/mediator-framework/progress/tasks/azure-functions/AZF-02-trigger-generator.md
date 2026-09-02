@@ -74,12 +74,12 @@ source.
 
 ## Acceptance
 
-- [ ] Every sample `[HttpEndpoint]` has an expected generated Function route in a test fixture.
-- [ ] Function names and routes are deterministic across repeated generator runs.
-- [ ] Unsupported/duplicate contracts fail at compile time with stable diagnostics.
-- [ ] Selected MessagePack-enabled contracts fail at compile time; excluded
-  MessagePack contracts do not block the host.
-- [ ] No Minimal API runtime type appears in generated Function source.
-- [ ] API-surface snapshots record Function endpoints.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Every sample `[HttpEndpoint]` has an expected generated Function route in a test fixture.
+- [ ] Function names and routes are deterministic across repeated generator runs (no dedicated repeated-run/determinism test for `AzureFunctionsEndpointGenerator`).
+- [x] Unsupported/duplicate contracts fail at compile time with stable diagnostics (ARKMF031/ARKMF032, tested in `GeneratorSnapshotTests.cs:639,663`).
+- [x] Selected MessagePack-enabled contracts fail at compile time; excluded
+  MessagePack contracts do not block the host (ARKMF030, `GeneratorSnapshotTests.cs:621`).
+- [x] No Minimal API runtime type appears in generated Function source.
+- [ ] API-surface snapshots record Function endpoints (no `FUNCTION` line format exists in any API-surface baseline; not implemented).
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

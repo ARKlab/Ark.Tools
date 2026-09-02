@@ -71,10 +71,10 @@ Documentation has no unit tests; the enforced checks are:
 
 ## Acceptance
 
-- [ ] All pages in the table exist with the described content.
-- [ ] Every snippet cites the compiled sample file it comes from.
-- [ ] All relative links in `docs/mediator-framework/` resolve (link check performed, result in PR).
-- [ ] `docs/mediator-framework/README.md` and the sample README point at the guide.
-- [ ] No page documents an unimplemented behavior without flagging it as pending.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] All pages in the table exist with the described content (all 16 required pages exist under `docs/mediator-framework/guide/`).
+- [ ] Every snippet cites the compiled sample file it comes from. (spot-check: `guide/testing.md` still shows `GreetingDriver`/`GreetingSteps`/`Feature: Greetings` snippets with no source-file citation — these types no longer exist in the Book-based sample)
+- [x] All relative links in `docs/mediator-framework/` resolve (link check performed: 0 broken relative links across `docs/mediator-framework/**/*.md`).
+- [x] `docs/mediator-framework/README.md` and the sample README point at the guide (`README.md:26`, sample `README.md:445-450`).
+- [ ] No page documents an unimplemented behavior without flagging it as pending. (`guide/testing.md` documents a `Greeting`-era workflow that no longer matches the Book-based sample; `Book_SearchQuery` paging has no `[HttpEndpoint]`/`[GrpcMethod]`, so it is not reachable over any transport, yet the guide does not flag this)
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

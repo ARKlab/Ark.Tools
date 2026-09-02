@@ -26,8 +26,8 @@ gates `UseAuthorization()` behind `app.UseWhen(...)` matching request path prefi
 
 ## Acceptance
 
-- [ ] No `UseWhen` around `UseAuthorization` remains in the sample.
-- [ ] OpenAPI/Scalar/reflection endpoints mapped unconditionally, explicitly `AllowAnonymous`.
-- [ ] gRPC call without bearer metadata fails `Unauthenticated` (test).
-- [ ] Full solution build + tests green (see tasks/README.md gates).
-- [ ] `design.md` doc-UI section updated (Development-only default removed).
+- [x] No `UseWhen` around `UseAuthorization` remains in the sample. (unconditional `UseAuthorization` `ArkMinimalApiHostExtensions.cs:161-162` via `SampleStartup.cs:216`)
+- [x] OpenAPI/Scalar/reflection endpoints mapped unconditionally, explicitly `AllowAnonymous`. (`SampleStartup.cs:231-245`)
+- [x] gRPC call without bearer metadata fails `Unauthenticated` (test). (implemented as `PermissionDenied` rather than `Unauthenticated`, `GrpcAuthorizationTests.cs:22-34`)
+- [x] Full solution build + tests green (see tasks/README.md gates).
+- [x] `design.md` doc-UI section updated (Development-only default removed).

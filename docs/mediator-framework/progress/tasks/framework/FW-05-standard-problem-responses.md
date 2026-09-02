@@ -68,12 +68,12 @@ own declaration wins and the standard one is skipped (no duplicate `Produces` fo
 
 ## Acceptance
 
-- [ ] All generated endpoint kinds declare 400/500 (and 403 unless anonymous) with
-      `application/problem+json`.
-- [ ] No duplicate response declarations when a custom status collides.
-- [ ] Enumerating OpenAPI test over all operations in all documents passes.
-- [ ] Behavioral 400/403/500 tests assert the payload shape and the absence of leaked exception detail.
-- [ ] MessagePack negotiation failure returns a ProblemDetails body.
-- [ ] `design.md` records the HTTP↔gRPC status mapping table.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] All generated endpoint kinds declare 400/500 (and 403 unless anonymous) with
+      `application/problem+json`. (emission with anonymous skip + dedupe `MinimalApiEndpointGenerator.cs:1395-1401`, uses `.Produces<ProblemDetails>(code, "application/problem+json")` instead of `.ProducesProblem` — variation)
+- [x] No duplicate response declarations when a custom status collides. (no-duplicate assertions `GeneratorSnapshotTests.cs:1127-1132`)
+- [ ] Enumerating OpenAPI test over all operations in all documents passes. (the sample OpenAPI test that enumerated all operations was deleted in commit `f48a2da65`; no test enumerates all v1/v2 operations today)
+- [x] Behavioral 400/403/500 tests assert the payload shape and the absence of leaked exception detail. (`MinimalApiErrorsTests.cs:58-119` + `MinimalApiAuthorizationTests.cs:49`)
+- [x] MessagePack negotiation failure returns a ProblemDetails body. (body-failure problem generator `:879-886`)
+- [x] `design.md` records the HTTP↔gRPC status mapping table. (mapping table `design.md:345-346`)
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

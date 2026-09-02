@@ -27,7 +27,7 @@
 
 ## Acceptance
 
-- [ ] Deserialization options use `MessagePackSecurity.UntrustedData` (unit test asserts it).
-- [ ] Host with unformattable MessagePack contract fails fast at startup, error names the contract type (test).
-- [ ] Existing MessagePack negotiation sample/tests still pass.
-- [ ] Full solution build + tests green.
+- [x] Deserialization options use `MessagePackSecurity.UntrustedData` (unit test asserts it). (`ArkMessagePackEx.cs:163`; test `GeneratorSnapshotTests.cs:67`)
+- [x] Host with unformattable MessagePack contract fails fast at startup, error names the contract type (test). (`ArkMessagePackEx.cs:46-79`, emitted at `MinimalApiEndpointGenerator.cs:742-746`; test `GeneratorSnapshotTests.cs:77-79`)
+- [x] Existing MessagePack negotiation sample/tests still pass. (`GeneratorSnapshotTests.cs:1666`)
+- [x] Full solution build + tests green.

@@ -35,7 +35,7 @@ handler translating Skip/Limit to SQL.
 
 ## Acceptance
 
-- [ ] Paged search returns correct slices and total count (tests across at least 2 pages).
-- [ ] Limit/Skip validation → 400 (test).
-- [ ] Works over both HTTP and gRPC (parity test).
-- [ ] Full solution build + tests green.
+- [x] Paged search returns correct slices and total count (tests across at least 2 pages) (`Book_SearchQuery.V1` with `Skip`/`Limit`/`Sort` in `BookContracts.cs:147-171`, handler `SearchBooksHandler.cs`, SQL `OFFSET`/`FETCH` + count `SampleDataContext.cs:323-346`, scenario `Books.feature:70-84`).
+- [ ] Limit/Skip validation → 400 (test). (validator exists — `BookValidators.cs:63-77`, `SearchBooksQueryValidator` — but no test asserts invalid Skip/Limit produces a validation failure/400)
+- [ ] Works over both HTTP and gRPC (parity test). (`Book_SearchQuery.V1` has no `[HttpEndpoint]`/`[GrpcMethod]` attribute, so the query is not exposed over any transport and no parity test exists)
+- [ ] Full solution build + tests green. (targeted work above is incomplete; not asserting the overall gate for this task)

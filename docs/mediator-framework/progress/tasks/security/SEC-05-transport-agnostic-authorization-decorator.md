@@ -48,9 +48,9 @@ a first-class framework story.
 
 ## Acceptance
 
-- [ ] Policy declared once on a contract is enforced for HTTP (403) and Rebus (handler skipped) — tests prove both.
-- [ ] Registration is a single helper call in the composition root.
-- [ ] No new package introduced; extensions live in `Ark.Tools.Solid.Authorization`/`Ark.Tools.Authorization`.
-- [ ] Docs updated; full solution build + tests green.
+- [ ] Policy declared once on a contract is enforced for HTTP (403) and Rebus (handler skipped) — tests prove both. (HTTP 403 proven `MinimalApiAuthorizationTests.cs:38-51`, gRPC parity `GrpcAuthorizationTests.cs:40-53`, sample `Books.feature:37-42`; missing: no test proving the Rebus/bus dispatch path is authorized)
+- [x] Registration is a single helper call in the composition root. (`container.RegisterAuthorization()`, `SampleComposition.cs:64`, `RebusProcessorComposition.cs:64`)
+- [x] No new package introduced; extensions live in `Ark.Tools.Solid.Authorization`/`Ark.Tools.Authorization`. (`src/common/Ark.Tools.Solid.Authorization/Ex.cs:22-45`)
+- [x] Docs updated; full solution build + tests green. (`design.md` ~1005)
 
 **Cross-reference**: depends on SMP-01 registration structure (same decorator wiring section of `Host/ApplicationComposition.cs`); coordinate with FW-01 for `ICommandHandler<>` coverage.

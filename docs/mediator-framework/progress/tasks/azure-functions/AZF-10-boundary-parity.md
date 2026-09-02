@@ -78,19 +78,19 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Acceptance
 
-- [ ] AZD-06, AZD-07, AZD-09 and AZD-10 are recorded as decided.
-- [ ] The complete Core Tools suite runs on every pull request and fails loudly when
-  the host cannot start.
-- [ ] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
-  uploads sanitized host logs on failure.
-- [ ] Every supported sample endpoint has a parity-matrix row and runnable tests.
-- [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
+- [x] AZD-06, AZD-07, AZD-09 and AZD-10 are recorded as decided.
+- [x] The complete Core Tools suite runs on every pull request and fails loudly when
+  the host cannot start (`ci.yml:85-86` installs Core Tools 4.12.1 and the whole-solution `dotnet test` step at `ci.yml:96` includes the boundary project).
+- [x] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
+  uploads sanitized host logs on failure (via the solution-wide test step, not a dedicated job/step for the boundary project alone).
+- [ ] Every supported sample endpoint has a parity-matrix row and runnable tests (the matrix below is stale: it lists retired Greeting-era contracts such as `GetGreetingQuery`/`UploadGreetingCardRequest` instead of the current Book_* sample contracts).
+- [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested (only auth/errors/binding are covered by `AzureFunctionsBoundaryTests.cs` synthetic Echo/Ping contracts; no files/ETag/streaming/Rebus boundary tests exist).
 - [ ] Documentation states all platform limitations and MessagePack and OpenAPI
-  exclusions.
-- [ ] Relative links and cited file/test names resolve.
-- [ ] Changed files pass secret scanning.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+  exclusions (`guide/azure-functions.md` §6 documents the MessagePack exclusion but never mentions OpenAPI).
+- [ ] Relative links and cited file/test names resolve (this file's parity matrix cites a guard named `SelectedApplicationEndpointsMatchTheParityMatrix`, but the actual test is `TestHostEndpointsMatchTheParityMatrix`, `AzureFunctionsBoundaryTests.cs:220`).
+- [x] Changed files pass secret scanning.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
 
 ## Parity matrix
 

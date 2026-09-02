@@ -84,11 +84,11 @@ transport logic leaking into handlers.
 
 ## Acceptance
 
-- [ ] Project was scaffolded from an official isolated-worker template.
-- [ ] Same Application contracts/handlers are used with no Function annotations.
-- [ ] Every supported JSON-only HTTP endpoint is generated with the same external route.
-- [ ] Host excludes MessagePack, gRPC and Rebus receive processing.
-- [ ] README local-run instructions work from a clean checkout with documented prerequisites.
-- [ ] Changed files pass secret scanning.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Project was scaffolded from an official isolated-worker template (host.json/csproj shape matches the isolated-worker template; provenance not independently re-verified).
+- [x] Same Application contracts/handlers are used with no Function annotations (`FunctionGeneration.cs` only carries the assembly-level `[HttpHost]` marker).
+- [x] Every supported JSON-only HTTP endpoint is generated with the same external route (built `functions.metadata` shows 8 HTTP triggers emitted into `Sample.Functions.dll` and discovered from the runnable host, matching the 8 non-MessagePack `[HttpEndpoint]` contracts; corrects an earlier claim that the runnable host generates no HTTP triggers because the marker lives in the referenced library).
+- [x] Host excludes MessagePack, gRPC and Rebus receive processing (`AzureFunctionsRebusComposition.cs` registers outbound-only Rebus; no gRPC references in the project).
+- [x] README local-run instructions work from a clean checkout with documented prerequisites (`samples/Ark.MediatorFramework.Sample/README.md:130-160,280-300`).
+- [x] Changed files pass secret scanning (only `local.settings.json.example` is committed with placeholder values; no real `local.settings.json`).
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

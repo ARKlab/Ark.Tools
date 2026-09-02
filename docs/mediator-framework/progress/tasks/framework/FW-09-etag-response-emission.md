@@ -113,14 +113,14 @@ detail payloads.
 
 ## Acceptance
 
-- [ ] Generator test: an endpoint with an `[ETag]` response property emits the `ApplyResponseETag`
-      call; one without it does not (`GeneratorSnapshotTests.cs` harness).
-- [ ] Unit tests for `ArkETag.ApplyResponseETag`: sets a quoted header; returns `null` for a
+- [x] Generator test: an endpoint with an `[ETag]` response property emits the `ApplyResponseETag`
+      call; one without it does not (`GeneratorSnapshotTests.cs` harness). (`GeneratorSnapshotTests.cs:761-784`)
+- [x] Unit tests for `ArkETag.ApplyResponseETag`: sets a quoted header; returns `null` for a
       null/empty token; throws for a token containing `"` or a control character; returns 304 when
-      `If-None-Match` matches on a conditional GET and `null` when it does not; no 304 for non-GET.
-- [ ] Test asserting the `[ETag]` property is still present in the serialized response body.
-- [ ] Interceptor tests (extend `tests/Ark.Tools.MediatorFramework.Tests/GrpcErrorInterceptorTests.cs`):
+      `If-None-Match` matches on a conditional GET and `null` when it does not; no 304 for non-GET. (`GeneratorSnapshotTests.cs:788-799`)
+- [ ] Test asserting the `[ETag]` property is still present in the serialized response body. (no test found asserting the property survives JSON/response-body serialization, as opposed to the generated-code string checks)
+- [x] Interceptor tests (extend `tests/Ark.Tools.MediatorFramework.Tests/GrpcErrorInterceptorTests.cs`):
       `EntityTagMismatchException` → `FailedPrecondition`, `OptimisticConcurrencyException` →
-      `Aborted`.
-- [ ] `design.md` updated.
-- [ ] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+      `Aborted`. (`GrpcErrorInterceptorTests.cs:74,81`)
+- [x] `design.md` updated. (`design.md:126`; bonus Azure Functions parity `AzureFunctionsResultsTests.cs:29-42`)
+- [x] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.

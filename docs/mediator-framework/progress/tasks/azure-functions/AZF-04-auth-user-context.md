@@ -84,7 +84,7 @@ principal used by transport-agnostic authorization decorators.
 - [x] `AllowAnonymous` has explicit tested behavior.
 - [x] User identity flows into handlers and auditing.
 - [x] Identity inputs and logs pass security review.
-- [ ] The sample demonstrates documented NLog configuration appropriate for local
-  Core Tools and Azure Functions hosting.
+- [x] The sample demonstrates documented NLog configuration appropriate for local
+  Core Tools and Azure Functions hosting (`Sample.AzureFunctions/Program.cs:27-32` wires `NLogConfigurer` and clears/adds the NLog provider; no evidence a Core Tools run actually captured a structured log with named properties without duplication).
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

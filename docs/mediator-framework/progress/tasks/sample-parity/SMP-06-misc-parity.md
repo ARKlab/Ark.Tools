@@ -34,7 +34,7 @@ This task may be split into up to 4 PRs (one per item) if any grows; each sub-it
 
 ## Acceptance
 
-- [ ] AI wiring present and inert without configuration.
-- [ ] Config layering matches ReferenceProject shape; sample still runs standalone.
-- [ ] `IClock` used by handlers; `FakeClock` in tests; NodaTime contract round-trips JSON/MessagePack/protobuf (tests).
-- [ ] Full solution build + tests green.
+- [x] AI wiring present and inert without configuration (`ApplicationInsightsTests.cs:26-36` inertness test; wired in `Program.cs:34/37` and `WebInterface/SampleHost.cs:50`).
+- [x] Config layering matches ReferenceProject shape; sample still runs standalone (optional KeyVault layering `SampleHost.cs:44-48`).
+- [ ] `IClock` used by handlers; `FakeClock` in tests; NodaTime contract round-trips JSON/MessagePack/protobuf (tests). (`IClock` registered `ApplicationComposition.cs:200` and injected in handlers; `FakeClock` in `ApplicationTestContext.cs:57,106`; NodaTime `Instant` used on contracts — but no test round-trips a NodaTime member across JSON + MessagePack + protobuf)
+- [ ] Full solution build + tests green. (NodaTime round-trip coverage above is missing; not asserting the overall gate for this task)

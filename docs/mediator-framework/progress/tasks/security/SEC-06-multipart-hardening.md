@@ -30,7 +30,7 @@ attachment types in `src/mediator-framework/Ark.Tools.MediatorFramework/` — `I
 
 ## Acceptance
 
-- [ ] Path-traversal filename test passes (leaf name only reaches handler).
-- [ ] 413 and 415 behaviors covered by tests.
-- [ ] Antiforgery posture explicit in emitted code and documented.
-- [ ] Existing sample upload scenarios green; full solution build + tests green.
+- [x] Path-traversal filename test passes (leaf name only reaches handler). (filename sanitize `MinimalApiEndpointGenerator.cs:1279` + `GeneratorSnapshotTests.cs:1718-1720`)
+- [x] 413 and 415 behaviors covered by tests. (415 `MinimalApiAttachmentsTests.cs:114`, 413 `:133`)
+- [x] Antiforgery posture explicit in emitted code and documented. (limits `HttpEndpointAttribute.cs:57-77` and generator `:1239,:1353`; explicit `DisableAntiforgery` generator `:1351` + snapshot `:1690`)
+- [x] Existing sample upload scenarios green; full solution build + tests green. (docs `design.md:237-238`, `migration-from-mvc.md:78-80`)

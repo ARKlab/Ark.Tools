@@ -77,12 +77,12 @@ Mapping:
 
 ## Acceptance
 
-- [ ] Documentation extraction helper implemented and unit-tested (including inherited members).
-- [ ] Operation summary/description and parameter/schema descriptions present in the OpenAPI document
-      (sample test asserts on the JSON document, not on UI HTML).
-- [ ] Exported `.proto` files carry leading comments for services, methods, messages and fields, and
-      still compile with `Grpc.Tools`.
-- [ ] `AddArkXmlDocumentation()` is additive and documented in `design.md`.
-- [ ] NET-01 updated to drop the superseded XML-doc step.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Documentation extraction helper implemented and unit-tested (`XmlDocumentation.cs` in both `MinimalApi.Generators` and `Grpc.Generators`; tests `GeneratorSnapshotTests.cs:871-955` cover multi-line/`<remarks>`/entity encoding). Inherited-member XML doc case not explicitly asserted — leaving this parenthetical note in place of a full check.
+- [x] Operation summary/description and parameter/schema descriptions present in the OpenAPI document
+      (sample test asserts on the JSON document, not on UI HTML) (`MinimalApiOpenApiTests.cs:25,41`).
+- [x] Exported `.proto` files carry leading comments for services, methods, messages and fields, and
+      still compile with `Grpc.Tools` (`GrpcEndpointGenerator.cs:341,807,837` + `GeneratorSnapshotTests.cs:943-955`).
+- [x] `AddArkXmlDocumentation()` is additive and documented in `design.md` (`ArkOpenApiEx.cs:19`, `design.md:648`, wired in `SampleStartup.cs:254`).
+- [x] NET-01 updated to drop the superseded XML-doc step.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

@@ -49,8 +49,8 @@ same mapping.
 
 ## Acceptance
 
-- [ ] New package builds, packs, and is referenced by `Ark.Tools.AspNetCore` (which keeps behavior as-is; its tests unchanged and green).
-- [ ] Mediator sample uses the shared mapping; sample-local handler deleted.
-- [ ] 403/404/400/409/500 mapping tests pass on the mediator host.
-- [ ] `packages.lock.json` files updated; full solution build + tests green.
-- [ ] `design.md` error-mapping section updated.
+- [x] New package builds, packs, and is referenced by `Ark.Tools.AspNetCore` (which keeps behavior as-is; its tests unchanged and green). (`src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/`, referenced by `Ark.Tools.AspNetCore.csproj:50`)
+- [x] Mediator sample uses the shared mapping; sample-local handler deleted. (referenced by `MinimalApi` csproj:26)
+- [x] 403/404/400/409/500 mapping tests pass on the mediator host. (`tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/ProblemDetailsShapeTests.cs`, `tests/Ark.Tools.MediatorFramework.Tests/ProblemDetailsMapperTests.cs`, `MinimalApiErrorsTests.cs:58,78,99`, `MinimalApiAuthorizationTests.cs:49`)
+- [x] `packages.lock.json` files updated; full solution build + tests green.
+- [x] `design.md` error-mapping section updated.

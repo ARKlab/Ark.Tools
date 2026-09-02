@@ -41,8 +41,8 @@
 
 ## Acceptance
 
-- [ ] HTTP-only command → 204; dual `[RebusMessage]` command → 202 with bus dispatch (tests for both).
-- [ ] `.Produces(...)` metadata matches actual codes (OpenAPI document test).
-- [ ] gRPC command RPC exists, returns Empty (test via generated Grpc client).
-- [ ] Rebus-only command contracts consumable from the bus (test).
-- [ ] `design.md` documents D4; full solution build + tests green.
+- [ ] HTTP-only command → 204; dual `[RebusMessage]` command → 202 with bus dispatch (tests for both). (implementation present: `MinimalApiEndpointGenerator.cs:1284` emits 202+`bus.Advanced.Routing.Send` when dual, else 204; snapshot tests `GeneratorSnapshotTests.cs:1136-1151`; missing: no behavioral HTTP test asserting 204/202 on a live command endpoint)
+- [ ] `.Produces(...)` metadata matches actual codes (OpenAPI document test). (`.Produces` emitted at `MinimalApiEndpointGenerator.cs:1343`; missing: no OpenAPI document assertion of command status codes)
+- [x] gRPC command RPC exists, returns Empty (test via generated Grpc client). (`GrpcEndpointGenerator.cs:298,534,603` + `GrpcUnaryTests.cs:44-59`)
+- [x] Rebus-only command contracts consumable from the bus (test). (`HostingFixtureTests.cs:58-81`, `GeneratorSnapshotTests.cs:1275`)
+- [x] `design.md` documents D4; full solution build + tests green. (`design.md:180-182`)

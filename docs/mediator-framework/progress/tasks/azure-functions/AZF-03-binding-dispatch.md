@@ -73,10 +73,10 @@ bind the existing contract and invoke its exact decorated handler safely.
 
 ## Acceptance
 
-- [ ] Route/query/body precedence matches the documented Minimal API rules.
-- [ ] Server-owned fields cannot be mass-assigned.
-- [ ] JSON options match the sample's existing JSON wire format.
-- [ ] No reflection-based mediator dispatch is introduced.
-- [ ] Invocation scope and cancellation behavior are tested.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Route/query/body precedence matches the documented Minimal API rules (`AzureFunctionsBoundaryTests.cs:141-170`; generator snapshot tests).
+- [x] Server-owned fields cannot be mass-assigned (`ArkAzureFunctionsInvocation.cs:186` resets `[ServerSet]` properties after binding, and the generator excludes them from route/query binding — corrects an earlier claim that Azure Functions has no `[ServerSet]` handling; no dedicated Functions-path test exists for this specific behavior though).
+- [x] JSON options match the sample's existing JSON wire format.
+- [x] No reflection-based mediator dispatch is introduced.
+- [ ] Invocation scope and cancellation behavior are tested (cancellation rethrow is snapshot-tested, `GeneratorSnapshotTests.cs:346-361`; no explicit scope-disposal test exists).
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

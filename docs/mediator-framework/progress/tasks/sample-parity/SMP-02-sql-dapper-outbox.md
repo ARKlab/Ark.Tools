@@ -33,8 +33,8 @@ production pattern: Dapper over SQL Server with a transactional **Outbox**.
 
 ## Acceptance
 
-- [x] CRUD scenarios pass against SQL Server via docker-compose (opt-in SQL Reqnroll path).
-- [x] Bus message is enlisted in the same SQL transaction as the greeting write.
-- [x] Test DB reset between scenarios (no cross-scenario leakage).
-- [x] README of the sample documents `docker compose up -d` prerequisite.
-- [ ] Lockfiles updated; full solution build + tests green.
+- [x] CRUD scenarios pass against SQL Server via docker-compose (opt-in SQL Reqnroll path) (domain variation: sample uses `Book` entities rather than `Greeting`; `ApplicationTestContext.cs:72-79` gates SQL-vs-in-memory via `ARK_SAMPLE_INMEMORY_TESTS`).
+- [x] Bus message is enlisted in the same SQL transaction as the greeting write (`NativeOutboxIntegrationTests.cs:25-51`, wiring `ApplicationComposition.cs:47-58,153`).
+- [x] Test DB reset between scenarios (no cross-scenario leakage) (`Hooks/DatabaseHooks.cs:62-78` + `ops/ResetFull_OnlyForTesting.sql`).
+- [x] README of the sample documents `docker compose up -d` prerequisite (`README.md:165-185`).
+- [x] Lockfiles updated; full solution build + tests green.

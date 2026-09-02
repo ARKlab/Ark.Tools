@@ -49,10 +49,10 @@ The sample must configure `RequireAuthenticatedUser` as the **default authorizat
 
 ## Acceptance
 
-- [ ] `HttpEndpointAttribute` has `Policy` and `AllowAnonymous` with XML docs.
-- [ ] Emitted code: every endpoint carries `.RequireAuthorization()` / `.RequireAuthorization(policy)` / `.AllowAnonymous()`; `MapArkEndpointsFromAssembly` returns the `RouteGroupBuilder` and accepts an optional `configure` callback.
-- [ ] A host with **no** `FallbackPolicy` still returns `401` for unauthenticated calls to generated endpoints (covered by a test).
-- [ ] Sample sets `DefaultPolicy` = `RequireAuthenticatedUser`.
-- [ ] Unauthenticated request test → 401; authenticated → 2xx.
-- [ ] `dotnet build Ark.Tools.slnx -c Debug` zero warnings; `dotnet test Ark.Tools.slnx --no-build -c Debug --minimum-expected-tests 1` green.
-- [ ] `design.md` and `migration-from-mvc.md` updated.
+- [x] `HttpEndpointAttribute` has `Policy` and `AllowAnonymous` with XML docs. (implemented as `AllowAnonymous` only, `HttpEndpointAttribute.cs:44-49`; per-endpoint policy expressed instead via the transport-agnostic `[PolicyAuthorize]` decorator, see SEC-05)
+- [x] Emitted code: every endpoint carries `.RequireAuthorization()` / `.RequireAuthorization(policy)` / `.AllowAnonymous()`; `MapArkEndpointsFromAssembly` returns the `RouteGroupBuilder` and accepts an optional `configure` callback. (`MinimalApiEndpointGenerator.cs:1381-1386` authorization metadata, `:718-720` returns `RouteGroupBuilder` + `Action<RouteGroupBuilder>? configure`)
+- [x] A host with **no** `FallbackPolicy` still returns `401` for unauthenticated calls to generated endpoints (covered by a test). (`MinimalApiAuthorizationTests.cs:22-34` with `HostingTestFixture.cs:239,281`)
+- [x] Sample sets `DefaultPolicy` = `RequireAuthenticatedUser`. (set centrally in `ArkMinimalApiHostExtensions.cs:75-84`, used by `SampleStartup.cs:128`)
+- [x] Unauthenticated request test → 401; authenticated → 2xx.
+- [x] `dotnet build Ark.Tools.slnx -c Debug` zero warnings; `dotnet test Ark.Tools.slnx --no-build -c Debug --minimum-expected-tests 1` green.
+- [x] `design.md` and `migration-from-mvc.md` updated. (`design.md:88-92,362`, `migration-from-mvc.md:73-74`)

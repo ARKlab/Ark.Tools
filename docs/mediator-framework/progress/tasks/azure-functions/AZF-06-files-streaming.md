@@ -72,10 +72,10 @@ Functions host behavior rather than ordinary JSON result serialization.
 
 ## Acceptance
 
-- [ ] Upload hardening matches Minimal API and is security-tested.
-- [ ] Downloads preserve bytes/metadata and dispose resources correctly.
-- [ ] AZD-06 is resolved and Core Tools evidence is committed.
-- [ ] No multipart/file path buffers full file content without a documented bound.
-- [ ] MessagePack and SSE are not implemented.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [ ] Upload hardening matches Minimal API and is security-tested (only one sanitization test, `AzureFunctionsHttpTests.ReadsAndSanitizesMultipartAttachment`; no 415/malformed-multipart/size-limit/`MaxFileCount` rejection tests).
+- [ ] Downloads preserve bytes/metadata and dispose resources correctly (no download null-404/cancellation/disposal test found for the Functions path).
+- [ ] AZD-06 is resolved and Core Tools evidence is committed (decision recorded as DECIDED, but no Core Tools E2E test proves the release gate; `WriteJsonStreamAsync`/`StreamsJsonArrayWithoutBuffering` is in-process only, and the generator already emits `IAsyncEnumerable<T>` triggers without the required committed proof).
+- [x] No multipart/file path buffers full file content without a documented bound (`ArkAzureFunctionsHttp.ReadAttachmentsAsync`/`WriteJsonStreamAsync` are incremental).
+- [x] MessagePack and SSE are not implemented.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

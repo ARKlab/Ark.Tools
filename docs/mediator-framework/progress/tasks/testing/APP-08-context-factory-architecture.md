@@ -24,14 +24,14 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Repository search finds no application `Store` abstraction.
-- [ ] Handlers visibly own transaction boundaries and lock/idempotency choices.
-- [ ] Handlers use the same always-enabled outbox enlistment path for SQL and
-  in-memory contexts.
-- [ ] SQL and in-memory context factories pass the same application scenarios.
-- [ ] Domain services are singleton and reusable by requests and messages.
-- [ ] External adapters are mockable and covered by binding drivers.
-- [ ] No test step resolves a persistence context for business assertions.
+- [x] Repository search finds no application `Store` abstraction (no `I*Store` interfaces exist; `Services/DocumentStore.cs` is a concrete singleton in-memory cache, not a repository abstraction, though its name is a legacy naming smell).
+- [x] Handlers visibly own transaction boundaries and lock/idempotency choices (`CreateBookHandler.cs:32-38`; `CreateBookPrintProcessHandler.cs` guards against a duplicate running process before committing).
+- [x] Handlers use the same always-enabled outbox enlistment path for SQL and
+  in-memory contexts (`CreateBookPrintProcessHandler.cs:57-59`; wired for both profiles in `ApplicationComposition.cs:173-186`).
+- [x] SQL and in-memory context factories pass the same application scenarios (`ApplicationTestContext.cs:71-77` profile switch; sample suite documented to run against both).
+- [ ] Domain services are singleton and reusable by requests and messages (only `DocumentStore` and `PrintCompletedNotificationService` are extracted as singletons; most business rules remain inline in handlers rather than in dedicated domain services).
+- [x] External adapters are mockable and covered by binding drivers (`Fakes/MockPrintCompletedNotificationService.cs`, `Fakes/ScenarioExternalServiceBinding.cs`, `Drivers/PrintCompletionNotificationDriver.cs`).
+- [ ] No test step resolves a persistence context for business assertions (`Steps/BookPrintingProcessSteps.cs:112` still resolves `ISampleDataContext` via `CreateDataContextAsync`, for scenario seeding rather than assertion, but the capability remains exposed to a step).
 
 ## Tests
 

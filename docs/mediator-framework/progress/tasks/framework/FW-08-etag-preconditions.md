@@ -157,18 +157,18 @@ Add `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkETag.cs` (
 
 ## Acceptance
 
-- [ ] `ETagAttribute` added to the core package with XML docs; no new dependencies anywhere.
-- [ ] Generator tests in `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
+- [x] `ETagAttribute` added to the core package with XML docs; no new dependencies anywhere. (`src/mediator-framework/Ark.Tools.MediatorFramework/ETagAttribute.cs`)
+- [x] Generator tests in `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
       (follow the existing `CSharpGeneratorDriver` harness):
       a contract with an `[ETag]` property emits the header-binding assignment; a non-`string`
-      `[ETag]` property reports `ARKMF017`; two `[ETag]` properties report `ARKMF018`.
+      `[ETag]` property reports `ARKMF017`; two `[ETag]` properties report `ARKMF018`. (`ARKMF017`/`ARKMF018` `DiagnosticDescriptors.cs:27,31` + `GeneratorSnapshotTests.cs:1155-1170,1190-1191`)
 - [ ] Test proving the `If-Match` header wins over a token supplied in the request body, and that the
-      body token is used when no precondition header is present.
-- [ ] Test proving the `[ETag]` property is present in the generated request schema (not filtered).
-- [ ] Test for `ArkETag.ReadPrecondition`: `If-Match: "abc"` → `abc`; `If-None-Match: *` → `*`;
-      neither header → `null`.
-- [ ] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character.
+      body token is used when no precondition header is present. (no test found asserting header-over-body precedence)
+- [ ] Test proving the `[ETag]` property is present in the generated request schema (not filtered). (no OpenAPI request-schema test found for `[ETag]` properties)
+- [x] Test for `ArkETag.ReadPrecondition`: `If-Match: "abc"` → `abc`; `If-None-Match: *` → `*`;
+      neither header → `null`. (`GeneratorSnapshotTests.cs:1198-1207`)
+- [x] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character. (`GeneratorSnapshotTests.cs:1198-1207`)
 - [ ] `.proto` export for a contract with an `[ETag]` property still contains the field (gRPC parity
-      unchanged) — assert in an existing gRPC generator test.
-- [ ] `design.md` updated with the D9 section.
-- [ ] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+      unchanged) — assert in an existing gRPC generator test. (no gRPC generator/proto-export test references `[ETag]`)
+- [x] `design.md` updated with the D9 section.
+- [x] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.

@@ -80,14 +80,14 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 ## Acceptance
 
-- [ ] AZD-01, AZD-02, AZD-09 and AZD-10 are recorded as decided.
-- [ ] New public APIs have XML docs and API-surface baselines.
-- [ ] Existing Minimal API snapshots and behavior remain unchanged.
-- [ ] Both HTTP generators support the shared assembly marker and version prefix.
+- [x] AZD-01, AZD-02, AZD-09 and AZD-10 are recorded as decided.
+- [ ] New public APIs have XML docs and API-surface baselines (`HttpHostAttribute.cs` has complete XML docs, but there is no Azure Functions API-surface baseline/snapshot recording `FUNCTION` entries).
+- [x] Existing Minimal API snapshots and behavior remain unchanged.
+- [ ] Both HTTP generators support the shared assembly marker and version prefix (the Functions generator consumes `[HttpHost]`; the Minimal API generator does not honor it and has no shared marker path).
 - [ ] Host selection composes assemblies and supports validated exact
-  inclusion/exclusion.
-- [ ] Generator absence/marker diagnostics are deterministic and tested.
-- [ ] NuGet package contains its analyzer and no unintended implementation assets.
-- [ ] Changed package versions have advisory review and regenerated lock files.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+  inclusion/exclusion (multiple `[HttpHost]` markers are processed and `IncludedContracts`/`ExcludedContracts` are honored in `AzureFunctionsEndpointGenerator.cs`, but there is no test coverage and no diagnostic for conflicting version prefixes across markers).
+- [ ] Generator absence/marker diagnostics are deterministic and tested (no missing-marker or invalid-prefix diagnostic exists; only messaging-related ARKMF033-039 and HTTP-selection ARKMF030-032 diagnostics are implemented).
+- [x] NuGet package contains its analyzer and no unintended implementation assets.
+- [x] Changed package versions have advisory review and regenerated lock files.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
