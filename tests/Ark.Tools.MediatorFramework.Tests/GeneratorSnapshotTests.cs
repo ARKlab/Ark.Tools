@@ -2245,24 +2245,50 @@ public sealed class GeneratorSnapshotTests
 
         var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
 
-        snapshot.Should().Contain("MESSAGE RecalculatePrint -> name:recalculate_print former:legacy_recalculate");
-        snapshot.Should().Contain("EVENT PrintCompleted -> name:books.print_completed former:legacy_print_completed");
         snapshot.Should().Contain(
-            "PARTICIPANT PrintingParticipant -> network:BookMessagingNetwork identity:printing"
-            + " processes:recalculate_print publishes:books.print_completed subscribes:-"
-            + " serializers:json|messagepack default:json");
+            """
+            EVENT PrintCompleted
+              name: books.print_completed
+              former: legacy_print_completed
+            END
+            """);
         snapshot.Should().Contain(
-            "NETWORK BookMessagingNetwork -> members:PrintingParticipant requires:receive|pubsub");
+            """
+            MESSAGE RecalculatePrint
+              name: recalculate_print
+              former: legacy_recalculate
+            END
+            """);
+        snapshot.Should().Contain(
+            """
+            PARTICIPANT PrintingParticipant
+              network: BookMessagingNetwork
+              identity: printing
+              processes: recalculate_print
+              publishes: books.print_completed
+              subscribes: -
+              serializers: json|messagepack
+              default: json
+            END
+            """);
+        snapshot.Should().Contain(
+            """
+            NETWORK BookMessagingNetwork
+              members: PrintingParticipant
+              requires: pubsub|receive
+            END
+            """);
 
         var result = _runApiSurfaceGeneratorResult(
             source,
             snapshot.Replace("legacy_recalculate", "older_recalculate", StringComparison.Ordinal),
             enabled: true);
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002" && d.GetMessage().Contains("RecalculatePrint"));
+        result.Diagnostics.Should().Contain(
+            d => d.Id == "ARKAPI002" && d.GetMessage().Contains("RecalculatePrint.former"));
     }
 
     [TestMethod]
-    public void ApiSurfaceGeneratorAcceptsMessagingSnapshotPrefixes()
+    public void ApiSurfaceGeneratorRejectsLegacyMessagingSnapshotLines()
     {
         var result = _runApiSurfaceGeneratorResult(
             """
@@ -2273,8 +2299,66 @@ public sealed class GeneratorSnapshotTests
             baseline: "/*\nMESSAGE RecalculatePrint -> name:recalculate_print former:-\n*/\n",
             enabled: true);
 
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI004");
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+        result.Diagnostics.Should().Contain(
+            d => d.Id == "ARKAPI004" && d.GetMessage().Contains("multiline"));
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorRejectsMalformedMessagingBlocks()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            [Message]
+            public sealed class RecalculatePrint { }
+            """;
+        var baselines = new[]
+        {
+            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  name: duplicate\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  former: -\n  name: recalculate_print\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  unknown: value\n  former: -\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former: a|a\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former: -\n",
+            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former: -\nMESSAGE Nested\n  name: nested\n  former: -\nEND\nEND\n*/\n",
+        };
+
+        foreach (var baseline in baselines)
+        {
+            var result = _runApiSurfaceGeneratorResult(source, baseline, enabled: true);
+            result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKAPI004");
+        }
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorSortsMessagingBlocksAndSetValues()
+    {
+        var generated = _runApiSurfaceGeneratorResult(
+            """
+            using Ark.Tools.MediatorFramework;
+            [Message(Name = "zeta", FormerNames = new[] { "z", "a" })]
+            public sealed class ZMessage { }
+            [Message(Name = "alpha")]
+            public sealed class AMessage { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(ZMessage), typeof(AMessage) },
+                Serializers = new[] { SerializationProtocol.MessagePack, SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class ZParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(ZParticipant) },
+                Requires = MessagingCapabilities.PubSub | MessagingCapabilities.SendReceive)]
+            public sealed class ANetwork { }
+            """,
+            baseline: null,
+            enabled: false).Generated;
+
+        generated.IndexOf("EVENT ", StringComparison.Ordinal).Should().BeLessThan(0);
+        generated.IndexOf("MESSAGE AMessage", StringComparison.Ordinal)
+            .Should().BeLessThan(generated.IndexOf("MESSAGE ZMessage", StringComparison.Ordinal));
+        generated.Should().Contain("former: a|z");
+        generated.Should().Contain("processes: alpha|zeta");
+        generated.Should().Contain("serializers: json|messagepack");
+        generated.Should().Contain("requires: pubsub|receive");
     }
 
     [TestMethod]
