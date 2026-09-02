@@ -28,7 +28,7 @@ public enum MessagingFunctionsRuntimeTransport
 }
 
 /// <summary>Composes generated messaging participants in Azure Functions hosts.</summary>
-public static class MessagingFunctionsServiceCollectionExtensions
+internal static class MessagingFunctionsServiceCollectionExtensions
 {
     /// <summary>
     /// Composes the generated participant with an Azure transport selected from configuration.
@@ -117,7 +117,7 @@ public static class MessagingFunctionsServiceCollectionExtensions
         _registerSteps(container, manifest.IncomingSteps);
         _registerSteps(container, manifest.OutgoingSteps);
         management ??= transport as IMessagingTransportManagement;
-        services.AddArkMessagingParticipant(
+        services._addArkMessagingParticipant(
             descriptor,
             transport,
             dataBus,
@@ -219,7 +219,10 @@ public static class MessagingFunctionsServiceCollectionExtensions
                 throw _missingConfiguration(
                     manifest.ConnectionConfigurationKey,
                     "fullyQualifiedNamespace");
-            var credential = _createCredential(configuration, manifest.ConnectionConfigurationKey);
+            var credential = _createCredential(
+                configuration,
+                manifest.ConnectionConfigurationKey,
+                manifest.ManagedIdentityConfigurationKey);
             client = new ServiceBusClient(serviceNamespace, credential);
             administration = new ServiceBusAdministrationClient(serviceNamespace, credential);
         }
@@ -259,7 +262,8 @@ public static class MessagingFunctionsServiceCollectionExtensions
                         manifest.ConnectionConfigurationKey));
             TokenCredential credential = _createCredential(
                 configuration,
-                manifest.ConnectionConfigurationKey);
+                manifest.ConnectionConfigurationKey,
+                manifest.ManagedIdentityConfigurationKey);
             client = new QueueServiceClient(serviceUri, credential);
             transport = new StorageQueueMessagingTransport(
                 serviceUri,
@@ -271,7 +275,8 @@ public static class MessagingFunctionsServiceCollectionExtensions
         {
             TokenCredential credential = _createCredential(
                 configuration,
-                manifest.ConnectionConfigurationKey);
+                manifest.ConnectionConfigurationKey,
+                manifest.ManagedIdentityConfigurationKey);
             client = new QueueServiceClient(serviceUri, credential);
             transport = new StorageQueueMessagingTransport(
                 serviceUri,
@@ -392,10 +397,12 @@ public static class MessagingFunctionsServiceCollectionExtensions
 
     private static TokenCredential _createCredential(
         IConfiguration configuration,
-        string connectionConfigurationKey)
+        string connectionConfigurationKey,
+        string? managedIdentityConfigurationKey)
     {
         var clientId = configuration[
-            string.Concat(connectionConfigurationKey, ":clientId")];
+            managedIdentityConfigurationKey
+                ?? string.Concat(connectionConfigurationKey, ":clientId")];
         return new DefaultAzureCredential(new DefaultAzureCredentialOptions
         {
             ManagedIdentityClientId = string.IsNullOrWhiteSpace(clientId) ? null : clientId

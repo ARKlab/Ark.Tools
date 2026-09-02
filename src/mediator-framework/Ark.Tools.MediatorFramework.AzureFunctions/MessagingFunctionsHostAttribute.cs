@@ -37,6 +37,9 @@ public sealed class MessagingFunctionsHostAttribute : Attribute
     /// <summary>Gets or sets the host configuration key containing the transport connection.</summary>
     public string? ConnectionConfigurationKey { get; set; }
 
+    /// <summary>Gets or sets the host configuration key containing the managed identity client id.</summary>
+    public string? ManagedIdentityConfigurationKey { get; set; }
+
     /// <summary>Gets or sets host-local incoming pipeline step types.</summary>
     public Type[] IncomingSteps { get; set; } = Array.Empty<Type>();
 

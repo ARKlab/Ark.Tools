@@ -64,4 +64,4 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend,
     MaximumSchedulingDelaySeconds = 3600)]
-public static partial class SampleMessagingNetwork;
+public sealed partial class SampleMessagingNetwork;

@@ -247,8 +247,9 @@ do not point their processors at the same outbox rows.
 
 ## Native AMF topology
 
-`BookPrintCompleted` is declared once in the Application assembly. The
-publisher participant owns its topic; the Azure Functions host records
+`BookPrintCompleted` is declared once in the Application assembly. Its logical
+topic is `sample-messaging-publisher-books/book-print.completed`; Service Bus
+maps it to the native topic below. The publisher participant owns its topic; the Azure Functions host records
 notification effects; and the separate AuditFunctions host records audit
 effects. The topic forwards independent copies to the
 `sample-messaging-notification` and `sample-messaging-audit` queues:
@@ -258,7 +259,7 @@ native publisher / native SQL outbox
         |
         | amf1-* headers + native envelope
         v
-sample-messaging-publisher-books-book-print.completed topic
+sample-messaging-publisher-books-book-print.completed-d320f7b71a7f80da8b35e92355395b14c45c7763a520b5aec672ad65d77b26aa topic
         |
         +---- forwarding subscription ----> sample-messaging-notification
         |                                      |
@@ -305,8 +306,8 @@ dotnet run \
   --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.OutboxProcessor
 ```
 
-Native senders call `AddArkMessagingOutboxEnqueue`; this only enables
-transactional enqueue. `Ark.MediatorFramework.Sample.OutboxProcessor` registers
+Native senders call fluent `UseOutbox`; this only enables transactional enqueue.
+`Ark.MediatorFramework.Sample.OutboxProcessor` registers
 the single `MessagingOutboxProcessor` hosted service under the reserved
 `outbox-processor` identity. Successful broker acceptance commits deletion of a
 peek-locked batch. Failures roll the SQL transaction back so the batch remains
@@ -324,11 +325,11 @@ host accepts a Service Bus connection string locally and uses
 `DefaultAzureCredential` for a namespace in managed environments. Do not commit
 credentials or `local.settings.json`.
 
-For claim-check payloads, the sample can use the production Azure Blob provider
-without changing message contracts:
+For claim-check payloads, the sample can select the production Azure Blob provider
+with `UseAzureBlobDataBus` without changing message contracts:
 
 ```csharp
-services.AddArkAzureBlobMessagingDataBus(
+messaging.UseAzureBlobDataBus(
     new AzureBlobDataBusOptions
     {
         ContainerName = "amf1-databus",
@@ -337,8 +338,7 @@ services.AddArkAzureBlobMessagingDataBus(
         ConnectionString = configuration.GetConnectionString("AzureBlobDataBus")
             ?? throw new InvalidOperationException(
                 "Azure Blob DataBus configuration is required.")
-    },
-    networkOptions);
+    });
 ```
 
 Local tests may set that connection string to `UseDevelopmentStorage=true`.

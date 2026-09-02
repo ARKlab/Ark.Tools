@@ -7,13 +7,13 @@ using Ark.Tools.MediatorFramework.Messaging;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
-/// <summary>Describes one desired Service Bus event subscription.</summary>
+/// <summary>Describes one desired Service Bus event subscription using provider-native entity names.</summary>
 public sealed class MessagingFunctionsSubscription
 {
     /// <summary>Creates one desired forwarding subscription.</summary>
-    /// <param name="topic">The event topic.</param>
-    /// <param name="name">The deterministic subscription name.</param>
-    /// <param name="forwardToQueue">The participant identity queue.</param>
+    /// <param name="topic">The provider-native event topic.</param>
+    /// <param name="name">The provider-native deterministic subscription name.</param>
+    /// <param name="forwardToQueue">The provider-native participant identity queue.</param>
     public MessagingFunctionsSubscription(string topic, string name, string forwardToQueue)
     {
         ArgumentException.ThrowIfNullOrEmpty(topic);
@@ -24,13 +24,13 @@ public sealed class MessagingFunctionsSubscription
         ForwardToQueue = forwardToQueue;
     }
 
-    /// <summary>Gets the event topic.</summary>
+    /// <summary>Gets the provider-native event topic.</summary>
     public string Topic { get; }
 
-    /// <summary>Gets the deterministic subscription name.</summary>
+    /// <summary>Gets the provider-native deterministic subscription name.</summary>
     public string Name { get; }
 
-    /// <summary>Gets the participant identity queue receiving forwarded copies.</summary>
+    /// <summary>Gets the provider-native participant identity queue receiving forwarded copies.</summary>
     public string ForwardToQueue { get; }
 }
 
@@ -41,11 +41,15 @@ public sealed class MessagingFunctionsManifest
     /// <param name="participant">The bound participant type.</param>
     /// <param name="network">The participant network type.</param>
     /// <param name="triggerBinding">The selected trigger binding.</param>
-    /// <param name="queue">The participant identity queue.</param>
+    /// <param name="queue">
+    /// The provider-native participant identity queue. When <paramref name="resources"/> is omitted, this value is also
+    /// used as the logical participant and queue name in the fallback resource manifest.
+    /// </param>
     /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <param name="managedIdentityConfigurationKey">The optional managed identity client id setting name.</param>
     /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
     /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
-    /// <param name="subscriptions">The desired forwarding subscriptions.</param>
+    /// <param name="subscriptions">The provider-native forwarding subscriptions.</param>
     /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
     /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
     /// <param name="retryDelay">The participant retry visibility delay.</param>
@@ -64,7 +68,8 @@ public sealed class MessagingFunctionsManifest
         IEnumerable<Type> outgoingSteps,
         TimeSpan? retryDelay = null,
         bool strictStorageQueueHostSettings = false,
-        MessagingResourceManifest? resources = null)
+        MessagingResourceManifest? resources = null,
+        string? managedIdentityConfigurationKey = null)
         : this(
             participant,
             network,
@@ -79,7 +84,8 @@ public sealed class MessagingFunctionsManifest
             outgoingSteps,
             retryDelay,
             strictStorageQueueHostSettings,
-            resources)
+            resources,
+            managedIdentityConfigurationKey)
     {
     }
 
@@ -88,11 +94,15 @@ public sealed class MessagingFunctionsManifest
     /// <param name="network">The participant network type.</param>
     /// <param name="descriptor">The generated participant runtime descriptor.</param>
     /// <param name="triggerBinding">The selected trigger binding.</param>
-    /// <param name="queue">The participant identity queue.</param>
+    /// <param name="queue">
+    /// The provider-native participant identity queue. When <paramref name="resources"/> is omitted, this value is also
+    /// used as the logical participant and queue name in the fallback resource manifest.
+    /// </param>
     /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <param name="managedIdentityConfigurationKey">The optional managed identity client id setting name.</param>
     /// <param name="maximumDeliveryCount">The native entity delivery limit.</param>
     /// <param name="maximumHandlerDuration">The maximum handler duration covered by lock renewal.</param>
-    /// <param name="subscriptions">The desired forwarding subscriptions.</param>
+    /// <param name="subscriptions">The provider-native forwarding subscriptions.</param>
     /// <param name="incomingSteps">The host-local incoming pipeline steps.</param>
     /// <param name="outgoingSteps">The host-local outgoing pipeline steps.</param>
     /// <param name="retryDelay">The participant retry visibility delay.</param>
@@ -112,7 +122,8 @@ public sealed class MessagingFunctionsManifest
         IEnumerable<Type> outgoingSteps,
         TimeSpan? retryDelay = null,
         bool strictStorageQueueHostSettings = false,
-        MessagingResourceManifest? resources = null)
+        MessagingResourceManifest? resources = null,
+        string? managedIdentityConfigurationKey = null)
     {
         Participant = participant ?? throw new ArgumentNullException(nameof(participant));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -128,6 +139,7 @@ public sealed class MessagingFunctionsManifest
         TriggerBinding = triggerBinding;
         Queue = queue;
         ConnectionConfigurationKey = connectionConfigurationKey;
+        ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
         MaximumDeliveryCount = maximumDeliveryCount;
         MaximumHandlerDuration = maximumHandlerDuration;
         Subscriptions = new ReadOnlyCollection<MessagingFunctionsSubscription>(subscriptions.ToArray());
@@ -157,11 +169,17 @@ public sealed class MessagingFunctionsManifest
     /// <summary>Gets the compile-time trigger binding.</summary>
     public MessagingFunctionsTriggerBinding TriggerBinding { get; }
 
-    /// <summary>Gets the participant identity queue.</summary>
+    /// <summary>
+    /// Gets the provider-native participant identity queue. The transport-neutral logical identity is represented in
+    /// <see cref="Resources"/> where applicable.
+    /// </summary>
     public string Queue { get; }
 
     /// <summary>Gets the Functions connection setting name.</summary>
     public string ConnectionConfigurationKey { get; }
+
+    /// <summary>Gets the optional managed identity client id setting name.</summary>
+    public string? ManagedIdentityConfigurationKey { get; }
 
     /// <summary>Gets the native entity maximum delivery count.</summary>
     public int MaximumDeliveryCount { get; }
@@ -169,7 +187,10 @@ public sealed class MessagingFunctionsManifest
     /// <summary>Gets the maximum handler duration covered by lock renewal.</summary>
     public TimeSpan MaximumHandlerDuration { get; }
 
-    /// <summary>Gets the desired forwarding subscriptions.</summary>
+    /// <summary>
+    /// Gets the provider-native forwarding subscriptions. Transport-neutral logical topic and subscription identities
+    /// remain in <see cref="Resources"/>.
+    /// </summary>
     public IReadOnlyList<MessagingFunctionsSubscription> Subscriptions { get; }
 
     /// <summary>Gets the host-local incoming pipeline step types.</summary>
@@ -184,6 +205,9 @@ public sealed class MessagingFunctionsManifest
     /// <summary>Gets whether Storage Queue host-setting mismatches fail startup.</summary>
     public bool StrictStorageQueueHostSettings { get; }
 
-    /// <summary>Gets the generated transport-neutral desired resources.</summary>
+    /// <summary>
+    /// Gets the generated transport-neutral desired resources. When the constructor receives no resources, its
+    /// fallback uses the provider-native <see cref="Queue"/> value as the logical participant and queue name.
+    /// </summary>
     public MessagingResourceManifest Resources { get; }
 }

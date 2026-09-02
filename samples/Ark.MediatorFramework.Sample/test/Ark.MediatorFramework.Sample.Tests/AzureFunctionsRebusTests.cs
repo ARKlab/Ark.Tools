@@ -102,7 +102,7 @@ public sealed class AzureFunctionsRebusTests
         var transport = new InMemoryMessagingTransport();
         var services = new ServiceCollection();
         services.AddSingleton<IMessagingTransportManagement>(transport);
-        services.AddArkMessagingResourceLifecycle(
+        services._addArkMessagingResourceLifecycle(
             ArkGeneratedMessagingFunctions.Manifest.Resources);
         await using var provider = services.BuildServiceProvider();
 

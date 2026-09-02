@@ -110,7 +110,7 @@ public static void AddArkMessagingFunctionsHost(
 
     // Runtime transport selection; the participant declaration never names Azure.
     var transport = new ServiceBusMessagingTransport(
-        new ServiceBusClient(configuration[options.ConnectionConfigurationKey!]));
+        new ServiceBusClient(configuration["Messaging:ConnectionString"]));
 
     // Startup validations — each fails fast with an explicit diagnostic:
     // 1. Capability check: throws naming any capability the transport lacks.

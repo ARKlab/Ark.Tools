@@ -64,11 +64,6 @@ public sealed class MessagingNetworkAttribute : Attribute
     /// <summary>Gets or sets the resource lifecycle policy.</summary>
     public MessagingResourceLifecycle ResourceLifecycle { get; set; } = MessagingResourceLifecycle.CreateIfMissing;
 
-    /// <summary>Gets or sets the host configuration key for the transport connection.</summary>
-    public string? ConnectionConfigurationKey { get; set; }
-
-    /// <summary>Gets or sets the host configuration key for managed identity settings.</summary>
-    public string? ManagedIdentityConfigurationKey { get; set; }
 }
 
 /// <summary>Controls ownership of resources declared by a messaging network.</summary>

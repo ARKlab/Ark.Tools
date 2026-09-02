@@ -173,21 +173,18 @@ public sealed class SampleStartup
                 applicationContext,
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
-        services.AddArkMessaging();
         var messagingNetwork =
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.CreateOptions();
-        var dataBus = new InMemoryMessagingDataBus(
-            NodaTime.SystemClock.Instance,
-            NodaTime.Duration.FromHours(2));
-        services.AddArkInMemoryMessaging(messagingNetwork);
-        services.AddArkMessagingDataBus(dataBus, messagingNetwork);
-        services.AddArkMessagingBus(
+        services.ConfigureArkMessaging(
             messagingNetwork,
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant.CreatePayloadSender(
-                dataBus,
-                messagingNetwork),
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant.Identity);
+            messaging => messaging.Producer<
+                    Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant>(
+                    producer => producer
+                        .UseTransport(transport => transport.UseInMemory())
+                        .UseDataBus(dataBus => dataBus.UseInMemory(
+                            NodaTime.SystemClock.Instance,
+                            NodaTime.Duration.FromHours(2)))));
         services.AddMcpServer()
             .WithHttpTransport()
             .WithArkMcpTools<SampleMcpHostContext>();

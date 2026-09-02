@@ -129,7 +129,7 @@ public sealed partial class PrintAuditParticipant;
     Requires = MessagingCapabilities.SendReceive
         | MessagingCapabilities.PubSub
         | MessagingCapabilities.ScheduledSend)]
-public static partial class BookMessagingNetwork;
+public sealed partial class BookMessagingNetwork;
 
 // Topology derived by generation: topic "web-frontend-book_print_completed" with two
 // forwarding subscriptions into the "print-notifications" and "print-audit" queues.

@@ -64,16 +64,21 @@ task:
 PARTICIPANT MyApp.PrintingParticipant
   network: MyApp.BookNetwork
   identity: printing
-  processes: books.print
+  processes:
+    - books.print
   publishes: -
-  subscribes: books.printed
-  serializers: json|msgpack
+  subscribes:
+    - books.printed
+  serializers:
+    - json
+    - msgpack
   default: json
 END
 ```
 
-Every field is deterministic. A change to `subscribes` changes one line rather
-than replacing the complete participant record.
+Every field is deterministic. Populated set fields use one sorted list item per
+line, so a change to `subscribes` changes one line rather than replacing the
+complete participant record.
 
 ## Guide contribution
 
@@ -108,12 +113,12 @@ review examples showing a one-field contract change and its focused diff.
 
 ## Acceptance
 
-- [ ] Messaging snapshots use one reviewed multiline block grammar.
-- [ ] Parser validation and declaration-local drift diagnostics cover every
+- [x] Messaging snapshots use one reviewed multiline block grammar.
+- [x] Parser validation and declaration-local drift diagnostics cover every
   field.
-- [ ] Legacy one-line messaging records fail with actionable migration guidance.
-- [ ] Non-messaging formats are unchanged.
-- [ ] All baselines, guides, and generator snapshots are updated.
-- [ ] The [task board](../README.md) status for AZM-23 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Legacy one-line messaging records fail with actionable migration guidance.
+- [x] Non-messaging formats are unchanged.
+- [x] All baselines, guides, and generator snapshots are updated.
+- [x] The [task board](../README.md) status for AZM-23 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

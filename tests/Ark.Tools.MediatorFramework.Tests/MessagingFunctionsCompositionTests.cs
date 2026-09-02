@@ -28,6 +28,91 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestClass]
 public sealed class MessagingFunctionsCompositionTests
 {
+    /// <summary>Verifies generated Functions metadata composes through the fluent entry point.</summary>
+    [TestMethod]
+    public async Task FluentFunctionsCompositionUsesManifestAndRegistersOutbox()
+    {
+        var services = new ServiceCollection();
+        await using var container = _container();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["CompositionConnection:fullyQualifiedNamespace"] = "composition.servicebus.windows.net",
+                ["CompositionConnection:clientId"] = Guid.NewGuid().ToString()
+            })
+            .Build();
+
+        services.ConfigureArkMessagingFunctions(
+            container,
+            configuration,
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
+            messaging => messaging
+                .UseAzureServiceBus()
+                .UseDataBus(_dataBus())
+                .UseOutbox());
+        await using var provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<IMessagingTransport>()
+            .Should().BeOfType<ServiceBusMessagingTransport>();
+        provider.GetRequiredService<IBusOutboxEnlistment>().Should().NotBeNull();
+    }
+
+    /// <summary>Verifies the fluent Functions entry point rejects incomplete composition.</summary>
+    [TestMethod]
+    public void FluentFunctionsCompositionRequiresTransport()
+    {
+        var services = new ServiceCollection();
+        using var container = _container();
+
+        var action = () => services.ConfigureArkMessagingFunctions(
+            container,
+            new ConfigurationBuilder().Build(),
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
+            messaging => messaging.UseDataBus(_dataBus()));
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*requires a transport*");
+        services.Should().BeEmpty();
+    }
+
+    /// <summary>Verifies duplicate fluent Functions transport choices fail immediately.</summary>
+    [TestMethod]
+    public void FluentFunctionsCompositionRejectsDuplicateTransport()
+    {
+        var services = new ServiceCollection();
+        using var container = _container();
+
+        var action = () => services.ConfigureArkMessagingFunctions(
+            container,
+            new ConfigurationBuilder().Build(),
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
+            messaging => messaging
+                .UseAzureServiceBus()
+                .UseAzureServiceBus());
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*transport is already selected*");
+        services.Should().BeEmpty();
+    }
+
+    /// <summary>Verifies Functions fluent composition rejects a hosted native outbox processor.</summary>
+    [TestMethod]
+    public void FluentFunctionsCompositionRejectsNativeOutboxProcessor()
+    {
+        var services = new ServiceCollection();
+        using var container = _container();
+
+        var action = () => services.ConfigureArkMessagingFunctions(
+            container,
+            new ConfigurationBuilder().Build(),
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
+            messaging => messaging.UseOutbox(new Ark.Tools.Outbox.InMemoryOutboxContextFactory()));
+
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*cannot host the native messaging outbox processor*");
+        services.Should().BeEmpty();
+    }
+
     /// <summary>Verifies the producer path registers only the restricted outbound runtime.</summary>
     [TestMethod]
     public async Task SenderOnlyCompositionResolvesWorkingBusWithoutDispatcher()
@@ -36,7 +121,7 @@ public sealed class MessagingFunctionsCompositionTests
         services.Configure<JsonSerializerOptions>(
             options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
         var transport = new InMemoryMessagingTransport();
-        services.AddArkMessagingParticipant(
+        services._addArkMessagingParticipant(
             _descriptor(receives: false),
             transport,
             _dataBus());

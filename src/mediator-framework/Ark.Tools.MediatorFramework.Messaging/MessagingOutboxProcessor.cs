@@ -3,6 +3,7 @@
 
 using System.Buffers;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using Ark.Tools.Outbox;
 
@@ -115,33 +116,51 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
                     DateTimeStyles.RoundtripKind);
             var readOnlyHeaders = new ReadOnlyDictionary<string, string>(headers);
             var payload = new ReadOnlySequence<byte>(body);
+            var operation = string.Equals(destinationKind, "topic", StringComparison.Ordinal)
+                ? "publish"
+                : dueTime is not null
+                    ? "defer"
+                    : "send";
+            var stopwatch = Stopwatch.StartNew();
 
-            if (string.Equals(destinationKind, "queue", StringComparison.Ordinal))
+            try
             {
-                await _transport.SendAsync(
-                    destination,
-                    readOnlyHeaders,
-                    payload,
-                    dueTime,
-                    ctk).ConfigureAwait(false);
+                if (string.Equals(destinationKind, "queue", StringComparison.Ordinal))
+                {
+                    await _transport.SendAsync(
+                        destination,
+                        readOnlyHeaders,
+                        payload,
+                        dueTime,
+                        ctk).ConfigureAwait(false);
+                }
+                else if (string.Equals(destinationKind, "topic", StringComparison.Ordinal))
+                {
+                    if (dueTime is not null)
+                        throw new InvalidOperationException("Published outbox messages cannot have a due time.");
+                    await _transport.PublishAsync(
+                        destination,
+                        readOnlyHeaders,
+                        payload,
+                        ctk).ConfigureAwait(false);
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            "Native messaging outbox destination kind '{0}' is invalid.",
+                            destinationKind));
+                }
             }
-            else if (string.Equals(destinationKind, "topic", StringComparison.Ordinal))
+            finally
             {
-                if (dueTime is not null)
-                    throw new InvalidOperationException("Published outbox messages cannot have a due time.");
-                await _transport.PublishAsync(
-                    destination,
+                stopwatch.Stop();
+                MessagingMetrics.RecordClientOperation(
+                    stopwatch.Elapsed,
                     readOnlyHeaders,
-                    payload,
-                    ctk).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    string.Format(
-                        CultureInfo.InvariantCulture,
-                        "Native messaging outbox destination kind '{0}' is invalid.",
-                        destinationKind));
+                    operation,
+                    destination);
             }
         }
     }
