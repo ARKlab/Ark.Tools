@@ -80,14 +80,16 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 ## Acceptance
 
-- [ ] AZD-01, AZD-02, AZD-09 and AZD-10 are recorded as decided.
+- [x] AZD-01, AZD-02, AZD-09 and AZD-10 are recorded as decided.
 - [ ] New public APIs have XML docs and API-surface baselines.
-- [ ] Existing Minimal API snapshots and behavior remain unchanged.
+- [x] Existing Minimal API snapshots and behavior remain unchanged.
 - [ ] Both HTTP generators support the shared assembly marker and version prefix.
 - [ ] Host selection composes assemblies and supports validated exact
   inclusion/exclusion.
 - [ ] Generator absence/marker diagnostics are deterministic and tested.
 - [ ] NuGet package contains its analyzer and no unintended implementation assets.
-- [ ] Changed package versions have advisory review and regenerated lock files.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Changed package versions have advisory review and regenerated lock files.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Still open: API-surface baselines for the two new packages, shared-marker support in the Minimal API generator (it kept its mapping-API `versionPrefix` parameter instead), generator diagnostics for invalid/duplicate marker selections, and a package-content test for the analyzer asset.

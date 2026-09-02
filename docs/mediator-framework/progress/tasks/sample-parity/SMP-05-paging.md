@@ -39,3 +39,5 @@ handler translating Skip/Limit to SQL.
 - [ ] Limit/Skip validation → 400 (test).
 - [ ] Works over both HTTP and gRPC (parity test).
 - [ ] Full solution build + tests green.
+
+> **Review 2026-09-02**: Paged search exists (`Book_SearchQuery.V1` with `Skip`/`Limit`, `PagedResult<T>`, validators bounding `Skip >= 0`/`Limit 1..100`, and a Books.feature paging scenario asserting one slice plus total count), but the acceptance tests are still missing: multi-page slice assertions, an invalid Limit/Skip → 400 test, and an HTTP/gRPC parity test.

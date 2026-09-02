@@ -68,12 +68,14 @@ own declaration wins and the standard one is skipped (no duplicate `Produces` fo
 
 ## Acceptance
 
-- [ ] All generated endpoint kinds declare 400/500 (and 403 unless anonymous) with
+- [x] All generated endpoint kinds declare 400/500 (and 403 unless anonymous) with
       `application/problem+json`.
-- [ ] No duplicate response declarations when a custom status collides.
+- [x] No duplicate response declarations when a custom status collides.
 - [ ] Enumerating OpenAPI test over all operations in all documents passes.
 - [ ] Behavioral 400/403/500 tests assert the payload shape and the absence of leaked exception detail.
 - [ ] MessagePack negotiation failure returns a ProblemDetails body.
-- [ ] `design.md` records the HTTP↔gRPC status mapping table.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `design.md` records the HTTP↔gRPC status mapping table.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Problem metadata emission and dedup are implemented and snapshot-tested; still open: an OpenAPI document test enumerating operations, payload-shape assertions for 403/500 (incl. no leaked exception detail), and a ProblemDetails-body assertion for MessagePack negotiation failure.

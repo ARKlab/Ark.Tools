@@ -76,10 +76,12 @@ source.
 
 - [ ] Every sample `[HttpEndpoint]` has an expected generated Function route in a test fixture.
 - [ ] Function names and routes are deterministic across repeated generator runs.
-- [ ] Unsupported/duplicate contracts fail at compile time with stable diagnostics.
-- [ ] Selected MessagePack-enabled contracts fail at compile time; excluded
+- [x] Unsupported/duplicate contracts fail at compile time with stable diagnostics.
+- [x] Selected MessagePack-enabled contracts fail at compile time; excluded
   MessagePack contracts do not block the host.
-- [ ] No Minimal API runtime type appears in generated Function source.
+- [x] No Minimal API runtime type appears in generated Function source.
 - [ ] API-surface snapshots record Function endpoints.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Still open: a fixture enumerating every sample endpoint's generated Function route, an explicit generator-determinism test, and API-surface snapshot entries for Function endpoints (snapshots record `[http=...]` routes only).

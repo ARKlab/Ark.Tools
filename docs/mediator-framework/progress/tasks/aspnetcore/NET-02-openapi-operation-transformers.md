@@ -30,3 +30,5 @@ precisely per endpoint instead of via document-wide transformers.
 - [ ] Per-endpoint documented responses match FW-02 runtime codes (document test).
 - [ ] 401/403 documented only on endpoints requiring authorization; 400 only where a validator exists.
 - [ ] Full solution build + tests green.
+
+> **Review 2026-09-02**: Per-endpoint response metadata is emitted by the generator (`.Produces<T>`, ProblemDetails 400/403/500) and snapshot-tested, but no OpenAPI document test asserts response codes, 401 is never documented, and 400 is emitted regardless of validator existence — all acceptance items remain open.

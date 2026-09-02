@@ -34,5 +34,7 @@ Files: `src/mediator-framework/Ark.Tools.MediatorFramework/IArkAttachment.cs`, `
 
 - [ ] Upload→download round-trip byte-equality test passes over HTTP and gRPC.
 - [ ] Missing document → 404.
-- [ ] Correct `Content-Type` and `Content-Disposition` headers (test).
-- [ ] Proto export includes the download RPC; full solution build + tests green; `design.md` updated.
+- [x] Correct `Content-Type` and `Content-Disposition` headers (test).
+- [x] Proto export includes the download RPC; full solution build + tests green; `design.md` updated.
+
+> **Review 2026-09-02**: HTTP download with content/headers is tested (`MinimalApiAttachmentsTests.cs`) and the sample covers an in-process upload→download round trip; missing: an over-the-wire gRPC download test via the generated client and an HTTP 404 missing-document test.

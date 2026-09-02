@@ -78,19 +78,21 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 
 ## Acceptance
 
-- [ ] AZD-06, AZD-07, AZD-09 and AZD-10 are recorded as decided.
-- [ ] The complete Core Tools suite runs on every pull request and fails loudly when
+- [x] AZD-06, AZD-07, AZD-09 and AZD-10 are recorded as decided.
+- [x] The complete Core Tools suite runs on every pull request and fails loudly when
   the host cannot start.
-- [ ] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
+- [x] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
   uploads sanitized host logs on failure.
 - [ ] Every supported sample endpoint has a parity-matrix row and runnable tests.
 - [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
 - [ ] Documentation states all platform limitations and MessagePack and OpenAPI
   exclusions.
 - [ ] Relative links and cited file/test names resolve.
-- [ ] Changed files pass secret scanning.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Changed files pass secret scanning.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Still open: the parity matrix below is stale (Greeting contracts were renamed to Book and the cited guard test does not exist — the actual guard `TestHostEndpointsMatchTheParityMatrix` covers only the boundary TestHost), files/ETags/streaming/Rebus-send boundary tests, and guide coverage of the OpenAPI exclusion and streaming decision.
 
 ## Parity matrix
 

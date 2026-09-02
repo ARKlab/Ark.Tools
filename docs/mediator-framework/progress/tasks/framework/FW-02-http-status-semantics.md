@@ -38,7 +38,9 @@ No runtime `IArkEndpointResultMapper` service.
 ## Acceptance
 
 - [ ] Null query result → 404; null request result → 204 (integration tests).
-- [ ] Attribute overrides respected (test with `SuccessStatusCode = 201`).
+- [x] Attribute overrides respected (test with `SuccessStatusCode = 201`).
 - [ ] OpenAPI document lists the exact status codes emitted (test inspects document).
-- [ ] Existing sample scenarios updated, not deleted.
-- [ ] Full solution build + tests green; docs updated.
+- [x] Existing sample scenarios updated, not deleted.
+- [x] Full solution build + tests green; docs updated.
+
+> **Review 2026-09-02**: Null query→404 has an integration test (`MinimalApiErrorsTests.cs`) and defaults are implemented in the generator; the null-request→204 default lacks a test and no OpenAPI document test inspects operation responses — those items stay open.

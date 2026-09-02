@@ -157,8 +157,8 @@ Add `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkETag.cs` (
 
 ## Acceptance
 
-- [ ] `ETagAttribute` added to the core package with XML docs; no new dependencies anywhere.
-- [ ] Generator tests in `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
+- [x] `ETagAttribute` added to the core package with XML docs; no new dependencies anywhere.
+- [x] Generator tests in `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
       (follow the existing `CSharpGeneratorDriver` harness):
       a contract with an `[ETag]` property emits the header-binding assignment; a non-`string`
       `[ETag]` property reports `ARKMF017`; two `[ETag]` properties report `ARKMF018`.
@@ -167,8 +167,10 @@ Add `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkETag.cs` (
 - [ ] Test proving the `[ETag]` property is present in the generated request schema (not filtered).
 - [ ] Test for `ArkETag.ReadPrecondition`: `If-Match: "abc"` → `abc`; `If-None-Match: *` → `*`;
       neither header → `null`.
-- [ ] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character.
+- [x] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character.
 - [ ] `.proto` export for a contract with an `[ETag]` property still contains the field (gRPC parity
       unchanged) — assert in an existing gRPC generator test.
-- [ ] `design.md` updated with the D9 section.
-- [ ] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+- [x] `design.md` updated with the D9 section.
+- [x] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+
+> **Review 2026-09-02**: Still open: an end-to-end If-Match-wins-over-body test, an OpenAPI schema test for the `[ETag]` property, the neither-header→null `ReadPrecondition` case, and an explicit `.proto` export assertion (gRPC parity is exercised at runtime via `GrpcErrorsTests.cs`).

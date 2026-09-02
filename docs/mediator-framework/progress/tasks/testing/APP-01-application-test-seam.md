@@ -49,19 +49,21 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] The test context has no `IHost`, `TestServer`, `HttpClient`, gRPC channel,
+- [x] The test context has no `IHost`, `TestServer`, `HttpClient`, gRPC channel,
   generated client, URL, or serializer dependency.
-- [ ] A test resolving a handler interface proves validation/audit/concurrency
+- [x] A test resolving a handler interface proves validation/audit/concurrency
   decorators are present.
-- [ ] A scope-lifecycle test proves sequential top-level dispatches do not reuse
+- [x] A scope-lifecycle test proves sequential top-level dispatches do not reuse
   a scope, while a nested contract call from a handler does reuse the current
   scope.
 - [ ] Focused lifecycle tests demonstrate both scenario-owned resources and the
   separately serialized process-wide fixture.
 - [ ] A step cannot obtain a persistence context as an application assertion API.
-- [ ] Container verification and disposal are deterministic.
-- [ ] All public test helper types and members have XML documentation where
+- [x] Container verification and disposal are deterministic.
+- [x] All public test helper types and members have XML documentation where
   repository analyzers require it.
+
+> **Review 2026-09-02**: Still open: a separately serialized process-wide fixture demonstration (suite currently uses `[assembly: DoNotParallelize]` with scenario-owned resources only), and `ApplicationTestContext` still exposes `CreateDataContextAsync` (used only by a seeding `Given`, never for assertions).
 
 ## Tests
 

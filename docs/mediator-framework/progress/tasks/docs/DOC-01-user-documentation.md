@@ -71,10 +71,12 @@ Documentation has no unit tests; the enforced checks are:
 
 ## Acceptance
 
-- [ ] All pages in the table exist with the described content.
+- [x] All pages in the table exist with the described content.
 - [ ] Every snippet cites the compiled sample file it comes from.
-- [ ] All relative links in `docs/mediator-framework/` resolve (link check performed, result in PR).
-- [ ] `docs/mediator-framework/README.md` and the sample README point at the guide.
-- [ ] No page documents an unimplemented behavior without flagging it as pending.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] All relative links in `docs/mediator-framework/` resolve (link check performed, result in PR).
+- [x] `docs/mediator-framework/README.md` and the sample README point at the guide.
+- [x] No page documents an unimplemented behavior without flagging it as pending.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: All 16 guide pages exist and links resolve; still open: several pages (http-endpoints, contracts-and-handlers, serialization, streaming, openapi, errors, validation-and-authorization, attachments, versioning, escape-hatches, api-surface-snapshots) do not yet cite the compiled sample files their snippets come from.

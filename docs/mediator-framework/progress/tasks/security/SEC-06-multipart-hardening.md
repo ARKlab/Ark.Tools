@@ -30,7 +30,7 @@ attachment types in `src/mediator-framework/Ark.Tools.MediatorFramework/` — `I
 
 ## Acceptance
 
-- [ ] Path-traversal filename test passes (leaf name only reaches handler).
-- [ ] 413 and 415 behaviors covered by tests.
-- [ ] Antiforgery posture explicit in emitted code and documented.
-- [ ] Existing sample upload scenarios green; full solution build + tests green.
+- [x] Path-traversal filename test passes (leaf name only reaches handler).
+- [x] 413 and 415 behaviors covered by tests.
+- [x] Antiforgery posture explicit in emitted code and documented.
+- [x] Existing sample upload scenarios green; full solution build + tests green.

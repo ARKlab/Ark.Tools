@@ -37,15 +37,15 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] No step definition in the application BDD suite references `HttpClient`,
+- [x] No step definition in the application BDD suite references `HttpClient`,
   `HttpResponseMessage`, `GrpcChannel`, `RpcException`, a URL, status code,
   ProblemDetails, or a serializer.
-- [ ] Every scenario dispatches through a handler interface resolved by the
+- [x] Every scenario dispatches through a handler interface resolved by the
   context.
-- [ ] Validation and domain exceptions are asserted with typed exception
+- [x] Validation and domain exceptions are asserted with typed exception
   checks.
-- [ ] Scenario cleanup runs after both successful and failed steps.
-- [ ] The generated `.feature.cs` output builds under strict analyzers.
+- [x] Scenario cleanup runs after both successful and failed steps.
+- [x] The generated `.feature.cs` output builds under strict analyzers.
 
 ## Tests
 

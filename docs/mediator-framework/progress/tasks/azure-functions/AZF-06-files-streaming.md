@@ -73,9 +73,11 @@ Functions host behavior rather than ordinary JSON result serialization.
 ## Acceptance
 
 - [ ] Upload hardening matches Minimal API and is security-tested.
-- [ ] Downloads preserve bytes/metadata and dispose resources correctly.
+- [x] Downloads preserve bytes/metadata and dispose resources correctly.
 - [ ] AZD-06 is resolved and Core Tools evidence is committed.
-- [ ] No multipart/file path buffers full file content without a documented bound.
-- [ ] MessagePack and SSE are not implemented.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] No multipart/file path buffers full file content without a documented bound.
+- [x] MessagePack and SSE are not implemented.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Still open: whole-request size enforcement (`MaxRequestBodySizeBytes` is not applied on the Functions path), a broader multipart security-test suite, and the AZD-06 Core Tools streaming evidence (streaming is implemented and unit-tested in-memory only).
