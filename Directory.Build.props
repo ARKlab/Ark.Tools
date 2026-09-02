@@ -7,6 +7,7 @@
 	<!-- Override with -p:Version=x.y.z during release builds -->
 	<Version Condition="'$(Version)' == ''">999.9.9</Version>
 	<IsPackable>true</IsPackable>
+	<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
   </PropertyGroup>
 
