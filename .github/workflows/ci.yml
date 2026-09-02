@@ -90,7 +90,7 @@ jobs:
       run: dotnet build --no-restore --configuration Debug
 
     - name: 'Pack projects (package validation and SBOM)'
-      run: dotnet pack Ark.Tools.slnx --no-restore --configuration Debug --output "${{ runner.temp }}/ark-tools-packages"
+      run: dotnet pack Ark.Tools.slnx --no-restore --configuration Debug --output "${{ runner.temp }}/ark-tools-packages" -p:WarnOnPackingNonPackableProject=false
 
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug
