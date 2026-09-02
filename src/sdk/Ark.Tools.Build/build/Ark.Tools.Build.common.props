@@ -21,7 +21,6 @@
 
     <Nullable Condition="'$(Nullable)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</Nullable>
     <ImplicitUsings Condition="'$(ImplicitUsings)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</ImplicitUsings>
-
   </PropertyGroup>
 
   <PropertyGroup Label="SQL Build Settings"

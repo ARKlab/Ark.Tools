@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi;
 
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 
 using TestWithoutArkTools.Application.Host;

@@ -80,11 +80,11 @@ public static class Program
         }
         catch (Exception ex)
         {
-            NLog.LogManager.GetLogger("Main").Fatal(ex, $@"Unhandled Fatal Exception occurred: {ex.Message}");
+            NLog.LogManager.GetLogger("Main").Fatal(ex, CultureInfo.InvariantCulture, $@"Unhandled Fatal Exception occurred: {ex.Message}");
         }
         finally
         {
-            NLog.LogManager.GetLogger("Main").Info("Shutting down");
+            NLog.LogManager.GetLogger("Main").Info(CultureInfo.InvariantCulture, "Shutting down");
             NLog.LogManager.Flush();
         }
     }

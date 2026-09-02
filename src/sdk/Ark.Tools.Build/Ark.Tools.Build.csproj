@@ -33,6 +33,6 @@
     <None Include="configuration\analyzers\Ark.Tools.VisualStudioThreading.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.VisualStudioThreading.globalconfig" />
     <None Include="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" />
     <None Include="configuration\analyzers\Ark.Tools.Core.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.Core.globalconfig" />
-    <None Include="configuration\analyzers\BannedSymbols.txt" Pack="true" PackagePath="configuration\analyzers\BannedSymbols.txt" />
+    <None Include="configuration\analyzers\BannedSymbols.Ark.txt" Pack="true" PackagePath="configuration\analyzers\BannedSymbols.Ark.txt" />
   </ItemGroup>
 </Project>

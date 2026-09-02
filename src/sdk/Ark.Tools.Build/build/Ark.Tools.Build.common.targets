@@ -5,7 +5,7 @@
 
   
   <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.txt"
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.txt"
                      KeepDuplicates="false"
                      Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
   </ItemGroup>

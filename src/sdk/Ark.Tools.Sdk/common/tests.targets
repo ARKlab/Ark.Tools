@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false' and '$(EnableArkToolsDefaultTestSettings)' != 'false'">
-    <OutputType>Exe</OutputType>
     <MinimumExpectedTests Condition="'$(MinimumExpectedTests)' == ''">1</MinimumExpectedTests>
     <_ArkMtpCoverageArguments Condition="'$(ContinuousIntegrationBuild)' == 'true'"> --coverage --coverage-output-format cobertura</_ArkMtpCoverageArguments>
     <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' != '' and '$(MinimumExpectedTests)' != '0'"> --minimum-expected-tests $(MinimumExpectedTests)</_ArkMtpMinimumExpectedTests>

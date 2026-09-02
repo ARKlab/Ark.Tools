@@ -69,14 +69,14 @@ public static class Program
         }
         catch (Exception ex)
         {
-NLog.LogManager.GetLogger("Main").Fatal(ex, global::System.Globalization.CultureInfo.InvariantCulture, "Unhandled fatal exception occurred: {Message}", ex.Message);
+NLog.LogManager.GetLogger("Main").Fatal(ex, CultureInfo.InvariantCulture, "Unhandled fatal exception occurred: {Message}", ex.Message);
 #pragma warning disable RS0030 // Exception handler - console output for critical failures
             Console.WriteLine(ex);
 #pragma warning restore RS0030
         }
         finally
         {
-            NLog.LogManager.GetLogger("Main").Info("Shutting down");
+            NLog.LogManager.GetLogger("Main").Info(CultureInfo.InvariantCulture, "Shutting down");
             NLog.LogManager.Flush();
         }
     }

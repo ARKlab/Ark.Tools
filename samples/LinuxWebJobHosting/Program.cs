@@ -8,8 +8,6 @@ using LinuxWebJobHosting.Utils;
 
 using NLog;
 
-using System.Globalization;
-
 namespace Processor.Service.WebInterface;
 
 public static class Program
@@ -75,7 +73,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            _logger.Fatal(ex, $@"Unhandled Fatal Exception occurred: {ex.Message}");
+            _logger.Fatal(ex, CultureInfo.InvariantCulture, $@"Unhandled Fatal Exception occurred: {ex.Message}");
         }
         finally
         {

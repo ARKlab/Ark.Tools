@@ -26,6 +26,11 @@
     <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">snupkg</SymbolPackageFormat>
 
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">
+    <OutputType Condition="'$(OutputType)' == ''">Exe</OutputType>
+    <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
   
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     

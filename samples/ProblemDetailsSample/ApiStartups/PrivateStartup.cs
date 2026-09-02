@@ -10,8 +10,6 @@ using ProblemDetailsSample.Application.Handlers.Host;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System.Globalization;
-
 namespace ProblemDetailsSample;
 
 public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>

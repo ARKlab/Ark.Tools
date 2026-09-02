@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)../src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props" />
+
+</Project>

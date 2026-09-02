@@ -1,8 +1,6 @@
 
 using NLog;
 
-using System.Globalization;
-
 namespace LinuxWebJobHosting.Utils;
 
 public class HostedService : BackgroundService
@@ -28,7 +26,7 @@ public class HostedService : BackgroundService
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
             catch (Exception e)
             {
-                _logger.Error(e, "Run failed");
+                _logger.Error(e, CultureInfo.InvariantCulture, "Run failed");
             }
 
             try
