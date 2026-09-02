@@ -864,16 +864,18 @@ snapshot differs from what is committed.
   diff. Plain (`strict`) enums produce `ENUM Type.Member=value` lines;
   `EvolvableEnum<TEnum>` members produce `EVOLVABLE-ENUM Type.Member=value`
   lines for the wrapped `TEnum`.
-- Transport-neutral messaging metadata: `MESSAGE` and `EVENT` lines record the
-  resolved logical name and ordinal-sorted former-name aliases. `PARTICIPANT`
-  lines record network membership, identity, ownership, subscriptions, and
-  serialization. `NETWORK` lines record members and required capabilities.
-  These entries are wire and topology decisions; accepting a baseline diff does
-  not migrate an existing event topic or Azure resource.
+- Transport-neutral messaging metadata: `MESSAGE`, `EVENT`, `PARTICIPANT`, and
+  `NETWORK` blocks record resolved logical names, ordinal-sorted aliases,
+  network membership, identity, ownership, subscriptions, serialization, and
+  required capabilities. These entries are wire and topology decisions;
+  accepting a baseline diff does not migrate an existing event topic or Azure
+  resource.
 
 **Workflow:**
 
-1. During every build the generator computes the full sorted surface. The
+1. During every build the generator computes the full deterministic surface.
+   Messaging blocks are sorted by kind and fully qualified CLR owner; their
+   fields have fixed ordering and terminate with `END`. The
    analyzer compares it with the committed `ArkApiSurface.txt` when
    `ArkApiSurfaceEnabled` is true.
 2. When `EmitCompilerGeneratedFiles=true` is supplied transiently, an MSBuild
@@ -885,6 +887,8 @@ snapshot differs from what is committed.
    the transient `dotnet build -p:EmitCompilerGeneratedFiles=true` command when
    the generated snapshot needs to be inspected; the package target
    supplies `$(BaseIntermediateOutputPath)generated`.
+   `ARKAPI004` rejects malformed, reordered, duplicated, unknown, or legacy
+   one-line messaging entries.
 4. The developer **accepts** the change by replacing the committed file with the
    generated one:
    ```
@@ -908,7 +912,7 @@ surface to pass the build, CI fails automatically on any API change that has
 not been explicitly committed. No separate release flag is needed; the single
 snapshot is the gate at every stage of the pipeline.
 
-**Entry format** (deterministic, ordinal-sorted, one entry per line):
+**Entry format** (deterministic, ordinal-sorted; messaging entries use blocks):
 
 ```
 CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1+] [grpc=GetGreeting] [grpc-version=1+]
@@ -920,11 +924,45 @@ EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
 EVOLVABLE-ENUM GreetingStatus.Active=1
 EVOLVABLE-ENUM GreetingStatus.Archived=2
 REBUS RefreshGreetingCommand -> queue:greetings
-MESSAGE Books.RecalculatePrint -> name:books_recalculate_print former:-
-EVENT Books.PrintCompleted -> name:books_print_completed former:books_print_finished
-PARTICIPANT BookTopology.PrintingParticipant -> network:BookMessagingNetwork identity:printing processes:books_recalculate_print publishes:- subscribes:books_print_completed serializers:json|messagepack default:json
-NETWORK BookTopology.BookMessagingNetwork -> members:BookTopology.PrintingParticipant|BookTopology.WebFrontendParticipant requires:receive|pubsub|scheduled_send
+EVENT Books.PrintCompleted
+  name: books_print_completed
+  former:
+    - books_print_finished
+END
+MESSAGE Books.RecalculatePrint
+  name: books_recalculate_print
+  former: -
+END
+NETWORK BookTopology.BookMessagingNetwork
+  members:
+    - BookTopology.PrintingParticipant
+    - BookTopology.WebFrontendParticipant
+  requires:
+    - pubsub
+    - receive
+    - scheduled_send
+END
+PARTICIPANT BookTopology.PrintingParticipant
+  network: BookMessagingNetwork
+  identity: printing
+  processes:
+    - books_recalculate_print
+  publishes: -
+  subscribes:
+    - books_print_completed
+  serializers:
+    - json
+    - messagepack
+  default: json
+END
 ```
+
+Messaging records use one block per declaration. Blocks are sorted by kind and
+fully qualified CLR owner; fields use a fixed order, set values are
+ordinal-sorted with one list item per line, and every block terminates with
+`END`. A changed field is
+reported against its owning declaration, so a review can approve only the
+metadata that changed.
 
 ## Testing strategy
 

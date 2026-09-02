@@ -58,10 +58,35 @@ CONTRACT GreetingResponse.Status : EvolvableEnum<GreetingStatus>
 EVOLVABLE-ENUM GreetingStatus.NOT_SET=0
 EVOLVABLE-ENUM GreetingStatus.Active=1
 REBUS CreateGreetingRequest -> queue:greetings
-MESSAGE MyApp.Messages.CompleteGreeting -> name:complete_greeting former:old_complete_greeting
-EVENT MyApp.Messages.GreetingCompleted -> name:greeting_completed former:-
-NETWORK MyApp.Messages.GreetingNetwork -> members:MyApp.Messages.GreetingProcessorParticipant|MyApp.Messages.GreetingPublisherParticipant requires:receive|pubsub
-PARTICIPANT MyApp.Messages.GreetingProcessorParticipant -> network:MyApp.Messages.GreetingNetwork identity:greeting-processor processes:complete_greeting publishes:- subscribes:greeting_completed serializers:json default:json
+EVENT MyApp.Messages.GreetingCompleted
+  name: greeting_completed
+  former: -
+END
+MESSAGE MyApp.Messages.CompleteGreeting
+  name: complete_greeting
+  former:
+    - old_complete_greeting
+END
+NETWORK MyApp.Messages.GreetingNetwork
+  members:
+    - MyApp.Messages.GreetingProcessorParticipant
+    - MyApp.Messages.GreetingPublisherParticipant
+  requires:
+    - pubsub
+    - receive
+END
+PARTICIPANT MyApp.Messages.GreetingProcessorParticipant
+  network: MyApp.Messages.GreetingNetwork
+  identity: greeting-processor
+  processes:
+    - complete_greeting
+  publishes: -
+  subscribes:
+    - greeting_completed
+  serializers:
+    - json
+  default: json
+END
 ```
 
 The `CONTRACT` line identifies the request, result, route, gRPC method, group,
@@ -70,11 +95,13 @@ and version range. Following lines describe public members and protobuf tags.
 every member and numeric value of a plain enum or an
 `EvolvableEnum<TEnum>`-wrapped enum reached from a contract, so adding,
 removing, or renumbering a member is a visible diff. The `REBUS` line
-describes generated Rebus queue routing. `MESSAGE` and `EVENT` record logical names and aliases, never transport-mapped
-entity names. `PARTICIPANT` records membership, identity, ownership,
-subscriptions, and serializer declarations. `NETWORK` records the complete
-member list and required optional capabilities. These declaration entries may
-feed either Rebus or native generation, but do not imply wire compatibility.
+describes generated Rebus queue routing. `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` are deterministic multiline
+blocks. Each block has a fixed field order and ends with `END`; set values are
+ordinal-sorted with one list item per line, and empty sets are `-`. They record logical names and aliases,
+never transport-mapped entity names, plus participant membership, identity,
+ownership, subscriptions, serializers, and network capabilities. These
+declaration entries may feed either Rebus or native generation, but do not imply
+wire compatibility.
 The baseline covers:
 
 | Change | Detected | Typical decision |
@@ -96,6 +123,7 @@ The baseline covers:
 | --- | --- | --- |
 | `ARKAPI001` | Tracking is enabled but `ArkApiSurface.txt` is missing. | Run `dotnet build -p:EmitCompilerGeneratedFiles=true`, copy `obj/.../ArkApiSurface.current.txt` to the project directory, review it, then commit it. |
 | `ARKAPI002` | The committed baseline differs from the generated surface. | Run `dotnet build -p:EmitCompilerGeneratedFiles=true`, inspect the generated file, and copy it over the baseline only after approval. |
+| `ARKAPI004` | The baseline contains an unknown, malformed, reordered, or legacy messaging entry. | Regenerate `ArkApiSurface.current.txt` and replace the baseline after reviewing the multiline block diff. |
 
 Example failure:
 

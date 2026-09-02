@@ -133,14 +133,19 @@ metadata is represented by the dedicated `MESSAGE`, `EVENT`, `PARTICIPANT`, and
 `NETWORK` entries.
 
 When a declaration changes, inspect and explicitly accept the generated
-baseline:
+baseline. Messaging declarations are emitted as deterministic multiline blocks:
+the header names the kind and fully qualified CLR owner, fields follow in their
+fixed order, set values are ordinal-sorted, and `END` terminates the block.
+`ARKAPI004` rejects legacy one-line messaging records and malformed blocks so
+there is no mixed grammar.
 
 ```powershell
 dotnet build -p:EmitCompilerGeneratedFiles=true
 Copy-Item obj/Debug/net10.0/ArkApiSurface.current.txt ArkApiSurface.txt
 ```
 
-Accepting `ARKAPI002` records the reviewed contract decision only. It does not
+Accepting `ARKAPI002` records the reviewed contract decision only; its field name
+identifies the owning declaration and changed metadata. It does not
 rename an existing event topic, move subscriptions, or migrate Azure resources;
 perform that topology migration separately.
 

@@ -57,7 +57,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor MalformedSnapshot = new(
         "ARKAPI004",
         "Malformed API surface snapshot",
-        "ArkApiSurface.txt contains an invalid snapshot line: '{0}'.",
+        "ArkApiSurface.txt contains an invalid snapshot entry: '{0}'. Messaging entries use multiline blocks; regenerate ArkApiSurface.current.txt and replace the baseline.",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -175,13 +175,21 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                     return;
                 }
 
+                var currentSnapshot = ParseSnapshotLines(string.Join("\n", currentLines));
                 var baselineSet = parsedBaseline.Lines;
-                var currentSet = new HashSet<string>(currentLines, StringComparer.Ordinal);
+                var currentSet = currentSnapshot.Lines;
 
                 var changedOwners = new SortedSet<string>(StringComparer.Ordinal);
                 foreach (var line in currentSet.Except(baselineSet, StringComparer.Ordinal)
                     .Concat(baselineSet.Except(currentSet, StringComparer.Ordinal)))
-                    changedOwners.Add(ContractOwner(line));
+                {
+                    if (currentSnapshot.EntryNames.TryGetValue(line, out var currentName))
+                        changedOwners.Add(currentName);
+                    else if (parsedBaseline.EntryNames.TryGetValue(line, out var baselineName))
+                        changedOwners.Add(baselineName);
+                    else
+                        changedOwners.Add(ContractOwner(line));
+                }
 
                 foreach (var name in changedOwners)
                 {
@@ -197,6 +205,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         CancellationToken cancellationToken)
     {
         var lines = new List<string>();
+        var messagingBlocks = new List<MessagingBlock>();
         var locBuilder = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
 
         var types = contractTypes
@@ -215,11 +224,15 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             var key = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             if (!locBuilder.ContainsKey(key))
                 locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
-            AddType(lines, type, networkMemberships);
+            AddType(lines, messagingBlocks, locBuilder, type, networkMemberships);
         }
 
         var ordered = lines.Distinct(StringComparer.Ordinal)
             .OrderBy(l => l, StringComparer.Ordinal)
+            .Concat(messagingBlocks
+                .OrderBy(block => block.Kind, StringComparer.Ordinal)
+                .ThenBy(block => block.Owner, StringComparer.Ordinal)
+                .SelectMany(FormatMessagingBlock))
             .ToImmutableArray();
         return (ordered, locBuilder.ToImmutable());
     }
@@ -231,18 +244,204 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             .Select(static l => l.TrimEnd('\r'))
             .Where(static l => l.Length > 0 && l != "/*" && l != "*/")
             .ToImmutableArray();
-        var invalidLine = lines.FirstOrDefault(static line =>
-            !line.StartsWith("CONTRACT ", StringComparison.Ordinal)
-            && !line.StartsWith("REBUS ", StringComparison.Ordinal)
-            && !line.StartsWith("ENUM ", StringComparison.Ordinal)
-            && !line.StartsWith("EVOLVABLE-ENUM ", StringComparison.Ordinal)
-            && !line.StartsWith("MESSAGE ", StringComparison.Ordinal)
-            && !line.StartsWith("EVENT ", StringComparison.Ordinal)
-            && !line.StartsWith("PARTICIPANT ", StringComparison.Ordinal)
-            && !line.StartsWith("NETWORK ", StringComparison.Ordinal));
-        return invalidLine is null
-            ? new SnapshotParseResult(new HashSet<string>(lines, StringComparer.Ordinal), true, string.Empty)
-            : new SnapshotParseResult(new HashSet<string>(StringComparer.Ordinal), false, invalidLine);
+        var parsed = new HashSet<string>(StringComparer.Ordinal);
+        var entryNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        var owners = new HashSet<string>(StringComparer.Ordinal);
+        var previousKind = string.Empty;
+        var previousOwner = string.Empty;
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index];
+            if (!TryGetMessagingKind(line, out var kind))
+            {
+                if (!IsNonMessagingLine(line))
+                    return InvalidSnapshot(parsed, entryNames, line);
+
+                parsed.Add(line);
+                entryNames[line] = ContractOwner(line);
+                continue;
+            }
+
+            if (line.IndexOf(" -> ", StringComparison.Ordinal) >= 0)
+                return InvalidSnapshot(parsed, entryNames, line);
+
+            var separator = line.IndexOf(' ');
+            var owner = separator < 0 ? string.Empty : line[(separator + 1)..];
+            if (!IsValidOwner(owner) || !owners.Add(kind + "\n" + owner))
+                return InvalidSnapshot(parsed, entryNames, line);
+
+            var kindOrder = MessagingKindOrder(kind);
+            if (previousKind.Length > 0
+                && (kindOrder < MessagingKindOrder(previousKind)
+                    || kind == previousKind && string.CompareOrdinal(owner, previousOwner) < 0))
+                return InvalidSnapshot(parsed, entryNames, line);
+            previousKind = kind;
+            previousOwner = owner;
+
+            var blockIdentity = kind + "\n" + owner;
+            parsed.Add(SnapshotEntryKey(blockIdentity, line));
+            entryNames[SnapshotEntryKey(blockIdentity, line)] = owner;
+            var fields = MessagingFields(kind);
+            for (var fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
+            {
+                if (++index >= lines.Length)
+                    return InvalidSnapshot(parsed, entryNames, $"missing field '{fields[fieldIndex]}' for {line}");
+
+                var fieldLine = lines[index];
+                if (!TryParseField(fieldLine, out var fieldName, out var value)
+                    || !string.Equals(fieldName, fields[fieldIndex], StringComparison.Ordinal))
+                    return InvalidSnapshot(parsed, entryNames, fieldLine);
+
+                var fieldOwner = owner + "." + fieldName;
+                var fieldIdentity = blockIdentity + "\n" + fieldName;
+                parsed.Add(SnapshotEntryKey(fieldIdentity, fieldLine));
+                entryNames[SnapshotEntryKey(fieldIdentity, fieldLine)] = fieldOwner;
+                if (IsMessagingSetField(fieldName))
+                {
+                    if (value == "-")
+                        continue;
+                    if (value.Length > 0)
+                        return InvalidSnapshot(parsed, entryNames, fieldLine);
+
+                    var values = new List<string>();
+                    while (++index < lines.Length && lines[index].StartsWith("    - ", StringComparison.Ordinal))
+                    {
+                        var item = lines[index][6..];
+                        if (item.Length == 0 || item.IndexOfAny([' ', '\t', '\r', '\n', '|']) >= 0)
+                            return InvalidSnapshot(parsed, entryNames, lines[index]);
+                        values.Add(item);
+                        parsed.Add(SnapshotEntryKey(fieldIdentity, lines[index]));
+                        entryNames[SnapshotEntryKey(fieldIdentity, lines[index])] = fieldOwner;
+                    }
+
+                    if (values.Count == 0 || !IsValidSet(values))
+                        return InvalidSnapshot(parsed, entryNames, fieldLine);
+                    index--;
+                }
+                else if (!IsValidMessagingValue(kind, fieldName, value))
+                {
+                    return InvalidSnapshot(parsed, entryNames, fieldLine);
+                }
+            }
+
+            if (++index >= lines.Length || lines[index] != "END")
+                return InvalidSnapshot(parsed, entryNames, index < lines.Length ? lines[index] : $"missing END for {line}");
+
+            parsed.Add(SnapshotEntryKey(blockIdentity, "END"));
+            entryNames[SnapshotEntryKey(blockIdentity, "END")] = owner;
+        }
+
+        return new SnapshotParseResult(parsed, entryNames, true, string.Empty);
+    }
+
+    private static SnapshotParseResult InvalidSnapshot(
+        HashSet<string> lines,
+        Dictionary<string, string> entryNames,
+        string invalidLine)
+        => new(lines, entryNames, false, invalidLine);
+
+    private static bool IsNonMessagingLine(string line) =>
+        line.StartsWith("CONTRACT ", StringComparison.Ordinal)
+        || line.StartsWith("REBUS ", StringComparison.Ordinal)
+        || line.StartsWith("ENUM ", StringComparison.Ordinal)
+        || line.StartsWith("EVOLVABLE-ENUM ", StringComparison.Ordinal);
+
+    private static string SnapshotEntryKey(string identity, string line) => identity + "\n" + line;
+
+    private static bool TryGetMessagingKind(string line, out string kind)
+    {
+        if (line.StartsWith("MESSAGE ", StringComparison.Ordinal))
+        {
+            kind = "MESSAGE";
+            return true;
+        }
+
+        if (line.StartsWith("EVENT ", StringComparison.Ordinal))
+        {
+            kind = "EVENT";
+            return true;
+        }
+
+        if (line.StartsWith("PARTICIPANT ", StringComparison.Ordinal))
+        {
+            kind = "PARTICIPANT";
+            return true;
+        }
+
+        if (line.StartsWith("NETWORK ", StringComparison.Ordinal))
+        {
+            kind = "NETWORK";
+            return true;
+        }
+
+        kind = string.Empty;
+        return false;
+    }
+
+    private static int MessagingKindOrder(string kind) => kind switch
+    {
+        "EVENT" => 0,
+        "MESSAGE" => 1,
+        "NETWORK" => 2,
+        "PARTICIPANT" => 3,
+        _ => int.MaxValue,
+    };
+
+    private static string[] MessagingFields(string kind) => kind switch
+    {
+        "MESSAGE" or "EVENT" => ["name", "former"],
+        "PARTICIPANT" => ["network", "identity", "processes", "publishes", "subscribes", "serializers", "default"],
+        "NETWORK" => ["members", "requires"],
+        _ => [],
+    };
+
+    private static bool TryParseField(string line, out string name, out string value)
+    {
+        name = string.Empty;
+        value = string.Empty;
+        if (!line.StartsWith("  ", StringComparison.Ordinal))
+            return false;
+
+        var separator = line.IndexOf(':', 2);
+        if (separator < 0)
+            return false;
+
+        name = line[2..separator];
+        value = line[(separator + 1)..];
+        if (value.Length > 0 && !value.StartsWith(" ", StringComparison.Ordinal))
+            return false;
+        if (value.StartsWith(" ", StringComparison.Ordinal))
+            value = value[1..];
+        return name.Length > 0;
+    }
+
+    private static bool IsValidOwner(string owner) =>
+        owner.Length > 0
+        && owner.IndexOfAny([' ', '\t', '\r', '\n']) < 0
+        && owner.IndexOf(" -> ", StringComparison.Ordinal) < 0;
+
+    private static bool IsValidMessagingValue(string kind, string field, string value)
+    {
+        if (field == "network")
+            return value == "-" || IsValidOwner(value);
+
+        return value.Length > 0
+            && value.IndexOfAny([' ', '\t', '\r', '\n']) < 0
+            && value != "-";
+    }
+
+    private static bool IsMessagingSetField(string field) =>
+        field is "former" or "processes" or "publishes" or "subscribes" or "serializers" or "members" or "requires";
+
+    private static bool IsValidSet(IEnumerable<string> values)
+    {
+        var ordered = values.ToArray();
+        return ordered.Length > 0
+            && ordered.All(static item => item.Length > 0 && item.IndexOfAny([' ', '\t', '\r', '\n', '|']) < 0)
+            && values.SequenceEqual(
+                ordered.Distinct(StringComparer.Ordinal).OrderBy(item => item, StringComparer.Ordinal),
+                StringComparer.Ordinal);
     }
 
     // Extracts the contract owner name from a snapshot line.
@@ -290,6 +489,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static void AddType(
         List<string> lines,
+        List<MessagingBlock> messagingBlocks,
+        ImmutableDictionary<string, Location>.Builder locBuilder,
         INamedTypeSymbol type,
         IReadOnlyDictionary<INamedTypeSymbol, string[]> networkMemberships)
     {
@@ -305,7 +506,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             return;
 
         var request = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        AddMessagingLines(lines, type, message, @event, participant, network, networkMemberships);
+        AddMessagingLines(messagingBlocks, locBuilder, type, message, @event, participant, network, networkMemberships);
         if (message is not null || @event is not null || participant is not null || network is not null)
         {
             if (http is null && grpc is null && rebus is null)
@@ -357,7 +558,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     }
 
     private static void AddMessagingLines(
-        List<string> lines,
+        List<MessagingBlock> blocks,
+        ImmutableDictionary<string, Location>.Builder locations,
         INamedTypeSymbol type,
         AttributeData? message,
         AttributeData? @event,
@@ -367,9 +569,19 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     {
         var clrName = type.ToDisplayString();
         if (message is not null)
-            lines.Add($"MESSAGE {clrName} -> name:{ContractName(type, message)} former:{FormatSet(StringsNamed(message, "FormerNames"))}");
+            AddMessagingBlock(
+                blocks,
+                locations,
+                type,
+                "MESSAGE",
+                [("name", ContractName(type, message)), ("former", FormatSet(StringsNamed(message, "FormerNames")))]);
         if (@event is not null)
-            lines.Add($"EVENT {clrName} -> name:{ContractName(type, @event)} former:{FormatSet(StringsNamed(@event, "FormerNames"))}");
+            AddMessagingBlock(
+                blocks,
+                locations,
+                type,
+                "EVENT",
+                [("name", ContractName(type, @event)), ("former", FormatSet(StringsNamed(@event, "FormerNames")))]);
         if (participant is not null)
         {
             var networkName = networkMemberships.TryGetValue(type, out var networks)
@@ -379,18 +591,64 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 type.Name.EndsWith("Participant", StringComparison.Ordinal)
                     ? type.Name[..^"Participant".Length]
                     : type.Name);
-            lines.Add($"PARTICIPANT {clrName} -> network:{networkName} identity:{identity}"
-                + $" processes:{FormatSet(ContractNames(participant, "Processes"))}"
-                + $" publishes:{FormatSet(ContractNames(participant, "Publishes"))}"
-                + $" subscribes:{FormatSet(ContractNames(participant, "Subscribes"))}"
-                + $" serializers:{FormatSet(EnumNames(participant, "Serializers"))}"
-                + $" default:{EnumName(participant, "DefaultSerializer")}");
+            AddMessagingBlock(
+                blocks,
+                locations,
+                type,
+                "PARTICIPANT",
+                [
+                    ("network", networkName),
+                    ("identity", identity),
+                    ("processes", FormatSet(ContractNames(participant, "Processes"))),
+                    ("publishes", FormatSet(ContractNames(participant, "Publishes"))),
+                    ("subscribes", FormatSet(ContractNames(participant, "Subscribes"))),
+                    ("serializers", FormatSet(EnumNames(participant, "Serializers"))),
+                    ("default", EnumName(participant, "DefaultSerializer")),
+                ]);
         }
         if (network is not null)
+            AddMessagingBlock(
+                blocks,
+                locations,
+                type,
+                "NETWORK",
+                [("members", FormatSet(TypeNames(network, "Members"))), ("requires", FormatFlags(EnumValue(network, "Requires")))]);
+    }
+
+    private static void AddMessagingBlock(
+        List<MessagingBlock> blocks,
+        ImmutableDictionary<string, Location>.Builder locations,
+        INamedTypeSymbol type,
+        string kind,
+        (string Name, string Value)[] fields)
+    {
+        var owner = type.ToDisplayString();
+        blocks.Add(new MessagingBlock(
+            kind,
+            owner,
+            fields.Select(static field => new MessagingField(field.Name, field.Value)).ToImmutableArray()));
+        var location = type.Locations.FirstOrDefault() ?? Location.None;
+        locations[owner] = location;
+        foreach (var field in fields)
+            locations[owner + "." + field.Name] = location;
+    }
+
+    private static IEnumerable<string> FormatMessagingBlock(MessagingBlock block)
+    {
+        yield return block.Kind + " " + block.Owner;
+        foreach (var field in block.Fields)
         {
-            lines.Add($"NETWORK {clrName} -> members:{FormatSet(TypeNames(network, "Members"))}"
-                + $" requires:{FormatFlags(EnumValue(network, "Requires"))}");
+            if (!IsMessagingSetField(field.Name) || field.Value == "-")
+            {
+                yield return "  " + field.Name + ": " + field.Value;
+                continue;
+            }
+
+            yield return "  " + field.Name + ":";
+            foreach (var value in field.Value.Split('|'))
+                yield return "    - " + value;
         }
+        yield return "END";
     }
 
     private static string ContractName(INamedTypeSymbol type, AttributeData? attribute)
@@ -429,7 +687,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static string FormatFlags(int flags)
     {
         var values = new[] { (1, "receive"), (2, "pubsub"), (4, "scheduled_send") };
-        var result = values.Where(value => (flags & value.Item1) != 0).Select(value => value.Item2).ToArray();
+        var result = values.Where(value => (flags & value.Item1) != 0)
+            .Select(value => value.Item2)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToArray();
         return result.Length == 0 ? "-" : string.Join("|", result);
     }
 
@@ -644,6 +905,14 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private readonly record struct SnapshotParseResult(
         HashSet<string> Lines,
+        Dictionary<string, string> EntryNames,
         bool IsValid,
         string InvalidLine);
+
+    private readonly record struct MessagingBlock(
+        string Kind,
+        string Owner,
+        ImmutableArray<MessagingField> Fields);
+
+    private readonly record struct MessagingField(string Name, string Value);
 }
