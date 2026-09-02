@@ -80,7 +80,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            NLog.LogManager.GetLogger("Main").Fatal(ex, CultureInfo.InvariantCulture, $@"Unhandled Fatal Exception occurred: {ex.Message}");
+            NLog.LogManager.GetLogger("Main").Fatal(ex, CultureInfo.InvariantCulture, "Unhandled Fatal Exception occurred: {Message}", ex.Message);
         }
         finally
         {

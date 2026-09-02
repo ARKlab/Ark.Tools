@@ -73,7 +73,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            _logger.Fatal(ex, CultureInfo.InvariantCulture, $@"Unhandled Fatal Exception occurred: {ex.Message}");
+            _logger.Fatal(ex, CultureInfo.InvariantCulture, "Unhandled Fatal Exception occurred: {Message}", ex.Message);
         }
         finally
         {

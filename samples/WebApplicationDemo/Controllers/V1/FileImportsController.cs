@@ -36,7 +36,7 @@ public class FileImportsController : ControllerBase
     [HttpPost()]
     public async Task<IActionResult> Post(IFormFile file, IFormFile file2, CancellationToken ctk = default)
     {
-        _logger.Trace(CultureInfo.InvariantCulture, $@"UploadFile: {file.FileName}");
+        _logger.Trace(CultureInfo.InvariantCulture, "UploadFile: {FileName}", file.FileName);
 
         if (file.Length > 0)
         {

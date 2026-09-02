@@ -284,7 +284,7 @@ The complete selected classification and rationale are in
   `Ark.Tools.VisualStudioThreading.globalconfig`,
   `Ark.Tools.IdentityModel.globalconfig`,
   `Ark.Tools.Core.globalconfig`, and
-  `BannedSymbols.txt`.
+  `BannedSymbols.Ark.txt`.
 - Consumer `.*.globalconfig` discovery rooted at
   `ArkToolsLocalAnalyzerConfigRoot` (the imported `Directory.Build.props`
   directory by default) and removal of only the `DevLooped.SponsorLink` and

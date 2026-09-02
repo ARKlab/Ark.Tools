@@ -12,7 +12,7 @@ behavior in repository-local files. Consumers copy those files from
 The desired product is a versioned, centrally maintained setup that:
 
 - applies consistent build and analysis defaults;
-- carries analyzer configuration and `BannedSymbols.txt`;
+- carries analyzer configuration and `BannedSymbols.Ark.txt`;
 - can vary package references and behavior by project type;
 - remains overridable where a solution has a legitimate exception;
 - supports Microsoft.Testing.Platform (MTP);
@@ -165,7 +165,7 @@ Ark.Tools.Build.nupkg
         ├── Ark.Tools.VisualStudioThreading.globalconfig
         ├── Ark.Tools.IdentityModel.globalconfig
         ├── Ark.Tools.Core.globalconfig
-        └── BannedSymbols.txt
+        └── BannedSymbols.Ark.txt
 ```
 
 The SDK package keeps the logical split between the thin `Sdk.props`/`Sdk.targets`
@@ -267,7 +267,7 @@ upstream default changes.
 | `Ark.Tools.VisualStudioThreading.globalconfig` | Non-SQL; `EnableArkToolsVisualStudioThreading` | Inert if VS Threading analyzers are absent. |
 | `Ark.Tools.IdentityModel.globalconfig` | Non-SQL; `EnableArkToolsIdentityModelConfiguration` | Inert if the IdentityModel analyzer is absent. |
 | `Ark.Tools.Core.globalconfig` | Non-SQL; `EnableArkToolsCoreConfiguration` | Inert if the Ark.Tools.Core analyzer is absent. |
-| `BannedSymbols.txt` | Non-SQL; `EnableArkToolsBannedApi` | Inert if Banned API Analyzers is absent; consumer lists compose. |
+| `BannedSymbols.Ark.txt` | Non-SQL; `EnableArkToolsBannedApi` | Inert if Banned API Analyzers is absent; consumer lists compose. |
 | Consumer `.*.globalconfig` discovery | Non-SQL; `EnableArkToolsLocalAnalyzerConfigDiscovery` | Preserves local overrides without changing consumer files. |
 | SponsorLink analyzer removal | `EnableArkToolsSponsorLinkRemoval` | Removes only `DevLooped.SponsorLink` and `Moq.CodeAnalysis` before compilation. |
 
@@ -479,7 +479,7 @@ The inventory below was verified against:
 | `.vsthreading.globalconfig` | 23 VSTHRD severity overrides | Build: package and load as a global analyzer config. |
 | `.editorconfig` | Formatting, code-style, naming rules, and three error severities | Build: split coding style/`IDE1006`, `IDX00001`, and `ARKCORE005` by analyzer provenance. Local source-tree config wins. |
 | Consumer `.globalconfig` | ReferenceProject keeps a local override file | Preserve local override capability and document precedence. |
-| `BannedSymbols.txt` | 93 active bans: local time, ambiguous parsing/rounding/culture, reference tuples, implicit time-zone conversion, console logging, and blocking task/thread APIs | Build: package as `AdditionalFiles`; provide one opt-out and compose with consumer lists. |
+| `BannedSymbols.Ark.txt` | 93 active bans: local time, ambiguous parsing/rounding/culture, reference tuples, implicit time-zone conversion, console logging, and blocking task/thread APIs | Build: package as `AdditionalFiles`; provide one opt-out and compose with consumer lists. |
 | `Disable_SponsorLink` target | Removes `DevLooped.SponsorLink` and `Moq.CodeAnalysis` analyzers | Build: include with an opt-out. |
 | Root wildcard imports for `.*.globalconfig` and `.*.editorconfig` | Loads repository-local analyzer overrides for non-SQL projects | Build: keep local global-config discovery in addition to packaged configs; avoid duplicate imports. |
 
@@ -551,7 +551,7 @@ one merged configuration.
 | Suggestion | `VSTHRD011`, `VSTHRD102`, `VSTHRD104`, `VSTHRD108`, `VSTHRD112`, `VSTHRD113` |
 | None | `VSTHRD012`, `VSTHRD111` in favor of `MA0004`, `VSTHRD200` |
 
-#### `BannedSymbols.txt`
+#### `BannedSymbols.Ark.txt`
 
 Package the complete current list, separately from the severity configurations.
 Its 93 active entries ban local-time APIs, ambiguous enum parsing and rounding,
@@ -657,7 +657,7 @@ consumer repository:
                              Condition="'$(EnableArkToolsIdentityModelConfiguration)' != 'false'" />
   <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Core.globalconfig"
                              Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
-  <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.txt"
+  <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.txt"
                    Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
 </ItemGroup>
 ```
@@ -732,7 +732,7 @@ An implementation is not complete until tests prove:
 - [`.meziantou.globalconfig`](../../.meziantou.globalconfig)
 - [`.errorprone.globalconfig`](../../.errorprone.globalconfig)
 - [`.vsthreading.globalconfig`](../../.vsthreading.globalconfig)
-- [`BannedSymbols.txt`](../../BannedSymbols.txt)
+- [`BannedSymbols.Ark.txt`](../../src/sdk/Ark.Tools.Build/configuration/analyzers/BannedSymbols.Ark.txt)
 
 ### External
 
