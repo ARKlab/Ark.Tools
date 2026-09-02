@@ -279,8 +279,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             previousKind = kind;
             previousOwner = owner;
 
-            parsed.Add(line);
-            entryNames[line] = owner;
+            var blockIdentity = kind + "\n" + owner;
+            parsed.Add(SnapshotEntryKey(blockIdentity, line));
+            entryNames[SnapshotEntryKey(blockIdentity, line)] = owner;
             var fields = MessagingFields(kind);
             for (var fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
             {
@@ -292,9 +293,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                     || !string.Equals(fieldName, fields[fieldIndex], StringComparison.Ordinal))
                     return InvalidSnapshot(parsed, entryNames, fieldLine);
 
-                parsed.Add(fieldLine);
                 var fieldOwner = owner + "." + fieldName;
-                entryNames[fieldLine] = fieldOwner;
+                var fieldIdentity = blockIdentity + "\n" + fieldName;
+                parsed.Add(SnapshotEntryKey(fieldIdentity, fieldLine));
+                entryNames[SnapshotEntryKey(fieldIdentity, fieldLine)] = fieldOwner;
                 if (IsMessagingSetField(fieldName))
                 {
                     if (value == "-")
@@ -309,8 +311,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                         if (item.Length == 0 || item.IndexOfAny([' ', '\t', '\r', '\n', '|']) >= 0)
                             return InvalidSnapshot(parsed, entryNames, lines[index]);
                         values.Add(item);
-                        parsed.Add(lines[index]);
-                        entryNames[lines[index]] = fieldOwner;
+                        parsed.Add(SnapshotEntryKey(fieldIdentity, lines[index]));
+                        entryNames[SnapshotEntryKey(fieldIdentity, lines[index])] = fieldOwner;
                     }
 
                     if (values.Count == 0 || !IsValidSet(values))
@@ -326,8 +328,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             if (++index >= lines.Length || lines[index] != "END")
                 return InvalidSnapshot(parsed, entryNames, index < lines.Length ? lines[index] : $"missing END for {line}");
 
-            parsed.Add("END");
-            entryNames["END"] = owner;
+            parsed.Add(SnapshotEntryKey(blockIdentity, "END"));
+            entryNames[SnapshotEntryKey(blockIdentity, "END")] = owner;
         }
 
         return new SnapshotParseResult(parsed, entryNames, true, string.Empty);
@@ -345,15 +347,32 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         || line.StartsWith("ENUM ", StringComparison.Ordinal)
         || line.StartsWith("EVOLVABLE-ENUM ", StringComparison.Ordinal);
 
+    private static string SnapshotEntryKey(string identity, string line) => identity + "\n" + line;
+
     private static bool TryGetMessagingKind(string line, out string kind)
     {
-        foreach (var candidate in new[] { "MESSAGE", "EVENT", "PARTICIPANT", "NETWORK" })
+        if (line.StartsWith("MESSAGE ", StringComparison.Ordinal))
         {
-            if (line.StartsWith(candidate + " ", StringComparison.Ordinal))
-            {
-                kind = candidate;
-                return true;
-            }
+            kind = "MESSAGE";
+            return true;
+        }
+
+        if (line.StartsWith("EVENT ", StringComparison.Ordinal))
+        {
+            kind = "EVENT";
+            return true;
+        }
+
+        if (line.StartsWith("PARTICIPANT ", StringComparison.Ordinal))
+        {
+            kind = "PARTICIPANT";
+            return true;
+        }
+
+        if (line.StartsWith("NETWORK ", StringComparison.Ordinal))
+        {
+            kind = "NETWORK";
+            return true;
         }
 
         kind = string.Empty;

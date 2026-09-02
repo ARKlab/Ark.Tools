@@ -2297,6 +2297,31 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorPreservesMessagingEntryIdentityWhenLinesRepeat()
+    {
+        const string baselineSource = """
+            using Ark.Tools.MediatorFramework;
+            [Message(Name = "shared")]
+            public sealed class FirstMessage { }
+            [Message(Name = "shared")]
+            public sealed class SecondMessage { }
+            """;
+        const string changedSource = """
+            using Ark.Tools.MediatorFramework;
+            [Message(Name = "shared")]
+            public sealed class FirstMessage { }
+            [Message(Name = "changed")]
+            public sealed class SecondMessage { }
+            """;
+
+        var baseline = _runApiSurfaceGeneratorResult(baselineSource, baseline: null, enabled: false).Generated;
+        var result = _runApiSurfaceGeneratorResult(changedSource, baseline, enabled: true);
+
+        result.Diagnostics.Should().Contain(
+            d => d.Id == "ARKAPI002" && d.GetMessage().Contains("SecondMessage.name"));
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorRejectsLegacyMessagingSnapshotLines()
     {
         var result = _runApiSurfaceGeneratorResult(
