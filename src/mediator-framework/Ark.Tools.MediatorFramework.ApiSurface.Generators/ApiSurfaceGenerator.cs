@@ -289,12 +289,38 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
                 var fieldLine = lines[index];
                 if (!TryParseField(fieldLine, out var fieldName, out var value)
-                    || !string.Equals(fieldName, fields[fieldIndex], StringComparison.Ordinal)
-                    || !IsValidMessagingValue(kind, fieldName, value))
+                    || !string.Equals(fieldName, fields[fieldIndex], StringComparison.Ordinal))
                     return InvalidSnapshot(parsed, entryNames, fieldLine);
 
                 parsed.Add(fieldLine);
-                entryNames[fieldLine] = owner + "." + fieldName;
+                var fieldOwner = owner + "." + fieldName;
+                entryNames[fieldLine] = fieldOwner;
+                if (IsMessagingSetField(fieldName))
+                {
+                    if (value == "-")
+                        continue;
+                    if (value.Length > 0)
+                        return InvalidSnapshot(parsed, entryNames, fieldLine);
+
+                    var values = new List<string>();
+                    while (++index < lines.Length && lines[index].StartsWith("    - ", StringComparison.Ordinal))
+                    {
+                        var item = lines[index][6..];
+                        if (item.Length == 0 || item.IndexOfAny([' ', '\t', '\r', '\n', '|']) >= 0)
+                            return InvalidSnapshot(parsed, entryNames, lines[index]);
+                        values.Add(item);
+                        parsed.Add(lines[index]);
+                        entryNames[lines[index]] = fieldOwner;
+                    }
+
+                    if (values.Count == 0 || !IsValidSet(values))
+                        return InvalidSnapshot(parsed, entryNames, fieldLine);
+                    index--;
+                }
+                else if (!IsValidMessagingValue(kind, fieldName, value))
+                {
+                    return InvalidSnapshot(parsed, entryNames, fieldLine);
+                }
             }
 
             if (++index >= lines.Length || lines[index] != "END")
@@ -358,13 +384,17 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         if (!line.StartsWith("  ", StringComparison.Ordinal))
             return false;
 
-        var separator = line.IndexOf(": ", 2, StringComparison.Ordinal);
+        var separator = line.IndexOf(':', 2);
         if (separator < 0)
             return false;
 
         name = line[2..separator];
-        value = line[(separator + 2)..];
-        return name.Length > 0 && value.Length > 0;
+        value = line[(separator + 1)..];
+        if (value.Length > 0 && !value.StartsWith(" ", StringComparison.Ordinal))
+            return false;
+        if (value.StartsWith(" ", StringComparison.Ordinal))
+            value = value[1..];
+        return name.Length > 0;
     }
 
     private static bool IsValidOwner(string owner) =>
@@ -374,27 +404,24 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static bool IsValidMessagingValue(string kind, string field, string value)
     {
-        if (field is "former" or "processes" or "publishes" or "subscribes" or "serializers" or "members" or "requires")
-            return IsValidSet(value);
-
         if (field == "network")
             return value == "-" || IsValidOwner(value);
 
-        return value.IndexOfAny([' ', '\t', '\r', '\n']) < 0
-            && value != "-"
-            && (kind != "PARTICIPANT" || field != "default" || value.Length > 0);
+        return value.Length > 0
+            && value.IndexOfAny([' ', '\t', '\r', '\n']) < 0
+            && value != "-";
     }
 
-    private static bool IsValidSet(string value)
-    {
-        if (value == "-")
-            return true;
+    private static bool IsMessagingSetField(string field) =>
+        field is "former" or "processes" or "publishes" or "subscribes" or "serializers" or "members" or "requires";
 
-        var values = value.Split('|');
-        return values.Length > 0
-            && values.All(static item => item.Length > 0 && item.IndexOfAny([' ', '\t', '\r', '\n', '|']) < 0)
+    private static bool IsValidSet(IEnumerable<string> values)
+    {
+        var ordered = values.ToArray();
+        return ordered.Length > 0
+            && ordered.All(static item => item.Length > 0 && item.IndexOfAny([' ', '\t', '\r', '\n', '|']) < 0)
             && values.SequenceEqual(
-                values.Distinct(StringComparer.Ordinal).OrderBy(item => item, StringComparer.Ordinal),
+                ordered.Distinct(StringComparer.Ordinal).OrderBy(item => item, StringComparer.Ordinal),
                 StringComparer.Ordinal);
     }
 
@@ -591,7 +618,17 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     {
         yield return block.Kind + " " + block.Owner;
         foreach (var field in block.Fields)
-            yield return "  " + field.Name + ": " + field.Value;
+        {
+            if (!IsMessagingSetField(field.Name) || field.Value == "-")
+            {
+                yield return "  " + field.Name + ": " + field.Value;
+                continue;
+            }
+
+            yield return "  " + field.Name + ":";
+            foreach (var value in field.Value.Split('|'))
+                yield return "    - " + value;
+        }
         yield return "END";
     }
 

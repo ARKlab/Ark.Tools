@@ -2249,14 +2249,16 @@ public sealed class GeneratorSnapshotTests
             """
             EVENT PrintCompleted
               name: books.print_completed
-              former: legacy_print_completed
+              former:
+                - legacy_print_completed
             END
             """);
         snapshot.Should().Contain(
             """
             MESSAGE RecalculatePrint
               name: recalculate_print
-              former: legacy_recalculate
+              former:
+                - legacy_recalculate
             END
             """);
         snapshot.Should().Contain(
@@ -2264,18 +2266,25 @@ public sealed class GeneratorSnapshotTests
             PARTICIPANT PrintingParticipant
               network: BookMessagingNetwork
               identity: printing
-              processes: recalculate_print
-              publishes: books.print_completed
+              processes:
+                - recalculate_print
+              publishes:
+                - books.print_completed
               subscribes: -
-              serializers: json|messagepack
+              serializers:
+                - json
+                - messagepack
               default: json
             END
             """);
         snapshot.Should().Contain(
             """
             NETWORK BookMessagingNetwork
-              members: PrintingParticipant
-              requires: pubsub|receive
+              members:
+                - PrintingParticipant
+              requires:
+                - pubsub
+                - receive
             END
             """);
 
@@ -2317,7 +2326,8 @@ public sealed class GeneratorSnapshotTests
             "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  name: duplicate\nEND\n*/\n",
             "/*\nMESSAGE RecalculatePrint\n  former: -\n  name: recalculate_print\nEND\n*/\n",
             "/*\nMESSAGE RecalculatePrint\n  unknown: value\n  former: -\nEND\n*/\n",
-            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former: a|a\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  name:\n  former: -\nEND\n*/\n",
+            "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former:\n    - a\n    - a\nEND\n*/\n",
             "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former: -\n",
             "/*\nMESSAGE RecalculatePrint\n  name: recalculate_print\n  former: -\nMESSAGE Nested\n  name: nested\n  former: -\nEND\nEND\n*/\n",
         };
@@ -2355,10 +2365,14 @@ public sealed class GeneratorSnapshotTests
         generated.IndexOf("EVENT ", StringComparison.Ordinal).Should().BeLessThan(0);
         generated.IndexOf("MESSAGE AMessage", StringComparison.Ordinal)
             .Should().BeLessThan(generated.IndexOf("MESSAGE ZMessage", StringComparison.Ordinal));
-        generated.Should().Contain("former: a|z");
-        generated.Should().Contain("processes: alpha|zeta");
-        generated.Should().Contain("serializers: json|messagepack");
-        generated.Should().Contain("requires: pubsub|receive");
+        generated.Should().Contain("    - a");
+        generated.Should().Contain("    - z");
+        generated.Should().Contain("    - alpha");
+        generated.Should().Contain("    - zeta");
+        generated.Should().Contain("    - json");
+        generated.Should().Contain("    - messagepack");
+        generated.Should().Contain("    - pubsub");
+        generated.Should().Contain("    - receive");
     }
 
     [TestMethod]

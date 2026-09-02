@@ -49,23 +49,34 @@ event, each participant, and each network:
 ```text
 EVENT Books.PrintCompleted
   name: books_print_completed
-  former: books_print_finished|legacy_print_completed
+  former:
+    - books_print_finished
+    - legacy_print_completed
 END
 MESSAGE Books.RecalculatePrint
   name: books_recalculate_print
   former: -
 END
 NETWORK BookTopology.BookMessagingNetwork
-  members: printing_participant|web_frontend_participant
-  requires: pubsub|receive|scheduled_send
+  members:
+    - printing_participant
+    - web_frontend_participant
+  requires:
+    - pubsub
+    - receive
+    - scheduled_send
 END
 PARTICIPANT BookTopology.PrintingParticipant
   network: BookMessagingNetwork
   identity: printing
-  processes: books_recalculate_print
+  processes:
+    - books_recalculate_print
   publishes: -
-  subscribes: books_print_completed
-  serializers: json|messagepack
+  subscribes:
+    - books_print_completed
+  serializers:
+    - json
+    - messagepack
   default: json
 END
 ```
@@ -197,23 +208,34 @@ above — these strings are the wire-drift baseline, byte-for-byte):*
 ```text
 EVENT Books.PrintCompleted
   name: books_print_completed
-  former: books_print_finished|legacy_print_completed
+  former:
+    - books_print_finished
+    - legacy_print_completed
 END
 MESSAGE Books.RecalculatePrint
   name: books_recalculate_print
   former: -
 END
 NETWORK BookTopology.BookMessagingNetwork
-  members: printing_participant|web_frontend_participant
-  requires: pubsub|receive|scheduled_send
+  members:
+    - printing_participant
+    - web_frontend_participant
+  requires:
+    - pubsub
+    - receive
+    - scheduled_send
 END
 PARTICIPANT BookTopology.PrintingParticipant
   network: BookMessagingNetwork
   identity: printing
-  processes: books_recalculate_print
+  processes:
+    - books_recalculate_print
   publishes: -
-  subscribes: books_print_completed
-  serializers: json|messagepack
+  subscribes:
+    - books_print_completed
+  serializers:
+    - json
+    - messagepack
   default: json
 END
 ```
@@ -234,10 +256,9 @@ private static void AddMessagingBlock(List<string> lines, INamedTypeSymbol type)
     if (message is not null)
     {
         var name = SharedNameResolver.ResolveCanonicalName(type, message);
-        var former = FormatSet(SharedNameResolver.ResolveFormerNames(message));
         lines.Add($"MESSAGE {clrName}");
         lines.Add($"  name: {name}");
-        lines.Add($"  former: {former}");
+        AddSetField(lines, "former", SharedNameResolver.ResolveFormerNames(message));
         lines.Add("END");
     }
 
@@ -245,25 +266,31 @@ private static void AddMessagingBlock(List<string> lines, INamedTypeSymbol type)
     if (@event is not null)
     {
         var name = SharedNameResolver.ResolveCanonicalName(type, @event);
-        var former = FormatSet(SharedNameResolver.ResolveFormerNames(@event));
         lines.Add($"EVENT {clrName}");
         lines.Add($"  name: {name}");
-        lines.Add($"  former: {former}");
+        AddSetField(lines, "former", SharedNameResolver.ResolveFormerNames(@event));
         lines.Add("END");
     }
 
     // PARTICIPANT {clrName}, followed by fixed-order key/value fields and END.
     // NETWORK {clrName}, followed by fixed-order key/value fields and END.
-    // Both use the same shared resolution helper and FormatSet.
+    // Both use the same shared resolution helper and AddSetField.
 }
 
-// Distinct, ordinal-sorted, '|'-joined; '-' when the set is empty.
-private static string FormatSet(IEnumerable<string> values)
+private static void AddSetField(List<string> lines, string field, IEnumerable<string> values)
 {
     var sorted = values.Distinct(StringComparer.Ordinal)
         .OrderBy(static v => v, StringComparer.Ordinal)
         .ToArray();
-    return sorted.Length == 0 ? "-" : string.Join("|", sorted);
+    if (sorted.Length == 0)
+    {
+        lines.Add($"  {field}: -");
+        return;
+    }
+
+    lines.Add($"  {field}:");
+    foreach (var value in sorted)
+        lines.Add($"    - {value}");
 }
 ```
 
@@ -313,7 +340,7 @@ surface lines without implying wire interoperability.
 - Default canonical names include the namespace, exclude assembly identity,
   and are normalized to lowercase snake_case.
 - Explicit `Name` appears exactly in the generated line.
-- Empty aliases and empty participant sets emit `former:-` / `publishes:-`.
+- Empty aliases and empty participant sets emit `former: -` / `publishes: -`.
 - Multiple aliases are deduplicated and ordinal-sorted.
 - `PARTICIPANT` lines record identity, network, ordinal-sorted
   processes/publishes/subscribes, serializer set, and default serializer.

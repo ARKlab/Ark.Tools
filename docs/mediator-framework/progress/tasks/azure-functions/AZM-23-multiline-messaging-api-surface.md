@@ -64,16 +64,21 @@ task:
 PARTICIPANT MyApp.PrintingParticipant
   network: MyApp.BookNetwork
   identity: printing
-  processes: books.print
+  processes:
+    - books.print
   publishes: -
-  subscribes: books.printed
-  serializers: json|msgpack
+  subscribes:
+    - books.printed
+  serializers:
+    - json
+    - msgpack
   default: json
 END
 ```
 
-Every field is deterministic. A change to `subscribes` changes one line rather
-than replacing the complete participant record.
+Every field is deterministic. Populated set fields use one sorted list item per
+line, so a change to `subscribes` changes one line rather than replacing the
+complete participant record.
 
 ## Guide contribution
 

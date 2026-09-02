@@ -926,30 +926,41 @@ EVOLVABLE-ENUM GreetingStatus.Archived=2
 REBUS RefreshGreetingCommand -> queue:greetings
 EVENT Books.PrintCompleted
   name: books_print_completed
-  former: books_print_finished
+  former:
+    - books_print_finished
 END
 MESSAGE Books.RecalculatePrint
   name: books_recalculate_print
   former: -
 END
 NETWORK BookTopology.BookMessagingNetwork
-  members: BookTopology.PrintingParticipant|BookTopology.WebFrontendParticipant
-  requires: pubsub|receive|scheduled_send
+  members:
+    - BookTopology.PrintingParticipant
+    - BookTopology.WebFrontendParticipant
+  requires:
+    - pubsub
+    - receive
+    - scheduled_send
 END
 PARTICIPANT BookTopology.PrintingParticipant
   network: BookMessagingNetwork
   identity: printing
-  processes: books_recalculate_print
+  processes:
+    - books_recalculate_print
   publishes: -
-  subscribes: books_print_completed
-  serializers: json|messagepack
+  subscribes:
+    - books_print_completed
+  serializers:
+    - json
+    - messagepack
   default: json
 END
 ```
 
 Messaging records use one block per declaration. Blocks are sorted by kind and
 fully qualified CLR owner; fields use a fixed order, set values are
-ordinal-sorted, and every block terminates with `END`. A changed field is
+ordinal-sorted with one list item per line, and every block terminates with
+`END`. A changed field is
 reported against its owning declaration, so a review can approve only the
 metadata that changed.
 

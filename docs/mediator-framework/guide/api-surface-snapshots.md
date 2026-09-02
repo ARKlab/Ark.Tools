@@ -64,19 +64,27 @@ EVENT MyApp.Messages.GreetingCompleted
 END
 MESSAGE MyApp.Messages.CompleteGreeting
   name: complete_greeting
-  former: old_complete_greeting
+  former:
+    - old_complete_greeting
 END
 NETWORK MyApp.Messages.GreetingNetwork
-  members: MyApp.Messages.GreetingProcessorParticipant|MyApp.Messages.GreetingPublisherParticipant
-  requires: pubsub|receive
+  members:
+    - MyApp.Messages.GreetingProcessorParticipant
+    - MyApp.Messages.GreetingPublisherParticipant
+  requires:
+    - pubsub
+    - receive
 END
 PARTICIPANT MyApp.Messages.GreetingProcessorParticipant
   network: MyApp.Messages.GreetingNetwork
   identity: greeting-processor
-  processes: complete_greeting
+  processes:
+    - complete_greeting
   publishes: -
-  subscribes: greeting_completed
-  serializers: json
+  subscribes:
+    - greeting_completed
+  serializers:
+    - json
   default: json
 END
 ```
@@ -89,7 +97,7 @@ every member and numeric value of a plain enum or an
 removing, or renumbering a member is a visible diff. The `REBUS` line
 describes generated Rebus queue routing. `MESSAGE`, `EVENT`, `PARTICIPANT`, and `NETWORK` are deterministic multiline
 blocks. Each block has a fixed field order and ends with `END`; set values are
-ordinal-sorted and empty sets are `-`. They record logical names and aliases,
+ordinal-sorted with one list item per line, and empty sets are `-`. They record logical names and aliases,
 never transport-mapped entity names, plus participant membership, identity,
 ownership, subscriptions, serializers, and network capabilities. These
 declaration entries may feed either Rebus or native generation, but do not imply
