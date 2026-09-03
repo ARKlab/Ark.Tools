@@ -6,7 +6,7 @@ Ark.Tools applies a framework-neutral Microsoft Testing Platform (MTP) profile t
 
 - The profile applies only when `IsTestProject` is `true`.
 - The profile is disabled by setting `EnableArkToolsMtpTestProfile=false`.
-- Default test settings are disabled by setting `EnableArkToolsDefaultTestSettings=false`.
+- Default command-line and minimum-test defaults are disabled by setting `EnableArkToolsDefaultTestSettings=false`.
 - Individual extension packages can be disabled with the matching `EnableArkToolsMtp*` switches.
 
 ## Test invocation
