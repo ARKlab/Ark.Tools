@@ -266,7 +266,7 @@ public sealed class GeneratorSnapshotTests
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
             using Ark.Tools.MediatorFramework;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             """);
 
@@ -284,7 +284,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/items/{id}")]
             public sealed class GetItem : IQuery<string>
@@ -306,7 +306,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/items/{name}")]
             public sealed class GetItem : IQuery<string>
@@ -328,7 +328,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
             public sealed class PublicEndpoint : IQuery<string> { }
@@ -349,7 +349,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/items")]
             public sealed class GetItems : IQuery<string> { }
@@ -368,7 +368,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/queries", SuccessStatusCode = 200, NullResultStatusCode = 404)]
             public sealed class GetQuery : IQuery<string> { }
@@ -403,7 +403,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(Marker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(Marker), "/api/v{version}")]
             public sealed class Marker { }
             public sealed record Input(string Message);
             [HttpEndpoint("PUT", "/items/{id}")]
@@ -444,7 +444,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(Marker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(Marker), "/api/v{version}")]
             public sealed class Marker { }
             public record Input(string Message);
             public record BaseRequest
@@ -470,7 +470,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             public sealed class ItemResponse { [ETag] public string? Version { get; set; } }
             [HttpEndpoint("PUT", "/items/{id}")]
@@ -612,7 +612,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/messages", AcceptsMessagePack = true)]
             public sealed class GetMessages : IQuery<string> { }
@@ -628,7 +628,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/messages")]
             public sealed class GetMessages : IQuery<string> { }
@@ -646,7 +646,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
             public sealed class ContractMarker { }
             namespace First
             {
@@ -661,6 +661,107 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF032");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsHostPrefixWithoutVersionToken()
+    {
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/messages")]
+            public sealed class GetMessages : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF047");
+        result.Generated.Should().NotContain("GetMessages_v1");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsConflictingHostPrefixes()
+    {
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(GetMessages), "/other/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/messages")]
+            public sealed class GetMessages : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF048");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsInvalidContractSelections()
+    {
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(
+                typeof(ContractMarker),
+                "/api/v{version}",
+                ExcludedContracts = new[] { typeof(ContractMarker) })]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/messages")]
+            public sealed class GetMessages : IQuery<string> { }
+            """);
+
+        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF049");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorEnforcesMaxRequestBodySize()
+    {
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("POST", "/messages", MaxRequestBodySizeBytes = 1024)]
+            public sealed class PostMessage : IRequest<string>
+            {
+                public string Text { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/messages")]
+            public sealed class GetMessages : IQuery<string> { }
+            """);
+
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.EnforceMaxRequestBodySize(request, 1024L)");
+        result.Generated.Should().ContainAll("PostMessage_v1", "GetMessages_v1");
+        result.Generated.Split("GetMessages_v1")[1].Should().NotContain("EnforceMaxRequestBodySize");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorOutputIsDeterministicAcrossRuns()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/greetings/{id}")]
+            [Versioning(Introduced = 1, Retired = 3)]
+            public sealed class GetGreeting : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            [HttpEndpoint("POST", "/greetings")]
+            public sealed class CreateGreeting : IRequest<string> { public string Message { get; set; } = string.Empty; }
+            [HttpEndpoint("DELETE", "/greetings/{id}")]
+            public sealed class DeleteGreeting : ICommand<DeleteGreeting> { public string Id { get; set; } = string.Empty; }
+            """;
+
+        var first = _runGenerator<AzureFunctionsEndpointGenerator>(source);
+        var second = _runGenerator<AzureFunctionsEndpointGenerator>(source);
+
+        second.Should().Be(first);
+        first.Should().ContainAll("GetGreeting_v1", "GetGreeting_v2", "CreateGreeting_v1", "DeleteGreeting_v1");
     }
 
     [TestMethod]

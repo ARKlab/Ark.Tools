@@ -22,5 +22,8 @@ ARKMF043 | Ark.Tools.MediatorFramework | Warning | Invalid Storage Queue visibil
 ARKMF044 | Ark.Tools.MediatorFramework | Error | Storage Queue consumer has no retry policy
 ARKMF045 | Ark.Tools.MediatorFramework | Error | Functions messaging subscriber cannot deserialize publisher protocol
 ARKMF046 | Ark.Tools.MediatorFramework | Error | Messaging native entity name collision
+ARKMF047 | Ark.Tools.MediatorFramework | Error | HTTP host version prefix is missing the {version} token
+ARKMF048 | Ark.Tools.MediatorFramework | Error | Conflicting HTTP host version prefixes for the same contract assembly
+ARKMF049 | Ark.Tools.MediatorFramework | Error | HTTP host contract selection does not match an HTTP endpoint contract
 ARKMSG025 | Ark.Tools.MediatorFramework | Error | MessagePack contract shape is missing
 ARKMSG026 | Ark.Tools.MediatorFramework | Error | Google.Protobuf contract shape is missing

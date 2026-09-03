@@ -57,15 +57,38 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor _invalidHostPrefix = new(
+        "ARKMF047",
+        "Invalid Azure Functions host version prefix",
+        "HTTP host version prefix '{0}' must contain the '{{version}}' token",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor _conflictingHostPrefixes = new(
+        "ARKMF048",
+        "Conflicting Azure Functions host version prefixes",
+        "HTTP host markers for contract assembly '{0}' declare conflicting version prefixes '{1}' and '{2}'",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true);
+
+    private static readonly DiagnosticDescriptor _invalidHostSelection = new(
+        "ARKMF049",
+        "Invalid Azure Functions host contract selection",
+        "Type '{0}' in the host {1} list is not an [HttpEndpoint] contract declared by assembly '{2}'",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true);
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _hostAttribute,
                 static (_, _) => true,
-                static (attributeContext, _) => _extractHost(attributeContext))
-            .Where(static host => host is not null)
-            .Select(static (host, _) => host!.Value)
+                static (attributeContext, _) => _extractHosts(attributeContext))
+            .SelectMany(static (extracted, _) => extracted)
             .Collect();
         var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _endpointAttribute,
@@ -80,20 +103,26 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             static (productionContext, pair) => _emit(productionContext, pair.Left, pair.Right));
     }
 
-    private static HostInfo? _extractHost(GeneratorAttributeSyntaxContext context)
+    private static ImmutableArray<HostInfo> _extractHosts(GeneratorAttributeSyntaxContext context)
     {
-        var host = context.Attributes[0];
-        if (host.ConstructorArguments.Length < 2
-            || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
-            || host.ConstructorArguments[1].Value is not string prefix)
-            return null;
+        var builder = ImmutableArray.CreateBuilder<HostInfo>(context.Attributes.Length);
+        foreach (var host in context.Attributes)
+        {
+            if (host.ConstructorArguments.Length < 2
+                || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
+                || host.ConstructorArguments[1].Value is not string prefix)
+                continue;
 
-        return new HostInfo(
-            marker,
-            prefix,
-            _getTypes(host, "IncludedContracts"),
-            _getTypes(host, "ExcludedContracts"),
-            marker.Locations.Any(location => location.IsInSource));
+            builder.Add(new HostInfo(
+                marker,
+                prefix,
+                _getTypes(host, "IncludedContracts"),
+                _getTypes(host, "ExcludedContracts"),
+                marker.Locations.Any(location => location.IsInSource),
+                host.ApplicationSyntaxReference is { } syntax ? Location.Create(syntax.SyntaxTree, syntax.Span) : null));
+        }
+
+        return builder.ToImmutable();
     }
 
     private static void _emit(
@@ -105,8 +134,43 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             return;
 
         var endpoints = new List<Endpoint>();
+        var prefixByAssembly = new Dictionary<IAssemblySymbol, string>(SymbolEqualityComparer.Default);
         foreach (var host in hosts)
         {
+            if (host.Prefix.IndexOf("{version}", StringComparison.Ordinal) < 0)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(_invalidHostPrefix, host.Location, host.Prefix));
+                continue;
+            }
+
+            var markerAssembly = host.Marker.ContainingAssembly;
+            if (prefixByAssembly.TryGetValue(markerAssembly, out var existingPrefix))
+            {
+                if (!string.Equals(existingPrefix, host.Prefix, StringComparison.Ordinal))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        _conflictingHostPrefixes, host.Location, markerAssembly.Name, existingPrefix, host.Prefix));
+                    continue;
+                }
+            }
+            else
+            {
+                prefixByAssembly.Add(markerAssembly, host.Prefix);
+            }
+
+            foreach (var (list, name) in new[] { (host.Included, "IncludedContracts"), (host.Excluded, "ExcludedContracts") })
+            {
+                foreach (var selection in list)
+                {
+                    if (!SymbolEqualityComparer.Default.Equals(selection.ContainingAssembly, markerAssembly)
+                        || !selection.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == _endpointAttribute))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            _invalidHostSelection, host.Location, selection.Name, name, markerAssembly.Name));
+                    }
+                }
+            }
+
             var candidates = host.MarkerIsInSource
                 ? sourceEndpoints.Where(candidate =>
                     SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
@@ -211,6 +275,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .AppendLine(").ConfigureAwait(false);");
         source.AppendLine("        if (_authentication is not null)");
         source.AppendLine("            return _authentication;");
+
+        if (endpoint.MaxRequestBodySizeBytes > 0)
+        {
+            source.Append("        var _sizeLimit = global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.EnforceMaxRequestBodySize(request, ")
+                .Append(endpoint.MaxRequestBodySizeBytes.ToString(CultureInfo.InvariantCulture))
+                .AppendLine("L);");
+            source.AppendLine("        if (_sizeLimit is not null)");
+            source.AppendLine("            return _sizeLimit;");
+        }
 
         // Body or default-instance binding
         if (hasAttachment)
@@ -452,7 +525,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string Prefix,
         ImmutableArray<INamedTypeSymbol> Included,
         ImmutableArray<INamedTypeSymbol> Excluded,
-        bool MarkerIsInSource);
+        bool MarkerIsInSource,
+        Location? Location);
 
     private readonly record struct EndpointCandidate(INamedTypeSymbol Type, AttributeData? Attribute);
 
@@ -475,6 +549,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var successStatusCode = _getNamedInt(attribute, "SuccessStatusCode", 200);
         var nullResultStatusCode = _getNamedInt(attribute, "NullResultStatusCode", 0);
         var maxFileCount = _getNamedInt(attribute, "MaxFileCount", 0);
+        var maxRequestBodySizeBytes = _getNamedLong(attribute, "MaxRequestBodySizeBytes", 0);
         var allowedContentTypes = _getNamedStrings(attribute, "AllowedContentTypes");
         var kind = HandlerKind.None;
         string? responseType = null;
@@ -577,6 +652,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             bodyProperty.Name,
             bodyProperty.Name is null ? type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : bodyProperty.TypeFullName,
             maxFileCount,
+            maxRequestBodySizeBytes,
             allowedContentTypes,
             responseSymbol is INamedTypeSymbol responseNamed
                 && responseNamed.OriginalDefinition.ToDisplayString() == _asyncEnumerable,
@@ -668,6 +744,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return value.Value is int number ? number : fallback;
     }
 
+    private static long _getNamedLong(AttributeData? attribute, string name, long fallback)
+    {
+        if (attribute is null)
+            return fallback;
+
+        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
+        return value.Value is long number ? number : fallback;
+    }
+
     private static bool _getNamedBool(AttributeData attribute, string name)
     {
         return attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value.Value is true;
@@ -750,6 +835,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         string? BodyProperty,
         string? BodyType,
         int MaxFileCount,
+        long MaxRequestBodySizeBytes,
         ImmutableArray<string> AllowedContentTypes,
         bool IsStreaming,
         bool IsRecord,

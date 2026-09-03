@@ -11,6 +11,24 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions;
 /// <summary>Provides HTTP file and streaming operations for generated Functions.</summary>
 public static class ArkAzureFunctionsHttp
 {
+    /// <summary>Enforces the configured whole-request body size before the body is read.</summary>
+    /// <param name="request">The current request.</param>
+    /// <param name="maxRequestBodySizeBytes">The maximum request body size in bytes.</param>
+    /// <returns>A 413 result when the declared or enforced size exceeds the limit, otherwise <see langword="null"/>.</returns>
+    public static IResult? EnforceMaxRequestBodySize(HttpRequest request, long maxRequestBodySizeBytes)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (request.ContentLength is { } declared && declared > maxRequestBodySizeBytes)
+            return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
+
+        var feature = request.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
+        if (feature is { IsReadOnly: false })
+            feature.MaxRequestBodySize = maxRequestBodySizeBytes;
+
+        return null;
+    }
+
     /// <summary>Reads uploaded files as transport-neutral attachments.</summary>
     /// <param name="request">The current request.</param>
     /// <param name="maxFileCount">The maximum number of files, or zero for unlimited.</param>
