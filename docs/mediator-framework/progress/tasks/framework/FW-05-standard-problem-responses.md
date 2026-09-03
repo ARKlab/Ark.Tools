@@ -71,11 +71,13 @@ own declaration wins and the standard one is skipped (no duplicate `Produces` fo
 - [x] All generated endpoint kinds declare 400/500 (and 403 unless anonymous) with
       `application/problem+json`.
 - [x] No duplicate response declarations when a custom status collides.
-- [ ] Enumerating OpenAPI test over all operations in all documents passes.
-- [ ] Behavioral 400/403/500 tests assert the payload shape and the absence of leaked exception detail.
-- [ ] MessagePack negotiation failure returns a ProblemDetails body.
+- [x] Enumerating OpenAPI test over all operations in all documents passes.
+- [x] Behavioral 400/403/500 tests assert the payload shape and the absence of leaked exception detail.
+- [x] MessagePack negotiation failure returns a ProblemDetails body.
 - [x] `design.md` records the HTTP↔gRPC status mapping table.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
 
 > **Review 2026-09-02**: Problem metadata emission and dedup are implemented and snapshot-tested; still open: an OpenAPI document test enumerating operations, payload-shape assertions for 403/500 (incl. no leaked exception detail), and a ProblemDetails-body assertion for MessagePack negotiation failure.
+
+> **Review 2026-09-03**: Closed. `MinimalApiOpenApiTests.V1OperationsDocumentStatusCodesAndProblemResponses` enumerates every operation asserting 400/500 (plus 403 only on authorized endpoints) as `application/problem+json`; `MinimalApiErrorsTests` adds `MapsForbiddenToProblemDetails`, leaked-detail assertions on the 500 path, and `MapsMalformedMessagePackBodyToProblemDetails`.

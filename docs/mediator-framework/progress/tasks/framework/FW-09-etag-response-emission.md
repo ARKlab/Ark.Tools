@@ -115,10 +115,10 @@ detail payloads.
 
 - [x] Generator test: an endpoint with an `[ETag]` response property emits the `ApplyResponseETag`
       call; one without it does not (`GeneratorSnapshotTests.cs` harness).
-- [ ] Unit tests for `ArkETag.ApplyResponseETag`: sets a quoted header; returns `null` for a
+- [x] Unit tests for `ArkETag.ApplyResponseETag`: sets a quoted header; returns `null` for a
       null/empty token; throws for a token containing `"` or a control character; returns 304 when
       `If-None-Match` matches on a conditional GET and `null` when it does not; no 304 for non-GET.
-- [ ] Test asserting the `[ETag]` property is still present in the serialized response body.
+- [x] Test asserting the `[ETag]` property is still present in the serialized response body.
 - [x] Interceptor tests (extend `tests/Ark.Tools.MediatorFramework.Tests/GrpcErrorInterceptorTests.cs`):
       `EntityTagMismatchException` → `FailedPrecondition`, `OptimisticConcurrencyException` →
       `Aborted`.
@@ -126,3 +126,5 @@ detail payloads.
 - [x] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
 
 > **Review 2026-09-02**: `ApplyResponseETag` unit tests cover quoted header, null token, control-char throw, and If-None-Match match/mismatch; still open: explicit empty-token/quote-token/304-status/non-GET cases and a test asserting the `[ETag]` property remains in the serialized response body.
+
+> **Review 2026-09-03**: Closed. `GeneratorSnapshotTests.ApplyResponseETagSetsHeaderAndHandlesConditionalRequests` now covers empty-token→null, quote-token throw, the explicit 304 status code, and the `conditionalGet: false` no-304 case; `MinimalApiETagTests.EmitsETagHeaderAndKeepsTokenInBody` asserts the quoted header plus the token kept in the serialized body, and `ConditionalGetReturnsNotModifiedOnMatch` proves the 304 over HTTP.

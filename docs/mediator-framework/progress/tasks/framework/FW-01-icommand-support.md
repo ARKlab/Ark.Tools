@@ -41,10 +41,12 @@
 
 ## Acceptance
 
-- [ ] HTTP-only command → 204; dual `[RebusMessage]` command → 202 with bus dispatch (tests for both).
-- [ ] `.Produces(...)` metadata matches actual codes (OpenAPI document test).
+- [x] HTTP-only command → 204; dual `[RebusMessage]` command → 202 with bus dispatch (tests for both).
+- [x] `.Produces(...)` metadata matches actual codes (OpenAPI document test).
 - [x] gRPC command RPC exists, returns Empty (test via generated Grpc client).
 - [x] Rebus-only command contracts consumable from the bus (test).
 - [x] `design.md` documents D4; full solution build + tests green.
 
 > **Review 2026-09-02**: 204/202 emission is implemented (`MinimalApiEndpointGenerator.cs` command path) and the 204 path is snapshot-tested, but no test asserts the 202 dual-`[RebusMessage]` HTTP path and no OpenAPI document test inspects command status codes — those two items stay open.
+
+> **Review 2026-09-03**: Closed. `MinimalApiCommandTests.cs` covers the inline 204 command and the dual `[RebusMessage]` 202 dispatch through the owner queue (the generator's bus-dispatch emission was fixed to resolve `Rebus.Bus.IBus` from the SimpleInjector container and snapshot-tested); `MinimalApiOpenApiTests.V1OperationsDocumentStatusCodesAndProblemResponses` asserts the documented 204/202 codes.

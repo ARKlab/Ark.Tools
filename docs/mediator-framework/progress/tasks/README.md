@@ -51,12 +51,12 @@ are intentional and avoid treating the two tasks as one item.
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [FW-01](framework/FW-01-icommand-support.md) | `ICommand` support across all transports | In progress |
-| [FW-02](framework/FW-02-http-status-semantics.md) | HTTP status semantics via attribute customization | In progress |
+| [FW-01](framework/FW-01-icommand-support.md) | `ICommand` support across all transports | Complete |
+| [FW-02](framework/FW-02-http-status-semantics.md) | HTTP status semantics via attribute customization | Complete |
 | [FW-03](framework/FW-03-shared-problemdetails-package.md) | Shared ProblemDetails package | Complete |
-| [FW-04](framework/FW-04-file-download.md) | File download support | In progress |
-| [FW-08](framework/FW-08-etag-preconditions.md) | `[ETag]` contract attribute and `If-Match` binding | In progress |
-| [FW-09](framework/FW-09-etag-response-emission.md) | `ETag` response header, 304, and gRPC error parity | In progress |
+| [FW-04](framework/FW-04-file-download.md) | File download support | Complete |
+| [FW-08](framework/FW-08-etag-preconditions.md) | `[ETag]` contract attribute and `If-Match` binding | Complete |
+| [FW-09](framework/FW-09-etag-response-emission.md) | `ETag` response header, 304, and gRPC error parity | Complete |
 
 ### Generator DX
 
@@ -106,7 +106,7 @@ not stop at a contract, schema, host, or documentation change.
 | --- | --- | --- |
 | [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md) | OpenAPI tags and operation names from the contract | Complete |
 | [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | In progress |
-| [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses | In progress |
+| [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses | Complete |
 | [FW-06](framework/FW-06-async-enumerable-streaming.md) | `IAsyncEnumerable<T>` streaming responses | Complete |
 | [FW-07](framework/FW-07-multifile-uploads.md) | Multi-file uploads bound to an attachment collection | Complete |
 | [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md) | API-surface snapshot gate | Complete |
