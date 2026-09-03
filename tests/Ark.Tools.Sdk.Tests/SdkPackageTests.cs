@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.IO.Compression;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace Ark.Tools.Sdk.Tests;
 
@@ -39,6 +41,25 @@ public sealed class SdkPackageTests
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Sdk", "Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Ensures the SDK package carries repository provenance without provider-specific Source Link packages.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkPackageContainsRepositoryMetadata()
+    {
+        var packagePath = Directory.GetFiles(_feed, "Ark.Tools.Sdk.*.nupkg").Single();
+        using var archive = await ZipFile.OpenReadAsync(packagePath).ConfigureAwait(false);
+        var nuspecEntry = archive.Entries.Single(entry => entry.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
+        await using var nuspecStream = await nuspecEntry.OpenAsync().ConfigureAwait(false);
+        var nuspec = await XDocument.LoadAsync(nuspecStream, LoadOptions.None, CancellationToken.None).ConfigureAwait(false);
+        var repository = nuspec.Descendants().Single(element => element.Name.LocalName == "repository");
+
+        Assert.AreEqual("https://github.com/ARKlab/Ark.Tools", repository.Attribute("url")?.Value);
+        Assert.AreEqual("git", repository.Attribute("type")?.Value);
+        var gitCommit = (await _run("git", "rev-parse HEAD")).Trim();
+        Assert.AreEqual(gitCommit, repository.Attribute("commit")?.Value);
     }
 
     private static readonly string[] _selectedProperties =

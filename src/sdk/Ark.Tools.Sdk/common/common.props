@@ -33,7 +33,7 @@
     <OutputType Condition="'$(OutputType)' == ''">Exe</OutputType>
     <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     
     <AnalysisLevel Condition="'$(AnalysisLevel)' == ''">latest-all</AnalysisLevel>

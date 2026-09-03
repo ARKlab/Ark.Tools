@@ -13,11 +13,6 @@
     <Using Include="System.Text" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsSourceLink)' != 'false'" />
-    <PackageReference Include="Microsoft.SourceLink.AzureRepos.Git" Version="10.0.400" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsSourceLink)' != 'false'" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.5" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsSbom)' != 'false'" />
     <PackageReference Include="Polyfill" Version="11.2.0" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsPolyfill)' != 'false'" />
