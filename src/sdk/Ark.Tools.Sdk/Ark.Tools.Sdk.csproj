@@ -39,6 +39,7 @@
     <XmlPoke XmlInputPath="$(_ArkToolsSdkVersionedCommonProps)"
              Query="/Project/ItemGroup/PackageReference[@Include='Ark.Tools.Build']/@Version"
              Value="$(_ArkToolsBuildPackageVersion)" />
+
     <ItemGroup>
       <None Remove="common\common.props" />
     </ItemGroup>
