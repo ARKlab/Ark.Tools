@@ -49,6 +49,8 @@ choices and rejected alternatives are in
 | [SDK-IMP-08](SDK-IMP-08-compatibility-and-release-gate.md) | Compatibility matrix and paired-package release gate | Validation | Pending |
 | [SDK-IMP-09](SDK-IMP-09-reference-project-migration.md) | ReferenceProject migration | Migration | Pending |
 | [SDK-IMP-10](SDK-IMP-10-documentation-and-adoption.md) | Consumer documentation and adoption guidance | Documentation | Pending |
+| [SDK-IMP-11](SDK-IMP-11-sonaranalyzer-csharp-evaluation.md) | `SonarAnalyzer.CSharp` evaluation | Analyzer evaluation | Pending analysis (draft) |
+| [SDK-IMP-12](SDK-IMP-12-devskim-evaluation.md) | `Microsoft.CST.DevSkim` evaluation | Analyzer evaluation | Pending analysis (draft) |
 
 SDK-IMP-05, SDK-IMP-06, and SDK-IMP-07 can proceed in parallel after
 SDK-IMP-04.
