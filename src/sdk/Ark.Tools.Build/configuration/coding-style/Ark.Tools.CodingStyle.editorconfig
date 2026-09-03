@@ -197,6 +197,10 @@ dotnet_naming_rule.types_should_be_pascal_case.severity = error
 dotnet_naming_rule.types_should_be_pascal_case.symbols = types
 dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
 
+dotnet_naming_rule.local_variables_should_be_camel_case.severity = error
+dotnet_naming_rule.local_variables_should_be_camel_case.symbols = local_variables
+dotnet_naming_rule.local_variables_should_be_camel_case.style = camel_case
+
 dotnet_naming_rule.private_method_should_be_begins_with__.severity = error
 dotnet_naming_rule.private_method_should_be_begins_with__.symbols = private_method
 dotnet_naming_rule.private_method_should_be_begins_with__.style = begins_with__
@@ -235,6 +239,10 @@ dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, private_protected
 dotnet_naming_symbols.types.required_modifiers =
 
+dotnet_naming_symbols.local_variables.applicable_kinds = local
+dotnet_naming_symbols.local_variables.applicable_accessibilities =
+dotnet_naming_symbols.local_variables.required_modifiers =
+
 dotnet_naming_symbols.protected_members.applicable_kinds = event, method, property, field
 dotnet_naming_symbols.protected_members.applicable_accessibilities = protected, protected_internal
 dotnet_naming_symbols.protected_members.required_modifiers =
@@ -245,6 +253,11 @@ dotnet_naming_style.pascal_case.required_prefix =
 dotnet_naming_style.pascal_case.required_suffix =
 dotnet_naming_style.pascal_case.word_separator =
 dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.camel_case.required_prefix =
+dotnet_naming_style.camel_case.required_suffix =
+dotnet_naming_style.camel_case.word_separator =
+dotnet_naming_style.camel_case.capitalization = camel_case
 
 dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix =
@@ -260,4 +273,3 @@ dotnet_naming_style.begins_with__.capitalization = camel_case
 
 dotnet_code_quality.ca1051.exclude_structs = true
 dotnet_code_quality.ca1822.api_surface = private, internal
-
