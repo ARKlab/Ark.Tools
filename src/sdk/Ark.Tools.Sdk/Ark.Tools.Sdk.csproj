@@ -15,13 +15,12 @@
 
   <PropertyGroup>
     <_ArkToolsSdkVersionedCommonProps>$(IntermediateOutputPath)generated/ark-sdk/common.props</_ArkToolsSdkVersionedCommonProps>
-    <_ArkToolsSdkVersionedCommonTargets>$(IntermediateOutputPath)generated/ark-sdk/common.targets</_ArkToolsSdkVersionedCommonTargets>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="Sdk\Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
     <None Include="Sdk\Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
-    <None Include="$(_ArkToolsSdkVersionedCommonTargets)" Pack="true" PackagePath="common\common.targets" />
+    <None Include="common\common.targets" Pack="true" PackagePath="common\common.targets" />
     <None Include="$(_ArkToolsSdkVersionedCommonProps)" Pack="true" PackagePath="common\common.props" />
     <None Include="common\tests.targets" Pack="true" PackagePath="common\tests.targets" />
     <None Include="common\ContinuousIntegrationBuild.props" Pack="true" PackagePath="common/ContinuousIntegrationBuild.props" />
@@ -40,13 +39,6 @@
     <XmlPoke XmlInputPath="$(_ArkToolsSdkVersionedCommonProps)"
              Query="/Project/ItemGroup/PackageReference[@Include='Ark.Tools.Build']/@Version"
              Value="$(_ArkToolsBuildPackageVersion)" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)common\common.targets"
-          DestinationFiles="$(_ArkToolsSdkVersionedCommonTargets)"
-          SkipUnchangedFiles="true" />
-    <XmlPoke XmlInputPath="$(_ArkToolsSdkVersionedCommonTargets)"
-             Query="/Project/ItemGroup/PackageReference[@Include='Ark.Tools.Build']/@Version"
-             Value="$(_ArkToolsBuildPackageVersion)" />
-
     <ItemGroup>
       <None Remove="common\common.props" />
     </ItemGroup>
