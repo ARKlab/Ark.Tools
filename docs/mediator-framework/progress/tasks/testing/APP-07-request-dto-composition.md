@@ -25,12 +25,14 @@ for every implementation task.
 ## Acceptance
 
 - [ ] Every sample request/query/command follows the documented naming shape.
-- [ ] Direct dispatch and all enabled transports receive the same outer contract.
-- [ ] A composed body binds without duplicating model fields.
-- [ ] Server-set, route, query, ETag, attachment, and inherited properties retain
+- [x] Direct dispatch and all enabled transports receive the same outer contract.
+- [x] A composed body binds without duplicating model fields.
+- [x] Server-set, route, query, ETag, attachment, and inherited properties retain
   their existing semantics.
-- [ ] Driver bindings never resolve a persistence context for business
+- [x] Driver bindings never resolve a persistence context for business
   assertions.
+
+> **Review 2026-09-02**: Book contracts follow the composed static/nested-`V1` shape, but other sample contracts (e.g. `CreateBookReviewRequest`, `GetBookPrintProcessQuery`, `StreamBooksQuery`) remain flat records — the naming-shape item stays open.
 
 ## Tests
 

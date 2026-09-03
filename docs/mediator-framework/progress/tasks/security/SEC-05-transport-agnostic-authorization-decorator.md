@@ -49,8 +49,10 @@ a first-class framework story.
 ## Acceptance
 
 - [ ] Policy declared once on a contract is enforced for HTTP (403) and Rebus (handler skipped) — tests prove both.
-- [ ] Registration is a single helper call in the composition root.
-- [ ] No new package introduced; extensions live in `Ark.Tools.Solid.Authorization`/`Ark.Tools.Authorization`.
-- [ ] Docs updated; full solution build + tests green.
+- [x] Registration is a single helper call in the composition root.
+- [x] No new package introduced; extensions live in `Ark.Tools.Solid.Authorization`/`Ark.Tools.Authorization`.
+- [x] Docs updated; full solution build + tests green.
 
 **Cross-reference**: depends on SMP-01 registration structure (same decorator wiring section of `Host/ApplicationComposition.cs`); coordinate with FW-01 for `ICommandHandler<>` coverage.
+
+> **Review 2026-09-02**: Decorators are registered in the Rebus processor composition (`RebusProcessorComposition.cs`) and `PolicyAuthorizationException` is asserted on in-process dispatch (`BookSteps.cs`), but no test yet dispatches a dual-exposed contract via the bus with a principal lacking the policy — the first acceptance item stays open for that Rebus-path test.

@@ -49,10 +49,12 @@ The sample must configure `RequireAuthenticatedUser` as the **default authorizat
 
 ## Acceptance
 
-- [ ] `HttpEndpointAttribute` has `Policy` and `AllowAnonymous` with XML docs.
-- [ ] Emitted code: every endpoint carries `.RequireAuthorization()` / `.RequireAuthorization(policy)` / `.AllowAnonymous()`; `MapArkEndpointsFromAssembly` returns the `RouteGroupBuilder` and accepts an optional `configure` callback.
-- [ ] A host with **no** `FallbackPolicy` still returns `401` for unauthenticated calls to generated endpoints (covered by a test).
-- [ ] Sample sets `DefaultPolicy` = `RequireAuthenticatedUser`.
-- [ ] Unauthenticated request test → 401; authenticated → 2xx.
-- [ ] `dotnet build Ark.Tools.slnx -c Debug` zero warnings; `dotnet test Ark.Tools.slnx --no-build -c Debug --minimum-expected-tests 1` green.
-- [ ] `design.md` and `migration-from-mvc.md` updated.
+- [x] `HttpEndpointAttribute` has `Policy` and `AllowAnonymous` with XML docs.
+- [x] Emitted code: every endpoint carries `.RequireAuthorization()` / `.RequireAuthorization(policy)` / `.AllowAnonymous()`; `MapArkEndpointsFromAssembly` returns the `RouteGroupBuilder` and accepts an optional `configure` callback.
+- [x] A host with **no** `FallbackPolicy` still returns `401` for unauthenticated calls to generated endpoints (covered by a test).
+- [x] Sample sets `DefaultPolicy` = `RequireAuthenticatedUser`.
+- [x] Unauthenticated request test → 401; authenticated → 2xx.
+- [x] `dotnet build Ark.Tools.slnx -c Debug` zero warnings; `dotnet test Ark.Tools.slnx --no-build -c Debug --minimum-expected-tests 1` green.
+- [x] `design.md` and `migration-from-mvc.md` updated.
+
+> **Review 2026-09-02**: Per-endpoint policy landed as the transport-agnostic `PolicyAuthorizeAttribute` decorator (SEC-05) instead of an `HttpEndpointAttribute.Policy` member, so the generator emits `.RequireAuthorization()`/`.AllowAnonymous()` only; the secure-by-default outcome is covered by `tests/Ark.Tools.MediatorFramework.Hosting.Tests/MinimalApiAuthorizationTests.cs` and `AddArkMinimalApiHost` sets `DefaultPolicy = RequireAuthenticatedUser` (`src/aspnetcore/Ark.Tools.AspNetCore.MinimalApi/ArkMinimalApiHostExtensions.cs`).

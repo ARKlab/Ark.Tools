@@ -27,7 +27,7 @@
 
 ## Acceptance
 
-- [ ] Deserialization options use `MessagePackSecurity.UntrustedData` (unit test asserts it).
-- [ ] Host with unformattable MessagePack contract fails fast at startup, error names the contract type (test).
-- [ ] Existing MessagePack negotiation sample/tests still pass.
-- [ ] Full solution build + tests green.
+- [x] Deserialization options use `MessagePackSecurity.UntrustedData` (unit test asserts it).
+- [x] Host with unformattable MessagePack contract fails fast at startup, error names the contract type (test).
+- [x] Existing MessagePack negotiation sample/tests still pass.
+- [x] Full solution build + tests green.

@@ -34,7 +34,9 @@ This task may be split into up to 4 PRs (one per item) if any grows; each sub-it
 
 ## Acceptance
 
-- [ ] AI wiring present and inert without configuration.
-- [ ] Config layering matches ReferenceProject shape; sample still runs standalone.
+- [x] AI wiring present and inert without configuration.
+- [x] Config layering matches ReferenceProject shape; sample still runs standalone.
 - [ ] `IClock` used by handlers; `FakeClock` in tests; NodaTime contract round-trips JSON/MessagePack/protobuf (tests).
-- [ ] Full solution build + tests green.
+- [x] Full solution build + tests green.
+
+> **Review 2026-09-02**: Still open: a sample test that round-trips a NodaTime contract across JSON, MessagePack, and protobuf (IClock/FakeClock and per-format infrastructure are in place).

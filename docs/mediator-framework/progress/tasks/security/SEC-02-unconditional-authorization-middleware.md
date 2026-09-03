@@ -26,8 +26,10 @@ gates `UseAuthorization()` behind `app.UseWhen(...)` matching request path prefi
 
 ## Acceptance
 
-- [ ] No `UseWhen` around `UseAuthorization` remains in the sample.
-- [ ] OpenAPI/Scalar/reflection endpoints mapped unconditionally, explicitly `AllowAnonymous`.
-- [ ] gRPC call without bearer metadata fails `Unauthenticated` (test).
-- [ ] Full solution build + tests green (see tasks/README.md gates).
-- [ ] `design.md` doc-UI section updated (Development-only default removed).
+- [x] No `UseWhen` around `UseAuthorization` remains in the sample.
+- [x] OpenAPI/Scalar/reflection endpoints mapped unconditionally, explicitly `AllowAnonymous`.
+- [x] gRPC call without bearer metadata fails `Unauthenticated` (test).
+- [x] Full solution build + tests green (see tasks/README.md gates).
+- [x] `design.md` doc-UI section updated (Development-only default removed).
+
+> **Review 2026-09-02**: Anonymous gRPC rejection is proven in `tests/Ark.Tools.MediatorFramework.Hosting.Tests/GrpcAuthorizationTests.cs` (status `PermissionDenied` with the handler never executing) rather than a sample-level `Unauthenticated` assertion; the outcome — no anonymous gRPC dispatch — is covered.

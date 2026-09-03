@@ -61,13 +61,15 @@ ensure loading the target assembly does not leave it locked after the export pro
 
 ## Acceptance
 
-- [ ] Sample `Program.cs` contains no `ArkProtoExport.TryHandle` call or proto-export argument handling.
-- [ ] Building the sample exports all generated service protos, shared protos, and declared additional
+- [x] Sample `Program.cs` contains no `ArkProtoExport.TryHandle` call or proto-export argument handling.
+- [x] Building the sample exports all generated service protos, shared protos, and declared additional
       protos without launching the sample entry point.
-- [ ] A consumer with generated gRPC services exports protos automatically with no startup changes.
+- [x] A consumer with generated gRPC services exports protos automatically with no startup changes.
 - [ ] A consumer with no generated gRPC services produces no automatic proto output and has no startup
       side effects.
 - [ ] Export destination override, opt-out, incremental rebuild, relative-path validation, and
       `@(ArkAdditionalProto)` behavior have automated tests.
 - [ ] Full solution build + tests green; package/consumer tests exercise packed `buildTransitive`
       assets rather than only project-reference behavior.
+
+> **Review 2026-09-02**: Export is package-owned (`Ark.Tools.MediatorFramework.Grpc.Export` + `buildTransitive` targets) with no entry-point wiring; still open: tests for override/opt-out/incremental/path-validation/`@(ArkAdditionalProto)` and packed-asset (nupkg) consumer tests.

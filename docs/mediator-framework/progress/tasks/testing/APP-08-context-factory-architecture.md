@@ -24,14 +24,14 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Repository search finds no application `Store` abstraction.
-- [ ] Handlers visibly own transaction boundaries and lock/idempotency choices.
-- [ ] Handlers use the same always-enabled outbox enlistment path for SQL and
+- [x] Repository search finds no application `Store` abstraction.
+- [x] Handlers visibly own transaction boundaries and lock/idempotency choices.
+- [x] Handlers use the same always-enabled outbox enlistment path for SQL and
   in-memory contexts.
-- [ ] SQL and in-memory context factories pass the same application scenarios.
-- [ ] Domain services are singleton and reusable by requests and messages.
-- [ ] External adapters are mockable and covered by binding drivers.
-- [ ] No test step resolves a persistence context for business assertions.
+- [x] SQL and in-memory context factories pass the same application scenarios.
+- [x] Domain services are singleton and reusable by requests and messages.
+- [x] External adapters are mockable and covered by binding drivers.
+- [x] No test step resolves a persistence context for business assertions.
 
 ## Tests
 

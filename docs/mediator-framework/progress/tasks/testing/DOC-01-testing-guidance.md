@@ -48,11 +48,13 @@ boundary tests without guessing which layer owns an assertion.
 
 ## Acceptance checks
 
-- `dotnet build samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.slnx`
+- [x] `dotnet build samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.slnx`
   succeeds.
-- The sample test project can run with SQL and with the explicit in-memory
+- [x] The sample test project can run with SQL and with the explicit in-memory
   profile.
-- Markdown links in this document and
+- [x] Markdown links in this document and
   [`guide/testing.md`](../../../guide/testing.md) resolve.
-- No credential, connection string, or token appears in examples.
-- `git diff --check` is clean.
+- [x] No credential, connection string, or token appears in examples.
+- [x] `git diff --check` is clean.
+
+> **Review 2026-09-02**: `docs/mediator-framework/guide/testing.md` exists and covers the two-layer model, Reqnroll setup, scenario-owned context, deterministic clock/principal, the `ARK_SAMPLE_INMEMORY_TESTS=1` profile, and boundary-test ownership; link check clean; full-solution build (0 warnings) and tests (859/859) green on this review.

@@ -6,6 +6,7 @@ using Ark.Tools.MediatorFramework.AzureFunctions;
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -41,6 +42,113 @@ public sealed class AzureFunctionsHttpTests
         attachments.Should().HaveCount(1);
         attachments[0].Name.Should().Be("unsafe.txt");
     }
+
+    [TestMethod]
+    public async Task RejectsNonMultipartAttachmentRequest()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.ContentType = "application/json";
+
+        var act = () => ArkAzureFunctionsHttp.ReadAttachmentsAsync(
+            context.Request, 1, Array.Empty<string>(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+    }
+
+    [TestMethod]
+    public async Task RejectsAttachmentsExceedingFileCount()
+    {
+        var context = _multipartContext(_formFile("a.txt", "text/plain"), _formFile("b.txt", "text/plain"));
+
+        var act = () => ArkAzureFunctionsHttp.ReadAttachmentsAsync(
+            context.Request, 1, Array.Empty<string>(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+    }
+
+    [TestMethod]
+    public async Task RejectsAttachmentWithDisallowedContentType()
+    {
+        var context = _multipartContext(_formFile("a.bin", "application/octet-stream"));
+
+        var act = () => ArkAzureFunctionsHttp.ReadAttachmentsAsync(
+            context.Request, 0, _pngOnly, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotSupportedException>();
+    }
+
+    [TestMethod]
+    public async Task EnforceMaxRequestBodySizeRejectsOversizedDeclaredBody()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.ContentLength = 2048;
+
+        var result = ArkAzureFunctionsHttp.EnforceMaxRequestBodySize(context.Request, 1024);
+
+        result.Should().NotBeNull();
+        var response = new DefaultHttpContext { RequestServices = _emptyServices() };
+        response.Response.Body = new MemoryStream();
+        await result!.ExecuteAsync(response);
+        response.Response.StatusCode.Should().Be(StatusCodes.Status413PayloadTooLarge);
+    }
+
+    [TestMethod]
+    public void EnforceMaxRequestBodySizeConfiguresFeatureForUndeclaredBody()
+    {
+        var context = new DefaultHttpContext();
+        var feature = new FakeMaxRequestBodySizeFeature();
+        context.Features.Set<IHttpMaxRequestBodySizeFeature>(feature);
+
+        var result = ArkAzureFunctionsHttp.EnforceMaxRequestBodySize(context.Request, 1024);
+
+        result.Should().BeNull();
+        feature.MaxRequestBodySize.Should().Be(1024);
+    }
+
+    [TestMethod]
+    public void EnforceMaxRequestBodySizeAllowsBodyWithinLimit()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.ContentLength = 512;
+
+        ArkAzureFunctionsHttp.EnforceMaxRequestBodySize(context.Request, 1024).Should().BeNull();
+    }
+
+    private static readonly string[] _pngOnly = ["image/png"];
+
+    private static IServiceProvider _emptyServices()
+    {
+        return new ServiceCollection().AddLogging().BuildServiceProvider();
+    }
+
+    private static FormFile _formFile(string name, string contentType)
+    {
+        var content = new MemoryStream("payload"u8.ToArray());
+        return new FormFile(content, 0, content.Length, "file", name)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType,
+        };
+    }
+
+    private static DefaultHttpContext _multipartContext(params FormFile[] files)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.ContentType = "multipart/form-data; boundary=test";
+        var collection = new FormFileCollection();
+        collection.AddRange(files);
+        context.Request.Form = new FormCollection(
+            new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(StringComparer.OrdinalIgnoreCase),
+            collection);
+        return context;
+    }
+
+    private sealed class FakeMaxRequestBodySizeFeature : IHttpMaxRequestBodySizeFeature
+    {
+        public bool IsReadOnly => false;
+        public long? MaxRequestBodySize { get; set; }
+    }
+
 
     [TestMethod]
     public async Task StreamsJsonArrayWithoutBuffering()

@@ -175,6 +175,17 @@ public sealed record HostingCommand : Solid.ICommand<HostingCommand>
     public string Value { get; set; } = string.Empty;
 }
 
+/// <summary>Command exposed both over HTTP (executes inline) and as a Rebus message.</summary>
+[HttpEndpoint("POST", "/api/v{version}/hosting/bus-commands", AllowAnonymous = true)]
+[RebusMessage(OwnerQueue = "hosting")]
+[ProtoBuf.ProtoContract]
+public sealed record HostingBusCommand : Solid.ICommand<HostingBusCommand>
+{
+    /// <summary>Gets or sets the command value.</summary>
+    [ProtoBuf.ProtoMember(1)]
+    public string Value { get; set; } = string.Empty;
+}
+
 /// <summary>Rebus-only command contract.</summary>
 [RebusMessage(OwnerQueue = "hosting")]
 [ProtoBuf.ProtoContract]
@@ -228,6 +239,14 @@ public sealed record HostingStatusRequest : Solid.IRequest<HostingStatusRequest,
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingNotFoundQuery : Solid.IQuery<HostingNotFoundQuery, HostingResponse>;
+
+/// <summary>Request whose handler returns null so the default 204 mapping can be observed.</summary>
+[HttpEndpoint("POST", "/api/v{version}/hosting/no-content", AllowAnonymous = true)]
+public sealed record HostingNoContentRequest : Solid.IRequest<HostingNoContentRequest, HostingResponse>
+{
+    /// <summary>Gets or sets the request value.</summary>
+    public string Value { get; set; } = string.Empty;
+}
 
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
@@ -366,12 +385,52 @@ public sealed record HostingAttachmentCollectionUploadRequest : Solid.IRequest<H
 
 /// <summary>Query returning a downloadable synthetic attachment.</summary>
 [HttpEndpoint("GET", "/api/v{version}/hosting/attachments/{name}", AllowAnonymous = true)]
+[GrpcMethod("DownloadHostingAttachment")]
+[GrpcService("Hosting")]
+[ProtoBuf.ProtoContract]
 [McpTool(Name = "hosting.attachment.download")]
 public sealed record HostingAttachmentDownloadQuery : Solid.IQuery<HostingAttachmentDownloadQuery, IArkAttachment>
 {
     /// <summary>Gets or sets the attachment name.</summary>
     [HttpRoute]
+    [ProtoBuf.ProtoMember(1)]
     public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>Response carrying an opaque concurrency token surfaced as an ETag header.</summary>
+public sealed record HostingETagResponse
+{
+    /// <summary>Gets the opaque concurrency token of the resource.</summary>
+    [ETag]
+    public string? Token { get; init; }
+
+    /// <summary>Gets the ETag received by the handler, if any.</summary>
+    public string? ReceivedETag { get; init; }
+}
+
+/// <summary>Query returning a resource that carries an ETag token.</summary>
+[HttpEndpoint("GET", "/api/v{version}/hosting/etag/{id}", AllowAnonymous = true)]
+public sealed record HostingETagQuery : Solid.IQuery<HostingETagQuery, HostingETagResponse>
+{
+    /// <summary>Gets or sets the resource identifier.</summary>
+    [HttpRoute]
+    public int Id { get; set; }
+}
+
+/// <summary>Request updating a resource guarded by an ETag precondition.</summary>
+[HttpEndpoint("PUT", "/api/v{version}/hosting/etag/{id}", AllowAnonymous = true)]
+public sealed record HostingETagUpdateRequest : Solid.IRequest<HostingETagUpdateRequest, HostingETagResponse>
+{
+    /// <summary>Gets or sets the resource identifier.</summary>
+    [HttpRoute]
+    public int Id { get; set; }
+
+    /// <summary>Gets or sets the new value.</summary>
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the opaque ETag supplied by the caller.</summary>
+    [ETag]
+    public string? ETag { get; set; }
 }
 
 /// <summary>Response model used to verify generated OpenAPI schemas.</summary>

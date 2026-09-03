@@ -73,10 +73,10 @@ bind the existing contract and invoke its exact decorated handler safely.
 
 ## Acceptance
 
-- [ ] Route/query/body precedence matches the documented Minimal API rules.
-- [ ] Server-owned fields cannot be mass-assigned.
-- [ ] JSON options match the sample's existing JSON wire format.
-- [ ] No reflection-based mediator dispatch is introduced.
-- [ ] Invocation scope and cancellation behavior are tested.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Route/query/body precedence matches the documented Minimal API rules.
+- [x] Server-owned fields cannot be mass-assigned.
+- [x] JSON options match the sample's existing JSON wire format.
+- [x] No reflection-based mediator dispatch is introduced.
+- [x] Invocation scope and cancellation behavior are tested.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
