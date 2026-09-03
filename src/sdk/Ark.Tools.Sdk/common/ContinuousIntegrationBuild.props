@@ -1,6 +1,6 @@
 <Project>
   <!-- Enable ContinuousIntegrationBuild when running on CI -->
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == ''">
     <!-- Azure Pipelines / DevOpsServer -->
     <ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
 
