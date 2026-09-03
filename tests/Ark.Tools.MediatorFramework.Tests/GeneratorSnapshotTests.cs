@@ -792,12 +792,21 @@ public sealed class GeneratorSnapshotTests
         context.Response.Headers.ETag.ToString().Should().Be("\"abc\"");
 
         context.Request.Headers.IfNoneMatch = "\"abc\"";
-        ArkETag.ApplyResponseETag(context, "abc", conditionalGet: true)
-            .Should().NotBeNull();
+        var notModified = ArkETag.ApplyResponseETag(context, "abc", conditionalGet: true);
+        notModified.Should().NotBeNull();
+        notModified.Should().BeAssignableTo<Microsoft.AspNetCore.Http.IStatusCodeHttpResult>()
+            .Which.StatusCode.Should().Be(StatusCodes.Status304NotModified);
+
+        ArkETag.ApplyResponseETag(context, "abc", conditionalGet: false).Should().BeNull();
 
         ArkETag.ApplyResponseETag(context, null, conditionalGet: true).Should().BeNull();
+        var emptyTokenContext = new DefaultHttpContext();
+        ArkETag.ApplyResponseETag(emptyTokenContext, "", conditionalGet: true).Should().BeNull();
+        emptyTokenContext.Response.Headers.ETag.ToString().Should().BeEmpty();
         Action invalid = () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\r\n", false);
         invalid.Should().Throw<InvalidOperationException>();
+        Action quoted = () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\"token", false);
+        quoted.Should().Throw<InvalidOperationException>();
     }
 
     [TestMethod]
@@ -1205,6 +1214,30 @@ public sealed class GeneratorSnapshotTests
         context.Request.Headers.Clear();
         context.Request.Headers.IfNoneMatch = "*";
         ArkETag.ReadPrecondition(context).Should().Be("*");
+
+        context.Request.Headers.Clear();
+        ArkETag.ReadPrecondition(context).Should().BeNull();
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorEmitsOwnerQueueDispatchForDualCommands()
+    {
+        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/orders", AllowAnonymous = true)]
+            [RebusMessage(OwnerQueue = "orders")]
+            public sealed record CreateOrder : ICommand<CreateOrder>
+            {
+            }
+            """);
+
+        generated.Should().Contain("GetInstance<global::Rebus.Bus.IBus>()");
+        generated.Should().Contain("bus.Advanced.Routing.Send(\"orders\", request)");
+        generated.Should().Contain("TypedResults.StatusCode(202)");
+        generated.Should().Contain(".Produces(202)");
+        generated.Should().NotContain("TypedResults.NoContent()");
     }
 
     [TestMethod]

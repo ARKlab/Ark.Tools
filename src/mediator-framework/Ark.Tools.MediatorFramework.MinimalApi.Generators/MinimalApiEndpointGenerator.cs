@@ -1328,9 +1328,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             EmitServerSetAssignments(sb, endpoint, "request");
             if (endpoint.OwnerQueue is not null)
             {
-                sb.AppendLine("                var bus = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Rebus.IBus>(httpContext.RequestServices);");
+                sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+                sb.AppendLine("                var bus = container.GetInstance<global::Rebus.Bus.IBus>();");
                 sb.AppendLine("                await bus.Advanced.Routing.Send(" + Literal(endpoint.OwnerQueue) + ", request).ConfigureAwait(false);");
-                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Accepted();");
+                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.StatusCode(202);");
             }
             else
             {
