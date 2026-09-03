@@ -160,16 +160,16 @@ The architecture and accepted decisions are in
 
 | Task | Title | Status |
 | --- | --- | --- |
-| [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | In progress |
-| [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing, and version expansion | In progress |
+| [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | Complete |
+| [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing, and version expansion | Complete |
 | [AZF-03](azure-functions/AZF-03-binding-dispatch.md) | JSON/route/query binding and scoped dispatch | Complete |
 | [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization, and user context | In progress |
 | [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails, and ETags | In progress |
-| [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads, and JSON streaming | In progress |
+| [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads, and JSON streaming | Complete |
 | [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | In progress |
-| [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | In progress |
+| [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | Complete |
 | [AZF-09](azure-functions/AZF-09-openapi.md) | OpenAPI | Deferred |
-| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | In progress |
+| [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | Complete |
 
 ## Azure Functions messaging
 

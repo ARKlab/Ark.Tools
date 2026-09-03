@@ -83,11 +83,11 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
   the host cannot start.
 - [x] `.github/workflows/ci.yml` pins Core Tools, invokes the boundary suite and
   uploads sanitized host logs on failure.
-- [ ] Every supported sample endpoint has a parity-matrix row and runnable tests.
-- [ ] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
-- [ ] Documentation states all platform limitations and MessagePack and OpenAPI
+- [x] Every supported sample endpoint has a parity-matrix row and runnable tests.
+- [x] Auth, errors, files, ETags, streaming decision and Rebus send are boundary-tested.
+- [x] Documentation states all platform limitations and MessagePack and OpenAPI
   exclusions.
-- [ ] Relative links and cited file/test names resolve.
+- [x] Relative links and cited file/test names resolve.
 - [x] Changed files pass secret scanning.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
