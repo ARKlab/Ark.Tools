@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+	<!-- Source-build harness; remove the local SDK imports when ejected. -->
+	  <_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
   </PropertyGroup>
 

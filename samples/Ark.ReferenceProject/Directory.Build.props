@@ -1,6 +1,8 @@
 <Project>
-	<!-- Remove this on eject -->
+	<!-- Remove the parent import on eject and use the package SDK declaration below. -->
     <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+	<!-- <Sdk Name="Ark.Tools.Sdk" Version="6.6.6" /> -->
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
