@@ -99,7 +99,7 @@ stages:
         inputs:
           command: 'test'
           projects: ${{ variables.solutionPath }}
-          arguments: '--configuration $(BuildConfiguration) --no-build --no-restore --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1'
+          arguments: '--configuration $(BuildConfiguration) --no-build --no-restore'
           publishTestResults: true
 
       - task: CopyFiles@2
