@@ -93,24 +93,44 @@ a real-host gate and an endpoint-by-endpoint parity record suitable for release.
 - [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
 
 > **Review 2026-09-02**: Still open: the parity matrix below is stale (Greeting contracts were renamed to Book and the cited guard test does not exist — the actual guard `TestHostEndpointsMatchTheParityMatrix` covers only the boundary TestHost), files/ETags/streaming/Rebus-send boundary tests, and guide coverage of the OpenAPI exclusion and streaming decision.
+>
+> **Review 2026-09-03**: Complete. The matrix below was rewritten against the current inventory (Book contracts in the sample host, Echo/Stream/File contracts in the boundary TestHost) with runnable test references. Files, ETags, streaming (first-item-before-completion and client-disconnect cancellation) and attachment upload/download are boundary-tested through Core Tools; Rebus send is proven in the sample's `AzureFunctionsRebusTests`. Per repo policy, framework evidence lives in `tests/` and the sample tests only exemplify application-level testing.
 
 ## Parity matrix
 
-The inventory guard in `AzureFunctionsBoundaryTests.SelectedApplicationEndpointsMatchTheParityMatrix`
-fails when a selected application endpoint is added without a row here. MessagePack contracts
-`CreateGreetingRequest` and `DescribeShapeRequest` are intentionally excluded by the sample host.
+Framework boundary evidence (Core Tools E2E, `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`):
+the contract inventory guard is `AzureFunctionsBoundaryTests.TestHostEndpointsMatchTheParityMatrix` and the generated
+Function name/verb/route guard is `FunctionsRouteGuardTests` — both fail when a TestHost endpoint is added without a
+fixture row.
 
-| Contract | Verb | Route | Boundary evidence |
+| Contract | Verb | Route | Boundary evidence (test methods in `AzureFunctionsBoundaryTests` unless noted) |
 |---|---|---|---|
-| `UpdateGreetingMessageRequest` | PUT | `/api/v{version}/greetings/{id}` | inventory + host readiness |
-| `RefreshGreetingCommand` | POST | `/api/v{version}/greetings/refresh` | inventory + host readiness |
-| `ComposeGreetingRequest` | POST | `/api/v{version}/greetings/compose` | inventory + host readiness |
-| `GetGreetingQuery` | GET | `/greetings/{id}` | inventory + host readiness |
-| `GetGreetingV2Query` | GET | `/api/v{version}/greetings-v2/{id}` | inventory + host readiness |
-| `SearchGreetingsQuery` | GET | `/api/v{version}/greetings` | inventory + host readiness |
-| `GetGreetingsStreamQuery` | GET | `/api/v{version}/greetings/stream` | inventory + host readiness; streaming gate |
-| `UpdateGreetingRequest` | POST | `/api/v{version}/greetings/{id}/envelope` | inventory + host readiness |
-| `UploadGreetingCardRequest` | POST | `/api/v{version}/greeting-cards/{id}` | inventory + host readiness |
-| `UploadGreetingCardsRequest` | POST | `/api/v{version}/greeting-cards/{id}/batch` | inventory + host readiness |
-| `GetDocumentQuery` | GET | `/api/v{version}/greeting-cards/{id}/download` | inventory + host readiness |
-| `GetAuditsQuery` | GET | `/api/v{version}/audits` | inventory + host readiness |
+| `PingQuery` | GET | `/api/v{version}/ping` | `AnonymousEndpointIsReachableWithoutCredentials` |
+| `EchoQuery` | GET | `/api/v{version}/echo/{id}` | `UnauthenticatedRequestIsChallenged`, `RouteAndQueryValuesAreBoundIntoTheContract`, `ValidationFailureProducesProblemDetails`, `BindingFailureProducesProblemDetails` |
+| `EchoRequest` | POST | `/api/v{version}/echo` | `JsonBodyIsBoundIntoTheRecordContract`, `InvalidJsonBodyProducesProblemDetails` |
+| `StreamNumbersQuery` | GET | `/api/v{version}/stream` | `StreamingDeliversFirstItemBeforeProducerCompletes` |
+| `StreamForeverQuery` | GET | `/api/v{version}/stream/forever` | `ClientDisconnectCancelsStreamingHandler` |
+| `StreamStateQuery` | GET | `/api/v{version}/stream/state` | `ClientDisconnectCancelsStreamingHandler` (cancellation observation) |
+| `ReleaseStreamRequest` | POST | `/api/v{version}/stream/release` | `StreamingDeliversFirstItemBeforeProducerCompletes` (producer release) |
+| `VersionedEchoRequest` | PUT | `/api/v{version}/versioned/{id}` | `ETagPreconditionBindsAndResponseEmitsETagHeader` |
+| `UploadFileRequest` | POST | `/api/v{version}/files` | `AttachmentUploadAndDownloadRoundtrip`, `AttachmentUploadRejectsDisallowedContentType` |
+| `DownloadFileQuery` | GET | `/api/v{version}/files/{name}` | `AttachmentUploadAndDownloadRoundtrip` |
+| health (generated) | GET | `/healthCheck` | `HealthEndpointIsDiscoveredByCoreTools` |
+
+Sample host inventory (application-level example, `Ark.MediatorFramework.Sample.Functions`): MessagePack contracts
+`StreamBooksQuery` and `DescribeBookEditionRequest` are intentionally excluded by the host marker. Route/host parity
+with the Minimal API sample is exemplified by `BookTransportBoundaryTests.GeneratedHttpBooksEndpointsExposeExpectedRoutes`
+and one-way Rebus send by `AzureFunctionsRebusTests` (`OutboundCompositionRoutesToOwnerQueue`,
+`NativeCompositionDoesNotRegisterRebus`, `GeneratedMessagingResourcesAreReconciledAtStartup`).
+
+| Contract | Verb | Route |
+|---|---|---|
+| `Book_BulkCreateRequest.V1` | POST | `/api/v1/books/bulk` |
+| `CreateBookReviewRequest` | POST | `/api/v1/books/{bookId}/reviews` |
+| `ListBookReviewsQuery` | GET | `/api/v1/books/{bookId}/reviews` |
+| `RecordReadingActivityRequest` | POST | `/api/v1/books/{bookId}/reading-activity` |
+| `GetReadingActivityQuery` | GET | `/api/v1/books/{bookId}/reading-activity` |
+| `UploadBookCoverRequest` | POST | `/api/v1/books/{id}/cover` |
+| `DownloadBookCoverQuery` | GET | `/api/v1/books/{id}/cover` |
+| `GetAuditsQuery` | GET | `/api/v1/audits` |
+| health (generated) | GET | `/healthCheck` |

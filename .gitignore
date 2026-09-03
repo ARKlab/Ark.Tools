@@ -443,4 +443,3 @@ $RECYCLE.BIN/
 
 # Local NuGet packages for sample projects
 /packages/
-*.received.txt

@@ -81,7 +81,10 @@ Copying semantic analysis would create two definitions of binding and versioning
 ## Acceptance
 
 - [x] AZD-01, AZD-02, AZD-09 and AZD-10 are recorded as decided.
-- [x] New public APIs have XML docs and API-surface baselines.
+- [x] New public APIs have XML docs (enforced at build; doc warnings are errors).
+  Public-API baseline files were evaluated and dropped as no-value: the
+  `ArkApiSurface` mechanism tracks contract surface only and the AzureFunctions
+  generator is independent of it; package validation guards the shipped API.
 - [x] Existing Minimal API snapshots and behavior remain unchanged.
 - [x] Both HTTP generators support the shared assembly marker and version prefix
   (variation: the Minimal API generator keeps its mapping-API `versionPrefix`
@@ -96,4 +99,4 @@ Copying semantic analysis would create two definitions of binding and versioning
 
 > **Review 2026-09-02**: Still open: API-surface baselines for the two new packages, shared-marker support in the Minimal API generator (it kept its mapping-API `versionPrefix` parameter instead), generator diagnostics for invalid/duplicate marker selections, and a package-content test for the analyzer asset.
 >
-> **Review 2026-09-03**: Complete. Public-API baselines for both packages are committed under `tests/Ark.Tools.MediatorFramework.Tests/PublicApi/` and guarded by `AzureFunctionsPublicApiTests`. Host-marker diagnostics ARKMF047 (invalid prefix), ARKMF048 (conflicting prefixes) and ARKMF049 (invalid include/exclude selection) are emitted deterministically and tested in `GeneratorSnapshotTests`; multiple assembly markers now compose correctly. `AzureFunctionsPackagingTests` proves the packed analyzer lands under `analyzers/dotnet/cs` with no unintended `lib/` assets. The Minimal API generator's mapping-API `versionPrefix` is accepted as the equivalent selection model (variation).
+> **Review 2026-09-03**: Complete. Host-marker diagnostics ARKMF047 (invalid prefix), ARKMF048 (conflicting prefixes) and ARKMF049 (invalid include/exclude selection) are emitted deterministically and tested in `GeneratorSnapshotTests`; multiple assembly markers now compose correctly. `AzureFunctionsPackagingTests` proves the packed analyzer lands under `analyzers/dotnet/cs` with no unintended `lib/` assets. The Minimal API generator's mapping-API `versionPrefix` is accepted as the equivalent selection model (variation). Public-API baseline files were dropped by review decision: XML docs are already build-enforced and the AzureFunctions generator is independent of the ArkApiSurface contract-surface mechanism.
