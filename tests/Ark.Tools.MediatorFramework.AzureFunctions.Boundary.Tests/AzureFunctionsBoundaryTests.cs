@@ -217,6 +217,132 @@ public sealed class AzureFunctionsBoundaryTests
 
     [TestMethod]
     [TestCategory("AzureFunctionsBoundary")]
+    public async Task StreamingDeliversFirstItemBeforeProducerCompletes()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("api/v1/stream", UriKind.Relative));
+        using var response = await _client!.SendAsync(
+            request, HttpCompletionOption.ResponseHeadersRead, TestContext.CancellationToken).ConfigureAwait(false);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var stream = await response.Content.ReadAsStreamAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        await using (stream.ConfigureAwait(false))
+        {
+            // The producer is blocked after the first item: reading "[0" proves the first
+            // item is flushed to the client before the handler completes (AZD-06 evidence).
+            var buffer = new byte[2];
+            await stream.ReadExactlyAsync(buffer, TestContext.CancellationToken).ConfigureAwait(false);
+            Encoding.UTF8.GetString(buffer).Should().Be("[0");
+
+            using var releaseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+            using var release = await _client.PostAsync(
+                new Uri("api/v1/stream/release", UriKind.Relative),
+                releaseContent,
+                TestContext.CancellationToken).ConfigureAwait(false);
+            release.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            using var reader = new StreamReader(stream);
+            (await reader.ReadToEndAsync(TestContext.CancellationToken).ConfigureAwait(false)).Should().Be(",1,2]");
+        }
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task ClientDisconnectCancelsStreamingHandler()
+    {
+        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.CancellationToken))
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("api/v1/stream/forever", UriKind.Relative));
+            using var response = await _client!.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var stream = await response.Content.ReadAsStreamAsync(cts.Token).ConfigureAwait(false);
+            await using (stream.ConfigureAwait(false))
+            {
+                var buffer = new byte[2];
+                await stream.ReadExactlyAsync(buffer, cts.Token).ConfigureAwait(false);
+                await cts.CancelAsync().ConfigureAwait(false);
+            }
+        }
+
+        // Poll the host until the handler observes the cancellation (AZD-06 evidence).
+        var deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(30);
+        while (true)
+        {
+            using var state = await _client!.GetAsync(
+                new Uri("api/v1/stream/state", UriKind.Relative), TestContext.CancellationToken).ConfigureAwait(false);
+            var body = await state.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+            if (body.Contains("\"count\":1", StringComparison.OrdinalIgnoreCase))
+                break;
+            DateTimeOffset.UtcNow.Should().BeBefore(deadline, "the streaming handler must observe client-disconnect cancellation");
+            await Task.Delay(TimeSpan.FromMilliseconds(200), TestContext.CancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task ETagPreconditionBindsAndResponseEmitsETagHeader()
+    {
+        var id = Guid.NewGuid();
+        using var request = new HttpRequestMessage(HttpMethod.Put, new Uri($"api/v1/versioned/{id}", UriKind.Relative))
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+        };
+        request.Headers.IfMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue("\"v1\""));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.ETag!.Tag.Should().Be("\"v2\"");
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        body.Should().ContainEquivalentOf("\"receivedETag\":\"v1\"");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task AttachmentUploadAndDownloadRoundtrip()
+    {
+        using var content = new MultipartFormDataContent("boundary-test");
+        using var file = new ByteArrayContent(Encoding.UTF8.GetBytes("hello attachment"));
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+        content.Add(file, "file", "../notes.txt");
+
+        using var upload = await _client!.PostAsync(
+            new Uri("api/v1/files", UriKind.Relative), content, TestContext.CancellationToken).ConfigureAwait(false);
+
+        upload.StatusCode.Should().Be(HttpStatusCode.OK);
+        var uploadBody = await upload.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        uploadBody.Should().ContainEquivalentOf("\"message\":\"notes.txt\"", "the attachment name must be sanitized");
+        uploadBody.Should().ContainEquivalentOf("\"count\":16");
+
+        using var download = await _client.GetAsync(
+            new Uri("api/v1/files/report.txt", UriKind.Relative), TestContext.CancellationToken).ConfigureAwait(false);
+
+        download.StatusCode.Should().Be(HttpStatusCode.OK);
+        download.Content.Headers.ContentType?.MediaType.Should().Be("text/plain");
+        download.Content.Headers.ContentDisposition?.FileName.Should().Be("report.txt");
+        (await download.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false))
+            .Should().Be("file:report.txt");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task AttachmentUploadRejectsDisallowedContentType()
+    {
+        using var content = new MultipartFormDataContent("boundary-test");
+        using var file = new ByteArrayContent([1, 2, 3]);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(file, "file", "payload.bin");
+
+        using var response = await _client!.PostAsync(
+            new Uri("api/v1/files", UriKind.Relative), content, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnsupportedMediaType);
+    }
+
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
     public void TestHostEndpointsMatchTheParityMatrix()
     {
         var hostMarker = typeof(EchoQuery).Assembly
@@ -239,9 +365,16 @@ public sealed class AzureFunctionsBoundaryTests
 
     private static readonly EndpointRow[] _expectedEndpoints =
     [
+        new("DownloadFileQuery", "GET", "/api/v{version}/files/{name}"),
         new("EchoQuery", "GET", "/api/v{version}/echo/{id}"),
         new("EchoRequest", "POST", "/api/v{version}/echo"),
         new("PingQuery", "GET", "/api/v{version}/ping"),
+        new("ReleaseStreamRequest", "POST", "/api/v{version}/stream/release"),
+        new("StreamForeverQuery", "GET", "/api/v{version}/stream/forever"),
+        new("StreamNumbersQuery", "GET", "/api/v{version}/stream"),
+        new("StreamStateQuery", "GET", "/api/v{version}/stream/state"),
+        new("UploadFileRequest", "POST", "/api/v{version}/files"),
+        new("VersionedEchoRequest", "PUT", "/api/v{version}/versioned/{id}"),
     ];
 
     private sealed record EndpointRow(string TypeName, string Verb, string Route);

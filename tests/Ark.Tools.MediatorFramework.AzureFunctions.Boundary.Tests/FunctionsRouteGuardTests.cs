@@ -23,9 +23,16 @@ public sealed class FunctionsRouteGuardTests
     private static readonly (string Name, string Verb, string Route)[] _expectedFunctions =
     [
         ("ArkHealthCheck", "get", "healthCheck"),
+        ("DownloadFileQuery_v1", "get", "api/v1/files/{name}"),
         ("EchoQuery_v1", "get", "api/v1/echo/{id}"),
         ("EchoRequest_v1", "post", "api/v1/echo"),
         ("PingQuery_v1", "get", "api/v1/ping"),
+        ("ReleaseStreamRequest_v1", "post", "api/v1/stream/release"),
+        ("StreamForeverQuery_v1", "get", "api/v1/stream/forever"),
+        ("StreamNumbersQuery_v1", "get", "api/v1/stream"),
+        ("StreamStateQuery_v1", "get", "api/v1/stream/state"),
+        ("UploadFileRequest_v1", "post", "api/v1/files"),
+        ("VersionedEchoRequest_v1", "put", "api/v1/versioned/{id}"),
     ];
 
     [TestMethod]
