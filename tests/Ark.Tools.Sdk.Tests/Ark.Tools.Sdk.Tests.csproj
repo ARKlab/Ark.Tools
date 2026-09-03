@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <!-- The fixture intentionally uses framework collection APIs and awaits process/archive operations. -->
     <NoWarn>$(NoWarn);MA0002;MA0004;MA0042</NoWarn>
