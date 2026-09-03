@@ -175,7 +175,7 @@ public sealed record HostingCommand : Solid.ICommand<HostingCommand>
     public string Value { get; set; } = string.Empty;
 }
 
-/// <summary>Command exposed over HTTP that is dispatched to its owner queue instead of executing inline.</summary>
+/// <summary>Command exposed both over HTTP (executes inline) and as a Rebus message.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/bus-commands", AllowAnonymous = true)]
 [RebusMessage(OwnerQueue = "hosting")]
 [ProtoBuf.ProtoContract]

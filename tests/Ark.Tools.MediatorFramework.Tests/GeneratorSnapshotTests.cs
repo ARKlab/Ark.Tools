@@ -1220,7 +1220,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorEmitsOwnerQueueDispatchForDualCommands()
+    public void MinimalApiGeneratorExecutesDualCommandsInline()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
             """
@@ -1233,11 +1233,11 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("GetInstance<global::Rebus.Bus.IBus>()");
-        generated.Should().Contain("bus.Advanced.Routing.Send(\"orders\", request)");
-        generated.Should().Contain("TypedResults.StatusCode(202)");
-        generated.Should().Contain(".Produces(202)");
-        generated.Should().NotContain("TypedResults.NoContent()");
+        generated.Should().Contain("GetInstance<global::Ark.Tools.Solid.ICommandProcessor>()");
+        generated.Should().Contain("TypedResults.NoContent()");
+        generated.Should().Contain(".Produces(204)");
+        generated.Should().NotContain("Rebus.Bus.IBus");
+        generated.Should().NotContain("202");
     }
 
     [TestMethod]

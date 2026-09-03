@@ -113,8 +113,8 @@ public sealed class MinimalApiOpenApiTests
         command["202"].Should().BeNull();
 
         var busCommand = paths["/api/v1/hosting/bus-commands"]!["post"]!["responses"]!.AsObject();
-        busCommand["202"].Should().NotBeNull();
-        busCommand["204"].Should().BeNull();
+        busCommand["204"].Should().NotBeNull();
+        busCommand["202"].Should().BeNull();
 
         var status = paths["/api/v1/hosting/status"]!["post"]!["responses"]!.AsObject();
         status["201"].Should().NotBeNull();

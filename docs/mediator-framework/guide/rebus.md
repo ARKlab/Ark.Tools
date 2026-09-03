@@ -70,6 +70,13 @@ For participant-bound Rebus hosts, the participant declaration is the ownership
 source of truth. `[RebusMessage]` remains only for the legacy assembly-scan path;
 do not add it to new participant-owned contracts.
 
+A contract may carry both `[HttpEndpoint]` and `[RebusMessage]`. The two
+attributes are independent: the Minimal API generator emits a normal HTTP
+endpoint that executes the handler inline (a command returns `204 No Content`),
+while the Rebus generator emits the message handler and routing. There is no
+automatic bus dispatch from the HTTP endpoint — callers choose whether to
+`Send` the contract as a message or invoke the exposed API.
+
 The network and participant declarations can generate either an all-Rebus
 deployment or an all-native deployment. They do not make the transports
 interoperable and cannot describe a live network that mixes Rebus and native

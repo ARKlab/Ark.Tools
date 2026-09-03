@@ -50,26 +50,21 @@ public sealed class MinimalApiCommandTests
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
-    /// <summary>Verifies a dual HTTP+Rebus command returns 202 and executes through the owner queue.</summary>
+    /// <summary>Verifies a dual HTTP+Rebus command executes its handler inline and returns 204, ignoring `[RebusMessage]`.</summary>
     [TestMethod]
-    public async Task DispatchesDualCommandToOwnerQueueWithAccepted()
+    public async Task ExecutesDualCommandInlineWithNoContent()
     {
         await using var fixture = new HostingTestFixture();
-        fixture.ConfigureRebusHost();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
-        fixture.BuildRebusHost();
         using var client = app.GetTestServer().CreateClient();
 
         using var response = await client.PostAsJsonAsync(
             "/api/v1/hosting/bus-commands",
-            new HostingBusCommand { Value = "queued" },
+            new HostingBusCommand { Value = "inline" },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        await fixture.State.BusCommandExecuted.WaitAsync(TimeSpan.FromSeconds(30), app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        await fixture.WaitForIdleAsync(ctk: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         fixture.State.BusCommandExecutions.Should().Be(1);
-        fixture.State.LastBusCommandValue.Should().Be("queued");
-        fixture.State.CommandExecutions.Should().Be(0);
+        fixture.State.LastBusCommandValue.Should().Be("inline");
     }
 }
