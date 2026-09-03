@@ -1,0 +1,134 @@
+class Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsAuthenticationOptions
+  public Constructor: Void .ctor()
+  public Property: Int32 EasyAuthHeaderLimit
+  public Property: System.String Scheme
+class Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp
+  public Method: Microsoft.AspNetCore.Http.IResult EnforceMaxRequestBodySize(Microsoft.AspNetCore.Http.HttpRequest, Int64)
+  public Method: System.Threading.Tasks.Task WriteAttachmentAsync(Microsoft.AspNetCore.Http.HttpResponse, Ark.Tools.MediatorFramework.IArkAttachment, System.Threading.CancellationToken)
+  public Method: System.Threading.Tasks.Task WriteJsonStreamAsync[T](Microsoft.AspNetCore.Http.HttpResponse, System.Collections.Generic.IAsyncEnumerable`1[T], System.Threading.CancellationToken)
+  public Method: System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Http.IResult] CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckService, System.Threading.CancellationToken)
+  public Method: System.Threading.Tasks.Task`1[System.Collections.Generic.IReadOnlyList`1[Ark.Tools.MediatorFramework.IArkAttachment]] ReadAttachmentsAsync(Microsoft.AspNetCore.Http.HttpRequest, Int32, System.Collections.Generic.IReadOnlyCollection`1[System.String], System.Threading.CancellationToken)
+class Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsInvocation
+  public Method: System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Http.IResult] AuthenticateAsync(Microsoft.AspNetCore.Http.HttpContext, Boolean)
+  public Method: System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Http.IResult] InvokeCommandAsync[TCommand](Microsoft.AspNetCore.Http.HttpRequest, System.Threading.CancellationToken)
+  public Method: System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Http.IResult] InvokeQueryAsync[TQuery,TResponse](Microsoft.AspNetCore.Http.HttpRequest, System.Threading.CancellationToken)
+  public Method: System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Http.IResult] InvokeRequestAsync[TRequest,TResponse](Microsoft.AspNetCore.Http.HttpRequest, System.Threading.CancellationToken)
+class Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults
+  public Method: Boolean IsValidToken(System.String)
+  public Method: Microsoft.AspNetCore.Http.IResult ApplyResponseETag(Microsoft.AspNetCore.Http.HttpContext, System.String, Boolean)
+  public Method: Microsoft.AspNetCore.Http.IResult FromException(System.Exception)
+  public Method: System.String ReadPrecondition(Microsoft.AspNetCore.Http.HttpContext)
+class Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsServiceCollectionExtensions
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection AddArkAzureFunctions(Microsoft.Extensions.DependencyInjection.IServiceCollection, SimpleInjector.Container, System.Text.Json.Serialization.JsonSerializerContext[])
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection AddArkAzureFunctions(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Text.Json.Serialization.JsonSerializerContext[])
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection AddArkAzureFunctionsAuthentication(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsAuthenticationOptions])
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection AddArkAzureFunctionsBearerAuthentication(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Action`1[Microsoft.AspNetCore.Authentication.AuthenticationOptions])
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection AddArkAzureFunctionsEasyAuthAuthentication(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsAuthenticationOptions])
+class Ark.Tools.MediatorFramework.AzureFunctions.FluentMessagingFunctionsCompositionExtensions
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection ConfigureArkMessagingFunctions(Microsoft.Extensions.DependencyInjection.IServiceCollection, SimpleInjector.Container, Microsoft.Extensions.Configuration.IConfiguration, Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest, System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder])
+  public Method: Microsoft.Extensions.DependencyInjection.IServiceCollection ConfigureArkMessagingFunctions[TNetwork,TParticipant,THost](Microsoft.Extensions.DependencyInjection.IServiceCollection, SimpleInjector.Container, Microsoft.Extensions.Configuration.IConfiguration, System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost]])
+interface Ark.Tools.MediatorFramework.AzureFunctions.IMessagingFunctionsHost`1
+  public Property: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest Manifest
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingCompositionHost : Ark.Tools.MediatorFramework.AzureFunctions.IMessagingFunctionsHost`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingCompositionHost]
+  public Constructor: Void .ctor()
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseAzureServiceBus()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseAzureStorageQueue(Ark.Tools.MediatorFramework.AzureFunctions.StorageQueueFunctionsHostSettings)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseDataBus(Ark.Tools.MediatorFramework.IMessagingDataBus)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseDataBus(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDataBusBuilder])
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseInMemoryDataBus()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseMessagePack()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseOutbox()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseOutbox(Ark.Tools.Outbox.IOutboxAsyncContextFactory, Int32)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseOutbox(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsOutboxBuilder])
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseProtobuf()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseResourceLifecycle(Ark.Tools.MediatorFramework.MessagingResourceLifecycle)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseSerialization(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSerializationBuilder])
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder UseTransport(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTransportBuilder])
+  public Method: Void Build()
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseAzureServiceBus()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseAzureStorageQueue(Ark.Tools.MediatorFramework.AzureFunctions.StorageQueueFunctionsHostSettings)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseDataBus(Ark.Tools.MediatorFramework.IMessagingDataBus)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseDataBus(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDataBusBuilder])
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseInMemoryDataBus()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseMessagePack()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseOutbox()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseOutbox(Ark.Tools.Outbox.IOutboxAsyncContextFactory, Int32)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseOutbox(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsOutboxBuilder])
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseProtobuf()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseResourceLifecycle(Ark.Tools.MediatorFramework.MessagingResourceLifecycle)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseSerialization(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSerializationBuilder])
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsCompositionBuilder`3[TNetwork,TParticipant,THost] UseTransport(System.Action`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTransportBuilder])
+  public Method: Void Build()
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDataBusBuilder
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDataBusBuilder Use(Ark.Tools.MediatorFramework.IMessagingDataBus)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDataBusBuilder UseAzureBlob(Ark.Tools.MediatorFramework.Messaging.AzureBlobDataBusOptions)
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDataBusBuilder UseInMemory()
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsDispatcher
+  public Method: System.Threading.Tasks.Task DispatchAsync(Azure.Messaging.ServiceBus.ServiceBusReceivedMessage, Microsoft.Azure.Functions.Worker.ServiceBusMessageActions, Microsoft.Azure.Functions.Worker.FunctionContext, System.Threading.CancellationToken)
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute : System.Attribute
+  public Constructor: Void .ctor(System.Type, Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding)
+  public Property: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding Binding
+  public Property: Boolean StrictStorageQueueHostSettings
+  public Property: System.String ConnectionConfigurationKey
+  public Property: System.String ManagedIdentityConfigurationKey
+  public Property: System.Type Participant
+  public Property: System.Type[] IncomingSteps
+  public Property: System.Type[] OutgoingSteps
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest
+  public Constructor: Void .ctor(System.Type, System.Type, Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding, System.String, System.String, Int32, System.TimeSpan, System.Collections.Generic.IEnumerable`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription], System.Collections.Generic.IEnumerable`1[System.Type], System.Collections.Generic.IEnumerable`1[System.Type], System.Nullable`1[System.TimeSpan], Boolean, Ark.Tools.MediatorFramework.Messaging.MessagingResourceManifest, System.String)
+  public Constructor: Void .ctor(System.Type, System.Type, Ark.Tools.MediatorFramework.Messaging.MessagingParticipantDescriptor, Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding, System.String, System.String, Int32, System.TimeSpan, System.Collections.Generic.IEnumerable`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription], System.Collections.Generic.IEnumerable`1[System.Type], System.Collections.Generic.IEnumerable`1[System.Type], System.Nullable`1[System.TimeSpan], Boolean, Ark.Tools.MediatorFramework.Messaging.MessagingResourceManifest, System.String)
+  public Property: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding TriggerBinding
+  public Property: Ark.Tools.MediatorFramework.Messaging.MessagingParticipantDescriptor Descriptor
+  public Property: Ark.Tools.MediatorFramework.Messaging.MessagingResourceManifest Resources
+  public Property: Boolean StrictStorageQueueHostSettings
+  public Property: Int32 MaximumDeliveryCount
+  public Property: System.Collections.Generic.IReadOnlyList`1[Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription] Subscriptions
+  public Property: System.Collections.Generic.IReadOnlyList`1[System.Type] IncomingSteps
+  public Property: System.Collections.Generic.IReadOnlyList`1[System.Type] OutgoingSteps
+  public Property: System.String ConnectionConfigurationKey
+  public Property: System.String ManagedIdentityConfigurationKey
+  public Property: System.String Queue
+  public Property: System.TimeSpan MaximumHandlerDuration
+  public Property: System.TimeSpan RetryDelay
+  public Property: System.Type Network
+  public Property: System.Type Participant
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsOutboxBuilder
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsOutboxBuilder UseEnqueue()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsOutboxBuilder UseProcessor(Ark.Tools.Outbox.IOutboxAsyncContextFactory, Int32)
+enum Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsRuntimeTransport : System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+  public Field: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsRuntimeTransport AzureServiceBus
+  public Field: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsRuntimeTransport AzureStorageQueue
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSerializationBuilder
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSerializationBuilder UseJson()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSerializationBuilder UseMessagePack()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSerializationBuilder UseProtobuf()
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription
+  public Constructor: Void .ctor(System.String, System.String, System.String)
+  public Property: System.String ForwardToQueue
+  public Property: System.String Name
+  public Property: System.String Topic
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTransportBuilder
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTransportBuilder UseServiceBus()
+  public Method: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTransportBuilder UseStorageQueue(Ark.Tools.MediatorFramework.AzureFunctions.StorageQueueFunctionsHostSettings)
+enum Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding : System.IComparable, System.IConvertible, System.IFormattable, System.ISpanFormattable
+  public Field: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding ServiceBus
+  public Field: Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding StorageQueue
+class Ark.Tools.MediatorFramework.AzureFunctions.MessagingQueueFunctionsDispatcher
+  public Method: System.Threading.Tasks.Task DispatchAsync(Azure.Storage.Queues.Models.QueueMessage, System.String, Microsoft.Azure.Functions.Worker.FunctionContext, System.Threading.CancellationToken)
+class Ark.Tools.MediatorFramework.AzureFunctions.StorageQueueFunctionsHostSettings
+  public Constructor: Void .ctor(System.String, Int32, System.TimeSpan)
+  public Property: Int32 MaximumDequeueCount
+  public Property: System.String MessageEncoding
+  public Property: System.TimeSpan VisibilityTimeout
+class Ark.Tools.MediatorFramework.AzureFunctions.StorageQueueFunctionsHostSettingsValidator : Microsoft.Extensions.Hosting.IHostedService
+  public Constructor: Void .ctor(Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest, Ark.Tools.MediatorFramework.AzureFunctions.StorageQueueFunctionsHostSettings)
+  public Method: System.Threading.Tasks.Task StartAsync(System.Threading.CancellationToken)
+  public Method: System.Threading.Tasks.Task StopAsync(System.Threading.CancellationToken)
+class Ark.Tools.MediatorFramework.HttpHostAttribute : System.Attribute
+  public Constructor: Void .ctor(System.Type, System.String)
+  public Property: System.String VersionPrefix
+  public Property: System.Type ContractAssemblyMarker
+  public Property: System.Type[] ExcludedContracts
+  public Property: System.Type[] IncludedContracts
