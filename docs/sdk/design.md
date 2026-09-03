@@ -304,8 +304,8 @@ The full diagnostic contents remain in
 TFMs, local versions, `IsPackable=true`, blanket `NoWarn`, unsafe blocks,
 assembly identity attributes, organization metadata, the Ark icon,
 `ApplicationInsightsResourceId`, exact project-reference rewriting,
-`RestoreUseStaticGraphEvaluation=false`, Ark.Tools.Core project-reference
-interceptor support, sample project-reference replacement, and defaults already
+Ark.Tools.Core project-reference interceptor support, sample project-reference
+replacement, and defaults already
 provided by the .NET SDK remain repository/project or platform owned.
 
 ### Comparison
@@ -440,7 +440,7 @@ The inventory below was verified against:
 | `RestorePackagesWithLockFile=true` | All current projects | SDK: include early when empty for every project. |
 | `RestoreLockedMode=true` on CI | All current projects | SDK: include early when empty and `ContinuousIntegrationBuild=true`. |
 | `EnablePackageValidation=true` | All current projects | SDK: include when empty as a safe packaging default. |
-| `RestoreUseStaticGraphEvaluation=false` | Workaround for NuGet audit suppression issue | Exclude. Re-test NuGet/Home#14300 separately rather than publishing the workaround. |
+| `RestoreUseStaticGraphEvaluation=false` | GitHub dependency-submission restores report NU1004 for valid lock files with static graph evaluation | SDK: include early when empty. |
 | `RestoreSerializeGlobalProperties=true` | All current projects | SDK: include early when empty. |
 | `Deterministic=true` | All current projects | Exclude as the .NET SDK default; retain an executable compatibility fixture. |
 | `AccelerateBuildsInVisualStudio=true` | All current projects | SDK: include when empty only for validated primary SDKs. |

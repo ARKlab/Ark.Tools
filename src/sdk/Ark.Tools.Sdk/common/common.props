@@ -10,7 +10,8 @@
     <RestorePackagesWithLockFile Condition="'$(RestorePackagesWithLockFile)' == ''">true</RestorePackagesWithLockFile>
     <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
     <RestoreLockedMode Condition="'$(RestoreLockedMode)' == '' and '$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
-    <RestoreUseStaticGraphEvaluation Condition="'$(RestoreUseStaticGraphEvaluation)' == ''">true</RestoreUseStaticGraphEvaluation>
+    <!-- Regular graph evaluation avoids NU1004 during GitHub dependency-submission restores. -->
+    <RestoreUseStaticGraphEvaluation Condition="'$(RestoreUseStaticGraphEvaluation)' == ''">false</RestoreUseStaticGraphEvaluation>
     <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
 
     <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>

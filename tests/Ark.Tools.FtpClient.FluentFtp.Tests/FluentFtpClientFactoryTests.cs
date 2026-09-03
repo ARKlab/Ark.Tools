@@ -49,10 +49,10 @@ public class FluentFtpClientFactoryTests
 
     private static FluentFTP.FtpConfig GetFluentFtpConfig(FluentFtpClientConnection connection)
     {
-        var clientField = typeof(FluentFtpClientConnection).GetField("_client", BindingFlags.Instance | BindingFlags.NonPublic);
-        clientField.Should().NotBeNull();
+        var _clientField = typeof(FluentFtpClientConnection).GetField("_client", BindingFlags.Instance | BindingFlags.NonPublic);
+        _clientField.Should().NotBeNull();
 
-        var client = clientField!.GetValue(connection);
+        var client = _clientField!.GetValue(connection);
         client.Should().NotBeNull();
 
         var configProperty = client!.GetType().GetProperty("Config", BindingFlags.Instance | BindingFlags.Public);
@@ -70,10 +70,10 @@ public class FluentFtpClientFactoryTests
 
     private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientFactory ftpClientFactory, string uri)
     {
-        var connectionFactoryField = typeof(DefaultFtpClientFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
-        connectionFactoryField.Should().NotBeNull();
+        var _connectionFactoryField = typeof(DefaultFtpClientFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
+        _connectionFactoryField.Should().NotBeNull();
 
-        var connectionFactory = connectionFactoryField!.GetValue(ftpClientFactory) as IFtpClientConnectionFactory;
+        var connectionFactory = _connectionFactoryField!.GetValue(ftpClientFactory) as IFtpClientConnectionFactory;
         connectionFactory.Should().NotBeNull();
 
         var ftpConfig = new FtpConfig(new Uri(uri), new NetworkCredential("user", "password"));
@@ -83,10 +83,10 @@ public class FluentFtpClientFactoryTests
 
     private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientPoolFactory ftpClientPoolFactory, string uri)
     {
-        var connectionFactoryField = typeof(DefaultFtpClientPoolFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
-        connectionFactoryField.Should().NotBeNull();
+        var _connectionFactoryField = typeof(DefaultFtpClientPoolFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
+        _connectionFactoryField.Should().NotBeNull();
 
-        if (connectionFactoryField!.GetValue(ftpClientPoolFactory) is not IFtpClientConnectionFactory connectionFactory)
+        if (_connectionFactoryField!.GetValue(ftpClientPoolFactory) is not IFtpClientConnectionFactory connectionFactory)
         {
             throw new InvalidOperationException("Expected _connectionFactory to be an IFtpClientConnectionFactory.");
         }
