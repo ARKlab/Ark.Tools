@@ -9,6 +9,25 @@ Ark.Tools applies a framework-neutral Microsoft Testing Platform (MTP) profile t
 - Default test settings are disabled by setting `EnableArkToolsDefaultTestSettings=false`.
 - Individual extension packages can be disabled with the matching `EnableArkToolsMtp*` switches.
 
+## Test invocation
+
+The repository opts into native MTP through `global.json`. With the .NET 10 SDK, use the native target selectors when targeting a specific project or solution:
+
+```powershell
+dotnet test --project .\Core\Ark.Reference.Core.Tests\Ark.Reference.Core.Tests.csproj
+dotnet test --solution .\Ark.Reference.slnx
+```
+
+Running `dotnet test` from `samples\Ark.ReferenceProject` still executes the nested `Ark.Reference.slnx`. The nested solution and its `Directory.Build.*` files are intentional: the sample is an ejectable starter solution and must remain independently buildable.
+
+`--list-tests` is a test-application option. In the current .NET 10 SDK/MTP combination, invoking it through the implicit or explicit solution target reports zero tests even though normal execution succeeds. List the reference project's tests by selecting the project explicitly:
+
+```powershell
+dotnet test --project .\Core\Ark.Reference.Core.Tests\Ark.Reference.Core.Tests.csproj --list-tests
+```
+
+This reports the 48 generated Reqnroll tests. Therefore, a zero result from `dotnet test --list-tests` at the sample directory or solution level is not evidence that the nested test project is missing or undiscoverable; use normal execution or an explicit project target to validate it.
+
 ## Installed extensions
 
 The SDK injects these exact implicit package references for test projects:
