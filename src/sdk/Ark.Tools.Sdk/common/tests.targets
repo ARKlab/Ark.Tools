@@ -8,9 +8,12 @@
 
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false' and '$(EnableArkToolsDefaultTestSettings)' != 'false'">
     <MinimumExpectedTests Condition="'$(MinimumExpectedTests)' == ''">1</MinimumExpectedTests>
-    <_ArkMtpCoverageArguments Condition="'$(ContinuousIntegrationBuild)' == 'true'"> --coverage --coverage-output-format cobertura</_ArkMtpCoverageArguments>
+    <_ArkMtpTrxArguments Condition="'$(EnableArkToolsMtpTrxReport)' != 'false'"> --report-trx</_ArkMtpTrxArguments>
+    <_ArkMtpCrashDumpArguments Condition="'$(EnableArkToolsMtpCrashDump)' != 'false'"> --crashdump --crashdump-type mini</_ArkMtpCrashDumpArguments>
+    <_ArkMtpHangDumpArguments Condition="'$(EnableArkToolsMtpHangDump)' != 'false'"> --hangdump --hangdump-type mini --hangdump-timeout 10m</_ArkMtpHangDumpArguments>
+    <_ArkMtpCoverageArguments Condition="'$(EnableArkToolsMtpCodeCoverage)' != 'false' and '$(ContinuousIntegrationBuild)' == 'true'"> --coverage</_ArkMtpCoverageArguments>
     <_ArkMtpMinimumExpectedTests Condition="'$(MinimumExpectedTests)' != '' and '$(MinimumExpectedTests)' != '0'"> --minimum-expected-tests $(MinimumExpectedTests)</_ArkMtpMinimumExpectedTests>
-    <TestingPlatformCommandLineArguments Condition="'$(TestingPlatformCommandLineArguments)' == ''">--report-trx --crashdump --crashdump-type mini --hangdump --hangdump-type mini --hangdump-timeout 10m$(_ArkMtpCoverageArguments)$(_ArkMtpMinimumExpectedTests)</TestingPlatformCommandLineArguments>
+    <TestingPlatformCommandLineArguments Condition="'$(TestingPlatformCommandLineArguments)' == ''">$(_ArkMtpTrxArguments)$(_ArkMtpCrashDumpArguments)$(_ArkMtpHangDumpArguments)$(_ArkMtpCoverageArguments)$(_ArkMtpMinimumExpectedTests)</TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">

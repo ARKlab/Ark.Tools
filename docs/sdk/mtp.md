@@ -61,7 +61,7 @@ The command line is composed as:
 - `--hangdump`
 - `--hangdump-type mini`
 - `--hangdump-timeout 10m`
-- `--coverage --coverage-output-format cobertura` only when `ContinuousIntegrationBuild=true`
+- `--coverage` only when `EnableArkToolsMtpCodeCoverage` is enabled and `ContinuousIntegrationBuild=true`; the default output is `.coverage`
 - `--minimum-expected-tests <value>` when `MinimumExpectedTests` is non-zero
 
 A value of `0` for `MinimumExpectedTests` suppresses the explicit `--minimum-expected-tests` argument. This prevents false-green empty test runs by default.

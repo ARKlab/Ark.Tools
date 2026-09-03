@@ -628,7 +628,7 @@ public sealed class SdkPackageTests
             environment: ciEnvironment);
         var ciArguments = _getProperty(ci, "TestingPlatformCommandLineArguments");
         Assert.IsTrue(ciArguments.Contains("--coverage", StringComparison.Ordinal));
-        Assert.IsTrue(ciArguments.Contains("--coverage-output-format cobertura", StringComparison.Ordinal));
+        Assert.IsFalse(ciArguments.Contains("--coverage-output-format", StringComparison.Ordinal));
 
         using var disabled = await _evaluateSdkAsync(
             fixtureRoot,
@@ -649,6 +649,7 @@ public sealed class SdkPackageTests
             environment: ciEnvironment,
             directoryProperties: "<EnableArkToolsMtpCodeCoverage>false</EnableArkToolsMtpCodeCoverage>");
         Assert.IsFalse(_getPackageReferences(optOut).ContainsKey("Microsoft.Testing.Extensions.CodeCoverage"));
+        Assert.IsFalse(_getProperty(optOut, "TestingPlatformCommandLineArguments").Contains("--coverage", StringComparison.Ordinal));
 
         using var nonTest = await _evaluateSdkAsync(
             fixtureRoot,
