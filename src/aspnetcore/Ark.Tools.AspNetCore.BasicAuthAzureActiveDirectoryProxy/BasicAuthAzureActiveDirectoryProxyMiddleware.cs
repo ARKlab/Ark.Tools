@@ -68,9 +68,9 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                             string username = usernameSpan.ToString();
                             string password = passwordSpan.ToString();
 
-                        using var content = new FormUrlEncodedContent(
-                            [
-                                new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
+                            using var content = new FormUrlEncodedContent(
+                                [
+                                    new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
                                 new KeyValuePair<string, string>("client_id", _config.ProxyClientId ?? string.Empty),
                                 new KeyValuePair<string, string>("grant_type", "password"),
                                 new KeyValuePair<string, string>("username", username),
@@ -79,19 +79,19 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                                 new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
                             ]);
 
-                        var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
+                            var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
 
-                        var result = await Policy
-                            .Handle<Exception>()
-                            .RetryAsync(2)
-                            .ExecuteAsync(async ct =>
-                            {
-                                using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
-                                res.EnsureSuccessStatusCode();
+                            var result = await Policy
+                                .Handle<Exception>()
+                                .RetryAsync(2)
+                                .ExecuteAsync(async ct =>
+                                {
+                                    using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
+                                    res.EnsureSuccessStatusCode();
 
-                                var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
-                                return JsonSerializer.Deserialize<OAuthResult>(payload);
-                            }, context.RequestAborted, true).ConfigureAwait(false);
+                                    var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
+                                    return JsonSerializer.Deserialize<OAuthResult>(payload);
+                                }, context.RequestAborted, true).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
                         }

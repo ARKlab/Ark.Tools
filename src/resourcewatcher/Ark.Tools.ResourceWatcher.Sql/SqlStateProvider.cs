@@ -16,7 +16,7 @@ namespace Ark.Tools.ResourceWatcher;
 public interface ISqlStateProviderConfig
 {
     string DbConnectionString { get; }
-    
+
     /// <summary>
     /// Optional JsonSerializerContext for Extensions serialization.
     /// When provided, enables trim-safe serialization of Extensions.
@@ -45,7 +45,7 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
         _connManager = connManager;
         _config = config;
         _extensionsJsonContext = config.ExtensionsJsonContext;
-        
+
         // Create internal JsonSerializerOptions with Ark defaults
         // Used for Extensions when no external context is provided
         _internalJsonOptions = new JsonSerializerOptions();

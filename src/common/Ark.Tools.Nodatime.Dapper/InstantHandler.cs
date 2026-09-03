@@ -50,7 +50,7 @@ public sealed class InstantHandler : SqlMapper.TypeHandler<Instant>
             var conv = TypeDescriptor.GetConverterFromRegisteredType(typeof(Instant));
 #else
             // For .NET 8, suppress the warning as NodaTime TypeConverters are statically registered
-            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", 
+            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
                 Justification = "The TypeConverter for NodaTime.Instant is statically registered in Ark.Tools.Nodatime and will not be trimmed. The Instant type is a known NodaTime struct with a well-defined TypeConverter.")]
             static TypeConverter GetConverter() => TypeDescriptor.GetConverter(typeof(Instant));
             var conv = GetConverter();

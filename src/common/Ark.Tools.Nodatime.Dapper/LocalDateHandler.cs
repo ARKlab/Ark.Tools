@@ -45,7 +45,7 @@ public sealed class LocalDateHandler : SqlMapper.TypeHandler<LocalDate>
             var conv = TypeDescriptor.GetConverterFromRegisteredType(typeof(LocalDate));
 #else
             // For .NET 8, suppress the warning as NodaTime TypeConverters are statically registered
-            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", 
+            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
                 Justification = "The TypeConverter for NodaTime.LocalDate is statically registered in Ark.Tools.Nodatime and will not be trimmed. The LocalDate type is a known NodaTime struct with a well-defined TypeConverter.")]
             static TypeConverter GetConverter() => TypeDescriptor.GetConverter(typeof(LocalDate));
             var conv = GetConverter();

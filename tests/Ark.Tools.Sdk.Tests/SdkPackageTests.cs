@@ -131,7 +131,7 @@ public sealed class SdkPackageTests
         "FilesForPackagingFromProject"
     ];
 
-    #if false
+#if false
     /// <summary>
     /// Ensures every packaged configuration asset is independently switchable and capability safe.
     /// </summary>
@@ -226,7 +226,7 @@ public sealed class SdkPackageTests
         Assert.IsFalse(File.Exists(Path.Join(scenarioRoot, "Ark.Tools.CodingStyle.editorconfig")));
         Assert.IsFalse(File.Exists(Path.Join(scenarioRoot, "Ark.Tools.NetAnalyzers.globalconfig")));
     }
-    #endif
+#endif
 
     /// <summary>
     /// Ensures compiler configuration precedence and packaged banned symbols work in consumer source.
@@ -316,7 +316,7 @@ public sealed class SdkPackageTests
         Assert.IsFalse(bannedError.Output.Contains("RS0030", StringComparison.Ordinal));
     }
 
-    #if false
+#if false
     /// <summary>
     /// Ensures SDK restore, audit, compiler, CI, and test-classification policy is early and overrideable.
     /// </summary>
@@ -423,7 +423,7 @@ public sealed class SdkPackageTests
         });
 
     }
-    #endif
+#endif
 
     /// <summary>
     /// Ensures the SDK adds only the accepted MTP test extensions and default safety settings for test projects.
@@ -477,7 +477,7 @@ public sealed class SdkPackageTests
 
     }
 
-    #if false
+#if false
     /// <summary>
     /// Ensures application settings and Reqnroll content semantics stay project-type aware and independently disableable.
     /// </summary>
@@ -592,9 +592,9 @@ public sealed class SdkPackageTests
         Assert.IsFalse(testConfigDisabledItem is not null &&
             string.Equals(testConfigDisabledItem.GetValueOrDefault("DefiningProjectName"), "Sdk", StringComparison.Ordinal));
     }
-    #endif
+#endif
 
-    #if false
+#if false
     /// <summary>
     /// Ensures exact analyzer references, opt-outs, SQL exclusion, and package boundaries compose with Build.
     /// </summary>
@@ -699,7 +699,7 @@ public sealed class SdkPackageTests
         }
         Assert.IsTrue(File.Exists(Path.Join(fixtureRoot, "fsharp", "packages.lock.json")));
     }
-    #endif
+#endif
 
     /// <summary>
     /// Ensures generated lock files, locked CI restore, and CPM ownership boundaries are enforced.
@@ -872,7 +872,7 @@ public sealed class ConsumerTests
             _createSdkEnvironment(scenarioRoot));
     }
 
-    #if false
+#if false
     /// <summary>
     /// Ensures packed Build assets select only the accepted capability-specific policy in clean consumers.
     /// </summary>
@@ -1044,7 +1044,7 @@ public sealed class ConsumerTests
         _assertPropertiesMatch(fsharp, fsharpControl, _boundaryProperties);
         _assertItemsMatch(fsharp, fsharpControl, _boundaryItems, "Ark.Tools.Build");
     }
-    #endif
+#endif
 
     private static string _createSdkCSharpProject(
         string properties = "",

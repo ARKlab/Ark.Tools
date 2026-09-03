@@ -45,7 +45,7 @@ public sealed class OffsetDateTimeHandler : SqlMapper.TypeHandler<OffsetDateTime
             var conv = TypeDescriptor.GetConverterFromRegisteredType(typeof(OffsetDateTime));
 #else
             // For .NET 8, suppress the warning as NodaTime TypeConverters are statically registered
-            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", 
+            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
                 Justification = "The TypeConverter for NodaTime.OffsetDateTime is statically registered in Ark.Tools.Nodatime and will not be trimmed. The OffsetDateTime type is a known NodaTime struct with a well-defined TypeConverter.")]
             static TypeConverter GetConverter() => TypeDescriptor.GetConverter(typeof(OffsetDateTime));
             var conv = GetConverter();

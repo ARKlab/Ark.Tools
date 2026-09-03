@@ -164,8 +164,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
 
         foreach (var child in namespaceSymbol.GetNamespaceMembers())
-        foreach (var type in AllTypes(child, cancellationToken))
-            yield return type;
+            foreach (var type in AllTypes(child, cancellationToken))
+                yield return type;
     }
 
     private static IEnumerable<INamedTypeSymbol> AllNestedTypes(INamedTypeSymbol type, CancellationToken cancellationToken)

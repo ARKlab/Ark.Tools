@@ -301,7 +301,7 @@ public class ParallellExtensionsTests
         // Assert
         // If sequential, would take ~400ms. If parallel, should take ~100ms
         sw.ElapsedMilliseconds.Should().BeLessThan(300);
-        
+
         // Verify items were processed concurrently by checking overlapping time windows
         var processingStarted = startTimes.Count;
         processingStarted.Should().Be(4);

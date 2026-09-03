@@ -124,7 +124,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
 
         // Get the current ETag from response for future conditional requests
         var currentETag = response.Headers.FirstOrDefault("ETag");
-        
+
         // Calculate new offset (for append-only resources)
         var newOffset = lastOffset + data.Length;
 

@@ -278,9 +278,9 @@ public static class DataTableExtensions
                 if (!table.Columns.Contains(column.Name))
                 {
                     // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-                    #pragma warning disable IL2072
+#pragma warning disable IL2072
                     table.Columns.Add(column.Name, column.ColumnType);
-                    #pragma warning restore IL2072
+#pragma warning restore IL2072
                 }
             }
         }
@@ -295,9 +295,9 @@ public static class DataTableExtensions
                 if (!table.Columns.Contains(column.Name))
                 {
                     // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-                    #pragma warning disable IL2072
+#pragma warning disable IL2072
                     var dc = table.Columns.Add(column.Name, column.ColumnType);
-                    #pragma warning restore IL2072
+#pragma warning restore IL2072
                     ordinalMap.Add(column.Name, dc.Ordinal);
                 }
                 else
