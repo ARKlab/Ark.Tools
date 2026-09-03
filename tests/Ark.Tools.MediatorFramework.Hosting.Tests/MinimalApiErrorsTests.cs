@@ -110,6 +110,52 @@ public sealed class MinimalApiErrorsTests
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         problem.Status.Should().Be(500);
+        var payload = await response.Content.ReadAsStringAsync(
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        payload.Should().NotContain("The synthetic handler failed unexpectedly.");
+        payload.Should().NotContain("InvalidOperationException");
+    }
+
+    /// <summary>Verifies a policy failure maps to a 403 ProblemDetails without leaked internals.</summary>
+    [TestMethod]
+    public async Task MapsForbiddenToProblemDetails()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "authenticated");
+
+        using var response = await client.GetAsync(
+            new Uri("http://localhost/api/v1/hosting/authorized"),
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var problem = await _readProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        problem.Status.Should().Be(403);
+        var payload = await response.Content.ReadAsStringAsync(
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        payload.Should().NotContain("Exception");
+    }
+
+    /// <summary>Verifies a malformed MessagePack body maps to a 400 ProblemDetails response.</summary>
+    [TestMethod]
+    public async Task MapsMalformedMessagePackBodyToProblemDetails()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+        using var content = new ByteArrayContent([0xC1, 0xFF, 0x00]);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-msgpack");
+
+        using var response = await client.PostAsync(
+            new Uri("http://localhost/api/v1/hosting/requests/1"),
+            content,
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var problem = await _readProblemAsync(response, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        problem.Title.Should().Be("INVALID_REQUEST_BODY");
+        problem.Detail.Should().Be("Request body is missing or could not be deserialized.");
     }
 
     private static async Task<ProblemDetails> _readProblemAsync(

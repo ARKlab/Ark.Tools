@@ -33,7 +33,6 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string HttpRouteAttribute = "Ark.Tools.MediatorFramework.HttpRouteAttribute";
         private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
         private const string ETagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
-        private const string RebusMessageAttribute = "Ark.Tools.MediatorFramework.RebusMessageAttribute";
         private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
         private const string VersioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
         private const string ArkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
@@ -152,7 +151,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(ServerSetAttribute),
                 compilation.GetTypeByMetadataName(ETagAttribute),
                 compilation.GetTypeByMetadataName(ArkAttachment),
-                compilation.GetTypeByMetadataName(RebusMessageAttribute),
                 compilation.GetTypeByMetadataName(ApiGroupAttribute),
                 compilation.GetTypeByMetadataName(Enumerable),
                 compilation.GetTypeByMetadataName(AsyncEnumerable),
@@ -267,7 +265,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             var httpRouteAttr = compilation.GetTypeByMetadataName(HttpRouteAttribute);
             var serverSetAttr = compilation.GetTypeByMetadataName(ServerSetAttribute);
             var etagAttr = compilation.GetTypeByMetadataName(ETagAttribute);
-            var rebusMessageAttr = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var apiGroupAttr = compilation.GetTypeByMetadataName(ApiGroupAttribute);
             var attachmentType = compilation.GetTypeByMetadataName(ArkAttachment);
             var enumerableType = compilation.GetTypeByMetadataName(Enumerable);
@@ -299,7 +296,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                         serverSetAttr,
                         etagAttr,
                         attachmentType,
-                        rebusMessageAttr,
                         apiGroupAttr,
                         enumerableType,
                         asyncEnumerableType,
@@ -365,7 +361,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             INamedTypeSymbol? serverSetAttr,
             INamedTypeSymbol? etagAttr,
             INamedTypeSymbol? attachmentType,
-            INamedTypeSymbol? rebusMessageAttr,
             INamedTypeSymbol? apiGroupAttr,
             INamedTypeSymbol? enumerableType,
             INamedTypeSymbol? asyncEnumerableType,
@@ -440,12 +435,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             var maxFileCount = NamedInt(http, "MaxFileCount", 0);
             var maxStreamedItems = NamedInt(http, "MaxMessagePackStreamedItems", 0);
             var allowedContentTypes = NamedStringArray(http, "AllowedContentTypes");
-            var ownerQueue = rebusMessageAttr is null
-                ? null
-                : type.GetAttributes()
-                    .Where(attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, rebusMessageAttr))
-                    .Select(attribute => NamedString(attribute, "OwnerQueue"))
-                    .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
             var apiGroup = apiGroupAttr is null
                 ? null
                 : type.GetAttributes()
@@ -552,7 +541,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 maxFileCount,
                 maxStreamedItems,
                 allowedContentTypes,
-                ownerQueue,
                 properties,
                 bodyProperties.Length == 0 ? null : bodyProperties[0].Name,
                 etagProperties.Length == 0 ? null : etagProperties[0].Name,
@@ -1326,21 +1314,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                 sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
-            if (endpoint.OwnerQueue is not null)
-            {
-                sb.AppendLine("                var bus = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Rebus.IBus>(httpContext.RequestServices);");
-                sb.AppendLine("                await bus.Advanced.Routing.Send(" + Literal(endpoint.OwnerQueue) + ", request).ConfigureAwait(false);");
-                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.Accepted();");
-            }
-            else
-            {
-                sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                sb.AppendLine("                var processor = container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
-                sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
-                sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
-            }
+            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+            sb.AppendLine("                var processor = container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
+            sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
+            sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
             sb.Append("            })").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion));
-            sb.Append(endpoint.OwnerQueue is null ? ".Produces(204)" : ".Produces(202)");
+            sb.Append(".Produces(204)");
             sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
 
@@ -1512,7 +1491,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 int maxFileCount,
                 int maxStreamedItems,
                 ImmutableArray<string> allowedContentTypes,
-                string? ownerQueue,
                 ImmutableArray<PropertyModel> properties,
                 string? bodyProperty,
                 string? etagProperty,
@@ -1549,7 +1527,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 MaxFileCount = maxFileCount;
                 MaxMessagePackStreamedItems = maxStreamedItems;
                 AllowedContentTypes = allowedContentTypes;
-                OwnerQueue = ownerQueue;
                 Properties = properties;
                 BodyProperty = bodyProperty;
                 ETagProperty = etagProperty;
@@ -1627,7 +1604,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             public int MaxMessagePackStreamedItems { get; }
 
             public ImmutableArray<string> AllowedContentTypes { get; }
-            public string? OwnerQueue { get; }
             public ImmutableArray<PropertyModel> Properties { get; }
             public string? BodyProperty { get; }
             public string? ETagProperty { get; }

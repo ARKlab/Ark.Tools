@@ -77,6 +77,13 @@ public static class Program
         container.Register<IQueryHandler<EchoQuery, EchoResponse>, EchoQueryHandler>();
         container.Register<IQueryHandler<PingQuery, EchoResponse>, PingQueryHandler>();
         container.Register<IRequestHandler<EchoRequest, EchoResponse>, EchoRequestHandler>();
+        container.Register<IQueryHandler<StreamNumbersQuery, IAsyncEnumerable<int>>, StreamNumbersQueryHandler>();
+        container.Register<IQueryHandler<StreamForeverQuery, IAsyncEnumerable<int>>, StreamForeverQueryHandler>();
+        container.Register<IQueryHandler<StreamStateQuery, EchoResponse>, StreamStateQueryHandler>();
+        container.Register<IRequestHandler<ReleaseStreamRequest, EchoResponse>, ReleaseStreamRequestHandler>();
+        container.Register<IRequestHandler<VersionedEchoRequest, VersionedEchoResponse>, VersionedEchoRequestHandler>();
+        container.Register<IRequestHandler<UploadFileRequest, EchoResponse>, UploadFileRequestHandler>();
+        container.Register<IQueryHandler<DownloadFileQuery, IArkAttachment>, DownloadFileQueryHandler>();
         container.Register<IValidator<EchoQuery>, EchoQueryValidator>(Lifestyle.Singleton);
         container.Register<IValidator<EchoRequest>, EchoRequestValidator>(Lifestyle.Singleton);
         container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);

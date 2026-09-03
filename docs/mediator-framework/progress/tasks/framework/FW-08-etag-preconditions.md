@@ -157,18 +157,22 @@ Add `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/ArkETag.cs` (
 
 ## Acceptance
 
-- [ ] `ETagAttribute` added to the core package with XML docs; no new dependencies anywhere.
-- [ ] Generator tests in `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
+- [x] `ETagAttribute` added to the core package with XML docs; no new dependencies anywhere.
+- [x] Generator tests in `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
       (follow the existing `CSharpGeneratorDriver` harness):
       a contract with an `[ETag]` property emits the header-binding assignment; a non-`string`
       `[ETag]` property reports `ARKMF017`; two `[ETag]` properties report `ARKMF018`.
-- [ ] Test proving the `If-Match` header wins over a token supplied in the request body, and that the
+- [x] Test proving the `If-Match` header wins over a token supplied in the request body, and that the
       body token is used when no precondition header is present.
-- [ ] Test proving the `[ETag]` property is present in the generated request schema (not filtered).
-- [ ] Test for `ArkETag.ReadPrecondition`: `If-Match: "abc"` → `abc`; `If-None-Match: *` → `*`;
+- [x] Test proving the `[ETag]` property is present in the generated request schema (not filtered).
+- [x] Test for `ArkETag.ReadPrecondition`: `If-Match: "abc"` → `abc`; `If-None-Match: *` → `*`;
       neither header → `null`.
-- [ ] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character.
-- [ ] `.proto` export for a contract with an `[ETag]` property still contains the field (gRPC parity
+- [x] Test for `ArkETag.IsValidToken` rejecting a quote, a backslash and a control character.
+- [x] `.proto` export for a contract with an `[ETag]` property still contains the field (gRPC parity
       unchanged) — assert in an existing gRPC generator test.
-- [ ] `design.md` updated with the D9 section.
-- [ ] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+- [x] `design.md` updated with the D9 section.
+- [x] Full solution build with zero warnings + `dotnet test Ark.Tools.slnx` green.
+
+> **Review 2026-09-02**: Still open: an end-to-end If-Match-wins-over-body test, an OpenAPI schema test for the `[ETag]` property, the neither-header→null `ReadPrecondition` case, and an explicit `.proto` export assertion (gRPC parity is exercised at runtime via `GrpcErrorsTests.cs`).
+
+> **Review 2026-09-03**: Closed. `MinimalApiETagTests` proves If-Match wins over the body token and the body fallback via the HTTP-exposed `HostingETagUpdateRequest`; `MinimalApiOpenApiTests.ETagPropertiesRemainInDocumentedSchemas` proves the `[ETag]` property stays in the request schema; `GeneratorSnapshotTests.ArkETagReadsAndValidatesPreconditions` covers the neither-header→null case; `GrpcProtoExportTests.ExportsETagFieldsInProtoMessages` asserts the exported `e_tag` field.

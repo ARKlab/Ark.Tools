@@ -10,7 +10,7 @@ always emits `TypedResults.Ok(result)`; a `null` query result serializes as `200
 Required defaults:
 - `IQuery<T>` returning `null` → **404 Not Found**
 - `IRequest<T>` returning `null` → **204 No Content**
-- `ICommand` → per FW-01/D4 (202 or 204)
+- `ICommand` → per FW-01/D4 revised (always inline **204**)
 - non-null results → 200
 
 ## Decision (D3) — customization point
@@ -37,8 +37,12 @@ No runtime `IArkEndpointResultMapper` service.
 
 ## Acceptance
 
-- [ ] Null query result → 404; null request result → 204 (integration tests).
-- [ ] Attribute overrides respected (test with `SuccessStatusCode = 201`).
-- [ ] OpenAPI document lists the exact status codes emitted (test inspects document).
-- [ ] Existing sample scenarios updated, not deleted.
-- [ ] Full solution build + tests green; docs updated.
+- [x] Null query result → 404; null request result → 204 (integration tests).
+- [x] Attribute overrides respected (test with `SuccessStatusCode = 201`).
+- [x] OpenAPI document lists the exact status codes emitted (test inspects document).
+- [x] Existing sample scenarios updated, not deleted.
+- [x] Full solution build + tests green; docs updated.
+
+> **Review 2026-09-02**: Null query→404 has an integration test (`MinimalApiErrorsTests.cs`) and defaults are implemented in the generator; the null-request→204 default lacks a test and no OpenAPI document test inspects operation responses — those items stay open.
+
+> **Review 2026-09-03**: Closed. `MinimalApiCommandTests.MapsNullRequestResultToNoContent` proves the null-request→204 default via `HostingNoContentRequest`, and `MinimalApiOpenApiTests.V1OperationsDocumentStatusCodesAndProblemResponses` inspects the documented 201/204/404/200 operation status codes.

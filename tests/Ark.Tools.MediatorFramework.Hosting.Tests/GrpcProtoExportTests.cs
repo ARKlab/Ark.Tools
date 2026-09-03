@@ -25,7 +25,21 @@ public sealed class GrpcProtoExportTests
         proto.Should().Contain("service HostingV3");
         proto.Should().Contain("rpc HostingRequest(HostingRequestMessage) returns (HostingResponse);");
         proto.Should().Contain("rpc UploadHostingAttachment(stream ark.mediator.UploadDocumentChunk)");
+        proto.Should().Contain("rpc DownloadHostingAttachment(HostingAttachmentDownloadQuery) returns (stream DownloadDocumentChunk);");
         proto.Should().NotContain("import \"ark/nodatime.proto\";");
+    }
+
+    /// <summary>Verifies ETag-marked contract properties stay in the exported proto messages.</summary>
+    [TestMethod]
+    public void ExportsETagFieldsInProtoMessages()
+    {
+        var protoPath = _findExportedProto();
+        var proto = File.ReadAllText(protoPath);
+
+        var messageIndex = proto.IndexOf("message HostingETagMismatchRequest {", StringComparison.Ordinal);
+        messageIndex.Should().BeGreaterThan(-1);
+        var messageEnd = proto.IndexOf('}', messageIndex);
+        proto[messageIndex..messageEnd].Should().Contain("string e_tag = 1;");
     }
 
     /// <summary>Verifies generated clients expose the exported versioned service descriptors.</summary>

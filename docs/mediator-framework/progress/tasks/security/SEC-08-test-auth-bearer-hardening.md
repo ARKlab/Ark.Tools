@@ -34,5 +34,7 @@ The remaining bug: a **malformed bearer token** (not parseable as JWT) causes an
 ## Acceptance
 
 - [ ] Malformed bearer tests return 401 across the three cases above.
-- [ ] No restructuring of the env-var auth pattern (per D6).
-- [ ] Full solution build + tests green.
+- [x] No restructuring of the env-var auth pattern (per D6).
+- [x] Full solution build + tests green.
+
+> **Review 2026-09-02**: The underlying crash is mitigated: the smart policy scheme wraps `new JwtSecurityToken(token)` in try/catch and forwards to the default scheme (`AuthenticationEx.cs`), and the IntegrationTests path uses plain `AddJwtBearer` (401 by default). The dedicated malformed-bearer 401 tests are still missing.

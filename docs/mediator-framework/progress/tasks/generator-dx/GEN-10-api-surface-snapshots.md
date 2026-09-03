@@ -128,13 +128,15 @@ the graph produces a visible diff.
 
 ## Acceptance
 
-- [ ] Generator + MSBuild targets implemented, packed as build assets, no-op when not opted in.
-- [ ] `ARKAPI001`/`ARKAPI002` behave as specified and are unit-tested.
-- [ ] Nested type fields produce recursive `CONTRACT`/`GRPC-FIELD` entries; renaming a nested
+- [x] Generator + MSBuild targets implemented, packed as build assets, no-op when not opted in.
+- [x] `ARKAPI001`/`ARKAPI002` behave as specified and are unit-tested.
+- [x] Nested type fields produce recursive `CONTRACT`/`GRPC-FIELD` entries; renaming a nested
       field causes `ARKAPI002`.
-- [ ] Surface is deterministic across compilations (same input = same output, bit-for-bit).
-- [ ] Sample Application assembly opted in with committed `ArkApiSurface.txt`; solution build
+- [x] Surface is deterministic across compilations (same input = same output, bit-for-bit).
+- [x] Sample Application assembly opted in with committed `ArkApiSurface.txt`; solution build
       is green with it.
-- [ ] Bootstrap workflow documented in `design.md` and referenced by the user guide task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Bootstrap workflow documented in `design.md` and referenced by the user guide task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Variation: the packed targets default `ArkApiSurfaceEnabled` to true (opt-out rather than opt-in); the disabled no-op path is implemented and tested (`ApiSurfaceGeneratorSkipsComparisonWhenDisabled`). Multiline messaging blocks were added later by AZM-23.

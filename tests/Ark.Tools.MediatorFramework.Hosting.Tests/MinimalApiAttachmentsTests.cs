@@ -153,6 +153,48 @@ public sealed class MinimalApiAttachmentsTests
             .Should().Be("downloaded content");
     }
 
+    /// <summary>Verifies an uploaded attachment round-trips byte-for-byte through HTTP download.</summary>
+    [TestMethod]
+    public async Task RoundTripsUploadedAttachment()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+        using var content = _createMultipart(
+            ("attachment", "roundtrip.txt", "text/plain", "round-trip payload"));
+
+        using var upload = await client.PostAsync(
+            new Uri("http://localhost/api/v1/hosting/attachments"),
+            content,
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        upload.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        using var download = await client.GetAsync(
+            new Uri("http://localhost/api/v1/hosting/attachments/roundtrip.txt"),
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        download.StatusCode.Should().Be(HttpStatusCode.OK);
+        download.Content.Headers.ContentType!.MediaType.Should().Be("text/plain");
+        var downloaded = await download.Content.ReadAsByteArrayAsync(
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        downloaded.Should().Equal(Encoding.UTF8.GetBytes("round-trip payload"));
+    }
+
+    /// <summary>Verifies a missing downloadable attachment maps to 404 Not Found.</summary>
+    [TestMethod]
+    public async Task MapsMissingAttachmentToNotFound()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("http://localhost/api/v1/hosting/attachments/missing.txt"),
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     private static MultipartFormDataContent _createMultipart(
         params (string Name, string FileName, string ContentType, string Content)[] files)
     {

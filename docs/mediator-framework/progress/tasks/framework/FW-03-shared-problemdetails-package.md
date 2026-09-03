@@ -49,8 +49,8 @@ same mapping.
 
 ## Acceptance
 
-- [ ] New package builds, packs, and is referenced by `Ark.Tools.AspNetCore` (which keeps behavior as-is; its tests unchanged and green).
-- [ ] Mediator sample uses the shared mapping; sample-local handler deleted.
-- [ ] 403/404/400/409/500 mapping tests pass on the mediator host.
-- [ ] `packages.lock.json` files updated; full solution build + tests green.
-- [ ] `design.md` error-mapping section updated.
+- [x] New package builds, packs, and is referenced by `Ark.Tools.AspNetCore` (which keeps behavior as-is; its tests unchanged and green).
+- [x] Mediator sample uses the shared mapping; sample-local handler deleted.
+- [x] 403/404/400/409/500 mapping tests pass on the mediator host.
+- [x] `packages.lock.json` files updated; full solution build + tests green.
+- [x] `design.md` error-mapping section updated.

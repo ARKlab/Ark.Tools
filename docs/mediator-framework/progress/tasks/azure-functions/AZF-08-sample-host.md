@@ -84,11 +84,15 @@ transport logic leaking into handlers.
 
 ## Acceptance
 
-- [ ] Project was scaffolded from an official isolated-worker template.
-- [ ] Same Application contracts/handlers are used with no Function annotations.
-- [ ] Every supported JSON-only HTTP endpoint is generated with the same external route.
-- [ ] Host excludes MessagePack, gRPC and Rebus receive processing.
-- [ ] README local-run instructions work from a clean checkout with documented prerequisites.
-- [ ] Changed files pass secret scanning.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Project was scaffolded from an official isolated-worker template.
+- [x] Same Application contracts/handlers are used with no Function annotations.
+- [x] Every supported JSON-only HTTP endpoint is generated with the same external route.
+- [x] Host excludes MessagePack, gRPC and Rebus receive processing.
+- [x] README local-run instructions work from a clean checkout with documented prerequisites.
+- [x] Changed files pass secret scanning.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Sample host renamed Greeting→Book; MessagePack contracts (`StreamBooksQuery`, `DescribeBookEditionRequest`) are excluded in `FunctionGeneration.cs`. Still open: a guard test enumerating Application `[HttpEndpoint]` contracts against the generated Functions surface with route equality vs the WebInterface.
+>
+> **Review 2026-09-03**: Complete. The guard lives in `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests/FunctionsRouteGuardTests.cs` (framework tests must live in `tests/`; samples only exemplify application testing): `GeneratedFunctionsCoverEveryNonExcludedHttpEndpointContract` cross-checks every non-excluded `[HttpEndpoint]` contract against the generated Functions surface, and `GeneratedFunctionsMatchTheExpectedRouteFixture` pins names, verbs and routes. Route parity with the Minimal API host is exemplified at application level by `BookTransportBoundaryTests.GeneratedHttpBooksEndpointsExposeExpectedRoutes`.

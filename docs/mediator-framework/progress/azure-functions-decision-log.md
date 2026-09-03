@@ -115,6 +115,13 @@ tasks.
   objects but not the complete ASP.NET Core server pipeline; platform buffering
   must be measured.
 - **Blocked tasks:** AZF-07, AZF-08.
+- **Resolution (2026-09-03):** gate passed. Core Tools boundary tests
+  `StreamingDeliversFirstItemBeforeProducerCompletes` and
+  `ClientDisconnectCancelsStreamingHandler` in
+  `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests` prove the
+  first JSON item is flushed before the producer completes and that client
+  disconnect cancellation reaches the handler's iterator. Azure Functions
+  streaming is supported.
 
 ### AZD-07 — Functions boundary-test execution
 

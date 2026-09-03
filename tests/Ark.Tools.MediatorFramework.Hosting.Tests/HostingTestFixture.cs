@@ -317,10 +317,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
         return app;
     }
 
-    /// <summary>Builds an isolated in-memory Rebus bus for the synthetic messages.</summary>
+    /// <summary>Registers the in-memory Rebus configuration without resolving the bus.</summary>
     /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="global::Rebus.Retry.Simple.IFailed{TMessage}"/>.</param>
-    /// <returns>The started Rebus bus.</returns>
-    public RebusBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
+    public void ConfigureRebusHost(bool secondLevelRetriesEnabled = false)
     {
         _throwIfDisposed();
         if (_rebusConfigured)
@@ -328,9 +327,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
             if (_secondLevelRetriesEnabled != secondLevelRetriesEnabled)
                 throw new InvalidOperationException("The Rebus host was already configured with a different second-level retry setting.");
 
-            var existingBus = Container.GetInstance<RebusBus>();
-            State._bus = existingBus;
-            return existingBus;
+            return;
         }
 
         _secondLevelRetriesEnabled = secondLevelRetriesEnabled;
@@ -350,6 +347,14 @@ public sealed class HostingTestFixture : IAsyncDisposable
             config.Timeouts(timeouts => timeouts.StoreInMemoryTests());
         });
         _rebusConfigured = true;
+    }
+
+    /// <summary>Builds an isolated in-memory Rebus bus for the synthetic messages.</summary>
+    /// <param name="secondLevelRetriesEnabled">Whether failed messages should be dispatched as <see cref="global::Rebus.Retry.Simple.IFailed{TMessage}"/>.</param>
+    /// <returns>The started Rebus bus.</returns>
+    public RebusBus BuildRebusHost(bool secondLevelRetriesEnabled = false)
+    {
+        ConfigureRebusHost(secondLevelRetriesEnabled);
 
         var bus = Container.GetInstance<RebusBus>();
         State._bus = bus;
@@ -404,6 +409,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
         if (includeRebusHandlers)
         {
+            container.Register<ICommandHandler<HostingBusCommand>, HostingBusCommandHandler>();
             container.Register<ICommandHandler<HostingRebusCommand>, HostingRebusCommandHandler>();
             container.Register<ICommandHandler<HostingRetryCommand>, HostingRetryCommandHandler>();
             container.Register<ICommandHandler<HostingSecondLevelRetryCommand>, HostingSecondLevelRetryCommandHandler>();
@@ -413,6 +419,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
         }
         container.Register<IRequestHandler<HostingValidationRequest, HostingResponse>, HostingValidationHandler>();
         container.Register<IRequestHandler<HostingStatusRequest, HostingResponse>, HostingStatusHandler>();
+        container.Register<IRequestHandler<HostingNoContentRequest, HostingResponse>, HostingNoContentHandler>();
+        container.Register<IQueryHandler<HostingETagQuery, HostingETagResponse>, HostingETagQueryHandler>();
+        container.Register<IRequestHandler<HostingETagUpdateRequest, HostingETagResponse>, HostingETagUpdateHandler>();
         container.Register<IQueryHandler<HostingNotFoundQuery, HostingResponse>, HostingNotFoundHandler>();
         container.Register<IRequestHandler<HostingBusinessViolationRequest, HostingResponse>, HostingBusinessViolationHandler>();
         container.Register<IRequestHandler<HostingUnexpectedRequest, HostingResponse>, HostingUnexpectedHandler>();
@@ -467,6 +476,35 @@ public sealed class HostingTestState
 
     /// <summary>Gets a task that completes when two commands have executed.</summary>
     public Task SecondCommandExecuted => _secondCommandExecution.Task;
+
+    /// <summary>Gets the number of bus-dispatched command handler executions.</summary>
+    public int BusCommandExecutions => Volatile.Read(ref _busCommandExecutions);
+
+    /// <summary>Gets a task that completes when a bus-dispatched command handler executes.</summary>
+    public Task BusCommandExecuted => _busCommandExecution.Task;
+
+    /// <summary>Gets the last bus-dispatched command value observed by the handler.</summary>
+    public string? LastBusCommandValue => Volatile.Read(ref _lastBusCommandValue);
+
+    /// <summary>Gets the ETag received by the last ETag update handler execution.</summary>
+    public string? LastETagReceived => Volatile.Read(ref _lastETagReceived);
+
+    private readonly TaskCompletionSource _busCommandExecution = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private int _busCommandExecutions;
+    private string? _lastBusCommandValue;
+    private string? _lastETagReceived;
+
+    internal void _recordBusCommandExecution(string value)
+    {
+        Interlocked.Increment(ref _busCommandExecutions);
+        Interlocked.Exchange(ref _lastBusCommandValue, value);
+        _busCommandExecution.TrySetResult();
+    }
+
+    internal void _recordETagReceived(string? etag)
+    {
+        Interlocked.Exchange(ref _lastETagReceived, etag);
+    }
 
     /// <summary>Gets the number of failed retry handler attempts.</summary>
     public int RetryAttempts => Volatile.Read(ref _retryAttempts);
@@ -659,6 +697,57 @@ internal sealed class HostingNotFoundHandler : IQueryHandler<HostingNotFoundQuer
     {
         await Task.CompletedTask.ConfigureAwait(false);
         return null!;
+    }
+}
+
+internal sealed class HostingNoContentHandler : IRequestHandler<HostingNoContentRequest, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(HostingNoContentRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return null!;
+    }
+}
+
+internal sealed class HostingBusCommandHandler : ICommandHandler<HostingBusCommand>
+{
+    private readonly HostingTestState _state;
+
+    public HostingBusCommandHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
+    public async Task ExecuteAsync(HostingBusCommand command, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        _state._recordBusCommandExecution(command.Value);
+    }
+}
+
+internal sealed class HostingETagQueryHandler : IQueryHandler<HostingETagQuery, HostingETagResponse>
+{
+    public async Task<HostingETagResponse> ExecuteAsync(HostingETagQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingETagResponse { Token = "hosting-v2" };
+    }
+}
+
+internal sealed class HostingETagUpdateHandler : IRequestHandler<HostingETagUpdateRequest, HostingETagResponse>
+{
+    private readonly HostingTestState _state;
+
+    public HostingETagUpdateHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
+    public async Task<HostingETagResponse> ExecuteAsync(HostingETagUpdateRequest request, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        _state._recordETagReceived(request.ETag);
+        return new HostingETagResponse { Token = "hosting-v3", ReceivedETag = request.ETag };
     }
 }
 
@@ -963,11 +1052,28 @@ internal sealed class HostingAttachmentCollectionUploadHandler : IRequestHandler
 
 internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAttachmentDownloadQuery, Ark.Tools.MediatorFramework.IArkAttachment>
 {
+    private readonly HostingTestState _state;
+
+    public HostingAttachmentDownloadHandler(HostingTestState state)
+    {
+        _state = state;
+    }
+
     public async Task<Ark.Tools.MediatorFramework.IArkAttachment> ExecuteAsync(
         HostingAttachmentDownloadQuery query,
         CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
+        if (string.Equals(query.Name, _state.LastAttachmentName, StringComparison.Ordinal)
+            && _state.LastAttachmentContent is not null)
+        {
+            var content = _state.LastAttachmentContent;
+            return new Ark.Tools.MediatorFramework.ArkAttachment(
+                query.Name,
+                "text/plain",
+                () => new MemoryStream(Encoding.UTF8.GetBytes(content)));
+        }
+
         if (!string.Equals(query.Name, "download.txt", StringComparison.Ordinal))
             return null!;
 

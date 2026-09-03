@@ -718,6 +718,19 @@ MessagePack HTTP contracts are excluded because the Functions binding does not
 provide the same formatter. Read [Serialization](serialization.md) before
 enabling a transport-specific format.
 
+OpenAPI document production is excluded from Azure Functions hosting (AZD-11):
+the official Functions OpenAPI extension is in maintenance mode and would
+diverge from the Minimal API surface. Host the same contracts behind
+[Minimal API](http-endpoints.md) when an [OpenAPI document](openapi.md) is
+required.
+
+`IAsyncEnumerable<T>` [streaming endpoints](streaming.md) are supported: the
+Core Tools boundary suite proves the first JSON array item reaches the client
+before the producer completes and that client disconnect cancels the handler
+(AZD-06, `StreamingDeliversFirstItemBeforeProducerCompletes` and
+`ClientDisconnectCancelsStreamingHandler`). Responses stream through the
+ASP.NET Core integration without buffering the complete payload.
+
 ## 7. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test

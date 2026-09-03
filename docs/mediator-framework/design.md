@@ -177,9 +177,11 @@ Generated HTTP responses use these defaults: non-null queries and requests retur
 lists both response statuses.
 
 Commands implement `ICommand` and are dispatched through `ICommandHandler<T>`.
-HTTP-only commands execute inline and return `204 No Content`; commands also
-marked with `[RebusMessage(OwnerQueue = "...")]` are sent to that queue and
-return `202 Accepted`. Generated gRPC command methods return
+HTTP command endpoints always execute the handler inline and return
+`204 No Content`. Adding `[RebusMessage]` to the same contract does not change
+the HTTP behavior: it only exposes the contract as a Rebus message (handler
+wrapper plus outbound routing), so other handlers can `Send` the contract as a
+message or call the exposed API. Generated gRPC command methods return
 `google.protobuf.Empty`, while Rebus wrappers invoke the command handler.
 
 The `Introduced` and exclusive `Retired` properties on `VersioningAttribute`

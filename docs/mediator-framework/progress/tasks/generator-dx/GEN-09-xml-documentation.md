@@ -80,9 +80,11 @@ Mapping:
 - [ ] Documentation extraction helper implemented and unit-tested (including inherited members).
 - [ ] Operation summary/description and parameter/schema descriptions present in the OpenAPI document
       (sample test asserts on the JSON document, not on UI HTML).
-- [ ] Exported `.proto` files carry leading comments for services, methods, messages and fields, and
+- [x] Exported `.proto` files carry leading comments for services, methods, messages and fields, and
       still compile with `Grpc.Tools`.
-- [ ] `AddArkXmlDocumentation()` is additive and documented in `design.md`.
-- [ ] NET-01 updated to drop the superseded XML-doc step.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `AddArkXmlDocumentation()` is additive and documented in `design.md`.
+- [x] NET-01 updated to drop the superseded XML-doc step.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-02**: Extraction helpers exist in both generators and are snapshot-tested; still open: inherited-member and `<see cref>` extraction tests, and OpenAPI document assertions for parameter/schema descriptions (operation summary is asserted in `MinimalApiOpenApiTests.cs`).
