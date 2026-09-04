@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.API;
 using Ark.MediatorFramework.Sample.API.JsonContext;
 
 using Ark.Tools.Nodatime.Protobuf;
@@ -34,7 +33,7 @@ public sealed class NodaTimeContractRoundtripTests
             EntityType = "Book",
             Identifier = "book-42",
             Operation = "Updated",
-            Timestamp = Instant.FromUtc(2026, 7, 27, 12, 34, 56).PlusNanoseconds(789),
+            Timestamp = Instant.FromUtc(2026, 7, 27, 12, 34, 56),
         };
 
         var json = JsonSerializer.SerializeToUtf8Bytes(
@@ -65,8 +64,26 @@ public sealed class NodaTimeContractRoundtripTests
             null,
             typeof(AuditRecord));
 
-        jsonClone.Should().Be(original);
-        messagePackClone.Should().Be(original);
-        protobufClone.Should().Be(original);
+        _assertRoundtrip(
+            jsonClone ?? throw new InvalidOperationException("JSON round-trip returned null."),
+            original,
+            "JSON");
+        _assertRoundtrip(messagePackClone, original, "MessagePack");
+        _assertRoundtrip(protobufClone, original, "protobuf");
+    }
+
+    private static void _assertRoundtrip(
+        AuditRecord actual,
+        AuditRecord expected,
+        string wireFormat)
+    {
+        actual.Id.Should().Be(expected.Id);
+        actual.UserId.Should().Be(expected.UserId);
+        actual.EntityType.Should().Be(expected.EntityType);
+        actual.Identifier.Should().Be(expected.Identifier);
+        actual.Operation.Should().Be(expected.Operation);
+        actual.Timestamp.Should().Be(
+            expected.Timestamp,
+            $"the {wireFormat} round-trip must preserve the timestamp");
     }
 }

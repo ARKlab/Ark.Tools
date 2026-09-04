@@ -71,11 +71,11 @@ are intentional and avoid treating the two tasks as one item.
 | Task | Title | Status |
 | --- | --- | --- |
 | [SMP-01](sample-parity/SMP-01-fluentvalidation.md) | FluentValidation decorators in the sample | Complete |
-| [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper and transactional outbox | In progress |
+| [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper and transactional outbox | Complete |
 | [SMP-03](sample-parity/SMP-03-persisted-auditing.md) | Persisted auditing | Complete |
 | [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency and opaque ETag | Complete |
 | [SMP-05](sample-parity/SMP-05-paging.md) | Paging | Pending |
-| [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, configuration layering, clock, and test infrastructure | In progress |
+| [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, configuration layering, clock, and test infrastructure | Complete |
 
 ### Book sample migration
 
@@ -105,12 +105,12 @@ not stop at a contract, schema, host, or documentation change.
 | Task | Title | Status |
 | --- | --- | --- |
 | [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md) | OpenAPI tags and operation names from the contract | Complete |
-| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | In progress |
+| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | Complete |
 | [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses | Complete |
 | [FW-06](framework/FW-06-async-enumerable-streaming.md) | `IAsyncEnumerable<T>` streaming responses | Complete |
 | [FW-07](framework/FW-07-multifile-uploads.md) | Multi-file uploads bound to an attachment collection | Complete |
 | [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md) | API-surface snapshot gate | Complete |
-| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started and feature guide | In progress |
+| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started and feature guide | Complete |
 
 ## Non-blocking improvements
 
@@ -144,7 +144,7 @@ Decisions and evidence are in
 | --- | --- | --- |
 | [HST-01](aspnetcore/HST-01-composable-minimal-api-startup.md) | Composable Minimal API startup | Complete |
 | [HST-02](aspnetcore/HST-02-security-headers-hsts-profile.md) | Security headers and HSTS defaults | Complete |
-| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling | In progress |
+| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling | Complete |
 | [HST-04](aspnetcore/HST-04-health-endpoint.md) | Default health endpoint | Complete |
 | [HST-05](aspnetcore/HST-05-response-compression.md) | Default response compression | Complete |
 | [HST-06](aspnetcore/HST-06-nlog-process-boundary.md) | NLog process boundary | Complete |
@@ -163,10 +163,10 @@ The architecture and accepted decisions are in
 | [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | Complete |
 | [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing, and version expansion | Complete |
 | [AZF-03](azure-functions/AZF-03-binding-dispatch.md) | JSON/route/query binding and scoped dispatch | Complete |
-| [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization, and user context | In progress |
-| [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails, and ETags | In progress |
+| [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization, and user context | Complete |
+| [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails, and ETags | Complete |
 | [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads, and JSON streaming | Complete |
-| [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | In progress |
+| [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | Complete |
 | [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | Complete |
 | [AZF-09](azure-functions/AZF-09-openapi.md) | OpenAPI | Deferred |
 | [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | Complete |
@@ -222,13 +222,13 @@ The architecture and accepted decisions are in
 | [TST-04](testing/TST-04-grpc-hosting.md) | Prove generated gRPC hosting | Complete |
 | [TST-05](testing/TST-05-rebus-hosting.md) | Prove generated Rebus hosting | Complete |
 | [TST-06](testing/TST-06-other-framework-hosts.md) | Keep other framework hosts under `tests/` | Complete |
-| [APP-01](testing/APP-01-application-test-seam.md) | Expose a direct application composition test seam | In progress |
+| [APP-01](testing/APP-01-application-test-seam.md) | Expose a direct application composition test seam | Complete |
 | [APP-02](testing/APP-02-reqnroll-dispatch.md) | Rewrite Reqnroll lifecycle and dispatch steps | Complete |
 | [APP-03](testing/APP-03-synchronous-application-behavior.md) | Cover synchronous application behavior | Complete |
 | [APP-04](testing/APP-04-rebus-application-workflows.md) | Exercise asynchronous workflows through in-memory Rebus | Complete |
 | [APP-05](testing/APP-05-sql-and-inmemory-stores.md) | Run the application suite against SQL and in-memory stores | Complete |
 | [APP-06](testing/APP-06-remove-boundary-tests.md) | Remove obsolete application boundary tests and dependencies | Complete |
-| [APP-07](testing/APP-07-request-dto-composition.md) | Adopt composed request and DTO contracts | In progress |
+| [APP-07](testing/APP-07-request-dto-composition.md) | Adopt composed request and DTO contracts | Complete |
 | [APP-08](testing/APP-08-context-factory-architecture.md) | Replace Stores with context factories and domain services | Complete |
 | [APP-09](testing/APP-09-inmemory-outbox.md) | Keep transactional outbox parity in test profiles | Complete |
 | [APP-10](testing/APP-10-scenario-scoped-external-mocks.md) | Scenario-scoped external mocks and application failure observation | Complete |

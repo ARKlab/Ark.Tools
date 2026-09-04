@@ -37,4 +37,4 @@ production pattern: Dapper over SQL Server with a transactional **Outbox**.
 - [x] Bus message is enlisted in the same SQL transaction as the greeting write.
 - [x] Test DB reset between scenarios (no cross-scenario leakage).
 - [x] README of the sample documents `docker compose up -d` prerequisite.
-- [ ] Lockfiles updated; full solution build + tests green.
+- [x] Lockfiles updated; full solution build + tests green.
