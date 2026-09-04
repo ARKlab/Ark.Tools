@@ -39,6 +39,12 @@ static async Task WriteTextFileAsync(string destination, string relativePath, st
 {
     var output = GetSafeOutputPath(destination, relativePath);
     Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+    if (File.Exists(output)
+        && string.Equals(
+            await File.ReadAllTextAsync(output).ConfigureAwait(false),
+            content,
+            StringComparison.Ordinal))
+        return;
     await File.WriteAllTextAsync(output, content).ConfigureAwait(false);
 }
 
@@ -52,12 +58,16 @@ static async Task WriteEmbeddedAssetAsync(string destination, string relativePat
         ?? throw new InvalidOperationException($"Embedded protobuf asset '{relativePath}' was not found.");
     var output = GetSafeOutputPath(destination, relativePath);
     Directory.CreateDirectory(Path.GetDirectoryName(output)!);
-    var file = File.Create(output);
+    using var content = new MemoryStream();
     await using (stream.ConfigureAwait(false))
-    await using (file.ConfigureAwait(false))
     {
-        await stream.CopyToAsync(file).ConfigureAwait(false);
+        await stream.CopyToAsync(content).ConfigureAwait(false);
     }
+    var bytes = content.ToArray();
+    if (File.Exists(output)
+        && (await File.ReadAllBytesAsync(output).ConfigureAwait(false)).AsSpan().SequenceEqual(bytes))
+        return;
+    await File.WriteAllBytesAsync(output, bytes).ConfigureAwait(false);
 }
 
 static string GetSafeOutputPath(string destination, string relativePath)

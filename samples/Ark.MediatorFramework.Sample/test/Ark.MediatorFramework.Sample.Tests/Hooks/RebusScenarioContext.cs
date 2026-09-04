@@ -49,14 +49,14 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         application.StartOutboundBus();
     }
 
-    /// <summary>Sends a message that demonstrates retry exhaustion.</summary>
-    /// <param name="reason">The error reason carried by the message.</param>
-    public async Task SendFailingMessageAsync(string reason)
+    /// <summary>Sends a message through the scenario-owned background bus.</summary>
+    /// <typeparam name="TMessage">The message type.</typeparam>
+    /// <param name="message">The message to send.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task SendAsync<TMessage>(TMessage message, CancellationToken ctk = default)
+        where TMessage : class
     {
-        await _sampleContext.Application.SendAsync(new FailingRebusRequest
-        {
-            Reason = reason,
-        }).ConfigureAwait(false);
+        await _sampleContext.Application.SendAsync(message, ctk).ConfigureAwait(false);
     }
 
     /// <summary>Waits for all background and outbox work to complete.</summary>

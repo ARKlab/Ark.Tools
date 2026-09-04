@@ -69,4 +69,5 @@ EVOLVABLE-ENUM ReadingActivityKind.Finished=3
 EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
 EVOLVABLE-ENUM ReadingActivityKind.Progressed=2
 EVOLVABLE-ENUM ReadingActivityKind.Started=1
+REBUS CreateBookReviewRequest -> queue:ark-mediator-sample
 */

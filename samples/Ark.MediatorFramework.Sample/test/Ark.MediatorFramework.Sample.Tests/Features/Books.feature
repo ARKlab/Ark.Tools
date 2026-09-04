@@ -171,6 +171,34 @@ Feature: Books
                 | 5      | Good |
             Then the book request fails with an authorization exception
 
+        Scenario: Complete an authorized book review through the background bus
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user
+            When I dispatch a book review for the current book through the background bus with
+                | Rating | Text             |
+                | 5      | Excellent book!  |
+            And I wait for the background bus to be idle and the outbox to be empty
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 1 results
+
+        Scenario: Reject an unauthorized book review through the background bus
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user without the book review write scope
+            When I dispatch a book review for the current book through the background bus with
+                | Rating | Text |
+                | 5      | Good |
+            Then the error queue contains the failed message
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 0 results
+
     Rule: Reading activity uses repository time and bounded retrieval
 
         Scenario: Record and retrieve reading activity

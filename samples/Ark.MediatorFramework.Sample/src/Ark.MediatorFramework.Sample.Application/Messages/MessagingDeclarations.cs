@@ -13,7 +13,7 @@ public sealed partial class SampleMessagingPublisherParticipant;
 /// <summary>Declares the sample background message consumer participant.</summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
-    Processes = new[] { typeof(ProcessBookPrintProcessRequest) },
+    Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(CreateBookReviewRequest) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
     Retry = typeof(SampleMessagingRetryPolicy))]
