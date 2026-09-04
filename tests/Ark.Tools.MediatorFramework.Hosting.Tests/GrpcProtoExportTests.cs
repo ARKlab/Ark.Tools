@@ -141,7 +141,7 @@ public sealed class GrpcProtoExportTests
     {
         var repositoryRoot = _findRepositoryRoot();
         var targetFramework = _targetFramework();
-        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Parent!.Name;
+        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
         var assembly = Path.Combine(
             repositoryRoot.FullName,
             "tests",
@@ -158,7 +158,7 @@ public sealed class GrpcProtoExportTests
     {
         var repositoryRoot = _findRepositoryRoot();
         var targetFramework = _targetFramework();
-        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Parent!.Name;
+        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
         var exporter = Path.Combine(
             repositoryRoot.FullName,
             "src",
