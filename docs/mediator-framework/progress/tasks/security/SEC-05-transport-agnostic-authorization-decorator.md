@@ -48,7 +48,7 @@ a first-class framework story.
 
 ## Acceptance
 
-- [ ] Policy declared once on a contract is enforced for HTTP (403) and Rebus (handler skipped) — tests prove both.
+- [x] Policy declared once on a contract is enforced for HTTP (403) and Rebus (handler skipped) — tests prove both.
 - [x] Registration is a single helper call in the composition root.
 - [x] No new package introduced; extensions live in `Ark.Tools.Solid.Authorization`/`Ark.Tools.Authorization`.
 - [x] Docs updated; full solution build + tests green.
