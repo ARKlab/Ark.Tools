@@ -331,6 +331,23 @@ project can opt out directly with `GenerateDocumentationFile=false` or
 `ImplicitUsings=disable`; project properties evaluate after NuGet package props
 and therefore override these set-when-empty defaults.
 
+## Compliance (privacy by default) decisions
+
+The privacy-by-default design is approved. Its decisions PII‑01…PII‑06 are
+recorded once, in
+[`../privacy-by-default-prd.md`](../privacy-by-default-prd.md#17-decisions), and
+are not duplicated here; implementation is tracked as the `PII-IMP` series on the
+[task board](tasks/README.md#compliance-privacy-by-default).
+
+| ID | Answer |
+| --- | --- |
+| PII‑01 | Depend on `Microsoft.Extensions.Compliance.Abstractions`. |
+| PII‑02 | `ARKPII001` (name heuristic) is a warning; every other rule is an error. |
+| PII‑03 | Cleartext is purpose-gated through `Reveal(CompliancePurpose)`. |
+| PII‑04 | `ArkComplianceSurface.txt` is a separate file from `ArkApiSurface.txt`. |
+| PII‑05 | SQL policy generation is opt-in and emits a token template. |
+| PII‑06 | The runtime pattern scanner ships, default off. |
+
 ## Accepted implementation details
 
 These details refine the accepted decisions and remain subject to executable
