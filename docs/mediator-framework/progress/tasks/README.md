@@ -63,7 +63,7 @@ are intentional and avoid treating the two tasks as one item.
 | Task | Title | Status |
 | --- | --- | --- |
 | [GEN-04](generator-dx/GEN-04-remove-hardcoded-documents-proto.md) | Remove sample `Documents.proto` from the framework generator | Complete |
-| [GEN-07](generator-dx/GEN-07-automatic-proto-export.md) | Automatic proto export without host entry-point wiring | In progress |
+| [GEN-07](generator-dx/GEN-07-automatic-proto-export.md) | Automatic proto export without host entry-point wiring | Complete |
 | [GEN-08](generator-dx/GEN-08-from-assembly-api-names.md) | Name assembly-scanning APIs explicitly | Complete |
 
 ### Sample parity
