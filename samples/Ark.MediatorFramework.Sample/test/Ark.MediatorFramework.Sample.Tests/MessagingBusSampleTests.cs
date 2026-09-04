@@ -185,7 +185,7 @@ public sealed class MessagingBusSampleTests
 
         var notifications = new SubscriberState();
         var audits = new SubscriberState();
-        #pragma warning disable MA0004 // Test-owned resources are disposed after the bounded run.
+#pragma warning disable MA0004 // Test-owned resources are disposed after the bounded run.
         await using var notificationSink = new RecordingNotificationSink(notifications);
         await using var auditSink = new RecordingAuditSink(audits);
         await using var notificationContainer = AzureFunctionsNativeComposition.BuildContainer(
@@ -219,7 +219,7 @@ public sealed class MessagingBusSampleTests
             transport,
             SampleMessagingAuditParticipant.Identity,
             auditDispatcher.OnDeliveryAsync);
-        #pragma warning restore MA0004
+#pragma warning restore MA0004
         using var bus = new MessagingBus(
             transport,
             network,

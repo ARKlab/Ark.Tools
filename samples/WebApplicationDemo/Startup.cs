@@ -18,8 +18,6 @@ using Microsoft.OpenApi;
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using System.Globalization;
-
 using WebApplicationDemo.Application.Host;
 using WebApplicationDemo.Configuration;
 using WebApplicationDemo.Dto;

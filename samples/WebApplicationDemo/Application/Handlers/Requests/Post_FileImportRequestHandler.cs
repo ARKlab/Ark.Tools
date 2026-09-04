@@ -2,8 +2,6 @@ using Ark.Tools.Solid;
 
 using NLog;
 
-using System.Globalization;
-
 using WebApplicationDemo.Api.Requests;
 using WebApplicationDemo.Dto;
 

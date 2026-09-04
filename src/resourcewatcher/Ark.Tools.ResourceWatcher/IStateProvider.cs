@@ -18,7 +18,7 @@ public interface IStateProvider<TExtensions>
     /// <param name="ctk">Cancellation token</param>
     /// <returns>Collection of resource states</returns>
     Task<IEnumerable<ResourceState<TExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default);
-    
+
     /// <summary>
     /// Saves state for the specified resources.
     /// </summary>

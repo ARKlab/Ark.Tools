@@ -72,25 +72,25 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                             string userName = usernameSpan.ToString();
                             string password = passwordSpan.ToString();
 
-                        var accessToken = await _policy.ExecuteAsync(async (ct) =>
-                            {
-                                var result = await _auth0.GetTokenAsync(new ResourceOwnerTokenRequest()
+                            var accessToken = await _policy.ExecuteAsync(async (ct) =>
                                 {
-                                    Audience = _config.Audience,
-                                    ClientId = _config.ProxyClientId,
-                                    Username = userName,
-                                    Password = password,
-                                    ClientSecret = _config.ProxySecret,
-                                    Realm = _config.Realm!,
-                                    Scope = "openid profile email",
-                                }, context.RequestAborted).ConfigureAwait(false);
+                                    var result = await _auth0.GetTokenAsync(new ResourceOwnerTokenRequest()
+                                    {
+                                        Audience = _config.Audience,
+                                        ClientId = _config.ProxyClientId,
+                                        Username = userName,
+                                        Password = password,
+                                        ClientSecret = _config.ProxySecret,
+                                        Realm = _config.Realm!,
+                                        Scope = "openid profile email",
+                                    }, context.RequestAborted).ConfigureAwait(false);
 
-                                return result.AccessToken;
-                            }, context.RequestAborted, true).ConfigureAwait(false);
+                                    return result.AccessToken;
+                                }, context.RequestAborted, true).ConfigureAwait(false);
 
-                        context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
+                            context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
+                        }
                     }
-                }
                 }
                 catch (Exception ex)
                 {

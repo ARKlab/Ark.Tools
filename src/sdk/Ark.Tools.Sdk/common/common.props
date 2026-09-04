@@ -1,0 +1,56 @@
+<Project>
+
+  <Import Project="$(MSBuildThisFileDirectory)ContinuousIntegrationBuild.props" />
+
+  <PropertyGroup>
+    <_IsGitHubActions Condition="'$(_IsGitHubActions)' == '' and '$(GITHUB_ACTIONS)' == 'true'">true</_IsGitHubActions>
+    <_IsGitMain Condition="'$(_IsGitMain)' == '' AND ('$(GITHUB_REF_NAME)' == 'main' OR '$(GITHUB_REF)' == 'refs/heads/main' OR '$(GITHUB_REF)' == 'refs/heads/master' OR '$(GITHUB_REF_NAME)' == 'master')">true</_IsGitMain>
+		
+
+    <RestorePackagesWithLockFile Condition="'$(RestorePackagesWithLockFile)' == ''">true</RestorePackagesWithLockFile>
+    <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
+    <RestoreLockedMode Condition="'$(RestoreLockedMode)' == '' and '$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
+    <!-- Regular graph evaluation avoids NU1004 during GitHub dependency-submission restores. -->
+    <RestoreUseStaticGraphEvaluation Condition="'$(RestoreUseStaticGraphEvaluation)' == ''">false</RestoreUseStaticGraphEvaluation>
+    <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
+
+    <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
+    <NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
+    <NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
+
+    <IsTestProject Condition="'$(IsTestProject)' == '' and ($(MSBuildProjectName.EndsWith('.Tests')) or $(MSBuildProjectName.EndsWith('.UnitTests')))">true</IsTestProject>
+    <!-- Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+    <PublishRepositoryUrl Condition="'$(PublishRepositoryUrl)' == ''">true</PublishRepositoryUrl>
+
+    <PolyUseEmbeddedAttribute Condition="'$(PolyUseEmbeddedAttribute)' == '' and '$(EnableArkToolsPolyfill)' != 'false'">true</PolyUseEmbeddedAttribute>
+    <AccelerateBuildsInVisualStudio Condition="'$(AccelerateBuildsInVisualStudio)' == '' and ('$(UsingMicrosoftNETSdk)' == 'true' or '$(UsingMicrosoftNETSdkWeb)' == 'true' or '$(UsingMicrosoftNETSdkRazor)' == 'true')">true</AccelerateBuildsInVisualStudio>
+    <EnablePackageValidation Condition="'$(EnablePackageValidation)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</EnablePackageValidation>
+    <IncludeSymbols Condition="'$(IncludeSymbols)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</IncludeSymbols>
+    <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">snupkg</SymbolPackageFormat>
+
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">
+    <OutputType Condition="'$(OutputType)' == ''">Exe</OutputType>
+    <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    
+    <AnalysisLevel Condition="'$(AnalysisLevel)' == ''">latest-all</AnalysisLevel>
+    <LangVersion Condition="'$(LangVersion)' == ''">14.0</LangVersion>
+    
+    <GenerateSBOM Condition="'$(GenerateSBOM)' == '' and '$(EnableArkToolsSbom)' != 'false'">true</GenerateSBOM>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != '' and '$(EnableArkToolsCopilotSandboxWorkaround)' != 'false'">
+    <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
+    <EnableSourceLink>false</EnableSourceLink>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true' and '$(EnableArkToolsBuild)' != 'false'">
+    <PackageReference Include="Ark.Tools.Build" Version="$(Version)" IsImplicitlyDefined="true" />
+  </ItemGroup>
+
+
+</Project>

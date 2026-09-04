@@ -1,39 +1,41 @@
 <Project>
   <PropertyGroup Label="Common Build Settings"
-                 Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
+                 Condition="'$(ArkToolsBuildImported)' != 'true'">
     <ArkToolsBuildImported>true</ArkToolsBuildImported>
     <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
+
     <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
     <MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
-  </PropertyGroup>
 
-  <PropertyGroup Label="C# Build Settings"
-                 Condition="'$(EnableArkToolsBuild)' != 'false' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-    <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
-    <ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
-    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == ''">true</GenerateDocumentationFile>
-    <Features Condition="'$(Features)' == ''">strict</Features>
-    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == ''">true</ReportAnalyzer>
-    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile Condition="'$(GenerateDocumentationFile)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</GenerateDocumentationFile>
+    <Features Condition="'$(Features)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">strict</Features>
+    <ReportAnalyzer Condition="'$(ReportAnalyzer)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</ReportAnalyzer>
+    <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</EnforceCodeStyleInBuild>
+    <Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
+
+		<!-- Embed source files that are not tracked by the source control manager in the PDB -->
+		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''">true</EmbedUntrackedSources>
+    
+    <DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
+  	<DebugSymbols Condition="'$(DebugSymbols)' == ''">true</DebugSymbols>
+
+    <Nullable Condition="'$(Nullable)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</Nullable>
+    <ImplicitUsings Condition="'$(ImplicitUsings)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup Label="SQL Build Settings"
-                 Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' == 'true'">
+                 Condition="'$(UsingMicrosoftBuildSqlSdk)' == 'true'">
     <TreatTSqlWarningsAsErrors Condition="'$(TreatTSqlWarningsAsErrors)' == ''">true</TreatTSqlWarningsAsErrors>
     <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == ''">true</RunSqlCodeAnalysis>
-  </PropertyGroup>
-
-  <PropertyGroup Label="Analyzer Configuration"
-                 Condition="'$(EnableArkToolsBuild)' != 'false'">
-    <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == '' and '$(DirectoryBuildPropsPath)' != ''">$([System.IO.Path]::GetDirectoryName('$(DirectoryBuildPropsPath)'))</ArkToolsLocalAnalyzerConfigRoot>
-    <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == ''">$(MSBuildProjectDirectory)</ArkToolsLocalAnalyzerConfigRoot>
+    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Label="Analyzer Configuration"
-             Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+             Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/coding-style/Ark.Tools.CodingStyle.editorconfig"
                        KeepDuplicates="false"
-                       Condition="'$(EnableArkToolsCodingStyle)' != 'false' and '$(ArkToolsSdkSourceBuild)' != 'true'" />
+                       Condition="'$(EnableArkToolsCodingStyle)' != 'false'" />
+
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig"
                                KeepDuplicates="false"
                                Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
@@ -52,8 +54,8 @@
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Core.globalconfig"
                                KeepDuplicates="false"
                                Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
-    <GlobalAnalyzerConfigFiles Include="$(ArkToolsLocalAnalyzerConfigRoot)/.*.globalconfig"
-                               KeepDuplicates="false"
-                               Condition="'$(EnableArkToolsLocalAnalyzerConfigDiscovery)' != 'false'" />
+    <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Analyzer.Devlooped.SponsorLink.globalconfig"
+                               KeepDuplicates="false" />
+                    
   </ItemGroup>
 </Project>

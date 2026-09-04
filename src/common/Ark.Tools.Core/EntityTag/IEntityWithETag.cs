@@ -4,8 +4,8 @@ namespace Ark.Tools.Core.EntityTag;
 
 public interface IEntityWithETag
 {
-    #pragma warning disable IDE1006 // Public API name is fixed for compatibility.
+#pragma warning disable IDE1006 // Public API name is fixed for compatibility.
     [SuppressMessage("Naming", "CA1707:Identifiers should not contain underscores", Justification = "By design")]
     string? _ETag { get; set; }
-    #pragma warning restore IDE1006
+#pragma warning restore IDE1006
 }

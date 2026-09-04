@@ -294,3 +294,6 @@ dotnet_diagnostic.IDE0160.severity = none
 
 # IDE0161: Use file-scoped namespace (when file-scoped is preferred) - this is what we want to enforce
 dotnet_diagnostic.IDE0161.severity = warning
+
+
+dotnet_diagnostic.IDE1006.severity = error

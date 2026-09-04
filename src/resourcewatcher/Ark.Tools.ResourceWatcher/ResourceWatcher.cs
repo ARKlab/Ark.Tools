@@ -15,7 +15,7 @@ namespace Ark.Tools.ResourceWatcher;
 /// </summary>
 /// <typeparam name="T">The resource state type</typeparam>
 /// <typeparam name="TExtensions">The type of extension data. Use <see cref="VoidExtensions"/> if no extension data is needed.</typeparam>
-public abstract class ResourceWatcher<T, TExtensions> : IDisposable 
+public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     where T : IResourceState
     where TExtensions : class
 {
@@ -76,7 +76,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         }
         , _cts.Token).FailFastOnException();
     }
-    
+
     [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected virtual void _onBeforeStart()
     {
@@ -295,7 +295,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     /// <returns>Collection of resource metadata</returns>
     [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract Task<IEnumerable<IResourceMetadata<TExtensions>>> _getResourcesInfo(CancellationToken ctk = default);
-    
+
     /// <summary>
     /// Retrieves the payload for a specific resource.
     /// </summary>
@@ -305,7 +305,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     /// <returns>The resource payload, or null if not available</returns>
     [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Legacy API")]
     protected abstract Task<T?> _retrievePayload(IResourceMetadata<TExtensions> info, IResourceTrackedState<TExtensions>? lastState, CancellationToken ctk = default);
-    
+
     /// <summary>
     /// Processes a resource that has changed.
     /// </summary>
@@ -706,7 +706,7 @@ public class ProcessContext : ProcessContext<VoidExtensions>
     }
 }
 
-public sealed class ChangedStateContext<T, TExtensions> 
+public sealed class ChangedStateContext<T, TExtensions>
     where T : IResourceState
     where TExtensions : class
 {
