@@ -208,6 +208,26 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-22](azure-functions/AZM-22-fluent-messaging-composition.md) | Fluent messaging composition | Complete |
 | [AZM-23](azure-functions/AZM-23-multiline-messaging-api-surface.md) | Multiline messaging API surface | Complete |
 
+## Messaging throughput (AMF)
+
+The design baseline is
+[`../../messaging-throughput-prd.md`](../../messaging-throughput-prd.md).
+These tasks replace the pre-release receive seam and add the processor-host
+runtime. They do not touch the send path, the Azure Functions receiver model, or
+`Ark.Tools.Rebus`, which remains a separate alternative stack.
+
+| Task | Title | Status |
+| --- | --- | --- |
+| [AMF-01](messaging/AMF-01-receive-seam-split.md) | Send/receive seam split: pull message source | Pending |
+| [AMF-02](messaging/AMF-02-processor-host.md) | `MessagingProcessorHost`: bounded buffer, credits and worker pool | Pending |
+| [AMF-03](messaging/AMF-03-adaptive-backoff.md) | Idle, error and no-capacity backoff | Pending |
+| [AMF-04](messaging/AMF-04-shared-lock-renewer.md) | Shared lock renewer driven by native lock duration | Pending |
+| [AMF-05](messaging/AMF-05-adaptive-concurrency.md) | Adaptive concurrency with an I/O-bound guard | Pending |
+| [AMF-06](messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive and pop-receipt race fix | Pending |
+| [AMF-07](messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver` | Pending |
+| [AMF-08](messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration and provisioning | Pending |
+| [AMF-09](messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics, guide, sample walkthrough and throughput smoke test | Pending |
+
 ## Testing redesign
 
 The architecture and accepted decisions are in
