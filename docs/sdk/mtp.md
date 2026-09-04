@@ -2,6 +2,9 @@
 
 Ark.Tools applies a framework-neutral Microsoft Testing Platform (MTP) profile to projects classified as tests. The SDK adds only the transport/runtime extensions and default command-line settings; it does not inject MSTest, Reqnroll, `Microsoft.NET.Test.Sdk`, or any assertion library.
 
+See the [SDK capability reference](reference.md) for the complete property
+table and adoption instructions.
+
 ## Activation and scope
 
 - The profile applies only when `IsTestProject` is `true`.

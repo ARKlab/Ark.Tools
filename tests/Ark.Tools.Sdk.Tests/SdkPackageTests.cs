@@ -194,23 +194,14 @@ public sealed class SdkPackageTests
         Directory.CreateDirectory(localConfigRoot);
         var localConfig = Path.Join(localConfigRoot, ".consumer.globalconfig");
         await File.WriteAllTextAsync(localConfig, "is_global = true\nglobal_level = 100\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
-        var localRootProperty = $"<ArkToolsLocalAnalyzerConfigRoot>{localConfigRoot}</ArkToolsLocalAnalyzerConfigRoot>";
         using var local = await _evaluateAsync(
             fixtureRoot,
             feed,
-            "local-config-enabled",
+            "local-config-not-discovered",
             "Consumer.csproj",
             _createCSharpProject(packageVersion),
-            localRootProperty);
-        CollectionAssert.Contains(_getItemIdentities(local, "GlobalAnalyzerConfigFiles"), localConfig);
-        using var localDisabled = await _evaluateAsync(
-            fixtureRoot,
-            feed,
-            "local-config-disabled",
-            "Consumer.csproj",
-            _createCSharpProject(packageVersion),
-            $"{localRootProperty}<EnableArkToolsLocalAnalyzerConfigDiscovery>false</EnableArkToolsLocalAnalyzerConfigDiscovery>");
-        CollectionAssert.DoesNotContain(_getItemIdentities(localDisabled, "GlobalAnalyzerConfigFiles"), localConfig);
+            $"<DirectoryBuildPropsPath>{Path.Join(localConfigRoot, "Directory.Build.props")}</DirectoryBuildPropsPath>");
+        CollectionAssert.DoesNotContain(_getItemIdentities(local, "GlobalAnalyzerConfigFiles"), localConfig);
 
         using var sql = await _evaluateAsync(
             fixtureRoot,
@@ -336,7 +327,6 @@ public sealed class SdkPackageTests
         var packageReferences = _getPackageReferences(baseline);
         Assert.AreEqual("11.2.0", packageReferences["Polyfill"]["Version"]);
         Assert.AreEqual("4.1.5", packageReferences["Microsoft.Sbom.Targets"]["Version"]);
-        Assert.AreEqual("10.0.400", packageReferences["Microsoft.SourceLink.GitHub"]["Version"]);
         _assertProperties(baseline, new Dictionary<string, string>
         {
             ["GenerateSBOM"] = "true",

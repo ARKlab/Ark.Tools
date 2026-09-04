@@ -2,6 +2,8 @@
 
 This directory tracks delivery. Stable architecture and accepted defaults
 remain in [`../design.md`](../design.md).
+The stable consumer property and capability reference is
+[`../reference.md`](../reference.md).
 
 | Document | Purpose |
 | --- | --- |
