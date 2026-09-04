@@ -18,8 +18,8 @@ public sealed class AsyncEnumerableStreamingTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("stream-user");
         using var cancellation = new CancellationTokenSource();
-        var stream = await context.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
-            new StreamBooksQuery { Count = 100, DelayMilliseconds = 0 },
+        var stream = await context.DispatchQueryAsync<StreamBooksQuery.V1, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery.V1 { Count = 100, DelayMilliseconds = 0 },
             cancellation.Token).ConfigureAwait(false);
         var items = new List<BookStreamItem>();
 
@@ -44,8 +44,8 @@ public sealed class AsyncEnumerableStreamingTests
     {
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("stream-user");
-        var stream = await context.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
-            new StreamBooksQuery { Count = 0 }).ConfigureAwait(false);
+        var stream = await context.DispatchQueryAsync<StreamBooksQuery.V1, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery.V1 { Count = 0 }).ConfigureAwait(false);
 
         var items = await stream.ToListAsync().ConfigureAwait(false);
 

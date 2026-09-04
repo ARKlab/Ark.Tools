@@ -43,7 +43,7 @@ public sealed class RebusSteps
     [When("I dispatch a book review for the current book through the background bus with")]
     public async Task DispatchBookReview(Table table)
     {
-        var request = table.CreateInstance<CreateBookReviewRequest>() with
+        var request = table.CreateInstance<CreateBookReviewRequest.V1>() with
         {
             BookId = _books.Current.Id,
         };

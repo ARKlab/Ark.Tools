@@ -31,30 +31,38 @@ public sealed record UploadResponse
 }
 
 /// <summary>Uploads a cover for a book.</summary>
-[HttpEndpoint(
-    "POST",
-    "/api/v{version}/books/{id}/cover",
-    MaxFileCount = 1,
-    AllowedContentTypes = new[] { "image/jpeg", "image/png" })]
-[RequireScopePolicy(ApplicationScopes.BookCover)]
-public sealed record UploadBookCoverRequest : IRequest<UploadBookCoverRequest, UploadResponse>
+public static class UploadBookCoverRequest
 {
-    /// <summary>Gets the book identifier.</summary>
-    [HttpRoute]
-    public Guid Id { get; init; }
+    /// <summary>Version one of the book-cover upload request.</summary>
+    [HttpEndpoint(
+        "POST",
+        "/api/v{version}/books/{id}/cover",
+        MaxFileCount = 1,
+        AllowedContentTypes = new[] { "image/jpeg", "image/png" })]
+    [RequireScopePolicy(ApplicationScopes.BookCover)]
+    public sealed record V1 : IRequest<V1, UploadResponse>
+    {
+        /// <summary>Gets the book identifier.</summary>
+        [HttpRoute]
+        public Guid Id { get; init; }
 
-    /// <summary>Gets the uploaded cover attachment.</summary>
-    public required IArkAttachment Attachment { get; init; }
+        /// <summary>Gets the uploaded cover attachment.</summary>
+        public required IArkAttachment Attachment { get; init; }
+    }
 }
 
 /// <summary>Downloads the cover for a book.</summary>
-[HttpEndpoint("GET", "/api/v{version}/books/{id}/cover")]
-[GrpcMethod("DownloadBookCover")]
-[GrpcService("Books")]
-[RequireScopePolicy(ApplicationScopes.BookCover)]
-public sealed record DownloadBookCoverQuery : IQuery<DownloadBookCoverQuery, IArkAttachment>
+public static class DownloadBookCoverQuery
 {
-    /// <summary>Gets the book identifier.</summary>
-    [HttpRoute]
-    public Guid Id { get; init; }
+    /// <summary>Version one of the book-cover download query.</summary>
+    [HttpEndpoint("GET", "/api/v{version}/books/{id}/cover")]
+    [GrpcMethod("DownloadBookCover")]
+    [GrpcService("Books")]
+    [RequireScopePolicy(ApplicationScopes.BookCover)]
+    public sealed record V1 : IQuery<V1, IArkAttachment>
+    {
+        /// <summary>Gets the book identifier.</summary>
+        [HttpRoute]
+        public Guid Id { get; init; }
+    }
 }

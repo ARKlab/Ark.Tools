@@ -16,6 +16,7 @@ Reference:
   <PackageReference Include="Ark.Tools.Solid" />
 </ItemGroup>
 ```
+Source: [`Ark.MediatorFramework.Sample.API.csproj`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj)
 
 `Ark.Tools.MediatorFramework` supplies shared framework metadata.
 `Ark.Tools.MediatorFramework.MinimalApi` supplies the generated HTTP host.
@@ -39,6 +40,7 @@ public sealed record Pong
     public required string Message { get; init; }
 }
 ```
+Source: [`BookContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
 
 The contract contains no `HttpContext`, controller, Rebus bus, or gRPC server
 object. `[HttpEndpoint]` is metadata. The generated endpoint will bind the
@@ -65,6 +67,7 @@ public sealed class PingHandler : IRequestHandler<Ping, Pong>
     }
 }
 ```
+Source: [`CreateBookHandler.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Book/CreateBookHandler.cs)
 
 The handler is ordinary application code. Its return value is a `Pong`
 regardless of whether the caller is HTTP, gRPC, a test, or a later transport.
@@ -106,6 +109,7 @@ app.UseEndpoints(endpoints =>
 
 await app.RunAsync().ConfigureAwait(false);
 ```
+Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 `ArkGenerateMinimalApiForAssembly` explicitly declares the contract assembly scanned by the
 generator. The context must be a partial class so additional generated context
@@ -124,12 +128,14 @@ ProblemDetails, JSON source generation, and OpenAPI configuration described in
 dotnet run
 curl http://localhost:5000/api/ping
 ```
+Source: [`Program.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/Program.cs)
 
 Expected response:
 
 ```json
 { "message": "pong" }
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 The call path is:
 
@@ -140,6 +146,7 @@ HTTP GET /api/ping
   -> PingHandler
   -> generated JSON response
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 ## 6. Test the operation without HTTP
 
@@ -162,6 +169,7 @@ using (AsyncScopedLifestyle.BeginScope(container))
     response.Message.Should().Be("pong");
 }
 ```
+Source: [`ApplicationTestContextTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/ApplicationTestContextTests.cs)
 
 Application tests assert business values. They do not need to assert a URL,
 HTTP status, JSON casing, or generated endpoint class. Those belong in a

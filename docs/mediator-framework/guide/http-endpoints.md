@@ -68,6 +68,7 @@ public sealed record UpdateGreetingRequest : IRequest<GreetingResponse>
     public string? UpdatedBy { get; init; }
 }
 ```
+Source: [`BookContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
 
 Caller request:
 
@@ -78,6 +79,7 @@ Authorization: ******
 
 { "message": "Hello again", "updatedBy": "forged-user" }
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 Value seen by the handler:
 
@@ -116,6 +118,7 @@ OpenAPI group.
 [HttpEndpoint("POST", "/api/v{version}/greetings", SuccessStatusCode = 201)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
+Source: [`BookContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
 
 Expected HTTP response for success:
 
@@ -123,6 +126,7 @@ Expected HTTP response for success:
 HTTP/1.1 201 Created
 Content-Type: application/json
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 ```json
 {
@@ -130,6 +134,7 @@ Content-Type: application/json
   "message": "Hello Ada"
 }
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 If the handler returns `null` and `NullResultStatusCode` is not set, the same
 contract would instead yield the framework default for the handler kind.
@@ -159,6 +164,7 @@ public sealed record UploadGreetingCardsRequest : IRequest<UploadBatchResponse>
     public IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
 }
 ```
+Source: [`AttachmentContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/AttachmentContracts.cs)
 
 Caller with five files receives a safe public failure before the handler runs:
 
@@ -169,6 +175,7 @@ Caller with five files receives a safe public failure before the handler runs:
   "detail": "The number of uploaded files exceeds the configured limit of 4."
 }
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 ## Security and unsupported shapes
 

@@ -74,5 +74,5 @@ safe error mapping without duplicating domain-exception policy.
 - [x] ETag and conditional GET behavior matches Minimal API.
 - [x] Production errors and logs pass security review.
 - [x] MessagePack remains absent and JSON negotiation behavior is documented.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

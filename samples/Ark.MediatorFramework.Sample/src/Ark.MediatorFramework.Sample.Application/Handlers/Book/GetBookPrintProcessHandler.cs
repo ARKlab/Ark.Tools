@@ -8,7 +8,7 @@ namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Reads a book print process.</summary>
 public sealed class GetBookPrintProcessHandler :
-    IQueryHandler<GetBookPrintProcessQuery, BookPrintProcessResponse>
+    IQueryHandler<GetBookPrintProcessQuery.V1, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
 
@@ -20,7 +20,7 @@ public sealed class GetBookPrintProcessHandler :
 
     /// <inheritdoc />
     public async Task<BookPrintProcessResponse> ExecuteAsync(
-        GetBookPrintProcessQuery query,
+        GetBookPrintProcessQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

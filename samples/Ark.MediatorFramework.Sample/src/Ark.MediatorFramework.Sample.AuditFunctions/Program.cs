@@ -32,7 +32,11 @@ public static class Program
                 .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration, async: false)
                 .Apply();
             builder.Logging.ClearProviders();
-            builder.Logging.AddNLog();
+            builder.Logging.AddNLog(new NLogProviderOptions
+            {
+                CaptureMessageTemplates = true,
+                CaptureMessageProperties = true
+            });
             builder.ConfigureFunctionsWebApplication();
             builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
 

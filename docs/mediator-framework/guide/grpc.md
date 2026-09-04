@@ -25,6 +25,7 @@ public sealed record Pong
     public required string Message { get; init; }
 }
 ```
+Source: [`BookStreamingContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookStreamingContracts.cs)
 
 Every protobuf member needs a stable number. Never reuse a number after a client
 has shipped. Add a new number or introduce a new API version.
@@ -37,6 +38,7 @@ services.AddCodeFirstGrpc(options =>
     options.Interceptors.Add<ArkGrpcErrorInterceptor>());
 services.AddCodeFirstGrpcReflection();
 ```
+Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 Map the generated service next to the generated HTTP endpoints:
 
@@ -44,6 +46,7 @@ Map the generated service next to the generated HTTP endpoints:
 endpoints.MapArkGrpcServicesFromAssembly<Ping>();
 endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
 ```
+Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 The generated method dispatches to `IRequestHandler<Ping,Pong>`. No separate
 gRPC handler is needed.
@@ -59,6 +62,7 @@ Set the export directory in the host's build properties:
   </ArkExportProtoDir>
 </PropertyGroup>
 ```
+Source: [`Directory.Build.props`](../../../samples/Ark.MediatorFramework.Sample/Directory.Build.props)
 
 Build without running the host. The generator emits the service and `.proto`
 files. `ArkAdditionalProto` copies hand-written shared schemas beside generated
@@ -69,6 +73,7 @@ files:
   <ArkAdditionalProto Include="$(MSBuildThisFileDirectory)proto/common.proto" />
 </ItemGroup>
 ```
+Source: [`Directory.Build.props`](../../../samples/Ark.MediatorFramework.Sample/Directory.Build.props)
 
 Treat the exported schema as a reviewable artifact. The sample stores its
 generated output in
@@ -84,6 +89,7 @@ generated output in
             GrpcServices="Client" />
 </ItemGroup>
 ```
+Source: [`Ark.MediatorFramework.Sample.GrpcClient.csproj`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj)
 
 ```csharp
 using Grpc.Net.Client;
@@ -93,6 +99,7 @@ var client = new GreetingsV1.GreetingsV1Client(channel);
 var response = await client.GetGreetingAsync(request).ResponseAsync
     .ConfigureAwait(false);
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 The sample keeps this client project under
 [`test/Ark.MediatorFramework.Sample.GrpcClient`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient).
@@ -126,6 +133,7 @@ public sealed record WatchPing : IQuery<WatchPing, IAsyncEnumerable<Pong>>
     public int Count { get; init; }
 }
 ```
+Source: [`BookStreamingContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookStreamingContracts.cs)
 
 The handler must propagate cancellation through the iterator. See the complete
 HTTP and gRPC examples in [Streaming](streaming.md).

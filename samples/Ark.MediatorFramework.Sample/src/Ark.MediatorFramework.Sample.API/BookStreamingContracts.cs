@@ -32,23 +32,27 @@ public sealed record BookStreamItem
 }
 
 /// <summary>Streams Book items without buffering the complete result.</summary>
-[HttpEndpoint("GET", "/api/v{version}/books/stream", AcceptsMessagePack = true)]
-[GrpcMethod("StreamBooks")]
-[GrpcService("Books")]
-[RequireScopePolicy(ApplicationScopes.BookRead)]
-[ProtoContract]
-[MessagePackObject]
-public sealed record StreamBooksQuery : IQuery<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>
+public static class StreamBooksQuery
 {
-    /// <summary>Gets the number of items to yield.</summary>
-    [HttpQuery]
-    [ProtoMember(1)]
-    [Key(0)]
-    public int Count { get; init; }
+    /// <summary>Version one of the Book streaming query.</summary>
+    [HttpEndpoint("GET", "/api/v{version}/books/stream", AcceptsMessagePack = true)]
+    [GrpcMethod("StreamBooks")]
+    [GrpcService("Books")]
+    [RequireScopePolicy(ApplicationScopes.BookRead)]
+    [ProtoContract]
+    [MessagePackObject]
+    public sealed record V1 : IQuery<V1, IAsyncEnumerable<BookStreamItem>>
+    {
+        /// <summary>Gets the number of items to yield.</summary>
+        [HttpQuery]
+        [ProtoMember(1)]
+        [Key(0)]
+        public int Count { get; init; }
 
-    /// <summary>Gets the delay between yielded items in milliseconds.</summary>
-    [HttpQuery]
-    [ProtoMember(2)]
-    [Key(1)]
-    public int DelayMilliseconds { get; init; }
+        /// <summary>Gets the delay between yielded items in milliseconds.</summary>
+        [HttpQuery]
+        [ProtoMember(2)]
+        [Key(1)]
+        public int DelayMilliseconds { get; init; }
+    }
 }

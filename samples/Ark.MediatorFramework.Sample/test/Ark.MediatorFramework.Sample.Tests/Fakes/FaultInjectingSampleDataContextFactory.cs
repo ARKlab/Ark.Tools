@@ -79,7 +79,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(
-            GetAuditsQuery query,
+            GetAuditsQuery.V1 query,
             CancellationToken ctk = default)
         {
             return await _inner.ReadAuditsAsync(query, ctk).ConfigureAwait(false);

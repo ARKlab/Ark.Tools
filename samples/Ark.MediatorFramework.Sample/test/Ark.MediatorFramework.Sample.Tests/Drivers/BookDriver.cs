@@ -101,8 +101,8 @@ public sealed class BookDriver
     public async Task UploadCoverAsync(IArkAttachment attachment, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(attachment);
-        CoverUpload = await _context.DispatchRequestAsync<UploadBookCoverRequest, UploadResponse>(
-            new UploadBookCoverRequest
+        CoverUpload = await _context.DispatchRequestAsync<UploadBookCoverRequest.V1, UploadResponse>(
+            new UploadBookCoverRequest.V1
             {
                 Id = Current.Id,
                 Attachment = attachment,
@@ -114,16 +114,16 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task DownloadCoverAsync(CancellationToken ctk = default)
     {
-        Cover = await _context.DispatchQueryAsync<DownloadBookCoverQuery, IArkAttachment>(
-            new DownloadBookCoverQuery { Id = Current.Id },
+        Cover = await _context.DispatchQueryAsync<DownloadBookCoverQuery.V1, IArkAttachment>(
+            new DownloadBookCoverQuery.V1 { Id = Current.Id },
             ctk).ConfigureAwait(false);
     }
 
     /// <summary>Creates a review for the active book.</summary>
     public async Task CreateReviewAsync(int rating, string text, CancellationToken ctk = default)
     {
-        CurrentReview = await _context.DispatchRequestAsync<CreateBookReviewRequest, BookReview>(
-            new CreateBookReviewRequest
+        CurrentReview = await _context.DispatchRequestAsync<CreateBookReviewRequest.V1, BookReview>(
+            new CreateBookReviewRequest.V1
             {
                 BookId = Current.Id,
                 Rating = rating,
@@ -135,8 +135,8 @@ public sealed class BookDriver
     /// <summary>Lists reviews for the active book.</summary>
     public async Task ListReviewsAsync(int skip = 0, int limit = 25, CancellationToken ctk = default)
     {
-        Reviews = await _context.DispatchQueryAsync<ListBookReviewsQuery, IReadOnlyList<BookReview>>(
-            new ListBookReviewsQuery
+        Reviews = await _context.DispatchQueryAsync<ListBookReviewsQuery.V1, IReadOnlyList<BookReview>>(
+            new ListBookReviewsQuery.V1
             {
                 BookId = Current.Id,
                 Skip = skip,
@@ -151,8 +151,8 @@ public sealed class BookDriver
         int progress,
         CancellationToken ctk = default)
     {
-        CurrentActivity = await _context.DispatchRequestAsync<RecordReadingActivityRequest, ReadingActivity>(
-            new RecordReadingActivityRequest
+        CurrentActivity = await _context.DispatchRequestAsync<RecordReadingActivityRequest.V1, ReadingActivity>(
+            new RecordReadingActivityRequest.V1
             {
                 BookId = Current.Id,
                 Kind = kind,
@@ -164,8 +164,8 @@ public sealed class BookDriver
     /// <summary>Reads recent activity for the active book.</summary>
     public async Task ReadActivitiesAsync(int limit = 25, CancellationToken ctk = default)
     {
-        Activities = await _context.DispatchQueryAsync<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>(
-            new GetReadingActivityQuery
+        Activities = await _context.DispatchQueryAsync<GetReadingActivityQuery.V1, IReadOnlyList<ReadingActivity>>(
+            new GetReadingActivityQuery.V1
             {
                 BookId = Current.Id,
                 Limit = limit,
@@ -178,8 +178,8 @@ public sealed class BookDriver
     /// <returns>The matching audit records.</returns>
     public async Task<PagedResult<AuditRecord>> ReadCurrentAuditsAsync(CancellationToken ctk = default)
     {
-        return await _context.DispatchQueryAsync<GetAuditsQuery, PagedResult<AuditRecord>>(
-            new GetAuditsQuery
+        return await _context.DispatchQueryAsync<GetAuditsQuery.V1, PagedResult<AuditRecord>>(
+            new GetAuditsQuery.V1
             {
                 Identifier = Current.Id.ToString("D"),
                 Limit = 25,

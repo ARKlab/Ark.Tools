@@ -29,6 +29,7 @@ public sealed record GreetingItem
     public required string Message { get; init; }
 }
 ```
+Source: [`BookStreamingContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookStreamingContracts.cs)
 
 The same query is now eligible for generated HTTP JSON and gRPC server-stream
 endpoints. It is not a Rebus response; a queue message has no caller stream.
@@ -70,6 +71,7 @@ public sealed class StreamGreetingsHandler :
     }
 }
 ```
+Source: [`StreamBooksHandler.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Book/StreamBooksHandler.cs)
 
 The `[EnumeratorCancellation]` parameter allows generated transports to cancel
 enumeration when a client disconnects. Check cancellation inside a long-running
@@ -92,6 +94,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapArkGrpcServicesFromAssembly<StreamGreetingsQuery>();
 });
 ```
+Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 ## HTTP behavior
 
@@ -99,6 +102,7 @@ app.UseEndpoints(endpoints =>
 GET /api/v1/greetings/stream?count=2
 Authorization: Bearer <token>
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 The generated JSON result is:
 
@@ -108,6 +112,7 @@ The generated JSON result is:
   { "index": 1, "message": "Hello, stream item 1!" }
 ]
 ```
+Source: [`AsyncEnumerableStreamingTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AsyncEnumerableStreamingTests.cs)
 
 JSON clients observe items as the response is written. The exact buffering
 behavior depends on the selected formatter; JSON is the default generated
@@ -125,6 +130,7 @@ using var call = client.StreamGreetings(
 call.ResponseStream.Current.Index.Should().Be(0);
 await cancellation.CancelAsync().ConfigureAwait(false);
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 The client receives a server stream and sees `Cancelled` when it cancels.
 

@@ -12,6 +12,7 @@ using Ark.Tools.Solid;
 
 using Rebus.Activation;
 using Rebus.Config;
+using Rebus.Handlers;
 using Rebus.Serialization.Json;
 using Rebus.Transport.InMem;
 using System.Text.Json;
@@ -54,6 +55,27 @@ public sealed class AzureFunctionsRebusTests
             exception.Message,
             "Azure Service Bus configuration is required",
             StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Adds the optional outbound bus without removing the native application
+    /// handlers or registering a Rebus receiver.
+    /// </summary>
+    [TestMethod]
+    public async Task OptionalOutboundCompositionPreservesNativeComposition()
+    {
+        await using var container = AzureFunctionsNativeComposition.BuildContainer();
+
+        AzureFunctionsRebusComposition.ConfigureOutbound(
+            container,
+            "sb://sample.servicebus.windows.net/");
+
+        Assert.IsNotNull(container.GetRegistration<Rebus.Bus.IBus>(throwOnFailure: false));
+        Assert.IsNotNull(container.GetRegistration<ICommandHandler<ProcessBookPrintProcessRequest>>(
+            throwOnFailure: false));
+        Assert.IsNull(
+            container.GetRegistration<IHandleMessages<ProcessBookPrintProcessRequest>>(
+                throwOnFailure: false));
     }
 
     /// <summary>Routes and delivers a typed message to an independently hosted receiver.</summary>

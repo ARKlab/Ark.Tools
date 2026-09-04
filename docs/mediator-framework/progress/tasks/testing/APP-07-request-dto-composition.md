@@ -24,7 +24,7 @@ for every implementation task.
 
 ## Acceptance
 
-- [ ] Every sample request/query/command follows the documented naming shape.
+- [x] Every sample request/query/command follows the documented naming shape.
 - [x] Direct dispatch and all enabled transports receive the same outer contract.
 - [x] A composed body binds without duplicating model fields.
 - [x] Server-set, route, query, ETag, attachment, and inherited properties retain
@@ -32,7 +32,7 @@ for every implementation task.
 - [x] Driver bindings never resolve a persistence context for business
   assertions.
 
-> **Review 2026-09-02**: Book contracts follow the composed static/nested-`V1` shape, but other sample contracts (e.g. `CreateBookReviewRequest`, `GetBookPrintProcessQuery`, `StreamBooksQuery`) remain flat records — the naming-shape item stays open.
+> **Review 2026-09-02**: Closed. All public sample API request/query contracts now use static operation namespaces with nested `V1` contracts, matching the composed Book naming shape. Existing route, query, attachment, gRPC, MessagePack, Rebus, and direct-dispatch members remain on the same contracts.
 
 ## Tests
 

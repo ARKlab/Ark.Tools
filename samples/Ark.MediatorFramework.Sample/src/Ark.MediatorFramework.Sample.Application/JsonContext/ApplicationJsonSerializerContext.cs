@@ -27,8 +27,8 @@ namespace Ark.MediatorFramework.Sample.Application.JsonContext;
 [JsonSerializable(typeof(FailingRebusRequest))]
 [JsonSerializable(typeof(DeadLetterAck))]
 [JsonSerializable(typeof(BookPrintProcessResponse))]
-[JsonSerializable(typeof(CancelBookPrintProcessRequest))]
-[JsonSerializable(typeof(CreateBookReviewRequest))]
+[JsonSerializable(typeof(CancelBookPrintProcessRequest.V1), TypeInfoPropertyName = "CancelBookPrintProcessRequestV1")]
+[JsonSerializable(typeof(CreateBookReviewRequest.V1), TypeInfoPropertyName = "CreateBookReviewRequestV1")]
 [JsonSerializable(typeof(BookReview))]
 [JsonSerializable(typeof(ReadingActivity))]
 public sealed partial class ApplicationJsonSerializerContext : JsonSerializerContext

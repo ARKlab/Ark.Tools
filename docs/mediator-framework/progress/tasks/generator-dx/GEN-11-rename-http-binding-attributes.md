@@ -19,5 +19,9 @@ clear.
 - [x] Define `HttpQuery` and `HttpRoute` semantics and XML documentation.
 - [x] Update generators, diagnostics, samples, tests, and user documentation.
 - [x] Verify non-HTTP contracts do not gain ASP.NET Core dependencies.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+
+> **Review 2026-09-04**: The successful CI run for `d31898c` (run
+> [33882765935](https://github.com/ARKlab/Ark.Tools/actions/runs/33882765935))
+> completed the Debug build and test steps. The commands were not rerun locally.

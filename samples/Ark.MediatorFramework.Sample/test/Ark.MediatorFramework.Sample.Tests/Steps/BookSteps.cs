@@ -391,8 +391,8 @@ public sealed class BookSteps
     public async Task ConsumeBookStream()
     {
         using var cancellation = new CancellationTokenSource();
-        var stream = await _sampleContext.Application.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
-            new StreamBooksQuery
+        var stream = await _sampleContext.Application.DispatchQueryAsync<StreamBooksQuery.V1, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery.V1
             {
                 Count = 10,
                 DelayMilliseconds = 0,
@@ -434,8 +434,8 @@ public sealed class BookSteps
     [When("I request a Book stream above the bound")]
     public async Task RequestBookStreamAboveBound()
     {
-        _exception = await _captureAsync(() => _sampleContext.Application.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
-            new StreamBooksQuery { Count = 101 })).ConfigureAwait(false);
+        _exception = await _captureAsync(() => _sampleContext.Application.DispatchQueryAsync<StreamBooksQuery.V1, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery.V1 { Count = 101 })).ConfigureAwait(false);
     }
 
     /// <summary>Asserts that an oversized Book stream was rejected.</summary>
@@ -449,8 +449,8 @@ public sealed class BookSteps
     [When("I describe a printed Book edition")]
     public async Task DescribePrintedBookEdition()
     {
-        _editionDescription = await _sampleContext.Application.DispatchRequestAsync<DescribeBookEditionRequest, BookEditionDescription>(
-            new DescribeBookEditionRequest
+        _editionDescription = await _sampleContext.Application.DispatchRequestAsync<DescribeBookEditionRequest.V1, BookEditionDescription>(
+            new DescribeBookEditionRequest.V1
             {
                 Edition = new PrintBookEdition
                 {
@@ -464,8 +464,8 @@ public sealed class BookSteps
     [When("I describe a digital Book edition")]
     public async Task DescribeDigitalBookEdition()
     {
-        _editionDescription = await _sampleContext.Application.DispatchRequestAsync<DescribeBookEditionRequest, BookEditionDescription>(
-            new DescribeBookEditionRequest
+        _editionDescription = await _sampleContext.Application.DispatchRequestAsync<DescribeBookEditionRequest.V1, BookEditionDescription>(
+            new DescribeBookEditionRequest.V1
             {
                 Edition = new DigitalBookEdition
                 {

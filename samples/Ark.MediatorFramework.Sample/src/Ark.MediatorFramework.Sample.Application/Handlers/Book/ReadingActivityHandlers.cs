@@ -12,7 +12,7 @@ namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Records reading activity through the application contract.</summary>
 public sealed class RecordReadingActivityHandler :
-    IRequestHandler<RecordReadingActivityRequest, ReadingActivity>
+    IRequestHandler<RecordReadingActivityRequest.V1, ReadingActivity>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -31,7 +31,7 @@ public sealed class RecordReadingActivityHandler :
 
     /// <inheritdoc />
     public async Task<ReadingActivity> ExecuteAsync(
-        RecordReadingActivityRequest request,
+        RecordReadingActivityRequest.V1 request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -65,7 +65,7 @@ public sealed class RecordReadingActivityHandler :
 
 /// <summary>Reads recent activity for a book through the application contract.</summary>
 public sealed class GetReadingActivityHandler :
-    IQueryHandler<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>
+    IQueryHandler<GetReadingActivityQuery.V1, IReadOnlyList<ReadingActivity>>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -81,7 +81,7 @@ public sealed class GetReadingActivityHandler :
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<ReadingActivity>> ExecuteAsync(
-        GetReadingActivityQuery query,
+        GetReadingActivityQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

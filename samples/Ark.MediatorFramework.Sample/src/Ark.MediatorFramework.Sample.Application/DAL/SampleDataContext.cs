@@ -21,7 +21,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default);
 
     /// <summary>Reads audit records.</summary>
-    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default);
+    Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery.V1 query, CancellationToken ctk = default);
 
     /// <summary>Commits the transaction.</summary>
     new Task CommitAsync(CancellationToken ctk = default);
@@ -139,7 +139,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Reads a page of audit records in the current transaction.</summary>
-    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery query, CancellationToken ctk = default)
+    public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery.V1 query, CancellationToken ctk = default)
     {
         var where = """
             WHERE (@UserId IS NULL OR [UserId] = @UserId)

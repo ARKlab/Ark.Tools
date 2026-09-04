@@ -24,6 +24,7 @@ dotnet add MyApp.Tests package Ark.Tools.Reqnroll
 dotnet add MyApp.Tests reference ../MyApp.API/MyApp.API.csproj
 dotnet add MyApp.Tests reference ../MyApp.Application/MyApp.Application.csproj
 ```
+Source: [`Ark.MediatorFramework.Sample.Tests.csproj`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj)
 
 The repository uses central package management. In that model, put the package
 versions in `Directory.Packages.props` and omit `Version` from the project:
@@ -35,6 +36,7 @@ versions in `Directory.Packages.props` and omit `Version` from the project:
   <PackageReference Include="Ark.Tools.Reqnroll" />
 </ItemGroup>
 ```
+Source: [`Ark.MediatorFramework.Sample.Tests.csproj`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj)
 
 Add `reqnroll.json`:
 
@@ -45,6 +47,7 @@ Add `reqnroll.json`:
   "runtime": { "stopAtFirstError": false }
 }
 ```
+Source: [`reqnroll.json`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/reqnroll.json)
 
 Use `TableMappingConfiguration` for custom `Reqnroll.Assist` mappings. The
 sample's implementation is
@@ -89,6 +92,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     }
 }
 ```
+Source: [`ApplicationTestContext.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/ApplicationTestContext.cs)
 
 In production code, prefer a reusable test context/driver rather than putting
 container resolution in every binding. The sample context adds deterministic
@@ -121,6 +125,7 @@ public sealed class GreetingDriver
     }
 }
 ```
+Source: [`BookDriver.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Drivers/BookDriver.cs)
 
 Bindings map Gherkin to drivers. Drivers own mutable scenario state. Do not
 share a current entity, container, clock, or message receiver between
@@ -136,6 +141,7 @@ Scenario: Create a greeting
     When I create a greeting for "Ada"
     Then the current greeting message is "Hello, Ada!"
 ```
+Source: [`Books.feature`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Features/Books.feature)
 
 The step should describe a user or QA action, not a handler class:
 
@@ -163,6 +169,7 @@ public sealed class GreetingSteps
     }
 }
 ```
+Source: [`BookSteps.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Steps/BookSteps.cs)
 
 Every scenario ends with a `Then` or an `And` continuation. A `Given` that
 invokes an operation must assert that setup succeeded.
@@ -194,6 +201,7 @@ public void CheckValidationFailure()
     _exception.Should().BeOfType<ValidationException>();
 }
 ```
+Source: [`BookSteps.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Steps/BookSteps.cs)
 
 Do not swallow unexpected exceptions or convert failures into a successful
 scenario. The driver should preserve enough exception detail for assertions.
@@ -213,6 +221,7 @@ await receiver.WaitForIdleAsync(TimeSpan.FromSeconds(10))
 var result = await application.ReadAsync(id).ConfigureAwait(false);
 result.Status.Should().Be("completed");
 ```
+Source: [`MessagingBusSampleTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/MessagingBusSampleTests.cs)
 
 Use bounded polling. On timeout report queue activity, outbox rows, deferred
 messages, and error-queue messages. Dispose receivers and clear test transport
@@ -230,6 +239,7 @@ The sample defaults to SQL:
 docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d db
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
 ```
+Source: [`DatabaseHooks.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/DatabaseHooks.cs)
 
 The hook deploys the DACPAC once and calls
 `[ops].[ResetFull_OnlyForTesting]` before each scenario. Reset uses
@@ -241,6 +251,7 @@ Choose in-memory explicitly:
 ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
   samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
 ```
+Source: [`ApplicationTestContext.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Hooks/ApplicationTestContext.cs)
 
 Do not silently fall back to memory when SQL setup fails; a profile change can
 hide a persistence defect.
@@ -274,6 +285,7 @@ dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Samp
 dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests \
   --filter "DisplayName~Rebus"
 ```
+Source: [`MessagingBusSampleTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/MessagingBusSampleTests.cs)
 
 Read [DOC-01 testing guidance](../progress/tasks/testing/DOC-01-testing-guidance.md)
 for the complete ownership map, cleanup rules, and documentation acceptance
