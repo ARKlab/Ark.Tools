@@ -1,4 +1,4 @@
-# AMF-01 — Receive seam split: message source and native processor
+# AMF-01 — Send/receive seam split: pull message source
 
 **Category**: messaging-throughput · **Priority**: pre-release
 **Depends on**: AZM-05, AZM-18
@@ -25,12 +25,12 @@ processing is host-specific and is what needs replacing.
 - **Pull seam**: `IMessagingMessageSource` with `ReceiveBatchAsync(queue,
   maxMessages, maxWait, ctk)` returning zero-or-more deliveries, where zero means
   "empty" rather than "ended".
-- **Push seam**: `IMessagingNativeProcessor` for transports whose SDK owns
-  concurrency, returning a handle that can be stopped and that reports the
-  effective concurrency.
+- **No push seam**: every transport is a pull source. Azure Functions receivers
+  never reach a framework seam, and Service Bus is a pull source too
+  ([why](../../../messaging-throughput-prd.md#154-rejected-servicebusprocessor-as-the-service-bus-pump)).
 - **Capability record**: `MessagingReceiverCapabilities` (maximum batch size,
-  server-side wait support, lock renewal support, native lock duration, owns
-  concurrency) so the host can validate and adapt instead of guessing.
+  server-side wait support, lock renewal support, native lock duration) so the
+  host can validate and adapt instead of guessing.
 - **Delivery contract**: `IMessagingLockedDelivery` gains required `LockedUntil`
   and `DeliveryId` members.
 - **Removal**: `IMessagingReceiveTransport` and `MessagingReceivePump` are
@@ -41,8 +41,7 @@ processing is host-specific and is what needs replacing.
 
 ## Implementation steps
 
-1. Add `IMessagingMessageSource`, `IMessagingNativeProcessor`,
-   `IMessagingProcessorHandle`, `MessagingReceiverCapabilities` and
+1. Add `IMessagingMessageSource`, `MessagingReceiverCapabilities` and
    `MessagingProcessingOptions` to `Ark.Tools.MediatorFramework.Messaging`.
 2. Specify the empty-result contract precisely: `ReceiveBatchAsync` returns an
    empty list after at most `maxWait`, never throws for an empty queue, and never
@@ -50,14 +49,15 @@ processing is host-specific and is what needs replacing.
 3. Add `LockedUntil` and `DeliveryId` to `IMessagingLockedDelivery` and implement
    them on every existing delivery type.
 4. Delete `IMessagingReceiveTransport` and `MessagingReceivePump`, and update the
-   composition path to compose the source/processor seam.
+   composition path to compose the message source.
 5. Implement `IMessagingMessageSource` on the in-memory transport with honest
    batching and empty results, backed by an injectable clock.
 6. Implement the seam on the Storage Queue and Service Bus transports at
    `MaximumBatchSize` parity with today (batching lands in AMF-06/AMF-07) so the
    solution stays green.
-7. Fail composition with a named diagnostic when a transport implements neither
-   seam, or when a native processor is composed in a host that owns triggering.
+7. Fail composition with a named diagnostic when a transport implements no
+   message source, or when a processor host is composed in a host that owns
+   triggering (Azure Functions).
 8. Update the API surface baseline and any generated snapshots.
 
 ## Core code shapes
@@ -71,9 +71,9 @@ place transport-specific limits enter the runtime.
 
 ## Guide contribution
 
-Update the messaging transport guide with the send-versus-process split, both
-receive seams, the capability record, the empty-batch contract, and an explicit
-statement that Azure Functions receivers are unaffected.
+Update the messaging transport guide with the send-versus-process split, the
+pull receive seam, the capability record, the empty-batch contract, and an
+explicit statement that Azure Functions receivers are unaffected.
 
 ## Sample extension
 
@@ -86,7 +86,7 @@ unchanged at this task; only the wiring moves.
 - `maxMessages` is never exceeded, including when the broker returns more.
 - `LockedUntil` and `DeliveryId` are populated by every transport.
 - Capabilities reported by each transport match its real behaviour.
-- Composing a native processor in a Functions host fails startup with the named
+- Composing a processor host in a Functions host fails startup with the named
   diagnostic.
 - Existing settlement, retry and scoping tests still pass through the new seam.
 
@@ -98,7 +98,7 @@ unchanged at this task; only the wiring moves.
 
 ## Acceptance
 
-- [ ] Pull and push seams, capability record and processing options are public and documented.
+- [ ] Pull seam, capability record and processing options are public and documented.
 - [ ] `LockedUntil` and `DeliveryId` are required and implemented everywhere.
 - [ ] `IMessagingReceiveTransport` and `MessagingReceivePump` are removed with no adapter.
 - [ ] In-memory, Storage Queue and Service Bus transports implement the new seam.

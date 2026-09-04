@@ -29,8 +29,6 @@ holding more locked deliveries than it can safely process.
 - **Graceful drain**: on stop, stop receiving, let in-flight work finish within
   `ShutdownTimeout`, then abandon what remains so redelivery is immediate rather
   than lock-expiry-delayed.
-- **Native path**: for `IMessagingNativeProcessor` transports the host starts the
-  native processor and runs no loop, no channel and no workers.
 - **Boundary**: fixed concurrency at this task. Backoff is AMF-03, renewal AMF-04,
   adaptivity AMF-05.
 
@@ -49,9 +47,7 @@ holding more locked deliveries than it can safely process.
    `ShutdownTimeout` and the host cancellation token.
 6. Compute and recompute the prefetch budget whenever the concurrency limit
    changes, and validate it against the transport's `NativeLockDuration`.
-7. Route native-processor transports to `StartProcessingAsync` and surface the
-   handle's effective concurrency for validation and metrics.
-8. Add composition-time validation with named diagnostics for impossible option
+7. Add composition-time validation with named diagnostics for impossible option
    combinations.
 
 ## Core code shapes
@@ -65,7 +61,7 @@ settle cannot cause the host to over-fetch.
 ## Guide contribution
 
 Document the host structure, the credit invariant, the prefetch budget formula,
-the shutdown sequence, and how the native path differs from the pull path.
+and the shutdown sequence.
 
 ## Sample extension
 
@@ -80,7 +76,6 @@ document the observed concurrency in the sample readme.
 - Settlement runs on the worker and credit is released only afterwards.
 - Shutdown drains in-flight work, then abandons the remainder within
   `ShutdownTimeout`.
-- A native-processor transport starts no receive loop and no workers.
 - Settlement, retry and scoping semantics are byte-for-byte the previous ones.
 
 ## Outcomes

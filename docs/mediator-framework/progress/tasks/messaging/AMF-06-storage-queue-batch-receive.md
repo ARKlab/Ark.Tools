@@ -23,7 +23,7 @@ moment the shared renewer (AMF-04) and a worker settle concurrently.
 - **Batch receive**: `MaximumBatchSize = 32`, requesting `min(credit, 32)`.
 - **Capabilities**: `SupportsServerSideWait = false` (no long poll),
   `SupportsLockRenewal = true` (via `UpdateMessage`), `NativeLockDuration` = the
-  configured visibility timeout, `OwnsConcurrency = false`.
+  configured visibility timeout.
 - **Pop-receipt safety**: the pop receipt becomes a single guarded value with a
   documented ordering rule — renew and settle can never interleave on one
   delivery, and settle always uses the newest receipt.

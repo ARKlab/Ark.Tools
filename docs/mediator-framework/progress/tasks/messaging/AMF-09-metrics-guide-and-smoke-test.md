@@ -24,7 +24,8 @@ buried among debug counters.
   throttled, lock renewals by outcome. Low cardinality, alertable, and the
   autoscaling input alongside broker queue depth.
 - **Advanced tier, opt-in**, on a separate meter
-  `Ark.MediatorFramework.Messaging.Advanced` with an `adv.` name segment: batch
+  `Ark.MediatorFramework.Messaging.Advanced`, keeping the plain `messaging.*` name
+  prefix (the meter marks the tier, not the name): batch
   size, empty receives, backoff interval, queue wait, settle duration,
   concurrency gradient, and a `reason`-tagged decision counter.
 - **Gated recording**: advanced measurements are gated on

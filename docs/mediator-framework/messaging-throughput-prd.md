@@ -86,12 +86,13 @@ triggering stays the Functions host's job.
 5. An empty queue costs **asymptotically nothing**: a receive can say "no
    messages", and the host backs off exponentially with jitter up to a bounded
    maximum, resetting on the first non-empty result.
-6. Transports can expose their **native strengths** — batch receive, prefetch
-   credits, native pumps, partitioned entities, long-poll windows — without those
-   concepts leaking into handlers or into transports that lack them.
-7. Where a provider already ships a correct, maintained pump (`ServiceBusProcessor`),
-   the framework **uses it** rather than reimplementing credit management and lock
-   renewal.
+6. Transports can expose their **native strengths** — batch receive, server-side
+   wait windows, lock renewal, partitioned entities — without those concepts
+   leaking into handlers or into transports that lack them.
+7. The framework **owns the receive loop** on every transport, built on the
+   provider SDK's lowest-level *supported* receive/settle API (`ServiceBusReceiver`,
+   `QueueClient`) rather than on a provider pump that hides batching, credits and
+   lock control behind its own policy (§4.3, §15.4).
 8. Hosts that own triggering themselves (Azure Functions) are **unchanged** and are
    prevented from composing a second pump.
 9. Throughput is observable through a **small set of always-on operational
@@ -191,23 +192,41 @@ message; per-second backoff granularity with a globally shared reset; and above
 all **prefetch XOR lock renewal**, which is a false dichotomy — the correct fix is
 to bound the prefetch buffer by measured drain time, not to switch renewal off.
 
-### 4.3 `ServiceBusProcessor` and MassTransit
+### 4.3 `ServiceBusProcessor` internals, and what to build on instead
 
-`Azure.Messaging.ServiceBus.ServiceBusProcessor` is a push pump that already
-solves the hard parts: `MaxConcurrentCalls` (default 1), `PrefetchCount`
-(default 0, credit-based local cache), `MaxAutoLockRenewalDuration` (default
-5 min, `Timeout.InfiniteTimeSpan` supported), `AutoCompleteMessages` (default
-true — must be **false** for us, we settle explicitly), plus a supported error
-handler and graceful stop.
+`Azure.Messaging.ServiceBus.ServiceBusProcessor` looks like exactly what this PRD
+needs: `MaxConcurrentCalls`, `PrefetchCount`, `MaxAutoLockRenewalDuration`,
+`AutoCompleteMessages`, an error handler, graceful stop, and — contrary to the
+first draft of this document — `UpdateConcurrency(int)` (7.3.0) and
+`UpdatePrefetchCount(int)` (7.12.0), which change both knobs on a *running*
+processor without restarting it. Reading the source changes the picture
+(citations: `sdk/servicebus/Azure.Messaging.ServiceBus/src`, tag 7.20.1):
 
-MassTransit does not reimplement it: `ServiceBusConnectionContext` fills
-`ServiceBusProcessorOptions` from endpoint settings, and unifies the knob under a
-transport-neutral `ConcurrentMessageLimit` (`MaxConcurrentCalls` is `[Obsolete]`
-in its configurator). It also warns/adjusts when `PrefetchCount` is smaller than
-the per-session message limit.
+| Fact | Consequence |
+| --- | --- |
+| For a non-session entity the processor creates exactly **one** `ReceiverManager` → one `ServiceBusReceiver` → one AMQP link (`Processor/ServiceBusProcessor.cs:652-659`) and runs `MaxConcurrentCalls` loops that each call `Receiver.ReceiveMessagesAsync(maxMessages: 1, …)` on it (`Processor/ReceiverManager.cs`). | **Batch receive is unreachable through the processor.** The single biggest lever in this PRD is a batch-of-1 API by construction; the only amortisation offered is `PrefetchCount`. |
+| The AMQP prefetch buffer is opaque: the client cannot enumerate it, cannot renew the locks of messages sitting in it, and cannot stop it ([#48396](https://github.com/Azure/azure-sdk-for-net/issues/48396), [#47684](https://github.com/Azure/azure-sdk-for-net/issues/47684)); auto lock renewal starts only when a message is handed to a handler. | Inside the SDK, prefetch and lock safety are **mutually exclusive** — precisely the trade this PRD refuses (§6.3, §15.3). A framework-owned buffer is renewable; the AMQP one is not. |
+| `UpdateConcurrency(n)` does not restart the pump, but **lowering** it cancels in-flight handler tasks with no guarantee about which (`ServiceBusProcessor.cs:1103-1120`, [#56447](https://github.com/Azure/azure-sdk-for-net/issues/56447)). | Adaptive concurrency through the processor kills work mid-handler, instead of the only correct way to shrink: stop picking up *new* work. |
+| The pump internals — receive loop, `ReceiverManager`, `MaxReceiveWaitTime`, `Connection` — are `private`/`internal`. The class is not sealed and has protected constructors, but the only subclass hooks are `OnProcessMessageAsync`/`OnProcessErrorAsync` and overriding `StartProcessingAsync` *without* calling base, i.e. writing the loop anyway; a `ProcessMessageEventArgs` built by user code carries no manager, so auto-renewal and auto-complete tracking are off. | Extending the processor buys nothing. The only extension point that changes pump behaviour is "replace the pump". |
+| Measured in [#60660](https://github.com/Azure/azure-sdk-for-net/issues/60660): the processor at `MaxConcurrentCalls = 40` reaches ~345 msg/s (PeekLock) on a partitioned Standard queue, while a hand-rolled loop using `ReceiveMessagesAsync(maxMessages: 100)` + a bounded `Channel` + 40 workers reaches ~537 msg/s with 4 receive loops and ~580 msg/s with 8. The Azure maintainer's advice in that thread is to use individual receivers when batch-level control is wanted. | §6 is the shape the SDK team recommends for this workload, and it measures ~1.7× the processor on the same entity. |
 
-This is the model to copy for Service Bus: one transport-neutral concurrency
-concept, mapped onto the provider's native pump.
+`ServiceBusReceiver`, the layer this design does build on, is public, non-sealed,
+virtual and mockable. `ReceiveMessagesAsync(maxMessages, maxWaitTime, ct)`
+returns an **empty list** when the wait elapses (never null, never throws), and
+that wait is served link-side rather than by client polling. Settlement,
+dead-lettering, deferral and `RenewMessageLockAsync` are public and already run
+under the SDK's retry policy. The concern that motivated the original
+recommendation — "owning AMQP link credit semantics forever" — does not apply:
+credit, link recovery and reconnection live in the internal `AmqpReceiver`,
+underneath the API we call. One constraint does follow from that boundary:
+`ServiceBusReceiver.PrefetchCount` has an `internal` setter, so a receiver's
+prefetch cannot change at runtime — irrelevant here, because this design sets it
+to 0 and buffers in its own channel (§7).
+
+MassTransit maps its transport-neutral `ConcurrentMessageLimit` onto
+`ServiceBusProcessorOptions` rather than reimplementing. The transport-neutral
+naming of the knob is worth copying; its throughput ceiling is the processor's,
+and it does not attempt the credit/lock-safety accounting this PRD needs.
 
 ### 4.4 Provider facts that constrain the design
 
@@ -215,7 +234,7 @@ concept, mapped onto the provider's native pump.
 | --- | --- |
 | ASB partitioning must be chosen **at entity creation** and cannot be changed (Standard: per-entity `EnablePartitioning`; Premium: a namespace-level 1/2/4/8/16 choice made at namespace creation). | Partitioning becomes an explicit option on the **host's transport declaration** (`UseServiceBus(client, o => o.EnablePartitioning = true)`) or on runtime setup (`MessagingProcessingOptions` / configuration binding), applied at create time only; the reconciler must **detect and report** a mismatch on an existing entity rather than silently continue (§8, §9). |
 | Transactions and send-batches cannot span partitions; `SessionId` is the partition key. | Partitioning is opt-in per network/participant, and mutually exclusive with cross-entity transactional sends. |
-| Prefetched ASB messages are **already locked** and their lock clock runs while buffered. | Prefetch budget must derive from measured processing rate × concurrency vs. lock duration, and renewal must start at fetch time. |
+| Prefetched ASB messages are **already locked**, their lock clock runs while buffered, and the AMQP prefetch buffer can be neither inspected nor renewed (§4.3). | Native prefetch is switched off (`PrefetchCount = 0`); the framework's own bounded channel is the buffer, sized from measured processing rate × concurrency vs. lock duration, with renewal starting at fetch time. |
 | ASB queue `LockDuration` default 60 s, max 5 min; `MaxDeliveryCount` default 10. | Renewal cadence must come from the entity, not a constant. `MaximumHandlerDuration` must be reconciled against `LockDuration × renewal capability`. |
 | Storage Queues: `ReceiveMessages` returns up to **32** messages per call; every call is a billed transaction; visibility timeout up to 7 days; no server-side long poll. | Batch receive is the single biggest win; adaptive idle backoff is a **cost** control, not only a latency control. |
 | Storage Queues has no lock renewal, only `UpdateMessage` with a new visibility timeout, which rotates the pop receipt. | Renewal must own the pop receipt, and concurrent settle must use the latest one — the existing `StorageQueueLockedDelivery` already rotates `_popReceipt`, but it is not thread-safe against a concurrent renewal + settle. |
@@ -228,8 +247,9 @@ publish, schedule, sizing, DataBus — is untouched, and remains the only messag
 seam an Azure Function (or any producer-only host) ever sees. Everything new in
 this PRD sits on the *processing* side and is composed only by processor hosts.
 
-The processing side is then split into two seams by who owns the pump, plus one
-host runtime.
+The processing side then has exactly **one** seam — a pull source — plus one host
+runtime. There is no push seam: the only push-shaped host is Azure Functions, and
+it does not reach a framework pump at all (§7, §15.10).
 
 ```
    every host, unchanged
@@ -242,33 +262,25 @@ host runtime.
                       ┌───────────────────────────────────────────┐
                       │ IMessagingMessageSource  (pull)           │
   broker ────────────►│  ReceiveBatchAsync(queue, maxMessages,    │
-    (Storage Queue,   │                    maxWait, ct) -> 0..n   │
-     in-memory, SQL)  │  Capabilities: batch size, lock duration, │
-                      │  renewal support, long-poll support       │
+   (Service Bus,      │                    maxWait, ct) -> 0..n   │
+    Storage Queue,    │  Capabilities: batch size, lock duration, │
+    in-memory, SQL)   │  renewal support, long-poll support       │
                       └──────────────────┬────────────────────────┘
                                          │ credits
                       ┌──────────────────▼────────────────────────┐
-                      │ MessagingProcessorHost                     │
-                      │  receive loop ─► bounded Channel ─► N      │
-                      │  workers ─► MessagingDispatcher            │
-                      │  + concurrency controller                  │
-                      │  + idle backoff                            │
-                      │  + shared lock renewer                     │
-                      └──────────────────▲────────────────────────┘
-                                         │ same delivery callback
-                      ┌──────────────────┴────────────────────────┐
-  broker ────────────►│ IMessagingNativeProcessor  (push)         │
-    (Service Bus via  │  StartProcessingAsync(queue, handler,     │
-     ServiceBusProc.) │                       options, ct)        │
-                      │ framework runs NO pump; reports effective │
-                      │ concurrency for metrics + validation      │
+                      │ MessagingProcessorHost                    │
+                      │  receive loop ─► bounded Channel ─► N     │
+                      │  workers ─► MessagingDispatcher           │
+                      │  + concurrency controller                 │
+                      │  + idle backoff                           │
+                      │  + shared lock renewer                    │
                       └───────────────────────────────────────────┘
 
-  Azure Functions: no seam here at all. Generated triggers + the Functions
-  host's own concurrency + the unchanged MessagingDispatcher.
+  Azure Functions: no seam on this side at all. Generated triggers + the
+  Functions host's own concurrency + the unchanged MessagingDispatcher.
 ```
 
-Sketch of the seams (final signatures are an `AMF-01` deliverable):
+Sketch of the seam (final signatures are an `AMF-01` deliverable):
 
 ```csharp
 /// <summary>Pull-style delivery source with explicit credits and an empty signal.</summary>
@@ -281,22 +293,11 @@ public interface IMessagingMessageSource
         string queue, int maxMessages, TimeSpan maxWait, CancellationToken ctk);
 }
 
-/// <summary>Push-style transports that own their own pump.</summary>
-public interface IMessagingNativeProcessor
-{
-    ValueTask<IMessagingProcessorHandle> StartProcessingAsync(
-        string queue,
-        Func<IMessagingLockedDelivery, CancellationToken, Task> onDelivery,
-        MessagingProcessingOptions options,
-        CancellationToken ctk);
-}
-
 public sealed record MessagingReceiverCapabilities(
     int MaximumBatchSize,          // 1 for degenerate transports, 32 for Storage Queues
     bool SupportsServerSideWait,   // long poll vs. client polling
     bool SupportsLockRenewal,
-    TimeSpan? NativeLockDuration,  // null when unknown/not applicable
-    bool OwnsConcurrency);         // true for native processors
+    TimeSpan? NativeLockDuration); // null when unknown/not applicable
 ```
 
 `IMessagingLockedDelivery` gains `DateTimeOffset? LockedUntil` (needed for
@@ -477,10 +478,10 @@ call completes. No batch settle: the SDKs do not offer one.
 
 | Transport | Seam | Notes |
 | --- | --- | --- |
-| **Azure Service Bus** | `IMessagingNativeProcessor` over `ServiceBusProcessor` (default), `IMessagingMessageSource` over `ReceiveMessagesAsync` (opt-in, and used by the conformance suite) | `AutoCompleteMessages = false`, `ReceiveMode = PeekLock`, `MaxConcurrentCalls` ← concurrency limit, `PrefetchCount` ← prefetch budget, `MaxAutoLockRenewalDuration` ← `MaximumHandlerDuration + margin`. Adaptive concurrency is applied by stopping/restarting the processor at a new limit (the SDK's limit is immutable per processor) — hysteresis (min dwell time, default 30 s) prevents churn. For very high rates, N processors over N `ServiceBusClient` instances (separate AMQP connections) instead of one processor with a huge limit. |
+| **Azure Service Bus** | `IMessagingMessageSource` over `ServiceBusReceiver.ReceiveMessagesAsync` — no `ServiceBusProcessor` (§4.3, §15.4) | `ReceiveMode = PeekLock`; `PrefetchCount = 0`, because the framework's bounded channel is the buffer and, unlike the AMQP one, its locks are renewable; `maxMessages` ← min(credit, batch cap, default 100 — the service imposes none); `maxWaitTime` ← the backoff window, served link-side. Settlement and `RenewMessageLockAsync` are called explicitly by the host. Concurrency is framework-side worker count, so lowering the limit never cancels an in-flight handler. `SupportsServerSideWait = true`, `SupportsLockRenewal = true`, `NativeLockDuration` read from the entity. `ReceiveChannels > 1` opens additional receivers (separate links) — the measured scaling lever; very high rates additionally fan out over N `ServiceBusClient` instances (separate AMQP connections). |
 | **Azure Storage Queues** | `IMessagingMessageSource` | `MaximumBatchSize = 32`, `SupportsServerSideWait = false`, `SupportsLockRenewal = true` (via `UpdateMessage`), `NativeLockDuration` = configured visibility timeout. Biggest single win in the whole PRD: 32× fewer receive transactions. Poison-queue handling stays as-is. |
 | **In-memory** | `IMessagingMessageSource` | Must implement batch + empty-return honestly so tests exercise the same code path as production, and must support a fake `IClock` so the controller and backoff are deterministically testable. |
-| **Azure Functions** | None — host-owned | `OwnsConcurrency = true`; the framework registers **no** hosted service and **fails startup** if a processor host is composed. Sending/publishing via `IBus` is unchanged, so a Function app is a first-class producer with zero changes. Guide documents `host.json` (`maxConcurrentCalls`, `prefetchCount`, `dynamicConcurrency`) as the tuning surface, and that `MaximumHandlerDuration` must fit the function timeout. |
+| **Azure Functions** | None — host-owned | The framework registers **no** hosted service and **fails startup** if a processor host is composed. Sending/publishing via `IBus` is unchanged, so a Function app is a first-class producer with zero changes. Guide documents `host.json` (`maxConcurrentCalls`, `prefetchCount`, `dynamicConcurrency`) as the tuning surface, and that `MaximumHandlerDuration` must fit the function timeout. |
 
 Rebus is deliberately absent from this table: it is a separate alternative stack,
 not a transport this runtime drives (§3).
@@ -584,19 +585,20 @@ stay in this tier.
 ### 10.2 Advanced tier — opt-in
 
 On a separate meter `Ark.MediatorFramework.Messaging.Advanced`
-(`MessagingMetrics.AdvancedMeterName`), with an `adv.` name segment so the tier
-is obvious in any dashboard or metric browser. These answer "why is the limit
-where it is" during tuning or an incident, not "is the system healthy".
+(`MessagingMetrics.AdvancedMeterName`). Names keep the plain `messaging.*`
+prefix — the separate meter is what marks the tier, and a dashboard filters on the
+meter, not on a name segment. These answer "why is the limit where it is" during
+tuning or an incident, not "is the system healthy".
 
 | Instrument | Kind | Purpose |
 | --- | --- | --- |
-| `messaging.adv.receive.batch.size` | Histogram | Effective batch sizes — proves batching works. |
-| `messaging.adv.receive.empty` | Counter | Empty receives — backoff/cost review. |
-| `messaging.adv.receive.backoff.interval` | Histogram | Current idle wait. |
-| `messaging.adv.process.queue_wait` | Histogram | Fetch → handler start; the buffer's latency contribution. |
-| `messaging.adv.process.settle.duration` | Histogram | Settlement cost, currently invisible. |
-| `messaging.adv.concurrency.gradient` | Histogram | Latency gradient driving the I/O-bound brake (§6.2). |
-| `messaging.adv.concurrency.decision` | Counter (`reason`) | Why the limit moved: `throughput`, `gradient`, `throttled`, `lock_lost`, `timeout`, `starvation`, `backpressure`. |
+| `messaging.receive.batch.size` | Histogram | Effective batch sizes — proves batching works. |
+| `messaging.receive.empty` | Counter | Empty receives — backoff/cost review. |
+| `messaging.receive.backoff.interval` | Histogram | Current idle wait. |
+| `messaging.process.queue_wait` | Histogram | Fetch → handler start; the buffer's latency contribution. |
+| `messaging.process.settle.duration` | Histogram | Settlement cost, currently invisible. |
+| `messaging.concurrency.gradient` | Histogram | Latency gradient driving the I/O-bound brake (§6.2). |
+| `messaging.concurrency.decision` | Counter (`reason`) | Why the limit moved: `throughput`, `gradient`, `throttled`, `lock_lost`, `timeout`, `starvation`, `backpressure`. |
 
 Recording is gated on `MessagingProcessingOptions.AdvancedMetrics` so the
 measurement cost is not paid when nobody is listening, and registration is a
@@ -619,8 +621,7 @@ not a migration. No adapter, no obsolete shims, no default-interface hedges to
 carry forever:
 
 - `IMessagingReceiveTransport` and `MessagingReceivePump` are **removed**,
-  replaced by `IMessagingMessageSource` / `IMessagingNativeProcessor` and
-  `MessagingProcessorHost`.
+  replaced by `IMessagingMessageSource` and `MessagingProcessorHost`.
 - `IMessagingLockedDelivery.LockedUntil` and `.DeliveryId` are **required**
   members; every transport implements them.
 - `MessagingDispatcher` loses its `lockRenewalInterval` constructor parameter and
@@ -666,8 +667,11 @@ carry forever:
 
 ## 13. Success criteria
 
-1. A trivial handler on an 8-vCPU host processes ≥ 2 000 msg/s from Service Bus and
-   ≥ 1 000 msg/s from Storage Queues, versus ~20–60 msg/s today.
+1. A trivial handler on an 8-vCPU host processes ≥ 500 msg/s from a Standard
+   Service Bus queue and ≥ 1 000 msg/s from Storage Queues, versus ~20–60 msg/s
+   today — i.e. at least 10×, and in line with the batch-loop measurement in §4.3.
+   Premium namespaces, partitioned entities and additional receive channels or
+   clients scale beyond that; the criterion is the per-host floor, not a ceiling.
 2. CPU utilisation under sustained backlog exceeds 80 % for a CPU-bound handler.
 3. For an I/O-bound handler against a dependency with useful concurrency `K`, the
    limit stabilises within `[K, LittlesLawSlack × K]` and never reaches
@@ -688,7 +692,7 @@ carry forever:
 | Higher concurrency exposes handler thread-safety bugs that the sequential pump hid. | Opt-out documented; release note calls it out explicitly; per-delivery DI scope is already isolated. |
 | Prefetch increases redelivery on crash (locked messages wait for lock expiry). | Bounded buffer, graceful drain-then-abandon on shutdown. |
 | The controller oscillates or fights an external autoscaler. | Hysteresis + min dwell time; `AdaptiveConcurrency = false` escape hatch; metrics expose the limit. |
-| Restarting `ServiceBusProcessor` to change `MaxConcurrentCalls` costs a stall. | Min dwell time (30 s) and step changes only; alternatively pin the processor and adapt via a framework-side semaphore. |
+| The framework owns the Service Bus receive loop instead of using the SDK pump. | Only public `ServiceBusReceiver` operations are used; AMQP credit, link recovery and retries stay inside the SDK (§4.3). The loop is a bounded channel plus workers, and the conformance suite runs it against the Service Bus emulator. |
 | Partitioning misconfiguration is unfixable in place. | Loud reconciler diagnostic naming the entity and the required recreation. |
 | Scope creep into ordering/sessions. | Explicit non-goal. |
 
@@ -717,13 +721,32 @@ Disabling renewal whenever prefetch is on trades one failure mode for another: a
 prefetched message whose lock expires in the local buffer is redelivered and
 processed twice. Bounding the buffer by measured drain time (§6.3) keeps both.
 
-### 15.4 Rejected: writing our own Service Bus pump instead of `ServiceBusProcessor`
+### 15.4 Rejected: `ServiceBusProcessor` as the Service Bus pump
 
-The SDK's processor already implements credit refill, concurrent dispatch,
-automatic lock renewal, error handling and graceful stop, and is maintained by
-Azure. Reimplementing it means owning AMQP link credit semantics forever. The
-pull seam is still implemented for Service Bus, but only as the conformance/testing
-path and for hosts that want a single unified runtime.
+The first draft made the processor the default path and rejected a framework-owned
+loop. That is reversed, on three independent grounds verified in the SDK source
+(§4.3): the processor receives **one message per call** on a single link, so batch
+receive — the largest win in this PRD — cannot be reached through it; its only
+amortisation is an AMQP prefetch buffer whose locks cannot be renewed or even
+observed, which re-creates the prefetch-versus-lock-safety trade §15.3 exists to
+avoid; and adapting concurrency downwards through `UpdateConcurrency` **cancels
+in-flight handlers**, which is not a shrink, it is data loss deferred to a retry.
+
+Extending it was considered too and does not help: the class is not sealed and has
+protected constructors, but the receive loop, `ReceiverManager`, `Connection` and
+even `MaxReceiveWaitTime` are `private`/`internal`, so the only way a subclass
+changes pump behaviour is to override `StartProcessingAsync`, not call base, and
+run its own loop — the custom pump again, wearing the base class as decoration,
+and losing auto-renewal and auto-complete tracking on the way (`ProcessMessageEventArgs`
+constructed by user code has no manager).
+
+The SDK still does the hard part. `ServiceBusReceiver` — public, non-sealed,
+virtual, mockable — keeps AMQP credit, link recovery and the retry policy inside
+`AmqpReceiver`, below the API this design calls. Azure's own measurement on this
+exact question ([#60660](https://github.com/Azure/azure-sdk-for-net/issues/60660))
+puts a batch loop plus a bounded channel at ~1.7× the processor's throughput, and
+the maintainer's recommendation there is individual receivers when batch-level
+control is wanted.
 
 ### 15.5 Rejected: batch settlement
 
@@ -760,7 +783,18 @@ proportional reduction** — the hard cuts still come from unambiguous signals
 (throttling responses, lock loss, thread-pool starvation) or from the explicit
 `MessagingBackpressureException`.
 
-### 15.9 Rejected: one flat metric set
+### 15.9 Rejected: a push seam with no implementation
+
+`IMessagingNativeProcessor` (plus a handle type and an `OwnsConcurrency`
+capability) existed for exactly one transport: Service Bus via
+`ServiceBusProcessor`. With that rejected (§15.4) nothing implements it — Azure
+Functions receivers never reach a framework seam at all, and every other
+transport is a pull source. Keeping a second interface and a second code path in
+the host for zero implementations is speculative generality; if a genuinely
+push-only transport ever appears, adding the seam then is a smaller change than
+carrying it until then.
+
+### 15.10 Rejected: one flat metric set
 
 The first draft emitted ten new instruments on one meter. Half are incident and
 autoscaling signals with a permanent audience; half are tuning aids read once
@@ -779,23 +813,25 @@ existing AZM task rules.
 
 | Task | Title | Depends on |
 | --- | --- | --- |
-| [`AMF-01`](progress/tasks/messaging/AMF-01-receive-seam-split.md) | Receive seam split: `IMessagingMessageSource`, `IMessagingNativeProcessor`, `MessagingReceiverCapabilities`, delivery `LockedUntil`/`DeliveryId`; old receive seam removed | — |
+| [`AMF-01`](progress/tasks/messaging/AMF-01-receive-seam-split.md) | Send/receive seam split: `IMessagingMessageSource`, `MessagingReceiverCapabilities`, delivery `LockedUntil`/`DeliveryId`; old receive seam removed | — |
 | [`AMF-02`](progress/tasks/messaging/AMF-02-processor-host.md) | `MessagingProcessorHost`: bounded channel, credit accounting, worker pool, graceful drain | `AMF-01` |
 | [`AMF-03`](progress/tasks/messaging/AMF-03-adaptive-backoff.md) | Idle/error/no-capacity backoff with server-side-wait growth | `AMF-02` |
 | [`AMF-04`](progress/tasks/messaging/AMF-04-shared-lock-renewer.md) | Shared lock renewer driven by native lock duration; dispatcher renewal loop retired | `AMF-02` |
 | [`AMF-05`](progress/tasks/messaging/AMF-05-adaptive-concurrency.md) | Adaptive concurrency controller, I/O-bound gradient guard, `MessagingBackpressureException` | `AMF-02`, `AMF-04` |
 | [`AMF-06`](progress/tasks/messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive (32), renewal/settle race fix, adaptive visibility | `AMF-01`–`AMF-04` |
-| [`AMF-07`](progress/tasks/messaging/AMF-07-service-bus-native-processor.md) | Service Bus `ServiceBusProcessor` native pump + pull batch path + multi-client fan-out | `AMF-01`–`AMF-05` |
+| [`AMF-07`](progress/tasks/messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver`, explicit settlement/renewal, multi-receiver and multi-client fan-out | `AMF-01`–`AMF-05` |
 | [`AMF-08`](progress/tasks/messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration: partitioning, lock duration, reconciler mismatch diagnostics | `AMF-07` |
 | [`AMF-09`](progress/tasks/messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics + OTel opt-in extension, guide, sample tuning walkthrough, throughput smoke test, API surface baseline | all |
 
-## 17. Open decisions
+## 17. Decisions
 
-| # | Decision | Recommendation |
+Resolved in review; the sections above already reflect them.
+
+| # | Question | Decision |
 | --- | --- | --- |
-| AMF-D1 | Default `MaxConcurrency` | `ProcessorCount × 8`, adaptive from `ProcessorCount`. Conservative alternative: `ProcessorCount`. |
-| AMF-D2 | Service Bus adaptive concurrency mechanism | Restart the processor at a new `MaxConcurrentCalls` with 30 s hysteresis. Alternative: fixed processor limit + framework-side semaphore (no stalls, wastes prefetch credits). |
-| AMF-D3 | Whether `Partitioned` defaults to true for new queues | No — opt-in, because of the transaction/session constraints. |
+| AMF-D1 | Default `MaxConcurrency` | `ProcessorCount × 8` ceiling, `InitialConcurrency = ProcessorCount`, adaptive between them (§6.2). |
+| AMF-D2 | Service Bus pump and adaptive concurrency mechanism | Neither of the original options: restarting `ServiceBusProcessor` is unnecessary (`UpdateConcurrency` exists) *and* unsafe (it cancels in-flight handlers), and a framework semaphore over the processor still cannot batch or renew prefetched locks. The framework owns the receive loop over `ServiceBusReceiver`, so the concurrency limit is simply the worker count and shrinking it only stops new pickups (§4.3, §7, §15.4). |
+| AMF-D3 | Whether `Partitioned` defaults to true for new queues | No — `EnablePartitioning` defaults to `false`, opt-in on the transport declaration, applied at create time only (§8). |
 | AMF-D4 | Whether the gradient guard is on by default | Yes — an I/O-bound workload is the common case, and the guard only vetoes growth. `AdaptiveConcurrency = false` disables the whole controller for hosts that want a fixed limit. |
 | AMF-D5 | Whether the backoff table is configurable Rebus-style (`TimeSpan[]`) | No — two bounds plus jitter, which is simpler and covers every observed case. |
 
@@ -815,8 +851,16 @@ existing AZM task rules.
   `Rebus.AzureServiceBus/AzureServiceBus/AzureServiceBusTransport.cs`,
   `Rebus.AzureServiceBus/Internals/MessageLockRenewer.cs`,
   `Rebus.AzureServiceBus/Config/AzureServiceBusTransportSettings.cs`.
-- Azure SDK: `Azure.Messaging.ServiceBus` `ServiceBusProcessorOptions`,
-  `ServiceBusReceiverOptions`; `Azure.Storage.Queues` `QueueClient.ReceiveMessagesAsync`.
+- Azure SDK (`azure-sdk-for-net`, tag `Azure.Messaging.ServiceBus_7.20.1`):
+  `sdk/servicebus/Azure.Messaging.ServiceBus/src/Receiver/ServiceBusReceiver.cs`,
+  `src/Processor/ServiceBusProcessor.cs`, `src/Processor/ReceiverManager.cs`,
+  `src/Amqp/AmqpReceiver.cs`; issues
+  [#60660](https://github.com/Azure/azure-sdk-for-net/issues/60660) (processor vs.
+  batch-loop throughput), [#56447](https://github.com/Azure/azure-sdk-for-net/issues/56447)
+  (`UpdateConcurrency` cancels in-flight handlers),
+  [#48396](https://github.com/Azure/azure-sdk-for-net/issues/48396) and
+  [#47684](https://github.com/Azure/azure-sdk-for-net/issues/47684) (prefetch buffer
+  opacity); `Azure.Storage.Queues` `QueueClient.ReceiveMessagesAsync`.
 - MassTransit: `src/Transports/MassTransit.Azure.ServiceBus.Core/` —
   `ServiceBusConnectionContext`, `BaseClientSettings`, `IServiceBusEndpointConfigurator`.
 - Microsoft Learn: [Service Bus partitioned entities](https://learn.microsoft.com/azure/service-bus-messaging/service-bus-partitioning),
