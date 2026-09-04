@@ -71,7 +71,7 @@ public sealed class GrpcProtoExportTests
                 _findBuiltAssembly("Ark.Tools.MediatorFramework.Hosting.GrpcClient"),
                 destination).ConfigureAwait(false);
 
-            result.ExitCode.Should().Be(0, result.Error);
+            result.ExitCode.Should().Be(0, result.Output);
             Directory.Exists(destination).Should().BeFalse();
         }
         finally
@@ -90,7 +90,7 @@ public sealed class GrpcProtoExportTests
             var result = await _runExporterAsync(
                 _findBuiltAssembly("Ark.Tools.MediatorFramework.Hosting.Contracts"),
                 destination).ConfigureAwait(false);
-            result.ExitCode.Should().Be(0, result.Error);
+            result.ExitCode.Should().Be(0, result.Output);
 
             var proto = Path.Join(destination, "Hosting.proto");
             File.Exists(proto).Should().BeTrue();
@@ -100,7 +100,7 @@ public sealed class GrpcProtoExportTests
             result = await _runExporterAsync(
                 _findBuiltAssembly("Ark.Tools.MediatorFramework.Hosting.Contracts"),
                 destination).ConfigureAwait(false);
-            result.ExitCode.Should().Be(0, result.Error);
+            result.ExitCode.Should().Be(0, result.Output);
             File.GetLastWriteTimeUtc(proto).Should().Be(expectedTimestamp);
         }
         finally
@@ -145,12 +145,12 @@ public static class Program
     }
 }
 """).ConfigureAwait(false);
-            var build = await _runDotnetAsync("build", fixture, project).ConfigureAwait(false);
+            var build = await _runDotnetAsync("build", fixture, project, "-c", _configuration()).ConfigureAwait(false);
             build.ExitCode.Should().Be(0, build.Output);
 
             var destination = Path.Join(fixture, "proto");
             var result = await _runExporterAsync(
-                Path.Join(fixture, "bin", "Debug", "net10.0", "Malicious.dll"),
+                Path.Join(fixture, "bin", _configuration(), _targetFramework(), "Malicious.dll"),
                 destination).ConfigureAwait(false);
             result.ExitCode.Should().NotBe(0);
             Directory.Exists(destination).Should().BeFalse();
@@ -283,7 +283,7 @@ public static class Program
     {
         var repositoryRoot = _findRepositoryRoot();
         var targetFramework = _targetFramework();
-        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
+        var configuration = _configuration();
         var assembly = Path.Join(
             repositoryRoot.FullName,
             "tests",
@@ -314,7 +314,7 @@ public static class Program
         return exporter;
     }
 
-    private static async Task<(int ExitCode, string Error)> _runExporterAsync(
+    private static async Task<(int ExitCode, string Output)> _runExporterAsync(
         string assembly,
         string destination)
     {
@@ -323,6 +323,7 @@ public static class Program
             StartInfo = new ProcessStartInfo("dotnet")
             {
                 RedirectStandardError = true,
+                RedirectStandardOutput = true,
                 UseShellExecute = false,
             },
         };
@@ -330,9 +331,13 @@ public static class Program
         process.StartInfo.ArgumentList.Add(assembly);
         process.StartInfo.ArgumentList.Add(destination);
         process.Start();
-        var error = await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+        await Task.WhenAll(outputTask, errorTask).ConfigureAwait(false);
         await process.WaitForExitAsync().ConfigureAwait(false);
-        return (process.ExitCode, error);
+        var output = await outputTask.ConfigureAwait(false);
+        var error = await errorTask.ConfigureAwait(false);
+        return (process.ExitCode, output + error);
     }
 
     private static async Task<string> _packGrpcClosureAsync(string fixture)
@@ -360,7 +365,7 @@ public static class Program
                 "pack",
                 root,
                 Path.Join(root, project),
-                "--no-build", "-c", "Debug", "-o", feed, "-p:TargetFrameworks=net10.0",
+                "--no-build", "-c", _configuration(), "-o", feed, $"-p:TargetFrameworks={_targetFramework()}",
                 "-p:PackageVersion=999.9.20", "-p:TreatWarningsAsErrors=false", "-p:NoWarn=NU5128").ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
         }
@@ -485,6 +490,12 @@ public static class Startup
             ?? throw new InvalidOperationException("The test target framework was not available.");
         var version = new FrameworkName(frameworkName).Version;
         return $"net{version.Major}.{version.Minor}";
+    }
+
+    private static string _configuration()
+    {
+        return new DirectoryInfo(AppContext.BaseDirectory).Parent?.Name
+            ?? throw new InvalidOperationException("The test configuration was not available.");
     }
 
     private static string _createTemporaryDirectory()
