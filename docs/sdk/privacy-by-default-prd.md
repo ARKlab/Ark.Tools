@@ -1,6 +1,8 @@
 # PRD — Privacy by Default for Ark.Tools
 
-Status: **proposed; research complete; review decisions applied (see [Decisions](#17-decisions))**.
+Status: **approved**; research complete, review decisions applied (see
+[Decisions](#17-decisions)); implementation tracked as the `PII-IMP` series on
+the [SDK task board](progress/tasks/README.md#compliance-privacy-by-default).
 
 Owner: Ark.Tools SDK. Scope: analyzers, source generators, value objects, NLog/OTel
 pipelines, SQL policy generation, test data.
@@ -302,6 +304,7 @@ and reflection-free:
 | **MessagePack** | `IMessagePackFormatter<EmailAddress>` + a generated resolver entry, in the shape of `Ark.Tools.MessagePack`'s `EvolvableEnumFormatter<T>` | `SerializationTargets.MessagePack` |
 | Dapper | `SqlMapper.TypeHandler<EmailAddress>` | default |
 | `TypeConverter` | redaction-aware converter (see below) | default |
+| **OpenAPI / Swashbuckle** | a `MapType` registration extension + `x-ark-classification` vendor extension, in the shape of `Ark.Tools.AspNetCore.Swashbuckle`'s `MapNodaTimeTypes` | `SerializationTargets.OpenApi` |
 | Reqnroll | value retriever + comparer registration | test projects |
 
 ```csharp
@@ -309,7 +312,8 @@ and reflection-free:
 [SensitiveValueObject<string>(ArkRedaction.Mask,
     Serialization = SerializationTargets.SystemTextJson
                   | SerializationTargets.Protobuf
-                  | SerializationTargets.MessagePack)]
+                  | SerializationTargets.MessagePack
+                  | SerializationTargets.OpenApi)]
 public readonly partial struct EmailAddress { … }
 ```
 
@@ -322,6 +326,47 @@ converter) and both are generated per closed type so nothing is discovered by
 reflection at runtime — `MessagePack`'s generated resolver and protobuf-net's
 surrogate registration are emitted by the same incremental generator, keeping the
 AoT/trim guarantee.
+
+**OpenAPI is not optional either.** These types appear on HTTP contracts
+(§6.5), so without a schema mapping Swashbuckle reflects over the struct and
+documents `{ "value": "string" }` — a wrong schema that silently breaks clients
+and, worse, invites developers back to `string`. The generator emits a
+partial-class registration extension in the shape of the existing
+`SupportNodaTimeExtensions.MapNodaTimeTypes`:
+
+```csharp
+// generated: Ark.Tools.Compliance.OpenApi
+public static SwaggerGenOptions MapArkComplianceTypes(this SwaggerGenOptions c)
+{
+    c.MapType<EmailAddress>(() => new OpenApiSchema
+    {
+        Type = JsonSchemaType.String,
+        Format = "email",
+        Examples = [JsonValue.Create("jane.doe@example.com")],   // RFC 2606, never real PII
+        Extensions = { ["x-ark-classification"] = new JsonNodeExtension("Ark:PersonalData") },
+    });
+    return c;
+}
+```
+
+Two deliberate properties: it is a **`MapType` mapping, not an `ISchemaFilter`**,
+so nothing reflects over the type at startup and the AoT/trim guarantee survives;
+and the schema carries `x-ark-classification`, which makes the published OpenAPI
+document itself an egress record — the same fact that `ARKPII012` and
+`ArkComplianceSurface.txt` track, now visible to API consumers and gateway
+policy. `ArkStartupWebApiCommon` calls the generated extension by default, so a
+classified type is documented correctly without the developer wiring anything.
+Examples come from the RFC 2606 reserved-domain generator used by `ARKPII006`,
+so a schema example can never be a real address.
+
+**Not in scope for v1, deliberately:** EF Core value converters and Orleans
+surrogates. Both are plausible future targets, and both need more than a
+converter — an EF Core mapping has to carry the storage policy of §6.6
+(`Masked` / `ApplicationEncrypted`, and Always Encrypted's equality-only
+comparison semantics), and an Orleans surrogate has to carry classification
+across grain-state versioning. They are tracked as follow-ups so that when they
+land they land *with* the compliance bits rather than as bare converters that
+quietly become a new cleartext egress.
 
 One trap the generator has to close: `DebuggerDisplay`, `TypeConverter`, and any
 `IParsable`/`ISpanFormattable` implementation are all cleartext-leaking surfaces
@@ -725,6 +770,7 @@ existing mediator-framework generator discipline.
 | `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | generator targets emitting surrogates/formatters next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.OpenApi` | generated `MapType` registrations and the `x-ark-classification` extension; wired into `ArkStartupWebApiCommon` next to `MapNodaTimeTypes` | `net8.0;net10.0` |
 | `Ark.Tools.OTel` (existing) | `ArkComplianceRedactionProcessor`, registered by the default setup | unchanged |
 | `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ComplianceSinks`/`ComplianceLexicon` `AdditionalFiles`, `ArkComplianceSurface.txt` gate | unchanged |
 
@@ -774,6 +820,9 @@ then guarantees no *new* undeclared personal data can be added afterwards.
   protobuf-net, MessagePack, Dapper, Reqnroll), each asserting that the wire form
   is cleartext and that `ToString()`/`DebuggerDisplay` on the deserialised value
   is still redacted.
+- OpenAPI document test in the reference API: a classified property is documented
+  as its primitive schema (not `{ "value": … }`), carries `x-ark-classification`,
+  and its example is an RFC 2606 reserved value.
 - A clean-consumer SDK test (existing `tests/Ark.Tools.Sdk.Tests` fixture) proving
   the rules and configuration flow through the packages.
 - AoT/trim smoke test: publish the reference API with
@@ -970,6 +1019,7 @@ not want to write:
 | **Partial members** (C# 13 / Roslyn 4.12+) | `Value`, `From`, `TryFrom` can be re-declared `partial` to change accessibility **and carry attributes** | `DiscoverUserProvidedPartials.cs:8-31`, `Util.cs:32-61` |
 | Surface reduction | `Conversions.None`, `CastOperator.None` both ways (explicit is already the default), `PrimitiveEqualityGeneration.Omit`, `DebuggerAttributeGeneration.Basic` | `Vogen.SharedTypes/*.cs` |
 | Serialisation | `TypeConverter`, STJ (+ AoT-clean `VogenTypesFactory`), Newtonsoft, Dapper, EF Core, LinqToDb, Bson, Orleans, ServiceStack, Xml, **MessagePack** (since 5.0.5) | `Conversions.cs`, `samples/AotTrimmedSample` |
+| OpenAPI | `OpenApiSchemaCustomizations`: a Swashbuckle `ISchemaFilter` (**reflection-based**) or a mapping extension method | `OpenApiSchemaCustomizations.cs`, `docs/…/Use-in-Swagger.md` |
 
 So the answer to "can a *developer* hand-build a sensitive value object on
 Vogen?" is **yes** — `Conversions.None`, `CastOperator.None`, a hand-written
@@ -1080,7 +1130,7 @@ deliberately a **narrow** type:
 | Vogen feature | Ark generator |
 | --- | --- |
 | Any underlying primitive, `INumber<T>` hoisting, comparison generation, `[Instance]`, EF Core/LinqToDb/Bson/Orleans/ServiceStack/Xml/OpenAPI conversions, `StaticAbstracts`, `ParsableForPrimitives`, LinqPad dump, Swashbuckle filters | **Not implemented.** Out of scope. |
-| `string` (and a small set of validated primitives) with `_validate`/`_normalize`, `From`/`TryFrom`, equality, STJ/Newtonsoft/Dapper/**protobuf-net**/**MessagePack**/Reqnroll converters | Implemented, closed-generic and AoT-clean. |
+| `string` (and a small set of validated primitives) with `_validate`/`_normalize`, `From`/`TryFrom`, equality, STJ/Newtonsoft/Dapper/**protobuf-net**/**MessagePack**/**OpenAPI**/Reqnroll converters | Implemented, closed-generic and AoT-clean; OpenAPI as a `MapType` mapping, never a reflection-based `ISchemaFilter`. |
 | — | **New:** classification attribute flow, redacted `ToString`/`TryFormat`/`IConvertible`/debugger surfaces, `Reveal(CompliancePurpose)`, NLog `RegisterObjectTransformation` registration, `ArkComplianceSurface.txt` entry, `ARKPII*` integration. |
 
 The estimate is a single-primitive-shape generator plus converter templates —
@@ -1116,26 +1166,34 @@ Blocker 1 entirely.
 | New MS dependency conflicts with CPM/lock files | `Microsoft.Extensions.Compliance.Abstractions` is attributes-only, MIT, and already in the transitive graph of `Microsoft.Extensions.Telemetry`; `Directory.Packages.props` and every `packages.lock.json` are updated in the same commit (CI runs `RestoreLockedMode=true`) |
 | Inventory churn noise | Snapshot format is deterministic and ordinal-sorted, like `ArkApiSurface.txt` |
 
-## 16. Delivery outline
+## 16. Delivery
 
-Task documents will follow the `docs/sdk/progress/tasks` convention
-(`PII-IMP-nn`), each self-contained, each leaving
-`dotnet build Ark.Tools.slnx` and `dotnet test Ark.Tools.slnx` green.
+The design is approved. Implementation is tracked on the SDK task board as the
+**PII-IMP** series, under
+[`progress/tasks/compliance/`](progress/tasks/compliance/), following the same
+conventions as the `SDK-IMP` tasks: one task per branch/PR, each self-contained,
+each leaving `dotnet build Ark.Tools.slnx --configuration Debug` and
+`dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+green.
 
-1. `Ark.Tools.Compliance` attributes, taxonomy, redactors.
-2. Sensitive value-object generator + built-in types (STJ/Dapper first,
-   protobuf-net and MessagePack targets in the same task family).
-3. `ARKPII001/005/009/010` (declaration tier) + code fixes.
-4. `ARKPII002/003/004/011` (sink tier) + `ComplianceSinks` additional file.
-5. `ArkComplianceSurface.txt` generator and `ARKPII020/021` gate.
-6. `Ark.Tools.Compliance.NLog` redaction pipeline wired by default into
-   `NLogConfigurer` + OTel processor.
-7. `ARKPII007/012` + opt-in SQL policy generation (`Ark.Tools.Compliance.Sql`).
-8. `ARKPII006` + `Ark.Tools.Reqnroll` fakes.
-9. SDK wiring, `ArkComplianceMode`, `LOGGEN*` escalation, `AddArkRedaction()`,
-   packaged configuration, docs
-   (`docs/analyzers.md`, migration notes).
-10. Reference-project migration and end-to-end tests.
+| Task | Scope | PRD sections |
+| --- | --- | --- |
+| [PII-IMP-01](progress/tasks/compliance/PII-IMP-01-compliance-foundation.md) | `Ark.Tools.Compliance` attributes, taxonomy, redactors, `CompliancePurpose` | §6.1, §17 PII‑01 |
+| [PII-IMP-02](progress/tasks/compliance/PII-IMP-02-sensitive-value-object-generator.md) | Value-object generator, redacted surfaces, STJ/Dapper/`TypeConverter` | §6.2, §14 |
+| [PII-IMP-03](progress/tasks/compliance/PII-IMP-03-serialization-targets.md) | Newtonsoft, protobuf-net, MessagePack, OpenAPI/Swashbuckle, Reqnroll targets | §6.2, §6.5 |
+| [PII-IMP-04](progress/tasks/compliance/PII-IMP-04-declaration-tier-analyzers.md) | `ARKPII001/005/009/010` + code fixes + `ComplianceLexicon` | §6.1, §7, §8 |
+| [PII-IMP-05](progress/tasks/compliance/PII-IMP-05-sink-tier-analyzers.md) | `ARKPII002/003/004/011` + `ComplianceSinks` | §6.3, §6.4, §7, §8 |
+| [PII-IMP-06](progress/tasks/compliance/PII-IMP-06-compliance-surface-gate.md) | `ArkComplianceSurface.txt` generator + `ARKPII020/021` | §6.10, §17 PII‑04 |
+| [PII-IMP-07](progress/tasks/compliance/PII-IMP-07-runtime-redaction.md) | NLog pipeline on by default + OTel processor | §6.9, §17 PII‑06 |
+| [PII-IMP-08](progress/tasks/compliance/PII-IMP-08-sql-policy-generation.md) | `[SqlDataPolicy]`/`[SqlColumnPolicy]`, `ARKPII007/012`, template script | §6.6, §17 PII‑05 |
+| [PII-IMP-09](progress/tasks/compliance/PII-IMP-09-test-data-rules.md) | `ARKPII006` + `Ark.Tools.Reqnroll` fakes | §6.7 |
+| [PII-IMP-10](progress/tasks/compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, `ArkComplianceMode`, `LOGGEN*` escalation, `AddArkRedaction()`, `ARKPII013`, docs | §9, §10, §13.3 |
+| [PII-IMP-11](progress/tasks/compliance/PII-IMP-11-reference-project-adoption.md) | Reference-project adoption, end-to-end and AoT tests | §11, §12 |
+| [PII-IMP-12](progress/tasks/compliance/PII-IMP-12-vogen-upstream-contributions.md) | Upstream `DebuggerAttributeGeneration.None` and `Conversions.Protobuf` | §14.3 |
+
+Deferred follow-ups, deliberately not tasks yet: EF Core value converters and
+Orleans surrogates for sensitive value objects (§6.2) — they must land carrying
+the storage and versioning compliance semantics, not as bare converters.
 
 ## 17. Decisions
 

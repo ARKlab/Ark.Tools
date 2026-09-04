@@ -57,3 +57,32 @@ SDK-IMP-04.
 SDK-IMP-09 starts only after the same preview version of `Ark.Tools.Sdk` and
 `Ark.Tools.Build` is available from an Ark package source; MSBuild must resolve
 the SDK before project targets can build a local replacement.
+
+## Compliance (privacy by default)
+
+Approved design: [`../../privacy-by-default-prd.md`](../../privacy-by-default-prd.md).
+These tasks are independent of the `SDK-IMP` sequence except for PII-IMP-10,
+which packages configuration through `Ark.Tools.Build` and therefore follows
+SDK-IMP-03's asset conventions.
+
+| Task | Title | Category | Status |
+| --- | --- | --- | --- |
+| [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Pending |
+| [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Pending |
+| [PII-IMP-03](compliance/PII-IMP-03-serialization-targets.md) | Serialization targets incl. OpenAPI/Swashbuckle | Generator | Pending |
+| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Pending |
+| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Pending |
+| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Pending |
+| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Pending |
+| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Pending |
+| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Pending |
+| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Pending |
+| [PII-IMP-11](compliance/PII-IMP-11-reference-project-adoption.md) | ReferenceProject adoption and end-to-end proof | Migration | Pending |
+| [PII-IMP-12](compliance/PII-IMP-12-vogen-upstream-contributions.md) | Upstream Vogen contributions | Upstream | Pending |
+
+PII-IMP-01 unblocks everything. PII-IMP-02, PII-IMP-04, and PII-IMP-07 can then
+proceed in parallel; PII-IMP-03 follows PII-IMP-02, and PII-IMP-05, PII-IMP-06,
+PII-IMP-08, and PII-IMP-09 follow PII-IMP-04. PII-IMP-10 needs the analyzer,
+surface, and runtime layers before it can package their defaults, and
+PII-IMP-11 is last because it consumes all of them. PII-IMP-12 is external
+work with no dependants.
