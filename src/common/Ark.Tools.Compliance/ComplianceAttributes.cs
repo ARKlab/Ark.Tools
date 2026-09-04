@@ -8,7 +8,7 @@ namespace Ark.Tools.Compliance;
 /// <summary>
 /// Marks data that directly identifies a natural person.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public sealed class PersonalDataAttribute : DataClassificationAttribute
 {
     /// <summary>
@@ -23,7 +23,7 @@ public sealed class PersonalDataAttribute : DataClassificationAttribute
 /// <summary>
 /// Marks special categories of personal data that require heightened protection.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public sealed class SensitivePersonalDataAttribute : DataClassificationAttribute
 {
     /// <summary>
@@ -38,7 +38,7 @@ public sealed class SensitivePersonalDataAttribute : DataClassificationAttribute
 /// <summary>
 /// Marks credentials, keys, tokens, and other authentication material.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public sealed class SecretAttribute : DataClassificationAttribute
 {
     /// <summary>
@@ -53,7 +53,7 @@ public sealed class SecretAttribute : DataClassificationAttribute
 /// <summary>
 /// Marks data that can identify a person only when combined with separately held data.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public sealed class PseudonymousAttribute : DataClassificationAttribute
 {
     /// <summary>
