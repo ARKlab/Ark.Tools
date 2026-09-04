@@ -9,7 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Compliance.Generators\Ark.Tools.Compliance.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
     <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
+    <PackageReference Include="Dapper" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll')" />
   </ItemGroup>
 
 </Project>
