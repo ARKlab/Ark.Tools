@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Security.Cryptography;
-using System.Text;
 
 using Microsoft.Extensions.Compliance.Redaction;
 
@@ -157,7 +156,7 @@ public sealed class ArkHmacRedactor : Redactor
         if (_key is null)
             return ArkErasingRedactor.Instance.Redact(source, destination);
 
-        var result = _prefix + Convert.ToHexString(HMACSHA256.HashData(_key, Encoding.UTF8.GetBytes(source)));
+        var result = _prefix + Convert.ToHexString(HMACSHA256.HashData(_key, System.Text.Encoding.UTF8.GetBytes(source.ToArray())));
         if (destination.Length < result.Length)
             throw new ArgumentException("The destination buffer is too small.", nameof(destination));
 
