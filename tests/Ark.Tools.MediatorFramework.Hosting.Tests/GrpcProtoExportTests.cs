@@ -300,7 +300,7 @@ public static class Program
     {
         var repositoryRoot = _findRepositoryRoot();
         var targetFramework = _targetFramework();
-        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
+        var configuration = _configuration();
         var exporter = Path.Join(
             repositoryRoot.FullName,
             "src",
