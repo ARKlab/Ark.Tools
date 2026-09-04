@@ -13,6 +13,7 @@
       <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And '$(TargetFramework)' == 'net8.0'">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
       <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
     </PropertyGroup>
+    <Delete Files="$(ArkExportProtoDir)/.ark-export-active" />
     <Exec Command="dotnet &quot;$(_ArkProtoExportRunner)&quot; &quot;$(TargetPath)&quot; &quot;$(ArkExportProtoDir)&quot;" />
   </Target>
 

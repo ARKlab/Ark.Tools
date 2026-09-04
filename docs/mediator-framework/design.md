@@ -583,7 +583,7 @@ the gRPC generator/package — no hand-maintained schema program:
 - The gRPC incremental generator (which already knows every `[GrpcMethod]`
   contract and `[ProtoContract]` message) additionally emits the proto text as
   generated C# (`ArkGeneratedProtos`: per-`[GrpcService]` `(fileName, content)`
-  pairs plus a `WriteTo(directory)` helper).
+  pairs plus a `GetFiles()` manifest).
 - Hosts with hand-written protobuf services can declare
   `<ArkAdditionalProto Include="path/to/service.proto" />`; the export target
   copies those files alongside generated service protos without making them
@@ -614,11 +614,8 @@ the gRPC generator/package — no hand-maintained schema program:
 - The export target and `$(ArkExportProtoDir)` wiring are **not** authored in
   the consuming csproj: `Ark.Tools.MediatorFramework.Grpc` delivers them via
   `buildTransitive` `.props`/`.targets` that NuGet imports automatically from
-  the package manifest (project-reference consumers inside this repo get the
-  same import through the package's MSBuild assets). If csproj-driven packing
-  cannot express the layout, a dedicated
-  `Ark.Tools.MediatorFramework.Grpc.MsBuild` package (nuspec-authored) carries
-  the MSBuild assets instead.
+  the package manifest. Project-reference consumers must import the targets
+  explicitly because project references do not consume packed build assets.
 - Test/client projects consume the exported files with `Grpc.Tools`
   (`<Protobuf Include="…/*.proto" GrpcServices="Client" />`): the **client is
   generated from `.proto`**, never from the code-first C# contracts, proving
