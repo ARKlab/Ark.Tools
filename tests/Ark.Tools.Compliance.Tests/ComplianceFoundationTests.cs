@@ -31,7 +31,7 @@ public sealed class ComplianceFoundationTests
 
         value.ToString().Should().Be("***");
         $"{value}".Should().Be("***");
-        string.Format("{0}", value).Should().Be("***");
+        string.Format("{0}", value.ToString()).Should().Be("***");
         value.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
         new string(buffer, 0, written).Should().Be("***");
         value.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
@@ -47,8 +47,10 @@ public sealed class ComplianceFoundationTests
         var restored = JsonSerializer.Deserialize<TestSensitiveValue>(serialized);
 
         serialized.Should().Be("\"secret-value\"");
-        restored.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
-        restored.ToString().Should().Be("***");
+        restored!.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
+        var buffer = new char[3];
+        restored.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
+        new string(buffer, 0, written).Should().Be("***");
     }
 
     /// <summary>
@@ -97,7 +99,7 @@ public sealed class ComplianceFoundationTests
 
         generated.Should().Contain("ArkErasingRedactor.Instance");
         generated.Should().Contain("ArkMaskingRedactor.Instance");
-        generated.Should().Contain("new ArkHmacRedactor()");
+        generated.Should().Contain("new ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))");
         generated.Should().Contain("ArkNullRedactor.Instance");
         generated.Should().Contain("Reveal");
         generated.Should().Contain("TryFormat");

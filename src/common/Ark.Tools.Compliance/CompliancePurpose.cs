@@ -8,7 +8,7 @@ namespace Ark.Tools.Compliance;
 /// </summary>
 public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
 {
-    private readonly string _reason;
+    private readonly string? _reason;
 
     private CompliancePurpose(string reason)
     {
@@ -34,12 +34,12 @@ public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
     /// <summary>
     /// Gets the recorded purpose reason.
     /// </summary>
-    public string Reason => _reason;
+    public string Reason => _reason ?? string.Empty;
 
     /// <summary>
     /// Gets the recorded purpose reason.
     /// </summary>
-    public string Value => _reason;
+    public string Value => _reason ?? string.Empty;
 
     /// <inheritdoc />
     public bool Equals(CompliancePurpose other)

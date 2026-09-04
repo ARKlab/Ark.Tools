@@ -126,13 +126,11 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             return constructorValue;
         }
 
-        foreach (var namedArgument in attribute.NamedArguments)
-        {
-            if (namedArgument.Key == name && namedArgument.Value.Value is int namedValue)
-                return namedValue;
-        }
-
-        return defaultValue;
+        var namedValue = attribute.NamedArguments
+            .Where(namedArgument => namedArgument.Key == name)
+            .Select(namedArgument => namedArgument.Value.Value is int value ? value : (int?)null)
+            .FirstOrDefault();
+        return namedValue ?? defaultValue;
     }
 
     private static string _emit(INamedTypeSymbol type, Settings settings)
@@ -145,7 +143,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         var redactor = settings.Redaction switch
         {
             1 => "ArkMaskingRedactor.Instance",
-            2 => "new ArkHmacRedactor()",
+            2 => "new ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))",
             3 => "ArkNullRedactor.Instance",
             _ => "ArkErasingRedactor.Instance",
         };
@@ -252,11 +250,13 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.Append("    public static bool operator ==(").Append(typeName).Append(" left, ").Append(typeName).AppendLine(" right) => left.Equals(right);");
         builder.Append("    public static bool operator !=(").Append(typeName).Append(" left, ").Append(typeName).AppendLine(" right) => !left.Equals(right);");
         builder.AppendLine();
+        builder.Append("    private static readonly global::Microsoft.Extensions.Compliance.Redaction.Redactor _redactor = global::Ark.Tools.Compliance.")
+            .Append(redactor).AppendLine(";");
+        builder.AppendLine();
         builder.AppendLine("    private static string _redact(string value)");
         builder.AppendLine("    {");
-        builder.Append("        var redactor = global::Ark.Tools.Compliance.").Append(redactor).AppendLine(";");
-        builder.AppendLine("        var buffer = new char[redactor.GetRedactedLength(value.AsSpan())];");
-        builder.AppendLine("        var length = redactor.Redact(value.AsSpan(), buffer);");
+        builder.AppendLine("        var buffer = new char[_redactor.GetRedactedLength(value.AsSpan())];");
+        builder.AppendLine("        var length = _redactor.Redact(value.AsSpan(), buffer);");
         builder.AppendLine("        return new string(buffer, 0, length);");
         builder.AppendLine("    }");
         builder.AppendLine();
