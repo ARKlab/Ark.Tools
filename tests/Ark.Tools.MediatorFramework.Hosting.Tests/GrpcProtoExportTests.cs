@@ -92,7 +92,7 @@ public sealed class GrpcProtoExportTests
                 destination).ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Error);
 
-            var proto = Path.Combine(destination, "Hosting.proto");
+            var proto = Path.Join(destination, "Hosting.proto");
             File.Exists(proto).Should().BeTrue();
             var expectedTimestamp = DateTime.UtcNow.AddMinutes(-1);
             File.SetLastWriteTimeUtc(proto, expectedTimestamp);
@@ -117,7 +117,7 @@ public sealed class GrpcProtoExportTests
         try
         {
             Directory.CreateDirectory(fixture);
-            var project = Path.Combine(fixture, "Malicious.csproj");
+            var project = Path.Join(fixture, "Malicious.csproj");
             await File.WriteAllTextAsync(
                 project,
                 """
@@ -129,7 +129,7 @@ public sealed class GrpcProtoExportTests
 </Project>
 """).ConfigureAwait(false);
             await File.WriteAllTextAsync(
-                Path.Combine(fixture, "Program.cs"),
+                Path.Join(fixture, "Program.cs"),
                 """
 namespace Ark.Tools.MediatorFramework.Generated;
 
@@ -148,13 +148,13 @@ public static class Program
             var build = await _runDotnetAsync("build", fixture, project).ConfigureAwait(false);
             build.ExitCode.Should().Be(0, build.Output);
 
-            var destination = Path.Combine(fixture, "proto");
+            var destination = Path.Join(fixture, "proto");
             var result = await _runExporterAsync(
-                Path.Combine(fixture, "bin", "Debug", "net10.0", "Malicious.dll"),
+                Path.Join(fixture, "bin", "Debug", "net10.0", "Malicious.dll"),
                 destination).ConfigureAwait(false);
             result.ExitCode.Should().NotBe(0);
             Directory.Exists(destination).Should().BeFalse();
-            File.Exists(Path.Combine(fixture, "escape.proto")).Should().BeFalse();
+            File.Exists(Path.Join(fixture, "escape.proto")).Should().BeFalse();
         }
         finally
         {
@@ -170,10 +170,10 @@ public static class Program
         try
         {
             var feed = await _packGrpcClosureAsync(fixture).ConfigureAwait(false);
-            var consumer = Path.Combine(fixture, "consumer");
+            var consumer = Path.Join(fixture, "consumer");
             Directory.CreateDirectory(consumer);
-            await File.WriteAllTextAsync(Path.Combine(consumer, "hand.proto"), "syntax = \"proto3\";\n").ConfigureAwait(false);
-            await File.WriteAllTextAsync(Path.Combine(consumer, "Consumer.csproj"), _packedProject("""
+            await File.WriteAllTextAsync(Path.Join(consumer, "hand.proto"), "syntax = \"proto3\";\n").ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "Consumer.csproj"), _packedProject("""
 <PropertyGroup>
   <ArkExportProtoDir>$(MSBuildProjectDirectory)/custom-proto</ArkExportProtoDir>
 </PropertyGroup>
@@ -181,24 +181,24 @@ public static class Program
   <ArkAdditionalProto Include="hand.proto" />
 </ItemGroup>
 """)).ConfigureAwait(false);
-            await File.WriteAllTextAsync(Path.Combine(consumer, "Program.cs"), _generatedConsumerSource()).ConfigureAwait(false);
-            await File.WriteAllTextAsync(Path.Combine(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "Program.cs"), _generatedConsumerSource()).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
 
             var result = await _runDotnetAsync(
                 "build",
                 consumer,
                 consumer,
-                "--configfile", Path.Combine(consumer, "NuGet.Config")).ConfigureAwait(false);
+                "--configfile", Path.Join(consumer, "NuGet.Config")).ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
 
-            var output = Path.Combine(consumer, "custom-proto");
-            File.Exists(Path.Combine(output, "Consumer.proto")).Should().BeTrue();
-            File.Exists(Path.Combine(output, "ark", "mediator.proto")).Should().BeTrue();
-            File.Exists(Path.Combine(output, "ark", "nodatime.proto")).Should().BeTrue();
-            File.Exists(Path.Combine(output, "hand.proto")).Should().BeTrue();
-            File.Exists(Path.Combine(consumer, "started.txt")).Should().BeFalse();
+            var output = Path.Join(consumer, "custom-proto");
+            File.Exists(Path.Join(output, "Consumer.proto")).Should().BeTrue();
+            File.Exists(Path.Join(output, "ark", "mediator.proto")).Should().BeTrue();
+            File.Exists(Path.Join(output, "ark", "nodatime.proto")).Should().BeTrue();
+            File.Exists(Path.Join(output, "hand.proto")).Should().BeTrue();
+            File.Exists(Path.Join(consumer, "started.txt")).Should().BeFalse();
 
-            var generatedProto = Path.Combine(output, "Consumer.proto");
+            var generatedProto = Path.Join(output, "Consumer.proto");
             var timestamp = DateTime.UtcNow.AddMinutes(-1);
             File.SetLastWriteTimeUtc(generatedProto, timestamp);
             result = await _runDotnetAsync("build", consumer, consumer, "--no-restore").ConfigureAwait(false);
@@ -228,22 +228,22 @@ public static class Program
         try
         {
             var feed = await _packGrpcClosureAsync(fixture).ConfigureAwait(false);
-            var consumer = Path.Combine(fixture, "consumer");
+            var consumer = Path.Join(fixture, "consumer");
             Directory.CreateDirectory(consumer);
-            await File.WriteAllTextAsync(Path.Combine(consumer, "Consumer.csproj"), _packedProject(string.Empty)).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "Consumer.csproj"), _packedProject(string.Empty)).ConfigureAwait(false);
             await File.WriteAllTextAsync(
-                Path.Combine(consumer, "Program.cs"),
+                Path.Join(consumer, "Program.cs"),
                 "using System.IO;\nFile.WriteAllText(\"started.txt\", \"started\");\n").ConfigureAwait(false);
-            await File.WriteAllTextAsync(Path.Combine(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
 
             var result = await _runDotnetAsync(
                 "build",
                 consumer,
                 consumer,
-                "--configfile", Path.Combine(consumer, "NuGet.Config")).ConfigureAwait(false);
+                "--configfile", Path.Join(consumer, "NuGet.Config")).ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
-            Directory.Exists(Path.Combine(consumer, "proto")).Should().BeFalse();
-            File.Exists(Path.Combine(consumer, "started.txt")).Should().BeFalse();
+            Directory.Exists(Path.Join(consumer, "proto")).Should().BeFalse();
+            File.Exists(Path.Join(consumer, "started.txt")).Should().BeFalse();
         }
         finally
         {
@@ -255,13 +255,13 @@ public static class Program
     {
         var repositoryRoot = new DirectoryInfo(AppContext.BaseDirectory);
         while (repositoryRoot is not null
-            && !File.Exists(Path.Combine(repositoryRoot.FullName, "Ark.Tools.slnx")))
+            && !File.Exists(Path.Join(repositoryRoot.FullName, "Ark.Tools.slnx")))
         {
             repositoryRoot = repositoryRoot.Parent;
         }
 
         repositoryRoot.Should().NotBeNull();
-        var contractsObj = Path.Combine(
+        var contractsObj = Path.Join(
             repositoryRoot!.FullName,
             "tests",
             "Ark.Tools.MediatorFramework.Hosting.Contracts",
@@ -284,7 +284,7 @@ public static class Program
         var repositoryRoot = _findRepositoryRoot();
         var targetFramework = _targetFramework();
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
-        var assembly = Path.Combine(
+        var assembly = Path.Join(
             repositoryRoot.FullName,
             "tests",
             projectName,
@@ -301,7 +301,7 @@ public static class Program
         var repositoryRoot = _findRepositoryRoot();
         var targetFramework = _targetFramework();
         var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
-        var exporter = Path.Combine(
+        var exporter = Path.Join(
             repositoryRoot.FullName,
             "src",
             "mediator-framework",
@@ -338,7 +338,7 @@ public static class Program
     private static async Task<string> _packGrpcClosureAsync(string fixture)
     {
         var root = _findRepositoryRoot().FullName;
-        var feed = Path.Combine(fixture, "feed");
+        var feed = Path.Join(fixture, "feed");
         Directory.CreateDirectory(feed);
         var projects = new[]
         {
@@ -359,7 +359,7 @@ public static class Program
             var result = await _runDotnetAsync(
                 "pack",
                 root,
-                Path.Combine(root, project),
+                Path.Join(root, project),
                 "--no-build", "-c", "Debug", "-o", feed, "-p:PackageVersion=999.9.20").ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
         }
@@ -469,7 +469,7 @@ public static class Startup
     private static DirectoryInfo _findRepositoryRoot()
     {
         var root = new DirectoryInfo(AppContext.BaseDirectory);
-        while (root is not null && !File.Exists(Path.Combine(root.FullName, "Ark.Tools.slnx")))
+        while (root is not null && !File.Exists(Path.Join(root.FullName, "Ark.Tools.slnx")))
         {
             root = root.Parent;
         }
@@ -488,7 +488,7 @@ public static class Startup
 
     private static string _createTemporaryDirectory()
     {
-        return Path.Combine(Path.GetTempPath(), "ark-gen07-" + Guid.NewGuid().ToString("N"));
+        return Path.Join(Path.GetTempPath(), "ark-gen07-" + Guid.NewGuid().ToString("N"));
     }
 
     private static void _deleteTemporaryDirectory(string path)
