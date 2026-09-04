@@ -377,6 +377,9 @@
           "Microsoft.Extensions.Compliance.Abstractions": "[10.9.0, )"
         }
       },
+      "ark.tools.compliance.generators": {
+        "type": "Project"
+      },
       "Dapper": {
         "type": "CentralTransitive",
         "requested": "[2.1.79, )",
