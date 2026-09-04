@@ -46,7 +46,7 @@ value unless stated otherwise.
 | Capability | Applies to | Main controls |
 | --- | --- | --- |
 | Build safety | C# and SQL projects | Nullable, implicit usings, warning policy, strict features, XML docs, SQL analysis |
-| Analyzer configuration | Non-SQL C# projects | Packaged editorconfig/globalconfig files, banned symbols, local globalconfig files |
+| Analyzer configuration | Non-SQL C# projects | Packaged editorconfig/globalconfig files and banned symbols |
 | Restore and audit | SDK-enabled projects | Lock files, locked CI restore, serialized globals, NuGet Audit |
 | Tooling packages | SDK-enabled projects | Polyfill, SBOM, analyzers, and private exact versions |
 | Packaging | Packable non-test projects | Package validation, symbols, `.snupkg` symbols |
@@ -94,18 +94,14 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsBannedApi` | Enabled unless `false` | Build targets and SDK restore | Set `false` |
 | `EnableArkToolsSponsorLinkRemoval` | Enabled unless `false` | Before `CoreCompile` | Set `false` |
-| `ArkToolsLocalAnalyzerConfigRoot` | Directory containing `DirectoryBuildPropsPath`, or project directory | Build props | Set a directory directly |
-| `EnableArkToolsLocalAnalyzerConfigDiscovery` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsGlobalUsings` | Enabled unless `false` when implicit usings are enabled | Build targets | Set `false` |
 | `GitTagVersion` | Valid semantic version derived from CI tag variables | Targets | Set a value directly |
 
 `ArkToolsBuildImported` and `ArkToolsBuildImportCount` are diagnostics for
 duplicate-import detection, not consumer configuration points. The SDK
 standard analyzer configuration is inert when its corresponding analyzer is
-absent. Consumer `AdditionalFiles` and global configuration files are
-combined with, rather than replaced by, Ark.Tools assets. Consumer
-dot-prefixed `.*.globalconfig` files under `ArkToolsLocalAnalyzerConfigRoot`
-are discovered by default.
+absent. Consumer `AdditionalFiles` and explicitly supplied global configuration files
+are combined with, rather than replaced by, Ark.Tools assets.
 
 ### Restore, compiler, and packaging properties
 
@@ -133,7 +129,6 @@ are discovered by default.
 | `EnableSourceLink` | `false` when `COPILOT_AGENT_ACTION` is set | Early | Set `EnableArkToolsCopilotSandboxWorkaround=false` or a direct value |
 | `EnableArkToolsSbom` | Enabled unless `false` | Early package injection | Set `false` |
 | `EnableArkToolsPolyfill` | Enabled unless `false` | Early package injection | Set `false` |
-| `EnableArkToolsSourceLink` | Enabled unless `false` for packable projects | Early package injection | Set `false` |
 | `EnableArkToolsCopilotSandboxWorkaround` | Enabled unless `false` when the environment signal exists | Early | Set `false` |
 
 `Ark.Tools.Sdk` owns the exact versions of its implicit package references.
@@ -186,7 +181,6 @@ generated TRX, dump, and coverage artifacts.
 | `ErrorProne.NET.CoreAnalyzers` | `0.1.2` | Non-SQL and enabled |
 | `Microsoft.Sbom.Targets` | `4.1.5` | Non-SQL and SBOM enabled |
 | `Polyfill` | `11.2.0` | Non-SQL and Polyfill enabled |
-| `Microsoft.SourceLink.GitHub` | `10.0.400` | Packable and SourceLink enabled |
 | `Microsoft.Testing.Extensions.CrashDump` | `2.3.3` | Test and enabled |
 | `Microsoft.Testing.Extensions.CodeCoverage` | `18.10.0` | Test and enabled |
 | `Microsoft.Testing.Extensions.HangDump` | `2.3.3` | Test and enabled |

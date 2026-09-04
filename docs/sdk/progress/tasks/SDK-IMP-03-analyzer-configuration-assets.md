@@ -36,9 +36,6 @@ compose with local overrides, and remain inert when an analyzer is absent.
   accepted `AdditionalFiles` contract without creating consumer-side source files.
 - **Precedence**: assign packaged global configs a level below the default local
   global-config level. Preserve normal source-tree EditorConfig hierarchy.
-- **Local discovery**: default `ArkToolsLocalAnalyzerConfigRoot` to the directory
-  containing `DirectoryBuildPropsPath`, otherwise `MSBuildProjectDirectory`;
-  include only root `.*.globalconfig` files and allow an explicit root override.
 - **Switches**: implement every `EnableArkTools*` switch named in the design.
 - **Safety target**: remove only analyzers whose file name is
   `DevLooped.SponsorLink` or `Moq.CodeAnalysis`, behind
@@ -58,13 +55,11 @@ compose with local overrides, and remain inert when an analyzer is absent.
    option, naming rule, comment, and banned-symbol entry.
 2. Pack each file at the path fixed by the design and wire the matching
    item/switch condition for non-SQL projects.
-3. Implement local global-config discovery without recursive parent scanning or
-   duplicate includes.
-4. Add the narrowly scoped SponsorLink removal target.
-5. Extend fixtures with explicit analyzer references only where needed to prove
+3. Add the narrowly scoped SponsorLink removal target.
+4. Extend fixtures with explicit analyzer references only where needed to prove
    a configuration; absent-analyzer fixtures must remain buildable.
-6. Add local global-config and nested `.editorconfig` fixtures proving
-   precedence and justified lowering of a diagnostic.
+5. Add nested `.editorconfig` fixtures proving precedence and justified lowering
+   of a diagnostic.
 
 ## Required test coverage
 
@@ -75,8 +70,9 @@ compose with local overrides, and remain inert when an analyzer is absent.
   assets.
 - A banned API diagnostic points to consumer source, and consumer
   `AdditionalFiles` compose with the packaged list.
-- Local `.globalconfig` overrides packaged global config; source-tree
-  `.editorconfig` overrides global config; a deeper EditorConfig wins.
+- Explicit consumer `.globalconfig` overrides packaged global config;
+  source-tree `.editorconfig` overrides global config; a deeper EditorConfig
+  wins.
 - Every asset switch suppresses only its asset. SQL receives none.
 - SponsorLink removal preserves every analyzer except the two exact names and
   can be disabled.

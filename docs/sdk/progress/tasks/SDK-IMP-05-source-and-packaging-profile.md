@@ -8,7 +8,7 @@
 
 ## Problem
 
-SourceLink, symbols, SBOM generation, Polyfill, package validation, selected
+SourceLink support, symbols, SBOM generation, Polyfill, package validation, selected
 global usings, and Visual Studio acceleration need package-aware or
 project-type-aware SDK behavior. They must remain independently disableable and
 must not leak Ark organization identity into consumer packages.
@@ -19,8 +19,8 @@ must not leak Ark organization identity into consumer packages.
   and pair it with `PolyUseEmbeddedAttribute=true`.
 - **SBOM**: inject exact `Microsoft.Sbom.Targets` privately for non-SQL projects
   and set `GenerateSBOM=true`; for SQL, inject neither package nor property.
-- **SourceLink**: inject exact `Microsoft.SourceLink.GitHub` privately for every
-  project where `IsPackable != 'false'`.
+- **SourceLink**: rely on the SourceLink support included in the supported .NET
+  SDKs; preserve the Copilot sandbox workaround.
 - **Packaging**: set when empty `EnablePackageValidation=true`,
   `IncludeSymbols=true`, and `SymbolPackageFormat=snupkg` only where packing is
   applicable.
@@ -40,7 +40,7 @@ must not leak Ark organization identity into consumer packages.
 
 ## Implementation steps
 
-1. Add exact implicit tool references and ensure each feature switch removes
+1. Add exact implicit tool references and ensure each package-backed feature switch removes
    both its package and paired properties/items.
 2. Apply packaging properties only after packability is known and without
    changing `IsPackable`.
@@ -54,8 +54,8 @@ must not leak Ark organization identity into consumer packages.
 
 ## Required test coverage
 
-- Polyfill, SBOM, and SourceLink each add the exact package and paired setting;
-  each opt-out removes both.
+- Polyfill and SBOM each add the exact package and paired setting; each opt-out
+  removes both. SourceLink uses the supported .NET SDK behavior.
 - Packable consumers produce validated packages and symbols; non-packable
   consumers do not gain pack topology.
 - Packed consumer nuspecs contain their own metadata and no Ark.Tools identity,
@@ -76,8 +76,7 @@ must not leak Ark organization identity into consumer packages.
 
 ## Acceptance
 
-- [x] Polyfill, SBOM, SourceLink, and packaging features have independently tested
-  opt-outs.
+- [x] Polyfill, SBOM, and packaging features have independently tested opt-outs.
 - [x] Global usings and Visual Studio acceleration are capability-gated.
 - [x] Package inspection proves no Ark identity or excluded policy leaks.
 - [x] Packable and non-packable fixtures preserve consumer topology.

@@ -31,7 +31,7 @@ Status: **design decisions complete; ready for implementation planning**.
 | SDK-16 | DECIDED | A — Reqnroll properties on tests, inert when Reqnroll is absent. |
 | SDK-17 | DECIDED | A — automatic SQL detection and SQL-specific behavior. |
 | SDK-18 | DECIDED | B — safe packaging defaults only; no organization profile. |
-| SDK-19 | DECIDED | A — SBOM, SourceLink, and Polyfill are baseline features. |
+| SDK-19 | DECIDED | A — SBOM and Polyfill are baseline features; SourceLink is provided by the .NET SDK. |
 | SDK-20 | DECIDED | A — include every current analyzer. |
 | SDK-21 | DECIDED | B — SDK bans plus consumer `AdditionalFiles` and suppressions. |
 | SDK-22 | DECIDED | A — build-breaking policy changes follow semantic versioning. |
@@ -58,7 +58,7 @@ single package from implementing:
 3. test-only MTP extension dependencies;
 4. CI-selected GitHub versus Azure DevOps report extensions;
 5. conditionally selected test-framework/assertion packages;
-6. project-type-selected SourceLink, SBOM, or Polyfill dependencies;
+6. project-type-selected SBOM or Polyfill dependencies;
 7. SDK-owned implicit versions marked `IsImplicitlyDefined`; and
 8. early defaults or validation for restore inputs.
 
@@ -200,8 +200,8 @@ selects `"runner": "Microsoft.Testing.Platform"`.
 
 **Status:** DECIDED — A.
 
-**Question:** Who owns versions for analyzers, MTP extensions, SourceLink, SBOM,
-and Polyfill?
+**Question:** Who owns versions for analyzers, MTP extensions, SBOM, and
+Polyfill?
 
 ### Constraint
 
@@ -285,10 +285,7 @@ The complete selected classification and rationale are in
   `Ark.Tools.IdentityModel.globalconfig`,
   `Ark.Tools.Core.globalconfig`, and
   `BannedSymbols.Ark.txt`.
-- Consumer `.*.globalconfig` discovery rooted at
-  `ArkToolsLocalAnalyzerConfigRoot` (the imported `Directory.Build.props`
-  directory by default) and removal of only the `DevLooped.SponsorLink` and
-  `Moq.CodeAnalysis` analyzers.
+- Removal of only the `DevLooped.SponsorLink` and `Moq.CodeAnalysis` analyzers.
 - No dependencies, project-type inference, test/output/publish/pack behavior,
   global usings, restore policy, or environment workaround.
 
@@ -367,11 +364,11 @@ tests:
 - **SQL:** `UsingMicrosoftBuildSqlSdk=true` selects
   `TreatTSqlWarningsAsErrors` and `RunSqlCodeAnalysis`, and excludes C#-specific
   analyzer/configuration items.
-- **Packaging:** include SourceLink, symbols, and validation. Exclude
+- **Packaging:** include symbols and validation. Exclude
   organization identity, license, icon, repository URL, and the exact
   project-reference dependency rewrite.
-- **Baseline packages:** SBOM, SourceLink, Polyfill, .NET analyzers, Banned API,
-  Meziantou, VS Threading, and ErrorProne are independently disableable.
+- **Baseline packages:** SBOM, Polyfill, .NET analyzers, Banned API, Meziantou,
+  VS Threading, and ErrorProne are independently disableable.
 - **Version ownership:** the SDK injects exact, implicit versions; matching
   consumer CPM entries are removed and SDK updates refresh lock files.
 - **Banned symbols:** SDK and consumer lists compose. Consumers suppress an

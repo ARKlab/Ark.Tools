@@ -82,7 +82,7 @@ single `buildTransitive` package with equivalent behavior:
 | Add MTP extensions only to test projects | A package dependency cannot be conditioned on consumer `IsTestProject`. | Separate test package referenced by each test project. |
 | Select GitHub or Azure DevOps MTP reporting packages from detected CI | Nuspec dependencies cannot vary from consumer environment variables. | Restore both reporters everywhere or require CI-specific references. |
 | Add Reqnroll, AwesomeAssertions, or another framework package only when selected | `PackageReference` cannot be injected after the package containing the props has been restored. | Explicit consumer references; inert properties remain possible. |
-| Add SourceLink, SBOM, and Polyfill according to project type | Their package references are restore inputs. | Make all unconditional dependencies, split packages, or require consumer references. |
+| Add SBOM and Polyfill according to project type | Their package references are restore inputs. | Make all unconditional dependencies, split packages, or require consumer references. |
 | Give every injected package an SDK-owned implicit version | `IsImplicitlyDefined` applies to SDK-injected `PackageReference`; nuspec dependencies use ordinary NuGet dependency resolution. | Consumer CPM/nuspec versions, potentially with central transitive pinning. |
 | Default or validate restore inputs such as TFM and package versions | NuGet explicitly excludes restore-affecting properties/items from package build assets. | Source files, `Directory.Build.props`, `Directory.Packages.props`, or an SDK. |
 | Configure audit, lock-file generation, locked restore, or serialized restore globals | `NuGetAudit*`, `RestorePackagesWithLockFile`, `RestoreLockedMode`, and `RestoreSerializeGlobalProperties` alter restore. | Set and validate them in the SDK. |
@@ -273,15 +273,7 @@ upstream default changes.
 | `Ark.Tools.IdentityModel.globalconfig` | Non-SQL; `EnableArkToolsIdentityModelConfiguration` | Inert if the IdentityModel analyzer is absent. |
 | `Ark.Tools.Core.globalconfig` | Non-SQL; `EnableArkToolsCoreConfiguration` | Inert if the Ark.Tools.Core analyzer is absent. |
 | `BannedSymbols.Ark.txt` | Non-SQL; `EnableArkToolsBannedApi` | Inert if Banned API Analyzers is absent; consumer lists compose. |
-| Consumer `.*.globalconfig` discovery | Non-SQL; `EnableArkToolsLocalAnalyzerConfigDiscovery` | Preserves local overrides without changing consumer files. |
 | SponsorLink analyzer removal | `EnableArkToolsSponsorLinkRemoval` | Removes only `DevLooped.SponsorLink` and `Moq.CodeAnalysis` before compilation. |
-
-`ArkToolsLocalAnalyzerConfigRoot` defaults to the directory containing the
-evaluated `DirectoryBuildPropsPath`, or `MSBuildProjectDirectory` when no
-`Directory.Build.props` was imported. Build adds the root's dot-prefixed
-`.*.globalconfig` files; a consumer can change the root or add
-`GlobalAnalyzerConfigFiles` explicitly. This preserves the current repository
-override convention without scanning arbitrary parent directories.
 
 The full diagnostic contents remain in
 [Analyzer and configuration assets](#analyzer-and-configuration-assets).
@@ -293,14 +285,14 @@ The full diagnostic contents remain in
 | Restore | CI detection used by restore, `RestorePackagesWithLockFile`, `RestoreLockedMode`, `RestoreSerializeGlobalProperties`, and all `NuGetAudit*` properties | Package build assets cannot reliably alter the current restore; consistency requires early SDK evaluation. |
 | Compiler/toolchain version | `AnalysisLevel=latest-all` and `LangVersion=14.0` | Avoids forcing evolving diagnostics or a C# version unsupported by an external consumer's SDK through a package dependency. |
 | IDE optimization | `AccelerateBuildsInVisualStudio=true` | Safe only after validating the selected primary SDK's up-to-date-check inputs and outputs. |
-| Package injection | `Ark.Tools.Build`, analyzers, Banned API, ErrorProne, MTP extensions, SourceLink, SBOM, and Polyfill references and versions | `PackageReference` is an SDK responsibility. |
+| Package injection | `Ark.Tools.Build`, analyzers, Banned API, ErrorProne, MTP extensions, SBOM, and Polyfill references and versions | `PackageReference` is an SDK responsibility. |
 | Package-backed properties | `GenerateSBOM` and `PolyUseEmbeddedAttribute` | Must be enabled and disabled with their injected package. |
 | Project classification | `IsTestProject` explicit/suffix handling and SQL/non-SQL package selection | A public dependency must not infer downstream project type. |
 | Test topology | `IsPackable=false`, `WarnOnPackingNonPackableProject=false`, `OutputType=Exe`, and `ExcludeByAttribute` | Changes project/test behavior rather than general build quality. |
 | MTP | Extension defaults, reporting, dumps, coverage, retry, empty-run protection, and `_MTPBuild` analyzer suppression | Alters test execution and requires SDK-injected packages. |
 | Reqnroll | Both code-behind properties plus `reqnroll*.json` handling | Requires the SDK's explicit test classification even though no Reqnroll package is injected. |
 | Content | `appsettings*.json` and `testconfig.json` output/publish metadata | Alters consumer output and publish artifacts. |
-| Packaging | `EnablePackageValidation`, SourceLink, symbols, and package-specific defaults | Alters packed artifacts and may require injected tools. |
+| Packaging | `EnablePackageValidation`, symbols, and package-specific defaults | Alters packed artifacts and may require injected tools. |
 | Source name resolution | `System.Diagnostics.CodeAnalysis`, `System.Globalization`, and `System.Text` global usings | Can introduce ambiguous names in an unknown downstream source tree. |
 | Agent workaround | Copilot-only SourceLink disablement | Environment-specific workaround, not a public package policy. |
 
@@ -389,13 +381,13 @@ The feedback rounds established the following baseline:
 - SQL projects are automatically detected through
   `UsingMicrosoftBuildSqlSdk`; they receive T-SQL warnings-as-errors and SQL
   code analysis while C# analyzer/configuration items are excluded.
-- Packaging adds safe public defaults only: SourceLink, symbols, and package
+- Packaging adds safe public defaults only: symbols and package
   validation. It adds no identity, license, icon, repository URL, exact
   dependency-version rewrite, or organization profile.
-- SBOM, SourceLink, and Polyfill are baseline implicit dependencies, each with
-  an escape hatch.
+- SBOM and Polyfill are baseline implicit dependencies, each with an escape
+  hatch. SourceLink is provided by the supported .NET SDK.
 - All current analyzers are baseline dependencies, including ErrorProne.
-- Analyzer, MTP extension, SourceLink, SBOM, Polyfill, and `Ark.Tools.Build`
+- Analyzer, MTP extension, SBOM, Polyfill, and `Ark.Tools.Build`
   package versions are exact and SDK-owned. Consumers remove matching CPM
   entries and update lock files when the SDK changes.
 - All standard analyzer configurations are packaged separately by analyzer in
@@ -483,10 +475,9 @@ The inventory below was verified against:
 | `.errorprone.globalconfig` | 30 EPC/ERP severity overrides | Build: package separately; inert when ErrorProne is absent. |
 | `.vsthreading.globalconfig` | 23 VSTHRD severity overrides | Build: package and load as a global analyzer config. |
 | `.editorconfig` | Formatting, code-style, naming rules, and three error severities | Build: split coding style/`IDE1006`, `IDX00001`, and `ARKCORE005` by analyzer provenance. Local source-tree config wins. |
-| Consumer `.globalconfig` | ReferenceProject keeps a local override file | Preserve local override capability and document precedence. |
+| Consumer `.globalconfig` | ReferenceProject keeps a local override file | Consumer-owned; the package does not discover local files. |
 | `BannedSymbols.Ark.txt` | 93 active bans: local time, ambiguous parsing/rounding/culture, reference tuples, implicit time-zone conversion, console logging, and blocking task/thread APIs | Build: package as `AdditionalFiles`; provide one opt-out and compose with consumer lists. |
 | `Disable_SponsorLink` target | Removes `DevLooped.SponsorLink` and `Moq.CodeAnalysis` analyzers | Build: include with an opt-out. |
-| Root wildcard imports for `.*.globalconfig` and `.*.editorconfig` | Loads repository-local analyzer overrides for non-SQL projects | Build: keep local global-config discovery in addition to packaged configs; avoid duplicate imports. |
 
 Analyzer versions shown are the versions pinned on 2026-08-29. The SDK owns
 them; consumers remove matching CPM entries. SDK updates require lock-file
@@ -569,7 +560,6 @@ direct `CultureInfo` construction, reference tuples, implicit `DateTime` to
 | Current feature | Current behavior | Disposition |
 | --- | --- | --- |
 | `Polyfill` private package reference | Added to all root projects | SDK: baseline implicit dependency with an independent opt-out. |
-| `Microsoft.SourceLink.GitHub` private package reference | Added to packable root projects | SDK: baseline implicit dependency with an independent opt-out. |
 | `Microsoft.Sbom.Targets` private package reference | Added to non-SQL projects | SDK: baseline implicit dependency with an independent opt-out. |
 | Global usings | Adds `System.Diagnostics.CodeAnalysis`, `System.Globalization`, and `System.Text` for C# with implicit usings | SDK: include with an opt-out; never flow them publicly through Build. |
 | `appsettings*.json` | Base files always copied to output/publish; environment variants copied to output but never publish | SDK: preserve for all projects, with one escape hatch. |
@@ -578,7 +568,7 @@ direct `CultureInfo` construction, reference tuples, implicit `DateTime` to
 | MTP extension package references | Crash dump, code coverage, hang dump, hot reload, retry, TRX, and Azure DevOps report | SDK: include the full set for test projects, with an opt-out per extension/default setting. |
 | Test framework packages | `MSTest.TestAdapter`, `MSTest.TestFramework`, `MSTest.Analyzers`, `Microsoft.NET.Test.Sdk`, and `AwesomeAssertions` | Do not add any framework, assertion, or VSTest compatibility package. MTP remains framework-neutral. |
 | Exact project-reference version target | Rewrites packed project dependencies as exact versions | Exclude. Repositories own dependency-version policy. |
-| Ark icon and package metadata | Ark.Tools repository URL, project URL, MIT license, authors, copyright, symbols/snupkg | Exclude identity/license/icon/repository defaults and organization profiles; include SourceLink, symbols, and package validation only. |
+| Ark icon and package metadata | Ark.Tools repository URL, project URL, MIT license, authors, copyright, symbols/snupkg | Exclude identity/license/icon/repository defaults and organization profiles; include symbols and package validation only. |
 | `samples/Directory.Build.targets` | Replaces local Ark.Tools packages with project references and manually mirrors generated/analyzer assets | Exclude. This is monorepo sample-development infrastructure. |
 
 ## Meziantou research
