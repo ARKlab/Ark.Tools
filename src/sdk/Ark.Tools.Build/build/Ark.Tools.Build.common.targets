@@ -1,22 +1,18 @@
 <Project>
-  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildTargetsImported)' != 'true'">
+  <PropertyGroup Condition="'$(ArkToolsBuildTargetsImported)' != 'true'">
     <ArkToolsBuildTargetsImported>true</ArkToolsBuildTargetsImported>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(ArkToolsBuildImported)' != 'true'">
-    <ArkToolsBuildImported>true</ArkToolsBuildImported>
-    <ArkToolsBuildImportCount>1</ArkToolsBuildImportCount>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(EnableArkToolsBuild)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.Tools.txt"
+  
+  <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.txt"
                      KeepDuplicates="false"
                      Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
   </ItemGroup>
 
   <Target Name="Disable_SponsorLink"
           BeforeTargets="CoreCompile"
-          Condition="'$(EnableArkToolsBuild)' != 'false' and '$(EnableArkToolsSponsorLinkRemoval)' != 'false'">
+          Condition="'$(EnableArkToolsSponsorLinkRemoval)' != 'false'">
     <ItemGroup>
       <Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'DevLooped.SponsorLink'" />
       <Analyzer Remove="@(Analyzer)" Condition="'%(FileName)' == 'Moq.CodeAnalysis'" />

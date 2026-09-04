@@ -67,14 +67,14 @@ Reqnroll-specific settings.
 
 ## Acceptance
 
-- [ ] Appsettings output/publish semantics are tested for .NET, Web, and Razor.
-- [ ] Reqnroll properties and content are test-only, inert, and independently
+- [x] Appsettings output/publish semantics are tested for .NET, Web, and Razor.
+- [x] Reqnroll properties and content are test-only, inert, and independently
   disableable.
-- [ ] Testconfig behavior and its switch are tested.
-- [ ] Package graphs prove framework/assertion packages remain consumer-owned.
-- [ ] Evaluated items contain no duplicates.
-- [ ] The [task board](README.md) status for SDK-IMP-07 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] Testconfig behavior and its switch are tested.
+- [x] Package graphs prove framework/assertion packages remain consumer-owned.
+- [x] Evaluated items contain no duplicates.
+- [x] The [task board](README.md) status for SDK-IMP-07 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

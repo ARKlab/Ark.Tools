@@ -29,13 +29,13 @@ namespace Ark.Reference.Core.API.JsonContext;
     AllowDuplicateProperties = false,
     NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    
+
     WriteIndented = false,
     PropertyNameCaseInsensitive = false,
 
     RespectNullableAnnotations = true,
     RespectRequiredConstructorParameters = true,
-    
+
     Converters = new Type[]
     {
         typeof(JsonStringEnumMemberConverter),

@@ -3,6 +3,8 @@ global_level = 90
 
 #### Meziantou.Analyzer Rules (MA*) and Visual Studio Threading Analyzers (VSTHRD*) ####
 
+MA0002.report_only_non_ordinal = true
+MA0015.consider_member_access_as_parameter = true
 
 # MA0004: Use Task.ConfigureAwait
 dotnet_diagnostic.MA0004.severity = warning
@@ -103,5 +105,20 @@ dotnet_diagnostic.MA0133.severity = error
 # MA0152: Use Unwrap instead of using await twice
 dotnet_diagnostic.MA0152.severity = warning
 
+# MA0155: Do not use async void methods
+dotnet_diagnostic.MA0155.severity = warning
+
 # MA0160: Use ContainsKey instead of TryGetValue
 dotnet_diagnostic.MA0160.severity = warning
+
+# MA0193: Use an overload with a MidpointRounding argument
+dotnet_diagnostic.MA0193.severity = warning
+
+# MA0211: Use multi-line syntax for XML summary comments
+dotnet_diagnostic.MA0211.severity = suggestion
+
+# MA0212: Use MemoryMarshal.GetReference instead of indexing at 0
+dotnet_diagnostic.MA0212.severity = warning
+
+# MA0217: Use a static lambda
+dotnet_diagnostic.MA0217.severity = warning

@@ -43,20 +43,19 @@ choices and rejected alternatives are in
 | [SDK-IMP-02](SDK-IMP-02-public-build-baseline.md) | Public `Ark.Tools.Build` safety baseline | Build policy | Complete |
 | [SDK-IMP-03](SDK-IMP-03-analyzer-configuration-assets.md) | Analyzer configuration, banned APIs, and safety targets | Build policy | Complete |
 | [SDK-IMP-04](SDK-IMP-04-sdk-restore-and-analyzers.md) | SDK restore policy and analyzer ownership | SDK policy | Complete |
-| [SDK-IMP-05](SDK-IMP-05-source-and-packaging-profile.md) | Source, build, and packaging tool profile | SDK policy | Pending |
-| [SDK-IMP-06](SDK-IMP-06-mtp-test-profile.md) | Framework-neutral MTP test profile | Testing | Pending |
-| [SDK-IMP-07](SDK-IMP-07-content-and-reqnroll-profile.md) | Application settings and Reqnroll profile | Content | Pending |
-| [SDK-IMP-08](SDK-IMP-08-compatibility-and-release-gate.md) | Compatibility matrix and paired-package release gate | Validation | Pending |
-| [SDK-IMP-09](SDK-IMP-09-reference-project-migration.md) | ReferenceProject migration | Migration | Pending |
+| [SDK-IMP-05](SDK-IMP-05-source-and-packaging-profile.md) | Source, build, and packaging tool profile | SDK policy | Complete |
+| [SDK-IMP-06](SDK-IMP-06-mtp-test-profile.md) | Framework-neutral MTP test profile | Testing | Complete |
+| [SDK-IMP-07](SDK-IMP-07-content-and-reqnroll-profile.md) | Application settings and Reqnroll profile | Content | Complete |
+| [SDK-IMP-08](SDK-IMP-08-compatibility-and-release-gate.md) | Compatibility matrix and paired-package release gate | Validation | Cancelled |
+| [SDK-IMP-09](SDK-IMP-09-reference-project-migration.md) | ReferenceProject migration | Migration | Complete |
 | [SDK-IMP-10](SDK-IMP-10-documentation-and-adoption.md) | Consumer documentation and adoption guidance | Documentation | Pending |
 | [SDK-IMP-11](SDK-IMP-11-sonaranalyzer-csharp-evaluation.md) | `SonarAnalyzer.CSharp` evaluation | Analyzer evaluation | Pending analysis (draft) |
 | [SDK-IMP-12](SDK-IMP-12-devskim-evaluation.md) | `Microsoft.CST.DevSkim` evaluation | Analyzer evaluation | Pending analysis (draft) |
 
 SDK-IMP-05, SDK-IMP-06, and SDK-IMP-07 can proceed in parallel after
 SDK-IMP-04.
-SDK-IMP-09 starts only after the same preview version of `Ark.Tools.Sdk` and
-`Ark.Tools.Build` is available from an Ark package source; MSBuild must resolve
-the SDK before project targets can build a local replacement.
+SDK-IMP-09 starts after SDK-IMP-07 and uses the repository source-build
+arrangement; it does not require a published preview pair.
 
 ## Compliance (privacy by default)
 

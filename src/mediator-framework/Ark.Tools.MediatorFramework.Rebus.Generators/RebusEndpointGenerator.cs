@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
-using Ark.Tools.MediatorFramework.Generators;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 

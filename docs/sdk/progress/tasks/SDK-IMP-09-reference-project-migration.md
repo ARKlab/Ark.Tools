@@ -1,92 +1,111 @@
-# SDK-IMP-09 — ReferenceProject migration
+# SDK-IMP-09 - ReferenceProject migration
 
-**Category**: migration · **Priority**: release
-**Depends on**: SDK-IMP-08 and a published matching preview pair
-**Scope**: `samples/Ark.ReferenceProject/` + MIGRATION EVIDENCE
+**Category**: migration · **Priority**: maintenance
+**Depends on**: SDK-IMP-01 through SDK-IMP-07
+**Scope**: `samples/` source-build integration and
+`samples/Ark.ReferenceProject/` migration
 **Design**: [Accepted decisions](../../design.md#accepted-decisions),
 [Current feature inventory](../../design.md#current-arktools-feature-inventory)
 
 ## Problem
 
-ReferenceProject is the source consumers currently copy. It must prove adoption
-of the published SDK pair and remove duplicated policy without hiding accepted
-behavior changes or making the repository depend on an SDK package that does
-not yet exist at evaluation time.
+ReferenceProject currently carries policy that is supplied by Ark.Tools SDK and
+Build assets. It must consume the SDK through the same source-build arrangement
+used by the other sample packages, then remove only the duplicated SDK-owned
+configuration while preserving consumer-owned behavior.
+
+SDK-IMP-09 must not depend on a published preview package or publish one as part
+of the migration.
 
 ## Execution map
 
-- **Prerequisite**: use the same published preview version of `Ark.Tools.Sdk`
-  and `Ark.Tools.Build`. Do not commit nupkgs or depend on a target that builds
-  the SDK after MSBuild SDK resolution has already started.
-- **Activation**: pin `Ark.Tools.Sdk` under `msbuild-sdks` in the sample
-  `global.json` and add the additional SDK reference to every intended
-  ReferenceProject C# and SQL project.
-- **Incremental migration**: migrate and validate in this order:
-  baseline properties; analyzer configuration/bans; analyzer/tool references
-  and CPM versions; global usings and content; test/MTP/Reqnroll; packaging and
-  SourceLink.
-- **Consumer ownership**: retain target frameworks, versions, packability where
-  project-specific, test framework, Reqnroll adapter, AwesomeAssertions,
-  organization/package identity, sample project-reference replacement, and
-  every other item classified as repository/project-owned.
-- **Accepted changes**: remove blanket `NoWarn`, unsafe-by-default,
-  Application Insights dummy resource, exact project-reference rewriting,
-  static-graph workaround, `EnableMSTestRunner`, and SDK-owned package versions.
-- **Locks**: refresh every affected `packages.lock.json` and verify locked CI
-  restore.
-- **Evidence**: record before/after evaluated properties/items, build/test/pack
-  outcomes, and intentional differences in
-  `docs/sdk/progress/reference-project-migration.md`.
+- **Source-build switch**: in `samples/Directory.Build.props`, set
+  `_ArkToolsSdkSourceBuild` to `true`.
+- **Common SDK imports**: after the existing parent build props are evaluated,
+  import the SDK `Sdk.props` and `Sdk.targets` from the local
+  `src/sdk/Ark.Tools.Sdk/Sdk/` source-build path. The imports are removed when
+  the sample is ejected.
+- **Nested-solution SDK activation**: in the nested solution's own
+  `Directory.Build.props` (for example,
+  `samples/Ark.ReferenceProject/Directory.Build.props`), keep the parent import
+  first and place the commented package SDK declaration there. Ejection replaces
+  the parent/source-build imports with `<Sdk Name="Ark.Tools.Sdk"
+  Version="6.6.6" />` using the released package version. Do not place this
+  declaration in the shared `samples/Directory.Build.props` harness.
+- **ReferenceProject cleanup**: remove SDK-owned properties, items, package
+  references, package versions, analyzer configuration, global usings, content
+  handling, SDK-owned test defaults, Reqnroll defaults, packaging defaults, and
+  SourceLink defaults from:
+  `samples/Ark.ReferenceProject/Directory.Build.props`,
+  `samples/Ark.ReferenceProject/Directory.Build.targets`, and every nested
+  `*.csproj`.
+- **Ownership boundary**: retain target frameworks, project-specific versions
+  and packability, explicit test/assertion/Reqnroll dependencies, project
+  identity, project references, sample infrastructure, and all other
+  consumer-owned choices.
+- **Locks**: refresh affected lock files.
 
 ## Implementation steps
 
-1. Capture a pre-migration evaluated property/item and package-graph baseline.
-2. Add SDK activation only after the matching preview pair is resolvable from
-   the configured Ark source on a clean machine.
-3. Remove one configuration category at a time; after each removal restore,
-   evaluate, build, test, and update migration evidence.
-4. Resolve newly exposed diagnostics through code changes or narrow justified
-   consumer overrides. Do not restore blanket suppressions.
-5. Keep framework/assertion/Reqnroll references explicit and verify Ark does not
-   reintroduce them implicitly.
-6. Refresh lock files, test locked restore, and pack all packable sample
-   projects.
-7. Delete only copied policy that is now supplied by the SDK; preserve
-   sample-development infrastructure and project-specific choices.
+1. Capture a pre-migration evaluated property, item, and package-graph
+   baseline for the ReferenceProject.
+2. Add the `samples/Directory.Build.props` source-build switch and unconditional
+  source-build SDK props/targets imports.
+3. Keep the package SDK declaration at the nested solution's own
+  `Directory.Build.props`; do not add it to the shared samples harness.
+4. Remove SDK-owned definitions from the ReferenceProject
+   `Directory.Build.props`, `Directory.Build.targets`, nested project files,
+   and package-version declarations.
+5. Restore, evaluate, build, and test after each cleanup category. Resolve
+   newly exposed diagnostics with code changes or narrow consumer overrides;
+   do not restore blanket suppressions.
+6. Verify the existing sample target imports still provide sample-development
+   infrastructure and that the SDK is activated exactly once per project.
+7. Refresh lock files and validate locked restore, sample build, full tests, and
+   packable sample outputs.
+8. Confirm preserved behavior and intentional SDK-provided behavior in the
+  resulting project files and validation output.
 
 ## Required test coverage
 
-- A clean checkout resolves the pinned SDK pair without a pre-populated cache.
-- Every intended project activates the additional SDK exactly once.
-- Evaluated before/after snapshots match for preserved behavior and identify
-  each accepted difference.
+- A clean source checkout activates the local SDK without a published preview
+  package.
+- Each nested solution activates `Ark.Tools.Sdk` exactly once after ejection.
+- Source-build SDK props and targets are imported unconditionally by the shared
+  samples harness.
+- Evaluated properties, items, and package graphs preserve consumer-owned
+  behavior and identify intentional SDK-owned differences.
 - Analyzer configurations and bans load once; local sample overrides still win.
-- MTP discovers all sample tests with consumer-owned MSTest/Reqnroll packages.
-- Appsettings, reqnroll, and testconfig output/publish behavior is unchanged.
+- MTP discovers all sample tests with consumer-owned MSTest and Reqnroll
+  packages.
+- Appsettings, Reqnroll, and testconfig output/publish behavior is unchanged.
 - SQL projects receive SQL policy and no C# analyzer profile.
-- Locked restore, sample build, full tests, and sample package inspection pass.
-- No copied SDK-owned setting or package version remains in sample
-  `Directory.Build.*` or `Directory.Packages.props`.
+- Locked restore, sample build, full tests, and packable sample validation pass.
+- No copied SDK-owned setting, item, or package version remains in the
+  ReferenceProject build props, build targets, nested project files, or package
+  version declarations.
 
 ## Outcomes
 
-- ReferenceProject becomes an executable adoption example rather than a copied
-  policy template.
-- Migration evidence distinguishes intentional policy corrections from
-  regressions.
+- ReferenceProject becomes an executable source-build adoption example rather
+  than a copied policy template.
 - Consumer-owned project and package choices remain explicit.
+- No SDK preview publication is required.
 
 ## Acceptance
 
-- [ ] A published matching preview pair is pinned and resolves from a clean
-  checkout.
-- [ ] Each migration category has recorded before/after evidence.
-- [ ] No duplicated SDK-owned policy or package version remains.
-- [ ] Framework, assertion, identity, targeting, and sample infrastructure stay
-  consumer-owned.
-- [ ] Lock files, build, tests, and package outputs are updated and validated.
-- [ ] The [task board](README.md) status for SDK-IMP-09 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] The source-build SDK switch and unconditional imports are present in
+  `samples/Directory.Build.props`.
+- [x] The nested solution `Directory.Build.props` contains the eject-time
+  package SDK declaration; the shared `samples/Directory.Build.props` does not.
+- [x] No duplicated SDK-owned policy remains in the ReferenceProject build
+  props, build targets, nested project files, or package-version declarations.
+- [x] Framework, assertion, identity, targeting, and sample infrastructure
+  stay consumer-owned.
+- [x] Lock files, build, tests, and packable sample outputs are updated and
+  validated.
+- [x] The [task board](README.md) status for SDK-IMP-09 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

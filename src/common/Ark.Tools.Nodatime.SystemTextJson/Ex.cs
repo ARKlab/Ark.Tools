@@ -39,7 +39,7 @@ public static class Ex
         _ensureThis(converters, Converters.LocalTimeConverter.Instance);
 
         _ensureThis(converters, Converters.AnnualDateConverter.Instance);
-        
+
         _ensureThis(converters, Converters.TzdbDateTimeZoneConverter.Instance);
         _ensureThis(converters, Converters.TzdbZonedDateTimeConverter.Instance);
 

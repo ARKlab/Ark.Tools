@@ -49,7 +49,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor MultipleSnapshots = new(
         "ARKAPI003",
         "Multiple API surface snapshots",
-        "Only one ArkApiSurface.txt baseline is allowed, but {0} were found.",
+        "Only one ArkApiSurface.txt baseline is allowed, but {0} were found",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

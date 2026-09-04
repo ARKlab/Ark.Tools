@@ -1,4 +1,9 @@
 <Project InitialTargets="_ReplaceArkToolsReferences">
+
+   
+  <Import Project="$(MSBuildThisFileDirectory)../src/sdk/Ark.Tools.Sdk/Sdk/Sdk.targets" />
+
+
   <PropertyGroup>
     <!-- Define root relative to this file (samples/) -->
     <ArkToolsSourceRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\src\'))</ArkToolsSourceRoot>

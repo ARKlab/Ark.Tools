@@ -1,0 +1,50 @@
+<Project>
+
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">
+    <OutputType Condition="'$(OutputType)' == '' or '$(OutputType)' == 'Library'">Exe</OutputType>
+  </PropertyGroup>
+
+	<Import Project="$(MSBuildThisFileDirectory)tests.targets" Condition="'$(IsTestProject)' == 'true'" />
+
+  
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(ImplicitUsings)' != 'disable' and '$(EnableArkToolsGlobalUsings)' != 'false'">
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Text" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.5" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsSbom)' != 'false'" />
+    <PackageReference Include="Polyfill" Version="11.2.0" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsPolyfill)' != 'false'" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.400" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
+    <PackageReference Include="Meziantou.Analyzer" Version="3.0.160" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
+    <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(EnableArkToolsAppSettings)' != 'false'">
+    <Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
+    <Content Remove="$(MSBuildProjectDirectory)/appsettings.*.json" />
+    <None Update="$(MSBuildProjectDirectory)/appsettings*.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory Condition="'%(Filename)' == 'appsettings'">Always</CopyToPublishDirectory>
+      <CopyToPublishDirectory Condition="'%(Filename)' != 'appsettings'">Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+	<PropertyGroup>
+		
+    <_GitRef Condition="'$(_GitRef)' == '' and '$(GITHUB_REF)' != ''">$(GITHUB_REF)</_GitRef>
+    <_GitRef Condition="'$(_GitRef)' == '' and '$(Build_SourceBranch)' != ''">$(Build_SourceBranch)</_GitRef>
+
+    <_GitTagName Condition="'$(GITHUB_REF_TYPE)' == 'tag'">$(GITHUB_REF_NAME)</_GitTagName>
+		<_GitTagName Condition="'$(_GitTagName)' == '' AND $([System.Text.RegularExpressions.Regex]::IsMatch('$(_GitRef)', '^refs/tags/'))">$([System.Text.RegularExpressions.Regex]::Replace('$(_GitRef)', '^refs/tags/', ''))</_GitTagName>
+		
+    <_GitTagVersion Condition="'$(_GitTagName)' != ''">$([System.Text.RegularExpressions.Regex]::Replace('$(_GitTagName)', '^[vV](?=\d)', ''))</_GitTagVersion>
+		<_GitTagVersionIsValid Condition="'$(_GitTagVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(_GitTagVersion)', '^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'))</_GitTagVersionIsValid>
+    <GitTagVersion Condition="'$(_GitTagVersionIsValid)' == 'true'">$(_GitTagVersion)</GitTagVersion>
+    
+	</PropertyGroup>
+
+</Project>
