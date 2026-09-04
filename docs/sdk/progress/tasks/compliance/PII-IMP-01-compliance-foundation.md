@@ -26,8 +26,11 @@ Microsoft one rather than a parallel Ark taxonomy.
   `DataClassificationAttribute` so `LOGGEN035` and Microsoft redaction recognise
   Ark-classified members with no bridge. Each carries `Notes` (purpose of
   processing) and is valid on property, field, parameter, and type.
-- **Escape hatch**: `[ComplianceReviewed(Justification = …)]` with a required
-  non-empty justification.
+- **Escape hatches**: `[ComplianceReviewed(string diagnosticId, string reason)]`
+  with an optional `Expires` date (the shape used in PRD §6.8), and
+  `[NotPersonalData(string justification)]` for a member the lexicon flags but
+  that genuinely holds no personal data. Both require a non-empty reason;
+  `ARKPII008`/`ARKPII009` (PII-IMP-04) enforce that.
 - **Purpose gate**: `CompliancePurpose` — the value passed to `Reveal(...)`;
   a closed set of named purposes plus a `Custom(string)` factory that keeps the
   reason greppable.
@@ -57,7 +60,8 @@ Microsoft one rather than a parallel Ark taxonomy.
 - `Hmac` with no configured key erases instead of returning cleartext.
 - `Mask` never emits any character of the input; `Erase` output length does not
   vary with input length.
-- `[ComplianceReviewed]` with an empty justification fails validation.
+- `[ComplianceReviewed]` and `[NotPersonalData]` with an empty reason fail
+  validation; an expired `Expires` date is representable and readable.
 - The package's transitive closure contains no logging or ASP.NET dependency.
 
 ## Outcomes
@@ -67,7 +71,8 @@ Microsoft one rather than a parallel Ark taxonomy.
 
 ## Acceptance
 
-- [ ] `Ark.Tools.Compliance` ships the attribute set, purposes, and redactors.
+- [ ] `Ark.Tools.Compliance` ships the classification attributes, both escape
+  hatches, purposes, and redactors.
 - [ ] Attributes derive from `DataClassificationAttribute`.
 - [ ] Redaction fails closed with no configuration.
 - [ ] Lock files are regenerated for the new dependency.

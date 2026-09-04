@@ -109,7 +109,7 @@ not possible without rewriting every call site (see [§13.3](#133-rejected-migra
 | `Microsoft.Extensions.Compliance.Abstractions` | 10.9.0 | MIT | attributes only | yes | yes | **Adopt as a dependency** (decision PII‑01) |
 | `Microsoft.Extensions.Compliance.Redaction` | 10.9.0 | MIT | no | yes | yes | Adopt `Redactor` shape |
 | `Microsoft.Extensions.Telemetry.Abstractions` (LOGGEN) | 10.9.0 | MIT | **yes** | yes | yes | Reference design; not usable directly |
-| `Microsoft.CodeAnalysis.BannedApiAnalyzers` | 5.6.0 | MIT | yes | n/a | yes | **Already in SDK** — extend `BannedSymbols.Ark.Tools.txt` |
+| `Microsoft.CodeAnalysis.BannedApiAnalyzers` | 5.6.0 | MIT | yes | n/a | yes | **Already in SDK** — extend `BannedSymbols.Ark.txt` |
 | `Microsoft.CodeAnalysis.AnalyzerUtilities` | 5.6.0 | MIT | yes | n/a | yes | Optional; taint types are `internal` |
 | CodeQL C# security queries | rolling | MIT (queries) | CI-time | n/a | yes | Complementary; heuristic-only |
 | `SonarAnalyzer.CSharp` | 10.33.0.1635 | file (LGPL-ish) | taint rules **do not run** from NuGet | n/a | yes | Rejected as gate |
@@ -739,7 +739,7 @@ Three tiers, in order of cost:
 
 Sinks are declared in data, not code: a packaged `ComplianceSinks.Ark.txt`
 `AdditionalFiles` document in Documentation-Comment-ID format, identical in shape
-to `BannedSymbols.Ark.Tools.txt`, so a consumer can add their own sinks
+to `BannedSymbols.Ark.txt`, so a consumer can add their own sinks
 (a custom audit logger, a legacy `Trace` wrapper) without forking the analyzer.
 
 ```
@@ -985,7 +985,7 @@ analyzer-less, and deprecated by its own author.
 ### 13.9 Rejected: `BannedApiAnalyzers` alone
 
 Banning `object.ToString()` on sensitive types is useful and **is part of the
-design** (the SDK already ships `BannedSymbols.Ark.Tools.txt`), but banning is
+design** (the SDK already ships `BannedSymbols.Ark.txt`), but banning is
 symbol-identity based: it cannot know that a `string` local holds an email, cannot
 inspect message templates, and cannot produce the inventory. It is a complement,
 not the mechanism.
@@ -1186,8 +1186,8 @@ green.
 | [PII-IMP-01](progress/tasks/compliance/PII-IMP-01-compliance-foundation.md) | `Ark.Tools.Compliance` attributes, taxonomy, redactors, `CompliancePurpose` | §6.1, §17 PII‑01 |
 | [PII-IMP-02](progress/tasks/compliance/PII-IMP-02-sensitive-value-object-generator.md) | Value-object generator, redacted surfaces, STJ/Dapper/`TypeConverter` | §6.2, §14 |
 | [PII-IMP-03](progress/tasks/compliance/PII-IMP-03-serialization-targets.md) | Newtonsoft, protobuf-net, MessagePack, OpenAPI/Swashbuckle, Reqnroll targets | §6.2, §6.5 |
-| [PII-IMP-04](progress/tasks/compliance/PII-IMP-04-declaration-tier-analyzers.md) | `ARKPII001/005/009/010` + code fixes + `ComplianceLexicon` | §6.1, §7, §8 |
-| [PII-IMP-05](progress/tasks/compliance/PII-IMP-05-sink-tier-analyzers.md) | `ARKPII002/003/004/011` + `ComplianceSinks` | §6.3, §6.4, §7, §8 |
+| [PII-IMP-04](progress/tasks/compliance/PII-IMP-04-declaration-tier-analyzers.md) | `ARKPII001/008/009/010` + code fixes + `ComplianceLexicon.Ark.txt` | §6.1, §6.8, §7, §8 |
+| [PII-IMP-05](progress/tasks/compliance/PII-IMP-05-sink-tier-analyzers.md) | `ARKPII002/003/004/005/011` + `ComplianceSinks.Ark.txt` | §6.3, §6.4, §7, §8 |
 | [PII-IMP-06](progress/tasks/compliance/PII-IMP-06-compliance-surface-gate.md) | `ArkComplianceSurface.txt` generator + `ARKPII020/021` | §6.10, §17 PII‑04 |
 | [PII-IMP-07](progress/tasks/compliance/PII-IMP-07-runtime-redaction.md) | NLog pipeline on by default + OTel processor | §6.9, §17 PII‑06 |
 | [PII-IMP-08](progress/tasks/compliance/PII-IMP-08-sql-policy-generation.md) | `[SqlDataPolicy]`/`[SqlColumnPolicy]`, `ARKPII007/012`, template script | §6.6, §17 PII‑05 |

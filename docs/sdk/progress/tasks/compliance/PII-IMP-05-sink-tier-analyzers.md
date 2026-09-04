@@ -18,27 +18,32 @@ ecosystem checks exception messages at all, and `LOGGEN035` only covers
 
 - **`ARKPII002`**: classified data used as a structured-log argument or in a log
   message — NLog `Logger.*`, `ILogger.Log*`, `BeginScope`, and any method listed
-  in `ComplianceSinks.txt`.
+  in `ComplianceSinks.Ark.txt`.
 - **`ARKPII003`**: classified data in an exception message or in
   `ArgumentException.paramName`-adjacent message text.
-- **`ARKPII004`**: classified data flowing into `ToString()`/interpolation on a
-  containing type that has no redacted rendering.
-- **`ARKPII011`**: `Reveal(CompliancePurpose)` whose result reaches a sink in the
-  same method.
+- **`ARKPII004`**: classified data reaching an `Activity` tag, a metric
+  dimension, or baggage — telemetry is a sink like any other, and one that
+  usually leaves the trust boundary.
+- **`ARKPII005`**: implicit `ToString`, interpolation, concatenation, or a
+  `Reveal` with no purpose applied to a classified value.
+- **`ARKPII011`**: classified data passed to a banned formatting sink —
+  `Console.*`, `Debug.*`, `Trace.*`, `StringBuilder.Append`.
+- **Scope check**: this list and the PRD §7 table are the same list. The
+  declaration-tier rules (`ARKPII001/008/009/010`) are PII-IMP-04.
 - **Flow**: intra-method `IOperation` reachability only — locals, interpolated
   strings, `string.Concat`/`Format`, ternaries, and member access chains.
   Explicitly not a taint engine (§13.1); cross-method flow is out of scope by
   design and the diagnostic messages say so.
 - **Recursion fix over `LOGGEN035`**: a classified member reached through any
   containing type is reported, not only through records.
-- **Sinks**: `ComplianceSinks.txt` as a composable `AdditionalFiles` input, so a
+- **Sinks**: `ComplianceSinks.Ark.txt` as a composable `AdditionalFiles` input, so a
   consumer can register its own sink methods without an Ark release.
 
 ## Implementation steps
 
 1. Implement the `IOperation`-based reachability walk with an explicit depth and
    node budget, bailing out to no-diagnostic rather than hanging.
-2. Implement the four rules on top of it.
+2. Implement the five rules on top of it.
 3. Implement the sinks file reader, defaulting to NLog, `ILogger`,
    `Console`/`Debug`/`Trace`, and exception constructors.
 4. Write diagnostic messages that name the member, the classification, and the
@@ -61,10 +66,10 @@ ecosystem checks exception messages at all, and `LOGGEN035` only covers
 
 ## Acceptance
 
-- [ ] `ARKPII002/003/004/011` are implemented over intra-method `IOperation`
-  flow.
+- [ ] `ARKPII002/003/004/005/011` are implemented over intra-method
+  `IOperation` flow, with the PRD §7 meanings and severities.
 - [ ] Non-record containing types are traversed.
-- [ ] `ComplianceSinks.txt` composes with consumer entries.
+- [ ] `ComplianceSinks.Ark.txt` composes with consumer entries.
 - [ ] The [task board](../README.md) status for PII-IMP-05 matches this task.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
