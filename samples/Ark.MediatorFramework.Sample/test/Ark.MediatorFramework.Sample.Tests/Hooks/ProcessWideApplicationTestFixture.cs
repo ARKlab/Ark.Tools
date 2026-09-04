@@ -86,9 +86,15 @@ public sealed class ProcessWideApplicationTestFixture : IAsyncDisposable
         }
         finally
         {
-            await _resetAsync(CancellationToken.None).ConfigureAwait(false);
-            Interlocked.Decrement(ref _activeScenarios);
-            _scenarioGate.Release();
+            try
+            {
+                await _resetAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _activeScenarios);
+                _scenarioGate.Release();
+            }
         }
     }
 

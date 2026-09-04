@@ -56,12 +56,12 @@ public sealed class DownloadBookCoverHandler : IQueryHandler<DownloadBookCoverQu
     }
 
     /// <inheritdoc />
-    public Task<IArkAttachment> ExecuteAsync(
+    public async Task<IArkAttachment> ExecuteAsync(
         DownloadBookCoverQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return Task.FromResult(_documents.Get(query.Id)
-            ?? throw new EntityNotFoundException($"Book cover '{query.Id}' was not found."));
+        return await Task.FromResult(_documents.Get(query.Id)
+            ?? throw new EntityNotFoundException($"Book cover '{query.Id}' was not found.")).ConfigureAwait(false);
     }
 }
