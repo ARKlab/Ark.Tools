@@ -9,30 +9,6 @@ CONTRACT BookReview.Id : Guid
 CONTRACT BookReview.Rating : int
 CONTRACT BookReview.Text : string
 CONTRACT BookReview.UserId : string
-CONTRACT CreateBookReviewRequest -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]
-CONTRACT CreateBookReviewRequest.BookId : Guid
-CONTRACT CreateBookReviewRequest.Rating : int
-CONTRACT CreateBookReviewRequest.Text : string default=string.Empty
-CONTRACT DescribeBookEditionRequest -> BookEditionDescription [group=Ark] [grpc-group=Books] [http=POST /api/v{version}/books/editions/describe] [version=1+] [grpc=DescribeBookEdition] [grpc-version=1+]
-CONTRACT DescribeBookEditionRequest.Edition.Kind : BookEditionKind
-CONTRACT DownloadBookCoverQuery -> IArkAttachment [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/{id}/cover] [version=1+] [grpc=DownloadBookCover] [grpc-version=1+]
-CONTRACT DownloadBookCoverQuery.Id : Guid
-CONTRACT GetAuditsQuery -> PagedResult<AuditRecord> [group=Ark] [http=GET /api/v{version}/audits] [version=1+]
-CONTRACT GetAuditsQuery.EntityType : string?
-CONTRACT GetAuditsQuery.FromTimestamp : Instant?
-CONTRACT GetAuditsQuery.Identifier : string?
-CONTRACT GetAuditsQuery.Limit : int default=25
-CONTRACT GetAuditsQuery.Skip : int
-CONTRACT GetAuditsQuery.Sort : IEnumerable<string> default=[]
-CONTRACT GetAuditsQuery.ToTimestamp : Instant?
-CONTRACT GetAuditsQuery.UserId : string?
-CONTRACT GetReadingActivityQuery -> IReadOnlyList<ReadingActivity> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reading-activity] [version=1+]
-CONTRACT GetReadingActivityQuery.BookId : Guid
-CONTRACT GetReadingActivityQuery.Limit : int default=25
-CONTRACT ListBookReviewsQuery -> IReadOnlyList<BookReview> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reviews] [version=1+]
-CONTRACT ListBookReviewsQuery.BookId : Guid
-CONTRACT ListBookReviewsQuery.Limit : int default=25
-CONTRACT ListBookReviewsQuery.Skip : int
 CONTRACT PagedResult
 CONTRACT PagedResult.Count : long
 CONTRACT PagedResult.Data : IEnumerable<AuditRecord>
@@ -46,28 +22,45 @@ CONTRACT ReadingActivity.Kind : EvolvableEnum<ReadingActivityKind>
 CONTRACT ReadingActivity.OccurredAt : Instant
 CONTRACT ReadingActivity.Progress : int
 CONTRACT ReadingActivity.UserId : string
-CONTRACT RecordReadingActivityRequest -> ReadingActivity [group=Ark] [http=POST /api/v{version}/books/{bookId}/reading-activity] [version=1+]
-CONTRACT RecordReadingActivityRequest.BookId : Guid
-CONTRACT RecordReadingActivityRequest.Kind : EvolvableEnum<ReadingActivityKind>
-CONTRACT RecordReadingActivityRequest.Progress : int
-CONTRACT StreamBooksQuery -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
-CONTRACT StreamBooksQuery.Count : int
-CONTRACT StreamBooksQuery.DelayMilliseconds : int
-CONTRACT UploadBookCoverRequest -> UploadResponse [group=Ark] [http=POST /api/v{version}/books/{id}/cover] [version=1+]
-CONTRACT UploadBookCoverRequest.Attachment : IArkAttachment
-CONTRACT UploadBookCoverRequest.Id : Guid
 CONTRACT UploadResponse
 CONTRACT UploadResponse.ContentType : string
 CONTRACT UploadResponse.Id : Guid
 CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
+CONTRACT V1 -> BookEditionDescription [group=Ark] [grpc-group=Books] [http=POST /api/v{version}/books/editions/describe] [version=1+] [grpc=DescribeBookEdition] [grpc-version=1+]
+CONTRACT V1 -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]
+CONTRACT V1 -> IArkAttachment [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/{id}/cover] [version=1+] [grpc=DownloadBookCover] [grpc-version=1+]
+CONTRACT V1 -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
+CONTRACT V1 -> IReadOnlyList<BookReview> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reviews] [version=1+]
 CONTRACT V1 -> IReadOnlyList<Output> [group=Ark] [http=POST /api/v{version}/books/bulk] [version=1+]
+CONTRACT V1 -> IReadOnlyList<ReadingActivity> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reading-activity] [version=1+]
+CONTRACT V1 -> PagedResult<AuditRecord> [group=Ark] [http=GET /api/v{version}/audits] [version=1+]
+CONTRACT V1 -> ReadingActivity [group=Ark] [http=POST /api/v{version}/books/{bookId}/reading-activity] [version=1+]
+CONTRACT V1 -> UploadResponse [group=Ark] [http=POST /api/v{version}/books/{id}/cover] [version=1+]
+CONTRACT V1.Attachment : IArkAttachment
+CONTRACT V1.BookId : Guid
+CONTRACT V1.Count : int
 CONTRACT V1.Data : IReadOnlyList<Create>
+CONTRACT V1.DelayMilliseconds : int
+CONTRACT V1.Edition.Kind : BookEditionKind
+CONTRACT V1.EntityType : string?
+CONTRACT V1.FromTimestamp : Instant?
+CONTRACT V1.Id : Guid
+CONTRACT V1.Identifier : string?
+CONTRACT V1.Kind : EvolvableEnum<ReadingActivityKind>
+CONTRACT V1.Limit : int default=25
+CONTRACT V1.Progress : int
+CONTRACT V1.Rating : int
+CONTRACT V1.Skip : int
+CONTRACT V1.Sort : IEnumerable<string> default=[]
+CONTRACT V1.Text : string default=string.Empty
+CONTRACT V1.ToTimestamp : Instant?
+CONTRACT V1.UserId : string?
 ENUM BookEditionKind.Digital=1
 ENUM BookEditionKind.Print=0
 EVOLVABLE-ENUM ReadingActivityKind.Finished=3
 EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
 EVOLVABLE-ENUM ReadingActivityKind.Progressed=2
 EVOLVABLE-ENUM ReadingActivityKind.Started=1
-REBUS CreateBookReviewRequest -> queue:ark-mediator-sample
+REBUS V1 -> queue:ark-mediator-sample
 */

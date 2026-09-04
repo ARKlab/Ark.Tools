@@ -13,7 +13,7 @@ namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Starts a background print process for a persisted book.</summary>
 public sealed class CreateBookPrintProcessHandler :
-    IRequestHandler<CreateBookPrintProcessRequest, BookPrintProcessResponse>
+    IRequestHandler<CreateBookPrintProcessRequest.V1, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IBus _bus;
@@ -35,7 +35,7 @@ public sealed class CreateBookPrintProcessHandler :
 
     /// <inheritdoc />
     public async Task<BookPrintProcessResponse> ExecuteAsync(
-        CreateBookPrintProcessRequest request,
+        CreateBookPrintProcessRequest.V1 request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

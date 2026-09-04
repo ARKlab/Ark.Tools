@@ -56,14 +56,14 @@ for every implementation task.
 - [x] A scope-lifecycle test proves sequential top-level dispatches do not reuse
   a scope, while a nested contract call from a handler does reuse the current
   scope.
-- [ ] Focused lifecycle tests demonstrate both scenario-owned resources and the
+- [x] Focused lifecycle tests demonstrate both scenario-owned resources and the
   separately serialized process-wide fixture.
-- [ ] A step cannot obtain a persistence context as an application assertion API.
+- [x] A step cannot obtain a persistence context as an application assertion API.
 - [x] Container verification and disposal are deterministic.
 - [x] All public test helper types and members have XML documentation where
   repository analyzers require it.
 
-> **Review 2026-09-02**: Still open: a separately serialized process-wide fixture demonstration (suite currently uses `[assembly: DoNotParallelize]` with scenario-owned resources only), and `ApplicationTestContext` still exposes `CreateDataContextAsync` (used only by a seeding `Given`, never for assertions).
+> **Review 2026-09-04**: Resolved by adding a separately tagged, class-serialized process-wide fixture demonstration and replacing the feature step's direct data-context seeding with a test-context setup operation.
 
 ## Tests
 

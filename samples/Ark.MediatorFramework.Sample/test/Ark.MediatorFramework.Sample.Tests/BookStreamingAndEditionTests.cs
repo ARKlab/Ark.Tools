@@ -18,8 +18,8 @@ public sealed class BookStreamingAndEditionTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("stream-user");
 
-        var action = () => context.DispatchQueryAsync<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>(
-            new StreamBooksQuery { Count = 101 });
+        var action = () => context.DispatchQueryAsync<StreamBooksQuery.V1, IAsyncEnumerable<BookStreamItem>>(
+            new StreamBooksQuery.V1 { Count = 101 });
 
         await action.Should().ThrowAsync<ArgumentOutOfRangeException>().ConfigureAwait(false);
     }
@@ -31,8 +31,8 @@ public sealed class BookStreamingAndEditionTests
         await using var context = new ApplicationTestContext(useSqlStore: false);
         context.SetAuthenticatedUser("edition-user");
 
-        var result = await context.DispatchRequestAsync<DescribeBookEditionRequest, BookEditionDescription>(
-            new DescribeBookEditionRequest
+        var result = await context.DispatchRequestAsync<DescribeBookEditionRequest.V1, BookEditionDescription>(
+            new DescribeBookEditionRequest.V1
             {
                 Edition = new DigitalBookEdition
                 {

@@ -77,8 +77,8 @@ Mapping:
 
 ## Acceptance
 
-- [ ] Documentation extraction helper implemented and unit-tested (including inherited members).
-- [ ] Operation summary/description and parameter/schema descriptions present in the OpenAPI document
+- [x] Documentation extraction helper implemented and unit-tested (including inherited members).
+- [x] Operation summary/description and parameter/schema descriptions present in the OpenAPI document
       (sample test asserts on the JSON document, not on UI HTML).
 - [x] Exported `.proto` files carry leading comments for services, methods, messages and fields, and
       still compile with `Grpc.Tools`.

@@ -1073,6 +1073,45 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsExtractInheritedAndSeeCrefDocumentation()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public class DocumentedBase
+            {
+                /// <summary>The inherited <see cref="System.String"/> identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            /// <summary>Gets the inherited value.</summary>
+            [HttpEndpoint("GET", "/inherited/{id}")]
+            public sealed class GetInherited : DocumentedBase, IQuery<string> { }
+            """);
+
+        minimalApi.Should().Contain("[\"Id\"] = \"The inherited String identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            public class DocumentedBase
+            {
+                /// <summary>The inherited <see cref="System.String"/> identifier.</summary>
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetInherited")]
+            [ProtoContract]
+            public sealed class GetInherited : DocumentedBase, IQuery<string> { }
+            """);
+
+        grpc.Should().Contain("// The inherited String identifier.");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(

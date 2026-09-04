@@ -7,7 +7,7 @@ using Ark.Tools.Solid;
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Handles paged reads of the persisted audit trail.</summary>
-public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult<AuditRecord>>
+public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery.V1, PagedResult<AuditRecord>>
 {
     private readonly ISampleDataContextFactory _factory;
 
@@ -19,7 +19,7 @@ public sealed class GetAuditsHandler : IQueryHandler<GetAuditsQuery, PagedResult
 
     /// <inheritdoc />
     public async Task<PagedResult<AuditRecord>> ExecuteAsync(
-        GetAuditsQuery query,
+        GetAuditsQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

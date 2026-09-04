@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Creates book reviews through the application contract.</summary>
-public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRequest, BookReview>
+public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRequest.V1, BookReview>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -30,7 +30,7 @@ public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRe
 
     /// <inheritdoc />
     public async Task<BookReview> ExecuteAsync(
-        CreateBookReviewRequest request,
+        CreateBookReviewRequest.V1 request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -64,7 +64,7 @@ public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRe
 }
 
 /// <summary>Lists reviews for a book through the application contract.</summary>
-public sealed class ListBookReviewsHandler : IQueryHandler<ListBookReviewsQuery, IReadOnlyList<BookReview>>
+public sealed class ListBookReviewsHandler : IQueryHandler<ListBookReviewsQuery.V1, IReadOnlyList<BookReview>>
 {
     private readonly ISampleDataContextFactory _factory;
 
@@ -76,7 +76,7 @@ public sealed class ListBookReviewsHandler : IQueryHandler<ListBookReviewsQuery,
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<BookReview>> ExecuteAsync(
-        ListBookReviewsQuery query,
+        ListBookReviewsQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

@@ -6,7 +6,7 @@ using FluentValidation;
 namespace Ark.MediatorFramework.Sample.Application.Handlers.Validators;
 
 /// <summary>Validates audit query paging parameters.</summary>
-public sealed class GetAuditsValidator : AbstractValidator<GetAuditsQuery>
+public sealed class GetAuditsValidator : AbstractValidator<GetAuditsQuery.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="GetAuditsValidator"/> class.</summary>
     public GetAuditsValidator()

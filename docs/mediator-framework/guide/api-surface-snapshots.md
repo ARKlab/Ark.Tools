@@ -29,6 +29,7 @@ Start tracking after the initial surface is ready:
   <ArkApiSurfaceEnabled>true</ArkApiSurfaceEnabled>
 </PropertyGroup>
 ```
+Source: [`Ark.MediatorFramework.Sample.API.csproj`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj)
 
 ```bash
 dotnet build src/MyApplication/MyApplication.csproj \
@@ -37,6 +38,7 @@ cp src/MyApplication/obj/Debug/net10.0/ArkApiSurface.current.txt \
    src/MyApplication/ArkApiSurface.txt
 git add src/MyApplication/ArkApiSurface.txt
 ```
+Source: [`ArkApiSurface.txt`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/ArkApiSurface.txt)
 
 Use the generated file as the source to copy. Do not hand-edit a baseline:
 hand edits can hide a generator change and will be replaced on the next review.
@@ -88,6 +90,7 @@ PARTICIPANT MyApp.Messages.GreetingProcessorParticipant
   default: json
 END
 ```
+Source: [`ArkApiSurface.txt`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/ArkApiSurface.txt)
 
 The `CONTRACT` line identifies the request, result, route, gRPC method, group,
 and version range. Following lines describe public members and protobuf tags.
@@ -133,6 +136,7 @@ accepted snapshot. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to
 inspect ArkApiSurface.current.txt, then update ArkApiSurface.txt to accept this
 change.
 ```
+Source: [`ArkApiSurface.txt`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/ArkApiSurface.txt)
 
 An intentional addition is accepted only after review:
 
@@ -145,6 +149,7 @@ cp src/MyApplication/obj/Debug/net10.0/ArkApiSurface.current.txt \
   src/MyApplication/ArkApiSurface.txt
 git add src/MyApplication/ArkApiSurface.txt
 ```
+Source: [`ArkApiSurface.txt`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/ArkApiSurface.txt)
 
 Never update the baseline simply to make `ARKAPI002` disappear. First classify
 the change. A changed route, protobuf type/tag, removed member, queue, status

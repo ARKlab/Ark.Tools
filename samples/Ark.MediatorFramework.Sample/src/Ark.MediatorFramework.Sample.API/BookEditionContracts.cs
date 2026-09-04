@@ -92,18 +92,22 @@ public sealed record BookEditionDescription
 }
 
 /// <summary>Describes a polymorphic Book edition.</summary>
-[HttpEndpoint("POST", "/api/v{version}/books/editions/describe", AcceptsMessagePack = true)]
-[GrpcMethod("DescribeBookEdition")]
-[GrpcService("Books")]
-[RequireScopePolicy(ApplicationScopes.BookRead)]
-[ProtoContract]
-[MessagePackObject]
-public sealed record DescribeBookEditionRequest : IRequest<DescribeBookEditionRequest, BookEditionDescription>
+public static class DescribeBookEditionRequest
 {
-    /// <summary>Gets the edition to describe.</summary>
-    [ProtoMember(1)]
-    [Key(0)]
-    public required BookEdition Edition { get; init; }
+    /// <summary>Version one of the polymorphic Book-edition description request.</summary>
+    [HttpEndpoint("POST", "/api/v{version}/books/editions/describe", AcceptsMessagePack = true)]
+    [GrpcMethod("DescribeBookEdition")]
+    [GrpcService("Books")]
+    [RequireScopePolicy(ApplicationScopes.BookRead)]
+    [ProtoContract]
+    [MessagePackObject]
+    public sealed record V1 : IRequest<V1, BookEditionDescription>
+    {
+        /// <summary>Gets the edition to describe.</summary>
+        [ProtoMember(1)]
+        [Key(0)]
+        public required BookEdition Edition { get; init; }
+    }
 }
 
 /// <summary>System.Text.Json converter for the Book edition discriminator.</summary>

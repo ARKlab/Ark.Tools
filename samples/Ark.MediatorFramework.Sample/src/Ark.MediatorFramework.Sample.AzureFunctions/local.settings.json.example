@@ -3,6 +3,8 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "AzureServiceBus__ConnectionString": "your-service-bus-connection-string"
+    "AzureServiceBus__ConnectionString": "your-service-bus-connection-string",
+    "AzureServiceBus__EnableOutboundRebus": "false",
+    "ApplicationInsights__ConnectionString": ""
   }
 }

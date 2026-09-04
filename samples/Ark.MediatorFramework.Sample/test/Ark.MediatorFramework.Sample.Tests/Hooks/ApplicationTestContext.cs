@@ -47,13 +47,15 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="connectionString">The optional SQL connection string.</param>
     /// <param name="dataContextFactory">The optional context factory shared with another test resource.</param>
     /// <param name="printCompletedNotificationService">The optional scenario-owned external-service mock.</param>
+    /// <param name="network">The optional Rebus network shared with another test resource.</param>
     public ApplicationTestContext(
         bool? useSqlStore = null,
         string? connectionString = null,
         ISampleDataContextFactory? dataContextFactory = null,
-        MockPrintCompletedNotificationService? printCompletedNotificationService = null)
+        MockPrintCompletedNotificationService? printCompletedNotificationService = null,
+        InMemNetwork? network = null)
     {
-        Network = new InMemNetwork();
+        Network = network ?? new InMemNetwork();
         Clock = new FakeClock(Instant.FromUtc(2026, 7, 27, 12, 0));
         _principalProvider = new TestPrincipalProvider();
         _printCompletedNotificationService = printCompletedNotificationService ?? new MockPrintCompletedNotificationService();
@@ -303,11 +305,31 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         return count;
     }
 
-    public async Task<ISampleDataContext> CreateDataContextAsync(CancellationToken ctk = default)
+    /// <summary>Seeds a running print process for a feature setup step.</summary>
+    /// <param name="bookId">The book that owns the process.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The process that was stored.</returns>
+    public async Task<BookPrintProcessResponse> SeedRunningBookPrintProcessAsync(
+        Guid bookId,
+        CancellationToken ctk = default)
     {
+        if (bookId == Guid.Empty)
+            throw new ArgumentException("A book identifier is required.", nameof(bookId));
         _verify();
-        return await _container.GetInstance<ISampleDataContextFactory>()
+        var process = new BookPrintProcessResponse
+        {
+            Id = Guid.NewGuid(),
+            BookId = bookId,
+            Progress = 0.5,
+            Status = BookPrintProcessStatus.Running,
+        };
+        var context = await _container.GetInstance<ISampleDataContextFactory>()
             .CreateAsync(ctk).ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
+        if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
+            throw new InvalidOperationException("The running book print process could not be seeded.");
+        await context.CommitAsync(ctk).ConfigureAwait(false);
+        return process;
     }
 
     /// <summary>Clears all pending outbox messages during scenario cleanup.</summary>

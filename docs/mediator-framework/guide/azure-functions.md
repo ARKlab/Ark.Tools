@@ -44,6 +44,20 @@ var container = AzureFunctionsNativeComposition.BuildContainer(
     useSqlStore: !string.IsNullOrWhiteSpace(
         builder.Configuration["ConnectionStrings:Sample"]),
     connectionString: builder.Configuration["ConnectionStrings:Sample"]);
+if (bool.TryParse(
+        builder.Configuration["AzureServiceBus:EnableOutboundRebus"],
+        out var enableOutboundRebus)
+    && enableOutboundRebus)
+{
+    var outboundServiceBusConfiguration =
+        builder.Configuration["AzureServiceBus:ConnectionString"];
+    if (string.IsNullOrWhiteSpace(outboundServiceBusConfiguration))
+        outboundServiceBusConfiguration =
+            builder.Configuration["AzureServiceBus:fullyQualifiedNamespace"];
+    AzureFunctionsRebusComposition.ConfigureOutbound(
+        container,
+        outboundServiceBusConfiguration);
+}
 builder.Services.AddArkAzureFunctions(container);
 builder.Services.AddArkHealthChecks();
 builder.Services.AddHostedService(
@@ -53,9 +67,36 @@ await builder.Build().RunAsync().ConfigureAwait(false);
 ```
 
 This composes the application and HTTP boundary only. Add the native messaging
-host in step 4. The sample retains a mutually exclusive outbound Rebus
-composition for the all-Rebus topology, but the production Functions entry point
-uses native messaging and never starts a Rebus worker.
+host in step 4. The sample also supports an explicitly enabled, outbound-only
+Rebus client for HTTP-to-Rebus compatibility. That client is added to the same
+application container; native messaging and its generated Function trigger
+remain registered. It never registers Rebus handlers, an input queue,
+subscriptions, or a worker.
+
+Enable the optional client with external configuration:
+
+```json
+{
+  "Values": {
+    "AzureServiceBus__EnableOutboundRebus": "true"
+  }
+}
+```
+
+When enabled, `AzureServiceBus:ConnectionString` must contain either a Service
+Bus connection string, or `AzureServiceBus:fullyQualifiedNamespace` must contain
+a fully qualified namespace. The latter uses `DefaultAzureCredential`. Leave the
+switch absent or `false` to keep the Function host native-only.
+
+The sample configures NLog before building the isolated worker, uses a
+synchronous console target for reliable Core Tools capture, clears the default
+logging providers, and registers one NLog provider with message templates and
+named properties enabled. This keeps structured application events visible in
+the Functions console without duplicate provider output. Application Insights
+telemetry is configured separately from Functions configuration; use
+`ApplicationInsights__ConnectionString` in local settings or
+`APPLICATIONINSIGHTS_CONNECTION_STRING` in Azure, and never place a connection
+string in source.
 
 ## 3. Declare a shared messaging network
 

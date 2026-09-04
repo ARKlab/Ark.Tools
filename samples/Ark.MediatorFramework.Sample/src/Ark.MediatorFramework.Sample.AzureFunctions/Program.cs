@@ -29,7 +29,11 @@ public static class Program
                 .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration, async: false)
                 .Apply();
             builder.Logging.ClearProviders();
-            builder.Logging.AddNLog();
+            builder.Logging.AddNLog(new NLogProviderOptions
+            {
+                CaptureMessageTemplates = true,
+                CaptureMessageProperties = true
+            });
             builder.ConfigureFunctionsWebApplication();
             builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
 
@@ -39,6 +43,20 @@ public static class Program
                 useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
+            if (bool.TryParse(
+                    builder.Configuration["AzureServiceBus:EnableOutboundRebus"],
+                    out var enableOutboundRebus)
+                && enableOutboundRebus)
+            {
+                var outboundServiceBusConfiguration =
+                    builder.Configuration["AzureServiceBus:ConnectionString"];
+                if (string.IsNullOrWhiteSpace(outboundServiceBusConfiguration))
+                    outboundServiceBusConfiguration =
+                        builder.Configuration["AzureServiceBus:fullyQualifiedNamespace"];
+                AzureFunctionsRebusComposition.ConfigureOutbound(
+                    applicationContainer,
+                    outboundServiceBusConfiguration);
+            }
             builder.Services.AddArkAzureFunctions(applicationContainer);
             builder.Services.ConfigureArkMessagingFunctions(
                 applicationContainer,

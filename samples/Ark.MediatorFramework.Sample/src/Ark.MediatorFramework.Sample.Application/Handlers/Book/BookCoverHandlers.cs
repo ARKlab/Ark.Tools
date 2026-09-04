@@ -7,7 +7,7 @@ using Ark.Tools.Solid;
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Stores uploaded book covers.</summary>
-public sealed class UploadBookCoverHandler : IRequestHandler<UploadBookCoverRequest, UploadResponse>
+public sealed class UploadBookCoverHandler : IRequestHandler<UploadBookCoverRequest.V1, UploadResponse>
 {
     private readonly DocumentStore _documents;
 
@@ -20,7 +20,7 @@ public sealed class UploadBookCoverHandler : IRequestHandler<UploadBookCoverRequ
 
     /// <inheritdoc />
     public async Task<UploadResponse> ExecuteAsync(
-        UploadBookCoverRequest request,
+        UploadBookCoverRequest.V1 request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -44,7 +44,7 @@ public sealed class UploadBookCoverHandler : IRequestHandler<UploadBookCoverRequ
 }
 
 /// <summary>Loads stored book covers.</summary>
-public sealed class DownloadBookCoverHandler : IQueryHandler<DownloadBookCoverQuery, IArkAttachment>
+public sealed class DownloadBookCoverHandler : IQueryHandler<DownloadBookCoverQuery.V1, IArkAttachment>
 {
     private readonly DocumentStore _documents;
 
@@ -57,7 +57,7 @@ public sealed class DownloadBookCoverHandler : IQueryHandler<DownloadBookCoverQu
 
     /// <inheritdoc />
     public Task<IArkAttachment> ExecuteAsync(
-        DownloadBookCoverQuery query,
+        DownloadBookCoverQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);

@@ -47,10 +47,10 @@ public sealed class BookPrintingProcessSteps
     [When("I start a book print process for the current book with")]
     public async Task StartCurrentBookPrintProcess(Table table)
     {
-        var request = table.CreateInstance<CreateBookPrintProcessRequest>() with { BookId = _books.Current.Id };
+        var request = table.CreateInstance<CreateBookPrintProcessRequest.V1>() with { BookId = _books.Current.Id };
         _exception = await _captureAsync(async () =>
         {
-            Current = await _context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request)
+            Current = await _context.DispatchRequestAsync<CreateBookPrintProcessRequest.V1, BookPrintProcessResponse>(request)
                 .ConfigureAwait(false);
             return Current;
         }).ConfigureAwait(false);
@@ -59,11 +59,11 @@ public sealed class BookPrintingProcessSteps
     [When("I concurrently start two book print processes for the current book with")]
     public async Task ConcurrentlyStartCurrentBookPrintProcesses(Table table)
     {
-        var request = table.CreateInstance<CreateBookPrintProcessRequest>() with { BookId = _books.Current.Id };
+        var request = table.CreateInstance<CreateBookPrintProcessRequest.V1>() with { BookId = _books.Current.Id };
         var requests = new[]
         {
-            _context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request),
-            _context.DispatchRequestAsync<CreateBookPrintProcessRequest, BookPrintProcessResponse>(request),
+            _context.DispatchRequestAsync<CreateBookPrintProcessRequest.V1, BookPrintProcessResponse>(request),
+            _context.DispatchRequestAsync<CreateBookPrintProcessRequest.V1, BookPrintProcessResponse>(request),
         };
 
         try
@@ -93,8 +93,8 @@ public sealed class BookPrintingProcessSteps
     public async Task RetrieveCurrentBookPrintProcess()
     {
         Current.Should().NotBeNull();
-        Current = await _context.DispatchQueryAsync<GetBookPrintProcessQuery, BookPrintProcessResponse>(
-            new GetBookPrintProcessQuery { Id = Current!.Id }).ConfigureAwait(false);
+        Current = await _context.DispatchQueryAsync<GetBookPrintProcessQuery.V1, BookPrintProcessResponse>(
+            new GetBookPrintProcessQuery.V1 { Id = Current!.Id }).ConfigureAwait(false);
     }
 
     /// <summary>Seeds a running process to represent interrupted background work.</summary>
@@ -102,18 +102,7 @@ public sealed class BookPrintingProcessSteps
     public async Task GivenRunningBookPrintProcess()
     {
         _books.HasCurrent.Should().BeTrue();
-        var process = new BookPrintProcessResponse
-        {
-            Id = Guid.NewGuid(),
-            BookId = _books.Current.Id,
-            Progress = 0.5,
-            Status = BookPrintProcessStatus.Running,
-        };
-        var context = await _context.CreateDataContextAsync().ConfigureAwait(false);
-        await using var __ctx = context.ConfigureAwait(false);
-        (await context.TrySaveBookPrintProcessAsync(process).ConfigureAwait(false)).Should().BeTrue();
-        await context.CommitAsync().ConfigureAwait(false);
-        Current = process;
+        Current = await _context.SeedRunningBookPrintProcessAsync(_books.Current.Id).ConfigureAwait(false);
     }
 
     /// <summary>Resumes the active process through its application request.</summary>
@@ -132,8 +121,8 @@ public sealed class BookPrintingProcessSteps
         Current.Should().NotBeNull();
         _exception = await _captureAsync(async () =>
         {
-            Current = await _context.DispatchRequestAsync<CancelBookPrintProcessRequest, BookPrintProcessResponse>(
-                new CancelBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
+            Current = await _context.DispatchRequestAsync<CancelBookPrintProcessRequest.V1, BookPrintProcessResponse>(
+                new CancelBookPrintProcessRequest.V1 { Id = Current!.Id }).ConfigureAwait(false);
             return Current;
         }).ConfigureAwait(false);
     }

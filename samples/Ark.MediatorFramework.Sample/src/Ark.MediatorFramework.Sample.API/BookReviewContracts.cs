@@ -32,38 +32,44 @@ public sealed record BookReview
 }
 
 /// <summary>Creates a review for a book.</summary>
-[HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reviews")]
-[RebusMessage(OwnerQueue = "ark-mediator-sample")]
-[RequireScopePolicy(ApplicationScopes.BookReviewsWrite)]
-public sealed record CreateBookReviewRequest :
-    IRequest<CreateBookReviewRequest, BookReview>
+public static class CreateBookReviewRequest
 {
-    /// <summary>Gets the reviewed book identifier.</summary>
-    [HttpRoute]
-    public Guid BookId { get; init; }
+    /// <summary>Version one of the book-review creation request.</summary>
+    [HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reviews")]
+    [RebusMessage(OwnerQueue = "ark-mediator-sample")]
+    [RequireScopePolicy(ApplicationScopes.BookReviewsWrite)]
+    public sealed record V1 : IRequest<V1, BookReview>
+    {
+        /// <summary>Gets the reviewed book identifier.</summary>
+        [HttpRoute]
+        public Guid BookId { get; init; }
 
-    /// <summary>Gets the rating from one to five.</summary>
-    public int Rating { get; init; }
+        /// <summary>Gets the rating from one to five.</summary>
+        public int Rating { get; init; }
 
-    /// <summary>Gets the review text.</summary>
-    public string Text { get; init; } = string.Empty;
+        /// <summary>Gets the review text.</summary>
+        public string Text { get; init; } = string.Empty;
+    }
 }
 
 /// <summary>Lists reviews written for a book.</summary>
-[HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reviews")]
-[RequireScopePolicy(ApplicationScopes.BookReviewsRead)]
-public sealed record ListBookReviewsQuery :
-    IQuery<ListBookReviewsQuery, IReadOnlyList<BookReview>>
+public static class ListBookReviewsQuery
 {
-    /// <summary>Gets the reviewed book identifier.</summary>
-    [HttpRoute]
-    public Guid BookId { get; init; }
+    /// <summary>Version one of the book-review list query.</summary>
+    [HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reviews")]
+    [RequireScopePolicy(ApplicationScopes.BookReviewsRead)]
+    public sealed record V1 : IQuery<V1, IReadOnlyList<BookReview>>
+    {
+        /// <summary>Gets the reviewed book identifier.</summary>
+        [HttpRoute]
+        public Guid BookId { get; init; }
 
-    /// <summary>Gets the number of reviews to skip.</summary>
-    [HttpQuery]
-    public int Skip { get; init; }
+        /// <summary>Gets the number of reviews to skip.</summary>
+        [HttpQuery]
+        public int Skip { get; init; }
 
-    /// <summary>Gets the maximum number of reviews to return.</summary>
-    [HttpQuery]
-    public int Limit { get; init; } = 25;
+        /// <summary>Gets the maximum number of reviews to return.</summary>
+        [HttpQuery]
+        public int Limit { get; init; } = 25;
+    }
 }
