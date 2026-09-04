@@ -789,13 +789,19 @@ public sealed class GeneratorSnapshotTests
             using ProtoBuf;
             public sealed record Response(Inner Value);
             public sealed record Inner([property: ProtoMember(1)] string Name);
-            [Versioning(Introduced = 1, Retired = 3)]
-            [HttpEndpoint("GET", "/v{version}/items")]
-            [GrpcMethod("GetItem")]
-            public sealed class GetItem : IQuery<Response>
+            public static class Operations
             {
-                [ProtoMember(1)]
-                public int Id { get; set; }
+                public static class Items
+                {
+                    [Versioning(Introduced = 1, Retired = 3)]
+                    [HttpEndpoint("GET", "/v{version}/items")]
+                    [GrpcMethod("GetItem")]
+                    public sealed class GetItem : IQuery<Response>
+                    {
+                        [ProtoMember(1)]
+                        public int Id { get; set; }
+                    }
+                }
             }
             """;
 
@@ -804,7 +810,8 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem.Id : int");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
         first.Should().NotContain("HTTP GET");
