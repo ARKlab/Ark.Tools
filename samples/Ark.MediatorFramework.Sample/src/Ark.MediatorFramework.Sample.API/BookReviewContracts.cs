@@ -33,6 +33,7 @@ public sealed record BookReview
 
 /// <summary>Creates a review for a book.</summary>
 [HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reviews")]
+[RebusMessage(OwnerQueue = "ark-mediator-sample")]
 [RequireScopePolicy(ApplicationScopes.BookReviewsWrite)]
 public sealed record CreateBookReviewRequest :
     IRequest<CreateBookReviewRequest, BookReview>

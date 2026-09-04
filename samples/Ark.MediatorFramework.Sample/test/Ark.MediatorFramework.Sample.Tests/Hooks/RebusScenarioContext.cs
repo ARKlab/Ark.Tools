@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.RebusProcessor;
+using Ark.MediatorFramework.Sample.API;
 
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
@@ -56,6 +57,20 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         await _sampleContext.Application.SendAsync(new FailingRebusRequest
         {
             Reason = reason,
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>Sends a book review through the background bus.</summary>
+    /// <param name="bookId">The book receiving the review.</param>
+    /// <param name="rating">The review rating.</param>
+    /// <param name="text">The review text.</param>
+    public async Task SendBookReviewAsync(Guid bookId, int rating, string text)
+    {
+        await _sampleContext.Application.SendAsync(new CreateBookReviewRequest
+        {
+            BookId = bookId,
+            Rating = rating,
+            Text = text,
         }).ConfigureAwait(false);
     }
 
