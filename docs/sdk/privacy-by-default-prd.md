@@ -1120,7 +1120,12 @@ benefit every Vogen user, and reduce our own divergence if we ever revisit:
 2. `Conversions.Protobuf` (protobuf-net surrogate generation) — a serializer flag
    in the same category as the accepted `MessagePack`/`XmlSerializable` ones.
 
-These are filed as good-citizen upstream work, not as prerequisites for this PRD.
+These are filed as good-citizen upstream work, not as prerequisites for this
+PRD, and they are **not scheduled**: Ark.Tools does not use Vogen, so they are
+recorded as a draft in
+[`progress/future-improvements.md`](progress/future-improvements.md). Until
+someone adopts Vogen, `ARKPII010` reporting the trap with the manual workaround
+in its message is the whole answer.
 
 ### 14.4 What Ark actually implements (and does not)
 
@@ -1189,11 +1194,13 @@ green.
 | [PII-IMP-09](progress/tasks/compliance/PII-IMP-09-test-data-rules.md) | `ARKPII006` + `Ark.Tools.Reqnroll` fakes | §6.7 |
 | [PII-IMP-10](progress/tasks/compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, `ArkComplianceMode`, `LOGGEN*` escalation, `AddArkRedaction()`, `ARKPII013`, docs | §9, §10, §13.3 |
 | [PII-IMP-11](progress/tasks/compliance/PII-IMP-11-reference-project-adoption.md) | Reference-project adoption, end-to-end and AoT tests | §11, §12 |
-| [PII-IMP-12](progress/tasks/compliance/PII-IMP-12-vogen-upstream-contributions.md) | Upstream `DebuggerAttributeGeneration.None` and `Conversions.Protobuf` | §14.3 |
 
-Deferred follow-ups, deliberately not tasks yet: EF Core value converters and
-Orleans surrogates for sensitive value objects (§6.2) — they must land carrying
-the storage and versioning compliance semantics, not as bare converters.
+Deliberately **not** tasks, recorded as drafts in
+[`progress/future-improvements.md`](progress/future-improvements.md): the
+upstream Vogen contributions of §14.3 (Ark.Tools does not use Vogen, so they are
+contribution work for a dependency nobody has taken), and EF Core / Orleans
+targets for sensitive value objects (§6.2) — they must land carrying the storage
+and versioning compliance semantics, not as bare converters.
 
 ## 17. Decisions
 

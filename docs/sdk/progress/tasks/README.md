@@ -78,11 +78,13 @@ SDK-IMP-03's asset conventions.
 | [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Pending |
 | [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Pending |
 | [PII-IMP-11](compliance/PII-IMP-11-reference-project-adoption.md) | ReferenceProject adoption and end-to-end proof | Migration | Pending |
-| [PII-IMP-12](compliance/PII-IMP-12-vogen-upstream-contributions.md) | Upstream Vogen contributions | Upstream | Pending |
 
 PII-IMP-01 unblocks everything. PII-IMP-02, PII-IMP-04, and PII-IMP-07 can then
 proceed in parallel; PII-IMP-03 follows PII-IMP-02, and PII-IMP-05, PII-IMP-06,
 PII-IMP-08, and PII-IMP-09 follow PII-IMP-04. PII-IMP-10 needs the analyzer,
 surface, and runtime layers before it can package their defaults, and
-PII-IMP-11 is last because it consumes all of them. PII-IMP-12 is external
-work with no dependants.
+PII-IMP-11 is last because it consumes all of them.
+
+Upstream Vogen contributions are **not** on this board: Ark.Tools does not use
+Vogen, so they are recorded as a draft in
+[`../future-improvements.md`](../future-improvements.md) instead.
