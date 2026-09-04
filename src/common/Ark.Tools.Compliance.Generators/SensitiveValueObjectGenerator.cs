@@ -41,12 +41,20 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true);
 
+    private static readonly DiagnosticDescriptor _invalidHook = new(
+        "ARKPII204",
+        "Invalid sensitive value object hook",
+        "Sensitive value object '{0}' declares '{1}' with an unsupported signature; it must be 'private static {2} {1}(string value)'",
+        "Compliance",
+        DiagnosticSeverity.Error,
+        true);
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var values = context.SyntaxProvider.CreateSyntaxProvider(
-                static (node, _) => node is AttributeSyntax attribute
-                    && attribute.Name.ToString().StartsWith("SensitiveValueObject", StringComparison.Ordinal),
+        var values = context.SyntaxProvider.ForAttributeWithMetadataName(
+                _attributeName,
+                static (node, _) => node is StructDeclarationSyntax,
                 static (ctx, _) => _analyze(ctx))
             .Where(static value => value is not null);
 
@@ -59,24 +67,19 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
                 return;
             }
 
-            spc.AddSource(model.HintName, model.Source!);
+            spc.AddSource(model.HintName!, model.Source!);
         });
     }
 
-    private static Model? _analyze(GeneratorSyntaxContext context)
+    private static Model? _analyze(GeneratorAttributeSyntaxContext context)
     {
-        if (context.Node is not AttributeSyntax
-            || context.Node.Parent?.Parent is not StructDeclarationSyntax declaration
-            || context.SemanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol type)
+        if (context.TargetNode is not StructDeclarationSyntax declaration
+            || context.TargetSymbol is not INamedTypeSymbol type)
         {
             return null;
         }
 
-        var attribute = type.GetAttributes().FirstOrDefault(attribute =>
-            attribute.AttributeClass?.Name == "SensitiveValueObjectAttribute"
-            && attribute.AttributeClass.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance");
-        if (attribute is null)
-            return null;
+        var attribute = context.Attributes[0];
 
         var location = declaration.GetLocation();
         var typeName = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
@@ -101,21 +104,52 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             return new Model(null, null, Diagnostic.Create(_clearTextToString, location, typeName));
         }
 
+        var validateHook = _findHook(type, "_validate", "Ark.Tools.Compliance.ValidationResult", out var invalidValidate);
+        if (invalidValidate)
+        {
+            return new Model(null, null, Diagnostic.Create(
+                _invalidHook, location, typeName, "_validate", "global::Ark.Tools.Compliance.ValidationResult"));
+        }
+
+        var normalizeHook = _findHook(type, "_normalize", "string", out var invalidNormalize);
+        if (invalidNormalize)
+        {
+            return new Model(null, null, Diagnostic.Create(_invalidHook, location, typeName, "_normalize", "string"));
+        }
+
         var redaction = _getEnumValue(attribute, 0, "Redaction", 0);
         var serialization = _getEnumValue(attribute, 1, "Serialization", 3);
-        var hasValidate = type.GetMembers("_validate").OfType<IMethodSymbol>().Any(_isStringHook);
-        var hasNormalize = type.GetMembers("_normalize").OfType<IMethodSymbol>().Any(_isStringHook);
+        var hasDapper = context.SemanticModel.Compilation.GetTypeByMetadataName("Dapper.SqlMapper") is not null;
         return new Model(
-            type,
-            new Settings(redaction, serialization, hasValidate, hasNormalize),
+            _hintName(type),
+            _emit(type, new Settings(redaction, serialization, validateHook, normalizeHook, hasDapper)),
             null);
     }
 
-    private static bool _isStringHook(IMethodSymbol method)
+    private static bool _findHook(INamedTypeSymbol type, string name, string returnType, out bool invalid)
+    {
+        var candidates = type.GetMembers(name).OfType<IMethodSymbol>().ToArray();
+        var valid = candidates.Any(method => _isStringHook(method, returnType));
+        invalid = !valid && candidates.Length > 0;
+        return valid;
+    }
+
+    private static bool _isStringHook(IMethodSymbol method, string returnType)
     {
         return method.IsStatic
             && method.Parameters.Length == 1
-            && method.Parameters[0].Type.SpecialType == SpecialType.System_String;
+            && method.Parameters[0].Type.SpecialType == SpecialType.System_String
+            && (returnType == "string"
+                ? method.ReturnType.SpecialType == SpecialType.System_String
+                : method.ReturnType.ToDisplayString() == returnType);
+    }
+
+    private static string _hintName(INamedTypeSymbol type)
+    {
+        return (type.ContainingNamespace.IsGlobalNamespace
+            ? type.Name
+            : type.ContainingNamespace.ToDisplayString().Replace('.', '_') + "." + type.Name)
+            + ".SensitiveValueObject.g.cs";
     }
 
     private static int _getEnumValue(AttributeData attribute, int argumentIndex, string name, int defaultValue)
@@ -215,11 +249,11 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.AppendLine("    {");
         builder.AppendLine("        if (string.IsNullOrWhiteSpace(purpose.Reason))");
         builder.AppendLine("            throw new global::System.ArgumentException(\"A compliance purpose is required.\", nameof(purpose));");
-        builder.AppendLine("        return _value;");
+        builder.AppendLine("        return _value ?? string.Empty;");
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
-        builder.AppendLine("    public override string ToString() => _redact(_value);");
+        builder.AppendLine("    public override string ToString() => _redact(_value ?? string.Empty);");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
         builder.AppendLine("    public string ToString(string? format, global::System.IFormatProvider? formatProvider) => ToString();");
@@ -267,7 +301,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
 
         if ((settings.Serialization & 1) != 0)
             _emitJson(builder, typeName);
-        if ((settings.Serialization & 2) != 0)
+        if ((settings.Serialization & 2) != 0 && settings.HasDapper)
             _emitDapper(builder, typeName);
         _emitTypeConverter(builder, typeName);
 
@@ -353,18 +387,14 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
     }
 
     private readonly record struct Model(
-        INamedTypeSymbol? Type,
-        Settings? Settings,
-        Diagnostic? Diagnostic)
-    {
-        public string HintName => Type is null
-            ? "SensitiveValueObjectError.g.cs"
-            : (Type.ContainingNamespace.IsGlobalNamespace
-                ? Type.Name
-                : Type.ContainingNamespace.ToDisplayString().Replace('.', '_') + "." + Type.Name)
-              + ".SensitiveValueObject.g.cs";
-        public string? Source => Type is null || Settings is null ? null : _emit(Type, Settings.Value);
-    }
+        string? HintName,
+        string? Source,
+        Diagnostic? Diagnostic);
 
-    private readonly record struct Settings(int Redaction, int Serialization, bool HasValidate, bool HasNormalize);
+    private readonly record struct Settings(
+        int Redaction,
+        int Serialization,
+        bool HasValidate,
+        bool HasNormalize,
+        bool HasDapper);
 }

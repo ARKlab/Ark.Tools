@@ -31,7 +31,7 @@ public sealed class ComplianceFoundationTests
 
         value.ToString().Should().Be("***");
         $"{value}".Should().Be("***");
-        string.Format("{0}", value.ToString()).Should().Be("***");
+        string.Format("{0}", value).Should().Be("***");
         value.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
         new string(buffer, 0, written).Should().Be("***");
         value.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
@@ -120,10 +120,31 @@ public sealed class ComplianceFoundationTests
             {
                 public override string ToString() => "clear";
             }
+            [SensitiveValueObject<string>] public readonly partial struct WrongHook
+            {
+                private static bool _validate(string value) => true;
+            }
             """);
 
         diagnostics.Select(static diagnostic => diagnostic.Id)
-            .Should().Contain(["ARKPII201", "ARKPII202", "ARKPII203"]);
+            .Should().Contain(["ARKPII201", "ARKPII202", "ARKPII203", "ARKPII204"]);
+    }
+
+    /// <summary>
+    /// The generator recognizes fully qualified attribute usages.
+    /// </summary>
+    [TestMethod]
+    public void Generator_HandlesFullyQualifiedAttribute()
+    {
+        var generated = _runGenerator(
+            """
+            [Ark.Tools.Compliance.SensitiveValueObject<string>(
+                Ark.Tools.Compliance.ArkRedaction.Erase,
+                Ark.Tools.Compliance.SerializationTargets.None)]
+            public readonly partial struct Qualified { }
+            """);
+
+        generated.Should().Contain("readonly partial struct Qualified");
     }
 
     /// <summary>

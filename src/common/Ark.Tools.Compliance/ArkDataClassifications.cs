@@ -35,34 +35,3 @@ public static class ArkDataClassifications
     /// </summary>
     public static DataClassification Pseudonymous => new(TaxonomyName, nameof(Pseudonymous));
 }
-
-/// <summary>
-/// Compatibility name for Ark's data classification taxonomy.
-/// </summary>
-public static class ArkComplianceTaxonomy
-{
-    /// <summary>
-    /// The name of the Ark classification taxonomy.
-    /// </summary>
-    public const string TaxonomyName = ArkDataClassifications.TaxonomyName;
-
-    /// <summary>
-    /// Directly identifies a natural person.
-    /// </summary>
-    public static DataClassification PersonalData => ArkDataClassifications.PersonalData;
-
-    /// <summary>
-    /// Represents special categories of personal data.
-    /// </summary>
-    public static DataClassification SensitivePersonalData => ArkDataClassifications.SensitivePersonalData;
-
-    /// <summary>
-    /// Represents credentials, keys, tokens, and connection strings.
-    /// </summary>
-    public static DataClassification Secret => ArkDataClassifications.Secret;
-
-    /// <summary>
-    /// Represents data that is re-identifiable only with additional data.
-    /// </summary>
-    public static DataClassification Pseudonymous => ArkDataClassifications.Pseudonymous;
-}

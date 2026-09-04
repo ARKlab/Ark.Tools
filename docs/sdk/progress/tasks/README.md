@@ -49,7 +49,7 @@ choices and rejected alternatives are in
 | [SDK-IMP-08](SDK-IMP-08-compatibility-and-release-gate.md) | Compatibility matrix and paired-package release gate | Validation | Cancelled |
 | [SDK-IMP-09](SDK-IMP-09-reference-project-migration.md) | ReferenceProject migration | Migration | Complete |
 | [SDK-IMP-10](SDK-IMP-10-documentation-and-adoption.md) | Consumer documentation and adoption guidance | Documentation | Pending |
-| [SDK-IMP-11](SDK-IMP-11-sonaranalyzer-csharp-evaluation.md) | `SonarAnalyzer.CSharp` evaluation | Analyzer evaluation | Pending analysis (draft) |
+| [SDK-IMP-11](SDK-IMP-11-sonaranalyzer-csharp-evaluation.md) | `SonarAnalyzer.CSharp` evaluation | Analyzer evaluation | Complete |
 | [SDK-IMP-12](SDK-IMP-12-devskim-evaluation.md) | `Microsoft.CST.DevSkim` evaluation | Analyzer evaluation | Pending analysis (draft) |
 
 SDK-IMP-05, SDK-IMP-06, and SDK-IMP-07 can proceed in parallel after
@@ -66,8 +66,8 @@ SDK-IMP-03's asset conventions.
 
 | Task | Title | Category | Status |
 | --- | --- | --- | --- |
-| [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Done |
-| [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Done |
+| [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Complete |
+| [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Complete |
 | [PII-IMP-03](compliance/PII-IMP-03-serialization-targets.md) | Serialization targets incl. OpenAPI/Swashbuckle | Generator | Pending |
 | [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Pending |
 | [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Pending |
