@@ -96,7 +96,7 @@ public sealed class TestHost
                 };
                 var connManager = new SqlConnectionManager();
                 var provider = new SqlStateProvider<VoidExtensions>(config, connManager);
-                
+
                 // Ensure tables exist
                 provider.EnsureTableAreCreated();
                 _dbSchemaInitialized = true;

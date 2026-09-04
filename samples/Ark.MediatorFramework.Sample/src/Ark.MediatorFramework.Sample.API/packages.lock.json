@@ -88,6 +88,12 @@
           "System.IO.Hashing": "6.0.0"
         }
       },
+      "Polyfill": {
+        "type": "Direct",
+        "requested": "[11.2.0, )",
+        "resolved": "11.2.0",
+        "contentHash": "3dDzS+dsKI9Qlb0lm0svPk/hFx1CuX2RHM0jHenTGuNI0jTw8fsXi3u4r/PI8sTf5PGKZKS4TaWQVybuiKSbVQ=="
+      },
       "Ben.Demystifier": {
         "type": "Transitive",
         "resolved": "0.4.1",

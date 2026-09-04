@@ -80,7 +80,7 @@ public sealed class SqlStateProviderContext
 
     // ===== VERBS (Given/When/Then) =====
     // These verbs are moved here from step classes as they only delegate to context methods
-    
+
     /// <summary>
     /// Given verb: Initializes SQL Server database.
     /// Moved from SqlStateProviderSteps as it only calls InitializeDatabase().

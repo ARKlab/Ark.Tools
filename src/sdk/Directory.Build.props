@@ -1,8 +1,33 @@
 <Project>
   <PropertyGroup>
-    <ArkToolsSdkProject>true</ArkToolsSdkProject>
+    <_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+    
     <LangVersion>14.0</LangVersion>
+
+    <!-- Default version for local development - allows samples to use locally built packages -->
+    <!-- Override with -p:Version=x.y.z during release builds -->
+    <Version Condition="'$(Version)' == ''">999.9.9</Version>
   </PropertyGroup>
 
-  <Import Project="../../Directory.Build.props" />
+
+	<PropertyGroup Label="NuGet Package Info" Condition="'$(IsPackable)' != 'false'">
+
+		<PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>ark-dark.png</PackageIcon>
+		<RepositoryUrl>https://github.com/ARKlab/Ark.Tools</RepositoryUrl>
+		<Authors>ARK Labs</Authors>
+		<Company>ARK S.r.l</Company>
+		<Copyright>Copyright (C) 2026 ARK S.r.l</Copyright>
+
+	</PropertyGroup>
+
+   
+	<ItemGroup Condition="'$(IsPackable)' != 'false'">
+		<None Include="$(MSBuildThisFileDirectory)../../README.md" Pack="true" PackagePath="README.md" Condition="'$(IsPackable)' == 'true'"/>
+		<None Include="$(MSBuildThisFileDirectory)../../ark-dark.png" Pack="true" PackagePath="ark-dark.png" Condition="'$(IsPackable)' == 'true'"/>
+	</ItemGroup>
+
+
 </Project>

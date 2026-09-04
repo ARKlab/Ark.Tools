@@ -101,7 +101,7 @@ public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAcces
             {
                 if (mi.Name != "Apply")
                     return false;
-                    
+
                 var parameters = mi.GetParameters();
                 return parameters.Length == 2
                     && aggregateEventType.GetTypeInfo().IsAssignableFrom(parameters[0].ParameterType)

@@ -29,8 +29,6 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
-          # Azure Sql is Enterprise - match it
-          MSSQL_PID: EnterpriseDeveloper
         options: >-
           --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
           --health-interval=10s
@@ -95,7 +93,7 @@ jobs:
       run: dotnet pack Ark.Tools.slnx --no-restore --configuration Debug --output "${{ runner.temp }}/ark-tools-packages"
 
     - name: Test
-      run: dotnet test --no-build --no-restore --configuration Debug --report-trx --coverage --crashdump --crashdump-type mini --hangdump --hangdump-timeout 10m --hangdump-type mini --minimum-expected-tests 1
+      run: dotnet test --no-build --no-restore --configuration Debug
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
     - uses: actions/upload-artifact@v7  # upload test results

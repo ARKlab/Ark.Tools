@@ -490,10 +490,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
             var responseETagProperties = responseType is INamedTypeSymbol namedResponse && etagAttr is not null
                 ? AllProperties(namedResponse)
-                    .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
-                    .Where(property => property.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr)))
-                    .ToArray()
+.Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic && property.GetAttributes().Any(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr))).ToArray()
                 : Array.Empty<IPropertySymbol>();
             if (etagProperties.Length > 1)
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.DuplicateETagProperty, type.Name, GetLocation(http)));
@@ -590,9 +588,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var propertyNames = properties.Select(property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var constructor = type.InstanceConstructors
                 .Where(constructor => constructor.DeclaredAccessibility == Accessibility.Public)
-                .Where(constructor => constructor.Parameters.Length > 0)
-                .Where(constructor => constructor.Parameters.All(parameter => propertyNames.Contains(parameter.Name)))
-                .OrderByDescending(constructor => constructor.Parameters.Length)
+.Where(constructor => constructor.Parameters.Length > 0 && constructor.Parameters.All(parameter => propertyNames.Contains(parameter.Name))).OrderByDescending(constructor => constructor.Parameters.Length)
                 .FirstOrDefault();
             return constructor is null
                 ? ImmutableArray<string>.Empty
@@ -1033,10 +1029,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             return property.IsStringCollection
                 ? "string[]"
                 : property.TypeFullName switch
-            {
-                _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
-                _ => property.TypeFullName,
-            };
+                {
+                    _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
+                    _ => property.TypeFullName,
+                };
         }
 
         private static string BodyType(EndpointModel endpoint)

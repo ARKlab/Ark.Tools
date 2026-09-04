@@ -4,8 +4,6 @@ using NLog;
 
 using NodaTime;
 
-using System.Globalization;
-
 using WebApplicationDemo.Dto;
 
 namespace WebApplicationDemo.Api.Queries;

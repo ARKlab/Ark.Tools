@@ -23,8 +23,8 @@ public class FluentFtpClientFactoryTests
             config.SocketKeepAlive = false;
         });
 
-        using var setup = CreateConnectionFromFactory(ftpClientFactory, "ftp://client-factory.example.com");
-        var clientConfig = GetFluentFtpConfig(setup.Connection);
+        using var setup = _createConnectionFromFactory(ftpClientFactory, "ftp://client-factory.example.com");
+        var clientConfig = _getFluentFtpConfig(setup.Connection);
 
         callbackHost.Should().Be("client-factory.example.com");
         clientConfig.SocketKeepAlive.Should().BeFalse();
@@ -40,14 +40,14 @@ public class FluentFtpClientFactoryTests
             config.SocketKeepAlive = false;
         });
 
-        using var setup = CreateConnectionFromFactory(ftpClientPoolFactory, "ftp://pool-factory.example.com");
-        var clientConfig = GetFluentFtpConfig(setup.Connection);
+        using var setup = _createConnectionFromFactory(ftpClientPoolFactory, "ftp://pool-factory.example.com");
+        var clientConfig = _getFluentFtpConfig(setup.Connection);
 
         callbackHost.Should().Be("pool-factory.example.com");
         clientConfig.SocketKeepAlive.Should().BeFalse();
     }
 
-    private static FluentFTP.FtpConfig GetFluentFtpConfig(FluentFtpClientConnection connection)
+    private static FluentFTP.FtpConfig _getFluentFtpConfig(FluentFtpClientConnection connection)
     {
         var clientField = typeof(FluentFtpClientConnection).GetField("_client", BindingFlags.Instance | BindingFlags.NonPublic);
         clientField.Should().NotBeNull();
@@ -68,7 +68,7 @@ public class FluentFtpClientFactoryTests
         return ftpConfig;
     }
 
-    private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientFactory ftpClientFactory, string uri)
+    private static ConnectionSetup _createConnectionFromFactory(FluentFtpClientFactory ftpClientFactory, string uri)
     {
         var connectionFactoryField = typeof(DefaultFtpClientFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
         connectionFactoryField.Should().NotBeNull();
@@ -81,7 +81,7 @@ public class FluentFtpClientFactoryTests
         return new ConnectionSetup(connection.Should().BeOfType<FluentFtpClientConnection>().Subject, ftpConfig);
     }
 
-    private static ConnectionSetup CreateConnectionFromFactory(FluentFtpClientPoolFactory ftpClientPoolFactory, string uri)
+    private static ConnectionSetup _createConnectionFromFactory(FluentFtpClientPoolFactory ftpClientPoolFactory, string uri)
     {
         var connectionFactoryField = typeof(DefaultFtpClientPoolFactory).GetField("_connectionFactory", BindingFlags.Instance | BindingFlags.NonPublic);
         connectionFactoryField.Should().NotBeNull();

@@ -4,26 +4,45 @@
     <TargetFrameworks></TargetFrameworks>
     <IsPackable>true</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    <PackageId>Ark.Tools.Sdk</PackageId>
-    <Description>Ark.Tools additional MSBuild SDK.</Description>
+    
+    <Description>Ark.Tools MSBuild SDK.</Description>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <!-- NU5128 is expected because this package intentionally contains only MSBuild assets. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <IncludeSymbols>false</IncludeSymbols>
     <GenerateSBOM>false</GenerateSBOM>
-    <ArkToolsSdkProject>true</ArkToolsSdkProject>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_ArkToolsSdkVersionedCommonProps>$(IntermediateOutputPath)generated/ark-sdk/common.props</_ArkToolsSdkVersionedCommonProps>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="Sdk\Sdk.targets" Pack="true" PackagePath="Sdk/Sdk.targets" />
-    <None Include="$(IntermediateOutputPath)Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
+    <None Include="Sdk\Sdk.props" Pack="true" PackagePath="Sdk/Sdk.props" />
+    <None Include="common\common.targets" Pack="true" PackagePath="common\common.targets" />
+    <None Include="$(_ArkToolsSdkVersionedCommonProps)" Pack="true" PackagePath="common\common.props" />
+    <None Include="common\tests.targets" Pack="true" PackagePath="common\tests.targets" />
+    <None Include="common\ContinuousIntegrationBuild.props" Pack="true" PackagePath="common/ContinuousIntegrationBuild.props" />
   </ItemGroup>
 
-  <Target Name="GenerateSdkProps" BeforeTargets="GenerateNuspec">
-    <Copy SourceFiles="Sdk\Sdk.props" DestinationFiles="$(IntermediateOutputPath)Sdk.props" />
-    <XmlPoke
-      XmlInputPath="$(IntermediateOutputPath)Sdk.props"
-      Query="/Project/ItemGroup/PackageReference[@Include='Ark.Tools.Build']/@Version"
-      Value="$(PackageVersion)" />
+  <Target Name="GenerateSdkVersionedAssets" BeforeTargets="GenerateNuspec;Pack">
+    <PropertyGroup>
+      <_ArkToolsBuildPackageVersion Condition="'$(PackageVersion)' != ''">$(PackageVersion)</_ArkToolsBuildPackageVersion>
+      <_ArkToolsBuildPackageVersion Condition="'$(_ArkToolsBuildPackageVersion)' == '' and '$(Version)' != ''">$(Version)</_ArkToolsBuildPackageVersion>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(IntermediateOutputPath)generated/ark-sdk/" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)common\common.props"
+          DestinationFiles="$(_ArkToolsSdkVersionedCommonProps)"
+          SkipUnchangedFiles="true" />
+    <XmlPoke XmlInputPath="$(_ArkToolsSdkVersionedCommonProps)"
+             Query="/Project/ItemGroup/PackageReference[@Include='Ark.Tools.Build']/@Version"
+             Value="$(_ArkToolsBuildPackageVersion)" />
+
+    <ItemGroup>
+      <None Remove="common\common.props" />
+    </ItemGroup>
   </Target>
+
 </Project>

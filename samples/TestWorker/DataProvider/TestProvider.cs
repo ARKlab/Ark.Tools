@@ -5,8 +5,6 @@ using NLog;
 
 using NodaTime;
 
-using System.Globalization;
-
 using TestWorker.Dto;
 
 namespace TestWorker.DataProvider;
@@ -40,7 +38,7 @@ public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, T
             ).ToList();
 
             return metadataList.AsEnumerable();
-        });
+        }, ctk);
     }
 
     public Task<Test_File?> GetResource(Test_FileMetadataDto metadata, IResourceTrackedState<VoidExtensions>? lastState, CancellationToken ctk = default)
@@ -55,6 +53,6 @@ public class TestProvider : IResourceProvider<Test_FileMetadataDto, Test_File, T
             _logger.Info(CultureInfo.InvariantCulture, "File {FileName} downloaded successfully", downloadedFile.Metadata.FileName);
 
             return downloadedFile;
-        });
+        }, ctk);
     }
 }

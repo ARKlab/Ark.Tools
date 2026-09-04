@@ -126,10 +126,10 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     #region Caching
 
     private async Task<AccessTokenResponse> _getToken<TRequest>(
-        TRequest request, 
-        Func<TRequest, string> getKey, 
+        TRequest request,
+        Func<TRequest, string> getKey,
         Func<TRequest, CancellationToken, Task<AccessTokenResponse>> getTokenAsync,
-        CancellationToken cancellationToken = default) 
+        CancellationToken cancellationToken = default)
         where TRequest : notnull
     {
         var key = getKey(request);

@@ -17,7 +17,7 @@ internal sealed class ArkStartupBase
     {
         Configuration = configuration;
     }
-    
+
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
     public void ConfigureServices(IServiceCollection services)
     {

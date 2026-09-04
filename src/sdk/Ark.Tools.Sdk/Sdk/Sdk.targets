@@ -1,12 +1,7 @@
 <Project>
   <Import Project="../../Ark.Tools.Build/build/Ark.Tools.Build.common.targets"
-          Condition="'$(ArkToolsSdkSourceBuild)' == 'true'" />
+          Condition="'$(_ArkToolsSdkSourceBuild)' == 'true' and '$(EnableArkToolsBuild)' != 'false'" />
 
-  <ItemGroup Condition="'$(ArkToolsSdkSourceBuild)' == 'true' and '$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(ArkToolsSdkProject)' != 'true'">
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
-    <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
-    <PackageReference Include="ErrorProne.NET.CoreAnalyzers" PrivateAssets="all" Condition="'$(EnableArkToolsErrorProne)' != 'false' and '$(DisableErrorProneAnalyzers)' != 'true'" />
-  </ItemGroup>
+  <Import Project="$(MSBuildThisFileDirectory)../common/common.targets" Condition="'$(EnableArkToolsBuild)' != 'false'" />
+   
 </Project>

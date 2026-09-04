@@ -57,6 +57,7 @@
     <Project Path="src/common/Ark.Tools.Sql/Ark.Tools.Sql.csproj" />
     <Project Path="src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
   </Folder>
+  <Folder Name="/src/" />
   <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
@@ -128,7 +129,6 @@
   </Folder>
   <Folder Name="/samples/Ark.Reference/">
     <Project Path="samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
-    <File Path="samples/Ark.ReferenceProject/.editorconfig" />
     <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.buildStage.yml" />
     <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.deployStage.yml" />
     <File Path="samples/Ark.ReferenceProject/Ark.Reference.Core.yml" />
@@ -187,7 +187,6 @@
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".devcontainer/docker-compose.yml" />
-    <File Path=".editorconfig" />
     <File Path="Ark.Tools.sln.licenseheader" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props.disable" />

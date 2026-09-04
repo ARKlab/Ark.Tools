@@ -78,16 +78,16 @@ library, or VSTest compatibility for the consumer.
 
 ## Acceptance
 
-- [ ] Classification and topology follow explicit-first semantics.
-- [ ] All seven MTP extensions and every switch are tested.
-- [ ] TRX, coverage, dump, hang timeout, and minimum-test defaults are proven.
-- [ ] Analyzer optimization and its opt-out are proven.
-- [ ] MTP switches, dump settings, and CI artifact responsibility are
+- [x] Classification and topology follow explicit-first semantics.
+- [x] All seven MTP extensions and every switch are tested.
+- [x] TRX, coverage, dump, hang timeout, and minimum-test defaults are proven.
+- [x] Analyzer optimization and its opt-out are proven.
+- [x] MTP switches, dump settings, and CI artifact responsibility are
   documented.
-- [ ] Package graphs prove Ark injects no framework/assertion/Reqnroll/VSTest
+- [x] Package graphs prove Ark injects no framework/assertion/Reqnroll/VSTest
   dependency.
-- [ ] The [task board](README.md) status for SDK-IMP-06 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] The [task board](README.md) status for SDK-IMP-06 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

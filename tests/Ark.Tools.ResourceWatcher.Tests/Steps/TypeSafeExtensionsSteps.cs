@@ -31,7 +31,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     private SqlStateProvider<VoidExtensions>? _voidStateProvider;
     private SqlStateProvider<TestExtensions>? _typedStateProvider;
     private readonly Dictionary<string, object> _namedProviders = [];
-    
+
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
 
     public TypeSafeExtensionsSteps(TypeSafeExtensionsContext context, SqlStateProviderContext dbContext)
@@ -93,7 +93,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
             DbConnectionString = _dbContext.Config.DbConnectionString,
             ExtensionsJsonContext = TestExtensionsJsonContext.Default
         };
-        
+
         _typedStateProvider = new SqlStateProvider<TestExtensions>(configWithContext, _dbContext.ConnectionManager);
     }
 
@@ -106,7 +106,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
             DbConnectionString = _dbContext.Config.DbConnectionString,
             ExtensionsJsonContext = TestExtensionsJsonContext.Default
         };
-        
+
         var provider = new SqlStateProvider<TestExtensions>(configWithContext, _dbContext.ConnectionManager);
         _namedProviders[providerName] = provider;
     }
@@ -144,7 +144,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void GivenTheResourceHasTypedExtensionWithLastOffsetAndETag(long lastOffset, string etag)
     {
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         _context.CurrentTyped!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset,
@@ -156,7 +156,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void GivenTheResourceHasTypedExtensionWithLastOffsetAndCounter(long lastOffset, int counter)
     {
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         _context.CurrentTyped!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset,
@@ -168,7 +168,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void GivenTheResourceHasTypedExtensionWithLastOffset(long lastOffset)
     {
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         _context.CurrentTyped!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset
@@ -179,7 +179,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void GivenTheResourceHasTypedExtensionWithETag(string etag)
     {
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         var current = _context.CurrentTyped!.Extensions ?? new TestExtensions();
         _context.CurrentTyped.Extensions = current with { ETag = etag };
     }
@@ -188,7 +188,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void GivenTheResourceHasTypedExtensionWithCounter(int counter)
     {
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         var current = _context.CurrentTyped!.Extensions ?? new TestExtensions();
         _context.CurrentTyped.Extensions = current with { Counter = counter };
     }
@@ -198,10 +198,10 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _context.CurrentTyped.Should().NotBeNull();
         _context.CurrentTyped!.Extensions.Should().NotBeNull("Extensions must be initialized before adding metadata");
-        
+
         var metadata = _context.CurrentTyped.Extensions!.Metadata ?? new Dictionary<string, string>(StringComparer.Ordinal);
         metadata[key] = value;
-        
+
         _context.CurrentTyped.Extensions = _context.CurrentTyped.Extensions with { Metadata = metadata };
     }
 
@@ -217,7 +217,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         var state = _context.TypedStatesToSave.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
         state.Should().NotBeNull($"Resource {resourceId} should exist");
-        
+
         state!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset
@@ -231,7 +231,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _voidStateProvider.Should().NotBeNull();
         _context.CurrentVoid.Should().NotBeNull();
-        
+
         await _voidStateProvider!.SaveStateAsync([_context.CurrentVoid!], CancellationToken.None);
     }
 
@@ -240,7 +240,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _voidStateProvider.Should().NotBeNull();
         _context.VoidStatesToSave.Should().NotBeEmpty();
-        
+
         await _voidStateProvider!.SaveStateAsync(_context.VoidStatesToSave, CancellationToken.None);
     }
 
@@ -249,7 +249,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _typedStateProvider.Should().NotBeNull();
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         await _typedStateProvider!.SaveStateAsync([_context.CurrentTyped!], CancellationToken.None);
     }
 
@@ -258,7 +258,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _typedStateProvider.Should().NotBeNull();
         _context.TypedStatesToSave.Should().NotBeEmpty();
-        
+
         await _typedStateProvider!.SaveStateAsync(_context.TypedStatesToSave, CancellationToken.None);
     }
 
@@ -268,7 +268,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<VoidExtensions>)_namedProviders[providerName];
         _context.CurrentVoid.Should().NotBeNull();
-        
+
         await provider.SaveStateAsync([_context.CurrentVoid!], CancellationToken.None);
     }
 
@@ -278,7 +278,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<TestExtensions>)_namedProviders[providerName];
         _context.CurrentTyped.Should().NotBeNull();
-        
+
         await provider.SaveStateAsync([_context.CurrentTyped!], CancellationToken.None);
     }
 
@@ -289,7 +289,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         var state = _context.TypedStatesToSave.FirstOrDefault(s => s.ResourceId.EndsWith(resourceId, StringComparison.Ordinal));
         state.Should().NotBeNull();
-        
+
         state!.Extensions = new TestExtensions
         {
             LastOffset = lastOffset,
@@ -304,7 +304,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _voidStateProvider.Should().NotBeNull();
         tenant = _dbContext.GetUniqueTenant(tenant);
-        
+
         _context.LoadedVoidStates = await _voidStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
     }
 
@@ -313,7 +313,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _typedStateProvider.Should().NotBeNull();
         tenant = _dbContext.GetUniqueTenant(tenant);
-        
+
         _context.LoadedTypedStates = await _typedStateProvider!.LoadStateAsync(tenant, null, CancellationToken.None);
     }
 
@@ -335,12 +335,12 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void ThenTheExtensionsColumnInDatabaseShouldBeNullFor(string resourceId)
     {
         _context.CurrentVoid.Should().NotBeNull();
-        
+
         using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         var extensionsJson = conn.QuerySingleOrDefault<string>(
             "SELECT ExtensionsJson FROM [State] WHERE Tenant = @Tenant AND ResourceId = @ResourceId",
             new { Tenant = _context.CurrentVoid!.Tenant, ResourceId = _context.CurrentVoid.ResourceId });
-        
+
         extensionsJson.Should().BeNull();
     }
 
@@ -440,10 +440,10 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<VoidExtensions>)_namedProviders[providerName];
         tenant = _dbContext.GetUniqueTenant(tenant);
-        
+
         var states = await provider.LoadStateAsync(tenant, [resourceId], CancellationToken.None);
         states.Should().NotBeEmpty();
-        
+
         var state = states.First();
         // Just check that it contains the resource ID (allows for tenant prefix)
         state.ResourceId.Should().Contain(resourceId);
@@ -456,14 +456,14 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
         _namedProviders.Should().ContainKey(providerName);
         var provider = (SqlStateProvider<TestExtensions>)_namedProviders[providerName];
         tenant = _dbContext.GetUniqueTenant(tenant);
-        
+
         var states = await provider.LoadStateAsync(tenant, [resourceId], CancellationToken.None);
         states.Should().NotBeEmpty();
-        
+
         var state = states.First();
         // Just check that it contains the resource ID (allows for tenant prefix)
         state.ResourceId.Should().Contain(resourceId);
-        
+
         _context.LoadedTypedResourceForVerification = state;
     }
 
@@ -472,7 +472,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     {
         _context.LoadedTypedResourceForVerification.Should().NotBeNull();
         var state = _context.LoadedTypedResourceForVerification!;
-        
+
         state.Extensions.Should().NotBeNull();
         state.Extensions!.LastOffset.Should().Be(expectedOffset);
     }

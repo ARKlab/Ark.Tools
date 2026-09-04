@@ -23,7 +23,7 @@ public interface IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensio
     /// <param name="ctk">Cancellation token</param>
     /// <returns>Collection of resource metadata</returns>
     Task<IEnumerable<TMetadata>> GetMetadata(TQueryFilter filter, CancellationToken ctk = default);
-    
+
     /// <summary>
     /// Gets the full resource for the specified metadata.
     /// </summary>

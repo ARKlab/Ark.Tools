@@ -56,7 +56,7 @@ sealed class Program
         }
         catch (Exception ex)
         {
-            _logger.Fatal(ex, "The materializer has gone in error");
+            _logger.Fatal(ex, CultureInfo.InvariantCulture, "The materializer has gone in error");
         }
 
     }

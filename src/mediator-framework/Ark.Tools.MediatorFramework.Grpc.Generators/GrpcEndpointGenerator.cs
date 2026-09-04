@@ -308,9 +308,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     GetLocation(grpc)));
 
             var attachmentProperties = AllProperties(type)
-                .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
-                .Where(property => IsAttachmentType(property.Type, attachmentType) || IsAttachmentCollection(property.Type, attachmentType))
-                .ToArray();
+.Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic && (IsAttachmentType(property.Type, attachmentType) || IsAttachmentCollection(property.Type, attachmentType))).ToArray();
             var attachmentRequest = kind == HandlerKind.Command || attachmentProperties.Length == 0
                 ? AttachmentRequestKind.None
                 : IsAttachmentCollection(attachmentProperties[0].Type, attachmentType)

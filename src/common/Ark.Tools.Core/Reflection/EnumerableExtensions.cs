@@ -60,18 +60,18 @@ public static partial class EnumerableExtensions
         {
             if (String.IsNullOrEmpty(orderBy))
                 return [];
-            
+
             var result = new List<Func<IQueryable<T>, IQueryable<T>>>();
-            
+
             // Use modern MemoryExtensions.Split to avoid allocations
             ReadOnlySpan<char> span = orderBy.AsSpan();
             bool initial = true;
-            
+
             // Process each comma-separated item using SpanSplitEnumerator
             foreach (var itemRange in span.Split(','))
             {
                 ReadOnlySpan<char> item = span[itemRange].Trim();
-                
+
                 if (item.IsEmpty)
                     continue;
 
@@ -80,17 +80,17 @@ public static partial class EnumerableExtensions
                 ReadOnlySpan<char> propertySpan = ReadOnlySpan<char>.Empty;
                 ReadOnlySpan<char> directionSpan = ReadOnlySpan<char>.Empty;
                 int partCount = 0;
-                
+
                 foreach (var partRange in item.Split(' '))
                 {
                     ReadOnlySpan<char> part = item[partRange].Trim();
-                    
+
                     // Skip empty parts (caused by multiple spaces)
                     if (part.IsEmpty)
                         continue;
-                    
+
                     partCount++;
-                    
+
                     if (partCount == 1)
                         propertySpan = part;
                     else if (partCount == 2)
@@ -98,19 +98,19 @@ public static partial class EnumerableExtensions
                     else
                         break; // More than 2 non-empty parts
                 }
-                
+
                 if (partCount > 2)
                     throw new ArgumentException($"Invalid OrderBy string '{item}'. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
-                
+
                 if (propertySpan.IsEmpty)
                     throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 ASC, Property2 DESC", orderByParam);
 
                 SortDirection dir = SortDirection.Ascending;
-                
+
                 if (partCount == 2 && !directionSpan.IsEmpty)
                 {
-                    dir = directionSpan.Equals("desc", StringComparison.OrdinalIgnoreCase) 
-                        ? SortDirection.Descending 
+                    dir = directionSpan.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? SortDirection.Descending
                         : SortDirection.Ascending;
                 }
 
@@ -119,14 +119,14 @@ public static partial class EnumerableExtensions
 
                 initial = false;
             }
-            
+
             return result.ToArray();
         }
 
         [RequiresUnreferencedCode("OrderBy uses string-based property access and expression tree compilation which requires reflection. Property names must be preserved for this to work correctly.")]
         [UnconditionalSuppressMessage("Trimming", "IL2060:UnrecognizedTypeInRuntimeMethod",
             Justification = "The GetMethods call on typeof(Queryable) is safe because Queryable is a framework type that will always be preserved. We're only looking for the OrderBy/ThenBy methods which are fundamental LINQ methods.")]
-        [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern", 
+        [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern",
             Justification = "MakeGenericMethod is called with typeof(T) and the property type. T is the generic parameter of the containing class and will be preserved. The property type comes from PropertyInfo which is obtained through string-based property access that's already marked with RequiresUnreferencedCode.")]
         private static Func<IQueryable<T>, IQueryable<T>> _compileOrderBy(ReadOnlySpan<char> propertyPath, SortDirection direction, bool initial)
         {
@@ -134,22 +134,22 @@ public static partial class EnumerableExtensions
 
             ParameterExpression arg = Expression.Parameter(type, "x");
             Expression expr = arg;
-            
+
             // Split property path by '.' and navigate the property chain
             foreach (var propRange in propertyPath.Split('.'))
             {
                 ReadOnlySpan<char> propSpan = propertyPath[propRange];
-                
+
                 // use reflection (not ComponentModel) to mirror LINQ
                 string propName = propSpan.ToString();
                 PropertyInfo? pi = type.GetProperty(propName);
-                if (pi is null) 
+                if (pi is null)
                     throw new InvalidOperationException($"Property '{propName}' not found in {propertyPath}");
 
                 expr = Expression.Property(expr, pi);
                 type = pi.PropertyType;
             }
-            
+
             Type delegateType = typeof(Func<,>).MakeGenericType(typeof(T), type);
             var lambda = Expression.Lambda(delegateType, expr, arg);
             string methodName = String.Empty;
