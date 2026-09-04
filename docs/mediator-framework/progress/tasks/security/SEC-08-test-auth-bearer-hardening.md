@@ -33,7 +33,7 @@ The remaining bug: a **malformed bearer token** (not parseable as JWT) causes an
 
 ## Acceptance
 
-- [ ] Malformed bearer tests return 401 across the three cases above.
+- [x] Malformed bearer tests return 401 across the three cases above.
 - [x] No restructuring of the env-var auth pattern (per D6).
 - [x] Full solution build + tests green.
 

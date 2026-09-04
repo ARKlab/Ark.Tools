@@ -45,7 +45,7 @@ are intentional and avoid treating the two tasks as one item.
 | [SEC-05](security/SEC-05-transport-agnostic-authorization-decorator.md) | Transport-agnostic policy authorization decorator | Complete |
 | [SEC-06](security/SEC-06-multipart-hardening.md) | Multipart upload hardening | Complete |
 | [SEC-07](security/SEC-07-error-serialization-hardening.md) | Error serialization hardening | Complete |
-| [SEC-08](security/SEC-08-test-auth-bearer-hardening.md) | Malformed bearer to 401 in the test auth scheme | In progress |
+| [SEC-08](security/SEC-08-test-auth-bearer-hardening.md) | Malformed bearer to 401 in the test auth scheme | Complete |
 
 ### Framework
 

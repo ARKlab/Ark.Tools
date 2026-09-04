@@ -18,6 +18,7 @@ using Rebus.Transport.InMem;
 using SimpleInjector.Lifestyles;
 
 using System.Reflection;
+using System.Net;
 using System.Security.Claims;
 
 namespace Ark.MediatorFramework.Sample.Tests;
@@ -133,5 +134,50 @@ public sealed class BookTransportBoundaryTests
         routes.Should().Contain("/api/v1/books/stream");
         routes.Should().Contain("/api/v1/books/editions/describe");
         routes.Should().Contain("/api/v1/books/bulk");
+    }
+
+    /// <summary>Returns 401 for missing, non-bearer, and malformed bearer credentials.</summary>
+    [TestMethod]
+    public async Task InvalidBearerCredentialsReturnUnauthorized()
+    {
+        var network = new InMemNetwork();
+        var dataContextFactory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        var container = SampleComposition.BuildContainer(
+            network,
+            useSqlStore: false,
+            dataContextFactory: dataContextFactory);
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            ApplicationName = typeof(SampleHost).Assembly.GetName().Name,
+            EnvironmentName = "IntegrationTests",
+            ContentRootPath = AppContext.BaseDirectory,
+        });
+        builder.WebHost.UseTestServer();
+
+        var startup = SampleHost.Configure(
+            builder,
+            container,
+            network,
+            useSqlStore: false,
+            sharedDataContextFactory: dataContextFactory);
+        await using var app = builder.Build();
+        startup.Configure(app);
+        await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        foreach (var authorization in new string?[] { null, "Basic abc", "Bearer " + "not-a-jwt" })
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                new Uri("/api/v1/books/" + Guid.NewGuid(), UriKind.Relative));
+            if (authorization is not null)
+                request.Headers.TryAddWithoutValidation("Authorization", authorization);
+
+            using var response = await app.GetTestClient().SendAsync(
+                request,
+                app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            response.Headers.WwwAuthenticate.Should().NotBeEmpty();
+        }
     }
 }
