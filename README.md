@@ -44,6 +44,14 @@ Both samples include full working code that you can use as a reference for your 
 
 ## Quick Start
 
+### Ark.Tools SDK
+
+Ark-owned .NET solutions can opt into the standardized build, analyzer,
+packaging, content, and framework-neutral MTP profile with the additional
+`Ark.Tools.Sdk`. See the [SDK capability reference](docs/sdk/reference.md) for
+activation, defaults, property overrides, package references, and adoption
+guidance.
+
 The main libraries used by Ark in its stack are:
 
 * [NodaTime](https://nodatime.org/) - Date and time API

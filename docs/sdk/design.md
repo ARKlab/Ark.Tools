@@ -1,5 +1,9 @@
 # Standardized .NET solution setup
 
+The stable consumer-facing capability and property reference is
+[`reference.md`](reference.md). It is the concise adoption document; this
+design records the rationale and full decision history.
+
 Status: **design accepted; ready for implementation planning**.
 
 ## Problem

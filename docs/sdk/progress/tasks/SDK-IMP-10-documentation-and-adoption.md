@@ -61,15 +61,15 @@ timing, and overrides visible without reproducing implementation details.
 
 ## Acceptance
 
-- [ ] The capability overview and complete property table document each SDK
+- [x] The capability overview and complete property table document each SDK
   capability, default or condition, evaluation timing, and override.
-- [ ] Every documented property is covered by an existing automated test or
+- [x] Every documented property is covered by an existing automated test or
   fixture.
-- [ ] Focused capability references and package READMEs link to the property
+- [x] Focused capability references and package READMEs link to the property
   table.
-- [ ] Final design-to-package capability inventory has no unexplained gap.
-- [ ] The [task board](README.md) status for SDK-IMP-10 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] Final design-to-package capability inventory has no unexplained gap.
+- [x] The [task board](README.md) status for SDK-IMP-10 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
