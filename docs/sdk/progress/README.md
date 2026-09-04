@@ -7,6 +7,8 @@ remain in [`../design.md`](../design.md).
 | --- | --- |
 | [`decisions.md`](decisions.md) | Accepted decisions and rejected alternatives. |
 | [`tasks/README.md`](tasks/README.md) | **Canonical current task board.** One status and one link per implementation task. |
+| [`../privacy-by-default-prd.md`](../privacy-by-default-prd.md) | Approved compliance/privacy design behind the `PII-IMP` tasks. |
+| [`future-improvements.md`](future-improvements.md) | Deferred drafts with no owner and no schedule. |
 
 ## Status rules
 
