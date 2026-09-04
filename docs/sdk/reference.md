@@ -83,13 +83,8 @@ directly unless the table says that a switch controls the capability.
 | `Features` | `strict` when empty for non-SQL C# | Build props | Set a value in the project |
 | `ReportAnalyzer` | `true` when empty for non-SQL C# | Build props | Set `false` or another value |
 | `EnforceCodeStyleInBuild` | `true` when empty for non-SQL C# | Build props | Set `false` or another value |
-| `Deterministic` | `true` when empty | Build props | Set a value in the project |
-| `EmbedUntrackedSources` | `true` when empty | Build props | Set a value in the project |
-| `DebugType` | `portable` when empty | Build props | Set a value in the project |
-| `DebugSymbols` | `true` when empty | Build props | Set a value in the project |
 | `TreatTSqlWarningsAsErrors` | `true` when empty and `UsingMicrosoftBuildSqlSdk=true` | Build props | Set `false` or another value |
 | `RunSqlCodeAnalysis` | `true` when empty and `UsingMicrosoftBuildSqlSdk=true` | Build props | Set `false` or another value |
-| `NoWarn` | Adds `NU1701` for SQL projects | Build props | Set/append the consumer value |
 | `EnableArkToolsCodingStyle` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsNetAnalyzers` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableArkToolsMeziantouAnalyzer` | Enabled unless `false` | Build props and SDK restore | Set `false` |
@@ -101,6 +96,7 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsSponsorLinkRemoval` | Enabled unless `false` | Before `CoreCompile` | Set `false` |
 | `ArkToolsLocalAnalyzerConfigRoot` | Directory containing `DirectoryBuildPropsPath`, or project directory | Build props | Set a directory directly |
 | `EnableArkToolsLocalAnalyzerConfigDiscovery` | Enabled unless `false` | Build props | Set `false` |
+| `EnableArkToolsGlobalUsings` | Enabled unless `false` when implicit usings are enabled | Build targets | Set `false` |
 | `GitTagVersion` | Valid semantic version derived from CI tag variables | Targets | Set a value directly |
 
 `ArkToolsBuildImported` and `ArkToolsBuildImportCount` are diagnostics for
@@ -137,6 +133,7 @@ are discovered by default.
 | `EnableSourceLink` | `false` when `COPILOT_AGENT_ACTION` is set | Early | Set `EnableArkToolsCopilotSandboxWorkaround=false` or a direct value |
 | `EnableArkToolsSbom` | Enabled unless `false` | Early package injection | Set `false` |
 | `EnableArkToolsPolyfill` | Enabled unless `false` | Early package injection | Set `false` |
+| `EnableArkToolsSourceLink` | Enabled unless `false` for packable projects | Early package injection | Set `false` |
 | `EnableArkToolsCopilotSandboxWorkaround` | Enabled unless `false` when the environment signal exists | Early | Set `false` |
 
 `Ark.Tools.Sdk` owns the exact versions of its implicit package references.

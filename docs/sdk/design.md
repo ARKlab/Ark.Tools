@@ -4,7 +4,8 @@ The stable consumer-facing capability and property reference is
 [`reference.md`](reference.md). It is the concise adoption document; this
 design records the rationale and full decision history.
 
-Status: **design accepted; ready for implementation planning**.
+Status: **design accepted and implemented**. See the
+[stable consumer reference](reference.md) for adoption guidance.
 
 ## Problem
 
@@ -502,7 +503,7 @@ one merged configuration.
   behavior, using ordering, C# spacing, indentation, newline, and wrapping
   preferences.
 - Code style: all current .NET and C# style options from the root
-  [`.editorconfig`](../../.editorconfig), including expression, pattern,
+  [`Ark.Tools.CodingStyle.editorconfig`](../../src/sdk/Ark.Tools.Build/configuration/coding-style/Ark.Tools.CodingStyle.editorconfig), including expression, pattern,
   namespace, modifier, `var`, and expression-body preferences.
 - Naming: interfaces start with `I`; types and protected members use PascalCase;
   private/internal methods, fields, events, and properties use `_camelCase`.
@@ -668,7 +669,7 @@ consumer repository:
 
 The package's style and analyzer options are direct compiler/design-time
 inputs. Each analyzer has its own file and switch, including analyzer severities
-currently embedded in the root `.editorconfig`. Packaged global configs use a
+currently embedded in the source coding-style configuration. Packaged global configs use a
 `global_level` below the default level
 `100` of a consumer `.globalconfig`, so an ordinary local global config wins.
 Source-tree `.editorconfig` entries win over global configs, and deeper local
@@ -731,11 +732,11 @@ An implementation is not complete until tests prove:
 - [`Directory.Build.targets`](../../Directory.Build.targets)
 - [`samples/Ark.ReferenceProject/Directory.Build.props`](../../samples/Ark.ReferenceProject/Directory.Build.props)
 - [`samples/Ark.ReferenceProject/Directory.Build.targets`](../../samples/Ark.ReferenceProject/Directory.Build.targets)
-- [`.editorconfig`](../../.editorconfig)
-- [`.netanalyzers.globalconfig`](../../.netanalyzers.globalconfig)
-- [`.meziantou.globalconfig`](../../.meziantou.globalconfig)
-- [`.errorprone.globalconfig`](../../.errorprone.globalconfig)
-- [`.vsthreading.globalconfig`](../../.vsthreading.globalconfig)
+- [`Ark.Tools.CodingStyle.editorconfig`](../../src/sdk/Ark.Tools.Build/configuration/coding-style/Ark.Tools.CodingStyle.editorconfig)
+- [`Ark.Tools.NetAnalyzers.globalconfig`](../../src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.NetAnalyzers.globalconfig)
+- [`Ark.Tools.MeziantouAnalyzer.globalconfig`](../../src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.MeziantouAnalyzer.globalconfig)
+- [`Ark.Tools.ErrorProne.globalconfig`](../../src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.ErrorProne.globalconfig)
+- [`Ark.Tools.VisualStudioThreading.globalconfig`](../../src/sdk/Ark.Tools.Build/configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig)
 - [`BannedSymbols.Ark.txt`](../../src/sdk/Ark.Tools.Build/configuration/analyzers/BannedSymbols.Ark.txt)
 
 ### External

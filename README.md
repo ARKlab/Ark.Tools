@@ -48,7 +48,7 @@ Both samples include full working code that you can use as a reference for your 
 
 Ark-owned .NET solutions can opt into the standardized build, analyzer,
 packaging, content, and framework-neutral MTP profile with the additional
-`Ark.Tools.Sdk`. See the [SDK capability reference](docs/sdk/reference.md) for
+`Ark.Tools.Sdk`. See the [SDK capability reference](https://github.com/ARKlab/Ark.Tools/blob/master/docs/sdk/reference.md) for
 activation, defaults, property overrides, package references, and adoption
 guidance.
 
@@ -73,8 +73,6 @@ Upgrading from an older version? Check out our migration guides:
 - [Migration to v4.5](docs/migration-v4.md) - NLog v5, Structured Logging, Slack integration
 - [Migration from v2 to v3](docs/migration-v3.md) - AspNetCore v5, Microsoft.Data.SqlClient, Flurl v3
 
-For .NET 10 modernization and performance optimization, see [.NET 10 Modernization Guide](docs/modernization-issues/)
-
 ## Building & Testing
 
 ```bash
@@ -92,8 +90,6 @@ dotnet build --configuration Debug
 # Run tests
 dotnet test --configuration Debug
 ```
-
-For more details, see the [Copilot Instructions](.github/copilot-instructions.md).
 
 ## Contributing
 
