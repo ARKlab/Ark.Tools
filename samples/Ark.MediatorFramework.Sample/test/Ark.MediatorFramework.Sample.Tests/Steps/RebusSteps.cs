@@ -32,7 +32,10 @@ public sealed class RebusSteps
     [When(@"I dispatch a failing background message with reason ""(.*)""")]
     public async Task DispatchFailingBackgroundMessage(string reason)
     {
-        await _rebusContext.SendFailingMessageAsync(reason).ConfigureAwait(false);
+        await _rebusContext.SendAsync(new FailingRebusRequest
+        {
+            Reason = reason,
+        }).ConfigureAwait(false);
     }
 
     /// <summary>Dispatches a book review through the background bus.</summary>
@@ -40,8 +43,11 @@ public sealed class RebusSteps
     [When("I dispatch a book review for the current book through the background bus with")]
     public async Task DispatchBookReview(Table table)
     {
-        var review = table.CreateInstance<BookReviewBusTable>();
-        await _rebusContext.SendBookReviewAsync(_books.Current.Id, review.Rating, review.Text).ConfigureAwait(false);
+        var request = table.CreateInstance<CreateBookReviewRequest>() with
+        {
+            BookId = _books.Current.Id,
+        };
+        await _rebusContext.SendAsync(request).ConfigureAwait(false);
     }
 
     /// <summary>Asserts that a failed second-level handler leaves the message in the error queue.</summary>
@@ -52,24 +58,4 @@ public sealed class RebusSteps
         _rebusContext.ErrorQueueCount.Should().BeGreaterThan(0);
     }
 
-    /// <summary>Asserts that an unauthorized bus review is failed before its handler runs.</summary>
-    [Then("the background bus rejects the book review without invoking its handler")]
-    public async Task UnauthorizedBookReviewIsRejected()
-    {
-        await _rebusContext.WaitForIdleAsync(allowErrors: true).ConfigureAwait(false);
-        _rebusContext.ErrorQueueCount.Should().BeGreaterThan(0);
-        await _books.ListReviewsAsync().ConfigureAwait(false);
-        _books.Reviews.Should().BeEmpty();
-    }
-
-}
-
-/// <summary>Defines table data for a review sent through Rebus.</summary>
-public sealed record BookReviewBusTable
-{
-    /// <summary>Gets the review rating.</summary>
-    public int Rating { get; init; }
-
-    /// <summary>Gets the review text.</summary>
-    public string Text { get; init; } = string.Empty;
 }

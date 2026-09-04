@@ -193,7 +193,11 @@ Feature: Books
             When I dispatch a book review for the current book through the background bus with
                 | Rating | Text |
                 | 5      | Good |
-            Then the background bus rejects the book review without invoking its handler
+            Then the error queue contains the failed message
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 0 results
 
     Rule: Reading activity uses repository time and bounded retrieval
 
