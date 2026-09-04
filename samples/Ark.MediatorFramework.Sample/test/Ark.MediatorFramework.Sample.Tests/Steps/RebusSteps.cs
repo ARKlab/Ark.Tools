@@ -20,6 +20,7 @@ public sealed class RebusSteps
 
     /// <summary>Initializes a new instance of the <see cref="RebusSteps"/> class.</summary>
     /// <param name="rebusContext">The scenario-owned Rebus receiver and diagnostics.</param>
+    /// <param name="books">The scenario-owned book driver.</param>
     public RebusSteps(RebusScenarioContext rebusContext, BookDriver books)
     {
         _rebusContext = rebusContext;

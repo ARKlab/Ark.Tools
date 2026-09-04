@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.RebusProcessor;
-using Ark.MediatorFramework.Sample.API;
 
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
