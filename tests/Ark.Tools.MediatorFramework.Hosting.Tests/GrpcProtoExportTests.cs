@@ -109,6 +109,59 @@ public sealed class GrpcProtoExportTests
         }
     }
 
+    /// <summary>Verifies the exporter rejects generated paths that escape the destination.</summary>
+    [TestMethod]
+    public async Task ExportRunnerRejectsEscapingGeneratedPaths()
+    {
+        var fixture = _createTemporaryDirectory();
+        try
+        {
+            Directory.CreateDirectory(fixture);
+            var project = Path.Combine(fixture, "Malicious.csproj");
+            await File.WriteAllTextAsync(
+                project,
+                """
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+</Project>
+""").ConfigureAwait(false);
+            await File.WriteAllTextAsync(
+                Path.Combine(fixture, "Program.cs"),
+                """
+namespace Ark.Tools.MediatorFramework.Generated;
+
+public static class ArkGeneratedProtos
+{
+    public static (string, string)[] GetFiles() => [("../escape.proto", "invalid")];
+}
+
+public static class Program
+{
+    public static void Main()
+    {
+    }
+}
+""").ConfigureAwait(false);
+            var build = await _runDotnetAsync("build", fixture, project).ConfigureAwait(false);
+            build.ExitCode.Should().Be(0, build.Output);
+
+            var destination = Path.Combine(fixture, "proto");
+            var result = await _runExporterAsync(
+                Path.Combine(fixture, "bin", "Debug", "net10.0", "Malicious.dll"),
+                destination).ConfigureAwait(false);
+            result.ExitCode.Should().NotBe(0);
+            Directory.Exists(destination).Should().BeFalse();
+            File.Exists(Path.Combine(fixture, "escape.proto")).Should().BeFalse();
+        }
+        finally
+        {
+            _deleteTemporaryDirectory(fixture);
+        }
+    }
+
     /// <summary>Verifies packed build assets export generated and additional protos without starting the consumer.</summary>
     [TestMethod]
     public async Task PackedConsumerExportsWithoutStartupAndSupportsBuildOptions()
@@ -294,6 +347,7 @@ public sealed class GrpcProtoExportTests
             "src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj",
             "src/common/Ark.Tools.Nodatime.Protobuf/Ark.Tools.Nodatime.Protobuf.csproj",
             "src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj",
+            "src/common/Ark.Tools.NLog/Ark.Tools.NLog.csproj",
             "src/common/Ark.Tools.Outbox/Ark.Tools.Outbox.csproj",
             "src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj",
             "src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj",
@@ -321,6 +375,7 @@ public sealed class GrpcProtoExportTests
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ArkApiSurfaceEnabled>false</ArkApiSurfaceEnabled>
     <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
   </PropertyGroup>
   {{propertiesAndItems}}
