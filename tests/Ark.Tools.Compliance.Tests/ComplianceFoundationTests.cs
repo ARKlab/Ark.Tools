@@ -24,7 +24,7 @@ public sealed class ComplianceFoundationTests
         new SecretAttribute().Classification.Should().Be(ArkDataClassifications.Secret);
         new PseudonymousAttribute().Classification.Should().Be(ArkDataClassifications.Pseudonymous);
 
-        typeof(PersonalDataAttribute).BaseType.Should().Be(typeof(DataClassificationAttribute));
+        typeof(PersonalDataAttribute).BaseType.Should().Be<DataClassificationAttribute>();
     }
 
     /// <summary>
@@ -51,8 +51,11 @@ public sealed class ComplianceFoundationTests
     [TestMethod]
     public void EscapeHatches_RejectEmptyReasons()
     {
-        Assert.ThrowsException<ArgumentException>(() => new ComplianceReviewedAttribute("ARKPII002", " "));
-        Assert.ThrowsException<ArgumentException>(() => new NotPersonalDataAttribute(string.Empty));
+        var reviewed = () => new ComplianceReviewedAttribute("ARKPII002", " ");
+        var notPersonal = () => new NotPersonalDataAttribute(string.Empty);
+
+        reviewed.Should().Throw<ArgumentException>();
+        notPersonal.Should().Throw<ArgumentException>();
     }
 
     /// <summary>
