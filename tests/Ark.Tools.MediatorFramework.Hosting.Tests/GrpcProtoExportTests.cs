@@ -360,7 +360,8 @@ public static class Program
                 "pack",
                 root,
                 Path.Join(root, project),
-                "--no-build", "-c", "Debug", "-o", feed, "-p:PackageVersion=999.9.20").ConfigureAwait(false);
+                "--no-build", "-c", "Debug", "-o", feed, "-p:TargetFramework=net10.0",
+                "-p:PackageVersion=999.9.20").ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
         }
 
