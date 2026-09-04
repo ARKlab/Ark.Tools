@@ -30,6 +30,11 @@
     <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == '' and '$(DirectoryBuildPropsPath)' != ''">$([System.IO.Path]::GetDirectoryName('$(DirectoryBuildPropsPath)'))</ArkToolsLocalAnalyzerConfigRoot>
+    <ArkToolsLocalAnalyzerConfigRoot Condition="'$(ArkToolsLocalAnalyzerConfigRoot)' == ''">$(MSBuildProjectDirectory)</ArkToolsLocalAnalyzerConfigRoot>
+  </PropertyGroup>
+
   <ItemGroup Label="Analyzer Configuration"
              Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <EditorConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/coding-style/Ark.Tools.CodingStyle.editorconfig"
@@ -56,6 +61,11 @@
                                Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Analyzer.Devlooped.SponsorLink.globalconfig"
                                KeepDuplicates="false" />
-                    
+
+    <GlobalAnalyzerConfigFiles Include="$(ArkToolsLocalAnalyzerConfigRoot)/.*.globalconfig"
+                               KeepDuplicates="false"
+                               Condition="'$(EnableArkToolsLocalAnalyzerConfigDiscovery)' != 'false' and '$(ArkToolsLocalAnalyzerConfigRoot)' != ''" />
+                     
   </ItemGroup>
+
 </Project>

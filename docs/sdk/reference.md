@@ -99,16 +99,17 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsBannedApi` | Enabled unless `false` | Build targets and SDK restore | Set `false` |
 | `EnableArkToolsSponsorLinkRemoval` | Enabled unless `false` | Before `CoreCompile` | Set `false` |
-| `ArkToolsLocalAnalyzerConfigRoot` | Not set by the current package | — | Add consumer `GlobalAnalyzerConfigFiles` explicitly |
+| `ArkToolsLocalAnalyzerConfigRoot` | Directory containing `DirectoryBuildPropsPath`, or project directory | Build props | Set a directory directly |
+| `EnableArkToolsLocalAnalyzerConfigDiscovery` | Enabled unless `false` | Build props | Set `false` |
 | `GitTagVersion` | Valid semantic version derived from CI tag variables | Targets | Set a value directly |
 
 `ArkToolsBuildImported` and `ArkToolsBuildImportCount` are diagnostics for
 duplicate-import detection, not consumer configuration points. The SDK
 standard analyzer configuration is inert when its corresponding analyzer is
 absent. Consumer `AdditionalFiles` and global configuration files are
-combined with, rather than replaced by, Ark.Tools assets. The current package
-does not automatically discover consumer `.*.globalconfig` files; add them
-explicitly when needed.
+combined with, rather than replaced by, Ark.Tools assets. Consumer
+dot-prefixed `.*.globalconfig` files under `ArkToolsLocalAnalyzerConfigRoot`
+are discovered by default.
 
 ### Restore, compiler, and packaging properties
 
@@ -188,6 +189,7 @@ generated TRX, dump, and coverage artifacts.
 | `ErrorProne.NET.CoreAnalyzers` | `0.1.2` | Non-SQL and enabled |
 | `Microsoft.Sbom.Targets` | `4.1.5` | Non-SQL and SBOM enabled |
 | `Polyfill` | `11.2.0` | Non-SQL and Polyfill enabled |
+| `Microsoft.SourceLink.GitHub` | `10.0.400` | Packable and SourceLink enabled |
 | `Microsoft.Testing.Extensions.CrashDump` | `2.3.3` | Test and enabled |
 | `Microsoft.Testing.Extensions.CodeCoverage` | `18.10.0` | Test and enabled |
 | `Microsoft.Testing.Extensions.HangDump` | `2.3.3` | Test and enabled |
