@@ -1,11 +1,11 @@
 // Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System;
 using System.Net.Mail;
 
 namespace Ark.Tools.Compliance;
 
+[PersonalData]
 [SensitiveValueObject<string>(ArkRedaction.Mask)]
 public readonly partial struct EmailAddress
 {
@@ -19,6 +19,7 @@ public readonly partial struct EmailAddress
     private static string _normalize(string value) => value.Trim().ToLowerInvariant();
 }
 
+[PersonalData]
 [SensitiveValueObject<string>(ArkRedaction.Mask)]
 public readonly partial struct PhoneNumber
 {
@@ -48,6 +49,7 @@ public readonly partial struct PhoneNumber
     }
 }
 
+[PersonalData]
 [SensitiveValueObject<string>(ArkRedaction.Mask)]
 public readonly partial struct PersonName
 {
@@ -61,6 +63,7 @@ public readonly partial struct PersonName
     private static string _normalize(string value) => value.Trim();
 }
 
+[PersonalData]
 [SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct PostalAddressLine
 {
@@ -74,6 +77,7 @@ public readonly partial struct PostalAddressLine
     private static string _normalize(string value) => value.Trim();
 }
 
+[SensitivePersonalData]
 [SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct NationalIdentifier
 {
@@ -87,6 +91,7 @@ public readonly partial struct NationalIdentifier
     private static string _normalize(string value) => value.Trim();
 }
 
+[Secret]
 [SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct ApiKey
 {

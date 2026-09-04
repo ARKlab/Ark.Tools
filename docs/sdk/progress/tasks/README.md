@@ -67,7 +67,7 @@ SDK-IMP-03's asset conventions.
 | Task | Title | Category | Status |
 | --- | --- | --- | --- |
 | [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Done |
-| [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Pending |
+| [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Done |
 | [PII-IMP-03](compliance/PII-IMP-03-serialization-targets.md) | Serialization targets incl. OpenAPI/Swashbuckle | Generator | Pending |
 | [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Pending |
 | [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Pending |

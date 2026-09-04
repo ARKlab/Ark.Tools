@@ -1,8 +1,6 @@
 // Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System;
-
 namespace Ark.Tools.Compliance;
 
 /// <summary>Controls which generated serializers are emitted for a sensitive value object.</summary>
@@ -46,7 +44,7 @@ public sealed class SensitiveValueObjectAttribute<T> : Attribute
 }
 
 /// <summary>Represents the result of validating a sensitive value object.</summary>
-public readonly struct ValidationResult
+public readonly struct ValidationResult : IEquatable<ValidationResult>
 {
     private ValidationResult(bool isValid, string? errorMessage)
     {
@@ -70,4 +68,35 @@ public readonly struct ValidationResult
 
     /// <summary>Gets the safe validation error, when validation failed.</summary>
     public string? ErrorMessage { get; }
+
+    /// <inheritdoc />
+    public bool Equals(ValidationResult other)
+    {
+        return IsValid == other.IsValid
+            && string.Equals(ErrorMessage, other.ErrorMessage, StringComparison.Ordinal);
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        return obj is ValidationResult other && Equals(other);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(IsValid, ErrorMessage);
+    }
+
+    /// <summary>Compares validation results.</summary>
+    public static bool operator ==(ValidationResult left, ValidationResult right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>Compares validation results.</summary>
+    public static bool operator !=(ValidationResult left, ValidationResult right)
+    {
+        return !left.Equals(right);
+    }
 }

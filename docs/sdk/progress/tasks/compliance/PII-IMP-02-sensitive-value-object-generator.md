@@ -68,12 +68,12 @@ mask rather than a leak.
 
 ## Acceptance
 
-- [ ] The generator emits the full redacted surface for `string`-shaped types.
-- [ ] No generated member returns cleartext except `Reveal(CompliancePurpose)`.
-- [ ] STJ and Dapper round-trips are proven by tests.
-- [ ] Six built-in sensitive types ship with the package.
-- [ ] The [task board](../README.md) status for PII-IMP-02 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] The generator emits the full redacted surface for `string`-shaped types.
+- [x] No generated member returns cleartext except `Reveal(CompliancePurpose)`.
+- [x] STJ and Dapper round-trips are proven by tests.
+- [x] Six built-in sensitive types ship with the package.
+- [x] The [task board](../README.md) status for PII-IMP-02 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

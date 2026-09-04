@@ -44,50 +44,61 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var values = context.SyntaxProvider.ForAttributeWithMetadataName(
-                _attributeName,
-                static (node, _) => node is StructDeclarationSyntax,
+        var values = context.SyntaxProvider.CreateSyntaxProvider(
+                static (node, _) => node is AttributeSyntax attribute
+                    && attribute.Name.ToString().StartsWith("SensitiveValueObject", StringComparison.Ordinal),
                 static (ctx, _) => _analyze(ctx))
             .Where(static value => value is not null);
 
         context.RegisterSourceOutput(values, static (spc, value) =>
         {
-            if (value!.Diagnostic is not null)
+            var model = value!.Value;
+            if (model.Diagnostic is not null)
             {
-                spc.ReportDiagnostic(value.Diagnostic);
+                spc.ReportDiagnostic(model.Diagnostic);
                 return;
             }
 
-            spc.AddSource(value.HintName, value.Source!);
+            spc.AddSource(model.HintName, model.Source!);
         });
     }
 
-    private static Model? _analyze(GeneratorAttributeSyntaxContext context)
+    private static Model? _analyze(GeneratorSyntaxContext context)
     {
-        var type = (INamedTypeSymbol)context.TargetSymbol;
-        var location = context.TargetNode.GetLocation();
+        if (context.Node is not AttributeSyntax
+            || context.Node.Parent?.Parent is not StructDeclarationSyntax declaration
+            || context.SemanticModel.GetDeclaredSymbol(declaration) is not INamedTypeSymbol type)
+        {
+            return null;
+        }
+
+        var attribute = type.GetAttributes().FirstOrDefault(attribute =>
+            attribute.AttributeClass?.Name == "SensitiveValueObjectAttribute"
+            && attribute.AttributeClass.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance");
+        if (attribute is null)
+            return null;
+
+        var location = declaration.GetLocation();
         var typeName = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
-        var attribute = context.Attributes[0];
         if (attribute.AttributeClass is not INamedTypeSymbol attributeClass
             || attributeClass.TypeArguments.Length != 1
             || attributeClass.TypeArguments[0].SpecialType != SpecialType.System_String)
         {
-            return new Model(null, null, _unsupportedType.WithLocation(location));
+            return new Model(null, null, Diagnostic.Create(_unsupportedType, location, typeName));
         }
 
         if (type.ContainingType is not null
-            || context.TargetNode is not StructDeclarationSyntax declaration
             || !declaration.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.PartialKeyword))
             || !declaration.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.ReadOnlyKeyword)))
         {
-            return new Model(null, null, _invalidDeclaration.WithLocation(location));
+            return new Model(null, null, Diagnostic.Create(_invalidDeclaration, location, typeName));
         }
 
         if (type.GetMembers("ToString").OfType<IMethodSymbol>().Any(static method =>
-                method.Parameters.Length == 0 && !method.IsOverride))
+                method.Parameters.Length == 0))
         {
-            return new Model(null, null, _clearTextToString.WithLocation(location));
+            return new Model(null, null, Diagnostic.Create(_clearTextToString, location, typeName));
         }
 
         var redaction = _getEnumValue(attribute, 0, "Redaction", 0);
@@ -130,7 +141,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             ? null
             : type.ContainingNamespace.ToDisplayString();
         var typeName = type.Name;
-        var fullyQualifiedType = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var accessibility = type.DeclaredAccessibility == Accessibility.Public ? "public " : "internal ";
         var redactor = settings.Redaction switch
         {
             1 => "ArkMaskingRedactor.Instance",
@@ -148,11 +159,11 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         }
 
         if ((settings.Serialization & 1) != 0)
-            builder.Append("[global::System.Text.Json.Serialization.JsonConverter(typeof(").Append(typeName).AppendLine("JsonConverter))");
+            builder.Append("[global::System.Text.Json.Serialization.JsonConverter(typeof(").Append(typeName).AppendLine("JsonConverter))]");
         builder.Append("[global::System.Diagnostics.DebuggerDisplay(\"{ToString(),nq}\")]").AppendLine();
         builder.Append("[global::System.ComponentModel.TypeConverter(typeof(").Append(typeName)
-            .AppendLine("TypeConverter))");
-        builder.Append("partial readonly struct ").Append(typeName)
+            .AppendLine("TypeConverter))]");
+        builder.Append(accessibility).Append("readonly partial struct ").Append(typeName)
             .Append(" : global::System.IEquatable<").Append(typeName)
             .AppendLine(">, global::System.IFormattable, global::System.ISpanFormattable");
         builder.AppendLine("{");
@@ -255,9 +266,10 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             builder.AppendLine("    private static string _normalize(string value) => value;");
 
         if ((settings.Serialization & 1) != 0)
-                _emitJson(builder, typeName);
+            _emitJson(builder, typeName);
         if ((settings.Serialization & 2) != 0)
             _emitDapper(builder, typeName);
+        _emitTypeConverter(builder, typeName);
 
         builder.AppendLine("}");
         return builder.ToString();
@@ -309,12 +321,48 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.Append("    public static void RegisterDapperHandler() => global::Dapper.SqlMapper.AddTypeHandler(new ").Append(typeName).AppendLine("DapperTypeHandler());");
     }
 
+    private static void _emitTypeConverter(StringBuilder builder, string typeName)
+    {
+        builder.AppendLine();
+        builder.Append("    private sealed class ").Append(typeName).AppendLine("TypeConverter : global::System.ComponentModel.TypeConverter");
+        builder.AppendLine("    {");
+        builder.AppendLine("        public override bool CanConvertFrom(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Type sourceType)");
+        builder.AppendLine("        {");
+        builder.AppendLine("            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);");
+        builder.AppendLine("        }");
+        builder.AppendLine();
+        builder.AppendLine("        public override object ConvertFrom(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Globalization.CultureInfo? culture, object value)");
+        builder.AppendLine("        {");
+        builder.AppendLine("            if (value is string text)");
+        builder.Append("                return ").Append(typeName).AppendLine(".From(text);");
+        builder.AppendLine("            return base.ConvertFrom(context, culture, value)!;");
+        builder.AppendLine("        }");
+        builder.AppendLine();
+        builder.AppendLine("        public override bool CanConvertTo(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Type? destinationType)");
+        builder.AppendLine("        {");
+        builder.AppendLine("            return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);");
+        builder.AppendLine("        }");
+        builder.AppendLine();
+        builder.AppendLine("        public override object? ConvertTo(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Globalization.CultureInfo? culture, object? value, global::System.Type destinationType)");
+        builder.AppendLine("        {");
+        builder.Append("            if (destinationType == typeof(string) && value is ").Append(typeName).AppendLine(" sensitive)");
+        builder.AppendLine("                return sensitive.ToString();");
+        builder.AppendLine("            return base.ConvertTo(context, culture, value, destinationType)!;");
+        builder.AppendLine("        }");
+        builder.AppendLine("    }");
+    }
+
     private readonly record struct Model(
         INamedTypeSymbol? Type,
         Settings? Settings,
         Diagnostic? Diagnostic)
     {
-        public string HintName => Type is null ? "SensitiveValueObjectError.g.cs" : Type.Name + ".SensitiveValueObject.g.cs";
+        public string HintName => Type is null
+            ? "SensitiveValueObjectError.g.cs"
+            : (Type.ContainingNamespace.IsGlobalNamespace
+                ? Type.Name
+                : Type.ContainingNamespace.ToDisplayString().Replace('.', '_') + "." + Type.Name)
+              + ".SensitiveValueObject.g.cs";
         public string? Source => Type is null || Settings is null ? null : _emit(Type, Settings.Value);
     }
 
