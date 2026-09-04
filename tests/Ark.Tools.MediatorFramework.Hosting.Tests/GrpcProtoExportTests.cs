@@ -109,6 +109,95 @@ public sealed class GrpcProtoExportTests
         }
     }
 
+    /// <summary>Verifies packed build assets export generated and additional protos without starting the consumer.</summary>
+    [TestMethod]
+    public async Task PackedConsumerExportsWithoutStartupAndSupportsBuildOptions()
+    {
+        var fixture = _createTemporaryDirectory();
+        try
+        {
+            var feed = await _packGrpcClosureAsync(fixture).ConfigureAwait(false);
+            var consumer = Path.Combine(fixture, "consumer");
+            Directory.CreateDirectory(consumer);
+            await File.WriteAllTextAsync(Path.Combine(consumer, "hand.proto"), "syntax = \"proto3\";\n").ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(consumer, "Consumer.csproj"), _packedProject("""
+<PropertyGroup>
+  <ArkExportProtoDir>$(MSBuildProjectDirectory)/custom-proto</ArkExportProtoDir>
+</PropertyGroup>
+<ItemGroup>
+  <ArkAdditionalProto Include="hand.proto" />
+</ItemGroup>
+""")).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(consumer, "Program.cs"), _generatedConsumerSource()).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
+
+            var result = await _runDotnetAsync(
+                "build",
+                consumer,
+                consumer,
+                "--configfile", Path.Combine(consumer, "NuGet.Config")).ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+
+            var output = Path.Combine(consumer, "custom-proto");
+            File.Exists(Path.Combine(output, "Consumer.proto")).Should().BeTrue();
+            File.Exists(Path.Combine(output, "ark", "mediator.proto")).Should().BeTrue();
+            File.Exists(Path.Combine(output, "ark", "nodatime.proto")).Should().BeTrue();
+            File.Exists(Path.Combine(output, "hand.proto")).Should().BeTrue();
+            File.Exists(Path.Combine(consumer, "started.txt")).Should().BeFalse();
+
+            var generatedProto = Path.Combine(output, "Consumer.proto");
+            var timestamp = DateTime.UtcNow.AddMinutes(-1);
+            File.SetLastWriteTimeUtc(generatedProto, timestamp);
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            File.GetLastWriteTimeUtc(generatedProto).Should().Be(timestamp);
+
+            Directory.Delete(output, recursive: true);
+            result = await _runDotnetAsync(
+                "build",
+                consumer,
+                consumer,
+                "--no-restore", "-p:ArkExportProto=false").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            Directory.Exists(output).Should().BeFalse();
+        }
+        finally
+        {
+            _deleteTemporaryDirectory(fixture);
+        }
+    }
+
+    /// <summary>Verifies a packed gRPC reference is a no-op when the consumer has no generated service.</summary>
+    [TestMethod]
+    public async Task PackedConsumerWithoutGeneratedServicesDoesNotStartOrExport()
+    {
+        var fixture = _createTemporaryDirectory();
+        try
+        {
+            var feed = await _packGrpcClosureAsync(fixture).ConfigureAwait(false);
+            var consumer = Path.Combine(fixture, "consumer");
+            Directory.CreateDirectory(consumer);
+            await File.WriteAllTextAsync(Path.Combine(consumer, "Consumer.csproj"), _packedProject(string.Empty)).ConfigureAwait(false);
+            await File.WriteAllTextAsync(
+                Path.Combine(consumer, "Program.cs"),
+                "using System.IO;\nFile.WriteAllText(\"started.txt\", \"started\");\n").ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
+
+            var result = await _runDotnetAsync(
+                "build",
+                consumer,
+                consumer,
+                "--configfile", Path.Combine(consumer, "NuGet.Config")).ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            Directory.Exists(Path.Combine(consumer, "proto")).Should().BeFalse();
+            File.Exists(Path.Combine(consumer, "started.txt")).Should().BeFalse();
+        }
+        finally
+        {
+            _deleteTemporaryDirectory(fixture);
+        }
+    }
+
     private static string _findExportedProto()
     {
         var repositoryRoot = new DirectoryInfo(AppContext.BaseDirectory);
@@ -191,6 +280,135 @@ public sealed class GrpcProtoExportTests
         var error = await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
         await process.WaitForExitAsync().ConfigureAwait(false);
         return (process.ExitCode, error);
+    }
+
+    private static async Task<string> _packGrpcClosureAsync(string fixture)
+    {
+        var root = _findRepositoryRoot().FullName;
+        var feed = Path.Combine(fixture, "feed");
+        Directory.CreateDirectory(feed);
+        var projects = new[]
+        {
+            "src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj",
+            "src/common/Ark.Tools.Core/Ark.Tools.Core.csproj",
+            "src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj",
+            "src/common/Ark.Tools.Nodatime.Protobuf/Ark.Tools.Nodatime.Protobuf.csproj",
+            "src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj",
+            "src/common/Ark.Tools.Outbox/Ark.Tools.Outbox.csproj",
+            "src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj",
+            "src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj",
+            "src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj",
+            "src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj",
+        };
+        foreach (var project in projects)
+        {
+            var result = await _runDotnetAsync(
+                "pack",
+                root,
+                Path.Combine(root, project),
+                "--no-build", "-c", "Debug", "-o", feed, "-p:PackageVersion=999.9.20").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+        }
+
+        return feed;
+    }
+
+    private static string _packedProject(string propertiesAndItems)
+    {
+        return $$"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  {{propertiesAndItems}}
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.20" />
+    <PackageReference Include="SimpleInjector" Version="5.6.0" />
+  </ItemGroup>
+</Project>
+""";
+    }
+
+    private static string _generatedConsumerSource()
+    {
+        return """
+using Ark.Tools.MediatorFramework;
+using Ark.Tools.MediatorFramework.Grpc;
+using Ark.Tools.Solid;
+
+public sealed class Marker
+{
+}
+
+[ArkGenerateGrpcForAssembly(typeof(Marker))]
+public partial class Context
+{
+}
+
+[GrpcMethod, GrpcService("Consumer")]
+[ProtoBuf.ProtoContract]
+public sealed record Ping : IRequest<Ping, Pong>
+{
+    [ProtoBuf.ProtoMember(1)]
+    public string Value { get; set; } = string.Empty;
+}
+
+[ProtoBuf.ProtoContract]
+public sealed record Pong
+{
+    [ProtoBuf.ProtoMember(1)]
+    public string Value { get; set; } = string.Empty;
+}
+
+public static class Startup
+{
+    public static void Main()
+    {
+        File.WriteAllText("started.txt", "started");
+    }
+}
+""";
+    }
+
+    private static string _nugetConfig(string feed)
+    {
+        return $"""
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="local" value="{feed}" />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+""";
+    }
+
+    private static async Task<(int ExitCode, string Output)> _runDotnetAsync(
+        string command,
+        string workingDirectory,
+        params string[] arguments)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo("dotnet")
+            {
+                WorkingDirectory = workingDirectory,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+            },
+        };
+        process.StartInfo.ArgumentList.Add(command);
+        foreach (var argument in arguments)
+            process.StartInfo.ArgumentList.Add(argument);
+        process.Start();
+        var output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+        output += await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
+        await process.WaitForExitAsync().ConfigureAwait(false);
+        return (process.ExitCode, output);
     }
 
     private static DirectoryInfo _findRepositoryRoot()
