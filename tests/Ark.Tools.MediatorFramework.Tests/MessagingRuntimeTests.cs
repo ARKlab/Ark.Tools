@@ -720,6 +720,10 @@ public sealed partial class MessagingRuntimeTests
 
         public int DeliveryCount { get; }
 
+        public string DeliveryId { get; } = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+
+        public DateTimeOffset? LockedUntil => null;
+
         internal int _completed { get; private set; }
 
         internal int _abandoned { get; private set; }

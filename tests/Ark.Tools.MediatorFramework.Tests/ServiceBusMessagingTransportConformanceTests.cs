@@ -26,7 +26,7 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
 
     protected override string EmptyQueueName => _emptyQueueName;
 
-    protected override IMessagingReceiveTransport CreateTransport()
+    protected override IMessagingTransport CreateTransport()
     {
 #pragma warning disable CA2000 // The tracked transport owns and disposes the client during test cleanup.
         var transport = new ServiceBusMessagingTransport(new ServiceBusClient(_connectionString));

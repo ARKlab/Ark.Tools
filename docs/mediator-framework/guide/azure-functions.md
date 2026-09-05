@@ -211,19 +211,43 @@ services.ConfigureArkMessaging(
 
 It supports send, scheduled send, publish/subscription fan-out, PeekLock
 settlement, delivery counts, lock expiry, and a readable dead-letter store.
-`MessagingReceivePump` runs its receive loop for tests or custom hosts; it is
-not an Azure Functions hosting mechanism. Registration validates the transport
-capabilities against each network and fails immediately when a required
-capability is missing.
+Registration validates the transport capabilities against each network and fails
+immediately when a required capability is missing.
+
+### Sending versus processing
+
+Messaging has two seams, and they are deliberately separate:
+
+- **Send** — `IMessagingTransport` (`SendAsync`, `PublishAsync`, sizing). Used by
+  every host, including Azure Functions, and unchanged by the processing side.
+- **Process** — `IMessagingMessageSource`, a *pull* seam:
+  `ReceiveBatchAsync(queue, maxMessages, maxWait, ctk)` returns zero or more
+  locked deliveries, never more than `maxMessages`. An **empty result means "the
+  queue is empty"**, is returned after at most `maxWait`, is not an error, and
+  never means "the source ended". The source does not sleep on an empty batch:
+  deciding how long to wait before the next call belongs to the host.
+
+Each source declares `ReceiverCapabilities` — a `MessagingReceiverCapabilities`
+record of maximum batch size, server-side wait support, lock renewal support and
+native lock duration — read once at composition time so a host adapts instead of
+guessing. Every delivery carries a required `DeliveryId` and a `LockedUntil`
+instant for lock-aware renewal.
+
+**Azure Functions receivers are unaffected.** They keep their generated triggers
+and the Functions host's own concurrency; they never touch
+`IMessagingMessageSource`. Composing a processor host inside a Functions host
+fails startup with the `ProcessorHostInTriggeredHost` diagnostic, and composing
+one over a transport that is not a message source fails with
+`TransportIsNotAMessageSource`.
 
 Producer-only hosts compose the generated descriptor without taking a Functions
 dependency:
 
 The producer mode is selected through the same fluent call and does not register
-dispatch, triggers, queues, subscriptions, or a receive pump.
+dispatch, triggers, queues, subscriptions, or a message source.
 
 This registers only the restricted bus and its outgoing runtime. It does not
-register dispatch, triggers, queues, subscriptions, or a receive pump.
+register dispatch, triggers, queues, subscriptions, or a message source.
 Publisher-owned topics are still reconciled when lifecycle management is
 enabled.
 
@@ -461,14 +485,14 @@ dispatch and is never persisted as a separate message.
 
 Applications register second-level handlers as regular
 `ICommandHandler` implementations that handle `MessagingFailed<T>`. InMemory custom hosts map the participant policy
-to the native queue limit and delay before starting the pump:
+to the native queue limit and delay before starting the receive loop:
 
 ```csharp
 transport.ConfigureRetry(participantIdentity, retryPolicy);
 ```
 
-Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into
-`MessagingReceivePump` (or an equivalent locked trigger) with the participant's
+Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into the processor host
+receive loop (or an equivalent locked trigger) with the participant's
 generated normal and `DispatchFailedAsync` binders. Each stage gets a fresh
 `AsyncScopedLifestyle` scope, and the dispatcher renews the transport lock
 while the bounded handler-duration token is active. A successful stage is

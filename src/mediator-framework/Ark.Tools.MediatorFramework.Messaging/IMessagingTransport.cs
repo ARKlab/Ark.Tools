@@ -84,16 +84,6 @@ public interface IMessagingTransport<TSelf>
     static abstract string ToNativeEntityName(string logicalName);
 }
 
-/// <summary>Receive seam for transports that provide locked deliveries.</summary>
-public interface IMessagingReceiveTransport : IMessagingTransport
-{
-    /// <summary>Streams locked deliveries from a queue until cancellation.</summary>
-    /// <param name="queue">The source queue.</param>
-    /// <param name="ctk">The cancellation token.</param>
-    /// <returns>An asynchronous delivery stream.</returns>
-    IAsyncEnumerable<IMessagingLockedDelivery> ReceiveAsync(string queue, CancellationToken ctk);
-}
-
 /// <summary>A PeekLock-style delivery with exactly one settlement operation.</summary>
 public interface IMessagingLockedDelivery
 {
@@ -105,6 +95,12 @@ public interface IMessagingLockedDelivery
 
     /// <summary>Gets the native delivery count, starting at one.</summary>
     int DeliveryCount { get; }
+
+    /// <summary>Gets the native delivery identifier, unique for the lifetime of the lock.</summary>
+    string DeliveryId { get; }
+
+    /// <summary>Gets the instant at which the native lock expires, or <see langword="null"/> when unknown.</summary>
+    DateTimeOffset? LockedUntil { get; }
 
     /// <summary>Renews the native lock for this delivery when supported.</summary>
     /// <param name="ctk">The cancellation token.</param>

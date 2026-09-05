@@ -4,7 +4,6 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
 
 using Azure.Messaging.ServiceBus;
 
@@ -12,7 +11,8 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
 public sealed class ServiceBusMessagingTransport :
-    IMessagingReceiveTransport,
+    IMessagingTransport,
+    IMessagingMessageSource,
     IAsyncDisposable,
     IMessagingTransport<ServiceBusMessagingTransport>
 {
@@ -129,13 +129,47 @@ public sealed class ServiceBusMessagingTransport :
     }
 
     /// <inheritdoc />
-    public IAsyncEnumerable<IMessagingLockedDelivery> ReceiveAsync(
+    public MessagingReceiverCapabilities ReceiverCapabilities => new(
+        MaximumBatchSize: MaximumReceiveBatchSize,
+        SupportsServerSideWait: true,
+        SupportsLockRenewal: true,
+        NativeLockDuration: null);
+
+    /// <summary>Gets the maximum number of messages a single receive returns.</summary>
+    /// <remarks>
+    /// One at this task: batch receive over <c>ReceiveMessagesAsync</c> lands in AMF-07.
+    /// </remarks>
+    public const int MaximumReceiveBatchSize = 1;
+
+    /// <inheritdoc />
+    public async ValueTask<IReadOnlyList<IMessagingLockedDelivery>> ReceiveBatchAsync(
         string queue,
+        int maxMessages,
+        TimeSpan maxWait,
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        queue = ToNativeEntityName(queue);
-        return _receiveAsync(queue, ctk);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxMessages, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxWait.Ticks, 0, nameof(maxWait));
+
+        var receiver = _receiver(ToNativeEntityName(queue));
+        var message = await receiver.ReceiveMessageAsync(maxWait, ctk).ConfigureAwait(false);
+        return message is null
+            ? Array.Empty<IMessagingLockedDelivery>()
+            : [new ServiceBusLockedDelivery(receiver, message)];
+    }
+
+    private ServiceBusReceiver _receiver(string queue)
+    {
+        return _receivers.GetOrAdd(
+            queue,
+            static (entity, client) => client.CreateReceiver(
+                entity,
+                new ServiceBusReceiverOptions
+                {
+                    ReceiveMode = ServiceBusReceiveMode.PeekLock
+                }),
+            _client);
     }
 
     /// <inheritdoc />
@@ -148,29 +182,6 @@ public sealed class ServiceBusMessagingTransport :
             await sender.Value.DisposeAsync().ConfigureAwait(false);
         _senders.Clear();
         await _client.DisposeAsync().ConfigureAwait(false);
-    }
-
-    private async IAsyncEnumerable<IMessagingLockedDelivery> _receiveAsync(
-        string queue,
-        [EnumeratorCancellation] CancellationToken ctk)
-    {
-        var receiver = _receivers.GetOrAdd(
-            queue,
-            static (entity, client) => client.CreateReceiver(
-                entity,
-                new ServiceBusReceiverOptions
-                {
-                    ReceiveMode = ServiceBusReceiveMode.PeekLock
-                }),
-            _client);
-        while (true)
-        {
-            ctk.ThrowIfCancellationRequested();
-            var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(1), ctk)
-                .ConfigureAwait(false);
-            if (message is not null)
-                yield return new ServiceBusLockedDelivery(receiver, message);
-        }
     }
 
     private static ServiceBusMessage _toNativeMessage(
@@ -221,6 +232,10 @@ public sealed class ServiceBusMessagingTransport :
         public ReadOnlySequence<byte> Payload => new(_message.Body.ToMemory());
 
         public int DeliveryCount => _message.DeliveryCount;
+
+        public string DeliveryId => _message.MessageId;
+
+        public DateTimeOffset? LockedUntil => _message.LockedUntil;
 
         public async Task RenewLockAsync(CancellationToken ctk)
         {

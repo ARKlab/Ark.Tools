@@ -672,9 +672,23 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         if (!participant.Receives)
             throw new InvalidOperationException(
                 "The selected participant is producer-only and cannot host a receiver.");
-        if (_transportValue is not IMessagingReceiveTransport)
-            throw new InvalidOperationException(
-                "A custom receiver requires a receive-capable messaging transport.");
+        if (_transportValue is not IMessagingMessageSource)
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.TransportIsNotAMessageSource,
+                FormattableString.Invariant(
+                    $"A processor host requires a transport implementing {nameof(IMessagingMessageSource)}; '{_transportValue?.GetType().Name}' does not."));
+        }
+
+        if (_servicesValue.Any(static service =>
+                service.ServiceType.FullName
+                    == "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest"))
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.ProcessorHostInTriggeredHost,
+                "A processor host cannot be composed in an Azure Functions host, which owns triggering itself.");
+        }
+
         _registerCommon(participant);
         _servicesValue.AddSingleton(serviceProvider => new MessagingHeaderProcessor(
             serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
@@ -708,47 +722,81 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
 
 internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisposable
 {
-    private readonly IMessagingReceiveTransport _transport;
+    private readonly IMessagingMessageSource _source;
     private readonly MessagingDispatcher _dispatcher;
     private readonly string _queue;
-    private MessagingReceivePump? _pump;
+    private CancellationTokenSource? _cts;
+    private Task? _loop;
 
     public MessagingReceiveHostedService(
         IMessagingTransport transport,
         MessagingDispatcher dispatcher,
         MessagingParticipantDescriptor participant)
     {
-        _transport = transport as IMessagingReceiveTransport
-            ?? throw new InvalidOperationException(
-                "A custom receiver requires a receive-capable messaging transport.");
+        ArgumentNullException.ThrowIfNull(participant);
+        ArgumentNullException.ThrowIfNull(transport);
+        _source = transport as IMessagingMessageSource
+            ?? throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.TransportIsNotAMessageSource,
+                FormattableString.Invariant(
+                    $"A processor host requires a transport implementing {nameof(IMessagingMessageSource)}; '{transport.GetType().Name}' does not."));
         _dispatcher = dispatcher;
         _queue = participant.Identity;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        _pump = new MessagingReceivePump(
-            _transport,
-            _queue,
-            _dispatcher.OnDeliveryAsync);
-        await _pump.StartAsync(cancellationToken).ConfigureAwait(false);
+        if (_cts is not null)
+            throw new InvalidOperationException("The messaging receive host has already been started.");
+
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _cts = cts;
+        _loop = Task.Run(() => _runAsync(cts.Token), CancellationToken.None);
+        return Task.CompletedTask;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (_pump is not null)
+        var cts = _cts;
+        var loop = _loop;
+        _cts = null;
+        _loop = null;
+        if (cts is null)
+            return;
+
+        using var toDispose = cts;
+        await cts.CancelAsync().ConfigureAwait(false);
+        if (loop is null)
+            return;
+
+        try
         {
-            await _pump.StopAsync().ConfigureAwait(false);
-            _pump = null;
+#pragma warning disable VSTHRD003 // The receive loop is intentionally started on the thread pool.
+            await loop.ConfigureAwait(false);
+#pragma warning restore VSTHRD003
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation is expected when stopping the receive loop.
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_pump is not null)
+        await StopAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    // ponytail: strictly sequential receive-then-dispatch, i.e. the behaviour of the removed
+    // pump. Ceiling: throughput is 1/(receive + handle + settle); AMF-02 replaces this loop with
+    // MessagingProcessorHost's bounded buffer and worker pool.
+    private async Task _runAsync(CancellationToken ctk)
+    {
+        var maxWait = TimeSpan.FromSeconds(1);
+        while (!ctk.IsCancellationRequested)
         {
-            await _pump.DisposeAsync().ConfigureAwait(false);
-            _pump = null;
+            var batch = await _source.ReceiveBatchAsync(_queue, 1, maxWait, ctk).ConfigureAwait(false);
+            foreach (var delivery in batch)
+                await _dispatcher.OnDeliveryAsync(delivery, ctk).ConfigureAwait(false);
         }
     }
 }

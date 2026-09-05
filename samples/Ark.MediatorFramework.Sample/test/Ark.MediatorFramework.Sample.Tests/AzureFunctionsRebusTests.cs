@@ -142,14 +142,9 @@ public sealed class AzureFunctionsRebusTests
             new ReadOnlySequence<byte>(new byte[] { 1 }),
             null,
             default).ConfigureAwait(false);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-#pragma warning disable MA0004 // The test disposes the enumerator at the end of the method.
-        await using var enumerator = transport.ReceiveAsync(
-            SampleMessagingParticipant.Identity,
-            cts.Token).GetAsyncEnumerator(cts.Token);
-#pragma warning restore MA0004
-        Assert.IsTrue(await enumerator.MoveNextAsync().ConfigureAwait(false));
-        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
+        var delivery = await transport.ReceiveOneAsync(SampleMessagingParticipant.Identity)
+            .ConfigureAwait(false);
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>

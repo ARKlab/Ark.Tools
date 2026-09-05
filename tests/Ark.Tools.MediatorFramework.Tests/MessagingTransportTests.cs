@@ -33,7 +33,7 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         publicMethods.Should().ContainSingle().Which.Should().Be("AddArkMessagingOutboxProcessor");
     }
 
-    protected override IMessagingReceiveTransport CreateTransport()
+    protected override IMessagingTransport CreateTransport()
     {
         return new InMemoryMessagingTransport();
     }
@@ -83,17 +83,14 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 
         var first = await _receiveOnce(transport, "queue").ConfigureAwait(false);
         await first.AbandonAsync(default).ConfigureAwait(false);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
-        var move = enumerator.MoveNextAsync().AsTask();
-        await Task.Delay(25, cts.Token).ConfigureAwait(false);
-        move.IsCompleted.Should().BeFalse();
+
+        (await transport.ReceiveBatchAsync("queue", 1, TimeSpan.FromMilliseconds(25), default)
+            .ConfigureAwait(false)).Should().BeEmpty();
 
         clock.Advance(Duration.FromMinutes(1));
-        (await move.ConfigureAwait(false)).Should().BeTrue();
-        enumerator.Current.DeliveryCount.Should().Be(2);
-        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
-        await enumerator.DisposeAsync().ConfigureAwait(false);
+        var second = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        second.DeliveryCount.Should().Be(2);
+        await second.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -162,13 +159,10 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 
         _ = await _receiveOnce(transport, "queue").ConfigureAwait(false);
         clock.Advance(Duration.FromMinutes(1));
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
-        Func<Task> receive = () => enumerator.MoveNextAsync().AsTask();
-        await receive.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
 
+        (await transport.ReceiveBatchAsync("queue", 1, TimeSpan.Zero, default).ConfigureAwait(false))
+            .Should().BeEmpty();
         transport.GetDeadLetters("queue").Should().ContainSingle();
-        await enumerator.DisposeAsync().ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -228,14 +222,12 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
             _sequence(4),
             clock.GetCurrentInstant().ToDateTimeOffset().AddMinutes(1),
             default).ConfigureAwait(false);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var enumerator = transport.ReceiveAsync("queue", cts.Token).GetAsyncEnumerator(cts.Token);
-        var move = enumerator.MoveNextAsync().AsTask();
-        clock.Advance(Duration.FromMinutes(1));
+        (await transport.ReceiveBatchAsync("queue", 1, TimeSpan.Zero, default).ConfigureAwait(false))
+            .Should().BeEmpty();
 
-        (await move.ConfigureAwait(false)).Should().BeTrue();
-        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
-        await enumerator.DisposeAsync().ConfigureAwait(false);
+        clock.Advance(Duration.FromMinutes(1));
+        var delivery = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -284,7 +276,7 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         services._addArkMessaging(new InMemoryMessagingTransport(), network);
 
         using var provider = services.BuildServiceProvider();
-        provider.GetRequiredService<IMessagingReceiveTransport>().Should()
+        provider.GetRequiredService<IMessagingMessageSource>().Should()
             .BeSameAs(provider.GetRequiredService<IMessagingTransport>());
         provider.GetRequiredService<IMessagingTransportManagement>().Should()
             .BeSameAs(provider.GetRequiredService<IMessagingTransport>());
@@ -303,29 +295,76 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     [TestMethod]
-    public async Task ReceivePumpInvokesCallback()
+    public async Task InMemorySourceBatchesUpToTheRequestedMaximum()
     {
         var transport = new InMemoryMessagingTransport();
-        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(5), null, default).ConfigureAwait(false);
-        var received = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var pump = new MessagingReceivePump(
-            transport,
-            "queue",
-            async (delivery, ctk) =>
-            {
-                received.SetResult(delivery.Payload.FirstSpan[0]);
-                await delivery.CompleteAsync(ctk).ConfigureAwait(false);
-            });
+        for (byte value = 1; value <= 5; value++)
+            await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(value), null, default).ConfigureAwait(false);
 
-        try
+        var batch = await transport.ReceiveBatchAsync("queue", 3, TimeSpan.Zero, default).ConfigureAwait(false);
+
+        batch.Should().HaveCount(3);
+        batch.Select(static delivery => delivery.Payload.FirstSpan[0]).Should().Equal(1, 2, 3);
+        batch.Select(static delivery => delivery.DeliveryId).Should().OnlyHaveUniqueItems();
+        foreach (var delivery in batch)
+            await delivery.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task InMemorySourceReportsLockExpiryFromTheInjectedClock()
+    {
+        var clock = new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0));
+        var transport = new InMemoryMessagingTransport(clock, Duration.FromMinutes(1));
+        await transport.SendAsync("queue", new Dictionary<string, string>(StringComparer.Ordinal), _sequence(6), null, default).ConfigureAwait(false);
+
+        var delivery = await _receiveOnce(transport, "queue").ConfigureAwait(false);
+
+        delivery.LockedUntil.Should().Be(Instant.FromUtc(2024, 1, 1, 0, 1).ToDateTimeOffset());
+        transport.ReceiverCapabilities.NativeLockDuration.Should().Be(TimeSpan.FromMinutes(1));
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public void SendOnlyTransportIsNotRegisteredAsAMessageSource()
+    {
+        var services = new ServiceCollection();
+        services._addArkMessaging(new ReceiveOnlyTransport());
+
+        using var provider = services.BuildServiceProvider();
+        provider.GetService<IMessagingMessageSource>().Should().BeNull();
+        provider.GetRequiredService<IMessagingTransport>().Should().BeOfType<ReceiveOnlyTransport>();
+    }
+
+    [TestMethod]
+    public void CompositionFailuresCarryTheirNamedDiagnostic()
+    {
+        var exception = new MessagingCompositionException(
+            MessagingCompositionDiagnostic.TransportIsNotAMessageSource,
+            "no source");
+
+        exception.Diagnostic.Should().Be(MessagingCompositionDiagnostic.TransportIsNotAMessageSource);
+        exception.Message.Should().Contain(nameof(MessagingCompositionDiagnostic.TransportIsNotAMessageSource));
+    }
+
+    [TestMethod]
+    public void ProcessingOptionsRejectImpossibleConcurrencyCombinations()
+    {
+        var options = new MessagingProcessingOptions
         {
-            await pump.StartAsync(default).ConfigureAwait(false);
-            (await received.Task.WaitAsync(TimeSpan.FromSeconds(2), CancellationToken.None).ConfigureAwait(false)).Should().Be(5);
-        }
-        finally
-        {
-            await pump.DisposeAsync().ConfigureAwait(false);
-        }
+            MaximumConcurrency = 4,
+            InitialConcurrency = 4,
+            MinimumConcurrency = 4
+        };
+        options.Validate();
+
+        options.MinimumConcurrency = 1;
+        options.InitialConcurrency = 1;
+        options.MaximumConcurrency = 1;
+        options.MinimumConcurrency = 2;
+
+        var action = options.Validate;
+        action.Should().Throw<MessagingCompositionException>()
+            .Which.Diagnostic.Should().Be(MessagingCompositionDiagnostic.ProcessingOptionsInvalid);
     }
 
     private static ReadOnlySequence<byte> _sequence(params byte[] bytes)
@@ -334,13 +373,10 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
     }
 
     private static async Task<IMessagingLockedDelivery> _receiveOnce(
-        IMessagingReceiveTransport transport,
+        IMessagingMessageSource source,
         string queue)
     {
-        await foreach (var delivery in transport.ReceiveAsync(queue, CancellationToken.None).ConfigureAwait(false))
-            return delivery;
-
-        throw new InvalidOperationException("The receive stream ended without a delivery.");
+        return await source.ReceiveOneAsync(queue).ConfigureAwait(false);
     }
 
     private sealed class ReceiveOnlyTransport : IMessagingTransport
@@ -390,7 +426,14 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 public abstract class MessagingTransportConformanceTests
 {
     /// <summary>Creates the transport under test.</summary>
-    protected abstract IMessagingReceiveTransport CreateTransport();
+    protected abstract IMessagingTransport CreateTransport();
+
+    /// <summary>Creates the transport under test as a pull message source.</summary>
+    protected IMessagingMessageSource CreateSource()
+    {
+        return CreateTransport() as IMessagingMessageSource
+            ?? throw new InvalidOperationException("The transport under test is not a message source.");
+    }
 
     /// <summary>Gets the queue used for conformance messages.</summary>
     protected virtual string QueueName => "queue";
@@ -409,21 +452,16 @@ public abstract class MessagingTransportConformanceTests
             return;
 
         var transport = CreateTransport();
+        var source = (IMessagingMessageSource)transport;
         await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(9), null, default).ConfigureAwait(false);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var first = transport.ReceiveAsync(QueueName, cts.Token).GetAsyncEnumerator(cts.Token);
-        var second = transport.ReceiveAsync(QueueName, cts.Token).GetAsyncEnumerator(cts.Token);
-        var results = await Task.WhenAll(
-            _tryMoveNextAsync(first),
-            _tryMoveNextAsync(second)).ConfigureAwait(false);
+        var wait = TimeSpan.FromSeconds(2);
+        var batches = await Task.WhenAll(
+            source.ReceiveBatchAsync(QueueName, 1, wait, default).AsTask(),
+            source.ReceiveBatchAsync(QueueName, 1, wait, default).AsTask()).ConfigureAwait(false);
 
-        results.Count(static result => result).Should().Be(1);
-        if (results[0])
-            await first.Current.CompleteAsync(default).ConfigureAwait(false);
-        if (results[1])
-            await second.Current.CompleteAsync(default).ConfigureAwait(false);
-        await first.DisposeAsync().ConfigureAwait(false);
-        await second.DisposeAsync().ConfigureAwait(false);
+        batches.Sum(static batch => batch.Count).Should().Be(1);
+        foreach (var delivery in batches.SelectMany(static batch => batch))
+            await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -432,13 +470,14 @@ public abstract class MessagingTransportConformanceTests
         if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
             return;
 
-        var transport = CreateTransport();
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
-        var enumerator = transport.ReceiveAsync(EmptyQueueName, cts.Token).GetAsyncEnumerator(cts.Token);
-        Func<Task> action = async () => await enumerator.MoveNextAsync().AsTask().ConfigureAwait(false);
+        var source = CreateSource();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync().ConfigureAwait(false);
+        Func<Task> action = async () => await source
+            .ReceiveBatchAsync(EmptyQueueName, 1, TimeSpan.FromSeconds(30), cts.Token)
+            .ConfigureAwait(false);
 
         await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
-        await enumerator.DisposeAsync().ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -448,10 +487,11 @@ public abstract class MessagingTransportConformanceTests
             return;
 
         var transport = CreateTransport();
+        var source = (IMessagingMessageSource)transport;
         await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(10), null, default).ConfigureAwait(false);
         for (var expectedCount = 1; expectedCount <= 3; expectedCount++)
         {
-            var delivery = await _receiveOnceAsync(transport, QueueName).ConfigureAwait(false);
+            var delivery = await source.ReceiveOneAsync(QueueName).ConfigureAwait(false);
             delivery.DeliveryCount.Should().Be(expectedCount);
             if (expectedCount < 3)
                 await delivery.AbandonAsync(default).ConfigureAwait(false);
@@ -465,25 +505,61 @@ public abstract class MessagingTransportConformanceTests
         return new ReadOnlySequence<byte>(bytes);
     }
 
-    private static async Task<bool> _tryMoveNextAsync(IAsyncEnumerator<IMessagingLockedDelivery> enumerator)
+    [TestMethod]
+    public async Task EmptyQueueReturnsAnEmptyBatchWithinTheWaitWindow()
     {
-        try
-        {
-            return await enumerator.MoveNextAsync().ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
+            return;
+
+        var source = CreateSource();
+        var maxWait = TimeSpan.FromMilliseconds(250);
+        var started = System.Diagnostics.Stopwatch.StartNew();
+
+        var batch = await source.ReceiveBatchAsync(EmptyQueueName, 1, maxWait, default).ConfigureAwait(false);
+
+        batch.Should().BeEmpty();
+        started.Elapsed.Should().BeLessThan(maxWait + TimeSpan.FromSeconds(5));
     }
 
-    private static async Task<IMessagingLockedDelivery> _receiveOnceAsync(
-        IMessagingReceiveTransport transport,
-        string queue)
+    [TestMethod]
+    public async Task ReceiveNeverReturnsMoreThanTheRequestedMaximum()
     {
-        await foreach (var delivery in transport.ReceiveAsync(queue, CancellationToken.None).ConfigureAwait(false))
-            return delivery;
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
+            return;
 
-        throw new InvalidOperationException("The receive stream ended without a delivery.");
+        var transport = CreateTransport();
+        var source = (IMessagingMessageSource)transport;
+        for (byte value = 1; value <= 3; value++)
+            await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(value), null, default).ConfigureAwait(false);
+
+        var batch = await source.ReceiveBatchAsync(QueueName, 1, TimeSpan.FromSeconds(2), default).ConfigureAwait(false);
+
+        batch.Should().HaveCount(1);
+        foreach (var delivery in batch)
+            await delivery.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task DeliveryIdAndLockExpiryArePopulated()
+    {
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
+            return;
+
+        var transport = CreateTransport();
+        var source = (IMessagingMessageSource)transport;
+        await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(11), null, default).ConfigureAwait(false);
+
+        var delivery = await source.ReceiveOneAsync(QueueName).ConfigureAwait(false);
+
+        delivery.DeliveryId.Should().NotBeNullOrEmpty();
+        if (source.ReceiverCapabilities.NativeLockDuration is not null)
+            delivery.LockedUntil.Should().NotBeNull();
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public void CapabilitiesDeclareAPositiveBatchSize()
+    {
+        CreateSource().ReceiverCapabilities.MaximumBatchSize.Should().BeGreaterThan(0);
     }
 }

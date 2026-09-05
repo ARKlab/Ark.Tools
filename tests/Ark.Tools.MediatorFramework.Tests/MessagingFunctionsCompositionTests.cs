@@ -132,13 +132,8 @@ public sealed class MessagingFunctionsCompositionTests
         await bus.Send(new CompositionMessage(), default, default).ConfigureAwait(false);
 
         provider.GetService<MessagingDispatcher>().Should().BeNull();
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-#pragma warning disable MA0004 // The enumerator is disposed by the test.
-        await using var enumerator = transport.ReceiveAsync("composition", cts.Token)
-            .GetAsyncEnumerator(cts.Token);
-#pragma warning restore MA0004
-        (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
-        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
+        var delivery = await transport.ReceiveOneAsync("composition").ConfigureAwait(false);
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     /// <summary>Verifies Functions cross-wires the native bus into the application container.</summary>

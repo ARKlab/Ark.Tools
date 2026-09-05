@@ -3,7 +3,7 @@
 
 using System.Buffers;
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 using NodaTime;
 
@@ -11,7 +11,8 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>First-class in-memory transport with scheduled delivery and PeekLock settlement.</summary>
 public sealed class InMemoryMessagingTransport :
-    IMessagingReceiveTransport,
+    IMessagingTransport,
+    IMessagingMessageSource,
     IMessagingTransportManagement,
     IMessagingTransport<InMemoryMessagingTransport>
 {
@@ -199,46 +200,70 @@ public sealed class InMemoryMessagingTransport :
         return Task.CompletedTask;
     }
 
+    /// <summary>Gets the default maximum batch size returned by a single receive.</summary>
+    public const int DefaultMaximumBatchSize = 32;
+
+    private static readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(5);
+
     /// <inheritdoc />
-    public IAsyncEnumerable<IMessagingLockedDelivery> ReceiveAsync(
+    public MessagingReceiverCapabilities ReceiverCapabilities => new(
+        MaximumBatchSize: DefaultMaximumBatchSize,
+        SupportsServerSideWait: true,
+        SupportsLockRenewal: true,
+        NativeLockDuration: _lockDuration.ToTimeSpan());
+
+    /// <inheritdoc />
+    public async ValueTask<IReadOnlyList<IMessagingLockedDelivery>> ReceiveBatchAsync(
         string queue,
+        int maxMessages,
+        TimeSpan maxWait,
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
-        return _receiveAsync(queue, ctk);
-    }
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxMessages, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxWait.Ticks, 0, nameof(maxWait));
 
-    private async IAsyncEnumerable<IMessagingLockedDelivery> _receiveAsync(
-        string queue,
-        [EnumeratorCancellation] CancellationToken ctk)
-    {
+        maxMessages = Math.Min(maxMessages, DefaultMaximumBatchSize);
+        var start = Stopwatch.GetTimestamp();
         while (true)
         {
             ctk.ThrowIfCancellationRequested();
-            InMemoryLockedDelivery? delivery = null;
-            lock (_gate)
-            {
-                var target = _getOrAddQueue(queue);
-                var now = _clock.GetCurrentInstant();
-                target._promoteDue(now);
-                target._expireLocks(now);
-                if (target._visible.TryDequeue(out var envelope))
-                {
-                    envelope._deliveryCount++;
-                    var lockId = Guid.NewGuid();
-                    target._locked.Add(lockId, new InMemoryLock(envelope, now + _lockDuration));
-                    delivery = new InMemoryLockedDelivery(this, target, lockId, envelope);
-                }
-            }
+            var batch = _tryDequeueBatch(queue, maxMessages);
+            if (batch.Count > 0)
+                return batch;
 
-            if (delivery is not null)
-            {
-                yield return delivery;
-                continue;
-            }
+            var remaining = maxWait - Stopwatch.GetElapsedTime(start);
+            if (remaining <= TimeSpan.Zero)
+                return Array.Empty<IMessagingLockedDelivery>();
 
-            await Task.Delay(TimeSpan.FromMilliseconds(10), ctk).ConfigureAwait(false);
+            // ponytail: 5 ms polling instead of an arrival signal, so a fake clock advancing
+            // scheduled deliveries still wakes the wait. Ceiling: up to 5 ms of extra latency
+            // per empty receive; upgrade path is a per-queue arrival TaskCompletionSource
+            // combined with a clock-driven timer.
+            await Task.Delay(remaining < _pollInterval ? remaining : _pollInterval, ctk).ConfigureAwait(false);
         }
+    }
+
+    private List<IMessagingLockedDelivery> _tryDequeueBatch(string queue, int maxMessages)
+    {
+        var batch = new List<IMessagingLockedDelivery>(maxMessages);
+        lock (_gate)
+        {
+            var target = _getOrAddQueue(queue);
+            var now = _clock.GetCurrentInstant();
+            target._promoteDue(now);
+            target._expireLocks(now);
+            while (batch.Count < maxMessages && target._visible.TryDequeue(out var envelope))
+            {
+                envelope._deliveryCount++;
+                var lockId = Guid.NewGuid();
+                var lockedUntil = now + _lockDuration;
+                target._locked.Add(lockId, new InMemoryLock(envelope, lockedUntil));
+                batch.Add(new InMemoryLockedDelivery(this, target, lockId, envelope, lockedUntil));
+            }
+        }
+
+        return batch;
     }
 
     /// <summary>Gets a snapshot of dead letters collected for a queue.</summary>
@@ -528,13 +553,19 @@ public sealed class InMemoryMessagingTransport :
             InMemoryMessagingTransport transport,
             InMemoryQueue queue,
             Guid lockId,
-            InMemoryEnvelope envelope)
+            InMemoryEnvelope envelope,
+            Instant lockedUntil)
         {
             _transport = transport;
             _queue = queue;
             _lockId = lockId;
             _envelope = envelope;
+            LockedUntil = lockedUntil.ToDateTimeOffset();
         }
+
+        public string DeliveryId => _lockId.ToString("N", CultureInfo.InvariantCulture);
+
+        public DateTimeOffset? LockedUntil { get; }
 
         public IReadOnlyDictionary<string, string> Headers => _envelope._headers;
 

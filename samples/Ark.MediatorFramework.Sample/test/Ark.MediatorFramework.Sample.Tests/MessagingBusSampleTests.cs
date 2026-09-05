@@ -60,21 +60,15 @@ public sealed class MessagingBusSampleTests
 
         await bus.Send(new ProcessBookPrintProcessRequest { Id = Guid.NewGuid() }).ConfigureAwait(false);
 
-        await foreach (var delivery in transport
-            .ReceiveAsync(SampleMessagingParticipant.Identity, CancellationToken.None)
-            .ConfigureAwait(false))
-        {
-            delivery.Headers[MessagingHeaders.MessageType]
-                .Should().Be("books_process_book_print_process");
-            delivery.Headers[MessagingHeaders.SenderIdentity]
-                .Should().Be(SampleMessagingParticipant.Identity);
-            (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, delivery.Payload)
-                .ConfigureAwait(false)).Id.Should().NotBe(Guid.Empty);
-            await delivery.CompleteAsync(default).ConfigureAwait(false);
-            return;
-        }
+        var delivery = await transport.ReceiveOneAsync(SampleMessagingParticipant.Identity).ConfigureAwait(false);
 
-        throw new InvalidOperationException("The sample bus did not produce a delivery.");
+        delivery.Headers[MessagingHeaders.MessageType]
+            .Should().Be("books_process_book_print_process");
+        delivery.Headers[MessagingHeaders.SenderIdentity]
+            .Should().Be(SampleMessagingParticipant.Identity);
+        (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, delivery.Payload)
+            .ConfigureAwait(false)).Id.Should().NotBe(Guid.Empty);
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -107,7 +101,7 @@ public sealed class MessagingBusSampleTests
             SampleMessagingParticipant.DispatchFailedAsync,
             lockRenewalInterval: TimeSpan.FromSeconds(1));
         var settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        await using var pump = new MessagingReceivePump(
+        await using var pump = new TestMessagePump(
             transport,
             SampleMessagingParticipant.Identity,
             async (delivery, ctk) =>
@@ -124,10 +118,8 @@ public sealed class MessagingBusSampleTests
             SampleMessagingParticipant.CreatePayloadSender(dataBus, network),
             SampleMessagingParticipant.Identity);
 
-        await pump.StartAsync(CancellationToken.None).ConfigureAwait(false);
         await bus.Send(new ProcessBookPrintProcessRequest { Id = Guid.NewGuid() }).ConfigureAwait(false);
         await settled.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        await pump.StopAsync().ConfigureAwait(false);
 
         state._normalExecutionCount.Should().Be(2);
         state._failureExecutionCount.Should().Be(1);
@@ -211,11 +203,11 @@ public sealed class MessagingBusSampleTests
             retryPolicy,
             SampleMessagingAuditParticipant.DispatchAsync,
             SampleMessagingAuditParticipant.DispatchFailedAsync);
-        await using var notificationPump = new MessagingReceivePump(
+        await using var notificationPump = new TestMessagePump(
             transport,
             SampleMessagingNotificationParticipant.Identity,
             notificationDispatcher.OnDeliveryAsync);
-        await using var auditPump = new MessagingReceivePump(
+        await using var auditPump = new TestMessagePump(
             transport,
             SampleMessagingAuditParticipant.Identity,
             auditDispatcher.OnDeliveryAsync);
@@ -228,16 +220,12 @@ public sealed class MessagingBusSampleTests
             SampleMessagingPublisherParticipant.CreatePayloadSender(dataBus, network),
             SampleMessagingPublisherParticipant.Identity);
 
-        await notificationPump.StartAsync(default).ConfigureAwait(false);
-        await auditPump.StartAsync(default).ConfigureAwait(false);
         await bus.Publish(new BookPrintCompleted { BookId = Guid.Parse("00000000-0000-0000-0000-000000000042") })
             .ConfigureAwait(false);
         await Task.WhenAll(
                 notifications._completed.Task.WaitAsync(TimeSpan.FromSeconds(5)),
                 audits._completed.Task.WaitAsync(TimeSpan.FromSeconds(5)))
             .ConfigureAwait(false);
-        await notificationPump.StopAsync().ConfigureAwait(false);
-        await auditPump.StopAsync().ConfigureAwait(false);
 
         notifications._bookIds.Should().ContainSingle();
         audits._bookIds.Should().ContainSingle();
@@ -303,18 +291,15 @@ public sealed class MessagingBusSampleTests
                 new ProcessBookPrintProcessRequest { Id = Guid.NewGuid() },
                 TimeSpan.FromSeconds(2),
                 cancellationToken: timeout.Token).ConfigureAwait(false);
-#pragma warning disable MA0004 // The test disposes the enumerator at the end of the method.
-            await using var enumerator = transport
-                .ReceiveAsync(SampleMessagingParticipant.Identity, timeout.Token)
-                .GetAsyncEnumerator(timeout.Token);
-#pragma warning restore MA0004
-            (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
+            var delivery = await transport
+                .ReceiveOneAsync(SampleMessagingParticipant.Identity, ctk: timeout.Token)
+                .ConfigureAwait(false);
             stopwatch.Elapsed.Should().BeGreaterThan(TimeSpan.FromSeconds(1));
-            (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, enumerator.Current.Payload)
+            (await _deserializeAsync<ProcessBookPrintProcessRequest>(codec, delivery.Payload)
                 .ConfigureAwait(false))
                 .Id.Should().NotBe(Guid.Empty);
 
-            await enumerator.Current.DeadLetterAsync(
+            await delivery.DeadLetterAsync(
                 "sample-failure",
                 "Book sample poison proof",
                 timeout.Token).ConfigureAwait(false);
