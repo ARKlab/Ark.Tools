@@ -205,6 +205,17 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Gets an access token using the OAuth 2.0 on-behalf-of token flow.
+    /// </summary>
+    /// <param name="request">The on-behalf-of token request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <returns>The on-behalf-of token response.</returns>
+    public async Task<OnBehalfOfTokenResponse> GetTokenOnBehalfOfAsync(OnBehalfOfTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenOnBehalfOfAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     private static string _getKey(RefreshTokenRequest r)
     {
         return $"RefreshTokenRequest{r.ClientId}{r.RefreshToken}{r.Audience}{r.Scope}";
