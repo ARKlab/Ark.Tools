@@ -35,6 +35,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string ServerSet = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string Versioning = "Ark.Tools.MediatorFramework.VersioningAttribute";
     private const string McpTool = "Ark.Tools.MediatorFramework.McpToolAttribute";
+    private const string Sse = "Ark.Tools.MediatorFramework.SseAttribute";
 
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
@@ -527,6 +528,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         if (http is not null)
         {
             metadata.Add($"http={StringArgument(http, 0)} {StringArgument(http, 1)}");
+            var sse = Attribute(type, Sse);
+            if (sse is not null)
+                metadata.Add($"sse=GET {StringArgument(http, 1)}{StringNamed(sse, "RouteSuffix") ?? "/sse"}");
             metadata.Add($"version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 

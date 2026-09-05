@@ -57,6 +57,7 @@ public static class ListBookReviewsQuery
 {
     /// <summary>Version one of the book-review list query.</summary>
     [HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reviews")]
+    [Sse(IntervalSeconds = 5, AllowClientInterval = true, MinimumIntervalSeconds = 2)]
     [RequireScopePolicy(ApplicationScopes.BookReviewsRead)]
     public sealed record V1 : IQuery<V1, IReadOnlyList<BookReview>>
     {
