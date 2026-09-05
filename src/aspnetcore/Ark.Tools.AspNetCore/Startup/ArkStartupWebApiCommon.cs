@@ -56,7 +56,7 @@ public abstract class ArkStartupWebApiCommon
         //HealthChecks
         services.AddArkHealthChecks();
 
-        services.AddResponseCompression(options =>
+        services.AddResponseCompression(static options =>
         {
             options.EnableForHttps = true;
             options.Providers.Add<BrotliCompressionProvider>();
@@ -89,7 +89,7 @@ public abstract class ArkStartupWebApiCommon
                 opt.ReturnHttpNotAcceptable = true;
                 opt.RespectBrowserAcceptHeader = true;
             })
-            .AddOData(options =>
+            .AddOData(static options =>
             {
                 options.EnableQueryFeatures();
 
@@ -118,15 +118,15 @@ public abstract class ArkStartupWebApiCommon
             o.DefaultApiVersion = Versions.Last();
             o.AssumeDefaultVersionWhenUnspecified = true;
         })
-        .AddMvc(o =>
+        .AddMvc(static o =>
         {
         })
-        .AddOData(options =>
+        .AddOData(static options =>
         {
             options.AddRouteComponents("v{api-version:apiVersion}");
 
         })
-        .AddODataApiExplorer(options =>
+        .AddODataApiExplorer(static options =>
         {
             options.GroupNameFormat = "'v'VVVV";
             options.SubstituteApiVersionInUrl = true;
@@ -136,7 +136,7 @@ public abstract class ArkStartupWebApiCommon
 
         services.AddSwaggerGen(c =>
         {
-            c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
+            c.DocInclusionPredicate(static (docName, apiDesc) => apiDesc.GroupName == docName);
 
             c.MapNodaTimeTypes();
             c.MapArkComplianceTypes();
@@ -151,15 +151,15 @@ public abstract class ArkStartupWebApiCommon
             c.UseAllOfForInheritance();
             c.UseAllOfToExtendReferenceSchemas();
 
-            c.CustomOperationIds(x => x.HttpMethod + " " + x.RelativePath);
-            c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+            c.CustomOperationIds(static x => x.HttpMethod + " " + x.RelativePath);
+            c.ResolveConflictingActions(static apiDescriptions => apiDescriptions.First());
 
             c.OperationFilter<DefaultResponsesOperationFilter>();
 
             c.IncludeXmlCommentsForAssembly(this.GetType().Assembly);
 
-            c.CustomSchemaIds((type) => Ark.Tools.Core.Reflection.ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
-            c.SelectSubTypesUsing(t =>
+            c.CustomSchemaIds(static (type) => Ark.Tools.Core.Reflection.ReflectionHelper.GetCSTypeName(type).Replace($"{type.Namespace}.", @"", StringComparison.Ordinal));
+            c.SelectSubTypesUsing(static t =>
             {
                 if (t.IsGenericTypeDefinition) return Enumerable.Empty<Type>();
                 return t.Assembly.GetTypes()
@@ -172,12 +172,12 @@ public abstract class ArkStartupWebApiCommon
 
         services._arkConfigureSwaggerVersions(Versions, MakeInfo);
 
-        services.ArkConfigureSwagger(c =>
+        services.ArkConfigureSwagger(static c =>
         {
             c.RouteTemplate = "swagger/docs/{documentName}";
         });
 
-        services.ArkConfigureSwaggerUI(c =>
+        services.ArkConfigureSwaggerUI(static c =>
         {
             c.RoutePrefix = "swagger";
 
@@ -196,7 +196,7 @@ public abstract class ArkStartupWebApiCommon
         });
 
         // Configure System.Text.Json with Ark defaults
-        mvcBuilder.AddJsonOptions(options =>
+        mvcBuilder.AddJsonOptions(static options =>
         {
             options.JsonSerializerOptions.ConfigureArkDefaults();
         });
@@ -207,14 +207,14 @@ public abstract class ArkStartupWebApiCommon
         services.Replace(ServiceDescriptor.Singleton<FormatFilter, CompatibleOldQueryFormatFilter>());
         _integrateSimpleInjectorContainer(services);
 
-        services.AddCors(c =>
+        services.AddCors(static c =>
         {
-            c.AddDefaultPolicy(p => p
+            c.AddDefaultPolicy(static p => p
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials()
                 .WithExposedHeaders("*")
-                .SetIsOriginAllowed(_ => true));
+                .SetIsOriginAllowed(static _ => true));
         });
     }
 
@@ -261,7 +261,7 @@ public abstract class ArkStartupWebApiCommon
             app.UseODataRouteDebug();
         }
 
-        app.UseSwagger(options =>
+        app.UseSwagger(static options =>
         {
             options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
         });
@@ -273,7 +273,7 @@ public abstract class ArkStartupWebApiCommon
 
         app.UseODataQueryRequest();
 
-        app.UseEndpoints(endpoints =>
+        app.UseEndpoints(static endpoints =>
         {
 
             endpoints.MapArkHealthChecks();

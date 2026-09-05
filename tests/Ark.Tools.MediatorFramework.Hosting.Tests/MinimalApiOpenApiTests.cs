@@ -43,9 +43,9 @@ public sealed class MinimalApiOpenApiTests
             .Should().Be("Deterministic request contract with route, query, body, and server-owned properties.");
         var requestParameters = requestOperation["parameters"]?.AsArray()
             ?? throw new InvalidOperationException("The request operation had no parameters.");
-        requestParameters.Single(parameter => parameter?["name"]?.GetValue<string>() == "id")!["description"]?
+        requestParameters.Single(static parameter => parameter?["name"]?.GetValue<string>() == "id")!["description"]?
             .GetValue<string>().Should().Be("Gets or sets the route identifier.");
-        requestParameters.Single(parameter => parameter?["name"]?.GetValue<string>() == "Filter")!["description"]?
+        requestParameters.Single(static parameter => parameter?["name"]?.GetValue<string>() == "Filter")!["description"]?
             .GetValue<string>().Should().Be("Gets or sets the optional query filter.");
         var requestBody = requestOperation["requestBody"]
             ?? throw new InvalidOperationException("The request operation had no request body.");

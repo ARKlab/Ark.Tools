@@ -49,7 +49,7 @@ public sealed class AzureFunctionsRebusTests
     public void MissingOutboundBusConfigurationFailsClearly()
     {
         var exception = Assert.Throws<InvalidOperationException>(
-            () => AzureFunctionsRebusComposition.BuildContainer(null));
+            static () => AzureFunctionsRebusComposition.BuildContainer(null));
 
         StringAssert.Contains(
             exception.Message,
@@ -102,7 +102,7 @@ public sealed class AzureFunctionsRebusTests
         });
         using var receiver = Configure.With(activator)
             .Transport(transport => transport.UseInMemoryTransport(network, "ark-mediator-sample"))
-            .Serialization(serialization => serialization.UseSystemTextJson(
+            .Serialization(static serialization => serialization.UseSystemTextJson(
                 new JsonSerializerOptions().ConfigureArkDefaults()))
             .Start();
 

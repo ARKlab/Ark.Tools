@@ -62,16 +62,16 @@ public static class Program
                 applicationContainer,
                 builder.Configuration,
                 ArkGeneratedMessagingFunctions.Manifest,
-                messaging => messaging
-                    .UseTransport(transport => transport.UseServiceBus())
-                    .UseDataBus(dataBus => dataBus.UseInMemory())
-                    .UseOutbox(outbox => outbox.UseEnqueue()));
+                static messaging => messaging
+                    .UseTransport(static transport => transport.UseServiceBus())
+                    .UseDataBus(static dataBus => dataBus.UseInMemory())
+                    .UseOutbox(static outbox => outbox.UseEnqueue()));
             builder.Services.AddArkHealthChecks();
             if (builder.Environment.IsEnvironment("IntegrationTests"))
             {
-                builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
+                builder.Services.AddArkAzureFunctionsBearerAuthentication(static options => options.DefaultScheme = "IntegrationTests")
                     .AddAuthentication()
-                    .AddJwtBearer("IntegrationTests", options =>
+                    .AddJwtBearer("IntegrationTests", static options =>
                     {
                         options.Audience = "API";
 #pragma warning disable CA5404 // Integration-test-only scheme with a symmetric key: issuer validation is intentionally disabled.
@@ -85,7 +85,7 @@ public static class Program
             {
                 builder.Services.AddArkAzureFunctionsBearerAuthentication();
             }
-            builder.Services.AddAuthorization(options =>
+            builder.Services.AddAuthorization(static options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()

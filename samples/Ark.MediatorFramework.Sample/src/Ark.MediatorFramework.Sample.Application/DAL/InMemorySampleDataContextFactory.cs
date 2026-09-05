@@ -97,7 +97,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             var sorts = query.Sort ?? [];
             var ordered = sorts.Any()
                 ? filtered.OrderBy(string.Join(", ", sorts))
-                : filtered.OrderByDescending(record => record.Timestamp);
+                : filtered.OrderByDescending(static record => record.Timestamp);
             var records = ordered.ToArray();
             return await Task.FromResult(new PagedResult<AuditRecord>
             {
@@ -136,7 +136,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 .ToArray();
             lock (_owner._sync)
             {
-                if (stored.GroupBy(book => book.Id).Any(group => group.Count() > 1)
+                if (stored.GroupBy(static book => book.Id).Any(static group => group.Count() > 1)
                     || stored.Any(book => _owner._books.ContainsKey(book.Id)))
                     throw new InvalidOperationException("A book in the bulk request already exists.");
                 foreach (var book in stored)
@@ -189,9 +189,9 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                     (query.Title is null || string.Equals(book.Title, query.Title, StringComparison.Ordinal))
                     && (query.Author is null || string.Equals(book.Author, query.Author, StringComparison.Ordinal))
                     && (query.Genre is null || book.Genre == query.Genre));
-            var sorts = query.Sort?.Where(sort => !string.IsNullOrWhiteSpace(sort)).ToArray() ?? [];
+            var sorts = query.Sort?.Where(static sort => !string.IsNullOrWhiteSpace(sort)).ToArray() ?? [];
             var ordered = sorts.Length == 0
-                ? matching.OrderBy(book => book.Id)
+                ? matching.OrderBy(static book => book.Id)
                 : matching.OrderBy(string.Join(", ", sorts));
             var results = ordered.ToArray();
             return await Task.FromResult(new Book.V1.Page
@@ -219,8 +219,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         {
             var reviews = _owner._bookReviews.Values
                 .Where(review => review.BookId == bookId)
-                .OrderByDescending(review => review.CreatedAt)
-                .ThenByDescending(review => review.Id)
+                .OrderByDescending(static review => review.CreatedAt)
+                .ThenByDescending(static review => review.Id)
                 .Skip(skip)
                 .Take(limit)
                 .ToArray();
@@ -243,8 +243,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         {
             var activities = _owner._readingActivities.Values
                 .Where(activity => activity.BookId == bookId && activity.UserId == userId)
-                .OrderByDescending(activity => activity.OccurredAt)
-                .ThenByDescending(activity => activity.Id)
+                .OrderByDescending(static activity => activity.OccurredAt)
+                .ThenByDescending(static activity => activity.Id)
                 .Take(limit)
                 .ToArray();
             return await Task.FromResult<IReadOnlyList<ReadingActivity>>(activities).ConfigureAwait(false);
@@ -357,7 +357,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
                 nameof(AuditRecord.Operation),
                 nameof(AuditRecord.Timestamp),
             };
-            foreach (var sort in sorts.Where(sort => !string.IsNullOrWhiteSpace(sort)))
+            foreach (var sort in sorts.Where(static sort => !string.IsNullOrWhiteSpace(sort)))
             {
                 var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length > 2 || !properties.Contains(parts[0]))

@@ -14,10 +14,10 @@ public sealed class Book_BulkCreateRequestValidator : AbstractValidator<Book_Bul
     /// </summary>
     public Book_BulkCreateRequestValidator()
     {
-        RuleFor(x => x.Data)
+        RuleFor(static x => x.Data)
             .NotEmpty();
 
-        RuleForEach(x => x.Data)
+        RuleForEach(static x => x.Data)
             .SetValidator(new Book_CreateValidator());
     }
 }

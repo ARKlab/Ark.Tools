@@ -9,7 +9,7 @@ public static partial class Ex
 {
     public static IHostBuilder AddWorkerHostInfrastracture(this IHostBuilder builder)
     {
-        return builder.ConfigureAppConfiguration((ctx, cfg) =>
+        return builder.ConfigureAppConfiguration(static (ctx, cfg) =>
         {
             cfg.AddArkEnvironmentVariables();
         });

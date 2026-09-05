@@ -28,7 +28,7 @@ public sealed class MockSinkApi
     /// <summary>
     /// Gets the total number of records received.
     /// </summary>
-    public int TotalRecordsReceived => _receivedPayloads.Sum(p => p.Records?.Count ?? 0);
+    public int TotalRecordsReceived => _receivedPayloads.Sum(static p => p.Records?.Count ?? 0);
 
     /// <summary>
     /// Configures the mock to fail on the next N calls.

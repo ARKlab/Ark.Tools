@@ -50,7 +50,7 @@ public sealed class MyTransformService
             HasHeaderRecord = true,
             TrimOptions = TrimOptions.Trim,
             HeaderValidated = null, // Don't validate headers - allow extra columns
-            PrepareHeaderForMatch = args => args.Header.ToLowerInvariant() // Case-insensitive matching
+            PrepareHeaderForMatch = static args => args.Header.ToLowerInvariant() // Case-insensitive matching
         };
 
         using var csv = new CsvReader(reader, config);
@@ -83,9 +83,9 @@ public sealed class MyTransformService
         public SinkRecordMap()
         {
             // Map required columns by name (case-insensitive due to PrepareHeaderForMatch)
-            Map(m => m.Id).Name("id").Index(0);
-            Map(m => m.Name).Name("name").Index(1);
-            Map(m => m.Value).Name("value").Index(2);
+            Map(static m => m.Id).Name("id").Index(0);
+            Map(static m => m.Name).Name("name").Index(1);
+            Map(static m => m.Value).Name("value").Index(2);
         }
     }
 }

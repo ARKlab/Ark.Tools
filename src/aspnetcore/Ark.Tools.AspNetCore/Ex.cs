@@ -29,6 +29,6 @@ public static partial class Ex
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        return services.Any(sd => sd.ServiceType == typeof(TService));
+        return services.Any(static sd => sd.ServiceType == typeof(TService));
     }
 }

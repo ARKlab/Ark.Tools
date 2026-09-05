@@ -51,10 +51,10 @@ public sealed class SdkPackageTests
     {
         var packagePath = Directory.GetFiles(_feed, "Ark.Tools.Sdk.*.nupkg").Single();
         using var archive = await ZipFile.OpenReadAsync(packagePath).ConfigureAwait(false);
-        var nuspecEntry = archive.Entries.Single(entry => entry.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
+        var nuspecEntry = archive.Entries.Single(static entry => entry.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
         await using var nuspecStream = await nuspecEntry.OpenAsync().ConfigureAwait(false);
         var nuspec = await XDocument.LoadAsync(nuspecStream, LoadOptions.None, CancellationToken.None).ConfigureAwait(false);
-        var repository = nuspec.Descendants().Single(element => element.Name.LocalName == "repository");
+        var repository = nuspec.Descendants().Single(static element => element.Name.LocalName == "repository");
 
         Assert.AreEqual("https://github.com/ARKlab/Ark.Tools", repository.Attribute("url")?.Value);
         Assert.AreEqual("git", repository.Attribute("type")?.Value);
@@ -96,10 +96,11 @@ public sealed class SdkPackageTests
         {
             ["Microsoft.CodeAnalysis.NetAnalyzers"] = "10.0.400",
             ["Microsoft.CodeAnalysis.BannedApiAnalyzers"] = "4.14.0",
-            ["Meziantou.Analyzer"] = "3.0.160",
-            ["Microsoft.VisualStudio.Threading.Analyzers"] = "18.7.23",
+            ["Meziantou.Analyzer"] = "3.0.205",
             ["ErrorProne.NET.CoreAnalyzers"] = "0.1.2"
         };
+
+    private const string _visualStudioThreadingAnalyzerVersion = "18.7.23";
 
     private static readonly string[] _boundaryProperties =
     [
@@ -298,7 +299,7 @@ public sealed class SdkPackageTests
             "P:System.DateTime.Today;Use an explicit timezone\n").ConfigureAwait(false);
         CollectionAssert.AreEquivalent(
             _composedBannedApiAssets,
-            _getItemIdentities(banned, "AdditionalFiles").Select(identity => Path.GetFileName(identity) ?? "").ToArray());
+            _getItemIdentities(banned, "AdditionalFiles").Select(static identity => Path.GetFileName(identity) ?? "").ToArray());
         var bannedError = await _runForExitCode(
             "dotnet",
             $"build \"{Path.Join(bannedRoot, "Consumer.csproj")}\" --no-restore",
@@ -434,13 +435,13 @@ public sealed class SdkPackageTests
         var packageReferences = _getPackageReferences(baseline);
         foreach (var package in new[]
         {
-            ("Microsoft.Testing.Extensions.CrashDump", "2.3.3"),
-            ("Microsoft.Testing.Extensions.CodeCoverage", "18.10.0"),
-            ("Microsoft.Testing.Extensions.HangDump", "2.3.3"),
-            ("Microsoft.Testing.Extensions.HotReload", "2.3.3"),
-            ("Microsoft.Testing.Extensions.Retry", "2.3.3"),
-            ("Microsoft.Testing.Extensions.TrxReport", "2.3.3"),
-            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.3.3")
+            ("Microsoft.Testing.Extensions.CrashDump", "2.4.0"),
+            ("Microsoft.Testing.Extensions.CodeCoverage", "18.11.0"),
+            ("Microsoft.Testing.Extensions.HangDump", "2.4.0"),
+            ("Microsoft.Testing.Extensions.HotReload", "2.4.0"),
+            ("Microsoft.Testing.Extensions.Retry", "2.4.0"),
+            ("Microsoft.Testing.Extensions.TrxReport", "2.4.0"),
+            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.4.0")
         })
         {
             Assert.AreEqual(package.Item2, packageReferences[package.Item1]["Version"], package.Item1);
@@ -721,7 +722,28 @@ public sealed class SdkPackageTests
             {
                 Assert.AreEqual(analyzer.Value, dependencies.GetProperty(analyzer.Key).GetProperty("resolved").GetString(), analyzer.Key);
             }
+            Assert.IsFalse(dependencies.TryGetProperty("Microsoft.VisualStudio.Threading.Analyzers", out _));
         }
+
+        var threadingOptInRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "threading-opt-in",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsVisualStudioThreading>true</EnableArkToolsVisualStudioThreading>");
+        await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(threadingOptInRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(threadingOptInRoot, "NuGet.Config")}\"",
+            _createSdkEnvironment(fixtureRoot));
+        using (var optInLockJson = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Join(threadingOptInRoot, "packages.lock.json")).ConfigureAwait(false)))
+        {
+            var dependencies = optInLockJson.RootElement.GetProperty("dependencies").GetProperty("net10.0");
+            Assert.AreEqual(
+                _visualStudioThreadingAnalyzerVersion,
+                dependencies.GetProperty("Microsoft.VisualStudio.Threading.Analyzers").GetProperty("resolved").GetString());
+        }
+
         lockedEnvironment["CI"] = "true";
         Directory.Delete(Path.Join(lockedRoot, "obj"), true);
         await _run(
@@ -1118,7 +1140,7 @@ public sealed class ConsumerTests
         Directory.CreateDirectory(scenarioRoot);
         var packageVersion = Directory.GetFiles(feed, "Ark.Tools.Sdk.*.nupkg")
             .Select(Path.GetFileNameWithoutExtension)
-            .Select(name => name?["Ark.Tools.Sdk.".Length..] ?? "")
+            .Select(static name => name?["Ark.Tools.Sdk.".Length..] ?? "")
             .Single();
         await File.WriteAllTextAsync(
             Path.Join(scenarioRoot, "Directory.Build.props"),
@@ -1215,10 +1237,10 @@ public sealed class ConsumerTests
         return evaluation.RootElement.GetProperty("Items").GetProperty("PackageReference")
             .EnumerateArray()
             .ToDictionary(
-                item => item.GetProperty("Identity").GetString() ?? "",
-                item => item.EnumerateObject().ToDictionary(
-                    property => property.Name,
-                    property => property.Value.GetString() ?? ""),
+                static item => item.GetProperty("Identity").GetString() ?? "",
+                static item => item.EnumerateObject().ToDictionary(
+                    static property => property.Name,
+                    static property => property.Value.GetString() ?? ""),
                 StringComparer.OrdinalIgnoreCase);
     }
 
@@ -1356,7 +1378,7 @@ public sealed class ConsumerTests
             _createEnvironment(scenarioRoot));
         using var targetEvaluation = JsonDocument.Parse(output);
         return _getItemIdentities(targetEvaluation, "Analyzer")
-            .Select(identity => Path.GetFileName(identity) ?? "")
+            .Select(static identity => Path.GetFileName(identity) ?? "")
             .Where(_allSyntheticAnalyzers.Contains)
             .ToArray();
     }
@@ -1382,8 +1404,8 @@ public sealed class ConsumerTests
     private static string[] _getArkBuildItemFileNames(JsonDocument evaluation, string itemName)
     {
         return _getItemIdentities(evaluation, itemName)
-            .Where(identity => identity.Contains("ark.tools.build", StringComparison.OrdinalIgnoreCase))
-            .Select(identity => Path.GetFileName(identity) ?? "")
+            .Where(static identity => identity.Contains("ark.tools.build", StringComparison.OrdinalIgnoreCase))
+            .Select(static identity => Path.GetFileName(identity) ?? "")
             .ToArray();
     }
 
@@ -1427,7 +1449,7 @@ public sealed class ConsumerTests
     {
         return evaluation.RootElement.GetProperty("Items").GetProperty(itemName)
             .EnumerateArray()
-            .Select(item => item.GetProperty("Identity").GetString() ?? "")
+            .Select(static item => item.GetProperty("Identity").GetString() ?? "")
             .ToArray();
     }
 
@@ -1435,9 +1457,9 @@ public sealed class ConsumerTests
     {
         return evaluation.RootElement.GetProperty("Items").GetProperty(itemName)
             .EnumerateArray()
-            .Where(item => item.TryGetProperty("DefiningProjectName", out var definingProjectName) &&
+            .Where(static item => item.TryGetProperty("DefiningProjectName", out var definingProjectName) &&
                 string.Equals(definingProjectName.GetString(), "Sdk", StringComparison.Ordinal))
-            .Select(item => item.GetProperty("Identity").GetString() ?? "")
+            .Select(static item => item.GetProperty("Identity").GetString() ?? "")
             .ToArray();
     }
 
@@ -1445,14 +1467,14 @@ public sealed class ConsumerTests
     {
         var matches = evaluation.RootElement.GetProperty("Items").GetProperty(itemName)
             .EnumerateArray()
-            .Select(item =>
+            .Select(static item =>
             {
                 var identity = item.GetProperty("Identity").GetString() ?? "";
                 var metadata = item.EnumerateObject()
-                    .Where(property => !string.Equals(property.Name, "Identity", StringComparison.Ordinal))
+                    .Where(static property => !string.Equals(property.Name, "Identity", StringComparison.Ordinal))
                     .ToDictionary(
-                        property => property.Name,
-                        property => property.Value.GetString() ?? "",
+                        static property => property.Name,
+                        static property => property.Value.GetString() ?? "",
                         StringComparer.Ordinal);
                 return new
                 {
@@ -1462,9 +1484,9 @@ public sealed class ConsumerTests
                 };
             })
             .Where(item => string.Equals(Path.GetFileName(item.Identity), fileName, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => string.Equals(item.DefiningProjectName, "Sdk", StringComparison.Ordinal))
-            .ThenByDescending(item => item.Metadata.ContainsKey("CopyToOutputDirectory"))
-            .ThenByDescending(item => item.Metadata.ContainsKey("CopyToPublishDirectory"))
+            .OrderByDescending(static item => string.Equals(item.DefiningProjectName, "Sdk", StringComparison.Ordinal))
+            .ThenByDescending(static item => item.Metadata.ContainsKey("CopyToOutputDirectory"))
+            .ThenByDescending(static item => item.Metadata.ContainsKey("CopyToPublishDirectory"))
             .ToArray();
 
         return matches.Length == 0 ? null : matches[0].Metadata;

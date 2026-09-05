@@ -9,8 +9,8 @@ public class FluentValidationProblemDetails : StatusCodeProblemDetails
 {
     public FluentValidationProblemDetails(FluentValidation.ValidationException ex, int statusCode) : base(statusCode)
     {
-        Errors = ex.Errors?.GroupBy(x => x.PropertyName, StringComparer.Ordinal)
-            .ToDictionary(x => x.Key, x => x.Select(error =>
+        Errors = ex.Errors?.GroupBy(static x => x.PropertyName, StringComparer.Ordinal)
+            .ToDictionary(static x => x.Key, static x => x.Select(static error =>
                 new FluentValidationErrors()
                 {
                     AttemptedValue = error.AttemptedValue,
@@ -21,7 +21,7 @@ public class FluentValidationProblemDetails : StatusCodeProblemDetails
                 }
             ).ToArray(), StringComparer.Ordinal) ?? new Dictionary<string, FluentValidationErrors[]>(StringComparer.Ordinal);
 
-        Detail = string.Join(Environment.NewLine, Errors.SelectMany(s => s.Value.Select(x => x.ErrorMessage)));
+        Detail = string.Join(Environment.NewLine, Errors.SelectMany(static s => s.Value.Select(static x => x.ErrorMessage)));
     }
 
     public Dictionary<string, FluentValidationErrors[]> Errors { get; set; }

@@ -18,7 +18,7 @@ public abstract class RequiredScopePolicyHandler : AuthorizationHandler<Required
     {
         var scopes = context.User
             .FindAll(x => x.Type == _serviceScope)
-            .SelectMany(x => x.Value.Split(_separator, StringSplitOptions.RemoveEmptyEntries))
+            .SelectMany(static x => x.Value.Split(_separator, StringSplitOptions.RemoveEmptyEntries))
             .ToList();
 
         var requiredScope = requirement.Scope;

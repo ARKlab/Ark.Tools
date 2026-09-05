@@ -25,9 +25,9 @@ public static class Ex
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
-            .ConfigureResource(resource => resource.AddArkTelemetryResource())
-            .WithTracing(tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
-            .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
+            .ConfigureResource(static resource => resource.AddArkTelemetryResource())
+            .WithTracing(static tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
+            .WithMetrics(static metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.ConfigureServices((_, services) =>
+        return builder.ConfigureServices(static (_, services) =>
         {
             services.AddOpenTelemetry().AddArkResourceWatcherOpenTelemetry();
         });

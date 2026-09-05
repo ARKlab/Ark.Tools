@@ -17,7 +17,7 @@ public static partial class Ex
         return builder
             .AllowAnyHttpStatus()
             .WithTimeout(TimeSpan.FromMinutes(5))
-            .ConfigureInnerHandler(h =>
+            .ConfigureInnerHandler(static h =>
             {
                 if (h is null) return; // can be null when using TestServer.CreateHandler() as inner handler
                 h.AutomaticDecompression = System.Net.DecompressionMethods.All;

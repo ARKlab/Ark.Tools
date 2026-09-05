@@ -99,7 +99,7 @@ public class EvolvableEnumTests
     public void FlagsEnum_ShouldBeRejected()
     {
         // Act
-        var act = () => EvolvableEnum<BadFlags>.FromValue(BadFlags.A);
+        var act = static () => EvolvableEnum<BadFlags>.FromValue(BadFlags.A);
 
         // Assert
         act.Should().Throw<TypeInitializationException>()
@@ -111,7 +111,7 @@ public class EvolvableEnumTests
     public void EnumWithoutNotSetMember_ShouldBeRejected()
     {
         // Act
-        var act = () => EvolvableEnum<MissingNotSet>.FromValue(MissingNotSet.A);
+        var act = static () => EvolvableEnum<MissingNotSet>.FromValue(MissingNotSet.A);
 
         // Assert
         act.Should().Throw<TypeInitializationException>()
@@ -123,7 +123,7 @@ public class EvolvableEnumTests
     public void EnumWithNonZeroNotSetMember_ShouldBeRejected()
     {
         // Act
-        var act = () => EvolvableEnum<NotSetNotZero>.FromValue(NotSetNotZero.A);
+        var act = static () => EvolvableEnum<NotSetNotZero>.FromValue(NotSetNotZero.A);
 
         // Assert
         act.Should().Throw<TypeInitializationException>()
@@ -372,7 +372,7 @@ public class EvolvableEnumTests
     public void ExplicitBackingType_ShouldBeRequired()
     {
         // Act
-        var act = () => EvolvableEnum<ByteStatus, int>.FromValue(ByteStatus.Low);
+        var act = static () => EvolvableEnum<ByteStatus, int>.FromValue(ByteStatus.Low);
 
         // Assert
         act.Should().Throw<TypeInitializationException>()

@@ -11,7 +11,7 @@ public sealed class CreateBookRequestValidator : AbstractValidator<Book_CreateRe
     /// <summary>Initializes a new instance of the <see cref="CreateBookRequestValidator"/> class.</summary>
     public CreateBookRequestValidator()
     {
-        RuleFor(request => request.Data)
+        RuleFor(static request => request.Data)
             .SetValidator(new BookCreateValidator());
     }
 }
@@ -22,15 +22,15 @@ public sealed class BookCreateValidator : AbstractValidator<Book.V1.Create>
     /// <summary>Initializes a new instance of the <see cref="BookCreateValidator"/> class.</summary>
     public BookCreateValidator()
     {
-        RuleFor(book => book.Title)
+        RuleFor(static book => book.Title)
             .NotEmpty()
             .MaximumLength(200);
-        RuleFor(book => book.Author)
+        RuleFor(static book => book.Author)
             .NotEmpty()
             .MaximumLength(100);
-        RuleFor(book => book.Genre)
+        RuleFor(static book => book.Genre)
             .NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
-        RuleFor(book => book.ISBN)
+        RuleFor(static book => book.ISBN)
             .MaximumLength(20);
     }
 }
@@ -41,8 +41,8 @@ public sealed class BulkCreateBookRequestValidator : AbstractValidator<Book_Bulk
     /// <summary>Initializes a new instance of the <see cref="BulkCreateBookRequestValidator"/> class.</summary>
     public BulkCreateBookRequestValidator()
     {
-        RuleFor(request => request.Data).NotEmpty();
-        RuleForEach(request => request.Data).SetValidator(new BookCreateValidator());
+        RuleFor(static request => request.Data).NotEmpty();
+        RuleForEach(static request => request.Data).SetValidator(new BookCreateValidator());
     }
 }
 
@@ -52,10 +52,10 @@ public sealed class UpdateBookRequestValidator : AbstractValidator<Book_UpdateRe
     /// <summary>Initializes a new instance of the <see cref="UpdateBookRequestValidator"/> class.</summary>
     public UpdateBookRequestValidator()
     {
-        RuleFor(request => request.Id).NotEmpty();
-        RuleFor(request => request.Data.Title).NotEmpty().MaximumLength(200);
-        RuleFor(request => request.Data.Author).NotEmpty().MaximumLength(100);
-        RuleFor(request => request.Data.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
+        RuleFor(static request => request.Id).NotEmpty();
+        RuleFor(static request => request.Data.Title).NotEmpty().MaximumLength(200);
+        RuleFor(static request => request.Data.Author).NotEmpty().MaximumLength(100);
+        RuleFor(static request => request.Data.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
     }
 }
 
@@ -65,12 +65,12 @@ public sealed class SearchBooksQueryValidator : AbstractValidator<Book_SearchQue
     /// <summary>Initializes a new instance of the <see cref="SearchBooksQueryValidator"/> class.</summary>
     public SearchBooksQueryValidator()
     {
-        RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
-        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+        RuleFor(static query => query.Skip).GreaterThanOrEqualTo(0);
+        RuleFor(static query => query.Limit).InclusiveBetween(1, 100);
 
-        When(query => query.Sort is not null, () =>
+        When(static query => query.Sort is not null, () =>
         {
-            RuleForEach(query => query.Sort)
+            RuleForEach(static query => query.Sort)
                 .Must(_isValidSort)
                 .WithMessage("Invalid book sort '{PropertyValue}'.");
         });
@@ -110,14 +110,14 @@ public sealed class UploadBookCoverRequestValidator : AbstractValidator<UploadBo
     /// <summary>Initializes a new instance of the <see cref="UploadBookCoverRequestValidator"/> class.</summary>
     public UploadBookCoverRequestValidator()
     {
-        RuleFor(request => request.Id).NotEmpty();
-        RuleFor(request => request.Attachment)
+        RuleFor(static request => request.Id).NotEmpty();
+        RuleFor(static request => request.Attachment)
             .NotNull()
             .DependentRules(() =>
             {
-                RuleFor(request => request.Attachment.Name).NotEmpty().MaximumLength(255);
-                RuleFor(request => request.Attachment.ContentType)
-                    .Must(contentType => string.Equals(contentType, "image/jpeg", StringComparison.OrdinalIgnoreCase)
+                RuleFor(static request => request.Attachment.Name).NotEmpty().MaximumLength(255);
+                RuleFor(static request => request.Attachment.ContentType)
+                    .Must(static contentType => string.Equals(contentType, "image/jpeg", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(contentType, "image/png", StringComparison.OrdinalIgnoreCase))
                     .WithMessage("Book covers must be JPEG or PNG images.");
             });
@@ -130,7 +130,7 @@ public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<C
     /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessRequestValidator"/> class.</summary>
     public CreateBookPrintProcessRequestValidator()
     {
-        RuleFor(request => request.BookId).NotEmpty();
+        RuleFor(static request => request.BookId).NotEmpty();
     }
 }
 
@@ -140,9 +140,9 @@ public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateB
     /// <summary>Initializes a new instance of the <see cref="CreateBookReviewRequestValidator"/> class.</summary>
     public CreateBookReviewRequestValidator()
     {
-        RuleFor(request => request.BookId).NotEmpty();
-        RuleFor(request => request.Rating).InclusiveBetween(1, 5);
-        RuleFor(request => request.Text).NotEmpty().MaximumLength(2000);
+        RuleFor(static request => request.BookId).NotEmpty();
+        RuleFor(static request => request.Rating).InclusiveBetween(1, 5);
+        RuleFor(static request => request.Text).NotEmpty().MaximumLength(2000);
     }
 }
 
@@ -152,9 +152,9 @@ public sealed class ListBookReviewsQueryValidator : AbstractValidator<ListBookRe
     /// <summary>Initializes a new instance of the <see cref="ListBookReviewsQueryValidator"/> class.</summary>
     public ListBookReviewsQueryValidator()
     {
-        RuleFor(query => query.BookId).NotEmpty();
-        RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
-        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+        RuleFor(static query => query.BookId).NotEmpty();
+        RuleFor(static query => query.Skip).GreaterThanOrEqualTo(0);
+        RuleFor(static query => query.Limit).InclusiveBetween(1, 100);
     }
 }
 
@@ -164,14 +164,14 @@ public sealed class RecordReadingActivityRequestValidator : AbstractValidator<Re
     /// <summary>Initializes a new instance of the <see cref="RecordReadingActivityRequestValidator"/> class.</summary>
     public RecordReadingActivityRequestValidator()
     {
-        RuleFor(request => request.BookId).NotEmpty();
-        RuleFor(request => request.Kind).NotEqual(Ark.Tools.Core.EvolvableEnum<ReadingActivityKind>.NotSet);
-        RuleFor(request => request.Progress).InclusiveBetween(0, 100);
-        RuleFor(request => request)
-            .Must(request => request.Kind != ReadingActivityKind.Started || request.Progress == 0)
+        RuleFor(static request => request.BookId).NotEmpty();
+        RuleFor(static request => request.Kind).NotEqual(Ark.Tools.Core.EvolvableEnum<ReadingActivityKind>.NotSet);
+        RuleFor(static request => request.Progress).InclusiveBetween(0, 100);
+        RuleFor(static request => request)
+            .Must(static request => request.Kind != ReadingActivityKind.Started || request.Progress == 0)
             .WithMessage("Started activity must have zero progress.");
-        RuleFor(request => request)
-            .Must(request => request.Kind != ReadingActivityKind.Finished || request.Progress == 100)
+        RuleFor(static request => request)
+            .Must(static request => request.Kind != ReadingActivityKind.Finished || request.Progress == 100)
             .WithMessage("Finished activity must have complete progress.");
     }
 }
@@ -182,7 +182,7 @@ public sealed class GetReadingActivityQueryValidator : AbstractValidator<GetRead
     /// <summary>Initializes a new instance of the <see cref="GetReadingActivityQueryValidator"/> class.</summary>
     public GetReadingActivityQueryValidator()
     {
-        RuleFor(query => query.BookId).NotEmpty();
-        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+        RuleFor(static query => query.BookId).NotEmpty();
+        RuleFor(static query => query.Limit).InclusiveBetween(1, 100);
     }
 }

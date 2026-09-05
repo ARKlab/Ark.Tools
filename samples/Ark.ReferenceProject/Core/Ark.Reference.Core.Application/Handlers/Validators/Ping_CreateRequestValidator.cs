@@ -18,7 +18,7 @@ public class Ping_CreateRequestValidator : AbstractValidator<Ping_CreateRequest.
     /// <param name="validator">The validator for the Ping create data</param>
     public Ping_CreateRequestValidator(IValidator<Ping.V1.Create> validator)
     {
-        RuleFor(x => x.Data)
+        RuleFor(static x => x.Data)
             .NotNull()
             .SetValidator(validator!);
     }
@@ -34,14 +34,14 @@ public class Ping_CreateValidator : AbstractValidator<Ping.V1.Create>
     /// </summary>
     public Ping_CreateValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(static x => x.Name)
             .NotNull()
             .NotEmpty()
             .MinimumLength(4)
             .MaximumLength(50)
             ;
 
-        RuleFor(x => x.Type)
+        RuleFor(static x => x.Type)
             .NotNull()
             .NotEqual(PingType.NotSet)
             ;

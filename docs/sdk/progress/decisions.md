@@ -385,7 +385,8 @@ tests:
   organization identity, license, icon, repository URL, and the exact
   project-reference dependency rewrite.
 - **Baseline packages:** SBOM, Polyfill, .NET analyzers, Banned API, Meziantou,
-  VS Threading, and ErrorProne are independently disableable.
+  and ErrorProne are enabled by default; VS Threading is opt-in through
+  `EnableArkToolsVisualStudioThreading=true`.
 - **Version ownership:** the SDK injects exact, implicit versions; matching
   consumer CPM entries are removed and SDK updates refresh lock files.
 - **Banned symbols:** SDK and consumer lists compose. Consumers suppress an

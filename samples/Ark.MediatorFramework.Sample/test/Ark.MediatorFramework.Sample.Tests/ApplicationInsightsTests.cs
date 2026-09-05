@@ -28,9 +28,9 @@ public sealed class ApplicationInsightsTests
         var services = new ServiceCollection();
         services.ArkApplicationInsightsTelemetry(new ConfigurationBuilder().Build());
 
-        services.Any(descriptor => descriptor.ServiceType == typeof(IConfigureOptions<TelemetryConfiguration>))
+        services.Any(static descriptor => descriptor.ServiceType == typeof(IConfigureOptions<TelemetryConfiguration>))
             .Should().BeTrue();
-        services.Any(descriptor =>
+        services.Any(static descriptor =>
             descriptor.ServiceType.FullName is { } fullName
             && fullName.Contains("SnapshotCollector", StringComparison.Ordinal))
             .Should().BeFalse();
@@ -88,7 +88,7 @@ public sealed class ApplicationInsightsTests
         var listener = new ActivityListener
         {
             ShouldListenTo = activitySource => activitySource == source,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData
         };
         ActivitySource.AddActivityListener(listener);
         return listener;

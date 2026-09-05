@@ -28,7 +28,7 @@ public sealed class ExtendedIsoOffsetDateTimeConverter : JsonConverter<OffsetDat
     public ExtendedIsoOffsetDateTimeConverter()
     {
         _inner = new NodaPatternConverter<OffsetDateTime>(
-            OffsetDateTimePattern.ExtendedIso, NodaConverterValidators._createIsoValidator<OffsetDateTime>(odt => odt.Calendar));
+            OffsetDateTimePattern.ExtendedIso, NodaConverterValidators._createIsoValidator<OffsetDateTime>(static odt => odt.Calendar));
     }
 
     /// <inheritdoc />

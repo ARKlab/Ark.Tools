@@ -56,7 +56,7 @@ public class Startup : ArkStartupWebApi
             options.DefaultChallengeScheme = auth0Scheme;
 
         })
-        .AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+        .AddJwtBearerArkDefault(auth0Scheme, audience, domain, static o =>
         {
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
             {
@@ -80,11 +80,11 @@ public class Startup : ArkStartupWebApi
         services.AddHealthChecks()
             //.AddCheck<ExampleHealthCheck>("Example Web App Demo Health Check", tags: new string[]{ "ArkTools", "WebDemo"})
             .AddSimpleInjectorCheck<ExampleHealthCheck>(name: "Example SimpleInjector Check", failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
-            .AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
+            .AddSimpleInjectorLambdaCheck<IExampleHealthCheckService>(name: "Example SimpleInjector Lamda Check", static (adapter, ctk) => adapter.CheckHealthAsync(ctk), failureStatus: HealthStatus.Unhealthy, tags: ["Example"])
             .AddSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Logs;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True", healthQuery: "SELECT 1;", name: "NLOG DB", tags: ["NLOG", "SQLServer"])
             ;
 
-        services.AddArkHealthChecksUIOptions(setup =>
+        services.AddArkHealthChecksUIOptions(static setup =>
         {
             if (File.Exists(Path.Join(Environment.CurrentDirectory, "UIHealthChecks.css")))
                 setup.AddCustomStylesheet("UIHealthChecks.css");
@@ -117,7 +117,7 @@ public class Startup : ArkStartupWebApi
             services.ArkConfigureSwaggerAuth0(domain, audience, swaggerClientId);
         }
 
-        services.ArkConfigureSwaggerUI(c =>
+        services.ArkConfigureSwaggerUI(static c =>
         {
             c.MaxDisplayedTags(10000);
             c.DefaultModelRendering(ModelRendering.Model);
@@ -125,26 +125,26 @@ public class Startup : ArkStartupWebApi
             //c.OAuthAppName("Public API");
         });
 
-        services.ConfigureSwaggerGen(c =>
+        services.ConfigureSwaggerGen(static c =>
         {
-            c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+            c.AddSecurityRequirement(static (document) => new OpenApiSecurityRequirement()
             {
                 [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
             });
 
-            c.SelectDiscriminatorNameUsing(t => "kind");
-            c.SelectDiscriminatorValueUsing(t => t.Name);
+            c.SelectDiscriminatorNameUsing(static t => "kind");
+            c.SelectDiscriminatorValueUsing(static t => t.Name);
 
         });
 
-        services.Configure<ODataOptions>(options =>
+        services.Configure<ODataOptions>(static options =>
         {
             // make the Odata independent from 'the hosting timezone'. Set this to the Timezone of 'DATA', if any, or UTC, so that is not dependant on the PC/Server Local timezone (reliable results ...)
             options.TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time");
         });
 
         //https://github.com/dotnet/aspnet-api-versioning/wiki/Controller-Conventions
-        services.AddTransient(s => ControllerNameConvention.Original);
+        services.AddTransient(static s => ControllerNameConvention.Original);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

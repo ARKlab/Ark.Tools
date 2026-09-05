@@ -123,7 +123,7 @@ public sealed class MyTransformServiceTests
             var expected = JsonSerializer.Deserialize<SinkDto>(expectedJson, _jsonOptions);
             expected.Should().NotBeNull($"Failed to deserialize expected output for case '{caseName}'");
 
-            result.Should().BeEquivalentTo(expected, options => options
+            result.Should().BeEquivalentTo(expected, static options => options
                 .ComparingByMembers<SinkDto>()
                 .ComparingByMembers<SinkRecord>(),
                 because: $"Full object equivalence for case '{caseName}'");

@@ -49,8 +49,8 @@ public class SelfGenericInterfaceAnalyzerTests
             """).ConfigureAwait(false);
 
         diagnostics.Should().HaveCount(3);
-        diagnostics.Should().OnlyContain(d => d.Id == "ARKSOLID001" && d.Severity == DiagnosticSeverity.Warning);
-        diagnostics.Select(d => d.GetMessage(null)).Should().BeEquivalentTo(
+        diagnostics.Should().OnlyContain(static d => d.Id == "ARKSOLID001" && d.Severity == DiagnosticSeverity.Warning);
+        diagnostics.Select(static d => d.GetMessage(null)).Should().BeEquivalentTo(
         [
             "Type 'MyQuery' should implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch",
             "Type 'MyRequest' should implement 'IRequest<MyRequest, string>' to enable reflection-free processor dispatch",
@@ -158,7 +158,7 @@ public class SelfGenericInterfaceAnalyzerTests
             """).ConfigureAwait(false);
 
         diagnostics.Should().HaveCount(3);
-        diagnostics.Select(diagnostic => diagnostic.GetMessage(null))
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage(null))
             .Should().BeEquivalentTo(
             [
                 "Type 'MyHandler' should implement 'IQuery<MyHandler, int>' to enable reflection-free processor dispatch",

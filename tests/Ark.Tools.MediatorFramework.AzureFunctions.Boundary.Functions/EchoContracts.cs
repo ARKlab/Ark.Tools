@@ -56,7 +56,7 @@ public sealed class EchoQueryValidator : AbstractValidator<EchoQuery>
     /// <summary>Initializes a new instance of the <see cref="EchoQueryValidator"/> class.</summary>
     public EchoQueryValidator()
     {
-        RuleFor(query => query.Count).InclusiveBetween(1, 100);
+        RuleFor(static query => query.Count).InclusiveBetween(1, 100);
     }
 }
 
@@ -66,7 +66,7 @@ public sealed class EchoRequestValidator : AbstractValidator<EchoRequest>
     /// <summary>Initializes a new instance of the <see cref="EchoRequestValidator"/> class.</summary>
     public EchoRequestValidator()
     {
-        RuleFor(request => request.Message).NotEmpty();
+        RuleFor(static request => request.Message).NotEmpty();
     }
 }
 

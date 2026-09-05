@@ -17,7 +17,7 @@ public static class Ex
         ArgumentNullException.ThrowIfNull(settings);
 
 
-        if (!settings.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+        if (!settings.Converters.Any(static x => x == NodaConverters.LocalDateConverter))
             throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
 
         // Add our converters
@@ -32,7 +32,7 @@ public static class Ex
         ArgumentNullException.ThrowIfNull(serializer);
 
 
-        if (!serializer.Converters.Any(x => x == NodaConverters.LocalDateConverter))
+        if (!serializer.Converters.Any(static x => x == NodaConverters.LocalDateConverter))
             throw new InvalidOperationException("Missing NodaTime converters. Call 'ConfigureForNodaTime()' before 'ConfigureForNodaTimeRanges()'");
 
         // Add our converters

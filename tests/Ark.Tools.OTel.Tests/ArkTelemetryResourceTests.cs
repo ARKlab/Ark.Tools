@@ -20,7 +20,7 @@ public sealed class ArkTelemetryResourceTests
             .AddArkTelemetryResource()
             .Build();
 
-        resource.Attributes.Should().Contain(x => x.Key == "service.name");
-        resource.Attributes.Single(x => x.Key == "service.name").Value.Should().Be(serviceName);
+        resource.Attributes.Should().Contain(static x => x.Key == "service.name");
+        resource.Attributes.Single(static x => x.Key == "service.name").Value.Should().Be(serviceName);
     }
 }

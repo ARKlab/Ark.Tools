@@ -34,7 +34,7 @@ public static class TestHost
         //_smtp = SimpleSmtpServer.Start();
 
         var builder = Program.GetHostBuilder(Array.Empty<string>())
-            .ConfigureWebHost(wh =>
+            .ConfigureWebHost(static wh =>
             {
                 wh.UseTestServer();
             });
@@ -55,7 +55,7 @@ public static class TestHost
     public static void BeforeScenario(ScenarioContext ctx)
     {
         if (_factory == null) throw new InvalidOperationException("");
-        ctx.ScenarioContainer.RegisterFactoryAs(c => _factory.Get(_baseUri));
+        ctx.ScenarioContainer.RegisterFactoryAs(static c => _factory.Get(_baseUri));
     }
 
     [AfterScenario]

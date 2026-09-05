@@ -59,7 +59,7 @@ public sealed class SliceActivitySaga
         }
         else
         {
-            _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Skipped materialization for slice {ActivitySlice}. Missing {MissingSlices}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(m => string.Format(global::System.Globalization.CultureInfo.InvariantCulture, "{0}@{1}", m.Resource, m.ResourceSlice))));
+            _activity.Logger.Info(global::System.Globalization.CultureInfo.InvariantCulture, "Skipped materialization for slice {ActivitySlice}. Missing {MissingSlices}", Data.ActivitySlice, string.Join(",", Data.MissingSlices.Select(static m => string.Format(global::System.Globalization.CultureInfo.InvariantCulture, "{0}@{1}", m.Resource, m.ResourceSlice))));
         }
     }
 
@@ -119,8 +119,8 @@ public sealed class SliceActivitySaga
 
     protected override void CorrelateMessages(ICorrelationConfig<SliceActivitySagaData> config)
     {
-        config.Correlate<SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
-        config.Correlate<Tasks.Messages.SliceReady>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
-        config.Correlate<CoolDownMessage>(m => m.ActivitySlice.ToString(), s => s.FormattedSliceStart);
+        config.Correlate<SliceReady>(static m => m.ActivitySlice.ToString(), static s => s.FormattedSliceStart);
+        config.Correlate<Tasks.Messages.SliceReady>(static m => m.ActivitySlice.ToString(), static s => s.FormattedSliceStart);
+        config.Correlate<CoolDownMessage>(static m => m.ActivitySlice.ToString(), static s => s.FormattedSliceStart);
     }
 }

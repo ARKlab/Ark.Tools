@@ -60,8 +60,8 @@ public class EvolvableEnumAnalyzerTests
             }
             """);
 
-        diagnostics.Select(item => item.Id).Should().BeEquivalentTo(["ARKCORE001", "ARKCORE002"]);
-        diagnostics.Should().OnlyContain(item => item.Severity == DiagnosticSeverity.Error);
+        diagnostics.Select(static item => item.Id).Should().BeEquivalentTo(["ARKCORE001", "ARKCORE002"]);
+        diagnostics.Should().OnlyContain(static item => item.Severity == DiagnosticSeverity.Error);
     }
 
     /// <summary>Verifies aliases and lookalike generic types are matched by symbol identity.</summary>
@@ -121,15 +121,15 @@ public class EvolvableEnumAnalyzerTests
             }
             """);
 
-        diagnostics.Select(item => item.Id).Should().Contain("ARKCORE003");
-        diagnostics.Single(item => item.Id == "ARKCORE003").Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostics.Select(static item => item.Id).Should().Contain("ARKCORE003");
+        diagnostics.Single(static item => item.Id == "ARKCORE003").Severity.Should().Be(DiagnosticSeverity.Error);
     }
 
     /// <summary>Verifies a full small backing type produces an evolvability warning.</summary>
     [TestMethod]
     public async Task FullEnum_ShouldReportWarning()
     {
-        var members = string.Join(", ", Enumerable.Range(1, 255).Select(item => $"Value{item} = {item}"));
+        var members = string.Join(", ", Enumerable.Range(1, 255).Select(static item => $"Value{item} = {item}"));
         var diagnostics = await _analyzeAsync($$"""
             namespace Ark.Tools.Core
             {
@@ -146,8 +146,8 @@ public class EvolvableEnumAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE004");
-        diagnostics.Single(item => item.Id == "ARKCORE004").Severity.Should().Be(DiagnosticSeverity.Warning);
+        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE004");
+        diagnostics.Single(static item => item.Id == "ARKCORE004").Severity.Should().Be(DiagnosticSeverity.Warning);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)

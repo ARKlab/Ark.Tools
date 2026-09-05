@@ -17,7 +17,7 @@ public static class DataKeyPrinter<[DynamicallyAccessedMembers(DynamicallyAccess
     where T : class
 {
     private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()
-            .Where(prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Length != 0)
+            .Where(static prop => prop.GetCustomAttributes(typeof(DataKeyAttribute), false).Length != 0)
             .ToArray()
             ;
 

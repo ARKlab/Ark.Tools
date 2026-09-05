@@ -23,11 +23,11 @@ sealed class Program
         var hostBuilder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
             .AddWorkerHostInfrastracture()
             .AddArkOpenTelemetryForWorkerHost()
-            .ConfigureServices(services => services.AddOpenTelemetry()
-                .WithTracing(tracing => tracing.AddSource(ResourceWatcherSampleTelemetry._activitySourceName))
-                .WithMetrics(metrics => metrics.AddMeter(ResourceWatcherSampleTelemetry._meterName)))
+            .ConfigureServices(static services => services.AddOpenTelemetry()
+                .WithTracing(static tracing => tracing.AddSource(ResourceWatcherSampleTelemetry._activitySourceName))
+                .WithMetrics(static metrics => metrics.AddMeter(ResourceWatcherSampleTelemetry._meterName)))
             .ConfigureNLog("BlobWorkerSample")
-            .AddWorkerHost(sp =>
+            .AddWorkerHost(static sp =>
             {
                 var cfg = sp.GetRequiredService<IConfiguration>();
 

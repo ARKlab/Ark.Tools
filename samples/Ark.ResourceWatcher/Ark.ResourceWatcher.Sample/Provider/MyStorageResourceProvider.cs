@@ -67,7 +67,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
 
         var response = await request.GetJsonAsync<MyListResponse>(cancellationToken: ctk).ConfigureAwait(false);
 
-        return response.Blobs.Select(b => new MyMetadata
+        return response.Blobs.Select(static b => new MyMetadata
         {
             ResourceId = b.Path,
             Modified = LocalDateTime.FromDateTime(b.LastModified),

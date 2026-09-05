@@ -46,9 +46,9 @@ public static class Program
                 {
                     MessageEncoding = QueueMessageEncoding.None
                 }));
-        builder.Services.AddArkAzureFunctionsBearerAuthentication(options => options.DefaultScheme = "IntegrationTests")
+        builder.Services.AddArkAzureFunctionsBearerAuthentication(static options => options.DefaultScheme = "IntegrationTests")
             .AddAuthentication()
-            .AddJwtBearer("IntegrationTests", options =>
+            .AddJwtBearer("IntegrationTests", static options =>
             {
                 options.Audience = "API";
 #pragma warning disable CA5404 // Test-only symmetric-key scheme: issuer validation is intentionally disabled.
@@ -57,7 +57,7 @@ public static class Program
                 options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.ASCII.GetBytes("IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong"));
             });
-        builder.Services.AddAuthorization(options =>
+        builder.Services.AddAuthorization(static options =>
         {
             options.DefaultPolicy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
@@ -86,7 +86,7 @@ public static class Program
         container.Register<IQueryHandler<DownloadFileQuery, IArkAttachment>, DownloadFileQueryHandler>();
         container.Register<IValidator<EchoQuery>, EchoQueryValidator>(Lifestyle.Singleton);
         container.Register<IValidator<EchoRequest>, EchoRequestValidator>(Lifestyle.Singleton);
-        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
+        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, static c => !c.Handled);
         container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidateDecorator<,>));
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
         return container;

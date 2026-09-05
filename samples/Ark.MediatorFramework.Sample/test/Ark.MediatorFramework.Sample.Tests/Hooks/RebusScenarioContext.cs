@@ -42,8 +42,8 @@ public sealed class RebusScenarioContext : IAsyncDisposable
             clock: application.Clock,
             dataContextFactory: application.UsesSqlStore ? null : application.DataContextFactory,
             printCompletedNotificationService: application.PrintCompletedNotificationService,
-            configureOptions: options => options.AddInProcessMessageInspector(),
-            configureTimeouts: timeouts => timeouts.StoreInMemoryTests());
+            configureOptions: static options => options.AddInProcessMessageInspector(),
+            configureTimeouts: static timeouts => timeouts.StoreInMemoryTests());
         _receiver.Verify();
         _receiver.StartBus();
         application.StartOutboundBus();
@@ -178,10 +178,10 @@ public sealed class RebusScenarioContext : IAsyncDisposable
         var network = _sampleContext.Application.Network;
         var queues = network.Queues.ToArray();
         var inQueue = queues
-            .Where(queue => !string.Equals(queue, "error", StringComparison.OrdinalIgnoreCase))
+            .Where(static queue => !string.Equals(queue, "error", StringComparison.OrdinalIgnoreCase))
             .Sum(network.GetCount);
         var errors = queues
-            .Where(queue => string.Equals(queue, "error", StringComparison.OrdinalIgnoreCase))
+            .Where(static queue => string.Equals(queue, "error", StringComparison.OrdinalIgnoreCase))
             .Sum(network.GetCount);
         var outbox = await _sampleContext.Application.GetOutboxCountAsync(ctk).ConfigureAwait(false);
         return new RebusWorkCounts(

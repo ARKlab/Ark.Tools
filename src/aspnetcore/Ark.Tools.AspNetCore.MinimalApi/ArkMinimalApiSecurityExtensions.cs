@@ -20,15 +20,15 @@ public static class ArkMinimalApiSecurityExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSecurityHeaderPolicies()
-            .SetDefaultPolicy(policy => policy
+            .SetDefaultPolicy(static policy => policy
                 .AddDefaultApiSecurityHeaders()
                 .RemoveServerHeader())
-            .AddPolicy("Scalar", policy => _configureDocumentationPolicy(policy))
-            .AddPolicy("Swagger", policy => _configureDocumentationPolicy(policy))
-            .AddPolicy("GrpcReflection", policy => policy
+            .AddPolicy("Scalar", static policy => _configureDocumentationPolicy(policy))
+            .AddPolicy("Swagger", static policy => _configureDocumentationPolicy(policy))
+            .AddPolicy("GrpcReflection", static policy => policy
                 .AddDefaultSecurityHeaders()
                 .RemoveServerHeader())
-            .SetPolicySelector(context =>
+            .SetPolicySelector(static context =>
             {
                 var path = context.HttpContext.Request.Path;
 
@@ -70,6 +70,6 @@ public static class ArkMinimalApiSecurityExtensions
             .AddDefaultSecurityHeaders()
             .RemoveServerHeader();
         policy.Remove("Cross-Origin-Opener-Policy");
-        policy.AddCrossOriginOpenerPolicy(options => options.UnsafeNone());
+        policy.AddCrossOriginOpenerPolicy(static options => options.UnsafeNone());
     }
 }

@@ -13,7 +13,7 @@ public class MetadataContainer : Dictionary<string, string>
     }
 
     public MetadataContainer(IEnumerable<KeyValuePair<string, string>> keyValuePairs)
-        : base(keyValuePairs.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal))
+        : base(keyValuePairs.ToDictionary(static kv => kv.Key, static kv => kv.Value, StringComparer.Ordinal))
     {
     }
 
@@ -37,12 +37,12 @@ public class MetadataContainer : Dictionary<string, string>
 
     public override string ToString()
     {
-        return string.Join(Environment.NewLine, this.Select(kv => $"{kv.Key}:{kv.Value}"));
+        return string.Join(Environment.NewLine, this.Select(static kv => $"{kv.Key}:{kv.Value}"));
     }
 
     public string? GetMetadataValue(string key)
     {
-        return GetMetadataValue(key, s => s);
+        return GetMetadataValue(key, static s => s);
     }
 
     public T? GetMetadataValue<T>(string key, Func<string, T> converter, T? defaultValue = null)

@@ -20,7 +20,7 @@ public abstract class CalendarSliceActivity : ISliceActivity
     {
         get
         {
-            return Dependencies.Select(x => x.Resource).Distinct();
+            return Dependencies.Select(static x => x.Resource).Distinct();
         }
     }
 
@@ -43,10 +43,10 @@ public abstract class CalendarSliceActivity : ISliceActivity
     {
         var calendar = _generateCalendar().ToArray();
         return Dependencies
-            .GroupBy(k => k.Resource)
-            .ToDictionary(k => k.Key, v => calendar
+            .GroupBy(static k => k.Resource)
+            .ToDictionary(static k => k.Key, v => calendar
                 .SelectMany(c => v.SelectMany(d => d.GetResourceSlices(c).Select(ds => new { C = c, D = ds })))
-                .GroupBy(x => x.D)
-                .ToDictionary(x => x.Key, y => y.Select(z => z.C).ToList()));
+                .GroupBy(static x => x.D)
+                .ToDictionary(static x => x.Key, static y => y.Select(static z => z.C).ToList()));
     }
 }

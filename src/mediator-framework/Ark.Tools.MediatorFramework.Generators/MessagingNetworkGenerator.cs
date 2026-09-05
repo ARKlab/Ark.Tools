@@ -151,7 +151,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     {
         var networks = symbols
             .Select(_readNetwork)
-            .OrderBy(network => network.Symbol.ToDisplayString(), StringComparer.Ordinal)
+            .OrderBy(static network => network.Symbol.ToDisplayString(), StringComparer.Ordinal)
             .ToArray();
         var participantNetworks = new Dictionary<INamedTypeSymbol, List<Network>>(SymbolEqualityComparer.Default);
         var allContracts = new Dictionary<INamedTypeSymbol, HashSet<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
@@ -190,9 +190,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _validateNetwork(context, network, participants);
         }
 
-        foreach (var membership in participantNetworks.Where(pair => pair.Value.Count > 1))
+        foreach (var membership in participantNetworks.Where(static pair => pair.Value.Count > 1))
             _report(context, _multipleNetworks, membership.Key, membership.Key.ToDisplayString());
-        foreach (var contract in allContracts.Where(pair => pair.Value.Count > 1))
+        foreach (var contract in allContracts.Where(static pair => pair.Value.Count > 1))
             _report(context, _crossNetworkContract, contract.Key, contract.Key.ToDisplayString());
 
         _validateContractNames(context, allContracts.Keys);
@@ -201,7 +201,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _emitNetwork(context, network, compilation);
 
         foreach (var participant in participantSymbols
-            .OrderBy(symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
+            .OrderBy(static symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
         {
             var model = _readParticipant(participant);
             if (model is not null)
@@ -292,7 +292,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             }
         }
 
-        foreach (var contract in participants.SelectMany(participant => participant.Contracts)
+        foreach (var contract in participants.SelectMany(static participant => participant.Contracts)
             .Distinct(SymbolEqualityComparer.Default)
             .Cast<INamedTypeSymbol>())
         {
@@ -325,7 +325,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     {
         var currentNames = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
         var aliases = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
-        foreach (var contract in contracts.OrderBy(symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
+        foreach (var contract in contracts.OrderBy(static symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
         {
             var attributes = _contractAttributes(contract);
             var current = attributes.Message is not null || attributes.Event is not null
@@ -353,7 +353,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static Network _readNetwork(INamedTypeSymbol symbol)
     {
-        var attribute = symbol.GetAttributes().First(attribute =>
+        var attribute = symbol.GetAttributes().First(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
         var members = _types(attribute, "Members");
         return new Network(
@@ -369,7 +369,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
     {
-        var attribute = symbol.GetAttributes().FirstOrDefault(attribute =>
+        var attribute = symbol.GetAttributes().FirstOrDefault(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
         if (attribute is null)
             return null;
@@ -414,7 +414,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static int? _readIntProperty(INamedTypeSymbol type, string name)
     {
         var field = type.GetMembers(name).OfType<IFieldSymbol>()
-            .FirstOrDefault(candidate => candidate.IsConst && candidate.ConstantValue is int);
+            .FirstOrDefault(static candidate => candidate.IsConst && candidate.ConstantValue is int);
         if (field?.ConstantValue is int fieldValue)
             return fieldValue;
 
@@ -429,9 +429,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             var expression = declaration.ExpressionBody?.Expression
                 ?? declaration.Initializer?.Value
                 ?? declaration.AccessorList?.Accessors
-                    .SelectMany(accessor => accessor.Body?.Statements ?? Enumerable.Empty<Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax>())
+                    .SelectMany(static accessor => accessor.Body?.Statements ?? Enumerable.Empty<Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax>())
                     .OfType<ReturnStatementSyntax>()
-                    .Select(statement => statement.Expression)
+                    .Select(static statement => statement.Expression)
                     .FirstOrDefault();
             if (expression is LiteralExpressionSyntax literal
                 && int.TryParse(literal.Token.ValueText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
@@ -443,7 +443,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static bool? _readBoolProperty(INamedTypeSymbol type, string name)
     {
         var field = type.GetMembers(name).OfType<IFieldSymbol>()
-            .FirstOrDefault(candidate => candidate.IsConst && candidate.ConstantValue is bool);
+            .FirstOrDefault(static candidate => candidate.IsConst && candidate.ConstantValue is bool);
         if (field?.ConstantValue is bool fieldValue)
             return fieldValue;
 
@@ -457,9 +457,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             var expression = declaration.ExpressionBody?.Expression
                 ?? declaration.Initializer?.Value
                 ?? declaration.AccessorList?.Accessors
-                    .SelectMany(accessor => accessor.Body?.Statements ?? Enumerable.Empty<Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax>())
+                    .SelectMany(static accessor => accessor.Body?.Statements ?? Enumerable.Empty<Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax>())
                     .OfType<ReturnStatementSyntax>()
-                    .Select(statement => statement.Expression)
+                    .Select(static statement => statement.Expression)
                     .FirstOrDefault();
             if (expression is LiteralExpressionSyntax literal
                 && bool.TryParse(literal.Token.ValueText, out var value))
@@ -472,9 +472,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static (AttributeData? Message, AttributeData? Event, string? Name, ImmutableArray<string> FormerNames)
         _contractAttributes(INamedTypeSymbol symbol)
     {
-        var message = symbol.GetAttributes().FirstOrDefault(attribute =>
+        var message = symbol.GetAttributes().FirstOrDefault(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _messageAttribute);
-        var @event = symbol.GetAttributes().FirstOrDefault(attribute =>
+        var @event = symbol.GetAttributes().FirstOrDefault(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _eventAttribute);
         var source = message ?? @event;
         return (message, @event, _string(source, "Name"), _strings(source, "FormerNames"));
@@ -504,25 +504,25 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
         var group = symbol.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            .FirstOrDefault(static attribute => attribute.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
             ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
         return _normalizeLogical(group) + "." + _normalizeLogical(symbol.Name);
     }
 
     private static string _normalizeIdentity(string value)
     {
-        return string.Join("-", _words(value).Select(word => word.ToLowerInvariant()));
+        return string.Join("-", _words(value).Select(static word => word.ToLowerInvariant()));
     }
 
     private static string _normalizeSnake(string value)
     {
-        return string.Join("_", value.Split('.').SelectMany(_words).Select(word => word.ToLowerInvariant()));
+        return string.Join("_", value.Split('.').SelectMany(_words).Select(static word => word.ToLowerInvariant()));
     }
 
     private static string _normalizeLogical(string value)
     {
         return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
-            .Select(segment => string.Join("-", _words(segment).Select(word => word.ToLowerInvariant()))));
+            .Select(static segment => string.Join("-", _words(segment).Select(static word => word.ToLowerInvariant()))));
     }
 
     private static IEnumerable<string> _words(string value)
@@ -586,18 +586,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .Select(static participant => participant!.Value)
             .ToArray();
         var processors = participants
-            .SelectMany(participant => participant.Processes.Select(contract => (contract, participant)))
-            .GroupBy(item => item.contract, SymbolEqualityComparer.Default)
-            .ToDictionary(group => group.Key, group => group.First().participant, SymbolEqualityComparer.Default);
+            .SelectMany(static participant => participant.Processes.Select(contract => (contract, participant)))
+            .GroupBy(static item => item.contract, SymbolEqualityComparer.Default)
+            .ToDictionary(static group => group.Key, static group => group.First().participant, SymbolEqualityComparer.Default);
         var publishers = participants
-            .SelectMany(participant => participant.Publishes.Select(contract => (contract, participant)))
-            .GroupBy(item => item.contract, SymbolEqualityComparer.Default)
-            .ToDictionary(group => group.Key, group => group.First().participant, SymbolEqualityComparer.Default);
+            .SelectMany(static participant => participant.Publishes.Select(contract => (contract, participant)))
+            .GroupBy(static item => item.contract, SymbolEqualityComparer.Default)
+            .ToDictionary(static group => group.Key, static group => group.First().participant, SymbolEqualityComparer.Default);
         var contracts = processors.Keys
             .Concat(publishers.Keys)
             .Distinct(SymbolEqualityComparer.Default)
             .Cast<INamedTypeSymbol>()
-            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal)
+            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal)
             .ToArray();
         var name = network.Symbol.Name;
         var source = new StringBuilder()
@@ -680,7 +680,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("        new Dictionary<Type, string>")
             .AppendLine("        {");
         foreach (var contract in processors.Keys.Cast<INamedTypeSymbol>()
-            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal))
+            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal))
         {
             source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
                .Append(_escape(processors[contract].Identity)).AppendLine("\",");
@@ -693,7 +693,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("        new Dictionary<Type, string>")
             .AppendLine("        {");
         foreach (var contract in publishers.Keys.Cast<INamedTypeSymbol>()
-            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal))
+            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal))
         {
             source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
                .Append(_escape(publishers[contract].Identity)).AppendLine("\",");
@@ -923,7 +923,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .Distinct(SymbolEqualityComparer.Default)
             .Cast<INamedTypeSymbol>()
             .Where(contract => !canEmitBinder || _implementsCommand(contract, commandInterface!))
-            .OrderBy(contract => contract.ToDisplayString(), StringComparer.Ordinal)
+            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal)
             .ToArray();
 
         if (canEmitBinder && contracts.Length > 0)
@@ -1100,9 +1100,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     {
 #pragma warning disable MA0040, MA0045
         var isPartial = symbol.DeclaringSyntaxReferences
-            .Select(reference => reference.GetSyntax())
+            .Select(static reference => reference.GetSyntax())
             .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.TypeDeclarationSyntax>()
-            .Any(declaration => declaration.Modifiers.Any(modifier => modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PartialKeyword)));
+            .Any(static declaration => declaration.Modifiers.Any(static modifier => modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PartialKeyword)));
 #pragma warning restore MA0040, MA0045
         if (symbol.ContainingType is not null
             || symbol.Arity != 0
@@ -1171,7 +1171,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine("{")
                 .Append("    internal const string Network = \"").Append(_escape(network.Name)).AppendLine("\";")
                 .Append("    internal static readonly string[] Members = new string[] { ")
-                .Append(string.Join(", ", network.MemberSymbols.Select(member => "\"" + _escape(member.ToDisplayString()) + "\"")))
+                .Append(string.Join(", ", network.MemberSymbols.Select(static member => "\"" + _escape(member.ToDisplayString()) + "\"")))
                 .AppendLine(" };")
                 .AppendLine("}");
         }
@@ -1228,8 +1228,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         if (value.Kind != TypedConstantKind.Array)
             return ImmutableArray<INamedTypeSymbol>.Empty;
         return value.Values
-            .Where(item => item.Value is INamedTypeSymbol)
-            .Select(item => (INamedTypeSymbol)item.Value!)
+            .Where(static item => item.Value is INamedTypeSymbol)
+            .Select(static item => (INamedTypeSymbol)item.Value!)
             .ToImmutableArray();
     }
 
@@ -1240,7 +1240,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var value = _named(attribute, name);
         if (value.Kind != TypedConstantKind.Array)
             return ImmutableArray<string>.Empty;
-        return value.Values.Where(item => item.Value is string).Select(item => (string)item.Value!).ToImmutableArray();
+        return value.Values.Where(static item => item.Value is string).Select(static item => (string)item.Value!).ToImmutableArray();
     }
 
     private static ImmutableArray<int> _enums(AttributeData attribute, string name)
@@ -1248,7 +1248,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var value = _named(attribute, name);
         if (value.Kind != TypedConstantKind.Array)
             return ImmutableArray<int>.Empty;
-        return value.Values.Select(item => (int)item.Value!).ToImmutableArray();
+        return value.Values.Select(static item => (int)item.Value!).ToImmutableArray();
     }
 
     private static int _enum(AttributeData attribute, string name)

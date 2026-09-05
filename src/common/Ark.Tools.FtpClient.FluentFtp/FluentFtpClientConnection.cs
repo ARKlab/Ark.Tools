@@ -80,7 +80,7 @@ public sealed class FluentFtpClientConnection : FtpClientConnectionBase
     {
         path ??= "./";
         var lst = await _client.GetListing(path, FtpListOption.Auto, ctk).ConfigureAwait(false);
-        var res = lst.Select(x => new FtpEntry()
+        var res = lst.Select(static x => new FtpEntry()
         {
             FullPath = x.FullName,
             IsDirectory = x.Type == FtpObjectType.Directory,

@@ -27,8 +27,8 @@ public static class Ex
     [RequiresUnreferencedCode("Uses assembly scanning to discover auditable entity types. Entity types must be preserved.")]
     public static void AddHostedServiceAuditProcessor(this IServiceCollection services, List<Assembly> assemblies)
     {
-        var types = assemblies.SelectMany(x => x.GetTypes())
-        .Where(x => typeof(IAuditableEntity).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
+        var types = assemblies.SelectMany(static x => x.GetTypes())
+        .Where(static x => typeof(IAuditableEntity).IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
         .ToList();
 
         services.AddHostedServiceAuditProcessor(types);

@@ -202,7 +202,7 @@ public sealed class AzureFunctionsHttpTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddHealthChecks()
-            .AddCheck("failing", () => HealthCheckResult.Unhealthy("broken", data: new Dictionary<string, object>(StringComparer.Ordinal)
+            .AddCheck("failing", static () => HealthCheckResult.Unhealthy("broken", data: new Dictionary<string, object>(StringComparer.Ordinal)
             {
                 ["answer"] = 42,
             }));

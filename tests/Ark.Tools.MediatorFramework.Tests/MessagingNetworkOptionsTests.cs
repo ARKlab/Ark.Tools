@@ -43,8 +43,8 @@ public sealed class MessagingNetworkOptionsTests
             });
 
         typeof(MessagingNetworkAttribute).GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property => property.DeclaringType == typeof(MessagingNetworkAttribute))
-            .Select(property => property.Name)
+            .Where(static property => property.DeclaringType == typeof(MessagingNetworkAttribute))
+            .Select(static property => property.Name)
             .Should().BeEquivalentTo(
                 "Members",
                 "Requires",
@@ -103,7 +103,7 @@ public sealed class MessagingNetworkOptionsTests
     public void OptionsExposeTheCompleteImmutableSharedApi()
     {
         typeof(MessagingNetworkOptions).GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Select(property => property.Name)
+            .Select(static property => property.Name)
             .Should().BeEquivalentTo(
                 "NetworkType",
                 "NetworkIdentity",
@@ -205,7 +205,7 @@ public sealed class MessagingNetworkOptionsTests
     public void NetworkHasNoParticipantOwnedSettings()
     {
         var properties = typeof(MessagingNetworkAttribute).GetProperties()
-            .Select(property => property.Name)
+            .Select(static property => property.Name)
             .ToArray();
         properties.Should().NotContain("Serialization");
         properties.Should().NotContain("Compression");
@@ -213,8 +213,8 @@ public sealed class MessagingNetworkOptionsTests
         properties.Should().NotContain("IncomingSteps");
         properties.Should().NotContain("OutgoingSteps");
         properties.Should().NotContain("DataBusRetention");
-        properties.Should().NotContain(property => property.Contains("AzureServiceBus", StringComparison.Ordinal));
-        properties.Should().NotContain(property => property.Contains("StorageQueue", StringComparison.Ordinal));
+        properties.Should().NotContain(static property => property.Contains("AzureServiceBus", StringComparison.Ordinal));
+        properties.Should().NotContain(static property => property.Contains("StorageQueue", StringComparison.Ordinal));
     }
 
     private sealed class BookNetwork;

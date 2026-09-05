@@ -24,8 +24,8 @@ public sealed class OpenTelemetryStepTests
         Activity? captured = null;
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == OpenTelemetryStep.ActivitySourceName,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ShouldListenTo = static source => source.Name == OpenTelemetryStep.ActivitySourceName,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
             ActivityStopped = activity => captured = activity
         };
         ActivitySource.AddActivityListener(listener);
@@ -41,7 +41,7 @@ public sealed class OpenTelemetryStepTests
         var context = new IncomingStepContext(message, transaction);
         var step = new OpenTelemetryStep(container);
 
-        await step.Process(context, () => Task.CompletedTask).ConfigureAwait(false);
+        await step.Process(context, static () => Task.CompletedTask).ConfigureAwait(false);
 
         captured.Should().NotBeNull();
         captured!.DisplayName.Should().Be("ark.tools.rebus.process");

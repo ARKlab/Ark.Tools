@@ -36,7 +36,7 @@ public class ParallellExtensionsTests
 
         // Assert
         processed.Should().HaveCount(10);
-        processed.OrderBy(x => x).Should().BeEquivalentTo(items);
+        processed.OrderBy(static x => x).Should().BeEquivalentTo(items);
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public class ParallellExtensionsTests
         var items = Enumerable.Range(1, 10).ToList();
 
         // Act
-        var results = await items.Parallel(4, async item =>
+        var results = await items.Parallel(4, static async item =>
         {
             await Task.Delay(10).ConfigureAwait(false);
             return item * 2;
@@ -57,7 +57,7 @@ public class ParallellExtensionsTests
 
         // Assert
         results.Should().HaveCount(10);
-        results.OrderBy(x => x).Should().BeEquivalentTo(items.Select(x => x * 2));
+        results.OrderBy(static x => x).Should().BeEquivalentTo(items.Select(static x => x * 2));
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public class ParallellExtensionsTests
 
         // Assert
         processedWithIndex.Should().HaveCount(5);
-        var ordered = processedWithIndex.OrderBy(x => x.Index, Comparer<int>.Default).ToArray();
+        var ordered = processedWithIndex.OrderBy(static x => x.Index, Comparer<int>.Default).ToArray();
         for (var i = 0; i < items.Count; i++)
         {
             ordered[i].Index.Should().Be(i);
@@ -97,7 +97,7 @@ public class ParallellExtensionsTests
         var items = _testSmallItems.ToList();
 
         // Act
-        var results = await items.Parallel(2, async (index, item) =>
+        var results = await items.Parallel(2, static async (index, item) =>
         {
             await Task.Delay(10).ConfigureAwait(false);
             return $"{index}:{item}";
@@ -105,7 +105,7 @@ public class ParallellExtensionsTests
 
         // Assert
         results.Should().HaveCount(3);
-        var ordered = results.OrderBy(x => x, StringComparer.Ordinal).ToArray();
+        var ordered = results.OrderBy(static x => x, StringComparer.Ordinal).ToArray();
         ordered[0].Should().Be("0:a");
         ordered[1].Should().Be("1:b");
         ordered[2].Should().Be("2:c");
@@ -147,7 +147,7 @@ public class ParallellExtensionsTests
         // Act
         Func<Task> act = async () =>
         {
-            await items.Parallel(2, async (index, item, ct) =>
+            await items.Parallel(2, static async (index, item, ct) =>
             {
                 await Task.Delay(100, ct).ConfigureAwait(false);
             }, cts.Token).ConfigureAwait(false);
@@ -168,7 +168,7 @@ public class ParallellExtensionsTests
         using var cts = new CancellationTokenSource();
 
         // Act
-        var results = await items.Parallel(2, async (index, item, ct) =>
+        var results = await items.Parallel(2, static async (index, item, ct) =>
         {
             await Task.Delay(10, ct).ConfigureAwait(false);
             return item * 3;
@@ -176,7 +176,7 @@ public class ParallellExtensionsTests
 
         // Assert
         results.Should().HaveCount(5);
-        results.OrderBy(x => x).Should().BeEquivalentTo(items.Select(x => x * 3));
+        results.OrderBy(static x => x).Should().BeEquivalentTo(items.Select(static x => x * 3));
     }
 
     /// <summary>
@@ -224,7 +224,7 @@ public class ParallellExtensionsTests
         var items = new List<int>();
 
         // Act
-        await items.Parallel(2, async item =>
+        await items.Parallel(2, static async item =>
         {
             await Task.Delay(10).ConfigureAwait(false);
         }).ConfigureAwait(false);
@@ -242,7 +242,7 @@ public class ParallellExtensionsTests
         var items = new List<int>();
 
         // Act
-        var results = await items.Parallel(2, async item =>
+        var results = await items.Parallel(2, static async item =>
         {
             await Task.Delay(10).ConfigureAwait(false);
             return item * 2;
@@ -264,7 +264,7 @@ public class ParallellExtensionsTests
         // Act
         Func<Task> act = async () =>
         {
-            await items.Parallel(2, async item =>
+            await items.Parallel(2, static async item =>
             {
                 await Task.Delay(10).ConfigureAwait(false);
                 if (item == 5)

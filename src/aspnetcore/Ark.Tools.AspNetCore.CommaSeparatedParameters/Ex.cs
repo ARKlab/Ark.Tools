@@ -8,11 +8,11 @@ public static class Ex
 {
     public static IMvcBuilder AddCommaSeparatedValues(this IMvcBuilder builder)
     {
-        return builder.AddMvcOptions(o => o.Conventions.Add(new CommaSeparatedConvention()));
+        return builder.AddMvcOptions(static o => o.Conventions.Add(new CommaSeparatedConvention()));
     }
 
     public static IMvcCoreBuilder AddCommaSeparatedValues(this IMvcCoreBuilder builder)
     {
-        return builder.AddMvcOptions(o => o.Conventions.Add(new CommaSeparatedConvention()));
+        return builder.AddMvcOptions(static o => o.Conventions.Add(new CommaSeparatedConvention()));
     }
 }

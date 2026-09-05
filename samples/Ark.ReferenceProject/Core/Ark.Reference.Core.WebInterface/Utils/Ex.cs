@@ -15,31 +15,31 @@ public static class Ex
 {
     public static TokenValidationParameters TokenValidator() => new()
     {
-        NameClaimTypeRetriever = (a, b) =>
+        NameClaimTypeRetriever = static (a, b) =>
         {
             if (a is JwtSecurityToken jwt)
             {
-                if (jwt.Claims.Any(x => x.Type == "http://ark-energy.eu/claims/email"))
+                if (jwt.Claims.Any(static x => x.Type == "http://ark-energy.eu/claims/email"))
                 {
                     return "http://ark-energy.eu/claims/email";
                 }
-                else if (jwt.Claims.Any(x => x.Type == ClaimTypes.Email))
+                else if (jwt.Claims.Any(static x => x.Type == ClaimTypes.Email))
                 {
                     return ClaimTypes.Email;
                 }
-                else if (jwt.Claims.Any(x => x.Type == "email"))
+                else if (jwt.Claims.Any(static x => x.Type == "email"))
                 {
                     return ClaimTypes.Email;
                 }
-                else if (jwt.Claims.Any(x => x.Type == "upn"))
+                else if (jwt.Claims.Any(static x => x.Type == "upn"))
                 {
                     return ClaimTypes.Upn;
                 }
-                else if (jwt.Claims.Any(x => x.Type == "emails"))
+                else if (jwt.Claims.Any(static x => x.Type == "emails"))
                 {
                     return "emails";
                 }
-                else if (jwt.Claims.Any(x => x.Type == "appid") && jwt.Claims.SingleOrDefault(w => w.Type == "appidacr")?.Value == "1")
+                else if (jwt.Claims.Any(static x => x.Type == "appid") && jwt.Claims.SingleOrDefault(static w => w.Type == "appidacr")?.Value == "1")
                 {
                     return "appid";
                 }
@@ -51,13 +51,13 @@ public static class Ex
 
     public static void ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        _ = services.AddAuthentication(options =>
+        _ = services.AddAuthentication(static options =>
         {
             options.DefaultScheme = "smart";
         })
-        .AddPolicyScheme("smart", "smart", o =>
+        .AddPolicyScheme("smart", "smart", static o =>
         {
-            o.ForwardDefaultSelector = ctx =>
+            o.ForwardDefaultSelector = static ctx =>
             {
                 string? authorization = ctx.Request.Headers.Authorization;
 
@@ -155,7 +155,7 @@ public static class Ex
                 Scheme = "oauth2"
             };
             c.AddSecurityDefinition("oauth2", oauthScheme);
-            c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+            c.AddSecurityRequirement(static (document) => new OpenApiSecurityRequirement()
             {
                 [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
             });
@@ -195,7 +195,7 @@ public static class Ex
 
             c.AddSecurityDefinition("oauth2", oauthScheme);
 
-            c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+            c.AddSecurityRequirement(static (document) => new OpenApiSecurityRequirement()
             {
                 [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
             });

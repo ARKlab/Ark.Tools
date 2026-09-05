@@ -210,7 +210,7 @@ public class EvolvableEnumTypeHandlerTests
     public void Register_ShouldNotThrow()
     {
         // Act
-        var act = () => EvolvableEnumDapper.Register<Status>();
+        var act = static () => EvolvableEnumDapper.Register<Status>();
 
         // Assert
         act.Should().NotThrow();

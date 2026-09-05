@@ -20,7 +20,7 @@ public static class ArkOpenApiEx
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.AddOperationTransformer((operation, context, _) =>
+        options.AddOperationTransformer(static (operation, context, _) =>
         {
             var metadata = context.Description.ActionDescriptor.EndpointMetadata
                 .OfType<ArkDocumentationMetadata>()
@@ -44,9 +44,9 @@ public static class ArkOpenApiEx
                 }
             }
 
-            _applySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(content => content.Schema), metadata);
+            _applySchemaDescriptions(operation.RequestBody?.Content?.Values.Select(static content => content.Schema), metadata);
             foreach (var response in operation.Responses?.Values.OfType<OpenApiResponse>() ?? [])
-                _applySchemaDescriptions(response.Content?.Values.Select(content => content.Schema), metadata);
+                _applySchemaDescriptions(response.Content?.Values.Select(static content => content.Schema), metadata);
             return Task.CompletedTask;
         });
 
@@ -85,11 +85,11 @@ public static class ArkOpenApiEx
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.AddSchemaTransformer((schema, context, _) =>
+        options.AddSchemaTransformer(static (schema, context, _) =>
         {
             var properties = context.JsonTypeInfo.Properties
-                .Where(property => property.AttributeProvider?.IsDefined(typeof(ServerSetAttribute), inherit: false) == true)
-                .Select(property => property.Name)
+                .Where(static property => property.AttributeProvider?.IsDefined(typeof(ServerSetAttribute), inherit: false) == true)
+                .Select(static property => property.Name)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             if (schema.Properties is not null)
             {
@@ -112,7 +112,7 @@ public static class ArkOpenApiEx
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.AddSchemaTransformer((schema, context, _) =>
+        options.AddSchemaTransformer(static (schema, context, _) =>
         {
             var type = Nullable.GetUnderlyingType(context.JsonTypeInfo.Type)
                 ?? context.JsonTypeInfo.Type;
@@ -158,7 +158,7 @@ public static class ArkOpenApiEx
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.AddOperationTransformer(async (operation, context, cancellationToken) =>
+        options.AddOperationTransformer(static async (operation, context, cancellationToken) =>
         {
             if (operation.Parameters is null)
                 return;
@@ -194,7 +194,7 @@ public static class ArkOpenApiEx
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.AddOperationTransformer((operation, context, _) =>
+        options.AddOperationTransformer(static (operation, context, _) =>
         {
             var metadata = context.Description.ActionDescriptor.EndpointMetadata
                 .OfType<ArkETagParameterMetadata>()
@@ -203,7 +203,7 @@ public static class ArkOpenApiEx
                 return Task.CompletedTask;
 
             operation.Parameters ??= [];
-            if (metadata.RequestETag && !operation.Parameters.Any(parameter =>
+            if (metadata.RequestETag && !operation.Parameters.Any(static parameter =>
                 string.Equals(parameter.Name, "If-Match", StringComparison.OrdinalIgnoreCase)))
             {
                 operation.Parameters.Add(new OpenApiParameter
@@ -219,7 +219,7 @@ public static class ArkOpenApiEx
             if (metadata.ResponseETag)
             {
                 operation.Responses ??= new OpenApiResponses();
-                var success = operation.Responses.FirstOrDefault(response => response.Key.StartsWith('2')).Value;
+                var success = operation.Responses.FirstOrDefault(static response => response.Key.StartsWith('2')).Value;
                 if (success is OpenApiResponse successResponse)
                 {
                     successResponse.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
@@ -233,7 +233,7 @@ public static class ArkOpenApiEx
                 if (string.Equals(context.Description.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
                 {
                     operation.Responses.TryAdd("304", new OpenApiResponse { Description = "Not Modified" });
-                    if (!operation.Parameters.Any(parameter =>
+                    if (!operation.Parameters.Any(static parameter =>
                         string.Equals(parameter.Name, "If-None-Match", StringComparison.OrdinalIgnoreCase)))
                     {
                         operation.Parameters.Add(new OpenApiParameter
@@ -296,13 +296,13 @@ public static class ArkOpenApiEx
                     new OpenApiSchemaReference(componentName, document)));
             }
 
-            schema.OneOf = new List<IOpenApiSchema>(references.Select(item => (IOpenApiSchema)item.Reference));
+            schema.OneOf = new List<IOpenApiSchema>(references.Select(static item => (IOpenApiSchema)item.Reference));
             schema.Discriminator = new OpenApiDiscriminator
             {
                 PropertyName = discriminatorProperty,
                 Mapping = references.ToDictionary(
-                    item => item.Value,
-                    item => item.Reference,
+                    static item => item.Value,
+                    static item => item.Reference,
                     StringComparer.Ordinal),
             };
         });

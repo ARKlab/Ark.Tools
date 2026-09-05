@@ -22,7 +22,7 @@ public static partial class Ex
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection. Configuration types and their properties may be trimmed.")]
     public static IHostBuilder AddApplicationInsithsTelemetryForWebHostArk(this IHostBuilder builder)
     {
-        return builder.ConfigureServices((ctx, services) =>
+        return builder.ConfigureServices(static (ctx, services) =>
         {
             services.ArkApplicationInsightsTelemetry(ctx.Configuration);
         });

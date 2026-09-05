@@ -20,7 +20,7 @@ public sealed class MockPrintCompletedNotificationService
     {
         Mock = new Mock<IPrintCompletedNotificationService>(MockBehavior.Strict);
         Mock
-            .Setup(service => service.NotifyAsync(
+            .Setup(static service => service.NotifyAsync(
                 It.IsAny<BookPrintProcessResponse>(),
                 It.IsAny<CancellationToken>()))
             .Returns((BookPrintProcessResponse process, CancellationToken ctk) => _notifyAsync(process, ctk));

@@ -162,7 +162,7 @@ public sealed class MessagingResourceLifecycleTests
             identity,
             identity,
             4,
-            desiredTopics.Select(topic => new MessagingTopicResource(topic, "publisher")),
+            desiredTopics.Select(static topic => new MessagingTopicResource(topic, "publisher")),
             subscribedTopics.Select(topic => _subscription(topic, identity, identity)),
             knownTopics,
             MessagingResourceLifecycle.CreateIfMissing);
