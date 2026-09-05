@@ -171,7 +171,7 @@ public sealed class ArkSseConnectionTracker
     {
         private readonly ArkSseConnectionTracker _tracker;
         private readonly string _key;
-        private bool _released;
+        private int _released;
 
         public Lease(ArkSseConnectionTracker tracker, string key)
         {
@@ -181,10 +181,9 @@ public sealed class ArkSseConnectionTracker
 
         public void Dispose()
         {
-            if (_released)
+            if (Interlocked.Exchange(ref _released, 1) != 0)
                 return;
 
-            _released = true;
             _tracker._release(_key);
         }
     }
@@ -361,7 +360,10 @@ public static class ArkSse
 
                 if (Stopwatch.GetElapsedTime(lastEmit) >= settings.Heartbeat)
                 {
-                    yield return new SseItem<TResponse>(default!, HeartbeatEventName);
+                    yield return new SseItem<TResponse>(default!, HeartbeatEventName)
+                    {
+                        ReconnectionInterval = emitted ? null : reconnection,
+                    };
                     emitted = true;
                     lastEmit = Stopwatch.GetTimestamp();
                 }

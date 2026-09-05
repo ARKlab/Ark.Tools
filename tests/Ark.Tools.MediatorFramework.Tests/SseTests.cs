@@ -217,17 +217,22 @@ public sealed class SseTests
         context.RequestAborted = abort.Token;
 
         var result = ArkSse.Poll(context, new Probe(), settings, changeToken, abort.Token);
-        try
+        if (context.RequestServices is IAsyncDisposable asyncDisposable)
         {
-            return await _executeAsync(context, result).ConfigureAwait(false);
+            await using (asyncDisposable.ConfigureAwait(false))
+            {
+                return await _executeAsync(context, result).ConfigureAwait(false);
+            }
         }
-        finally
+        else if (context.RequestServices is IDisposable disposable)
         {
-            if (context.RequestServices is IAsyncDisposable asyncDisposable)
-                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
-            else if (context.RequestServices is IDisposable disposable)
-                disposable.Dispose();
+            using (disposable)
+            {
+                return await _executeAsync(context, result).ConfigureAwait(false);
+            }
         }
+
+        return await _executeAsync(context, result).ConfigureAwait(false);
     }
 
     private static async Task<string> _executeAsync(HttpContext context, IResult result)
