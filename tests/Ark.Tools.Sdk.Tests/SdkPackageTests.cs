@@ -96,7 +96,7 @@ public sealed class SdkPackageTests
         {
             ["Microsoft.CodeAnalysis.NetAnalyzers"] = "10.0.400",
             ["Microsoft.CodeAnalysis.BannedApiAnalyzers"] = "4.14.0",
-            ["Meziantou.Analyzer"] = "3.0.160",
+            ["Meziantou.Analyzer"] = "3.0.205",
             ["Microsoft.VisualStudio.Threading.Analyzers"] = "18.7.23",
             ["ErrorProne.NET.CoreAnalyzers"] = "0.1.2"
         };
@@ -434,13 +434,13 @@ public sealed class SdkPackageTests
         var packageReferences = _getPackageReferences(baseline);
         foreach (var package in new[]
         {
-            ("Microsoft.Testing.Extensions.CrashDump", "2.3.3"),
-            ("Microsoft.Testing.Extensions.CodeCoverage", "18.10.0"),
-            ("Microsoft.Testing.Extensions.HangDump", "2.3.3"),
-            ("Microsoft.Testing.Extensions.HotReload", "2.3.3"),
-            ("Microsoft.Testing.Extensions.Retry", "2.3.3"),
-            ("Microsoft.Testing.Extensions.TrxReport", "2.3.3"),
-            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.3.3")
+            ("Microsoft.Testing.Extensions.CrashDump", "2.4.0"),
+            ("Microsoft.Testing.Extensions.CodeCoverage", "18.11.0"),
+            ("Microsoft.Testing.Extensions.HangDump", "2.4.0"),
+            ("Microsoft.Testing.Extensions.HotReload", "2.4.0"),
+            ("Microsoft.Testing.Extensions.Retry", "2.4.0"),
+            ("Microsoft.Testing.Extensions.TrxReport", "2.4.0"),
+            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.4.0")
         })
         {
             Assert.AreEqual(package.Item2, packageReferences[package.Item1]["Version"], package.Item1);
