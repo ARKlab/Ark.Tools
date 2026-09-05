@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <TargetFrameworks>net10.0</TargetFrameworks>
+
+    <Description>OpenAPI/Swashbuckle schema mappings for Ark.Tools.Compliance sensitive value objects</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;OpenApi;Swashbuckle;Swagger</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <!-- Trimming configuration -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup Label="Project-Specific Usings">
+    <Using Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <Using Include="Microsoft.OpenApi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
+  </ItemGroup>
+
+</Project>

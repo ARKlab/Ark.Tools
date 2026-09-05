@@ -3,6 +3,7 @@
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Compliance.OpenApi;
 
 using Asp.Versioning;
 
@@ -138,6 +139,7 @@ public abstract class ArkStartupWebApiCommon
             c.DocInclusionPredicate((docName, apiDesc) => apiDesc.GroupName == docName);
 
             c.MapNodaTimeTypes();
+            c.MapArkComplianceTypes();
 
             c.OperationFilter<SupportFlaggedEnums>();
             c.OperationFilter<SwaggerDefaultValues>();
