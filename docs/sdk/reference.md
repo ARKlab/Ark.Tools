@@ -89,7 +89,7 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsNetAnalyzers` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableArkToolsMeziantouAnalyzer` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableArkToolsErrorProne` | Enabled unless `false` | Build props and SDK restore | Set `false` |
-| `EnableArkToolsVisualStudioThreading` | Enabled unless `false` | Build props and SDK restore | Set `false` |
+| `EnableArkToolsVisualStudioThreading` | Disabled unless `true` | Build props and SDK restore | Set `true` |
 | `EnableArkToolsIdentityModelConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsBannedApi` | Enabled unless `false` | Build targets and SDK restore | Set `false` |
