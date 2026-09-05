@@ -16,6 +16,7 @@ using Microsoft.OpenApi;
 
 using Newtonsoft.Json;
 
+using ProtoBuf;
 using ProtoBuf.Meta;
 
 namespace Ark.Tools.Compliance.Tests;
@@ -85,6 +86,32 @@ public sealed class SerializationTargetTests
         restored.ToString().Should().NotBe(ComplianceFakes.PhoneNumber());
     }
 
+    /// <summary>A protobuf payload without the transport value fails instead of yielding an empty value.</summary>
+    [TestMethod]
+    public void Protobuf_RejectsMissingTransportValue()
+    {
+        var model = RuntimeTypeModel.Create().RegisterBuiltIn();
+
+        using var stream = new MemoryStream();
+        var deserialize = () => model.Deserialize<PhoneNumber>(stream);
+
+        deserialize.Should().Throw<FormatException>();
+    }
+
+    /// <summary>A nullable protobuf member stays <see langword="null"/> when the field is absent.</summary>
+    [TestMethod]
+    public void Protobuf_KeepsAbsentNullableMemberNull()
+    {
+        var model = RuntimeTypeModel.Create().RegisterBuiltIn();
+
+        using var stream = new MemoryStream();
+        model.Serialize(stream, new ProtobufContract());
+        stream.Position = 0;
+        var restored = model.Deserialize<ProtobufContract>(stream);
+
+        restored.Email.Should().BeNull();
+    }
+
     /// <summary>The MessagePack formatter round-trips cleartext and restores redaction.</summary>
     [TestMethod]
     public void MessagePack_RoundTripsCleartextAndStaysRedacted()
@@ -101,6 +128,22 @@ public sealed class SerializationTargetTests
             .Should().Be("\"" + ComplianceFakes.NationalIdentifier() + "\"");
         restored.Reveal(_purpose).Should().Be(ComplianceFakes.NationalIdentifier());
         restored.ToString().Should().Be("***");
+    }
+
+    /// <summary>A MessagePack <c>nil</c> is rejected for a non-nullable member and honoured for a nullable one.</summary>
+    [TestMethod]
+    public void MessagePack_RejectsNilForNonNullableMembers()
+    {
+        SensitiveValueFormatterResolver.RegisterBuiltIn();
+        var options = MessagePackSerializerOptions.Standard.WithResolver(
+            CompositeResolver.Create(SensitiveValueFormatterResolver.Instance, StandardResolver.Instance));
+        var nil = MessagePackSerializer.Serialize<string?>(null, options);
+
+        var deserialize = () => MessagePackSerializer.Deserialize<NationalIdentifier>(nil, options);
+
+        deserialize.Should().Throw<MessagePackSerializationException>();
+        MessagePackSerializer.Deserialize<NationalIdentifier?>(nil, options).Should().BeNull();
+        MessagePackSerializer.Serialize<NationalIdentifier?>(null, options).Should().Equal(nil);
     }
 
     /// <summary>The OpenAPI mapping documents the primitive schema, the classification, and a reserved example.</summary>
@@ -214,4 +257,13 @@ public sealed class SerializationTargetTests
             || value.StartsWith("+447700900", StringComparison.Ordinal)
             || value.All(static character => character is 'X' or '0' or '-');
     }
+}
+
+/// <summary>A protobuf contract carrying an optional sensitive member.</summary>
+[ProtoContract]
+internal sealed class ProtobufContract
+{
+    /// <summary>Gets or sets the optional email address.</summary>
+    [ProtoMember(1)]
+    public EmailAddress? Email { get; set; }
 }

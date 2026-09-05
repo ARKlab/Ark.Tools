@@ -23,8 +23,13 @@ public struct SensitiveValueSurrogate<T>
         => new() { Value = SensitiveValueSerialization.ToTransport(value, "Protobuf") };
 
     /// <summary>Converts from the protobuf surrogate.</summary>
+    /// <remarks>
+    /// A missing transport value fails instead of yielding an empty sensitive value: a
+    /// nullable member is handled by protobuf-net's <see cref="Nullable{T}"/> support, so a
+    /// <see langword="null"/> reaching this conversion is a missing required value.
+    /// </remarks>
     public static implicit operator T(SensitiveValueSurrogate<T> value)
-        => value.Value is null ? default : SensitiveValueSerialization.FromTransport<T>(value.Value);
+        => SensitiveValueSerialization.FromTransport<T>(value.Value);
 }
 
 /// <summary>

@@ -10,6 +10,12 @@ namespace Ark.Tools.Compliance.MessagePack;
 
 /// <summary>Writes a sensitive value object as its cleartext transport value.</summary>
 /// <typeparam name="T">The sensitive value object.</typeparam>
+/// <remarks>
+/// A MessagePack <c>nil</c> is rejected: nullability is the business of the
+/// <see cref="StaticNullableFormatter{T}"/> registered for <typeparamref name="T"/>?, so a
+/// <c>nil</c> reaching this formatter is a missing value for a non-nullable member and must
+/// fail rather than rehydrate as an empty sensitive value.
+/// </remarks>
 public sealed class SensitiveValueFormatter<T> : IMessagePackFormatter<T>
     where T : struct, ISensitiveValue<T>
 {
@@ -19,12 +25,7 @@ public sealed class SensitiveValueFormatter<T> : IMessagePackFormatter<T>
 
     /// <inheritdoc />
     public T Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
-    {
-        if (reader.TryReadNil())
-            return default;
-
-        return SensitiveValueSerialization.FromTransport<T>(reader.ReadString());
-    }
+        => SensitiveValueSerialization.FromTransport<T>(reader.ReadString());
 }
 
 /// <summary>
@@ -44,14 +45,16 @@ public sealed class SensitiveValueFormatterResolver : IFormatterResolver
     }
 
     /// <summary>
-    /// Registers the formatter for a sensitive value object. Register before the first
-    /// serialization: MessagePack caches resolver lookups per type.
+    /// Registers the formatter for a sensitive value object and for its nullable form.
+    /// Register before the first serialization: MessagePack caches resolver lookups per type.
     /// </summary>
     /// <typeparam name="T">The sensitive value object.</typeparam>
     public static void Register<T>()
         where T : struct, ISensitiveValue<T>
     {
-        _formatters[typeof(T)] = new SensitiveValueFormatter<T>();
+        var formatter = new SensitiveValueFormatter<T>();
+        _formatters[typeof(T)] = formatter;
+        _formatters[typeof(T?)] = new StaticNullableFormatter<T>(formatter);
     }
 
     /// <summary>
