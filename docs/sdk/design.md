@@ -468,7 +468,7 @@ The inventory below was verified against:
 | `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` 4.14.0 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
 | `Meziantou.Analyzer` 3.0.160 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
-| `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
+| `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference when `EnableArkToolsVisualStudioThreading=true`. |
 | `ErrorProne.NET.CoreAnalyzers` 0.1.2 | Private reference; root supports `DisableErrorProneAnalyzers=true` | SDK: exact implicit reference with an independent opt-out. |
 | `.netanalyzers.globalconfig` | 97 CA/IDE severity overrides | Build: package and load as a global analyzer config. |
 | `.meziantou.globalconfig` | 34 MA severity overrides | Build: package and load as a global analyzer config. |

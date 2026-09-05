@@ -177,7 +177,7 @@ generated TRX, dump, and coverage artifacts.
 | `Microsoft.CodeAnalysis.NetAnalyzers` | `10.0.400` | Non-SQL and enabled |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` | `4.14.0` | Non-SQL and enabled |
 | `Meziantou.Analyzer` | `3.0.160` | Non-SQL and enabled |
-| `Microsoft.VisualStudio.Threading.Analyzers` | `18.7.23` | Non-SQL and enabled |
+| `Microsoft.VisualStudio.Threading.Analyzers` | `18.7.23` | Non-SQL and `EnableArkToolsVisualStudioThreading=true` |
 | `ErrorProne.NET.CoreAnalyzers` | `0.1.2` | Non-SQL and enabled |
 | `Microsoft.Sbom.Targets` | `4.1.5` | Non-SQL and SBOM enabled |
 | `Polyfill` | `11.2.0` | Non-SQL and Polyfill enabled |

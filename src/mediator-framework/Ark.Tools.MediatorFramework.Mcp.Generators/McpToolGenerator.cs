@@ -101,15 +101,14 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         foreach (var group in grouped)
         {
             var contractTypes = new List<INamedTypeSymbol>();
-            foreach (var value in group.Value)
+            foreach (var value in group.Value.Where(static value => value.AssemblyName is not null))
             {
-                if (value.AssemblyName is null)
-                    continue;
+                var assemblyName = value.AssemblyName!;
 
-                if (!contractCache.TryGetValue(value.AssemblyName, out var cachedContracts))
+                if (!contractCache.TryGetValue(assemblyName, out var cachedContracts))
                 {
-                    cachedContracts = FindContracts(compilation, value.AssemblyName, context.CancellationToken);
-                    contractCache.Add(value.AssemblyName, cachedContracts);
+                    cachedContracts = FindContracts(compilation, assemblyName, context.CancellationToken);
+                    contractCache.Add(assemblyName, cachedContracts);
                 }
 
                 contractTypes.AddRange(cachedContracts);
