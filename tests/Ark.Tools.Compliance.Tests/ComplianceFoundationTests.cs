@@ -3,11 +3,14 @@
 
 using AwesomeAssertions;
 
+using Ark.Tools.Compliance.Dapper;
+
 using Microsoft.Extensions.Compliance.Classification;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace Ark.Tools.Compliance.Tests;
@@ -54,15 +57,37 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
-    /// The generated Dapper handler reads cleartext into a safely rendering value object.
+    /// The Dapper adapter round-trips any sensitive value object without per-type generation.
     /// </summary>
     [TestMethod]
     public void SensitiveValueObject_DapperHandlerRoundTrips()
     {
-        var restored = new EmailAddress.EmailAddressDapperTypeHandler().Parse("person@example.com");
+        var handler = new SensitiveValueTypeHandler<EmailAddress>();
+        var parameter = new FakeDbDataParameter();
+
+        var restored = handler.Parse("person@example.com");
+        handler.SetValue(parameter, restored);
 
         restored.Reveal(CompliancePurpose.Custom("test")).Should().Be("person@example.com");
         restored.ToString().Should().Be("***");
+        parameter.Value.Should().Be("person@example.com");
+    }
+
+    /// <summary>
+    /// A consumer registration wires one serialization library without touching declarations.
+    /// </summary>
+    [TestMethod]
+    public void SerializerRegistration_RegistersThroughStaticAbstract()
+    {
+        var register = () => _register<TestDapperRegistration>();
+
+        register.Should().NotThrow();
+    }
+
+    private static void _register<T>()
+        where T : ISensitiveValueSerializerRegistration
+    {
+        T.Register();
     }
 
     /// <summary>
@@ -87,13 +112,13 @@ public sealed class ComplianceFoundationTests
         var generated = _runGenerator(
             """
             using Ark.Tools.Compliance;
-            [SensitiveValueObject<string>(ArkRedaction.Erase, SerializationTargets.None)]
+            [SensitiveValueObject<string>(ArkRedaction.Erase)]
             public readonly partial struct Erased { }
-            [SensitiveValueObject<string>(ArkRedaction.Mask, SerializationTargets.None)]
+            [SensitiveValueObject<string>(ArkRedaction.Mask)]
             public readonly partial struct Masked { }
-            [SensitiveValueObject<string>(ArkRedaction.Hmac, SerializationTargets.None)]
+            [SensitiveValueObject<string>(ArkRedaction.Hmac)]
             public readonly partial struct Hashed { }
-            [SensitiveValueObject<string>(ArkRedaction.None, SerializationTargets.None)]
+            [SensitiveValueObject<string>(ArkRedaction.None)]
             public readonly partial struct Clear { }
             """);
 
@@ -139,8 +164,7 @@ public sealed class ComplianceFoundationTests
         var generated = _runGenerator(
             """
             [Ark.Tools.Compliance.SensitiveValueObject<string>(
-                Ark.Tools.Compliance.ArkRedaction.Erase,
-                Ark.Tools.Compliance.SerializationTargets.None)]
+                Ark.Tools.Compliance.ArkRedaction.Erase)]
             public readonly partial struct Qualified { }
             """);
 
@@ -227,10 +251,15 @@ public sealed class ComplianceFoundationTests
         var source = "mario.rossi@example.com";
         var missingKey = new ArkHmacRedactor();
         var configured = new ArkHmacRedactor("test-key");
+        var expected = "hmac:" + Convert.ToHexString(
+            HMACSHA256.HashData(Encoding.UTF8.GetBytes("test-key"), Encoding.UTF8.GetBytes(source)));
+        var longSource = new string('a', 1024);
 
         missingKey.Redact(source).Should().Be(ArkErasingRedactor.Marker);
-        configured.Redact(source).Should().Be(configured.Redact(source));
+        configured.Redact(source).Should().Be(expected);
         configured.Redact(source).Should().NotContain(source);
+        configured.Redact(longSource).Should().Be("hmac:" + Convert.ToHexString(
+            HMACSHA256.HashData(Encoding.UTF8.GetBytes("test-key"), Encoding.UTF8.GetBytes(longSource))));
     }
 
     /// <summary>
@@ -281,7 +310,14 @@ public sealed class ComplianceFoundationTests
 }
 
 /// <summary>Test-only generated sensitive value object.</summary>
-[SensitiveValueObject<string>(ArkRedaction.Erase, SerializationTargets.SystemTextJson)]
+[SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct TestSensitiveValue
 {
+}
+
+/// <summary>Test-only per-serializer registration.</summary>
+public sealed partial class TestDapperRegistration : ISensitiveValueSerializerRegistration
+{
+    /// <inheritdoc />
+    public static void Register() => SensitiveValueDapper.RegisterBuiltIn();
 }

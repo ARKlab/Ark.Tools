@@ -118,11 +118,9 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         }
 
         var redaction = _getEnumValue(attribute, 0, "Redaction", 0);
-        var serialization = _getEnumValue(attribute, 1, "Serialization", 3);
-        var hasDapper = context.SemanticModel.Compilation.GetTypeByMetadataName("Dapper.SqlMapper") is not null;
         return new Model(
             _hintName(type),
-            _emit(type, new Settings(redaction, serialization, validateHook, normalizeHook, hasDapper)),
+            _emit(type, new Settings(redaction, validateHook, normalizeHook)),
             null);
     }
 
@@ -190,14 +188,15 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             builder.Append("namespace ").Append(namespaceName).AppendLine(";");
         }
 
-        if ((settings.Serialization & 1) != 0)
-            builder.Append("[global::System.Text.Json.Serialization.JsonConverter(typeof(").Append(typeName).AppendLine("JsonConverter))]");
+        builder.Append("[global::System.Text.Json.Serialization.JsonConverter(typeof(global::Ark.Tools.Compliance.SensitiveValueJsonConverter<")
+            .Append(typeName).AppendLine(">))]");
         builder.Append("[global::System.Diagnostics.DebuggerDisplay(\"{ToString(),nq}\")]").AppendLine();
-        builder.Append("[global::System.ComponentModel.TypeConverter(typeof(").Append(typeName)
-            .AppendLine("TypeConverter))]");
+        builder.Append("[global::System.ComponentModel.TypeConverter(typeof(global::Ark.Tools.Compliance.SensitiveValueTypeConverter<")
+            .Append(typeName).AppendLine(">))]");
         builder.Append(accessibility).Append("readonly partial struct ").Append(typeName)
             .Append(" : global::System.IEquatable<").Append(typeName)
-            .AppendLine(">, global::System.IFormattable, global::System.ISpanFormattable");
+            .Append(">, global::System.IFormattable, global::System.ISpanFormattable, global::Ark.Tools.Compliance.ISensitiveValue<")
+            .Append(typeName).AppendLine(">");
         builder.AppendLine("{");
         builder.AppendLine("    private readonly string _value;");
         builder.AppendLine();
@@ -299,91 +298,8 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         if (!settings.HasNormalize)
             builder.AppendLine("    private static string _normalize(string value) => value;");
 
-        if ((settings.Serialization & 1) != 0)
-            _emitJson(builder, typeName);
-        if ((settings.Serialization & 2) != 0 && settings.HasDapper)
-            _emitDapper(builder, typeName);
-        _emitTypeConverter(builder, typeName);
-
         builder.AppendLine("}");
         return builder.ToString();
-    }
-
-    private static void _emitJson(StringBuilder builder, string typeName)
-    {
-        builder.AppendLine();
-        builder.Append("    private sealed class ").Append(typeName).AppendLine("JsonConverter : global::System.Text.Json.Serialization.JsonConverter<" + typeName + ">");
-        builder.AppendLine("    {");
-        builder.AppendLine("        public override " + typeName + " Read(ref global::System.Text.Json.Utf8JsonReader reader, global::System.Type typeToConvert, global::System.Text.Json.JsonSerializerOptions options)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            var value = reader.GetString();");
-        builder.AppendLine("            if (" + typeName + ".TryFrom(value, out var result))");
-        builder.AppendLine("                return result;");
-        builder.AppendLine("            throw new global::System.Text.Json.JsonException(\"Invalid sensitive value.\");");
-        builder.AppendLine("        }");
-        builder.AppendLine();
-        builder.AppendLine("        public override void Write(global::System.Text.Json.Utf8JsonWriter writer, " + typeName + " value, global::System.Text.Json.JsonSerializerOptions options)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            writer.WriteStringValue(value.Reveal(global::Ark.Tools.Compliance.CompliancePurpose.Custom(\"SystemTextJson\")));");
-        builder.AppendLine("        }");
-        builder.AppendLine("    }");
-    }
-
-    private static void _emitDapper(StringBuilder builder, string typeName)
-    {
-        builder.AppendLine();
-        builder.Append("    /// <summary>Dapper type handler for ").Append(typeName).AppendLine(".</summary>");
-        builder.Append("    public sealed class ").Append(typeName).AppendLine("DapperTypeHandler : global::Dapper.SqlMapper.TypeHandler<" + typeName + ">");
-        builder.AppendLine("    {");
-        builder.AppendLine("        /// <inheritdoc />");
-        builder.AppendLine("        public override void SetValue(global::System.Data.IDbDataParameter parameter, " + typeName + " value)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            parameter.DbType = global::System.Data.DbType.String;");
-        builder.AppendLine("            parameter.Value = value.Reveal(global::Ark.Tools.Compliance.CompliancePurpose.Custom(\"Dapper\"));");
-        builder.AppendLine("        }");
-        builder.AppendLine();
-        builder.AppendLine("        /// <inheritdoc />");
-        builder.AppendLine("        public override " + typeName + " Parse(object value)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            if (value is string text && " + typeName + ".TryFrom(text, out var result))");
-        builder.AppendLine("                return result;");
-        builder.AppendLine("            throw new global::System.Data.DataException(\"Invalid sensitive database value.\");");
-        builder.AppendLine("        }");
-        builder.AppendLine("    }");
-        builder.AppendLine();
-        builder.Append("    /// <summary>Registers the generated Dapper handler for ").Append(typeName).AppendLine(".</summary>");
-        builder.Append("    public static void RegisterDapperHandler() => global::Dapper.SqlMapper.AddTypeHandler(new ").Append(typeName).AppendLine("DapperTypeHandler());");
-    }
-
-    private static void _emitTypeConverter(StringBuilder builder, string typeName)
-    {
-        builder.AppendLine();
-        builder.Append("    private sealed class ").Append(typeName).AppendLine("TypeConverter : global::System.ComponentModel.TypeConverter");
-        builder.AppendLine("    {");
-        builder.AppendLine("        public override bool CanConvertFrom(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Type sourceType)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);");
-        builder.AppendLine("        }");
-        builder.AppendLine();
-        builder.AppendLine("        public override object ConvertFrom(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Globalization.CultureInfo? culture, object value)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            if (value is string text)");
-        builder.Append("                return ").Append(typeName).AppendLine(".From(text);");
-        builder.AppendLine("            return base.ConvertFrom(context, culture, value)!;");
-        builder.AppendLine("        }");
-        builder.AppendLine();
-        builder.AppendLine("        public override bool CanConvertTo(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Type? destinationType)");
-        builder.AppendLine("        {");
-        builder.AppendLine("            return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);");
-        builder.AppendLine("        }");
-        builder.AppendLine();
-        builder.AppendLine("        public override object? ConvertTo(global::System.ComponentModel.ITypeDescriptorContext? context, global::System.Globalization.CultureInfo? culture, object? value, global::System.Type destinationType)");
-        builder.AppendLine("        {");
-        builder.Append("            if (destinationType == typeof(string) && value is ").Append(typeName).AppendLine(" sensitive)");
-        builder.AppendLine("                return sensitive.ToString();");
-        builder.AppendLine("            return base.ConvertTo(context, culture, value, destinationType)!;");
-        builder.AppendLine("        }");
-        builder.AppendLine("    }");
     }
 
     private readonly record struct Model(
@@ -393,8 +309,6 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
 
     private readonly record struct Settings(
         int Redaction,
-        int Serialization,
         bool HasValidate,
-        bool HasNormalize,
-        bool HasDapper);
+        bool HasNormalize);
 }

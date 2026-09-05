@@ -373,8 +373,14 @@
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
-          "Dapper": "[2.1.79, )",
           "Microsoft.Extensions.Compliance.Abstractions": "[10.9.0, )"
+        }
+      },
+      "ark.tools.compliance.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Dapper": "[2.1.79, )"
         }
       },
       "ark.tools.compliance.generators": {

@@ -6,6 +6,7 @@
   <Folder Name="/src/common/">
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
     <Project Path="src/common/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+    <Project Path="src/common/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
     <Project Path="src/common/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />

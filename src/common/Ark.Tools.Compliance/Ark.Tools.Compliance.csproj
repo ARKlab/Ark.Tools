@@ -13,7 +13,6 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
-    <PackageReference Include="Dapper" />
   </ItemGroup>
 
   <ItemGroup>

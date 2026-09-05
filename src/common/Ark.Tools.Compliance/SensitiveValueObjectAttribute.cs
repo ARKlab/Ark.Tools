@@ -3,44 +3,27 @@
 
 namespace Ark.Tools.Compliance;
 
-/// <summary>Controls which generated serializers are emitted for a sensitive value object.</summary>
-[Flags]
-public enum SerializationTargets
-{
-    /// <summary>Do not emit serialization support.</summary>
-    None = 0,
-
-    /// <summary>Emit a System.Text.Json converter.</summary>
-    SystemTextJson = 1,
-
-    /// <summary>Emit a Dapper type handler.</summary>
-    Dapper = 2,
-
-    /// <summary>Emit all supported serializers.</summary>
-    All = SystemTextJson | Dapper,
-}
-
 /// <summary>Marks a readonly partial string value object for safe generated rendering.</summary>
 /// <typeparam name="T">The underlying value type; only <see cref="string"/> is supported.</typeparam>
+/// <remarks>
+/// Serialization support is not declared here: the generated type implements
+/// <see cref="ISensitiveValue{TSelf}"/>, and each serialization library is wired by a
+/// dedicated adapter package through <see cref="ISensitiveValueSerializerRegistration"/>.
+/// Only the in-box <c>System.Text.Json</c> converter and the <c>TypeConverter</c> are
+/// applied by the generator, because both ship with the framework.
+/// </remarks>
 [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class SensitiveValueObjectAttribute<T> : Attribute
 {
     /// <summary>Initializes the attribute.</summary>
     /// <param name="redaction">The default redaction mode.</param>
-    /// <param name="serialization">The serializers to generate.</param>
-    public SensitiveValueObjectAttribute(
-        ArkRedaction redaction = ArkRedaction.Erase,
-        SerializationTargets serialization = SerializationTargets.All)
+    public SensitiveValueObjectAttribute(ArkRedaction redaction = ArkRedaction.Erase)
     {
         Redaction = redaction;
-        Serialization = serialization;
     }
 
     /// <summary>Gets the default redaction mode.</summary>
     public ArkRedaction Redaction { get; }
-
-    /// <summary>Gets the serializers to generate.</summary>
-    public SerializationTargets Serialization { get; }
 }
 
 /// <summary>Represents the result of validating a sensitive value object.</summary>

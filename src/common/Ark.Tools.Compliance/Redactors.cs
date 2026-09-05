@@ -1,6 +1,7 @@
 // Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Buffers;
 using System.Security.Cryptography;
 
 using Microsoft.Extensions.Compliance.Redaction;
@@ -103,6 +104,7 @@ public sealed class ArkHmacRedactor : Redactor
 {
     private const string _prefix = "hmac:";
     private const int _digestLength = 32;
+    private const int _stackLimit = 256;
     private readonly byte[]? _key;
 
     /// <summary>
@@ -156,12 +158,40 @@ public sealed class ArkHmacRedactor : Redactor
         if (_key is null)
             return ArkErasingRedactor.Instance.Redact(source, destination);
 
-        var result = _prefix + Convert.ToHexString(HMACSHA256.HashData(_key, System.Text.Encoding.UTF8.GetBytes(source.ToArray())));
-        if (destination.Length < result.Length)
+        var length = _prefix.Length + (_digestLength * 2);
+        if (destination.Length < length)
             throw new ArgumentException("The destination buffer is too small.", nameof(destination));
 
-        result.AsSpan().CopyTo(destination);
-        return result.Length;
+        var maxByteCount = Encoding.UTF8.GetMaxByteCount(source.Length);
+        var rented = maxByteCount > _stackLimit ? ArrayPool<byte>.Shared.Rent(maxByteCount) : null;
+        Span<byte> stackBuffer = stackalloc byte[_stackLimit];
+        var utf8 = rented is null ? stackBuffer : rented.AsSpan(0, maxByteCount);
+        Span<byte> digest = stackalloc byte[_digestLength];
+        try
+        {
+            var byteCount = Encoding.UTF8.GetBytes(source, utf8);
+            HMACSHA256.HashData(_key, utf8[..byteCount], digest);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(utf8);
+            if (rented is not null)
+                ArrayPool<byte>.Shared.Return(rented);
+        }
+
+        _prefix.AsSpan().CopyTo(destination);
+        _writeHex(digest, destination[_prefix.Length..]);
+        return length;
+    }
+
+    private static void _writeHex(ReadOnlySpan<byte> value, Span<char> destination)
+    {
+        const string digits = "0123456789ABCDEF";
+        for (var i = 0; i < value.Length; i++)
+        {
+            destination[i * 2] = digits[value[i] >> 4];
+            destination[(i * 2) + 1] = digits[value[i] & 0xF];
+        }
     }
 }
 
