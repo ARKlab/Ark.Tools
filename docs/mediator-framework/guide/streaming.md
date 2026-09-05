@@ -140,7 +140,7 @@ The client receives a server stream and sees `Cancelled` when it cancels.
 | --- | --- |
 | Simple incremental API response | Generated HTTP JSON |
 | Typed high-throughput stream | Generated gRPC |
-| Browser SSE framing | Handwritten adapter |
+| Browser SSE framing | `[Sse]` on the contract (see [SSE](sse.md)) |
 | Bidirectional stream | Handwritten gRPC service |
 | Background work | Rebus command plus durable progress |
 | MessagePack stream | Avoid; top-level length requires buffering |

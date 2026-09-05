@@ -25,6 +25,27 @@ endpoint (typed events, reconnection ids).
 
 ## Acceptance
 
-- [ ] Spike report committed under `docs/mediator-framework/`.
-- [ ] Prototype (if any) isolated (branch or `evaluations/`-style folder), not shipped in packages.
-- [ ] Explicit recommendation and follow-up task list.
+- [x] Spike report committed under `docs/mediator-framework/`.
+- [x] Prototype (if any) isolated (branch or `evaluations/`-style folder), not shipped in packages.
+- [x] Explicit recommendation and follow-up task list.
+
+## Outcome (shipped)
+
+Report: [`docs/mediator-framework/sse-spike.md`](../../../sse-spike.md).
+
+The spike was re-scoped and productized in the same change, because the design that answers §1 turned
+out to need no new abstraction at all:
+
+- **NO-GO on `IStreamQueryHandler`.** The dominant use case is a poller over an existing `IQuery`, so
+  the handler shape never changes: the endpoint re-executes `IQueryProcessor.ExecuteAsync` on a timer.
+  Every decorator (validation, authorization, profiling) therefore re-runs per tick, unchanged.
+- **GO on `[Sse]`**, a supplement to the `[HttpEndpoint("GET", …)]` already on the contract, emitting a
+  sibling `<template>/sse` route. It covers both the polled shape and the existing
+  `IAsyncEnumerable` streaming shape.
+- §3 security review is in the report: per-tick authorization, connection caps with `503`, compression
+  bypass, proxy buffering headers, heartbeats, connection lifetime capped at the bearer token `exp`,
+  and the HTTP/2 requirement.
+
+Shipped surface: `SseAttribute` (core), `ArkSse` / `ArkSseSettings` / `ArkSseConnectionTracker`
+(`Ark.Tools.MediatorFramework.MinimalApi`), generator diagnostics `ARKMF021`-`ARKMF024`, `sse=` API
+surface metadata, and sample endpoints on `ListBookReviewsQuery.V1` and `StreamBooksQuery.V1`.
