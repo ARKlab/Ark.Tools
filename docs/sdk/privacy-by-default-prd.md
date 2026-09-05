@@ -293,29 +293,55 @@ with:
 - the full serialisation surface Ark actually uses — because serialisation is
   expected, and a type people cannot serialise is a type people will not adopt.
 
-Generated serialisation support, one file per opted-in target, all closed-generic
-and reflection-free:
+Serialisation is **not declared on the type**. The generated struct implements
+`ISensitiveValue<TSelf>` (`static abstract From`/`TryFrom` plus `Reveal`), so every
+serializer adapter is written once as a closed generic over that contract instead of
+being emitted per type and per target. This keeps `Ark.Tools.Compliance` free of
+transport dependencies — otherwise the built-in types shipped in the package would
+have to opt into every target upfront and drag protobuf-net, MessagePack, Dapper and
+Swashbuckle into every consumer.
 
-| Target | Generated artifact | Enabled by |
+Only what ships with the framework is applied by the generator:
+
+| Target | Artifact | Where |
 | --- | --- | --- |
-| `System.Text.Json` | `JsonConverter<EmailAddress>` + `JsonSerializerContext`-friendly registration | default |
-| Newtonsoft.Json | `JsonConverter` | `SerializationTargets.NewtonsoftJson` |
-| **protobuf-net** | surrogate `struct` + `RuntimeTypeModel`/`[ProtoContract]` registration, in the shape of `Ark.Tools.Protobuf`'s `EvolvableEnumSurrogate<T>` | `SerializationTargets.Protobuf` |
-| **MessagePack** | `IMessagePackFormatter<EmailAddress>` + a generated resolver entry, in the shape of `Ark.Tools.MessagePack`'s `EvolvableEnumFormatter<T>` | `SerializationTargets.MessagePack` |
-| Dapper | `SqlMapper.TypeHandler<EmailAddress>` | default |
-| `TypeConverter` | redaction-aware converter (see below) | default |
-| **OpenAPI / Swashbuckle** | a `MapType` registration extension + `x-ark-classification` vendor extension, in the shape of `Ark.Tools.AspNetCore.Swashbuckle`'s `MapNodaTimeTypes` | `SerializationTargets.OpenApi` |
-| Reqnroll | value retriever + comparer registration | test projects |
+| `System.Text.Json` | `SensitiveValueJsonConverter<T>`, applied with `[JsonConverter]`; `JsonSerializerContext`-friendly | `Ark.Tools.Compliance` (in-box) |
+| `TypeConverter` | `SensitiveValueTypeConverter<T>` (see below) | `Ark.Tools.Compliance` (in-box) |
+
+Every other target lives in its own adapter package and is opted into by the
+consumer, in the shape of a `System.Text.Json` serializer context: a partial class
+implementing `ISensitiveValueSerializerRegistration`, whose `static abstract Register()`
+registers the types with the target library.
+
+| Target | Adapter | Package |
+| --- | --- | --- |
+| Dapper | `SensitiveValueTypeHandler<T>` + `SensitiveValueDapper.Register<T>()` | `Ark.Tools.Compliance.Dapper` |
+| Newtonsoft.Json | `JsonConverter<T>` | `Ark.Tools.Compliance.NewtonsoftJson` |
+| **protobuf-net** | surrogate + `RuntimeTypeModel` registration, in the shape of `Ark.Tools.Protobuf`'s `EvolvableEnumSurrogate<T>` | `Ark.Tools.Compliance.Protobuf` |
+| **MessagePack** | `IMessagePackFormatter<T>` + resolver entry, in the shape of `Ark.Tools.MessagePack`'s `EvolvableEnumFormatter<T>` | `Ark.Tools.Compliance.MessagePack` |
+| **OpenAPI / Swashbuckle** | `MapType` registration + `x-ark-classification`, in the shape of `Ark.Tools.AspNetCore.Swashbuckle`'s `MapNodaTimeTypes` | `Ark.Tools.Compliance.OpenApi` |
+| Reqnroll | value retriever + comparer registration | `Ark.Tools.Compliance.Reqnroll` |
 
 ```csharp
 [PersonalData(Notes = "Customer contact address.")]
-[SensitiveValueObject<string>(ArkRedaction.Mask,
-    Serialization = SerializationTargets.SystemTextJson
-                  | SerializationTargets.Protobuf
-                  | SerializationTargets.MessagePack
-                  | SerializationTargets.OpenApi)]
+[SensitiveValueObject<string>(ArkRedaction.Mask)]
 public readonly partial struct EmailAddress { … }
+
+// One partial class per serialization library, declared by the consumer.
+public sealed partial class AppDapperCompliance : ISensitiveValueSerializerRegistration
+{
+    public static void Register()
+    {
+        SensitiveValueDapper.RegisterBuiltIn();
+        SensitiveValueDapper.Register<CustomerReference>();
+    }
+}
 ```
+
+Adapters share the `SensitiveValueSerialization.ToTransport`/`FromTransport` helpers,
+so a new target is a reader/writer mapping and nothing else. A per-target generator
+may fill the `Register()` body from declarative attributes, but the runtime contract
+above stands on its own.
 
 Protobuf and MessagePack are first-class rather than an afterthought because the
 MediatorFramework transports and `Ark.Tools.MessagePack`/`Ark.Tools.Protobuf`
@@ -765,9 +791,10 @@ existing mediator-framework generator discipline.
 
 | Package | Contents | TFMs |
 | --- | --- | --- |
-| `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`; ships the analyzer + generator + code-fix DLLs as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`) | `net8.0;net10.0` |
+| `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the analyzer + generator + code-fix DLLs as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | `IsPackable=false`, packed into the above | `netstandard2.0` |
 | `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | generator targets emitting surrogates/formatters next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.OpenApi` | generated `MapType` registrations and the `x-ark-classification` extension; wired into `ArkStartupWebApiCommon` next to `MapNodaTimeTypes` | `net8.0;net10.0` |

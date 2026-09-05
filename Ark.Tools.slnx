@@ -5,6 +5,9 @@
   </Folder>
   <Folder Name="/src/common/">
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
+    <Project Path="src/common/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+    <Project Path="src/common/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
+    <Project Path="src/common/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
@@ -159,6 +162,7 @@
     <Project Path="benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.Compliance.Tests/Ark.Tools.Compliance.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Sdk.Tests/Ark.Tools.Sdk.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Hosting.Contracts/Ark.Tools.MediatorFramework.Hosting.Contracts.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Hosting.GrpcClient/Ark.Tools.MediatorFramework.Hosting.GrpcClient.csproj" />

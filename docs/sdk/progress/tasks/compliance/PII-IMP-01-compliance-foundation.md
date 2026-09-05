@@ -71,13 +71,13 @@ Microsoft one rather than a parallel Ark taxonomy.
 
 ## Acceptance
 
-- [ ] `Ark.Tools.Compliance` ships the classification attributes, both escape
+- [x] `Ark.Tools.Compliance` ships the classification attributes, both escape
   hatches, purposes, and redactors.
-- [ ] Attributes derive from `DataClassificationAttribute`.
-- [ ] Redaction fails closed with no configuration.
-- [ ] Lock files are regenerated for the new dependency.
-- [ ] The [task board](../README.md) status for PII-IMP-01 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] Attributes derive from `DataClassificationAttribute`.
+- [x] Redaction fails closed with no configuration.
+- [x] Lock files are regenerated for the new dependency.
+- [x] The [task board](../README.md) status for PII-IMP-01 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
