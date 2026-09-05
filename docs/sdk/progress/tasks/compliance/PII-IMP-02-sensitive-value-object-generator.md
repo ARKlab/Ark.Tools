@@ -26,9 +26,12 @@ mask rather than a leak.
   redacted form; no `DebuggerTypeProxy`; the generated `TypeConverter`
   round-trips for model binding but `ConvertTo(string)` returns the redacted
   form unless the destination is the converter's own round-trip contract.
-- **Default targets in this task**: `System.Text.Json` converter (closed
-  generic, `JsonSerializerContext`-friendly) and the Dapper
-  `SqlMapper.TypeHandler<T>`. Other targets are PII-IMP-03.
+- **Serialization is not declared on the type**: the generated struct implements
+  `ISensitiveValue<TSelf>`, so adapters are closed generics written once. The
+  generator applies only the in-box `SensitiveValueJsonConverter<T>` and
+  `SensitiveValueTypeConverter<T>`; Dapper moves to `Ark.Tools.Compliance.Dapper`
+  and every other target is PII-IMP-03. Consumers opt a library in with a partial
+  class implementing `ISensitiveValueSerializerRegistration`.
 - **Built-in types** shipped with the package: `EmailAddress`, `PhoneNumber`,
   `PersonName`, `PostalAddressLine`, `NationalIdentifier`, `ApiKey`.
 - **Diagnostics owned here**: generator-side errors for an unsupported
@@ -41,7 +44,8 @@ mask rather than a leak.
    inside `Ark.Tools.Compliance`.
 2. Implement the incremental generator over the attribute, emitting one file per
    type with `#nullable enable` and full XML documentation.
-3. Emit STJ and Dapper converters behind the default `SerializationTargets`.
+3. Apply the in-box STJ converter and `TypeConverter`; ship the Dapper adapter in
+   `Ark.Tools.Compliance.Dapper`.
 4. Add the six built-in types with validation and normalisation.
 5. Add snapshot tests for the emitted source, following the existing
    `GeneratorSnapshotTests` pattern.
@@ -55,8 +59,8 @@ mask rather than a leak.
   conversion to `string` compiles.
 - STJ round-trip writes cleartext and rehydrates a value whose `ToString()` is
   still redacted.
-- Dapper handler parameterises cleartext and reads back a redacted-rendering
-  value.
+- The generic Dapper handler parameterises cleartext and reads back a
+  redacted-rendering value.
 - Built-in type validation rejects malformed input without echoing the input in
   the exception message.
 
@@ -68,12 +72,13 @@ mask rather than a leak.
 
 ## Acceptance
 
-- [ ] The generator emits the full redacted surface for `string`-shaped types.
-- [ ] No generated member returns cleartext except `Reveal(CompliancePurpose)`.
-- [ ] STJ and Dapper round-trips are proven by tests.
-- [ ] Six built-in sensitive types ship with the package.
-- [ ] The [task board](../README.md) status for PII-IMP-02 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] The generator emits the full redacted surface for `string`-shaped types.
+- [x] No generated member returns cleartext except `Reveal(CompliancePurpose)`.
+- [x] STJ and Dapper round-trips are proven by tests.
+- [x] The core package takes no serialization dependency; Dapper ships separately.
+- [x] Six built-in sensitive types ship with the package.
+- [x] The [task board](../README.md) status for PII-IMP-02 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

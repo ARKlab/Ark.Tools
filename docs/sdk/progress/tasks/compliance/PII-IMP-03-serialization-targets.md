@@ -16,9 +16,11 @@ without reflection.
 
 ## Execution map
 
-- **`SerializationTargets`** flags on `[SensitiveValueObject<T>]` select the
-  emitted files; every emitted converter is closed-generic and reflection-free
-  so the AoT/trim guarantee holds.
+- **No declaration-time flags**: each target is a closed generic adapter over
+  `ISensitiveValue<TSelf>` living in its own package, opted in by a consumer
+  partial class implementing `ISensitiveValueSerializerRegistration`. Adapters are
+  reflection-free so the AoT/trim guarantee holds, and the core package keeps no
+  transport dependency (`Ark.Tools.Compliance.Dapper` is the reference shape).
 - **Newtonsoft.Json**: `JsonConverter` plus a registration entry.
 - **protobuf-net**: surrogate `struct` and `RuntimeTypeModel` registration in the
   shape of `Ark.Tools.Protobuf`'s `EvolvableEnumSurrogate<T>`
@@ -41,7 +43,7 @@ without reflection.
 
 ## Implementation steps
 
-1. Extend the generator with the target flags and one emitted file per target.
+1. Add one adapter package per target, each with its `Register<T>` entry point.
 2. Create the `.Protobuf`, `.MessagePack`, and `.OpenApi` packages with the
    minimal dependency each target requires, so no consumer pays for a transport
    it does not use.
@@ -68,8 +70,8 @@ without reflection.
 
 ## Acceptance
 
-- [ ] Newtonsoft, protobuf-net, MessagePack, OpenAPI, and Reqnroll targets are
-  generated and tested.
+- [ ] Newtonsoft, protobuf-net, MessagePack, OpenAPI, and Reqnroll adapters ship
+  as separate packages and are tested.
 - [ ] OpenAPI support uses `MapType`, not a reflection-based schema filter.
 - [ ] Schema examples come from the reserved-value generator.
 - [ ] EF Core and Orleans are recorded as follow-ups, not silently dropped.
