@@ -256,15 +256,20 @@ Analyzers use different severity levels based on the impact of violations:
 
 ## Migration and Future Work
 
-### VSTHRD002 Re-enablement Plan
+### VSTHRD002 Adoption Plan
 
-VSTHRD002 (Avoid synchronous waits) is currently disabled due to extensive legacy sync-over-async patterns in the codebase (50+ locations). A comprehensive migration plan exists to eventually re-enable this rule:
+VSTHRD002 (Avoid synchronous waits) is configured as a warning in
+`.vsthreading.globalconfig`. The Visual Studio threading analyzer package remains
+opt-in because Ark.Tools does not use Visual Studio threading or Joinable Task
+Factory APIs; projects that enable `EnableArkToolsVisualStudioThreading=true`
+will receive this diagnostic. A comprehensive migration plan exists for the
+legacy sync-over-async patterns in the codebase (50+ locations):
 
 **See:** `docs/todo/vsthrd002-reenable.md` for detailed 4-phase migration strategy including:
 - Phase 1: Obsolete sync methods in CQRS handler interfaces (Application layer)
 - Phase 2: Evaluate sync methods in processor interfaces (Infrastructure layer)
 - Phase 3: Implement safe waiting patterns where sync methods must be retained
-- Phase 4: Re-enable VSTHRD002 analyzer
+- Phase 4: Complete the migration and enable the analyzer where required
 
 ## Maintaining This Configuration
 
