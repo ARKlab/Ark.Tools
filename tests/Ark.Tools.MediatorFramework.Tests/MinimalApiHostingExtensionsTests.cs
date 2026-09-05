@@ -3,6 +3,8 @@
 
 using System.ComponentModel;
 
+using Ark.Tools.Compliance;
+using Ark.Tools.Compliance.OpenApi;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 
@@ -284,6 +286,49 @@ public sealed class MinimalApiHostingExtensionsTests
         nullable[0].GetProperty("type").GetString().Should().Be("null");
         nullable[1].GetProperty("$ref").GetString().Should().Be("#/components/schemas/LocalDate");
     }
+
+    [TestMethod]
+    public async Task OpenApiComplianceSchemasDocumentSensitiveValuesAsPrimitives()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddOpenApi("v1", static options => options.AddArkComplianceSchemas());
+        await using var app = builder.Build();
+        app.MapGet("/compliance", static () => new ComplianceSchemaModel());
+        app.MapOpenApi();
+        await app.StartAsync(app.Lifetime.ApplicationStarted);
+
+        using var client = app.GetTestServer().CreateClient();
+        using var document = JsonDocument.Parse(await client.GetStringAsync(
+            new Uri("http://localhost/openapi/v1.json"),
+            app.Lifetime.ApplicationStopping));
+        var properties = document.RootElement.GetProperty("components").GetProperty("schemas")
+            .GetProperty("ComplianceSchemaModel").GetProperty("properties");
+
+        var email = _resolveSchema(document.RootElement, properties.GetProperty("email"));
+        email.GetProperty("type").GetString().Should().Be("string");
+        email.GetProperty("format").GetString().Should().Be("email");
+        email.GetProperty("examples")[0].GetString().Should().Be(ComplianceFakes.Email());
+        email.GetProperty(SensitiveValueSchemaDescriptor.ClassificationExtension).GetString()
+            .Should().Be("Ark:PersonalData");
+
+        var apiKey = _resolveSchema(document.RootElement, properties.GetProperty("apiKey"));
+        apiKey.GetProperty(SensitiveValueSchemaDescriptor.ClassificationExtension).GetString()
+            .Should().Be("Ark:Secret");
+
+        var nullable = properties.GetProperty("nullableEmail");
+        if (nullable.TryGetProperty("oneOf", out var oneOf))
+        {
+            oneOf.EnumerateArray().Select(static item =>
+                item.TryGetProperty("type", out var type) ? type.GetString() : null)
+                .Should().Contain("null");
+        }
+        else
+        {
+            _resolveSchema(document.RootElement, nullable).GetProperty("type")
+                .EnumerateArray().Select(static item => item.GetString()).Should().Contain("null");
+        }
+    }
 #endif
 
     private static void _assertSchema(
@@ -377,6 +422,13 @@ public sealed class MinimalApiHostingExtensionsTests
     }
 
     private sealed record TestResponse;
+
+    private sealed record ComplianceSchemaModel
+    {
+        public EmailAddress Email { get; init; }
+        public ApiKey ApiKey { get; init; }
+        public EmailAddress? NullableEmail { get; init; }
+    }
 
     private sealed record NodaTimeSchemaModel
     {

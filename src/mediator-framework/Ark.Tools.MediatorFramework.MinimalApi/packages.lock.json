@@ -232,6 +232,19 @@
           "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
+      "ark.tools.compliance": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.9.0, )"
+        }
+      },
+      "ark.tools.compliance.openapi": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Microsoft.AspNetCore.OpenApi": "[10.0.11, )"
+        }
+      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
@@ -367,6 +380,12 @@
           "System.Configuration.ConfigurationManager": "9.0.13",
           "System.Security.Cryptography.Pkcs": "9.0.13"
         }
+      },
+      "Microsoft.Extensions.Compliance.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.9.0, )",
+        "resolved": "10.9.0",
+        "contentHash": "tuSqNuiJxlln43sZ8c1EDA4WXit1eX4foGadylXso3DnMVc+DtKfaNEwvHuiFXfPsEUZ6Z3GnF0Bfk9vvOsE4Q=="
       },
       "Microsoft.IdentityModel.JsonWebTokens": {
         "type": "CentralTransitive",
