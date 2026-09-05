@@ -212,7 +212,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static ContractModel? CreateModel(
         INamedTypeSymbol type,
         Compilation compilation,
-        IReadOnlyDictionary<string, XDocument> documentationFiles,
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, XElement>> documentationFiles,
         SourceProductionContext context)
     {
         var toolAttribute = type.GetAttributes().First(attribute =>
@@ -345,12 +345,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return null;
     }
 
-    private static IReadOnlyDictionary<string, XDocument> GetDocumentationFiles(
+    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, XElement>> GetDocumentationFiles(
         Compilation compilation,
         IEnumerable<string> assemblyNames)
     {
         var selectedAssemblyNames = new HashSet<string>(assemblyNames, StringComparer.Ordinal);
-        var documentationFiles = new Dictionary<string, XDocument>(StringComparer.Ordinal);
+        var documentationFiles = new Dictionary<string, IReadOnlyDictionary<string, XElement>>(StringComparer.Ordinal);
+        if (selectedAssemblyNames.Count == 0)
+            return documentationFiles;
+
         foreach (var reference in compilation.References)
         {
             if (reference is not PortableExecutableReference portableReference
@@ -377,7 +380,20 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
             try
             {
-                documentationFiles[assembly.Name] = XDocument.Load(documentationFile);
+                var document = XDocument.Load(documentationFile);
+                var members = new Dictionary<string, XElement>(StringComparer.Ordinal);
+                var membersElement = document.Root?.Element("members");
+                if (membersElement is not null)
+                {
+                    foreach (var member in membersElement.Elements("member"))
+                    {
+                        var name = member.Attribute("name")?.Value;
+                        if (name is not null && !members.ContainsKey(name))
+                            members.Add(name, member);
+                    }
+                }
+
+                documentationFiles[assembly.Name] = members;
             }
             catch (IOException)
             {
@@ -395,7 +411,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static string? XmlDocumentation(
         ISymbol? symbol,
         string element,
-        IReadOnlyDictionary<string, XDocument> documentationFiles)
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, XElement>> documentationFiles)
     {
         if (symbol is null)
             return null;
@@ -405,13 +421,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             && documentationFiles.TryGetValue(symbol.ContainingAssembly.Name, out var documentationFile))
         {
             var documentationId = symbol.GetDocumentationCommentId();
-            if (documentationId is not null)
+            if (documentationId is not null
+                && documentationFile.TryGetValue(documentationId, out var member))
             {
-                var member = documentationFile.Root?
-                    .Element("members")?
-                    .Elements("member")
-                    .FirstOrDefault(candidate => candidate.Attribute("name")?.Value == documentationId);
-                xml = member?.ToString(SaveOptions.DisableFormatting) ?? string.Empty;
+                xml = member.ToString(SaveOptions.DisableFormatting);
             }
         }
         if (string.IsNullOrWhiteSpace(xml))
