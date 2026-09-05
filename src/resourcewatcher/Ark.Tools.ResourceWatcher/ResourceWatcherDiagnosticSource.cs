@@ -40,7 +40,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     public void HostStartEvent()
 #pragma warning restore CA1822 // Mark members as static
     {
-        ResourceWatcherDiagnosticSource._reportEvent("HostStartEvent", () => new { });
+        ResourceWatcherDiagnosticSource._reportEvent("HostStartEvent", static () => new { });
     }
 
     public void RunTookTooLong(Activity activity)
@@ -141,7 +141,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     public Activity GetResourcesStart()
 #pragma warning restore CA1822 // Mark members as static
     {
-        Activity activity = ResourceWatcherDiagnosticSource._start("GetResources", () => new
+        Activity activity = ResourceWatcherDiagnosticSource._start("GetResources", static () => new
         {
         }
         );
@@ -179,7 +179,7 @@ internal sealed class ResourceWatcherDiagnosticSource
     public Activity CheckStateStart()
 #pragma warning restore CA1822 // Mark members as static
     {
-        Activity activity = ResourceWatcherDiagnosticSource._start("CheckState", () => new
+        Activity activity = ResourceWatcherDiagnosticSource._start("CheckState", static () => new
         {
         }
         );

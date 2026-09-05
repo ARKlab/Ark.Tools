@@ -10,7 +10,7 @@ public static class NodatimeDapperOracle
 {
     static NodatimeDapperOracle()
     {
-        InstantHandler.Instance.OnSetValue += (s, p) =>
+        InstantHandler.Instance.OnSetValue += static (s, p) =>
         {
             if (p is OracleParameter orc)
             {
@@ -18,14 +18,14 @@ public static class NodatimeDapperOracle
                 orc.OracleDbType = OracleDbType.TimeStamp;
             }
         };
-        LocalDateHandler.Instance.OnSetValue += (s, p) =>
+        LocalDateHandler.Instance.OnSetValue += static (s, p) =>
         {
             if (p is OracleParameter orc)
             {
                 orc.OracleDbType = OracleDbType.Date;
             }
         };
-        LocalDateTimeHandler.Instance.OnSetValue += (s, p) =>
+        LocalDateTimeHandler.Instance.OnSetValue += static (s, p) =>
         {
             if (p is OracleParameter orc)
             {
@@ -33,7 +33,7 @@ public static class NodatimeDapperOracle
                 orc.OracleDbType = OracleDbType.TimeStamp;
             }
         };
-        OffsetDateTimeHandler.Instance.OnSetValue += (s, p) =>
+        OffsetDateTimeHandler.Instance.OnSetValue += static (s, p) =>
         {
             if (p is OracleParameter orc)
             {
@@ -41,7 +41,7 @@ public static class NodatimeDapperOracle
                 orc.OracleDbType = OracleDbType.TimeStampTZ;
             }
         };
-        LocalTimeHandler.Instance.OnSetValue += (s, p) =>
+        LocalTimeHandler.Instance.OnSetValue += static (s, p) =>
         {
             if (p is OracleParameter orc)
             {

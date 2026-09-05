@@ -68,10 +68,10 @@ public static class ExceptionProblemDetailsMapper
             Detail = exception.Message,
         };
         problemDetails.Extensions["errors"] = exception.Errors
-            .GroupBy(failure => failure.PropertyName, StringComparer.Ordinal)
+            .GroupBy(static failure => failure.PropertyName, StringComparer.Ordinal)
             .ToDictionary(
-                group => group.Key,
-                group => group.Select(failure => failure.ErrorMessage).ToArray(),
+                static group => group.Key,
+                static group => group.Select(static failure => failure.ErrorMessage).ToArray(),
                 StringComparer.Ordinal);
         return problemDetails;
     }
@@ -84,7 +84,7 @@ public static class ExceptionProblemDetailsMapper
             accessors = _businessRuleViolationAccessors.GetOrAdd(violationType, _createAccessors(violationType));
         var payload = accessors
             .ToDictionary(
-                accessor => accessor.Name,
+                static accessor => accessor.Name,
                 accessor => accessor.GetValue(violation),
                 StringComparer.Ordinal);
         payload["type"] = violation.GetType().Name;
@@ -106,14 +106,14 @@ public static class ExceptionProblemDetailsMapper
     {
         return violationType
             .GetProperties()
-            .Where(property => property.GetMethod is not null
+            .Where(static property => property.GetMethod is not null
                 && !property.GetMethod.IsStatic
                 && property.DeclaringType != typeof(BusinessRuleViolation))
-            .GroupBy(property => property.Name, StringComparer.Ordinal)
-            .Select(group => group
-                .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
+            .GroupBy(static property => property.Name, StringComparer.Ordinal)
+            .Select(static group => group
+                .OrderByDescending(static property => _getInheritanceDepth(property.DeclaringType))
                 .First())
-            .OrderBy(property => property.Name, StringComparer.Ordinal)
+            .OrderBy(static property => property.Name, StringComparer.Ordinal)
             .Select(property => new Accessor(property.Name, _createGetter(violationType, property)))
             .ToArray();
     }

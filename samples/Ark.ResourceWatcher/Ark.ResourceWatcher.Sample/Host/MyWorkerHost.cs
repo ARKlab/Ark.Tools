@@ -26,7 +26,7 @@ public sealed class MyWorkerHost : WorkerHost<MyResource, MyMetadata, BlobQueryF
     public MyWorkerHost(MyWorkerHostConfig config)
         : base(config)
     {
-        Use(d =>
+        Use(static d =>
         {
             // commond deps
             d.Container.RegisterInstance<IArkFlurlClientFactory>(new ArkFlurlClientFactory());

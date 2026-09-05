@@ -113,7 +113,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
 
         var hasNotSet = enumType.GetMembers("NOT_SET")
             .OfType<IFieldSymbol>()
-            .Any(field => field.HasConstantValue && _isZero(field.ConstantValue));
+            .Any(static field => field.HasConstantValue && _isZero(field.ConstantValue));
         if (!hasNotSet)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -187,10 +187,10 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
             var typeName = attributeType?.Name;
             var namespaceName = attributeType?.ContainingNamespace.ToDisplayString();
             if (typeName == "EnumMemberAttribute" && namespaceName == "System.Runtime.Serialization"
-                && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Value").Value.Value is string enumMember)
+                && attribute.NamedArguments.FirstOrDefault(static item => item.Key == "Value").Value.Value is string enumMember)
                 yield return enumMember;
             else if (typeName == "DisplayAttribute" && namespaceName == "System.ComponentModel.DataAnnotations"
-                && attribute.NamedArguments.FirstOrDefault(item => item.Key == "Name").Value.Value is string display)
+                && attribute.NamedArguments.FirstOrDefault(static item => item.Key == "Name").Value.Value is string display)
                 yield return display;
             else if (typeName == "DisplayNameAttribute" && namespaceName == "System.ComponentModel"
                 && attribute.ConstructorArguments.FirstOrDefault().Value is string displayName)

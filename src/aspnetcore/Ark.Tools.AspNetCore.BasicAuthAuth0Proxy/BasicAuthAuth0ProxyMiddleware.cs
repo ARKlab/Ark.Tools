@@ -27,7 +27,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
         _logger = logger;
 
         _policy = Policy.Handle<Exception>()
-            .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(r));
+            .WaitAndRetryAsync(3, static r => TimeSpan.FromSeconds(r));
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient($"{_config.Domain}"));

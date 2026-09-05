@@ -29,7 +29,7 @@ internal sealed class TestReceiver_Activity : CalendarSliceActivity
         get
         {
             return [
-                ResourceDependency.OneSlice("test", "first", activitySlice => activitySlice),
+                ResourceDependency.OneSlice("test", "first", static activitySlice => activitySlice),
             ];
         }
     }

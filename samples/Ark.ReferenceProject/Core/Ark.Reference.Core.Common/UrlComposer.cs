@@ -64,7 +64,7 @@ public class UrlComposer
     public UrlComposer AddQueryParam<T>(string key, IEnumerable<T> values)
     {
         var toAdd = values
-               .Where(x => !string.IsNullOrWhiteSpace($"{x}"))
+               .Where(static x => !string.IsNullOrWhiteSpace($"{x}"))
                .Select(x => (key, $"{x}"));
 
         if (toAdd != null && toAdd.Any())
@@ -77,8 +77,8 @@ public class UrlComposer
     {
         this._tuples.AddRange(
             query
-            .Where(w => !string.IsNullOrWhiteSpace(w.value))
-            .Select(s => (s.key, s.value))
+            .Where(static w => !string.IsNullOrWhiteSpace(w.value))
+            .Select(static s => (s.key, s.value))
         );
         return this;
     }
@@ -98,7 +98,7 @@ public class UrlComposer
     private static string _queryParams(List<(string key, string value)> query)
     {
         if (query.Count != 0)
-            return $"?{string.Join("&", query.Select(v => $"{v.key}={WebUtility.UrlEncode(v.value)}"))}";
+            return $"?{string.Join("&", query.Select(static v => $"{v.key}={WebUtility.UrlEncode(v.value)}"))}";
         return "";
     }
 

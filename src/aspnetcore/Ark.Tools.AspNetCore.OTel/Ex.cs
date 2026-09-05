@@ -71,7 +71,7 @@ public static class Ex
         var failedTraceRegistry = new FailedTraceRegistry();
 
         return builder
-            .ConfigureResource(resource => resource.AddArkTelemetryResource())
+            .ConfigureResource(static resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
                 .ConfigureServices(services =>
                     _configureAdaptiveSampler(services, configuration, configureAdaptiveSampler))
@@ -102,7 +102,7 @@ public static class Ex
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
-            .WithMetrics(metrics => metrics
+            .WithMetrics(static metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
                 .AddMeter(_mediatorMessagingInstrumentationName)
                 .AddSqlClientInstrumentation());
@@ -141,7 +141,7 @@ public static class Ex
         if (!string.IsNullOrWhiteSpace(connectionString))
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
-        services.AddLogging(logging =>
+        services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
         _addArkAspNetCoreOpenTelemetry(

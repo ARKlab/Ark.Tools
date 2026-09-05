@@ -32,7 +32,7 @@ public sealed class MinimalApiStreamingTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         items.Should().NotBeNull();
-        items!.Select(item => item.Number).Should().Equal(1, 2, 3);
+        items!.Select(static item => item.Number).Should().Equal(1, 2, 3);
     }
 
     /// <summary>Verifies the first item is readable before the producer is released.</summary>

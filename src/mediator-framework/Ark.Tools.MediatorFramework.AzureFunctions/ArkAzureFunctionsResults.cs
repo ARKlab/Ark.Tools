@@ -57,8 +57,8 @@ public static class ArkAzureFunctionsResults
             return null;
         if (!IsValidToken(token))
         {
-            var position = token.Select((character, index) => (character, index))
-                .First(item => item.character == '"' || item.character == '\\'
+            var position = token.Select(static (character, index) => (character, index))
+                .First(static item => item.character == '"' || item.character == '\\'
                     || item.character < '\u0020' || item.character == '\u007f')
                 .index;
             throw new InvalidOperationException($"ETag token contains an invalid character at position {position}.");
@@ -71,7 +71,7 @@ public static class ArkAzureFunctionsResults
         var matches = context.Request.Headers.IfNoneMatch
             .ToString()
             .Split(',', StringSplitOptions.TrimEntries)
-            .Select(value => value.StartsWith("W/", StringComparison.Ordinal) ? value[2..] : value)
+            .Select(static value => value.StartsWith("W/", StringComparison.Ordinal) ? value[2..] : value)
             .Select(_unquote)
             .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));
         return matches ? TypedResults.StatusCode(StatusCodes.Status304NotModified) : null;
@@ -83,7 +83,7 @@ public static class ArkAzureFunctionsResults
     public static bool IsValidToken(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return value.All(character => character != '"' && character != '\\'
+        return value.All(static character => character != '"' && character != '\\'
             && character >= '\u0020' && character != '\u007f');
     }
 

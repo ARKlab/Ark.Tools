@@ -17,7 +17,7 @@ public sealed class OptimisticConcurrencyRetrierDecorator<TRequest, TResult> : I
 
     public async Task<TResult> ExecuteAsync(TRequest Request, CancellationToken ctk = default)
     {
-        return await Policy.Handle<Exception>(ex => ex.IsOptimistic())
+        return await Policy.Handle<Exception>(static ex => ex.IsOptimistic())
             .RetryAsync(2)
             .ExecuteAsync(ct => _inner.ExecuteAsync(Request, ct), ctk).ConfigureAwait(false);
     }

@@ -83,8 +83,8 @@ public sealed class SwaggerSpecSteps : IDisposable
 
         // The second allOf entry contains the output-specific properties
         var dateProperty = allOf.EnumerateArray()
-            .Where(e => e.TryGetProperty("properties", out var props) && props.TryGetProperty("date", out _))
-            .Select(e => { e.GetProperty("properties").TryGetProperty("date", out var d); return (JsonElement?)d; })
+            .Where(static e => e.TryGetProperty("properties", out var props) && props.TryGetProperty("date", out _))
+            .Select(static e => { e.GetProperty("properties").TryGetProperty("date", out var d); return (JsonElement?)d; })
             .FirstOrDefault();
 
         dateProperty.Should().NotBeNull("Entity.V1.Output allOf should have a 'date' property somewhere");
@@ -129,16 +129,16 @@ public sealed class SwaggerSpecSteps : IDisposable
 
         // Find any entity path (non-OData standard controller)
         var entityPath = paths.EnumerateObject()
-            .FirstOrDefault(p => p.Name.Contains("/entity", StringComparison.OrdinalIgnoreCase)
+            .FirstOrDefault(static p => p.Name.Contains("/entity", StringComparison.OrdinalIgnoreCase)
                 && !p.Name.Contains("odata", StringComparison.OrdinalIgnoreCase));
 
         entityPath.Value.ValueKind.Should().NotBe(JsonValueKind.Undefined,
             "should find an entity path in swagger");
 
-        foreach (var verb in entityPath.Value.EnumerateObject().Where(v => v.Value.TryGetProperty("responses", out _)))
+        foreach (var verb in entityPath.Value.EnumerateObject().Where(static v => v.Value.TryGetProperty("responses", out _)))
         {
             verb.Value.TryGetProperty("responses", out var responses);
-            foreach (var response in responses.EnumerateObject().Where(r => r.Value.TryGetProperty("content", out _)))
+            foreach (var response in responses.EnumerateObject().Where(static r => r.Value.TryGetProperty("content", out _)))
             {
                 response.Value.TryGetProperty("content", out var content);
                 foreach (var mediaType in content.EnumerateObject())
@@ -159,7 +159,7 @@ public sealed class SwaggerSpecSteps : IDisposable
 
         // Find GET /entity/{entityId} path (contains entityId in path template)
         var entityPath = paths.EnumerateObject()
-            .FirstOrDefault(p => p.Name.Contains("/entity/", StringComparison.OrdinalIgnoreCase)
+            .FirstOrDefault(static p => p.Name.Contains("/entity/", StringComparison.OrdinalIgnoreCase)
                 && p.Name.Contains("entityId", StringComparison.OrdinalIgnoreCase));
 
         entityPath.Value.ValueKind.Should().NotBe(JsonValueKind.Undefined,
@@ -169,7 +169,7 @@ public sealed class SwaggerSpecSteps : IDisposable
         getOp.TryGetProperty("parameters", out var parameters).Should().BeTrue("GET operation should have parameters");
 
         var resultParam = parameters.EnumerateArray()
-            .FirstOrDefault(p => p.TryGetProperty("name", out var n)
+            .FirstOrDefault(static p => p.TryGetProperty("name", out var n)
                 && n.GetString()?.Equals("result", StringComparison.OrdinalIgnoreCase) == true);
 
         resultParam.ValueKind.Should().NotBe(JsonValueKind.Undefined,
@@ -190,11 +190,11 @@ public sealed class SwaggerSpecSteps : IDisposable
 
         // Match any entity get endpoint
         var entityGetOp = paths.EnumerateObject()
-            .Where(p => p.Name.Contains("/entity", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(p => p.Value.EnumerateObject()
-                .Where(v => v.Name.Equals("get", StringComparison.OrdinalIgnoreCase))
-                .Select(v => v.Value))
-            .FirstOrDefault(op => op.ValueKind != JsonValueKind.Undefined);
+            .Where(static p => p.Name.Contains("/entity", StringComparison.OrdinalIgnoreCase))
+            .SelectMany(static p => p.Value.EnumerateObject()
+                .Where(static v => v.Name.Equals("get", StringComparison.OrdinalIgnoreCase))
+                .Select(static v => v.Value))
+            .FirstOrDefault(static op => op.ValueKind != JsonValueKind.Undefined);
 
         entityGetOp.ValueKind.Should().NotBe(JsonValueKind.Undefined,
             "should find an entity GET operation");
@@ -216,7 +216,7 @@ public sealed class SwaggerSpecSteps : IDisposable
 
         if (!schemas.TryGetProperty(schemaName, out var schema))
         {
-            var available = string.Join(", ", schemas.EnumerateObject().Select(p => p.Name));
+            var available = string.Join(", ", schemas.EnumerateObject().Select(static p => p.Name));
             throw new InvalidOperationException($"Schema '{schemaName}' not found. Available: {available}");
         }
 

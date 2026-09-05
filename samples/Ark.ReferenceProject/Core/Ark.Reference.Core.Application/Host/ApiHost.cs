@@ -122,7 +122,7 @@ public class ApiHost
     {
         if (clock == null)
         {
-            Container.RegisterSingleton<IClock>(() => SystemClock.Instance);
+            Container.RegisterSingleton<IClock>(static () => SystemClock.Instance);
         }
         else
             Container.RegisterInstance(clock);
@@ -148,7 +148,7 @@ public class ApiHost
         }
 
         Container.ConfigureRebus(_ => _
-            .Logging(l => l.NLog())
+            .Logging(static l => l.NLog())
             .Transport(t =>
             {
                 if (queue == Queue.OneWay)
@@ -198,7 +198,7 @@ public class ApiHost
                     // this is used only by the Outbox processor, not on Send() or Publish()
                     o.OutboxAsyncContextFactory(c => c.Use(Container.GetInstance<IOutboxAsyncContextFactory>()));
                     o.OutboxOptions(o => o.StartProcessor = queue == Queue.Core);
-                    o.OutboxOptions(o => o.MaxMessagesPerBatch = 10);
+                    o.OutboxOptions(static o => o.MaxMessagesPerBatch = 10);
                 });
             })
             .Subscriptions(s =>
@@ -226,7 +226,7 @@ public class ApiHost
                 o.AutomaticallyFlowUserContext(Container);
                 o.UseOpenTelemetry(Container);
                 o.UseOpenTelemetryMetrics(Container);
-                o.FailFastOn<Exception>(ex => ex.IsFinal());
+                o.FailFastOn<Exception>(static ex => ex.IsFinal());
                 if (isInMemory)
                     o.AddInProcessMessageInspector();
             })
@@ -239,7 +239,7 @@ public class ApiHost
                 d.SendBigMessagesAsAttachments((256 - 64 - 2) * 1024); // 256KB (max size) - 64KB (max headers) - 2KB (just in case)
 
             })
-            .Serialization(s =>
+            .Serialization(static s =>
             {
                 // Configure Rebus to use source-generated JSON serialization (API types only, no ProblemDetails)
                 // Note: JsonSerializerOptions get locked when passed to JsonSerializerContext constructor,
@@ -287,14 +287,14 @@ public class ApiHost
 
         container.Register(typeof(IValidator<>),
             container.GetTypesToRegister(typeof(IValidator<>), validatorAndHandlerAssemblies)
-                .Where(x => x.IsPublic)
+                .Where(static x => x.IsPublic)
             , Lifestyle.Singleton);
 
         container.Register(typeof(IQueryHandler<,>), validatorAndHandlerAssemblies);
         container.Register(typeof(IRequestHandler<,>), validatorAndHandlerAssemblies);
         container.Register(typeof(ICommandHandler<>), validatorAndHandlerAssemblies);
         container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
-            c => !c.Handled);
+            static c => !c.Handled);
 
         container.RegisterDecorator(
                  typeof(IRequestHandler<,>)

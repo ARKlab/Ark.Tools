@@ -46,7 +46,7 @@ public partial class CoreDataContext_Sql
         {
             @Id = query.Id,
             @Name = query.Name,
-            @Type = query.Type?.Select(x => x.ToString()),
+            @Type = query.Type?.Select(static x => x.ToString()),
             @Skip = query.Skip,
             @Limit = query.Limit
         };
@@ -71,7 +71,7 @@ public partial class CoreDataContext_Sql
 
         var (data, count) = await Connection.ReadPagedAsync<PingView>(cmd).ConfigureAwait(false);
 
-        var d = data.Select(s => s.ToOutput());
+        var d = data.Select(static s => s.ToOutput());
 
         _logger.Trace(CultureInfo.InvariantCulture, "ReadPingByFiltersAsync ended");
 
@@ -276,7 +276,7 @@ public partial class CoreDataContext_Sql
         var data = await Connection.QueryAsync<PingView>(cmd).ConfigureAwait(false);
 
         var resTable = data
-            .Select(s => new AuditedEntityDto<Ping.V1.Output>()
+            .Select(static s => new AuditedEntityDto<Ping.V1.Output>()
             {
                 Entity = s.ToOutput(),
                 SysStartTime = s.SysStartTime!.Value,

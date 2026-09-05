@@ -20,6 +20,6 @@ public static class InMemoryTimeoutManagerExtensions
     {
         if (configurer == null) throw new ArgumentNullException(nameof(configurer));
 
-        configurer.Register(c => new TestsInMemoryTimeoutManager(c.Get<IRebusTime>()));
+        configurer.Register(static c => new TestsInMemoryTimeoutManager(c.Get<IRebusTime>()));
     }
 }

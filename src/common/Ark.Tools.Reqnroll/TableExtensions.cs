@@ -107,8 +107,8 @@ public static class TableExtensions
 
         // find sub-properties by looking for "."
         var propNames = tableRow
-            .Where(x => x.Key.Contains('.', StringComparison.Ordinal))
-            .Select(x => Regex.Replace(x.Key, @"^(?<root>.+?)\..+$", "${root}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)));
+            .Where(static x => x.Key.Contains('.', StringComparison.Ordinal))
+            .Select(static x => Regex.Replace(x.Key, @"^(?<root>.+?)\..+$", "${root}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)));
 
         foreach (var propName in propNames)
         {
@@ -174,8 +174,8 @@ public static class TableExtensions
     [UnconditionalSuppressMessage("Trimming", "IL2090", Justification = "Reqnroll test helper uses reflection to verify test object properties. Test types must be preserved.")]
     public static void VerifyAllPropertiesExistOnTargetType<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(this DataTable table)
     {
-        var headers = table.Header.Select(e => e.Split('.').First());
-        var propertiesOnTargetType = typeof(T).GetProperties().Select(e => e.Name).ToList();
+        var headers = table.Header.Select(static e => e.Split('.').First());
+        var propertiesOnTargetType = typeof(T).GetProperties().Select(static e => e.Name).ToList();
 
         var missingProperties = headers.Where(e => !propertiesOnTargetType.Contains(e, StringComparer.Ordinal)).ToList();
 

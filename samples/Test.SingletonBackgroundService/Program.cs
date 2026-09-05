@@ -12,7 +12,7 @@ internal sealed class Program
     static async Task Main(string[] args)
     {
         var host = Host.CreateDefaultBuilder(args)
-            .ConfigureServices((ctx, s) =>
+            .ConfigureServices(static (ctx, s) =>
             {
                 s.AddSingleton<IDistributedLockProvider>(
                     new AzureBlobLeaseDistributedSynchronizationProvider(

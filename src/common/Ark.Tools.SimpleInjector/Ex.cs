@@ -32,7 +32,7 @@ public static partial class Ex
 
         if (registrations.Length != 0)
         {
-            var instances = registrations.Select(r => r.GetInstance());
+            var instances = registrations.Select(static r => r.GetInstance());
 
             var castMethod = typeof(Enumerable).GetMethod("Cast")!
                 .MakeGenericMethod(serviceType);
@@ -111,7 +111,7 @@ public static partial class Ex
 
         if (registrations.Length != 0)
         {
-            var instances = registrations.Select(r => r.GetInstance());
+            var instances = registrations.Select(static r => r.GetInstance());
 
             var castMethod = typeof(Enumerable).GetMethod("Cast")!
                 .MakeGenericMethod(serviceType);
@@ -167,7 +167,7 @@ public static partial class Ex
         else
         {
             var names = string.Join(", ", registrations
-                .Select(r => string.Format(CultureInfo.InvariantCulture, "{0}", r.ServiceType)));
+                .Select(static r => string.Format(CultureInfo.InvariantCulture, "{0}", r.ServiceType)));
 
             throw new ActivationException(string.Format(CultureInfo.InvariantCulture,
                 "It is impossible to resolve type {0}, because there are {1} " +
@@ -269,7 +269,7 @@ public static partial class Ex
     public static bool HasService<TService>(this Container container) where TService : class
     {
         return container.GetCurrentRegistrations()
-                 .Any(x => x.ServiceType == typeof(TService));
+                 .Any(static x => x.ServiceType == typeof(TService));
     }
 
     public static bool HasService(this Container container, Type serviceType)

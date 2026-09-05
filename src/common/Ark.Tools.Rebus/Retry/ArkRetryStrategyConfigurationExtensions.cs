@@ -40,7 +40,7 @@ public static class ArkRetryStrategyConfigurationExtensions
             errorQueueErrorCooldownTimeSeconds);
 
         //ArkDefault --> IRetryStrategy
-        optionsConfigurer.Register<IRetryStrategy>(c =>
+        optionsConfigurer.Register<IRetryStrategy>(static c =>
         {
             var simpleRetryStrategySettings = c.Get<RetryStrategySettings>();
             var rebusLoggerFactory = c.Get<IRebusLoggerFactory>();

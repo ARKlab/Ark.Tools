@@ -145,7 +145,7 @@ public sealed class FtpClientProxy : IFtpClientPool
                 .ReceiveJson<IEnumerable<FtpEntry>>()
 .ConfigureAwait(false);
 
-            return res.Where(e => !e.IsDirectory);
+            return res.Where(static e => !e.IsDirectory);
         }
         else
         {
@@ -172,7 +172,7 @@ public sealed class FtpClientProxy : IFtpClientPool
                     .PostJsonAsync(new ListingRequest
                     {
                         Info = _connectionInfo,
-                        Paths = folders.Select(f => f.FullPath).ToArray(),
+                        Paths = folders.Select(static f => f.FullPath).ToArray(),
                         Recursive = false,
                     }, cancellationToken: ctk)
                     .ReceiveJson<IEnumerable<FtpEntry>>()
@@ -182,7 +182,7 @@ public sealed class FtpClientProxy : IFtpClientPool
                 folders = r.Where(x => x.IsDirectory && !skipFolder(x)).ToArray();
             }
 
-            return entries.SelectMany(x => x.Where(e => !e.IsDirectory));
+            return entries.SelectMany(static x => x.Where(static e => !e.IsDirectory));
         }
     }
 
@@ -207,10 +207,10 @@ public sealed class FtpClientProxy : IFtpClientPool
     {
         var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
             .ConfigureArkDefaults()
-            .ConfigureInnerHandler(h =>
+            .ConfigureInnerHandler(static h =>
             {
 #pragma warning disable MA0039 // Do not write your own certificate validation method
-                h.ServerCertificateCustomValidationCallback = (a, b, c, d) => true;
+                h.ServerCertificateCustomValidationCallback = static (a, b, c, d) => true;
 #pragma warning restore MA0039 // Do not write your own certificate validation method
             })
             .WithHeader("Accept", "application/json, text/json")

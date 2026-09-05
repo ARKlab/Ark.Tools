@@ -51,10 +51,10 @@ public static class Program
                 applicationContainer,
                 builder.Configuration,
                 ArkGeneratedMessagingFunctions.Manifest,
-                messaging => messaging
-                    .UseTransport(transport => transport.UseServiceBus())
-                    .UseDataBus(dataBus => dataBus.UseInMemory())
-                    .UseOutbox(outbox => outbox.UseEnqueue()));
+                static messaging => messaging
+                    .UseTransport(static transport => transport.UseServiceBus())
+                    .UseDataBus(static dataBus => dataBus.UseInMemory())
+                    .UseOutbox(static outbox => outbox.UseEnqueue()));
             builder.Services.AddArkHealthChecks();
             builder.Services.AddHostedService<ContainerHostedService>();
 

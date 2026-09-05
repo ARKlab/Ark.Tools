@@ -351,16 +351,16 @@ public sealed class AzureFunctionsBoundaryTests
         var excluded = hostMarker.ExcludedContracts.ToHashSet(EqualityComparer<Type>.Default);
         var actual = hostMarker.ContractAssemblyMarker.Assembly
             .GetTypes()
-            .Select(type => (Type: type, Attribute: type.GetCustomAttribute<HttpEndpointAttribute>()))
+            .Select(static type => (Type: type, Attribute: type.GetCustomAttribute<HttpEndpointAttribute>()))
             .Where(item => item.Attribute is not null && !excluded.Contains(item.Type))
-            .Select(item => new EndpointRow(
+            .Select(static item => new EndpointRow(
                 item.Type.Name,
                 item.Attribute!.Verb,
                 item.Attribute.Template))
-            .OrderBy(row => row.TypeName, StringComparer.Ordinal)
+            .OrderBy(static row => row.TypeName, StringComparer.Ordinal)
             .ToArray();
 
-        actual.Should().Equal(_expectedEndpoints.OrderBy(row => row.TypeName, StringComparer.Ordinal));
+        actual.Should().Equal(_expectedEndpoints.OrderBy(static row => row.TypeName, StringComparer.Ordinal));
     }
 
     private static readonly EndpointRow[] _expectedEndpoints =

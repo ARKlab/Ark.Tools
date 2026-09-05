@@ -25,7 +25,7 @@ public sealed class OpenTelemetryProcessingMetricsStepTests
         var context = new IncomingStepContext(message, transaction);
         var step = new OpenTelemetryProcessingMetricsStep(metrics, new FixedRebusTime(now));
 
-        await step.Process(context, () => Task.CompletedTask);
+        await step.Process(context, static () => Task.CompletedTask);
         metrics.TimeInQueue.Should().ContainSingle();
         metrics.TimeInQueue[0].MessageType.Should().Be("tests.Message");
         metrics.TimeInQueue[0].Value.Should().BeGreaterThan(1900);
@@ -47,7 +47,7 @@ public sealed class OpenTelemetryProcessingMetricsStepTests
 
         Func<Task> process = () => step.Process(
             context,
-            () => throw new InvalidOperationException("handler failed"));
+            static () => throw new InvalidOperationException("handler failed"));
         await process.Should().ThrowAsync<InvalidOperationException>();
         metrics.Processing.Should().ContainSingle();
         metrics.Processing[0].MessageType.Should().Be("tests.Message");

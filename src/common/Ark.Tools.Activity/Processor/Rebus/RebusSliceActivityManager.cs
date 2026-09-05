@@ -35,21 +35,21 @@ public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager
         _activityFactory = instanceCreator;
         var instance = _activityFactory();
         _name = instance.Resource.ToString().ToValidAzureServiceBusEntityName();
-        _dependencies = instance.Dependencies.Select(x => x.Resource);
+        _dependencies = instance.Dependencies.Select(static x => x.Resource);
         _container.AllowToResolveVariantCollections();
 
 
         _container.ConfigureRebus(c => c
-            .Logging(l => l.NLog())
+            .Logging(static l => l.NLog())
             .Transport(t => t.UseAzureServiceBus(_config.AsbConnectionString, "q_" + _name).AutomaticallyRenewPeekLock().UseLegacyNaming())
-            .Options(o =>
+            .Options(static o =>
             {
                 o.EnableCompression();
                 o.SetMaxParallelism(1);
                 o.SetNumberOfWorkers(1);
                 o.ArkRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
             })
-            .Serialization(s =>
+            .Serialization(static s =>
             {
                 var cfg = new JsonSerializerSettings();
                 cfg.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);

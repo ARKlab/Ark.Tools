@@ -154,10 +154,10 @@ public sealed class HostingTestFixture : IAsyncDisposable
     {
         var queues = _network.Queues.ToArray();
         var inQueue = queues
-            .Where(queue => !string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
+            .Where(static queue => !string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
             .Sum(queue => _network.GetCount(queue));
         var error = queues
-            .Where(queue => string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
+            .Where(static queue => string.Equals(queue, "hosting-error", StringComparison.OrdinalIgnoreCase))
             .Sum(queue => _network.GetCount(queue));
 
         return new RebusWorkCounts(
@@ -182,10 +182,10 @@ public sealed class HostingTestFixture : IAsyncDisposable
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
                 TestAuthenticationHandler._schemeName,
                 static _ => { });
-        builder.Services.AddArkMinimalApiHost(Container, options =>
+        builder.Services.AddArkMinimalApiHost(Container, static options =>
         {
             options.RequireAuthenticatedUser = false;
-            options.CrossWireContainer = (container, services) =>
+            options.CrossWireContainer = static (container, services) =>
                 container.RegisterInstance(services.GetRequiredService<IHttpContextAccessor>());
         });
         builder.Services.AddArkProblemDetailsExceptionHandler();
@@ -195,7 +195,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         var app = builder.Build();
         app.UseArkProblemDetailsExceptionHandler();
         app.UseArkMinimalApiHost(Container);
-        app.Use(async (context, next) =>
+        app.Use(static async (context, next) =>
         {
             var sizeLimit = context.GetEndpoint()?.Metadata.GetMetadata<IRequestSizeLimitMetadata>()?.MaxRequestBodySize;
             if (sizeLimit is not null && context.Request.ContentLength > sizeLimit)
@@ -230,7 +230,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.WebHost.UseTestServer();
         builder.Services.AddSingleton(Container);
         builder.Services.AddSingleton(_principalProvider);
-        builder.Services.AddSimpleInjector(Container, simpleInjector => simpleInjector.AddAspNetCore());
+        builder.Services.AddSimpleInjector(Container, static simpleInjector => simpleInjector.AddAspNetCore());
         builder.Services
             .AddAuthentication(TestAuthenticationHandler._schemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
@@ -272,7 +272,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 options.Listen(
                     System.Net.IPAddress.Any,
                     listenAddress.Port,
-                    listenOptions => listenOptions.Protocols = HttpProtocols.Http2));
+                    static listenOptions => listenOptions.Protocols = HttpProtocols.Http2));
         builder.Services
             .AddAuthentication(TestAuthenticationHandler._schemeName)
             .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
@@ -280,13 +280,13 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 static _ => { });
         builder.Services.AddAuthorization();
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+        builder.Services.AddCodeFirstGrpc(static options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
         builder.Services.AddCodeFirstGrpcReflection();
         var container = _createHostContainer();
         _hostContainers.Add(container);
         builder.Services.AddSingleton(container);
         builder.Services.AddSingleton(_principalProvider);
-        builder.Services.AddSimpleInjector(container, simpleInjector => simpleInjector.AddAspNetCore());
+        builder.Services.AddSimpleInjector(container, static simpleInjector => simpleInjector.AddAspNetCore());
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -344,7 +344,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
                     maxDeliveryAttempts: 2,
                     secondLevelRetriesEnabled: secondLevelRetriesEnabled);
             });
-            config.Timeouts(timeouts => timeouts.StoreInMemoryTests());
+            config.Timeouts(static timeouts => timeouts.StoreInMemoryTests());
         });
         _rebusConfigured = true;
     }
@@ -1044,7 +1044,7 @@ internal sealed class HostingAttachmentCollectionUploadHandler : IRequestHandler
         _state.LastAttachmentCount = request.Attachments.Count;
         return new HostingResponse
         {
-            Message = string.Join(",", request.Attachments.Select(attachment => attachment.Name)),
+            Message = string.Join(",", request.Attachments.Select(static attachment => attachment.Name)),
             ServerStamp = "hosting-server",
         };
     }
@@ -1080,7 +1080,7 @@ internal sealed class HostingAttachmentDownloadHandler : IQueryHandler<HostingAt
         return new Ark.Tools.MediatorFramework.ArkAttachment(
             query.Name,
             "text/plain",
-            () => new MemoryStream(Encoding.UTF8.GetBytes("downloaded content")));
+            static () => new MemoryStream(Encoding.UTF8.GetBytes("downloaded content")));
     }
 }
 

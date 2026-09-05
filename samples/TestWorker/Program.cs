@@ -18,10 +18,10 @@ sealed class Program
             .AddApplicationInsightsForWorkerHost()
             .ConfigureNLog(Test_Constants.AppName)
             .AddWorkerHost(
-                s =>
+                static s =>
                 {
                     var cfg = s.GetRequiredService<IConfiguration>();
-                    var h = HostNs.Test_Host.Configure(cfg, configurer: c =>
+                    var h = HostNs.Test_Host.Configure(cfg, configurer: static c =>
                     {
                         //c.IgnoreState = Debugger.IsAttached;
                     });

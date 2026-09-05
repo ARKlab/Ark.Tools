@@ -66,7 +66,7 @@ public class SftpClientConnection : FtpClientConnectionBase
     {
         await _ensureConnected(ctk).ConfigureAwait(false);
         using var ms = new MemoryStream(80 * 1024);
-        await _client.DownloadAsync(path, ms, u => { }).ConfigureAwait(false);
+        await _client.DownloadAsync(path, ms, static u => { }).ConfigureAwait(false);
         return ms.ToArray();
     }
 

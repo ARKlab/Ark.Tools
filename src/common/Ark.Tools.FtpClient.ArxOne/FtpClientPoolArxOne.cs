@@ -172,7 +172,7 @@ public class FtpClientPoolArxOne : FtpClientBase, IFtpClientPool
         try
         {
             var list = _list(path);
-            return list.Select(x => new Core.FtpEntry
+            return list.Select(static x => new Core.FtpEntry
             {
                 FullPath = x.Path.ToString(),
                 IsDirectory = x.Type == FtpEntryType.Directory,

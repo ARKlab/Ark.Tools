@@ -46,7 +46,7 @@ public sealed class MessagingFunctionsCompositionTests
             container,
             configuration,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
-            messaging => messaging
+            static messaging => messaging
                 .UseAzureServiceBus()
                 .UseDataBus(_dataBus())
                 .UseOutbox());
@@ -68,7 +68,7 @@ public sealed class MessagingFunctionsCompositionTests
             container,
             new ConfigurationBuilder().Build(),
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
-            messaging => messaging.UseDataBus(_dataBus()));
+            static messaging => messaging.UseDataBus(_dataBus()));
 
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*requires a transport*");
@@ -86,7 +86,7 @@ public sealed class MessagingFunctionsCompositionTests
             container,
             new ConfigurationBuilder().Build(),
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
-            messaging => messaging
+            static messaging => messaging
                 .UseAzureServiceBus()
                 .UseAzureServiceBus());
 
@@ -106,7 +106,7 @@ public sealed class MessagingFunctionsCompositionTests
             container,
             new ConfigurationBuilder().Build(),
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
-            messaging => messaging.UseOutbox(new Ark.Tools.Outbox.InMemoryOutboxContextFactory()));
+            static messaging => messaging.UseOutbox(new Ark.Tools.Outbox.InMemoryOutboxContextFactory()));
 
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*cannot host the native messaging outbox processor*");
@@ -119,7 +119,7 @@ public sealed class MessagingFunctionsCompositionTests
     {
         var services = new ServiceCollection();
         services.Configure<JsonSerializerOptions>(
-            options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
         var transport = new InMemoryMessagingTransport();
         services._addArkMessagingParticipant(
             _descriptor(receives: false),
@@ -156,7 +156,7 @@ public sealed class MessagingFunctionsCompositionTests
             _dataBus());
         await using var provider = services.BuildServiceProvider();
         var bridge = provider.GetServices<IHostedService>()
-            .Single(service => service.GetType().Name == "MessagingFunctionsBusBridge");
+            .Single(static service => service.GetType().Name == "MessagingFunctionsBusBridge");
         await bridge.StartAsync(default).ConfigureAwait(false);
 
         container.GetInstance<IBus>().Should().BeSameAs(provider.GetRequiredService<IBus>());
@@ -209,7 +209,7 @@ public sealed class MessagingFunctionsCompositionTests
         provider.GetRequiredService<IMessagingTransport>()
             .Should().BeOfType<ServiceBusMessagingTransport>();
         provider.GetServices<IHostedService>()
-            .Should().Contain(service => service.GetType().Name == "ServiceBusTransportLifetime");
+            .Should().Contain(static service => service.GetType().Name == "ServiceBusTransportLifetime");
     }
 
     /// <summary>Verifies standard Functions Storage Queue identity settings compose without a secret.</summary>
@@ -316,7 +316,7 @@ public sealed class MessagingFunctionsCompositionTests
     {
         var services = new ServiceCollection();
         services.Configure<JsonSerializerOptions>(
-            options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
         await using var container = _container();
 #pragma warning disable CA2000 // The service provider owns the registered transport.
         var transport = _serviceBus();
@@ -331,7 +331,7 @@ public sealed class MessagingFunctionsCompositionTests
         provider.GetRequiredService<IBus>().Should().BeOfType<MessagingBus>();
         provider.GetRequiredService<MessagingDispatcher>().Should().NotBeNull();
         provider.GetServices<IHostedService>()
-            .Should().NotContain(service => service.GetType().Name.Contains("Rebus", StringComparison.Ordinal)
+            .Should().NotContain(static service => service.GetType().Name.Contains("Rebus", StringComparison.Ordinal)
                 || service.GetType().Name.Contains("Outbox", StringComparison.Ordinal));
     }
 
@@ -364,7 +364,7 @@ public sealed class MessagingFunctionsCompositionTests
         await using var provider = services.BuildServiceProvider();
 
         provider.GetServices<IHostedService>()
-            .Should().Contain(service => service.GetType().Name == "MessagingResourceStartupService");
+            .Should().Contain(static service => service.GetType().Name == "MessagingResourceStartupService");
         provider.GetService<MessagingDispatcher>().Should().BeNull();
     }
 

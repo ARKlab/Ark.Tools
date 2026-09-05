@@ -20,7 +20,7 @@ public static partial class McpToolErrors
     /// <returns>The MCP call-tool error filter.</returns>
     public static McpRequestFilter<CallToolRequestParams, CallToolResult> CreateFilter()
     {
-        return next => _createHandler(next);
+        return static next => _createHandler(next);
     }
 
     /// <summary>

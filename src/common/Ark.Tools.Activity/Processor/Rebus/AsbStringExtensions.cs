@@ -16,6 +16,6 @@ public static class AsbStringExtensions
     public static string ToValidAzureServiceBusEntityName(this string topic)
     {
         return string.Concat(topic
-            .Select(c => _validChars.Contains(c) ? char.ToLower(c, CultureInfo.InvariantCulture) : '_'));
+            .Select(static c => _validChars.Contains(c) ? char.ToLower(c, CultureInfo.InvariantCulture) : '_'));
     }
 }

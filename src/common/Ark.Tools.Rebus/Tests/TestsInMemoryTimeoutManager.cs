@@ -65,7 +65,7 @@ public class TestsInMemoryTimeoutManager
             var added = _deferredMessages
                 .AddOrUpdate(headers.GetValue(Headers.MessageId),
                     id => @new,
-                    (id, existing) => existing);
+                    static (id, existing) => existing);
 
             if (added == @new) Interlocked.Increment(ref _dueCount);
         }

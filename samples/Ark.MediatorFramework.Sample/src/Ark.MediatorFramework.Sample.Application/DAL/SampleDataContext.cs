@@ -344,7 +344,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             Count = count,
             Skip = query.Skip,
             Limit = query.Limit,
-            Data = rows.Select(row => row.ToResponse()).ToArray(),
+            Data = rows.Select(static row => row.ToResponse()).ToArray(),
         };
     }
 
@@ -541,7 +541,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             [nameof(AuditRecord.Timestamp)] = "[Timestamp]",
         };
         var orderBy = sorts
-            .Where(sort => !string.IsNullOrWhiteSpace(sort))
+            .Where(static sort => !string.IsNullOrWhiteSpace(sort))
             .Select(sort =>
             {
                 var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -573,7 +573,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             [nameof(Book.V1.Output.Description)] = "[Description]",
         };
         var orderBy = sorts
-            .Where(sort => !string.IsNullOrWhiteSpace(sort))
+            .Where(static sort => !string.IsNullOrWhiteSpace(sort))
             .Select(sort =>
             {
                 var parts = sort.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);

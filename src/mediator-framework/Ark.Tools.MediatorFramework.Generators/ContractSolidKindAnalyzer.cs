@@ -63,7 +63,7 @@ public sealed class ContractSolidKindAnalyzer : DiagnosticAnalyzer
                 if (kindCount <= 1)
                     return;
 
-                var location = type.Locations.FirstOrDefault(candidate => candidate.IsInSource);
+                var location = type.Locations.FirstOrDefault(static candidate => candidate.IsInSource);
                 if (location is null)
                     return;
 

@@ -171,7 +171,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         }
 
         var host = hosts[0];
-        var participantAttribute = host.Participant.GetAttributes().FirstOrDefault(attribute =>
+        var participantAttribute = host.Participant.GetAttributes().FirstOrDefault(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
         if (participantAttribute is null)
         {
@@ -183,7 +183,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         }
 
         var networks = _allTypes(host.Participant.ContainingAssembly.GlobalNamespace)
-            .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(attribute =>
+            .Select(static type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(static attribute =>
                 attribute.AttributeClass?.ToDisplayString() == _networkAttribute)))
             .Where(item => item.Attribute is not null
                 && _types(item.Attribute, "Members").Any(member =>
@@ -230,7 +230,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 _int(participantAttribute, "DefaultSerializer"));
         foreach (var member in _types(network.Attribute!, "Members"))
         {
-            var memberAttribute = member.GetAttributes().FirstOrDefault(attribute =>
+            var memberAttribute = member.GetAttributes().FirstOrDefault(static attribute =>
                 attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
             if (memberAttribute is null)
                 continue;
@@ -324,12 +324,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         ImmutableArray<INamedTypeSymbol> subscribedEvents)
     {
         var members = _types(networkAttribute, "Members")
-            .Select(member => (Type: member, Attribute: member.GetAttributes().FirstOrDefault(attribute =>
+            .Select(static member => (Type: member, Attribute: member.GetAttributes().FirstOrDefault(static attribute =>
                 attribute.AttributeClass?.ToDisplayString() == _participantAttribute)))
             .Where(static item => item.Attribute is not null)
             .ToArray();
         var subscriptions = ImmutableArray.CreateBuilder<Subscription>();
-        var participantAttribute = participant.GetAttributes().First(attribute =>
+        var participantAttribute = participant.GetAttributes().First(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
         foreach (var subscribedEvent in subscribedEvents
             .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
@@ -385,7 +385,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         var topics = ImmutableArray.CreateBuilder<Topic>();
         foreach (var member in _types(networkAttribute, "Members"))
         {
-            var participant = member.GetAttributes().FirstOrDefault(attribute =>
+            var participant = member.GetAttributes().FirstOrDefault(static attribute =>
                 attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
             if (participant is null)
                 continue;
@@ -777,12 +777,12 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
     private static string _contractName(INamedTypeSymbol contract)
     {
-        var attribute = contract.GetAttributes().FirstOrDefault(candidate =>
+        var attribute = contract.GetAttributes().FirstOrDefault(static candidate =>
             candidate.AttributeClass?.ToDisplayString() is _messageAttribute or _eventAttribute);
         if (_string(attribute, "Name") is { } explicitName)
             return explicitName;
         var group = contract.GetAttributes()
-            .FirstOrDefault(candidate => candidate.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            .FirstOrDefault(static candidate => candidate.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
             ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
         return _normalizeLogical(group) + "." + _normalizeLogical(contract.Name);
     }
@@ -802,7 +802,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     private static string _normalizeLogical(string value)
     {
         return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
-            .Select(segment => string.Join("-", _words(segment).Select(static word => word.ToLowerInvariant()))));
+            .Select(static segment => string.Join("-", _words(segment).Select(static word => word.ToLowerInvariant()))));
     }
 
     private static IEnumerable<string> _words(string value)
@@ -834,7 +834,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
     private static string _functionName(string identity)
     {
-        var name = string.Concat(_words(identity).Select(word =>
+        var name = string.Concat(_words(identity).Select(static word =>
             char.ToUpperInvariant(word[0]) + word.Substring(1)));
         return string.IsNullOrEmpty(name) ? "Messaging" : name;
     }

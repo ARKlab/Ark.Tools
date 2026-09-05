@@ -49,8 +49,8 @@ public static class SampleHost
 
         builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
         builder.Services.AddOpenTelemetry()
-            .WithTracing(tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName))
-            .WithMetrics(metrics => metrics.AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
+            .WithTracing(static tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName))
+            .WithMetrics(static metrics => metrics.AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
         var startup = new SampleStartup(
             container,
             network,

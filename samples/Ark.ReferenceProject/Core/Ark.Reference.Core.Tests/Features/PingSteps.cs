@@ -197,9 +197,9 @@ sealed class PingSteps
         var expected = table.CreateInstance<Ping.V1.Output>();
 
         res.Should().BeEquivalentTo(expected,
-            options => options
-                .Excluding(c => c.Id)
-                .Excluding(c => c.AuditId)
+            static options => options
+                .Excluding(static c => c.Id)
+                .Excluding(static c => c.AuditId)
         );
     }
 

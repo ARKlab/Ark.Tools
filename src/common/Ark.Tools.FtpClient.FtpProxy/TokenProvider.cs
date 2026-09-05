@@ -52,7 +52,7 @@ internal sealed class TokenProvider
         {
             var result = await Policy
                 .Handle<Exception>()
-                .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
+                .WaitAndRetryAsync(3, static r => TimeSpan.FromSeconds(3))
                 .ExecuteAsync((ct) => auth0.GetTokenAsync(new ClientCredentialsTokenRequest
                 {
                     Audience = _config.ApiIdentifier,
@@ -76,8 +76,8 @@ internal sealed class TokenProvider
         try
         {
             result = await Policy
-                .Handle<MsalException>(ex => ex.IsRetryable)
-                .WaitAndRetryAsync(3, r => TimeSpan.FromSeconds(3))
+                .Handle<MsalException>(static ex => ex.IsRetryable)
+                .WaitAndRetryAsync(3, static r => TimeSpan.FromSeconds(3))
                 .ExecuteAsync(c => adal.AcquireTokenForClient([_config.ApiIdentifier + "/.default"]).ExecuteAsync(c), ctk, false)
 .ConfigureAwait(false);
         }

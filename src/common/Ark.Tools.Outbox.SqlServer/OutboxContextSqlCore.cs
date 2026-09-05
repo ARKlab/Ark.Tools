@@ -96,7 +96,7 @@ internal abstract class OutboxContextSqlCore
     {
         foreach (var b in messages.Batch(1000))
         {
-            var parameters = b.Select(message => new
+            var parameters = b.Select(static message => new
             {
                 pHeaders = _headerSerializer.SerializeToString(message.Headers),
                 pBody = message.Body
@@ -114,7 +114,7 @@ internal abstract class OutboxContextSqlCore
 
         var res = await _connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
 
-        return res.Select(x => new OutboxMessage
+        return res.Select(static x => new OutboxMessage
         {
             Body = x.Body,
             Headers = _headerSerializer.DeserializeFromString(x.Headers)

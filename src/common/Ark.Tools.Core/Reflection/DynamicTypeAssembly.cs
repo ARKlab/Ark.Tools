@@ -52,7 +52,7 @@ public class DynamicTypeAssembly
             var parameters = constructor.GetParameters();
 
             // Get all of the types from parameters
-            var parameterTypes = parameters.Select(p => p.ParameterType).ToArray();
+            var parameterTypes = parameters.Select(static p => p.ParameterType).ToArray();
 
             // Build the new constructor on the new type we are creating
             var newConstructor = typeBuilder.DefineConstructor(MethodAttributes.Public, constructor.CallingConvention, parameterTypes);

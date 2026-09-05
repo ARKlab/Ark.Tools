@@ -10,7 +10,7 @@ public static class TaskExtensions
 {
     public static Task IgnoreExceptions(this Task task)
     {
-        _ = task.ContinueWith(c => { _ = c.Exception; },
+        _ = task.ContinueWith(static c => { _ = c.Exception; },
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted |
             TaskContinuationOptions.ExecuteSynchronously,
@@ -20,7 +20,7 @@ public static class TaskExtensions
 
     public static Task FailFastOnException(this Task task)
     {
-        _ = task.ContinueWith(c => Environment.FailFast("Task faulted", c.Exception),
+        _ = task.ContinueWith(static c => Environment.FailFast("Task faulted", c.Exception),
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted |
             TaskContinuationOptions.ExecuteSynchronously,
@@ -42,7 +42,7 @@ public static class TaskExtensions
         return task.IsCompleted // fast-path optimization
             ? task
             : task.ContinueWith(
-                completedTask => completedTask.GetAwaiter().GetResult(),
+                static completedTask => completedTask.GetAwaiter().GetResult(),
                 cancellationToken,
                 TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);
@@ -62,7 +62,7 @@ public static class TaskExtensions
         return task.IsCompleted // fast-path optimization
             ? task
             : task.ContinueWith(
-                completedTask => completedTask.GetAwaiter().GetResult(),
+                static completedTask => completedTask.GetAwaiter().GetResult(),
                 cancellationToken,
                 TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);

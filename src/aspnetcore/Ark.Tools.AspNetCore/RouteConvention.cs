@@ -24,17 +24,17 @@ internal sealed class RouteConvention : IApplicationModelConvention
             if (typeof(ODataController).IsAssignableFrom(controller.ControllerType))
                 continue;
 
-            var matchedSelectors = controller.Selectors.Where(x => x.AttributeRouteModel != null).ToList();
+            var matchedSelectors = controller.Selectors.Where(static x => x.AttributeRouteModel != null).ToList();
             if (matchedSelectors.Count != 0)
             {
-                foreach (var selectorModel in matchedSelectors.Where(x => x.AttributeRouteModel?.IsAbsoluteTemplate == false))
+                foreach (var selectorModel in matchedSelectors.Where(static x => x.AttributeRouteModel?.IsAbsoluteTemplate == false))
                 {
                     selectorModel.AttributeRouteModel = AttributeRouteModel.CombineAttributeRouteModel(_centralPrefix,
                         selectorModel.AttributeRouteModel);
                 }
             }
 
-            var unmatchedSelectors = controller.Selectors.Where(x => x.AttributeRouteModel == null).ToList();
+            var unmatchedSelectors = controller.Selectors.Where(static x => x.AttributeRouteModel == null).ToList();
             if (unmatchedSelectors.Count != 0)
             {
                 foreach (var selectorModel in unmatchedSelectors)
