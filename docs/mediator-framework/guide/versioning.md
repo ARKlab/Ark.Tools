@@ -31,6 +31,7 @@ public sealed record GetGreetingV1Query : IQuery<GreetingResponseV1>;
 [GrpcService("Greetings")]
 public sealed record GetGreetingV2Query : IQuery<GreetingResponseV2>;
 ```
+Source: [`BookContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
 
 **Outcome:** version 1 exposes the original HTTP route and gRPC method; version
 2 exposes the replacement. The generator expands `{version}` in HTTP routes,

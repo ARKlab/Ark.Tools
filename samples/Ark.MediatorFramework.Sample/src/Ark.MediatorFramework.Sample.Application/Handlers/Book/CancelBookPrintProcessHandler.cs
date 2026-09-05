@@ -13,7 +13,7 @@ namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Cancels a pending or running book print process.</summary>
 public sealed class CancelBookPrintProcessHandler :
-    IRequestHandler<CancelBookPrintProcessRequest, BookPrintProcessResponse>
+    IRequestHandler<CancelBookPrintProcessRequest.V1, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
     private readonly IContextProvider<ClaimsPrincipal> _user;
@@ -32,7 +32,7 @@ public sealed class CancelBookPrintProcessHandler :
 
     /// <inheritdoc />
     public async Task<BookPrintProcessResponse> ExecuteAsync(
-        CancelBookPrintProcessRequest request,
+        CancelBookPrintProcessRequest.V1 request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

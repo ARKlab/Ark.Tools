@@ -11,14 +11,6 @@
     <Features Condition="'$(Features)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">strict</Features>
     <ReportAnalyzer Condition="'$(ReportAnalyzer)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</ReportAnalyzer>
     <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">true</EnforceCodeStyleInBuild>
-    <Deterministic Condition="'$(Deterministic)' == ''">true</Deterministic>
-
-		<!-- Embed source files that are not tracked by the source control manager in the PDB -->
-		<EmbedUntrackedSources Condition="'$(EmbedUntrackedSources)' == ''">true</EmbedUntrackedSources>
-    
-    <DebugType Condition="'$(DebugType)' == ''">portable</DebugType>
-  	<DebugSymbols Condition="'$(DebugSymbols)' == ''">true</DebugSymbols>
-
     <Nullable Condition="'$(Nullable)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</Nullable>
     <ImplicitUsings Condition="'$(ImplicitUsings)' == '' and '$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">enable</ImplicitUsings>
   </PropertyGroup>
@@ -27,7 +19,6 @@
                  Condition="'$(UsingMicrosoftBuildSqlSdk)' == 'true'">
     <TreatTSqlWarningsAsErrors Condition="'$(TreatTSqlWarningsAsErrors)' == ''">true</TreatTSqlWarningsAsErrors>
     <RunSqlCodeAnalysis Condition="'$(RunSqlCodeAnalysis)' == ''">true</RunSqlCodeAnalysis>
-    <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Label="Analyzer Configuration"
@@ -56,6 +47,5 @@
                                Condition="'$(EnableArkToolsCoreConfiguration)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Analyzer.Devlooped.SponsorLink.globalconfig"
                                KeepDuplicates="false" />
-                    
   </ItemGroup>
 </Project>

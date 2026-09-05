@@ -105,7 +105,7 @@ public sealed class SearchBooksQueryValidator : AbstractValidator<Book_SearchQue
 }
 
 /// <summary>Validates book cover uploads.</summary>
-public sealed class UploadBookCoverRequestValidator : AbstractValidator<UploadBookCoverRequest>
+public sealed class UploadBookCoverRequestValidator : AbstractValidator<UploadBookCoverRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="UploadBookCoverRequestValidator"/> class.</summary>
     public UploadBookCoverRequestValidator()
@@ -125,7 +125,7 @@ public sealed class UploadBookCoverRequestValidator : AbstractValidator<UploadBo
 }
 
 /// <summary>Validates book print-process creation requests.</summary>
-public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<CreateBookPrintProcessRequest>
+public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<CreateBookPrintProcessRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="CreateBookPrintProcessRequestValidator"/> class.</summary>
     public CreateBookPrintProcessRequestValidator()
@@ -135,7 +135,7 @@ public sealed class CreateBookPrintProcessRequestValidator : AbstractValidator<C
 }
 
 /// <summary>Validates book review creation requests.</summary>
-public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateBookReviewRequest>
+public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateBookReviewRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="CreateBookReviewRequestValidator"/> class.</summary>
     public CreateBookReviewRequestValidator()
@@ -147,7 +147,7 @@ public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateB
 }
 
 /// <summary>Validates book review list queries.</summary>
-public sealed class ListBookReviewsQueryValidator : AbstractValidator<ListBookReviewsQuery>
+public sealed class ListBookReviewsQueryValidator : AbstractValidator<ListBookReviewsQuery.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="ListBookReviewsQueryValidator"/> class.</summary>
     public ListBookReviewsQueryValidator()
@@ -159,7 +159,7 @@ public sealed class ListBookReviewsQueryValidator : AbstractValidator<ListBookRe
 }
 
 /// <summary>Validates reading activity requests.</summary>
-public sealed class RecordReadingActivityRequestValidator : AbstractValidator<RecordReadingActivityRequest>
+public sealed class RecordReadingActivityRequestValidator : AbstractValidator<RecordReadingActivityRequest.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="RecordReadingActivityRequestValidator"/> class.</summary>
     public RecordReadingActivityRequestValidator()
@@ -177,7 +177,7 @@ public sealed class RecordReadingActivityRequestValidator : AbstractValidator<Re
 }
 
 /// <summary>Validates reading activity queries.</summary>
-public sealed class GetReadingActivityQueryValidator : AbstractValidator<GetReadingActivityQuery>
+public sealed class GetReadingActivityQueryValidator : AbstractValidator<GetReadingActivityQuery.V1>
 {
     /// <summary>Initializes a new instance of the <see cref="GetReadingActivityQueryValidator"/> class.</summary>
     public GetReadingActivityQueryValidator()

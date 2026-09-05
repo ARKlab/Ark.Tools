@@ -49,33 +49,39 @@ public sealed record ReadingActivity
 }
 
 /// <summary>Records reading activity for a book.</summary>
-[HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reading-activity")]
-[RequireScopePolicy(ApplicationScopes.BookActivityWrite)]
-public sealed record RecordReadingActivityRequest :
-    IRequest<RecordReadingActivityRequest, ReadingActivity>
+public static class RecordReadingActivityRequest
 {
-    /// <summary>Gets the book identifier.</summary>
-    [HttpRoute]
-    public Guid BookId { get; init; }
+    /// <summary>Version one of the reading-activity recording request.</summary>
+    [HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reading-activity")]
+    [RequireScopePolicy(ApplicationScopes.BookActivityWrite)]
+    public sealed record V1 : IRequest<V1, ReadingActivity>
+    {
+        /// <summary>Gets the book identifier.</summary>
+        [HttpRoute]
+        public Guid BookId { get; init; }
 
-    /// <summary>Gets the activity kind.</summary>
-    public EvolvableEnum<ReadingActivityKind> Kind { get; init; }
+        /// <summary>Gets the activity kind.</summary>
+        public EvolvableEnum<ReadingActivityKind> Kind { get; init; }
 
-    /// <summary>Gets the percentage read at the time of the activity.</summary>
-    public int Progress { get; init; }
+        /// <summary>Gets the percentage read at the time of the activity.</summary>
+        public int Progress { get; init; }
+    }
 }
 
 /// <summary>Reads recent activity for a book and the current reader.</summary>
-[HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reading-activity")]
-[RequireScopePolicy(ApplicationScopes.BookActivityRead)]
-public sealed record GetReadingActivityQuery :
-    IQuery<GetReadingActivityQuery, IReadOnlyList<ReadingActivity>>
+public static class GetReadingActivityQuery
 {
-    /// <summary>Gets the book identifier.</summary>
-    [HttpRoute]
-    public Guid BookId { get; init; }
+    /// <summary>Version one of the recent reading-activity query.</summary>
+    [HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reading-activity")]
+    [RequireScopePolicy(ApplicationScopes.BookActivityRead)]
+    public sealed record V1 : IQuery<V1, IReadOnlyList<ReadingActivity>>
+    {
+        /// <summary>Gets the book identifier.</summary>
+        [HttpRoute]
+        public Guid BookId { get; init; }
 
-    /// <summary>Gets the maximum number of activity events to return.</summary>
-    [HttpQuery]
-    public int Limit { get; init; } = 25;
+        /// <summary>Gets the maximum number of activity events to return.</summary>
+        [HttpQuery]
+        public int Limit { get; init; } = 25;
+    }
 }

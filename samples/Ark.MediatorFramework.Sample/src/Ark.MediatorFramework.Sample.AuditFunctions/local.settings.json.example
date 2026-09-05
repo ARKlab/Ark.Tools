@@ -3,6 +3,7 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "AzureServiceBus__ConnectionString": "your-service-bus-connection-string",
-    "ConnectionStrings:Sample": ""
+    "ConnectionStrings:Sample": "",
+    "ApplicationInsights__ConnectionString": ""
   }
 }

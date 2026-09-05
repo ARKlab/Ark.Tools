@@ -24,6 +24,31 @@ public sealed partial class AzureFunctionsRebusHost;
 public static class AzureFunctionsRebusComposition
 {
     /// <summary>
+    /// Adds the outbound-only Rebus client to an existing Function application
+    /// container without replacing its native messaging composition.
+    /// </summary>
+    /// <param name="container">The already composed Function application container.</param>
+    /// <param name="serviceBusConnectionString">
+    /// A Service Bus connection string or fully qualified namespace from external configuration.
+    /// </param>
+    public static void ConfigureOutbound(
+        Container container,
+        string? serviceBusConnectionString)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+
+        if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
+            throw new InvalidOperationException(
+                "Azure Service Bus configuration is required for the Functions outbound bus.");
+
+        AzureFunctionsRebusHost.Register(container);
+        ApplicationComposition.RegisterOutboundRebus(
+            container,
+            transport => _configureTransport(transport, serviceBusConnectionString),
+            AzureFunctionsRebusHost.ConfigureRouting);
+    }
+
+    /// <summary>
     /// Builds a container that sends owned messages through Azure Service Bus without receiving.
     /// </summary>
     /// <param name="serviceBusConnectionString">
@@ -49,11 +74,7 @@ public static class AzureFunctionsRebusComposition
             connectionString);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
-        AzureFunctionsRebusHost.Register(container);
-        ApplicationComposition.RegisterOutboundRebus(
-            container,
-            transport => _configureTransport(transport, serviceBusConnectionString),
-            AzureFunctionsRebusHost.ConfigureRouting);
+        ConfigureOutbound(container, serviceBusConnectionString);
         return container;
     }
 

@@ -78,5 +78,5 @@ generated routing without accidentally registering receivers or starting workers
 - [x] Existing drainable behavior remains backward compatible.
 - [x] Managed identity is the documented Azure default; no secret is committed.
 - [x] Lifecycle and unsupported request/reply behavior are documented.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

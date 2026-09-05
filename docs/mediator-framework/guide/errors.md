@@ -13,6 +13,7 @@ if (await _store.ExistsAsync(request.Name, cancellationToken).ConfigureAwait(fal
         new GreetingAlreadyExistsViolation(request.Name));
 }
 ```
+Source: [`CreateBookPrintProcessHandler.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Book/CreateBookPrintProcessHandler.cs)
 
 Create a violation by deriving from `BusinessRuleViolation`. Its public
 properties are safe, structured data returned to clients, so make them
@@ -33,6 +34,7 @@ public sealed class GreetingAlreadyExistsViolation : BusinessRuleViolation
     public string Name { get; }
 }
 ```
+Source: [`BookPrintingProcessAlreadyRunningViolation.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Exceptions/BookPrintingProcessAlreadyRunningViolation.cs)
 
 Throw `BusinessRuleViolationException` from the handler as shown above. The
 HTTP problem-details mapper and gRPC interceptor expose the base `Status`,
@@ -67,6 +69,7 @@ A business-rule failure is an RFC 7807 response. For the violation above:
 HTTP/1.1 400 Bad Request
 Content-Type: application/problem+json
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 ```json
 {
@@ -77,6 +80,7 @@ Content-Type: application/problem+json
   "name": "hello"
 }
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 A FluentValidation failure is HTTP 400 and identifies invalid input fields.
 For example, a missing name can produce:
@@ -90,6 +94,7 @@ For example, a missing name can produce:
   }
 }
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 Exact validation text depends on the application's validators. Clients should
 branch on stable error codes/statuses rather than parsing human-readable
@@ -111,6 +116,7 @@ details {
            extensions: { "Name": "\"hello\"" } }
 }
 ```
+Source: [`BookPrintProcessCannotBeCancelledViolation.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Exceptions/BookPrintProcessCannotBeCancelledViolation.cs)
 
 FluentValidation maps to `InvalidArgument` with a `google.rpc.BadRequest`
 detail. Each invalid member is a `field_violations` entry:
@@ -123,6 +129,7 @@ details {
   value: { field_violations: [{ field: "Name", description: "'Name' must not be empty." }] }
 }
 ```
+Source: [`BookValidators.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Validators/BookValidators.cs)
 
 Configure `ArkGrpcErrorOptions.IncludeExceptionDetails` only for trusted
 diagnostic environments. Development includes details automatically; production

@@ -36,4 +36,4 @@ unvalidated forwarding header, while the mediator sample has no equivalent.
       middleware runs.
 - [x] No configured prefix or known proxy/network list is required.
 - [x] Prefix routing and generated OpenAPI paths work end to end.
-- [ ] Full solution build and tests pass with zero warnings.
+- [x] Full solution build and tests pass with zero warnings.

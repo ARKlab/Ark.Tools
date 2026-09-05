@@ -16,6 +16,7 @@ public sealed class SearchGreetingsValidator : AbstractValidator<SearchGreetings
     }
 }
 ```
+Source: [`BookValidators.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Validators/BookValidators.cs)
 
 Register validators from the application assembly and the validation decorator
 with the container.
@@ -31,6 +32,7 @@ container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryFluentValidate
 container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestFluentValidateDecorator<,>));
 container.RegisterDecorator(typeof(ICommandHandler<>), typeof(CommandFluentValidateDecorator<>));
 ```
+Source: [`ApplicationComposition.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs)
 
 **Outcome:** invalid requests do not enter the handler. HTTP callers receive a
 validation Problem Details response and gRPC callers receive the corresponding
@@ -48,6 +50,7 @@ to HTTP, gRPC, and Rebus.
 [RequireScopePolicy(ApplicationScopes.GreetingWrite)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
+Source: [`BookContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
 
 | Mechanism | Applies to | Use it for |
 | --- | --- | --- |
@@ -85,6 +88,7 @@ public sealed class RequireScopePolicyAttribute : PolicyAuthorizeAttribute
     }
 }
 ```
+Source: [`ApplicationScopes.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Authorization/ApplicationScopes.cs)
 
 The authorization handler evaluates the requirement against the current user:
 
@@ -107,6 +111,7 @@ public sealed class ScopeAuthorizationHandler : AuthorizationHandler<ScopeAuthor
     }
 }
 ```
+Source: [`ScopeAuthorizationPolicy.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Authorization/ScopeAuthorizationPolicy.cs)
 
 Register the authorization services in the application container:
 
@@ -114,6 +119,7 @@ Register the authorization services in the application container:
 container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 ```
+Source: [`ApplicationComposition.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs)
 
 ## Host authentication still matters
 
@@ -134,6 +140,7 @@ services.AddAuthorization(options =>
         .Build();
 });
 ```
+Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 This means every generated HTTP endpoint is authenticated by default even when
 the contract carries no extra permission attribute. `AllowAnonymous = true` is
@@ -156,6 +163,7 @@ Example HTTP assertion from the sample:
 var response = await context.Client.PostAsync(new Uri("/api/v1/greetings", UriKind.Relative), content);
 response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 Example gRPC assertion from the sample:
 
@@ -166,6 +174,7 @@ var action = async () => await client.GetGreetingAsync(
 var exception = await action.Should().ThrowAsync<RpcException>();
 exception.Which.StatusCode.Should().Be(StatusCode.Unauthenticated);
 ```
+Source: [`BookTransportBoundaryTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
 
 ## Workflow
 

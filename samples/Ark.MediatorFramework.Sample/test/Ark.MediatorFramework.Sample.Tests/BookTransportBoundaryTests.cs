@@ -61,13 +61,13 @@ public sealed class BookTransportBoundaryTests
                 ?? throw new InvalidOperationException("Generated Books gRPC service type was not found.");
             var service = Activator.CreateInstance(serviceType, container)
                 ?? throw new InvalidOperationException("Generated Books gRPC service could not be created.");
-            var describeMethod = serviceType.GetMethod("DescribeBookEditionRequestAsync")
+            var describeMethod = serviceType.GetMethod("DescribeBookEditionRequest_V1Async")
                 ?? throw new InvalidOperationException("Generated Book edition gRPC method was not found.");
-            var streamMethod = serviceType.GetMethod("StreamBooksQueryAsync")
+            var streamMethod = serviceType.GetMethod("StreamBooksQuery_V1Async")
                 ?? throw new InvalidOperationException("Generated Book stream gRPC method was not found.");
             var editionTask = (ValueTask<BookEditionDescription>)describeMethod.Invoke(service,
             [
-                new DescribeBookEditionRequest
+                new DescribeBookEditionRequest.V1
                 {
                     Edition = new PrintBookEdition
                     {
@@ -81,7 +81,7 @@ public sealed class BookTransportBoundaryTests
             var items = new List<BookStreamItem>();
             var stream = (IAsyncEnumerable<BookStreamItem>)streamMethod.Invoke(service,
             [
-                new StreamBooksQuery { Count = 2 },
+                new StreamBooksQuery.V1 { Count = 2 },
                 default(ProtoBuf.Grpc.CallContext),
             ])!;
             await foreach (var item in stream.WithCancellation(CancellationToken.None).ConfigureAwait(false))

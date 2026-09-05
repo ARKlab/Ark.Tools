@@ -789,13 +789,19 @@ public sealed class GeneratorSnapshotTests
             using ProtoBuf;
             public sealed record Response(Inner Value);
             public sealed record Inner([property: ProtoMember(1)] string Name);
-            [Versioning(Introduced = 1, Retired = 3)]
-            [HttpEndpoint("GET", "/v{version}/items")]
-            [GrpcMethod("GetItem")]
-            public sealed class GetItem : IQuery<Response>
+            public static class Operations
             {
-                [ProtoMember(1)]
-                public int Id { get; set; }
+                public static class Items
+                {
+                    [Versioning(Introduced = 1, Retired = 3)]
+                    [HttpEndpoint("GET", "/v{version}/items")]
+                    [GrpcMethod("GetItem")]
+                    public sealed class GetItem : IQuery<Response>
+                    {
+                        [ProtoMember(1)]
+                        public int Id { get; set; }
+                    }
+                }
             }
             """;
 
@@ -804,7 +810,8 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem.Id : int");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
         first.Should().NotContain("HTTP GET");
@@ -1070,6 +1077,45 @@ public sealed class GeneratorSnapshotTests
             """);
 
         grpc.Should().Contain("// First line second line where left > right.");
+    }
+
+    [TestMethod]
+    public void GeneratorsExtractInheritedAndSeeCrefDocumentation()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public class DocumentedBase
+            {
+                /// <summary>The inherited <see cref="System.String"/> identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            /// <summary>Gets the inherited value.</summary>
+            [HttpEndpoint("GET", "/inherited/{id}")]
+            public sealed class GetInherited : DocumentedBase, IQuery<string> { }
+            """);
+
+        minimalApi.Should().Contain("[\"Id\"] = \"The inherited String identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            public class DocumentedBase
+            {
+                /// <summary>The inherited <see cref="System.String"/> identifier.</summary>
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetInherited")]
+            [ProtoContract]
+            public sealed class GetInherited : DocumentedBase, IQuery<string> { }
+            """);
+
+        grpc.Should().Contain("// The inherited String identifier.");
     }
 
     [TestMethod]

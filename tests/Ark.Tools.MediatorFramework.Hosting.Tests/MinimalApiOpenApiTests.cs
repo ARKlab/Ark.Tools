@@ -38,6 +38,21 @@ public sealed class MinimalApiOpenApiTests
         paths["/api/v1/hosting/versioned/{id}"].Should().BeNull();
         paths["/api/v2/hosting/versioned/{id}"].Should().BeNull();
 
+        var requestOperation = paths["/api/v1/hosting/requests/{id}"]!["post"]!;
+        requestOperation["summary"]?.GetValue<string>()
+            .Should().Be("Deterministic request contract with route, query, body, and server-owned properties.");
+        var requestParameters = requestOperation["parameters"]?.AsArray()
+            ?? throw new InvalidOperationException("The request operation had no parameters.");
+        requestParameters.Single(parameter => parameter?["name"]?.GetValue<string>() == "id")!["description"]?
+            .GetValue<string>().Should().Be("Gets or sets the route identifier.");
+        requestParameters.Single(parameter => parameter?["name"]?.GetValue<string>() == "Filter")!["description"]?
+            .GetValue<string>().Should().Be("Gets or sets the optional query filter.");
+        var requestBody = requestOperation["requestBody"]
+            ?? throw new InvalidOperationException("The request operation had no request body.");
+        var requestSchema = _resolveSchema(document, requestBody["content"]!["application/json"]!["schema"]!);
+        requestSchema["properties"]?["value"]?["description"]?.GetValue<string>()
+            .Should().Be("Gets or sets the request body value.");
+
         paths["/api/v1/hosting/openapi"]?["get"]?["summary"]?.GetValue<string>()
             .Should().Be("Query used to expose the generated OpenAPI response schema.");
 

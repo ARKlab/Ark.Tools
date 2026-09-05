@@ -241,6 +241,23 @@ ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
   Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
 ```
 
+### Functions logging
+
+Both isolated-worker entry points configure `Ark.Tools.NLog` before the host is
+built. They use the synchronous console target so Azure Functions Core Tools
+captures startup and invocation output, clear the default providers, and add
+one NLog provider with message templates and named properties preserved. This
+avoids duplicate application events while keeping structured logging intact.
+
+`ArkApplicationInsightsTelemetry` reads the Application Insights connection
+string from Functions configuration (`ApplicationInsights:ConnectionString` or
+`APPLICATIONINSIGHTS_CONNECTION_STRING`); it is never stored in source. For
+Core Tools, replace the empty `ApplicationInsights__ConnectionString` value in
+the copied `local.settings.json` only when sending telemetry to Azure Monitor. In
+Azure, configure the same setting as an application setting or use the
+standard `APPLICATIONINSIGHTS_CONNECTION_STRING` setting. Leave it empty for
+local console-only diagnostics.
+
 The WebInterface and RebusProcessor keep their existing Rebus outbox
 registrations. Rebus and native outbox adapters are alternative topology modes;
 do not point their processors at the same outbox rows.
@@ -325,6 +342,15 @@ host accepts a Service Bus connection string locally and uses
 `DefaultAzureCredential` for a namespace in managed environments. Do not commit
 credentials or `local.settings.json`.
 
+The optional outbound Rebus client is disabled by default. Set
+`AzureServiceBus__EnableOutboundRebus` to `true` only when the external
+`AzureServiceBus__ConnectionString` or
+`AzureServiceBus__fullyQualifiedNamespace` setting is intended for outbound
+Rebus sends. Namespaces use `DefaultAzureCredential`. It is one-way only: the
+Function host does not register Rebus handlers, an input queue, subscriptions,
+or a worker. Keep Rebus messages and native AMF messages on their respective
+topologies; this switch does not make the transports interoperable.
+
 For claim-check payloads, the sample can select the production Azure Blob provider
 with `UseAzureBlobDataBus` without changing message contracts:
 
@@ -383,8 +409,10 @@ generated HTTP host. It uses the in-memory profile when no
 `ConnectionStrings__Sample` value is configured; configure that value for the
 shared SQL profile in a deployed environment. It intentionally excludes
 MessagePack contracts because the Functions binding does not provide that
-formatter. Its production entry point uses native Service Bus messaging. The
-outbound-only Rebus composition exists only for the separate all-Rebus mode.
+formatter. Its production entry point uses native Service Bus messaging. An
+explicit `AzureServiceBus__EnableOutboundRebus=true` setting can additionally
+register the outbound-only Rebus client used by HTTP-to-Rebus compatibility
+deployments; this does not replace native messaging or start a Rebus receiver.
 
 The production Functions host remains bound to Service Bus. The focused
 `MessagingBusSampleTests` fixture separately composes the Book messaging

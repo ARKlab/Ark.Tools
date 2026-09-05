@@ -72,7 +72,7 @@ Documentation has no unit tests; the enforced checks are:
 ## Acceptance
 
 - [x] All pages in the table exist with the described content.
-- [ ] Every snippet cites the compiled sample file it comes from.
+- [x] Every snippet cites the compiled sample file it comes from.
 - [x] All relative links in `docs/mediator-framework/` resolve (link check performed, result in PR).
 - [x] `docs/mediator-framework/README.md` and the sample README point at the guide.
 - [x] No page documents an unimplemented behavior without flagging it as pending.

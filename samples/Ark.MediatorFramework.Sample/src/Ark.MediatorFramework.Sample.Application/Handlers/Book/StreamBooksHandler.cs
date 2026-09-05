@@ -6,14 +6,14 @@ using Ark.Tools.Solid;
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Produces Book items incrementally for HTTP JSON and gRPC streaming.</summary>
-public sealed class StreamBooksHandler : IQueryHandler<StreamBooksQuery, IAsyncEnumerable<BookStreamItem>>
+public sealed class StreamBooksHandler : IQueryHandler<StreamBooksQuery.V1, IAsyncEnumerable<BookStreamItem>>
 {
     private const int _maximumCount = 100;
     private const int _maximumDelayMilliseconds = 10_000;
 
     /// <inheritdoc />
     public async Task<IAsyncEnumerable<BookStreamItem>> ExecuteAsync(
-        StreamBooksQuery query,
+        StreamBooksQuery.V1 query,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -27,7 +27,7 @@ public sealed class StreamBooksHandler : IQueryHandler<StreamBooksQuery, IAsyncE
     }
 
     private static async IAsyncEnumerable<BookStreamItem> _streamAsync(
-        StreamBooksQuery query,
+        StreamBooksQuery.V1 query,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)
     {
         for (var index = 0; index < query.Count; index++)

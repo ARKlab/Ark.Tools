@@ -71,11 +71,11 @@ are intentional and avoid treating the two tasks as one item.
 | Task | Title | Status |
 | --- | --- | --- |
 | [SMP-01](sample-parity/SMP-01-fluentvalidation.md) | FluentValidation decorators in the sample | Complete |
-| [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper and transactional outbox | In progress |
+| [SMP-02](sample-parity/SMP-02-sql-dapper-outbox.md) | SQL/Dapper and transactional outbox | Complete |
 | [SMP-03](sample-parity/SMP-03-persisted-auditing.md) | Persisted auditing | Complete |
 | [SMP-04](sample-parity/SMP-04-optimistic-concurrency.md) | Optimistic concurrency and opaque ETag | Complete |
 | [SMP-05](sample-parity/SMP-05-paging.md) | Paging | Pending |
-| [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, configuration layering, clock, and test infrastructure | In progress |
+| [SMP-06](sample-parity/SMP-06-misc-parity.md) | App Insights, configuration layering, clock, and test infrastructure | Complete |
 
 ### Book sample migration
 
@@ -105,12 +105,12 @@ not stop at a contract, schema, host, or documentation change.
 | Task | Title | Status |
 | --- | --- | --- |
 | [NET-06](aspnetcore/NET-06-openapi-tags-operation-names.md) | OpenAPI tags and operation names from the contract | Complete |
-| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | In progress |
+| [GEN-09](generator-dx/GEN-09-xml-documentation.md) | XML documentation into OpenAPI and exported `.proto` | Complete |
 | [FW-05](framework/FW-05-standard-problem-responses.md) | Standard 400/403/500 ProblemDetails responses | Complete |
 | [FW-06](framework/FW-06-async-enumerable-streaming.md) | `IAsyncEnumerable<T>` streaming responses | Complete |
 | [FW-07](framework/FW-07-multifile-uploads.md) | Multi-file uploads bound to an attachment collection | Complete |
 | [GEN-10](generator-dx/GEN-10-api-surface-snapshots.md) | API-surface snapshot gate | Complete |
-| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started and feature guide | In progress |
+| [DOC-01](docs/DOC-01-user-documentation.md) | User documentation: getting started and feature guide | Complete |
 
 ## Non-blocking improvements
 
@@ -121,7 +121,7 @@ not stop at a contract, schema, host, or documentation change.
 | [GEN-03](generator-dx/GEN-03-startup-handler-verification.md) | Startup handler-registration verification | Complete |
 | [GEN-05](generator-dx/GEN-05-rebus-cancellation-token.md) | Flow `CancellationToken` through Rebus wrappers | Complete |
 | [GEN-06](generator-dx/GEN-06-grpc-user-context-interceptor.md) | gRPC user-context interceptor | Cancelled |
-| [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md) | Rename HTTP binding attributes | In progress |
+| [GEN-11](generator-dx/GEN-11-rename-http-binding-attributes.md) | Rename HTTP binding attributes | Complete |
 | [GEN-12](generator-dx/GEN-12-evolvable-enums.md) | Evolve enum contracts without breaking strict clients | Complete |
 | [FW-10](framework/FW-10-remove-http-auth-metadata.md) | Remove authentication and authorization metadata from HTTP contracts | Complete |
 | [FW-11](framework/FW-11-configure-version-prefix-at-mapping.md) | Configure the common version route prefix at mapping time | Complete |
@@ -144,7 +144,7 @@ Decisions and evidence are in
 | --- | --- | --- |
 | [HST-01](aspnetcore/HST-01-composable-minimal-api-startup.md) | Composable Minimal API startup | Complete |
 | [HST-02](aspnetcore/HST-02-security-headers-hsts-profile.md) | Security headers and HSTS defaults | Complete |
-| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling | In progress |
+| [HST-03](aspnetcore/HST-03-path-base-validation.md) | Strict forwarded-prefix handling | Complete |
 | [HST-04](aspnetcore/HST-04-health-endpoint.md) | Default health endpoint | Complete |
 | [HST-05](aspnetcore/HST-05-response-compression.md) | Default response compression | Complete |
 | [HST-06](aspnetcore/HST-06-nlog-process-boundary.md) | NLog process boundary | Complete |
@@ -163,10 +163,10 @@ The architecture and accepted decisions are in
 | [AZF-01](azure-functions/AZF-01-foundation.md) | Package and shared HTTP model foundation | Complete |
 | [AZF-02](azure-functions/AZF-02-trigger-generator.md) | Trigger generation, routing, and version expansion | Complete |
 | [AZF-03](azure-functions/AZF-03-binding-dispatch.md) | JSON/route/query binding and scoped dispatch | Complete |
-| [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization, and user context | In progress |
-| [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails, and ETags | In progress |
+| [AZF-04](azure-functions/AZF-04-auth-user-context.md) | Authentication, authorization, and user context | Complete |
+| [AZF-05](azure-functions/AZF-05-results-problems-etags.md) | Results, ProblemDetails, and ETags | Complete |
 | [AZF-06](azure-functions/AZF-06-files-streaming.md) | Uploads, downloads, and JSON streaming | Complete |
-| [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | In progress |
+| [AZF-07](azure-functions/AZF-07-one-way-rebus.md) | Outbound-only Rebus composition | Complete |
 | [AZF-08](azure-functions/AZF-08-sample-host.md) | Mediator sample Functions host | Complete |
 | [AZF-09](azure-functions/AZF-09-openapi.md) | OpenAPI | Deferred |
 | [AZF-10](azure-functions/AZF-10-boundary-parity.md) | Core Tools tests, parity matrix, and guide | Complete |
@@ -208,6 +208,26 @@ transport or starting a Rebus worker/outbox processor in a Function app.
 | [AZM-22](azure-functions/AZM-22-fluent-messaging-composition.md) | Fluent messaging composition | Complete |
 | [AZM-23](azure-functions/AZM-23-multiline-messaging-api-surface.md) | Multiline messaging API surface | Complete |
 
+## Messaging throughput (AMF)
+
+The design baseline is
+[`../../messaging-throughput-prd.md`](../../messaging-throughput-prd.md).
+These tasks replace the pre-release receive seam and add the processor-host
+runtime. They do not touch the send path, the Azure Functions receiver model, or
+`Ark.Tools.Rebus`, which remains a separate alternative stack.
+
+| Task | Title | Status |
+| --- | --- | --- |
+| [AMF-01](messaging/AMF-01-receive-seam-split.md) | Send/receive seam split: pull message source | Pending |
+| [AMF-02](messaging/AMF-02-processor-host.md) | `MessagingProcessorHost`: bounded buffer, credits and worker pool | Pending |
+| [AMF-03](messaging/AMF-03-adaptive-backoff.md) | Idle, error and no-capacity backoff | Pending |
+| [AMF-04](messaging/AMF-04-shared-lock-renewer.md) | Shared lock renewer driven by native lock duration | Pending |
+| [AMF-05](messaging/AMF-05-adaptive-concurrency.md) | Adaptive concurrency with an I/O-bound guard | Pending |
+| [AMF-06](messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive and pop-receipt race fix | Pending |
+| [AMF-07](messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver` | Pending |
+| [AMF-08](messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration and provisioning | Pending |
+| [AMF-09](messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics, guide, sample walkthrough and throughput smoke test | Pending |
+
 ## Testing redesign
 
 The architecture and accepted decisions are in
@@ -222,13 +242,13 @@ The architecture and accepted decisions are in
 | [TST-04](testing/TST-04-grpc-hosting.md) | Prove generated gRPC hosting | Complete |
 | [TST-05](testing/TST-05-rebus-hosting.md) | Prove generated Rebus hosting | Complete |
 | [TST-06](testing/TST-06-other-framework-hosts.md) | Keep other framework hosts under `tests/` | Complete |
-| [APP-01](testing/APP-01-application-test-seam.md) | Expose a direct application composition test seam | In progress |
+| [APP-01](testing/APP-01-application-test-seam.md) | Expose a direct application composition test seam | Complete |
 | [APP-02](testing/APP-02-reqnroll-dispatch.md) | Rewrite Reqnroll lifecycle and dispatch steps | Complete |
 | [APP-03](testing/APP-03-synchronous-application-behavior.md) | Cover synchronous application behavior | Complete |
 | [APP-04](testing/APP-04-rebus-application-workflows.md) | Exercise asynchronous workflows through in-memory Rebus | Complete |
 | [APP-05](testing/APP-05-sql-and-inmemory-stores.md) | Run the application suite against SQL and in-memory stores | Complete |
 | [APP-06](testing/APP-06-remove-boundary-tests.md) | Remove obsolete application boundary tests and dependencies | Complete |
-| [APP-07](testing/APP-07-request-dto-composition.md) | Adopt composed request and DTO contracts | In progress |
+| [APP-07](testing/APP-07-request-dto-composition.md) | Adopt composed request and DTO contracts | Complete |
 | [APP-08](testing/APP-08-context-factory-architecture.md) | Replace Stores with context factories and domain services | Complete |
 | [APP-09](testing/APP-09-inmemory-outbox.md) | Keep transactional outbox parity in test profiles | Complete |
 | [APP-10](testing/APP-10-scenario-scoped-external-mocks.md) | Scenario-scoped external mocks and application failure observation | Complete |

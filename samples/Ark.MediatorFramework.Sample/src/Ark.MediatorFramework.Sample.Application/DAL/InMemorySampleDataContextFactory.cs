@@ -83,7 +83,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(
-            GetAuditsQuery query,
+            GetAuditsQuery.V1 query,
             CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(query);

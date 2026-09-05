@@ -31,6 +31,7 @@ public sealed record UploadGreetingCardsRequest : IRequest<UploadCardsResponse>
     public IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
 }
 ```
+Source: [`AttachmentContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/AttachmentContracts.cs)
 
 Send `multipart/form-data` with the files and route value. The generated
 endpoint rejects too many files, an oversized request, or a content type outside
@@ -42,6 +43,7 @@ curl --request POST 'https://api.example.test/api/v1/greeting-cards/3fa85f64-571
   --form 'files=@front.png;type=image/png' \
   --form 'files=@back.jpg;type=image/jpeg'
 ```
+Source: [`BookSteps.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Steps/BookSteps.cs)
 
 For five files with `MaxFileCount = 4`, the generated HTTP response is:
 
@@ -52,6 +54,7 @@ For five files with `MaxFileCount = 4`, the generated HTTP response is:
   "detail": "The number of uploaded files exceeds the configured limit of 4."
 }
 ```
+Source: [`BookSteps.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Steps/BookSteps.cs)
 
 **Outcome:** the handler receives ordered, readable attachments and can store
 them without knowing whether the caller used an HTTP form or generated gRPC

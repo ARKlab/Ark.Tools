@@ -16,6 +16,12 @@ namespace Ark.Tools.MediatorFramework.ApiSurface;
 [Generator(LanguageNames.CSharp)]
 public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 {
+    private static readonly SymbolDisplayFormat _typeNameFormat = new(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypes,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+            | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
     private const string Http = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
     private const string Grpc = "Ark.Tools.MediatorFramework.GrpcMethodAttribute";
     private const string GrpcService = "Ark.Tools.MediatorFramework.GrpcServiceAttribute";
@@ -218,10 +224,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         foreach (var type in types)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            // ponytail: MinimallyQualifiedFormat == Name for non-generic non-nested types; generic
-            // response types are interfaces/collections and never get a CONTRACT header, so mismatch
-            // is not reachable in practice. Upgrade path: use FullyQualifiedFormat + strip namespace.
-            var key = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+            var key = TypeName(type);
             if (!locBuilder.ContainsKey(key))
                 locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
             AddType(lines, messagingBlocks, locBuilder, type, networkMemberships);
@@ -505,7 +508,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             && message is null && @event is null && participant is null && network is null)
             return;
 
-        var request = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var request = TypeName(type);
         AddMessagingLines(messagingBlocks, locBuilder, type, message, @event, participant, network, networkMemberships);
         if (message is not null || @event is not null || participant is not null || network is not null)
         {
@@ -542,9 +545,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         if (result is INamedTypeSymbol resultType && resultType.TypeKind == TypeKind.Class
             && !SymbolEqualityComparer.Default.Equals(resultType, type))
         {
-            lines.Add($"CONTRACT {resultType.Name}");
+            var resultName = TypeName(resultType);
+            lines.Add($"CONTRACT {resultName}");
             foreach (var member in AllProperties(resultType))
-                AddContract(lines, resultType.Name, member, string.Empty, visited);
+                AddContract(lines, resultName, member, string.Empty, visited);
         }
         else
         {
@@ -887,7 +891,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     }
 
     private static string TypeName(ITypeSymbol type) =>
-        type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).Replace(" ", string.Empty);
+        type.ToDisplayString(_typeNameFormat).Replace(" ", string.Empty);
 
     private static string DefaultValue(IPropertySymbol property)
     {

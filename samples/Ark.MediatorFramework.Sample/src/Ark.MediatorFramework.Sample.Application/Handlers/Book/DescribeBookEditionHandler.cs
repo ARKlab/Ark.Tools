@@ -6,11 +6,11 @@ using Ark.Tools.Solid;
 namespace Ark.MediatorFramework.Sample.Application.Handlers;
 
 /// <summary>Describes a polymorphic Book edition without transport dependencies.</summary>
-public sealed class DescribeBookEditionHandler : IRequestHandler<DescribeBookEditionRequest, BookEditionDescription>
+public sealed class DescribeBookEditionHandler : IRequestHandler<DescribeBookEditionRequest.V1, BookEditionDescription>
 {
     /// <inheritdoc />
     public async Task<BookEditionDescription> ExecuteAsync(
-        DescribeBookEditionRequest request,
+        DescribeBookEditionRequest.V1 request,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);

@@ -51,28 +51,37 @@ public sealed record BookPrintProcessResponse
 }
 
 /// <summary>Starts a background print process for a book.</summary>
-public sealed record CreateBookPrintProcessRequest :
-    IRequest<CreateBookPrintProcessRequest, BookPrintProcessResponse>
+public static class CreateBookPrintProcessRequest
 {
-    /// <summary>Gets the identifier of the book to print.</summary>
-    public Guid BookId { get; init; }
+    /// <summary>Version one of the book print-process creation request.</summary>
+    public sealed record V1 : IRequest<V1, BookPrintProcessResponse>
+    {
+        /// <summary>Gets the identifier of the book to print.</summary>
+        public Guid BookId { get; init; }
 
-    /// <summary>Gets whether the process should report an error.</summary>
-    public bool ShouldFail { get; init; }
+        /// <summary>Gets whether the process should report an error.</summary>
+        public bool ShouldFail { get; init; }
+    }
 }
 
 /// <summary>Reads a book print process by identifier.</summary>
-public sealed record GetBookPrintProcessQuery :
-    IQuery<GetBookPrintProcessQuery, BookPrintProcessResponse>
+public static class GetBookPrintProcessQuery
 {
-    /// <summary>Gets the print-process identifier.</summary>
-    public Guid Id { get; init; }
+    /// <summary>Version one of the book print-process query.</summary>
+    public sealed record V1 : IQuery<V1, BookPrintProcessResponse>
+    {
+        /// <summary>Gets the print-process identifier.</summary>
+        public Guid Id { get; init; }
+    }
 }
 
 /// <summary>Cancels a pending or running book print process.</summary>
-public sealed record CancelBookPrintProcessRequest :
-    IRequest<CancelBookPrintProcessRequest, BookPrintProcessResponse>
+public static class CancelBookPrintProcessRequest
 {
-    /// <summary>Gets the print-process identifier.</summary>
-    public Guid Id { get; init; }
+    /// <summary>Version one of the book print-process cancellation request.</summary>
+    public sealed record V1 : IRequest<V1, BookPrintProcessResponse>
+    {
+        /// <summary>Gets the print-process identifier.</summary>
+        public Guid Id { get; init; }
+    }
 }

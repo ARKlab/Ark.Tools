@@ -26,6 +26,7 @@ app.MapPost("/legacy/greeting", async (
     return Results.Ok(response);
 });
 ```
+Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 **Outcome:** the legacy endpoint owns its unusual binding and response, while
 the application operation retains its normal validation, authorization, and
