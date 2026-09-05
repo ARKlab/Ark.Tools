@@ -1,0 +1,85 @@
+// Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+namespace Ark.Tools.Compliance;
+
+/// <summary>Marks a readonly partial string value object for safe generated rendering.</summary>
+/// <typeparam name="T">The underlying value type; only <see cref="string"/> is supported.</typeparam>
+/// <remarks>
+/// Serialization support is not declared here: the generated type implements
+/// <see cref="ISensitiveValue{TSelf}"/>, and each serialization library is wired by a
+/// dedicated adapter package through <see cref="ISensitiveValueSerializerRegistration"/>.
+/// Only the in-box <c>System.Text.Json</c> converter and the <c>TypeConverter</c> are
+/// applied by the generator, because both ship with the framework.
+/// </remarks>
+[AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+public sealed class SensitiveValueObjectAttribute<T> : Attribute
+{
+    /// <summary>Initializes the attribute.</summary>
+    /// <param name="redaction">The default redaction mode.</param>
+    public SensitiveValueObjectAttribute(ArkRedaction redaction = ArkRedaction.Erase)
+    {
+        Redaction = redaction;
+    }
+
+    /// <summary>Gets the default redaction mode.</summary>
+    public ArkRedaction Redaction { get; }
+}
+
+/// <summary>Represents the result of validating a sensitive value object.</summary>
+public readonly struct ValidationResult : IEquatable<ValidationResult>
+{
+    private ValidationResult(bool isValid, string? errorMessage)
+    {
+        IsValid = isValid;
+        ErrorMessage = errorMessage;
+    }
+
+    /// <summary>Gets a successful validation result.</summary>
+    public static ValidationResult Ok => new(true, null);
+
+    /// <summary>Creates a failed validation result.</summary>
+    /// <param name="errorMessage">A safe error message that does not contain the input value.</param>
+    public static ValidationResult Invalid(string errorMessage)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(errorMessage);
+        return new ValidationResult(false, errorMessage);
+    }
+
+    /// <summary>Gets whether validation succeeded.</summary>
+    public bool IsValid { get; }
+
+    /// <summary>Gets the safe validation error, when validation failed.</summary>
+    public string? ErrorMessage { get; }
+
+    /// <inheritdoc />
+    public bool Equals(ValidationResult other)
+    {
+        return IsValid == other.IsValid
+            && string.Equals(ErrorMessage, other.ErrorMessage, StringComparison.Ordinal);
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        return obj is ValidationResult other && Equals(other);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(IsValid, ErrorMessage);
+    }
+
+    /// <summary>Compares validation results.</summary>
+    public static bool operator ==(ValidationResult left, ValidationResult right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>Compares validation results.</summary>
+    public static bool operator !=(ValidationResult left, ValidationResult right)
+    {
+        return !left.Equals(right);
+    }
+}
