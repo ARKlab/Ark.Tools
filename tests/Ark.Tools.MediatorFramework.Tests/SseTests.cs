@@ -217,7 +217,17 @@ public sealed class SseTests
         context.RequestAborted = abort.Token;
 
         var result = ArkSse.Poll(context, new Probe(), settings, changeToken, abort.Token);
-        return await _executeAsync(context, result).ConfigureAwait(false);
+        try
+        {
+            return await _executeAsync(context, result).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (context.RequestServices is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            else if (context.RequestServices is IDisposable disposable)
+                disposable.Dispose();
+        }
     }
 
     private static async Task<string> _executeAsync(HttpContext context, IResult result)
@@ -256,9 +266,8 @@ public sealed class SseTests
         var events = new List<(string? Event, string? Id)>();
         string? name = null;
         string? id = null;
-        foreach (var line in body.Split('\n'))
+        foreach (var text in body.Split('\n').Select(static line => line.TrimEnd('\r')))
         {
-            var text = line.TrimEnd('\r');
             if (text.Length == 0)
             {
                 if (name is not null)

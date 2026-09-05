@@ -3,6 +3,7 @@
 
 using Ark.Tools.Solid;
 
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,9 +41,11 @@ public sealed class ArkSseSettings
         string eventName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
+        ArgumentOutOfRangeException.ThrowIfLessThan(interval, TimeSpan.Zero);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(minimumInterval, TimeSpan.Zero);
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumInterval, minimumInterval);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(heartbeat, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxConnection, TimeSpan.Zero);
 
         Interval = interval;
         MinimumInterval = minimumInterval;
@@ -316,65 +319,101 @@ public static class ArkSse
         where TQuery : class, IQuery<TQuery, TResponse>
     {
         using var scope = lease;
-        using var cancellation = _connectionCancellation(httpContext, settings, cancellationToken);
+        using var cancellation = await _connectionCancellation(httpContext, settings, cancellationToken)
+            .ConfigureAwait(false);
         var processor = httpContext.RequestServices
             .GetRequiredService<Container>()
             .GetInstance<IQueryProcessor>();
         var interval = ResolveInterval(httpContext, settings);
         // PeriodicTimer keeps at most one pending tick, so a slow client skips polls instead of
         // queueing them: there is no backpressure on an SSE connection.
-        using var timer = new PeriodicTimer(interval);
+        using var pollTimer = new PeriodicTimer(interval);
+        using var heartbeatTimer = new PeriodicTimer(settings.Heartbeat);
         var lastToken = _lastEventId(httpContext);
         byte[]? lastPayload = null;
         var reconnection = interval;
         var emitted = false;
         var lastEmit = Stopwatch.GetTimestamp();
+        Task<TResponse>? pendingQuery = processor.ExecuteAsync<TQuery, TResponse>(query, cancellation.Token);
+        Task<bool>? pendingPoll = null;
+        var pendingHeartbeat = heartbeatTimer.WaitForNextTickAsync(cancellation.Token).AsTask();
 
         while (true)
         {
-            TResponse result;
-            try
-            {
-                result = await processor.ExecuteAsync<TQuery, TResponse>(query, cancellation.Token)
-                    .ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                yield break;
-            }
+            var completed = pendingQuery is null
+                ? await Task.WhenAny(pendingPoll!, pendingHeartbeat).ConfigureAwait(false)
+                : await Task.WhenAny(pendingQuery, pendingHeartbeat).ConfigureAwait(false);
 
-            var token = changeToken?.Invoke(result);
-            var payload = changeToken is null && !settings.EmitEveryTick
-                ? _serialize(httpContext, result)
-                : null;
-            var changed = settings.EmitEveryTick
-                || (changeToken is null
-                    ? lastPayload is null || !lastPayload.AsSpan().SequenceEqual(payload)
-                    : !string.Equals(token, lastToken, StringComparison.Ordinal));
-
-            if (changed)
+            if (completed == pendingHeartbeat)
             {
-                lastToken = token;
-                lastPayload = payload;
-                yield return new SseItem<TResponse>(result, settings.EventName)
+                bool heartbeat;
+                try
                 {
-                    EventId = token,
-                    ReconnectionInterval = emitted ? null : reconnection,
-                };
-                emitted = true;
-                lastEmit = Stopwatch.GetTimestamp();
+                    heartbeat = await pendingHeartbeat.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    yield break;
+                }
+
+                if (!heartbeat)
+                    yield break;
+
+                if (Stopwatch.GetElapsedTime(lastEmit) >= settings.Heartbeat)
+                {
+                    yield return new SseItem<TResponse>(default!, HeartbeatEventName);
+                    emitted = true;
+                    lastEmit = Stopwatch.GetTimestamp();
+                }
+
+                pendingHeartbeat = heartbeatTimer.WaitForNextTickAsync(cancellation.Token).AsTask();
+                continue;
             }
-            else if (Stopwatch.GetElapsedTime(lastEmit) >= settings.Heartbeat)
+
+            if (pendingQuery is not null)
             {
-                yield return new SseItem<TResponse>(default!, HeartbeatEventName);
-                emitted = true;
-                lastEmit = Stopwatch.GetTimestamp();
+                TResponse result;
+                try
+                {
+                    result = await pendingQuery.ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    yield break;
+                }
+
+                pendingQuery = null;
+                pendingPoll = pollTimer.WaitForNextTickAsync(cancellation.Token).AsTask();
+
+                var token = changeToken?.Invoke(result);
+                var payload = changeToken is null && !settings.EmitEveryTick
+                    ? _serialize(httpContext, result)
+                    : null;
+                var changed = settings.EmitEveryTick
+                    || (changeToken is null
+                        ? lastPayload is null || !lastPayload.AsSpan().SequenceEqual(payload)
+                        : !string.Equals(token, lastToken, StringComparison.Ordinal));
+
+                if (changed)
+                {
+                    lastToken = token;
+                    lastPayload = payload;
+                    yield return new SseItem<TResponse>(result, settings.EventName)
+                    {
+                        EventId = token,
+                        ReconnectionInterval = emitted ? null : reconnection,
+                    };
+                    emitted = true;
+                    lastEmit = Stopwatch.GetTimestamp();
+                }
+
+                continue;
             }
 
             bool next;
             try
             {
-                next = await timer.WaitForNextTickAsync(cancellation.Token).ConfigureAwait(false);
+                next = await pendingPoll!.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -383,6 +422,9 @@ public static class ArkSse
 
             if (!next)
                 yield break;
+
+            pendingPoll = null;
+            pendingQuery = processor.ExecuteAsync<TQuery, TResponse>(query, cancellation.Token);
         }
     }
 
@@ -395,12 +437,13 @@ public static class ArkSse
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var scope = lease;
-        using var cancellation = _connectionCancellation(httpContext, settings, cancellationToken);
+        using var cancellation = await _connectionCancellation(httpContext, settings, cancellationToken)
+            .ConfigureAwait(false);
         await foreach (var item in source.WithCancellation(cancellation.Token).ConfigureAwait(false))
             yield return new SseItem<TItem>(item, settings.EventName);
     }
 
-    private static CancellationTokenSource _connectionCancellation(
+    private static async Task<CancellationTokenSource> _connectionCancellation(
         HttpContext httpContext,
         ArkSseSettings settings,
         CancellationToken cancellationToken)
@@ -408,7 +451,7 @@ public static class ArkSse
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             httpContext.RequestAborted);
-        var lifetime = _connectionLifetime(httpContext, settings);
+        var lifetime = await _connectionLifetime(httpContext, settings).ConfigureAwait(false);
         if (lifetime is { } deadline)
             cancellation.CancelAfter(deadline);
         return cancellation;
@@ -418,14 +461,28 @@ public static class ArkSse
     /// Returns the remaining connection lifetime: the smaller of the declared cap and the time left on
     /// the caller's bearer token, because the principal is captured once and never re-authenticated.
     /// </summary>
-    private static TimeSpan? _connectionLifetime(HttpContext httpContext, ArkSseSettings settings)
+    private static async Task<TimeSpan?> _connectionLifetime(HttpContext httpContext, ArkSseSettings settings)
     {
         TimeSpan? lifetime = settings.MaxConnection > TimeSpan.Zero ? settings.MaxConnection : null;
-        var expiration = httpContext.User?.FindFirst("exp")?.Value;
-        if (expiration is not null
-            && long.TryParse(expiration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var unixSeconds))
+        DateTimeOffset? expiration = null;
+        var authentication = httpContext.RequestServices.GetService<IAuthenticationService>();
+        if (authentication is not null)
         {
-            var remaining = DateTimeOffset.FromUnixTimeSeconds(unixSeconds) - DateTimeOffset.UtcNow;
+            var result = await authentication.AuthenticateAsync(httpContext, scheme: null).ConfigureAwait(false);
+            expiration = result.Properties?.ExpiresUtc;
+        }
+
+        if (expiration is null)
+        {
+            var expirationClaim = httpContext.User?.FindFirst("exp")?.Value;
+            if (expirationClaim is not null
+                && long.TryParse(expirationClaim, NumberStyles.Integer, CultureInfo.InvariantCulture, out var unixSeconds))
+                expiration = DateTimeOffset.FromUnixTimeSeconds(unixSeconds);
+        }
+
+        if (expiration is { } expiresUtc)
+        {
+            var remaining = expiresUtc - DateTimeOffset.UtcNow;
             if (remaining < TimeSpan.Zero)
                 remaining = TimeSpan.Zero;
             if (lifetime is null || remaining < lifetime)
