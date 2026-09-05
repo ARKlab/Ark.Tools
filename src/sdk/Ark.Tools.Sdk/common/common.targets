@@ -19,7 +19,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.400" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsNetAnalyzers)' != 'false'" />
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
     <PackageReference Include="Meziantou.Analyzer" Version="3.0.205" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsVisualStudioThreading)' == 'true'" />
     <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
   </ItemGroup>
 

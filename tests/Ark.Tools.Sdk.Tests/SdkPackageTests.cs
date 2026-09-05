@@ -97,9 +97,10 @@ public sealed class SdkPackageTests
             ["Microsoft.CodeAnalysis.NetAnalyzers"] = "10.0.400",
             ["Microsoft.CodeAnalysis.BannedApiAnalyzers"] = "4.14.0",
             ["Meziantou.Analyzer"] = "3.0.205",
-            ["Microsoft.VisualStudio.Threading.Analyzers"] = "18.7.23",
             ["ErrorProne.NET.CoreAnalyzers"] = "0.1.2"
         };
+
+    private const string _visualStudioThreadingAnalyzerVersion = "18.7.23";
 
     private static readonly string[] _boundaryProperties =
     [
@@ -721,7 +722,28 @@ public sealed class SdkPackageTests
             {
                 Assert.AreEqual(analyzer.Value, dependencies.GetProperty(analyzer.Key).GetProperty("resolved").GetString(), analyzer.Key);
             }
+            Assert.IsFalse(dependencies.TryGetProperty("Microsoft.VisualStudio.Threading.Analyzers", out _));
         }
+
+        var threadingOptInRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            feed,
+            "threading-opt-in",
+            "Consumer.csproj",
+            _createSdkCSharpProject(),
+            directoryProperties: "<EnableArkToolsVisualStudioThreading>true</EnableArkToolsVisualStudioThreading>");
+        await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(threadingOptInRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(threadingOptInRoot, "NuGet.Config")}\"",
+            _createSdkEnvironment(fixtureRoot));
+        using (var optInLockJson = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Join(threadingOptInRoot, "packages.lock.json")).ConfigureAwait(false)))
+        {
+            var dependencies = optInLockJson.RootElement.GetProperty("dependencies").GetProperty("net10.0");
+            Assert.AreEqual(
+                _visualStudioThreadingAnalyzerVersion,
+                dependencies.GetProperty("Microsoft.VisualStudio.Threading.Analyzers").GetProperty("resolved").GetString());
+        }
+
         lockedEnvironment["CI"] = "true";
         Directory.Delete(Path.Join(lockedRoot, "obj"), true);
         await _run(

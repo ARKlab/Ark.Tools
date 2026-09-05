@@ -269,7 +269,7 @@ upstream default changes.
 | `Ark.Tools.NetAnalyzers.globalconfig` | Non-SQL; `EnableArkToolsNetAnalyzers` | Configures built-in and .NET analyzers if present. |
 | `Ark.Tools.MeziantouAnalyzer.globalconfig` | Non-SQL; `EnableArkToolsMeziantouAnalyzer` | Inert if Meziantou.Analyzer is absent. |
 | `Ark.Tools.ErrorProne.globalconfig` | Non-SQL; `EnableArkToolsErrorProne` | Inert if ErrorProne is absent. |
-| `Ark.Tools.VisualStudioThreading.globalconfig` | Non-SQL; `EnableArkToolsVisualStudioThreading` | Inert if VS Threading analyzers are absent. |
+| `Ark.Tools.VisualStudioThreading.globalconfig` | Non-SQL; `EnableArkToolsVisualStudioThreading=true` | Opt-in VS Threading analyzer configuration; inert if analyzers are absent. |
 | `Ark.Tools.IdentityModel.globalconfig` | Non-SQL; `EnableArkToolsIdentityModelConfiguration` | Inert if the IdentityModel analyzer is absent. |
 | `Ark.Tools.Core.globalconfig` | Non-SQL; `EnableArkToolsCoreConfiguration` | Inert if the Ark.Tools.Core analyzer is absent. |
 | `BannedSymbols.Ark.txt` | Non-SQL; `EnableArkToolsBannedApi` | Inert if Banned API Analyzers is absent; consumer lists compose. |
@@ -468,7 +468,7 @@ The inventory below was verified against:
 | `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` 4.14.0 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
 | `Meziantou.Analyzer` 3.0.160 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
-| `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
+| `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference when `EnableArkToolsVisualStudioThreading=true`. |
 | `ErrorProne.NET.CoreAnalyzers` 0.1.2 | Private reference; root supports `DisableErrorProneAnalyzers=true` | SDK: exact implicit reference with an independent opt-out. |
 | `.netanalyzers.globalconfig` | 97 CA/IDE severity overrides | Build: package and load as a global analyzer config. |
 | `.meziantou.globalconfig` | 34 MA severity overrides | Build: package and load as a global analyzer config. |
@@ -647,7 +647,7 @@ consumer repository:
   <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.ErrorProne.globalconfig"
                              Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
   <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig"
-                             Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
+                             Condition="'$(EnableArkToolsVisualStudioThreading)' == 'true'" />
   <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.IdentityModel.globalconfig"
                              Condition="'$(EnableArkToolsIdentityModelConfiguration)' != 'false'" />
   <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Core.globalconfig"
