@@ -86,10 +86,10 @@ document the observed concurrency in the sample readme.
 
 ## Acceptance
 
-- [ ] `MessagingProcessorHost` implements receive loop, bounded channel, worker pool and drain.
-- [ ] The credit invariant is enforced and tested.
-- [ ] Prefetch budget derives from concurrency and lock duration.
-- [ ] Native-processor transports bypass the pull runtime entirely.
-- [ ] The [task board](../README.md) status for AMF-02 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] `MessagingProcessorHost` implements receive loop, bounded channel, worker pool and drain.
+- [x] The credit invariant is enforced and tested.
+- [x] Prefetch budget derives from concurrency and lock duration.
+- [x] Native-processor transports bypass the pull runtime entirely.
+- [x] The [task board](../README.md) status for AMF-02 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

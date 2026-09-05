@@ -18,6 +18,9 @@ public sealed class MessagingProcessingOptions
     private double _prefetchMultiplier = 2;
     private double _lockSafetyFactor = 0.5;
     private TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
+    private int? _maximumPrefetch;
+    private TimeSpan _expectedHandlerDuration = TimeSpan.FromSeconds(1);
+    private TimeSpan _receiveWaitTime = TimeSpan.FromSeconds(1);
 
     /// <summary>Gets or sets the initial number of concurrent workers. Defaults to the processor count.</summary>
     public int InitialConcurrency
@@ -97,6 +100,84 @@ public sealed class MessagingProcessingOptions
         }
     }
 
+    /// <summary>Gets or sets the hard upper bound on buffered plus in-flight deliveries.</summary>
+    /// <remarks>Defaults to eight times <see cref="MaximumConcurrency"/> when left unset.</remarks>
+    public int? MaximumPrefetch
+    {
+        get => _maximumPrefetch;
+        set
+        {
+            if (value is not null)
+                ArgumentOutOfRangeException.ThrowIfLessThan(value.Value, 1);
+            _maximumPrefetch = value;
+        }
+    }
+
+    /// <summary>Gets or sets the assumed handler duration used to bound the prefetch buffer. Defaults to one second.</summary>
+    /// <remarks>
+    /// Only used when the transport cannot renew locks, to keep the expected full-buffer drain time
+    /// below <see cref="LockSafetyFactor"/> times the native lock duration.
+    /// </remarks>
+    public TimeSpan ExpectedHandlerDuration
+    {
+        get => _expectedHandlerDuration;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _expectedHandlerDuration = value;
+        }
+    }
+
+    /// <summary>Gets or sets the maximum time a receive waits for the broker. Defaults to one second.</summary>
+    public TimeSpan ReceiveWaitTime
+    {
+        get => _receiveWaitTime;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _receiveWaitTime = value;
+        }
+    }
+
+    /// <summary>Gets the effective hard prefetch ceiling.</summary>
+    /// <returns>The configured <see cref="MaximumPrefetch"/>, or eight times <see cref="MaximumConcurrency"/>.</returns>
+    public int GetEffectiveMaximumPrefetch()
+    {
+        return MaximumPrefetch ?? checked(MaximumConcurrency * 8);
+    }
+
+    /// <summary>Computes the prefetch budget for a concurrency limit and the transport capabilities.</summary>
+    /// <param name="concurrencyLimit">The current concurrency limit.</param>
+    /// <param name="capabilities">The declared receiver capabilities.</param>
+    /// <returns>The maximum number of deliveries that may be buffered plus in flight, at least one.</returns>
+    /// <remarks>
+    /// <c>clamp(ceil(limit x PrefetchMultiplier), limit, MaximumPrefetch)</c>, additionally clamped so a full
+    /// buffer is expected to drain within <see cref="LockSafetyFactor"/> of the native lock duration when the
+    /// transport cannot renew locks.
+    /// </remarks>
+    public int ComputePrefetchBudget(int concurrencyLimit, MessagingReceiverCapabilities capabilities)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(concurrencyLimit, 1);
+        ArgumentNullException.ThrowIfNull(capabilities);
+
+        var budget = (int)Math.Ceiling(concurrencyLimit * PrefetchMultiplier);
+        budget = Math.Clamp(budget, concurrencyLimit, GetEffectiveMaximumPrefetch());
+
+        // The buffer is only lock-unsafe when the transport cannot renew: with renewal the shared
+        // renewer (AMF-04) covers the whole buffered lifetime.
+        if (!capabilities.SupportsLockRenewal && capabilities.NativeLockDuration is { } lockDuration)
+        {
+            // ponytail: a configured ExpectedHandlerDuration instead of a measured EWMA of handler
+            // duration. Ceiling: a workload slower than the estimate can still buffer past the safe
+            // drain time; AMF-05 replaces this term with the measured EWMA.
+            var safeDrain = lockDuration * LockSafetyFactor;
+            var lockBudget = (int)(concurrencyLimit * (safeDrain / ExpectedHandlerDuration));
+            budget = Math.Min(budget, lockBudget);
+        }
+
+        return Math.Max(1, budget);
+    }
+
     /// <summary>Validates the option combination and throws a named diagnostic when impossible.</summary>
     /// <exception cref="MessagingCompositionException">The options cannot be satisfied.</exception>
     public void Validate()
@@ -115,6 +196,14 @@ public sealed class MessagingProcessingOptions
                 MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
                 FormattableString.Invariant(
                     $"InitialConcurrency ({InitialConcurrency}) must be between MinimumConcurrency ({MinimumConcurrency}) and MaximumConcurrency ({MaximumConcurrency})."));
+        }
+
+        if (GetEffectiveMaximumPrefetch() < MaximumConcurrency)
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
+                FormattableString.Invariant(
+                    $"MaximumPrefetch ({GetEffectiveMaximumPrefetch()}) cannot be smaller than MaximumConcurrency ({MaximumConcurrency}); a worker would never receive work."));
         }
     }
 }

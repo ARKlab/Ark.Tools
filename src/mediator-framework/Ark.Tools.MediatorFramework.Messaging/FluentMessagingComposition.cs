@@ -715,88 +715,11 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
                         ctk),
             IncomingSteps,
             _container.GetInstance));
-        _servicesValue.AddSingleton<IHostedService, MessagingReceiveHostedService>();
+        _servicesValue.AddSingleton<IHostedService>(serviceProvider => new MessagingProcessorHost(
+            (IMessagingMessageSource)serviceProvider.GetRequiredService<IMessagingTransport>(),
+            participant.Identity,
+            serviceProvider.GetRequiredService<MessagingDispatcher>().OnDeliveryAsync,
+            serviceProvider.GetService<MessagingProcessingOptions>()));
     }
 
-}
-
-internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisposable
-{
-    private readonly IMessagingMessageSource _source;
-    private readonly MessagingDispatcher _dispatcher;
-    private readonly string _queue;
-    private CancellationTokenSource? _cts;
-    private Task? _loop;
-
-    public MessagingReceiveHostedService(
-        IMessagingTransport transport,
-        MessagingDispatcher dispatcher,
-        MessagingParticipantDescriptor participant)
-    {
-        ArgumentNullException.ThrowIfNull(participant);
-        ArgumentNullException.ThrowIfNull(transport);
-        _source = transport as IMessagingMessageSource
-            ?? throw new MessagingCompositionException(
-                MessagingCompositionDiagnostic.TransportIsNotAMessageSource,
-                FormattableString.Invariant(
-                    $"A processor host requires a transport implementing {nameof(IMessagingMessageSource)}; '{transport.GetType().Name}' does not."));
-        _dispatcher = dispatcher;
-        _queue = participant.Identity;
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        if (_cts is not null)
-            throw new InvalidOperationException("The messaging receive host has already been started.");
-
-        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _cts = cts;
-        _loop = Task.Run(() => _runAsync(cts.Token), CancellationToken.None);
-        return Task.CompletedTask;
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        var cts = _cts;
-        var loop = _loop;
-        _cts = null;
-        _loop = null;
-        if (cts is null)
-            return;
-
-        using var toDispose = cts;
-        await cts.CancelAsync().ConfigureAwait(false);
-        if (loop is null)
-            return;
-
-        try
-        {
-#pragma warning disable VSTHRD003 // The receive loop is intentionally started on the thread pool.
-            await loop.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancellation is expected when stopping the receive loop.
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await StopAsync(CancellationToken.None).ConfigureAwait(false);
-    }
-
-    // ponytail: strictly sequential receive-then-dispatch, i.e. the behaviour of the removed
-    // pump. Ceiling: throughput is 1/(receive + handle + settle); AMF-02 replaces this loop with
-    // MessagingProcessorHost's bounded buffer and worker pool.
-    private async Task _runAsync(CancellationToken ctk)
-    {
-        var maxWait = TimeSpan.FromSeconds(1);
-        while (!ctk.IsCancellationRequested)
-        {
-            var batch = await _source.ReceiveBatchAsync(_queue, 1, maxWait, ctk).ConfigureAwait(false);
-            foreach (var delivery in batch)
-                await _dispatcher.OnDeliveryAsync(delivery, ctk).ConfigureAwait(false);
-        }
-    }
 }

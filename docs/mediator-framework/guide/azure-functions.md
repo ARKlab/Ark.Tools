@@ -240,6 +240,41 @@ fails startup with the `ProcessorHostInTriggeredHost` diagnostic, and composing
 one over a transport that is not a message source fails with
 `TransportIsNotAMessageSource`.
 
+### The processor host
+
+Non-Functions hosts process a participant queue with `MessagingProcessorHost`,
+registered as the receiver `IHostedService`. It is four cooperating parts:
+
+- a **receive loop** that acquires credit, calls `ReceiveBatchAsync` with
+  `min(credit, ReceiverCapabilities.MaximumBatchSize)` and writes deliveries into
+  the buffer;
+- a **bounded buffer** (`Channel<IMessagingLockedDelivery>` with
+  `BoundedChannelFullMode.Wait`) sized to the prefetch budget;
+- a **worker pool** of `InitialConcurrency` async workers dispatching through the
+  unchanged `MessagingDispatcher`, with its existing per-delivery scope,
+  settlement and retry semantics;
+- a **credit accountant** enforcing `inFlight + buffered + requested ≤
+  PrefetchBudget`.
+
+Credit is released **after settlement**, not after the handler returns, so a slow
+settle cannot cause over-fetching. When the budget is exhausted the receive loop
+blocks on credit and makes no broker call at all.
+
+The prefetch budget is `clamp(ceil(limit × PrefetchMultiplier), limit,
+MaximumPrefetch)`. When the transport cannot renew locks it is additionally
+clamped so a full buffer is expected to drain within `LockSafetyFactor ×
+NativeLockDuration`, using `ExpectedHandlerDuration` as the per-message estimate.
+`MaximumPrefetch` defaults to eight times `MaximumConcurrency`; a value below
+`MaximumConcurrency` fails composition with `ProcessingOptionsInvalid`.
+
+Shutdown is stop-receiving → drain → abandon: the receive loop is cancelled
+first so the buffer can only shrink, workers finish in-flight and buffered work
+within `ShutdownTimeout`, then anything still unprocessed is abandoned so
+redelivery is immediate rather than lock-expiry-delayed.
+
+Concurrency is fixed at `InitialConcurrency` for now; backoff, lock renewal and
+adaptive concurrency arrive with the later tasks in this series.
+
 Producer-only hosts compose the generated descriptor without taking a Functions
 dependency:
 
