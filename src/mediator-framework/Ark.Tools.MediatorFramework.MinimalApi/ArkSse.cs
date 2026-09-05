@@ -299,7 +299,7 @@ public static class ArkSse
 
     private static IResult _unavailable(HttpContext httpContext, ArkSseSettings settings)
     {
-        var retryAfter = settings.Interval > TimeSpan.Zero ? settings.Interval : settings.MinimumInterval;
+        var retryAfter = ResolveInterval(httpContext, settings);
         httpContext.Response.Headers.RetryAfter =
             ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
         return Results.Problem(
