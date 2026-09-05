@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>MessagePack formatters for Ark.Tools.Compliance sensitive value objects</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;MessagePack</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <!-- Trimming configuration -->
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <!--===============================================================================-->
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
+
+</Project>

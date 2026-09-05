@@ -8,6 +8,11 @@
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.MessagePack/Ark.Tools.Compliance.MessagePack.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.NewtonsoftJson/Ark.Tools.Compliance.NewtonsoftJson.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Protobuf/Ark.Tools.Compliance.Protobuf.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Reqnroll/Ark.Tools.Compliance.Reqnroll.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.Compliance.OpenApi/Ark.Tools.Compliance.OpenApi.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="true" />

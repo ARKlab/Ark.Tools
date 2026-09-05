@@ -138,6 +138,7 @@ public abstract class ArkStartupWebApiCommon
             c.DocInclusionPredicate(static (docName, apiDesc) => apiDesc.GroupName == docName);
 
             c.MapNodaTimeTypes();
+            c.MapArkComplianceTypes();
 
             c.OperationFilter<SupportFlaggedEnums>();
             c.OperationFilter<SwaggerDefaultValues>();
