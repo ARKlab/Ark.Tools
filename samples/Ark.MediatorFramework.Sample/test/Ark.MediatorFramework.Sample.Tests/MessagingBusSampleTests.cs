@@ -98,8 +98,7 @@ public sealed class MessagingBusSampleTests
             new MessagingPayloadReceiver(dataBus, network),
             retryPolicy,
             SampleMessagingParticipant.DispatchAsync,
-            SampleMessagingParticipant.DispatchFailedAsync,
-            lockRenewalInterval: TimeSpan.FromSeconds(1));
+            SampleMessagingParticipant.DispatchFailedAsync);
         var settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await using var pump = new TestMessagePump(
             transport,

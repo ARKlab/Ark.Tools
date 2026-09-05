@@ -86,10 +86,10 @@ exercises the path end to end.
 
 ## Acceptance
 
-- [ ] A single host-scoped renewer replaces the per-delivery loop.
-- [ ] Renewal starts at buffer entry and follows transport-reported lock state.
-- [ ] Renewal failure cancels the handler and is recorded operationally.
-- [ ] Non-renewable transports are validated at composition time.
-- [ ] The [task board](../README.md) status for AMF-04 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] A single host-scoped renewer replaces the per-delivery loop.
+- [x] Renewal starts at buffer entry and follows transport-reported lock state.
+- [x] Renewal failure cancels the handler and is recorded operationally.
+- [x] Non-renewable transports are validated at composition time.
+- [x] The [task board](../README.md) status for AMF-04 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

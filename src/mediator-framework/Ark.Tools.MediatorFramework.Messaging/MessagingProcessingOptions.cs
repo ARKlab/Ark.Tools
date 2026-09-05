@@ -24,6 +24,9 @@ public sealed class MessagingProcessingOptions
     private TimeSpan _minPollInterval = TimeSpan.FromMilliseconds(50);
     private TimeSpan _maxPollInterval = TimeSpan.FromSeconds(5);
     private TimeSpan _errorCooldown = TimeSpan.FromSeconds(10);
+    private TimeSpan _renewalSafetyMargin = TimeSpan.FromSeconds(10);
+    private TimeSpan _renewalScanInterval = TimeSpan.FromSeconds(1);
+    private int _maximumRenewalBatch = 64;
 
     /// <summary>Gets or sets the initial number of concurrent workers. Defaults to the processor count.</summary>
     public int InitialConcurrency
@@ -176,6 +179,44 @@ public sealed class MessagingProcessingOptions
         {
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
             _errorCooldown = value;
+        }
+    }
+
+    /// <summary>Gets or sets the smallest margin kept before a lock expires. Defaults to ten seconds.</summary>
+    /// <remarks>
+    /// A delivery is renewed when <c>now &gt;= lockedUntil - max(RenewalSafetyMargin, remaining / 2)</c>,
+    /// so the cadence follows the entity's lock duration rather than a constant.
+    /// </remarks>
+    public TimeSpan RenewalSafetyMargin
+    {
+        get => _renewalSafetyMargin;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _renewalSafetyMargin = value;
+        }
+    }
+
+    /// <summary>Gets or sets how often the single renewal timer scans for due locks. Defaults to one second.</summary>
+    public TimeSpan RenewalScanInterval
+    {
+        get => _renewalScanInterval;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _renewalScanInterval = value;
+        }
+    }
+
+    /// <summary>Gets or sets how many locks a single renewal tick may renew. Defaults to sixty-four.</summary>
+    /// <remarks>Bounding the batch keeps a large in-flight set from stalling the timer.</remarks>
+    public int MaximumRenewalBatch
+    {
+        get => _maximumRenewalBatch;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            _maximumRenewalBatch = value;
         }
     }
 

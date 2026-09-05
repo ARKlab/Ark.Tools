@@ -299,6 +299,35 @@ the host sleeps the jittered interval, which takes an idle queue from roughly
 four requests per second down to a fraction of one. The transport itself never
 sleeps: it waits only as instructed by `maxWait`.
 
+### Lock renewal
+
+Every host owns a single lock renewer, not one timer per delivery. A delivery is
+registered the moment it enters the prefetch buffer — not when a worker picks it
+up — so a message that waits behind the concurrency limit keeps its lock alive
+instead of expiring in the buffer.
+
+The renewer wakes on a fixed `RenewalScanInterval` (1 s), renews at most
+`MaximumRenewalBatch` (64) locks per scan, and treats a lock as due when
+
+```
+now >= lockedUntil - max(RenewalSafetyMargin, (lockedUntil - acquiredAt) / 2)
+```
+
+so a long lock is renewed at roughly its halfway point while a short lock still
+gets the full `RenewalSafetyMargin` (10 s) of headroom. Renewal is serialised
+against settlement: a renewal never overlaps a complete, abandon or dead-letter
+on the same delivery, which matters for Storage Queues where renewing rotates
+the pop receipt that settlement needs. When a renewal fails, the delivery's
+handler token is cancelled — the lock is gone, and continuing to work on it
+would only produce a duplicate.
+
+Transports that cannot renew (`SupportsLockRenewal == false`) are validated at
+composition time instead of at runtime: if `MaximumHandlerDuration` plus the
+worst-case buffer wait implied by `PrefetchBudget`, `Concurrency` and
+`ExpectedHandlerDuration` exceeds the transport's `NativeLockDuration`, the
+composition fails with `ProcessingOptionsInvalid` rather than letting locks
+expire in production.
+
 Producer-only hosts compose the generated descriptor without taking a Functions
 dependency:
 

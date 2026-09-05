@@ -5,6 +5,8 @@ using Microsoft.Extensions.Hosting;
 
 using NLog;
 
+using NodaTime;
+
 using System.Threading.Channels;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -27,23 +29,27 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
     private readonly SemaphoreSlim _credits;
     private readonly int _prefetchBudget;
     private readonly int _batchSize;
+    private readonly MessagingLockRenewer? _renewer;
     private readonly Lock _gate = new();
     private CancellationTokenSource? _receiving;
     private CancellationTokenSource? _processing;
     private Task[]? _workers;
     private Task? _receiveLoop;
+    private Task? _renewalLoop;
 
     /// <summary>Creates a processor host for one queue.</summary>
     /// <param name="source">The pull message source.</param>
     /// <param name="queue">The participant queue to process.</param>
     /// <param name="onDelivery">The per-delivery callback, normally <c>MessagingDispatcher.OnDeliveryAsync</c>.</param>
     /// <param name="options">The processing options, or <see langword="null"/> for the defaults.</param>
+    /// <param name="maximumHandlerDuration">The participant's maximum handler duration, validated against a non-renewable lock.</param>
     public MessagingProcessorHost(
         IMessagingMessageSource source,
         string queue,
         Func<IMessagingLockedDelivery, CancellationToken, Task> onDelivery,
-        MessagingProcessingOptions? options = null)
-        : this(source, queue, onDelivery, options, null)
+        MessagingProcessingOptions? options = null,
+        TimeSpan? maximumHandlerDuration = null)
+        : this(source, queue, onDelivery, options, maximumHandlerDuration, null, null)
     {
     }
 
@@ -52,7 +58,9 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         string queue,
         Func<IMessagingLockedDelivery, CancellationToken, Task> onDelivery,
         MessagingProcessingOptions? options,
-        Func<double>? jitter)
+        TimeSpan? maximumHandlerDuration,
+        Func<double>? jitter,
+        IClock? clock)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrEmpty(queue);
@@ -78,6 +86,30 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             SingleWriter = true,
             SingleReader = false
         });
+
+        if (source.ReceiverCapabilities.SupportsLockRenewal)
+            _renewer = new MessagingLockRenewer(_options, clock);
+        else
+            _validateNonRenewableLock(source.ReceiverCapabilities, maximumHandlerDuration);
+    }
+
+    private void _validateNonRenewableLock(
+        MessagingReceiverCapabilities capabilities,
+        TimeSpan? maximumHandlerDuration)
+    {
+        if (capabilities.NativeLockDuration is not { } lockDuration || maximumHandlerDuration is not { } handler)
+            return;
+
+        // A delivery may sit in the buffer behind a full drain before a worker reaches it, and a
+        // transport that cannot renew has no way to extend the lock while it waits.
+        var bufferWait = _options.ExpectedHandlerDuration * ((_prefetchBudget - Concurrency) / (double)Concurrency);
+        if (handler + bufferWait <= lockDuration)
+            return;
+
+        throw new MessagingCompositionException(
+            MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
+            FormattableString.Invariant(
+                $"Transport '{_queue}' cannot renew locks and its lock duration ({lockDuration}) is shorter than MaximumHandlerDuration ({handler}) plus the expected buffer wait ({bufferWait}). Lower MaximumPrefetch or MaximumHandlerDuration, or raise the lock duration."));
     }
 
     /// <summary>Gets the number of workers dispatching deliveries.</summary>
@@ -108,6 +140,11 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             for (var index = 0; index < Concurrency; index++)
                 _workers[index] = Task.Run(() => _workAsync(processing.Token), CancellationToken.None);
             _receiveLoop = Task.Run(() => _receiveAsync(receiving.Token), CancellationToken.None);
+            if (_renewer is not null)
+            {
+                var renewer = _renewer;
+                _renewalLoop = Task.Run(() => renewer._runAsync(processing.Token), CancellationToken.None);
+            }
         }
 
         return Task.CompletedTask;
@@ -120,16 +157,19 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         CancellationTokenSource? processing;
         Task[]? workers;
         Task? receiveLoop;
+        Task? renewalLoop;
         lock (_gate)
         {
             receiving = _receiving;
             processing = _processing;
             workers = _workers;
             receiveLoop = _receiveLoop;
+            renewalLoop = _renewalLoop;
             _receiving = null;
             _processing = null;
             _workers = null;
             _receiveLoop = null;
+            _renewalLoop = null;
         }
 
         if (receiving is null || processing is null)
@@ -152,6 +192,10 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             await _observeAsync(drain).ConfigureAwait(false);
         }
 
+        // The renewal timer has nothing left to keep alive once the workers are done.
+        await processing.CancelAsync().ConfigureAwait(false);
+        await _observeAsync(renewalLoop).ConfigureAwait(false);
+
         // Abandon whatever never got processed so redelivery is immediate rather than
         // lock-expiry-delayed.
         while (_buffer.Reader.TryRead(out var delivery))
@@ -166,6 +210,9 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await StopAsync(CancellationToken.None).ConfigureAwait(false);
+        if (_renewer is not null)
+            await _renewer.DisposeAsync().ConfigureAwait(false);
+
         _credits.Dispose();
     }
 
@@ -193,7 +240,10 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 foreach (var delivery in batch)
                 {
                     received++;
-                    await _buffer.Writer.WriteAsync(delivery, ctk).ConfigureAwait(false);
+                    // Renewal starts at buffer entry, not when a worker picks the delivery up: that
+                    // is what keeps a prefetched lock alive while it waits.
+                    var tracked = _renewer is null ? delivery : _renewer._register(delivery);
+                    await _buffer.Writer.WriteAsync(tracked, ctk).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) when (ctk.IsCancellationRequested)
@@ -261,11 +311,16 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             if (!_buffer.Reader.TryRead(out var delivery))
                 continue;
 
+            // A lost lock must cancel the handler: continuing would settle a delivery the broker has
+            // already handed to somebody else.
+            using var handlerCancellation = delivery is IMessagingRenewedDelivery renewed
+                ? CancellationTokenSource.CreateLinkedTokenSource(ctk, renewed._lockLost)
+                : CancellationTokenSource.CreateLinkedTokenSource(ctk);
             try
             {
                 // Settlement happens inside the callback, so releasing credit afterwards releases it
                 // after settlement.
-                await _onDelivery(delivery, ctk).ConfigureAwait(false);
+                await _onDelivery(delivery, handlerCancellation.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (ctk.IsCancellationRequested)
             {
