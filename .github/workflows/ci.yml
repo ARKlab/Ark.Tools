@@ -81,7 +81,7 @@ jobs:
         global-json-file: global.json
 
     - name: 'Install Azure Functions Core Tools'
-      run: npm install --global azure-functions-core-tools@4.12.1
+      run: npm install --global azure-functions-core-tools@4.14.0
 
     - name: 'Restore packages'
       run: dotnet restore --locked-mode
