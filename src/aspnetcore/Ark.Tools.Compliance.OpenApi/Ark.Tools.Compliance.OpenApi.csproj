@@ -4,8 +4,6 @@
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <TargetFrameworks>net10.0</TargetFrameworks>
-
     <Description>OpenAPI/Swashbuckle schema mappings for Ark.Tools.Compliance sensitive value objects</Description>
     <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;OpenApi;Swashbuckle;Swagger</PackageTags>
 

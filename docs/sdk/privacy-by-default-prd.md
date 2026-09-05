@@ -796,7 +796,9 @@ existing mediator-framework generator discipline.
 | `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
-| `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | generator targets emitting surrogates/formatters next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.NewtonsoftJson` | `JsonConverter<T>` and `SensitiveValueNewtonsoftJson` registrations | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | closed generic surrogate/formatter over `ISensitiveValue<T>` next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Reqnroll` | value retriever and comparer for feature tables | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.OpenApi` | generated `MapType` registrations and the `x-ark-classification` extension; wired into `ArkStartupWebApiCommon` next to `MapNodaTimeTypes` | `net8.0;net10.0` |
 | `Ark.Tools.OTel` (existing) | `ArkComplianceRedactionProcessor`, registered by the default setup | unchanged |
 | `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ComplianceSinks`/`ComplianceLexicon` `AdditionalFiles`, `ArkComplianceSurface.txt` gate | unchanged |
