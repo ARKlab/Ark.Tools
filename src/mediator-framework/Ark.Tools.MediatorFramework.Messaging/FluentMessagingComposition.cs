@@ -4,6 +4,7 @@
 using Ark.Tools.Outbox;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 using NodaTime;
@@ -696,6 +697,8 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         _servicesValue.AddSingleton(serviceProvider => new MessagingPayloadReceiver(
             serviceProvider.GetRequiredService<IMessagingDataBus>(),
             participant.Network));
+        _servicesValue.TryAddSingleton<IMessagingConcurrencyController>(static serviceProvider =>
+            new MessagingAimdConcurrencyController(serviceProvider.GetService<MessagingProcessingOptions>()));
         _servicesValue.AddSingleton(serviceProvider => new MessagingDispatcher(
             _container,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
@@ -714,13 +717,16 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
                         processor,
                         ctk),
             IncomingSteps,
-            _container.GetInstance));
+            _container.GetInstance,
+            clock: null,
+            serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
         _servicesValue.AddSingleton<IHostedService>(serviceProvider => new MessagingProcessorHost(
             (IMessagingMessageSource)serviceProvider.GetRequiredService<IMessagingTransport>(),
             participant.Identity,
             serviceProvider.GetRequiredService<MessagingDispatcher>().OnDeliveryAsync,
             serviceProvider.GetService<MessagingProcessingOptions>(),
-            participant.RetryPolicy.MaximumHandlerDuration));
+            participant.RetryPolicy.MaximumHandlerDuration,
+            serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
     }
 
 }

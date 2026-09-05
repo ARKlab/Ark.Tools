@@ -33,6 +33,7 @@ public sealed class MessagingDispatcher
     private readonly IReadOnlyList<Type> _incomingStepTypes;
     private readonly Func<Type, object> _resolveStep;
     private readonly IClock _clock;
+    private readonly IMessagingConcurrencyController? _concurrency;
 
     /// <summary>Creates a receive dispatcher for one participant.</summary>
     /// <param name="container">The participant's SimpleInjector container.</param>
@@ -44,6 +45,7 @@ public sealed class MessagingDispatcher
     /// <param name="incomingStepTypes">The incoming pipeline steps in execution order.</param>
     /// <param name="resolveStep">The pipeline step resolver.</param>
     /// <param name="clock">The clock used for processing metrics.</param>
+    /// <param name="concurrencyController">The host concurrency controller notified of adverse signals.</param>
     public MessagingDispatcher(
         Container container,
         MessagingHeaderProcessor headerProcessor,
@@ -60,7 +62,8 @@ public sealed class MessagingDispatcher
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
         Func<Type, object>? resolveStep = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IMessagingConcurrencyController? concurrencyController = null)
     {
         _container = container ?? throw new ArgumentNullException(nameof(container));
         _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
@@ -77,6 +80,7 @@ public sealed class MessagingDispatcher
             (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
         _resolveStep = resolveStep ?? container.GetInstance;
         _clock = clock ?? SystemClock.Instance;
+        _concurrency = concurrencyController;
     }
 
     /// <summary>Processes one locked delivery and applies exactly one settlement.</summary>
@@ -142,6 +146,19 @@ public sealed class MessagingDispatcher
                 delivery.DeliveryCount,
                 decision);
         }
+        catch (MessagingBackpressureException exception)
+        {
+            // Backpressure is not a failure: the message is fine, this host is simply asking for less
+            // work, so the delivery goes back to the queue and the limit halves.
+            outcome = "abandon";
+            _concurrency?.ReportSignal(MessagingConcurrencySignal.DownstreamBackpressure);
+            _logger.Warn(
+                exception,
+                CultureInfo.InvariantCulture,
+                "Messaging delivery signalled downstream backpressure; abandoning with retry delay {RetryDelay}.",
+                exception.RetryDelay);
+            await delivery.AbandonAsync(cancellationToken).ConfigureAwait(false);
+        }
         catch (MessagingFailFastException exception)
         {
             outcome = "dead_letter";
@@ -203,9 +220,25 @@ public sealed class MessagingDispatcher
         {
             throw;
         }
+        catch (MessagingBackpressureException)
+        {
+            throw;
+        }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
+        }
+        catch (OperationCanceledException exception)
+        {
+            // The host token is not cancelled, so the stage hit MaximumHandlerDuration.
+            _concurrency?.ReportSignal(MessagingConcurrencySignal.HandlerTimeout);
+            var timeout = MessagingExceptionInfo.From(exception);
+            _logger.Warn(
+                exception,
+                CultureInfo.InvariantCulture,
+                "Messaging delivery exceeded the maximum handler duration of {MaximumHandlerDuration}.",
+                _retryPolicy.MaximumHandlerDuration);
+            return timeout;
         }
         catch (Exception exception)
         {

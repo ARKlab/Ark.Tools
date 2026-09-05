@@ -328,6 +328,59 @@ worst-case buffer wait implied by `PrefetchBudget`, `Concurrency` and
 composition fails with `ProcessingOptionsInvalid` rather than letting locks
 expire in production.
 
+### Adaptive concurrency
+
+The concurrency limit adapts on a fixed `ConcurrencyEvaluationInterval` (5 s).
+**CPU utilisation is never a signal**: it says nothing about an I/O-bound
+handler, whose bottleneck is the dependency's useful concurrency, not the host.
+Growth therefore needs three independent permissions:
+
+- **Throughput gate** — measured throughput must beat the previous interval by
+  more than `ThroughputImprovementThreshold` (5 %). A saturated dependency yields
+  flat throughput, so growth stops by itself.
+- **Latency gradient** — `gradient = clamp(rttNoLoad / rttShort, 0.5, 1.0)`, where
+  `rttNoLoad` is the long-window minimum handler duration and `rttShort` a short
+  EWMA. Growth requires `gradient >= GradientIncreaseThreshold` (0.9); two
+  consecutive intervals below it reduce the limit to `floor(limit x gradient)`
+  even when nothing failed. The ratio cancels the workload-dependent baseline
+  that makes raw latency useless as a signal. `rttNoLoad` is re-armed every
+  `BaselineRearmInterval` (10 min) so a permanently slower dependency does not
+  leave a stale optimistic baseline.
+- **Little's law cap** — `usefulConcurrency = throughput x rttNoLoad`, and the
+  limit is hard-capped at `LittlesLawSlack x ceil(usefulConcurrency)` (slack 2).
+  Once the dependency saturates, this cap freezes: it is what stops an I/O-bound
+  workload from growing to `MaximumConcurrency`.
+
+Decreases are multiplicative and immediate — waiting for the next interval means
+another interval of the overload that caused them:
+
+| Signal | Reaction |
+| --- | --- |
+| Broker throttling | `limit / 2` |
+| Lock lost or renewal failure | `limit / 2` |
+| Handler timeout (`MaximumHandlerDuration`) | `limit x 3/4` |
+| Thread-pool starvation (probe delay > `ThreadPoolStarvationThreshold`) | `limit / 2`, and no growth while starved |
+| `MessagingBackpressureException` | `limit / 2`, delivery abandoned for retry |
+| Buffer empty | hold — extra workers cannot help a drained queue |
+
+Throw `MessagingBackpressureException` from a handler when *its* downstream is
+the limit and its capacity is known — a connection pool size, a documented rate
+limit, an HTTP 429. The delivery is abandoned for retry rather than treated as a
+failure: declaring a known bottleneck beats discovering it.
+
+The worker pool follows the limit cooperatively. Growth starts workers
+immediately; a shrink is applied only after two consecutive intervals below the
+current pool size, and a worker leaves after its current delivery settles — never
+mid-flight. The prefetch budget is recomputed from the new limit at the same
+time.
+
+Pin the limit with `AdaptiveConcurrency = false`, which fixes it at
+`InitialConcurrency` and disables all measurement work. Whatever the controller
+decides, the limit stays inside `[MinimumConcurrency, MaximumConcurrency]` and
+the prefetch clamp. Replace the algorithm entirely by registering your own
+`IMessagingConcurrencyController`; the built-in controller is registered with
+`TryAddSingleton`.
+
 Producer-only hosts compose the generated descriptor without taking a Functions
 dependency:
 

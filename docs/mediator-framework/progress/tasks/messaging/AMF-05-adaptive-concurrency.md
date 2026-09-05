@@ -111,11 +111,11 @@ converging near the dependency's capacity rather than at `MaxConcurrency`.
 
 ## Acceptance
 
-- [ ] AIMD controller with throughput gate, gradient guard and Little's-law cap is implemented.
-- [ ] I/O-bound convergence is proven by a deterministic test.
-- [ ] `MessagingBackpressureException` is public, documented and wired to settlement.
-- [ ] Worker pool and prefetch budget resize with the limit, with hysteresis.
-- [ ] `IMessagingConcurrencyController` is a replaceable public seam.
-- [ ] The [task board](../README.md) status for AMF-05 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] AIMD controller with throughput gate, gradient guard and Little's-law cap is implemented.
+- [x] I/O-bound convergence is proven by a deterministic test.
+- [x] `MessagingBackpressureException` is public, documented and wired to settlement.
+- [x] Worker pool and prefetch budget resize with the limit, with hysteresis.
+- [x] `IMessagingConcurrencyController` is a replaceable public seam.
+- [x] The [task board](../README.md) status for AMF-05 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

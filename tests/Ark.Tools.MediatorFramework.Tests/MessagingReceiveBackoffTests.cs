@@ -110,7 +110,7 @@ public sealed class MessagingReceiveBackoffTests
         options.MaximumConcurrency = 1;
         options.ReceiveWaitTime = TimeSpan.FromMilliseconds(10);
         options.MaxPollInterval = TimeSpan.FromMilliseconds(80);
-        await using var host = new MessagingProcessorHost(source, "queue", _neverCalled, options, null, static () => 1, null);
+        await using var host = new MessagingProcessorHost(source, "queue", _neverCalled, options, null, null, static () => 1, null);
 
         await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
         await _waitUntilAsync(() => source._waits.Count >= 5).ConfigureAwait(false);
@@ -133,7 +133,7 @@ public sealed class MessagingReceiveBackoffTests
         options.ReceiveWaitTime = TimeSpan.FromMilliseconds(10);
         options.MinPollInterval = TimeSpan.FromMilliseconds(1);
         options.MaxPollInterval = TimeSpan.FromMilliseconds(20);
-        await using var host = new MessagingProcessorHost(source, "queue", _neverCalled, options, null, static () => 1, null);
+        await using var host = new MessagingProcessorHost(source, "queue", _neverCalled, options, null, null, static () => 1, null);
 
         await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
         await _waitUntilAsync(() => source._waits.Count >= 3).ConfigureAwait(false);
@@ -153,7 +153,7 @@ public sealed class MessagingReceiveBackoffTests
         options.MaximumConcurrency = 1;
         options.ReceiveWaitTime = TimeSpan.FromMilliseconds(10);
         options.ErrorCooldown = TimeSpan.FromMilliseconds(100);
-        await using var host = new MessagingProcessorHost(source, "queue", _neverCalled, options, null, static () => 0, null);
+        await using var host = new MessagingProcessorHost(source, "queue", _neverCalled, options, null, null, static () => 0, null);
 
         await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
         await _waitUntilAsync(() => source._waits.Count >= 2).ConfigureAwait(false);

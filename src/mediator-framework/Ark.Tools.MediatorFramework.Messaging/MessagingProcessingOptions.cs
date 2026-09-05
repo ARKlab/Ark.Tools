@@ -27,6 +27,12 @@ public sealed class MessagingProcessingOptions
     private TimeSpan _renewalSafetyMargin = TimeSpan.FromSeconds(10);
     private TimeSpan _renewalScanInterval = TimeSpan.FromSeconds(1);
     private int _maximumRenewalBatch = 64;
+    private TimeSpan _concurrencyEvaluationInterval = TimeSpan.FromSeconds(5);
+    private double _throughputImprovementThreshold = 0.05;
+    private double _gradientIncreaseThreshold = 0.9;
+    private double _littlesLawSlack = 2;
+    private TimeSpan _baselineRearmInterval = TimeSpan.FromMinutes(10);
+    private TimeSpan _threadPoolStarvationThreshold = TimeSpan.FromMilliseconds(250);
 
     /// <summary>Gets or sets the initial number of concurrent workers. Defaults to the processor count.</summary>
     public int InitialConcurrency
@@ -217,6 +223,84 @@ public sealed class MessagingProcessingOptions
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
             _maximumRenewalBatch = value;
+        }
+    }
+
+    /// <summary>Gets or sets whether the concurrency limit adapts to load. Defaults to <see langword="true"/>.</summary>
+    /// <remarks>
+    /// When disabled the limit is pinned at <see cref="InitialConcurrency"/> and no measurement work is
+    /// performed at all.
+    /// </remarks>
+    public bool AdaptiveConcurrency { get; set; } = true;
+
+    /// <summary>Gets or sets how often the concurrency controller evaluates. Defaults to five seconds.</summary>
+    public TimeSpan ConcurrencyEvaluationInterval
+    {
+        get => _concurrencyEvaluationInterval;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _concurrencyEvaluationInterval = value;
+        }
+    }
+
+    /// <summary>Gets or sets the throughput noise band that growth must beat. Defaults to five percent.</summary>
+    public double ThroughputImprovementThreshold
+    {
+        get => _throughputImprovementThreshold;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            _throughputImprovementThreshold = value;
+        }
+    }
+
+    /// <summary>Gets or sets the latency gradient required to grow. Defaults to zero point nine.</summary>
+    /// <remarks>
+    /// <c>gradient = clamp(rttNoLoad / rttShort, 0.5, 1.0)</c>. A ratio cancels the workload-dependent
+    /// baseline that makes raw latency useless as a control signal.
+    /// </remarks>
+    public double GradientIncreaseThreshold
+    {
+        get => _gradientIncreaseThreshold;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 1);
+            _gradientIncreaseThreshold = value;
+        }
+    }
+
+    /// <summary>Gets or sets the slack applied to the Little's-law cap. Defaults to two.</summary>
+    public double LittlesLawSlack
+    {
+        get => _littlesLawSlack;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            _littlesLawSlack = value;
+        }
+    }
+
+    /// <summary>Gets or sets how often the no-load latency baseline is re-armed. Defaults to ten minutes.</summary>
+    public TimeSpan BaselineRearmInterval
+    {
+        get => _baselineRearmInterval;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _baselineRearmInterval = value;
+        }
+    }
+
+    /// <summary>Gets or sets the scheduling delay treated as thread-pool starvation. Defaults to 250 ms.</summary>
+    public TimeSpan ThreadPoolStarvationThreshold
+    {
+        get => _threadPoolStarvationThreshold;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _threadPoolStarvationThreshold = value;
         }
     }
 
