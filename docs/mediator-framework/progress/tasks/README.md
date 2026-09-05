@@ -220,7 +220,7 @@ runtime. They do not touch the send path, the Azure Functions receiver model, or
 | --- | --- | --- |
 | [AMF-01](messaging/AMF-01-receive-seam-split.md) | Send/receive seam split: pull message source | Done |
 | [AMF-02](messaging/AMF-02-processor-host.md) | `MessagingProcessorHost`: bounded buffer, credits and worker pool | Done |
-| [AMF-03](messaging/AMF-03-adaptive-backoff.md) | Idle, error and no-capacity backoff | Pending |
+| [AMF-03](messaging/AMF-03-adaptive-backoff.md) | Idle, error and no-capacity backoff | Done |
 | [AMF-04](messaging/AMF-04-shared-lock-renewer.md) | Shared lock renewer driven by native lock duration | Pending |
 | [AMF-05](messaging/AMF-05-adaptive-concurrency.md) | Adaptive concurrency with an I/O-bound guard | Pending |
 | [AMF-06](messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive and pop-receipt race fix | Pending |

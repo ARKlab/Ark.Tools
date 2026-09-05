@@ -88,10 +88,10 @@ before and after, and the option names to tune it.
 
 ## Acceptance
 
-- [ ] Empty, no-credit and error waits are implemented independently.
-- [ ] Exponential backoff with full jitter and per-loop reset is tested deterministically.
-- [ ] Server-side wait growth is used where the transport supports it.
-- [ ] The hard-coded transport delay is removed.
-- [ ] The [task board](../README.md) status for AMF-03 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Empty, no-credit and error waits are implemented independently.
+- [x] Exponential backoff with full jitter and per-loop reset is tested deterministically.
+- [x] Server-side wait growth is used where the transport supports it.
+- [x] The hard-coded transport delay is removed.
+- [x] The [task board](../README.md) status for AMF-03 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

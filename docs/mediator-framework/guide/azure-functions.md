@@ -272,8 +272,32 @@ first so the buffer can only shrink, workers finish in-flight and buffered work
 within `ShutdownTimeout`, then anything still unprocessed is abandoned so
 redelivery is immediate rather than lock-expiry-delayed.
 
-Concurrency is fixed at `InitialConcurrency` for now; backoff, lock renewal and
-adaptive concurrency arrive with the later tasks in this series.
+Concurrency is fixed at `InitialConcurrency` for now; lock renewal and adaptive
+concurrency arrive with the later tasks in this series.
+
+### Idle, error and no-capacity waits
+
+The receive loop has three independent waits, and they never share state:
+
+- **Empty result** — exponential backoff with full jitter, doubling from
+  `MinPollInterval` (50 ms) to `MaxPollInterval` (5 s) per consecutive empty
+  result and resetting on the first non-empty batch. Full jitter (`random(0,
+  cap)`) keeps replicas of the same host from polling in lockstep.
+- **No credit** — no timer at all. The loop awaits credit, so a saturated host
+  issues no broker call; nothing is polled while nothing can be accepted.
+- **Transport error** — a fixed jittered `ErrorCooldown` (10 s by default,
+  sampled in its upper half) with a structured warning naming the queue and the
+  failure. An error never lengthens the empty backoff, and an empty result never
+  shortens the cooldown.
+
+When the source declares `SupportsServerSideWait` (Service Bus), backoff grows
+the `maxWait` passed to `ReceiveBatchAsync` up to `MaxPollInterval` instead of
+sleeping: an idle receiver holds one long request rather than polling, and the
+first message after an idle period is delivered without waiting out a client
+sleep. Sources without server-side wait (Storage Queues) return immediately and
+the host sleeps the jittered interval, which takes an idle queue from roughly
+four requests per second down to a fraction of one. The transport itself never
+sleeps: it waits only as instructed by `maxWait`.
 
 Producer-only hosts compose the generated descriptor without taking a Functions
 dependency:

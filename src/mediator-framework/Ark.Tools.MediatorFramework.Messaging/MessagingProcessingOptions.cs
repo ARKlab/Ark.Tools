@@ -21,6 +21,9 @@ public sealed class MessagingProcessingOptions
     private int? _maximumPrefetch;
     private TimeSpan _expectedHandlerDuration = TimeSpan.FromSeconds(1);
     private TimeSpan _receiveWaitTime = TimeSpan.FromSeconds(1);
+    private TimeSpan _minPollInterval = TimeSpan.FromMilliseconds(50);
+    private TimeSpan _maxPollInterval = TimeSpan.FromSeconds(5);
+    private TimeSpan _errorCooldown = TimeSpan.FromSeconds(10);
 
     /// <summary>Gets or sets the initial number of concurrent workers. Defaults to the processor count.</summary>
     public int InitialConcurrency
@@ -139,6 +142,43 @@ public sealed class MessagingProcessingOptions
         }
     }
 
+    /// <summary>Gets or sets the shortest wait after an empty result. Defaults to fifty milliseconds.</summary>
+    public TimeSpan MinPollInterval
+    {
+        get => _minPollInterval;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _minPollInterval = value;
+        }
+    }
+
+    /// <summary>Gets or sets the longest wait after consecutive empty results. Defaults to five seconds.</summary>
+    /// <remarks>
+    /// Transports with server-side wait grow the receive wait window up to this value instead of
+    /// sleeping, so idle latency never exceeds one interval.
+    /// </remarks>
+    public TimeSpan MaxPollInterval
+    {
+        get => _maxPollInterval;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _maxPollInterval = value;
+        }
+    }
+
+    /// <summary>Gets or sets the cooldown applied after a transport error. Defaults to ten seconds.</summary>
+    public TimeSpan ErrorCooldown
+    {
+        get => _errorCooldown;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
+            _errorCooldown = value;
+        }
+    }
+
     /// <summary>Gets the effective hard prefetch ceiling.</summary>
     /// <returns>The configured <see cref="MaximumPrefetch"/>, or eight times <see cref="MaximumConcurrency"/>.</returns>
     public int GetEffectiveMaximumPrefetch()
@@ -196,6 +236,14 @@ public sealed class MessagingProcessingOptions
                 MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
                 FormattableString.Invariant(
                     $"InitialConcurrency ({InitialConcurrency}) must be between MinimumConcurrency ({MinimumConcurrency}) and MaximumConcurrency ({MaximumConcurrency})."));
+        }
+
+        if (MinPollInterval > MaxPollInterval)
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
+                FormattableString.Invariant(
+                    $"MinPollInterval ({MinPollInterval}) cannot exceed MaxPollInterval ({MaxPollInterval})."));
         }
 
         if (GetEffectiveMaximumPrefetch() < MaximumConcurrency)

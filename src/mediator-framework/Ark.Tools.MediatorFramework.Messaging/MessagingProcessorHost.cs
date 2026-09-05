@@ -1,9 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Threading.Channels;
-
 using Microsoft.Extensions.Hosting;
+
+using NLog;
+
+using System.Threading.Channels;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -15,7 +17,9 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// </remarks>
 public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly IMessagingMessageSource _source;
+    private readonly Func<double>? _jitter;
     private readonly Func<IMessagingLockedDelivery, CancellationToken, Task> _onDelivery;
     private readonly string _queue;
     private readonly MessagingProcessingOptions _options;
@@ -39,6 +43,16 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         string queue,
         Func<IMessagingLockedDelivery, CancellationToken, Task> onDelivery,
         MessagingProcessingOptions? options = null)
+        : this(source, queue, onDelivery, options, null)
+    {
+    }
+
+    internal MessagingProcessorHost(
+        IMessagingMessageSource source,
+        string queue,
+        Func<IMessagingLockedDelivery, CancellationToken, Task> onDelivery,
+        MessagingProcessingOptions? options,
+        Func<double>? jitter)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrEmpty(queue);
@@ -48,6 +62,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         _queue = queue;
         _onDelivery = onDelivery;
         _options = options ?? new MessagingProcessingOptions();
+        _jitter = jitter;
         _options.Validate();
 
         // ponytail: the concurrency limit is fixed at InitialConcurrency, so the budget is computed
@@ -156,20 +171,24 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
     private async Task _receiveAsync(CancellationToken ctk)
     {
+        var backoff = new MessagingReceiveBackoff(_options, _jitter);
+        var serverSideWait = _source.ReceiverCapabilities.SupportsServerSideWait;
+        var waitWindow = _options.ReceiveWaitTime;
         while (!ctk.IsCancellationRequested)
         {
             // Acquiring credit before receiving is the backpressure: a full budget blocks here and
-            // no receive call is made at all.
+            // no receive call is made at all. No-credit therefore has no timer of its own.
             await _credits.WaitAsync(ctk).ConfigureAwait(false);
             var requested = 1;
             while (requested < _batchSize && _credits.Wait(0, CancellationToken.None))
                 requested++;
 
             var received = 0;
+            var failed = false;
             try
             {
                 var batch = await _source
-                    .ReceiveBatchAsync(_queue, requested, _options.ReceiveWaitTime, ctk)
+                    .ReceiveBatchAsync(_queue, requested, waitWindow, ctk)
                     .ConfigureAwait(false);
                 foreach (var delivery in batch)
                 {
@@ -177,13 +196,62 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                     await _buffer.Writer.WriteAsync(delivery, ctk).ConfigureAwait(false);
                 }
             }
+            catch (OperationCanceledException) when (ctk.IsCancellationRequested)
+            {
+                throw;
+            }
+#pragma warning disable CA1031 // A broker failure must cool down, not kill the loop.
+            catch (Exception exception)
+#pragma warning restore CA1031
+            {
+                failed = true;
+                var cooldown = backoff._sampleErrorCooldown();
+                _logger.Warn(
+                    exception,
+                    CultureInfo.InvariantCulture,
+                    "Receive failed on queue {queue}; retrying after {cooldown}.",
+                    _queue,
+                    cooldown);
+                await _delayAsync(cooldown, ctk).ConfigureAwait(false);
+            }
             finally
             {
                 // Credit is only consumed by deliveries actually taken from the broker.
                 if (requested > received)
                     _credits.Release(requested - received);
             }
+
+            // The error cooldown never touches the empty backoff, and vice versa.
+            if (failed)
+                continue;
+
+            if (received > 0)
+            {
+                backoff._onReceived();
+                waitWindow = _options.ReceiveWaitTime;
+                continue;
+            }
+
+            var cap = backoff._onEmpty();
+            if (serverSideWait)
+            {
+                // The broker holds the call open, so growing the window lowers the request rate
+                // without adding latency.
+                waitWindow = cap > _options.ReceiveWaitTime ? cap : _options.ReceiveWaitTime;
+            }
+            else
+            {
+                await _delayAsync(backoff._sample(cap), ctk).ConfigureAwait(false);
+            }
         }
+    }
+
+    private static async Task _delayAsync(TimeSpan delay, CancellationToken ctk)
+    {
+        if (delay <= TimeSpan.Zero)
+            return;
+
+        await Task.Delay(delay, ctk).ConfigureAwait(false);
     }
 
     private async Task _workAsync(CancellationToken ctk)
