@@ -25,7 +25,7 @@ public class MockIClock : Steps
 
         //        this is needed for Rebus as sometime we need a normal Defer, sometime we need a 'Fake' defer.
         //        we should apply this fake-clock swapping 'only for rebus' and not for the entire applications
-        if (sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags).Any(x => x == "UseFakeClock"))
+        if (sctx.ScenarioInfo.Tags.Concat(fctx.FeatureInfo.Tags).Any(static x => x == "UseFakeClock"))
             _swappableClock.Clock = _fakeClock;
         else
             _swappableClock.Clock = SystemClock.Instance;

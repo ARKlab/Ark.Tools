@@ -66,7 +66,7 @@ public static class ArkMinimalApiHostExtensions
         services.AddHttpContextAccessor();
         services.AddAuthentication();
         services.AddArkHealthChecks();
-        services.AddResponseCompression(options =>
+        services.AddResponseCompression(static options =>
         {
             options.EnableForHttps = true;
             options.Providers.Add<BrotliCompressionProvider>();
@@ -139,7 +139,7 @@ public static class ArkMinimalApiHostExtensions
         var options = app.ApplicationServices.GetService<ArkMinimalApiHostOptions>();
         if (options?.UseForwardedPrefix == true)
         {
-            app.Use((context, next) =>
+            app.Use(static (context, next) =>
             {
                 if (context.Request.Headers.TryGetValue("X-Forwarded-Prefix", out var values))
                 {

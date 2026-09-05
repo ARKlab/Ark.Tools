@@ -98,7 +98,7 @@ public sealed class PermissionAuthorizationTests
         var provider = new TestPermissionsProvider(TestPermission.Read);
         var handler = new PermissionAuthorizationHandler<TestPermission>(provider);
         var contexts = Enumerable.Range(0, 32)
-            .Select(index => _createContext(
+            .Select(static index => _createContext(
                 new AuthorizationPolicyBuilder($"Concurrent-{index}")
                     .AddRequirements(index % 2 == 0
                         ? new PermissionAuthorizationRequirement<TestPermission, ResourceA>(TestPermission.Read)
@@ -109,7 +109,7 @@ public sealed class PermissionAuthorizationTests
 
         await Task.WhenAll(contexts.Select(context => handler.HandleAsync(context))).ConfigureAwait(false);
 
-        contexts.All(context => context.HasSucceeded).Should().BeTrue();
+        contexts.All(static context => context.HasSucceeded).Should().BeTrue();
         provider.CallCount.Should().Be(contexts.Length);
     }
 

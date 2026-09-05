@@ -24,14 +24,14 @@ internal sealed class ArkStartupBase
         services.AddHttpContextAccessor();
 
         services.AddSecurityHeaderPolicies()
-            .SetDefaultPolicy(p => p.AddDefaultApiSecurityHeaders().RemoveServerHeader())
-            .AddPolicy("Swagger", p =>
+            .SetDefaultPolicy(static p => p.AddDefaultApiSecurityHeaders().RemoveServerHeader())
+            .AddPolicy("Swagger", static p =>
             {
                 p.AddDefaultSecurityHeaders().RemoveServerHeader();
                 p.Remove("Cross-Origin-Opener-Policy");
-                p.AddCrossOriginOpenerPolicy(x => x.UnsafeNone());
+                p.AddCrossOriginOpenerPolicy(static x => x.UnsafeNone());
             })
-            .SetPolicySelector(ctx =>
+            .SetPolicySelector(static ctx =>
             {
                 // yes, contains is a bit dirty but it works for both /swagger and /swagger/index.html even when the path base is not root
                 var isSwagger = _sourceArray.Any(x => ctx.HttpContext.Request.Path.Value?.EndsWith(x, System.StringComparison.OrdinalIgnoreCase) == true);
@@ -47,7 +47,7 @@ internal sealed class ArkStartupBase
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Pattern")]
     public void Configure(IApplicationBuilder app)
     {
-        app.Use((context, next) =>
+        app.Use(static (context, next) =>
         {
             if (context.Request.Headers.TryGetValue("X-Forwarded-PathBase", out var pathbase) && pathbase != "/")
                 context.Request.PathBase = pathbase[0] ?? "" + context.Request.PathBase;

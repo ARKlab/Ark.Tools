@@ -164,7 +164,7 @@ public sealed class GeneratorSnapshotTests
             public partial class McpContext { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain("Name = \"books.search\"");
         result.Generated.Should().Contain(
             "Description(\"Searches books. Returns matching books.\")");
@@ -255,7 +255,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("new global::GetGreeting()");
         result.Generated.Should().NotContain("InvokeQueryAsync");
         result.Diagnostics.Should().NotContain(
-            diagnostic => diagnostic.Id == "ARKMF030"
+            static diagnostic => diagnostic.Id == "ARKMF030"
                 || diagnostic.Id == "ARKMF031"
                 || diagnostic.Id == "ARKMF032");
     }
@@ -497,7 +497,7 @@ public sealed class GeneratorSnapshotTests
         var authentication = new StubAuthenticationService(
             AuthenticateResult.Success(new AuthenticationTicket(principal, "test")));
         var services = new ServiceCollection()
-            .AddArkAzureFunctionsAuthentication(options => options.Scheme = "test")
+            .AddArkAzureFunctionsAuthentication(static options => options.Scheme = "test")
             .AddSingleton<IAuthenticationService>(authentication)
             .BuildServiceProvider();
         var context = new DefaultHttpContext
@@ -511,7 +511,7 @@ public sealed class GeneratorSnapshotTests
         context.User.Should().BeSameAs(principal);
 
         var failureServices = new ServiceCollection()
-            .AddArkAzureFunctionsAuthentication(options => options.Scheme = "test")
+            .AddArkAzureFunctionsAuthentication(static options => options.Scheme = "test")
             .AddSingleton<IAuthenticationService>(new StubAuthenticationService(
                 AuthenticateResult.Fail("invalid")))
             .BuildServiceProvider();
@@ -618,7 +618,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetMessages : IQuery<string> { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF030");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF030");
     }
 
     [TestMethod]
@@ -636,7 +636,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class ListMessages : IQuery<string> { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF031");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF031");
     }
 
     [TestMethod]
@@ -660,7 +660,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF032");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF032");
     }
 
     [TestMethod]
@@ -676,7 +676,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetMessages : IQuery<string> { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF047");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF047");
         result.Generated.Should().NotContain("GetMessages_v1");
     }
 
@@ -694,7 +694,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetMessages : IQuery<string> { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF048");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF048");
     }
 
     [TestMethod]
@@ -713,7 +713,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class GetMessages : IQuery<string> { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF049");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF049");
     }
 
     [TestMethod]
@@ -776,7 +776,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class StreamMessage : IRequest<IAsyncEnumerable<string>> { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF019");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF019");
     }
 
     [TestMethod]
@@ -911,9 +911,9 @@ public sealed class GeneratorSnapshotTests
         var emptyTokenContext = new DefaultHttpContext();
         ArkETag.ApplyResponseETag(emptyTokenContext, "", conditionalGet: true).Should().BeNull();
         emptyTokenContext.Response.Headers.ETag.ToString().Should().BeEmpty();
-        Action invalid = () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\r\n", false);
+        Action invalid = static () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\r\n", false);
         invalid.Should().Throw<InvalidOperationException>();
-        Action quoted = () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\"token", false);
+        Action quoted = static () => ArkETag.ApplyResponseETag(new DefaultHttpContext(), "bad\"token", false);
         quoted.Should().Throw<InvalidOperationException>();
     }
 
@@ -981,7 +981,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class Marker;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
@@ -1151,7 +1151,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result2.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF016");
+        result2.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF016");
     }
 
     [TestMethod]
@@ -1167,7 +1167,7 @@ public sealed class GeneratorSnapshotTests
             """;
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => MetadataReference.CreateFromFile(path))
+            .Select(static path => MetadataReference.CreateFromFile(path))
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
@@ -1190,10 +1190,10 @@ public sealed class GeneratorSnapshotTests
         driver = driver.RunGenerators(compilation);
 
         var reasons = driver.GetRunResult().Results
-            .SelectMany(result => result.TrackedSteps.Values)
-            .SelectMany(stepRuns => stepRuns)
-            .SelectMany(stepRun => stepRun.Outputs)
-            .Select(output => output.Reason);
+            .SelectMany(static result => result.TrackedSteps.Values)
+            .SelectMany(static stepRuns => stepRuns)
+            .SelectMany(static stepRun => stepRun.Outputs)
+            .Select(static output => output.Reason);
         reasons.Should().Contain(IncrementalStepRunReason.Cached);
     }
 
@@ -1343,8 +1343,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF017");
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF018");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF017");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF018");
     }
 
     [TestMethod]
@@ -1541,7 +1541,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class OrphanRebusHost;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
@@ -1564,7 +1564,7 @@ public sealed class GeneratorSnapshotTests
             public partial class RebusHost;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF020");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
     }
 
     [TestMethod]
@@ -1617,7 +1617,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF004");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF004");
     }
 
     [TestMethod]
@@ -1824,7 +1824,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF003");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF003");
     }
 
     [TestMethod]
@@ -1916,7 +1916,7 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Generated.Should().NotContain("MapPost(\"/uploads\"");
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF001");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF001");
     }
 
     [TestMethod]
@@ -1933,7 +1933,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF005");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF005");
     }
 
     [TestMethod]
@@ -2092,7 +2092,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().NotContain(item => item.Id == "CS8785");
+        result.Diagnostics.Should().NotContain(static item => item.Id == "CS8785");
         result.Generated.Should().Contain("uint32 status = 1;");
     }
 
@@ -2107,7 +2107,7 @@ public sealed class GeneratorSnapshotTests
             public sealed record OptionsRequest : IRequest<string>;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF010");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF010");
         result.Generated.Should().NotContain("OptionsRequest");
     }
 
@@ -2121,7 +2121,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class InvalidEndpoint;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF011");
     }
 
     [TestMethod]
@@ -2135,7 +2135,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class MissingRoute : IQuery<string>;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF012");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF012");
     }
 
     [TestMethod]
@@ -2152,7 +2152,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF013");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF013");
     }
 
     [TestMethod]
@@ -2165,7 +2165,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class InvalidGrpc;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF011");
     }
 
     [TestMethod]
@@ -2178,7 +2178,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class InvalidRebus;
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF011");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF011");
     }
 
     private sealed class StubAuthenticationService(AuthenticateResult result) : IAuthenticationService
@@ -2241,7 +2241,7 @@ public sealed class GeneratorSnapshotTests
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => MetadataReference.CreateFromFile(path))
+            .Select(static path => MetadataReference.CreateFromFile(path))
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
@@ -2267,7 +2267,7 @@ public sealed class GeneratorSnapshotTests
         return (
             string.Join(
             Environment.NewLine,
-            result.Results.SelectMany(generator => generator.GeneratedSources).Select(generator => generator.SourceText.ToString())),
+            result.Results.SelectMany(static generator => generator.GeneratedSources).Select(static generator => generator.SourceText.ToString())),
             result.Diagnostics);
     }
 
@@ -2276,7 +2276,7 @@ public sealed class GeneratorSnapshotTests
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => MetadataReference.CreateFromFile(path))
+            .Select(static path => MetadataReference.CreateFromFile(path))
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
@@ -2297,7 +2297,7 @@ public sealed class GeneratorSnapshotTests
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => MetadataReference.CreateFromFile(path))
+            .Select(static path => MetadataReference.CreateFromFile(path))
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
@@ -2321,10 +2321,10 @@ public sealed class GeneratorSnapshotTests
         driver = driver.RunGenerators(compilation);
 
         var reasons = driver.GetRunResult().Results
-            .SelectMany(result => result.TrackedSteps.Values)
-            .SelectMany(stepRuns => stepRuns)
-            .SelectMany(stepRun => stepRun.Outputs)
-            .Select(output => output.Reason);
+            .SelectMany(static result => result.TrackedSteps.Values)
+            .SelectMany(static stepRuns => stepRuns)
+            .SelectMany(static stepRun => stepRun.Outputs)
+            .Select(static output => output.Reason);
         reasons.Should().Contain(IncrementalStepRunReason.Cached);
     }
 
@@ -2341,8 +2341,8 @@ public sealed class GeneratorSnapshotTests
             baseline: null,
             enabled: true);
 
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI001" && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+        result.Diagnostics.Should().Contain(static d => d.Id == "ARKAPI001" && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
+        result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI002");
     }
 
     [TestMethod]
@@ -2360,10 +2360,10 @@ public sealed class GeneratorSnapshotTests
 
         var result = _runApiSurfaceGeneratorResult(source, baseline: staleBaseline, enabled: true);
 
-        result.Diagnostics.Should().Contain(d => d.Id == "ARKAPI002"
+        result.Diagnostics.Should().Contain(static d => d.Id == "ARKAPI002"
             && d.GetMessage().Contains("GetItem")
             && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI001");
     }
 
     [TestMethod]
@@ -2381,8 +2381,8 @@ public sealed class GeneratorSnapshotTests
 
         var result = _runApiSurfaceGeneratorResult(source, baseline: snapshot, enabled: true);
 
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+        result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI002");
     }
 
     [TestMethod]
@@ -2398,8 +2398,8 @@ public sealed class GeneratorSnapshotTests
             baseline: null,
             enabled: false);
 
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI001");
-        result.Diagnostics.Should().NotContain(d => d.Id == "ARKAPI002");
+        result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI001");
+        result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI002");
     }
 
     [TestMethod]
@@ -2473,7 +2473,7 @@ public sealed class GeneratorSnapshotTests
             snapshot.Replace("legacy_recalculate", "older_recalculate", StringComparison.Ordinal),
             enabled: true);
         result.Diagnostics.Should().Contain(
-            d => d.Id == "ARKAPI002" && d.GetMessage().Contains("RecalculatePrint.former"));
+            static d => d.Id == "ARKAPI002" && d.GetMessage().Contains("RecalculatePrint.former"));
     }
 
     [TestMethod]
@@ -2498,7 +2498,7 @@ public sealed class GeneratorSnapshotTests
         var result = _runApiSurfaceGeneratorResult(changedSource, baseline, enabled: true);
 
         result.Diagnostics.Should().Contain(
-            d => d.Id == "ARKAPI002" && d.GetMessage().Contains("SecondMessage.name"));
+            static d => d.Id == "ARKAPI002" && d.GetMessage().Contains("SecondMessage.name"));
     }
 
     [TestMethod]
@@ -2514,7 +2514,7 @@ public sealed class GeneratorSnapshotTests
             enabled: true);
 
         result.Diagnostics.Should().Contain(
-            d => d.Id == "ARKAPI004" && d.GetMessage().Contains("multiline"));
+            static d => d.Id == "ARKAPI004" && d.GetMessage().Contains("multiline"));
     }
 
     [TestMethod]
@@ -2540,7 +2540,7 @@ public sealed class GeneratorSnapshotTests
         foreach (var baseline in baselines)
         {
             var result = _runApiSurfaceGeneratorResult(source, baseline, enabled: true);
-            result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKAPI004");
+            result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKAPI004");
         }
     }
 
@@ -2611,8 +2611,8 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG018");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG018");
         result.Generated.Should().Contain("FrozenDictionary");
         result.Generated.Should().Contain("GetDestinationFor<T>()");
         result.Generated.Should().Contain("GetWireProtocolFor<T>()");
@@ -2668,7 +2668,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG025");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG025");
     }
 
     [TestMethod]
@@ -2691,7 +2691,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id != "ARKMSG025" && diagnostic.Id != "ARKMSG026");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id != "ARKMSG025" && diagnostic.Id != "ARKMSG026");
     }
 
     [TestMethod]
@@ -2717,7 +2717,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG025");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG025");
     }
 
     [TestMethod]
@@ -2742,7 +2742,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic =>
+        result.Diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMSG026"
             && diagnostic.GetMessage().Contains("PrintingParticipant")
             && diagnostic.GetMessage().Contains("Protobuf"));
@@ -2772,7 +2772,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG026");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG026");
     }
 
     [TestMethod]
@@ -2802,7 +2802,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic =>
+        result.Diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMSG009"
             && diagnostic.GetMessage().Contains("notification")
             && diagnostic.GetMessage().Contains("MessagePack"));
@@ -2828,7 +2828,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic =>
+        result.Diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMSG018"
             && diagnostic.GetMessage().Contains("ICommand<TSelf> or IRequest<TSelf, TResponse>"));
     }
@@ -2842,7 +2842,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class PrintBook : ICommand<PrintBook>, IQuery<PrintBook> { }
             """).ConfigureAwait(false);
 
-        diagnostics.Should().Contain(diagnostic =>
+        diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMF021"
             && diagnostic.GetMessage().Contains("can implement only one of IQuery, IRequest, or ICommand"));
     }
@@ -2867,7 +2867,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain(
             "MaximumDecompressedPayloadBytes = global::Ark.Tools.MediatorFramework.MessagingNetworkAttribute.DefaultMaximumDecompressedPayloadBytes");
         result.Generated.Should().Contain(
@@ -2950,7 +2950,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG023");
     }
 
     [TestMethod]
@@ -2979,7 +2979,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMSG015");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG015");
     }
 
     [TestMethod]
@@ -2994,7 +2994,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().NotContain(diagnostic => diagnostic.Id == "ARKMSG023");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG023");
         result.Generated.Should().Contain("partial class PrintingParticipant");
         result.Generated.Should().Contain("sealed partial class BookMessagingNetwork");
         result.Generated.Should().Contain(
@@ -3049,7 +3049,7 @@ public sealed class GeneratorSnapshotTests
         var first = _runGeneratorResult<MessagingFunctionsGenerator>(source);
         var second = _runGeneratorResult<MessagingFunctionsGenerator>(source);
 
-        first.Diagnostics.Should().NotContain(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        first.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         first.Generated.Should().Be(second.Generated);
         first.Generated.Should().Contain("ServiceBusTrigger(");
         first.Generated.Should().Contain("AutoCompleteMessages = false");
@@ -3129,7 +3129,7 @@ public sealed class GeneratorSnapshotTests
         var first = _runGeneratorResult<MessagingFunctionsGenerator>(source, hostJson);
         var second = _runGeneratorResult<MessagingFunctionsGenerator>(source, hostJson);
 
-        first.Diagnostics.Should().NotContain(diagnostic =>
+        first.Diagnostics.Should().NotContain(static diagnostic =>
             diagnostic.Severity == DiagnosticSeverity.Error
             || diagnostic.Severity == DiagnosticSeverity.Warning);
         first.Generated.Should().Be(second.Generated);
@@ -3179,7 +3179,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF046");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF046");
         result.Generated.Should().BeEmpty();
     }
 
@@ -3199,7 +3199,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        result.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF037");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF037");
         result.Generated.Should().Contain("MessagingFunctionsManifest Manifest");
         result.Generated.Should().NotContain("ServiceBusTrigger(");
     }
@@ -3245,11 +3245,11 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class BookMessagingNetwork { }
             """);
 
-        multipleHosts.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF033");
+        multipleHosts.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF033");
         multipleHosts.Generated.Should().BeEmpty();
-        missingNetwork.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF035");
+        missingNetwork.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF035");
         missingNetwork.Generated.Should().BeEmpty();
-        unsupported.Diagnostics.Should().Contain(diagnostic => diagnostic.Id == "ARKMF038");
+        unsupported.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF038");
         unsupported.Generated.Should().BeEmpty();
     }
 
@@ -3260,7 +3260,7 @@ public sealed class GeneratorSnapshotTests
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => MetadataReference.CreateFromFile(path))
+            .Select(static path => MetadataReference.CreateFromFile(path))
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
@@ -3295,7 +3295,7 @@ public sealed class GeneratorSnapshotTests
         var result = driver.GetRunResult();
         return (
             string.Join(Environment.NewLine,
-                result.Results.SelectMany(r => r.GeneratedSources).Select(s => s.SourceText.ToString())),
+                result.Results.SelectMany(static r => r.GeneratedSources).Select(static s => s.SourceText.ToString())),
             result.Diagnostics);
     }
 

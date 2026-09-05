@@ -10,18 +10,18 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.160, )",
-        "resolved": "3.0.160",
-        "contentHash": "CtK/wbHVsFsb/mc3ijuu7yGmgWpfZ8L7CwSms+5vd81eTo8+66LNFdASb8fO0PJjoaI9fgMnVSNmNqyTTVUZPA=="
+        "requested": "[3.0.205, )",
+        "resolved": "3.0.205",
+        "contentHash": "hfr4SFqwOHdjCtXsPOFhGljie10BccNDSAUvM9kOQ0raqsolg7EWRFsJcGTtvydPcN+06a4ltlZ7pXA4YLMurA=="
       },
       "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": {
         "type": "Direct",
-        "requested": "[5.5.4, )",
-        "resolved": "5.5.4",
-        "contentHash": "/JZMukCWT9F1VZAggd0Yyx+/FAWxxG4ConEP4MMIYfihyt75UcnXnMjvL/Z6yq11nNWaXmwigYyFwWPH67RhRQ==",
+        "requested": "[5.5.0, )",
+        "resolved": "5.5.0",
+        "contentHash": "bJ+mtss/2TFH80OCZ80WJNZOZTzMX7jIe/XcpKugyCuF4JH98sv0T/XrTYVak9fyeMCLPyDZUQomYhqYU9ydpA==",
         "dependencies": {
-          "Azure.Storage.Queues": "12.21.0",
-          "Microsoft.Azure.Functions.Worker.Core": "1.20.0",
+          "Azure.Storage.Queues": "12.17.1",
+          "Microsoft.Azure.Functions.Worker.Core": "1.18.0",
           "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0"
         }
       },
@@ -42,12 +42,6 @@
         "requested": "[4.1.5, )",
         "resolved": "4.1.5",
         "contentHash": "i5z+cNu/cOcdO0AgFB8aXk8w6In2H+haaDfSgd9ImvQIK+rSHavHZIogVoAZLL8jLwYx4bAcs5b7EyuMMG4mQQ=="
-      },
-      "Microsoft.VisualStudio.Threading.Analyzers": {
-        "type": "Direct",
-        "requested": "[18.7.23, )",
-        "resolved": "18.7.23",
-        "contentHash": "dyj6z8m+LFjpeH69hdnciCcRCmD0YgMlvuQEywiEshjqj/blgQ+PuWX8Vd5gkWQFoBN4e+TFxx6DvGNSv/gIKg=="
       },
       "Polyfill": {
         "type": "Direct",
@@ -460,8 +454,8 @@
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.3.21",
-        "contentHash": "qARODs9k5/mw44Il2tIJaDV6s3Tm8qGVgG9RI07c1PxFYiFyMOqPkaFjbgNPBLWRtop57ktDPaMDzf+6TYpdcg=="
+        "resolved": "3.4.21",
+        "contentHash": "UkcNc2raxldJ1S0Z+tK8lp1AmY3mTnKWZUXOOZj1T0St9ql9B13BDhBwdFEKAeJkfZBMxOIr3aBGOH3xappARw=="
       },
       "System.ClientModel": {
         "type": "Transitive",
@@ -525,7 +519,7 @@
         "dependencies": {
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "protobuf-net": "[3.3.21, )"
+          "protobuf-net": "[3.4.21, )"
         }
       },
       "ark.tools.mediatorframework.azurefunctions": {
@@ -540,7 +534,7 @@
           "Microsoft.Azure.Functions.Worker": "[2.52.0, )",
           "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore": "[2.1.1, )",
           "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": "[5.5.4, )",
+          "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": "[5.5.0, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },
@@ -552,9 +546,9 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
-          "Azure.Storage.Blobs": "[12.29.1, )",
+          "Azure.Storage.Blobs": "[12.29.2, )",
           "Azure.Storage.Queues": "[12.27.1, )",
-          "Google.Protobuf": "[3.35.1, )",
+          "Google.Protobuf": "[3.36.1, )",
           "MessagePack": "[3.1.8, )",
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.11, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.11, )",
@@ -672,9 +666,9 @@
       },
       "Azure.Storage.Blobs": {
         "type": "CentralTransitive",
-        "requested": "[12.29.1, )",
-        "resolved": "12.29.1",
-        "contentHash": "pWh7xZBto8YcwiO853AB3uijTfVqs9PDte0Bu9/Zd8O9nwKiitWm0Jej1vsNkmYUzeG1552f8vJPjmtW30pBUQ==",
+        "requested": "[12.29.2, )",
+        "resolved": "12.29.2",
+        "contentHash": "NeZmk7bphspT2BYn8XaNCTV4/9vQG+ea79F85MBTi2o2WiXIIJNsRBtFyeBrzK2HIk476rfSqLNwPt4vXgOEkQ==",
         "dependencies": {
           "Azure.Core": "1.55.0",
           "Azure.Storage.Common": "12.28.0"
@@ -710,9 +704,9 @@
       },
       "Google.Protobuf": {
         "type": "CentralTransitive",
-        "requested": "[3.35.1, )",
-        "resolved": "3.35.1",
-        "contentHash": "pxtkuXhR8svkvDTQrYew9GZQt6eWhblz/V/WKUFrQgkHYlQPsumJTeF6ppHRJpe6j9ffukkd5lQULiiKaek4xA=="
+        "requested": "[3.36.1, )",
+        "resolved": "3.36.1",
+        "contentHash": "77AqPEoaY1ODE+syYBHti0jXiwQq0J/fUr/fRyYhNlc9oKtH5dZZEr/OLKtdKNVG83PRnCYB2r8B80ZrObzOGQ=="
       },
       "Grpc.Net.Client": {
         "type": "CentralTransitive",
@@ -960,20 +954,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.87.0, )",
-        "resolved": "4.87.0",
-        "contentHash": "ERObBpS3b6kc92D/Z86zSd/MpWvdJu97BNamRzg5V4y59KwnxzfhM762tgiNnKoIwTbnIBOcwGPFGQ4DvShLvw==",
+        "requested": "[4.88.0, )",
+        "resolved": "4.88.0",
+        "contentHash": "7Eg+0J3DQyy/HNMucGScRBCcxetZUJkti8KNxY6K/HtM5BsyYQpc25agW0xxKmjvpaZY9XcEbyUL7DbSkIIcZQ==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.87.0, )",
-        "resolved": "4.87.0",
-        "contentHash": "TyBuYz7Nldl0rhC4Fza/yAM4MATEf+YG4CCh5Kl10UXeT/JOzI4yag8/juD2ZinhiQSmJl+BFzMjEWY75JCX5Q==",
+        "requested": "[4.88.0, )",
+        "resolved": "4.88.0",
+        "contentHash": "9thwwy5LGQJuUcTWQ+P22aGD7kFc+03NCEE81fEzQeb1zlXuVPZxfrq/5D5IoXFDRVLdF8UiWLG1rNidmJwkAQ==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.87.0",
+          "Microsoft.Identity.Client": "4.88.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
@@ -1062,11 +1056,11 @@
       },
       "protobuf-net": {
         "type": "CentralTransitive",
-        "requested": "[3.3.21, )",
-        "resolved": "3.3.21",
-        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
+        "requested": "[3.4.21, )",
+        "resolved": "3.4.21",
+        "contentHash": "dO3+5x4LQTDZDIEcKq8oOCkGY/ifbjhLV+Jml7uGPTcJ2PZ+Qj7pbsWIgpUUqWjIny2KWnh02FT+b6tffmDqcQ==",
         "dependencies": {
-          "protobuf-net.Core": "3.3.21"
+          "protobuf-net.Core": "3.4.21"
         }
       },
       "SimpleInjector": {

@@ -28,8 +28,8 @@ public static class AuthenticationEx
 
         if (environment.IsEnvironment("IntegrationTests"))
         {
-            _ = services.AddAuthentication(options => options.DefaultScheme = "IntegrationTests")
-                .AddJwtBearer("IntegrationTests", options =>
+            _ = services.AddAuthentication(static options => options.DefaultScheme = "IntegrationTests")
+                .AddJwtBearer("IntegrationTests", static options =>
                 {
                     options.Audience = AuthConstants.IntegrationTestsAudience;
                     options.TokenValidationParameters = _tokenValidator();
@@ -43,10 +43,10 @@ public static class AuthenticationEx
             return;
         }
 
-        _ = services.AddAuthentication(options => options.DefaultScheme = "smart")
-            .AddPolicyScheme("smart", "smart", options =>
+        _ = services.AddAuthentication(static options => options.DefaultScheme = "smart")
+            .AddPolicyScheme("smart", "smart", static options =>
             {
-                options.ForwardDefaultSelector = context =>
+                options.ForwardDefaultSelector = static context =>
                 {
                     var authorization = context.Request.Headers.Authorization.ToString();
                     if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
@@ -96,20 +96,20 @@ public static class AuthenticationEx
     {
         return new TokenValidationParameters
         {
-            NameClaimTypeRetriever = (token, _) =>
+            NameClaimTypeRetriever = static (token, _) =>
             {
                 if (token is JwtSecurityToken jwt)
                 {
-                    if (jwt.Claims.Any(claim => claim.Type == "http://ark-energy.eu/claims/email"))
+                    if (jwt.Claims.Any(static claim => claim.Type == "http://ark-energy.eu/claims/email"))
                         return "http://ark-energy.eu/claims/email";
-                    if (jwt.Claims.Any(claim => claim.Type == ClaimTypes.Email || claim.Type == "email"))
+                    if (jwt.Claims.Any(static claim => claim.Type == ClaimTypes.Email || claim.Type == "email"))
                         return ClaimTypes.Email;
-                    if (jwt.Claims.Any(claim => claim.Type == "upn"))
+                    if (jwt.Claims.Any(static claim => claim.Type == "upn"))
                         return ClaimTypes.Upn;
-                    if (jwt.Claims.Any(claim => claim.Type == "emails"))
+                    if (jwt.Claims.Any(static claim => claim.Type == "emails"))
                         return "emails";
-                    if (jwt.Claims.Any(claim => claim.Type == "appid")
-                        && jwt.Claims.SingleOrDefault(claim => claim.Type == "appidacr")?.Value == "1")
+                    if (jwt.Claims.Any(static claim => claim.Type == "appid")
+                        && jwt.Claims.SingleOrDefault(static claim => claim.Type == "appidacr")?.Value == "1")
                         return "appid";
                 }
 

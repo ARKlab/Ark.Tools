@@ -20,7 +20,7 @@ public static class OutboxOpenTelemetryExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         return builder
-            .WithTracing(tracing => tracing.AddSource(OutboxProcessorBase.InstrumentationName))
-            .WithMetrics(metrics => metrics.AddMeter(OutboxProcessorBase.InstrumentationName));
+            .WithTracing(static tracing => tracing.AddSource(OutboxProcessorBase.InstrumentationName))
+            .WithMetrics(static metrics => metrics.AddMeter(OutboxProcessorBase.InstrumentationName));
     }
 }

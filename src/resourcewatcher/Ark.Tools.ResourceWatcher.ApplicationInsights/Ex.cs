@@ -40,12 +40,12 @@ public static partial class Ex
 
                             try
                             {
-                                configuration.ConfigureOpenTelemetryBuilder(otelBuilder =>
+                                configuration.ConfigureOpenTelemetryBuilder(static otelBuilder =>
                                 {
                                     otelBuilder.Services.ConfigureOpenTelemetryTracerProvider(
-                                        tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName));
+                                        static tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName));
                                     otelBuilder.Services.ConfigureOpenTelemetryMeterProvider(
-                                        metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
+                                        static metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
                                 });
                             }
                             catch (InvalidOperationException ex)

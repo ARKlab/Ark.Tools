@@ -31,9 +31,9 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
 
         var name = parameter.GetCustomAttributes()
             .OfType<IFromRouteMetadata>()
-            .Select(attribute => attribute.Name)
-            .Concat(parameter.GetCustomAttributes().OfType<IFromQueryMetadata>().Select(attribute => attribute.Name))
-            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))
+            .Select(static attribute => attribute.Name)
+            .Concat(parameter.GetCustomAttributes().OfType<IFromQueryMetadata>().Select(static attribute => attribute.Name))
+            .FirstOrDefault(static value => !string.IsNullOrWhiteSpace(value))
             ?? parameter.Name
             ?? throw new InvalidOperationException("A type-converter parameter must have a name.");
         builder.Metadata.Add(new ArkTypeConverterParameterMetadata(name, typeof(T)));

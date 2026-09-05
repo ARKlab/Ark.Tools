@@ -34,11 +34,11 @@ public class AuditContext<TAuditKind>
 
         var parameters = new
         {
-            AuditIds = (query.AuditIds?.Select(x => x.ToString())),
+            AuditIds = (query.AuditIds?.Select(static x => x.ToString())),
             query.Users,
             query.FromDateTime,
             query.ToDateTime,
-            AuditKinds = (query.AuditKinds?.Select(x => x.ToString())),
+            AuditKinds = (query.AuditKinds?.Select(static x => x.ToString())),
             query.Skip,
             query.Limit,
         };

@@ -20,7 +20,7 @@ public static class Program
     public static IHostBuilder Config(this IHostBuilder builder, string[] args)
     {
         return builder
-            .ConfigureServices(s =>
+            .ConfigureServices(static s =>
             {
                 s.AddSingleton<IExternalInjected, ExternalInjected>();
             })

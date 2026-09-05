@@ -85,13 +85,13 @@ public static class Ex
         {
             var databaseStatistics = admin.Send(new GetStatisticsOperation());
             var indexes = databaseStatistics.Indexes
-                .Where(x => x.State != IndexState.Disabled);
+                .Where(static x => x.State != IndexState.Disabled);
 
-            if (indexes.All(x => x.IsStale == false
+            if (indexes.All(static x => x.IsStale == false
                 && x.Name.StartsWith(Constants.Documents.Indexing.SideBySideIndexNamePrefix, StringComparison.Ordinal) == false))
                 return;
 
-            if (databaseStatistics.Indexes.Any(x => x.State == IndexState.Error))
+            if (databaseStatistics.Indexes.Any(static x => x.State == IndexState.Error))
             {
                 break;
             }
@@ -113,7 +113,7 @@ public static class Ex
             static string FormatIndexErrors(IndexErrors indexErrors)
             {
                 var errorsListText = string.Join("\r\n",
-                    indexErrors.Errors.Select(x => $"- {x}"));
+                    indexErrors.Errors.Select(static x => $"- {x}"));
                 return $"Index '{indexErrors.Name}' ({indexErrors.Errors.Length} errors):\r\n{errorsListText}";
             }
         }

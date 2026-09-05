@@ -15,7 +15,7 @@ public class Ping_DeepCheckQueryValidator : AbstractValidator<Ping_GetByNameQuer
     /// </summary>
     public Ping_DeepCheckQueryValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(static x => x.Name)
             .NotEqual("FAIL")
             .MinimumLength(4)
             ;

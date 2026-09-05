@@ -41,8 +41,8 @@ public sealed class ProcessWideApplicationTestFixture : IAsyncDisposable
             clock: Application.Clock,
             dataContextFactory: _store,
             printCompletedNotificationService: Application.PrintCompletedNotificationService,
-            configureOptions: options => options.AddInProcessMessageInspector(),
-            configureTimeouts: timeouts => timeouts.StoreInMemoryTests());
+            configureOptions: static options => options.AddInProcessMessageInspector(),
+            configureTimeouts: static timeouts => timeouts.StoreInMemoryTests());
         _processor.Verify();
         _processor.StartBus();
         Application.StartOutboundBus();

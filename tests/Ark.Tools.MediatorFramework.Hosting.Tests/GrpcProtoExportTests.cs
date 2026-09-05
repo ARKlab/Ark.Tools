@@ -48,7 +48,7 @@ public sealed class GrpcProtoExportTests
     public void GeneratesVersionedClientShape()
     {
         var services = HostingReflection.Descriptor.Services
-            .Select(service => service.Name)
+            .Select(static service => service.Name)
             .ToArray();
 
         services.Should().Equal("HostingV1", "HostingV2", "HostingV3");
@@ -56,8 +56,8 @@ public sealed class GrpcProtoExportTests
         typeof(HostingV2.HostingV2Client).Should().NotBeNull();
         typeof(HostingV3.HostingV3Client).Should().NotBeNull();
         HostingReflection.Descriptor.Services
-            .Single(service => service.Name == "HostingV1")
-            .Methods.Should().Contain(method => method.Name == "HostingRequest");
+            .Single(static service => service.Name == "HostingV1")
+            .Methods.Should().Contain(static method => method.Name == "HostingRequest");
     }
 
     /// <summary>Verifies an assembly without generated services is a successful no-op.</summary>

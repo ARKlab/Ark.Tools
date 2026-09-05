@@ -87,7 +87,7 @@ public sealed class MinimalApiHostingExtensionsTests
                 && result.Value.Value == index;
         });
 
-        results.Should().OnlyContain(value => value);
+        results.Should().OnlyContain(static value => value);
     }
 
 #if NET10_0_OR_GREATER
@@ -97,7 +97,7 @@ public sealed class MinimalApiHostingExtensionsTests
         Ark.Tools.Nodatime.NodaTimeConverter.Register();
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.AddOpenApi("v1", options => options
+        builder.Services.AddOpenApi("v1", static options => options
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas());
         await using var app = builder.Build();
@@ -150,9 +150,9 @@ public sealed class MinimalApiHostingExtensionsTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.AddOpenApi("v1", options => options.AddArkTypeConverterValueSchemas());
+        builder.Services.AddOpenApi("v1", static options => options.AddArkTypeConverterValueSchemas());
         await using var app = builder.Build();
-        app.MapGet("/converted", (
+        app.MapGet("/converted", static (
             [Microsoft.AspNetCore.Mvc.FromQuery]
             ArkTypeConverterValue<int> value) => TypedResults.Ok(value.Value));
         app.MapOpenApi();
@@ -177,7 +177,7 @@ public sealed class MinimalApiHostingExtensionsTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.ConfigureHttpJsonOptions(options =>
+        builder.Services.ConfigureHttpJsonOptions(static options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         builder.Services.AddOpenApi("v1");
         await using var app = builder.Build();
@@ -232,7 +232,7 @@ public sealed class MinimalApiHostingExtensionsTests
         builder.WebHost.UseTestServer();
         builder.Services.AddOpenApi("v1", options => options.AddArkOAuthSecurity(settings));
         await using var app = builder.Build();
-        app.MapGet("/secured", () => "ok");
+        app.MapGet("/secured", static () => "ok");
         app.MapOpenApi();
         await app.StartAsync(app.Lifetime.ApplicationStarted);
 
@@ -258,9 +258,9 @@ public sealed class MinimalApiHostingExtensionsTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.AddOpenApi("v1", options => options.AddArkNodaTimeSchemas());
+        builder.Services.AddOpenApi("v1", static options => options.AddArkNodaTimeSchemas());
         await using var app = builder.Build();
-        app.MapGet("/nodatime", () => new NodaTimeSchemaModel());
+        app.MapGet("/nodatime", static () => new NodaTimeSchemaModel());
         app.MapOpenApi();
         await app.StartAsync(app.Lifetime.ApplicationStarted);
 
@@ -326,11 +326,11 @@ public sealed class MinimalApiHostingExtensionsTests
         {
             type.Should().Be("string");
             schema.GetProperty("enum").EnumerateArray()
-                .Should().OnlyContain(item => item.ValueKind == JsonValueKind.String);
+                .Should().OnlyContain(static item => item.ValueKind == JsonValueKind.String);
         }
         else if (schemaType.ValueKind == JsonValueKind.Array)
         {
-            schemaType.EnumerateArray().Select(item => item.GetString()).Should().Contain(type);
+            schemaType.EnumerateArray().Select(static item => item.GetString()).Should().Contain(type);
         }
         else
         {
@@ -350,7 +350,7 @@ public sealed class MinimalApiHostingExtensionsTests
 
         var route = app.MapArkAttachmentUpload<TestRequest, TestResponse>(
             "/uploads",
-            attachment => new TestRequest { Attachment = attachment });
+            static attachment => new TestRequest { Attachment = attachment });
 
         route.Should().NotBeNull();
     }

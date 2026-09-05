@@ -15,7 +15,7 @@ internal sealed class ZonedDateTimeTzdbConverter : JsonConverter
 {
     private readonly JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
             ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
-        , x => InvalidOperationException.ThrowIf(x.Calendar != CalendarSystem.Iso, "Only ISO calendar system is supported")
+        , static x => InvalidOperationException.ThrowIf(x.Calendar != CalendarSystem.Iso, "Only ISO calendar system is supported")
         );
 
     public override bool CanRead => _converter.CanRead;

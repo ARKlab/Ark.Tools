@@ -86,7 +86,7 @@ public class AuthTestContext
     [Given(@"User scopes as")]
     public void GivenUserScopesAs(Table table)
     {
-        _scopes = table.Rows.SelectMany(x => x.Values).ToList();
+        _scopes = table.Rows.SelectMany(static x => x.Values).ToList();
     }
     [Given(@"User has no Permissions")]
     public void GivenUserNoScopes()

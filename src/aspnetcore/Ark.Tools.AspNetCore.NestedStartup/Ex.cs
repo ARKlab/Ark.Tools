@@ -61,7 +61,7 @@ public static class Ex
     public static IServiceCollection ConfigureControllerArea<TArea>(this IServiceCollection services)
         where TArea : IArea
     {
-        services.AddMvcCore().ConfigureApplicationPartManager(manager =>
+        services.AddMvcCore().ConfigureApplicationPartManager(static manager =>
         {
             var controllers = manager.FeatureProviders.OfType<ControllerFeatureProvider>().ToArray();
             foreach (var item in controllers)

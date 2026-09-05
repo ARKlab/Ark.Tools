@@ -31,7 +31,7 @@ public sealed class McpHostingTests
         var tools = await client.ListToolsAsync(cancellationToken: app.Lifetime.ApplicationStopping)
             .ConfigureAwait(false);
 
-        tools.Select(tool => tool.Name).Should().BeEquivalentTo(
+        tools.Select(static tool => tool.Name).Should().BeEquivalentTo(
             [
                 "hosting.attachment.download",
                 "hosting.attachment.upload",
@@ -40,7 +40,7 @@ public sealed class McpHostingTests
                 "hosting.validation",
             ]);
 
-        var query = tools.Single(tool => tool.Name == "hosting.query");
+        var query = tools.Single(static tool => tool.Name == "hosting.query");
         query.ProtocolTool.OutputSchema.Should().NotBeNull();
         query.ProtocolTool.OutputSchema!.Value.GetProperty("type").GetString().Should().Be("object");
         query.ProtocolTool.OutputSchema.Value.GetProperty("properties").GetProperty("message").GetProperty("type")
@@ -58,7 +58,7 @@ public sealed class McpHostingTests
         var tools = await client.ListToolsAsync(cancellationToken: app.Lifetime.ApplicationStopping)
             .ConfigureAwait(false);
 
-        tools.Select(tool => tool.Name).Should().Contain("hosting.authorized");
+        tools.Select(static tool => tool.Name).Should().Contain("hosting.authorized");
     }
 
     /// <summary>Verifies an anonymous client cannot invoke a protected generated tool.</summary>
@@ -201,10 +201,10 @@ public sealed class McpHostingTests
         var versionFourTools = await versionFour.ListToolsAsync(
             cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
-        versionOneTools.Select(tool => tool.Name).Should().NotContain("hosting.versioned");
-        versionTwoTools.Select(tool => tool.Name).Should().Contain("hosting.versioned");
-        versionFourTools.Select(tool => tool.Name).Should().NotContain("hosting.versioned");
-        versionFourTools.Select(tool => tool.Name).Should().Contain("hosting.query");
+        versionOneTools.Select(static tool => tool.Name).Should().NotContain("hosting.versioned");
+        versionTwoTools.Select(static tool => tool.Name).Should().Contain("hosting.versioned");
+        versionFourTools.Select(static tool => tool.Name).Should().NotContain("hosting.versioned");
+        versionFourTools.Select(static tool => tool.Name).Should().Contain("hosting.query");
     }
 
     private static async Task<McpClient> _createClientAsync(

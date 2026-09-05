@@ -127,6 +127,6 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
             SyntaxFactory.TypeArgumentList(
                 SyntaxFactory.SeparatedList<TypeSyntax>(
                     declaration.TypeParameterList.Parameters
-                        .Select(parameter => (TypeSyntax)SyntaxFactory.IdentifierName(parameter.Identifier)))));
+                        .Select(static parameter => (TypeSyntax)SyntaxFactory.IdentifierName(parameter.Identifier)))));
     }
 }

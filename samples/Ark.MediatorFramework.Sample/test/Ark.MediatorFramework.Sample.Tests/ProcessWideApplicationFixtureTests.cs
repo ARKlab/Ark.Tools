@@ -35,7 +35,7 @@ public sealed class ProcessWideApplicationFixtureTests
     [TestMethod]
     public async Task SharedFixtureResetsStateBetweenScenarios()
     {
-        var firstBookId = await _fixture.RunScenarioAsync(async application =>
+        var firstBookId = await _fixture.RunScenarioAsync(static async application =>
         {
             var book = await application.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
                 new Book_CreateRequest.V1(new Book.V1.Create
@@ -48,7 +48,7 @@ public sealed class ProcessWideApplicationFixtureTests
         }).ConfigureAwait(false);
 
         firstBookId.Should().NotBe(Guid.Empty);
-        var secondScenarioBookCount = await _fixture.RunScenarioAsync(async application =>
+        var secondScenarioBookCount = await _fixture.RunScenarioAsync(static async application =>
         {
             var page = await application.DispatchQueryAsync<Book_SearchQuery.V1, Book.V1.Page>(
                 new Book_SearchQuery.V1()).ConfigureAwait(false);
@@ -65,12 +65,12 @@ public sealed class ProcessWideApplicationFixtureTests
     public async Task SharedFixtureSerializesConcurrentScenarios()
     {
         await Task.WhenAll(
-            _fixture.RunScenarioAsync(async _ =>
+            _fixture.RunScenarioAsync(static async _ =>
             {
                 await Task.Delay(25).ConfigureAwait(false);
                 return true;
             }),
-            _fixture.RunScenarioAsync(async _ =>
+            _fixture.RunScenarioAsync(static async _ =>
             {
                 await Task.Delay(25).ConfigureAwait(false);
                 return true;

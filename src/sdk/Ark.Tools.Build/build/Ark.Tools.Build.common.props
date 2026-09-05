@@ -38,7 +38,7 @@
                                Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.VisualStudioThreading.globalconfig"
                                KeepDuplicates="false"
-                               Condition="'$(EnableArkToolsVisualStudioThreading)' != 'false'" />
+                               Condition="'$(EnableArkToolsVisualStudioThreading)' == 'true'" />
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.IdentityModel.globalconfig"
                                KeepDuplicates="false"
                                Condition="'$(EnableArkToolsIdentityModelConfiguration)' != 'false'" />

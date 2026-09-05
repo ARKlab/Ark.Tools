@@ -46,7 +46,7 @@ public static class Program
                         .AddCommandLine(args)
                         ;
                 })
-                .ConfigureServices((ctx, services) =>
+                .ConfigureServices(static (ctx, services) =>
                 {
                     services.AddSingleton<IHostedService, RebusProcessorService>();
 

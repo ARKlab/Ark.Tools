@@ -87,7 +87,7 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
                 bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
 
                 var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
-                res = res.Concat(list.Select(e => new FtpMetadata(e)));
+                res = res.Concat(list.Select(static e => new FtpMetadata(e)));
             }
             return res.ToList();
         }

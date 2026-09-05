@@ -21,7 +21,7 @@ public static class Program
             //.UseContentRoot(Directory.GetCurrentDirectory())
             .ConfigureWebHostDefaults(webBuilder =>
             {
-                webBuilder.ConfigureKestrel(serverOptions =>
+                webBuilder.ConfigureKestrel(static serverOptions =>
                 {
                     // Set properties and call methods on options
                 })
@@ -40,7 +40,7 @@ public static class Program
                         .AddCommandLine(args)
                         ;
                 })
-                .ConfigureLogging((hostingContext, logging) =>
+                .ConfigureLogging(static (hostingContext, logging) =>
                 {
                     logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                     logging.AddConsole();

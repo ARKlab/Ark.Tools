@@ -55,7 +55,7 @@ public static class SliceActivityManagerExtensions
                         select (ISliceActivityManager)r.GetInstance());
 
 
-        return Task.WhenAll(managers.Select(m => m.Start()));
+        return Task.WhenAll(managers.Select(static m => m.Start()));
     }
 
 }

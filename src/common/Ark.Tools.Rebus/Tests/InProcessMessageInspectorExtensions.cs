@@ -6,7 +6,7 @@ public static class InProcessMessageInspectorExtensions
 {
     public static void AddInProcessMessageInspector(this OptionsConfigurer configurer)
     {
-        configurer.Decorate<IPipeline>(c =>
+        configurer.Decorate<IPipeline>(static c =>
         {
             var pipeline = c.Get<IPipeline>();
             var step = new InProcessMessageInspectorStep();

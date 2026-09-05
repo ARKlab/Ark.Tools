@@ -8,20 +8,20 @@ public class Post_EntityRequestValidator : AbstractValidator<Post_EntityRequest.
 {
     public Post_EntityRequestValidator()
     {
-        RuleFor(x => x.EntityId)
+        RuleFor(static x => x.EntityId)
             .NotEmpty()
             .MaximumLength(10)
             ;
 
-        RuleFor(x => x.EntityId)
+        RuleFor(static x => x.EntityId)
             .NotEmpty()
             .MaximumLength(20)
             ;
 
-        RuleFor(x => x.EntityId)
+        RuleFor(static x => x.EntityId)
             .NotEqual("ErrorCode")
             .WithErrorCode("NOT_EQUAL_ERRORCODE")
-            .WithState(x => new
+            .WithState(static x => new
             {
                 Foo = "bar"
             });

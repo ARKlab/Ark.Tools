@@ -111,7 +111,7 @@ public abstract class AggregateRoot<[DynamicallyAccessedMembers(DynamicallyAcces
 
         _applyMethods = methods
             .ToDictionary(
-                mi => mi.GetParameters()[0].ParameterType,
+                static mi => mi.GetParameters()[0].ParameterType,
                 mi =>
                 {
                     var eventType = mi.GetParameters()[0].ParameterType;

@@ -74,7 +74,7 @@ public static partial class Ex
 
         evt.Timestamp = e.Metadata.Timestamp;
 
-        evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
+        evt.Metadata = e.Metadata.Values.ToDictionary(static x => x.Key, static x => x.Value, StringComparer.Ordinal);
 
         evt.SetEvent(e.Event);
 

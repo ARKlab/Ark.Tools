@@ -32,14 +32,14 @@ public sealed class ResourceWatcherOpenTelemetryTests
 
         await watcher.RunOnce().ConfigureAwait(false);
 
-        collector.Spans.Should().Contain(x => x.OperationName == "ark.tools.resourcewatcher.run");
-        collector.Spans.Should().Contain(x => x.OperationName == "ark.tools.resourcewatcher.get_resources");
-        collector.Spans.Should().Contain(x => x.OperationName == "ark.tools.resourcewatcher.check_state");
-        collector.Spans.Should().Contain(x =>
+        collector.Spans.Should().Contain(static x => x.OperationName == "ark.tools.resourcewatcher.run");
+        collector.Spans.Should().Contain(static x => x.OperationName == "ark.tools.resourcewatcher.get_resources");
+        collector.Spans.Should().Contain(static x => x.OperationName == "ark.tools.resourcewatcher.check_state");
+        collector.Spans.Should().Contain(static x =>
             x.OperationName == "ark.tools.resourcewatcher.process_resource"
             && _hasTag(x, "resource_id", "resource-1")
             && _hasTag(x, "result_type", nameof(ResultType.Normal)));
-        collector.Spans.Should().Contain(x =>
+        collector.Spans.Should().Contain(static x =>
             x.OperationName == "ark.tools.resourcewatcher.run"
             && _hasTag(x, "tenant", "tenant"));
     }
@@ -57,9 +57,9 @@ public sealed class ResourceWatcherOpenTelemetryTests
 
         await watcher.RunOnce().ConfigureAwait(false);
 
-        var activity = collector.Spans.Single(x => x.OperationName == "ark.tools.resourcewatcher.process_resource");
+        var activity = collector.Spans.Single(static x => x.OperationName == "ark.tools.resourcewatcher.process_resource");
         activity.Status.Should().Be(ActivityStatusCode.Error);
-        activity.Events.Should().Contain(x => x.Name == "exception");
+        activity.Events.Should().Contain(static x => x.Name == "exception");
     }
 
     [TestMethod]
@@ -67,7 +67,7 @@ public sealed class ResourceWatcherOpenTelemetryTests
     {
         var measurements = new List<(string Name, long Value, string? Outcome)>();
         using var listener = new MeterListener();
-        listener.InstrumentPublished = (instrument, meterListener) =>
+        listener.InstrumentPublished = static (instrument, meterListener) =>
         {
             if (instrument.Meter.Name == ResourceWatcherInstrumentation.MeterName)
                 meterListener.EnableMeasurementEvents(instrument);
@@ -92,12 +92,12 @@ public sealed class ResourceWatcherOpenTelemetryTests
         await watcher.RunOnce().ConfigureAwait(false);
         listener.RecordObservableInstruments();
 
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == "ark.tools.resourcewatcher.runs"
             && x.Value == 1
             && x.Outcome == "success");
-        measurements.Should().Contain(x => x.Name == "ark.tools.resourcewatcher.resources.listed" && x.Value == 1);
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x => x.Name == "ark.tools.resourcewatcher.resources.listed" && x.Value == 1);
+        measurements.Should().Contain(static x =>
             x.Name == "ark.tools.resourcewatcher.resources.processed"
             && x.Value == 1
             && x.Outcome == "success");
@@ -108,7 +108,7 @@ public sealed class ResourceWatcherOpenTelemetryTests
     {
         var measurements = new List<(string Name, long Value, string? Outcome)>();
         using var listener = new MeterListener();
-        listener.InstrumentPublished = (instrument, meterListener) =>
+        listener.InstrumentPublished = static (instrument, meterListener) =>
         {
             if (instrument.Meter.Name == ResourceWatcherInstrumentation.MeterName)
                 meterListener.EnableMeasurementEvents(instrument);
@@ -133,11 +133,11 @@ public sealed class ResourceWatcherOpenTelemetryTests
         await noActionWatcher.RunOnce().ConfigureAwait(false);
         listener.RecordObservableInstruments();
 
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == "ark.tools.resourcewatcher.resources.processed"
             && x.Value == 1
             && x.Outcome == "no_new_data");
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == "ark.tools.resourcewatcher.resources.processed"
             && x.Value == 1
             && x.Outcome == "no_action");

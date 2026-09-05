@@ -34,7 +34,7 @@ public sealed class AsyncEnumerableStreamingTests
         };
 
         await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
-        items.Select(item => item.Index).Should().Equal(0, 1);
+        items.Select(static item => item.Index).Should().Equal(0, 1);
         items[0].Title.Should().Be("Book 0");
     }
 

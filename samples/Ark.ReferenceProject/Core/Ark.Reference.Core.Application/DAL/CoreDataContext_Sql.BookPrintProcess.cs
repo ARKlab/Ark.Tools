@@ -53,7 +53,7 @@ public partial class CoreDataContext_Sql
         {
             @BookPrintProcessId = query.BookPrintProcessId,
             @BookId = query.BookId,
-            @Status = query.Status?.Select(x => x.ToString()),
+            @Status = query.Status?.Select(static x => x.ToString()),
             @Skip = query.Skip,
             @Limit = query.Limit
         };
@@ -81,7 +81,7 @@ public partial class CoreDataContext_Sql
 
         var (data, count) = await Connection.ReadPagedAsync<BookPrintProcessDto>(cmd).ConfigureAwait(false);
 
-        var d = data.Select(s => s.ToOutput());
+        var d = data.Select(static s => s.ToOutput());
 
         _logger.Trace(CultureInfo.InvariantCulture, "ReadBookPrintProcessByFiltersAsync ended");
 

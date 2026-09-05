@@ -35,7 +35,7 @@ public sealed class BulkCreateBookHandler :
     {
         ArgumentNullException.ThrowIfNull(request);
         var books = request.Data
-            .Select(data => CreateBookHandler._createResponse(
+            .Select(static data => CreateBookHandler._createResponse(
                 Guid.NewGuid(),
                 data.Title,
                 data.Author,

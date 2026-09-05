@@ -31,7 +31,7 @@ public sealed class UserContextIncomingStep : IMessagingIncomingStep
                 identity.AddClaim(new Claim("scope", scopes));
             if (context.Headers.TryGetValue(MessagingHeaders.UserRoles, out var roles))
                 identity.AddClaims(roles.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(role => new Claim(ClaimTypes.Role, role)));
+                    .Select(static role => new Claim(ClaimTypes.Role, role)));
             _setPrincipal(new ClaimsPrincipal(identity));
         }
 
@@ -62,7 +62,7 @@ public sealed class UserContextOutgoingStep : IMessagingOutgoingStep
             _setIfPresent(context, MessagingHeaders.UserAuthenticationType, principal.Identity.AuthenticationType);
             _setIfPresent(context, MessagingHeaders.UserId, principal.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             _setIfPresent(context, MessagingHeaders.UserScopes, principal.FindFirst("scope")?.Value);
-            var roles = principal.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
+            var roles = principal.FindAll(ClaimTypes.Role).Select(static claim => claim.Value).ToArray();
             if (roles.Length > 0)
                 context._setReservedHeader(MessagingHeaders.UserRoles, string.Join(",", roles));
         }

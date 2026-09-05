@@ -66,7 +66,7 @@ public sealed class MockProviderApi
     public IEnumerable<MyMetadata> ListBlobs()
     {
         _listCalls.Add(DateTimeOffset.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
-        return _blobs.Values.Select(b => new MyMetadata
+        return _blobs.Values.Select(static b => new MyMetadata
         {
             ResourceId = b.ResourceId,
             Modified = b.Modified,

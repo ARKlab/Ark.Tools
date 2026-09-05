@@ -28,9 +28,9 @@ public sealed class AzureFunctionsPackagingTests
         package.GetEntry("analyzers/dotnet/cs/Ark.Tools.MediatorFramework.AzureFunctions.Generators.dll").Should().NotBeNull();
         package.GetEntry("lib/net10.0/Ark.Tools.MediatorFramework.AzureFunctions.dll").Should().NotBeNull();
         package.GetEntry("buildTransitive/Ark.Tools.MediatorFramework.AzureFunctions.props").Should().NotBeNull();
-        package.Entries.Should().NotContain(e => e.FullName.StartsWith("lib/", StringComparison.Ordinal) && e.FullName.Contains("Generators", StringComparison.Ordinal),
+        package.Entries.Should().NotContain(static e => e.FullName.StartsWith("lib/", StringComparison.Ordinal) && e.FullName.Contains("Generators", StringComparison.Ordinal),
             "the generator must not ship as an implementation assembly");
-        package.Entries.Where(e => e.FullName.StartsWith("lib/net10.0/", StringComparison.Ordinal) && e.FullName.EndsWith(".dll", StringComparison.Ordinal))
+        package.Entries.Where(static e => e.FullName.StartsWith("lib/net10.0/", StringComparison.Ordinal) && e.FullName.EndsWith(".dll", StringComparison.Ordinal))
             .Should().ContainSingle("only the package's own assembly ships under lib");
     }
 

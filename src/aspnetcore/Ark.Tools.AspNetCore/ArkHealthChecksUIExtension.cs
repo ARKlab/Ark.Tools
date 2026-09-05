@@ -17,7 +17,7 @@ public static class ArkHealthChecksUIExtension
     /// <returns>The service collection.</returns>
     public static IServiceCollection AddArkHealthChecksUI(this IServiceCollection services)
     {
-        services.AddHealthChecksUI(setupSettings: setup =>
+        services.AddHealthChecksUI(setupSettings: static setup =>
         {
             setup.SetEvaluationTimeInSeconds(60);
             setup.MaximumHistoryEntriesPerEndpoint(50);
@@ -25,7 +25,7 @@ public static class ArkHealthChecksUIExtension
         }
         ).AddInMemoryStorage();
 
-        services.AddArkHealthChecksUIOptions(o =>
+        services.AddArkHealthChecksUIOptions(static o =>
         {
             if (File.Exists(Path.Join(Environment.CurrentDirectory, "UIHealthChecks.css")))
                 o.AddCustomStylesheet("UIHealthChecks.css");
