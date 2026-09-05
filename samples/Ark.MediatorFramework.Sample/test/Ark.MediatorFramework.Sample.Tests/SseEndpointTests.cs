@@ -34,8 +34,8 @@ public sealed class SseEndpointTests
             .Select(static endpoint => endpoint.RoutePattern.RawText)
             .ToArray();
 
-        routes.Should().Contain("/api/v1/books/{bookId}/reviews/sse");
-        routes.Should().Contain("/api/v1/books/stream/sse");
+        routes.Should().Contain("/api/v1/books/{bookId}/reviews/poller");
+        routes.Should().Contain("/api/v1/books/stream/stream");
     }
 
     /// <summary>Requires the same authorization as the underlying query.</summary>
@@ -45,7 +45,7 @@ public sealed class SseEndpointTests
         await using var host = await _startAsync().ConfigureAwait(false);
 
         using var response = await host.GetTestClient().GetAsync(
-            new Uri("/api/v1/books/stream/sse", UriKind.Relative),
+            new Uri("/api/v1/books/stream/stream", UriKind.Relative),
             host.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -58,7 +58,7 @@ public sealed class SseEndpointTests
         await using var host = await _startAsync().ConfigureAwait(false);
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
-            new Uri("/api/v1/books/stream/sse?Count=3&DelayMilliseconds=0", UriKind.Relative));
+            new Uri("/api/v1/books/stream/stream?Count=3&DelayMilliseconds=0", UriKind.Relative));
         request.Headers.TryAddWithoutValidation(
             "Authorization",
             "Bearer " + new JwtTokenBuilder().AddSubject("sse-user").AddScope(ApplicationScopes.BookRead).Build());

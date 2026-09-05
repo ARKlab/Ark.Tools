@@ -24,11 +24,12 @@ on a timer and wraps each result in `SseItem<T>`.
 
 ```csharp
 [HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reviews")]
-[Sse(IntervalSeconds = 5, AllowClientInterval = true, MinimumIntervalSeconds = 2)]
+[Sse(IntervalSeconds = 60, AllowClientInterval = true)]
 public sealed record V1 : IQuery<V1, IReadOnlyList<BookReview>> { … }
 ```
 
-The generator emits a sibling route (`<template>/sse`, configurable with `RouteSuffix`). A sibling
+The generator emits a sibling route named after the behavior rather than the transport: `<template>/poller`
+for a polled query and `<template>/stream` for a streaming one, both configurable with `RouteSuffix`. A sibling
 route is preferred over `Accept: text/event-stream` negotiation on the original route: negotiation
 would silently turn a normal `GET` into a never-ending response for any client that mis-sends the
 header, and it would make the OpenAPI document lie about the operation's response.
@@ -41,7 +42,8 @@ is available with no multi-targeting cost.
 
 - **Interval**: declared server-side. A client may request an interval only when `AllowClientInterval`
   is set, and the value is always clamped to `[MinimumIntervalSeconds, MaximumIntervalSeconds]` —
-  never trusted raw. A declared interval below the floor is raised to the floor.
+  never trusted raw. The floor defaults to 60 seconds because cost scales with the client count.
+  A declared interval below the floor is raised to the floor.
 - **Change detection**: prefer the `[ETag]` response property when the contract has one; it is the
   framework's canonical change token. Without one, the serialized payload is compared byte-for-byte
   against the previous frame (this costs one serialization per tick). `EmitEveryTick = true` opts out.

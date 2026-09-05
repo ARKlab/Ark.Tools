@@ -530,7 +530,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             metadata.Add($"http={StringArgument(http, 0)} {StringArgument(http, 1)}");
             var sse = Attribute(type, Sse);
             if (sse is not null)
-                metadata.Add($"sse=GET {StringArgument(http, 1)}{StringNamed(sse, "RouteSuffix") ?? "/sse"}");
+            {
+                var suffix = StringNamed(sse, "RouteSuffix")
+                    ?? (result is INamedTypeSymbol { Name: "IAsyncEnumerable" } ? "/stream" : "/poller");
+                metadata.Add($"sse=GET {StringArgument(http, 1)}{suffix}");
+            }
             metadata.Add($"version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 

@@ -143,7 +143,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.Solid;
             public sealed record Item(string ETag, string Value);
             [HttpEndpoint("GET", "/items/{id}")]
-            [Sse(IntervalSeconds = 5, AllowClientInterval = true)]
+            [Sse(IntervalSeconds = 60, AllowClientInterval = true)]
             public sealed record GetItem : IQuery<GetItem, Item>
             {
                 [HttpRoute]
@@ -151,11 +151,11 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimal.Should().Contain("+ \"/sse\"");
+        minimal.Should().Contain("+ \"/poller\"");
         minimal.Should().Contain("ArkSse.Poll<global::GetItem, global::Item>");
         minimal.Should().Contain("text/event-stream");
         minimal.Should().Contain("WithName(\"GetItem_sse\")");
-        minimal.Should().Contain("TimeSpan.FromSeconds(5)");
+        minimal.Should().Contain("TimeSpan.FromSeconds(60)");
     }
 
     [TestMethod]
@@ -171,6 +171,7 @@ public sealed class GeneratorSnapshotTests
             public sealed record GetStream : IQuery<GetStream, IAsyncEnumerable<string>>;
             """);
 
+        minimal.Should().Contain("+ \"/stream\"");
         minimal.Should().Contain("ArkSse.Stream<string>");
         minimal.Should().NotContain("ArkSse.Poll");
     }
@@ -182,7 +183,7 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [Sse(IntervalSeconds = 5)]
+            [Sse(IntervalSeconds = 60)]
             public sealed record Orphan : IQuery<Orphan, string>;
             """).Should().Contain("ARKMF021");
 
@@ -191,7 +192,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("POST", "/items")]
-            [Sse(IntervalSeconds = 5)]
+            [Sse(IntervalSeconds = 60)]
             public sealed record Create : ICommand<Create>;
             """).Should().Contain("ARKMF022").And.Contain("ARKMF023");
 
@@ -209,7 +210,7 @@ public sealed class GeneratorSnapshotTests
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [HttpEndpoint("GET", "/items")]
-            [Sse(IntervalSeconds = 5, MinimumIntervalSeconds = 10)]
+            [Sse(IntervalSeconds = 5)]
             public sealed record List : IQuery<List, string>;
             """).Should().Contain("ARKMF024");
     }

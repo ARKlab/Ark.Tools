@@ -23,8 +23,11 @@ public sealed class SseAttribute : Attribute
     /// </summary>
     public int IntervalSeconds { get; set; }
 
-    /// <summary>Gets or sets the smallest interval a client may request. The default is one second.</summary>
-    public int MinimumIntervalSeconds { get; set; } = 1;
+    /// <summary>
+    /// Gets or sets the smallest interval a client may request. The default is 60 seconds, because a
+    /// poller multiplies its cost by the number of connected clients.
+    /// </summary>
+    public int MinimumIntervalSeconds { get; set; } = 60;
 
     /// <summary>Gets or sets the largest interval a client may request. The default is one hour.</summary>
     public int MaximumIntervalSeconds { get; set; } = 3600;
@@ -56,10 +59,11 @@ public sealed class SseAttribute : Attribute
     public bool EmitEveryTick { get; set; }
 
     /// <summary>
-    /// Gets or sets the route suffix appended to the declared HTTP endpoint template.
-    /// The default is <c>/sse</c>.
+    /// Gets or sets the route suffix appended to the declared HTTP endpoint template. The default
+    /// names the behavior rather than the transport: <c>/poller</c> for a polled query and
+    /// <c>/stream</c> for a streaming one.
     /// </summary>
-    public string RouteSuffix { get; set; } = "/sse";
+    public string? RouteSuffix { get; set; }
 
     /// <summary>
     /// Gets or sets the SSE <c>event</c> name used for data frames. The default is the contract name.

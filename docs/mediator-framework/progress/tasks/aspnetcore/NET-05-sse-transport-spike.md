@@ -40,7 +40,7 @@ out to need no new abstraction at all:
   the handler shape never changes: the endpoint re-executes `IQueryProcessor.ExecuteAsync` on a timer.
   Every decorator (validation, authorization, profiling) therefore re-runs per tick, unchanged.
 - **GO on `[Sse]`**, a supplement to the `[HttpEndpoint("GET", …)]` already on the contract, emitting a
-  sibling `<template>/sse` route. It covers both the polled shape and the existing
+  sibling `<template>/poller` (or `/stream`) route. It covers both the polled shape and the existing
   `IAsyncEnumerable` streaming shape.
 - §3 security review is in the report: per-tick authorization, connection caps with `503`, compression
   bypass, proxy buffering headers, heartbeats, connection lifetime capped at the bearer token `exp`,

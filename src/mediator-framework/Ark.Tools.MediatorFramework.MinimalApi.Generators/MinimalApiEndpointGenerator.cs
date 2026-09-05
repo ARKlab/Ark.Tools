@@ -610,11 +610,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                     DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "attachment responses cannot be framed as events"));
 
             var interval = NamedInt(sse, "IntervalSeconds", 0);
-            var minimum = NamedInt(sse, "MinimumIntervalSeconds", 1);
+            var minimum = NamedInt(sse, "MinimumIntervalSeconds", 60);
             var maximum = NamedInt(sse, "MaximumIntervalSeconds", 3600);
             var heartbeat = NamedInt(sse, "HeartbeatSeconds", 15);
             var maxConnection = NamedInt(sse, "MaxConnectionSeconds", 3600);
-            var routeSuffix = NamedString(sse, "RouteSuffix") ?? "/sse";
+            var routeSuffix = NamedString(sse, "RouteSuffix") ?? (isStreaming ? "/stream" : "/poller");
             if (minimum <= 0)
                 diagnostics.Add(new DiagnosticInfo(
                     DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "MinimumIntervalSeconds must be positive"));

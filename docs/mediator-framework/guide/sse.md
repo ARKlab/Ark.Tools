@@ -15,7 +15,7 @@ Two shapes are supported, both with the same attribute:
 
 ```csharp
 [HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reviews")]
-[Sse(IntervalSeconds = 5, AllowClientInterval = true, MinimumIntervalSeconds = 2)]
+[Sse(IntervalSeconds = 60, AllowClientInterval = true)]
 public sealed record V1 : IQuery<V1, IReadOnlyList<BookReview>>
 {
     [HttpRoute]
@@ -23,15 +23,16 @@ public sealed record V1 : IQuery<V1, IReadOnlyList<BookReview>>
 }
 ```
 
-This maps `GET /api/v1/books/{bookId}/reviews/sse` alongside the normal route.
-`RouteSuffix` changes the suffix, `EventName` changes the event name (it defaults
-to the generated contract name).
+This maps `GET /api/v1/books/{bookId}/reviews/poller` alongside the normal route.
+The suffix names the behavior, not the transport: `/poller` for a polled query and
+`/stream` for a streaming one. `RouteSuffix` overrides it, `EventName` changes the
+event name (it defaults to the generated contract name).
 
 ## 2. Consume it
 
 ```bash
 curl -N -H "Accept: text/event-stream" \
-  "https://host/api/v1/books/$id/reviews/sse?pollIntervalSeconds=10"
+  "https://host/api/v1/books/$id/reviews/poller?pollIntervalSeconds=120"
 ```
 
 The browser's native `EventSource` cannot send an `Authorization` header: use
@@ -43,7 +44,8 @@ six connections per origin on HTTP/1.1.
 
 - **Clamps the interval.** `pollIntervalSeconds` is honored only when
   `AllowClientInterval` is set, and is always clamped to
-  `[MinimumIntervalSeconds, MaximumIntervalSeconds]`.
+  `[MinimumIntervalSeconds, MaximumIntervalSeconds]`. The floor defaults to 60
+  seconds: a poller multiplies its cost by the number of connected clients.
 - **Re-runs every decorator per tick.** Validation and authorization are
   re-evaluated on each poll, exactly as for a normal request, because each tick
   goes through `IQueryProcessor`.
