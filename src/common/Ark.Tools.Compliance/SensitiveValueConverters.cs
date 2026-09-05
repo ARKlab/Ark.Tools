@@ -17,6 +17,9 @@ public sealed class SensitiveValueJsonConverter<T> : JsonConverter<T>
     /// <inheritdoc />
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        if (reader.TokenType is not (JsonTokenType.String or JsonTokenType.PropertyName))
+            throw new JsonException("Invalid sensitive value.");
+
         if (!T.TryFrom(reader.GetString(), out var result))
             throw new JsonException("Invalid sensitive value.");
 

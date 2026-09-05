@@ -135,6 +135,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
     private static bool _isStringHook(IMethodSymbol method, string returnType)
     {
         return method.IsStatic
+            && method.DeclaredAccessibility == Accessibility.Private
             && method.Parameters.Length == 1
             && method.Parameters[0].Type.SpecialType == SpecialType.System_String
             && (returnType == "string"

@@ -74,6 +74,28 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
+    /// The Dapper adapter maps SQL NULL to the default value, like the other Ark handlers.
+    /// </summary>
+    [TestMethod]
+    public void SensitiveValueObject_DapperHandlerMapsNullToDefault()
+    {
+        var handler = new SensitiveValueTypeHandler<EmailAddress>();
+
+        handler.Parse(DBNull.Value).Should().Be(default(EmailAddress));
+    }
+
+    /// <summary>
+    /// The JSON converter reports invalid payload tokens as a JSON error.
+    /// </summary>
+    [TestMethod]
+    public void SensitiveValueObject_JsonRejectsNonStringTokens()
+    {
+        var deserialize = () => JsonSerializer.Deserialize<TestSensitiveValue>("42");
+
+        deserialize.Should().Throw<JsonException>();
+    }
+
+    /// <summary>
     /// A consumer registration wires one serialization library without touching declarations.
     /// </summary>
     [TestMethod]
@@ -149,10 +171,16 @@ public sealed class ComplianceFoundationTests
             {
                 private static bool _validate(string value) => true;
             }
+            [SensitiveValueObject<string>] public readonly partial struct PublicHook
+            {
+                public static string _normalize(string value) => value;
+            }
             """);
 
-        diagnostics.Select(static diagnostic => diagnostic.Id)
-            .Should().Contain(["ARKPII201", "ARKPII202", "ARKPII203", "ARKPII204"]);
+        var ids = diagnostics.Select(static diagnostic => diagnostic.Id).ToList();
+
+        ids.Should().Contain(["ARKPII201", "ARKPII202", "ARKPII203", "ARKPII204"]);
+        ids.Count(static id => string.Equals(id, "ARKPII204", StringComparison.Ordinal)).Should().Be(2);
     }
 
     /// <summary>

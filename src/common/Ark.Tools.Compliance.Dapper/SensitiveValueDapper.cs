@@ -25,6 +25,9 @@ public sealed class SensitiveValueTypeHandler<T> : SqlMapper.TypeHandler<T>
     /// <inheritdoc />
     public override T Parse(object value)
     {
+        if (value is null or DBNull)
+            return default;
+
         if (value is not string text)
             throw new DataException("Invalid sensitive database value.");
 
