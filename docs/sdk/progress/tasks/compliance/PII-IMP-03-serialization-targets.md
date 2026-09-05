@@ -31,8 +31,9 @@ without reflection.
 - **OpenAPI** (`Ark.Tools.Compliance.OpenApi`): `Microsoft.OpenApi` schema
   descriptors carrying the primitive `Type`/`Format`, an `x-ark-classification`
   vendor extension, and an example drawn from the RFC 2606 reserved-value
-  generator. The package depends on `Microsoft.OpenApi` only, never on
-  Swashbuckle. `AddArkComplianceSchemas()` binds them to
+  generator. The package depends on `Microsoft.OpenApi` and
+  `Microsoft.AspNetCore.OpenApi` (hence net10.0 only), never on Swashbuckle.
+  `AddArkComplianceSchemas()` binds the descriptors to
   `Microsoft.AspNetCore.OpenApi` for MediatorFramework Minimal API hosts, and
   `Ark.Tools.AspNetCore.Swashbuckle` binds the same descriptors as `MapType`
   registrations for `ArkStartupWebApiCommon`. Never an `ISchemaFilter`: a filter

@@ -85,17 +85,10 @@ public sealed class SensitiveValueRetrieverAndComparer : IValueRetriever, IValue
     private static bool _isSensitiveValue(Type type)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
-        foreach (var candidate in type.GetInterfaces())
-        {
-            if (candidate.IsGenericType
-                && candidate.GetGenericTypeDefinition() == typeof(ISensitiveValue<>)
-                && candidate.GenericTypeArguments[0] == type)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return Array.Exists(type.GetInterfaces(), candidate =>
+            candidate.IsGenericType
+            && candidate.GetGenericTypeDefinition() == typeof(ISensitiveValue<>)
+            && candidate.GenericTypeArguments[0] == type);
     }
 }
 
