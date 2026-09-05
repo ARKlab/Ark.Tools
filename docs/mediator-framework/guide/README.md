@@ -27,7 +27,7 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | 5 | Generated HTTP binding and multipart inputs | [HTTP endpoints](http-endpoints.md), [Attachments](attachments.md) |
 | 6 | Code-first gRPC and `.proto` export | [gRPC](grpc.md) |
 | 7 | Queue a separate background operation with Rebus | [Rebus](rebus.md) |
-| 8 | Incremental results and cancellation | [Streaming](streaming.md) |
+| 8 | Incremental results and cancellation | [Streaming](streaming.md), [Server-Sent Events](sse.md) |
 | 9 | JSON, MessagePack, protobuf, and generated metadata | [Serialization](serialization.md) |
 | 10 | Versioned OpenAPI and Scalar | [OpenAPI](openapi.md) |
 | 11 | Isolated Azure Functions HTTP host | [Azure Functions](azure-functions.md) |
@@ -41,6 +41,7 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | Capability | Contract metadata | Generated/runtime behavior |
 | --- | --- | --- |
 | HTTP | `[HttpEndpoint]`, `[HttpBody]`, `[HttpQuery]`, `[HttpRoute]` | Minimal API route, binding, status code, multipart support |
+| Server-Sent Events | `[Sse]` | Sibling `text/event-stream` route polling the query or framing its stream |
 | gRPC | `[GrpcMethod]`, `[GrpcService]`, `[ProtoContract]` | Code-first service, protobuf schema, reflection |
 | Native messaging | `[Message]`, `[Event]`, `[MessagingParticipant]`, `[MessagingNetwork]` | Participant-owned routing, generated dispatch, transport-neutral send/publish |
 | Rebus | `[ArkRebusHost(typeof(MyParticipant))]` | Generated Rebus routing, scoped adapters, retries, and subscriptions |

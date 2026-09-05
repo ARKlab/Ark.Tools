@@ -17,3 +17,7 @@ ARKMF016 | Ark.Tools.MediatorFramework | Error | Duplicate operation name
 ARKMF017 | Ark.Tools.MediatorFramework | Error | Invalid ETag property
 ARKMF018 | Ark.Tools.MediatorFramework | Error | Duplicate ETag property
 ARKMF020 | Ark.Tools.MediatorFramework | Error | Missing version token
+ARKMF021 | Ark.Tools.MediatorFramework | Error | SSE contract is missing an HTTP endpoint
+ARKMF022 | Ark.Tools.MediatorFramework | Error | SSE contract is not a query
+ARKMF023 | Ark.Tools.MediatorFramework | Error | SSE contract does not use GET
+ARKMF024 | Ark.Tools.MediatorFramework | Error | Invalid SSE configuration

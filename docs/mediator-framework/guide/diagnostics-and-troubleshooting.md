@@ -19,6 +19,7 @@ for compatibility.
 | `ARKMF016` | HTTP operation names collide within a version | Change the route, contract name, or explicit operation metadata |
 | `ARKMF017`, `ARKMF018` | ETag property type or multiplicity is invalid | Use one nullable/string ETag property |
 | `ARKMF020` | Version prefix has no `{version}` token | Include the token in `versionPrefix` |
+| `ARKMF021`-`ARKMF024` | `[Sse]` is misplaced or misconfigured | Declare it beside a `GET` `[HttpEndpoint]` on a query, with a positive interval inside its bounds |
 | `ARKMF030`–`ARKMF032` | Azure Functions MessagePack, route, or function name is invalid | Use supported bindings and unique route/name values |
 | `ARKAPI001`–`ARKAPI004` | API surface baseline is missing, changed, duplicated, or malformed | Enable the feature only with one deterministic `ArkApiSurface.txt` baseline and review intentional changes |
 

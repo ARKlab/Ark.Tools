@@ -36,6 +36,7 @@ public static class StreamBooksQuery
 {
     /// <summary>Version one of the Book streaming query.</summary>
     [HttpEndpoint("GET", "/api/v{version}/books/stream", AcceptsMessagePack = true)]
+    [Sse]
     [GrpcMethod("StreamBooks")]
     [GrpcService("Books")]
     [RequireScopePolicy(ApplicationScopes.BookRead)]

@@ -31,7 +31,7 @@ CONTRACT GetAuditsQuery.V1.UserId : string?
 CONTRACT GetReadingActivityQuery.V1 -> IReadOnlyList<ReadingActivity> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reading-activity] [version=1+]
 CONTRACT GetReadingActivityQuery.V1.BookId : Guid
 CONTRACT GetReadingActivityQuery.V1.Limit : int default=25
-CONTRACT ListBookReviewsQuery.V1 -> IReadOnlyList<BookReview> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reviews] [version=1+]
+CONTRACT ListBookReviewsQuery.V1 -> IReadOnlyList<BookReview> [group=Ark] [http=GET /api/v{version}/books/{bookId}/reviews] [sse=GET /api/v{version}/books/{bookId}/reviews/poller] [version=1+]
 CONTRACT ListBookReviewsQuery.V1.BookId : Guid
 CONTRACT ListBookReviewsQuery.V1.Limit : int default=25
 CONTRACT ListBookReviewsQuery.V1.Skip : int
@@ -52,7 +52,7 @@ CONTRACT RecordReadingActivityRequest.V1 -> ReadingActivity [group=Ark] [http=PO
 CONTRACT RecordReadingActivityRequest.V1.BookId : Guid
 CONTRACT RecordReadingActivityRequest.V1.Kind : EvolvableEnum<ReadingActivityKind>
 CONTRACT RecordReadingActivityRequest.V1.Progress : int
-CONTRACT StreamBooksQuery.V1 -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
+CONTRACT StreamBooksQuery.V1 -> IAsyncEnumerable<BookStreamItem> [group=Ark] [grpc-group=Books] [http=GET /api/v{version}/books/stream] [sse=GET /api/v{version}/books/stream/stream] [version=1+] [grpc=StreamBooks] [grpc-version=1+]
 CONTRACT StreamBooksQuery.V1.Count : int
 CONTRACT StreamBooksQuery.V1.DelayMilliseconds : int
 CONTRACT UploadBookCoverRequest.V1 -> UploadResponse [group=Ark] [http=POST /api/v{version}/books/{id}/cover] [version=1+]

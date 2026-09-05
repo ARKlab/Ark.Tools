@@ -38,6 +38,10 @@ attribute location:
 | ARKMF018 | Error | HTTP endpoint declares duplicate ETag properties |
 | ARKMF019 | Error | Rebus response uses unsupported streaming |
 | ARKMF020 | Error | Version prefix does not contain the `{version}` token |
+| ARKMF021 | Error | `[Sse]` requires `[HttpEndpoint]` on the same contract |
+| ARKMF022 | Error | `[Sse]` is only supported on query contracts |
+| ARKMF023 | Error | `[Sse]` requires a `GET` endpoint |
+| ARKMF024 | Error | `[Sse]` configuration is invalid |
 | ARKMF030 | Error | Azure Functions endpoint uses unsupported MessagePack |
 | ARKMF031 | Error | Azure Functions route is duplicated |
 | ARKMF032 | Error | Azure Functions name is duplicated |

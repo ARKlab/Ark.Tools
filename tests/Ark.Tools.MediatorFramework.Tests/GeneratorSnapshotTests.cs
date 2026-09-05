@@ -135,6 +135,90 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsEmitASiblingSseRouteForPolledQueries()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed record Item(string ETag, string Value);
+            [HttpEndpoint("GET", "/items/{id}")]
+            [Sse(IntervalSeconds = 60, AllowClientInterval = true)]
+            public sealed record GetItem : IQuery<GetItem, Item>
+            {
+                [HttpRoute]
+                public System.Guid Id { get; init; }
+            }
+            """);
+
+        minimal.Should().Contain("+ \"/poller\"");
+        minimal.Should().Contain("ArkSse.Poll<global::GetItem, global::Item>");
+        minimal.Should().Contain("text/event-stream");
+        minimal.Should().Contain("WithName(\"GetItem_sse\")");
+        minimal.Should().Contain("TimeSpan.FromSeconds(60)");
+    }
+
+    [TestMethod]
+    public void GeneratorsFrameStreamingQueriesAsEventsWhenSseIsDeclared()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/stream")]
+            [Sse]
+            public sealed record GetStream : IQuery<GetStream, IAsyncEnumerable<string>>;
+            """);
+
+        minimal.Should().Contain("+ \"/stream\"");
+        minimal.Should().Contain("ArkSse.Stream<string>");
+        minimal.Should().NotContain("ArkSse.Poll");
+    }
+
+    [TestMethod]
+    public void GeneratorsRejectInvalidSseDeclarations()
+    {
+        _sseDiagnostics(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Sse(IntervalSeconds = 60)]
+            public sealed record Orphan : IQuery<Orphan, string>;
+            """).Should().Contain("ARKMF021");
+
+        _sseDiagnostics(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/items")]
+            [Sse(IntervalSeconds = 60)]
+            public sealed record Create : ICommand<Create>;
+            """).Should().Contain("ARKMF022").And.Contain("ARKMF023");
+
+        _sseDiagnostics(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items")]
+            [Sse]
+            public sealed record List : IQuery<List, string>;
+            """).Should().Contain("ARKMF024");
+
+        _sseDiagnostics(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items")]
+            [Sse(IntervalSeconds = 5)]
+            public sealed record List : IQuery<List, string>;
+            """).Should().Contain("ARKMF024");
+    }
+
+    private static IReadOnlyList<string> _sseDiagnostics(string source)
+        => [.. _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source).Diagnostics.Select(static x => x.Id)];
+
+    [TestMethod]
     public void McpGeneratorEmitsExplicitVersionedToolRegistration()
     {
         var result = _runGeneratorResult<McpToolGenerator>(

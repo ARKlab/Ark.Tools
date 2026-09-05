@@ -133,7 +133,7 @@ not stop at a contract, schema, host, or documentation change.
 | [NET-02](aspnetcore/NET-02-openapi-operation-transformers.md) | Per-endpoint OpenAPI operation transformers | Pending |
 | [NET-03](aspnetcore/NET-03-json-patch.md) | PATCH support via System.Text.Json JSON Patch | Pending |
 | [NET-04](aspnetcore/NET-04-auth-metrics.md) | Auth and Identity metrics in the sample | Pending |
-| [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike | Pending |
+| [NET-05](aspnetcore/NET-05-sse-transport-spike.md) | SSE transport spike | Done |
 
 ## Minimal API hosting defaults
 

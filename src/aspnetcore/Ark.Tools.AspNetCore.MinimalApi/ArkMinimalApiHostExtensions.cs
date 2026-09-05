@@ -71,6 +71,8 @@ public static class ArkMinimalApiHostExtensions
             options.EnableForHttps = true;
             options.Providers.Add<BrotliCompressionProvider>();
             options.Providers.Add<GzipCompressionProvider>();
+            // Compression buffers the response and would defeat SSE frame flushing.
+            options.ExcludedMimeTypes = [.. options.ExcludedMimeTypes, "text/event-stream"];
         });
         services.AddAuthorization(authorization =>
         {

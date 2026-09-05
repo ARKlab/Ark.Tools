@@ -30,4 +30,24 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor DuplicateETagProperty = new(
         "ARKMF018", "Duplicate ETag property", "HTTP endpoint '{0}' has more than one property marked with [ETag]",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor SseRequiresHttpEndpoint = new(
+        "ARKMF021", "SSE contract is missing an HTTP endpoint",
+        "Contract '{0}' declares [Sse] but has no [HttpEndpoint]; SSE reuses the route, versioning and authorization of the declared HTTP endpoint",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor SseRequiresQuery = new(
+        "ARKMF022", "SSE contract is not a query",
+        "SSE endpoint '{0}' must be a query, because polling re-executes the contract and must never mutate state",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor SseRequiresGet = new(
+        "ARKMF023", "SSE contract does not use GET",
+        "SSE endpoint '{0}' must use the GET verb, but uses '{1}'",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor InvalidSseConfiguration = new(
+        "ARKMF024", "Invalid SSE configuration",
+        "SSE endpoint '{0}' has an invalid [Sse] configuration: {1}",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
 }

@@ -33,6 +33,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string HttpRouteAttribute = "Ark.Tools.MediatorFramework.HttpRouteAttribute";
         private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
         private const string ETagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
+        private const string SseAttribute = "Ark.Tools.MediatorFramework.SseAttribute";
         private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
         private const string VersioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
         private const string ArkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
@@ -106,22 +107,29 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Combine(endpointAssemblies)
                 .SelectMany(static (pair, cancellationToken) =>
                     GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
+            var orphanSseContracts = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    SseAttribute,
+                    static (_, _) => true,
+                    static (attributeContext, _) => ExtractOrphanSseContract(attributeContext))
+                .Where(static endpoint => endpoint is not null)
+                .Select(static (endpoint, _) => endpoint!.Value);
 
             var collected = sourceEndpoints.Collect()
                 .Combine(referencedEndpoints.Collect())
-                .Combine(endpointMappings.Collect());
+                .Combine(endpointMappings.Collect())
+                .Combine(orphanSseContracts.Collect());
 
             context.RegisterSourceOutput(
                 collected,
                 static (spc, pair) =>
                 {
-                    foreach (var mapping in pair.Right)
+                    foreach (var mapping in pair.Left.Right)
                     {
                         if (mapping.InvalidVersionPrefixLocation is not null)
                             spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
                     }
 
-                    Emit(spc, pair.Left.Left.AddRange(pair.Left.Right));
+                    Emit(spc, pair.Left.Left.Left.AddRange(pair.Left.Left.Right).AddRange(pair.Right));
                 });
         }
 
@@ -137,8 +145,21 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                    return etagResult;");
         }
 
-        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
+        private static EndpointModel? ExtractOrphanSseContract(GeneratorAttributeSyntaxContext context)
         {
+            var type = (INamedTypeSymbol)context.TargetSymbol;
+            if (type.GetAttributes().Any(candidate => IsAttribute(candidate, HttpEndpointAttribute)))
+                return null;
+
+            return EndpointModel.Invalid(
+                type,
+                [new DiagnosticInfo(
+                    DiagnosticDescriptors.SseRequiresHttpEndpoint,
+                    type.Name,
+                    GetLocation(context.Attributes[0]))]);
+        }
+
+        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)        {
             var type = (INamedTypeSymbol)context.TargetSymbol;
             var http = context.Attributes[0];
             var compilation = context.SemanticModel.Compilation;
@@ -516,6 +537,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             foreach (var property in properties.Where(property => IsPotentialAttachmentCollection(property.TypeFullName))
                 .Where(property => !property.IsAttachmentCollection))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedAttachmentCollection, type.Name, GetLocation(http), property.Name));
+            var sse = ExtractSse(type, http, kind, verb, streamElement is not null, attachmentResponse, diagnostics);
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -560,8 +582,78 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .ToImmutableArray(),
                 attachmentResponse,
                 streamElement,
+                sse,
                 type.Locations.FirstOrDefault(),
                 diagnostics);
+        }
+
+        private static SseModel? ExtractSse(
+            INamedTypeSymbol type,
+            AttributeData http,
+            HandlerKind kind,
+            string verb,
+            bool isStreaming,
+            bool attachmentResponse,
+            List<DiagnosticInfo> diagnostics)
+        {
+            var sse = type.GetAttributes().FirstOrDefault(candidate => IsAttribute(candidate, SseAttribute));
+            if (sse is null)
+                return null;
+
+            var location = GetLocation(sse);
+            if (kind != HandlerKind.Query)
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.SseRequiresQuery, type.Name, location));
+            if (verb != "GET")
+                diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.SseRequiresGet, type.Name, location, verb));
+            if (attachmentResponse)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "attachment responses cannot be framed as events"));
+
+            var interval = NamedInt(sse, "IntervalSeconds", 0);
+            var minimum = NamedInt(sse, "MinimumIntervalSeconds", 60);
+            var maximum = NamedInt(sse, "MaximumIntervalSeconds", 3600);
+            var heartbeat = NamedInt(sse, "HeartbeatSeconds", 15);
+            var maxConnection = NamedInt(sse, "MaxConnectionSeconds", 3600);
+            var routeSuffix = NamedString(sse, "RouteSuffix") ?? (isStreaming ? "/stream" : "/poller");
+            if (minimum <= 0)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "MinimumIntervalSeconds must be positive"));
+            if (maximum < minimum)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "MaximumIntervalSeconds must not be lower than MinimumIntervalSeconds"));
+            if (heartbeat <= 0)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "HeartbeatSeconds must be positive"));
+            if (maxConnection < 0)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "MaxConnectionSeconds must not be negative"));
+            if (routeSuffix.Length == 0 || routeSuffix[0] != '/')
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location, "RouteSuffix must start with '/'"));
+            if (isStreaming && interval != 0)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location,
+                    "IntervalSeconds must be zero because the query already streams its items"));
+            if (!isStreaming && interval <= 0)
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location,
+                    "IntervalSeconds must be positive for a polled query"));
+            if (!isStreaming && interval > 0 && (interval < minimum || interval > maximum))
+                diagnostics.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.InvalidSseConfiguration, type.Name, location,
+                    "IntervalSeconds must be within MinimumIntervalSeconds and MaximumIntervalSeconds"));
+
+            return new SseModel(
+                interval,
+                minimum,
+                maximum,
+                NamedBool(sse, "AllowClientInterval"),
+                heartbeat,
+                maxConnection,
+                NamedBool(sse, "EmitEveryTick"),
+                routeSuffix,
+                NamedString(sse, "EventName") ?? GeneratedName(type),
+                isStreaming);
         }
 
         private static bool HasAttribute(
@@ -821,6 +913,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                         var templateVariable = "template" + currentEndpointIndex + "V" + version;
                         sb.AppendLine("            var " + templateVariable + " = VersionedRoute(versionPrefix, "
                             + Literal(e.Template) + ", " + e.IsVersioned.ToString().ToLowerInvariant() + ", " + version + ");");
+                        if (e.Sse is { } sse)
+                        {
+                            var sseTemplateVariable = templateVariable + "Sse";
+                            sb.AppendLine("            var " + sseTemplateVariable + " = " + templateVariable
+                                + " + " + Literal(sse.RouteSuffix) + ";");
+                            EmitSseEndpoint(sb, e, sse, processorService, sseTemplateVariable, version, maxVersion);
+                        }
+
                         if (e.Kind == HandlerKind.Command)
                         {
                             EmitCommandEndpoint(sb, e, map, templateVariable, version, maxVersion);
@@ -1223,6 +1323,84 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                        return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.StatusCode(415);");
         }
 
+        private static void EmitSseEndpoint(
+            StringBuilder sb,
+            EndpointModel endpoint,
+            SseModel sse,
+            string processorService,
+            string templateExpression,
+            int version,
+            int maxVersion)
+        {
+            var explicitBindings = endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
+            sb.Append("            group.MapGet(").Append(templateExpression).Append(", static ")
+                .AppendLine(sse.IsStreaming ? "async (" : "(");
+            if (explicitBindings)
+            {
+                foreach (var property in endpoint.Properties.Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet))
+                {
+                    var source = property.IsRoute ? "FromRoute" : "FromQuery";
+                    var bindingName = property.IsRoute ? property.BindingName : property.Name;
+                    sb.Append("                [global::Microsoft.AspNetCore.Mvc.").Append(source)
+                        .Append("(Name = ").Append(Literal(bindingName)).Append(")] ")
+                        .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
+                }
+            }
+            else
+            {
+                sb.AppendLine("                [global::Microsoft.AspNetCore.Http.AsParameters] " + endpoint.TypeFullName + " request,");
+            }
+
+            sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
+            sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
+            sb.AppendLine("            {");
+            if (explicitBindings)
+            {
+                var assignments = string.Join(", ", endpoint.Properties
+                    .Where(property => property.IsRoute || property.IsQuery)
+                    .Select(property => property.Name + " = " + BindingValue(property))
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
+                sb.AppendLine("                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
+            }
+            else if (endpoint.IsRecord && endpoint.ServerSetProperties.Length > 0)
+            {
+                sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
+            }
+
+            EmitServerSetAssignments(sb, endpoint, "request");
+            sb.AppendLine("                var settings = new global::Ark.Tools.MediatorFramework.MinimalApi.ArkSseSettings(");
+            sb.AppendLine("                    global::System.TimeSpan.FromSeconds(" + sse.IntervalSeconds + "),");
+            sb.AppendLine("                    global::System.TimeSpan.FromSeconds(" + sse.MinimumIntervalSeconds + "),");
+            sb.AppendLine("                    global::System.TimeSpan.FromSeconds(" + sse.MaximumIntervalSeconds + "),");
+            sb.AppendLine("                    " + sse.AllowClientInterval.ToString().ToLowerInvariant() + ",");
+            sb.AppendLine("                    global::System.TimeSpan.FromSeconds(" + sse.HeartbeatSeconds + "),");
+            sb.AppendLine("                    global::System.TimeSpan.FromSeconds(" + sse.MaxConnectionSeconds + "),");
+            sb.AppendLine("                    " + sse.EmitEveryTick.ToString().ToLowerInvariant() + ",");
+            sb.AppendLine("                    " + Literal(sse.EventName) + ");");
+            if (sse.IsStreaming)
+            {
+                sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
+                sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+                sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
+                sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkSse.Stream<" + endpoint.StreamElement + ">(httpContext, settings, result, cancellationToken);");
+            }
+            else
+            {
+                var changeToken = endpoint.ResponseETagProperty is null
+                    ? "null"
+                    : "static result => result?." + endpoint.ResponseETagProperty;
+                sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkSse.Poll<"
+                    + endpoint.TypeFullName + ", " + endpoint.Response + ">(httpContext, request, settings, "
+                    + changeToken + ", cancellationToken);");
+            }
+
+            var produced = sse.IsStreaming ? endpoint.StreamElement! : endpoint.Response;
+            sb.Append("            }).Produces<").Append(produced).Append(">(200, \"text/event-stream\").Produces(503)")
+                .Append(ProblemMetadata(endpoint))
+                .Append(OpenApiMetadata(endpoint, version, maxVersion, "_sse"))
+                .Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+        }
+
         private static void EmitDownloadEndpoint(
             StringBuilder sb,
             EndpointModel endpoint,
@@ -1382,7 +1560,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
         }
 
-        private static string OpenApiMetadata(EndpointModel endpoint, int version, int maxVersion)
+        private static string OpenApiMetadata(EndpointModel endpoint, int version, int maxVersion, string operationSuffix = "")
             => (endpoint.Summary is null && endpoint.Remarks is null && endpoint.Properties.All(property => property.Description is null)
                     ? string.Empty
                     : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkDocumentationMetadata("
@@ -1398,7 +1576,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 + (endpoint.Remarks is null ? string.Empty : ".WithDescription(" + Literal(endpoint.Remarks) + ")")
                 + ".WithGroupName(" + Literal("v" + version)
                 + ").WithTags(" + Literal(endpoint.ApiGroup)
-                + ").WithName(" + Literal(OperationName(endpoint, version, maxVersion)) + ")"
+                + ").WithName(" + Literal(OperationName(endpoint, version, maxVersion) + operationSuffix) + ")"
                 + (endpoint.ETagProperty is null && endpoint.ResponseETagProperty is null
                     ? string.Empty
                     : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata("
@@ -1499,6 +1677,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ImmutableArray<string> unsupportedAttachmentCollections,
                 bool attachmentResponse,
                 string? streamElement,
+                SseModel? sse,
                 Location? location,
                 IReadOnlyList<DiagnosticInfo> diagnostics)
             {
@@ -1539,6 +1718,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 UnsupportedAttachmentCollections = unsupportedAttachmentCollections;
                 AttachmentResponse = attachmentResponse;
                 StreamElement = streamElement;
+                Sse = sse;
                 Location = location;
                 Diagnostics = diagnostics;
                 IsValid = diagnostics.Count == 0;
@@ -1571,6 +1751,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 UnsupportedAttachmentCollections = ImmutableArray<string>.Empty;
                 AttachmentResponse = false;
                 StreamElement = null;
+                Sse = null;
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, IReadOnlyList<DiagnosticInfo> diagnostics)
@@ -1613,10 +1794,49 @@ namespace Ark.Tools.MediatorFramework.Generators
             public ImmutableArray<string> UnsupportedAttachmentCollections { get; }
             public bool AttachmentResponse { get; }
             public string? StreamElement { get; }
+            public SseModel? Sse { get; }
             public bool IsStreaming => StreamElement is not null;
             public Location? Location { get; }
             public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }
+        }
+
+        private readonly record struct SseModel
+        {
+            public SseModel(
+                int intervalSeconds,
+                int minimumIntervalSeconds,
+                int maximumIntervalSeconds,
+                bool allowClientInterval,
+                int heartbeatSeconds,
+                int maxConnectionSeconds,
+                bool emitEveryTick,
+                string routeSuffix,
+                string eventName,
+                bool isStreaming)
+            {
+                IntervalSeconds = intervalSeconds;
+                MinimumIntervalSeconds = minimumIntervalSeconds;
+                MaximumIntervalSeconds = maximumIntervalSeconds;
+                AllowClientInterval = allowClientInterval;
+                HeartbeatSeconds = heartbeatSeconds;
+                MaxConnectionSeconds = maxConnectionSeconds;
+                EmitEveryTick = emitEveryTick;
+                RouteSuffix = routeSuffix;
+                EventName = eventName;
+                IsStreaming = isStreaming;
+            }
+
+            public int IntervalSeconds { get; }
+            public int MinimumIntervalSeconds { get; }
+            public int MaximumIntervalSeconds { get; }
+            public bool AllowClientInterval { get; }
+            public int HeartbeatSeconds { get; }
+            public int MaxConnectionSeconds { get; }
+            public bool EmitEveryTick { get; }
+            public string RouteSuffix { get; }
+            public string EventName { get; }
+            public bool IsStreaming { get; }
         }
 
         private readonly record struct DiagnosticInfo
