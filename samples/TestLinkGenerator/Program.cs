@@ -11,11 +11,11 @@ internal sealed class Program
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
-            .ConfigureWebHostDefaults(webBuilder =>
+            .ConfigureWebHostDefaults(static webBuilder =>
             {
                 webBuilder.UseStartup<Startup>();
             })
-            .ConfigureLogging((hostingContext, logging) =>
+            .ConfigureLogging(static (hostingContext, logging) =>
             {
                 logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                 logging.AddConsole();

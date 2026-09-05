@@ -16,13 +16,13 @@ internal sealed class ArkDefaultConventions : IActionModelConvention
     {
         var models = action.Selectors.OfType<SelectorModel>();
         var methods = models
-            .SelectMany(m => m.EndpointMetadata)
+            .SelectMany(static m => m.EndpointMetadata)
             .OfType<HttpMethodMetadata>()
-            .SelectMany(m => m.HttpMethods)
+            .SelectMany(static m => m.HttpMethods)
             .ToList();
 
         var isOData = models
-            .SelectMany(m => m.EndpointMetadata)
+            .SelectMany(static m => m.EndpointMetadata)
             .OfType<Microsoft.AspNetCore.OData.Routing.ODataRoutingMetadata>()
             .Any();
 
@@ -36,7 +36,7 @@ internal sealed class ArkDefaultConventions : IActionModelConvention
 
         if (methods != null
             && _consumeMethods.Intersect(methods, System.StringComparer.Ordinal).Any()
-            && action.Parameters.Any(x => x.Attributes.OfType<FromBodyAttribute>().Any())
+            && action.Parameters.Any(static x => x.Attributes.OfType<FromBodyAttribute>().Any())
             && !action.Filters.OfType<ConsumesAttribute>().Any()
             && !action.Controller.Filters.OfType<ConsumesAttribute>().Any())
         {

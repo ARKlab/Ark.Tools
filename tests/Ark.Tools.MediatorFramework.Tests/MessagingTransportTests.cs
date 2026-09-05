@@ -298,7 +298,7 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
         services._addArkInMemoryMessaging();
 
         using var provider = services.BuildServiceProvider();
-        provider.GetServices<IMessagingCodec>().Should().ContainSingle(codec => codec is JsonMessagingCodec);
+        provider.GetServices<IMessagingCodec>().Should().ContainSingle(static codec => codec is JsonMessagingCodec);
         provider.GetServices<IMessagingTransport>().Should().ContainSingle();
     }
 

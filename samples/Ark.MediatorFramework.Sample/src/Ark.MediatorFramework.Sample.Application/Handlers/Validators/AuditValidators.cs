@@ -11,12 +11,12 @@ public sealed class GetAuditsValidator : AbstractValidator<GetAuditsQuery.V1>
     /// <summary>Initializes a new instance of the <see cref="GetAuditsValidator"/> class.</summary>
     public GetAuditsValidator()
     {
-        RuleFor(query => query.Skip).GreaterThanOrEqualTo(0);
-        RuleFor(query => query.Limit).InclusiveBetween(1, 100);
+        RuleFor(static query => query.Skip).GreaterThanOrEqualTo(0);
+        RuleFor(static query => query.Limit).InclusiveBetween(1, 100);
 
-        When(query => query.Sort is not null, () =>
+        When(static query => query.Sort is not null, () =>
         {
-            RuleForEach(query => query.Sort)
+            RuleForEach(static query => query.Sort)
                 .Must(_isValidSort)
                 .WithMessage("Invalid audit sort '{PropertyValue}'.");
         });

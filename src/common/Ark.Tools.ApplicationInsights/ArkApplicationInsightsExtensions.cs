@@ -51,7 +51,7 @@ public static class ArkApplicationInsightsExtensions
         string? sqlConnectionStringToFilter = null)
     {
         // Configure sampler options with defaults that match the v2.x AdaptiveSampling settings.
-        services.Configure<ArkAdaptiveSamplerOptions>(o =>
+        services.Configure<ArkAdaptiveSamplerOptions>(static o =>
         {
             o.TracesPerSecond = 1.0;
             o.MovingAverageRatio = 0.5;
@@ -99,7 +99,7 @@ public static class ArkApplicationInsightsExtensions
                             if (!string.IsNullOrWhiteSpace(sqlConnectionStringToFilter))
                                 tracerBuilder.AddProcessor(new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter));
                         });
-                        builder.ConfigureResource(resource => resource.AddArkTelemetryResource());
+                        builder.ConfigureResource(static resource => resource.AddArkTelemetryResource());
                     });
                 }
                 catch (InvalidOperationException)

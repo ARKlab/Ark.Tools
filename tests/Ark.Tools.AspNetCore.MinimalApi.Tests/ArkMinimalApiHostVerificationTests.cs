@@ -43,7 +43,7 @@ public sealed class ArkMinimalApiHostVerificationTests
         using var host = await _createHostAsync(
             container,
             start: false,
-            options => options.RegisterContainer = c => c.Register<BrokenService>()).ConfigureAwait(false);
+            static options => options.RegisterContainer = static c => c.Register<BrokenService>()).ConfigureAwait(false);
 
         var start = async () => await host.StartAsync().ConfigureAwait(false);
 
@@ -73,7 +73,7 @@ public sealed class ArkMinimalApiHostVerificationTests
             options =>
             {
                 options.RegisterContainer = c => c.RegisterInstance(probe);
-                options.OnContainerVerified = c =>
+                options.OnContainerVerified = static c =>
                 {
                     c.GetInstance<StartupProbe>().Started = true;
                 };
@@ -110,9 +110,9 @@ public sealed class ArkMinimalApiHostVerificationTests
         using var host = await _createHostAsync(
             container,
             start: true,
-            configureServices: services => services
+            configureServices: static services => services
                 .AddHealthChecks()
-                .AddCheck("database", () => HealthCheckResult.Unhealthy("secret-connection-details",
+                .AddCheck("database", static () => HealthCheckResult.Unhealthy("secret-connection-details",
                     new InvalidOperationException("secret-exception-details")))).ConfigureAwait(false);
 
         using var client = host.GetTestClient();
@@ -134,13 +134,13 @@ public sealed class ArkMinimalApiHostVerificationTests
         using var host = await _createHostAsync(
             container,
             start: true,
-            configureServices: services =>
+            configureServices: static services =>
             {
                 services
-                    .Where(service => service.ServiceType.FullName is not null)
-                    .Select(service => service.ServiceType.FullName!)
+                    .Where(static service => service.ServiceType.FullName is not null)
+                    .Select(static service => service.ServiceType.FullName!)
                     .Should()
-                    .NotContain(typeName => typeName.Contains("HealthChecks.UI", StringComparison.Ordinal));
+                    .NotContain(static typeName => typeName.Contains("HealthChecks.UI", StringComparison.Ordinal));
             }).ConfigureAwait(false);
 
         host.Should().NotBeNull();
@@ -169,9 +169,9 @@ public sealed class ArkMinimalApiHostVerificationTests
                 web.Configure(app =>
                 {
                     app.UseArkMinimalApiHost(container);
-                    app.UseEndpoints(endpoints => endpoints
+                    app.UseEndpoints(static endpoints => endpoints
                         .MapArkMinimalApiHost()
-                        .MapGet("/ping", ([FromServices] StartupProbe? probe) =>
+                        .MapGet("/ping", static ([FromServices] StartupProbe? probe) =>
                     {
                         probe?.Started.Should().BeTrue();
                         return "pong";

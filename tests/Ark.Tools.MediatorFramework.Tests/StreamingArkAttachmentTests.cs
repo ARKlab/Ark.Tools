@@ -41,8 +41,8 @@ public sealed class StreamingArkAttachmentTests
     {
         var attachments = await StreamingArkAttachments.ReadAllAsync(_multipleChunksAsync()).ConfigureAwait(false);
 
-        attachments.Select(attachment => attachment.Name).Should().Equal("first.txt", "second.txt");
-        attachments.Select(attachment => attachment.ContentType).Should().Equal("text/plain", "text/plain");
+        attachments.Select(static attachment => attachment.Name).Should().Equal("first.txt", "second.txt");
+        attachments.Select(static attachment => attachment.ContentType).Should().Equal("text/plain", "text/plain");
         var first = attachments[0].OpenRead();
         var second = attachments[1].OpenRead();
         await using (first.ConfigureAwait(false))

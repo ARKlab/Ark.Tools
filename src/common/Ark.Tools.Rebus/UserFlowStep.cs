@@ -28,7 +28,7 @@ public class UserFlowStep : IOutgoingStep, IIncomingStep
             var userId = userContext.Current.GetUserId();
             var userEmail = userContext.Current.GetUserEmail();
             var scopes = userContext.Current.FindFirst("scope")?.Value;
-            var roles = userContext.Current.FindAll(ClaimTypes.Role).Select(x => x.Value) ?? Enumerable.Empty<string>();
+            var roles = userContext.Current.FindAll(ClaimTypes.Role).Select(static x => x.Value) ?? Enumerable.Empty<string>();
 
             var message = context.Load<Message>();
 
@@ -84,7 +84,7 @@ public class UserFlowStep : IOutgoingStep, IIncomingStep
             if (headers.TryGetValue("ark-user-roles", out var roles))
                 identity.AddClaims(
                     roles.Split(_separator, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => new Claim(ClaimTypes.Role, x)));
+                        .Select(static x => new Claim(ClaimTypes.Role, x)));
 
             context.Save(new ClaimsPrincipal([identity]));
         }

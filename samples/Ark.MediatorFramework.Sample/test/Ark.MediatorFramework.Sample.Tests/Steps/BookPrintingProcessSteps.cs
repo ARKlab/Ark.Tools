@@ -73,7 +73,7 @@ public sealed class BookPrintingProcessSteps
         catch (Exception exception)
         {
             _exception = exception;
-            var successfulRequests = requests.Where(task => task.Status == TaskStatus.RanToCompletion).ToArray();
+            var successfulRequests = requests.Where(static task => task.Status == TaskStatus.RanToCompletion).ToArray();
             if (successfulRequests.Length != 1)
             {
                 throw new InvalidOperationException(

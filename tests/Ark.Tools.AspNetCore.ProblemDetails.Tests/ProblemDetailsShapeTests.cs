@@ -48,9 +48,9 @@ public sealed class ProblemDetailsShapeTests
             var expected = violation
                 .GetType()
                 .GetProperties()
-                .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+                .Where(static property => property.DeclaringType != typeof(BusinessRuleViolation))
                 .ToDictionary(
-                    property => property.Name,
+                    static property => property.Name,
                     property => property.GetValue(violation),
                     StringComparer.Ordinal);
             expected["type"] = violation.GetType().Name;

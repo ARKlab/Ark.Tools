@@ -41,7 +41,7 @@ public static class ArkAttachmentName
     public static string Sanitize(string name)
     {
         var leafName = Path.GetFileName(name.Replace('\\', '/'));
-        var sanitized = new string(leafName.Where(character => !char.IsControl(character)).ToArray());
+        var sanitized = new string(leafName.Where(static character => !char.IsControl(character)).ToArray());
         return string.IsNullOrWhiteSpace(sanitized)
             ? Guid.NewGuid().ToString("N")
             : sanitized;

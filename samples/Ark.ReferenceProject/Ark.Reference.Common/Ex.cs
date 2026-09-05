@@ -23,13 +23,13 @@ public static partial class Ex
     public static IEnumerable<Permissions> GetPermissions(this ClaimsPrincipal user)
     {
         var permissionClaim =
-            user.FindAll(x => x.Type == PermissionsConstants.PermissionKey).Select(x => x.Value)
+            user.FindAll(static x => x.Type == PermissionsConstants.PermissionKey).Select(static x => x.Value)
             ?? Enumerable.Empty<string>();
 
-        if (permissionClaim.Any(a => a.Contains(PermissionsConstants.AdminGrant, StringComparison.Ordinal)))
+        if (permissionClaim.Any(static a => a.Contains(PermissionsConstants.AdminGrant, StringComparison.Ordinal)))
             return PermissionsConstants.PermissionsMap.Values;
         else
-            return permissionClaim.Select(x => PermissionsConstants.PermissionsMap[x]);
+            return permissionClaim.Select(static x => PermissionsConstants.PermissionsMap[x]);
     }
 
     //***************************************************************************************************************
@@ -39,12 +39,12 @@ public static partial class Ex
     public static string[] CompileSorts(this IEnumerable<string> sorts, Dictionary<string, string> validCols, string defaultValue)
     {
         return (sorts ?? Enumerable.Empty<string>())
-            .Select(s => Regex.Match(s, "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)))
-            .Where(s => s.Success)
+            .Select(static s => Regex.Match(s, "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)))
+            .Where(static s => s.Success)
             .Join(validCols
-                , s => s.Groups["col"].Value.ToUpperInvariant()
-                , d => d.Key.ToUpperInvariant()
-                , (s, i) => i.Value + s.Groups["dir"].Value, StringComparer.Ordinal)
+                , static s => s.Groups["col"].Value.ToUpperInvariant()
+                , static d => d.Key.ToUpperInvariant()
+                , static (s, i) => i.Value + s.Groups["dir"].Value, StringComparer.Ordinal)
             .DefaultIfEmpty(defaultValue)
             .ToArray();
     }

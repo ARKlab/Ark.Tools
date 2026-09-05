@@ -67,9 +67,9 @@ public class ExceptionProblemDetailsBenchmarks
         var payload = violation
             .GetType()
             .GetProperties()
-            .Where(property => property.DeclaringType != typeof(BusinessRuleViolation))
+            .Where(static property => property.DeclaringType != typeof(BusinessRuleViolation))
             .ToDictionary(
-                property => property.Name,
+                static property => property.Name,
                 property => property.GetValue(violation),
                 StringComparer.Ordinal);
         payload["type"] = violation.GetType().Name;

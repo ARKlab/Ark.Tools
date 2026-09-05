@@ -46,7 +46,7 @@ public class MultiPartJsonOperationFilter : IOperationFilter
                 {
                     // Group all exploded properties.
                     var groupedProperties = s.Properties
-                        .GroupBy(pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
+                        .GroupBy(static pair => pair.Key.Split('.')[0], StringComparer.Ordinal);
 
                     var schemaProperties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal);
 
@@ -108,7 +108,7 @@ public class MultiPartJsonOperationFilter : IOperationFilter
 
         mediaType.Encoding = mediaType.Encoding
             .Where(pair => !pair.Key.Contains(propertyInfo.Name, StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+            .ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal);
 
         mediaType.Encoding.Add(propertyInfo.Name, new OpenApiEncoding()
         {
@@ -144,7 +144,7 @@ public class MultiPartJsonOperationFilter : IOperationFilter
 
     private static PropertyInfo? _getPropertyInfo(ParameterDescriptor descriptor) =>
         descriptor.ParameterType.GetProperties()
-            .SingleOrDefault(f => f.GetCustomAttribute<FromJsonAttribute>() != null);
+            .SingleOrDefault(static f => f.GetCustomAttribute<FromJsonAttribute>() != null);
 }
 
 

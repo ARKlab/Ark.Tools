@@ -19,7 +19,7 @@ public static partial class Ex
     [RequiresUnreferencedCode("Application Insights configuration binding uses reflection.")]
     public static IHostBuilder AddApplicationInsightsForHostedService(this IHostBuilder builder)
     {
-        return builder.ConfigureServices((ctx, services) =>
+        return builder.ConfigureServices(static (ctx, services) =>
         {
             // Resolve connection string from configuration
             var connectionString = ctx.Configuration["ApplicationInsights:ConnectionString"]

@@ -84,7 +84,7 @@ public sealed class NativeOutboxIntegrationTests
         await using var __services = services.ConfigureAwait(false);
 
         services.GetServices<IHostedService>().Should()
-            .ContainSingle(service => service is MessagingOutboxProcessor);
+            .ContainSingle(static service => service is MessagingOutboxProcessor);
         MessagingOutboxProcessor.Identity.Should().Be("outbox-processor");
     }
 

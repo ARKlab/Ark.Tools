@@ -348,7 +348,7 @@ public sealed class TypeSafeExtensionsSteps : IDisposable
     public void ThenAllVoidExtensionsResourcesShouldHaveNullExtensions()
     {
         _context.LoadedVoidStates.Should().NotBeNull();
-        _context.LoadedVoidStates!.Should().AllSatisfy(s => s.Extensions.Should().BeNull());
+        _context.LoadedVoidStates!.Should().AllSatisfy(static s => s.Extensions.Should().BeNull());
     }
 
     [Then(@"resource ""(.*)"" VoidExtensions should be default value")]

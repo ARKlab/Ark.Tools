@@ -119,7 +119,7 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
 
     private static void _report(SymbolAnalysisContext context, INamedTypeSymbol type, string suggested)
     {
-        var location = type.Locations.FirstOrDefault(l => l.IsInSource);
+        var location = type.Locations.FirstOrDefault(static l => l.IsInSource);
         if (location is null)
             return;
 

@@ -76,8 +76,8 @@ public class SlackTarget : TargetWithContext
         if (this.ShouldIncludeProperties(info.LogEvent) || this.ContextProperties.Count > 0)
         {
             var allProperties = this.GetAllProperties(info.LogEvent)
-                .Where(w => !string.IsNullOrEmpty(w.Key) && !string.IsNullOrEmpty(w.Value?.ToString()))
-                .Select(s => (s.Key, s.Value?.ToString()));
+                .Where(static w => !string.IsNullOrEmpty(w.Key) && !string.IsNullOrEmpty(w.Value?.ToString()))
+                .Select(static s => (s.Key, s.Value?.ToString()));
 
             slack.AddAttachment(color, allProperties);
         }

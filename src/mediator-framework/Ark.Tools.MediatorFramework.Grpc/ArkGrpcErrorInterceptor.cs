@@ -223,20 +223,20 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
     {
         var properties = violation.GetType()
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property => property.GetMethod is not null
+            .Where(static property => property.GetMethod is not null
                 && !property.GetMethod.IsStatic
                 && property.Name is not nameof(BusinessRuleViolation.Status)
                 and not nameof(BusinessRuleViolation.Title)
                 and not nameof(BusinessRuleViolation.Detail)
                 )
-            .GroupBy(property => property.Name, StringComparer.Ordinal)
-            .Select(group => group
-                .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
+            .GroupBy(static property => property.Name, StringComparer.Ordinal)
+            .Select(static group => group
+                .OrderByDescending(static property => _getInheritanceDepth(property.DeclaringType))
                 .First())
-            .OrderBy(property => property.Name, StringComparer.Ordinal);
+            .OrderBy(static property => property.Name, StringComparer.Ordinal);
 
         return properties.ToDictionary(
-            property => property.Name,
+            static property => property.Name,
             property => JsonSerializer.Serialize(property.GetValue(violation), property.PropertyType, ArkSerializerOptions.JsonOptions),
             StringComparer.Ordinal);
     }

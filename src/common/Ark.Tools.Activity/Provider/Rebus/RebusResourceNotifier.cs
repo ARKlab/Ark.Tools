@@ -29,16 +29,16 @@ public class RebusResourceNotifier : IResourceNotifier, IDisposable
     {
         _providerName = config.ProviderName ?? throw new ArgumentNullException(nameof(config), "ProviderName should not be null");
         _container.ConfigureRebus(c => c
-            .Logging(l => l.NLog())
+            .Logging(static l => l.NLog())
             .Transport(t => t.UseAzureServiceBusAsOneWayClient(config.AsbConnectionString).UseLegacyNaming())
-            .Options(o =>
+            .Options(static o =>
             {
                 o.EnableCompression();
                 o.SetMaxParallelism(1);
                 o.SetNumberOfWorkers(1);
                 o.ArkRetryStrategy(maxDeliveryAttempts: ResourceConstants.MaxRetryCount);
             })
-            .Serialization(s =>
+            .Serialization(static s =>
             {
                 var cfg = new JsonSerializerSettings();
                 cfg = cfg.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);

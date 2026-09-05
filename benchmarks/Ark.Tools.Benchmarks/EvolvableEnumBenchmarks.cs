@@ -34,10 +34,10 @@ public class EvolvableEnumBenchmarks
         Converters = { new EvolvableEnumJsonConverterFactory() },
     };
     private static readonly StrictRecord[] _strictRecords = Enumerable.Range(0, 100)
-        .Select(index => new StrictRecord((Status)(index % 3), index))
+        .Select(static index => new StrictRecord((Status)(index % 3), index))
         .ToArray();
     private static readonly EvolvableRecord[] _evolvableRecords = Enumerable.Range(0, 100)
-        .Select(index => new EvolvableRecord(EvolvableEnum<Status>.FromNumber(index % 3), index))
+        .Select(static index => new EvolvableRecord(EvolvableEnum<Status>.FromNumber(index % 3), index))
         .ToArray();
     private static readonly string _strictJson = JsonSerializer.Serialize(_strictRecords, _strictJsonOptions);
     private static readonly string _evolvableJson = JsonSerializer.Serialize(_evolvableRecords, _evolvableJsonOptions);

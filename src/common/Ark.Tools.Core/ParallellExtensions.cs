@@ -39,7 +39,7 @@ public static class ParallellExtensions
         };
 
         await System.Threading.Tasks.Parallel.ForEachAsync(
-            list.Select((item, index) => (item, index)),
+            list.Select(static (item, index) => (item, index)),
             options,
             async (tuple, ct) =>
             {
@@ -57,7 +57,7 @@ public static class ParallellExtensions
         };
 
         await System.Threading.Tasks.Parallel.ForEachAsync(
-            list.Select((item, index) => (item, index)),
+            list.Select(static (item, index) => (item, index)),
             options,
             async (tuple, ct) =>
             {

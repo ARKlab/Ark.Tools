@@ -38,7 +38,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         _accessTokenResponseCachePolicy =
                 Policy.CacheAsync(
                     _memoryCacheProvider.AsyncFor<AccessTokenResponse>(),
-                    new ResultTtl<AccessTokenResponse>(r => r is not null ? new Ttl(_expiresIn(r)) : new Ttl(TimeSpan.Zero))
+                    new ResultTtl<AccessTokenResponse>(static r => r is not null ? new Ttl(_expiresIn(r)) : new Ttl(TimeSpan.Zero))
                     );
 
         _userInfoCachePolicy =
@@ -203,6 +203,17 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     public async Task<AccessTokenResponse> GetTokenAsync(FederatedConnectionAccessTokenRequest request, CancellationToken cancellationToken = default)
     {
         return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets an access token using the OAuth 2.0 on-behalf-of token flow.
+    /// </summary>
+    /// <param name="request">The on-behalf-of token request.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <returns>The on-behalf-of token response.</returns>
+    public async Task<OnBehalfOfTokenResponse> GetTokenOnBehalfOfAsync(OnBehalfOfTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenOnBehalfOfAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     private static string _getKey(RefreshTokenRequest r)

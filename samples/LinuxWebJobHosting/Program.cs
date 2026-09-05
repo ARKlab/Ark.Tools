@@ -26,7 +26,7 @@ public static class Program
     {
         _logger.Info(CultureInfo.InvariantCulture, "Starting program");
         return builder
-            .ConfigureWebHostDefaults(webBuilder =>
+            .ConfigureWebHostDefaults(static webBuilder =>
             {
                 webBuilder
                     .CaptureStartupErrors(true)
@@ -34,18 +34,18 @@ public static class Program
             })
             .AddApplicationInsithsTelemetryForWebHostArk()
             .ConfigureNLog()
-            .ConfigureServices((ctx, services) =>
+            .ConfigureServices(static (ctx, services) =>
             {
                 services.AddSingleton<IHostedService, HostedService>();
-            }).ConfigureAppConfiguration((ctx, cfg) =>
+            }).ConfigureAppConfiguration(static (ctx, cfg) =>
             {
                 cfg.AddArkEnvironmentVariables();
             })
             .AddWorkerHost(
-                s =>
+                static s =>
                 {
                     var cfg = s.GetRequiredService<IConfiguration>();
-                    var h = TestWorker.HostNs.Test_Host.Configure(cfg, configurer: c =>
+                    var h = TestWorker.HostNs.Test_Host.Configure(cfg, configurer: static c =>
                     {
                     });
 

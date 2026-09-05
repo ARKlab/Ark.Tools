@@ -38,6 +38,6 @@ public static class McpServerBuilderExtensions
                 McpToolVersionSessionFilter>());
         return result
             .AddAuthorizationFilters()
-            .WithRequestFilters(filters => filters.AddCallToolFilter(McpToolErrors.CreateFilter()));
+            .WithRequestFilters(static filters => filters.AddCallToolFilter(McpToolErrors.CreateFilter()));
     }
 }

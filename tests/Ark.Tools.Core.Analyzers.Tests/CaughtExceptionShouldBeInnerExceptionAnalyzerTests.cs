@@ -35,8 +35,8 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE005");
-        diagnostics.Single(item => item.Id == "ARKCORE005").Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE005");
+        diagnostics.Single(static item => item.Id == "ARKCORE005").Severity.Should().Be(DiagnosticSeverity.Error);
     }
 
     /// <summary>Verifies direct and named inner exception arguments are accepted.</summary>
@@ -85,7 +85,7 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE005");
+        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE005");
     }
 
     /// <summary>Verifies exceptions returned by another function are not assumed to preserve the caught exception.</summary>
@@ -110,7 +110,7 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE005");
+        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE005");
     }
 
     /// <summary>Verifies exceptions created in the catch body must preserve the caught exception.</summary>
@@ -144,7 +144,7 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE005");
+        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE005");
     }
 
     /// <summary>Verifies rethrowing the caught exception is accepted.</summary>
@@ -190,7 +190,7 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(item => item.Id == "ARKCORE006" && item.Severity == DiagnosticSeverity.Error);
+        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE006" && item.Severity == DiagnosticSeverity.Error);
     }
 
     /// <summary>Verifies bare rethrows from catch clauses without variables are accepted.</summary>

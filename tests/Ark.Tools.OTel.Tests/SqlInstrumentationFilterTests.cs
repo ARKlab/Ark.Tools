@@ -84,8 +84,8 @@ public sealed class SqlInstrumentationFilterTests
             await transaction.CommitAsync().ConfigureAwait(false);
         }
 
-        pipeline.Exported.Should().Contain(span => span.DisplayName.Equals("SELECT", StringComparison.OrdinalIgnoreCase));
-        pipeline.Exported.Should().NotContain(span =>
+        pipeline.Exported.Should().Contain(static span => span.DisplayName.Equals("SELECT", StringComparison.OrdinalIgnoreCase));
+        pipeline.Exported.Should().NotContain(static span =>
             string.Equals(span.GetTagItem("db.operation.name") as string, "Commit", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(span.GetTagItem("db.operation") as string, "Commit", StringComparison.OrdinalIgnoreCase));
     }
@@ -96,7 +96,7 @@ public sealed class SqlInstrumentationFilterTests
             "Microsoft.Data.SqlClient",
             new AlwaysOnSampler(),
             [processor],
-            builder => builder.AddSqlClientInstrumentation());
+            static builder => builder.AddSqlClientInstrumentation());
     }
 
     private static async Task _executeScalarAsync(string connectionString)
@@ -152,8 +152,8 @@ public sealed class SqlClientSpanProcessorTests
         using var processor = new ArkSqlClientSpanProcessor();
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == "sql-client-test",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ShouldListenTo = static source => source.Name == "sql-client-test",
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
             ActivityStarted = activity => processor.OnStart(activity),
             ActivityStopped = activity => processor.OnEnd(activity)
         };
@@ -202,8 +202,8 @@ public sealed class SqlClientSpanProcessorTests
         using var processor = new ArkSqlClientSpanProcessor(includeQueryText: true);
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == "sql-client-test-enabled",
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ShouldListenTo = static source => source.Name == "sql-client-test-enabled",
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
             ActivityStopped = processor.OnEnd
         };
         ActivitySource.AddActivityListener(listener);

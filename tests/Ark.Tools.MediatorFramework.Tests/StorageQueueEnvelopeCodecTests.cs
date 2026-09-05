@@ -73,7 +73,7 @@ public sealed class StorageQueueEnvelopeCodecTests
     [TestMethod]
     public void EnvelopeRejectsMalformedBase64AndDuplicateHeaders()
     {
-        var malformed = () => StorageQueueEnvelopeCodec.Decode(BinaryData.FromString("not-base64"));
+        var malformed = static () => StorageQueueEnvelopeCodec.Decode(BinaryData.FromString("not-base64"));
         malformed.Should().Throw<MessagingFailFastException>()
             .Which.Reason.Should().Be(MessagingFailFastReason.MalformedHeaders);
 

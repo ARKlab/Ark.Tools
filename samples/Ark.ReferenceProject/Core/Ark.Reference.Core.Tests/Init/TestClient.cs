@@ -36,7 +36,7 @@ public sealed class TestClient
         _authContext = authContext;
         var tags = fctx.FeatureInfo.Tags;
 
-        _version = tags.FirstOrDefault(x => x.StartsWith("Api:", StringComparison.Ordinal))?["Api:".Length..] ?? "v" + ApplicationConstants.Versions.First();
+        _version = tags.FirstOrDefault(static x => x.StartsWith("Api:", StringComparison.Ordinal))?["Api:".Length..] ?? "v" + ApplicationConstants.Versions.First();
     }
 
     public void SetAuthorization(bool auth)

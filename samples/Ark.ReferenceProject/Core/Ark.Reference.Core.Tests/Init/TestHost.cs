@@ -109,23 +109,23 @@ public sealed class TestHost : IDisposable
         var (inqueue, inprocess, deferred, outbox, errorMessages) =
             await Policy
                 .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
-                    (c) =>
+                    static (c) =>
                     {
                         int def = c.deferred;
                         return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) == 0;
                     }
                 ) // if true, go again
-                .WaitAndRetryAsync(1, i => TimeSpan.FromMilliseconds(100))
+                .WaitAndRetryAsync(1, static i => TimeSpan.FromMilliseconds(100))
                 .WrapAsync(
                     Policy
                         .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
-                            (c) =>
+                            static (c) =>
                             {
                                 int def = c.deferred;
                                 return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) > 0; // if true, go again
                             }
                         )
-                        .WaitAndRetryAsync(600, _ => TimeSpan.FromMilliseconds(100))
+                        .WaitAndRetryAsync(600, static _ => TimeSpan.FromMilliseconds(100))
                  )
                 .ExecuteAsync(async () =>
                 {
@@ -188,12 +188,12 @@ public sealed class TestHost : IDisposable
 
         _fileTelemetry = ArkTelemetryFileCollector.StartFromEnvironment();
         var builder = Program.GetHostBuilder([])
-            .ConfigureWebHost(wh =>
+            .ConfigureWebHost(static wh =>
             {
                 wh.UseTestServer()
-                .ConfigureServices(services =>
+                .ConfigureServices(static services =>
                 {
-                    services.AddTransient<Func<ScenarioContext>>(s => () => _scenarioContext ?? throw new InvalidOperationException("ScenarioContext is accessed outside of a Scenario."));
+                    services.AddTransient<Func<ScenarioContext>>(static s => static () => _scenarioContext ?? throw new InvalidOperationException("ScenarioContext is accessed outside of a Scenario."));
                     services.AddSingleton(Env.RebusNetwork);
                     services.AddSingleton(Env.RebusSubscriber);
                     services.AddSingleton(MockIClock.FakeClock);
@@ -220,7 +220,7 @@ public sealed class TestHost : IDisposable
     public static void BeforeScenario(ScenarioContext ctx)
     {
         if (Factory == null) throw new InvalidOperationException("");
-        ctx.ScenarioContainer.RegisterFactoryAs(c => Factory.Get(_baseUri));
+        ctx.ScenarioContainer.RegisterFactoryAs(static c => Factory.Get(_baseUri));
     }
 
     [AfterScenario]

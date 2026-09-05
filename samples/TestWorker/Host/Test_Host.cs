@@ -34,13 +34,13 @@ public static class Test_Host
         public Task RunOnceAsync(LocalDate date, CancellationToken ctk = default)
         {
 #pragma warning disable RS0030 // Sample/test code - intentionally using local time for demo
-            return base.RunOnceAsync(f => f.Date = LocalDate.FromDateTime(DateTime.Today), ctk);
+            return base.RunOnceAsync(static f => f.Date = LocalDate.FromDateTime(DateTime.Today), ctk);
 #pragma warning restore RS0030
         }
 
         public Host WithTestWriter()
         {
-            this.AppendFileProcessor<TestWriter>(deps =>
+            this.AppendFileProcessor<TestWriter>(static deps =>
             {
                 //deps.Container.RegisterInstance(cfg);
             });
@@ -114,7 +114,7 @@ public static class Test_Host
             //.WithNotifier(rebusCfg)
             ;
 
-        h.AddProviderFilterConfigurer(c => c.Count = 100);
+        h.AddProviderFilterConfigurer(static c => c.Count = 100);
         return h;
     }
 }

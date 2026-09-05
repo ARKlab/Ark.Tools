@@ -15,7 +15,7 @@ public class MarketRecordConfiguration : IModelConfiguration
         {
             var recordv1 = builder.EntitySet<MarketRecordV1>("MarketRecordV1").EntityType;
 
-            recordv1.HasKey(p => new
+            recordv1.HasKey(static p => new
             {
                 p.Market,
                 p.DateTimeOffset
@@ -28,7 +28,7 @@ public class MarketRecordConfiguration : IModelConfiguration
         {
             var recordv0 = builder.EntitySet<MarketRecordV0>("MarketRecord").EntityType;
 
-            recordv0.HasKey(p => new
+            recordv0.HasKey(static p => new
             {
                 p.Market,
                 p.DateTimeOffset

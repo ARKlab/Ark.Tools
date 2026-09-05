@@ -14,13 +14,13 @@ public class PersonModelConfiguration : IModelConfiguration
         if (apiVersion < ApiVersions.V2)
         {
             var person = builder.EntitySet<Person.V1>("People").EntityType;
-            person.HasKey(p => p.Id);
+            person.HasKey(static p => p.Id);
             person.Select().OrderBy("firstName", "lastName").Filter();
         }
         else
         {
             var person = builder.EntitySet<Person.V2>("People").EntityType;
-            person.HasKey(p => p.Id);
+            person.HasKey(static p => p.Id);
             person.Select().OrderBy("firstName", "lastName").Filter();
         }
     }

@@ -8,7 +8,7 @@ public class Get_EntityByIdQueryValidator : AbstractValidator<Get_EntityByIdQuer
 {
     public Get_EntityByIdQueryValidator()
     {
-        RuleFor(x => x.EntityId)
+        RuleFor(static x => x.EntityId)
             .NotEmpty()
             .MaximumLength(10)
             ;

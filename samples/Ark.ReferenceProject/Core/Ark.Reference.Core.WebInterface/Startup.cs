@@ -29,7 +29,7 @@ namespace Ark.Reference.Core.WebInterface;
 
 public class Startup : ArkStartupWebApi
 {
-    public override IEnumerable<ApiVersion> Versions => ApplicationConstants.Versions.Reverse().Select(x => ApiVersionParser.Default.Parse(x));
+    public override IEnumerable<ApiVersion> Versions => ApplicationConstants.Versions.Reverse().Select(static x => ApiVersionParser.Default.Parse(x));
 
     public override OpenApiInfo MakeInfo(ApiVersion version)
             => new()
@@ -48,7 +48,7 @@ public class Startup : ArkStartupWebApi
         base.ConfigureServices(services);
         services.AddArkAzureMonitorOpenTelemetry(Configuration);
         services.AddOpenTelemetry()
-            .WithTracing(tracing => tracing.AddSource(ReferenceTelemetry.ActivitySourceName));
+            .WithTracing(static tracing => tracing.AddSource(ReferenceTelemetry.ActivitySourceName));
 
         // Configure System.Text.Json source generation with Ark defaults
         // Using JsonTypeInfoResolver.Combine to merge application and ProblemDetails contexts
@@ -96,7 +96,7 @@ public class Startup : ArkStartupWebApi
         if (isIntegrationTests)
         {
             schemes.Add(integrationTestsScheme);
-            authBuilder.AddJwtBearerArkDefault(integrationTestsScheme, AuthConstants.IntegrationTestsAudience, AuthConstants.IntegrationTestsDomain, o =>
+            authBuilder.AddJwtBearerArkDefault(integrationTestsScheme, AuthConstants.IntegrationTestsAudience, AuthConstants.IntegrationTestsDomain, static o =>
             {
                 o.TokenValidationParameters.ValidIssuer = o.Authority;
                 o.Authority = null;
@@ -116,7 +116,7 @@ public class Startup : ArkStartupWebApi
                     , Configuration.GetRequiredValue<string>("EntraId:ClientId")
                     , Configuration.GetRequiredValue<string>("EntraId:TenantId"));
 
-            services.ConfigureSwaggerGen(c =>
+            services.ConfigureSwaggerGen(static c =>
             {
                 c.IncludeXmlCommentsForAssembly<Startup>();
                 c.SchemaFilter<MatrixSchemaFilter>();
@@ -124,7 +124,7 @@ public class Startup : ArkStartupWebApi
                 c.OperationFilter<MultiPartJsonOperationFilter>();
             });
 
-            services.ArkConfigureSwaggerUI(c =>
+            services.ArkConfigureSwaggerUI(static c =>
             {
                 c.MaxDisplayedTags(100);
                 c.DefaultModelRendering(ModelRendering.Example);

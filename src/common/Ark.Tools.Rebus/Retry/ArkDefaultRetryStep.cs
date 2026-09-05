@@ -236,7 +236,7 @@ public class ArkDefaultRetryStep : IRetryStep
 
         return new(typeof(AggregateException).GetSimpleAssemblyQualifiedName(),
             $"{list.Count} unhandled exceptions",
-            string.Join(Environment.NewLine + Environment.NewLine, list.Select(e => e.GetFullErrorDescription())),
+            string.Join(Environment.NewLine + Environment.NewLine, list.Select(static e => e.GetFullErrorDescription())),
             DateTimeOffset.UtcNow
         );
     }

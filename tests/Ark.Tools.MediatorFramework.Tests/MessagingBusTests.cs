@@ -118,7 +118,7 @@ public sealed partial class MessagingBusTests
     [TestMethod]
     public void BusDoesNotExposeReceiveOrReplyOperations()
     {
-        typeof(IBus).GetMethods().Select(method => method.Name).Should()
+        typeof(IBus).GetMethods().Select(static method => method.Name).Should()
             .BeEquivalentTo("Send", "Defer", "Defer", "Publish");
     }
 

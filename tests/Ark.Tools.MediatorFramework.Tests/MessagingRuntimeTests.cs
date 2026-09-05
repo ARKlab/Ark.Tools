@@ -101,7 +101,7 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public void StartupValidationRejectsMissingJsonMetadata()
     {
-        var action = () => MessagingJsonStartupValidation.ValidateContract<MessagingRuntimeContract>(
+        var action = static () => MessagingJsonStartupValidation.ValidateContract<MessagingRuntimeContract>(
             new JsonSerializerOptions());
 
         action.Should().Throw<InvalidOperationException>()
@@ -262,7 +262,7 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public void RetryPolicyValidationRejectsInvalidSecondLevelCount()
     {
-        var action = () => MessagingRetryPolicyValidation.Validate(
+        var action = static () => MessagingRetryPolicyValidation.Validate(
             new TestRetryPolicy(1, secondLevelRetriesEnabled: true));
 
         action.Should().Throw<ArgumentOutOfRangeException>();
@@ -308,7 +308,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
-            async (_, payload, _, token) =>
+            static async (_, payload, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
@@ -333,7 +333,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            async (_, payload, _, token) =>
+            static async (_, payload, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             },
@@ -364,7 +364,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            (_, _, _, _) => throw new InvalidOperationException("handler failed"),
+            static (_, _, _, _) => throw new InvalidOperationException("handler failed"),
             async (_, payload, count, error, processor, token) =>
             {
                 var message = await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
@@ -394,8 +394,8 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            (_, _, _, _) => throw new InvalidOperationException("handler failed"),
-            (_, _, _, _, _, _) => throw new ActivationException("missing handler"));
+            static (_, _, _, _) => throw new InvalidOperationException("handler failed"),
+            static (_, _, _, _, _, _) => throw new ActivationException("missing handler"));
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
 
@@ -418,7 +418,7 @@ public sealed partial class MessagingRuntimeTests
                 3,
                 secondLevelRetriesEnabled: false,
                 maximumHandlerDuration: TimeSpan.FromMilliseconds(30)),
-            async (_, _, _, _) =>
+            static async (_, _, _, _) =>
                 await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false),
             lockRenewalInterval: TimeSpan.FromMilliseconds(5));
 
@@ -439,7 +439,7 @@ public sealed partial class MessagingRuntimeTests
         var act = () => _createDispatcher(
             container,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            async (_, payload, _, token) =>
+            static async (_, payload, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
@@ -513,11 +513,11 @@ public sealed partial class MessagingRuntimeTests
             new Claim(ClaimTypes.Role, "admin")
         ], "test"));
         await new UserContextOutgoingStep(() => principal)
-            .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
+            .ProcessAsync(outgoing, static () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
 
         var incoming = new MessagingIncomingContext(headers, default);
         await new UserContextIncomingStep(value => restored = value)
-            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
+            .ProcessAsync(incoming, static () => Task.CompletedTask, CancellationToken.None).ConfigureAwait(false);
 
         restored!.FindFirst(ClaimTypes.NameIdentifier)!.Value.Should().Be("42");
         headers.Should().NotContainKey("ark-user-email");
@@ -539,7 +539,7 @@ public sealed partial class MessagingRuntimeTests
             producer.AddBaggage("tenant", "a,b=value");
 
             await new OpenTelemetryOutgoingStep()
-                .ProcessAsync(outgoing, () => Task.CompletedTask, CancellationToken.None)
+                .ProcessAsync(outgoing, static () => Task.CompletedTask, CancellationToken.None)
                 .ConfigureAwait(false);
 
             diagnosticId = producer.Id!;
@@ -555,22 +555,22 @@ public sealed partial class MessagingRuntimeTests
         Activity? received = null;
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == OpenTelemetryIncomingStep.ActivitySourceName,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ShouldListenTo = static source => source.Name == OpenTelemetryIncomingStep.ActivitySourceName,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
             ActivityStopped = activity => received = activity
         };
         ActivitySource.AddActivityListener(listener);
 
         var incoming = new MessagingIncomingContext(headers, default);
         await new OpenTelemetryIncomingStep()
-            .ProcessAsync(incoming, () => Task.CompletedTask, CancellationToken.None)
+            .ProcessAsync(incoming, static () => Task.CompletedTask, CancellationToken.None)
             .ConfigureAwait(false);
 
         received.Should().NotBeNull();
         received!.ParentId.Should().Be(diagnosticId);
         received.TraceId.Should().Be(producerTraceId);
-        received.Baggage.Should().Contain(x => x.Key == "tenant" && x.Value == "a,b=value");
-        received.Baggage.Should().NotContain(x => x.Key == "invalid");
+        received.Baggage.Should().Contain(static x => x.Key == "tenant" && x.Value == "a,b=value");
+        received.Baggage.Should().NotContain(static x => x.Key == "invalid");
     }
 
     [TestMethod]
@@ -578,7 +578,7 @@ public sealed partial class MessagingRuntimeTests
     {
         var measurements = new List<(string Name, double Value, string? MessageType, string? Outcome)>();
         using var listener = new MeterListener();
-        listener.InstrumentPublished = (instrument, meterListener) =>
+        listener.InstrumentPublished = static (instrument, meterListener) =>
         {
             if (instrument.Meter.Name == OpenTelemetryProcessingMetricsStep.MeterName)
                 meterListener.EnableMeasurementEvents(instrument);
@@ -609,7 +609,7 @@ public sealed partial class MessagingRuntimeTests
             },
             deliveryCount: 2);
         var step = new OpenTelemetryProcessingMetricsStep(clock);
-        await step.ProcessAsync(successContext, () => Task.CompletedTask, CancellationToken.None)
+        await step.ProcessAsync(successContext, static () => Task.CompletedTask, CancellationToken.None)
             .ConfigureAwait(false);
 
         var failureContext = new MessagingIncomingContext(
@@ -620,7 +620,7 @@ public sealed partial class MessagingRuntimeTests
             deliveryCount: 2);
         Func<Task> processFailure = () => step.ProcessAsync(
             failureContext,
-            () => throw new InvalidOperationException("handler failed"),
+            static () => throw new InvalidOperationException("handler failed"),
             CancellationToken.None);
         await processFailure.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
 
@@ -637,22 +637,22 @@ public sealed partial class MessagingRuntimeTests
         MessagingMetrics.RecordClientOperation(
             TimeSpan.FromSeconds(0.25), producerHeaders, "defer", "tests-queue");
 
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == MessagingMetrics.TimeInQueueName
             && x.MessageType == "tests.Message"
             && x.Value > 1.5);
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == MessagingMetrics.ProcessDurationName
             && x.MessageType == "tests.Message"
             && x.Outcome == "complete");
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == MessagingMetrics.ProcessDurationName
             && x.MessageType == "tests.Message"
             && x.Outcome == "error");
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == MessagingMetrics.DeliveryAttemptsName
             && Math.Abs(x.Value - 2d) < 1e-9);
-        measurements.Should().Contain(x =>
+        measurements.Should().Contain(static x =>
             x.Name == MessagingMetrics.ClientOperationDurationName
             && Math.Abs(x.Value - 0.25d) < 1e-9);
     }

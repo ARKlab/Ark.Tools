@@ -177,7 +177,7 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
             else
                 return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
                     , map
-                    , param: new { tenant = tenant, resources = resourceIds.Select(x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
+                    , param: new { tenant = tenant, resources = resourceIds.Select(static x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
         }
     }

@@ -90,7 +90,7 @@ public sealed class ComplianceFoundationTests
     [TestMethod]
     public void SensitiveValueObject_JsonRejectsNonStringTokens()
     {
-        var deserialize = () => JsonSerializer.Deserialize<TestSensitiveValue>("42");
+        var deserialize = static () => JsonSerializer.Deserialize<TestSensitiveValue>("42");
 
         deserialize.Should().Throw<JsonException>();
     }
@@ -101,7 +101,7 @@ public sealed class ComplianceFoundationTests
     [TestMethod]
     public void SerializerRegistration_RegistersThroughStaticAbstract()
     {
-        var register = () => _register<TestDapperRegistration>();
+        var register = static () => _register<TestDapperRegistration>();
 
         register.Should().NotThrow();
     }
@@ -237,8 +237,8 @@ public sealed class ComplianceFoundationTests
     [TestMethod]
     public void EscapeHatches_RejectEmptyReasons()
     {
-        var reviewed = () => new ComplianceReviewedAttribute("ARKPII002", " ");
-        var notPersonal = () => new NotPersonalDataAttribute(string.Empty);
+        var reviewed = static () => new ComplianceReviewedAttribute("ARKPII002", " ");
+        var notPersonal = static () => new NotPersonalDataAttribute(string.Empty);
 
         reviewed.Should().Throw<ArgumentException>();
         notPersonal.Should().Throw<ArgumentException>();

@@ -147,7 +147,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
             var evaluated = await _evaluateActions(list, ctk).ConfigureAwait(false);
 
             //Process
-            var toProcess = evaluated.Where(x => !x.ResultType.HasValue).ToList();
+            var toProcess = evaluated.Where(static x => !x.ResultType.HasValue).ToList();
             var skipped = evaluated.Count - toProcess.Count;
 
             _logger.Info(CultureInfo.InvariantCulture, "Found {SkippedCount} resources to skip", skipped);
@@ -172,12 +172,12 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
             }
 
             var resultCounts = evaluated
-                .GroupBy(x => x.ResultType ?? ResultType.Skipped)
-                .ToDictionary(g => g.Key, g => g.Count());
+                .GroupBy(static x => x.ResultType ?? ResultType.Skipped)
+                .ToDictionary(static g => g.Key, static g => g.Count());
             _diagnosticSource.RunSuccessful(
                 activityRun,
                 resultCounts,
-                evaluated.Count(x => x.ProcessType == ProcessType.Banned));
+                evaluated.Count(static x => x.ProcessType == ProcessType.Banned));
 
             if (activityRun.Duration > _config.RunDurationNotificationLimit)
                 _diagnosticSource.RunTookTooLong(activityRun);
@@ -194,13 +194,13 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         using var activityCheckState = _diagnosticSource.CheckStateStart();
         try
         {
-            var states = _config.IgnoreState ? Enumerable.Empty<ResourceState<TExtensions>>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
+            var states = _config.IgnoreState ? Enumerable.Empty<ResourceState<TExtensions>>() : await _stateProvider.LoadStateAsync(_config.Tenant, list.Select(static i => i.ResourceId).ToArray(), ctk).ConfigureAwait(false);
 
             var evaluated = _createEvaluateList(list, states);
 
             var processCounts = evaluated
-                .GroupBy(x => x.ProcessType)
-                .ToDictionary(g => g.Key, g => g.Count());
+                .GroupBy(static x => x.ProcessType)
+                .ToDictionary(static g => g.Key, static g => g.Count());
             _diagnosticSource.CheckStateSuccessful(activityCheckState, processCounts);
 
             return evaluated;
@@ -220,7 +220,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
         {
             var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
 
-            var bad = infos.GroupBy(x => x.ResourceId, StringComparer.Ordinal).FirstOrDefault(x => x.Count() > 1);
+            var bad = infos.GroupBy(static x => x.ResourceId, StringComparer.Ordinal).FirstOrDefault(static x => x.Count() > 1);
             if (bad != null)
                 _diagnosticSource.ThrowDuplicateResourceIdRetrived(bad.Key);
 
@@ -243,7 +243,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
 
     private IList<ProcessContext<TExtensions>> _createEvaluateList(IList<IResourceMetadata<TExtensions>> list, IEnumerable<ResourceState<TExtensions>> states)
     {
-        var ev = list.GroupJoin(states, i => i.ResourceId, s => s.ResourceId, (i, s) =>
+        var ev = list.GroupJoin(states, static i => i.ResourceId, static s => s.ResourceId, (i, s) =>
          {
              var x = new ProcessContext<TExtensions>(i) { LastState = s.SingleOrDefault() };
              if (x.LastState == null)
@@ -485,7 +485,7 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
     {
         if (info.ModifiedSources != null && info.ModifiedSources.Count != 0)
         {
-            return info.ModifiedSources.Max(x => x.Value);
+            return info.ModifiedSources.Max(static x => x.Value);
         }
         else
         {
@@ -645,7 +645,7 @@ public class ProcessContext<TExtensions>
                     changed = (
                                     source: null,
                                     current: CurrentInfo.Modified,
-                                    last: LastState.ModifiedSources.Max(x => x.Value)
+                                    last: LastState.ModifiedSources.Max(static x => x.Value)
                                 );
                     return true;
                 }

@@ -43,8 +43,8 @@ public sealed class ProblemDetailsResultAttribute : Attribute, IAlwaysRunResultF
     private static ValidationProblemDetails _toValidationProblemDetails(SerializableError serializableError)
     {
         var validationErrors = serializableError
-            .Where(x => x.Value is string[])
-            .ToDictionary(x => x.Key, x => (string[])x.Value, StringComparer.Ordinal);
+            .Where(static x => x.Value is string[])
+            .ToDictionary(static x => x.Key, static x => (string[])x.Value, StringComparer.Ordinal);
 
         return new ValidationProblemDetails(validationErrors);
     }

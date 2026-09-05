@@ -12,7 +12,7 @@ public class SetVersionInPaths : IDocumentFilter
         var dict = swaggerDoc.Paths
             .ToDictionary(
                 path => path.Key.Replace("v{api-version}", swaggerDoc.Info.Version, System.StringComparison.Ordinal),
-                path => path.Value,
+                static path => path.Value,
                 System.StringComparer.Ordinal);
 
 

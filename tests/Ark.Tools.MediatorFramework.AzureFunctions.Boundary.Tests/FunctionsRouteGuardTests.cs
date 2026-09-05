@@ -39,12 +39,12 @@ public sealed class FunctionsRouteGuardTests
     public void GeneratedFunctionsMatchTheExpectedRouteFixture()
     {
         var actual = _generatedFunctions()
-            .OrderBy(function => function.Name, StringComparer.Ordinal)
+            .OrderBy(static function => function.Name, StringComparer.Ordinal)
             .ToArray();
 
         actual.Should().BeEquivalentTo(
-            _expectedFunctions.OrderBy(function => function.Name, StringComparer.Ordinal),
-            options => options.WithStrictOrdering());
+            _expectedFunctions.OrderBy(static function => function.Name, StringComparer.Ordinal),
+            static options => options.WithStrictOrdering());
     }
 
     [TestMethod]
@@ -54,7 +54,7 @@ public sealed class FunctionsRouteGuardTests
         var contractAssembly = host.ContractAssemblyMarker.Assembly;
         var excluded = host.ExcludedContracts.ToHashSet(EqualityComparer<Type>.Default);
         var functionsByRoute = _generatedFunctions()
-            .Select(function => (function.Verb, function.Route))
+            .Select(static function => (function.Verb, function.Route))
             .ToHashSet();
 
         foreach (var contract in contractAssembly.GetTypes())
@@ -88,8 +88,8 @@ public sealed class FunctionsRouteGuardTests
                     continue;
 
                 var trigger = method.GetParameters()
-                    .Select(parameter => parameter.GetCustomAttribute<HttpTriggerAttribute>())
-                    .FirstOrDefault(attribute => attribute is not null);
+                    .Select(static parameter => parameter.GetCustomAttribute<HttpTriggerAttribute>())
+                    .FirstOrDefault(static attribute => attribute is not null);
                 if (trigger is null)
                     continue;
 

@@ -13,11 +13,11 @@ public class TransformEmailClaim : IClaimsTransformation
 
     public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
-        if (principal.HasClaim(c => c.Type == ClaimTypes.Email))
+        if (principal.HasClaim(static c => c.Type == ClaimTypes.Email))
             return principal;
 
         // If it does not exist, look for the custom email claim
-        var emailClaim = principal.FindFirst(c => c.Type == "emails");
+        var emailClaim = principal.FindFirst(static c => c.Type == "emails");
         if (emailClaim == null)
             return principal;
 

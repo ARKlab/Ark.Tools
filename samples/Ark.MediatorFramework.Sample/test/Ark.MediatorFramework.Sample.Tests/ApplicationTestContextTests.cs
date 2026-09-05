@@ -60,7 +60,7 @@ public sealed class ApplicationTestContextTests
             ])).ConfigureAwait(false);
 
         response.Should().HaveCount(2);
-        response.Select(book => book.Title).Should().Equal("Clean Code", "Dune");
+        response.Select(static book => book.Title).Should().Equal("Clean Code", "Dune");
         context.AuditCount.Should().Be(1);
     }
 
@@ -73,7 +73,7 @@ public sealed class ApplicationTestContextTests
             new Book_CreateRequest.V1(new Book.V1.Create()));
 
         var exception = await action.Should().ThrowAsync<ValidationException>().ConfigureAwait(false);
-        exception.Which.Errors.Should().Contain(error => error.PropertyName == "Data.Title");
+        exception.Which.Errors.Should().Contain(static error => error.PropertyName == "Data.Title");
     }
 
     /// <summary>Uses a new scoped graph for each top-level dispatch.</summary>

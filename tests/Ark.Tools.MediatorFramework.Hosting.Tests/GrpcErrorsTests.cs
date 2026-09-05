@@ -38,8 +38,8 @@ public sealed class GrpcErrorsTests
         var status = _readRichStatus(exception.Which);
         exception.Which.StatusCode.Should().Be(StatusCode.InvalidArgument);
         status.Message.Should().Be("Validation failed");
-        var badRequest = status.Details.Single(detail => detail.Is(BadRequest.Descriptor)).Unpack<BadRequest>();
-        badRequest.FieldViolations.Should().ContainSingle(violation =>
+        var badRequest = status.Details.Single(static detail => detail.Is(BadRequest.Descriptor)).Unpack<BadRequest>();
+        badRequest.FieldViolations.Should().ContainSingle(static violation =>
             violation.Field == nameof(HostingContracts.HostingValidationRequest.Value)
             && violation.Description == "The synthetic value is invalid.");
     }
@@ -61,7 +61,7 @@ public sealed class GrpcErrorsTests
         var status = _readRichStatus(exception.Which);
         exception.Which.StatusCode.Should().Be(StatusCode.FailedPrecondition);
         var violation = status.Details
-            .Single(detail => detail.Is(ArkBusinessRuleViolation.Descriptor))
+            .Single(static detail => detail.Is(ArkBusinessRuleViolation.Descriptor))
             .Unpack<ArkBusinessRuleViolation>();
         violation.Type.Should().Be("BusinessRuleViolation");
         violation.Title.Should().Be("Synthetic rule");

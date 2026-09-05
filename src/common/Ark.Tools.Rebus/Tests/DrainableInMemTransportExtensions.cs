@@ -18,9 +18,9 @@ public static class DrainableInMemTransportExtensions
             .Register(context => new DrainableInMemTransport(network, inputQueueName));
 
         configurer.OtherService<ITransportInspector>()
-            .Register(context => context.Get<DrainableInMemTransport>());
+            .Register(static context => context.Get<DrainableInMemTransport>());
 
-        configurer.Register(context => context.Get<DrainableInMemTransport>());
+        configurer.Register(static context => context.Get<DrainableInMemTransport>());
     }
 
     public static void UseDrainableInMemoryTransportAsOneWayClient(this StandardConfigurer<ITransport> configurer, InMemNetwork network)

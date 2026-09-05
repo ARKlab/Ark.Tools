@@ -49,20 +49,20 @@ public sealed partial class MessagingOutboxTests
         await using var __inspection = inspection.ConfigureAwait(false);
         var messages = (await inspection.PeekLockMessagesAsync(10).ConfigureAwait(false)).ToList();
         messages.Should().HaveCount(3);
-        messages.Should().OnlyContain(message =>
+        messages.Should().OnlyContain(static message =>
             message.Headers![MessagingHeaders.SenderIdentity] == "sender"
             && message.Headers.ContainsKey(MessagingHeaders.MessageId)
             && message.Body != null
             && message.Body.Length > 0);
-        messages.Should().ContainSingle(message =>
+        messages.Should().ContainSingle(static message =>
             message.Headers!.ContainsKey("tenant")
             && message.Headers["tenant"] == "books"
             && message.Headers[MessagingHeaders.OutboxDestinationKind] == "queue"
             && message.Headers[MessagingHeaders.OutboxDestination] == "processor");
-        messages.Should().ContainSingle(message =>
+        messages.Should().ContainSingle(static message =>
             message.Headers!.ContainsKey(MessagingHeaders.OutboxDueTime)
             && message.Headers[MessagingHeaders.OutboxDueTime] == "2024-01-01T00:05:00.0000000+00:00");
-        messages.Should().ContainSingle(message =>
+        messages.Should().ContainSingle(static message =>
             message.Headers![MessagingHeaders.OutboxDestinationKind] == "topic"
             && message.Headers[MessagingHeaders.OutboxDestination] == "publisher-test_event");
     }
@@ -151,7 +151,7 @@ public sealed partial class MessagingOutboxTests
         await using var provider = services.BuildServiceProvider();
         provider.GetRequiredService<MessagingOutboxProcessor>().Should().NotBeNull();
         provider.GetServices<IHostedService>().Should()
-            .ContainSingle(service => service is MessagingOutboxProcessor);
+            .ContainSingle(static service => service is MessagingOutboxProcessor);
     }
 
     private static MessagingBus _createBus(
@@ -184,7 +184,7 @@ public sealed partial class MessagingOutboxTests
                 CompressionAlgorithm.None,
                 0),
             participantIdentity,
-            utcNow: () => DateTimeOffset.Parse(
+            utcNow: static () => DateTimeOffset.Parse(
                 "2024-01-01T00:00:00Z",
                 CultureInfo.InvariantCulture));
     }

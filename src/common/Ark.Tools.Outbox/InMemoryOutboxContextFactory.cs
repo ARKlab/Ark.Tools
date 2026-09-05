@@ -189,7 +189,7 @@ public sealed class InMemoryOutbox
         lock (_sync)
         {
             var messages = new List<OutboxMessage>(messageCount);
-            foreach (var entry in _entries.Where(entry => entry.Owner is null).Take(messageCount))
+            foreach (var entry in _entries.Where(static entry => entry.Owner is null).Take(messageCount))
             {
                 entry.Owner = owner;
                 lockedMessageIds.Add(entry.Id);
@@ -204,7 +204,7 @@ public sealed class InMemoryOutbox
     {
         lock (_sync)
         {
-            return _entries.Count(entry => entry.Owner is null);
+            return _entries.Count(static entry => entry.Owner is null);
         }
     }
 

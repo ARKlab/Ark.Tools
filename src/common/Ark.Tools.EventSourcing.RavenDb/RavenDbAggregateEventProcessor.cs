@@ -142,7 +142,7 @@ where startsWith(id(e), '{prefix}')
     {
         _logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Got a batch of {BatchItemCount} items", batch.NumberOfItemsInBatch);
 
-        var tasks = batch.Items.GroupBy(x => x.Result.AggregateId, StringComparer.Ordinal)
+        var tasks = batch.Items.GroupBy(static x => x.Result.AggregateId, StringComparer.Ordinal)
             .Select(async g =>
             {
                 foreach (var e in g)

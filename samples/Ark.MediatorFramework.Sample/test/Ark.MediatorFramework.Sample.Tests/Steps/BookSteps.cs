@@ -420,7 +420,7 @@ public sealed class BookSteps
     public void BookStreamContains(int count)
     {
         _streamItems.Should().HaveCount(count);
-        _streamItems.Select(item => item.Index).Should().Equal(Enumerable.Range(0, count));
+        _streamItems.Select(static item => item.Index).Should().Equal(Enumerable.Range(0, count));
     }
 
     /// <summary>Asserts that the Book stream observed cancellation.</summary>

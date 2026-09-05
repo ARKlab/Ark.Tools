@@ -53,7 +53,7 @@ public static class MessagingContractTopologyValidator
 
     private static bool _hasMessagePackAttribute(INamedTypeSymbol contract)
     {
-        return contract.GetAttributes().Any(attribute =>
+        return contract.GetAttributes().Any(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == "MessagePack.MessagePackObjectAttribute");
     }
 

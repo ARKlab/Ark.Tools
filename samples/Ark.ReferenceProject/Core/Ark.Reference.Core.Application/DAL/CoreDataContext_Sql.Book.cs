@@ -51,7 +51,7 @@ public partial class CoreDataContext_Sql
             @Id = query.Id,
             @Title = query.Title,
             @Author = query.Author,
-            @Genre = query.Genre?.Select(x => x.ToString()),
+            @Genre = query.Genre?.Select(static x => x.ToString()),
             @Skip = query.Skip,
             @Limit = query.Limit
         };
@@ -80,7 +80,7 @@ public partial class CoreDataContext_Sql
 
         var (data, count) = await Connection.ReadPagedAsync<BookView>(cmd).ConfigureAwait(false);
 
-        var d = data.Select(s => s.ToOutput());
+        var d = data.Select(static s => s.ToOutput());
 
         _logger.Trace(CultureInfo.InvariantCulture, "ReadBookByFiltersAsync ended");
 
@@ -275,7 +275,7 @@ public partial class CoreDataContext_Sql
         var data = await Connection.QueryAsync<BookView>(cmd).ConfigureAwait(false);
 
         var resTable = data
-            .Select(s => new AuditedEntityDto<Book.V1.Output>()
+            .Select(static s => new AuditedEntityDto<Book.V1.Output>()
             {
                 Entity = s.ToOutput(),
                 SysStartTime = s.SysStartTime!.Value,
