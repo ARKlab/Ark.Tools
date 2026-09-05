@@ -121,4 +121,4 @@ dotnet_diagnostic.MA0211.severity = suggestion
 dotnet_diagnostic.MA0212.severity = warning
 
 # MA0217: Use a static lambda
-dotnet_diagnostic.MA0217.severity = suggestion
+dotnet_diagnostic.MA0217.severity = warning

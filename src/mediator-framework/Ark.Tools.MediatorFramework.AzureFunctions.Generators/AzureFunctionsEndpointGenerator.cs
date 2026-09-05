@@ -118,7 +118,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 prefix,
                 _getTypes(host, "IncludedContracts"),
                 _getTypes(host, "ExcludedContracts"),
-                marker.Locations.Any(location => location.IsInSource),
+                marker.Locations.Any(static location => location.IsInSource),
                 host.ApplicationSyntaxReference is { } syntax ? Location.Create(syntax.SyntaxTree, syntax.Span) : null));
         }
 
@@ -163,7 +163,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 foreach (var selection in list)
                 {
                     if (!SymbolEqualityComparer.Default.Equals(selection.ContainingAssembly, markerAssembly)
-                        || !selection.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == _endpointAttribute))
+                        || !selection.GetAttributes().Any(static attribute => attribute.AttributeClass?.ToDisplayString() == _endpointAttribute))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(
                             _invalidHostSelection, host.Location, selection.Name, name, markerAssembly.Name));
@@ -175,11 +175,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 ? sourceEndpoints.Where(candidate =>
                     SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
                 : _allTypes(host.Marker.ContainingAssembly.GlobalNamespace)
-                    .Select(type => new EndpointCandidate(
+                    .Select(static type => new EndpointCandidate(
                         type,
-                        type.GetAttributes().FirstOrDefault(attribute =>
+                        type.GetAttributes().FirstOrDefault(static attribute =>
                             attribute.AttributeClass?.ToDisplayString() == _endpointAttribute)))
-                    .Where(candidate => candidate.Attribute is not null);
+                    .Where(static candidate => candidate.Attribute is not null);
             foreach (var candidate in candidates)
             {
                 if (!_isSelected(candidate.Type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
@@ -193,7 +193,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
         var maxVersion = endpoints.Count == 0
             ? 1
-            : endpoints.Max(item => item.Retired > 0 ? item.Retired - 1 : item.Introduced);
+            : endpoints.Max(static item => item.Retired > 0 ? item.Retired - 1 : item.Introduced);
         var expanded = endpoints.SelectMany(endpoint =>
             Enumerable.Range(endpoint.Introduced, Math.Max(1, maxVersion - endpoint.Introduced + 1))
                 .Where(version => endpoint.Retired == 0 || version < endpoint.Retired)
@@ -204,7 +204,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 }));
 
         var valid = new List<Endpoint>();
-        foreach (var endpoint in expanded.OrderBy(item => item.FunctionName, StringComparer.Ordinal))
+        foreach (var endpoint in expanded.OrderBy(static item => item.FunctionName, StringComparer.Ordinal))
         {
             if (endpoint.MessagePack)
             {
@@ -253,10 +253,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private static void _emitFunction(StringBuilder source, Endpoint endpoint)
     {
         var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
-        var routeProperties = endpoint.Properties.Where(p => p.IsRoute && !p.IsServerSet).ToArray();
-        var queryProperties = endpoint.Properties.Where(p => p.IsQuery && !p.IsServerSet).ToArray();
-        var serverSetProperties = endpoint.Properties.Where(p => p.IsServerSet).ToArray();
-        var attachment = endpoint.Properties.FirstOrDefault(p => p.IsAttachment || p.IsAttachmentCollection);
+        var routeProperties = endpoint.Properties.Where(static p => p.IsRoute && !p.IsServerSet).ToArray();
+        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsServerSet).ToArray();
+        var serverSetProperties = endpoint.Properties.Where(static p => p.IsServerSet).ToArray();
+        var attachment = endpoint.Properties.FirstOrDefault(static p => p.IsAttachment || p.IsAttachmentCollection);
         var hasAttachment = attachment.IsAttachment || attachment.IsAttachmentCollection;
 
         source.Append("    [global::Microsoft.Azure.Functions.Worker.Function(\"")
@@ -395,7 +395,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             _emitPropertyAssignment(source, endpoint, "        ", prop.Name, "default!");
         }
-        var _etagProperties = endpoint.Properties.Where(p => p.IsETag).ToArray();
+        var _etagProperties = endpoint.Properties.Where(static p => p.IsETag).ToArray();
         if (_etagProperties.Length > 0)
         {
             source.AppendLine("        var _etag = global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.ReadPrecondition(request.HttpContext);");
@@ -542,7 +542,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             return null;
 
         var versioning = type.GetAttributes()
-            .FirstOrDefault(item => item.AttributeClass?.ToDisplayString() == _versioningAttribute);
+            .FirstOrDefault(static item => item.AttributeClass?.ToDisplayString() == _versioningAttribute);
         var introduced = _getNamedInt(versioning, "Introduced", 1);
         var retired = _getNamedInt(versioning, "Retired", 0);
         var messagePack = _getNamedBool(attribute, "AcceptsMessagePack");
@@ -584,28 +584,28 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var routeNames = new HashSet<string>(
             _routeParamRegex.Matches(template!)
                 .Cast<Match>()
-                .Select(m => m.Groups["param"].Value)
-                .Where(n => !string.Equals(n, "version", StringComparison.OrdinalIgnoreCase)),
+                .Select(static m => m.Groups["param"].Value)
+                .Where(static n => !string.Equals(n, "version", StringComparison.OrdinalIgnoreCase)),
             StringComparer.OrdinalIgnoreCase);
 
         // Extract per-property binding info at generation time (no runtime reflection per request)
         var properties = _allProperties(type)
-            .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
+            .Where(static p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
                 && p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
             .Select(p =>
             {
                 var routeAttr = p.GetAttributes()
-                    .FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == _httpRouteAttribute);
+                    .FirstOrDefault(static a => a.AttributeClass?.ToDisplayString() == _httpRouteAttribute);
                 var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
-                var isQuery = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _httpQueryAttribute);
-                var isBody = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _httpBodyAttribute);
-                var isServerSet = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute);
-                var isETag = p.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == _eTagAttribute);
+                var isQuery = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpQueryAttribute);
+                var isBody = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpBodyAttribute);
+                var isServerSet = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute);
+                var isETag = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _eTagAttribute);
                 var isString = p.Type.SpecialType == SpecialType.System_String;
                 var isAttachment = p.Type.ToDisplayString() == _arkAttachment;
                 var isAttachmentCollection = p.Type is INamedTypeSymbol collection
-                    && collection.AllInterfaces.Any(item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
+                    && collection.AllInterfaces.Any(static item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
                     && collection.TypeArguments.Length == 1
                     && collection.TypeArguments[0].ToDisplayString() == _arkAttachment;
                 return new PropertyInfo(
@@ -625,10 +625,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var responseETagProperty = responseSymbol is null
             ? null
             : _allProperties(responseSymbol)
-                .FirstOrDefault(property => property.GetAttributes().Any(attribute =>
+                .FirstOrDefault(static property => property.GetAttributes().Any(static attribute =>
                     attribute.AttributeClass?.ToDisplayString() == _eTagAttribute))
                 ?.Name;
-        var bodyProperty = properties.FirstOrDefault(property => property.IsBody);
+        var bodyProperty = properties.FirstOrDefault(static property => property.IsBody);
 
         return new Endpoint(
             _typeName(type),
@@ -664,16 +664,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         INamedTypeSymbol type,
         ImmutableArray<PropertyInfo> properties)
     {
-        var propertyNames = properties.Select(property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var propertyNames = properties.Select(static property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var constructor = type.InstanceConstructors
             .Where(candidate => candidate.DeclaredAccessibility == Accessibility.Public
                 && candidate.Parameters.Length > 0
                 && candidate.Parameters.All(parameter => propertyNames.Contains(parameter.Name)))
-            .OrderByDescending(candidate => candidate.Parameters.Length)
+            .OrderByDescending(static candidate => candidate.Parameters.Length)
             .FirstOrDefault();
         return constructor is null
             ? ImmutableArray<string>.Empty
-            : constructor.Parameters.Select(parameter => parameter.Name).ToImmutableArray();
+            : constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray();
     }
 
     private static bool _isSelected(
@@ -695,8 +695,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         if (argument.Kind != TypedConstantKind.Array)
             return ImmutableArray<INamedTypeSymbol>.Empty;
         return argument.Values
-            .Where(value => value.Value is INamedTypeSymbol)
-            .Select(value => (INamedTypeSymbol)value.Value!)
+            .Where(static value => value.Value is INamedTypeSymbol)
+            .Select(static value => (INamedTypeSymbol)value.Value!)
             .ToImmutableArray();
     }
 
@@ -762,7 +762,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     {
         var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
         return value.Kind == TypedConstantKind.Array
-            ? value.Values.Where(item => item.Value is string).Select(item => (string)item.Value!).ToImmutableArray()
+            ? value.Values.Where(static item => item.Value is string).Select(static item => (string)item.Value!).ToImmutableArray()
             : ImmutableArray<string>.Empty;
     }
 

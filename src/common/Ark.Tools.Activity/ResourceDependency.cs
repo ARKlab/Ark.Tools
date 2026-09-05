@@ -5,7 +5,7 @@ public class ResourceDependency
 {
     public Resource Resource { get; internal set; }
 
-    internal Func<Slice, IEnumerable<Slice>> _getDependentSlice = s => Enumerable.Empty<Slice>();
+    internal Func<Slice, IEnumerable<Slice>> _getDependentSlice = static s => Enumerable.Empty<Slice>();
 
     public virtual IEnumerable<Slice> GetResourceSlices(Slice activitySlice)
     {

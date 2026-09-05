@@ -35,7 +35,7 @@ public class Metadata : IMetadata
     public DateTimeOffset Timestamp
     {
         get => _container.GetMetadataValue(MetadataKeys.Timestamp, DateTimeOffset.Parse) ?? throw new InvalidOperationException(MetadataKeys.Timestamp + " cannot be null");
-        set => _container.SetMetadataValue<DateTimeOffset>(MetadataKeys.Timestamp, value, v => v.ToString("O"));
+        set => _container.SetMetadataValue<DateTimeOffset>(MetadataKeys.Timestamp, value, static v => v.ToString("O"));
     }
 
     public long TimestampEpoch

@@ -14,21 +14,21 @@ internal sealed class OtelTestCollector : IDisposable
     {
         _activityListener = new ActivityListener
         {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ShouldListenTo = static _ => true,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity => _spans.Enqueue(new OtelSpan(
                 activity.Source.Name,
                 activity.DisplayName,
                 activity.TagObjects.ToDictionary(
-                    tag => tag.Key,
-                    tag => tag.Value?.ToString(),
+                    static tag => tag.Key,
+                    static tag => tag.Value?.ToString(),
                     StringComparer.Ordinal)))
         };
         ActivitySource.AddActivityListener(_activityListener);
 
         _meterListener = new MeterListener
         {
-            InstrumentPublished = (instrument, listener) => listener.EnableMeasurementEvents(instrument)
+            InstrumentPublished = static (instrument, listener) => listener.EnableMeasurementEvents(instrument)
         };
         _meterListener.SetMeasurementEventCallback<long>((instrument, measurement, tags, _) =>
             _metrics.Enqueue(_metric(instrument, measurement, tags)));
@@ -69,8 +69,8 @@ internal sealed class OtelTestCollector : IDisposable
             instrument.Name,
             Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture),
             tags.ToArray().ToDictionary(
-                tag => tag.Key,
-                tag => tag.Value?.ToString(),
+                static tag => tag.Key,
+                static tag => tag.Value?.ToString(),
                 StringComparer.Ordinal));
     }
 }

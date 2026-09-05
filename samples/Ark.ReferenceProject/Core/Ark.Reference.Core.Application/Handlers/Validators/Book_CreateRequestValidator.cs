@@ -17,7 +17,7 @@ public class Book_CreateRequestValidator : AbstractValidator<Book_CreateRequest.
     /// <param name="validator">The validator for the Book create data</param>
     public Book_CreateRequestValidator(IValidator<Book.V1.Create> validator)
     {
-        RuleFor(x => x.Data)
+        RuleFor(static x => x.Data)
             .NotNull()
             .SetValidator(validator!);
     }
@@ -33,28 +33,28 @@ public class Book_CreateValidator : AbstractValidator<Book.V1.Create>
     /// </summary>
     public Book_CreateValidator()
     {
-        RuleFor(x => x.Title)
+        RuleFor(static x => x.Title)
             .NotNull()
             .NotEmpty()
             .MinimumLength(1)
             .MaximumLength(200)
             ;
 
-        RuleFor(x => x.Author)
+        RuleFor(static x => x.Author)
             .NotNull()
             .NotEmpty()
             .MinimumLength(1)
             .MaximumLength(100)
             ;
 
-        RuleFor(x => x.Genre)
+        RuleFor(static x => x.Genre)
             .NotNull()
             .NotEqual(BookGenre.NotSet)
             ;
 
-        RuleFor(x => x.ISBN)
+        RuleFor(static x => x.ISBN)
             .MaximumLength(20)
-            .When(x => x.ISBN != null)
+            .When(static x => x.ISBN != null)
             ;
     }
 }

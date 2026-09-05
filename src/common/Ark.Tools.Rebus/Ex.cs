@@ -15,7 +15,7 @@ public static class Ex
     public static void ConfigureRebus(this Container container, Action<RebusConfigurer> configurationCallback)
     {
         container.RegisterSingleton<IMessageContextProvider, MessageContextProvider>();
-        container.Register(() =>
+        container.Register(static () =>
         {
             return MessageContext.Current ?? new FakeMessageContext();
         });

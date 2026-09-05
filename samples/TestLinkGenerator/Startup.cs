@@ -45,7 +45,7 @@ internal sealed class Startup : ArkStartupWebApi
             options.DefaultChallengeScheme = auth0Scheme;
 
         })
-        .AddJwtBearerArkDefault(auth0Scheme, audience, domain, o =>
+        .AddJwtBearerArkDefault(auth0Scheme, audience, domain, static o =>
         {
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "IntegrationTests")
             {
@@ -83,13 +83,13 @@ internal sealed class Startup : ArkStartupWebApi
 
 
 
-        services.ArkConfigureSwaggerUI(c =>
+        services.ArkConfigureSwaggerUI(static c =>
         {
         });
 
-        services.ConfigureSwaggerGen(c =>
+        services.ConfigureSwaggerGen(static c =>
         {
-            c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement()
+            c.AddSecurityRequirement(static (document) => new OpenApiSecurityRequirement()
             {
                 [new OpenApiSecuritySchemeReference("oauth2", document)] = ["openid"]
             });

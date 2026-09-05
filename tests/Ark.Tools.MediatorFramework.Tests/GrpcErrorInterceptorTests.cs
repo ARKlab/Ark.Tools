@@ -55,9 +55,9 @@ public sealed class GrpcErrorInterceptorTests
         exception.Which.Status.Detail.Should().Be("grpc exception detail");
         var status = RpcStatus.Parser.ParseFrom(
             exception.Which.Trailers.GetValueBytes("grpc-status-details-bin"));
-        status.Details.Should().Contain(detail => detail.Is(DebugInfo.Descriptor));
+        status.Details.Should().Contain(static detail => detail.Is(DebugInfo.Descriptor));
         status.Details
-            .Single(detail => detail.Is(DebugInfo.Descriptor))
+            .Single(static detail => detail.Is(DebugInfo.Descriptor))
             .Unpack<DebugInfo>()
             .Detail.Should()
             .Contain("AwaitUnexpectedException");
@@ -71,14 +71,14 @@ public sealed class GrpcErrorInterceptorTests
         Func<Task> etagAction = () => interceptor.UnaryServerHandler(
             new Empty(),
             new TestServerCallContext(),
-            (_, _) => Task.FromException<Empty>(new EntityTagMismatchException("etag")));
+            static (_, _) => Task.FromException<Empty>(new EntityTagMismatchException("etag")));
         var etag = await etagAction.Should().ThrowAsync<RpcException>();
         etag.Which.StatusCode.Should().Be(StatusCode.FailedPrecondition);
 
         Func<Task> optimisticAction = () => interceptor.UnaryServerHandler(
             new Empty(),
             new TestServerCallContext(),
-            (_, _) => Task.FromException<Empty>(new OptimisticConcurrencyException("conflict")));
+            static (_, _) => Task.FromException<Empty>(new OptimisticConcurrencyException("conflict")));
         var optimistic = await optimisticAction.Should().ThrowAsync<RpcException>();
         optimistic.Which.StatusCode.Should().Be(StatusCode.Aborted);
     }
@@ -133,7 +133,7 @@ public sealed class GrpcErrorInterceptorTests
         Func<Task> action = () => interceptor.UnaryServerHandler(
             new Empty(),
             new TestServerCallContext(CancellationToken.None),
-            (_, _) => Task.FromException<Empty>(new OperationCanceledException()));
+            static (_, _) => Task.FromException<Empty>(new OperationCanceledException()));
 
         var exception = await action.Should().ThrowAsync<RpcException>();
         exception.Which.StatusCode.Should().Be(StatusCode.Internal);
@@ -157,7 +157,7 @@ public sealed class GrpcErrorInterceptorTests
         var exception = await action.Should().ThrowAsync<RpcException>();
         var status = RpcStatus.Parser.ParseFrom(
             exception.Which.Trailers.GetValueBytes("grpc-status-details-bin"));
-        var detail = status.Details.Single(item => item.Is(ArkBusinessRuleViolation.Descriptor))
+        var detail = status.Details.Single(static item => item.Is(ArkBusinessRuleViolation.Descriptor))
             .Unpack<ArkBusinessRuleViolation>();
 
         detail.Extensions.Should().ContainKey(nameof(TestBusinessRuleViolation.Exposed));

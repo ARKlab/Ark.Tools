@@ -38,7 +38,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         _accessTokenResponseCachePolicy =
                 Policy.CacheAsync(
                     _memoryCacheProvider.AsyncFor<AccessTokenResponse>(),
-                    new ResultTtl<AccessTokenResponse>(r => r is not null ? new Ttl(_expiresIn(r)) : new Ttl(TimeSpan.Zero))
+                    new ResultTtl<AccessTokenResponse>(static r => r is not null ? new Ttl(_expiresIn(r)) : new Ttl(TimeSpan.Zero))
                     );
 
         _userInfoCachePolicy =

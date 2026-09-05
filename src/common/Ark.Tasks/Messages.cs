@@ -79,7 +79,7 @@ internal sealed class ZonedDateTimeTzdbConverter : JsonConverter
 {
     private readonly JsonConverter _converter = new NodaPatternConverter<ZonedDateTime>(
             ZonedDateTimePattern.CreateWithInvariantCulture("uuuu'-'MM'-'dd'T'HH':'mm':'ss;FFFFFFFFFo<G> z", DateTimeZoneProviders.Tzdb)
-        , x =>
+        , static x =>
         {
             if (x.Calendar != CalendarSystem.Iso) throw new InvalidOperationException("Invalid Calendar for ZonedDateTime");
         }

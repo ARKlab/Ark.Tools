@@ -28,7 +28,7 @@ public class ProblemDetailsRouterProvider : IProblemDetailsRouterProvider
     [RequiresUnreferencedCode("ProblemDetails router dynamically resolves type names from route parameters for diagnostic purposes.")]
     public void BuildRouter(IApplicationBuilder app)
     {
-        var pageRouteHandler = new RouteHandler(context =>
+        var pageRouteHandler = new RouteHandler(static context =>
         {
             var typename = context.GetRouteValue("name") as string;
             string content = "Unknown";

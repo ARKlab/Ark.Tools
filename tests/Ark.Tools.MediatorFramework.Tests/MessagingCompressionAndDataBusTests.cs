@@ -80,7 +80,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var transport = new CappedTransport(300);
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        var value = string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()));
+        var value = string.Concat(Enumerable.Range(0, 100).Select(static _ => Guid.NewGuid().ToString()));
         var payload = await sender.BuildOutgoingPayloadAsync(
             new PayloadContract(value),
             new TextCodec(),
@@ -155,7 +155,7 @@ public sealed class MessagingCompressionAndDataBusTests
 
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()))),
+                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(static _ => Guid.NewGuid().ToString()))),
                 new TextCodec(),
                 new CappedTransport(500),
                 headers,
@@ -195,7 +195,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()))),
+                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(static _ => Guid.NewGuid().ToString()))),
                 new TextCodec(),
                 new CappedTransport(300),
                 headers,
@@ -257,7 +257,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
         var payload = await new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0)
             .BuildOutgoingPayloadAsync(
-                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()))),
+                new PayloadContract(string.Concat(Enumerable.Range(0, 100).Select(static _ => Guid.NewGuid().ToString()))),
                 new TextCodec(),
                 new CappedTransport(300),
                 headers,
@@ -278,7 +278,7 @@ public sealed class MessagingCompressionAndDataBusTests
         var dataBus = new InMemoryMessagingDataBus();
         var sender = new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0);
         var headers = new Dictionary<string, string>(StringComparer.Ordinal);
-        var value = string.Concat(Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString()));
+        var value = string.Concat(Enumerable.Range(0, 100).Select(static _ => Guid.NewGuid().ToString()));
         var payload = await sender.BuildOutgoingPayloadAsync(
             new PayloadContract(value),
             new TextCodec(),
@@ -549,7 +549,7 @@ public sealed class MessagingCompressionAndDataBusTests
 
         public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
         {
-            return headers.Sum(pair => pair.Key.Length + pair.Value.Length);
+            return headers.Sum(static pair => pair.Key.Length + pair.Value.Length);
         }
 
         public async Task SendAsync(

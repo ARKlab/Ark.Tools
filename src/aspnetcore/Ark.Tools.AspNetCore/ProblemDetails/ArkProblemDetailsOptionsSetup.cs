@@ -49,12 +49,12 @@ public class ArkProblemDetailsOptionsSetup
         // Keep exception details to development by default. A configured delegate opts in explicitly.
         options.IncludeExceptionDetails ??= (ctx, ex) => !_environment.IsProduction();
 
-        options.ShouldLogUnhandledException = (ctx, e, d) => _isServerError(d.Status);
+        options.ShouldLogUnhandledException = static (ctx, e, d) => _isServerError(d.Status);
 
         options.IsProblem = _isProblem;
 
         // keep consistent with asp.net core 2.2 conventions that adds a tracing value
-        options.GetTraceId = ctx => Activity.Current?.Id ?? ctx.TraceIdentifier;
+        options.GetTraceId = static ctx => Activity.Current?.Id ?? ctx.TraceIdentifier;
 
         options.OnBeforeWriteDetails = (ctx, details) =>
         {
@@ -105,11 +105,11 @@ public class ArkProblemDetailsOptionsSetup
 
         options.MapToStatusCode<OptimisticConcurrencyException>(StatusCodes.Status409Conflict);
 
-        options.Map<SqlException>(ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex)
+        options.Map<SqlException>(static ex => SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(ex)
             ? StatusCodeProblemDetails.Create(StatusCodes.Status409Conflict)
             : StatusCodeProblemDetails.Create(StatusCodes.Status500InternalServerError));
 
-        options.Map<FluentValidation.ValidationException>(ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
+        options.Map<FluentValidation.ValidationException>(static ex => new FluentValidationProblemDetails(ex, StatusCodes.Status400BadRequest));
 
         options.Map<BusinessRuleViolationException>(_toProblemDetails);
     }
@@ -120,15 +120,15 @@ public class ArkProblemDetailsOptionsSetup
         var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>
         {
             var props = t.GetProperties()
-                .Where(x => x.GetMethod is not null
+                .Where(static x => x.GetMethod is not null
                     && !x.GetMethod.IsStatic
                     && x.DeclaringType != typeof(BusinessRuleViolation))
-                .GroupBy(x => x.Name, StringComparer.Ordinal)
-                .Select(x => x
-                    .OrderByDescending(property => _getInheritanceDepth(property.DeclaringType))
+                .GroupBy(static x => x.Name, StringComparer.Ordinal)
+                .Select(static x => x
+                    .OrderByDescending(static property => _getInheritanceDepth(property.DeclaringType))
                     .First())
-                .OrderBy(x => x.Name, StringComparer.Ordinal)
-                .Select(x => (x.Name, x.PropertyType))
+                .OrderBy(static x => x.Name, StringComparer.Ordinal)
+                .Select(static x => (x.Name, x.PropertyType))
                 .ToArray();
             return _dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
         });

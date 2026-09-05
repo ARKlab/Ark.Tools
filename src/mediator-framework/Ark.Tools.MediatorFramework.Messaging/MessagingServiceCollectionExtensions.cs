@@ -30,7 +30,7 @@ public static class MessagingServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, JsonMessagingCodec>());
         services.AddSingleton<MessagingCodecRegistry>();
         services.AddSingleton<IMessagingCodecRegistry>(
-            serviceProvider => serviceProvider.GetRequiredService<MessagingCodecRegistry>());
+            static serviceProvider => serviceProvider.GetRequiredService<MessagingCodecRegistry>());
         return services;
     }
 
@@ -102,7 +102,7 @@ public static class MessagingServiceCollectionExtensions
             serviceProvider.GetRequiredService<IMessagingTransport>(),
             batchSize));
         services.AddSingleton<IHostedService>(
-            serviceProvider => serviceProvider.GetRequiredService<MessagingOutboxProcessor>());
+            static serviceProvider => serviceProvider.GetRequiredService<MessagingOutboxProcessor>());
         return services;
     }
 
@@ -270,9 +270,9 @@ public static class MessagingServiceCollectionExtensions
                 outgoingStepTypes,
                 resolveStep ?? serviceProvider.GetRequiredService));
         services.AddSingleton<IBus>(
-            serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
+            static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         services.AddSingleton<IBusOutboxEnlistment>(
-            serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
+            static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         return services;
     }
 

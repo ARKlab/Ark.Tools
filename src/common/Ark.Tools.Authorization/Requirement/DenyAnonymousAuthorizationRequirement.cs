@@ -18,7 +18,7 @@ public class DenyAnonymousAuthorizationRequirement : AuthorizationHandler<DenyAn
         var user = context.User;
         var userIsAnonymous =
             user?.Identity == null ||
-            !user.Identities.Any(i => i.IsAuthenticated);
+            !user.Identities.Any(static i => i.IsAuthenticated);
         if (!userIsAnonymous)
         {
             context.Succeed(requirement);

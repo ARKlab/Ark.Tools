@@ -197,7 +197,7 @@ public static class ReflectionHelper
         if (genericTypeName.Contains('`', StringComparison.Ordinal))
         {
             genericTypeName = genericTypeName[..genericTypeName.IndexOf('`', StringComparison.Ordinal)];
-            string genericArgs = string.Join(", ", arguments.Select(a => a._toGenericTypeString()).ToArray());
+            string genericArgs = string.Join(", ", arguments.Select(static a => a._toGenericTypeString()).ToArray());
             //Recursive
             genericTypeName = genericTypeName + "<" + genericArgs + ">";
             if (isArray) genericTypeName += "[]";

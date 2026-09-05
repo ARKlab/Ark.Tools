@@ -44,14 +44,14 @@ public class ApiHost
     {
         container.Register(typeof(IValidator<>),
             container.GetTypesToRegister(typeof(IValidator<>), this._applicationAssemblies)
-                .Where(x => x.IsPublic)
+                .Where(static x => x.IsPublic)
             , Lifestyle.Singleton);
 
         container.Register(typeof(IQueryHandler<,>), this._applicationAssemblies);
         container.Register(typeof(IRequestHandler<,>), this._applicationAssemblies);
 
         container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton,
-            c => !c.Handled);
+            static c => !c.Handled);
 
         container.RegisterDecorator(
                  typeof(IQueryHandler<,>)

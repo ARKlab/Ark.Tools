@@ -77,7 +77,7 @@ public sealed class JwtTokenBuilder
         {
             Issuer = this._issuer,
             Audience = this._audience,
-            Claims = claims.ToDictionary(x => x.Type, x => x.Value as object, StringComparer.Ordinal),
+            Claims = claims.ToDictionary(static x => x.Type, static x => x.Value as object, StringComparer.Ordinal),
             NotBefore = DateTime.UtcNow,
             IssuedAt = DateTime.UtcNow,
             Expires = DateTime.UtcNow.AddMinutes(_expiryInMinutes),

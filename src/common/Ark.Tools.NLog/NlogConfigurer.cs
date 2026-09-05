@@ -33,7 +33,7 @@ public static class NLogConfigurer
         _configureUnhandledExceptionLogging();
 
         LogManager.Setup()
-            .SetupExtensions(b => b
+            .SetupExtensions(static b => b
                 .RegisterTarget<SlackTarget>()
                 .RegisterLayoutRenderer<ActivityIdLayoutRenderer>()
                 .RegisterLayoutRenderer<HostNameLayoutRenderer>()
@@ -57,7 +57,7 @@ public static class NLogConfigurer
 
     private static void _configureUnhandledExceptionLogging()
     {
-        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        AppDomain.CurrentDomain.UnhandledException += static (_, e) =>
         {
             global::NLog.LogManager.GetLogger("Main").Fatal(
                 e.ExceptionObject as Exception,

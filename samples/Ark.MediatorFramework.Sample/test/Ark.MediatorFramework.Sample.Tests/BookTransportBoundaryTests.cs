@@ -90,7 +90,7 @@ public sealed class BookTransportBoundaryTests
             }
 
             edition.Description.Should().Be("Paperback print edition with 320 pages");
-            items.Select(item => item.Index).Should().Equal(0, 1);
+            items.Select(static item => item.Index).Should().Equal(0, 1);
         }
         finally
         {
@@ -128,7 +128,7 @@ public sealed class BookTransportBoundaryTests
 
         var routes = app.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()
-            .Select(endpoint => endpoint.RoutePattern.RawText)
+            .Select(static endpoint => endpoint.RoutePattern.RawText)
             .ToArray();
 
         routes.Should().Contain("/api/v1/books/stream");

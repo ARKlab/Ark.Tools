@@ -6,7 +6,7 @@ namespace Ark.Tools.Core;
 public static class EmptyLookup<TKey, TElement>
 {
     private static readonly ILookup<TKey, TElement> _instance
-        = Enumerable.Empty<(TKey KeyType, TElement ValueType)>().ToLookup(x => x.KeyType, x => x.ValueType);
+        = Enumerable.Empty<(TKey KeyType, TElement ValueType)>().ToLookup(static x => x.KeyType, static x => x.ValueType);
 
     public static ILookup<TKey, TElement> Instance
     {

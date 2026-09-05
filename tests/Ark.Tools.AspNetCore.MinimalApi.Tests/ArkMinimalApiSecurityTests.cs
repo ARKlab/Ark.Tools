@@ -81,32 +81,32 @@ public sealed class ArkMinimalApiSecurityTests
     private static async Task<IHost> _createHostAsync()
     {
         var host = new HostBuilder()
-            .ConfigureWebHost(web =>
+            .ConfigureWebHost(static web =>
             {
                 web.UseTestServer();
                 web.UseEnvironment(Environments.Production);
-                web.ConfigureServices(services =>
+                web.ConfigureServices(static services =>
                 {
                     services.AddRouting();
                     services.AddArkMinimalApiSecurity();
-                    services.Configure<HstsOptions>(o => o.ExcludedHosts.Clear());
+                    services.Configure<HstsOptions>(static o => o.ExcludedHosts.Clear());
                 });
-                web.Configure(app =>
+                web.Configure(static app =>
                 {
-                    app.Use((context, next) =>
+                    app.Use(static (context, next) =>
                     {
                         context.Request.Scheme = "https";
                         return next();
                     });
                     app.UseArkMinimalApiSecurity();
                     app.UseRouting();
-                    app.UseEndpoints(endpoints =>
+                    app.UseEndpoints(static endpoints =>
                     {
-                        endpoints.MapGet("/", () => "ok");
-                        endpoints.MapGet("/scalar/{**path}", () => "scalar ui");
-                        endpoints.MapGet("/swagger/{**path}", () => "swagger ui");
-                        endpoints.MapGet("/openapi/{**path}", () => "openapi ui");
-                        endpoints.MapGet("/error", () => Results.StatusCode(500));
+                        endpoints.MapGet("/", static () => "ok");
+                        endpoints.MapGet("/scalar/{**path}", static () => "scalar ui");
+                        endpoints.MapGet("/swagger/{**path}", static () => "swagger ui");
+                        endpoints.MapGet("/openapi/{**path}", static () => "openapi ui");
+                        endpoints.MapGet("/error", static () => Results.StatusCode(500));
                     });
                 });
             })

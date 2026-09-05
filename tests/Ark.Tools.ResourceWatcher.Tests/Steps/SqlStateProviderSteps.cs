@@ -218,7 +218,7 @@ public sealed class SqlStateProviderSteps : IDisposable
     public async Task WhenILoadStateForTenantWithAllResourceIDs(string tenant, int count)
     {
         var resourceIds = Enumerable.Range(0, count)
-            .Select(i => string.Create(CultureInfo.InvariantCulture, $"batch-resource-{i:D5}"))
+            .Select(static i => string.Create(CultureInfo.InvariantCulture, $"batch-resource-{i:D5}"))
             .ToArray();
         await _loadStateForTenantAsync(tenant, resourceIds);
     }

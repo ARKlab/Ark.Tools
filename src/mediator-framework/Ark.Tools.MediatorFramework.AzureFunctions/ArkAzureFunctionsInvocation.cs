@@ -270,15 +270,15 @@ public static class ArkAzureFunctionsInvocation
         {
             return typeof(T)
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Select(p =>
+                .Select(static p =>
                 {
-                    var routeAttr = p.CustomAttributes.FirstOrDefault(a =>
+                    var routeAttr = p.CustomAttributes.FirstOrDefault(static a =>
                         string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.HttpRouteAttribute", StringComparison.Ordinal));
                     var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                     var isRoute = routeAttr is not null;
-                    var isQuery = p.CustomAttributes.Any(a =>
+                    var isQuery = p.CustomAttributes.Any(static a =>
                         string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.HttpQueryAttribute", StringComparison.Ordinal));
-                    var isServerSet = p.CustomAttributes.Any(a =>
+                    var isServerSet = p.CustomAttributes.Any(static a =>
                         string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.ServerSetAttribute", StringComparison.Ordinal));
                     var propType = p.PropertyType;
                     var isNullableOrRef = !propType.IsValueType || Nullable.GetUnderlyingType(propType) is not null;

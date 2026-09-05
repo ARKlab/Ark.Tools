@@ -34,7 +34,7 @@ public static class Ex
         container.Collection.Register<IAuthorizationHandler>(typeof(PassThroughAuthorizationHandler));
         container.Collection.Register(Array.Empty<IAuthorizationPolicy>());
         container.RegisterConditional(typeof(IAuthorizationResourceHandler<,>), typeof(PassThroughAuthorizationResourceHandler<,>), Lifestyle.Singleton,
-            c => !c.Handled);
+            static c => !c.Handled);
     }
 
     public static void RegisterAuthorizationDecorator(this Container container)

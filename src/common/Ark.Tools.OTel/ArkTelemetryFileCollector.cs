@@ -40,15 +40,15 @@ public sealed class ArkTelemetryFileCollector : IDisposable
 
         _activityListener = new ActivityListener
         {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ShouldListenTo = static _ => true,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = _writeActivity
         };
         ActivitySource.AddActivityListener(_activityListener);
 
         _meterListener = new MeterListener
         {
-            InstrumentPublished = (instrument, listener) => listener.EnableMeasurementEvents(instrument)
+            InstrumentPublished = static (instrument, listener) => listener.EnableMeasurementEvents(instrument)
         };
         _meterListener.SetMeasurementEventCallback<long>(_writeLongMeasurement);
         _meterListener.SetMeasurementEventCallback<double>(_writeDoubleMeasurement);
@@ -110,7 +110,7 @@ public sealed class ArkTelemetryFileCollector : IDisposable
                 status = activity.Status.ToString(),
                 status_description = activity.StatusDescription,
                 tags = _tags(activity.TagObjects),
-                events = activity.Events.Select(activityEvent => new
+                events = activity.Events.Select(static activityEvent => new
                 {
                     name = activityEvent.Name,
                     timestamp = activityEvent.Timestamp,
@@ -173,8 +173,8 @@ public sealed class ArkTelemetryFileCollector : IDisposable
     private static Dictionary<string, object?> _tags(IEnumerable<KeyValuePair<string, object?>> tags)
     {
         return tags.ToDictionary(
-            pair => pair.Key,
-            pair => pair.Value,
+            static pair => pair.Key,
+            static pair => pair.Value,
             StringComparer.Ordinal);
     }
 }

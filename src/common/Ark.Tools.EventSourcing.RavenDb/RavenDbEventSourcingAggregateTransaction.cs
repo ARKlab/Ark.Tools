@@ -71,7 +71,7 @@ ctk
             }
         }
 
-        return envelopes.Select(x => x.FromStore<TAggregate>());
+        return envelopes.Select(static x => x.FromStore<TAggregate>());
     }
 
 
@@ -92,7 +92,7 @@ ctk
                 var evt = (OutboxEvent)(Activator.CreateInstance(outboxType) ?? throw new InvalidOperationException($"Failed to create instance for type {outboxType}"));
 
                 evt.Id = e.Metadata.EventId;
-                evt.Metadata = e.Metadata.Values.ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
+                evt.Metadata = e.Metadata.Values.ToDictionary(static x => x.Key, static x => x.Value, StringComparer.Ordinal);
                 evt.SetEvent(e.Event);
 
                 await _session.StoreAsync(evt, ctk).ConfigureAwait(false);

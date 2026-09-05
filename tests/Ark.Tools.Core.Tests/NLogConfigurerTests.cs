@@ -37,7 +37,7 @@ public class NLogConfigurerTests
                 .Apply();
 
             var databaseRule = LogManager.Configuration!.LoggingRules
-                .Single(rule => rule.RuleName == $"{NLogConfigurer.DatabaseTarget}-*");
+                .Single(static rule => rule.RuleName == $"{NLogConfigurer.DatabaseTarget}-*");
 
             databaseRule.IsLoggingEnabledForLevel(expectedLevel).Should().BeTrue();
             databaseRule.IsLoggingEnabledForLevel(disabledLevel).Should().BeFalse();

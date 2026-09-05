@@ -33,7 +33,7 @@ public static class ArkETag
     public static bool IsValidToken(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return value.All(character => character != '"' && character != '\\'
+        return value.All(static character => character != '"' && character != '\\'
             && character >= '\u0020' && character != '\u007f');
     }
 
@@ -52,8 +52,8 @@ public static class ArkETag
 
         if (!IsValidToken(token))
         {
-            var position = token.Select((character, index) => (character, index))
-                .First(item => item.character == '"' || item.character == '\\'
+            var position = token.Select(static (character, index) => (character, index))
+                .First(static item => item.character == '"' || item.character == '\\'
                     || item.character < '\u0020' || item.character == '\u007f')
                 .index;
             throw new InvalidOperationException($"ETag token contains an invalid character at position {position}.");
@@ -66,7 +66,7 @@ public static class ArkETag
         var matches = context.Request.Headers.IfNoneMatch
             .ToString()
             .Split(',', StringSplitOptions.TrimEntries)
-            .Select(value => value.StartsWith("W/", StringComparison.Ordinal)
+            .Select(static value => value.StartsWith("W/", StringComparison.Ordinal)
                 ? _unquote(value[2..])
                 : _unquote(value))
             .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));

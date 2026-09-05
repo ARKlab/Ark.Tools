@@ -5,6 +5,6 @@ public class DefaultAuthorizationContextEvaluator : IAuthorizationContextEvaluat
 {
     public (bool authorized, IList<string> messages) Evaluate(AuthorizationContext authContext)
     {
-        return (authContext.HasSucceeded, authContext.Messages.Select(s => s.Value).ToList());
+        return (authContext.HasSucceeded, authContext.Messages.Select(static s => s.Value).ToList());
     }
 }

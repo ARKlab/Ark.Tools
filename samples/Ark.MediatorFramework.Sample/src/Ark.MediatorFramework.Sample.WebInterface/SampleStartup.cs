@@ -126,11 +126,11 @@ public sealed class SampleStartup
         services.AddArkMinimalApiHost(_container, options =>
         {
             options.RequireAuthenticatedUser = _configureFallbackPolicy;
-            options.CrossWireContainer = (container, serviceProvider) =>
+            options.CrossWireContainer = static (container, serviceProvider) =>
                 container.RegisterInstance(serviceProvider.GetRequiredService<IHttpContextAccessor>());
             // Started right after verification, while the host is starting and before the
             // server accepts requests.
-            options.OnContainerVerified = container => container.StartBus();
+            options.OnContainerVerified = static container => container.StartBus();
         });
         services.AddArkMinimalApiSecurity();
 
@@ -161,7 +161,7 @@ public sealed class SampleStartup
 
         // Minimal API JSON: compose the source-generated application metadata with the Ark
         // defaults (camelCase, NodaTime, enum-as-member).
-        services.ConfigureHttpJsonOptions(options =>
+        services.ConfigureHttpJsonOptions(static options =>
         {
             var context = new SampleApiJsonSerializerContext(
                 new JsonSerializerOptions().ConfigureArkDefaults());
@@ -178,11 +178,11 @@ public sealed class SampleStartup
         services.ConfigureArkMessaging(
             messagingNetwork,
             Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
-            messaging => messaging.Producer<
+            static messaging => messaging.Producer<
                     Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant>(
-                    producer => producer
-                        .UseTransport(transport => transport.UseInMemory())
-                        .UseDataBus(dataBus => dataBus.UseInMemory(
+                    static producer => producer
+                        .UseTransport(static transport => transport.UseInMemory())
+                        .UseDataBus(static dataBus => dataBus.UseInMemory(
                             NodaTime.SystemClock.Instance,
                             NodaTime.Duration.FromHours(2)))));
         services.AddMcpServer()
@@ -192,7 +192,7 @@ public sealed class SampleStartup
         // RFC 7807 ProblemDetails: map semantic domain exceptions consistently across hosts.
         services.AddArkProblemDetailsExceptionHandler();
         RuntimeTypeModel.Default.AddNodaTimeSurrogates();
-        services.AddCodeFirstGrpc(options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
+        services.AddCodeFirstGrpc(static options => options.Interceptors.Add<ArkGrpcErrorInterceptor>());
         services.AddCodeFirstGrpcReflection();
 
         // OpenAPI: one document per API version. The generator tags expanded versioned routes
@@ -214,7 +214,7 @@ public sealed class SampleStartup
 
         app.UseArkMinimalApiHost(_container);
 
-        app.UseSwaggerUI(options =>
+        app.UseSwaggerUI(static options =>
         {
             options.SwaggerEndpoint("/openapi/v1.json", "Mediator API v1");
             options.SwaggerEndpoint("/openapi/v2.json", "Mediator API v2");

@@ -13,9 +13,9 @@ public class SupportFlaggedEnums : IOperationFilter
             return;
 
         var queryEnumParams = operation.Parameters.OfType<OpenApiParameter>()
-            .Where(param => param.In == ParameterLocation.Query)
-            .Join(context.ApiDescription.ParameterDescriptions, o => o.Name, i => i.Name, (o, i) => new { o, i }, StringComparer.Ordinal)
-            .Where(x =>
+            .Where(static param => param.In == ParameterLocation.Query)
+            .Join(context.ApiDescription.ParameterDescriptions, static o => o.Name, static i => i.Name, static (o, i) => new { o, i }, StringComparer.Ordinal)
+            .Where(static x =>
             {
                 var t = x.i.Type;
                 if (t is null) return false;
@@ -26,7 +26,7 @@ public class SupportFlaggedEnums : IOperationFilter
                 }
                 return t.IsEnum && t.IsDefined(typeof(FlagsAttribute), false);
             })
-            .Select(x => x.o)
+            .Select(static x => x.o)
             .ToArray();
 
         foreach (var param in queryEnumParams)

@@ -87,7 +87,7 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     /// </summary>
     public IReadOnlyList<string> GetResourcesByProcessType(ProcessType processType)
     {
-        return _results.Where(r => r.Value.ProcessType == processType).Select(r => r.Key).ToList();
+        return _results.Where(r => r.Value.ProcessType == processType).Select(static r => r.Key).ToList();
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
     /// </summary>
     public IReadOnlyList<string> GetResourcesByResultType(ResultType resultType)
     {
-        return _results.Where(r => r.Value.ResultType == resultType).Select(r => r.Key).ToList();
+        return _results.Where(r => r.Value.ResultType == resultType).Select(static r => r.Key).ToList();
     }
 
     /// <summary>

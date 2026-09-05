@@ -109,7 +109,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
                     }, ctk);
 
                     var userInfo = await _auth0.GetUserInfoAsync(token, ctk).ConfigureAwait(false);
-                    var policyPayload = jwt.Claims.FirstOrDefault(x => x.Type == Auth0ClaimTypes.PolicyPostPayload)?.Value;
+                    var policyPayload = jwt.Claims.FirstOrDefault(static x => x.Type == Auth0ClaimTypes.PolicyPostPayload)?.Value;
 
                     if (userInfo != null)
                     {
@@ -164,8 +164,8 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
                 }
                 else if (res == "Pending") // wait for the cache to be populated
                 {
-                    res = await Policy.HandleResult<string>(r => r == "Pending")
-                        .WaitAndRetryForeverAsync(x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
+                    res = await Policy.HandleResult<string>(static r => r == "Pending")
+                        .WaitAndRetryForeverAsync(static x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
                         .ExecuteAsync(async ct => await cache.GetStringAsync(cacheKey, ct).ConfigureAwait(false) ?? string.Empty, ctk)
 .ConfigureAwait(false);
                 }
@@ -202,7 +202,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 
     private static bool _isDelegation(JwtSecurityToken jwt)
     {
-        return jwt.Claims.Any(x => x.Type == "azp");
+        return jwt.Claims.Any(static x => x.Type == "azp");
     }
 
     private static bool _isUnattendedClient(ClaimsIdentity cid)

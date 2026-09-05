@@ -56,7 +56,7 @@ public static class ArkAzureFunctionsHttp
             throw new NotSupportedException("An uploaded file content type is not allowed.");
 
         return form.Files
-            .Select(file => (IArkAttachment)new ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream))
+            .Select(static file => (IArkAttachment)new ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream))
             .ToArray();
     }
 

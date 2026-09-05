@@ -34,7 +34,7 @@ internal sealed class AuditSteps
 
         var results = _client.ReadAs<PagedResult<AuditDto<AuditKind>>>();
 
-        _lastAudit = results.Data.OrderByDescending(x => x.SysStartTime).FirstOrDefault();
+        _lastAudit = results.Data.OrderByDescending(static x => x.SysStartTime).FirstOrDefault();
     }
 
     [Then(@"the audit record has")]
@@ -75,9 +75,9 @@ internal sealed class AuditSteps
             res = changes?.Pre?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity;
         }
 
-        res.Should().BeEquivalentTo(expected, options => options
-            .Excluding(p => p.Id)
-            .Excluding(p => p.AuditId)
+        res.Should().BeEquivalentTo(expected, static options => options
+            .Excluding(static p => p.Id)
+            .Excluding(static p => p.AuditId)
         );
     }
 

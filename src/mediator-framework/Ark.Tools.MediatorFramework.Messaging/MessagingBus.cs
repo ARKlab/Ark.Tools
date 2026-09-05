@@ -66,9 +66,9 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         _participantIdentity = participantIdentity;
         _outgoingStepTypes = new ReadOnlyCollection<Type>(
             (outgoingStepTypes ?? Array.Empty<Type>()).ToArray());
-        _resolveStep = resolveStep ?? (_ =>
+        _resolveStep = resolveStep ?? (static _ =>
             throw new InvalidOperationException("A pipeline step resolver is required when outgoing steps are configured."));
-        _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
+        _utcNow = utcNow ?? (static () => DateTimeOffset.UtcNow);
     }
 
     /// <inheritdoc />

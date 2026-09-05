@@ -16,7 +16,7 @@ public sealed class PostService : IPostService, IDisposable
 
     public PostService(IArkFlurlClientFactory factory)
     {
-        _jsonPlaceHolderClient = factory.Get(_url, s =>
+        _jsonPlaceHolderClient = factory.Get(_url, static s =>
         {
             s.Timeout = TimeSpan.FromSeconds(10);
         });

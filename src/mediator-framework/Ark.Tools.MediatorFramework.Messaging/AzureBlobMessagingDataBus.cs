@@ -145,7 +145,7 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
                 options.ContainerName.ToLowerInvariant(),
                 StringComparison.Ordinal)
             || options.ContainerName.Any(
-                character => !(character is >= 'a' and <= 'z'
+                static character => !(character is >= 'a' and <= 'z'
                     or >= '0' and <= '9'
                     or '-')))
         {

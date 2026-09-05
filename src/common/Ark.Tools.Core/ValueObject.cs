@@ -36,8 +36,8 @@ public abstract class ValueObject<T>
     public override int GetHashCode()
     {
         return GetAtomicValues()
-             .Select(x => x?.GetHashCode() ?? 0)
-             .Aggregate((x, y) => x ^ y);
+             .Select(static x => x?.GetHashCode() ?? 0)
+             .Aggregate(static (x, y) => x ^ y);
     }
 
     private bool _equals(ValueObject<T> obj)

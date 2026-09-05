@@ -29,7 +29,7 @@ public class SliceSplitter
     public Task Handle(ResourceSliceReady e)
     {
         // check if the resource is still our dependency. If not, unsubscribe
-        if (_activity.Dependencies.Select(x => x.Resource).Contains(e.Resource))
+        if (_activity.Dependencies.Select(static x => x.Resource).Contains(e.Resource))
         {
             var impactedSlices = _activity.ImpactedSlices(e.Resource, e.Slice);
             // Contract.Assume(Contract.ForAll(impactedSlices, s => _activity.Dependencies.Where(d => d.Resource == e.Resource).SelectMany(d => d.GetResourceSlices(s)).Any(x => x == e.Slice)));

@@ -26,13 +26,13 @@ public sealed class OutboxProcessorBaseTests
         var measurements = new List<(string Name, object Value)>();
         using var activityListener = new ActivityListener
         {
-            ShouldListenTo = source => source.Name == OutboxProcessorBase.InstrumentationName,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            ShouldListenTo = static source => source.Name == OutboxProcessorBase.InstrumentationName,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
             ActivityStopped = activity => captured = activity
         };
         using var meterListener = new MeterListener
         {
-            InstrumentPublished = (instrument, listener) =>
+            InstrumentPublished = static (instrument, listener) =>
             {
                 if (instrument.Meter.Name == OutboxProcessorBase.InstrumentationName)
                     listener.EnableMeasurementEvents(instrument);
@@ -51,9 +51,9 @@ public sealed class OutboxProcessorBaseTests
 
         captured.Should().NotBeNull();
         captured!.DisplayName.Should().Be(OutboxProcessorBase.ProcessActivityName);
-        measurements.Should().Contain(measurement =>
+        measurements.Should().Contain(static measurement =>
             measurement.Name == "ark.tools.outbox.messages.processed" && (long)measurement.Value == 3);
-        measurements.Should().Contain(measurement =>
+        measurements.Should().Contain(static measurement =>
             measurement.Name == "ark.tools.outbox.batch.size" && (long)measurement.Value == 3);
     }
 

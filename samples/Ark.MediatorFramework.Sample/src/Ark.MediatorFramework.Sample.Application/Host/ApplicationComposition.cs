@@ -78,8 +78,8 @@ public static class ApplicationComposition
         ArgumentNullException.ThrowIfNull(configureRouting);
 
         config.Routing(configureRouting);
-        config.Logging(logging => logging.NLog());
-        config.Serialization(serializer =>
+        config.Logging(static logging => logging.NLog());
+        config.Serialization(static serializer =>
         {
             var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
             var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
@@ -177,7 +177,7 @@ public static class ApplicationComposition
         }
         else
         {
-            container.RegisterSingleton(() => new InMemoryOutboxContextFactory());
+            container.RegisterSingleton(static () => new InMemoryOutboxContextFactory());
             container.RegisterSingleton<IOutboxAsyncContextFactory>(
                 () => container.GetInstance<InMemoryOutboxContextFactory>());
             container.RegisterSingleton<InMemorySampleDataContextFactory>();
@@ -204,9 +204,9 @@ public static class ApplicationComposition
         container.Register(
             typeof(IValidator<>),
             container.GetTypesToRegister(typeof(IValidator<>), new[] { applicationAssembly })
-                .Where(type => type.IsPublic),
+                .Where(static type => type.IsPublic),
             Lifestyle.Singleton);
-        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, c => !c.Handled);
+        container.RegisterConditional(typeof(IValidator<>), typeof(NullValidator<>), Lifestyle.Singleton, static c => !c.Handled);
 
         container.Register<IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>, CreateBookHandler>();
         container.Register<IRequestHandler<Book_BulkCreateRequest.V1, IReadOnlyList<Book.V1.Output>>, BulkCreateBookHandler>();

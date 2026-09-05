@@ -36,7 +36,7 @@ public abstract class FtpClientConnectionBase : IFtpClientConnection
         startPath ??= "./";
 
         if (skipFolder == null)
-            skipFolder = x => false;
+            skipFolder = static x => false;
 
         Stack<FtpEntry> pendingFolders = new();
         IEnumerable<FtpEntry> files = new List<FtpEntry>();
@@ -58,7 +58,7 @@ public abstract class FtpClientConnectionBase : IFtpClientConnection
                 return await ListDirectoryAsync(path, ct1).ConfigureAwait(false);
             }, ct).ConfigureAwait(false);
 
-            foreach (var d in list.Where(x => x.IsDirectory && !x.Name.Equals(".", StringComparison.Ordinal) && !x.Name.Equals("..", StringComparison.Ordinal)))
+            foreach (var d in list.Where(static x => x.IsDirectory && !x.Name.Equals(".", StringComparison.Ordinal) && !x.Name.Equals("..", StringComparison.Ordinal)))
             {
                 if (skipFolder.Invoke(d))
                     _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);
@@ -66,7 +66,7 @@ public abstract class FtpClientConnectionBase : IFtpClientConnection
                     pendingFolders.Push(d);
             }
 
-            files = files.Concat(list.Where(x => !x.IsDirectory).ToList());
+            files = files.Concat(list.Where(static x => !x.IsDirectory).ToList());
         }
 
         await listFolderAsync(startPath, ctk).ConfigureAwait(false);

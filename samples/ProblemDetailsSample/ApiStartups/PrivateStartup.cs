@@ -23,9 +23,9 @@ public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
     public override IEnumerable<ApiVersion> Versions => ProblemDetailsSampleConstants
         .PrivateVersions
         .Reverse()
-        .Select(x =>
+        .Select(static x =>
         {
-            var split = x.Split('.').Select(v => int.Parse(v, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture)).ToArray();
+            var split = x.Split('.').Select(static v => int.Parse(v, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture)).ToArray();
             return new ApiVersion(split[0], split[1]);
         });
 
@@ -42,7 +42,7 @@ public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
 
         //Removed AUTH 
 
-        services.ArkConfigureSwaggerUI(c =>
+        services.ArkConfigureSwaggerUI(static c =>
         {
             c.MaxDisplayedTags(100);
             c.DefaultModelRendering(ModelRendering.Example);
