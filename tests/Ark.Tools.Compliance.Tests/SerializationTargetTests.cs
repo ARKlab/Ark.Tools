@@ -18,8 +18,6 @@ using Newtonsoft.Json;
 
 using ProtoBuf.Meta;
 
-using Swashbuckle.AspNetCore.SwaggerGen;
-
 namespace Ark.Tools.Compliance.Tests;
 
 /// <summary>
@@ -56,6 +54,19 @@ public sealed class SerializationTargetTests
         var deserialize = () => JsonConvert.DeserializeObject<EmailAddress>("\"not-an-email\"", settings);
 
         deserialize.Should().Throw<JsonSerializationException>();
+    }
+
+    /// <summary>A JSON <c>null</c> is rejected for a non-nullable member and honoured for a nullable one.</summary>
+    [TestMethod]
+    public void NewtonsoftJson_RejectsNullForNonNullableMembers()
+    {
+        var settings = SensitiveValueNewtonsoftJson.Register<EmailAddress>(new JsonSerializerSettings());
+
+        var deserialize = () => JsonConvert.DeserializeObject<EmailAddress>("null", settings);
+
+        deserialize.Should().Throw<JsonSerializationException>();
+        JsonConvert.DeserializeObject<EmailAddress?>("null", settings).Should().BeNull();
+        JsonConvert.SerializeObject((EmailAddress?)null, settings).Should().Be("null");
     }
 
     /// <summary>The protobuf-net surrogate round-trips cleartext and restores redaction.</summary>
@@ -96,14 +107,16 @@ public sealed class SerializationTargetTests
     [TestMethod]
     public void OpenApi_MapsPrimitiveSchemaWithClassificationAndReservedExample()
     {
-        var options = new SwaggerGenOptions().MapArkComplianceTypes();
+        var descriptor = SensitiveValueSchemaDescriptor.ArkTypes
+            .Single(static d => d.Type == typeof(EmailAddress));
 
-        var schema = options.SchemaGeneratorOptions.CustomTypeMappings[typeof(EmailAddress)]();
+        var schema = descriptor.CreateSchema();
 
+        descriptor.NullableType.Should().Be<EmailAddress?>();
         schema.Type.Should().Be(JsonSchemaType.String);
         schema.Format.Should().Be("email");
         schema.Properties.Should().BeNull();
-        schema.Extensions![SupportComplianceExtensions.ClassificationExtension]
+        schema.Extensions![SensitiveValueSchemaDescriptor.ClassificationExtension]
             .Should().BeOfType<JsonNodeExtension>()
             .Which.Node.GetValue<string>().Should().Be("Ark:PersonalData");
         schema.Examples![0]!.GetValue<string>().Should().Be(ComplianceFakes.Email());
@@ -113,28 +126,23 @@ public sealed class SerializationTargetTests
     [TestMethod]
     public void OpenApi_MapsNullableSensitiveValues()
     {
-        var options = new SwaggerGenOptions().MapArkComplianceTypes();
+        var descriptor = SensitiveValueSchemaDescriptor.ArkTypes
+            .Single(static d => d.Type == typeof(EmailAddress));
 
-        var schema = options.SchemaGeneratorOptions.CustomTypeMappings[typeof(EmailAddress?)]();
-
-        schema.Type.Should().Be(JsonSchemaType.String | JsonSchemaType.Null);
+        descriptor.CreateSchema(nullable: true).Type
+            .Should().Be(JsonSchemaType.String | JsonSchemaType.Null);
     }
 
     /// <summary>Every schema example is drawn from the reserved-value generator.</summary>
     [TestMethod]
     public void OpenApi_ExamplesAreReservedValues()
     {
-        var options = new SwaggerGenOptions().MapArkComplianceTypes();
+        SensitiveValueSchemaDescriptor.ArkTypes.Should().NotBeEmpty();
 
-        var examples = options.SchemaGeneratorOptions.CustomTypeMappings.Values
-            .Select(factory => factory().Examples?[0]?.GetValue<string>())
-            .Where(example => example is not null)
-            .ToArray();
-
-        examples.Should().NotBeEmpty();
-        foreach (var example in examples)
+        foreach (var descriptor in SensitiveValueSchemaDescriptor.ArkTypes)
         {
-            _isReserved(example!).Should().BeTrue(example);
+            var example = descriptor.CreateSchema().Examples![0]!.GetValue<string>();
+            _isReserved(example).Should().BeTrue(example);
         }
     }
 

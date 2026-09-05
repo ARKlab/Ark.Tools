@@ -3,7 +3,6 @@
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.AspNetCore.Swashbuckle;
-using Ark.Tools.Compliance.OpenApi;
 
 using Asp.Versioning;
 

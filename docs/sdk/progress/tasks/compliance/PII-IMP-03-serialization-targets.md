@@ -28,14 +28,15 @@ without reflection.
 - **MessagePack**: `IMessagePackFormatter<T>` and a generated resolver entry in
   the shape of `Ark.Tools.MessagePack`'s `EvolvableEnumFormatter<T>`
   (`Ark.Tools.Compliance.MessagePack`).
-- **OpenAPI/Swashbuckle** (`Ark.Tools.Compliance.OpenApi`): a generated
-  `MapArkComplianceTypes(this SwaggerGenOptions)` in the shape of
-  `SupportNodaTimeExtensions.MapNodaTimeTypes`, emitting `MapType<T>` with the
-  primitive `Type`/`Format`, an `x-ark-classification` vendor extension, and an
-  example drawn from the RFC 2606 reserved-value generator. It must be a
-  `MapType` mapping, never an `ISchemaFilter`: a filter reflects over the type at
-  startup and is AoT-hostile. `ArkStartupWebApiCommon` calls the generated
-  extension by default.
+- **OpenAPI** (`Ark.Tools.Compliance.OpenApi`): `Microsoft.OpenApi` schema
+  descriptors carrying the primitive `Type`/`Format`, an `x-ark-classification`
+  vendor extension, and an example drawn from the RFC 2606 reserved-value
+  generator. The package depends on `Microsoft.OpenApi` only, never on
+  Swashbuckle. `AddArkComplianceSchemas()` binds them to
+  `Microsoft.AspNetCore.OpenApi` for MediatorFramework Minimal API hosts, and
+  `Ark.Tools.AspNetCore.Swashbuckle` binds the same descriptors as `MapType`
+  registrations for `ArkStartupWebApiCommon`. Never an `ISchemaFilter`: a filter
+  reflects over the type at startup and is AoT-hostile.
 - **Reqnroll**: value retriever and comparer registration for test projects.
 - **Out of scope, tracked as follow-ups**: EF Core value converters and Orleans
   surrogates; they must carry storage policy and grain-state versioning
@@ -47,8 +48,10 @@ without reflection.
 2. Create the `.Protobuf`, `.MessagePack`, and `.OpenApi` packages with the
    minimal dependency each target requires, so no consumer pays for a transport
    it does not use.
-3. Wire `MapArkComplianceTypes` into `ArkStartupWebApiCommon` alongside the
-   NodaTime mapping.
+3. Wire the schemas into both hosts: `MapArkComplianceTypes` in
+   `ArkStartupWebApiCommon` alongside the NodaTime mapping, and
+   `AddArkComplianceSchemas` alongside `AddArkNodaTimeSchemas` in the
+   MediatorFramework Minimal API host.
 4. Add the reserved-value example generator shared with PII-IMP-09.
 5. Update `Directory.Packages.props` and every `packages.lock.json`.
 
@@ -94,9 +97,12 @@ without reflection.
   identifiers) shared by the OpenAPI examples and, from PII-IMP-09, the test-data
   fakes. It lives in the core package so the OpenAPI adapter does not depend on
   Reqnroll.
-- `SupportComplianceExtensions.MapArkComplianceTypes()`, called by
-  `ArkStartupWebApiCommon` next to `MapNodaTimeTypes()`; nullable members map to
-  the same primitive schema.
+- `SensitiveValueSchemaDescriptor` (pure `Microsoft.OpenApi`), bound by
+  `ArkComplianceOpenApiEx.AddArkComplianceSchemas()` for
+  `Microsoft.AspNetCore.OpenApi` hosts and by
+  `Ark.Tools.AspNetCore.Swashbuckle`'s `SupportComplianceExtensions.MapArkComplianceTypes()`,
+  called by `ArkStartupWebApiCommon` next to `MapNodaTimeTypes()`; nullable
+  members map to the same primitive schema.
 - `Ark.Tools.Compliance.Protobuf` is not marked `IsTrimmable`, matching
   `Ark.Tools.Protobuf`: protobuf-net builds serializers from the
   `RuntimeTypeModel` and rejects a trimmable assembly without `[ProtoModel]`

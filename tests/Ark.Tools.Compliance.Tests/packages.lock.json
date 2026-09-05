@@ -377,8 +377,8 @@
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.3.21",
-        "contentHash": "qARODs9k5/mw44Il2tIJaDV6s3Tm8qGVgG9RI07c1PxFYiFyMOqPkaFjbgNPBLWRtop57ktDPaMDzf+6TYpdcg=="
+        "resolved": "3.4.21",
+        "contentHash": "UkcNc2raxldJ1S0Z+tK8lp1AmY3mTnKWZUXOOZj1T0St9ql9B13BDhBwdFEKAeJkfZBMxOIr3aBGOH3xappARw=="
       },
       "System.ClientModel": {
         "type": "Transitive",
@@ -435,14 +435,14 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Swashbuckle.AspNetCore.SwaggerGen": "[10.2.3, )"
+          "Microsoft.AspNetCore.OpenApi": "[10.0.11, )"
         }
       },
       "ark.tools.compliance.protobuf": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "protobuf-net": "[3.3.21, )"
+          "protobuf-net": "[3.4.21, )"
         }
       },
       "ark.tools.compliance.reqnroll": {
@@ -476,6 +476,15 @@
         "contentHash": "E+8N7Q6GS/AcyJ0xuYA48nVL4eQGGOSJZvNz/R7qQtMGCUwjLzQe9Ttpgh/7eQktngsUuNGaEzBhM7IUU0t4xA==",
         "dependencies": {
           "Azure.Monitor.OpenTelemetry.Exporter": "1.8.0"
+        }
+      },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "R/1EATnPLU+gRfB6lwVkMcymmyAY5ppBBdRN/5lhNEiT3xP1sWccuSFkU/f1lQvN/WgRq5Vn8AhCdE3fqgsL/w==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.7.5, 3.0.0)"
         }
       },
       "Microsoft.CodeAnalysis.Common": {
@@ -604,9 +613,9 @@
       },
       "Microsoft.OpenApi": {
         "type": "CentralTransitive",
-        "requested": "[2.12.0, )",
-        "resolved": "2.12.0",
-        "contentHash": "0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ=="
+        "requested": "[2.12.2, )",
+        "resolved": "2.12.2",
+        "contentHash": "ZkT7qiJe0Kj0+DTZOZo+xrDy1kNmdsWFQVPIQLNx9ZJ0T9cB2LG7r+Bi60so8/+yg1nkS7QCPadrzsTG4VPKrA=="
       },
       "Newtonsoft.Json": {
         "type": "CentralTransitive",
@@ -644,11 +653,11 @@
       },
       "protobuf-net": {
         "type": "CentralTransitive",
-        "requested": "[3.3.21, )",
-        "resolved": "3.3.21",
-        "contentHash": "o6fDHWb+/2dogq5JsFBp0kyidznG1T0leCyqh9jVBEbrzLc5E1oYC95Hkix/AxsH9ORGXFpLciFgoNz//N53iw==",
+        "requested": "[3.4.21, )",
+        "resolved": "3.4.21",
+        "contentHash": "dO3+5x4LQTDZDIEcKq8oOCkGY/ifbjhLV+Jml7uGPTcJ2PZ+Qj7pbsWIgpUUqWjIny2KWnh02FT+b6tffmDqcQ==",
         "dependencies": {
-          "protobuf-net.Core": "3.3.21"
+          "protobuf-net.Core": "3.4.21"
         }
       },
       "Reqnroll": {
@@ -663,24 +672,6 @@
           "Gherkin": "35.0.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.6",
           "Microsoft.Extensions.DependencyModel": "8.0.2"
-        }
-      },
-      "Swashbuckle.AspNetCore.Swagger": {
-        "type": "CentralTransitive",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "1jUUs3WQnrS0FUtaZPLSy1yYMEwS1zlvDmvQ2/eldPHUANX0LJSLVZecCMgSMdeGiRqeaRrIXLtSz++TCiTMww==",
-        "dependencies": {
-          "Microsoft.OpenApi": "2.7.5"
-        }
-      },
-      "Swashbuckle.AspNetCore.SwaggerGen": {
-        "type": "CentralTransitive",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "y7t4coDRAeFYChmvlMRiH2OjbiRrm9AVIDgt17fQfs3x9PVAI5PiwWYOhg+4F13R4Q36WDc9lqfoOnNa3tNbGg==",
-        "dependencies": {
-          "Swashbuckle.AspNetCore.Swagger": "10.2.3"
         }
       }
     }

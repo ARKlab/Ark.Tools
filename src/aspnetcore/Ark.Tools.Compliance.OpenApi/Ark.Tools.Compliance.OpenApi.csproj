@@ -1,11 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- the other props are defined in Directory.Build.props -->
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
 
-    <Description>OpenAPI/Swashbuckle schema mappings for Ark.Tools.Compliance sensitive value objects</Description>
-    <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;OpenApi;Swashbuckle;Swagger</PackageTags>
+    <!-- Microsoft.AspNetCore.OpenApi ships net10.0 only. -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
+
+    <Description>OpenAPI schema mappings for Ark.Tools.Compliance sensitive value objects</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;OpenApi</PackageTags>
 
     <!--Update these information when releasing a new version of the NugetPackage-->
     <PackageReleaseNotes></PackageReleaseNotes>
@@ -17,7 +20,6 @@
   <!--===============================================================================-->
 
   <ItemGroup Label="Project-Specific Usings">
-    <Using Include="Swashbuckle.AspNetCore.SwaggerGen" />
     <Using Include="Microsoft.OpenApi" />
   </ItemGroup>
 
@@ -26,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
   <ItemGroup>

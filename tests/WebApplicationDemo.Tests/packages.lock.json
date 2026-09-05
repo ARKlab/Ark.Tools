@@ -830,7 +830,6 @@
           "Ark.Tools.AspNetCore.NestedStartup": "[1.0.0, )",
           "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
           "Ark.Tools.AspNetCore.Swashbuckle": "[1.0.0, )",
-          "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
@@ -903,6 +902,7 @@
       "ark.tools.aspnetcore.swashbuckle": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[10.2.1, )",
@@ -929,7 +929,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Swashbuckle.AspNetCore.SwaggerGen": "[10.2.3, )"
+          "Microsoft.AspNetCore.OpenApi": "[10.0.11, )"
         }
       },
       "ark.tools.core": {
@@ -1395,6 +1395,15 @@
           "Microsoft.OData.Edm": "[9.0.0-preview.4, 10.0.0)",
           "Microsoft.OData.ModelBuilder": "[3.0.0-preview.1, 4.0.0)",
           "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
+        }
+      },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "R/1EATnPLU+gRfB6lwVkMcymmyAY5ppBBdRN/5lhNEiT3xP1sWccuSFkU/f1lQvN/WgRq5Vn8AhCdE3fqgsL/w==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.7.5, 3.0.0)"
         }
       },
       "Microsoft.CodeAnalysis.Common": {

@@ -9,23 +9,40 @@ namespace Ark.Tools.Compliance.NewtonsoftJson;
 /// Writes a sensitive value object as its cleartext transport value and rehydrates it.
 /// </summary>
 /// <typeparam name="T">The sensitive value object.</typeparam>
-public sealed class SensitiveValueJsonConverter<T> : JsonConverter<T>
+/// <remarks>
+/// Newtonsoft.Json hands the <c>null</c> token to the converter of a nullable member instead
+/// of short-circuiting it as <c>System.Text.Json</c> does, so the converter is untyped: only a
+/// <see cref="Nullable{T}"/> target may answer <see langword="null"/>, and a <c>null</c> for a
+/// non-nullable member is rejected rather than silently rehydrated as an empty value.
+/// </remarks>
+public sealed class SensitiveValueJsonConverter<T> : JsonConverter
     where T : struct, ISensitiveValue<T>
 {
     /// <inheritdoc />
-    public override void WriteJson(JsonWriter writer, T value, JsonSerializer serializer)
+    public override bool CanConvert(Type objectType) => objectType == typeof(T) || objectType == typeof(T?);
+
+    /// <inheritdoc />
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         ArgumentNullException.ThrowIfNull(writer);
-        writer.WriteValue(SensitiveValueSerialization.ToTransport(value, "NewtonsoftJson"));
+
+        if (value is null)
+            writer.WriteNull();
+        else
+            writer.WriteValue(SensitiveValueSerialization.ToTransport((T)value, "NewtonsoftJson"));
     }
 
     /// <inheritdoc />
-    public override T ReadJson(JsonReader reader, Type objectType, T existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         ArgumentNullException.ThrowIfNull(reader);
 
         if (reader.TokenType == JsonToken.Null)
-            return default;
+        {
+            return Nullable.GetUnderlyingType(objectType) is not null
+                ? null
+                : throw new JsonSerializationException($"Cannot convert null to '{typeof(T)}'.");
+        }
 
         if (reader.Value is not string text || !T.TryFrom(text, out var result))
             throw new JsonSerializationException("Invalid sensitive value.");
