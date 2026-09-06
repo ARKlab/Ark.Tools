@@ -96,9 +96,9 @@ default.
   registers the span processor. Custom tracing pipelines must register redaction
   **before exporters**. Span tags are covered; event/link attributes, baggage,
   metrics and independent OpenTelemetry log export are not covered by this task.
-- The NuGet package includes a `buildTransitive` startup source to root the
-  optional NLog hook in trimmed consumers. Ordinary project references use an
-  optional assembly lookup; hosts without this package keep existing behavior.
+- `Ark.Tools.NLog` references `Ark.Tools.Compliance.NLog` directly. Its default
+  setup calls the compliance extensions without reflection or generated startup
+  code, so every Ark NLog consumer gets the fail-closed policy by default.
 
 ## Focused validation
 

@@ -139,8 +139,10 @@ single shared baseline.
   serializer registrations and ignores, and transport graph traversal.
 - A standalone consumer and an automated MSBuild regression fixture were restored
   and built against real `net8.0;net10.0`
-  reference assemblies: the missing baseline failed with `ARKPII020`, the update
-  target repaired it, verification succeeded, and `cmp` confirmed byte-identical
+  reference assemblies: the missing baseline failed with `ARKPII020`, the
+  `ArkComplianceSurfaceUpdating` build property enabled generation of the
+  replacement, and manually copying `ArkComplianceSurface.current.txt` to the
+  committed baseline made verification succeed. `cmp` confirmed byte-identical
   inventories. Both emitted `.g.cs` files were inspected.
 - Full-solution build/test commands were deliberately not run by this task.
 
@@ -149,7 +151,8 @@ single shared baseline.
 - [x] `ArkComplianceSurface.txt` is generated deterministically and separately
   from the API surface.
 - [x] `ARKPII020/021` gate baseline drift.
-- [x] The update target and CI step exist and are documented.
+- [x] The `ArkComplianceSurfaceUpdating` property, manual baseline-copy
+  workflow, and CI step exist and are documented.
 - [x] The [task board](../README.md) status for PII-IMP-06 matches this task.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.

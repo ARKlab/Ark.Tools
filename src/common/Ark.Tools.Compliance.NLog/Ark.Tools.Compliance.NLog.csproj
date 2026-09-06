@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NLog" />
     <ProjectReference Include="../Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
-    <ProjectReference Include="../Ark.Tools.NLog/Ark.Tools.NLog.csproj" />
   </ItemGroup>
 </Project>

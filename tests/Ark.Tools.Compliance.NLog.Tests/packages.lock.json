@@ -479,7 +479,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Ark.Tools.NLog": "[1.0.0, )",
           "NLog": "[6.2.0, )"
         }
       },
@@ -492,6 +491,7 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",

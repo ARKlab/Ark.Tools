@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+using Ark.Tools.Compliance.NLog;
 using Ark.Tools.NLog.Slack;
 
 using Microsoft.Data.SqlClient;
@@ -19,16 +21,6 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurer
 {
-    private static Action<Configurer, LoggingConfiguration>? _complianceConfiguration;
-
-    /// <summary>Registers the optional compliance package's configuration hook.</summary>
-    /// <param name="configure">The redaction configuration callback.</param>
-    public static void RegisterComplianceConfiguration(Action<Configurer, LoggingConfiguration> configure)
-    {
-        ArgumentNullException.ThrowIfNull(configure);
-        _complianceConfiguration = configure;
-    }
-
     public const string SlackTarget = "Ark.Slack";
     public const string ConsoleTarget = "Ark.Console";
     public const string FileTarget = "Ark.File";
@@ -79,7 +71,6 @@ public static class NLogConfigurer
 
     public static Configurer For(string appName)
     {
-        _loadComplianceConfiguration();
         return new Configurer(appName);
     }
 
@@ -493,6 +484,24 @@ VALUES
             {
                 _config.RemoveRuleByName(MailTarget);
             }
+
+            return this;
+        }
+
+        /// <summary>Overrides the default runtime redaction policy.</summary>
+        /// <param name="configure">Optional overrides of fail-closed defaults.</param>
+        /// <returns>The original configurer.</returns>
+        public Configurer WithComplianceRedaction(Action<ComplianceRedactionOptions>? configure = null)
+        {
+            _config.WithComplianceRedaction(configure);
+            return this;
+        }
+
+        /// <summary>Explicitly disables runtime redaction for this NLog configuration.</summary>
+        /// <returns>The original configurer.</returns>
+        public Configurer WithoutComplianceRedaction()
+        {
+            _config.WithoutComplianceRedaction();
             return this;
         }
 
@@ -518,30 +527,13 @@ VALUES
             LogManager.ThrowExceptions = _isVisualStudioAttached();
             LogManager.ThrowConfigExceptions = true;
             InternalLogger.LogToConsole = true;
-            _configureCompliance(this, _config);
+            _config.ConfigureCompliance();
             // this is last, so that ThrowConfigExceptions is respected on Config change
             LogManager.Configuration = _config;
 
             if (_isProduction())
                 LogManager.GlobalThreshold = LogLevel.Info;
         }
-    }
-
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The optional compliance package is discovered by name; applications that use trimming must preserve the package.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "The optional compliance package is discovered by name; applications that use trimming must preserve the package.")]
-    private static void _configureCompliance(Configurer configurer, LoggingConfiguration configuration)
-    {
-        _loadComplianceConfiguration();
-        _complianceConfiguration?.Invoke(configurer, configuration);
-    }
-
-    private static void _loadComplianceConfiguration()
-    {
-        if (_complianceConfiguration is not null)
-            return;
-
-        var bootstrap = Type.GetType("Ark.Tools.Compliance.NLog.ComplianceNLogBootstrap, Ark.Tools.Compliance.NLog", throwOnError: false);
-        bootstrap?.GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public)?.Invoke(null, null);
     }
 
     [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]

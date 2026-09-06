@@ -11,6 +11,7 @@
     <IncludeSymbols>false</IncludeSymbols>
     <DevelopmentDependency>true</DevelopmentDependency>
     <Description>Privacy declaration, fixture and sink diagnostics for Ark.Tools.</Description>
+    <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
