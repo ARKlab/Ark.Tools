@@ -87,7 +87,9 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         _controller = concurrencyController ?? new MessagingAimdConcurrencyController(_options, clock);
         _workerTarget = _controller.Limit;
         _prefetchBudget = _options.ComputePrefetchBudget(_workerTarget, source.ReceiverCapabilities);
-        _batchSize = Math.Min(_prefetchBudget, source.ReceiverCapabilities.MaximumBatchSize);
+        // Only the source's declared maximum bounds a request: the current budget is enforced by
+        // credits, so a limit grown by adaptive concurrency is not capped by the initial budget.
+        _batchSize = source.ReceiverCapabilities.MaximumBatchSize;
         _credits = new SemaphoreSlim(_prefetchBudget);
 
         // The channel is sized for the hard ceiling because credits, not the channel, enforce the

@@ -446,7 +446,7 @@ public sealed class InMemoryMessagingTransport :
         return Task.CompletedTask;
     }
 
-    private Task _renew(InMemoryQueue queue, Guid lockId, CancellationToken ctk)
+    private Task<Instant> _renew(InMemoryQueue queue, Guid lockId, CancellationToken ctk)
     {
         ctk.ThrowIfCancellationRequested();
         lock (_gate)
@@ -455,9 +455,8 @@ public sealed class InMemoryMessagingTransport :
             if (!queue._locked.TryGetValue(lockId, out var locked))
                 throw new InvalidOperationException("The messaging delivery has already been settled or expired.");
             locked._lockedUntil = _clock.GetCurrentInstant() + _lockDuration;
+            return Task.FromResult(locked._lockedUntil);
         }
-
-        return Task.CompletedTask;
     }
 
     private sealed class InMemoryQueue
@@ -565,7 +564,7 @@ public sealed class InMemoryMessagingTransport :
 
         public string DeliveryId => _lockId.ToString("N", CultureInfo.InvariantCulture);
 
-        public DateTimeOffset? LockedUntil { get; }
+        public DateTimeOffset? LockedUntil { get; private set; }
 
         public IReadOnlyDictionary<string, string> Headers => _envelope._headers;
 
@@ -578,9 +577,10 @@ public sealed class InMemoryMessagingTransport :
             return _transport._settle(_queue, _lockId, Settlement.Complete, null, null, ctk);
         }
 
-        public Task RenewLockAsync(CancellationToken ctk)
+        public async Task RenewLockAsync(CancellationToken ctk)
         {
-            return _transport._renew(_queue, _lockId, ctk);
+            var lockedUntil = await _transport._renew(_queue, _lockId, ctk).ConfigureAwait(false);
+            LockedUntil = lockedUntil.ToDateTimeOffset();
         }
 
         public Task AbandonAsync(CancellationToken ctk)

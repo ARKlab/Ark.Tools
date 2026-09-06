@@ -321,6 +321,10 @@ public sealed class MessagingTransportTests : MessagingTransportConformanceTests
 
         delivery.LockedUntil.Should().Be(Instant.FromUtc(2024, 1, 1, 0, 1).ToDateTimeOffset());
         transport.ReceiverCapabilities.NativeLockDuration.Should().Be(TimeSpan.FromMinutes(1));
+
+        clock.Advance(Duration.FromSeconds(30));
+        await delivery.RenewLockAsync(default).ConfigureAwait(false);
+        delivery.LockedUntil.Should().Be(Instant.FromUtc(2024, 1, 1, 0, 1, 30).ToDateTimeOffset());
         await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
