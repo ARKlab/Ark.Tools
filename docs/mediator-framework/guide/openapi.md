@@ -32,6 +32,7 @@ private static void ConfigureOpenApi(OpenApiOptions options)
     options
         .AddArkTypeConverterValueSchemas()
         .AddArkNodaTimeSchemas()
+        .AddArkComplianceSchemas()
         .AddArkServerSetProperties()
         .AddArkXmlDocumentation()
         .AddArkOAuthSecurity(openApiSecurity)
@@ -49,6 +50,7 @@ Why each option exists:
 | --- | --- |
 | `AddArkTypeConverterValueSchemas` | Documents custom converter values accurately |
 | `AddArkNodaTimeSchemas` | Publishes stable NodaTime formats |
+| `AddArkComplianceSchemas` | Documents sensitive value objects as their primitive schema |
 | `AddArkServerSetProperties` | Removes server-owned input members |
 | `AddArkXmlDocumentation` | Copies contract XML comments |
 | `AddArkOAuthSecurity` | Publishes OAuth flows and scopes |

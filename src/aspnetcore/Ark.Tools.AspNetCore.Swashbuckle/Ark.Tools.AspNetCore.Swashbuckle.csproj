@@ -50,6 +50,7 @@
       
   <ItemGroup>
     <ProjectReference Include="..\..\common\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />
+    <ProjectReference Include="..\Ark.Tools.Compliance.OpenApi\Ark.Tools.Compliance.OpenApi.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
       

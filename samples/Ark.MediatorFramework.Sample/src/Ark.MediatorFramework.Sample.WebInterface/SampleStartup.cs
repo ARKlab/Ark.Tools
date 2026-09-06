@@ -12,6 +12,7 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.MediatorFramework.Mcp;
+using Ark.Tools.Compliance.OpenApi;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Rebus;
 using Ark.Tools.Nodatime;
@@ -250,6 +251,7 @@ public sealed class SampleStartup
         options
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
+            .AddArkComplianceSchemas()
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)

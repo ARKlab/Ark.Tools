@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>protobuf-net surrogates for Ark.Tools.Compliance sensitive value objects</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;protobuf;protobuf-net;grpc</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <!-- protobuf-net builds its serializers from the RuntimeTypeModel, so the package is
+         not marked trimmable, exactly like Ark.Tools.Protobuf. -->
+  </PropertyGroup>
+
+  <!--===============================================================================-->
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" />
+  </ItemGroup>
+
+</Project>

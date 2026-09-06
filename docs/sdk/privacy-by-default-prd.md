@@ -316,10 +316,10 @@ registers the types with the target library.
 | Target | Adapter | Package |
 | --- | --- | --- |
 | Dapper | `SensitiveValueTypeHandler<T>` + `SensitiveValueDapper.Register<T>()` | `Ark.Tools.Compliance.Dapper` |
-| Newtonsoft.Json | `JsonConverter<T>` | `Ark.Tools.Compliance.NewtonsoftJson` |
+| Newtonsoft.Json | `JsonConverter` closed over `ISensitiveValue<T>`, rejecting `null` for non-nullable members | `Ark.Tools.Compliance.NewtonsoftJson` |
 | **protobuf-net** | surrogate + `RuntimeTypeModel` registration, in the shape of `Ark.Tools.Protobuf`'s `EvolvableEnumSurrogate<T>` | `Ark.Tools.Compliance.Protobuf` |
 | **MessagePack** | `IMessagePackFormatter<T>` + resolver entry, in the shape of `Ark.Tools.MessagePack`'s `EvolvableEnumFormatter<T>` | `Ark.Tools.Compliance.MessagePack` |
-| **OpenAPI / Swashbuckle** | `MapType` registration + `x-ark-classification`, in the shape of `Ark.Tools.AspNetCore.Swashbuckle`'s `MapNodaTimeTypes` | `Ark.Tools.Compliance.OpenApi` |
+| **OpenAPI** | `Microsoft.OpenApi` schema descriptors + `x-ark-classification`, consumed by the `Microsoft.AspNetCore.OpenApi` transformer and by Swashbuckle's `MapType` | `Ark.Tools.Compliance.OpenApi` |
 | Reqnroll | value retriever + comparer registration | `Ark.Tools.Compliance.Reqnroll` |
 
 ```csharp
@@ -354,25 +354,31 @@ surrogate registration are emitted by the same incremental generator, keeping th
 AoT/trim guarantee.
 
 **OpenAPI is not optional either.** These types appear on HTTP contracts
-(§6.5), so without a schema mapping Swashbuckle reflects over the struct and
-documents `{ "value": "string" }` — a wrong schema that silently breaks clients
-and, worse, invites developers back to `string`. The generator emits a
-partial-class registration extension in the shape of the existing
-`SupportNodaTimeExtensions.MapNodaTimeTypes`:
+(§6.5), so without a schema mapping the document generator reflects over the
+struct and documents `{ "value": "string" }` — a wrong schema that silently
+breaks clients and, worse, invites developers back to `string`. OpenAPI and
+Swashbuckle are two different things: the package owns plain `Microsoft.OpenApi`
+schema descriptors, and each host binds them to its own document generator.
 
 ```csharp
-// generated: Ark.Tools.Compliance.OpenApi
-public static SwaggerGenOptions MapArkComplianceTypes(this SwaggerGenOptions c)
+// Ark.Tools.Compliance.OpenApi
+public sealed record SensitiveValueSchemaDescriptor(
+    Type Type, Type NullableType, DataClassification Classification, string Example, string? Format)
 {
-    c.MapType<EmailAddress>(() => new OpenApiSchema
-    {
-        Type = JsonSchemaType.String,
-        Format = "email",
-        Examples = [JsonValue.Create("jane.doe@example.com")],   // RFC 2606, never real PII
-        Extensions = { ["x-ark-classification"] = new JsonNodeExtension("Ark:PersonalData") },
-    });
-    return c;
+    public static SensitiveValueSchemaDescriptor For<T>(
+        DataClassification classification, string example, string? format = null)
+        where T : struct, ISensitiveValue<T>;
+
+    public OpenApiSchema CreateSchema(bool nullable = false);   // type: string, format: email,
+                                                                // examples: RFC 2606, never real PII
+                                                                // x-ark-classification: Ark:PersonalData
 }
+
+// Minimal API / Microsoft.AspNetCore.OpenApi
+options.AddArkComplianceSchemas();
+
+// Swashbuckle (Ark.Tools.AspNetCore.Swashbuckle)
+c.MapArkComplianceTypes();
 ```
 
 Two deliberate properties: it is a **`MapType` mapping, not an `ISchemaFilter`**,
@@ -796,8 +802,10 @@ existing mediator-framework generator discipline.
 | `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
-| `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | generator targets emitting surrogates/formatters next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
-| `Ark.Tools.Compliance.OpenApi` | generated `MapType` registrations and the `x-ark-classification` extension; wired into `ArkStartupWebApiCommon` next to `MapNodaTimeTypes` | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.NewtonsoftJson` | `SensitiveValueJsonConverter<T>` and `SensitiveValueNewtonsoftJson` registrations | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | closed generic surrogate/formatter over `ISensitiveValue<T>` next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Reqnroll` | value retriever and comparer for feature tables | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.OpenApi` | `Microsoft.OpenApi` schema descriptors, the `x-ark-classification` extension and `AddArkComplianceSchemas()`; consumed by MediatorFramework Minimal API hosts and, through `Ark.Tools.AspNetCore.Swashbuckle`, by `ArkStartupWebApiCommon` | `net10.0` |
 | `Ark.Tools.OTel` (existing) | `ArkComplianceRedactionProcessor`, registered by the default setup | unchanged |
 | `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ComplianceSinks`/`ComplianceLexicon` `AdditionalFiles`, `ArkComplianceSurface.txt` gate | unchanged |
 
