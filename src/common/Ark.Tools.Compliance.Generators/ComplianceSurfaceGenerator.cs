@@ -150,9 +150,8 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
 
     private static void _classifications(ISymbol symbol, SortedSet<string> output)
     {
-        foreach (var attribute in symbol.GetAttributes())
+        foreach (var name in symbol.GetAttributes().Select(static attribute => attribute.AttributeClass?.ToDisplayString()))
         {
-            var name = attribute.AttributeClass?.ToDisplayString();
             if (name == Prefix + "PersonalDataAttribute")
                 output.Add("Ark:PersonalData");
             else if (name == Prefix + "SensitivePersonalDataAttribute")
@@ -278,9 +277,8 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         var result = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         foreach (var type in types)
         {
-            foreach (var attribute in type.GetAttributes())
-            {
-                var transport = attribute.AttributeClass?.ToDisplayString() switch
+            foreach (var transport in type.GetAttributes()
+                .Select(static attribute => attribute.AttributeClass?.ToDisplayString() switch
                 {
                     "Ark.Tools.MediatorFramework.HttpEndpointAttribute" => "Http",
                     "Ark.Tools.MediatorFramework.GrpcMethodAttribute" => "Grpc",
@@ -288,9 +286,9 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                     "Ark.Tools.MediatorFramework.MessageAttribute" => "Message",
                     "Ark.Tools.MediatorFramework.EventAttribute" => "Event",
                     _ => null,
-                };
-                if (transport is null)
-                    continue;
+                })
+                .Where(static transport => transport is not null))
+            {
                 var target = transport + ":" + _name(type);
                 var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
                 var path = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
@@ -343,9 +341,8 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         if (transport.TryGetValue(_name(member.ContainingType), out var targets))
             result.UnionWith(targets.Where(target => !_ignoredByTransport(member, target)));
         _valueEgress(valueType, result, registrations, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
-        foreach (var attribute in member.GetAttributes().Concat(member.ContainingType.GetAttributes()))
-        {
-            var serializer = attribute.AttributeClass?.ToDisplayString() switch
+        foreach (var serializer in member.GetAttributes().Concat(member.ContainingType.GetAttributes())
+            .Select(static attribute => attribute.AttributeClass?.ToDisplayString() switch
             {
                 "System.Text.Json.Serialization.JsonPropertyNameAttribute" => "System.Text.Json",
                 "System.Text.Json.Serialization.JsonIncludeAttribute" => "System.Text.Json",
@@ -353,9 +350,10 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 "ProtoBuf.ProtoMemberAttribute" => "Protobuf",
                 "MessagePack.KeyAttribute" => "MessagePack",
                 _ => null,
-            };
-            if (serializer is not null)
-                result.Add(serializer);
+            })
+            .Where(static serializer => serializer is not null))
+        {
+            result.Add(serializer!);
         }
         if (_hasAttribute(member, "System.Text.Json.Serialization.JsonIgnoreAttribute", alwaysOnly: true))
             result.Remove("System.Text.Json");

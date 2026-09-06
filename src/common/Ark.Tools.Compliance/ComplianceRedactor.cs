@@ -149,10 +149,22 @@ public sealed class ComplianceRedactor
             }
             return properties;
         }
-        catch (Exception)
+        catch (Exception ex) when (!_isCriticalException(ex))
         {
             return Marker;
         }
+    }
+
+    private static bool _isCriticalException(Exception exception)
+    {
+        return exception is OutOfMemoryException
+            or StackOverflowException
+            or AccessViolationException
+            or AppDomainUnloadedException
+            or BadImageFormatException
+            or CannotUnloadAppDomainException
+            or InvalidProgramException
+            or ThreadAbortException;
     }
 
     private string _redactClassified(object value, DataClassification[] classifications)

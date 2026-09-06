@@ -25,13 +25,13 @@ internal sealed class SinkConfiguration
     internal static SinkConfiguration _read(AnalyzerOptions options, CancellationToken cancellationToken)
     {
         var entries = ImmutableArray.CreateBuilder<Entry>();
-        foreach (var file in options.AdditionalFiles
+        foreach (var text in options.AdditionalFiles
             .Where(static file => Path.GetFileName(file.Path).StartsWith("ComplianceSinks", StringComparison.OrdinalIgnoreCase)
                 && file.Path.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
             .OrderBy(static file => string.Equals(Path.GetFileName(file.Path), "ComplianceSinks.Ark.txt", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
-            .ThenBy(static file => file.Path, StringComparer.Ordinal))
+            .ThenBy(static file => file.Path, StringComparer.Ordinal)
+            .Select(file => file.GetText(cancellationToken)))
         {
-            var text = file.GetText(cancellationToken);
             if (text is null)
             {
                 continue;

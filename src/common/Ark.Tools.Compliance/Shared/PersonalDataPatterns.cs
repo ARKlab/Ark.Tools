@@ -3,6 +3,7 @@
 
 #if NETSTANDARD2_0
 using System;
+using System.Linq;
 using System.Text;
 #endif
 
@@ -157,12 +158,9 @@ internal static class PersonalDataPatterns
     private static string _alphanumeric(string value)
     {
         var builder = new StringBuilder(value.Length);
-        foreach (var character in value)
+        foreach (var character in value.Where(char.IsLetterOrDigit))
         {
-            if (char.IsLetterOrDigit(character))
-            {
-                builder.Append(char.ToUpperInvariant(character));
-            }
+            builder.Append(char.ToUpperInvariant(character));
         }
 
         return builder.ToString();

@@ -132,9 +132,8 @@ internal sealed class SinkFlow
 
     private Source? _children(IEnumerable<IOperation> operations, int depth)
     {
-        foreach (var child in operations)
+        foreach (var source in operations.Select(child => _find(child, depth)))
         {
-            var source = _find(child, depth);
             if (source is not null || _exhausted)
             {
                 return source;
@@ -165,9 +164,8 @@ internal sealed class SinkFlow
 
     private Source? _directLocal(ILocalReferenceOperation local, int depth)
     {
-        foreach (var value in _localValues(local, depth))
+        foreach (var source in _localValues(local, depth).Select(value => _direct(value, depth + 1)))
         {
-            var source = _direct(value, depth + 1);
             if (source is not null || _exhausted)
             {
                 return source;
@@ -423,9 +421,8 @@ internal sealed class SinkFlow
     {
         var sensitive = false;
         var pseudonymous = false;
-        foreach (var attribute in symbol.GetAttributes())
+        foreach (var type in symbol.GetAttributes().Select(static attribute => attribute.AttributeClass))
         {
-            var type = attribute.AttributeClass;
             if (type?.ToDisplayString() == "Ark.Tools.Compliance.PseudonymousAttribute")
             {
                 pseudonymous = true;

@@ -80,6 +80,10 @@ public static class ComplianceNLogExtensions
         for (var i = 0; i < rule.Targets.Count; i++)
         {
             var target = rule.Targets[i];
+            if (enabled && target is RedactingTargetWrapper)
+            {
+                continue;
+            }
             while (target is RedactingTargetWrapper existing)
                 target = existing.WrappedTarget ?? throw new InvalidOperationException("A redaction wrapper requires a downstream target.");
             if (!enabled)

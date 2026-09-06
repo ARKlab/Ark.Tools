@@ -126,6 +126,16 @@ public sealed class RuntimeRedactionTests
         output.Should().NotContain("alice@private-domain.dev");
     }
 
+    /// <summary>Pattern scanning classifies phone and postal-address matches independently from email.</summary>
+    [TestMethod]
+    public void PatternScan_MasksPhoneAndPostalAddress()
+    {
+        var redactor = new ComplianceRedactor(new() { PatternScan = PatternScanMode.MessageAndProperties });
+
+        redactor.Scan("call +12025550100 at 1 Example Street")
+            .Should().Be($"call {ComplianceRedactor.Marker} at {ComplianceRedactor.Marker}");
+    }
+
     /// <summary>Broken getters and cycles do not leak or prevent logging.</summary>
     [TestMethod]
     public void UnsafeObjectGraphs_FailClosed()
@@ -233,7 +243,7 @@ public sealed class RuntimeRedactionTests
         using var baseline = new LogFactory();
         using var protectedFactory = new LogFactory();
         var baselineTarget = new NullTarget { FormatMessage = true };
-        var protectedInnerTarget = new NullTarget { FormatMessage = true };
+        using var protectedInnerTarget = new NullTarget { FormatMessage = true };
         baseline.Configuration = new();
         baseline.Configuration.AddRuleForAllLevels(baselineTarget);
         protectedFactory.Configuration = new();

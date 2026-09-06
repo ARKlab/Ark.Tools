@@ -31,7 +31,9 @@ internal static partial class PiiPatternScanner
             var previous = 0;
             for (var match = _regex().Match(value); match.Success; match = match.NextMatch())
             {
-                var kind = match.Groups["Iban"].Success ? PersonalDataKind.Iban
+                var kind = match.Groups["Phone"].Success ? PersonalDataKind.Phone
+                    : match.Groups["PostalAddress"].Success ? PersonalDataKind.PostalAddress
+                    : match.Groups["Iban"].Success ? PersonalDataKind.Iban
                     : match.Groups["NationalIdentifier"].Success ? PersonalDataKind.NationalIdentifier
                     : PersonalDataKind.Email;
                 if (!PersonalDataPatterns._isChecksumValid(kind, match.Value))
