@@ -47,6 +47,13 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static start =>
         {
+            if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                    "build_property.EnableArkToolsCompliance", out var enabled)
+                && string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
             start.RegisterSymbolAction(symbolContext =>

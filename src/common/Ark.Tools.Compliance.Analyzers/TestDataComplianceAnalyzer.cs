@@ -43,6 +43,13 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static start =>
         {
+            if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                    "build_property.EnableArkToolsCompliance", out var enabled)
+                && string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             var isTestProject = _isTestProject(start.Compilation, start.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
             start.RegisterOperationAction(operationContext =>
             {

@@ -250,6 +250,16 @@ public sealed class DeclarationAnalyzerTests
         (await changed.GetTextAsync().ConfigureAwait(false)).ToString().Should().Contain("EmailAddress.From");
     }
 
+    /// <summary>The build-level compliance opt-out disables declaration diagnostics.</summary>
+    [TestMethod]
+    public async Task ComplianceOptOut_DisablesDeclarationDiagnostics()
+    {
+        var diagnostics = await _analyzeAsync(
+            "class Customer { public string Email; }",
+            options: new DeclarationOptionsProvider(complianceEnabled: false)).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
+    }
+
     private static CSharpCompilation _compilation(string source, bool includeStubs = true)
     {
         return CSharpCompilation.Create("DeclarationTests",
@@ -263,11 +273,14 @@ public sealed class DeclarationAnalyzerTests
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(
-        string source, ImmutableArray<AdditionalText> files = default)
+        string source,
+        ImmutableArray<AdditionalText> files = default,
+        AnalyzerConfigOptionsProvider? options = null)
     {
         return await _compilation(source).WithAnalyzers(
                 [new DeclarationComplianceAnalyzer()],
-                new AnalyzerOptions(files.IsDefault ? ImmutableArray<AdditionalText>.Empty : files))
+                new AnalyzerOptions(files.IsDefault ? ImmutableArray<AdditionalText>.Empty : files,
+                    options ?? new DeclarationOptionsProvider()))
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
@@ -297,6 +310,32 @@ public sealed class DeclarationAnalyzerTests
         public override SourceText GetText(CancellationToken cancellationToken = default)
         {
             return SourceText.From(content);
+        }
+    }
+
+    private sealed class DeclarationOptionsProvider(bool complianceEnabled = true) : AnalyzerConfigOptionsProvider
+    {
+        private readonly DeclarationOptions _options = new(complianceEnabled);
+
+        public override AnalyzerConfigOptions GlobalOptions => _options;
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
+        {
+            return _options;
+        }
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile)
+        {
+            return _options;
+        }
+    }
+
+    private sealed class DeclarationOptions(bool complianceEnabled) : AnalyzerConfigOptions
+    {
+        public override bool TryGetValue(string key, out string value)
+        {
+            value = complianceEnabled ? "true" : "false";
+            return key == "build_property.EnableArkToolsCompliance";
         }
     }
 }

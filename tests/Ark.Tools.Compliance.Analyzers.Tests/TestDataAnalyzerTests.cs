@@ -112,6 +112,14 @@ public sealed class TestDataAnalyzerTests
         diagnostics.Should().ContainSingle();
     }
 
+    /// <summary>The build-level compliance opt-out disables fixture diagnostics.</summary>
+    [TestMethod]
+    public async Task ComplianceOptOut_DisablesFixtureDiagnostics()
+    {
+        (await _analyzeAsync("fixture.person@corporate-domain.com", complianceEnabled: false).ConfigureAwait(false))
+            .Should().BeEmpty();
+    }
+
     /// <summary>Only feature table cells are scanned, and diagnostics have exact file spans.</summary>
     [TestMethod]
     public async Task FeatureTableCellsHaveExactLocations()
@@ -176,9 +184,21 @@ public sealed class TestDataAnalyzerTests
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(
-        string value, string assemblyName = "Fixtures.Tests", string path = "Fixture.cs")
+        string value,
+        string assemblyName = "Fixtures.Tests",
+        string path = "Fixture.cs",
+        bool? complianceEnabled = null)
     {
-        return await _compilation(value, assemblyName, path).WithAnalyzers([new TestDataComplianceAnalyzer()])
+        var compilation = _compilation(value, assemblyName, path);
+        if (complianceEnabled is null)
+        {
+            return await compilation.WithAnalyzers([new TestDataComplianceAnalyzer()])
+                .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+        }
+
+        return await compilation.WithAnalyzers(
+                [new TestDataComplianceAnalyzer()],
+                new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, new OptionsProvider(complianceEnabled.Value)))
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
@@ -192,9 +212,9 @@ public sealed class TestDataAnalyzerTests
         }
     }
 
-    private sealed class OptionsProvider : AnalyzerConfigOptionsProvider
+    private sealed class OptionsProvider(bool complianceEnabled = true) : AnalyzerConfigOptionsProvider
     {
-        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options();
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(complianceEnabled);
 
         public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
         {
@@ -207,12 +227,15 @@ public sealed class TestDataAnalyzerTests
         }
     }
 
-    private sealed class Options : AnalyzerConfigOptions
+    private sealed class Options(bool complianceEnabled) : AnalyzerConfigOptions
     {
         public override bool TryGetValue(string key, out string value)
         {
-            value = "true";
-            return key == "build_property.IsTestProject";
+            value = key == "build_property.IsTestProject"
+                ? "true"
+                : "false";
+            return key is "build_property.IsTestProject" or "build_property.EnableArkToolsCompliance"
+                && (key == "build_property.IsTestProject" || !complianceEnabled);
         }
     }
 }
