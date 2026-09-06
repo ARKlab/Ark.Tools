@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<coreProperties xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">
-  <dc:creator>ARK Labs</dc:creator>
-  <dc:description>Explicit SQL storage policies and opt-in SQLCMD compliance templates.</dc:description>
-  <dc:identifier>Ark.Tools.Compliance.Sql</dc:identifier>
-  <version>999.9.9</version>
-  <keywords>Ark Compliance Privacy PII Sql</keywords>
-  <lastModifiedBy>NuGet.Packaging, Version=7.9.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35;.NET 8.0</lastModifiedBy>
-</coreProperties>
