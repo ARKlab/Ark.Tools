@@ -562,6 +562,52 @@ public abstract class MessagingTransportConformanceTests
     }
 
     [TestMethod]
+    public async Task RenewedLockStillSettles()
+    {
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
+            return;
+
+        var transport = CreateTransport();
+        var source = (IMessagingMessageSource)transport;
+        if (!source.ReceiverCapabilities.SupportsLockRenewal)
+            return;
+
+        await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(12), null, default).ConfigureAwait(false);
+        var delivery = await source.ReceiveOneAsync(QueueName).ConfigureAwait(false);
+
+        // Storage Queues rotates the pop receipt on renewal, so settling after a renewal is the
+        // race the guarded receipt exists for.
+        await delivery.RenewLockAsync(default).ConfigureAwait(false);
+        await delivery.RenewLockAsync(default).ConfigureAwait(false);
+        Func<Task> settle = async () => await delivery.CompleteAsync(default).ConfigureAwait(false);
+
+        await settle.Should().NotThrowAsync().ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task ConcurrentRenewAndSettleDoNotInterleave()
+    {
+        if (!Capabilities.HasFlag(MessagingCapabilities.SendReceive))
+            return;
+
+        var transport = CreateTransport();
+        var source = (IMessagingMessageSource)transport;
+        if (!source.ReceiverCapabilities.SupportsLockRenewal)
+            return;
+
+        await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(13), null, default).ConfigureAwait(false);
+        var delivery = await source.ReceiveOneAsync(QueueName).ConfigureAwait(false);
+
+        var renew = Task.Run(async () => await delivery.RenewLockAsync(default).ConfigureAwait(false));
+        var settle = Task.Run(async () => await delivery.CompleteAsync(default).ConfigureAwait(false));
+        Func<Task> both = async () => await Task.WhenAll(renew, settle).ConfigureAwait(false);
+
+        // A renewal losing the race is fine; a settlement using a stale receipt is not, and would
+        // surface as a lock-lost failure rather than a silent redelivery.
+        await both.Should().NotThrowAsync<MessagingLockLostException>().ConfigureAwait(false);
+    }
+
+    [TestMethod]
     public void CapabilitiesDeclareAPositiveBatchSize()
     {
         CreateSource().ReceiverCapabilities.MaximumBatchSize.Should().BeGreaterThan(0);

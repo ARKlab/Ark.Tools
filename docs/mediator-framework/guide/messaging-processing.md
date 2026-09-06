@@ -123,7 +123,7 @@ with the `ProcessingOptionsInvalid` diagnostic.
 | `ExpectedHandlerDuration` | 1 s | Per-message estimate used to bound the buffer on transports that cannot renew locks |
 | `LockSafetyFactor` | 0.5 | Fraction of the native lock duration a full buffer may take to drain |
 | `ShutdownTimeout` | 30 s | Drain window before unprocessed deliveries are abandoned |
-| `ReceiveChannels` | 1 | Reserved; the host currently runs a single receive loop |
+| `ReceiveChannels` | 1 | Reserved on the host; Service Bus fan-out is declared on the transport instead |
 
 ### Polling and errors
 
@@ -141,6 +141,72 @@ with the `ProcessingOptionsInvalid` diagnostic.
 | `RenewalSafetyMargin` | 10 s | Smallest headroom kept before a lock expires |
 | `RenewalScanInterval` | 1 s | How often due locks are scanned |
 | `MaximumRenewalBatch` | 64 | Locks renewed per scan, so a large in-flight set cannot stall the timer |
+
+A transport whose lock duration is not longer than `RenewalSafetyMargin +
+RenewalScanInterval` fails composition: renewal could never run in time, so the
+combination is impossible rather than merely risky.
+
+## Transport receive profiles
+
+The host asks each receive for `min(available credit, MaximumBatchSize)`
+deliveries; the rest of the runtime is transport-neutral.
+
+### Azure Storage Queues
+
+| Fact | Value |
+| --- | --- |
+| `MaximumBatchSize` | 32 (the service maximum for one `ReceiveMessages` call) |
+| Server-side wait | No: an empty queue returns immediately and `MinPollInterval`/`MaxPollInterval` own the idle rate |
+| Lock renewal | Yes, through `UpdateMessage` |
+| Native lock duration | The receive visibility timeout you configure on the transport |
+
+Every receive is one billed transaction whether it returns 1 or 32 messages, so
+batching cuts receive transactions by up to 32× at the same throughput. An idle
+queue costs roughly one receive every 15 s at the default `MaxPollInterval`
+(full jitter averages half the cap).
+
+`UpdateMessage` **rotates the pop receipt**, so renewal and settlement of one
+delivery are mutually exclusive and settlement always uses the newest receipt. A
+receipt that is no longer valid surfaces as `MessagingLockLostException` rather
+than a generic transport error, and the host reports it as a lock-lost signal.
+
+The visibility timeout is the lock: it must cover the handler *plus* the time a
+delivery may wait in the prefetch buffer. Use
+`StorageQueueMessagingTransport.DeriveReceiveVisibilityTimeout(maximumHandlerDuration,
+options)` to compute it instead of guessing; it adds the expected buffer wait and
+the renewal safety margin, and throws when the result exceeds the seven-day
+service maximum.
+
+Poison handling and dequeue-count semantics are unchanged by batching: one bad
+message in a batch of 32 is moved to the poison queue and the other 31 settle
+independently.
+
+### Azure Service Bus
+
+| Fact | Value |
+| --- | --- |
+| `MaximumBatchSize` | 100 by default, configurable; the service imposes no cap |
+| Server-side wait | Yes: the receive is held open for the host's backoff window |
+| Lock renewal | Yes, through `RenewMessageLockAsync` |
+| Native lock duration | Declared on the transport (`lockDuration`), or unknown |
+
+`PrefetchCount` stays at 0 on purpose. The host's bounded buffer is the prefetch,
+and unlike the AMQP prefetch buffer its locks are visible to the shared renewer.
+Settlement stays explicit — no auto-complete, no SDK-owned renewal task — and
+concurrency is the host's worker count, so lowering it stops new pickups instead
+of cancelling in-flight handlers. `ServiceBusProcessor` is deliberately not used:
+its pump receives one message per call on a single link and its internals are
+`internal`, so subclassing could not change any of that.
+
+Fan-out is opt-in and ordered: raise `receiveChannels` first (extra receivers,
+each its own AMQP link on the same connection), and only then pass extra
+`ServiceBusClient` instances via `additionalClients` (extra connections). Service
+Bus never hands one message to two links, so fan-out cannot double-deliver.
+
+Failures are mapped, not swallowed: `ServiceBusFailureReason.ServiceBusy` becomes
+`MessagingThrottledException` and feeds the controller a broker-throttled signal;
+`MessageLockLost` and `SessionLockLost` become `MessagingLockLostException` and
+feed a lock-lost signal. Both halve the concurrency limit.
 
 ## Settlement and retries
 

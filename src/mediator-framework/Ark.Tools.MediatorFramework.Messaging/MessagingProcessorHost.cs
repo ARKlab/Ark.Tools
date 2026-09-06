@@ -103,9 +103,32 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         });
 
         if (source.ReceiverCapabilities.SupportsLockRenewal)
+        {
+            _validateRenewableLock(source.ReceiverCapabilities);
             _renewer = new MessagingLockRenewer(_options, clock);
+        }
         else
+        {
             _validateNonRenewableLock(source.ReceiverCapabilities, maximumHandlerDuration);
+        }
+    }
+
+    private void _validateRenewableLock(MessagingReceiverCapabilities capabilities)
+    {
+        if (capabilities.NativeLockDuration is not { } lockDuration)
+            return;
+
+        // Renewal only keeps a lock alive when the renewer gets a chance to run before it expires:
+        // it scans on an interval and renews once the safety margin is reached, so a lock shorter
+        // than both together expires no matter how the handler behaves.
+        var minimum = _options.RenewalSafetyMargin + _options.RenewalScanInterval;
+        if (lockDuration > minimum)
+            return;
+
+        throw new MessagingCompositionException(
+            MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
+            FormattableString.Invariant(
+                $"Transport '{_queue}' declares a lock duration ({lockDuration}) that is not longer than RenewalSafetyMargin plus RenewalScanInterval ({minimum}); renewal could never run in time. Raise the lock duration (for Storage Queues, the receive visibility timeout) or lower the renewal margin."));
     }
 
     private void _validateNonRenewableLock(
@@ -281,6 +304,8 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 #pragma warning restore CA1031
             {
                 failed = true;
+                if (exception is MessagingThrottledException)
+                    _controller.ReportSignal(MessagingConcurrencySignal.BrokerThrottled);
                 var cooldown = backoff._sampleErrorCooldown();
                 _logger.Warn(
                     exception,
@@ -504,6 +529,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             // already handed to somebody else.
             var started = Stopwatch.GetTimestamp();
             var renewedDelivery = delivery as IMessagingRenewedDelivery;
+            Exception? settleFailure = null;
             using var handlerCancellation = delivery is IMessagingRenewedDelivery renewed
                 ? CancellationTokenSource.CreateLinkedTokenSource(ctk, renewed._lockLost)
                 : CancellationTokenSource.CreateLinkedTokenSource(ctk);
@@ -520,16 +546,21 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 return;
             }
 #pragma warning disable CA1031, ERP022 // A worker must survive a settlement or broker failure.
-            catch (Exception)
+            catch (Exception exception)
             {
                 // ponytail: the delivery is abandoned for immediate redelivery and the worker keeps
                 // going. Ceiling: the failure is not reported anywhere; AMF-09 adds the metric and
                 // the structured log for it.
+                settleFailure = exception;
                 await _settleQuietlyAsync(delivery).ConfigureAwait(false);
             }
 #pragma warning restore CA1031, ERP022
 
-            var lockLost = renewedDelivery is not null && renewedDelivery._lockLost.IsCancellationRequested;
+            if (settleFailure is MessagingThrottledException)
+                _controller.ReportSignal(MessagingConcurrencySignal.BrokerThrottled);
+
+            var lockLost = settleFailure is MessagingLockLostException
+                || (renewedDelivery is not null && renewedDelivery._lockLost.IsCancellationRequested);
             _releaseCredit(1);
             _controller.ReportCompletion(Stopwatch.GetElapsedTime(started));
             if (lockLost)

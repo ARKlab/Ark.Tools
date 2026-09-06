@@ -85,10 +85,10 @@ receive-transaction reduction in the sample readme.
 
 ## Acceptance
 
-- [ ] Batch receive up to 32 with correct credit clamping is implemented.
-- [ ] Capabilities are accurate for Storage Queues.
-- [ ] The pop-receipt race is fixed and covered by a conformance test.
-- [ ] Visibility timeout is derived and validated.
-- [ ] The [task board](../README.md) status for AMF-06 is updated to this task's acceptance state.
+- [x] Batch receive up to 32 with correct credit clamping is implemented.
+- [x] Capabilities are accurate for Storage Queues.
+- [x] The pop-receipt race is fixed and covered by a conformance test.
+- [x] Visibility timeout is derived and validated.
+- [x] The [task board](../README.md) status for AMF-06 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

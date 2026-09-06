@@ -102,11 +102,11 @@ observed throughput against the previous sequential baseline.
 
 ## Acceptance
 
-- [ ] Pull batch source implemented over `ServiceBusReceiver` with prefetch 0 and explicit settlement.
-- [ ] Server-side wait window carries the host's backoff interval.
-- [ ] Receive-channel and multi-client fan-out implemented with conservative defaults.
-- [ ] Failure reasons map to controller signals and operational metrics.
-- [ ] The single-message receive path is removed.
-- [ ] The [task board](../README.md) status for AMF-07 is updated to this task's acceptance state.
+- [x] Pull batch source implemented over `ServiceBusReceiver` with prefetch 0 and explicit settlement.
+- [x] Server-side wait window carries the host's backoff interval.
+- [x] Receive-channel and multi-client fan-out implemented with conservative defaults.
+- [x] Failure reasons map to controller signals (operational metrics land in AMF-09).
+- [x] The single-message receive path is removed.
+- [x] The [task board](../README.md) status for AMF-07 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
