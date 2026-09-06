@@ -217,6 +217,56 @@ Failures are mapped, not swallowed: `ServiceBusFailureReason.ServiceBusy` become
 `MessageLockLost` and `SessionLockLost` become `MessagingLockLostException` and
 feed a lock-lost signal. Both halve the concurrency limit.
 
+## Provisioning the entity shape
+
+Service Bus entity shape is declared once, next to the transport, and binds from
+configuration so a deployment can change it without a rebuild:
+
+```csharp
+services.AddMessaging(m => m
+    .UseTransport(t => t.UseServiceBus(client, o =>
+    {
+        o.EnablePartitioning = true;    // create-time only
+        o.LockDuration = TimeSpan.FromMinutes(2);
+    })));
+```
+
+`ServiceBusMessagingOptions` is a plain settable-property class, so
+`configuration.GetSection("ServiceBus").Bind(options)` (or
+`IOptions<ServiceBusMessagingOptions>`) produces exactly the same result as the
+fluent call. On the Azure Functions path, pass the bound instance as the
+`serviceBusOptions` argument of `AddArkMessagingFunctionsHost`.
+
+| Setting | Default | Reconcilable? |
+| --- | --- | --- |
+| `EnablePartitioning` | `false` | **No — create time only** |
+| `LockDuration` | 60 s | Yes, updated in place |
+| `MaxSizeInMegabytes` | tier default | Yes, where the tier allows |
+| `MaxMessageSizeInKilobytes` | tier default | Yes, where the tier allows |
+
+The declared `LockDuration` is also what the transport reports as its native lock
+duration, so provisioning and the shared renewer plan against the same number
+instead of two numbers that drift apart.
+
+Partitioning is opt-in because it is not free: no cross-partition transactions or
+send-batches, `SessionId` becomes the partition key, and ordering and duplicate
+detection hold only within a partition. Turn it on for a queue that needs more
+throughput than one partition can carry, and leave it off otherwise.
+
+Because Service Bus fixes partitioning when the entity is created, a declaration
+that disagrees with an existing queue cannot be applied. The reconciler throws
+`MessagingCompositionException` with
+`MessagingCompositionDiagnostic.ImmutableEntitySettingMismatch`, naming the queue,
+both values and the only remediation: delete and recreate the queue (drain it
+first, or accept losing its messages) or change the declaration back. On a Premium
+namespace partitioning is a namespace-creation choice and cannot be enabled per
+entity at all. Mutable settings, `LockDuration` and the size limits, are updated
+in place on the existing entity, and a queue that already matches is left
+untouched — no update call at all.
+
+Storage Queues have no equivalent knobs: the visibility timeout is a client-side
+receive parameter, covered above.
+
 ## Settlement and retries
 
 The processor host does not change settlement: successful handling completes,

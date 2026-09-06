@@ -225,7 +225,7 @@ runtime. They do not touch the send path, the Azure Functions receiver model, or
 | [AMF-05](messaging/AMF-05-adaptive-concurrency.md) | Adaptive concurrency with an I/O-bound guard | Done |
 | [AMF-06](messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive and pop-receipt race fix | Done |
 | [AMF-07](messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver` | Done |
-| [AMF-08](messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration and provisioning | Pending |
+| [AMF-08](messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration and provisioning | Done |
 | [AMF-09](messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics, guide, sample walkthrough and throughput smoke test | Pending |
 
 ## Testing redesign
