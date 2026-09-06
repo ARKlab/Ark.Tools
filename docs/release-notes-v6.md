@@ -68,6 +68,9 @@ Ark.Tools v6.0 is a major release focusing on modernization, performance, and tr
   `MessagingProcessingOptions` to restore strictly sequential processing
 - **Benefit**: Throughput scales with the workload instead of the slowest handler,
   and lock loss is observable rather than silent
+- **Fixed**: A failure between receiving a delivery and buffering it no longer
+  keeps the credit it consumed; the delivery is abandoned for redelivery instead
+  of stalling the receive loop once the budget reached zero
 
 ### MediatorFramework Messaging Metrics
 - **New**: Operational metrics (concurrency limit, in-flight, buffered, throttled,

@@ -5,6 +5,8 @@ using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
 
+using NodaTime;
+
 using System.Buffers;
 using System.Collections.Concurrent;
 
@@ -233,6 +235,50 @@ public sealed class MessagingProcessorHostTests
         await host.DisposeAsync().ConfigureAwait(false);
     }
 
+    [TestMethod]
+    public async Task ABufferingFailureGivesTheCreditBackInsteadOfStallingTheHost()
+    {
+        // Anything that throws between taking a delivery from the broker and handing it to a worker
+        // used to keep the credit it consumed: with a budget of one, the receive loop then waited for
+        // a credit that no worker could ever release.
+        var source = new ScriptedSource(maximumBatchSize: 1);
+        var clock = new FailingClock();
+        var processed = 0;
+        var options = new MessagingProcessingOptions
+        {
+            InitialConcurrency = 1,
+            MinimumConcurrency = 1,
+            MaximumConcurrency = 1,
+            MaximumPrefetch = 1,
+            AdaptiveConcurrency = false,
+            RenewalScanInterval = TimeSpan.FromMinutes(1)
+        };
+
+        await using var host = new MessagingProcessorHost(
+            source,
+            "queue",
+            async (delivery, ctk) =>
+            {
+                await delivery.CompleteAsync(ctk).ConfigureAwait(false);
+                if (Interlocked.Increment(ref processed) == 1)
+                    clock._arm();
+            },
+            options,
+            null,
+            null,
+            null,
+            clock);
+
+        await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        await _waitUntilAsync(() => clock._failed && Volatile.Read(ref processed) >= 5).ConfigureAwait(false);
+        var abandoned = source._abandoned;
+
+        await host.StopAsync(CancellationToken.None).ConfigureAwait(false);
+
+        abandoned.Should().Be(1, "a delivery that never reached the buffer is abandoned rather than left locked");
+        host.Outstanding.Should().Be(0, "every credit taken is accounted for once the host is stopped");
+    }
+
     private static void _interlockedMax(ref int target, int value)
     {
         var current = Volatile.Read(ref target);
@@ -252,6 +298,31 @@ public sealed class MessagingProcessorHostTests
         {
             timeout.Token.ThrowIfCancellationRequested();
             await Task.Delay(5, timeout.Token).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>A clock that fails exactly once, on the first reading taken after it is armed.</summary>
+    private sealed class FailingClock : IClock
+    {
+        private int _armed;
+        private int _thrown;
+
+        internal bool _failed => Volatile.Read(ref _thrown) == 1;
+
+        internal void _arm()
+        {
+            Interlocked.Exchange(ref _armed, 1);
+        }
+
+        public Instant GetCurrentInstant()
+        {
+            if (Interlocked.CompareExchange(ref _armed, 0, 1) == 1)
+            {
+                Interlocked.Exchange(ref _thrown, 1);
+                throw new InvalidOperationException("The clock failed while the delivery was being buffered.");
+            }
+
+            return SystemClock.Instance.GetCurrentInstant();
         }
     }
 

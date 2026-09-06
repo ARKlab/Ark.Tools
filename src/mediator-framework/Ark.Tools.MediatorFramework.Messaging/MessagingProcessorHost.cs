@@ -289,14 +289,14 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             var received = 0;
             var failed = false;
             var advanced = _options.AdvancedMetrics;
+            IReadOnlyList<IMessagingLockedDelivery> batch = [];
             try
             {
-                var batch = await _source
+                batch = await _source
                     .ReceiveBatchAsync(_queue, requested, waitWindow, ctk)
                     .ConfigureAwait(false);
                 foreach (var delivery in batch)
                 {
-                    received++;
                     // Renewal starts at buffer entry, not when a worker picks the delivery up: that
                     // is what keeps a prefetched lock alive while it waits.
                     var tracked = _renewer is null ? delivery : _renewer._register(delivery);
@@ -304,12 +304,18 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                     // Never cancel a write: the delivery is already locked, and dropping it here would
                     // hold that lock until it expires. Credit guarantees room in the buffer.
                     var buffered = new BufferedDelivery(tracked, advanced ? Stopwatch.GetTimestamp() : 0);
-                    MessagingMetrics._recordBuffered(1, _tags);
                     await _buffer.Writer.WriteAsync(buffered, CancellationToken.None).ConfigureAwait(false);
+
+                    // Counted only once the delivery is a worker's problem: anything that throws before
+                    // this point must give the credit back, or the budget shrinks by one for good and a
+                    // host whose budget reaches zero never receives again.
+                    received++;
+                    MessagingMetrics._recordBuffered(1, _tags);
                 }
             }
             catch (OperationCanceledException) when (ctk.IsCancellationRequested)
             {
+                await _abandonUnbufferedAsync(batch, received).ConfigureAwait(false);
                 throw;
             }
 #pragma warning disable CA1031 // A broker failure must cool down, not kill the loop.
@@ -323,6 +329,9 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                     _reportSignal(MessagingConcurrencySignal.BrokerThrottled);
                 }
 
+                // Whatever the broker already handed over but the host never buffered has to go back
+                // now: nothing else in the process still knows about those locks.
+                await _abandonUnbufferedAsync(batch, received).ConfigureAwait(false);
                 var cooldown = backoff._sampleErrorCooldown();
                 _logger.Warn(
                     exception,
@@ -379,6 +388,16 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             Interlocked.Increment(ref _activeWorkers);
             _workers!.Add(Task.Run(() => _workAsync(ctk), CancellationToken.None));
         }
+    }
+
+    /// <summary>Abandons the deliveries of a batch that never made it into the buffer.</summary>
+    /// <param name="batch">The batch handed over by the transport.</param>
+    /// <param name="buffered">The number of leading deliveries that reached the buffer.</param>
+    /// <returns>A task that completes once the remainder is abandoned.</returns>
+    private static async Task _abandonUnbufferedAsync(IReadOnlyList<IMessagingLockedDelivery> batch, int buffered)
+    {
+        for (var index = buffered; index < batch.Count; index++)
+            await _settleQuietlyAsync(batch[index]).ConfigureAwait(false);
     }
 
     private bool _tryRetireWorker()
@@ -548,6 +567,25 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
     private async Task _workAsync(CancellationToken ctk)
     {
+        // The count must match the workers that actually exist: an exit that forgets to decrement it
+        // makes the pool look bigger than it is, and shrinking then retires workers that are gone.
+        var retired = false;
+        try
+        {
+            retired = await _dispatchLoopAsync(ctk).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (!retired)
+                Interlocked.Decrement(ref _activeWorkers);
+        }
+    }
+
+    /// <summary>Dispatches buffered deliveries until the buffer completes or the worker retires.</summary>
+    /// <param name="ctk">The processing cancellation token.</param>
+    /// <returns><see langword="true"/> when the worker retired and already gave up its slot.</returns>
+    private async Task<bool> _dispatchLoopAsync(CancellationToken ctk)
+    {
         while (await _buffer.Reader.WaitToReadAsync(CancellationToken.None).ConfigureAwait(false))
         {
             if (!_buffer.Reader.TryRead(out var buffered))
@@ -579,7 +617,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 await _settleQuietlyAsync(delivery).ConfigureAwait(false);
                 MessagingMetrics._recordInFlight(-1, _tags);
                 _releaseCredit(1);
-                return;
+                return false;
             }
 #pragma warning disable CA1031, ERP022 // A worker must survive a settlement or broker failure.
             catch (Exception exception)
@@ -611,8 +649,10 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
             // Shrinking is cooperative: a worker leaves after its delivery settled, never mid-flight.
             if (_tryRetireWorker())
-                return;
+                return true;
         }
+
+        return false;
     }
 
     private void _reportSignal(MessagingConcurrencySignal signal)

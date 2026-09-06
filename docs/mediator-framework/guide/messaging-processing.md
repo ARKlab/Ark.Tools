@@ -351,6 +351,33 @@ While `AdvancedMetrics` is false the measurements are not even computed.
 A worked run of this procedure, with the histogram views it needs, is in the
 [sample walkthrough](../../../samples/Ark.MediatorFramework.Sample/README.md#throughput-tuning-walkthrough).
 
+### Measuring the host itself
+
+`benchmarks/Ark.Tools.Benchmarks` carries a BenchmarkDotNet throughput benchmark
+that drains one backlog three ways over the in-memory transport, so the number
+measures the host rather than a broker:
+
+```bash
+dotnet run -c Release --project benchmarks/Ark.Tools.Benchmarks -- --filter "*MessagingThroughput*"
+```
+
+The handler waits asynchronously for two milliseconds, standing in for the
+network call a real handler makes. On a four-core runner, 2 000 messages:
+
+| Arm | Mean | Ratio |
+| --- | --- | --- |
+| Sequential receive-handle-settle | 4 387 ms | 1.00 |
+| Host, fixed concurrency 32 | 141 ms | 0.03 |
+| Host, adaptive concurrency from 4 | 559 ms | 0.13 |
+
+Read it as the two claims the runtime makes, not as an absolute: batching plus
+prefetching plus concurrency is worth roughly thirty times the one-at-a-time loop
+for an I/O-bound handler, and the adaptive arm pays for the climb — it starts at
+four workers and is still searching when the backlog ends. A drain that lasts
+seconds rather than a second closes that gap, which is why the benchmark shortens
+`ConcurrencyEvaluationInterval`: with the five-second default the controller never
+takes a second reading inside a run.
+
 ## Settlement and retries
 
 The processor host does not change settlement: successful handling completes,

@@ -821,7 +821,7 @@ existing AZM task rules.
 | [`AMF-06`](progress/tasks/messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive (32), renewal/settle race fix, adaptive visibility | `AMF-01`–`AMF-04` |
 | [`AMF-07`](progress/tasks/messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver`, explicit settlement/renewal, multi-receiver and multi-client fan-out | `AMF-01`–`AMF-05` |
 | [`AMF-08`](progress/tasks/messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration: partitioning, lock duration, reconciler mismatch diagnostics | `AMF-07` |
-| [`AMF-09`](progress/tasks/messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics + OTel opt-in extension, guide, sample tuning walkthrough, throughput smoke test, API surface baseline | all |
+| [`AMF-09`](progress/tasks/messaging/AMF-09-metrics-guide-and-throughput-benchmark.md) | Two-tier metrics + OTel opt-in extension, guide, sample tuning walkthrough, throughput benchmark, API surface baseline | all |
 
 ## 17. Decisions
 
