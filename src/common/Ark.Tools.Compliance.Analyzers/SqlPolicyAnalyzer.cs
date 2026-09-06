@@ -35,9 +35,18 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSymbolAction(_analyzeType, SymbolKind.NamedType);
-        context.RegisterSymbolAction(_analyzeEndpoint, SymbolKind.Method);
-        context.RegisterOperationAction(_analyzeTransport, OperationKind.Invocation);
+        context.RegisterCompilationStartAction(static start =>
+        {
+            if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                    "build_property.EnableArkToolsCompliance", out var enabled)
+                && string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+            start.RegisterSymbolAction(_analyzeType, SymbolKind.NamedType);
+            start.RegisterSymbolAction(_analyzeEndpoint, SymbolKind.Method);
+            start.RegisterOperationAction(_analyzeTransport, OperationKind.Invocation);
+        });
     }
 
     private static void _analyzeType(SymbolAnalysisContext context)

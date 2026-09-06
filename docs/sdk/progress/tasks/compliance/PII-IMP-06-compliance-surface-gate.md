@@ -85,7 +85,8 @@ comment wrapper. A header-only inventory is valid.
 
 `ArkComplianceSurfaceEnabled=false` is an explicit migration opt-out, not an
 acceptance operation. `VerifyArkComplianceSurface` overrides the opt-out and
-forces compilation. CI verifies every tracked compliance baseline immediately
+forces compilation. The global `EnableArkToolsCompliance=false` switch overrides
+the surface gate and disables explicit update/verify targets as well. CI verifies every tracked compliance baseline immediately
 after the ordinary build/API-surface gate; the ordinary build also rejects a
 missing baseline in newly opted-in consumers.
 

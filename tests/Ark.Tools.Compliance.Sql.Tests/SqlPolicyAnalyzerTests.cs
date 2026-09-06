@@ -219,11 +219,26 @@ public sealed class SqlPolicyAnalyzerTests
         diagnostics.Should().ContainSingle(static d => d.Id == "ARKPII012");
     }
 
-    private static async Task<ImmutableArray<Diagnostic>> _diagnostics(string source)
+    /// <summary>The build opt-out disables both storage and egress diagnostics.</summary>
+    [TestMethod]
+    public async Task ComplianceOptOutSuppressesSqlAndEgressDiagnostics()
+    {
+        var diagnostics = await _diagnostics("""
+            [SqlDataPolicy(Table = "Customers")] public class Customer
+            {
+                [PersonalData] public string Email { get; set; } = "";
+                public string Send() => System.Text.Json.JsonSerializer.Serialize(this);
+            }
+            """, enabled: false).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
+    }
+
+    private static async Task<ImmutableArray<Diagnostic>> _diagnostics(string source, bool enabled = true)
     {
         var compilation = SqlTestCompilation._create(source);
         compilation.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
-        return await compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new SqlPolicyAnalyzer()))
+        return await compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new SqlPolicyAnalyzer()),
+                new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, new SqlTestOptionsProvider(enabled)))
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 }

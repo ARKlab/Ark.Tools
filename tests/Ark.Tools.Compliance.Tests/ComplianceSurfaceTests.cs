@@ -74,6 +74,14 @@ public sealed class ComplianceSurfaceTests
         _run("public class Empty { }", enabled: true).Diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>The global compliance opt-out overrides an explicitly enabled surface gate.</summary>
+    [TestMethod]
+    public void Surface_GlobalComplianceOptOutDisablesDiagnostics()
+    {
+        _run(_personalMember, enabled: true, complianceEnabled: false).Diagnostics.Should().BeEmpty();
+        _run(_personalMember, "invalid baseline", enabled: true, complianceEnabled: false).Diagnostics.Should().BeEmpty();
+    }
+
     /// <summary>The update build emits the inventory without blocking the explicit acceptance operation.</summary>
     [TestMethod]
     public void Surface_UpdateModeSuppressesOnlyBaselineDiagnostics()
@@ -458,7 +466,8 @@ public sealed class ComplianceSurfaceTests
     }
 
     private static (string Text, ImmutableArray<Diagnostic> Diagnostics) _run(string source,
-        string? baseline = null, bool enabled = false, bool updating = false, bool duplicateBaseline = false)
+        string? baseline = null, bool enabled = false, bool updating = false, bool duplicateBaseline = false,
+        bool complianceEnabled = true)
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
@@ -472,7 +481,7 @@ public sealed class ComplianceSurfaceTests
             files = files.Add(new BaselineText("other/ArkComplianceSurface.txt", baseline!));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new ComplianceSurfaceGenerator().AsSourceGenerator()], additionalTexts: files,
-            optionsProvider: new OptionsProvider(enabled, updating));
+            optionsProvider: new OptionsProvider(enabled, updating, complianceEnabled));
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var output, out _);
         var result = driver.GetRunResult();
         result.Results.Should().OnlyContain(static generator => generator.Exception == null);
@@ -494,10 +503,10 @@ public sealed class ComplianceSurfaceTests
         }
     }
 
-    private sealed class OptionsProvider(bool enabled, bool updating) : AnalyzerConfigOptionsProvider
+    private sealed class OptionsProvider(bool enabled, bool updating, bool complianceEnabled) : AnalyzerConfigOptionsProvider
     {
         /// <inheritdoc />
-        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(enabled, updating);
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(enabled, updating, complianceEnabled);
 
         /// <inheritdoc />
         public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
@@ -512,13 +521,14 @@ public sealed class ComplianceSurfaceTests
         }
     }
 
-    private sealed class Options(bool enabled, bool updating) : AnalyzerConfigOptions
+    private sealed class Options(bool enabled, bool updating, bool complianceEnabled) : AnalyzerConfigOptions
     {
         /// <inheritdoc />
         public override bool TryGetValue(string key, out string value)
         {
             value = key switch
             {
+                "build_property.EnableArkToolsCompliance" => complianceEnabled ? "true" : "false",
                 "build_property.ArkComplianceSurfaceEnabled" => enabled ? "true" : "false",
                 "build_property.ArkComplianceSurfaceUpdating" => updating ? "true" : "false",
                 _ => string.Empty,

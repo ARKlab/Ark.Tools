@@ -106,6 +106,9 @@ ecosystem checks exception messages at all, and `LOGGEN035` only covers
   `dotnet build tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj --no-restore --configuration Debug`
   and
   `dotnet test --project tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj --no-build --configuration Debug --filter 'FullyQualifiedName~SinkTaintAnalyzerTests'`.
-  Latest focused result: build succeeded with zero warnings/errors; 93 tests
+  Focused result before the SDK opt-out integration: build succeeded with zero warnings/errors; 93 tests
   passed, zero failed or skipped.
+  The later `build_property.EnableArkToolsCompliance=false` guard and regression
+  test were added; revalidation was blocked by seven NU1102 package-resolution
+  errors in the shared test project assets.
   Full-solution acceptance remains unchecked until independently verified.

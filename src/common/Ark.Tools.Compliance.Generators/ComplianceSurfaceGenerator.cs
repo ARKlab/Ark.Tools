@@ -41,7 +41,9 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             .Select(static (file, token) => file.GetText(token)?.ToString())
             .Collect();
         var enabled = context.AnalyzerConfigOptionsProvider.Select(static (options, _) =>
-            options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceEnabled", out var value)
+            !(options.GlobalOptions.TryGetValue("build_property.EnableArkToolsCompliance", out var compliance)
+                && string.Equals(compliance, "false", StringComparison.OrdinalIgnoreCase))
+            && options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceEnabled", out var value)
             && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
             && !(options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceUpdating", out var updating)
                 && string.Equals(updating, "true", StringComparison.OrdinalIgnoreCase)));

@@ -2,6 +2,9 @@
   <PropertyGroup>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
+  </ItemGroup>
 
   <UsingTask TaskName="ArkWriteComplianceSqlTemplates" TaskFactory="RoslynCodeTaskFactory"
              AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
@@ -80,7 +83,7 @@
   </UsingTask>
 
   <Target Name="ArkGenerateComplianceSql" AfterTargets="CoreCompile"
-          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != ''">
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != '' and '$(EnableArkToolsCompliance)' != 'false'">
     <PropertyGroup>
       <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
     </PropertyGroup>
@@ -94,5 +97,16 @@
     <ItemGroup>
       <FileWrites Include="@(ArkComplianceSqlScript)" />
     </ItemGroup>
+  </Target>
+
+  <Target Name="_ArkClearDisabledComplianceSql" AfterTargets="CoreCompile"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != '' and '$(EnableArkToolsCompliance)' == 'false'">
+    <PropertyGroup>
+      <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_ArkDisabledSql Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql" />
+    </ItemGroup>
+    <Delete Files="@(_ArkDisabledSql)" />
   </Target>
 </Project>

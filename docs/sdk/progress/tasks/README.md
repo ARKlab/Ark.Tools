@@ -87,3 +87,22 @@ PII-IMP-11 is last because it consumes all of them.
 Upstream Vogen contributions are **not** on this board: Ark.Tools does not use
 Vogen, so they are recorded as a draft in
 [`../future-improvements.md`](../future-improvements.md) instead.
+
+### Timeboxed implementation validation (2026-09-06)
+
+PII-IMP-04 through PII-IMP-09 have implementations and focused checks, but are
+not marked complete: full acceptance is blocked. The combined analyzer checks
+passed 153 tests; SQL checks passed 31; the focused SDK configuration/composition
+checks passed 2. The compliance package was packed and its analyzer, code-fix,
+generator, and build-transitive assets inspected.
+
+The one full-suite invocation started at 07:25:42 UTC, after the 40-minute mark,
+and exited at 07:27:49 UTC before executing tests: the MTP runner rejected
+existing projects reported as VSTest projects. The integrated solution build
+also reported NU1004 lock-graph and NU1102 dependency-resolution errors and was
+stopped without claiming success. No full-suite retry was made. Automated
+code/security validation timed out and could not complete.
+
+PII-IMP-10 remains partial (Microsoft telemetry registration and LOGGEN proof);
+PII-IMP-11 remains pending. Runtime release-throughput acceptance and the
+reference-database SQL application proof remain outstanding in their task files.

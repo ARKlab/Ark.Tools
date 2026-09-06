@@ -151,10 +151,10 @@ internal sealed class SinkConfiguration
     {
         return kind switch
         {
-            "log" => "ARKPII002",
-            "exception" => "ARKPII003",
-            "telemetry" => "ARKPII004",
-            "format" => "ARKPII011",
+            "log" or "ARKPII002" => "ARKPII002",
+            "exception" or "ARKPII003" => "ARKPII003",
+            "telemetry" or "ARKPII004" => "ARKPII004",
+            "format" or "ARKPII011" => "ARKPII011",
             _ => null,
         };
     }

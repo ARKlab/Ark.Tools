@@ -1,11 +1,13 @@
 <Project>
   <PropertyGroup>
     <ArkComplianceSurfaceTargetsImported>true</ArkComplianceSurfaceTargetsImported>
+    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == '' AND '$(EnableArkToolsCompliance)' == 'false'">false</ArkComplianceSurfaceEnabled>
     <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == ''">true</ArkComplianceSurfaceEnabled>
-    <EmitCompilerGeneratedFiles Condition="'$(ArkComplianceSurfaceEnabled)' == 'true'">true</EmitCompilerGeneratedFiles>
+    <EmitCompilerGeneratedFiles Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' != 'false'">true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <ItemGroup>
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
     <CompilerVisibleProperty Include="ArkComplianceSurfaceEnabled" />
     <CompilerVisibleProperty Include="ArkComplianceSurfaceUpdating" />
   </ItemGroup>
@@ -25,7 +27,7 @@
 
   <Target Name="ArkComplianceSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
-          Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(IsCrossTargetingBuild)' != 'true' AND '$(DesignTimeBuild)' != 'true' AND '$(SkipCompilerExecution)' != 'true'">
+          Condition="'$(EnableArkToolsCompliance)' != 'false' AND '$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(IsCrossTargetingBuild)' != 'true' AND '$(DesignTimeBuild)' != 'true' AND '$(SkipCompilerExecution)' != 'true'">
     <PropertyGroup>
       <_ArkComplianceGeneratedSurface>$(CompilerGeneratedFilesOutputPath)/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator/ArkComplianceSurface.g.cs</_ArkComplianceGeneratedSurface>
     </PropertyGroup>
@@ -42,7 +44,7 @@
   </Target>
 
   <!-- Rebuild with the gate disabled only in the nested acceptance build; never suppress unrelated diagnostics. -->
-  <Target Name="UpdateArkComplianceSurface">
+  <Target Name="UpdateArkComplianceSurface" Condition="'$(EnableArkToolsCompliance)' != 'false'">
     <PropertyGroup>
       <_ArkComplianceUpdateFramework Condition="'$(TargetFramework)' != ''">$(TargetFramework)</_ArkComplianceUpdateFramework>
       <_ArkComplianceUpdateFramework Condition="'$(_ArkComplianceUpdateFramework)' == ''">$([System.String]::Copy('$(TargetFrameworks)').Split(';').GetValue(0))</_ArkComplianceUpdateFramework>
@@ -67,7 +69,7 @@
   </Target>
 
   <!-- Explicit verification forces compilation, even after an update or an incremental no-op build. -->
-  <Target Name="VerifyArkComplianceSurface">
+  <Target Name="VerifyArkComplianceSurface" Condition="'$(EnableArkToolsCompliance)' != 'false'">
     <MSBuild Projects="$(MSBuildProjectFullPath)"
              Targets="Rebuild"
              BuildInParallel="false"

@@ -268,7 +268,9 @@ public sealed class SinkTaintAnalyzerTests
 
     /// <summary>Consumer entries add sinks and remove exact or wildcard defaults deterministically.</summary>
     [TestMethod]
-    public async Task AdditionalFiles_ComposeAndRemoveDefaults()
+    [DataRow("log")]
+    [DataRow("ARKPII002")]
+    public async Task AdditionalFiles_ComposeAndRemoveDefaults(string kind)
     {
         var diagnostics = await _analyzeAsync(_method("""
             Audit.Write(c.Email);
@@ -276,9 +278,9 @@ public sealed class SinkTaintAnalyzerTests
             Console.WriteLine(c.Email);
             """),
             [
-                new SinkText("ComplianceSinks.Consumer.txt", """
+                new SinkText("ComplianceSinks.Consumer.txt", $$"""
                     # Consumer overrides are applied after Ark defaults.
-                    M:Audit.Write(System.Object);log
+                    M:Audit.Write(System.Object);{{kind}}
                     -M:NLog.Logger.*
                     -M:System.Console.WriteLine(System.String);format
                     malformed line

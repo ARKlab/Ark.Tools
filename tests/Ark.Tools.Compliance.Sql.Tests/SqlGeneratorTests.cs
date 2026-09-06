@@ -180,10 +180,27 @@ public sealed class SqlGeneratorTests
             .And.NotContain("$(ComplianceSchema)").And.NotContain("$(ComplianceLabel)");
     }
 
-    private static (string[] Sql, ImmutableArray<Diagnostic> Diagnostics) _generate(string source, bool expectMappingError = false)
+    /// <summary>The build opt-out suppresses SQL output and mapping diagnostics.</summary>
+    [TestMethod]
+    public void ComplianceOptOutSuppressesSqlGeneration()
+    {
+        var result = _generate("""
+            [SqlDataPolicy] public class Customer
+            {
+                [PersonalData, SqlColumnPolicy("email", StoragePolicy.Masked)]
+                public string Email { get; set; } = "";
+            }
+            """, enabled: false);
+        result.Sql.Should().BeEmpty();
+        result.Diagnostics.Should().BeEmpty();
+    }
+
+    private static (string[] Sql, ImmutableArray<Diagnostic> Diagnostics) _generate(string source, bool expectMappingError = false, bool enabled = true)
     {
         var compilation = SqlTestCompilation._create(source);
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(new SqlPolicyGenerator().AsSourceGenerator());
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new SqlPolicyGenerator().AsSourceGenerator()],
+            optionsProvider: new SqlTestOptionsProvider(enabled));
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var output, out var diagnostics);
         if (!expectMappingError)
         {
