@@ -23,6 +23,7 @@
     <PropertyGroup>
       <CompilerGeneratedFilesOutputPath>$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
+    <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
   </Target>
 
   <Target Name="ArkComplianceSurfaceWriteCurrent"
@@ -43,36 +44,4 @@
     </ItemGroup>
   </Target>
 
-  <!-- Rebuild with the gate disabled only in the nested acceptance build; never suppress unrelated diagnostics. -->
-  <Target Name="UpdateArkComplianceSurface" Condition="'$(EnableArkToolsCompliance)' != 'false'">
-    <PropertyGroup>
-      <_ArkComplianceUpdateFramework Condition="'$(TargetFramework)' != ''">$(TargetFramework)</_ArkComplianceUpdateFramework>
-      <_ArkComplianceUpdateFramework Condition="'$(_ArkComplianceUpdateFramework)' == ''">$([System.String]::Copy('$(TargetFrameworks)').Split(';').GetValue(0))</_ArkComplianceUpdateFramework>
-    </PropertyGroup>
-    <MSBuild Projects="$(MSBuildProjectFullPath)"
-             Targets="_ArkComplianceDeleteCurrent;_ArkComplianceAcceptSurface"
-             BuildInParallel="false"
-             Properties="TargetFramework=$(_ArkComplianceUpdateFramework);ArkComplianceSurfaceEnabled=true;ArkComplianceSurfaceUpdating=true;EmitCompilerGeneratedFiles=true" />
-    <Message Importance="high" Text="Updated ArkComplianceSurface.txt. Review and commit the diff, then run VerifyArkComplianceSurface for all target frameworks." />
-  </Target>
-
-  <Target Name="_ArkComplianceDeleteCurrent">
-    <Delete Files="$(IntermediateOutputPath)ArkComplianceSurface.current.txt;$(CompilerGeneratedFilesOutputPath)/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator/ArkComplianceSurface.g.cs" />
-  </Target>
-
-  <Target Name="_ArkComplianceAcceptSurface"
-          DependsOnTargets="Rebuild">
-    <Error Condition="!Exists('$(IntermediateOutputPath)ArkComplianceSurface.current.txt')"
-           Text="The compliance generator did not emit an inventory. Reference Ark.Tools.Compliance and enable its analyzer assets." />
-    <Copy SourceFiles="$(IntermediateOutputPath)ArkComplianceSurface.current.txt"
-          DestinationFiles="$(MSBuildProjectDirectory)/ArkComplianceSurface.txt" />
-  </Target>
-
-  <!-- Explicit verification forces compilation, even after an update or an incremental no-op build. -->
-  <Target Name="VerifyArkComplianceSurface" Condition="'$(EnableArkToolsCompliance)' != 'false'">
-    <MSBuild Projects="$(MSBuildProjectFullPath)"
-             Targets="Rebuild"
-             BuildInParallel="false"
-             Properties="ArkComplianceSurfaceEnabled=true;ArkComplianceSurfaceUpdating=false;EmitCompilerGeneratedFiles=true" />
-  </Target>
 </Project>

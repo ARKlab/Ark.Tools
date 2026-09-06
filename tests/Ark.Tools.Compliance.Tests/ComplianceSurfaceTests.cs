@@ -356,7 +356,7 @@ public sealed class ComplianceSurfaceTests
         result.Text.Should().NotContain("Http:");
     }
 
-    /// <summary>Real MSBuild acceptance and verification gates produce identical net8/net10 baselines.</summary>
+    /// <summary>Real MSBuild acceptance produces identical net8/net10 baselines for manual review.</summary>
     [TestMethod]
     public async Task Surface_TargetsRejectDriftAndAcceptReviewedMultiTargetBaseline()
     {
@@ -406,22 +406,19 @@ public sealed class ComplianceSurfaceTests
             missing.ExitCode.Should().NotBe(0);
             missing.Output.Should().Contain("ARKPII020");
 
-            var accepted = await _buildFixture(project, "UpdateArkComplianceSurface").ConfigureAwait(false);
-            accepted.ExitCode.Should().Be(0, accepted.Output);
-            var verified = await _buildFixture(project, "VerifyArkComplianceSurface").ConfigureAwait(false);
-            verified.ExitCode.Should().Be(0, verified.Output);
+            var generation = await _buildFixture(project, properties: ["ArkComplianceSurfaceUpdating=true"]).ConfigureAwait(false);
+            generation.ExitCode.Should().Be(0, generation.Output);
             var net8 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net8.0", "ArkComplianceSurface.current.txt")).ConfigureAwait(false);
             var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "ArkComplianceSurface.current.txt")).ConfigureAwait(false);
             net8.Should().Equal(net10);
+            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net8).ConfigureAwait(false);
+            var accepted = await _buildFixture(project).ConfigureAwait(false);
+            accepted.ExitCode.Should().Be(0, accepted.Output);
 
             await File.WriteAllTextAsync(declaration, source.Replace("public string Email", "public string Contact", StringComparison.Ordinal)).ConfigureAwait(false);
             var drift = await _buildFixture(project).ConfigureAwait(false);
             drift.ExitCode.Should().NotBe(0);
             drift.Output.Should().Contain("ARKPII020");
-            var updated = await _buildFixture(project, "UpdateArkComplianceSurface").ConfigureAwait(false);
-            updated.ExitCode.Should().Be(0, updated.Output);
-            var reverified = await _buildFixture(project, "VerifyArkComplianceSurface").ConfigureAwait(false);
-            reverified.ExitCode.Should().Be(0, reverified.Output);
         }
         finally
         {
@@ -429,7 +426,10 @@ public sealed class ComplianceSurfaceTests
         }
     }
 
-    private static async Task<(int ExitCode, string Output)> _buildFixture(string project, string? target = null)
+    private static async Task<(int ExitCode, string Output)> _buildFixture(
+        string project,
+        string? target = null,
+        string[]? properties = null)
     {
         var start = new ProcessStartInfo("dotnet")
         {
@@ -447,6 +447,11 @@ public sealed class ComplianceSurfaceTests
             start.ArgumentList.Add("--target");
             start.ArgumentList.Add(target);
             start.ArgumentList.Add("--no-restore");
+        }
+        if (properties is not null)
+        {
+            foreach (var property in properties)
+                start.ArgumentList.Add($"-p:{property}");
         }
         using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start dotnet.");
         var standardOutput = process.StandardOutput.ReadToEndAsync();

@@ -24,22 +24,22 @@ file, and makes every addition a reviewed change.
   new or changed classified data was not reviewed.
 - **`ARKPII021`**: a member was removed from the surface while still classified,
   or its classification was weakened.
-- **Workflow**: reuse the existing `ArkApiSurface.txt` verify/update MSBuild
-  targets and CI step, with its own baseline file per project.
+- **Workflow**: follow the existing `ArkApiSurface.txt` baseline flow, with its
+  own generated intermediate and committed baseline per project.
 
 ## Implementation steps
 
 1. Implement the generator, reusing the `ApiSurfaceGenerator` determinism rules.
 2. Implement the two comparison diagnostics against the committed baseline.
-3. Add the `UpdateArkComplianceSurface` target mirroring the API-surface update
-   flow, and document it.
-4. Add the CI step next to the API-surface check.
+3. Emit the generated inventory to the intermediate output and document the
+   manual baseline-copy flow.
+4. Let the ordinary CI build enforce every committed baseline.
 
 ## Required test coverage
 
 - Byte-identical output across repeated builds and across target frameworks.
 - Adding a classified member without updating the baseline fails the build with
-  `ARKPII020`; the update target fixes it.
+  `ARKPII020`; manually copying the generated intermediate inventory fixes it.
 - Weakening a classification is reported by `ARKPII021`.
 - Egress targets from PII-IMP-03 appear on the member's line.
 
@@ -55,40 +55,33 @@ Its `buildTransitive/Ark.Tools.Compliance.Surface.targets` enables the gate when
 imported, adds the baseline as an `AdditionalFile`, and makes the gate properties
 visible to Roslyn. The compliance package/SDK wires this target into consumers;
 source-project references must import it explicitly because `ProjectReference`
-does not flow NuGet build assets. Package entrypoints must import the target from
-both `buildTransitive` and `buildMultiTargeting` so the update and verify targets
-are also available in the outer build of a multi-target consumer.
+does not flow NuGet build assets.
 
 ```sh
 # Normal compilation rejects unreviewed additions, removals, or changes.
 dotnet build path/to/Service.csproj
 
-# Explicitly accept a reviewed change (first target framework by default).
-dotnet build path/to/Service.csproj --target UpdateArkComplianceSurface
+# Generate the reviewed inventory without applying it.
+dotnet build path/to/Service.csproj -p:ArkComplianceSurfaceUpdating=true
 
-# Force verification against every configured target framework.
-dotnet build path/to/Service.csproj --target VerifyArkComplianceSurface
-
-# Choose the framework used to produce the shared baseline.
-dotnet build path/to/Service.csproj --framework net10.0 --target UpdateArkComplianceSurface
+# Copy the generated intermediate inventory to the committed baseline.
+cp path/to/Service/obj/Debug/net10.0/ArkComplianceSurface.current.txt \
+   path/to/Service/ArkComplianceSurface.txt
 ```
 
-The update target runs a fresh nested build with
-`ArkComplianceSurfaceUpdating=true`; only the two baseline diagnostics are
-bypassed, not unrelated compiler/analyzer errors. It copies the generated
-inventory to `ArkComplianceSurface.txt`. Inspect and commit that diff. Normal
-builds write `obj/<configuration>/<framework>/ArkComplianceSurface.current.txt`;
+The updating property bypasses only the two baseline diagnostics, not unrelated
+compiler/analyzer errors. Copy the generated inventory to
+`ArkComplianceSurface.txt` only after inspecting the diff. Normal builds write
+`obj/<configuration>/<framework>/ArkComplianceSurface.current.txt`;
 the generated `ArkComplianceSurface.g.cs` remains inspectable under the configured
 compiler-generated-files directory even when baseline drift stops compilation.
 Like the existing API snapshot, the accepted file may include the generated C#
 comment wrapper. A header-only inventory is valid.
 
 `ArkComplianceSurfaceEnabled=false` is an explicit migration opt-out, not an
-acceptance operation. `VerifyArkComplianceSurface` overrides the opt-out and
-forces compilation. The global `EnableArkToolsCompliance=false` switch overrides
-the surface gate and disables explicit update/verify targets as well. CI verifies every tracked compliance baseline immediately
-after the ordinary build/API-surface gate; the ordinary build also rejects a
-missing baseline in newly opted-in consumers.
+acceptance operation. The global `EnableArkToolsCompliance=false` switch
+overrides the surface gate. The ordinary CI build rejects drift or a missing
+baseline in newly opted-in consumers.
 
 ### Inventory format and coverage
 

@@ -24,7 +24,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
 
     private static readonly DiagnosticDescriptor _drift = new(
         "ARKPII020", "Compliance surface changed",
-        "Compliance surface differs from ArkComplianceSurface.txt: {0}. Review the generated inventory and run 'dotnet build -t:UpdateArkComplianceSurface'",
+        "Compliance surface differs from ArkComplianceSurface.txt: {0}. Review obj/.../ArkComplianceSurface.current.txt and copy it to ArkComplianceSurface.txt to accept this change.",
         "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     private static readonly DiagnosticDescriptor _weakened = new(

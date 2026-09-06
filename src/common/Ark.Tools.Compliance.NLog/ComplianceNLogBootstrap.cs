@@ -18,7 +18,7 @@ public static class ComplianceNLogBootstrap
     private static readonly ComplianceRedactor _defaultPolicy = new();
     private static IValueFormatter? _originalFormatter;
 
-    /// <summary>Registers the default-on hook; also rooted by the package's buildTransitive startup source.</summary>
+    /// <summary>Registers the default-on hook used by <see cref="NLogConfigurer"/>.</summary>
     public static void Initialize()
     {
         NLogConfigurer.RegisterComplianceConfiguration(_configure);

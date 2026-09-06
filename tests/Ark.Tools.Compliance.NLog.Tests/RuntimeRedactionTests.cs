@@ -268,7 +268,8 @@ public sealed class RuntimeRedactionTests
         {
             Console.SetOut(output);
             var configurer = NLogConfigurer.For("RuntimeRedactionTests")
-                .WithArkDefaultTargetsAndRules(new NLogConfigurer.Config(Async: false));
+                .WithConsoleTarget(false)
+                .WithConsoleRule("*", LogLevel.Trace);
             configure?.Invoke(configurer);
             configurer.Apply();
             var target = LogManager.Configuration!.FindTargetByName<ConsoleTarget>(NLogConfigurer.ConsoleTarget);
