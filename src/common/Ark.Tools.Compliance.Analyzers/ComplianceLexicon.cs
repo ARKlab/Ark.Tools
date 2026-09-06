@@ -17,6 +17,18 @@ internal sealed class ComplianceLexicon
 {
     private static readonly ConditionalWeakTable<SourceText, ParsedEntries> _snapshots = new();
     private static readonly char[] _newLines = { '\r', '\n' };
+    private static readonly HashSet<string> _ambiguousTerms = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Certificate",
+        "Face",
+        "Financial",
+        "Gender",
+        "Health",
+        "Location",
+        "Mail",
+        "Mobile",
+        "Token",
+    };
     private readonly HashSet<string> _terms = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _excluded = new(StringComparer.OrdinalIgnoreCase);
 
@@ -63,6 +75,11 @@ internal sealed class ComplianceLexicon
 
     private static bool _matches(string name, string term)
     {
+        if (_ambiguousTerms.Contains(term))
+        {
+            return string.Equals(name, term, StringComparison.OrdinalIgnoreCase);
+        }
+
         if (term.EndsWith("*", StringComparison.Ordinal))
         {
             return name.StartsWith(term.Substring(0, term.Length - 1), StringComparison.OrdinalIgnoreCase);

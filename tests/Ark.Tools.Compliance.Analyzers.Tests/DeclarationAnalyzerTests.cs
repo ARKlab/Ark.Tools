@@ -112,6 +112,26 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().HaveCount(2);
     }
 
+    /// <summary>Ambiguous infrastructure words do not classify compound identifiers by themselves.</summary>
+    [TestMethod]
+    public async Task AmbiguousInfrastructureWordsRequireExactIdentifiers()
+    {
+        var diagnostics = await _analyzeAsync("""
+            class Infrastructure
+            {
+                public string Token;
+                public string SourceLocation;
+                public System.Threading.CancellationToken CancellationToken;
+                public string ClientSecret;
+            }
+            """).ConfigureAwait(false);
+
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage())
+            .Should().ContainSingle(static message => message.Contains("Token", StringComparison.Ordinal));
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage())
+            .Should().ContainSingle(static message => message.Contains("ClientSecret", StringComparison.Ordinal));
+    }
+
     /// <summary>Exclusions cannot quietly use empty or boilerplate explanations.</summary>
     [TestMethod]
     [DataRow("")]
