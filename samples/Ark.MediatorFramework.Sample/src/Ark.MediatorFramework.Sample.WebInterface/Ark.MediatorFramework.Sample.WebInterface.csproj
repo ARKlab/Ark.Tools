@@ -14,6 +14,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.OTel" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Mcp" />
     <PackageReference Include="Ark.Tools.Rebus" />
@@ -28,7 +29,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <PackageReference Include="Microsoft.Identity.Web" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
-    <ProjectReference Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Messaging.OTel\Ark.Tools.MediatorFramework.Messaging.OTel.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.RebusProcessor\Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
   </ItemGroup>

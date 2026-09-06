@@ -59,30 +59,6 @@ Ark.Tools v6.0 is a major release focusing on modernization, performance, and tr
 - **When**: Only affects custom types with `TypeConverterAttribute` used as dictionary keys
 - **Benefit**: Native AOT compatibility, trim-safe type discovery
 
-### MediatorFramework Messaging Processing (pre-release)
-- **Changed**: The message pump was replaced by a receive/dispatch/settle host with
-  prefetch buffering, adaptive concurrency, idle backoff and lock renewal
-- **Impact**: Transports must report `LockedUntil` and `DeliveryId` on every locked
-  delivery; the previous pump types and their one-message-at-a-time behaviour are gone
-- **Migration**: Set `AdaptiveConcurrency = false` and `InitialConcurrency = 1` in
-  `MessagingProcessingOptions` to restore strictly sequential processing
-- **Benefit**: Throughput scales with the workload instead of the slowest handler,
-  and lock loss is observable rather than silent
-- **Fixed**: A failure between receiving a delivery and buffering it no longer
-  keeps the credit it consumed; the delivery is abandoned for redelivery instead
-  of stalling the receive loop once the budget reached zero
-
-### MediatorFramework Messaging Metrics
-- **New**: Operational metrics (concurrency limit, in-flight, buffered, throttled,
-  lock renewals) on the existing `Ark.MediatorFramework.Messaging` meter
-- **New**: Opt-in advanced tuning metrics on `Ark.MediatorFramework.Messaging.Advanced`,
-  gated by `MessagingProcessingOptions.AdvancedMetrics`
-- **Registration**: `AddArkMessagingInstrumentation()` and
-  `AddArkMessagingAdvancedInstrumentation()` in the new
-  `Ark.Tools.MediatorFramework.Messaging.OTel` package
-- **Benefit**: Alerting and autoscaling signal always available and cheap; tuning
-  detail costs nothing until it is asked for
-
 ## ✨ New Features & Enhancements
 
 ### Dependencies Modernized
@@ -138,10 +114,6 @@ Ark.Tools v6.0 is a major release focusing on modernization, performance, and tr
 - Default to System.Text.Json serialization
 - Newtonsoft.Json support requires manual configuration
 - Updated to ASP.NET Core 8.0/10.0
-
-### MediatorFramework Packages
-- New `Ark.Tools.MediatorFramework.Messaging.OTel` with the messaging meter
-  registration extensions
 
 ### ResourceWatcher Packages
 - Type-safe extensions with generic parameters
