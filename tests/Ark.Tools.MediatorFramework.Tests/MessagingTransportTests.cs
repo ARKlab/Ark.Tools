@@ -598,12 +598,23 @@ public abstract class MessagingTransportConformanceTests
         await transport.SendAsync(QueueName, new Dictionary<string, string>(StringComparer.Ordinal), _sequence(13), null, default).ConfigureAwait(false);
         var delivery = await source.ReceiveOneAsync(QueueName).ConfigureAwait(false);
 
-        var renew = Task.Run(async () => await delivery.RenewLockAsync(default).ConfigureAwait(false));
+        var renew = Task.Run(async () =>
+        {
+            try
+            {
+                await delivery.RenewLockAsync(default).ConfigureAwait(false);
+            }
+            catch (MessagingLockLostException)
+            {
+                // Losing the race to settlement is the expected outcome on a broker that drops the
+                // lock the moment the message is settled; only the settlement side is an invariant.
+            }
+        });
         var settle = Task.Run(async () => await delivery.CompleteAsync(default).ConfigureAwait(false));
         Func<Task> both = async () => await Task.WhenAll(renew, settle).ConfigureAwait(false);
 
-        // A renewal losing the race is fine; a settlement using a stale receipt is not, and would
-        // surface as a lock-lost failure rather than a silent redelivery.
+        // A settlement using a stale receipt is not fine, and would surface as a lock-lost failure
+        // rather than a silent redelivery.
         await both.Should().NotThrowAsync<MessagingLockLostException>().ConfigureAwait(false);
     }
 
