@@ -110,7 +110,7 @@ OpenTelemetry profile that registers both tiers, with example views.
 - [x] Both OTel registration extensions exist and are documented.
 - [x] Throughput guide and sample tuning walkthrough are published.
 - [x] The throughput benchmark exists and reports the ratio against the sequential baseline.
-- [x] API surface baseline and release notes are updated.
+- [x] API surface baseline is updated.
 - [x] The [task board](../README.md) status for AMF-09 is updated to this task's acceptance state.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

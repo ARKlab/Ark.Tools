@@ -77,6 +77,9 @@ document the observed concurrency in the sample readme.
 - Shutdown drains in-flight work, then abandons the remainder within
   `ShutdownTimeout`.
 - Settlement, retry and scoping semantics are byte-for-byte the previous ones.
+- Against the Storage Queue and Service Bus emulators: a backlog is drained
+  exactly once, renewal keeps the lock of a handler that outlives it, and a stop
+  hands buffered work back before the lock would have expired.
 
 ## Outcomes
 
@@ -89,6 +92,7 @@ document the observed concurrency in the sample readme.
 - [x] `MessagingProcessorHost` implements receive loop, bounded channel, worker pool and drain.
 - [x] The credit invariant is enforced and tested.
 - [x] Prefetch budget derives from concurrency and lock duration.
+- [x] Emulator boundary tests cover the host over both Azure transports.
 - [x] Native-processor transports bypass the pull runtime entirely.
 - [x] The [task board](../README.md) status for AMF-02 is updated to this task's acceptance state.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
