@@ -12,12 +12,21 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
     private const string _ownerPrefix = "ark.tools.mediator-framework:";
 
     private readonly ServiceBusAdministrationClient _administration;
+    private readonly ServiceBusMessagingOptions _options;
 
     /// <summary>Creates the management seam over an application-composed administration client.</summary>
     /// <param name="administration">The Service Bus administration client.</param>
-    public ServiceBusTransportManagement(ServiceBusAdministrationClient administration)
+    /// <param name="options">
+    /// The entity-shaping options, or <see langword="null"/> for the defaults. These are declared
+    /// once for the transport because they describe the namespace's entities, not a single message.
+    /// </param>
+    public ServiceBusTransportManagement(
+        ServiceBusAdministrationClient administration,
+        ServiceBusMessagingOptions? options = null)
     {
         _administration = administration ?? throw new ArgumentNullException(nameof(administration));
+        _options = options ?? new ServiceBusMessagingOptions();
+        _options.Validate();
     }
 
     /// <inheritdoc />
@@ -34,8 +43,14 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
         var options = new CreateQueueOptions(queue)
         {
             MaxDeliveryCount = maximumDeliveryCount,
-            UserMetadata = _owner(ownerIdentity)
+            UserMetadata = _owner(ownerIdentity),
+            EnablePartitioning = _options.EnablePartitioning,
+            LockDuration = _options.LockDuration
         };
+        if (_options.MaxSizeInMegabytes is { } maxSize)
+            options.MaxSizeInMegabytes = (int)maxSize;
+        if (_options.MaxMessageSizeInKilobytes is { } maxMessageSize)
+            options.MaxMessageSizeInKilobytes = maxMessageSize;
         try
         {
             _ = await _administration.CreateQueueAsync(options, ctk).ConfigureAwait(false);
@@ -207,10 +222,43 @@ public sealed class ServiceBusTransportManagement : IMessagingTransportManagemen
                     existing.Name));
         }
 
-        if (existing.MaxDeliveryCount == maximumDeliveryCount)
+        if (existing.EnablePartitioning != _options.EnablePartitioning)
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.ImmutableEntitySettingMismatch,
+                FormattableString.Invariant(
+                    $"Queue '{existing.Name}' has EnablePartitioning={existing.EnablePartitioning} but the transport declares EnablePartitioning={_options.EnablePartitioning}. Service Bus fixes partitioning when the entity is created, so the only fix is to delete and recreate the queue (draining or accepting the loss of its messages) or to change the declaration to match. On a Premium namespace partitioning is chosen when the namespace itself is created and cannot be enabled per entity afterwards."));
+        }
+
+        var updated = false;
+        if (existing.MaxDeliveryCount != maximumDeliveryCount)
+        {
+            existing.MaxDeliveryCount = maximumDeliveryCount;
+            updated = true;
+        }
+
+        if (existing.LockDuration != _options.LockDuration)
+        {
+            existing.LockDuration = _options.LockDuration;
+            updated = true;
+        }
+
+        if (_options.MaxSizeInMegabytes is { } maxSize && existing.MaxSizeInMegabytes != maxSize)
+        {
+            existing.MaxSizeInMegabytes = maxSize;
+            updated = true;
+        }
+
+        if (_options.MaxMessageSizeInKilobytes is { } maxMessageSize
+            && existing.MaxMessageSizeInKilobytes != maxMessageSize)
+        {
+            existing.MaxMessageSizeInKilobytes = maxMessageSize;
+            updated = true;
+        }
+
+        if (!updated)
             return;
 
-        existing.MaxDeliveryCount = maximumDeliveryCount;
         _ = await _administration.UpdateQueueAsync(existing, ctk).ConfigureAwait(false);
     }
 

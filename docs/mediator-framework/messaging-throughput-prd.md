@@ -434,7 +434,7 @@ Three separate waits, following Rebus's split but with finer granularity:
 
 | Situation | Wait |
 | --- | --- |
-| `ReceiveBatchAsync` returned 0 | Exponential with full jitter: `MinPollInterval` (default 50 ms) → `MaxPollInterval` (default 5 s), doubling per consecutive empty result. Reset to minimum on the first non-empty batch **for that receive loop** (not globally). |
+| `ReceiveBatchAsync` returned 0 | Exponential with full jitter: `MinPollInterval` (default 50 ms) → `MaxPollInterval` (default 30 s), doubling per consecutive empty result. Reset to minimum on the first non-empty batch **for that receive loop** (not globally). |
 | No credit available | Do not poll at all; await channel capacity. No timer, no wasted call. |
 | Transport error | Fixed cooldown (default 10 s, jittered), independent of the empty-backoff state, with structured logging. |
 
@@ -478,7 +478,7 @@ call completes. No batch settle: the SDKs do not offer one.
 
 | Transport | Seam | Notes |
 | --- | --- | --- |
-| **Azure Service Bus** | `IMessagingMessageSource` over `ServiceBusReceiver.ReceiveMessagesAsync` — no `ServiceBusProcessor` (§4.3, §15.4) | `ReceiveMode = PeekLock`; `PrefetchCount = 0`, because the framework's bounded channel is the buffer and, unlike the AMQP one, its locks are renewable; `maxMessages` ← min(credit, batch cap, default 100 — the service imposes none); `maxWaitTime` ← the backoff window, served link-side. Settlement and `RenewMessageLockAsync` are called explicitly by the host. Concurrency is framework-side worker count, so lowering the limit never cancels an in-flight handler. `SupportsServerSideWait = true`, `SupportsLockRenewal = true`, `NativeLockDuration` read from the entity. `ReceiveChannels > 1` opens additional receivers (separate links) — the measured scaling lever; very high rates additionally fan out over N `ServiceBusClient` instances (separate AMQP connections). |
+| **Azure Service Bus** | `IMessagingMessageSource` over `ServiceBusReceiver.ReceiveMessagesAsync` — no `ServiceBusProcessor` (§4.3, §15.4) | `ReceiveMode = PeekLock`; `PrefetchCount = 0`, because the framework's bounded channel is the buffer and, unlike the AMQP one, its locks are renewable; `maxMessages` ← min(credit, optional batch cap — the service imposes none, and none is declared by default, so the credit derived from the concurrency limit is the only bound); `maxWaitTime` ← the backoff window, served link-side. Settlement and `RenewMessageLockAsync` are called explicitly by the host. Concurrency is framework-side worker count, so lowering the limit never cancels an in-flight handler. `SupportsServerSideWait = true`, `SupportsLockRenewal = true`, `NativeLockDuration` read from the entity. `ReceiveChannels > 1` opens additional receivers (separate links) — the measured scaling lever; very high rates additionally fan out over N `ServiceBusClient` instances (separate AMQP connections). |
 | **Azure Storage Queues** | `IMessagingMessageSource` | `MaximumBatchSize = 32`, `SupportsServerSideWait = false`, `SupportsLockRenewal = true` (via `UpdateMessage`), `NativeLockDuration` = configured visibility timeout. Biggest single win in the whole PRD: 32× fewer receive transactions. Poison-queue handling stays as-is. |
 | **In-memory** | `IMessagingMessageSource` | Must implement batch + empty-return honestly so tests exercise the same code path as production, and must support a fake `IClock` so the controller and backoff are deterministically testable. |
 | **Azure Functions** | None — host-owned | The framework registers **no** hosted service and **fails startup** if a processor host is composed. Sending/publishing via `IBus` is unchanged, so a Function app is a first-class producer with zero changes. Guide documents `host.json` (`maxConcurrentCalls`, `prefetchCount`, `dynamicConcurrency`) as the tuning surface, and that `MaximumHandlerDuration` must fit the function timeout. |
@@ -545,7 +545,7 @@ from runtime setup/configuration binding:
 | `MaximumPrefetch` | `8 × MaxConcurrency` | Absolute buffer cap. |
 | `LockSafetyFactor` | 0.5 | Fraction of lock duration the buffer may consume. |
 | `ReceiveChannels` | 1 | Parallel receive loops per queue. |
-| `MinPollInterval` / `MaxPollInterval` | 50 ms / 5 s | Idle backoff bounds. |
+| `MinPollInterval` / `MaxPollInterval` | 50 ms / 30 s | Idle backoff bounds. |
 | `ErrorCooldown` | 10 s | Transport-error wait. |
 | `ShutdownTimeout` | 30 s | Drain window before abandoning in-flight work. |
 | `AdvancedMetrics` | `false` | Enables the diagnostic instrument set (§10). |
@@ -821,7 +821,7 @@ existing AZM task rules.
 | [`AMF-06`](progress/tasks/messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive (32), renewal/settle race fix, adaptive visibility | `AMF-01`–`AMF-04` |
 | [`AMF-07`](progress/tasks/messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver`, explicit settlement/renewal, multi-receiver and multi-client fan-out | `AMF-01`–`AMF-05` |
 | [`AMF-08`](progress/tasks/messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration: partitioning, lock duration, reconciler mismatch diagnostics | `AMF-07` |
-| [`AMF-09`](progress/tasks/messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics + OTel opt-in extension, guide, sample tuning walkthrough, throughput smoke test, API surface baseline | all |
+| [`AMF-09`](progress/tasks/messaging/AMF-09-metrics-guide-and-throughput-benchmark.md) | Two-tier metrics + OTel opt-in extension, guide, sample tuning walkthrough, throughput benchmark, API surface baseline | all |
 
 ## 17. Decisions
 

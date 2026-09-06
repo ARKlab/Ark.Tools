@@ -211,21 +211,25 @@ services.ConfigureArkMessaging(
 
 It supports send, scheduled send, publish/subscription fan-out, PeekLock
 settlement, delivery counts, lock expiry, and a readable dead-letter store.
-`MessagingReceivePump` runs its receive loop for tests or custom hosts; it is
-not an Azure Functions hosting mechanism. Registration validates the transport
-capabilities against each network and fails immediately when a required
-capability is missing.
+Registration validates the transport capabilities against each network and fails
+immediately when a required capability is missing.
 
-Producer-only hosts compose the generated descriptor without taking a Functions
-dependency:
+### Sending versus processing
 
-The producer mode is selected through the same fluent call and does not register
-dispatch, triggers, queues, subscriptions, or a receive pump.
+Messaging has two seams, and a host uses only what it needs: `IMessagingTransport`
+sends, and `IMessagingMessageSource` pulls locked deliveries.
 
-This registers only the restricted bus and its outgoing runtime. It does not
-register dispatch, triggers, queues, subscriptions, or a receive pump.
-Publisher-owned topics are still reconciled when lifecycle management is
-enabled.
+**Azure Functions receivers use neither pull loop.** They keep their generated
+triggers and the Functions host's own concurrency. Composing a processor host
+inside a Functions host fails startup with the `ProcessorHostInTriggeredHost`
+diagnostic. Use a processor host in a long-running worker instead — see
+[Messaging processing](messaging-processing.md) for how to run and tune one.
+
+Producer-only hosts select the producer mode through the same fluent call. That
+registers only the restricted bus and its outgoing runtime — no dispatch,
+triggers, queues, subscriptions, or message source — and takes no Functions
+dependency. Publisher-owned topics are still reconciled when lifecycle
+management is enabled.
 
 ### Generate a Service Bus receive trigger
 
@@ -461,14 +465,14 @@ dispatch and is never persisted as a separate message.
 
 Applications register second-level handlers as regular
 `ICommandHandler` implementations that handle `MessagingFailed<T>`. InMemory custom hosts map the participant policy
-to the native queue limit and delay before starting the pump:
+to the native queue limit and delay before starting the receive loop:
 
 ```csharp
 transport.ConfigureRetry(participantIdentity, retryPolicy);
 ```
 
-Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into
-`MessagingReceivePump` (or an equivalent locked trigger) with the participant's
+Receive hosts wire `MessagingDispatcher.OnDeliveryAsync` into the processor host
+receive loop (or an equivalent locked trigger) with the participant's
 generated normal and `DispatchFailedAsync` binders. Each stage gets a fresh
 `AsyncScopedLifestyle` scope, and the dispatcher renews the transport lock
 while the bounded handler-duration token is active. A successful stage is
@@ -716,7 +720,7 @@ Set an empty Functions route prefix when the generated route already includes
 }
 ```
 
-## 6. Understand the Rebus boundary
+## 7. Understand the Rebus boundary
 
 The Functions process:
 
@@ -744,7 +748,7 @@ native participants cannot exchange messages because their headers and persisted
 wire formats are incompatible, and they must not share queues, topics,
 subscriptions, or outbox rows.
 
-## 6. Authentication and supported features
+## 8. Authentication and supported features
 
 Every generated trigger is `AuthorizationLevel.Anonymous`; ASP.NET Core
 authentication and authorization still enforce the application policy. Never
@@ -772,7 +776,7 @@ before the producer completes and that client disconnect cancels the handler
 `ClientDisconnectCancelsStreamingHandler`). Responses stream through the
 ASP.NET Core integration without buffering the complete payload.
 
-## 7. Test the boundary
+## 9. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test
 must launch the built host with a dynamically allocated loopback port, wait for
@@ -784,7 +788,7 @@ The repository boundary project is
 also covers its sender composition in
 [`AzureFunctionsRebusTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).
 
-# Logical names and provider entities
+## Logical names and provider entities
 
 Messaging contracts, participants, networks, topics, and subscriptions use
 lowercase logical names. Names are non-empty and may contain letters, digits,
@@ -801,7 +805,7 @@ hash suffix, so distinct logical names do not silently share an address.
 `FormerNames` are receive-only aliases and never create topology resources;
 renaming a publisher or current contract name requires explicit migration.
 
-# Messaging metrics
+## Messaging metrics
 
 Native messaging metrics use the stable OpenTelemetry messaging semantic
 conventions version 1.37.0 and the `Ark.MediatorFramework.Messaging` meter.

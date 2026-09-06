@@ -153,10 +153,35 @@ by default and remain inert until a listener or provider subscribes.
 | `messaging.message.time_in_queue` | `s` histogram | Bounded topology attributes plus `messaging.process.result` | Only when a valid sent timestamp is available; negative values are clamped to zero. |
 | `messaging.process.messages` | `{message}` counter | Bounded topology attributes plus `messaging.process.result` | One count for each final complete, abandon, or dead-letter outcome. |
 | `messaging.process.attempts` | `{attempt}` histogram | Bounded topology attributes plus `messaging.process.result` | Native delivery count only; absent when the transport does not provide a positive count. |
+| `messaging.process.concurrency.limit` | `{worker}` up-down counter | `messaging.system`, `messaging.destination.name`, `ark.participant` | Delta on every limit change; returns to zero when the host stops. |
+| `messaging.process.in_flight` | `{message}` up-down counter | Same | Delta as a worker takes and releases a delivery. |
+| `messaging.process.buffered` | `{message}` up-down counter | Same | Delta as a delivery enters and leaves the prefetch buffer. |
+| `messaging.process.throttled` | `{event}` counter | Same | One count per broker throttling response observed by the host. |
+| `messaging.process.lock_renewals` | `{renewal}` counter | Same plus `outcome` (`renewed`, `lost`) | One count per renewal attempt. |
+
+Registration: `AddArkMessagingInstrumentation()` from
+`Ark.Tools.MediatorFramework.Messaging.OTel`.
+
+#### Advanced tier (opt-in)
+
+Meter: `Ark.MediatorFramework.Messaging.Advanced`, registered with
+`AddArkMessagingAdvancedInstrumentation()`, which also sets
+`MessagingProcessingOptions.AdvancedMetrics`. While that flag is false the
+measurements are not computed at all.
+
+| Instrument | Unit | Attributes | Emission |
+|---|---|---|---|
+| `messaging.receive.batch.size` | `{message}` histogram | `messaging.system`, `messaging.destination.name`, `ark.participant` | One record per successful receive call, zero included. |
+| `messaging.receive.empty` | `{receive}` counter | Same | One count per receive that returned nothing. |
+| `messaging.receive.backoff.interval` | `s` histogram | Same | The idle wait applied after an empty receive. |
+| `messaging.process.queue_wait` | `s` histogram | Same | Buffer entry to handler start. |
+| `messaging.process.settle.duration` | `s` histogram | Same | Settlement calls on transports that renew locks. |
+| `messaging.concurrency.gradient` | `1` histogram | Same | One record per control interval. |
+| `messaging.concurrency.decision` | `{decision}` counter | Same plus `reason` | One count per limit change. |
 
 Message IDs, correlation IDs, attachment IDs, exception messages, and stack
-traces are never metric attributes. The sample registers this meter only in its
-opt-in OpenTelemetry profile; an exporter is not required.
+traces are never metric attributes, on either tier. The sample registers these
+meters only in its opt-in OpenTelemetry profile; an exporter is not required.
 
 ### Outbox
 

@@ -84,15 +84,12 @@ public sealed partial class MessagingBusTests
         using var bus = _createBus(transport, MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend, clock);
 
         await bus.Defer(new TestMessage { Value = "scheduled" }, TimeSpan.FromMinutes(1)).ConfigureAwait(false);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var enumerator = transport.ReceiveAsync("processor", cts.Token).GetAsyncEnumerator(cts.Token);
-        var move = enumerator.MoveNextAsync().AsTask();
-        await Task.Delay(1, cts.Token).ConfigureAwait(false);
-        move.IsCompleted.Should().BeFalse();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        (await transport.ReceiveBatchAsync("processor", 1, TimeSpan.Zero, cts.Token).ConfigureAwait(false))
+            .Should().BeEmpty();
         clock.Advance(Duration.FromMinutes(1));
-        (await move.ConfigureAwait(false)).Should().BeTrue();
-        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
-        await enumerator.DisposeAsync().ConfigureAwait(false);
+        var scheduled = await transport.ReceiveOneAsync("processor", ctk: cts.Token).ConfigureAwait(false);
+        await scheduled.CompleteAsync(default).ConfigureAwait(false);
 
         using var noSchedule = _createBus(transport, MessagingCapabilities.SendReceive, clock);
         Func<Task> action = () => noSchedule.Defer(new TestMessage(), TimeSpan.Zero, cancellationToken: cts.Token);
@@ -202,12 +199,10 @@ public sealed partial class MessagingBusTests
     }
 
     private static async Task<IMessagingLockedDelivery> _receiveOnce(
-        IMessagingReceiveTransport transport,
+        IMessagingMessageSource source,
         string queue)
     {
-        await foreach (var delivery in transport.ReceiveAsync(queue, CancellationToken.None).ConfigureAwait(false))
-            return delivery;
-        throw new InvalidOperationException("The receive stream ended without a delivery.");
+        return await source.ReceiveOneAsync(queue).ConfigureAwait(false);
     }
 
     private sealed class TestMessage

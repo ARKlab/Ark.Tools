@@ -40,6 +40,10 @@ internal sealed class ServiceBusMessagingLockedDelivery : IMessagingLockedDelive
 
     public int DeliveryCount => _message.DeliveryCount;
 
+    public string DeliveryId => _message.MessageId;
+
+    public DateTimeOffset? LockedUntil => _message.LockedUntil;
+
     public async Task RenewLockAsync(CancellationToken ctk)
     {
         await _actions.RenewMessageLockAsync(_message, ctk).ConfigureAwait(false);

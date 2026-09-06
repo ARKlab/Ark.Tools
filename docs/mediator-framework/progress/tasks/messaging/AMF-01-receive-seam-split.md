@@ -98,11 +98,11 @@ unchanged at this task; only the wiring moves.
 
 ## Acceptance
 
-- [ ] Pull seam, capability record and processing options are public and documented.
-- [ ] `LockedUntil` and `DeliveryId` are required and implemented everywhere.
-- [ ] `IMessagingReceiveTransport` and `MessagingReceivePump` are removed with no adapter.
-- [ ] In-memory, Storage Queue and Service Bus transports implement the new seam.
-- [ ] API surface baseline is updated.
-- [ ] The [task board](../README.md) status for AMF-01 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Pull seam, capability record and processing options are public and documented.
+- [x] `LockedUntil` and `DeliveryId` are required and implemented everywhere.
+- [x] `IMessagingReceiveTransport` and `MessagingReceivePump` are removed with no adapter.
+- [x] In-memory, Storage Queue and Service Bus transports implement the new seam.
+- [x] API surface baseline is updated (contract snapshots unchanged: no message contracts changed).
+- [x] The [task board](../README.md) status for AMF-01 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

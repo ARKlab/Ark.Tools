@@ -40,6 +40,10 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// <param name="dataBus">The shared network DataBus.</param>
     /// <param name="transport">The runtime Azure transport selection.</param>
     /// <param name="storageQueueHostSettings">Effective Queue host settings, when applicable.</param>
+    /// <param name="serviceBusOptions">
+    /// Entity-shaping options for Service Bus provisioning, or <see langword="null"/> for the
+    /// defaults. Bind these from configuration to reshape a deployment without a rebuild.
+    /// </param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
@@ -48,7 +52,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
         MessagingFunctionsRuntimeTransport transport,
-        StorageQueueFunctionsHostSettings? storageQueueHostSettings = null)
+        StorageQueueFunctionsHostSettings? storageQueueHostSettings = null,
+        ServiceBusMessagingOptions? serviceBusOptions = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(container);
@@ -59,7 +64,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         return transport switch
         {
             MessagingFunctionsRuntimeTransport.AzureServiceBus =>
-                _addServiceBus(services, container, configuration, manifest, dataBus),
+                _addServiceBus(services, container, configuration, manifest, dataBus, serviceBusOptions),
             MessagingFunctionsRuntimeTransport.AzureStorageQueue =>
                 _addStorageQueue(
                     services,
@@ -127,6 +132,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             container.GetInstance);
         _registerBusBridge(services, container);
         services.AddSingleton(manifest);
+        services.AddSingleton(MessagingTriggeredHostMarker.Instance);
 
         if (!descriptor.Receives)
             return services;
@@ -196,8 +202,11 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
-        IMessagingDataBus dataBus)
+        IMessagingDataBus dataBus,
+        ServiceBusMessagingOptions? serviceBusOptions)
     {
+        serviceBusOptions ??= new ServiceBusMessagingOptions();
+        serviceBusOptions.Validate();
         var connection = configuration[manifest.ConnectionConfigurationKey];
         var fullyQualifiedNamespace = configuration[
             string.Concat(manifest.ConnectionConfigurationKey, ":fullyQualifiedNamespace")];
@@ -227,13 +236,13 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             administration = new ServiceBusAdministrationClient(serviceNamespace, credential);
         }
 
-        var transport = new ServiceBusMessagingTransport(client);
+        var transport = new ServiceBusMessagingTransport(client, lockDuration: serviceBusOptions.LockDuration);
         services.AddArkMessagingFunctionsHost(
             container,
             manifest,
             transport,
             dataBus,
-            new ServiceBusTransportManagement(administration));
+            new ServiceBusTransportManagement(administration, serviceBusOptions));
         services.AddSingleton<IHostedService>(_ => new ServiceBusTransportLifetime(transport));
         return services;
 #pragma warning restore CA2000

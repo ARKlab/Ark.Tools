@@ -34,7 +34,7 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
     protected override MessagingCapabilities Capabilities =>
         MessagingCapabilities.SendReceive | MessagingCapabilities.ScheduledSend;
 
-    protected override IMessagingReceiveTransport CreateTransport()
+    protected override IMessagingTransport CreateTransport()
     {
         return new StorageQueueMessagingTransport(
             _service,
@@ -69,13 +69,11 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
             new ReadOnlySequence<byte>(new byte[] { 1 }),
             DateTimeOffset.UtcNow.AddSeconds(2),
             default).ConfigureAwait(false);
-#pragma warning disable MA0004 // The test disposes the enumerator at the end of the method.
-        await using var enumerator = transport.ReceiveAsync(_queue, default).GetAsyncEnumerator();
-#pragma warning restore MA0004
+        var delivery = await ((IMessagingMessageSource)transport).ReceiveOneAsync(_queue, TimeSpan.FromSeconds(30))
+            .ConfigureAwait(false);
 
-        (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
         stopwatch.Elapsed.Should().BeGreaterThan(TimeSpan.FromSeconds(1));
-        await enumerator.Current.CompleteAsync(default).ConfigureAwait(false);
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -89,13 +87,9 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
             new ReadOnlySequence<byte>(new byte[] { 1, 2, 3 }),
             null,
             default).ConfigureAwait(false);
-#pragma warning disable MA0004 // The test disposes the enumerator at the end of the method.
-        await using var enumerator = transport.ReceiveAsync(_queue, default).GetAsyncEnumerator();
-#pragma warning restore MA0004
-        (await enumerator.MoveNextAsync().ConfigureAwait(false)).Should().BeTrue();
+        var delivery = await ((IMessagingMessageSource)transport).ReceiveOneAsync(_queue).ConfigureAwait(false);
 
-        await enumerator.Current.DeadLetterAsync("failed", "description", default)
-            .ConfigureAwait(false);
+        await delivery.DeadLetterAsync("failed", "description", default).ConfigureAwait(false);
 
         var poison = await _service.GetQueueClient(_queue + "-poison")
             .ReceiveMessageAsync(cancellationToken: default).ConfigureAwait(false);

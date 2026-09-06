@@ -44,8 +44,11 @@ change them without a rebuild.
 
 ## Implementation steps
 
-1. Add the throughput options to the transport builder and to
-   `MessagingResourceManifest`, with the PRD's defaults.
+1. Add the throughput options to the transport builder, with the PRD's defaults.
+   They are declared on the transport rather than on `MessagingResourceManifest`
+   because they describe the namespace's entities for the whole host, while the
+   manifest is generated per participant; putting them on the manifest would have
+   meant regenerating every participant to change a deployment setting.
 2. Bind the options from configuration and validate them at composition time with
    named diagnostics.
 3. Apply `EnablePartitioning` and `LockDuration` in `EnsureQueueAsync` at create
@@ -96,10 +99,10 @@ show the mismatch diagnostic in the sample readme.
 
 ## Acceptance
 
-- [ ] Throughput options exist on the transport declaration and bind from configuration.
-- [ ] Partitioning is applied at create time and never silently ignored.
-- [ ] The mismatch diagnostic names entity, values and remediation.
-- [ ] Lock duration is reconciled and validated against processing options.
-- [ ] The [task board](../README.md) status for AMF-08 is updated to this task's acceptance state.
+- [x] Throughput options exist on the transport declaration and bind from configuration.
+- [x] Partitioning is applied at create time and never silently ignored.
+- [x] The mismatch diagnostic names entity, values and remediation.
+- [x] Lock duration is reconciled and validated against processing options.
+- [x] The [task board](../README.md) status for AMF-08 is updated to this task's acceptance state.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

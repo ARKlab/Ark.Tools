@@ -32,8 +32,8 @@ public sealed class MessagingDispatcher
         Task>? _dispatchFailed;
     private readonly IReadOnlyList<Type> _incomingStepTypes;
     private readonly Func<Type, object> _resolveStep;
-    private readonly TimeSpan _lockRenewalInterval;
     private readonly IClock _clock;
+    private readonly IMessagingConcurrencyController? _concurrency;
 
     /// <summary>Creates a receive dispatcher for one participant.</summary>
     /// <param name="container">The participant's SimpleInjector container.</param>
@@ -44,8 +44,8 @@ public sealed class MessagingDispatcher
     /// <param name="dispatchFailed">The generated inline failure binder, when installed.</param>
     /// <param name="incomingStepTypes">The incoming pipeline steps in execution order.</param>
     /// <param name="resolveStep">The pipeline step resolver.</param>
-    /// <param name="lockRenewalInterval">The bounded interval between lock renewals.</param>
     /// <param name="clock">The clock used for processing metrics.</param>
+    /// <param name="concurrencyController">The host concurrency controller notified of adverse signals.</param>
     public MessagingDispatcher(
         Container container,
         MessagingHeaderProcessor headerProcessor,
@@ -62,8 +62,8 @@ public sealed class MessagingDispatcher
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
         Func<Type, object>? resolveStep = null,
-        TimeSpan? lockRenewalInterval = null,
-        IClock? clock = null)
+        IClock? clock = null,
+        IMessagingConcurrencyController? concurrencyController = null)
     {
         _container = container ?? throw new ArgumentNullException(nameof(container));
         _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
@@ -79,10 +79,8 @@ public sealed class MessagingDispatcher
         _incomingStepTypes = new ReadOnlyCollection<Type>(
             (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
         _resolveStep = resolveStep ?? container.GetInstance;
-        _lockRenewalInterval = lockRenewalInterval ?? TimeSpan.FromSeconds(15);
         _clock = clock ?? SystemClock.Instance;
-        if (_lockRenewalInterval <= TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(lockRenewalInterval));
+        _concurrency = concurrencyController;
     }
 
     /// <summary>Processes one locked delivery and applies exactly one settlement.</summary>
@@ -128,7 +126,7 @@ public sealed class MessagingDispatcher
                     logicalName,
                     payload,
                     error!,
-                    cancellationToken).ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
                 decision = secondLevel.Decision;
                 error = secondLevel.Error ?? error;
             }
@@ -147,6 +145,19 @@ public sealed class MessagingDispatcher
                 logicalName,
                 delivery.DeliveryCount,
                 decision);
+        }
+        catch (MessagingBackpressureException exception)
+        {
+            // Backpressure is not a failure: the message is fine, this host is simply asking for less
+            // work, so the delivery goes back to the queue and the limit halves.
+            outcome = "abandon";
+            _concurrency?.ReportSignal(MessagingConcurrencySignal.DownstreamBackpressure);
+            _logger.Warn(
+                exception,
+                CultureInfo.InvariantCulture,
+                "Messaging delivery signalled downstream backpressure; abandoning with retry delay {RetryDelay}.",
+                exception.RetryDelay);
+            await delivery.AbandonAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (MessagingFailFastException exception)
         {
@@ -183,7 +194,6 @@ public sealed class MessagingDispatcher
         try
         {
             await _invokeStageAsync(
-                delivery,
                 async stageToken =>
                 {
 #pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
@@ -202,6 +212,7 @@ public sealed class MessagingDispatcher
                         () => _dispatch(logicalName, payload, processor, stageToken),
                         stageToken).ConfigureAwait(false);
                 },
+                _retryPolicy.MaximumHandlerDuration,
                 cancellationToken).ConfigureAwait(false);
             return null;
         }
@@ -209,9 +220,25 @@ public sealed class MessagingDispatcher
         {
             throw;
         }
+        catch (MessagingBackpressureException)
+        {
+            throw;
+        }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
+        }
+        catch (OperationCanceledException exception)
+        {
+            // The host token is not cancelled, so the stage hit MaximumHandlerDuration.
+            _concurrency?.ReportSignal(MessagingConcurrencySignal.HandlerTimeout);
+            var timeout = MessagingExceptionInfo.From(exception);
+            _logger.Warn(
+                exception,
+                CultureInfo.InvariantCulture,
+                "Messaging delivery exceeded the maximum handler duration of {MaximumHandlerDuration}.",
+                _retryPolicy.MaximumHandlerDuration);
+            return timeout;
         }
         catch (Exception exception)
         {
@@ -239,7 +266,6 @@ public sealed class MessagingDispatcher
         try
         {
             await _invokeStageAsync(
-                delivery,
                 async stageToken =>
                 {
 #pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
@@ -254,6 +280,7 @@ public sealed class MessagingDispatcher
                         processor,
                         stageToken).ConfigureAwait(false);
                 },
+                _retryPolicy.MaximumHandlerDuration,
                 cancellationToken).ConfigureAwait(false);
             return (MessagingSettlementDecision.Complete, null);
         }
@@ -299,54 +326,17 @@ public sealed class MessagingDispatcher
 #pragma warning restore ERP022
     }
 
-    private async Task _invokeStageAsync(
-        IMessagingLockedDelivery delivery,
+    private static async Task _invokeStageAsync(
         Func<CancellationToken, Task> stage,
+        TimeSpan maximumHandlerDuration,
         CancellationToken cancellationToken)
     {
+        // Lock renewal is the host renewer's job (it starts at buffer entry), so a stage only bounds
+        // the handler and honours the token the host handed it.
         using var stageCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        stageCancellation.CancelAfter(_retryPolicy.MaximumHandlerDuration);
-        using var renewalCancellation = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            stageCancellation.Token);
-        var renewal = _renewLockAsync(delivery, renewalCancellation.Token);
-        Exception? renewalFailure = null;
-        try
-        {
-            await stage(stageCancellation.Token).ConfigureAwait(false);
-            stageCancellation.Token.ThrowIfCancellationRequested();
-        }
-        finally
-        {
-            await renewalCancellation.CancelAsync().ConfigureAwait(false);
-            try
-            {
-                await renewal.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException exception)
-            {
-                if (!renewalCancellation.IsCancellationRequested)
-                    renewalFailure = exception;
-            }
-            catch (Exception exception)
-            {
-                renewalFailure = exception;
-            }
-        }
-
-        if (renewalFailure is not null)
-            global::System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(renewalFailure).Throw();
-    }
-
-    private async Task _renewLockAsync(
-        IMessagingLockedDelivery delivery,
-        CancellationToken cancellationToken)
-    {
-        while (true)
-        {
-            await Task.Delay(_lockRenewalInterval, cancellationToken).ConfigureAwait(false);
-            await delivery.RenewLockAsync(cancellationToken).ConfigureAwait(false);
-        }
+        stageCancellation.CancelAfter(maximumHandlerDuration);
+        await stage(stageCancellation.Token).ConfigureAwait(false);
+        stageCancellation.Token.ThrowIfCancellationRequested();
     }
 
     private static async Task _settleAsync(
@@ -367,7 +357,7 @@ public sealed class MessagingDispatcher
                 await delivery.DeadLetterAsync(
                     error?.ExceptionType ?? "fail-fast",
                     error?.Message ?? string.Empty,
-                    cancellationToken).ConfigureAwait(false);
+                cancellationToken).ConfigureAwait(false);
                 break;
             default:
                 throw new InvalidOperationException("Second-level dispatch must be resolved before settlement.");
