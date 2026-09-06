@@ -87,7 +87,7 @@ instead of waiting out a client sleep.
 | Handlers are slow and messages lose their lock | Raise the entity lock duration, or lower `MaximumPrefetch` | A delivery waiting in the buffer holds a lock; only renewable transports extend it |
 | A downstream dependency is being overwhelmed | Lower `MaximumConcurrency`, or throw `MessagingBackpressureException` | The limit is an upper bound the controller may not exceed |
 | Throughput plateaus below expectations | Raise `MaximumConcurrency` and `PrefetchMultiplier` | Growth stops at the first of these caps to bind |
-| Idle queue costs too many broker transactions | Raise `MaxPollInterval` | Bounds the idle poll rate; also the maximum idle latency on transports without server-side wait |
+| Idle queue costs too many broker transactions | Raise `MaxPollInterval` | Bounds the idle poll rate; also the maximum idle latency on transports without server-side wait. Past ~30 s the saving per added second of latency becomes negligible |
 | First message after idle arrives too late | Lower `MaxPollInterval` | Caps the sleep between polls |
 | A transport outage produces a warning storm | Raise `ErrorCooldown` | Applied after transport errors only, never to empty results |
 | Restarts drop work back to the queue | Raise `ShutdownTimeout` | The drain window before unprocessed deliveries are abandoned |
@@ -131,7 +131,7 @@ with the `ProcessingOptionsInvalid` diagnostic.
 | --- | --- | --- |
 | `ReceiveWaitTime` | 1 s | Maximum wait asked of the broker per receive |
 | `MinPollInterval` | 50 ms | Shortest wait after an empty result |
-| `MaxPollInterval` | 5 s | Longest wait after consecutive empty results, and the maximum idle latency |
+| `MaxPollInterval` | 30 s | Longest wait after consecutive empty results, and the maximum idle latency |
 | `ErrorCooldown` | 10 s | Jittered pause after a transport error |
 
 ### Lock renewal

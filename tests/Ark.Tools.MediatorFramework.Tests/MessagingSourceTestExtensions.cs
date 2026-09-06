@@ -9,7 +9,13 @@ namespace Ark.Tools.MediatorFramework.Tests;
 internal static class MessagingSourceTestExtensions
 {
     private static readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan _emptyPollInterval = TimeSpan.FromMilliseconds(50);
+
+    // Test-scale bounds for the real backoff: the production defaults would outlast the timeout.
+    private static readonly MessagingProcessingOptions _pollOptions = new()
+    {
+        MinPollInterval = TimeSpan.FromMilliseconds(2),
+        MaxPollInterval = TimeSpan.FromMilliseconds(200)
+    };
 
     /// <summary>Receives exactly one delivery, polling until the timeout elapses.</summary>
     public static async Task<IMessagingLockedDelivery> ReceiveOneAsync(
@@ -21,6 +27,7 @@ internal static class MessagingSourceTestExtensions
         ArgumentNullException.ThrowIfNull(source);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctk);
         cts.CancelAfter(timeout ?? _defaultTimeout);
+        var backoff = new MessagingReceiveBackoff(_pollOptions);
         while (true)
         {
             var batch = await source
@@ -30,9 +37,9 @@ internal static class MessagingSourceTestExtensions
                 return batch[0];
 
             // A source without server-side wait returns immediately on an empty queue, so the
-            // caller owns the poll interval.
+            // caller owns the wait — and grows it per empty result, as every receive is billed.
             if (!source.ReceiverCapabilities.SupportsServerSideWait)
-                await Task.Delay(_emptyPollInterval, cts.Token).ConfigureAwait(false);
+                await Task.Delay(backoff._sample(backoff._onEmpty()), cts.Token).ConfigureAwait(false);
         }
     }
 

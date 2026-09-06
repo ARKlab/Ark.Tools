@@ -434,7 +434,7 @@ Three separate waits, following Rebus's split but with finer granularity:
 
 | Situation | Wait |
 | --- | --- |
-| `ReceiveBatchAsync` returned 0 | Exponential with full jitter: `MinPollInterval` (default 50 ms) → `MaxPollInterval` (default 5 s), doubling per consecutive empty result. Reset to minimum on the first non-empty batch **for that receive loop** (not globally). |
+| `ReceiveBatchAsync` returned 0 | Exponential with full jitter: `MinPollInterval` (default 50 ms) → `MaxPollInterval` (default 30 s), doubling per consecutive empty result. Reset to minimum on the first non-empty batch **for that receive loop** (not globally). |
 | No credit available | Do not poll at all; await channel capacity. No timer, no wasted call. |
 | Transport error | Fixed cooldown (default 10 s, jittered), independent of the empty-backoff state, with structured logging. |
 
@@ -545,7 +545,7 @@ from runtime setup/configuration binding:
 | `MaximumPrefetch` | `8 × MaxConcurrency` | Absolute buffer cap. |
 | `LockSafetyFactor` | 0.5 | Fraction of lock duration the buffer may consume. |
 | `ReceiveChannels` | 1 | Parallel receive loops per queue. |
-| `MinPollInterval` / `MaxPollInterval` | 50 ms / 5 s | Idle backoff bounds. |
+| `MinPollInterval` / `MaxPollInterval` | 50 ms / 30 s | Idle backoff bounds. |
 | `ErrorCooldown` | 10 s | Transport-error wait. |
 | `ShutdownTimeout` | 30 s | Drain window before abandoning in-flight work. |
 | `AdvancedMetrics` | `false` | Enables the diagnostic instrument set (§10). |

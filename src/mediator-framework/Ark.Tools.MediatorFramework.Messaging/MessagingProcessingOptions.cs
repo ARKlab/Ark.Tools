@@ -22,7 +22,7 @@ public sealed class MessagingProcessingOptions
     private TimeSpan _expectedHandlerDuration = TimeSpan.FromSeconds(1);
     private TimeSpan _receiveWaitTime = TimeSpan.FromSeconds(1);
     private TimeSpan _minPollInterval = TimeSpan.FromMilliseconds(50);
-    private TimeSpan _maxPollInterval = TimeSpan.FromSeconds(5);
+    private TimeSpan _maxPollInterval = TimeSpan.FromSeconds(30);
     private TimeSpan _errorCooldown = TimeSpan.FromSeconds(10);
     private TimeSpan _renewalSafetyMargin = TimeSpan.FromSeconds(10);
     private TimeSpan _renewalScanInterval = TimeSpan.FromSeconds(1);
@@ -156,6 +156,10 @@ public sealed class MessagingProcessingOptions
     }
 
     /// <summary>Gets or sets the shortest wait after an empty result. Defaults to fifty milliseconds.</summary>
+    /// <remarks>
+    /// This is the hot-spin floor: it is only paid by the first empty result after a busy period,
+    /// so a queue that is actually working never has more than this added to its latency.
+    /// </remarks>
     public TimeSpan MinPollInterval
     {
         get => _minPollInterval;
@@ -166,10 +170,26 @@ public sealed class MessagingProcessingOptions
         }
     }
 
-    /// <summary>Gets or sets the longest wait after consecutive empty results. Defaults to five seconds.</summary>
+    /// <summary>Gets or sets the longest wait after consecutive empty results. Defaults to thirty seconds.</summary>
     /// <remarks>
+    /// <para>
+    /// The wait doubles per consecutive empty result from <see cref="MinPollInterval"/> to this
+    /// value, so an idle queue settles into the cheap regime within about a minute while a busy one
+    /// never leaves the floor. Every broker receive is a billed transaction, and the default trades
+    /// the two against each other: at the ceiling an idle queue costs roughly one receive every
+    /// fifteen seconds (full jitter averages half the cap) instead of twenty per second.
+    /// </para>
+    /// <para>
+    /// Thirty seconds is the point of diminishing returns. Going from five to thirty seconds removes
+    /// about 83 % of the remaining idle transactions; going from thirty to sixty removes half of
+    /// what is left — an amount too small to matter — while doubling the delay before a rare message
+    /// is picked up. Thirty seconds is still within what a human accepts for background processing;
+    /// raise it for queues nobody waits on, and lower it for queues a person is watching.
+    /// </para>
+    /// <para>
     /// Transports with server-side wait grow the receive wait window up to this value instead of
-    /// sleeping, so idle latency never exceeds one interval.
+    /// sleeping, so they get the same transaction saving with no added latency at all.
+    /// </para>
     /// </remarks>
     public TimeSpan MaxPollInterval
     {

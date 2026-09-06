@@ -31,6 +31,33 @@ public sealed class MessagingReceiveBackoffTests
     }
 
     [TestMethod]
+    public void TheDefaultsReachTheIdleCapWithinAboutAMinute()
+    {
+        var options = new MessagingProcessingOptions();
+        options.MinPollInterval.Should().Be(TimeSpan.FromMilliseconds(50), "a busy queue must not pay more than this");
+        options.MaxPollInterval.Should().Be(
+            TimeSpan.FromSeconds(30),
+            "past this the transactions saved per added second of idle latency stop being worth it");
+
+        // The mean draw of full jitter is half the cap, which is what an idle queue actually pays.
+        var backoff = new MessagingReceiveBackoff(options, static () => 0.5);
+        var spins = 0;
+        var elapsed = TimeSpan.Zero;
+        TimeSpan cap;
+        do
+        {
+            cap = backoff._onEmpty();
+            elapsed += backoff._sample(cap);
+            spins++;
+            spins.Should().BeLessThan(100, "the cap must be reachable");
+        }
+        while (cap < options.MaxPollInterval);
+
+        spins.Should().BeLessThan(12, "an idle queue must stop hot-spinning quickly");
+        elapsed.Should().BeLessThan(TimeSpan.FromMinutes(1));
+    }
+
+    [TestMethod]
     public void ANonEmptyBatchResetsTheCapToTheMinimum()
     {
         var backoff = new MessagingReceiveBackoff(_options(), static () => 1);

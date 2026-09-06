@@ -80,8 +80,26 @@ sleeping: an idle receiver holds one long request rather than polling, and the
 first message after an idle period is delivered without waiting out a client
 sleep. Sources without server-side wait (Storage Queues) return immediately and
 the host sleeps the jittered interval, which takes an idle queue from roughly
-four requests per second down to a fraction of one. The transport itself never
-sleeps: it waits only as instructed by `maxWait`.
+twenty requests per second down to one every fifteen seconds on average. The
+transport itself never sleeps: it waits only as instructed by `maxWait`.
+
+### Why the cap defaults to thirty seconds
+
+Every receive is a billed transaction, so the cap is a cost decision, and the
+growth curve is what makes it safe: the 50 ms floor is only ever paid by the
+first empty result after a busy period, and the wait doubles per consecutive
+empty result, so a queue that goes quiet reaches the ceiling in about ten empty
+polls (under a minute) while a queue that is actually working never leaves the
+floor. Adding latency to a rarely-exercised queue is cheap; adding it to a busy
+one never happens.
+
+The ceiling itself is where the saving stops being worth the latency. Relative
+to a 50 ms poll, a 5 s cap already removes about 99 % of idle transactions, 30 s
+removes another 83 % of what is left, and 60 s removes only half of that
+remainder — an absolute saving too small to matter — while doubling the time a
+rare message sits unnoticed. Thirty seconds is also still inside what a person
+accepts for background processing. Raise it for queues nobody waits on; lower it
+when someone is watching for the result.
 
 ## Shared lock renewal
 

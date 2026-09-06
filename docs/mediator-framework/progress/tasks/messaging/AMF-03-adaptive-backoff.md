@@ -22,7 +22,7 @@ arrives.
 - **Three distinct waits**, not one: empty result, no credit, transport error.
   They have different causes and must not share state.
 - **Empty**: exponential with full jitter from `MinPollInterval` (50 ms) to
-  `MaxPollInterval` (5 s), doubling per consecutive empty result, reset to the
+  `MaxPollInterval` (30 s), doubling per consecutive empty result, reset to the
   minimum on the first non-empty batch **for that receive loop**.
 - **No credit**: no timer at all — await channel capacity. Polling while the host
   cannot accept work is pure waste, and holding a slot during backoff (as Rebus
