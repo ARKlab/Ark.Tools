@@ -223,7 +223,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         {
             AbandonedOnShutdown++;
             await _settleQuietlyAsync(delivery).ConfigureAwait(false);
-            _credits.Release();
+            _releaseCredit(1);
         }
     }
 
