@@ -71,6 +71,14 @@ internal static class ComplianceSymbolFacts
             : type;
     }
 
+    internal static bool _isKnownSafeDotNetType(ITypeSymbol type)
+    {
+        type = _unwrapNullable(type);
+        return type.ToDisplayString() is
+            "System.Threading.CancellationToken"
+            or "System.Threading.CancellationTokenSource";
+    }
+
     internal static bool _isReviewValid(AttributeData attribute, DateTime today)
     {
         if (attribute.ConstructorArguments.Length < 2

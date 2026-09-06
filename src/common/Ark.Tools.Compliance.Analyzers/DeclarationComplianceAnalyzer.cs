@@ -110,13 +110,14 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         if (type is not null)
         {
             type = ComplianceSymbolFacts._unwrapNullable(type);
+            var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type);
             var classified = ComplianceSymbolFacts._isClassified(symbol)
                 || ComplianceSymbolFacts._isClassified(type)
                 || ComplianceSymbolFacts._isClassified(symbol.ContainingType)
                 || _isPositionalCounterpartClassified(symbol);
 
             var isPositionalProperty = symbol is IPropertySymbol && _positionalCounterpart(symbol) is not null;
-            if (!isPositionalProperty && !classified && lexicon._matches(symbol.Name)
+            if (!isPositionalProperty && !knownSafeDotNetType && !classified && lexicon._matches(symbol.Name)
                 && !ComplianceSymbolFacts._hasAttribute(symbol, "NotPersonalDataAttribute")
                 && !_hasPositionalExclusion(symbol))
             {

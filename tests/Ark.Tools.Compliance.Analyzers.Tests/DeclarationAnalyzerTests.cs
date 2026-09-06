@@ -112,24 +112,28 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().HaveCount(2);
     }
 
-    /// <summary>Ambiguous infrastructure words do not classify compound identifiers by themselves.</summary>
+    /// <summary>Known safe framework types do not classify infrastructure parameters by name.</summary>
     [TestMethod]
-    public async Task AmbiguousInfrastructureWordsRequireExactIdentifiers()
+    public async Task KnownSafeFrameworkTypesAreExcludedSemantically()
     {
         var diagnostics = await _analyzeAsync("""
             class Infrastructure
             {
-                public string Token;
-                public string SourceLocation;
                 public System.Threading.CancellationToken CancellationToken;
+                public System.Threading.CancellationTokenSource CancellationTokenSource;
+                public string Location;
+                public string Token;
                 public string ClientSecret;
             }
             """).ConfigureAwait(false);
 
-        diagnostics.Select(static diagnostic => diagnostic.GetMessage())
-            .Should().ContainSingle(static message => message.Contains("Token", StringComparison.Ordinal));
-        diagnostics.Select(static diagnostic => diagnostic.GetMessage())
-            .Should().ContainSingle(static message => message.Contains("ClientSecret", StringComparison.Ordinal));
+        diagnostics.Should().HaveCount(3);
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage()).Should().Contain(
+            static message => message.Contains("Location", StringComparison.Ordinal));
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage()).Should().Contain(
+            static message => message.Contains("Token", StringComparison.Ordinal));
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage()).Should().Contain(
+            static message => message.Contains("ClientSecret", StringComparison.Ordinal));
     }
 
     /// <summary>Exclusions cannot quietly use empty or boilerplate explanations.</summary>
