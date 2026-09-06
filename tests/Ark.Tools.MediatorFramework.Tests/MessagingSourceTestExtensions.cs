@@ -11,7 +11,7 @@ internal static class MessagingSourceTestExtensions
     private static readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(5);
 
     // Test-scale bounds for the real backoff: the production defaults would outlast the timeout.
-    private static readonly MessagingProcessingOptions _pollOptions = new()
+    internal static readonly MessagingProcessingOptions _pollOptions = new()
     {
         MinPollInterval = TimeSpan.FromMilliseconds(2),
         MaxPollInterval = TimeSpan.FromMilliseconds(200)
@@ -70,11 +70,23 @@ internal sealed class TestMessagePump : IAsyncDisposable
         _loop = Task.Run(
             async () =>
             {
+                var backoff = new MessagingReceiveBackoff(MessagingSourceTestExtensions._pollOptions);
                 while (!ctk.IsCancellationRequested)
                 {
                     var batch = await source
                         .ReceiveBatchAsync(queue, 1, TimeSpan.FromMilliseconds(100), ctk)
                         .ConfigureAwait(false);
+                    if (batch.Count == 0)
+                    {
+                        // A source without server-side wait returns immediately on an empty queue:
+                        // wait, and grow that wait per empty result, instead of spinning.
+                        if (!source.ReceiverCapabilities.SupportsServerSideWait)
+                            await Task.Delay(backoff._sample(backoff._onEmpty()), ctk).ConfigureAwait(false);
+
+                        continue;
+                    }
+
+                    backoff._onReceived();
                     foreach (var delivery in batch)
                         await onDelivery(delivery, ctk).ConfigureAwait(false);
                 }
