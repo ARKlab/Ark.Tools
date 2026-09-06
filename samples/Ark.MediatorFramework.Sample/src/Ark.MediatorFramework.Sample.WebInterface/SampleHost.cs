@@ -4,7 +4,7 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
-using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.MediatorFramework.Messaging.OTel;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
@@ -48,9 +48,17 @@ public static class SampleHost
         }
 
         builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+
+        // The advanced tier is a tuning profile: opt in from configuration, not by default.
+        var advancedMetrics = builder.Configuration.GetValue<bool>("Messaging:AdvancedMetrics");
         builder.Services.AddOpenTelemetry()
             .WithTracing(static tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName))
-            .WithMetrics(static metrics => metrics.AddMeter(OpenTelemetryProcessingMetricsStep.MeterName));
+            .WithMetrics(metrics =>
+            {
+                metrics.AddArkMessagingInstrumentation();
+                if (advancedMetrics)
+                    metrics.AddArkMessagingAdvancedInstrumentation();
+            });
         var startup = new SampleStartup(
             container,
             network,

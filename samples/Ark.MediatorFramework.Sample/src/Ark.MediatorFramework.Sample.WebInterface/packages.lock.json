@@ -1171,6 +1171,13 @@
           "NodaTime": "[3.3.3, )"
         }
       },
+      "ark.tools.mediatorframework.messaging.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
+          "OpenTelemetry.Api": "[1.18.0, )"
+        }
+      },
       "ark.tools.mediatorframework.minimalapi": {
         "type": "Project",
         "dependencies": {

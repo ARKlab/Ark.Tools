@@ -134,6 +134,12 @@ with the `ProcessingOptionsInvalid` diagnostic.
 | `MaxPollInterval` | 30 s | Longest wait after consecutive empty results, and the maximum idle latency |
 | `ErrorCooldown` | 10 s | Jittered pause after a transport error |
 
+### Observability
+
+| Setting | Default | What it is for |
+| --- | --- | --- |
+| `AdvancedMetrics` | `false` | Record the opt-in advanced metric tier. `AddArkMessagingAdvancedInstrumentation()` turns it on for you |
+
 ### Lock renewal
 
 | Setting | Default | What it is for |
@@ -266,6 +272,84 @@ untouched — no update call at all.
 
 Storage Queues have no equivalent knobs: the visibility timeout is a client-side
 receive parameter, covered above.
+
+## Metrics
+
+Two tiers, because an alert and a tuning read have different audiences and
+different costs. Both carry the same bounded attributes — `messaging.system`,
+`messaging.destination.name` and `ark.participant` — and nothing else: no message
+ids, no correlation ids, no exception text.
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .AddArkMessagingInstrumentation()             // operational tier
+        .AddArkMessagingAdvancedInstrumentation());   // opt-in tuning tier
+```
+
+Both extensions live in `Ark.Tools.MediatorFramework.Messaging.OTel`. The advanced
+one also sets `AdvancedMetrics`, so a registered meter is never silently empty.
+
+### Operational tier — always on
+
+Meter `Ark.MediatorFramework.Messaging`, alongside the existing
+`messaging.process.duration`, `messaging.process.messages`,
+`messaging.message.time_in_queue`, `messaging.process.attempts` and
+`messaging.client.operation.duration`.
+
+| Instrument | Kind | Read it for |
+| --- | --- | --- |
+| `messaging.process.concurrency.limit` | UpDownCounter | A limit collapsing towards `MinimumConcurrency` means throttling or a failing dependency |
+| `messaging.process.in_flight` | UpDownCounter | Saturation; with queue depth it is the autoscaling input |
+| `messaging.process.buffered` | UpDownCounter | Backlog held locally, and the scale-in safety check |
+| `messaging.process.throttled` | Counter | Broker throttling: capacity alarm and tier-upgrade trigger |
+| `messaging.process.lock_renewals` | Counter (`outcome`) | Renewal failures precede redelivery and duplicate work |
+
+The three gauges are recorded as deltas and return to zero when the host stops, so
+`sum` over the series is the live value.
+
+A scale-out rule needs nothing else: scale out while
+`in_flight ≈ concurrency.limit` and `buffered` stays above zero, scale in when
+both fall and stay low.
+
+### Advanced tier — opt-in
+
+Meter `Ark.MediatorFramework.Messaging.Advanced`. Names keep the plain
+`messaging.` prefix: the meter marks the tier, so a dashboard filters on the meter.
+While `AdvancedMetrics` is false the measurements are not even computed.
+
+| Instrument | Kind | Read it for |
+| --- | --- | --- |
+| `messaging.receive.batch.size` | Histogram | Effective batch sizes — proves batching works |
+| `messaging.receive.empty` | Counter | Empty receives, for backoff and cost review |
+| `messaging.receive.backoff.interval` | Histogram | The idle wait actually applied |
+| `messaging.process.queue_wait` | Histogram | Fetch to handler start: the buffer's latency contribution |
+| `messaging.process.settle.duration` | Histogram | Settlement cost, on transports that renew locks |
+| `messaging.concurrency.gradient` | Histogram | The latency gradient driving the I/O-bound brake |
+| `messaging.concurrency.decision` | Counter (`reason`) | Why the limit moved: `throughput`, `gradient`, `throttled`, `lock_lost`, `timeout`, `starvation`, `backpressure` |
+
+### Tuning procedure
+
+1. Run with the defaults and the operational tier only. If `buffered` stays at
+   zero under load, the queue, not the host, is the limit — stop here.
+2. Turn the advanced tier on and replay the load.
+3. Read `messaging.receive.batch.size`. Batches stuck at one mean the transport
+   profile is wrong, not the concurrency: check `MaximumReceiveBatchSize` and the
+   Storage Queues 32-message cap.
+4. Read `messaging.concurrency.decision`. Mostly `throughput` means the workload
+   is **compute-bound** and growth ended at `MaximumConcurrency` or at the
+   processor count — raise `MaximumConcurrency` only if CPU is not already
+   saturated. Mostly `gradient` means the workload is **I/O-bound**: the
+   dependency's useful concurrency has been found, and raising the ceiling only
+   adds queueing. Mostly `throttled` or `lock_lost` means the entity, not the
+   host, needs attention.
+5. Read `messaging.process.queue_wait`. A wait comparable to the handler duration
+   means `PrefetchMultiplier` is buying latency for nothing; lower it.
+6. Pin the result with `AdaptiveConcurrency = false` and `InitialConcurrency` set
+   to the measured limit when you want a fixed, reviewable value.
+
+A worked run of this procedure, with the histogram views it needs, is in the
+[sample walkthrough](../../../samples/Ark.MediatorFramework.Sample/README.md#throughput-tuning-walkthrough).
 
 ## Settlement and retries
 

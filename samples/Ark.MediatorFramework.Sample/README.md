@@ -402,6 +402,54 @@ for this sample is:
 }
 ```
 
+## Throughput tuning walkthrough
+
+`SampleHost` registers the operational metric tier unconditionally and the
+advanced tier only when `Messaging:AdvancedMetrics` is `true`, so a tuning run
+is a configuration change and a restart:
+
+```bash
+Messaging__AdvancedMetrics=true dotnet run \
+  --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface
+```
+
+Exporting the histograms with usable buckets needs explicit views; the defaults
+are too coarse for sub-second waits:
+
+```csharp
+metrics.AddView("messaging.process.queue_wait", new ExplicitBucketHistogramConfiguration
+{
+    Boundaries = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
+});
+metrics.AddView("messaging.concurrency.gradient", new ExplicitBucketHistogramConfiguration
+{
+    Boundaries = [0.25, 0.5, 0.8, 1, 1.25, 2, 4],
+});
+```
+
+Run a load through `book-print` and read the result in this order:
+
+1. `messaging.receive.batch.size` well below `PrefetchCount` together with a
+   rising `messaging.receive.empty` means the load, not the host, is the limit;
+   stop here.
+2. `messaging.process.buffered` pinned at the prefetch ceiling while
+   `messaging.process.in_flight` sits below `messaging.process.concurrency.limit`
+   means the handler is not the bottleneck — look at the downstream dependency.
+3. `messaging.process.queue_wait` growing with a stable
+   `messaging.process.duration` means the limit is too low; the deliveries are
+   waiting, not working.
+4. `messaging.concurrency.decision` tagged `reason=throughput` repeating in both
+   directions means the limit is oscillating around its optimum; that value is
+   the answer.
+5. Any `messaging.process.throttled` count or `messaging.process.lock_renewals`
+   with `outcome=lost` invalidates the run: the broker or the lock duration is
+   the constraint, not concurrency.
+
+Pin the observed value with `AdaptiveConcurrency = false` and
+`InitialConcurrency = <value>` when a fixed limit is required, then turn the
+advanced tier back off. The operational tier is enough to keep the result
+under watch.
+
 ## Azure Functions
 
 The isolated-worker project exposes the same public API contract set through the
