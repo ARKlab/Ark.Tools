@@ -63,7 +63,7 @@ public sealed class MessagingBatchReceiveDeclarationTests
     }
 
     [TestMethod]
-    public async Task ServiceBusDefaultsToABatchOfOneHundredAndSurfacesTheEntityLockDuration()
+    public async Task ServiceBusDefaultsToAnUncappedBatchAndSurfacesTheEntityLockDuration()
     {
 #pragma warning disable CA2000 // The transport owns and disposes the client.
         await using var defaults = new ServiceBusMessagingTransport(new ServiceBusClient(_serviceBusConnection));
@@ -74,13 +74,32 @@ public sealed class MessagingBatchReceiveDeclarationTests
             lockDuration: TimeSpan.FromSeconds(45));
 #pragma warning restore CA2000
 
-        defaults.ReceiverCapabilities.MaximumBatchSize.Should().Be(100);
+        // Uncapped is the conservative default: the host requests at most its prefetch budget, which
+        // is the concurrency limit times PrefetchMultiplier, so batches follow the adaptive limit
+        // instead of a fixed number the host may not be able to drain.
+        defaults.ReceiverCapabilities.MaximumBatchSize.Should().Be(int.MaxValue);
         defaults.ReceiverCapabilities.SupportsServerSideWait.Should().BeTrue();
         defaults.ReceiverCapabilities.SupportsLockRenewal.Should().BeTrue();
         defaults.ReceiverCapabilities.NativeLockDuration.Should().BeNull();
 
         tuned.ReceiverCapabilities.MaximumBatchSize.Should().Be(10);
         tuned.ReceiverCapabilities.NativeLockDuration.Should().Be(TimeSpan.FromSeconds(45));
+    }
+
+    [TestMethod]
+    public void UncappedTransportStillBatchesOnlyWhatTheConcurrencyLimitAllows()
+    {
+        var options = new MessagingProcessingOptions
+        {
+            InitialConcurrency = 4,
+            MaximumConcurrency = 64,
+            PrefetchMultiplier = 2
+        };
+        var uncapped = new MessagingReceiverCapabilities(int.MaxValue, true, true, null);
+
+        // The budget is the real batch ceiling, and it only moves when the controller moves the limit.
+        options.ComputePrefetchBudget(4, uncapped).Should().Be(8);
+        options.ComputePrefetchBudget(32, uncapped).Should().Be(64);
     }
 
     [TestMethod]

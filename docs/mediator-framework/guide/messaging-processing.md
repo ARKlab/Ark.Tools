@@ -185,10 +185,19 @@ independently.
 
 | Fact | Value |
 | --- | --- |
-| `MaximumBatchSize` | 100 by default, configurable; the service imposes no cap |
+| `MaximumBatchSize` | Uncapped by default; the service imposes no cap, and an optional hard cap is configurable |
 | Server-side wait | Yes: the receive is held open for the host's backoff window |
 | Lock renewal | Yes, through `RenewMessageLockAsync` |
 | Native lock duration | Declared on the transport (`lockDuration`), or unknown |
+
+Uncapped is the conservative choice here, not the aggressive one. The host never
+asks for more than its prefetch budget — the concurrency limit times
+`PrefetchMultiplier` — so a batch is proportional to the configured parallelism
+and grows only as adaptive concurrency raises the limit. A fixed number such as
+100 would be unrelated to what the host can actually drain, and at a low
+processing rate it would leave a large batch of locks to renew. Pass
+`maximumReceiveBatchSize` only to pin a ceiling *below* the budget, for example
+to bound the size of a single AMQP transfer.
 
 `PrefetchCount` stays at 0 on purpose. The host's bounded buffer is the prefetch,
 and unlike the AMQP prefetch buffer its locks are visible to the shared renewer.

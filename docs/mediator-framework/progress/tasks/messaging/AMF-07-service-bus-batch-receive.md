@@ -27,8 +27,12 @@ retries below the API surface being called.
 - **Prefetch off**: `PrefetchCount = 0`. The framework's bounded channel is the
   buffer, and unlike the AMQP one its locks are renewable (AMF-04). This also
   sidesteps the receiver's `internal` prefetch setter.
-- **Batch cap**: `MaximumBatchSize` default 100, configurable; the service imposes
-  no cap, so the limit is a tuning choice bounded by the prefetch budget.
+- **Batch cap**: no default cap, configurable; the service imposes none, and the
+  prefetch budget (concurrency limit x `PrefetchMultiplier`) is the real bound, so
+  the batch stays proportional to the configured parallelism and grows only with
+  the adaptive limit. A fixed default such as 100 would be unrelated to what the
+  host can drain and would leave a large batch of locks to renew at a low
+  processing rate.
 - **Server-side wait**: `maxWaitTime` carries the backoff window (AMF-03) so an
   idle queue costs one held-open request rather than a poll loop; validation
   requires a positive wait when prefetch is 0.
@@ -49,7 +53,7 @@ retries below the API surface being called.
    receiver per receive channel, created with `ReceiveMode = PeekLock` and
    `PrefetchCount = 0`.
 2. Map `maxMessages` and `maxWait` straight onto `ReceiveMessagesAsync`, clamping
-   `maxMessages` to the credit the host granted and to `MaximumBatchSize`.
+   `maxMessages` to the credit the host granted and to the optional batch cap.
 3. Populate `LockedUntil` and `DeliveryId` from `ServiceBusReceivedMessage`
    (`LockedUntil`, `LockToken`) so the shared renewer can drive renewal.
 4. Keep settlement explicit, with the existing `MessagingSettlement` decisions

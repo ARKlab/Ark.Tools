@@ -35,7 +35,13 @@ public sealed class ServiceBusMessagingTransport :
 
     /// <summary>Creates the transport over an application-composed client.</summary>
     /// <param name="client">The Service Bus client owned by this transport.</param>
-    /// <param name="maximumReceiveBatchSize">The largest batch a single receive may request. Defaults to <see cref="DefaultMaximumReceiveBatchSize"/>.</param>
+    /// <param name="maximumReceiveBatchSize">
+    /// An optional hard cap on a single receive. Defaults to <see langword="null"/>: Service Bus
+    /// imposes no cap of its own, and the processor host already limits every request to its
+    /// prefetch budget, which is the concurrency limit times the prefetch multiplier. Leaving this
+    /// unset therefore keeps batches proportional to the configured parallelism and lets them grow
+    /// only as adaptive concurrency raises the limit. Set it to pin a smaller ceiling.
+    /// </param>
     /// <param name="receiveChannels">The number of receivers (AMQP links) opened per entity. Defaults to one.</param>
     /// <param name="lockDuration">The entity's lock duration, or <see langword="null"/> when unknown.</param>
     /// <param name="additionalClients">
@@ -44,18 +50,19 @@ public sealed class ServiceBusMessagingTransport :
     /// </param>
     public ServiceBusMessagingTransport(
         ServiceBusClient client,
-        int maximumReceiveBatchSize = DefaultMaximumReceiveBatchSize,
+        int? maximumReceiveBatchSize = null,
         int receiveChannels = 1,
         TimeSpan? lockDuration = null,
         IReadOnlyList<ServiceBusClient>? additionalClients = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
-        ArgumentOutOfRangeException.ThrowIfLessThan(maximumReceiveBatchSize, 1);
+        if (maximumReceiveBatchSize is { } cap)
+            ArgumentOutOfRangeException.ThrowIfLessThan(cap, 1, nameof(maximumReceiveBatchSize));
         ArgumentOutOfRangeException.ThrowIfLessThan(receiveChannels, 1);
         if (lockDuration is { } duration)
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero, nameof(lockDuration));
 
-        _maximumReceiveBatchSize = maximumReceiveBatchSize;
+        _maximumReceiveBatchSize = maximumReceiveBatchSize ?? int.MaxValue;
         _receiveChannels = receiveChannels;
         _lockDuration = lockDuration;
         _clients = additionalClients is null or { Count: 0 }
@@ -156,14 +163,13 @@ public sealed class ServiceBusMessagingTransport :
         await sender.SendMessageAsync(_toNativeMessage(headers, payload), ctk).ConfigureAwait(false);
     }
 
-    /// <summary>Gets the default largest batch a single receive requests.</summary>
+    /// <summary>Gets the hard cap on a single receive, or <see cref="int.MaxValue"/> when uncapped.</summary>
     /// <remarks>
-    /// Service Bus imposes no server-side cap, so the limit is a tuning choice bounded by the host's
-    /// prefetch budget rather than a service fact.
+    /// Service Bus imposes no server-side cap. An uncapped transport is the conservative choice, not
+    /// the aggressive one: the host never asks for more than its prefetch budget, so the batch is
+    /// bounded by the configured parallelism and grows only with the adaptive concurrency limit. A
+    /// fixed cap here can only make batches smaller than the host is already prepared to drain.
     /// </remarks>
-    public const int DefaultMaximumReceiveBatchSize = 100;
-
-    /// <summary>Gets the largest batch a single receive requests.</summary>
     public int MaximumReceiveBatchSize => _maximumReceiveBatchSize;
 
     /// <inheritdoc />

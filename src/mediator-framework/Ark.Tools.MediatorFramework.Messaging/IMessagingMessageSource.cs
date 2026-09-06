@@ -33,7 +33,11 @@ public interface IMessagingMessageSource
 }
 
 /// <summary>The native receive capabilities declared by a message source.</summary>
-/// <param name="MaximumBatchSize">The maximum number of deliveries a single receive can return.</param>
+/// <param name="MaximumBatchSize">
+/// The maximum number of deliveries a single receive can return, or <see cref="int.MaxValue"/> when
+/// the transport imposes no cap. This is a ceiling, not a target: the host never requests more than
+/// its prefetch budget, so the batch tracks the concurrency limit rather than this value.
+/// </param>
 /// <param name="SupportsServerSideWait">
 /// Whether the broker holds a receive open for the requested wait window instead of returning
 /// immediately, so a host can grow the wait window rather than sleep between calls.
