@@ -1266,7 +1266,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Microsoft.Data.SqlClient": "[7.0.2, )",
           "OpenTelemetry": "[1.18.0, )"
         }
       },

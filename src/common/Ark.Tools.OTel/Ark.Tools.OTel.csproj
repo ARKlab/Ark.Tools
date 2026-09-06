@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
-    <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>

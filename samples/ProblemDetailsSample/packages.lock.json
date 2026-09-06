@@ -593,9 +593,6 @@
           "Microsoft.Extensions.Compliance.Abstractions": "[10.9.0, )"
         }
       },
-      "ark.tools.compliance.analyzers": {
-        "type": "Project"
-      },
       "ark.tools.compliance.nlog": {
         "type": "Project",
         "dependencies": {
