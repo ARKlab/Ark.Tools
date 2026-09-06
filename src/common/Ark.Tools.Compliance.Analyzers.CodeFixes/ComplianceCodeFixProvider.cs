@@ -191,7 +191,7 @@ public sealed class ComplianceCodeFixProvider : CodeFixProvider
             var model = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
             var constant = model is null ? default : model.GetConstantValue(value, cancellationToken);
             ExpressionSyntax initializer = value.IsKind(SyntaxKind.DefaultLiteralExpression) || value is DefaultExpressionSyntax
-                || constant is { HasValue: true, Value: null })
+                || constant is { HasValue: true, Value: null }
                 ? SyntaxFactory.LiteralExpression(SyntaxKind.DefaultLiteralExpression)
                 : SyntaxFactory.InvocationExpression(SyntaxFactory.ParseExpression(qualified + ".From"),
                     SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(value))));

@@ -7,7 +7,6 @@ using global::NLog.Targets;
 using global::NLog.Targets.Wrappers;
 
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Ark.Tools.Compliance.NLog;
 
