@@ -13,7 +13,13 @@ public enum MessagingCompositionDiagnostic
     ProcessorHostInTriggeredHost,
 
     /// <summary>The supplied <see cref="MessagingProcessingOptions"/> cannot be satisfied.</summary>
-    ProcessingOptionsInvalid
+    ProcessingOptionsInvalid,
+
+    /// <summary>The supplied transport provisioning options cannot be satisfied.</summary>
+    TransportOptionsInvalid,
+
+    /// <summary>An existing entity differs from the declaration in a setting that cannot be changed in place.</summary>
+    ImmutableEntitySettingMismatch
 }
 
 /// <summary>Thrown when messaging composition fails with a named diagnostic.</summary>

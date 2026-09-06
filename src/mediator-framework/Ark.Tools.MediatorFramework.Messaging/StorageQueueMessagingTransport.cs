@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Buffers.Text;
 using System.Collections.Concurrent;
 
+using Azure;
 using Azure.Core;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -166,16 +167,55 @@ public sealed class StorageQueueMessagingTransport :
 
     /// <summary>Gets the maximum number of messages a single receive returns.</summary>
     /// <remarks>
-    /// One at this task: batch receive at the service maximum of 32 lands in AMF-06.
+    /// The service maximum for <c>ReceiveMessages</c>. Every receive is one billed transaction, so a
+    /// full batch costs the same as a single message.
     /// </remarks>
-    public const int MaximumReceiveBatchSize = 1;
+    public const int MaximumReceiveBatchSize = 32;
+
+    /// <summary>Computes the visibility timeout a processor needs for a handler duration.</summary>
+    /// <param name="maximumHandlerDuration">The participant's maximum handler duration.</param>
+    /// <param name="options">The processing options, or <see langword="null"/> for the defaults.</param>
+    /// <returns>The handler duration plus the expected buffer wait plus the renewal safety margin.</returns>
+    /// <remarks>
+    /// Storage Queues has no lock duration of its own: the visibility timeout <em>is</em> the lock, and
+    /// it is a client-side receive parameter rather than a queue setting. A delivery may wait in the
+    /// prefetch buffer before a worker reaches it, so the window must cover that wait as well as the
+    /// handler, with the renewal margin on top so the shared renewer has time to extend it.
+    /// </remarks>
+    /// <exception cref="MessagingCompositionException">The derived window exceeds the seven-day service maximum.</exception>
+    public static TimeSpan DeriveReceiveVisibilityTimeout(
+        TimeSpan maximumHandlerDuration,
+        MessagingProcessingOptions? options = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maximumHandlerDuration, TimeSpan.Zero);
+
+        options ??= new MessagingProcessingOptions();
+        var concurrency = options.InitialConcurrency;
+        var queued = Math.Max(0, options.ComputePrefetchBudget(concurrency, _capabilities(TimeSpan.FromMinutes(1))) - concurrency);
+        var bufferWait = options.ExpectedHandlerDuration * (queued / (double)concurrency);
+        var derived = maximumHandlerDuration + bufferWait + options.RenewalSafetyMargin;
+        if (derived > _maximumVisibilityDelay)
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.ProcessingOptionsInvalid,
+                FormattableString.Invariant(
+                    $"The derived Storage Queue visibility timeout ({derived}) exceeds the seven-day service maximum. Lower MaximumHandlerDuration ({maximumHandlerDuration}) or the prefetch budget."));
+        }
+
+        return derived;
+    }
+
+    private static MessagingReceiverCapabilities _capabilities(TimeSpan visibilityTimeout)
+    {
+        return new MessagingReceiverCapabilities(
+            MaximumBatchSize: MaximumReceiveBatchSize,
+            SupportsServerSideWait: false,
+            SupportsLockRenewal: true,
+            NativeLockDuration: visibilityTimeout);
+    }
 
     /// <inheritdoc />
-    public MessagingReceiverCapabilities ReceiverCapabilities => new(
-        MaximumBatchSize: MaximumReceiveBatchSize,
-        SupportsServerSideWait: false,
-        SupportsLockRenewal: true,
-        NativeLockDuration: _receiveVisibilityTimeout);
+    public MessagingReceiverCapabilities ReceiverCapabilities => _capabilities(_receiveVisibilityTimeout);
 
     /// <inheritdoc />
     public async ValueTask<IReadOnlyList<IMessagingLockedDelivery>> ReceiveBatchAsync(
@@ -220,6 +260,7 @@ public sealed class StorageQueueMessagingTransport :
                         source,
                         poison,
                         message,
+                        message.PopReceipt,
                         exception.Reason.ToString(),
                         exception.Message,
                         ctk).ConfigureAwait(false);
@@ -350,6 +391,7 @@ public sealed class StorageQueueMessagingTransport :
         QueueClient source,
         QueueClient poison,
         QueueMessage message,
+        string popReceipt,
         string reason,
         string description,
         CancellationToken ctk)
@@ -361,18 +403,24 @@ public sealed class StorageQueueMessagingTransport :
             description);
         await poison.SendMessageAsync(BinaryData.FromString(body), cancellationToken: ctk)
             .ConfigureAwait(false);
-        await source.DeleteMessageAsync(message.MessageId, message.PopReceipt, ctk)
+        await source.DeleteMessageAsync(message.MessageId, popReceipt, ctk)
             .ConfigureAwait(false);
     }
 
-    private sealed class StorageQueueLockedDelivery : IMessagingLockedDelivery
+    private sealed class StorageQueueLockedDelivery : IMessagingLockedDelivery, IDisposable
     {
         private readonly QueueClient _source;
         private readonly QueueClient _poison;
         private readonly QueueMessage _message;
         private readonly TimeSpan _receiveVisibilityTimeout;
         private readonly TimeSpan _retryDelay;
+
+        // Storage Queues rotates the pop receipt on every UpdateMessage, so the receipt is mutable
+        // state shared by the renewer and the settling worker. The gate makes renewal and settlement
+        // mutually exclusive for one delivery, which is what keeps settlement on the newest receipt.
+        private readonly SemaphoreSlim _receipt = new(1, 1);
         private string _popReceipt;
+        private long _lockedUntilTicks;
 
         public StorageQueueLockedDelivery(
             QueueClient source,
@@ -388,7 +436,7 @@ public sealed class StorageQueueMessagingTransport :
             _popReceipt = message.PopReceipt;
             _receiveVisibilityTimeout = receiveVisibilityTimeout;
             _retryDelay = retryDelay;
-            LockedUntil = message.NextVisibleOn;
+            _setLockedUntil(message.NextVisibleOn);
             Headers = envelope.Headers;
             Payload = envelope.Payload;
         }
@@ -401,36 +449,64 @@ public sealed class StorageQueueMessagingTransport :
 
         public string DeliveryId => _message.MessageId;
 
-        public DateTimeOffset? LockedUntil { get; private set; }
+        public DateTimeOffset? LockedUntil
+        {
+            get
+            {
+                var ticks = Interlocked.Read(ref _lockedUntilTicks);
+                return ticks == 0 ? null : new DateTimeOffset(ticks, TimeSpan.Zero);
+            }
+        }
 
         public async Task RenewLockAsync(CancellationToken ctk)
         {
-            var response = await _source.UpdateMessageAsync(
-                _message.MessageId,
-                _popReceipt,
-                _message.Body,
-                _receiveVisibilityTimeout,
-                ctk).ConfigureAwait(false);
-            _popReceipt = response.Value.PopReceipt;
-            LockedUntil = response.Value.NextVisibleOn;
+            // A renewal that loses the race to a settlement is pointless: settlement consumes the
+            // lock, so skipping is correct and keeps the renewer's timer from blocking.
+            if (!await _receipt.WaitAsync(0, ctk).ConfigureAwait(false))
+                return;
+
+            try
+            {
+                await _updateAsync(_receiveVisibilityTimeout, ctk).ConfigureAwait(false);
+            }
+            finally
+            {
+                _receipt.Release();
+            }
         }
 
         public async Task CompleteAsync(CancellationToken ctk)
         {
-            await _source.DeleteMessageAsync(_message.MessageId, _popReceipt, ctk)
-                .ConfigureAwait(false);
+            await _receipt.WaitAsync(ctk).ConfigureAwait(false);
+            try
+            {
+                try
+                {
+                    await _source.DeleteMessageAsync(_message.MessageId, _popReceipt, ctk)
+                        .ConfigureAwait(false);
+                }
+                catch (RequestFailedException exception) when (_isLockLost(exception))
+                {
+                    throw MessagingLockLostException._forDelivery(_message.MessageId, exception);
+                }
+            }
+            finally
+            {
+                _receipt.Release();
+            }
         }
 
         public async Task AbandonAsync(CancellationToken ctk)
         {
-            var response = await _source.UpdateMessageAsync(
-                _message.MessageId,
-                _popReceipt,
-                _message.Body,
-                _retryDelay,
-                ctk).ConfigureAwait(false);
-            _popReceipt = response.Value.PopReceipt;
-            LockedUntil = response.Value.NextVisibleOn;
+            await _receipt.WaitAsync(ctk).ConfigureAwait(false);
+            try
+            {
+                await _updateAsync(_retryDelay, ctk).ConfigureAwait(false);
+            }
+            finally
+            {
+                _receipt.Release();
+            }
         }
 
         public async Task DeadLetterAsync(
@@ -438,13 +514,69 @@ public sealed class StorageQueueMessagingTransport :
             string description,
             CancellationToken ctk)
         {
-            await _moveToPoisonAsync(
-                _source,
-                _poison,
-                _message,
-                reason,
-                description,
-                ctk).ConfigureAwait(false);
+            await _receipt.WaitAsync(ctk).ConfigureAwait(false);
+            try
+            {
+                try
+                {
+                    await _moveToPoisonAsync(
+                        _source,
+                        _poison,
+                        _message,
+                        _popReceipt,
+                        reason,
+                        description,
+                        ctk).ConfigureAwait(false);
+                }
+                catch (RequestFailedException exception) when (_isLockLost(exception))
+                {
+                    throw MessagingLockLostException._forDelivery(_message.MessageId, exception);
+                }
+            }
+            finally
+            {
+                _receipt.Release();
+            }
+        }
+
+        public void Dispose()
+        {
+            _receipt.Dispose();
+        }
+
+        private async Task _updateAsync(TimeSpan visibilityTimeout, CancellationToken ctk)
+        {
+            try
+            {
+                var response = await _source.UpdateMessageAsync(
+                    _message.MessageId,
+                    _popReceipt,
+                    _message.Body,
+                    visibilityTimeout,
+                    ctk).ConfigureAwait(false);
+                _popReceipt = response.Value.PopReceipt;
+                _setLockedUntil(response.Value.NextVisibleOn);
+            }
+            catch (RequestFailedException exception) when (_isLockLost(exception))
+            {
+                throw MessagingLockLostException._forDelivery(_message.MessageId, exception);
+            }
+        }
+
+        private void _setLockedUntil(DateTimeOffset? lockedUntil)
+        {
+            Interlocked.Exchange(
+                ref _lockedUntilTicks,
+                lockedUntil?.ToUniversalTime().Ticks ?? 0);
+        }
+
+        private static bool _isLockLost(RequestFailedException exception)
+        {
+            // A rotated receipt makes the previous one invalid, and an expired visibility window
+            // makes the message somebody else's: both are "the lock is gone", not a broken transport.
+            return string.Equals(exception.ErrorCode, "MessageNotFound", StringComparison.Ordinal)
+                || string.Equals(exception.ErrorCode, "PopReceiptMismatch", StringComparison.Ordinal)
+                || exception.Status is 404;
         }
     }
 }

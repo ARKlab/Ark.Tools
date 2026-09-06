@@ -200,12 +200,21 @@ public sealed class MessagingTransportBuilder
 
     /// <summary>Uses Azure Service Bus.</summary>
     /// <param name="client">The configured Service Bus client.</param>
+    /// <param name="configure">
+    /// Optional entity-shaping options. The declared lock duration is what the renewer plans
+    /// against, so declaring it here keeps provisioning and processing reading the same number.
+    /// </param>
     /// <returns>This builder.</returns>
-    public MessagingTransportBuilder UseServiceBus(Azure.Messaging.ServiceBus.ServiceBusClient client)
+    public MessagingTransportBuilder UseServiceBus(
+        Azure.Messaging.ServiceBus.ServiceBusClient client,
+        Action<ServiceBusMessagingOptions>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(client);
+        var options = new ServiceBusMessagingOptions();
+        configure?.Invoke(options);
+        options.Validate();
 #pragma warning disable CA2000 // Ownership is transferred to the composition service provider.
-        _select(new ServiceBusMessagingTransport(client));
+        _select(new ServiceBusMessagingTransport(client, lockDuration: options.LockDuration));
 #pragma warning restore CA2000
         return this;
     }
@@ -725,7 +734,8 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
             serviceProvider.GetRequiredService<MessagingDispatcher>().OnDeliveryAsync,
             serviceProvider.GetService<MessagingProcessingOptions>(),
             participant.RetryPolicy.MaximumHandlerDuration,
-            serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
+            serviceProvider.GetRequiredService<IMessagingConcurrencyController>(),
+            participant.Identity));
     }
 
 }

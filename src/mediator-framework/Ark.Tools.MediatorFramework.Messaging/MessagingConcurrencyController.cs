@@ -24,6 +24,18 @@ public enum MessagingConcurrencySignal
     DownstreamBackpressure
 }
 
+/// <summary>The outcome of one control interval, as read by the advanced metric tier.</summary>
+/// <param name="Gradient">The latency gradient measured for the interval.</param>
+/// <param name="Reason">Why the limit moved, or <see langword="null"/> when it did not.</param>
+public readonly record struct MessagingConcurrencyDecision(double Gradient, string? Reason);
+
+/// <summary>Exposes the last control decision so a host can record it without owning the algorithm.</summary>
+public interface IMessagingConcurrencyDiagnostics
+{
+    /// <summary>Gets the outcome of the most recent evaluation.</summary>
+    MessagingConcurrencyDecision LastDecision { get; }
+}
+
 /// <summary>Decides the concurrency limit of a processor host from throughput and latency.</summary>
 /// <remarks>
 /// The controller never sees deliveries, channels or transports: it consumes measurements and returns
@@ -56,7 +68,7 @@ public interface IMessagingConcurrencyController
 /// cap. Any one of them is enough to stop an I/O-bound workload from growing to
 /// <see cref="MessagingProcessingOptions.MaximumConcurrency"/>.
 /// </remarks>
-public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyController
+public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyController, IMessagingConcurrencyDiagnostics
 {
     private const double _shortWindowWeight = 0.3;
     private readonly MessagingProcessingOptions _options;
@@ -73,6 +85,7 @@ public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyCo
     private bool _starved;
     private Instant? _lastEvaluation;
     private Instant _baselineArmedAt;
+    private MessagingConcurrencyDecision _lastDecision = new(1.0, null);
 
     /// <summary>Creates a controller for one processor host.</summary>
     /// <param name="options">The processing options, or <see langword="null"/> for the defaults.</param>
@@ -92,6 +105,16 @@ public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyCo
         {
             lock (_gate)
                 return _limit;
+        }
+    }
+
+    /// <inheritdoc />
+    public MessagingConcurrencyDecision LastDecision
+    {
+        get
+        {
+            lock (_gate)
+                return _lastDecision;
         }
     }
 
@@ -172,9 +195,12 @@ public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyCo
                 _previousThroughput = throughput;
                 _adverse = false;
                 _starved = false;
+                _lastDecision = new MessagingConcurrencyDecision(gradient, null);
                 return _limit;
             }
 
+            var before = _limit;
+            string? reason = null;
             if (gradient < _options.GradientIncreaseThreshold)
             {
                 _lowGradientStreak++;
@@ -182,6 +208,8 @@ public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyCo
                 {
                     _limit = _clamp((int)Math.Floor(_limit * gradient));
                     _lowGradientStreak = 0;
+                    if (_limit != before)
+                        reason = "gradient";
                 }
             }
             else
@@ -191,9 +219,14 @@ public sealed class MessagingAimdConcurrencyController : IMessagingConcurrencyCo
                     ? throughput > 0
                     : throughput > _previousThroughput * (1 + _options.ThroughputImprovementThreshold);
                 if (improved && !_adverse && !_starved && _limit < _littlesLawCap(throughput))
+                {
                     _limit = _clamp(_limit + 1);
+                    if (_limit != before)
+                        reason = "throughput";
+                }
             }
 
+            _lastDecision = new MessagingConcurrencyDecision(gradient, reason);
             _previousThroughput = throughput;
             _adverse = false;
             _starved = false;

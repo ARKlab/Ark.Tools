@@ -223,10 +223,10 @@ runtime. They do not touch the send path, the Azure Functions receiver model, or
 | [AMF-03](messaging/AMF-03-adaptive-backoff.md) | Idle, error and no-capacity backoff | Done |
 | [AMF-04](messaging/AMF-04-shared-lock-renewer.md) | Shared lock renewer driven by native lock duration | Done |
 | [AMF-05](messaging/AMF-05-adaptive-concurrency.md) | Adaptive concurrency with an I/O-bound guard | Done |
-| [AMF-06](messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive and pop-receipt race fix | Pending |
-| [AMF-07](messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver` | Pending |
-| [AMF-08](messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration and provisioning | Pending |
-| [AMF-09](messaging/AMF-09-metrics-guide-and-smoke-test.md) | Two-tier metrics, guide, sample walkthrough and throughput smoke test | Pending |
+| [AMF-06](messaging/AMF-06-storage-queue-batch-receive.md) | Storage Queues batch receive and pop-receipt race fix | Done |
+| [AMF-07](messaging/AMF-07-service-bus-batch-receive.md) | Service Bus batch receive over `ServiceBusReceiver` | Done |
+| [AMF-08](messaging/AMF-08-throughput-provisioning-options.md) | Throughput options on the transport declaration and provisioning | Done |
+| [AMF-09](messaging/AMF-09-metrics-guide-and-throughput-benchmark.md) | Two-tier metrics, guide, sample walkthrough and throughput benchmark | Done |
 
 ## Testing redesign
 

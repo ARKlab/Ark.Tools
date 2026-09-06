@@ -2004,6 +2004,7 @@
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Mcp": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Messaging.OTel": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
@@ -2200,6 +2201,13 @@
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.11, )",
           "Microsoft.Extensions.Options": "[10.0.11, )",
           "NodaTime": "[3.3.3, )"
+        }
+      },
+      "ark.tools.mediatorframework.messaging.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
+          "OpenTelemetry.Api": "[1.18.0, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {

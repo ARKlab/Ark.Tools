@@ -33,6 +33,7 @@ public sealed class MessagingProcessingOptions
     private double _littlesLawSlack = 2;
     private TimeSpan _baselineRearmInterval = TimeSpan.FromMinutes(10);
     private TimeSpan _threadPoolStarvationThreshold = TimeSpan.FromMilliseconds(250);
+    private bool _advancedMetrics;
 
     /// <summary>Gets or sets the initial number of concurrent workers. Defaults to the processor count.</summary>
     public int InitialConcurrency
@@ -326,6 +327,19 @@ public sealed class MessagingProcessingOptions
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(value, TimeSpan.Zero);
             _threadPoolStarvationThreshold = value;
         }
+    }
+
+    /// <summary>Gets or sets whether the opt-in advanced metric tier is recorded. Defaults to <see langword="false"/>.</summary>
+    /// <remarks>
+    /// The advanced tier answers "why is the limit where it is" during tuning, so its measurements are
+    /// not computed at all while this is off. Registering the advanced meter through
+    /// <c>AddArkMessagingAdvancedInstrumentation</c> turns it on process-wide, so a registered meter is
+    /// never silently empty.
+    /// </remarks>
+    public bool AdvancedMetrics
+    {
+        get => _advancedMetrics || MessagingMetrics._advancedMetricsRegistered;
+        set => _advancedMetrics = value;
     }
 
     /// <summary>Gets the effective hard prefetch ceiling.</summary>

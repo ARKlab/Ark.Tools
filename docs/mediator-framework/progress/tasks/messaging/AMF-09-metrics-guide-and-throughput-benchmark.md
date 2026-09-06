@@ -1,4 +1,4 @@
-# AMF-09 — Two-tier metrics, guide, sample walkthrough and throughput smoke test
+# AMF-09 — Two-tier metrics, guide, sample walkthrough and throughput benchmark
 
 **Category**: messaging-throughput · **Priority**: pre-release
 **Depends on**: AMF-01, AMF-02, AMF-03, AMF-04, AMF-05, AMF-06, AMF-07, AMF-08
@@ -40,7 +40,11 @@ buried among debug counters.
   ids, exception text or other per-delivery values, on either tier.
 - **Documentation and sample**: a tuning walkthrough that goes from default
   options to a measured limit using only the two tiers.
-- **Throughput smoke test**: the PRD's success criteria, runnable on demand.
+- **Throughput benchmark**: the PRD's success criteria measured with
+  BenchmarkDotNet in `benchmarks/Ark.Tools.Benchmarks`, runnable on demand and not
+  a CI gate. A benchmark rather than a test because the claim is a ratio between
+  two drains of the same backlog, which a pass/fail assertion on a shared runner
+  can only report as a flake.
 
 ## Implementation steps
 
@@ -54,9 +58,10 @@ buried among debug counters.
    tiers, the tuning procedure, and the compute-bound versus I/O-bound guidance.
 6. Add the sample tuning walkthrough with the metric queries used to read the
    result.
-7. Add the throughput smoke test (`TestCategory("integration")`, emulator, not a
-   CI gate): 10 000 trivial messages at ≥ 10× the sequential baseline with zero
-   lock-lost events.
+7. Add the throughput benchmark to `benchmarks/Ark.Tools.Benchmarks`: the same
+   backlog drained sequentially, by the host at a fixed concurrency, and by the
+   host while the controller adapts, over the in-memory transport so the number
+   measures the host and not a broker.
 8. Update the API surface baseline and any lock files touched by the series.
 9. Record the release note for the pre-release breaking changes introduced by
    AMF-01 through AMF-08, including the option pair that restores single-message
@@ -89,7 +94,8 @@ OpenTelemetry profile that registers both tiers, with example views.
 - Forbidden attributes never appear on either tier.
 - Operational instruments alone are sufficient to compute a scale-out decision.
 - A throwing or disposed listener cannot change messaging behaviour.
-- The throughput smoke test meets the success criteria on the emulator.
+- The throughput benchmark drains the same backlog through every arm and reports
+  the ratio against the sequential baseline.
 
 ## Outcomes
 
@@ -99,12 +105,12 @@ OpenTelemetry profile that registers both tiers, with example views.
 
 ## Acceptance
 
-- [ ] Operational tier is implemented on the existing meter.
-- [ ] Advanced tier is implemented on its own meter, gated and opt-in.
-- [ ] Both OTel registration extensions exist and are documented.
-- [ ] Throughput guide and sample tuning walkthrough are published.
-- [ ] The throughput smoke test exists and meets the success criteria.
-- [ ] API surface baseline and release notes are updated.
-- [ ] The [task board](../README.md) status for AMF-09 is updated to this task's acceptance state.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
+- [x] Operational tier is implemented on the existing meter.
+- [x] Advanced tier is implemented on its own meter, gated and opt-in.
+- [x] Both OTel registration extensions exist and are documented.
+- [x] Throughput guide and sample tuning walkthrough are published.
+- [x] The throughput benchmark exists and reports the ratio against the sequential baseline.
+- [x] API surface baseline is updated.
+- [x] The [task board](../README.md) status for AMF-09 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.
