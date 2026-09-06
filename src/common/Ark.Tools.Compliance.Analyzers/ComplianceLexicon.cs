@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -17,14 +16,12 @@ namespace Ark.Tools.Compliance.Analyzers;
 internal sealed class ComplianceLexicon
 {
     private static readonly ConditionalWeakTable<SourceText, ParsedEntries> _snapshots = new();
-    private static readonly ParsedEntries _defaults = _readDefaults();
     private static readonly char[] _newLines = { '\r', '\n' };
     private readonly HashSet<string> _terms = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _excluded = new(StringComparer.OrdinalIgnoreCase);
 
     internal ComplianceLexicon(ImmutableArray<AdditionalText> files, CancellationToken cancellationToken)
     {
-        _add(_defaults);
         foreach (var file in files)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -103,20 +100,6 @@ internal sealed class ComplianceLexicon
                 _terms.Add(entry.TrimStart('+'));
             }
         }
-    }
-
-    [SuppressMessage("Performance", "MA0045", Justification = "Roslyn compilation-start callbacks are synchronous and read only this embedded resource once.")]
-    private static ParsedEntries _readDefaults()
-    {
-        using var stream = typeof(ComplianceLexicon).Assembly.GetManifestResourceStream(
-            "Ark.Tools.Compliance.Analyzers.ComplianceLexicon.Ark.txt");
-        if (stream is null)
-        {
-            return new ParsedEntries(string.Empty);
-        }
-
-        using var reader = new StreamReader(stream);
-        return new ParsedEntries(reader.ReadToEnd());
     }
 
     private sealed class ParsedEntries

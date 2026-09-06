@@ -21,10 +21,6 @@
   <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' != 'false'">
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Compliance.globalconfig"
                                KeepDuplicates="false" />
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/ComplianceLexicon.Ark.txt"
-                     KeepDuplicates="false" />
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/ComplianceSinks.Ark.txt"
-                     KeepDuplicates="false" />
   </ItemGroup>
 
   

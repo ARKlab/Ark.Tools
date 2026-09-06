@@ -89,10 +89,11 @@ they must not contain PII, secrets, or unexpected exception details.
 
 ### Compliance policy
 
-`Ark.Tools.Build` ships `Ark.Tools.Compliance.globalconfig` and composable
-`ComplianceLexicon.Ark.txt` / `ComplianceSinks.Ark.txt` additional files. The
-configuration does not install an analyzer or logging generator; entries are
-inert when their implementing assembly is absent.
+`Ark.Tools.Build` ships `Ark.Tools.Compliance.globalconfig`; its entries are inert
+when the implementing assembly is absent. `Ark.Tools.Compliance.Analyzers`, added
+implicitly by `Ark.Tools.Sdk` unless `EnableArkToolsCompliance=false`, ships the
+analyzers together with the composable `ComplianceLexicon.Ark.txt` /
+`ComplianceSinks.Ark.txt` additional files.
 
 | ID | Default severity | Meaning |
 |---|---|---|

@@ -41,6 +41,10 @@ public sealed class SdkPackageTests
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Sdk", "Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(_root, "src", "common", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -79,9 +83,7 @@ public sealed class SdkPackageTests
     private static readonly string[] _composedBannedApiAssets =
     [
         "BannedSymbols.Ark.txt",
-        "BannedSymbols.Consumer.txt",
-        "ComplianceLexicon.Ark.txt",
-        "ComplianceSinks.Ark.txt"
+        "BannedSymbols.Consumer.txt"
     ];
 
     private static readonly string[] _preservedAnalyzer = ["Preserved.Analyzer.dll"];
@@ -99,16 +101,16 @@ public sealed class SdkPackageTests
         Assert.AreEqual("Enforce", _getProperty(baseline, "ArkComplianceMode"));
         StringAssert.Contains(_getProperty(baseline, "WarningsNotAsErrors"), "ARKPII001", StringComparison.Ordinal);
         CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
-        CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
-        CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
+        CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(baseline, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
+        CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(baseline, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
 
         using var disabled = await _evaluateSdkAsync(
             fixtureRoot, feed, "disabled", "Consumer.csproj",
             _createSdkCSharpProject("<EnableArkToolsCompliance>false</EnableArkToolsCompliance>"));
         Assert.AreEqual("Off", _getProperty(disabled, "ArkComplianceMode"));
         CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(disabled, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
-        CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(disabled, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
-        CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(disabled, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
+        CollectionAssert.DoesNotContain(_getComplianceAnalyzerItemFileNames(disabled, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
+        CollectionAssert.DoesNotContain(_getComplianceAnalyzerItemFileNames(disabled, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
         CollectionAssert.Contains(_getArkBuildItemFileNames(disabled, "AdditionalFiles"), "BannedSymbols.Ark.txt");
         CollectionAssert.AreEquivalent(
             _getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles").Where(static name => name != "Ark.Tools.Compliance.globalconfig").ToArray(),
@@ -1456,6 +1458,14 @@ public sealed class ConsumerTests
             .Concat(_getArkBuildItemFileNames(evaluation, "GlobalAnalyzerConfigFiles"))
             .Concat(_getArkBuildItemFileNames(evaluation, "AdditionalFiles"))
             .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static string[] _getComplianceAnalyzerItemFileNames(JsonDocument evaluation, string itemName)
+    {
+        return _getItemIdentities(evaluation, itemName)
+            .Where(static identity => identity.Contains("ark.tools.compliance.analyzers", StringComparison.OrdinalIgnoreCase))
+            .Select(static identity => Path.GetFileName(identity) ?? "")
             .ToArray();
     }
 

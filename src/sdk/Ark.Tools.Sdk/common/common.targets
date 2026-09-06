@@ -21,6 +21,7 @@
     <PackageReference Include="Meziantou.Analyzer" Version="3.0.205" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsVisualStudioThreading)' == 'true'" />
     <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
+    <PackageReference Include="Ark.Tools.Compliance.Analyzers" Version="$(ArkToolsSdkPackageVersion)" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(_ArkToolsSdkSourceBuild)' != 'true' and '$(EnableArkToolsCompliance)' != 'false'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(EnableArkToolsAppSettings)' != 'false'">

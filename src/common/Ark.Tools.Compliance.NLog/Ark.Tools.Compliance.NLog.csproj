@@ -5,10 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="buildTransitive/**/*.cs" />
-    <None Include="buildTransitive/**/*" Pack="true" PackagePath="buildTransitive/%(RecursiveDir)%(Filename)%(Extension)" />
     <ProjectReference Include="../Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <ProjectReference Include="../Ark.Tools.NLog/Ark.Tools.NLog.csproj" />
-    <PackageReference Include="NLog" />
   </ItemGroup>
 </Project>

@@ -48,6 +48,11 @@
     <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- The value is replaced with the package version by GenerateSdkVersionedAssets. -->
+    <ArkToolsSdkPackageVersion>$(Version)</ArkToolsSdkPackageVersion>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true' and '$(EnableArkToolsBuild)' != 'false'">
     <PackageReference Include="Ark.Tools.Build" Version="$(Version)" IsImplicitlyDefined="true" />
   </ItemGroup>

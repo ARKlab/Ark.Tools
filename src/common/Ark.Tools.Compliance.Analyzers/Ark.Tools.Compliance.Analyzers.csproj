@@ -15,15 +15,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="../../sdk/Ark.Tools.Build/configuration/analyzers/ComplianceLexicon.Ark.txt"
-          Link="ComplianceLexicon.Ark.txt"
-          Pack="true"
-          PackagePath="buildTransitive/ComplianceLexicon.Ark.txt" />
-    <None Include="../../sdk/Ark.Tools.Build/configuration/analyzers/ComplianceSinks.Ark.txt" Link="ComplianceSinks.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceSinks.Ark.txt" />
     <None Update="buildTransitive/Ark.Tools.Compliance.Analyzers.props" Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.Analyzers.props" />
-    <EmbeddedResource Include="../../sdk/Ark.Tools.Build/configuration/analyzers/ComplianceLexicon.Ark.txt">
-      <LogicalName>Ark.Tools.Compliance.Analyzers.ComplianceLexicon.Ark.txt</LogicalName>
-    </EmbeddedResource>
+    <None Update="buildTransitive/ComplianceLexicon.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceLexicon.Ark.txt" />
+    <None Update="buildTransitive/ComplianceSinks.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceSinks.Ark.txt" />
     <Compile Include="../Ark.Tools.Compliance/Shared/PersonalDataPatterns.cs" Link="Shared/PersonalDataPatterns.cs" />
     <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />

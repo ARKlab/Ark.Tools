@@ -34,8 +34,6 @@
     <None Include="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.IdentityModel.globalconfig" />
     <None Include="configuration\analyzers\Ark.Tools.Core.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.Core.globalconfig" />
     <None Include="configuration\analyzers\Ark.Tools.Compliance.globalconfig" Pack="true" PackagePath="configuration\analyzers\Ark.Tools.Compliance.globalconfig" />
-    <None Include="configuration\analyzers\ComplianceLexicon.Ark.txt" Pack="true" PackagePath="configuration\analyzers\ComplianceLexicon.Ark.txt" />
-    <None Include="configuration\analyzers\ComplianceSinks.Ark.txt" Pack="true" PackagePath="configuration\analyzers\ComplianceSinks.Ark.txt" />
     <None Include="configuration\analyzers\Analyzer.Devlooped.SponsorLink.globalconfig" Pack="true" PackagePath="configuration\analyzers\Analyzer.Devlooped.SponsorLink.globalconfig" />
     <None Include="configuration\analyzers\BannedSymbols.Ark.txt" Pack="true" PackagePath="configuration\analyzers\BannedSymbols.Ark.txt" />
   </ItemGroup>

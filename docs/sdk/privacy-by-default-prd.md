@@ -162,8 +162,7 @@ Five layers, in order of authority. A leak must pass all five.
 1. **Declare** — classification attributes and sensitive value objects
    (`Ark.Tools.Compliance`).
 2. **Refuse** — `ARKPII*` analyzers turn use-at-a-sink into a compile error
-   (`Ark.Tools.Compliance.Analyzers`, shipped inside `Ark.Tools.Compliance`, wired by
-   `Ark.Tools.Sdk`).
+   (`Ark.Tools.Compliance.Analyzers`, added implicitly by `Ark.Tools.Sdk`).
 3. **Inventory** — a generated, committed `ArkComplianceSurface.txt` snapshot; new or
    changed personal data cannot enter the codebase without an explicit diff, the
    same gate style already used for `ArkApiSurface.txt` (`ARKAPI001..004`).
@@ -797,8 +796,8 @@ existing mediator-framework generator discipline.
 
 | Package | Contents | TFMs |
 | --- | --- | --- |
-| `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the analyzer + generator + code-fix DLLs as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
-| `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | `IsPackable=false`, packed into the above | `netstandard2.0` |
+| `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the generator DLL as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | analyzer and code-fix DLLs as `analyzers/dotnet/cs` plus the canonical `ComplianceLexicon.Ark.txt`/`ComplianceSinks.Ark.txt` `AdditionalFiles`; added implicitly by `Ark.Tools.Sdk` | `netstandard2.0` |
 | `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
@@ -807,7 +806,7 @@ existing mediator-framework generator discipline.
 | `Ark.Tools.Compliance.Reqnroll` | value retriever and comparer for feature tables | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.OpenApi` | `Microsoft.OpenApi` schema descriptors, the `x-ark-classification` extension and `AddArkComplianceSchemas()`; consumed by MediatorFramework Minimal API hosts and, through `Ark.Tools.AspNetCore.Swashbuckle`, by `ArkStartupWebApiCommon` | `net10.0` |
 | `Ark.Tools.OTel` (existing) | `ArkComplianceRedactionProcessor`, registered by the default setup | unchanged |
-| `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ComplianceSinks`/`ComplianceLexicon` `AdditionalFiles`, `ArkComplianceSurface.txt` gate | unchanged |
+| `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` to `Ark.Tools.Compliance.Analyzers` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ArkComplianceSurface.txt` gate | unchanged |
 
 Opt-out follows the SDK convention already established
 (`EnableArkToolsCompliance=false`, per-rule severity overrides), and the analyzer

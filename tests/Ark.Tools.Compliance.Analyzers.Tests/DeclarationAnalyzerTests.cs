@@ -34,6 +34,9 @@ public sealed class DeclarationAnalyzerTests
             }
         }
         """;
+    private static readonly ImmutableArray<AdditionalText> _defaultLexicon = ImmutableArray.Create<AdditionalText>(
+        new TextFile("ComplianceLexicon.Ark.txt",
+            File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "ComplianceLexicon.Ark.txt"))));
     private static readonly ImmutableArray<MetadataReference> _platformReferences =
         ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
             .Select(static path => (MetadataReference)MetadataReference.CreateFromFile(path)).ToImmutableArray();
@@ -81,7 +84,7 @@ public sealed class DeclarationAnalyzerTests
     [TestMethod]
     public async Task AdditionalLexiconAddsAndRemovesTerms()
     {
-        var files = ImmutableArray.Create<AdditionalText>(
+        var files = _defaultLexicon.Add(
             new TextFile("ComplianceLexicon.Consumer.txt", "+Recipient\n-Email\nBilling*\n-BillingTemplate\n"));
         var diagnostics = await _analyzeAsync("""
             class Contact { public string Recipient; public string Email; public string BillingContact; public string BillingTemplate; }
@@ -194,8 +197,8 @@ public sealed class DeclarationAnalyzerTests
         var compilation = _compilation(fixedSource, includeStubs: false);
         compilation.GetDiagnostics().Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .Should().BeEmpty();
-        (await compilation.WithAnalyzers([new DeclarationComplianceAnalyzer()]).GetAnalyzerDiagnosticsAsync().ConfigureAwait(false))
-            .Should().BeEmpty();
+        (await compilation.WithAnalyzers([new DeclarationComplianceAnalyzer()], _analyzerOptions())
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false)).Should().BeEmpty();
         if (equivalenceKey == "UseSensitiveValueObject")
         {
             fixedSource.Should().Contain("EmailAddress.From(\"jane@example.com\")");
@@ -209,7 +212,8 @@ public sealed class DeclarationAnalyzerTests
         var fixedSource = await _applyFixAsync(
             "class Customer { public string Email { get; set; } }", "ExplainNotPersonalData").ConfigureAwait(false);
         var diagnostics = await _compilation(fixedSource, includeStubs: false)
-            .WithAnalyzers([new DeclarationComplianceAnalyzer()]).GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+            .WithAnalyzers([new DeclarationComplianceAnalyzer()], _analyzerOptions())
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
         diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII009");
         new ComplianceCodeFixProvider().GetFixAllProvider().Should().NotBeNull();
     }
@@ -279,9 +283,17 @@ public sealed class DeclarationAnalyzerTests
     {
         return await _compilation(source).WithAnalyzers(
                 [new DeclarationComplianceAnalyzer()],
-                new AnalyzerOptions(files.IsDefault ? ImmutableArray<AdditionalText>.Empty : files,
-                    options ?? new DeclarationOptionsProvider()))
+                _analyzerOptions(files, options))
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+    }
+
+    private static AnalyzerOptions _analyzerOptions(
+        ImmutableArray<AdditionalText> files = default,
+        AnalyzerConfigOptionsProvider? options = null)
+    {
+        return new AnalyzerOptions(
+            files.IsDefault ? _defaultLexicon : files,
+            options ?? new DeclarationOptionsProvider());
     }
 
     private static async Task<string> _applyFixAsync(string source, string equivalenceKey)
@@ -292,7 +304,7 @@ public sealed class DeclarationAnalyzerTests
             .WithMetadataReferences(_references());
         var document = project.AddDocument("Tests.cs", SourceText.From(_stubs + source));
         var compilation = await document.Project.GetCompilationAsync().ConfigureAwait(false);
-        var diagnostics = await compilation!.WithAnalyzers([new DeclarationComplianceAnalyzer()])
+        var diagnostics = await compilation!.WithAnalyzers([new DeclarationComplianceAnalyzer()], _analyzerOptions())
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
         var actions = new List<CodeAction>();
         await new ComplianceCodeFixProvider().RegisterCodeFixesAsync(new CodeFixContext(
