@@ -31,10 +31,14 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | 9 | JSON, MessagePack, protobuf, and generated metadata | [Serialization](serialization.md) |
 | 10 | Versioned OpenAPI and Scalar | [OpenAPI](openapi.md) |
 | 11 | Isolated Azure Functions HTTP host | [Azure Functions](azure-functions.md) |
-| 12 | Reqnroll application and host-boundary testing | [Testing](testing.md), [DOC-01 testing guidance](../progress/tasks/testing/DOC-01-testing-guidance.md) |
-| 13 | API-surface review and custom transport adapters | [API-surface snapshots](api-surface-snapshots.md), [Escape hatches](escape-hatches.md) |
-| 14 | Generator diagnostics, fallback behavior, and troubleshooting | [Diagnostics and troubleshooting](diagnostics-and-troubleshooting.md) |
-| 15 | MCP tools, host composition, and embedded attachments | [MCP](mcp.md) |
+| 12 | Long-running messaging receivers: processor host, tuning, backpressure | [Messaging processing](messaging-processing.md) |
+| 13 | Reqnroll application and host-boundary testing | [Testing](testing.md), [DOC-01 testing guidance](../progress/tasks/testing/DOC-01-testing-guidance.md) |
+| 14 | API-surface review and custom transport adapters | [API-surface snapshots](api-surface-snapshots.md), [Escape hatches](escape-hatches.md) |
+| 15 | Generator diagnostics, fallback behavior, and troubleshooting | [Diagnostics and troubleshooting](diagnostics-and-troubleshooting.md) |
+| 16 | MCP tools, host composition, and embedded attachments | [MCP](mcp.md) |
+
+Looking for the mechanics behind a behavior rather than how to use it? See
+[How it works](../how-it-works/README.md).
 
 ## Capability map
 

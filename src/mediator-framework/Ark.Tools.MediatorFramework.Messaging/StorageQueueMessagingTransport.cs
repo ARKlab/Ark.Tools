@@ -4,7 +4,6 @@
 using System.Buffers;
 using System.Buffers.Text;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 
 using Azure.Core;
 using Azure.Storage.Queues;
@@ -14,7 +13,8 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Storage Queue implementation of the messaging transport contract.</summary>
 public sealed class StorageQueueMessagingTransport :
-    IMessagingReceiveTransport,
+    IMessagingTransport,
+    IMessagingMessageSource,
     IMessagingTransportManagement,
     IMessagingTransport<StorageQueueMessagingTransport>
 {
@@ -164,14 +164,80 @@ public sealed class StorageQueueMessagingTransport :
             "Azure Storage Queue does not support the PubSub messaging capability.");
     }
 
+    /// <summary>Gets the maximum number of messages a single receive returns.</summary>
+    /// <remarks>
+    /// One at this task: batch receive at the service maximum of 32 lands in AMF-06.
+    /// </remarks>
+    public const int MaximumReceiveBatchSize = 1;
+
     /// <inheritdoc />
-    public IAsyncEnumerable<IMessagingLockedDelivery> ReceiveAsync(
+    public MessagingReceiverCapabilities ReceiverCapabilities => new(
+        MaximumBatchSize: MaximumReceiveBatchSize,
+        SupportsServerSideWait: false,
+        SupportsLockRenewal: true,
+        NativeLockDuration: _receiveVisibilityTimeout);
+
+    /// <inheritdoc />
+    public async ValueTask<IReadOnlyList<IMessagingLockedDelivery>> ReceiveBatchAsync(
         string queue,
+        int maxMessages,
+        TimeSpan maxWait,
         CancellationToken ctk)
     {
         ArgumentException.ThrowIfNullOrEmpty(queue);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxMessages, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxWait.Ticks, 0, nameof(maxWait));
+
         queue = ToNativeEntityName(queue);
-        return _receiveAsync(queue, ctk);
+        var source = _queue(queue);
+        var poison = _queue(_poisonQueue(queue));
+        var requested = Math.Min(maxMessages, MaximumReceiveBatchSize);
+
+        // Storage Queues has no server-side wait, so an empty queue returns immediately and the
+        // host owns the backoff. Poison moves are retried within the same call so a single bad
+        // message cannot make a non-empty queue look empty forever.
+        while (true)
+        {
+            ctk.ThrowIfCancellationRequested();
+            var response = await source.ReceiveMessagesAsync(
+                maxMessages: requested,
+                visibilityTimeout: _receiveVisibilityTimeout,
+                cancellationToken: ctk).ConfigureAwait(false);
+            if (response.Value.Length == 0)
+                return Array.Empty<IMessagingLockedDelivery>();
+
+            var batch = new List<IMessagingLockedDelivery>(response.Value.Length);
+            foreach (var message in response.Value)
+            {
+                StorageQueueEnvelope envelope;
+                try
+                {
+                    envelope = StorageQueueEnvelopeCodec.Decode(message.Body);
+                }
+                catch (MessagingFailFastException exception)
+                {
+                    await _moveToPoisonAsync(
+                        source,
+                        poison,
+                        message,
+                        exception.Reason.ToString(),
+                        exception.Message,
+                        ctk).ConfigureAwait(false);
+                    continue;
+                }
+
+                batch.Add(new StorageQueueLockedDelivery(
+                    source,
+                    poison,
+                    message,
+                    envelope,
+                    _receiveVisibilityTimeout,
+                    _retryDelay));
+            }
+
+            if (batch.Count > 0)
+                return batch;
+        }
     }
 
     /// <inheritdoc />
@@ -234,53 +300,6 @@ public sealed class StorageQueueMessagingTransport :
         await Task.CompletedTask.ConfigureAwait(false);
         throw new NotSupportedException(
             "Azure Storage Queue does not support the PubSub messaging capability.");
-    }
-
-    private async IAsyncEnumerable<IMessagingLockedDelivery> _receiveAsync(
-        string queue,
-        [EnumeratorCancellation] CancellationToken ctk)
-    {
-        var source = _queue(queue);
-        var poison = _queue(_poisonQueue(queue));
-        while (true)
-        {
-            ctk.ThrowIfCancellationRequested();
-            var response = await source.ReceiveMessagesAsync(
-                maxMessages: 1,
-                visibilityTimeout: _receiveVisibilityTimeout,
-                cancellationToken: ctk).ConfigureAwait(false);
-            if (response.Value.Length == 0)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(250), ctk).ConfigureAwait(false);
-                continue;
-            }
-
-            var message = response.Value[0];
-            StorageQueueEnvelope envelope;
-            try
-            {
-                envelope = StorageQueueEnvelopeCodec.Decode(message.Body);
-            }
-            catch (MessagingFailFastException exception)
-            {
-                await _moveToPoisonAsync(
-                    source,
-                    poison,
-                    message,
-                    exception.Reason.ToString(),
-                    exception.Message,
-                    ctk).ConfigureAwait(false);
-                continue;
-            }
-
-            yield return new StorageQueueLockedDelivery(
-                source,
-                poison,
-                message,
-                envelope,
-                _receiveVisibilityTimeout,
-                _retryDelay);
-        }
     }
 
     private QueueClient _queue(string queue)
@@ -369,6 +388,7 @@ public sealed class StorageQueueMessagingTransport :
             _popReceipt = message.PopReceipt;
             _receiveVisibilityTimeout = receiveVisibilityTimeout;
             _retryDelay = retryDelay;
+            LockedUntil = message.NextVisibleOn;
             Headers = envelope.Headers;
             Payload = envelope.Payload;
         }
@@ -379,6 +399,10 @@ public sealed class StorageQueueMessagingTransport :
 
         public int DeliveryCount => checked((int)_message.DequeueCount);
 
+        public string DeliveryId => _message.MessageId;
+
+        public DateTimeOffset? LockedUntil { get; private set; }
+
         public async Task RenewLockAsync(CancellationToken ctk)
         {
             var response = await _source.UpdateMessageAsync(
@@ -388,6 +412,7 @@ public sealed class StorageQueueMessagingTransport :
                 _receiveVisibilityTimeout,
                 ctk).ConfigureAwait(false);
             _popReceipt = response.Value.PopReceipt;
+            LockedUntil = response.Value.NextVisibleOn;
         }
 
         public async Task CompleteAsync(CancellationToken ctk)
@@ -405,6 +430,7 @@ public sealed class StorageQueueMessagingTransport :
                 _retryDelay,
                 ctk).ConfigureAwait(false);
             _popReceipt = response.Value.PopReceipt;
+            LockedUntil = response.Value.NextVisibleOn;
         }
 
         public async Task DeadLetterAsync(

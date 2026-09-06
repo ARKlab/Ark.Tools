@@ -56,8 +56,8 @@ public static class MessagingServiceCollectionExtensions
 
         services._addArkMessaging();
         services.AddSingleton<IMessagingTransport>(transport);
-        if (transport is IMessagingReceiveTransport receiveTransport)
-            services.AddSingleton(receiveTransport);
+        if (transport is IMessagingMessageSource messageSource)
+            services.AddSingleton(messageSource);
         if (transport is IMessagingTransportManagement management)
             services.AddSingleton(management);
         return services;
@@ -88,8 +88,7 @@ public static class MessagingServiceCollectionExtensions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
         if (services.Any(static service =>
                 service.ServiceType == typeof(MessagingOutboxProcessor)
-                || service.ServiceType.FullName
-                    == "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest"))
+                || service.ServiceType == typeof(MessagingTriggeredHostMarker)))
         {
             throw new InvalidOperationException(
                 "A native messaging outbox processor is already registered or Azure Functions composition is active.");

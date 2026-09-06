@@ -419,14 +419,13 @@ public sealed partial class MessagingRuntimeTests
                 secondLevelRetriesEnabled: false,
                 maximumHandlerDuration: TimeSpan.FromMilliseconds(30)),
             static async (_, _, _, _) =>
-                await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false),
-            lockRenewalInterval: TimeSpan.FromMilliseconds(5));
+                await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false));
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
 
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(1);
-        delivery._renewals.Should().BeGreaterThan(0).And.BeLessThan(15);
+        delivery._renewals.Should().Be(0, "renewal is the host renewer's job, not the dispatcher's");
     }
 
     [TestMethod]
@@ -668,8 +667,7 @@ public sealed partial class MessagingRuntimeTests
             MessagingExceptionInfo,
             ICommandProcessor,
             CancellationToken,
-            Task>? dispatchFailed = null,
-        TimeSpan? lockRenewalInterval = null)
+            Task>? dispatchFailed = null)
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
@@ -688,8 +686,7 @@ public sealed partial class MessagingRuntimeTests
             payloadReceiver,
             retryPolicy,
             dispatch,
-            dispatchFailed,
-            lockRenewalInterval: lockRenewalInterval ?? TimeSpan.FromHours(1));
+            dispatchFailed);
     }
 
     private sealed class TestLockedDelivery : IMessagingLockedDelivery
@@ -719,6 +716,10 @@ public sealed partial class MessagingRuntimeTests
         public ReadOnlySequence<byte> Payload { get; }
 
         public int DeliveryCount { get; }
+
+        public string DeliveryId { get; } = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
+
+        public DateTimeOffset? LockedUntil => null;
 
         internal int _completed { get; private set; }
 

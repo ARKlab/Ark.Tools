@@ -107,6 +107,10 @@ public static class MessagingQueueFunctionsDispatcher
 
         public int DeliveryCount => checked((int)_message.DequeueCount);
 
+        public string DeliveryId => _message.MessageId;
+
+        public DateTimeOffset? LockedUntil => _message.NextVisibleOn;
+
         public async Task RenewLockAsync(CancellationToken ctk)
         {
             await Task.CompletedTask.ConfigureAwait(false);

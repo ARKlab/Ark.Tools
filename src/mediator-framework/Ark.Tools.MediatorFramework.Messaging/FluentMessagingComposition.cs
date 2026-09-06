@@ -4,6 +4,7 @@
 using Ark.Tools.Outbox;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 using NodaTime;
@@ -672,9 +673,22 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         if (!participant.Receives)
             throw new InvalidOperationException(
                 "The selected participant is producer-only and cannot host a receiver.");
-        if (_transportValue is not IMessagingReceiveTransport)
-            throw new InvalidOperationException(
-                "A custom receiver requires a receive-capable messaging transport.");
+        if (_transportValue is not IMessagingMessageSource)
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.TransportIsNotAMessageSource,
+                FormattableString.Invariant(
+                    $"A processor host requires a transport implementing {nameof(IMessagingMessageSource)}; '{_transportValue?.GetType().Name}' does not."));
+        }
+
+        if (_servicesValue.Any(static service =>
+                service.ServiceType == typeof(MessagingTriggeredHostMarker)))
+        {
+            throw new MessagingCompositionException(
+                MessagingCompositionDiagnostic.ProcessorHostInTriggeredHost,
+                "A processor host cannot be composed in an Azure Functions host, which owns triggering itself.");
+        }
+
         _registerCommon(participant);
         _servicesValue.AddSingleton(serviceProvider => new MessagingHeaderProcessor(
             serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
@@ -682,6 +696,8 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         _servicesValue.AddSingleton(serviceProvider => new MessagingPayloadReceiver(
             serviceProvider.GetRequiredService<IMessagingDataBus>(),
             participant.Network));
+        _servicesValue.TryAddSingleton<IMessagingConcurrencyController>(static serviceProvider =>
+            new MessagingAimdConcurrencyController(serviceProvider.GetService<MessagingProcessingOptions>()));
         _servicesValue.AddSingleton(serviceProvider => new MessagingDispatcher(
             _container,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
@@ -700,55 +716,16 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
                         processor,
                         ctk),
             IncomingSteps,
-            _container.GetInstance));
-        _servicesValue.AddSingleton<IHostedService, MessagingReceiveHostedService>();
+            _container.GetInstance,
+            clock: null,
+            serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
+        _servicesValue.AddSingleton<IHostedService>(serviceProvider => new MessagingProcessorHost(
+            (IMessagingMessageSource)serviceProvider.GetRequiredService<IMessagingTransport>(),
+            participant.Identity,
+            serviceProvider.GetRequiredService<MessagingDispatcher>().OnDeliveryAsync,
+            serviceProvider.GetService<MessagingProcessingOptions>(),
+            participant.RetryPolicy.MaximumHandlerDuration,
+            serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
     }
 
-}
-
-internal sealed class MessagingReceiveHostedService : IHostedService, IAsyncDisposable
-{
-    private readonly IMessagingReceiveTransport _transport;
-    private readonly MessagingDispatcher _dispatcher;
-    private readonly string _queue;
-    private MessagingReceivePump? _pump;
-
-    public MessagingReceiveHostedService(
-        IMessagingTransport transport,
-        MessagingDispatcher dispatcher,
-        MessagingParticipantDescriptor participant)
-    {
-        _transport = transport as IMessagingReceiveTransport
-            ?? throw new InvalidOperationException(
-                "A custom receiver requires a receive-capable messaging transport.");
-        _dispatcher = dispatcher;
-        _queue = participant.Identity;
-    }
-
-    public async Task StartAsync(CancellationToken cancellationToken)
-    {
-        _pump = new MessagingReceivePump(
-            _transport,
-            _queue,
-            _dispatcher.OnDeliveryAsync);
-        await _pump.StartAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        if (_pump is not null)
-        {
-            await _pump.StopAsync().ConfigureAwait(false);
-            _pump = null;
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_pump is not null)
-        {
-            await _pump.DisposeAsync().ConfigureAwait(false);
-            _pump = null;
-        }
-    }
 }
