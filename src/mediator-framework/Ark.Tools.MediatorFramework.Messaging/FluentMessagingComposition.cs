@@ -734,7 +734,8 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
             serviceProvider.GetRequiredService<MessagingDispatcher>().OnDeliveryAsync,
             serviceProvider.GetService<MessagingProcessingOptions>(),
             participant.RetryPolicy.MaximumHandlerDuration,
-            serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
+            serviceProvider.GetRequiredService<IMessagingConcurrencyController>(),
+            participant.Identity));
     }
 
 }

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <Description>OpenTelemetry registration for MediatorFramework messaging processor hosts</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;Messaging;OpenTelemetry</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.Messaging\Ark.Tools.MediatorFramework.Messaging.csproj" />
+  </ItemGroup>
+</Project>

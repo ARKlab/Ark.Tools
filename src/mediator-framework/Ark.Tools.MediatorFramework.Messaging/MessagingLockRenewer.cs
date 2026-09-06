@@ -7,6 +7,7 @@ using NodaTime;
 
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -30,16 +31,26 @@ internal sealed class MessagingLockRenewer : IAsyncDisposable
     private readonly MessagingProcessingOptions _options;
     private readonly IClock _clock;
     private readonly ConcurrentDictionary<RenewedDelivery, byte> _registrations = new();
+    private readonly KeyValuePair<string, object?>[] _renewedTags;
+    private readonly KeyValuePair<string, object?>[] _lostTags;
+    private readonly KeyValuePair<string, object?>[] _tags;
 
     /// <summary>Creates a renewer for one processor host.</summary>
     /// <param name="options">The processing options carrying the renewal cadence.</param>
     /// <param name="clock">The clock, or <see langword="null"/> for the system clock.</param>
-    internal MessagingLockRenewer(MessagingProcessingOptions options, IClock? clock = null)
+    /// <param name="tags">The host topology tags used by the renewal instrument.</param>
+    internal MessagingLockRenewer(
+        MessagingProcessingOptions options,
+        IClock? clock = null,
+        KeyValuePair<string, object?>[]? tags = null)
     {
         ArgumentNullException.ThrowIfNull(options);
 
         _options = options;
         _clock = clock ?? SystemClock.Instance;
+        _tags = tags ?? [];
+        _renewedTags = [.. _tags, new KeyValuePair<string, object?>("outcome", "renewed")];
+        _lostTags = [.. _tags, new KeyValuePair<string, object?>("outcome", "lost")];
     }
 
     /// <summary>Gets the number of deliveries whose lock is currently being kept alive.</summary>
@@ -210,6 +221,7 @@ internal sealed class MessagingLockRenewer : IAsyncDisposable
 
                 await _inner.RenewLockAsync(ctk).ConfigureAwait(false);
                 _acquiredAt = _renewer._clock.GetCurrentInstant();
+                MessagingMetrics._recordLockRenewal(_renewer._renewedTags);
             }
             catch (OperationCanceledException) when (ctk.IsCancellationRequested)
             {
@@ -219,8 +231,7 @@ internal sealed class MessagingLockRenewer : IAsyncDisposable
             catch (Exception exception)
 #pragma warning restore CA1031
             {
-                // ponytail: the failure cancels the handler and drops the registration. Ceiling: the
-                // lock-renewal instrument and the concurrency-controller feed land in AMF-05/AMF-09.
+                MessagingMetrics._recordLockRenewal(_renewer._lostTags);
                 _logger.Warn(
                     exception,
                     CultureInfo.InvariantCulture,
@@ -239,6 +250,7 @@ internal sealed class MessagingLockRenewer : IAsyncDisposable
         private async Task _settleAsync(Func<CancellationToken, Task> settle, CancellationToken ctk)
         {
             await _gate.WaitAsync(ctk).ConfigureAwait(false);
+            var started = _renewer._options.AdvancedMetrics ? Stopwatch.GetTimestamp() : 0;
             try
             {
                 _settled = true;
@@ -248,6 +260,8 @@ internal sealed class MessagingLockRenewer : IAsyncDisposable
             finally
             {
                 _gate.Release();
+                if (started != 0)
+                    MessagingMetrics._recordSettleDuration(Stopwatch.GetElapsedTime(started), _renewer._tags);
             }
         }
     }

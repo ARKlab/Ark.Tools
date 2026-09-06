@@ -26,11 +26,12 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
     private readonly Func<IMessagingLockedDelivery, CancellationToken, Task> _onDelivery;
     private readonly string _queue;
     private readonly MessagingProcessingOptions _options;
-    private readonly Channel<IMessagingLockedDelivery> _buffer;
+    private readonly Channel<BufferedDelivery> _buffer;
     private readonly SemaphoreSlim _credits;
     private readonly int _batchSize;
     private readonly MessagingLockRenewer? _renewer;
     private readonly IMessagingConcurrencyController _controller;
+    private readonly KeyValuePair<string, object?>[] _tags;
     private readonly Lock _gate = new();
     private int _prefetchBudget;
     private int _creditDebt;
@@ -52,14 +53,16 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
     /// <param name="options">The processing options, or <see langword="null"/> for the defaults.</param>
     /// <param name="maximumHandlerDuration">The participant's maximum handler duration, validated against a non-renewable lock.</param>
     /// <param name="concurrencyController">The concurrency controller, or <see langword="null"/> for the default AIMD controller.</param>
+    /// <param name="participant">The participant identity used as a metric attribute, when it differs from the queue.</param>
     public MessagingProcessorHost(
         IMessagingMessageSource source,
         string queue,
         Func<IMessagingLockedDelivery, CancellationToken, Task> onDelivery,
         MessagingProcessingOptions? options = null,
         TimeSpan? maximumHandlerDuration = null,
-        IMessagingConcurrencyController? concurrencyController = null)
-        : this(source, queue, onDelivery, options, maximumHandlerDuration, concurrencyController, null, null)
+        IMessagingConcurrencyController? concurrencyController = null,
+        string? participant = null)
+        : this(source, queue, onDelivery, options, maximumHandlerDuration, concurrencyController, null, null, participant)
     {
     }
 
@@ -71,7 +74,8 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         TimeSpan? maximumHandlerDuration,
         IMessagingConcurrencyController? concurrencyController,
         Func<double>? jitter,
-        IClock? clock)
+        IClock? clock,
+        string? participant = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrEmpty(queue);
@@ -83,6 +87,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         _options = options ?? new MessagingProcessingOptions();
         _jitter = jitter;
         _options.Validate();
+        _tags = MessagingMetrics._topologyTags(queue, participant);
 
         _controller = concurrencyController ?? new MessagingAimdConcurrencyController(_options, clock);
         _workerTarget = _controller.Limit;
@@ -95,7 +100,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         // The channel is sized for the hard ceiling because credits, not the channel, enforce the
         // current budget: a bounded channel cannot be resized while the host runs.
         var ceiling = Math.Max(_prefetchBudget, _options.GetEffectiveMaximumPrefetch());
-        _buffer = Channel.CreateBounded<IMessagingLockedDelivery>(new BoundedChannelOptions(ceiling)
+        _buffer = Channel.CreateBounded<BufferedDelivery>(new BoundedChannelOptions(ceiling)
         {
             FullMode = BoundedChannelFullMode.Wait,
             SingleWriter = true,
@@ -105,7 +110,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         if (source.ReceiverCapabilities.SupportsLockRenewal)
         {
             _validateRenewableLock(source.ReceiverCapabilities);
-            _renewer = new MessagingLockRenewer(_options, clock);
+            _renewer = new MessagingLockRenewer(_options, clock, _tags);
         }
         else
         {
@@ -177,6 +182,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             _receiving = receiving;
             _processing = processing;
             _workers = [];
+            MessagingMetrics._recordConcurrencyLimit(_workerTarget, _tags);
             _startWorkers(_workerTarget, processing.Token);
             _receiveLoop = Task.Run(() => _receiveAsync(receiving.Token), CancellationToken.None);
             if (_renewer is not null)
@@ -244,12 +250,16 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
         // Abandon whatever never got processed so redelivery is immediate rather than
         // lock-expiry-delayed.
-        while (_buffer.Reader.TryRead(out var delivery))
+        while (_buffer.Reader.TryRead(out var buffered))
         {
             AbandonedOnShutdown++;
-            await _settleQuietlyAsync(delivery).ConfigureAwait(false);
+            MessagingMetrics._recordBuffered(-1, _tags);
+            await _settleQuietlyAsync(buffered.Delivery).ConfigureAwait(false);
             _releaseCredit(1);
         }
+
+        // The gauges are deltas, so a stopped host must return them to zero.
+        MessagingMetrics._recordConcurrencyLimit(-Volatile.Read(ref _workerTarget), _tags);
     }
 
     /// <inheritdoc />
@@ -278,6 +288,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
             var received = 0;
             var failed = false;
+            var advanced = _options.AdvancedMetrics;
             try
             {
                 var batch = await _source
@@ -292,7 +303,9 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
                     // Never cancel a write: the delivery is already locked, and dropping it here would
                     // hold that lock until it expires. Credit guarantees room in the buffer.
-                    await _buffer.Writer.WriteAsync(tracked, CancellationToken.None).ConfigureAwait(false);
+                    var buffered = new BufferedDelivery(tracked, advanced ? Stopwatch.GetTimestamp() : 0);
+                    MessagingMetrics._recordBuffered(1, _tags);
+                    await _buffer.Writer.WriteAsync(buffered, CancellationToken.None).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException) when (ctk.IsCancellationRequested)
@@ -305,7 +318,11 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             {
                 failed = true;
                 if (exception is MessagingThrottledException)
-                    _controller.ReportSignal(MessagingConcurrencySignal.BrokerThrottled);
+                {
+                    MessagingMetrics._recordThrottled(_tags);
+                    _reportSignal(MessagingConcurrencySignal.BrokerThrottled);
+                }
+
                 var cooldown = backoff._sampleErrorCooldown();
                 _logger.Warn(
                     exception,
@@ -326,6 +343,9 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             if (failed)
                 continue;
 
+            if (advanced)
+                MessagingMetrics._recordReceiveBatch(received, _tags);
+
             if (received > 0)
             {
                 backoff._onReceived();
@@ -339,10 +359,15 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 // The broker holds the call open, so growing the window lowers the request rate
                 // without adding latency.
                 waitWindow = cap > _options.ReceiveWaitTime ? cap : _options.ReceiveWaitTime;
+                if (advanced)
+                    MessagingMetrics._recordBackoffInterval(waitWindow, _tags);
             }
             else
             {
-                await _delayAsync(backoff._sample(cap), ctk).ConfigureAwait(false);
+                var wait = backoff._sample(cap);
+                if (advanced)
+                    MessagingMetrics._recordBackoffInterval(wait, _tags);
+                await _delayAsync(wait, ctk).ConfigureAwait(false);
             }
         }
     }
@@ -377,12 +402,13 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 return;
 
             if (await _probeThreadPoolAsync(ctk).ConfigureAwait(false) > _options.ThreadPoolStarvationThreshold)
-                _controller.ReportSignal(MessagingConcurrencySignal.ThreadPoolStarved);
+                _reportSignal(MessagingConcurrencySignal.ThreadPoolStarved);
 
             // A drained queue makes measurements meaningless, so the controller is told whether work
             // was actually waiting rather than inferring it from throughput.
             var limit = _controller.Evaluate(_buffer.Reader.Count > 0);
             _applyLimit(limit);
+            _recordEvaluation();
         }
     }
 
@@ -405,6 +431,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 var added = limit - _workerTarget;
                 _workerTarget = limit;
                 _shrinkStreak = 0;
+                MessagingMetrics._recordConcurrencyLimit(added, _tags);
                 _startWorkers(added, processing.Token);
             }
             else if (limit < _workerTarget)
@@ -415,6 +442,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                     return;
 
                 _shrinkStreak = 0;
+                MessagingMetrics._recordConcurrencyLimit(limit - _workerTarget, _tags);
                 _workerTarget = limit;
             }
             else
@@ -522,12 +550,19 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
     {
         while (await _buffer.Reader.WaitToReadAsync(CancellationToken.None).ConfigureAwait(false))
         {
-            if (!_buffer.Reader.TryRead(out var delivery))
+            if (!_buffer.Reader.TryRead(out var buffered))
                 continue;
+
+            var delivery = buffered.Delivery;
+            MessagingMetrics._recordBuffered(-1, _tags);
+            MessagingMetrics._recordInFlight(1, _tags);
 
             // A lost lock must cancel the handler: continuing would settle a delivery the broker has
             // already handed to somebody else.
             var started = Stopwatch.GetTimestamp();
+            if (buffered.EnqueuedTicks != 0)
+                MessagingMetrics._recordQueueWait(Stopwatch.GetElapsedTime(buffered.EnqueuedTicks, started), _tags);
+
             var renewedDelivery = delivery as IMessagingRenewedDelivery;
             Exception? settleFailure = null;
             using var handlerCancellation = delivery is IMessagingRenewedDelivery renewed
@@ -542,35 +577,85 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             catch (OperationCanceledException) when (ctk.IsCancellationRequested)
             {
                 await _settleQuietlyAsync(delivery).ConfigureAwait(false);
+                MessagingMetrics._recordInFlight(-1, _tags);
                 _releaseCredit(1);
                 return;
             }
 #pragma warning disable CA1031, ERP022 // A worker must survive a settlement or broker failure.
             catch (Exception exception)
             {
-                // ponytail: the delivery is abandoned for immediate redelivery and the worker keeps
-                // going. Ceiling: the failure is not reported anywhere; AMF-09 adds the metric and
-                // the structured log for it.
                 settleFailure = exception;
+                _logger.Warn(
+                    exception,
+                    CultureInfo.InvariantCulture,
+                    "Dispatch or settlement failed for delivery {deliveryId} on queue {queue}; abandoning it for redelivery.",
+                    delivery.DeliveryId,
+                    _queue);
                 await _settleQuietlyAsync(delivery).ConfigureAwait(false);
             }
 #pragma warning restore CA1031, ERP022
 
             if (settleFailure is MessagingThrottledException)
-                _controller.ReportSignal(MessagingConcurrencySignal.BrokerThrottled);
+            {
+                MessagingMetrics._recordThrottled(_tags);
+                _reportSignal(MessagingConcurrencySignal.BrokerThrottled);
+            }
 
             var lockLost = settleFailure is MessagingLockLostException
                 || (renewedDelivery is not null && renewedDelivery._lockLost.IsCancellationRequested);
+            MessagingMetrics._recordInFlight(-1, _tags);
             _releaseCredit(1);
             _controller.ReportCompletion(Stopwatch.GetElapsedTime(started));
             if (lockLost)
-                _controller.ReportSignal(MessagingConcurrencySignal.LockLost);
+                _reportSignal(MessagingConcurrencySignal.LockLost);
 
             // Shrinking is cooperative: a worker leaves after its delivery settled, never mid-flight.
             if (_tryRetireWorker())
                 return;
         }
     }
+
+    private void _reportSignal(MessagingConcurrencySignal signal)
+    {
+        _controller.ReportSignal(signal);
+        if (_options.AdvancedMetrics)
+            MessagingMetrics._recordConcurrencyDecision(_withReason(_reason(signal)));
+    }
+
+    private void _recordEvaluation()
+    {
+        // The gate is checked before reading the controller, so a disabled tier costs one bool.
+        if (!_options.AdvancedMetrics || _controller is not IMessagingConcurrencyDiagnostics diagnostics)
+            return;
+
+        var decision = diagnostics.LastDecision;
+        MessagingMetrics._recordGradient(decision.Gradient, _tags);
+        if (decision.Reason is { } reason)
+            MessagingMetrics._recordConcurrencyDecision(_withReason(reason));
+    }
+
+    private KeyValuePair<string, object?>[] _withReason(string reason)
+    {
+        var tags = new KeyValuePair<string, object?>[_tags.Length + 1];
+        _tags.CopyTo(tags, 0);
+        tags[^1] = new KeyValuePair<string, object?>("reason", reason);
+        return tags;
+    }
+
+    private static string _reason(MessagingConcurrencySignal signal)
+    {
+        return signal switch
+        {
+            MessagingConcurrencySignal.BrokerThrottled => "throttled",
+            MessagingConcurrencySignal.LockLost => "lock_lost",
+            MessagingConcurrencySignal.HandlerTimeout => "timeout",
+            MessagingConcurrencySignal.ThreadPoolStarved => "starvation",
+            _ => "backpressure"
+        };
+    }
+
+    /// <summary>A buffered delivery and, when the advanced tier is on, the timestamp it was buffered at.</summary>
+    private readonly record struct BufferedDelivery(IMessagingLockedDelivery Delivery, long EnqueuedTicks);
 
     private static async Task _settleQuietlyAsync(IMessagingLockedDelivery delivery)
     {
