@@ -80,13 +80,22 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
                 break;
             case IInterpolatedStringOperation interpolation:
-                _check(context, interpolation, "ARKPII005");
+                if (!_isInsideConfiguredSink(interpolation, sinks))
+                {
+                    _check(context, interpolation, "ARKPII005");
+                }
                 break;
             case IBinaryOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String } binary:
-                _check(context, binary, "ARKPII005");
+                if (!_isInsideConfiguredSink(binary, sinks))
+                {
+                    _check(context, binary, "ARKPII005");
+                }
                 break;
             case IConversionOperation { IsImplicit: true, Type.SpecialType: SpecialType.System_String } conversion:
-                _check(context, conversion.Operand, "ARKPII005");
+                if (!_isInsideConfiguredSink(conversion, sinks))
+                {
+                    _check(context, conversion.Operand, "ARKPII005");
+                }
                 break;
             case IAssignmentOperation assignment:
                 if (_isExceptionData(assignment.Target, context, 0))
@@ -151,14 +160,30 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
                 }
             }
         }
-        else if (method.Name == "ToString" && invocation.Instance is not null)
+        else if (method.Name == "ToString" && invocation.Instance is not null
+            && !_isInsideConfiguredSink(invocation, sinks))
         {
             _check(context, invocation.Instance, "ARKPII005");
         }
-        else if (method.ContainingType.SpecialType == SpecialType.System_String && method.Name is "Concat" or "Format")
+        else if (method.ContainingType.SpecialType == SpecialType.System_String
+            && (method.Name is "Concat" or "Format")
+            && !_isInsideConfiguredSink(invocation, sinks))
         {
             _check(context, invocation, "ARKPII005");
         }
+    }
+
+    private static bool _isInsideConfiguredSink(IOperation operation, SinkConfiguration sinks)
+    {
+        for (var parent = operation.Parent; parent is not null; parent = parent.Parent)
+        {
+            if (parent is IInvocationOperation invocation && sinks._getRule(invocation.TargetMethod) is not null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool _emptyPurpose(IOperation operation, OperationAnalysisContext context, int depth)

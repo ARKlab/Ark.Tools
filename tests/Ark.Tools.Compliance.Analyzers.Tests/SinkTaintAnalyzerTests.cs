@@ -126,6 +126,15 @@ public sealed class SinkTaintAnalyzerTests
             static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("intra-method", StringComparison.Ordinal));
     }
 
+    /// <summary>A formatting expression directly inside a configured sink reports only the sink violation.</summary>
+    [TestMethod]
+    public async Task SinkFormatting_IsNotReportedTwice()
+    {
+        var diagnostics = await _analyzeAsync(_method("logger.Info($\"User {c.Email}\");")).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII002");
+    }
+
     /// <summary>Safe identifiers, masks, constants and overwritten locals do not taint logs.</summary>
     [TestMethod]
     [DataRow("logger.Info(\"{Key}\", c.Key);")]
