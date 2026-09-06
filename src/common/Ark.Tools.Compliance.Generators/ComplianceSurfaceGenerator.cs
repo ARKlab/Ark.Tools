@@ -461,7 +461,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         }
         foreach (var entry in surface.Entries.Values)
         {
-            if (baseline.TryGetValue(entry.Key, out var previous) && previous.Line == entry.Line)
+            if (baseline.TryGetValue(entry.Key, out var previous) && previous is not null && previous.Line == entry.Line)
                 continue;
             context.ReportDiagnostic(Diagnostic.Create(_drift, entry.Location, entry.Key.Replace('\t', '.')));
             if (previous is null || previous.Classifications.Any(old => !entry.Classifications.Any(current => _covers(current, old))))

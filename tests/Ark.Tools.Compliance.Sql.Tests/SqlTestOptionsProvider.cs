@@ -30,8 +30,14 @@ internal sealed class SqlTestOptionsProvider(bool enabled) : AnalyzerConfigOptio
         /// <inheritdoc />
         public override bool TryGetValue(string key, out string value)
         {
-            value = enabled ? "true" : "false";
-            return key == "build_property.EnableArkToolsCompliance";
+            if (key == "build_property.EnableArkToolsCompliance")
+            {
+                value = enabled ? "true" : "false";
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
         }
     }
 }

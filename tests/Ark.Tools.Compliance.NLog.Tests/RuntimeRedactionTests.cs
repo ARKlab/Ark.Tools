@@ -167,13 +167,14 @@ public sealed class RuntimeRedactionTests
     public void DefaultOtelSetup_RedactsExportedSpanTags()
     {
         using var exporter = new CapturingExporter();
+        using var processor = new SimpleActivityExportProcessor(exporter);
         var services = new ServiceCollection();
         services.AddOpenTelemetry()
             .AddArkAspNetCoreOpenTelemetry()
             .WithTracing(tracing => tracing
                 .AddSource("Compliance.Runtime.Tests")
                 .SetSampler(new AlwaysOnSampler())
-                .AddProcessor(new SimpleActivityExportProcessor(exporter)));
+                .AddProcessor(processor));
         using var provider = services.BuildServiceProvider();
         _ = provider.GetRequiredService<TracerProvider>();
         using var source = new ActivitySource("Compliance.Runtime.Tests");
@@ -231,10 +232,12 @@ public sealed class RuntimeRedactionTests
     {
         using var baseline = new LogFactory();
         using var protectedFactory = new LogFactory();
+        var baselineTarget = new NullTarget { FormatMessage = true };
+        var protectedInnerTarget = new NullTarget { FormatMessage = true };
         baseline.Configuration = new();
-        baseline.Configuration.AddRuleForAllLevels(new NullTarget { FormatMessage = true });
+        baseline.Configuration.AddRuleForAllLevels(baselineTarget);
         protectedFactory.Configuration = new();
-        protectedFactory.Configuration.AddRuleForAllLevels(new RedactingTargetWrapper(new NullTarget { FormatMessage = true }));
+        protectedFactory.Configuration.AddRuleForAllLevels(new RedactingTargetWrapper(protectedInnerTarget));
         baseline.ReconfigExistingLoggers();
         protectedFactory.ReconfigExistingLoggers();
         var clearLogger = baseline.GetLogger("baseline");

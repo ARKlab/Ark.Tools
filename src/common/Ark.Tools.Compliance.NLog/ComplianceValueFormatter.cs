@@ -26,6 +26,6 @@ public sealed class ComplianceValueFormatter : IValueFormatter
     /// <inheritdoc />
     public bool FormatValue(object? value, string? format, CaptureType captureType, IFormatProvider? formatProvider, StringBuilder builder)
     {
-        return _inner.FormatValue(_redactor.Redact(value), format, captureType, formatProvider ?? CultureInfo.InvariantCulture, builder);
+        return _inner.FormatValue(_redactor.Redact(value), format, captureType, CultureInfo.InvariantCulture, builder);
     }
 }

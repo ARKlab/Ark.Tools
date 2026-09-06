@@ -44,13 +44,29 @@
             if (!line.StartsWith(marker, StringComparison.Ordinal)) continue;
             var start = marker.Length;
             var separator = line.IndexOf(':', start);
+            if (separator <= start || separator == line.Length - 1)
+            {
+                Log.LogError("Invalid compliance SQL template marker.");
+                return false;
+            }
             var name = line.Substring(start, separator - start);
             if (!Regex.IsMatch(name, @"^policy-[a-f0-9]{64}\.compliance\.sql$"))
             {
                 Log.LogError("Invalid compliance SQL artifact name.");
                 return false;
             }
-            var template = Encoding.UTF8.GetString(Convert.FromBase64String(line.Substring(separator + 1).Trim()));
+            string encoded = line.Substring(separator + 1).Trim();
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(encoded);
+            }
+            catch (FormatException)
+            {
+                Log.LogError("Invalid base64 payload in compliance SQL template '{0}'.", name);
+                return false;
+            }
+            var template = Encoding.UTF8.GetString(bytes);
             // Tokens occur only inside bracketed identifiers or string literals. Escape each replacement
             // for its own SQL context, never recursively expanding replacement values.
             var sql = Regex.Replace(template, @"\[(?:[^\]]|\]\])*\]|'(?:[^']|'')*'", match =>

@@ -128,7 +128,12 @@ public sealed class ComplianceCodeFixProvider : CodeFixProvider
         }
 
         var model = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
-        if (model?.GetDeclaredSymbol(property, cancellationToken) is not IPropertySymbol symbol
+        if (model is null)
+        {
+            return false;
+        }
+
+        if (model.GetDeclaredSymbol(property, cancellationToken) is not IPropertySymbol symbol
             || symbol.Type.SpecialType != SpecialType.System_String
             || symbol.IsOverride
             || symbol.ExplicitInterfaceImplementations.Length != 0
@@ -185,17 +190,11 @@ public sealed class ComplianceCodeFixProvider : CodeFixProvider
 
             var model = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
             var constant = model is null ? default : model.GetConstantValue(value, cancellationToken);
-            ExpressionSyntax initializer;
-            if (value.IsKind(SyntaxKind.DefaultLiteralExpression) || value is DefaultExpressionSyntax
+            ExpressionSyntax initializer = value.IsKind(SyntaxKind.DefaultLiteralExpression) || value is DefaultExpressionSyntax
                 || constant is { HasValue: true, Value: null })
-            {
-                initializer = SyntaxFactory.LiteralExpression(SyntaxKind.DefaultLiteralExpression);
-            }
-            else
-            {
-                initializer = SyntaxFactory.InvocationExpression(SyntaxFactory.ParseExpression(qualified + ".From"),
+                ? SyntaxFactory.LiteralExpression(SyntaxKind.DefaultLiteralExpression)
+                : SyntaxFactory.InvocationExpression(SyntaxFactory.ParseExpression(qualified + ".From"),
                     SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(value))));
-            }
 
             updated = updated.WithInitializer(property.Initializer.WithValue(
                 initializer.WithTriviaFrom(property.Initializer.Value)));

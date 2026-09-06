@@ -433,7 +433,7 @@ internal sealed class SinkFlow
             }
 
             if (type?.OriginalDefinition.MetadataName == "SensitiveValueObjectAttribute`1"
-                && type.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
+                && type?.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
             {
                 sensitive = true;
             }

@@ -7,6 +7,7 @@ using global::NLog.Targets;
 using global::NLog.Targets.Wrappers;
 
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Ark.Tools.Compliance.NLog;
 
@@ -74,9 +75,21 @@ internal sealed class RedactedEventCache(ComplianceRedactor? redactor)
             }
             return result;
         }
-        catch
+        catch (Exception ex) when (!_isCriticalException(ex))
         {
             return new(source.Level, source.LoggerName, ComplianceRedactor.Marker);
         }
+    }
+
+    private static bool _isCriticalException(Exception exception)
+    {
+        return exception is OutOfMemoryException
+            or StackOverflowException
+            or AccessViolationException
+            or AppDomainUnloadedException
+            or BadImageFormatException
+            or CannotUnloadAppDomainException
+            or InvalidProgramException
+            or ThreadAbortException;
     }
 }

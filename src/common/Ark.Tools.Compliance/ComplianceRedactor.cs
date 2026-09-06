@@ -149,7 +149,7 @@ public sealed class ComplianceRedactor
             }
             return properties;
         }
-        catch
+        catch (Exception)
         {
             return Marker;
         }
@@ -169,9 +169,8 @@ public sealed class ComplianceRedactor
     private ArkRedaction _selectRedaction(DataClassification[] classifications)
     {
         var result = ArkRedaction.None;
-        foreach (var classification in classifications)
+        foreach (var current in classifications.Select(_getRedaction))
         {
-            var current = _getRedaction(classification);
             if (current is ArkRedaction.Erase or ArkRedaction.Mask)
                 return current;
             if (current == ArkRedaction.Hmac)
