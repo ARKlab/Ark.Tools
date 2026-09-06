@@ -116,7 +116,8 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         // A delivery may sit in the buffer behind a full drain before a worker reaches it, and a
         // transport that cannot renew has no way to extend the lock while it waits.
         var concurrency = _workerTarget;
-        var bufferWait = _options.ExpectedHandlerDuration * ((_prefetchBudget - concurrency) / (double)concurrency);
+        var queued = Math.Max(0, _prefetchBudget - concurrency);
+        var bufferWait = _options.ExpectedHandlerDuration * (queued / (double)concurrency);
         if (handler + bufferWait <= lockDuration)
             return;
 

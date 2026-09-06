@@ -68,6 +68,10 @@ public sealed class MessagingProcessingOptions
     }
 
     /// <summary>Gets or sets the number of overlapping receive loops. Defaults to one.</summary>
+    /// <remarks>
+    /// Reserved: <see cref="MessagingProcessorHost"/> currently runs a single receive loop and
+    /// ignores this value. Multi-receiver fan-out arrives with the Service Bus batch-receive work.
+    /// </remarks>
     public int ReceiveChannels
     {
         get => _receiveChannels;

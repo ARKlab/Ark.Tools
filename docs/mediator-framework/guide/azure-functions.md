@@ -216,181 +216,20 @@ immediately when a required capability is missing.
 
 ### Sending versus processing
 
-Messaging has two seams, and they are deliberately separate:
+Messaging has two seams, and a host uses only what it needs: `IMessagingTransport`
+sends, and `IMessagingMessageSource` pulls locked deliveries.
 
-- **Send** — `IMessagingTransport` (`SendAsync`, `PublishAsync`, sizing). Used by
-  every host, including Azure Functions, and unchanged by the processing side.
-- **Process** — `IMessagingMessageSource`, a *pull* seam:
-  `ReceiveBatchAsync(queue, maxMessages, maxWait, ctk)` returns zero or more
-  locked deliveries, never more than `maxMessages`. An **empty result means "the
-  queue is empty"**, is returned after at most `maxWait`, is not an error, and
-  never means "the source ended". The source does not sleep on an empty batch:
-  deciding how long to wait before the next call belongs to the host.
+**Azure Functions receivers use neither pull loop.** They keep their generated
+triggers and the Functions host's own concurrency. Composing a processor host
+inside a Functions host fails startup with the `ProcessorHostInTriggeredHost`
+diagnostic. Use a processor host in a long-running worker instead — see
+[Messaging processing](messaging-processing.md) for how to run and tune one.
 
-Each source declares `ReceiverCapabilities` — a `MessagingReceiverCapabilities`
-record of maximum batch size, server-side wait support, lock renewal support and
-native lock duration — read once at composition time so a host adapts instead of
-guessing. Every delivery carries a required `DeliveryId` and a `LockedUntil`
-instant for lock-aware renewal.
-
-**Azure Functions receivers are unaffected.** They keep their generated triggers
-and the Functions host's own concurrency; they never touch
-`IMessagingMessageSource`. Composing a processor host inside a Functions host
-fails startup with the `ProcessorHostInTriggeredHost` diagnostic, and composing
-one over a transport that is not a message source fails with
-`TransportIsNotAMessageSource`.
-
-### The processor host
-
-Non-Functions hosts process a participant queue with `MessagingProcessorHost`,
-registered as the receiver `IHostedService`. It is four cooperating parts:
-
-- a **receive loop** that acquires credit, calls `ReceiveBatchAsync` with
-  `min(credit, ReceiverCapabilities.MaximumBatchSize)` and writes deliveries into
-  the buffer;
-- a **bounded buffer** (`Channel<IMessagingLockedDelivery>` with
-  `BoundedChannelFullMode.Wait`) sized to the prefetch budget;
-- a **worker pool** of `InitialConcurrency` async workers dispatching through the
-  unchanged `MessagingDispatcher`, with its existing per-delivery scope,
-  settlement and retry semantics;
-- a **credit accountant** enforcing `inFlight + buffered + requested ≤
-  PrefetchBudget`.
-
-Credit is released **after settlement**, not after the handler returns, so a slow
-settle cannot cause over-fetching. When the budget is exhausted the receive loop
-blocks on credit and makes no broker call at all.
-
-The prefetch budget is `clamp(ceil(limit × PrefetchMultiplier), limit,
-MaximumPrefetch)`. When the transport cannot renew locks it is additionally
-clamped so a full buffer is expected to drain within `LockSafetyFactor ×
-NativeLockDuration`, using `ExpectedHandlerDuration` as the per-message estimate.
-`MaximumPrefetch` defaults to eight times `MaximumConcurrency`; a value below
-`MaximumConcurrency` fails composition with `ProcessingOptionsInvalid`.
-
-Shutdown is stop-receiving → drain → abandon: the receive loop is cancelled
-first so the buffer can only shrink, workers finish in-flight and buffered work
-within `ShutdownTimeout`, then anything still unprocessed is abandoned so
-redelivery is immediate rather than lock-expiry-delayed.
-
-Concurrency is fixed at `InitialConcurrency` for now; lock renewal and adaptive
-concurrency arrive with the later tasks in this series.
-
-### Idle, error and no-capacity waits
-
-The receive loop has three independent waits, and they never share state:
-
-- **Empty result** — exponential backoff with full jitter, doubling from
-  `MinPollInterval` (50 ms) to `MaxPollInterval` (5 s) per consecutive empty
-  result and resetting on the first non-empty batch. Full jitter (`random(0,
-  cap)`) keeps replicas of the same host from polling in lockstep.
-- **No credit** — no timer at all. The loop awaits credit, so a saturated host
-  issues no broker call; nothing is polled while nothing can be accepted.
-- **Transport error** — a fixed jittered `ErrorCooldown` (10 s by default,
-  sampled in its upper half) with a structured warning naming the queue and the
-  failure. An error never lengthens the empty backoff, and an empty result never
-  shortens the cooldown.
-
-When the source declares `SupportsServerSideWait` (Service Bus), backoff grows
-the `maxWait` passed to `ReceiveBatchAsync` up to `MaxPollInterval` instead of
-sleeping: an idle receiver holds one long request rather than polling, and the
-first message after an idle period is delivered without waiting out a client
-sleep. Sources without server-side wait (Storage Queues) return immediately and
-the host sleeps the jittered interval, which takes an idle queue from roughly
-four requests per second down to a fraction of one. The transport itself never
-sleeps: it waits only as instructed by `maxWait`.
-
-### Lock renewal
-
-Every host owns a single lock renewer, not one timer per delivery. A delivery is
-registered the moment it enters the prefetch buffer — not when a worker picks it
-up — so a message that waits behind the concurrency limit keeps its lock alive
-instead of expiring in the buffer.
-
-The renewer wakes on a fixed `RenewalScanInterval` (1 s), renews at most
-`MaximumRenewalBatch` (64) locks per scan, and treats a lock as due when
-
-```
-now >= lockedUntil - max(RenewalSafetyMargin, (lockedUntil - acquiredAt) / 2)
-```
-
-so a long lock is renewed at roughly its halfway point while a short lock still
-gets the full `RenewalSafetyMargin` (10 s) of headroom. Renewal is serialised
-against settlement: a renewal never overlaps a complete, abandon or dead-letter
-on the same delivery, which matters for Storage Queues where renewing rotates
-the pop receipt that settlement needs. When a renewal fails, the delivery's
-handler token is cancelled — the lock is gone, and continuing to work on it
-would only produce a duplicate.
-
-Transports that cannot renew (`SupportsLockRenewal == false`) are validated at
-composition time instead of at runtime: if `MaximumHandlerDuration` plus the
-worst-case buffer wait implied by `PrefetchBudget`, `Concurrency` and
-`ExpectedHandlerDuration` exceeds the transport's `NativeLockDuration`, the
-composition fails with `ProcessingOptionsInvalid` rather than letting locks
-expire in production.
-
-### Adaptive concurrency
-
-The concurrency limit adapts on a fixed `ConcurrencyEvaluationInterval` (5 s).
-**CPU utilisation is never a signal**: it says nothing about an I/O-bound
-handler, whose bottleneck is the dependency's useful concurrency, not the host.
-Growth therefore needs three independent permissions:
-
-- **Throughput gate** — measured throughput must beat the previous interval by
-  more than `ThroughputImprovementThreshold` (5 %). A saturated dependency yields
-  flat throughput, so growth stops by itself.
-- **Latency gradient** — `gradient = clamp(rttNoLoad / rttShort, 0.5, 1.0)`, where
-  `rttNoLoad` is the long-window minimum handler duration and `rttShort` a short
-  EWMA. Growth requires `gradient >= GradientIncreaseThreshold` (0.9); two
-  consecutive intervals below it reduce the limit to `floor(limit x gradient)`
-  even when nothing failed. The ratio cancels the workload-dependent baseline
-  that makes raw latency useless as a signal. `rttNoLoad` is re-armed every
-  `BaselineRearmInterval` (10 min) so a permanently slower dependency does not
-  leave a stale optimistic baseline.
-- **Little's law cap** — `usefulConcurrency = throughput x rttNoLoad`, and the
-  limit is hard-capped at `LittlesLawSlack x ceil(usefulConcurrency)` (slack 2).
-  Once the dependency saturates, this cap freezes: it is what stops an I/O-bound
-  workload from growing to `MaximumConcurrency`.
-
-Decreases are multiplicative and immediate — waiting for the next interval means
-another interval of the overload that caused them:
-
-| Signal | Reaction |
-| --- | --- |
-| Broker throttling | `limit / 2` |
-| Lock lost or renewal failure | `limit / 2` |
-| Handler timeout (`MaximumHandlerDuration`) | `limit x 3/4` |
-| Thread-pool starvation (probe delay > `ThreadPoolStarvationThreshold`) | `limit / 2`, and no growth while starved |
-| `MessagingBackpressureException` | `limit / 2`, delivery abandoned for retry |
-| Buffer empty | hold — extra workers cannot help a drained queue |
-
-Throw `MessagingBackpressureException` from a handler when *its* downstream is
-the limit and its capacity is known — a connection pool size, a documented rate
-limit, an HTTP 429. The delivery is abandoned for retry rather than treated as a
-failure: declaring a known bottleneck beats discovering it.
-
-The worker pool follows the limit cooperatively. Growth starts workers
-immediately; a shrink is applied only after two consecutive intervals below the
-current pool size, and a worker leaves after its current delivery settles — never
-mid-flight. The prefetch budget is recomputed from the new limit at the same
-time.
-
-Pin the limit with `AdaptiveConcurrency = false`, which fixes it at
-`InitialConcurrency` and disables all measurement work. Whatever the controller
-decides, the limit stays inside `[MinimumConcurrency, MaximumConcurrency]` and
-the prefetch clamp. Replace the algorithm entirely by registering your own
-`IMessagingConcurrencyController`; the built-in controller is registered with
-`TryAddSingleton`.
-
-Producer-only hosts compose the generated descriptor without taking a Functions
-dependency:
-
-The producer mode is selected through the same fluent call and does not register
-dispatch, triggers, queues, subscriptions, or a message source.
-
-This registers only the restricted bus and its outgoing runtime. It does not
-register dispatch, triggers, queues, subscriptions, or a message source.
-Publisher-owned topics are still reconciled when lifecycle management is
-enabled.
+Producer-only hosts select the producer mode through the same fluent call. That
+registers only the restricted bus and its outgoing runtime — no dispatch,
+triggers, queues, subscriptions, or message source — and takes no Functions
+dependency. Publisher-owned topics are still reconciled when lifecycle
+management is enabled.
 
 ### Generate a Service Bus receive trigger
 
@@ -881,7 +720,7 @@ Set an empty Functions route prefix when the generated route already includes
 }
 ```
 
-## 6. Understand the Rebus boundary
+## 7. Understand the Rebus boundary
 
 The Functions process:
 
@@ -909,7 +748,7 @@ native participants cannot exchange messages because their headers and persisted
 wire formats are incompatible, and they must not share queues, topics,
 subscriptions, or outbox rows.
 
-## 6. Authentication and supported features
+## 8. Authentication and supported features
 
 Every generated trigger is `AuthorizationLevel.Anonymous`; ASP.NET Core
 authentication and authorization still enforce the application policy. Never
@@ -937,7 +776,7 @@ before the producer completes and that client disconnect cancels the handler
 `ClientDisconnectCancelsStreamingHandler`). Responses stream through the
 ASP.NET Core integration without buffering the complete payload.
 
-## 7. Test the boundary
+## 9. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test
 must launch the built host with a dynamically allocated loopback port, wait for
@@ -949,7 +788,7 @@ The repository boundary project is
 also covers its sender composition in
 [`AzureFunctionsRebusTests.cs`](../../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).
 
-# Logical names and provider entities
+## Logical names and provider entities
 
 Messaging contracts, participants, networks, topics, and subscriptions use
 lowercase logical names. Names are non-empty and may contain letters, digits,
@@ -966,7 +805,7 @@ hash suffix, so distinct logical names do not silently share an address.
 `FormerNames` are receive-only aliases and never create topology resources;
 renaming a publisher or current contract name requires explicit migration.
 
-# Messaging metrics
+## Messaging metrics
 
 Native messaging metrics use the stable OpenTelemetry messaging semantic
 conventions version 1.37.0 and the `Ark.MediatorFramework.Messaging` meter.

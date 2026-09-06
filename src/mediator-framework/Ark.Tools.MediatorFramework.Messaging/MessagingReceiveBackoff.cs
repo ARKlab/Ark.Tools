@@ -46,8 +46,10 @@ internal sealed class MessagingReceiveBackoff
         if (_consecutiveEmpty < 30)
             _consecutiveEmpty++;
 
-        var scaled = _minimum * Math.Pow(2, _consecutiveEmpty - 1);
-        return scaled >= _maximum ? _maximum : scaled;
+        // Scaling in ticks and clamping before constructing the TimeSpan: the multiplication
+        // overflows TimeSpan for large MinPollInterval values even though the result is capped.
+        var scaledTicks = _minimum.Ticks * Math.Pow(2, _consecutiveEmpty - 1);
+        return scaledTicks >= _maximum.Ticks ? _maximum : TimeSpan.FromTicks((long)scaledTicks);
     }
 
     /// <summary>Samples a full-jitter delay within a cap.</summary>

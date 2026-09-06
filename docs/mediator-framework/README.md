@@ -24,7 +24,9 @@ reviews — lives in [`progress/`](progress/README.md).
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 
-Start with the [Mediator Framework user guide](guide/README.md).
+Start with the [Mediator Framework user guide](guide/README.md). The
+[how-it-works](how-it-works/README.md) section documents the mechanics behind
+the features for anyone debugging, extending, or changing them.
 
 ### Progress and tracking
 
