@@ -5,6 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
   </PropertyGroup>
 
   <ItemGroup>
