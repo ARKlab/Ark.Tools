@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IncludeSymbols>false</IncludeSymbols>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <Description>Privacy declaration, fixture and sink diagnostics for Ark.Tools.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Update="ComplianceLexicon.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceLexicon.Ark.txt" />
+    <None Include="../../sdk/Ark.Tools.Build/configuration/analyzers/ComplianceSinks.Ark.txt" Link="ComplianceSinks.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceSinks.Ark.txt" />
+    <None Update="buildTransitive/Ark.Tools.Compliance.Analyzers.props" Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.Analyzers.props" />
+    <EmbeddedResource Include="ComplianceLexicon.Ark.txt" />
+    <Compile Include="../Ark.Tools.Compliance/Shared/PersonalDataPatterns.cs" Link="Shared/PersonalDataPatterns.cs" />
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    <ProjectReference Include="../Ark.Tools.Compliance.Analyzers.CodeFixes/Ark.Tools.Compliance.Analyzers.CodeFixes.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="../Ark.Tools.Compliance.Analyzers.CodeFixes/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Analyzers.CodeFixes.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+</Project>

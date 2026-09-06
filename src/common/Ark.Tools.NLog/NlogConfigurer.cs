@@ -19,6 +19,16 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurer
 {
+    private static Action<Configurer, LoggingConfiguration>? _complianceConfiguration;
+
+    /// <summary>Registers the optional compliance package's configuration hook.</summary>
+    /// <param name="configure">The redaction configuration callback.</param>
+    public static void RegisterComplianceConfiguration(Action<Configurer, LoggingConfiguration> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        _complianceConfiguration = configure;
+    }
+
     public const string SlackTarget = "Ark.Slack";
     public const string ConsoleTarget = "Ark.Console";
     public const string FileTarget = "Ark.File";
@@ -93,6 +103,7 @@ public static class NLogConfigurer
 
     public static Configurer WithArkDefaultTargetsAndRules(this Configurer @this, Config config)
     {
+        @this._useComplianceRedaction = true;
         if (config.EnableConsole != false)
         {
             @this
@@ -155,6 +166,7 @@ public static class NLogConfigurer
     public sealed class Configurer
     {
         internal LoggingConfiguration _config = new();
+        internal bool _useComplianceRedaction;
 
         public string AppName { get; }
 
@@ -508,12 +520,26 @@ VALUES
             LogManager.ThrowExceptions = _isVisualStudioAttached();
             LogManager.ThrowConfigExceptions = true;
             InternalLogger.LogToConsole = true;
+            if (_useComplianceRedaction)
+                _configureCompliance(this, _config);
             // this is last, so that ThrowConfigExceptions is respected on Config change
             LogManager.Configuration = _config;
 
             if (_isProduction())
                 LogManager.GlobalThreshold = LogLevel.Info;
         }
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The compliance NuGet buildTransitive bootstrap roots and registers the hook for trimmed applications. Reflection is only a fallback for ordinary project references.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "The compliance package roots its bootstrap through buildTransitive startup source for trimmed applications.")]
+    private static void _configureCompliance(Configurer configurer, LoggingConfiguration configuration)
+    {
+        if (_complianceConfiguration is null)
+        {
+            var bootstrap = Type.GetType("Ark.Tools.Compliance.NLog.ComplianceNLogBootstrap, Ark.Tools.Compliance.NLog", throwOnError: false);
+            bootstrap?.GetMethod("Initialize", BindingFlags.Static | BindingFlags.Public)?.Invoke(null, null);
+        }
+        _complianceConfiguration?.Invoke(configurer, configuration);
     }
 
     [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]

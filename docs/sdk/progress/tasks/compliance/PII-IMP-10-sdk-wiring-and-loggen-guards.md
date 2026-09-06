@@ -62,13 +62,34 @@ the same guarantees as the NLog path.
 
 ## Acceptance
 
-- [ ] `ArkComplianceMode` has exactly two states and one documented opt-out.
-- [ ] The packaged config is inert without the analyzer package.
+- [x] `ArkComplianceMode` has exactly two states and one documented opt-out.
+- [x] The packaged config is inert without the analyzer package.
 - [ ] LOGGEN guards are escalated and proven against Ark-classified types.
 - [ ] `AddArkRedaction()` and `ARKPII013` remove the half-configured state.
-- [ ] Documentation covers the rules and the Microsoft-logging boundary rule.
-- [ ] The [task board](../README.md) status for PII-IMP-10 matches this task.
+- [x] Documentation covers the rules and the Microsoft-logging boundary rule.
+- [x] The [task board](../README.md) status for PII-IMP-10 matches this task.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
+
+## Implementation progress
+
+- Packaged all PRD diagnostic severities, including LOGGEN escalations, in
+  `Ark.Tools.Compliance.globalconfig`.
+- `ArkComplianceMode` is derived from `EnableArkToolsCompliance`; the single
+  opt-out removes compliance configuration/AdditionalFiles and reaches analyzers
+  through a compiler-visible property. Other build policy remains active.
+- The SDK includes consumer-composable lexicon/sink files and test `.feature`
+  files. `ARKPII001` remains a warning under `TreatWarningsAsErrors`.
+- `docs/analyzers.md` documents the default policy, opt-out, per-rule overrides,
+  and Microsoft-stack logging boundary.
+- Pending: `AddArkRedaction()`, `ARKPII013`, and an actual LOGGEN generator
+  compatibility test. Microsoft telemetry/redaction packages are not currently
+  repository dependencies; no new third-party packages were introduced.
+- Focused validation: SDK test-project build passed with zero warnings/errors;
+  `ComplianceConfigurationIsDefaultOnAndSwitchable` and
+  `CompilerConfigurationPrecedenceAndBannedApiAreEnforced` both passed. These
+  exercise packed consumer assets, default/disabled modes, unsupported-mode
+  rejection, an analyzer-free consumer build, and unrelated configuration
+  precedence/composition.

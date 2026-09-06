@@ -1,0 +1,24 @@
+# Case-insensitive identifier terms. Prefix a consumer term with - to exclude it.
+# A trailing * opts into prefix matching; other entries match a complete identifier.
+Email
+EmailAddress
+Phone
+PhoneNumber
+MobileNumber
+Ssn
+SocialSecurityNumber
+NationalIdentificationNumber
+NationalIdentifier
+TaxCode
+Iban
+PostalAddress
+HomeAddress
+DateOfBirth
+BirthDate
+FirstName
+LastName
+FullName
+PersonName
+Password
+ApiKey
+BearerToken

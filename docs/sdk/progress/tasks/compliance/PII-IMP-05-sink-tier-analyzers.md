@@ -66,12 +66,46 @@ ecosystem checks exception messages at all, and `LOGGEN035` only covers
 
 ## Acceptance
 
-- [ ] `ARKPII002/003/004/005/011` are implemented over intra-method
+- [x] `ARKPII002/003/004/005/011` are implemented over intra-method
   `IOperation` flow, with the PRD §7 meanings and severities.
-- [ ] Non-record containing types are traversed.
-- [ ] `ComplianceSinks.Ark.txt` composes with consumer entries.
-- [ ] The [task board](../README.md) status for PII-IMP-05 matches this task.
+- [x] Non-record containing types are traversed.
+- [x] `ComplianceSinks.Ark.txt` composes with consumer entries.
+- [x] The [task board](../README.md) status for PII-IMP-05 matches this task.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
+
+## Implementation notes
+
+- `SinkTaintAnalyzer` reports all five rules as errors. Coverage includes NLog and
+  Microsoft `ILogger` scopes/extensions, exception messages and data keys/values,
+  `BusinessRuleViolation` members, Activity events/tags/baggage, metric dimensions,
+  and the formatting families listed above.
+- The backward operation walk follows local declarations/assignments, conditional
+  alternatives, nullable member access, casts, string formatting, collection
+  initializers, and local collection writes. Unconditional local overwrites stop
+  earlier flow; conditional and loop-carried writes conservatively retain possible sources.
+  Cross-method calls and captured-variable flow across function boundaries are
+  deliberately not followed. This is bounded reachability, not a control-flow or
+  inter-procedural taint engine.
+- Classification includes custom attributes derived from Microsoft's classification
+  base, positional record parameters, inherited/non-record containing types, and
+  sensitive-value contracts, including generic constraints. Pseudonymous values and
+  explicit redactor results are permitted.
+- `ComplianceSinks*.txt` files use `M:Documentation.Comment.Id;kind`, where `kind`
+  is `log`, `exception`, `telemetry`, or `format`. A trailing `*` matches method
+  prefixes; a leading `-` removes a sink. Consumer files apply after
+  `ComplianceSinks.Ark.txt`, in ordinal path order, so removal is independent of
+  `AdditionalFiles` enumeration order. Empty lines and `#`/`//` comments are ignored.
+- Analyzer options `ark_compliance.max_type_depth` (default 5, maximum 32),
+  `ark_compliance.max_operation_depth` (default 64, maximum 128), and
+  `ark_compliance.max_operation_nodes` (default 512, maximum 4096) bound traversal.
+  Exhausted operation budgets produce no diagnostic.
+- Focused validation uses
+  `dotnet build tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj --no-restore --configuration Debug`
+  and
+  `dotnet test --project tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj --no-build --configuration Debug --filter 'FullyQualifiedName~SinkTaintAnalyzerTests'`.
+  Latest focused result: build succeeded with zero warnings/errors; 93 tests
+  passed, zero failed or skipped.
+  Full-solution acceptance remains unchecked until independently verified.

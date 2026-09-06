@@ -1,0 +1,23 @@
+is_global = true
+global_level = 90
+
+dotnet_diagnostic.ARKPII001.severity = warning
+dotnet_diagnostic.ARKPII002.severity = error
+dotnet_diagnostic.ARKPII003.severity = error
+dotnet_diagnostic.ARKPII004.severity = error
+dotnet_diagnostic.ARKPII005.severity = error
+dotnet_diagnostic.ARKPII006.severity = warning
+dotnet_diagnostic.ARKPII007.severity = error
+dotnet_diagnostic.ARKPII008.severity = warning
+dotnet_diagnostic.ARKPII009.severity = warning
+dotnet_diagnostic.ARKPII010.severity = error
+dotnet_diagnostic.ARKPII011.severity = error
+dotnet_diagnostic.ARKPII012.severity = warning
+dotnet_diagnostic.ARKPII013.severity = warning
+dotnet_diagnostic.ARKPII020.severity = error
+dotnet_diagnostic.ARKPII021.severity = error
+
+dotnet_diagnostic.LOGGEN035.severity = error
+dotnet_diagnostic.LOGGEN017.severity = error
+dotnet_diagnostic.LOGGEN026.severity = error
+dotnet_diagnostic.LOGGEN036.severity = warning

@@ -26,7 +26,9 @@ public static class Ex
 
         return builder
             .ConfigureResource(static resource => resource.AddArkTelemetryResource())
-            .WithTracing(static tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
+            .WithTracing(static tracing => tracing
+                .AddArkComplianceRedaction()
+                .AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
             .WithMetrics(static metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
     }
 

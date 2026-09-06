@@ -197,9 +197,26 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.Append(accessibility).Append("readonly partial struct ").Append(typeName)
             .Append(" : global::System.IEquatable<").Append(typeName)
             .Append(">, global::System.IFormattable, global::System.ISpanFormattable, global::Ark.Tools.Compliance.ISensitiveValue<")
-            .Append(typeName).AppendLine(">");
+            .Append(typeName).AppendLine(">, global::Ark.Tools.Compliance.IRuntimeClassifiedValue");
         builder.AppendLine("{");
         builder.AppendLine("    private readonly string _value;");
+        var classifications = type.GetAttributes()
+            .Select(static attribute => attribute.AttributeClass?.ToDisplayString())
+            .ToArray();
+        var classification = classifications.Contains("Ark.Tools.Compliance.SecretAttribute") ? "Secret"
+            : classifications.Contains("Ark.Tools.Compliance.SensitivePersonalDataAttribute") ? "SensitivePersonalData"
+            : classifications.Contains("Ark.Tools.Compliance.PersonalDataAttribute") ? "PersonalData"
+            : classifications.Contains("Ark.Tools.Compliance.PseudonymousAttribute") ? "Pseudonymous"
+            : null;
+        builder.Append("    global::Microsoft.Extensions.Compliance.Classification.DataClassification global::Ark.Tools.Compliance.IRuntimeClassifiedValue.Classification => ")
+            .Append(classification is null
+                ? "global::Microsoft.Extensions.Compliance.Classification.DataClassification.Unknown"
+                : "global::Ark.Tools.Compliance.ArkDataClassifications." + classification)
+            .AppendLine(";");
+        builder.AppendLine("    string global::Ark.Tools.Compliance.IRuntimeClassifiedValue.Redact(global::Microsoft.Extensions.Compliance.Redaction.Redactor redactor)");
+        builder.AppendLine("    {");
+        builder.AppendLine("        return redactor.Redact(_value ?? string.Empty);");
+        builder.AppendLine("    }");
         builder.AppendLine();
         builder.Append("    private ").Append(typeName).AppendLine("(string value)");
         builder.AppendLine("    {");

@@ -8,6 +8,9 @@ namespace Ark.Tools.OTel;
 /// </summary>
 public sealed class ArkOtelConfig
 {
+    /// <summary>Gets the runtime span redaction overrides; fail-closed defaults apply otherwise.</summary>
+    public Ark.Tools.Compliance.ComplianceRedactionOptions ComplianceRedaction { get; } = new();
+
     /// <summary>
     /// Gets or sets a value indicating whether SQL query text is retained on exported spans.
     /// </summary>

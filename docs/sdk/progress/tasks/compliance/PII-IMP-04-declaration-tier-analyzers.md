@@ -71,11 +71,44 @@ have annotated that" into a build outcome.
 
 ## Acceptance
 
-- [ ] `ARKPII001/008/009/010` are implemented with the PRD §7 severities.
-- [ ] The lexicon is a composable `AdditionalFiles` input.
-- [ ] Every rule has a code fix where a mechanical fix exists.
-- [ ] The [task board](../README.md) status for PII-IMP-04 matches this task.
+- [x] `ARKPII001/008/009/010` are implemented with the PRD §7 severities.
+- [x] The lexicon is a composable `AdditionalFiles` input.
+- [x] Every rule has a code fix where a mechanical fix exists.
+- [x] The [task board](../README.md) status for PII-IMP-04 matches this task.
 - [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
 - [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
+
+## Implementation evidence (2026-09-06)
+
+- Added `Ark.Tools.Compliance.Analyzers` and its separately loaded
+  `Ark.Tools.Compliance.Analyzers.CodeFixes` assembly. Compiler analyzers do not
+  reference Roslyn Workspaces; the package carries both DLLs as analyzer assets.
+- Declaration checks cover fields, properties, method/indexer parameters,
+  positional records, type-level classification and classification-attribute
+  inheritance. Vogen diagnostics identify unsafe conversion, debugger and
+  generated formatting options; Vogen versions without a safe debugger option
+  require an Ark sensitive value object.
+- Embedded default lexicon entries are composable with consumer
+  `ComplianceLexicon*.txt` inputs. Identifier-word matching supports negative
+  terms and explicit prefix wildcards; parsed consumer snapshots are weakly
+  cached by `SourceText`.
+- Code actions add classification or a deliberate, still-diagnosed exclusion
+  placeholder. Value-object conversion preserves nullable/default initializers
+  and is withheld for existing callers and interface/override contracts that
+  would otherwise break. An additional refactoring handles already-classified
+  string properties. Batch Fix All is exposed for diagnostic fixes.
+- Focused analyzer/test builds succeeded with zero warnings/errors; the
+  combined declaration, fixture, sink and SQL analyzer test project passed
+  153 tests, including the final classified-property refactoring test.
+  Code-fix output is compiled by the tests rather than compared only as text.
+  Standalone `dotnet pack` succeeded; analyzer DLLs, defaults and transitive
+  props were inspected in the resulting package.
+- CI's inherited coverage instrumentation caused `BadImageFormatException`;
+  running the built test module directly with
+  `dotnet test --test-modules tests/Ark.Tools.Compliance.Analyzers.Tests/bin/Debug/net10.0/Ark.Tools.Compliance.Analyzers.Tests.dll --minimum-expected-tests 1`
+  passed without coverage instrumentation.
+- Remaining integration evidence: reference-project throughput budget, shared
+  task-board reconciliation and the parent's final full-solution build/test.
+  These checks are intentionally not represented as complete above.

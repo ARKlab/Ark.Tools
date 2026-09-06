@@ -9,9 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../Ark.Tools.Compliance.Shared/PiiPatternScanner.cs" Link="Shared/PiiPatternScanner.cs" />
     <ProjectReference Include="..\Ark.Tools.Compliance.Generators\Ark.Tools.Compliance.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Ark.Tools.Compliance.Analyzers\Ark.Tools.Compliance.Analyzers.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
   </ItemGroup>
 
@@ -21,6 +25,21 @@
           PackagePath="analyzers/dotnet/cs"
           Visible="false"
           Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../Ark.Tools.Compliance.Analyzers/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Analyzers.dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="../Ark.Tools.Compliance.Analyzers.CodeFixes/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Analyzers.CodeFixes.dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="../Ark.Tools.Compliance.Analyzers/buildTransitive/Ark.Tools.Compliance.Analyzers.props"
+          Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.props" Visible="false" />
+    <None Include="../Ark.Tools.Compliance.Generators/buildTransitive/Ark.Tools.Compliance.Surface.targets"
+          Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.targets" Visible="false" />
+    <None Include="../../sdk/Ark.Tools.Build/configuration/analyzers/ComplianceLexicon.Ark.txt"
+          Pack="true" PackagePath="buildTransitive/ComplianceLexicon.Ark.txt" Visible="false" />
+    <None Include="../../sdk/Ark.Tools.Build/configuration/analyzers/ComplianceSinks.Ark.txt"
+          Pack="true" PackagePath="buildTransitive/ComplianceSinks.Ark.txt" Visible="false" />
   </ItemGroup>
 
 </Project>

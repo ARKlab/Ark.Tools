@@ -79,10 +79,67 @@ public sealed class SdkPackageTests
     private static readonly string[] _composedBannedApiAssets =
     [
         "BannedSymbols.Ark.txt",
-        "BannedSymbols.Consumer.txt"
+        "BannedSymbols.Consumer.txt",
+        "ComplianceLexicon.Ark.txt",
+        "ComplianceSinks.Ark.txt"
     ];
 
     private static readonly string[] _preservedAnalyzer = ["Preserved.Analyzer.dll"];
+
+    /// <summary>
+    /// Verifies compliance configuration is packaged, default-on, switchable, and inert without its analyzers.
+    /// </summary>
+    [TestMethod]
+    public async Task ComplianceConfigurationIsDefaultOnAndSwitchable()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-compliance-configuration");
+        var feed = _prepareSdkFixture(fixtureRoot);
+        using var baseline = await _evaluateSdkAsync(
+            fixtureRoot, feed, "default", "Consumer.csproj", _createSdkCSharpProject());
+        Assert.AreEqual("Enforce", _getProperty(baseline, "ArkComplianceMode"));
+        StringAssert.Contains(_getProperty(baseline, "WarningsNotAsErrors"), "ARKPII001", StringComparison.Ordinal);
+        CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
+        CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
+        CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
+
+        using var disabled = await _evaluateSdkAsync(
+            fixtureRoot, feed, "disabled", "Consumer.csproj",
+            _createSdkCSharpProject("<EnableArkToolsCompliance>false</EnableArkToolsCompliance>"));
+        Assert.AreEqual("Off", _getProperty(disabled, "ArkComplianceMode"));
+        CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(disabled, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
+        CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(disabled, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
+        CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(disabled, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
+        CollectionAssert.Contains(_getArkBuildItemFileNames(disabled, "AdditionalFiles"), "BannedSymbols.Ark.txt");
+        CollectionAssert.AreEquivalent(
+            _getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles").Where(static name => name != "Ark.Tools.Compliance.globalconfig").ToArray(),
+            _getArkBuildItemFileNames(disabled, "GlobalAnalyzerConfigFiles"));
+
+        var configPath = _getItemIdentities(baseline, "GlobalAnalyzerConfigFiles")
+            .Single(static path => path.EndsWith("Ark.Tools.Compliance.globalconfig", StringComparison.Ordinal));
+        var config = await File.ReadAllTextAsync(configPath).ConfigureAwait(false);
+        foreach (var id in new[] { "001", "006", "008", "009", "012", "013" })
+        {
+            StringAssert.Contains(config, $"dotnet_diagnostic.ARKPII{id}.severity = warning", StringComparison.Ordinal);
+        }
+        foreach (var id in new[] { "002", "003", "004", "005", "007", "010", "011", "020", "021" })
+        {
+            StringAssert.Contains(config, $"dotnet_diagnostic.ARKPII{id}.severity = error", StringComparison.Ordinal);
+        }
+        foreach (var id in new[] { "035", "017", "026" })
+        {
+            StringAssert.Contains(config, $"dotnet_diagnostic.LOGGEN{id}.severity = error", StringComparison.Ordinal);
+        }
+        StringAssert.Contains(config, "dotnet_diagnostic.LOGGEN036.severity = warning", StringComparison.Ordinal);
+
+        var scenarioRoot = Path.Join(fixtureRoot, "default");
+        await _run("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore",
+            _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
+        var unsupported = await _runForExitCode(
+            "dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore -p:ArkComplianceMode=Observe",
+            _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
+        Assert.AreNotEqual(0, unsupported.ExitCode);
+        StringAssert.Contains(unsupported.Output, "ArkComplianceMode is derived", StringComparison.Ordinal);
+    }
 
     private static readonly string[] _allSyntheticAnalyzers =
     [
@@ -1211,7 +1268,8 @@ public sealed class ConsumerTests
             "IncludeSymbols",
             "SymbolPackageFormat",
             "EnableSourceControlManagerQueries",
-            "EnableSourceLink"
+            "EnableSourceLink",
+            "ArkComplianceMode"
         };
         var output = await _run(
             "dotnet",

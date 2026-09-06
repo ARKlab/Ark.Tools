@@ -69,13 +69,13 @@ SDK-IMP-03's asset conventions.
 | [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Complete |
 | [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Complete |
 | [PII-IMP-03](compliance/PII-IMP-03-serialization-targets.md) | Serialization targets incl. OpenAPI/Swashbuckle | Generator | Complete |
-| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Pending |
-| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Pending |
-| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Pending |
-| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Pending |
-| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Pending |
-| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Pending |
-| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Pending |
+| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Implemented; acceptance pending |
+| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Implemented; acceptance pending |
+| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Implemented; acceptance pending |
+| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Implemented; acceptance pending |
+| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Implemented; acceptance pending |
+| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Implemented; acceptance pending |
+| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Partial |
 | [PII-IMP-11](compliance/PII-IMP-11-reference-project-adoption.md) | ReferenceProject adoption and end-to-end proof | Migration | Pending |
 
 PII-IMP-01 unblocks everything. PII-IMP-02, PII-IMP-04, and PII-IMP-07 can then
