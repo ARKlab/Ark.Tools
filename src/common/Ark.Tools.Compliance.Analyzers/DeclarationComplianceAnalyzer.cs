@@ -219,13 +219,11 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             risks.Add("disable DebuggerAttributeGeneration; Vogen versions without None require an Ark sensitive value object");
         }
 
-        foreach (var option in options)
+        foreach (var option in options.Where(static option =>
+            option.Key.IndexOf("cast", StringComparison.OrdinalIgnoreCase) >= 0
+            && _isEnumOption(option.Value, "Implicit")))
         {
-            if (option.Key.IndexOf("cast", StringComparison.OrdinalIgnoreCase) >= 0
-                && _isEnumOption(option.Value, "Implicit"))
-            {
-                risks.Add("set " + option.Key + " = CastOperator.None (implicit conversion exposes cleartext)");
-            }
+            risks.Add("set " + option.Key + " = CastOperator.None (implicit conversion exposes cleartext)");
         }
 
         if (!type.GetMembers("ToString").OfType<IMethodSymbol>().Any(static method =>

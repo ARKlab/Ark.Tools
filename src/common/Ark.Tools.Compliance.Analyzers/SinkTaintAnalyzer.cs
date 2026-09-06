@@ -68,13 +68,11 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
                 var rule = sinks._getRule(creation.Constructor);
                 if (rule is not null)
                 {
-                    foreach (var argument in creation.Arguments)
+                    foreach (var argument in creation.Arguments.Where(argument =>
+                        rule != "ARKPII003"
+                        || !SinkConfiguration._isOrDerivesFrom(argument.Parameter?.Type as INamedTypeSymbol, "System.Exception")))
                     {
-                        if (rule != "ARKPII003"
-                            || !SinkConfiguration._isOrDerivesFrom(argument.Parameter?.Type as INamedTypeSymbol, "System.Exception"))
-                        {
-                            _check(context, argument.Value, rule);
-                        }
+                        _check(context, argument.Value, rule);
                     }
                 }
 

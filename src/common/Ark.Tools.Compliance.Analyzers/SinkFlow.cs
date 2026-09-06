@@ -297,7 +297,7 @@ internal sealed class SinkFlow
 
     private static bool _conditional(IOperation operation, IOperation root)
     {
-        for (var parent = operation.Parent; parent is not null && parent != root; parent = parent.Parent)
+        for (var parent = operation.Parent; parent is not null && !ReferenceEquals(parent, root); parent = parent.Parent)
         {
             if (parent is IConditionalOperation or ILoopOperation or ISwitchOperation or ITryOperation or ICoalesceOperation)
             {
@@ -401,15 +401,13 @@ internal sealed class SinkFlow
 
         foreach (var constructor in property.ContainingType.InstanceConstructors)
         {
-            foreach (var parameter in constructor.Parameters)
+            foreach (var parameter in constructor.Parameters.Where(parameter =>
+                parameter.Name == property.Name && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)))
             {
-                if (parameter.Name == property.Name && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type))
+                var source = _classification(parameter);
+                if (source is not null)
                 {
-                    var source = _classification(parameter);
-                    if (source is not null)
-                    {
-                        return source;
-                    }
+                    return source;
                 }
             }
         }

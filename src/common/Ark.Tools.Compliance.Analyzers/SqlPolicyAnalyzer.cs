@@ -128,13 +128,13 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
         var invocation = (IInvocationOperation)context.Operation;
         var method = invocation.TargetMethod;
         var owner = method.ContainingType.ToDisplayString();
-        var channel = owner == "System.Text.Json.JsonSerializer" && method.Name.StartsWith("Serialize", StringComparison.Ordinal)
-            || owner == "Newtonsoft.Json.JsonConvert" && method.Name == "SerializeObject"
+        var isJson = owner == "System.Text.Json.JsonSerializer" && method.Name.StartsWith("Serialize", StringComparison.Ordinal)
+            || owner == "Newtonsoft.Json.JsonConvert" && method.Name == "SerializeObject";
+        var isMessaging = method.ContainingNamespace.ToDisplayString().StartsWith("Rebus.", StringComparison.Ordinal)
+            && method.Name is "Send" or "SendLocal" or "Publish" or "Reply";
+        var channel = isJson
             ? "JSON"
-            : method.ContainingNamespace.ToDisplayString().StartsWith("Rebus.", StringComparison.Ordinal)
-              && method.Name is "Send" or "SendLocal" or "Publish" or "Reply"
-                ? "messaging"
-                : null;
+            : isMessaging ? "messaging" : null;
         if (channel is null || _hasEgressPolicy(context.ContainingSymbol))
         {
             return;
@@ -147,9 +147,9 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
                 value = conversion.Operand;
             }
             var type = value.Type;
-            var source = value switch
+            ISymbol? source = value switch
             {
-                IPropertyReferenceOperation property => (ISymbol)property.Property,
+                IPropertyReferenceOperation property => property.Property,
                 IFieldReferenceOperation field => field.Field,
                 IParameterReferenceOperation parameter => parameter.Parameter,
                 _ => null,

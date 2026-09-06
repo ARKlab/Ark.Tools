@@ -67,11 +67,13 @@ internal static class PersonalDataPatterns
                     || _isDomain(domain, "localhost");
             case PersonalDataKind.Phone:
                 var digits = _alphanumeric(value);
-                return (digits.Length == 11 && digits[0] == '1'
-                        && digits.Substring(4, 5) == "55501")
-                    || (digits.Length == 10 && digits.Substring(3, 5) == "55501")
-                    || (digits.Length == 12 && digits.StartsWith("447700900", StringComparison.Ordinal))
-                    || (digits.Length == 8 && digits.StartsWith("155501", StringComparison.Ordinal));
+                if (digits.Length == 11 && digits[0] == '1' && digits.Substring(4, 5) == "55501")
+                    return true;
+                if (digits.Length == 10 && digits.Substring(3, 5) == "55501")
+                    return true;
+                if (digits.Length == 12 && digits.StartsWith("447700900", StringComparison.Ordinal))
+                    return true;
+                return digits.Length == 8 && digits.StartsWith("155501", StringComparison.Ordinal);
             case PersonalDataKind.NationalIdentifier:
                 return value is "000-00-0000" or "XXXXXX00X00X000X" or "XX00000000";
             case PersonalDataKind.Iban:

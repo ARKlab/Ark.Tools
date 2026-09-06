@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -42,23 +43,9 @@ internal sealed class ComplianceLexicon
     internal bool _matches(string name)
     {
         name = name.TrimStart('_');
-        foreach (var excluded in _excluded)
-        {
-            if (_matches(name, excluded))
-            {
-                return false;
-            }
-        }
-
-        foreach (var term in _terms)
-        {
-            if (_matches(name, term))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        if (_excluded.Any(excluded => _matches(name, excluded)))
+            return false;
+        return _terms.Any(term => _matches(name, term));
     }
 
     private static bool _matches(string name, string term)
@@ -82,9 +69,12 @@ internal sealed class ComplianceLexicon
 
     private static bool _isBoundary(string name, int index)
     {
-        return index == 0 || index == name.Length || name[index - 1] == '_' || name[index] == '_'
-            || (char.IsUpper(name[index]) && (!char.IsUpper(name[index - 1])
-                || (index + 1 < name.Length && char.IsLower(name[index + 1]))));
+        if (index == 0 || index == name.Length)
+            return true;
+        if (name[index - 1] == '_' || name[index] == '_')
+            return true;
+        return char.IsUpper(name[index]) && (!char.IsUpper(name[index - 1])
+            || index + 1 < name.Length && char.IsLower(name[index + 1]));
     }
 
     private void _add(ParsedEntries entries)

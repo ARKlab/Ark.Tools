@@ -88,15 +88,12 @@ internal static class ComplianceSymbolFacts
             return false;
         }
 
-        foreach (var argument in attribute.NamedArguments)
+        foreach (var argument in attribute.NamedArguments.Where(static argument => argument.Key == "Expires"))
         {
-            if (argument.Key == "Expires")
-            {
-                return argument.Value.Value is string expires
-                    && DateTime.TryParseExact(expires, "yyyy-MM-dd", CultureInfo.InvariantCulture,
-                        DateTimeStyles.None, out var date)
-                    && date.Date >= today.Date;
-            }
+            return argument.Value.Value is string expires
+                && DateTime.TryParseExact(expires, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out var date)
+                && date.Date >= today.Date;
         }
 
         return true;

@@ -55,6 +55,30 @@ public sealed class RuntimeRedactionTests
         output.Should().Contain(SecretValue.Cleartext);
     }
 
+    /// <summary>Repeated policy changes reuse the configured wrapper target.</summary>
+    [TestMethod]
+    public void ConfigureCompliance_ReusesWrapperAfterToggle()
+    {
+        using var factory = new LogFactory();
+        using var target = new NullTarget();
+        factory.Configuration = new();
+        factory.Configuration.AddRuleForAllLevels(target);
+        var configuration = factory.Configuration!;
+
+        configuration.WithComplianceRedaction();
+        configuration.ConfigureCompliance();
+        var first = configuration.LoggingRules[0].Targets[0];
+        first.Should().BeOfType<RedactingTargetWrapper>();
+
+        configuration.WithoutComplianceRedaction();
+        configuration.ConfigureCompliance();
+        configuration.LoggingRules[0].Targets[0].Should().BeSameAs(target);
+
+        configuration.WithComplianceRedaction();
+        configuration.ConfigureCompliance();
+        configuration.LoggingRules[0].Targets[0].Should().BeSameAs(first);
+    }
+
     /// <summary>Overrides apply to both templates and boxed properties.</summary>
     [TestMethod]
     public void Override_CanSelectHmacAndSnapshotsOptions()
@@ -172,6 +196,27 @@ public sealed class RuntimeRedactionTests
         logEvent.Properties["value"].Should().BeSameAs(value);
     }
 
+    /// <summary>Redaction preserves caller metadata needed by callsite layouts.</summary>
+    [TestMethod]
+    public void Wrapper_PreservesCallerMetadata()
+    {
+        using var factory = new LogFactory();
+        using var memory = new MemoryTarget { Layout = "${callsite:className=true:methodName=true:fileName=true:includeSourcePath=false}" };
+        using var wrapper = new RedactingTargetWrapper(memory);
+        factory.Configuration = new();
+        factory.Configuration.AddRuleForAllLevels(wrapper);
+        factory.ReconfigExistingLoggers();
+        var logEvent = new LogEventInfo(LogLevel.Info, "test", "value");
+        logEvent.SetCallerInfo("Caller.Type", "Write", "Caller.cs", 42);
+        factory.GetLogger("test").Log(logEvent);
+
+        var output = memory.Logs.Should().ContainSingle().Which;
+        output.Should().Contain("Caller.Type");
+        output.Should().Contain("Write");
+        output.Should().Contain("Caller.cs");
+        output.Should().Contain("42");
+    }
+
     /// <summary>Default Ark setup registers redaction before an actual exporting processor.</summary>
     [TestMethod]
     public void DefaultOtelSetup_RedactsExportedSpanTags()
@@ -242,7 +287,7 @@ public sealed class RuntimeRedactionTests
     {
         using var baseline = new LogFactory();
         using var protectedFactory = new LogFactory();
-        var baselineTarget = new NullTarget { FormatMessage = true };
+        using var baselineTarget = new NullTarget { FormatMessage = true };
         using var protectedInnerTarget = new NullTarget { FormatMessage = true };
         baseline.Configuration = new();
         baseline.Configuration.AddRuleForAllLevels(baselineTarget);

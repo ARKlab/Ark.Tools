@@ -14,7 +14,7 @@ namespace Ark.Tools.Compliance.NLog;
 [Target("ArkComplianceRedaction")]
 public sealed class RedactingTargetWrapper : WrapperTargetBase
 {
-    private readonly RedactedEventCache _cache;
+    private RedactedEventCache _cache;
 
     /// <summary>Initializes a wrapper with a fail-closed policy.</summary>
     /// <param name="target">The downstream target.</param>
@@ -28,6 +28,11 @@ public sealed class RedactingTargetWrapper : WrapperTargetBase
     {
         ArgumentNullException.ThrowIfNull(target);
         WrappedTarget = target;
+        _cache = cache;
+    }
+
+    internal void _setCache(RedactedEventCache cache)
+    {
         _cache = cache;
     }
 
@@ -72,12 +77,25 @@ internal sealed class RedactedEventCache(ComplianceRedactor? redactor)
                 result.Message = message;
                 result.Parameters = null;
             }
-            return result;
+            return _copyCallSite(source, result);
         }
         catch (Exception ex) when (!_isCriticalException(ex))
         {
-            return new(source.Level, source.LoggerName, ComplianceRedactor.Marker);
+            return _copyCallSite(source, new(source.Level, source.LoggerName, ComplianceRedactor.Marker));
         }
+    }
+
+    private static LogEventInfo _copyCallSite(LogEventInfo source, LogEventInfo target)
+    {
+        var callerClassName = source.CallerClassName;
+        var callerMemberName = source.CallerMemberName;
+        var callerFilePath = source.CallerFilePath;
+        var callerLineNumber = source.CallerLineNumber;
+        if (callerClassName is not null || callerMemberName is not null || callerFilePath is not null || callerLineNumber != 0)
+            target.SetCallerInfo(callerClassName, callerMemberName, callerFilePath, callerLineNumber);
+        if (source.StackTrace is { } stackTrace)
+            target.SetStackTrace(stackTrace);
+        return target;
     }
 
     private static bool _isCriticalException(Exception exception)

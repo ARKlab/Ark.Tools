@@ -82,10 +82,13 @@ public static class ComplianceNLogExtensions
             var target = rule.Targets[i];
             if (enabled && target is RedactingTargetWrapper)
             {
+                ((RedactingTargetWrapper)target)._setCache(cache);
                 continue;
             }
             while (target is RedactingTargetWrapper existing)
+            {
                 target = existing.WrappedTarget ?? throw new InvalidOperationException("A redaction wrapper requires a downstream target.");
+            }
             if (!enabled)
             {
                 rule.Targets[i] = target;
@@ -93,12 +96,16 @@ public static class ComplianceNLogExtensions
             }
             if (!wrappers.TryGetValue(target, out var wrapper))
             {
-                wrapper = new RedactingTargetWrapper(target, cache)
-                {
-                    Name = target.Name + ".Compliance",
-                };
+                var wrapperName = target.Name + ".Compliance";
+                wrapper = configuration.FindTargetByName(wrapperName) is RedactingTargetWrapper existing
+                    && ReferenceEquals(existing.WrappedTarget, target)
+                    ? existing
+                    : new RedactingTargetWrapper(target, cache) { Name = wrapperName };
+                if (wrapper is RedactingTargetWrapper existingWrapper)
+                    existingWrapper._setCache(cache);
                 wrappers.Add(target, wrapper);
-                configuration.AddTarget(wrapper);
+                if (!ReferenceEquals(configuration.FindTargetByName(wrapper.Name), wrapper))
+                    configuration.AddTarget(wrapper);
             }
             rule.Targets[i] = wrapper;
         }
