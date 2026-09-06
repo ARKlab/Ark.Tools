@@ -127,6 +127,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             container.GetInstance);
         _registerBusBridge(services, container);
         services.AddSingleton(manifest);
+        services.AddSingleton(MessagingTriggeredHostMarker.Instance);
 
         if (!descriptor.Receives)
             return services;

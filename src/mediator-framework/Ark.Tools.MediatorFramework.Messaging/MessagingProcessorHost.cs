@@ -548,8 +548,16 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
             await delivery.AbandonAsync(CancellationToken.None).ConfigureAwait(false);
         }
 #pragma warning disable CA1031, ERP022 // The lock may already be lost; there is nothing left to do.
-        catch (Exception)
+        catch (Exception exception)
         {
+            // Debug, not warning: losing the lock before abandoning it is the expected outcome of a
+            // failed renewal, and the message is redelivered either way. Silence would make a
+            // genuinely broken transport indistinguishable from that.
+            _logger.Debug(
+                exception,
+                CultureInfo.InvariantCulture,
+                "Abandoning delivery {deliveryId} failed; the lock will expire instead.",
+                delivery.DeliveryId);
         }
 #pragma warning restore CA1031, ERP022
     }

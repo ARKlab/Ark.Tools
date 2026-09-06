@@ -682,8 +682,7 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         }
 
         if (_servicesValue.Any(static service =>
-                service.ServiceType.FullName
-                    == "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest"))
+                service.ServiceType == typeof(MessagingTriggeredHostMarker)))
         {
             throw new MessagingCompositionException(
                 MessagingCompositionDiagnostic.ProcessorHostInTriggeredHost,
