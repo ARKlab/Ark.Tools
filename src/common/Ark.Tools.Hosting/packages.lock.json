@@ -2,12 +2,6 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "Ark.Tools.Compliance.Analyzers": {
-        "type": "Direct",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "QJBSqBj2zY/JooI8HSYH04TSVCtlRoCcLbBUtnrDoWN+s8RrL58iEDBLSP4kkR867qLATZFIuPkXo/xS3tgInQ=="
-      },
       "Azure.Extensions.AspNetCore.Configuration.Secrets": {
         "type": "Direct",
         "requested": "[1.5.2, )",
@@ -446,12 +440,6 @@
       }
     },
     "net8.0": {
-      "Ark.Tools.Compliance.Analyzers": {
-        "type": "Direct",
-        "requested": "[999.9.9, )",
-        "resolved": "999.9.9",
-        "contentHash": "QJBSqBj2zY/JooI8HSYH04TSVCtlRoCcLbBUtnrDoWN+s8RrL58iEDBLSP4kkR867qLATZFIuPkXo/xS3tgInQ=="
-      },
       "Azure.Extensions.AspNetCore.Configuration.Secrets": {
         "type": "Direct",
         "requested": "[1.5.2, )",
