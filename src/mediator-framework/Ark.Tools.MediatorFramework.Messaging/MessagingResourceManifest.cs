@@ -151,6 +151,7 @@ public sealed class MessagingResourceManifest
 
     private void _validate()
     {
+#pragma warning disable MA0015 // Properties are validated after construction and are not method parameters.
         if (!Enum.IsDefined(Lifecycle))
             throw new ArgumentOutOfRangeException(nameof(Lifecycle));
         if (Subscriptions.Count > 0 && IdentityQueue is null)
@@ -179,5 +180,6 @@ public sealed class MessagingResourceManifest
         {
             throw new ArgumentException("Desired topics and subscriptions must belong to the network.");
         }
+#pragma warning restore MA0015
     }
 }

@@ -15,7 +15,7 @@ public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateSt
         set
         {
             if (_isRootManaged)
-                throw new InvalidOperationException($"Cannot set Identifier when AggregateState is managed by an AggregateRoot");
+                throw new InvalidOperationException("Cannot set Identifier when AggregateState is managed by an AggregateRoot");
             _identifier = value;
         }
     }
@@ -25,7 +25,7 @@ public abstract class AggregateState<TAggregateState, TAggregate> : IAggregateSt
         set
         {
             if (_isRootManaged)
-                throw new InvalidOperationException($"Cannot set Version when AggregateState is managed by an AggregateRoot");
+                throw new InvalidOperationException("Cannot set Version when AggregateState is managed by an AggregateRoot");
             _version = value;
         }
     }

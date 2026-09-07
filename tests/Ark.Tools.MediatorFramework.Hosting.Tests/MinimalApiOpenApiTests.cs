@@ -180,7 +180,7 @@ public sealed class MinimalApiOpenApiTests
         if (reference is null)
             return schema;
 
-        var name = reference[(reference.LastIndexOf('/') + 1)..];
+        var name = reference[(reference.LastIndexOf("/", StringComparison.Ordinal) + 1)..];
         return document["components"]?["schemas"]?[name]
             ?? throw new InvalidOperationException($"The schema reference '{reference}' was not found.");
     }

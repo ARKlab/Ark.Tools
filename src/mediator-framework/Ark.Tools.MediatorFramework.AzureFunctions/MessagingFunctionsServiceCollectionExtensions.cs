@@ -393,7 +393,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     {
         foreach (var stepType in stepTypes)
         {
-            ArgumentNullException.ThrowIfNull(stepType);
+            if (stepType is null)
+                throw new ArgumentNullException(nameof(stepType));
             if (container.GetRegistration(stepType, throwOnFailure: false) is null)
                 container.Register(stepType, stepType, Lifestyle.Scoped);
         }

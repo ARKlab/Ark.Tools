@@ -16,6 +16,7 @@ using System.Text.Json;
 namespace Ark.Reference.Core.Tests.Features;
 
 [Binding]
+#pragma warning disable MA0182 // Binding is discovered by Reqnroll.
 internal sealed class AuditSteps
 {
     private readonly TestClient _client;
@@ -26,6 +27,7 @@ internal sealed class AuditSteps
     {
         _client = client;
     }
+    #pragma warning restore MA0182
 
     [When(@"I get the last audit for '(.*)'")]
     public void WhenIGetTheLastAuditFor(string auditKind)

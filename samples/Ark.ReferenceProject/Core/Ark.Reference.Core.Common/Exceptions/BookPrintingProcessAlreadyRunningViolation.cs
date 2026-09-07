@@ -11,7 +11,7 @@ public class BookPrintingProcessAlreadyRunningViolation : Tools.Core.BusinessRul
     /// </summary>
     /// <param name="bookId">The ID of the book that already has a running print process</param>
     public BookPrintingProcessAlreadyRunningViolation(int bookId)
-        : base($"A print process is already running or pending for this book")
+        : base("A print process is already running or pending for this book")
     {
         BookId = bookId;
         Detail = $"Cannot start a new print process for book ID {bookId} because another print process is already running or pending for this book.";

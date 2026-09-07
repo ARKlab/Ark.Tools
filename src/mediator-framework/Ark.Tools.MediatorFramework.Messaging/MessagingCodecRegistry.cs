@@ -21,7 +21,8 @@ public sealed class MessagingCodecRegistry : IMessagingCodecRegistry
         var protocols = new Dictionary<SerializationProtocol, IMessagingCodec>();
         foreach (var codec in codecs)
         {
-            ArgumentNullException.ThrowIfNull(codec);
+            if (codec is null)
+                throw new ArgumentNullException(nameof(codecs));
             if (!contentTypes.TryAdd(codec.ContentType, codec))
                 throw new ArgumentException(
                     $"More than one codec is registered for content type '{codec.ContentType}'.",

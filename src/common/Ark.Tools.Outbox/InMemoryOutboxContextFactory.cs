@@ -59,7 +59,8 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
             ctk.ThrowIfCancellationRequested();
             foreach (var message in messages)
             {
-                ArgumentNullException.ThrowIfNull(message);
+                if (message is null)
+                    throw new ArgumentNullException(nameof(messages));
                 _messages.Add(_clone(message));
             }
 

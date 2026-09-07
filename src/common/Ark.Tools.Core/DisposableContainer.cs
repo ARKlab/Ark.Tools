@@ -25,7 +25,8 @@ public sealed class DisposableContainer : IDisposable
         _disposables = new(disposables.Length);
         foreach (var d in disposables)
         {
-            ArgumentNullException.ThrowIfNull(d);
+            if (d is null)
+                throw new ArgumentNullException(nameof(disposables));
             _disposables.Add(d);
         }
     }

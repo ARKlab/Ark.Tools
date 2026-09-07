@@ -35,7 +35,8 @@ public sealed class McpToolVersionMap : IMcpToolVersionMap
         var lastVersion = 0;
         foreach (var pair in toolsByVersion)
         {
-            ArgumentNullException.ThrowIfNull(pair.Value);
+            if (pair.Value is null)
+                throw new ArgumentNullException(nameof(toolsByVersion));
             _toolsByVersion.Add(
                 pair.Key,
                 new HashSet<string>(pair.Value, StringComparer.OrdinalIgnoreCase));

@@ -18,7 +18,7 @@ internal static class NodaConverterValidators
                     CultureInfo.InvariantCulture,
                     "Values of type {0} must (currently) use the ISO calendar in order to be serialized.",
                     typeof(T).Name);
-                throw new ArgumentException(message);
+                throw new ArgumentException(message, nameof(value));
             }
         };
     }
