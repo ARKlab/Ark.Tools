@@ -8,7 +8,6 @@ using Ark.Tools.Solid;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries;
 
-#pragma warning disable MA0182 // Handler is discovered by the mediator registration generator.
 internal sealed class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, PagedResult<AuditDto<AuditKind>>>
 {
     private readonly ICoreDataContextFactory _dataContext;
@@ -17,8 +16,6 @@ internal sealed class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, P
     {
         _dataContext = dataContext;
     }
-    #pragma warning restore MA0182
-
     public async Task<PagedResult<AuditDto<AuditKind>>> ExecuteAsync(Audit_GetQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);

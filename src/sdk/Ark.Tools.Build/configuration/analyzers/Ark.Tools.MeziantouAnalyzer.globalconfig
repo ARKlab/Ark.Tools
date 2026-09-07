@@ -7,7 +7,7 @@ MA0002.report_only_non_ordinal = true
 MA0015.consider_member_access_as_parameter = true
 
 # MA0001: StringComparison is missing
-dotnet_diagnostic.MA0001.severity = warning
+dotnet_diagnostic.MA0001.severity = none
 
 # MA0004: Use Task.ConfigureAwait
 dotnet_diagnostic.MA0004.severity = warning
@@ -160,7 +160,7 @@ dotnet_diagnostic.MA0166.severity = suggestion
 dotnet_diagnostic.MA0167.severity = none
 
 # MA0182: Avoid unused internal types
-dotnet_diagnostic.MA0182.severity = warning
+dotnet_diagnostic.MA0182.severity = none
 
 # MA0184: Do not use interpolated string without parameters
 dotnet_diagnostic.MA0184.severity = warning

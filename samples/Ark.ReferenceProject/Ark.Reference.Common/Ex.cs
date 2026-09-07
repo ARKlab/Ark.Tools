@@ -52,13 +52,13 @@ public static partial class Ex
 #if NET10_0_OR_GREATER
     [GeneratedRegex(
         "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
         1000)]
     private static partial Regex _sortRegex { get; }
 #else
     private static readonly Regex _sortRegex = new(
         "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
         TimeSpan.FromMilliseconds(1000));
 #endif
 

@@ -60,7 +60,7 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
             foreach (var message in messages)
             {
                 if (message is null)
-                    throw new ArgumentNullException(nameof(messages));
+                    throw new ArgumentNullException(nameof(messages), "The messages collection contains a null element.");
                 _messages.Add(_clone(message));
             }
 

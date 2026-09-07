@@ -247,8 +247,8 @@ public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSessi
     private static void _checkEntityIdGeneration(string entityId)
     {
         if (entityId != null && (string.IsNullOrEmpty(entityId)
-            || entityId.AsSpan().EndsWith("/", StringComparison.Ordinal)
-            || entityId.AsSpan().EndsWith("|", StringComparison.Ordinal)))
+            || entityId.EndsWith('/')
+            || entityId.EndsWith('|')))
             throw new NotSupportedException("Entity Id generation incompatible with audit");
     }
 

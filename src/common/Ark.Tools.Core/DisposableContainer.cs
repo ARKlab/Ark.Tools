@@ -26,7 +26,7 @@ public sealed class DisposableContainer : IDisposable
         foreach (var d in disposables)
         {
             if (d is null)
-                throw new ArgumentNullException(nameof(disposables));
+                throw new ArgumentNullException(nameof(disposables), "The disposables collection contains a null element.");
             _disposables.Add(d);
         }
     }
