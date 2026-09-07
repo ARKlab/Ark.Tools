@@ -24,6 +24,9 @@ dotnet_diagnostic.MA0015.severity = warning
 # MA0016: Prefer using collection abstraction instead of implementation
 dotnet_diagnostic.MA0016.severity = suggestion
 
+# MA0018: Do not declare static members on generic types
+dotnet_diagnostic.MA0018.severity = none
+
 # MA0028: Optimize StringBuilder usage
 dotnet_diagnostic.MA0028.severity = warning
 
@@ -66,6 +69,9 @@ dotnet_diagnostic.MA0050.severity = warning
 # MA0051: Method is too long
 dotnet_diagnostic.MA0051.severity = suggestion
 
+# MA0052: Replace constant Enum.ToString with nameof
+dotnet_diagnostic.MA0052.severity = warning
+
 # MA0053: Make class or record sealed
 dotnet_diagnostic.MA0053.severity = warning
 
@@ -87,6 +93,9 @@ dotnet_diagnostic.MA0063.severity = warning
 # MA0067: Use Guid.Empty
 dotnet_diagnostic.MA0067.severity = warning
 
+# MA0071: Avoid using redundant else
+dotnet_diagnostic.MA0071.severity = silent
+
 # MA0078: Use 'Cast' instead of 'Select' to cast
 dotnet_diagnostic.MA0078.severity = error
 
@@ -99,6 +108,12 @@ dotnet_diagnostic.MA0080.severity = warning
 # MA0102: Make member readonly
 dotnet_diagnostic.MA0102.severity = warning
 
+# MA0105: Use the lambda parameters instead of using a closure
+dotnet_diagnostic.MA0105.severity = warning
+
+# MA0106: Avoid closure by using an overload with the 'factoryArgument' parameter
+dotnet_diagnostic.MA0106.severity = warning
+
 # MA0107: Do not use object.ToString
 dotnet_diagnostic.MA0107.severity = none
 
@@ -107,6 +122,12 @@ dotnet_diagnostic.MA0113.severity = warning
 
 # MA0114: Use DateTimeOffset.UnixEpoch
 dotnet_diagnostic.MA0114.severity = warning
+
+# MA0110: Use the Regex source generator
+dotnet_diagnostic.MA0110.severity = warning
+
+# MA0112: Use 'Count > 0' instead of 'Any()'
+dotnet_diagnostic.MA0112.severity = silent
 
 # MA0121: Do not overwrite parameter value
 dotnet_diagnostic.MA0121.severity = suggestion
@@ -132,6 +153,12 @@ dotnet_diagnostic.MA0157.severity = none
 # MA0160: Use ContainsKey instead of TryGetValue
 dotnet_diagnostic.MA0160.severity = warning
 
+# MA0166: Forward the TimeProvider to methods that take one
+dotnet_diagnostic.MA0166.severity = suggestion
+
+# MA0167: Use an overload with a TimeProvider argument
+dotnet_diagnostic.MA0167.severity = none
+
 # MA0182: Avoid unused internal types
 dotnet_diagnostic.MA0182.severity = warning
 
@@ -143,6 +170,12 @@ dotnet_diagnostic.MA0193.severity = warning
 
 # MA0194: Merge is expressions on the same value
 dotnet_diagnostic.MA0194.severity = warning
+
+# MA0190: Use partial property instead of partial method for GeneratedRegex
+dotnet_diagnostic.MA0190.severity = warning
+
+# MA0192: Use HasFlag instead of bitwise checks
+dotnet_diagnostic.MA0192.severity = none
 
 # MA0200: Do not use empty property patterns with non-nullable value types
 dotnet_diagnostic.MA0200.severity = warning
