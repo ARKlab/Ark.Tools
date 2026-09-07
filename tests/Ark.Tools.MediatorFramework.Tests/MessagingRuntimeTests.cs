@@ -273,7 +273,9 @@ public sealed partial class MessagingRuntimeTests
     {
         var exception = new InvalidOperationException(
             new string('m', 300),
-            new ArgumentException(new string('i', 300), "inner"));
+#pragma warning disable MA0015 // The exception is constructed as test data without a method parameter.
+            new ArgumentException(new string('i', 300)));
+#pragma warning restore MA0015
 
         var info = MessagingExceptionInfo.From(exception);
 
