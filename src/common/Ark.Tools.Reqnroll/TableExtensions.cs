@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Reqnroll;
 
-public static class TableExtensions
+public static partial class TableExtensions
 {
     /// <summary>
     /// Creates a shallow clone of an existing object and replaces only the
@@ -108,7 +108,7 @@ public static class TableExtensions
         // find sub-properties by looking for "."
         var propNames = tableRow
             .Where(static x => x.Key.Contains('.', StringComparison.Ordinal))
-            .Select(static x => Regex.Replace(x.Key, @"^(?<root>.+?)\..+$", "${root}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)));
+            .Select(static x => _getRootPropertyMatch(x.Key));
 
         foreach (var propName in propNames)
         {
@@ -151,6 +151,33 @@ public static class TableExtensions
         }
 
         return result;
+    }
+
+#if NET10_0_OR_GREATER
+    [GeneratedRegex(
+        @"^(?<root>.+?)\..+$",
+        RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking,
+        1000)]
+    private static partial Regex _rootPropertyRegex { get; }
+#else
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Meziantou.Analyzer",
+        "MA0190",
+        Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
+    [GeneratedRegex(
+        @"^(?<root>.+?)\..+$",
+        RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking,
+        1000)]
+    private static partial Regex _rootPropertyRegex();
+#endif
+
+    private static string _getRootPropertyMatch(string value)
+    {
+#if NET10_0_OR_GREATER
+        return _rootPropertyRegex.Replace(value, "${root}");
+#else
+        return _rootPropertyRegex().Replace(value, "${root}");
+#endif
     }
 
     /// <summary>

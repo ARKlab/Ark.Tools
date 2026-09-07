@@ -304,7 +304,7 @@ public sealed class ServiceBusMessagingProcessorHostBoundaryTests : MessagingPro
         const string endpointPrefix = "Endpoint=";
         var endpointStart = connectionString.IndexOf(endpointPrefix, StringComparison.Ordinal)
             + endpointPrefix.Length;
-        var endpointEnd = connectionString.IndexOf(';', endpointStart);
+        var endpointEnd = endpointStart + connectionString.AsSpan(endpointStart).IndexOf(';');
         var endpoint = new Uri(connectionString[endpointStart..endpointEnd]);
         var dataPlaneEndpoint = new UriBuilder(endpoint) { Port = -1 }.Uri
             .AbsoluteUri.TrimEnd('/');

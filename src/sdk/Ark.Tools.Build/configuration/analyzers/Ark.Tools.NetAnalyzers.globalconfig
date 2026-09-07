@@ -124,6 +124,9 @@ dotnet_diagnostic.CA1819.severity = suggestion
 # CA1821: Remove empty finalizers
 dotnet_diagnostic.CA1821.severity = error
 
+# CA1822: Mark members as static
+dotnet_diagnostic.CA1822.severity = warning
+
 # CA1823: Avoid unused private fields
 dotnet_diagnostic.CA1823.severity = error
 

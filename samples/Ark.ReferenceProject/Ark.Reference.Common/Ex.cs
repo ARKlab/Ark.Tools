@@ -39,7 +39,7 @@ public static partial class Ex
     public static string[] CompileSorts(this IEnumerable<string> sorts, Dictionary<string, string> validCols, string defaultValue)
     {
         return (sorts ?? Enumerable.Empty<string>())
-            .Select(static s => Regex.Match(s, "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)))
+            .Select(static s => _getSortRegex().Match(s))
             .Where(static s => s.Success)
             .Join(validCols
                 , static s => s.Groups["col"].Value.ToUpperInvariant()
@@ -47,6 +47,33 @@ public static partial class Ex
                 , static (s, i) => i.Value + s.Groups["dir"].Value, StringComparer.Ordinal)
             .DefaultIfEmpty(defaultValue)
             .ToArray();
+    }
+
+#if NET10_0_OR_GREATER
+    [GeneratedRegex(
+        "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+        1000)]
+    private static partial Regex _sortRegex { get; }
+#else
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Meziantou.Analyzer",
+        "MA0190",
+        Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
+    [GeneratedRegex(
+        "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+        1000)]
+    private static partial Regex _sortRegex();
+#endif
+
+    private static Regex _getSortRegex()
+    {
+#if NET10_0_OR_GREATER
+        return _sortRegex;
+#else
+        return _sortRegex();
+#endif
     }
 
     public static async Task<IEnumerable<TReturn>> QueryAsync<TRead, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TRead, TReturn> func)

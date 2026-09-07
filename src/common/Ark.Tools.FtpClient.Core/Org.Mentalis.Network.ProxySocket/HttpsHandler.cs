@@ -59,7 +59,8 @@ internal sealed class HttpsHandler : SocksHandler
     {
         string header = Encoding.ASCII.GetString(buffer);
         if ((!header.StartsWith("HTTP/1.1 ", StringComparison.OrdinalIgnoreCase) &&
-             !header.StartsWith("HTTP/1.0 ", StringComparison.OrdinalIgnoreCase)) || !header.EndsWith(' '))
+             !header.StartsWith("HTTP/1.0 ", StringComparison.OrdinalIgnoreCase))
+             || !header.AsSpan().EndsWith(" ", StringComparison.Ordinal))
             throw new ProtocolViolationException();
         string code = header[9..12];
         if (code != "200")

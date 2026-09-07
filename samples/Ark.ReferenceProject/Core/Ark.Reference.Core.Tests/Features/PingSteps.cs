@@ -13,6 +13,7 @@ using Reqnroll.Assist;
 namespace Ark.Reference.Core.Tests.Features;
 
 [Binding]
+#pragma warning disable MA0182 // Binding is discovered by Reqnroll.
 sealed class PingSteps
 {
     //** Common section **
@@ -27,6 +28,7 @@ sealed class PingSteps
     {
         _client = client;
     }
+    #pragma warning restore MA0182
 
     //** PING *****************************
     [Given(@"I make a request to ping")]

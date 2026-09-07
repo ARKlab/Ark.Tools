@@ -33,7 +33,11 @@ public class InMemStateProvider<TExtensions> : IStateProvider<TExtensions>
     public Task SaveStateAsync(IEnumerable<ResourceState<TExtensions>> states, CancellationToken ctk = default)
     {
         foreach (var s in states)
-            _store.AddOrUpdate(s.ResourceId, s, (k, v) => s);
+            _store.AddOrUpdate(
+                s.ResourceId,
+                static (_, state) => state,
+                static (_, _, state) => state,
+                s);
 
         return Task.CompletedTask;
     }

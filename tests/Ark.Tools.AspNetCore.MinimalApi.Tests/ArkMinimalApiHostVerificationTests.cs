@@ -28,8 +28,6 @@ public sealed class ArkMinimalApiHostVerificationTests
         public BrokenService(IMissingDependency dependency) => _ = dependency;
     }
 
-    private sealed class WorkingService;
-
     private sealed class StartupProbe
     {
         public bool Started { get; set; }

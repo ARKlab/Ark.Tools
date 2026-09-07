@@ -26,7 +26,7 @@ public readonly partial struct PhoneNumber
     private static ValidationResult _validate(string value)
     {
         var digits = 0;
-        var charactersToValidate = value.StartsWith('+') ? value.Skip(1) : value;
+        var charactersToValidate = value.Length > 0 && value[0] == '+' ? value.Skip(1) : value;
         foreach (var character in charactersToValidate)
         {
             if (character is < '0' or > '9')
