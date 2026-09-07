@@ -39,7 +39,7 @@ public sealed class GrpcProtoExportTests
 
         var messageIndex = proto.IndexOf("message HostingETagMismatchRequest {", StringComparison.Ordinal);
         messageIndex.Should().BeGreaterThan(-1);
-        var messageEnd = proto.IndexOf("}", messageIndex, StringComparison.Ordinal);
+        var messageEnd = messageIndex + proto.AsSpan(messageIndex).IndexOf('}');
         proto[messageIndex..messageEnd].Should().Contain("string e_tag = 1;");
     }
 

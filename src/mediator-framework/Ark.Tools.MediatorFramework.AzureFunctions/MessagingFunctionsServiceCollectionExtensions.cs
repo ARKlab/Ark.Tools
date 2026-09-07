@@ -391,10 +391,9 @@ internal static class MessagingFunctionsServiceCollectionExtensions
 
     private static void _registerSteps(Container container, IEnumerable<Type> stepTypes)
     {
+        ArgumentNullException.ThrowIfNull(stepTypes);
         foreach (var stepType in stepTypes)
         {
-            if (stepType is null)
-                throw new ArgumentNullException(nameof(stepType));
             if (container.GetRegistration(stepType, throwOnFailure: false) is null)
                 container.Register(stepType, stepType, Lifestyle.Scoped);
         }
