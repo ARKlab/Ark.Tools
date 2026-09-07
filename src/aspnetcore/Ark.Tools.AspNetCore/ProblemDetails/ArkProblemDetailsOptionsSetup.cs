@@ -117,7 +117,7 @@ public class ArkProblemDetailsOptionsSetup
     [RequiresUnreferencedCode("BusinessRuleViolation serialization requires reflection and JSON serialization of domain types.")]
     private Microsoft.AspNetCore.Mvc.ProblemDetails _toProblemDetails(BusinessRuleViolationException arg)
     {
-        var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), t =>
+        var pdt = _brvMap.GetOrAdd(arg.BusinessRuleViolation.GetType(), static (t, setup) =>
         {
             var props = t.GetProperties()
                 .Where(static x => x.GetMethod is not null
@@ -130,8 +130,8 @@ public class ArkProblemDetailsOptionsSetup
                 .OrderBy(static x => x.Name, StringComparer.Ordinal)
                 .Select(static x => (x.Name, x.PropertyType))
                 .ToArray();
-            return _dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
-        });
+            return setup._dynamicTypeAssembly.CreateNewTypeWithDynamicProperties(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), props);
+        }, this);
 
         var js = (arg.BusinessRuleViolation as object).SerializeToByte(ArkSerializerOptions.JsonOptions);
         var ret = (Microsoft.AspNetCore.Mvc.ProblemDetails)JsonSerializer.Deserialize(js, pdt, ArkSerializerOptions.JsonOptions)!;

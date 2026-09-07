@@ -137,8 +137,11 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         var task = _pendingTasks.GetOrAdd(
             key,
             static (k, state) => state.Policy.ExecuteAsync(
-                static (_, _) => state.GetTokenAsync(state.Request, state.CancellationToken),
-                new Context(k)
+                static context => _executeToken<TRequest>(context),
+                new Context(k, new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    ["state"] = state
+                })
             ),
             (
                 Policy: _accessTokenResponseCachePolicy,
@@ -152,6 +155,13 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
         _pendingTasks.TryRemove(key, out var _);
         return res;
+    }
+
+    private static Task<AccessTokenResponse> _executeToken<TRequest>(Context context)
+        where TRequest : notnull
+    {
+        var state = ((TRequest Request, Func<TRequest, CancellationToken, Task<AccessTokenResponse>> GetTokenAsync, CancellationToken CancellationToken))context["state"];
+        return state.GetTokenAsync(state.Request, state.CancellationToken);
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request, CancellationToken cancellationToken = default)

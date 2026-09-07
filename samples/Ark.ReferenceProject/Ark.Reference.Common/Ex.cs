@@ -39,7 +39,7 @@ public static partial class Ex
     public static string[] CompileSorts(this IEnumerable<string> sorts, Dictionary<string, string> validCols, string defaultValue)
     {
         return (sorts ?? Enumerable.Empty<string>())
-            .Select(static s => Regex.Match(s, "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(1000)))
+            .Select(static s => _sortRegex.Match(s))
             .Where(static s => s.Success)
             .Join(validCols
                 , static s => s.Groups["col"].Value.ToUpperInvariant()
@@ -48,6 +48,19 @@ public static partial class Ex
             .DefaultIfEmpty(defaultValue)
             .ToArray();
     }
+
+#if NET10_0_OR_GREATER
+    [GeneratedRegex(
+        "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+        1000)]
+    private static partial Regex _sortRegex { get; }
+#else
+    private static readonly Regex _sortRegex = new(
+        "^(?<col>\\S+)(\\s(?<dir>asc|desc))?$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+        TimeSpan.FromMilliseconds(1000));
+#endif
 
     public static async Task<IEnumerable<TReturn>> QueryAsync<TRead, TReturn>(this IDbConnection cnn, CommandDefinition command, Func<TRead, TReturn> func)
     {

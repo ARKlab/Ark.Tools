@@ -350,7 +350,7 @@ public sealed partial class MessagingRuntimeTests
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(0);
         delivery._deadLetters.Should().ContainSingle();
-        delivery._deadLetterReason.Should().Be(MessagingFailFastReason.MalformedPayload.ToString());
+        delivery._deadLetterReason.Should().Be(nameof(MessagingFailFastReason.MalformedPayload));
         secondLevelDispatched.Should().BeFalse();
     }
 

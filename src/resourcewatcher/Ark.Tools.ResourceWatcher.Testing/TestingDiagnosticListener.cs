@@ -70,7 +70,11 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
             ResultType = resultType,
             Exception = exception
         };
-        _results.AddOrUpdate(resourceId, result, (k, v) => result);
+        _results.AddOrUpdate(
+            resourceId,
+            static (_, state) => state,
+            static (_, _, state) => state,
+            result);
     }
 
     /// <summary>
@@ -154,7 +158,11 @@ public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
             Total = total
         };
 
-        _results.AddOrUpdate(resourceId, result, (k, v) => result);
+        _results.AddOrUpdate(
+            resourceId,
+            static (_, state) => state,
+            static (_, _, state) => state,
+            result);
     }
 
     [DiagnosticName("Ark.Tools.ResourceWatcher.Run.Stop")]
