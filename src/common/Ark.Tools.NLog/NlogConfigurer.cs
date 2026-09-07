@@ -160,6 +160,7 @@ public static class NLogConfigurer
         internal LoggingConfiguration _config = new();
         private ComplianceRedactionOptions? _complianceOptions;
         private bool _complianceEnabled = true;
+        private ComplianceRedactor? _complianceRedactor = new();
         public string AppName { get; }
 
         internal Configurer(string appName)
@@ -189,7 +190,7 @@ public static class NLogConfigurer
         {
             _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
             {
-                Layout = TextLineLayout
+                Layout = _createTextLineLayout()
             });
             return this;
         }
@@ -207,6 +208,9 @@ public static class NLogConfigurer
             var slackTarget = new SlackTarget
             {
                 WebHookUrl = slackwebhook,
+                Layout = _createMessageLayout(),
+                _exceptionLayout = "${ark.compliance.exception}",
+                _valueRedactor = value => _complianceRedactor?.Redact(value) ?? value
             };
             _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);
             return this;
@@ -216,7 +220,7 @@ public static class NLogConfigurer
             var consoleTarget = new ConsoleTarget();
             consoleTarget.ForceWriteLine = !async;
             consoleTarget.AutoFlush = !async;
-            consoleTarget.Layout = TextLineLayout;
+            consoleTarget.Layout = _createTextLineLayout();
 
             _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) : consoleTarget);
             return this;
@@ -226,7 +230,7 @@ public static class NLogConfigurer
         {
             var fileTarget = new FileTarget();
 
-            fileTarget.Layout = TextLineLayout;
+            fileTarget.Layout = _createTextLineLayout();
             fileTarget.FileName = @"${basedir}\Logs\Trace.log";
             fileTarget.KeepFileOpen = true;
             fileTarget.ArchiveFileName = @"${basedir}\Logs\Trace_{#}.log";
@@ -302,7 +306,7 @@ VALUES
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", "${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout()
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", _createScannedLayout(new JsonLayout()
             {
                 ExcludeEmptyProperties = true,
                 IncludeGdc = false, //false, due to NLog not respecting ExcludeProperties for GDC and we want to exclude AppName :(
@@ -310,9 +314,9 @@ VALUES
                 RenderEmptyObject = true,
                 IncludeEventProperties = true,
                 ExcludeProperties = { "Message", "Exception", "AppName" }
-            }));
+            })));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", _createMessageLayout()));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${ark.compliance.exception}}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${ark.compliance.exception}}"));
             _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
@@ -320,12 +324,12 @@ VALUES
             return this;
         }
 
-        private static MailTarget _getBasicMailTarget()
+        private MailTarget _getBasicMailTarget()
         {
             var target = new MailTarget();
             target.AddNewLines = true;
             target.Encoding = Encoding.UTF8;
-            target.Layout = TextLineLayout;
+            target.Layout = _createTextLineLayout();
             target.Html = true;
             target.ReplaceNewlineWithBrTagInHtml = true;
             target.Subject = "Errors from ${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}@${ark.hostname}";
@@ -500,6 +504,7 @@ VALUES
             configure?.Invoke(options);
             _complianceOptions = options;
             _complianceEnabled = true;
+            _complianceRedactor = new ComplianceRedactor(options);
             return this;
         }
 
@@ -509,6 +514,7 @@ VALUES
         {
             _complianceOptions = null;
             _complianceEnabled = false;
+            _complianceRedactor = null;
             return this;
         }
 
@@ -548,11 +554,12 @@ VALUES
             while (activeFormatter is ComplianceValueFormatter complianceFormatter)
                 activeFormatter = complianceFormatter.InnerFormatter;
 
-            var redactor = _complianceEnabled ? new ComplianceRedactor(_complianceOptions) : null;
+            var redactor = _complianceEnabled
+                ? _complianceRedactor ??= new ComplianceRedactor(_complianceOptions)
+                : null;
             _config.Variables.Remove(ComplianceNLogExtensions.RedactionVariable);
             if (redactor is not null)
                 _config.Variables[ComplianceNLogExtensions.RedactionVariable] = Layout.FromLiteral("true");
-            _configureDatabaseLayouts(redactor);
 
             LogManager.Setup()
                 .SetupSerialization(builder =>
@@ -566,30 +573,27 @@ VALUES
             _wrapTargets(redactor);
         }
 
-        private void _configureDatabaseLayouts(ComplianceRedactor? redactor)
+        private Layout _createTextLineLayout()
         {
-            if (redactor?.PatternScan != PatternScanMode.MessageAndProperties)
-                return;
+            return _createScannedLayout(Layout.FromString(TextLineLayout));
+        }
 
-            foreach (var target in _config.AllTargets.OfType<DatabaseTarget>())
-            {
-                foreach (var parameter in target.Parameters)
+        private Layout _createMessageLayout()
+        {
+            return Layout.FromMethod(
+                logEvent => _complianceRedactor?.Scan(logEvent.FormattedMessage) ?? logEvent.FormattedMessage,
+                LayoutRenderOptions.ThreadAgnostic);
+        }
+
+        private Layout _createScannedLayout(Layout layout)
+        {
+            return Layout.FromMethod(
+                logEvent =>
                 {
-                    if (parameter.Name is "Message")
-                    {
-                        parameter.Layout = Layout.FromMethod(
-                            logEvent => redactor.Scan(logEvent.FormattedMessage),
-                            LayoutRenderOptions.ThreadAgnostic);
-                    }
-                    else if (parameter.Name is "Properties")
-                    {
-                        var layout = parameter.Layout;
-                        parameter.Layout = Layout.FromMethod(
-                            logEvent => redactor.Scan(layout.Render(logEvent)),
-                            LayoutRenderOptions.ThreadAgnostic);
-                    }
-                }
-            }
+                    var rendered = layout.Render(logEvent);
+                    return _complianceRedactor?.Scan(rendered) ?? rendered;
+                },
+                LayoutRenderOptions.ThreadAgnostic);
         }
 
         private void _wrapTargets(ComplianceRedactor? redactor)

@@ -1,4 +1,5 @@
 using NLog.Common;
+using NLog.Layouts;
 using NLog.Targets;
 
 using Slack.Webhooks;
@@ -10,6 +11,9 @@ namespace Ark.Tools.NLog.Slack;
 [Target(NLogConfigurer.SlackTarget)]
 public class SlackTarget : TargetWithContext
 {
+    internal Func<object?, object?>? _valueRedactor;
+    internal Layout? _exceptionLayout;
+
     [SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "NLog configuration limitation")]
     public string? WebHookUrl { get; set; }
 
@@ -77,7 +81,7 @@ public class SlackTarget : TargetWithContext
         {
             var allProperties = this.GetAllProperties(info.LogEvent)
                 .Where(static w => !string.IsNullOrEmpty(w.Key) && !string.IsNullOrEmpty(w.Value?.ToString()))
-                .Select(static s => (s.Key, s.Value?.ToString()));
+                .Select(s => (s.Key, _valueRedactor?.Invoke(s.Value)?.ToString() ?? s.Value?.ToString()));
 
             slack.AddAttachment(color, allProperties);
         }
@@ -85,7 +89,10 @@ public class SlackTarget : TargetWithContext
         var exception = info.LogEvent.Exception;
         if (exception != null)
         {
-            slack.AddAttachment(exception.Message, color, [($"Type: {exception.GetType()}", exception.StackTrace ?? "N/A")]);
+            var exceptionText = _exceptionLayout is null
+                ? exception.ToString()
+                : this.RenderLogEvent(_exceptionLayout, info.LogEvent);
+            slack.AddAttachment(exceptionText, color, []);
         }
 
         slack.Send(_client ?? throw new InvalidOperationException("SlackClient is null"));
