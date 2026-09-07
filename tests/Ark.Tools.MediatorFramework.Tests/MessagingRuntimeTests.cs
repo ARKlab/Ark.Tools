@@ -273,7 +273,7 @@ public sealed partial class MessagingRuntimeTests
     {
         var exception = new InvalidOperationException(
             new string('m', 300),
-            new ArgumentException(new string('i', 300)));
+            new ArgumentException(new string('i', 300), "inner"));
 
         var info = MessagingExceptionInfo.From(exception);
 
