@@ -407,10 +407,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
 
         // Dispatch via Simple Injector scope
+        source.AppendLine("        var _container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(request.HttpContext.RequestServices);");
+        source.AppendLine("        var _scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(_container);");
         source.AppendLine("        try");
         source.AppendLine("        {");
-        source.AppendLine("        var _container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(request.HttpContext.RequestServices);");
-        source.AppendLine("        await using var _scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(_container);");
 
         if (endpoint.Kind == HandlerKind.Command)
         {
@@ -449,6 +449,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("        catch (global::System.Exception _exception)");
         source.AppendLine("        {");
         source.AppendLine("            return global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
+        source.AppendLine("        }");
+        source.AppendLine("        finally");
+        source.AppendLine("        {");
+        source.AppendLine("            await _scope.DisposeAsync().ConfigureAwait(false);");
         source.AppendLine("        }");
         source.AppendLine("    }");
     }
