@@ -517,11 +517,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                                 sb.AppendLine("                if (result is null)");
                                 sb.AppendLine("                    yield break;");
                                 sb.AppendLine("                yield return new global::Ark.Tools.MediatorFramework.DownloadDocumentChunk { Metadata = new global::Ark.Tools.MediatorFramework.DownloadDocumentMetadata { Name = global::Ark.Tools.MediatorFramework.ArkAttachmentName.Sanitize(result.Name), ContentType = result.ContentType } };");
-                                sb.AppendLine("                await using var stream = result.OpenRead();");
+                                sb.AppendLine("                var stream = result.OpenRead();");
+                                sb.AppendLine("                await using (stream.ConfigureAwait(false))");
+                                sb.AppendLine("                {");
                                 sb.AppendLine("                var buffer = new byte[64 * 1024];");
                                 sb.AppendLine("                int bytesRead;");
                                 sb.AppendLine("                while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(), context.CancellationToken).ConfigureAwait(false)) > 0)");
                                 sb.AppendLine("                    yield return new global::Ark.Tools.MediatorFramework.DownloadDocumentChunk { Data = buffer[..bytesRead] };");
+                                sb.AppendLine("                }");
                             }
                             else if (e.IsStreaming)
                             {

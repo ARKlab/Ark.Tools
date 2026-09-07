@@ -970,8 +970,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .AppendLine("        global::Ark.Tools.Solid.ICommandProcessor processor,")
                     .AppendLine("        global::System.Threading.CancellationToken ctk)")
                     .AppendLine("    {")
-                    .AppendLine("        await using var reader = new global::Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader(payload, codec);")
-                    .AppendLine("        await DispatchAsync(logicalName, reader, processor, ctk).ConfigureAwait(false);")
+                    .AppendLine("        var reader = new global::Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader(payload, codec);")
+                    .AppendLine("        await using (reader.ConfigureAwait(false))")
+                    .AppendLine("        {")
+                    .AppendLine("            await DispatchAsync(logicalName, reader, processor, ctk).ConfigureAwait(false);")
+                    .AppendLine("        }")
                     .AppendLine("    }");
             }
 

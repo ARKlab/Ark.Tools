@@ -11,6 +11,7 @@ dotnet_diagnostic.MA0001.severity = none
 
 # MA0004: Use Task.ConfigureAwait
 dotnet_diagnostic.MA0004.severity = warning
+MA0004.report_generated_code = false
 
 # MA0006: Use String.Equals instead of equality operator
 dotnet_diagnostic.MA0006.severity = silent
