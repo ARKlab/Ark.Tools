@@ -26,7 +26,7 @@ public static partial class EnumerableExtensions
 
     static class QueryCompiler<T>
     {
-        private static readonly ConcurrentDictionary<string, Func<IQueryable<T>, IQueryable<T>>> _cache = new(StringComparer.Ordinal);
+        private static readonly ConcurrentDictionary<string, Func<IQueryable<T>, IQueryable<T>>[]> _cache = new(StringComparer.Ordinal);
 
         [RequiresUnreferencedCode("OrderBy uses string-based property access and expression tree compilation which requires reflection. Property names must be preserved for this to work correctly.")]
         public static IQueryable<T> ApplyOrderBy(IQueryable<T> collection, string orderBy
@@ -35,23 +35,12 @@ public static partial class EnumerableExtensions
         {
             var paramName = orderByParam;
 
-            var apply = _cache.GetOrAdd(orderBy, k =>
-            {
-                // Parse and compile in one pass to avoid intermediate allocations
-                var chain = _parseAndCompileOrderBy(k, paramName);
+            // Parse and compile in one pass to avoid intermediate allocations
+            var chain = _cache.GetOrAdd(orderBy, static (k, state) => _parseAndCompileOrderBy(k, state), paramName);
+            foreach (var item in chain)
+                collection = item(collection);
 
-                IQueryable<T> apply(IQueryable<T> c)
-                {
-                    foreach (var item in chain)
-                        c = item(c);
-
-                    return c;
-                }
-
-                return apply;
-            });
-
-            return apply(collection);
+            return collection;
         }
 
 

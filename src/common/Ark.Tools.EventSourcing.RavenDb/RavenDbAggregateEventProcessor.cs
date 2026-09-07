@@ -150,7 +150,7 @@ where startsWith(id(e), '{prefix}')
                     AggregateEventEnvelope<TAggregate> envelope = e.Result.FromStore<TAggregate>();
                     var evtType = envelope.Event.GetType();
                     var methodToInvoke = _dispatchMethods
-                        .GetOrAdd(evtType, type => _getDispatchMethod(evtType));
+                        .GetOrAdd(evtType, static (type, processor) => processor._getDispatchMethod(type), this);
 
                     await ((Task)methodToInvoke.Invoke(this, [envelope.Event, envelope.Metadata])!).ConfigureAwait(false);
                 }

@@ -136,16 +136,36 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
         var task = _pendingTasks.GetOrAdd(
             key,
-            k => _accessTokenResponseCachePolicy.ExecuteAsync(
-                ctx => getTokenAsync(request, cancellationToken),
-                new Context(k)
+            static (k, state) => state.Policy.ExecuteAsync(
+                static context => _executeToken<TRequest>(context),
+                new Context(k, new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    ["state"] = (state.Request, state.GetTokenAsync, state.CancellationToken)
+                })
+            ),
+            (
+                Policy: _accessTokenResponseCachePolicy,
+                Request: request,
+                GetTokenAsync: getTokenAsync,
+                CancellationToken: cancellationToken
             )
         ) as Task<AccessTokenResponse>;
 
-        var res = await task!.ConfigureAwait(false);
+        try
+        {
+            return await task!.ConfigureAwait(false);
+        }
+        finally
+        {
+            _pendingTasks.TryRemove(key, out var _);
+        }
+    }
 
-        _pendingTasks.TryRemove(key, out var _);
-        return res;
+    private static Task<AccessTokenResponse> _executeToken<TRequest>(Context context)
+        where TRequest : notnull
+    {
+        var state = ((TRequest Request, Func<TRequest, CancellationToken, Task<AccessTokenResponse>> GetTokenAsync, CancellationToken CancellationToken))context["state"];
+        return state.GetTokenAsync(state.Request, state.CancellationToken);
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodeTokenRequest request, CancellationToken cancellationToken = default)

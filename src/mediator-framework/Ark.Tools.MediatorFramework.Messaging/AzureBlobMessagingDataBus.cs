@@ -154,7 +154,8 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
                 nameof(options));
         }
 
-        if (options.ContainerName.StartsWith('-') || options.ContainerName.EndsWith('-'))
+        if (options.ContainerName.AsSpan().StartsWith("-", StringComparison.Ordinal)
+            || options.ContainerName.AsSpan().EndsWith("-", StringComparison.Ordinal))
             throw new ArgumentException(
                 "The Blob container name cannot start or end with a hyphen.",
                 nameof(options));

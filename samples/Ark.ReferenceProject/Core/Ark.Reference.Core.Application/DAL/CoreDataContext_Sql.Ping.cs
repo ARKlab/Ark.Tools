@@ -179,10 +179,10 @@ public partial class CoreDataContext_Sql
         var updateValues = new List<string>();
 
         if (entity.Name != null)
-            updateValues.Add($"[Name] = @Name");
+            updateValues.Add("[Name] = @Name");
 
         if (entity.Type != null)
-            updateValues.Add($"[Type] = @Type");
+            updateValues.Add("[Type] = @Type");
 
         var query = @$"
                 UPDATE  [{_schemaPing}].[{_tablePing}]

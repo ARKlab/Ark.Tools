@@ -19,7 +19,7 @@ public class ReqnrollSteps
     [When(@"I get a wrong url")]
     public void WhenIGetAWrongUrl()
     {
-        var url = $@"entity/null";
+        var url = @"entity/null";
         _client.Get(url);
     }
 

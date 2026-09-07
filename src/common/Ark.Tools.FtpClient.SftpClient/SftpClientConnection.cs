@@ -153,7 +153,7 @@ public class SftpClientConnection : FtpClientConnectionBase
         }
 
         if (isKeyNull)
-            throw new InvalidOperationException($"ClientCertificate has a null Key");
+            throw new InvalidOperationException("ClientCertificate has a null Key");
 
         var privateKeyPem = PemEncoding.Write($"{keyExchangeAlgorithm} PRIVATE KEY", privateKeyBytes);
         privateKeyPemString = new string(privateKeyPem);

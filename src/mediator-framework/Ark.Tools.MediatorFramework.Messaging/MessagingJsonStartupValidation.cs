@@ -50,7 +50,8 @@ public static class MessagingJsonStartupValidation
         ArgumentNullException.ThrowIfNull(contractTypes);
         foreach (var contractType in contractTypes)
         {
-            ArgumentNullException.ThrowIfNull(contractType);
+            if (contractType is null)
+                throw new ArgumentNullException(nameof(contractTypes));
             _validate(options, contractType);
         }
     }

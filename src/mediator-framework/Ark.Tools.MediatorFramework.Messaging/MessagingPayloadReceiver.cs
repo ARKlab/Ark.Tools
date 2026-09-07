@@ -40,9 +40,7 @@ public sealed class MessagingPayloadReceiver
             out var encoding)
             ? encoding
             : null;
-        if (contentEncoding is not null
-            && contentEncoding is not "gzip"
-            && contentEncoding is not "br")
+        if (contentEncoding is not null and not "gzip" and not "br")
         {
             throw new MessagingFailFastException(
                 MessagingFailFastReason.UnsupportedContentEncoding,

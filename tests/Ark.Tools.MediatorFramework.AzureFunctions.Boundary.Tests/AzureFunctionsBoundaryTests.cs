@@ -17,7 +17,7 @@ using Azure.Storage.Queues;
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests;
 
 [TestClass]
-public sealed class AzureFunctionsBoundaryTests
+public sealed partial class AzureFunctionsBoundaryTests
 {
     private static FunctionHost? _host;
     private static HttpClient? _client;
@@ -91,7 +91,7 @@ public sealed class AzureFunctionsBoundaryTests
             moved.Should().NotBeNull();
             var envelope = StorageQueueEnvelopeCodec.Decode(moved!.Body);
             envelope.Headers[StorageQueuePoisonHeaders.Reason]
-                .Should().Be(MessagingFailFastReason.MalformedHeaders.ToString());
+                .Should().Be(nameof(MessagingFailFastReason.MalformedHeaders));
             var deletionDeadline = DateTimeOffset.UtcNow.AddSeconds(10);
             var properties = await source.GetPropertiesAsync(TestContext.CancellationToken)
                 .ConfigureAwait(false);
@@ -379,15 +379,28 @@ public sealed class AzureFunctionsBoundaryTests
 
     private sealed record EndpointRow(string TypeName, string Verb, string Route);
 
-    private sealed class FunctionHost : IAsyncDisposable
+    private sealed partial class FunctionHost : IAsyncDisposable
     {
         private static readonly TimeSpan _startupTimeout = TimeSpan.FromSeconds(60);
-        private static readonly Regex _secretPattern = new(
+#if NET10_0_OR_GREATER
+        [GeneratedRegex(
             "(?i)(authorization\\s*:\\s*|connectionstring\\s*[=:]\\s*)[^\\s,;]+",
-            RegexOptions.Compiled
-                | RegexOptions.CultureInvariant
+            RegexOptions.CultureInvariant
                 | RegexOptions.ExplicitCapture
-                | RegexOptions.NonBacktracking);
+                | RegexOptions.NonBacktracking)]
+        private static partial Regex _secretPattern { get; }
+#else
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Meziantou.Analyzer",
+            "MA0190",
+            Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
+        [GeneratedRegex(
+            "(?i)(authorization\\s*:\\s*|connectionstring\\s*[=:]\\s*)[^\\s,;]+",
+            RegexOptions.CultureInvariant
+                | RegexOptions.ExplicitCapture
+                | RegexOptions.NonBacktracking)]
+        private static partial Regex _secretPattern();
+#endif
         private readonly Process _process;
         private readonly StreamWriter _log;
         private readonly string _logPath;
@@ -512,7 +525,11 @@ public sealed class AzureFunctionsBoundaryTests
             CancellationToken cancellationToken)
         {
             await foreach (var line in logLines.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+#if NET10_0_OR_GREATER
                 await log.WriteLineAsync(_secretPattern.Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
+#else
+                await log.WriteLineAsync(_secretPattern().Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
+#endif
         }
 
         private async Task _waitForReadinessAsync(CancellationToken cancellationToken)

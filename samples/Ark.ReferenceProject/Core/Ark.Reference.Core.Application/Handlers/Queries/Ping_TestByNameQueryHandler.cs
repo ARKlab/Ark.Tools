@@ -5,6 +5,7 @@ using Ark.Tools.Solid;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries;
 
+#pragma warning disable MA0182 // Handler is discovered by the mediator registration generator.
 /// <summary>
 /// Handler for testing Ping retrieval by name (demonstration/test handler)
 /// </summary>
@@ -21,4 +22,5 @@ internal sealed class Ping_TestByNameQueryHandler : IQueryHandler<Ping_GetByName
             Code = $"PING_CODE_{query.Name}"
         };
     }
+    #pragma warning restore MA0182
 }

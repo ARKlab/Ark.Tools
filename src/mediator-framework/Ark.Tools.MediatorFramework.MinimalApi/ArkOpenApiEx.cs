@@ -219,7 +219,8 @@ public static class ArkOpenApiEx
             if (metadata.ResponseETag)
             {
                 operation.Responses ??= new OpenApiResponses();
-                var success = operation.Responses.FirstOrDefault(static response => response.Key.StartsWith('2')).Value;
+                var success = operation.Responses.FirstOrDefault(
+                    static response => response.Key.AsSpan().StartsWith("2", StringComparison.Ordinal)).Value;
                 if (success is OpenApiResponse successResponse)
                 {
                     successResponse.Headers ??= new Dictionary<string, IOpenApiHeader>(StringComparer.OrdinalIgnoreCase);
@@ -282,7 +283,8 @@ public static class ArkOpenApiEx
             var references = new List<(string Value, OpenApiSchemaReference Reference)>();
             foreach (var (value, derivedType) in mapping)
             {
-                ArgumentNullException.ThrowIfNull(derivedType);
+                if (derivedType is null)
+                    throw new ArgumentNullException(nameof(mapping));
 
                 var componentName = derivedType.Name;
                 var derivedSchema = await context.GetOrCreateSchemaAsync(

@@ -50,7 +50,8 @@ public static class MessagingServiceCollectionExtensions
 
         foreach (var network in networks)
         {
-            ArgumentNullException.ThrowIfNull(network);
+            if (network is null)
+                throw new ArgumentNullException(nameof(networks));
             network.Validate(transport.Capabilities);
         }
 
@@ -391,7 +392,8 @@ public static class MessagingServiceCollectionExtensions
 
         foreach (var network in networks)
         {
-            ArgumentNullException.ThrowIfNull(network);
+            if (network is null)
+                throw new ArgumentNullException(nameof(networks));
             if (network.MaximumSchedulingDelay <= TimeSpan.Zero)
                 continue;
 

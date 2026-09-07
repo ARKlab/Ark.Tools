@@ -111,8 +111,8 @@ public partial class CoreDataContext_Sql
         var result = await Connection.QueryAsync<BookPrintProcessDto>(cmdText, new
         {
             BookId = bookId,
-            Pending = BookPrintProcessStatus.Pending.ToString(),
-            Running = BookPrintProcessStatus.Running.ToString()
+            Pending = nameof(BookPrintProcessStatus.Pending),
+            Running = nameof(BookPrintProcessStatus.Running)
         }, Transaction).ConfigureAwait(false);
 
         _logger.Trace(CultureInfo.InvariantCulture, "ReadRunningPrintProcessForBookAsync ended");

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 
 if (args.Length != 2)
-    throw new ArgumentException("Expected target assembly and destination directory.");
+    throw new ArgumentException("Expected target assembly and destination directory.", nameof(args));
 
 var targetAssemblyPath = Path.GetFullPath(args[0]);
 var destination = Path.GetFullPath(args[1]);

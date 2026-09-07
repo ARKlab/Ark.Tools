@@ -195,7 +195,7 @@ public class InterceptorRuntimeTests
         var entityMethodIndex = generated.IndexOf("global::Ark.Tools.Core.Interceptors.Tests.InterceptedEntity> source", StringComparison.Ordinal);
         entityMethodIndex.Should().BeGreaterThan(0);
         var precedingBlock = generated[..entityMethodIndex];
-        var signatureStart = precedingBlock.LastIndexOf('\n') + 1;
+        var signatureStart = precedingBlock.AsSpan().LastIndexOf('\n') + 1;
         var attributeCount = precedingBlock[..signatureStart].TrimEnd().Split('\n')
             .Reverse()
             .TakeWhile(static line => line.Contains("InterceptsLocationAttribute", StringComparison.Ordinal))
