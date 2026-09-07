@@ -35,10 +35,10 @@ public static partial class EnumerableExtensions
         {
             var paramName = orderByParam;
 
-            var apply = _cache.GetOrAdd(orderBy, k =>
+            var apply = _cache.GetOrAdd(orderBy, static (k, state) =>
             {
                 // Parse and compile in one pass to avoid intermediate allocations
-                var chain = _parseAndCompileOrderBy(k, paramName);
+                var chain = _parseAndCompileOrderBy(k, state);
 
                 IQueryable<T> apply(IQueryable<T> c)
                 {
@@ -49,7 +49,7 @@ public static partial class EnumerableExtensions
                 }
 
                 return apply;
-            });
+            }, paramName);
 
             return apply(collection);
         }

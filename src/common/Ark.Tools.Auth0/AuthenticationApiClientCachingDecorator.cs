@@ -136,9 +136,15 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
         var task = _pendingTasks.GetOrAdd(
             key,
-            k => _accessTokenResponseCachePolicy.ExecuteAsync(
-                ctx => getTokenAsync(request, cancellationToken),
+            static (k, state) => state.Policy.ExecuteAsync(
+                static (_, _) => state.GetTokenAsync(state.Request, state.CancellationToken),
                 new Context(k)
+            ),
+            (
+                Policy: _accessTokenResponseCachePolicy,
+                Request: request,
+                GetTokenAsync: getTokenAsync,
+                CancellationToken: cancellationToken
             )
         ) as Task<AccessTokenResponse>;
 
