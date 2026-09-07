@@ -96,7 +96,7 @@ public sealed class SdkPackageTests
         {
             ["Microsoft.CodeAnalysis.NetAnalyzers"] = "10.0.400",
             ["Microsoft.CodeAnalysis.BannedApiAnalyzers"] = "4.14.0",
-            ["Meziantou.Analyzer"] = "3.0.205",
+            ["Meziantou.Analyzer"] = "3.0.217",
             ["ErrorProne.NET.CoreAnalyzers"] = "0.1.2"
         };
 
