@@ -154,7 +154,7 @@ single shared baseline.
 - [x] The `ArkComplianceSurfaceUpdating` property, manual baseline-copy
   workflow, and CI step exist and are documented.
 - [x] The [task board](../README.md) status for PII-IMP-06 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.

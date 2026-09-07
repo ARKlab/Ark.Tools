@@ -71,9 +71,9 @@ ecosystem checks exception messages at all, and `LOGGEN035` only covers
 - [x] Non-record containing types are traversed.
 - [x] `ComplianceSinks.Ark.txt` composes with consumer entries.
 - [x] The [task board](../README.md) status for PII-IMP-05 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
 
 ## Implementation notes
@@ -109,6 +109,5 @@ ecosystem checks exception messages at all, and `LOGGEN035` only covers
   Focused result before the SDK opt-out integration: build succeeded with zero warnings/errors; 93 tests
   passed, zero failed or skipped.
   The later `build_property.EnableArkToolsCompliance=false` guard and regression
-  test were added; revalidation was blocked by seven NU1102 package-resolution
-  errors in the shared test project assets.
-  Full-solution acceptance remains unchecked until independently verified.
+  test were included in the full solution validation; the Debug build and
+  1,257-test run passed with zero warnings, errors, failures, or skips.

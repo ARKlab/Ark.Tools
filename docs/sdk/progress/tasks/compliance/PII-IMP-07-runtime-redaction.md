@@ -66,9 +66,9 @@ default.
 - [x] Pattern scan ships default-off.
 - [x] The OTel processor is registered by the default setup.
 - [x] The [task board](../README.md) status for PII-IMP-07 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
 
 ## Implementation notes
@@ -113,4 +113,7 @@ Throughput tests exercise the actual wrapper and a 200-character scanned message
 The CI smoke ceiling is 50 microseconds per operation, allowing shared-runner
 contention. The PRD's **2 microseconds** release scanner target still requires
 an isolated, warmed release measurement; it is not claimed as satisfied.
-Full-solution build/test acceptance remains unchecked.
+Full-solution build/test acceptance is complete: the Debug build succeeded with
+zero warnings and the full test run passed 1,257 tests. The PRD's 2
+microseconds release scanner target still requires an isolated, warmed release
+measurement; it is not claimed as satisfied.

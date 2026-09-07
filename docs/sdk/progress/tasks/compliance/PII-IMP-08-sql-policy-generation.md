@@ -125,9 +125,9 @@ inferred by this rule.
 - [x] The emitted script is a token template with a documented substitution
   path.
 - [x] The [task board](../README.md) status for PII-IMP-08 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
 
 Focused validation: `dotnet build

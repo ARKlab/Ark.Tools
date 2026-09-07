@@ -69,12 +69,12 @@ SDK-IMP-03's asset conventions.
 | [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Complete |
 | [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Complete |
 | [PII-IMP-03](compliance/PII-IMP-03-serialization-targets.md) | Serialization targets incl. OpenAPI/Swashbuckle | Generator | Complete |
-| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Implemented; acceptance pending |
-| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Implemented; acceptance pending |
-| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Implemented; acceptance pending |
-| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Implemented; acceptance pending |
-| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Implemented; acceptance pending |
-| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Implemented; acceptance pending |
+| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Complete |
+| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Complete |
+| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Complete |
+| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Complete |
+| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Complete |
+| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Complete |
 | [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Partial |
 | [PII-IMP-11](compliance/PII-IMP-11-reference-project-adoption.md) | ReferenceProject adoption and end-to-end proof | Migration | Pending |
 
@@ -88,21 +88,15 @@ Upstream Vogen contributions are **not** on this board: Ark.Tools does not use
 Vogen, so they are recorded as a draft in
 [`../future-improvements.md`](../future-improvements.md) instead.
 
-### Timeboxed implementation validation (2026-09-06)
+### Full-suite validation (2026-09-07)
 
-PII-IMP-04 through PII-IMP-09 have implementations and focused checks, but are
-not marked complete: full acceptance is blocked. The combined analyzer checks
-passed 153 tests; SQL checks passed 31; the focused SDK configuration/composition
-checks passed 2. The compliance package was packed and its analyzer, code-fix,
-generator, and build-transitive assets inspected.
+PII-IMP-04 through PII-IMP-09 meet their documented acceptance criteria. The
+Debug solution build succeeded with zero warnings and errors, and the full
+solution test run passed 1,257 tests with no failures, skips, or unexpected
+test-count violations. The compliance package was packed and its analyzer,
+code-fix, generator, and build-transitive assets inspected.
 
-The one full-suite invocation started at 07:25:42 UTC, after the 40-minute mark,
-and exited at 07:27:49 UTC before executing tests: the MTP runner rejected
-existing projects reported as VSTest projects. The integrated solution build
-also reported NU1004 lock-graph and NU1102 dependency-resolution errors and was
-stopped without claiming success. No full-suite retry was made. Automated
-code/security validation timed out and could not complete.
-
-PII-IMP-10 remains partial (Microsoft telemetry registration and LOGGEN proof);
-PII-IMP-11 remains pending. Runtime release-throughput acceptance and the
-reference-database SQL application proof remain outstanding in their task files.
+The implementation remains intentionally separate from the unresolved
+PII-IMP-10 LOGGEN proof and PII-IMP-11 reference-project adoption. Runtime
+release-throughput acceptance and the reference-database SQL application proof
+remain outstanding in their task files.

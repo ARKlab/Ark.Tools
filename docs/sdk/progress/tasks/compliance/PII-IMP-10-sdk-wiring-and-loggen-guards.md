@@ -68,9 +68,9 @@ the same guarantees as the NLog path.
 - [ ] `AddArkRedaction()` and `ARKPII013` remove the half-configured state.
 - [x] Documentation covers the rules and the Microsoft-logging boundary rule.
 - [x] The [task board](../README.md) status for PII-IMP-10 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
 
 ## Implementation progress
