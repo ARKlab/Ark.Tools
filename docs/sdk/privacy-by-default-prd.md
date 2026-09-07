@@ -627,10 +627,11 @@ private void _logSupportContext(Customer c) { … }
 
 ### 6.9 Runtime redaction (second net)
 
-`Ark.Tools.Compliance.NLog` adds one wrapper target and one value formatter to the
-existing `NLogConfigurer` chain. NLog has no log-event interceptor, so the wrapper
-target is the correct place: it sees the `LogEventInfo` once, before fan-out to
-console/file/database/Slack/mail.
+`Ark.Tools.Compliance.NLog` adds a native NLog value formatter, a target wrapper,
+and an exception layout renderer to the existing `NLogConfigurer` chain. NLog has
+no log-event interceptor, so `Ark.Tools.NLog` composes those primitives into each
+configured target. The wrapper scans the rendered target output as a last resort
+and forwards the original `LogEventInfo`; it does not cache or clone events.
 
 **It is on by default.** `NLogConfigurer.WithArkDefaultTargetsAndRules(...)` —
 and therefore `WithDefaultTargetsAndRulesFromConfiguration` and
@@ -677,7 +678,7 @@ Three mechanisms, all AoT-safe:
 2. **Value formatter** — an `IValueFormatter` decorator that intercepts message
    template parameter rendering for classified types not covered above.
 3. **Pattern scan** — a `RedactingTargetWrapper : WrapperTargetBase` running a
-   single pass over the rendered message with `[GeneratedRegex]`-compiled
+   single pass over rendered target output with `[GeneratedRegex]`-compiled
    patterns pre-filtered by `SearchValues<char>` prefilters (email `@`, IBAN
    country prefixes, digit runs). Off by default; measured budget: ≤ 2 µs per
    event for a 200-char message. Regexes are source-generated with a timeout,

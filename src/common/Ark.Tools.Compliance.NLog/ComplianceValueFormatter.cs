@@ -23,6 +23,9 @@ public sealed class ComplianceValueFormatter : IValueFormatter
         _redactor = redactor;
     }
 
+    /// <summary>Gets the formatter used after redaction.</summary>
+    public IValueFormatter InnerFormatter => _inner;
+
     /// <inheritdoc />
     public bool FormatValue(object? value, string? format, CaptureType captureType, IFormatProvider? formatProvider, StringBuilder builder)
     {

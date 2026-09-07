@@ -28,7 +28,7 @@ public static class NLogConfigurer
     public const string MailTarget = "Ark.Mail";
     public const string MailFromDefault = "noreply@ark-energy.eu";
 
-    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString,Data}}";
+    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${ark.compliance.exception}}";
 
     static NLogConfigurer()
     {
@@ -40,6 +40,7 @@ public static class NLogConfigurer
                 .RegisterLayoutRenderer<ActivityIdLayoutRenderer>()
                 .RegisterLayoutRenderer<HostNameLayoutRenderer>()
                 .RegisterLayoutRenderer<ActivityTraceLayoutRenderer>()
+                .RegisterComplianceLayoutRenderers()
                 .RegisterTarget<DiagnosticListenerTarget>())
             ;
 
@@ -157,6 +158,8 @@ public static class NLogConfigurer
     public sealed class Configurer
     {
         internal LoggingConfiguration _config = new();
+        private ComplianceRedactionOptions? _complianceOptions;
+        private bool _complianceEnabled = true;
         public string AppName { get; }
 
         internal Configurer(string appName)
@@ -310,8 +313,8 @@ VALUES
             }));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString,Data}}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${ark.compliance.exception}}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${ark.compliance.exception}}"));
             _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
 
             return this;
@@ -493,7 +496,10 @@ VALUES
         /// <returns>The original configurer.</returns>
         public Configurer WithComplianceRedaction(Action<ComplianceRedactionOptions>? configure = null)
         {
-            _config.WithComplianceRedaction(configure);
+            var options = new ComplianceRedactionOptions();
+            configure?.Invoke(options);
+            _complianceOptions = options;
+            _complianceEnabled = true;
             return this;
         }
 
@@ -501,7 +507,8 @@ VALUES
         /// <returns>The original configurer.</returns>
         public Configurer WithoutComplianceRedaction()
         {
-            _config.WithoutComplianceRedaction();
+            _complianceOptions = null;
+            _complianceEnabled = false;
             return this;
         }
 
@@ -527,12 +534,101 @@ VALUES
             LogManager.ThrowExceptions = _isVisualStudioAttached();
             LogManager.ThrowConfigExceptions = true;
             InternalLogger.LogToConsole = true;
-            _config.ConfigureCompliance();
+            _configureCompliance();
             // this is last, so that ThrowConfigExceptions is respected on Config change
             LogManager.Configuration = _config;
 
             if (_isProduction())
                 LogManager.GlobalThreshold = LogLevel.Info;
+        }
+
+        private void _configureCompliance()
+        {
+            var activeFormatter = (IValueFormatter)LogManager.LogFactory.ServiceRepository.GetService(typeof(IValueFormatter));
+            while (activeFormatter is ComplianceValueFormatter complianceFormatter)
+                activeFormatter = complianceFormatter.InnerFormatter;
+
+            var redactor = _complianceEnabled ? new ComplianceRedactor(_complianceOptions) : null;
+            _config.Variables.Remove(ComplianceNLogExtensions.RedactionVariable);
+            if (redactor is not null)
+                _config.Variables[ComplianceNLogExtensions.RedactionVariable] = Layout.FromLiteral("true");
+            _configureDatabaseLayouts(redactor);
+
+            LogManager.Setup()
+                .SetupSerialization(builder =>
+                {
+                    if (redactor is null)
+                        builder.UseArkMessageTemplateParsing(activeFormatter);
+                    else
+                        builder.UseComplianceRedaction(activeFormatter, redactor);
+                });
+
+            _wrapTargets(redactor);
+        }
+
+        private void _configureDatabaseLayouts(ComplianceRedactor? redactor)
+        {
+            if (redactor?.PatternScan != PatternScanMode.MessageAndProperties)
+                return;
+
+            foreach (var target in _config.AllTargets.OfType<DatabaseTarget>())
+            {
+                foreach (var parameter in target.Parameters)
+                {
+                    if (parameter.Name is "Message")
+                    {
+                        parameter.Layout = Layout.FromMethod(
+                            logEvent => redactor.Scan(logEvent.FormattedMessage),
+                            LayoutRenderOptions.ThreadAgnostic);
+                    }
+                    else if (parameter.Name is "Properties")
+                    {
+                        var layout = parameter.Layout;
+                        parameter.Layout = Layout.FromMethod(
+                            logEvent => redactor.Scan(layout.Render(logEvent)),
+                            LayoutRenderOptions.ThreadAgnostic);
+                    }
+                }
+            }
+        }
+
+        private void _wrapTargets(ComplianceRedactor? redactor)
+        {
+            var wrappers = new Dictionary<Target, Target>();
+            foreach (var rule in _config.LoggingRules)
+                _wrapRule(rule, redactor, wrappers);
+        }
+
+        private void _wrapRule(LoggingRule rule, ComplianceRedactor? redactor, Dictionary<Target, Target> wrappers)
+        {
+            for (var i = 0; i < rule.Targets.Count; i++)
+            {
+                var target = rule.Targets[i];
+                while (target is RedactingTargetWrapper existing)
+                    target = existing.WrappedTarget ?? throw new InvalidOperationException("A compliance wrapper requires a downstream target.");
+
+                if (redactor is null)
+                {
+                    rule.Targets[i] = target;
+                    continue;
+                }
+
+                if (!wrappers.TryGetValue(target, out var wrapper))
+                {
+                    wrapper = new RedactingTargetWrapper(target, redactor)
+                    {
+                        Name = target.Name + ".Compliance"
+                    };
+                    wrappers.Add(target, wrapper);
+                    _config.AddTarget(wrapper);
+                }
+
+                rule.Targets[i] = wrapper;
+            }
+#pragma warning disable CS0618 // Legacy child rules must also be protected before any target receives the event.
+            foreach (var child in rule.ChildRules)
+                _wrapRule(child, redactor, wrappers);
+#pragma warning restore CS0618
         }
     }
 

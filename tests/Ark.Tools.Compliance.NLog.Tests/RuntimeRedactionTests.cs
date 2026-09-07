@@ -38,11 +38,24 @@ public sealed class RuntimeRedactionTests
                 "payload {@Payload}", [new Payload()]);
             logEvent.Properties["boxed"] = new SecretValue();
             logger.Log(logEvent);
+            logger.Info(CultureInfo.InvariantCulture, "positional {0}", new SecretValue());
         });
 
         output.Should().Contain(ComplianceRedactor.Marker);
         output.Should().NotContain(SecretValue.Cleartext);
         output.Should().Contain("safe-operation");
+    }
+
+    /// <summary>Default setup replaces exception details with the fail-closed marker.</summary>
+    [TestMethod]
+    public void DefaultNLogSetup_RedactsExceptions()
+    {
+        var output = _capture(null, static logger =>
+            logger.Error(new InvalidOperationException(SecretValue.Cleartext), CultureInfo.InvariantCulture, "failed"),
+            "${message}${onexception:${newline}${ark.compliance.exception}}");
+
+        output.Should().Contain(ComplianceRedactor.Marker);
+        output.Should().NotContain(SecretValue.Cleartext);
     }
 
     /// <summary>The opt-out restores ordinary classified values, not generated safe ToString methods.</summary>
@@ -53,30 +66,6 @@ public sealed class RuntimeRedactionTests
             static logger => logger.Info(CultureInfo.InvariantCulture, "value {Value}", new SecretValue()));
 
         output.Should().Contain(SecretValue.Cleartext);
-    }
-
-    /// <summary>Repeated policy changes reuse the configured wrapper target.</summary>
-    [TestMethod]
-    public void ConfigureCompliance_ReusesWrapperAfterToggle()
-    {
-        using var factory = new LogFactory();
-        using var target = new NullTarget();
-        factory.Configuration = new();
-        factory.Configuration.AddRuleForAllLevels(target);
-        var configuration = factory.Configuration!;
-
-        configuration.WithComplianceRedaction();
-        configuration.ConfigureCompliance();
-        var first = configuration.LoggingRules[0].Targets[0];
-        first.Should().BeOfType<RedactingTargetWrapper>();
-
-        configuration.WithoutComplianceRedaction();
-        configuration.ConfigureCompliance();
-        configuration.LoggingRules[0].Targets[0].Should().BeSameAs(target);
-
-        configuration.WithComplianceRedaction();
-        configuration.ConfigureCompliance();
-        configuration.LoggingRules[0].Targets[0].Should().BeSameAs(first);
     }
 
     /// <summary>Overrides apply to both templates and boxed properties.</summary>
@@ -172,28 +161,29 @@ public sealed class RuntimeRedactionTests
         redactor.Redact(new UnknownClassified()).Should().Be(ComplianceRedactor.Marker);
     }
 
-    /// <summary>Pre-rendered input cannot reuse a cached cleartext message downstream.</summary>
+    /// <summary>The target wrapper scans rendered output without changing the source event.</summary>
     [TestMethod]
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "LogFactory owns and disposes its configured targets.")]
     public void Wrapper_DiscardsCachedMessageAndDoesNotMutateCaller()
     {
         using var factory = new LogFactory();
         var memory = new MemoryTarget { Layout = "${message}|${all-event-properties}" };
-        var wrapper = new RedactingTargetWrapper(memory);
+        var wrapper = new RedactingTargetWrapper(memory, new ComplianceRedactor(new()
+        {
+            PatternScan = PatternScanMode.MessageAndProperties
+        }));
         factory.Configuration = new();
         factory.Configuration.AddRuleForAllLevels(wrapper);
         factory.ReconfigExistingLoggers();
-        var value = new SecretValue();
-        var logEvent = new LogEventInfo(LogLevel.Info, "test", CultureInfo.InvariantCulture, "{Value}", [value]);
-        logEvent.MessageFormatter = static logEvent => ((SecretValue)logEvent.Parameters![0]!).ToString();
-        logEvent.Properties["value"] = value;
-        logEvent.FormattedMessage.Should().Contain(SecretValue.Cleartext);
+        var logEvent = new LogEventInfo(LogLevel.Info, "test", "contact alice@private-domain.dev");
+        logEvent.Properties["value"] = "alice@private-domain.dev";
+        logEvent.FormattedMessage.Should().Contain("alice@private-domain.dev");
         factory.GetLogger("test").Log(logEvent);
 
         memory.Logs.Should().ContainSingle().Which.Should().Contain(ComplianceRedactor.Marker);
-        memory.Logs[0].Should().NotContain(SecretValue.Cleartext);
-        logEvent.Parameters![0].Should().BeSameAs(value);
-        logEvent.Properties["value"].Should().BeSameAs(value);
+        memory.Logs[0].Should().NotContain("alice@private-domain.dev");
+        logEvent.Message.Should().Be("contact alice@private-domain.dev");
+        logEvent.Properties["value"].Should().Be("alice@private-domain.dev");
     }
 
     /// <summary>Redaction preserves caller metadata needed by callsite layouts.</summary>
@@ -202,7 +192,7 @@ public sealed class RuntimeRedactionTests
     {
         using var factory = new LogFactory();
         using var memory = new MemoryTarget { Layout = "${callsite:className=true:methodName=true:fileName=true:includeSourcePath=false}" };
-        using var wrapper = new RedactingTargetWrapper(memory);
+        using var wrapper = new RedactingTargetWrapper(memory, new ComplianceRedactor());
         factory.Configuration = new();
         factory.Configuration.AddRuleForAllLevels(wrapper);
         factory.ReconfigExistingLoggers();
@@ -292,7 +282,7 @@ public sealed class RuntimeRedactionTests
         baseline.Configuration = new();
         baseline.Configuration.AddRuleForAllLevels(baselineTarget);
         protectedFactory.Configuration = new();
-        protectedFactory.Configuration.AddRuleForAllLevels(new RedactingTargetWrapper(protectedInnerTarget));
+        protectedFactory.Configuration.AddRuleForAllLevels(new RedactingTargetWrapper(protectedInnerTarget, new ComplianceRedactor()));
         baseline.ReconfigExistingLoggers();
         protectedFactory.ReconfigExistingLoggers();
         var clearLogger = baseline.GetLogger("baseline");
@@ -315,7 +305,10 @@ public sealed class RuntimeRedactionTests
         added.Should().BeLessThan(50);
     }
 
-    private static string _capture(Action<NLogConfigurer.Configurer>? configure, Action<Logger> log)
+    private static string _capture(
+        Action<NLogConfigurer.Configurer>? configure,
+        Action<Logger> log,
+        string layout = "${message}|${all-event-properties}")
     {
         _ = NLogConfigurer.For("initialize");
         var originalConfiguration = LogManager.Configuration;
@@ -331,7 +324,7 @@ public sealed class RuntimeRedactionTests
             configure?.Invoke(configurer);
             configurer.Apply();
             var target = LogManager.Configuration!.FindTargetByName<ConsoleTarget>(NLogConfigurer.ConsoleTarget);
-            target!.Layout = "${message}|${all-event-properties}";
+            target!.Layout = layout;
             log(LogManager.GetLogger("Compliance.Runtime.Tests"));
             LogManager.Flush();
             return output.ToString();

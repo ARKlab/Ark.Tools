@@ -1,112 +1,75 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using global::NLog;
 using global::NLog.Common;
+using global::NLog.Layouts;
 using global::NLog.Targets;
 using global::NLog.Targets.Wrappers;
 
-using System.Runtime.CompilerServices;
-
 namespace Ark.Tools.Compliance.NLog;
 
-/// <summary>Sanitizes events before downstream targets, including asynchronous queues.</summary>
+/// <summary>Applies last-resort pattern scanning to a target's rendered output.</summary>
 [Target("ArkComplianceRedaction")]
 public sealed class RedactingTargetWrapper : WrapperTargetBase
 {
-    private RedactedEventCache _cache;
+    private readonly ComplianceRedactor _redactor;
+    private Layout? _originalLayout;
+    private Layout? _wrappedLayout;
 
-    /// <summary>Initializes a wrapper with a fail-closed policy.</summary>
+    /// <summary>Initializes a wrapper with a runtime redaction policy.</summary>
     /// <param name="target">The downstream target.</param>
-    /// <param name="options">Optional policy overrides.</param>
-    public RedactingTargetWrapper(Target target, ComplianceRedactionOptions? options = null)
-        : this(target, new RedactedEventCache(new ComplianceRedactor(options)))
-    {
-    }
-
-    internal RedactingTargetWrapper(Target target, RedactedEventCache cache)
+    /// <param name="redactor">The immutable runtime redaction policy.</param>
+    public RedactingTargetWrapper(Target target, ComplianceRedactor redactor)
     {
         ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(redactor);
         WrappedTarget = target;
-        _cache = cache;
+        _redactor = redactor;
     }
 
-    internal void _setCache(RedactedEventCache cache)
+    /// <inheritdoc />
+    protected override void InitializeTarget()
     {
-        _cache = cache;
+        _wrapLayout();
+
+        base.InitializeTarget();
+    }
+
+    /// <inheritdoc />
+    protected override void CloseTarget()
+    {
+        if (_findTargetWithLayout(WrappedTarget) is { } targetWithLayout && _originalLayout is not null)
+            targetWithLayout.Layout = _originalLayout;
+
+        base.CloseTarget();
     }
 
     /// <inheritdoc />
     protected override void Write(AsyncLogEventInfo logEvent)
     {
-        WrappedTarget!.WriteAsyncLogEvent(new AsyncLogEventInfo(_cache._get(logEvent.LogEvent), logEvent.Continuation));
-    }
-}
-
-internal sealed class RedactedEventCache(ComplianceRedactor? redactor)
-{
-    private readonly ConditionalWeakTable<LogEventInfo, LogEventInfo> _events = new();
-
-    internal LogEventInfo _get(LogEventInfo source)
-    {
-        return _events.GetValue(source, _redact);
+        _wrapLayout();
+        WrappedTarget!.WriteAsyncLogEvent(logEvent);
     }
 
-    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "An unsafe event must never be forwarded on a redaction failure.")]
-    [SuppressMessage("Correctness", "ERP022", Justification = "Discard confidential exception details at this fail-closed boundary.")]
-    private LogEventInfo _redact(LogEventInfo source)
+    private void _wrapLayout()
     {
-        if (redactor is null)
-            return source;
-        try
-        {
-            var result = new LogEventInfo(source.Level, source.LoggerName, CultureInfo.InvariantCulture,
-                source.Message, source.Parameters?.Select(redactor.Redact).ToArray())
-            {
-                TimeStamp = source.TimeStamp,
-                Exception = source.Exception is null ? null : new InvalidOperationException(ComplianceRedactor.Marker),
-            };
-            foreach (var property in source.Properties)
-            {
-                var key = property.Key is string name ? redactor.Scan(name) : ComplianceRedactor.Marker;
-                result.Properties[key] = redactor.Redact(property.Value);
-            }
-            if (redactor.PatternScan != PatternScanMode.Off)
-            {
-                var message = redactor.Scan(result.FormattedMessage);
-                result.Message = message;
-                result.Parameters = null;
-            }
-            return _copyCallSite(source, result);
-        }
-        catch (Exception ex) when (!_isCriticalException(ex))
-        {
-            return _copyCallSite(source, new(source.Level, source.LoggerName, ComplianceRedactor.Marker));
-        }
+        if (_findTargetWithLayout(WrappedTarget) is not { } targetWithLayout
+            || ReferenceEquals(targetWithLayout.Layout, _wrappedLayout))
+            return;
+
+        var originalLayout = targetWithLayout.Layout;
+        _originalLayout = originalLayout;
+        _wrappedLayout = Layout.FromMethod(
+            logEvent => _redactor.Scan(originalLayout.Render(logEvent)),
+            LayoutRenderOptions.ThreadAgnostic);
+        targetWithLayout.Layout = _wrappedLayout;
     }
 
-    private static LogEventInfo _copyCallSite(LogEventInfo source, LogEventInfo target)
+    private static TargetWithLayout? _findTargetWithLayout(Target? target)
     {
-        var callerClassName = source.CallerClassName;
-        var callerMemberName = source.CallerMemberName;
-        var callerFilePath = source.CallerFilePath;
-        var callerLineNumber = source.CallerLineNumber;
-        if (callerClassName is not null || callerMemberName is not null || callerFilePath is not null || callerLineNumber != 0)
-            target.SetCallerInfo(callerClassName, callerMemberName, callerFilePath, callerLineNumber);
-        if (source.StackTrace is { } stackTrace)
-            target.SetStackTrace(stackTrace);
-        return target;
-    }
+        while (target is WrapperTargetBase wrapper)
+            target = wrapper.WrappedTarget;
 
-    private static bool _isCriticalException(Exception exception)
-    {
-        return exception is OutOfMemoryException
-            or StackOverflowException
-            or AccessViolationException
-            or AppDomainUnloadedException
-            or BadImageFormatException
-            or CannotUnloadAppDomainException
-            or InvalidProgramException
-            or ThreadAbortException;
+        return target as TargetWithLayout;
     }
 }
