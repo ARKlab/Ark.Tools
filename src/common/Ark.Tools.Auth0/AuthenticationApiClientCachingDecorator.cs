@@ -140,7 +140,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
                 static context => _executeToken<TRequest>(context),
                 new Context(k, new Dictionary<string, object>(StringComparer.Ordinal)
                 {
-                    ["state"] = state
+                    ["state"] = (state.Request, state.GetTokenAsync, state.CancellationToken)
                 })
             ),
             (
@@ -151,10 +151,14 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
             )
         ) as Task<AccessTokenResponse>;
 
-        var res = await task!.ConfigureAwait(false);
-
-        _pendingTasks.TryRemove(key, out var _);
-        return res;
+        try
+        {
+            return await task!.ConfigureAwait(false);
+        }
+        finally
+        {
+            _pendingTasks.TryRemove(key, out var _);
+        }
     }
 
     private static Task<AccessTokenResponse> _executeToken<TRequest>(Context context)
