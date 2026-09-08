@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.224, )",
-        "resolved": "3.0.224",
-        "contentHash": "VJ1odmBzUroCdGdQq/sh17s5zPe9jHC2jFnMNQf4z4SUfbP7GKiC7iSKEBnsX3mfEAlGKdB0r9dQ/wm2EvMR/A=="
+        "requested": "[3.0.225, )",
+        "resolved": "3.0.225",
+        "contentHash": "Ayx89r5eY6Szcou5QPBNl3rbNi4Rbdjf3k6aahtE8vSab1YpNVc5jRSJyTCNIWaVYTpmyjj5jLCVNoOJUtcO2Q=="
       },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Direct",
@@ -2011,7 +2011,7 @@
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
           "Azure.Identity": "[1.21.0, )",
           "Microsoft.Identity.Web": "[4.14.2, )",
-          "Scalar.AspNetCore": "[2.17.2, )",
+          "Scalar.AspNetCore": "[2.17.3, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[10.2.3, )",
           "protobuf-net.Grpc.AspNetCore.Reflection": "[1.3.14, )"
         }
@@ -2604,9 +2604,9 @@
       },
       "Scalar.AspNetCore": {
         "type": "CentralTransitive",
-        "requested": "[2.17.2, )",
-        "resolved": "2.17.2",
-        "contentHash": "ciW2HuRWJgNEecophHN9DvoRlTs/+8TNPhB6tQW1gmJWh/eoAIO0ys8XIxx7irUpIu3KRHZyxyuHstqqrTn1Tw=="
+        "requested": "[2.17.3, )",
+        "resolved": "2.17.3",
+        "contentHash": "TwAf1zy/MH2famozcDqk9+/jD37VAbonRXfnjAso0Q2YKeWtA0kH59WxhuevvAxWDL3jUU3TDpNmUFS2gF9bHw=="
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "CentralTransitive",

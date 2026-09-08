@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.224, )",
-        "resolved": "3.0.224",
-        "contentHash": "VJ1odmBzUroCdGdQq/sh17s5zPe9jHC2jFnMNQf4z4SUfbP7GKiC7iSKEBnsX3mfEAlGKdB0r9dQ/wm2EvMR/A=="
+        "requested": "[3.0.225, )",
+        "resolved": "3.0.225",
+        "contentHash": "Ayx89r5eY6Szcou5QPBNl3rbNi4Rbdjf3k6aahtE8vSab1YpNVc5jRSJyTCNIWaVYTpmyjj5jLCVNoOJUtcO2Q=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -404,9 +404,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.224, )",
-        "resolved": "3.0.224",
-        "contentHash": "VJ1odmBzUroCdGdQq/sh17s5zPe9jHC2jFnMNQf4z4SUfbP7GKiC7iSKEBnsX3mfEAlGKdB0r9dQ/wm2EvMR/A=="
+        "requested": "[3.0.225, )",
+        "resolved": "3.0.225",
+        "contentHash": "Ayx89r5eY6Szcou5QPBNl3rbNi4Rbdjf3k6aahtE8vSab1YpNVc5jRSJyTCNIWaVYTpmyjj5jLCVNoOJUtcO2Q=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
