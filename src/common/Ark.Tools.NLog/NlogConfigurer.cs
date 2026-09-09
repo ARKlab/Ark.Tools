@@ -317,8 +317,8 @@ VALUES
             })));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", _createMessageLayout()));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${ark.compliance.exception}}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${ark.compliance.exception}}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${ark.compliance.exception:format=Message}}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=StackTrace}}"));
             _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
 
             return this;
@@ -570,7 +570,6 @@ VALUES
                         builder.UseComplianceRedaction(activeFormatter, redactor);
                 });
 
-            _wrapTargets(redactor);
         }
 
         private Layout _createTextLineLayout()
@@ -580,59 +579,14 @@ VALUES
 
         private Layout _createMessageLayout()
         {
-            return Layout.FromMethod(
-                logEvent => _complianceRedactor?.Scan(logEvent.FormattedMessage) ?? logEvent.FormattedMessage,
-                LayoutRenderOptions.ThreadAgnostic);
+            return _createScannedLayout(Layout.FromMethod(
+                logEvent => logEvent.FormattedMessage,
+                LayoutRenderOptions.ThreadAgnostic));
         }
 
         private Layout _createScannedLayout(Layout layout)
         {
-            return Layout.FromMethod(
-                logEvent =>
-                {
-                    var rendered = layout.Render(logEvent);
-                    return _complianceRedactor?.Scan(rendered) ?? rendered;
-                },
-                LayoutRenderOptions.ThreadAgnostic);
-        }
-
-        private void _wrapTargets(ComplianceRedactor? redactor)
-        {
-            var wrappers = new Dictionary<Target, Target>();
-            foreach (var rule in _config.LoggingRules)
-                _wrapRule(rule, redactor, wrappers);
-        }
-
-        private void _wrapRule(LoggingRule rule, ComplianceRedactor? redactor, Dictionary<Target, Target> wrappers)
-        {
-            for (var i = 0; i < rule.Targets.Count; i++)
-            {
-                var target = rule.Targets[i];
-                while (target is RedactingTargetWrapper existing)
-                    target = existing.WrappedTarget ?? throw new InvalidOperationException("A compliance wrapper requires a downstream target.");
-
-                if (redactor is null)
-                {
-                    rule.Targets[i] = target;
-                    continue;
-                }
-
-                if (!wrappers.TryGetValue(target, out var wrapper))
-                {
-                    wrapper = new RedactingTargetWrapper(target, redactor)
-                    {
-                        Name = target.Name + ".Compliance"
-                    };
-                    wrappers.Add(target, wrapper);
-                    _config.AddTarget(wrapper);
-                }
-
-                rule.Targets[i] = wrapper;
-            }
-#pragma warning disable CS0618 // Legacy child rules must also be protected before any target receives the event.
-            foreach (var child in rule.ChildRules)
-                _wrapRule(child, redactor, wrappers);
-#pragma warning restore CS0618
+            return new ComplianceLayout(layout, () => _complianceRedactor);
         }
     }
 

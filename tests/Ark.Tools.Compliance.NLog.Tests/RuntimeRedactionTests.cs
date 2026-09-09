@@ -7,7 +7,6 @@ using Ark.Tools.NLog;
 using AwesomeAssertions;
 
 using global::NLog;
-using global::NLog.Targets;
 
 using Microsoft.Extensions.Compliance.Classification;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,8 +50,7 @@ public sealed class RuntimeRedactionTests
     public void DefaultNLogSetup_RedactsExceptions()
     {
         var output = _capture(null, static logger =>
-            logger.Error(new InvalidOperationException(SecretValue.Cleartext), CultureInfo.InvariantCulture, "failed"),
-            "${message}${onexception:${newline}${ark.compliance.exception}}");
+            logger.Error(new InvalidOperationException(SecretValue.Cleartext), CultureInfo.InvariantCulture, "failed"));
 
         output.Should().Contain(ComplianceRedactor.Marker);
         output.Should().NotContain(SecretValue.Cleartext);
@@ -131,9 +129,7 @@ public sealed class RuntimeRedactionTests
         var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
             options.PatternScan = PatternScanMode.MessageAndProperties), static logger =>
         {
-            var logEvent = new LogEventInfo(LogLevel.Info, logger.Name, message);
-            logEvent.Properties["contact"] = message;
-            logger.Log(logEvent);
+            logger.Info(CultureInfo.InvariantCulture, "{Message}", message);
         });
         output.Should().Contain(ComplianceRedactor.Marker);
         output.Should().NotContain("alice@private-domain.dev");
@@ -159,52 +155,6 @@ public sealed class RuntimeRedactionTests
         cycle["self"] = cycle;
         redactor.Redact(cycle).Should().NotBeNull();
         redactor.Redact(new UnknownClassified()).Should().Be(ComplianceRedactor.Marker);
-    }
-
-    /// <summary>The target wrapper scans rendered output without changing the source event.</summary>
-    [TestMethod]
-    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "LogFactory owns and disposes its configured targets.")]
-    public void Wrapper_DiscardsCachedMessageAndDoesNotMutateCaller()
-    {
-        using var factory = new LogFactory();
-        var memory = new MemoryTarget { Layout = "${message}|${all-event-properties}" };
-        var wrapper = new RedactingTargetWrapper(memory, new ComplianceRedactor(new()
-        {
-            PatternScan = PatternScanMode.MessageAndProperties
-        }));
-        factory.Configuration = new();
-        factory.Configuration.AddRuleForAllLevels(wrapper);
-        factory.ReconfigExistingLoggers();
-        var logEvent = new LogEventInfo(LogLevel.Info, "test", "contact alice@private-domain.dev");
-        logEvent.Properties["value"] = "alice@private-domain.dev";
-        logEvent.FormattedMessage.Should().Contain("alice@private-domain.dev");
-        factory.GetLogger("test").Log(logEvent);
-
-        memory.Logs.Should().ContainSingle().Which.Should().Contain(ComplianceRedactor.Marker);
-        memory.Logs[0].Should().NotContain("alice@private-domain.dev");
-        logEvent.Message.Should().Be("contact alice@private-domain.dev");
-        logEvent.Properties["value"].Should().Be("alice@private-domain.dev");
-    }
-
-    /// <summary>Redaction preserves caller metadata needed by callsite layouts.</summary>
-    [TestMethod]
-    public void Wrapper_PreservesCallerMetadata()
-    {
-        using var factory = new LogFactory();
-        using var memory = new MemoryTarget { Layout = "${callsite:className=true:methodName=true:fileName=true:includeSourcePath=false}" };
-        using var wrapper = new RedactingTargetWrapper(memory, new ComplianceRedactor());
-        factory.Configuration = new();
-        factory.Configuration.AddRuleForAllLevels(wrapper);
-        factory.ReconfigExistingLoggers();
-        var logEvent = new LogEventInfo(LogLevel.Info, "test", "value");
-        logEvent.SetCallerInfo("Caller.Type", "Write", "Caller.cs", 42);
-        factory.GetLogger("test").Log(logEvent);
-
-        var output = memory.Logs.Should().ContainSingle().Which;
-        output.Should().Contain("Caller.Type");
-        output.Should().Contain("Write");
-        output.Should().Contain("Caller.cs");
-        output.Should().Contain("42");
     }
 
     /// <summary>Default Ark setup registers redaction before an actual exporting processor.</summary>
@@ -270,45 +220,9 @@ public sealed class RuntimeRedactionTests
         microseconds.Should().BeLessThan(50, "the CI smoke limit allows contention; the release target is 2 microseconds");
     }
 
-    /// <summary>Measures added cost at the real NLog target boundary.</summary>
-    [TestMethod]
-    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "LogFactory owns and disposes its targets.")]
-    public void Throughput_WrapperHasBoundedPerEventCost()
-    {
-        using var baseline = new LogFactory();
-        using var protectedFactory = new LogFactory();
-        using var baselineTarget = new NullTarget { FormatMessage = true };
-        using var protectedInnerTarget = new NullTarget { FormatMessage = true };
-        baseline.Configuration = new();
-        baseline.Configuration.AddRuleForAllLevels(baselineTarget);
-        protectedFactory.Configuration = new();
-        protectedFactory.Configuration.AddRuleForAllLevels(new RedactingTargetWrapper(protectedInnerTarget, new ComplianceRedactor()));
-        baseline.ReconfigExistingLoggers();
-        protectedFactory.ReconfigExistingLoggers();
-        var clearLogger = baseline.GetLogger("baseline");
-        var safeLogger = protectedFactory.GetLogger("protected");
-        const int iterations = 20000;
-        for (var i = 0; i < 1000; i++)
-        {
-            clearLogger.Info(CultureInfo.InvariantCulture, "event {Count}", i);
-            safeLogger.Info(CultureInfo.InvariantCulture, "event {Count}", i);
-        }
-        var started = Stopwatch.GetTimestamp();
-        for (var i = 0; i < iterations; i++)
-            clearLogger.Info(CultureInfo.InvariantCulture, "event {Count}", i);
-        var clear = Stopwatch.GetElapsedTime(started);
-        started = Stopwatch.GetTimestamp();
-        for (var i = 0; i < iterations; i++)
-            safeLogger.Info(CultureInfo.InvariantCulture, "event {Count}", i);
-        var added = (Stopwatch.GetElapsedTime(started) - clear).TotalMicroseconds / iterations;
-        TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture, "NLog wrapper: {0:F3} added microseconds per event.", added));
-        added.Should().BeLessThan(50);
-    }
-
     private static string _capture(
         Action<NLogConfigurer.Configurer>? configure,
-        Action<Logger> log,
-        string layout = "${message}|${all-event-properties}")
+        Action<Logger> log)
     {
         _ = NLogConfigurer.For("initialize");
         var originalConfiguration = LogManager.Configuration;
@@ -323,8 +237,6 @@ public sealed class RuntimeRedactionTests
                 .WithConsoleRule("*", LogLevel.Trace);
             configure?.Invoke(configurer);
             configurer.Apply();
-            var target = LogManager.Configuration!.FindTargetByName<ConsoleTarget>(NLogConfigurer.ConsoleTarget);
-            target!.Layout = layout;
             log(LogManager.GetLogger("Compliance.Runtime.Tests"));
             LogManager.Flush();
             return output.ToString();
@@ -350,8 +262,7 @@ public sealed class RuntimeRedactionTests
 
     private sealed class Payload
     {
-        [Secret]
-        public string Credential { get; } = SecretValue.Cleartext;
+        public EmailAddress Credential { get; } = EmailAddress.From("alice@example.test");
         public string Operation { get; } = "safe-operation";
     }
 

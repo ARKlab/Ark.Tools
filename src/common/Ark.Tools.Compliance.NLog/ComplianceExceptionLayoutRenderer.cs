@@ -8,7 +8,7 @@ namespace Ark.Tools.Compliance.NLog;
 
 /// <summary>Renders exception details as a fail-closed marker.</summary>
 [LayoutRenderer("ark.compliance.exception")]
-public sealed class ComplianceExceptionLayoutRenderer : LayoutRenderer
+public sealed class ComplianceExceptionLayoutRenderer : ExceptionLayoutRenderer
 {
     private bool _redact;
 
@@ -25,16 +25,45 @@ public sealed class ComplianceExceptionLayoutRenderer : LayoutRenderer
     }
 
     /// <inheritdoc />
-    protected override void Append(StringBuilder builder, LogEventInfo logEvent)
+    protected override void AppendMessage(StringBuilder builder, Exception exception)
     {
-        if (logEvent.Exception is null)
+        if (_isRedactionEnabled())
+        {
+            builder.Append(ComplianceRedactor.Marker);
             return;
+        }
 
-        var redact = _redact
+        base.AppendMessage(builder, exception);
+    }
+
+    /// <inheritdoc />
+    protected override void AppendToString(StringBuilder builder, Exception exception)
+    {
+        if (_isRedactionEnabled())
+        {
+            builder.Append(ComplianceRedactor.Marker);
+            return;
+        }
+
+        base.AppendToString(builder, exception);
+    }
+
+    /// <inheritdoc />
+    protected override void AppendData(StringBuilder builder, Exception exception)
+    {
+        if (_isRedactionEnabled() && exception.Data?.Count > 0)
+        {
+            builder.Append(ComplianceRedactor.Marker);
+            return;
+        }
+
+        base.AppendData(builder, exception);
+    }
+
+    private bool _isRedactionEnabled()
+    {
+        return _redact
             || LoggingConfiguration?.Variables.ContainsKey(ComplianceNLogExtensions.RedactionVariable) == true
             || LogManager.Configuration?.Variables.ContainsKey(ComplianceNLogExtensions.RedactionVariable) == true;
-        builder.Append(redact
-            ? ComplianceRedactor.Marker
-            : logEvent.Exception.ToString());
     }
 }
