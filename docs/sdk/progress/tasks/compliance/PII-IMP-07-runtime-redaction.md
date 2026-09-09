@@ -74,10 +74,10 @@ default.
 ## Implementation notes
 
 - `Ark.Tools.Compliance.NLog` exposes NLog's object transformation, value formatter,
-  target wrapper, and exception layout renderer extension points. `Ark.Tools.NLog`
-  owns policy composition, enables `ParseMessageTemplates`, and wraps configured
-  targets. The wrapper scans rendered output without mutating, caching, or cloning
-  the caller's event.
+  configured-layout wrapper, and exception layout renderer extension points.
+  `Ark.Tools.NLog` owns policy composition, enables `ParseMessageTemplates`, and
+  wraps only its affected target layouts. The layout wrapper scans rendered output
+  without mutating, caching, or cloning the caller's event.
 - `ComplianceRedactionOptions` and `ComplianceRedactor` live in the foundation so
   OTel does not acquire an NLog dependency. Missing HMAC keys and unknown
   classifications emit the alertable `***ARKPII***` marker. Supply `HmacKey` from

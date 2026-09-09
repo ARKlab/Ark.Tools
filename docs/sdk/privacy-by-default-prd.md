@@ -627,11 +627,12 @@ private void _logSupportContext(Customer c) { … }
 
 ### 6.9 Runtime redaction (second net)
 
-`Ark.Tools.Compliance.NLog` adds a native NLog value formatter, a target wrapper,
-and an exception layout renderer to the existing `NLogConfigurer` chain. NLog has
-no log-event interceptor, so `Ark.Tools.NLog` composes those primitives into each
-configured target. The wrapper scans the rendered target output as a last resort
-and forwards the original `LogEventInfo`; it does not cache or clone events.
+`Ark.Tools.Compliance.NLog` adds a native NLog value formatter, a configured-layout
+wrapper, and an exception layout renderer to the existing `NLogConfigurer` chain.
+NLog has no log-event interceptor, so `Ark.Tools.NLog` composes those primitives
+only into its own affected layouts. The layout wrapper scans rendered output as a
+last resort without caching or cloning the `LogEventInfo`; unrelated layouts such
+as a database stack trace remain untouched.
 
 **It is on by default.** `NLogConfigurer.WithArkDefaultTargetsAndRules(...)` —
 and therefore `WithDefaultTargetsAndRulesFromConfiguration` and
@@ -677,8 +678,8 @@ Three mechanisms, all AoT-safe:
    so structured properties are redacted even when they arrive as `object`.
 2. **Value formatter** — an `IValueFormatter` decorator that intercepts message
    template parameter rendering for classified types not covered above.
-3. **Pattern scan** — a `RedactingTargetWrapper : WrapperTargetBase` running a
-   single pass over rendered target output with `[GeneratedRegex]`-compiled
+3. **Pattern scan** — a `ComplianceLayout` wrapper running a single pass over
+   rendered Ark target layouts with `[GeneratedRegex]`-compiled
    patterns pre-filtered by `SearchValues<char>` prefilters (email `@`, IBAN
    country prefixes, digit runs). Off by default; measured budget: ≤ 2 µs per
    event for a 200-char message. Regexes are source-generated with a timeout,
@@ -799,7 +800,7 @@ existing mediator-framework generator discipline.
 | --- | --- | --- |
 | `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the generator DLL as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | analyzer and code-fix DLLs as `analyzers/dotnet/cs` plus the canonical `ComplianceLexicon.Ark.txt`/`ComplianceSinks.Ark.txt` `AdditionalFiles`; added implicitly by `Ark.Tools.Sdk` | `netstandard2.0` |
-| `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.NLog` | `ComplianceLayout`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.NewtonsoftJson` | `SensitiveValueJsonConverter<T>` and `SensitiveValueNewtonsoftJson` registrations | `net8.0;net10.0` |

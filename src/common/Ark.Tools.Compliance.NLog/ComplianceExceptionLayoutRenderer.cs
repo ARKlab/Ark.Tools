@@ -25,39 +25,39 @@ public sealed class ComplianceExceptionLayoutRenderer : ExceptionLayoutRenderer
     }
 
     /// <inheritdoc />
-    protected override void AppendMessage(StringBuilder builder, Exception exception)
+    protected override void AppendMessage(StringBuilder sb, Exception ex)
     {
         if (_isRedactionEnabled())
         {
-            builder.Append(ComplianceRedactor.Marker);
+            sb.Append(ComplianceRedactor.Marker);
             return;
         }
 
-        base.AppendMessage(builder, exception);
+        base.AppendMessage(sb, ex);
     }
 
     /// <inheritdoc />
-    protected override void AppendToString(StringBuilder builder, Exception exception)
+    protected override void AppendToString(StringBuilder sb, Exception ex)
     {
         if (_isRedactionEnabled())
         {
-            builder.Append(ComplianceRedactor.Marker);
+            sb.Append(ComplianceRedactor.Marker);
             return;
         }
 
-        base.AppendToString(builder, exception);
+        base.AppendToString(sb, ex);
     }
 
     /// <inheritdoc />
-    protected override void AppendData(StringBuilder builder, Exception exception)
+    protected override void AppendData(StringBuilder sb, Exception ex)
     {
-        if (_isRedactionEnabled() && exception.Data?.Count > 0)
+        if (_isRedactionEnabled() && ex.Data?.Count > 0)
         {
-            builder.Append(ComplianceRedactor.Marker);
+            sb.Append(ComplianceRedactor.Marker);
             return;
         }
 
-        base.AppendData(builder, exception);
+        base.AppendData(sb, ex);
     }
 
     private bool _isRedactionEnabled()

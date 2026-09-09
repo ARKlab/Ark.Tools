@@ -580,7 +580,7 @@ VALUES
         private Layout _createMessageLayout()
         {
             return _createScannedLayout(Layout.FromMethod(
-                logEvent => logEvent.FormattedMessage,
+                static logEvent => logEvent.FormattedMessage,
                 LayoutRenderOptions.ThreadAgnostic));
         }
 

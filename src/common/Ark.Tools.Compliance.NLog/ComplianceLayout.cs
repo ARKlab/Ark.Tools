@@ -7,11 +7,14 @@ using global::NLog.Layouts;
 namespace Ark.Tools.Compliance.NLog;
 
 /// <summary>Applies compliance pattern scanning to a configured layout.</summary>
-internal sealed class ComplianceLayout : Layout
+public sealed class ComplianceLayout : Layout
 {
     private readonly Layout _inner;
     private readonly Func<ComplianceRedactor?> _redactorProvider;
 
+    /// <summary>Initializes a layout wrapper.</summary>
+    /// <param name="inner">The configured layout to render.</param>
+    /// <param name="redactorProvider">Provides the current runtime redaction policy.</param>
     public ComplianceLayout(Layout inner, Func<ComplianceRedactor?> redactorProvider)
     {
         ArgumentNullException.ThrowIfNull(inner);
@@ -24,5 +27,11 @@ internal sealed class ComplianceLayout : Layout
     {
         var rendered = _inner.Render(logEvent);
         target.Append(_redactorProvider()?.Scan(rendered) ?? rendered);
+    }
+
+    protected override string GetFormattedMessage(LogEventInfo logEvent)
+    {
+        var rendered = _inner.Render(logEvent);
+        return _redactorProvider()?.Scan(rendered) ?? rendered;
     }
 }
