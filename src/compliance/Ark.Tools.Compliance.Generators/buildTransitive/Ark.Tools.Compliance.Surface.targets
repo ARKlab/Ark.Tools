@@ -20,9 +20,9 @@
 
   <Target Name="ArkComplianceSurfaceSetOutputPath"
           BeforeTargets="CoreCompile"
-          Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(CompilerGeneratedFilesOutputPath)' == ''">
+            Condition="'$(ArkComplianceSurfaceEnabled)' == 'true'">
     <PropertyGroup>
-      <CompilerGeneratedFilesOutputPath>$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+        <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
     <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
   </Target>

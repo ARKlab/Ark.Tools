@@ -48,7 +48,7 @@ public class Book_UpdateRequestHandler : IRequestHandler<Book_UpdateRequest.V1, 
             Author = request.Data.Author,
             Genre = request.Data.Genre,
             ISBN = request.Data.ISBN,
-            Description = $"Book updated: {request.Data.Title} by {request.Data.Author}"
+            Description = $"Book updated: {request.Data.Title} by {ComplianceReferenceData._mask(request.Data.Author)}"
         };
 
         await ctx.PutBookAsync(updateBookData, ctk).ConfigureAwait(false);

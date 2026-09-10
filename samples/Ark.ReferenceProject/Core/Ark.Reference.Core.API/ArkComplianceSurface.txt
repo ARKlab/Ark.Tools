@@ -1,7 +1,4 @@
 ﻿/*
 COMPLIANCE-SURFACE 1
-CLASSIFIED	Ark.Reference.Core.Common.Auth.AuthConstants	IntegrationTestsEncryptionKey	Ark:Secret		
-CLASSIFIED	Ark.Reference.Core.Common.Dto.Book.V1.Create	Author	Ark:PersonalData	Gets or initializes the author of the Book	System.Text.Json
-CLASSIFIED	Ark.Reference.Core.Common.Dto.BookSearchQueryDto.V1	Author	Ark:PersonalData		System.Text.Json
 CLASSIFIED	Ark.Reference.Core.API.Queries.Book_GetByFiltersQuery.V1	Author	Ark:PersonalData		System.Text.Json
 */

@@ -10,10 +10,6 @@
 		<EnableArkToolsCompliance>true</EnableArkToolsCompliance>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
-	  <Compile Include="$(MSBuildThisFileDirectory)ComplianceRegistration.cs" Link="ComplianceRegistration.cs" />
-	</ItemGroup>
-
   <PropertyGroup Label="Common Build Settings">
 	<NoWarn>$(NoWarn);CS1591</NoWarn>
 	<IsPackable>false</IsPackable>

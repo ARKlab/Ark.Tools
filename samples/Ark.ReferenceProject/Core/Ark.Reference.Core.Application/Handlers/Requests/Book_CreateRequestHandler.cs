@@ -2,12 +2,10 @@ using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
-using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using NLog;
 
-using System.Diagnostics;
 using System.Security.Claims;
 
 namespace Ark.Reference.Core.Application.Handlers.Requests;
@@ -38,8 +36,9 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
         ArgumentNullException.ThrowIfNull(request.Data);
 
         using var activity = ReferenceTelemetry.ActivitySource.StartActivity("book.create");
-        activity?.SetTag("ark.compliance.book.author", request.Data.Author);
-        _logger.Info(CultureInfo.InvariantCulture, "Creating book with author {author}", request.Data.Author);
+        var maskedAuthor = ComplianceReferenceData._mask(request.Data.Author);
+        activity?.SetTag("ark.compliance.book.author", maskedAuthor);
+        _logger.Info(CultureInfo.InvariantCulture, "Creating book with author {author}", maskedAuthor);
 
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
         await using var _ = ctx.ConfigureAwait(false);
@@ -52,7 +51,7 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
             Author = request.Data.Author,
             Genre = request.Data.Genre,
             ISBN = request.Data.ISBN,
-            Description = $"Book created: {request.Data.Title} by {request.Data.Author}"
+            Description = $"Book created: {request.Data.Title} by {maskedAuthor}"
         };
 
         var id = await ctx.InsertBookAsync(createBookData, ctk).ConfigureAwait(false);

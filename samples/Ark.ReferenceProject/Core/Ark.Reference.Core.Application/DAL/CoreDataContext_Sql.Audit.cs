@@ -1,5 +1,6 @@
 using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Compliance;
 
 
 namespace Ark.Reference.Core.Application.DAL;
@@ -26,7 +27,7 @@ public partial class CoreDataContext_Sql
 
     public ValueTask<AuditDto<AuditKind>> EnsureAudit(
         AuditKind kind
-        , string? userId
+        , [Pseudonymous] string? userId
         , string? infoMessage
         , CancellationToken ctk = default)
     {

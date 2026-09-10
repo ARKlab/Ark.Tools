@@ -43,8 +43,6 @@ public class Book_CreateValidator : AbstractValidator<Book.V1.Create>
         RuleFor(static x => x.Author)
             .NotNull()
             .NotEmpty()
-            .MinimumLength(1)
-            .MaximumLength(100)
             ;
 
         RuleFor(static x => x.Genre)

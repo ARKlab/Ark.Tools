@@ -21,5 +21,8 @@
 		<PackageReference Include="Ark.Tools.Solid.FluentValidaton" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Include="..\ComplianceRegistration.cs" Link="ComplianceRegistration.cs" />
+	</ItemGroup>
 
 </Project>

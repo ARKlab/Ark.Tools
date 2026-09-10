@@ -4,6 +4,7 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.Core;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace Ark.Reference.Core.WebInterface.Controllers;
 /// Controller for managing Book entities
 /// </summary>
 [Route("book")]
+[PersonalDataEgress(Purpose = "Return book data to authenticated API clients")]
 public class BookController : ApiController
 {
     private readonly IQueryProcessor _queryProcessor;
@@ -126,7 +128,7 @@ public class BookController : ApiController
         {
             Id = id,
             Title = title,
-            Author = author,
+            Author = author.Select(static value => PersonName.From(value)).ToArray(),
             Genre = genre,
 
             Sort = sort,
