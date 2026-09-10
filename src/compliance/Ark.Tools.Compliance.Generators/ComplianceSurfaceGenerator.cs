@@ -277,7 +277,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         var result = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         foreach (var type in types)
         {
-            foreach (var transport in type.GetAttributes()
+            var transports = type.GetAttributes()
                 .Select(static attribute => attribute.AttributeClass?.ToDisplayString() switch
                 {
                     "Ark.Tools.MediatorFramework.HttpEndpointAttribute" => "Http",
@@ -287,7 +287,8 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                     "Ark.Tools.MediatorFramework.EventAttribute" => "Event",
                     _ => null,
                 })
-                .Where(static transport => transport is not null))
+                .Where(static transport => transport is not null);
+            foreach (var transport in transports)
             {
                 var target = transport + ":" + _name(type);
                 var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
@@ -323,10 +324,13 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             _walkTransport(baseType, target, result, visited, path, token);
         if (named.Locations.Any(static location => location.IsInSource))
         {
-            foreach (var member in named.GetMembers())
+            foreach (var (member, value) in named.GetMembers()
+                .Select(member => (member, value: _valueType(member)))
+                .Where(item => item.value is not null
+                    && _isSerializableMember(item.member)
+                    && !_ignoredByTransport(item.member, target)))
             {
-                if (_isSerializableMember(member) && !_ignoredByTransport(member, target) && _valueType(member) is { } value)
-                    _walkTransport(value, target, result, visited, path, token);
+                _walkTransport(value!, target, result, visited, path, token);
             }
         }
         path.Remove(named.OriginalDefinition);
@@ -457,18 +461,22 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             context.ReportDiagnostic(Diagnostic.Create(_drift, Location.None, "baseline is malformed"));
             return;
         }
-        foreach (var entry in surface.Entries.Values)
+        foreach (var item in surface.Entries.Values
+            .Select(entry =>
+            {
+                var found = baseline.TryGetValue(entry.Key, out var previous);
+                return (entry, found, previous);
+            })
+            .Where(static item => !(item.found && item.previous is not null && item.previous.Line == item.entry.Line)))
         {
-            if (baseline.TryGetValue(entry.Key, out var previous) && previous is not null && previous.Line == entry.Line)
-                continue;
+            var entry = item.entry;
+            var previous = item.previous;
             context.ReportDiagnostic(Diagnostic.Create(_drift, entry.Location, entry.Key.Replace('\t', '.')));
             if (previous is null || previous.Classifications.Any(old => !entry.Classifications.Any(current => _covers(current, old))))
                 context.ReportDiagnostic(Diagnostic.Create(_weakened, entry.Location, entry.Key.Replace('\t', '.')));
         }
-        foreach (var previous in baseline.Values)
+        foreach (var previous in baseline.Values.Where(previous => !surface.Entries.ContainsKey(previous.Key)))
         {
-            if (surface.Entries.ContainsKey(previous.Key))
-                continue;
             context.ReportDiagnostic(Diagnostic.Create(_drift, Location.None, previous.Key.Replace('\t', '.')));
             if (surface.Members.Contains(previous.Key))
                 context.ReportDiagnostic(Diagnostic.Create(_weakened, Location.None, previous.Key.Replace('\t', '.')));

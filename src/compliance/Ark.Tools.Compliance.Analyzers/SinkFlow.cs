@@ -399,20 +399,12 @@ internal sealed class SinkFlow
             return null;
         }
 
-        foreach (var constructor in property.ContainingType.InstanceConstructors)
-        {
-            foreach (var parameter in constructor.Parameters.Where(parameter =>
-                parameter.Name == property.Name && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)))
-            {
-                var source = _classification(parameter);
-                if (source is not null)
-                {
-                    return source;
-                }
-            }
-        }
-
-        return null;
+        return property.ContainingType.InstanceConstructors
+            .SelectMany(static constructor => constructor.Parameters)
+            .Where(parameter => parameter.Name == property.Name
+                && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type))
+            .Select(_classification)
+            .FirstOrDefault(static source => source is not null);
     }
 
     private static Source? _classification(ISymbol symbol)
