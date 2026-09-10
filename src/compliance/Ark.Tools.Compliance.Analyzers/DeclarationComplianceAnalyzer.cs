@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -36,9 +37,14 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         "Classified declaration '{0}' cannot be safely redacted: {1}",
         "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
 
+    internal static readonly DiagnosticDescriptor _missingRedactionRegistration = new(
+        "ARKPII013", "Register Ark redaction for Microsoft telemetry",
+        "Project references Microsoft.Extensions.Telemetry but does not call AddArkRedaction(); classified logging can remain unredacted",
+        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
+
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(_unclassified, _review, _justification, _unsupported);
+        ImmutableArray.Create(_unclassified, _review, _justification, _unsupported, _missingRedactionRegistration);
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
@@ -56,6 +62,29 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
 
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
+            var telemetryRequiresRegistration = start.Compilation.ReferencedAssemblyNames.Any(static name =>
+                name.Name is "Microsoft.Extensions.Telemetry" or "Microsoft.Extensions.Telemetry.Abstractions");
+            var hasRedactionRegistration = 0;
+            if (telemetryRequiresRegistration)
+            {
+                start.RegisterOperationAction(operationContext =>
+                {
+                    var invocation = (Microsoft.CodeAnalysis.Operations.IInvocationOperation)operationContext.Operation;
+                    var method = invocation.TargetMethod;
+                    if (method.Name == "AddArkRedaction"
+                        && method.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
+                    {
+                        Interlocked.Exchange(ref hasRedactionRegistration, 1);
+                    }
+                }, Microsoft.CodeAnalysis.Operations.OperationKind.Invocation);
+                start.RegisterCompilationEndAction(endContext =>
+                {
+                    if (Volatile.Read(ref hasRedactionRegistration) == 0)
+                    {
+                        endContext.ReportDiagnostic(Diagnostic.Create(_missingRedactionRegistration, Location.None));
+                    }
+                });
+            }
             start.RegisterSymbolAction(symbolContext =>
             {
                 _analyze(symbolContext, symbolContext.Symbol, lexicon, today);

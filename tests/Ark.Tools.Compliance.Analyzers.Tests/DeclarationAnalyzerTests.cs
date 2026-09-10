@@ -288,11 +288,59 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
-    private static CSharpCompilation _compilation(string source, bool includeStubs = true)
+    /// <summary>Microsoft telemetry consumers must register Ark redaction.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithoutArkRedactionIsRejected()
+    {
+        var diagnostics = await _analyzeAsync(
+            "class Startup { void Configure(object services) { } }",
+            references: [_telemetryReference()]).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII013");
+    }
+
+    /// <summary>The Ark redaction registration satisfies the telemetry guard.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithArkRedactionIsAccepted()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            using Ark.Tools.Compliance;
+            namespace Ark.Tools.Compliance
+            {
+                public static class Registration
+                {
+                    public static void AddArkRedaction(this object services) { }
+                }
+            }
+            class Startup { void Configure(object services) { services.AddArkRedaction(); } }
+            """,
+            references: [_telemetryReference()]).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
+    private static CSharpCompilation _compilation(
+        string source,
+        IEnumerable<MetadataReference>? references = null,
+        bool includeStubs = true)
     {
         return CSharpCompilation.Create("DeclarationTests",
             [CSharpSyntaxTree.ParseText((includeStubs ? _stubs : string.Empty) + source, path: "Tests.cs")],
-            _references(), new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            (references ?? []).Concat(_references()),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+    }
+
+    private static MetadataReference _telemetryReference()
+    {
+        var compilation = CSharpCompilation.Create(
+            "Microsoft.Extensions.Telemetry.Abstractions",
+            [CSharpSyntaxTree.ParseText("public static class TelemetryMarker { }")],
+            _references(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        using var stream = new MemoryStream();
+        compilation.Emit(stream).Success.Should().BeTrue();
+        return MetadataReference.CreateFromImage(stream.ToArray());
     }
 
     private static IEnumerable<MetadataReference> _references()
@@ -303,9 +351,11 @@ public sealed class DeclarationAnalyzerTests
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(
         string source,
         ImmutableArray<AdditionalText> files = default,
-        AnalyzerConfigOptionsProvider? options = null)
+        AnalyzerConfigOptionsProvider? options = null,
+        IEnumerable<MetadataReference>? references = null)
     {
-        return await _compilation(source).WithAnalyzers(
+        var compilation = _compilation(source, references);
+        return await compilation.WithAnalyzers(
                 [new DeclarationComplianceAnalyzer()],
                 _analyzerOptions(files, options))
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
