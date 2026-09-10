@@ -211,6 +211,22 @@ public sealed class ComplianceSurfaceTests
         result.Text.Should().NotContain("BackingField");
     }
 
+    /// <summary>Classified constants are included in the reviewed surface.</summary>
+    [TestMethod]
+    public void Surface_TracksClassifiedConstants()
+    {
+        var result = _run("""
+            using Ark.Tools.Compliance;
+            namespace Example;
+            public static class Secrets
+            {
+                [Secret] public const string ApiKey = "reserved";
+            }
+            """);
+
+        result.Text.Should().Contain("CLASSIFIED\tExample.Secrets\tApiKey\tArk:Secret");
+    }
+
     /// <summary>Unrelated attributes with the same short name do not classify data.</summary>
     [TestMethod]
     public void Surface_IgnoresUnrelatedAttributeNames()

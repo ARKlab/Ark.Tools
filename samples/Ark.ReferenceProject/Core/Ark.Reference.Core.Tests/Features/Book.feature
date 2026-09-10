@@ -7,16 +7,16 @@ Feature: Book
     Scenario: Endpoint Book Create and Get
       When I create a single Book with
         | Title                    | Author          | Genre      | ISBN           |
-        | The Pragmatic Programmer | Hunt and Thomas | Technology | 978-0135957059 |
+        | The Pragmatic Programmer | Jane Doe         | Technology | 978-0135957059 |
       Then the request succeded
       Then the stored Book response should be
         | Title                    | Author          | Genre      | ISBN           |
-        | The Pragmatic Programmer | Hunt and Thomas | Technology | 978-0135957059 |
+        | The Pragmatic Programmer | Jane Doe         | Technology | 978-0135957059 |
       When I request the Book 'The Pragmatic Programmer' by id
       Then the request succeded
       Then the Book response should match
         | Title                    | Author          | Genre      | ISBN           |
-        | The Pragmatic Programmer | Hunt and Thomas | Technology | 978-0135957059 |
+        | The Pragmatic Programmer | Jane Doe         | Technology | 978-0135957059 |
 
     Scenario: Endpoint Book Bulk Create
       When I create bulk Books with
@@ -37,8 +37,8 @@ Feature: Book
 
     Examples:
         | FilterName | Value        | ExpectedCount |
-        | Author     | Martin       | 1             |
-        | Author     | Tolkien      | 1             |
+        | Author     | Jane Doe     | 1             |
+        | Author     | John Doe     | 1             |
         | Genre      | Technology   | 2             |
         | Genre      | Fiction      | 1             |
         | Title      | Clean Code   | 1             |
@@ -63,7 +63,7 @@ Feature: Book
     Scenario: Endpoint Book Update 404
       When I try to update a Book with
         | Id | Title    | Author    | Genre   | ISBN           |
-        |  0 | NewTitle | NewAuthor | Fiction | 555-5555555555 |
+        |  0 | NewTitle | Test User | Fiction | 555-0100 |
       Then the request fails with 404
 
     Scenario: Endpoint Book Delete

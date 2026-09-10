@@ -126,7 +126,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             if (member is IPropertySymbol property
                 && (!property.IsImplicitlyDeclared || property.DeclaringSyntaxReferences.Length > 0))
                 yield return property;
-            else if (member is IFieldSymbol field && !field.IsImplicitlyDeclared && !field.IsConst)
+            else if (member is IFieldSymbol field && !field.IsImplicitlyDeclared)
                 yield return field;
             else if (member is IMethodSymbol method && !method.IsImplicitlyDeclared
                 && method.MethodKind is MethodKind.Ordinary or MethodKind.Constructor)
