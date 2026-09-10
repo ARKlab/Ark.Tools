@@ -18,8 +18,17 @@ internal static partial class PiiPatternScanner
         + "|(?<PostalAddress>" + PersonalDataPatterns._postalAddress + ")";
     private static readonly SearchValues<char> _candidates = SearchValues.Create("@0123456789");
 
+#if NET10_0_OR_GREATER
     [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
     private static partial Regex _regex { get; }
+#else
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Meziantou.Analyzer",
+        "MA0190",
+        Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
+    [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
+    private static partial Regex _regex();
+#endif
 
     internal static string _redact(string value, string replacement)
     {
@@ -29,7 +38,11 @@ internal static partial class PiiPatternScanner
         {
             StringBuilder? builder = null;
             var previous = 0;
+#if NET10_0_OR_GREATER
+            for (var match = _regex.Match(value); match.Success; match = match.NextMatch())
+#else
             for (var match = _regex().Match(value); match.Success; match = match.NextMatch())
+#endif
             {
                 var kind = match.Groups["Phone"].Success ? PersonalDataKind.Phone
                     : match.Groups["PostalAddress"].Success ? PersonalDataKind.PostalAddress
