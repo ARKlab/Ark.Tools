@@ -28,9 +28,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "IBf7lbovvjGWVWXZX5cJ/cO0WXbId0Zq4BuSeT94mGZuOAP66oMeH9PTBZ9Jpp3Jb6jtK0qm/NyUbPRo1gC/wQ=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "xi+BDjFpW+Sb+MHFHaH6Y/gV9I8BluFwRXc1QyCdoZbIK26eNiBeFuMTe/FMwc33G1wdHCyDg7CVTmb8OdQrMQ=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -164,8 +164,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.SystemTextJson": "[999.9.9, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.2.0, )",
@@ -179,21 +179,21 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
+          "Ark.Tools.Core": "[999.9.9, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
+          "Ark.Tools.Nodatime": "[999.9.9, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
         }
       },
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.Nodatime.SystemTextJson": "[999.9.9, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       },
@@ -426,9 +426,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[8.0.30, )",
-        "resolved": "8.0.30",
-        "contentHash": "SfmwuZjUPBTEoBMAsXZ/hWkaEK9oL+Y/UtAx7N6RyWHfcMt9J0ExrNPuOgTyPbCXIyiTBFsxFNrPLEZNPmJcvA=="
+        "requested": "[8.0.31, )",
+        "resolved": "8.0.31",
+        "contentHash": "OJdAGATV2QoVWL11zlDLEluA06q8rK+cgZR47ohrO8V+Qj5z9dlvN7bG9/0e5t0IOe+yD8tREC0bpsEgDGrzIQ=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -584,8 +584,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.SystemTextJson": "[999.9.9, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.2.0, )",
@@ -599,21 +599,21 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
+          "Ark.Tools.Core": "[999.9.9, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
+          "Ark.Tools.Nodatime": "[999.9.9, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
         }
       },
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.Nodatime.SystemTextJson": "[999.9.9, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       },

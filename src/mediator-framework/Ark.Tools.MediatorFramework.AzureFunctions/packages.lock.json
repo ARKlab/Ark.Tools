@@ -84,9 +84,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "IBf7lbovvjGWVWXZX5cJ/cO0WXbId0Zq4BuSeT94mGZuOAP66oMeH9PTBZ9Jpp3Jb6jtK0qm/NyUbPRo1gC/wQ=="
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "xi+BDjFpW+Sb+MHFHaH6Y/gV9I8BluFwRXc1QyCdoZbIK26eNiBeFuMTe/FMwc33G1wdHCyDg7CVTmb8OdQrMQ=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -345,16 +345,16 @@
       "ark.tools.aspnetcore.problemdetails": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Authorization": "[1.0.0, )",
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "Ark.Tools.Authorization": "[999.9.9, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.Sql.SqlServer": "[999.9.9, )",
           "FluentValidation": "[12.1.1, )"
         }
       },
       "ark.tools.authorization": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.NLog": "[1.0.0, )"
+          "Ark.Tools.NLog": "[999.9.9, )"
         }
       },
       "ark.tools.compliance": {
@@ -379,17 +379,17 @@
       "ark.tools.mediatorframework": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Outbox": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.Outbox": "[999.9.9, )",
+          "Ark.Tools.Solid": "[999.9.9, )",
           "protobuf-net": "[3.4.21, )"
         }
       },
       "ark.tools.mediatorframework.messaging": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.MediatorFramework": "[1.0.0, )",
-          "Ark.Tools.SimpleInjector": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework": "[999.9.9, )",
+          "Ark.Tools.SimpleInjector": "[999.9.9, )",
+          "Ark.Tools.Solid": "[999.9.9, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
           "Azure.Storage.Blobs": "[12.29.2, )",
@@ -403,8 +403,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.SystemTextJson": "[999.9.9, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.2.0, )",
@@ -418,27 +418,27 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
+          "Ark.Tools.Core": "[999.9.9, )"
         }
       },
       "ark.tools.nodatime.dapper": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
+          "Ark.Tools.Nodatime": "[999.9.9, )",
           "Dapper": "[2.1.79, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Nodatime": "[1.0.0, )",
+          "Ark.Tools.Nodatime": "[999.9.9, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
         }
       },
       "ark.tools.outbox": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
           "NLog": "[6.2.0, )"
         }
       },
@@ -451,30 +451,30 @@
       "ark.tools.solid": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.NLog": "[1.0.0, )"
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.NLog": "[999.9.9, )"
         }
       },
       "ark.tools.sql": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )"
+          "Ark.Tools.Core": "[999.9.9, )"
         }
       },
       "ark.tools.sql.sqlserver": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.NLog": "[1.0.0, )",
-          "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
-          "Ark.Tools.Sql": "[1.0.0, )",
+          "Ark.Tools.NLog": "[999.9.9, )",
+          "Ark.Tools.Nodatime.Dapper": "[999.9.9, )",
+          "Ark.Tools.Sql": "[999.9.9, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )"
         }
       },
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
+          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.Nodatime.SystemTextJson": "[999.9.9, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       },
