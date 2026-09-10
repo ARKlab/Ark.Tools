@@ -9,23 +9,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Sql/Ark.Tools.Compliance.Sql.csproj" />
-    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj"
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Sql/Ark.Tools.Compliance.Sql.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
-    <ProjectReference Include="../../src/common/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <ArkComplianceSqlToken Include="ComplianceSchema" Value="tenant]schema" />
     <ArkComplianceSqlToken Include="ComplianceLabel" Value="Customer's confidential data" />
     <None Include="Fixtures/SqlTokens.proj" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../src/common/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets"
+    <None Include="../../src/compliance/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets"
           Link="Fixtures/Ark.Tools.Compliance.Sql.targets" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Import Project="../../src/common/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets" />
+  <Import Project="../../src/compliance/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets" />
 
   <Target Name="_CopySqlFixtures" AfterTargets="ArkGenerateComplianceSql">
     <Copy SourceFiles="@(ArkComplianceSqlScript)" DestinationFolder="$(OutDir)ComplianceSql" />
-    <Copy SourceFiles="Fixtures/SqlTokens.proj;../../src/common/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets"
+    <Copy SourceFiles="Fixtures/SqlTokens.proj;../../src/compliance/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets"
           DestinationFolder="$(OutDir)Fixtures" />
   </Target>
 

@@ -90,8 +90,9 @@ they must not contain PII, secrets, or unexpected exception details.
 ### Compliance policy
 
 `Ark.Tools.Build` ships `Ark.Tools.Compliance.globalconfig`; its entries are inert
-when the implementing assembly is absent. `Ark.Tools.Compliance.Analyzers`, added
-implicitly by `Ark.Tools.Sdk` unless `EnableArkToolsCompliance=false`, ships the
+when the implementing assembly is absent. While the analyzer is beta,
+`Ark.Tools.Compliance.Analyzers` is disabled by default in `Ark.Tools.Sdk`; opt in
+with `EnableArkToolsCompliance=true`. When enabled, it ships the
 analyzers together with the composable `ComplianceLexicon.Ark.txt` /
 `ComplianceSinks.Ark.txt` additional files.
 
@@ -117,8 +118,8 @@ analyzers together with the composable `ComplianceLexicon.Ark.txt` /
 | LOGGEN026 | Error | A tag provider opts out of redaction |
 | LOGGEN036 | Warning | A logged value has no meaningful formatting surface |
 
-The evaluated `ArkComplianceMode` is `Enforce` by default and `Off` only when
-`EnableArkToolsCompliance=false` is set. This switch removes compliance
+The evaluated `ArkComplianceMode` is `Off` by default while the analyzer is beta,
+and `Enforce` when `EnableArkToolsCompliance=true` is set. The switch removes compliance
 configuration and additional files and is passed to the analyzers; it does not
 disable unrelated analyzers or change the safe formatting of sensitive value
 objects. Set it in the project or `Directory.Build.props`. Local `.editorconfig`

@@ -831,16 +831,16 @@ softer default.
 
 Two modes only:
 
-1. `ArkComplianceMode=Enforce` (**default**) — the severities in §7.
-2. `ArkComplianceMode=Off` (`EnableArkToolsCompliance=false`) — for a solution
-   that cannot absorb the change yet. Opting out is a single, greppable,
-   review-visible MSBuild property; per-rule severity overrides in
-   `.editorconfig` remain available for finer control.
+1. `ArkComplianceMode=Off` (**default while the analyzer is beta**).
+2. `ArkComplianceMode=Enforce` (`EnableArkToolsCompliance=true`) — opt in to the
+   severities in §7. Opting in is a single, greppable, review-visible MSBuild
+   property; per-rule severity overrides in `.editorconfig` remain available
+   for finer control.
 
-Existing solutions therefore adopt this the same way they adopt any other
-breaking SDK change: bump the SDK on a branch, fix or suppress what the build
-reports, commit `ArkComplianceSurface.txt` as the baseline. `ARKPII020` (drift)
-then guarantees no *new* undeclared personal data can be added afterwards.
+Solutions can evaluate the analyzer on a branch before the beta ends by opting
+in, fixing or suppressing what the build reports, and committing
+`ArkComplianceSurface.txt` as the baseline. `ARKPII020` (drift) then guarantees
+no *new* undeclared personal data can be added afterwards.
 
 ## 11. Testing
 
@@ -931,9 +931,9 @@ requires two things from this design:
    `[PersonalData]`-marked member in an Ark type with no bridge, no duplicate
    attribute, and no adapter. This is the concrete reason the dependency is
    taken rather than reimplemented.
-2. **LOGGEN guards enabled by default in the SDK.** `Ark.Tools.Build` ships them
-   escalated in the packaged global config, so a `[LoggerMessage]` leak is a
-   build break, not a warning someone scrolls past:
+2. **LOGGEN guards available when compliance is enabled in the SDK.**
+   `Ark.Tools.Build` ships them escalated in the packaged global config, so a
+   `[LoggerMessage]` leak is a build break, not a warning someone scrolls past:
 
    ```ini
    # Ark.Tools.Compliance.globalconfig

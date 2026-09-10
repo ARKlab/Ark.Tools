@@ -92,8 +92,8 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsVisualStudioThreading` | Disabled unless `true` | Build props and SDK restore | Set `true` |
 | `EnableArkToolsIdentityModelConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
-| `EnableArkToolsCompliance` | Enabled unless `false` | Build targets and analyzer options | Set `false` to disable compliance analysis/configuration only |
-| `ArkComplianceMode` | `Enforce`, or `Off` when `EnableArkToolsCompliance=false` | Build targets | Derived; use `EnableArkToolsCompliance`, not a separate mode override |
+| `EnableArkToolsCompliance` | Disabled by default while the analyzer is beta | Build targets and analyzer options | Set `true` to opt into compliance analysis/configuration |
+| `ArkComplianceMode` | `Off`, or `Enforce` when `EnableArkToolsCompliance=true` | Build targets | Derived; use `EnableArkToolsCompliance`, not a separate mode override |
 | `EnableArkToolsBannedApi` | Enabled unless `false` | Build targets and SDK restore | Set `false` |
 | `EnableArkToolsSponsorLinkRemoval` | Enabled unless `false` | Before `CoreCompile` | Set `false` |
 | `EnableArkToolsGlobalUsings` | Enabled unless `false` when implicit usings are enabled | Build targets | Set `false` |

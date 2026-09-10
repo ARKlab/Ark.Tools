@@ -16,8 +16,8 @@ the same guarantees as the NLog path.
 
 ## Execution map
 
-- **`ArkComplianceMode`**: `Enforce` (default, §7 severities from day one) or
-  `Off` via `EnableArkToolsCompliance=false`. There is no Observe stage: most
+- **`ArkComplianceMode`**: `Off` while the analyzer is beta; opt into `Enforce`
+  with `EnableArkToolsCompliance=true` (§7 severities). There is no Observe stage: most
   code here is written by agents outside an IDE, and a `suggestion` that does not
   fail `dotnet build` is a diagnostic nobody reads. Per-rule `.editorconfig`
   overrides remain available.
@@ -57,7 +57,7 @@ the same guarantees as the NLog path.
 
 ## Outcomes
 
-- Enforcement is the default for every consumer of the SDK.
+- Enforcement is opt-in for every consumer of the SDK until the analyzer leaves beta.
 - The NLog and Microsoft logging paths have equivalent guarantees.
 
 ## Acceptance

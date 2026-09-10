@@ -3,18 +3,21 @@
     <Project Path="src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj" />
     <Project Path="src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj" />
   </Folder>
+  <Folder Name="/src/compliance/">
+    <Project Path="src/compliance/Ark.Tools.Compliance.Sql/Ark.Tools.Compliance.Sql.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.MessagePack/Ark.Tools.Compliance.MessagePack.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.NewtonsoftJson/Ark.Tools.Compliance.NewtonsoftJson.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.NLog/Ark.Tools.Compliance.NLog.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Protobuf/Ark.Tools.Compliance.Protobuf.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Reqnroll/Ark.Tools.Compliance.Reqnroll.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Analyzers.CodeFixes/Ark.Tools.Compliance.Analyzers.CodeFixes.csproj" />
+  </Folder>
   <Folder Name="/src/common/">
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Sql/Ark.Tools.Compliance.Sql.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.MessagePack/Ark.Tools.Compliance.MessagePack.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.NewtonsoftJson/Ark.Tools.Compliance.NewtonsoftJson.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.NLog/Ark.Tools.Compliance.NLog.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Protobuf/Ark.Tools.Compliance.Protobuf.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Reqnroll/Ark.Tools.Compliance.Reqnroll.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
@@ -180,7 +183,6 @@
     <Project Path="tests/Ark.Tools.MediatorFramework.Hosting.GrpcClient/Ark.Tools.MediatorFramework.Hosting.GrpcClient.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Hosting.Tests/Ark.Tools.MediatorFramework.Hosting.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Analyzers.CodeFixes/Ark.Tools.Compliance.Analyzers.CodeFixes.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.MinimalApi.Tests/Ark.Tools.AspNetCore.MinimalApi.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Dapper.Tests/Ark.Tools.Dapper.Tests.csproj" />

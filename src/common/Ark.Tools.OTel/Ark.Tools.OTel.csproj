@@ -21,7 +21,7 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <ProjectReference Include="../Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+    <ProjectReference Include="../../compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="Microsoft.Extensions.Options" />
   </ItemGroup>
