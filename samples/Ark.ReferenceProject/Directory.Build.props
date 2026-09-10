@@ -7,12 +7,7 @@
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<Version>6.6.6</Version>
-		<EnableArkToolsCompliance>true</EnableArkToolsCompliance>
 	</PropertyGroup>
-
-	<ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(EnableArkToolsCompliance)' == 'true'">
-	  <Compile Include="$(MSBuildThisFileDirectory)ComplianceRegistration.cs" Link="ComplianceRegistration.cs" />
-	</ItemGroup>
 
   <PropertyGroup Label="Common Build Settings">
 	<NoWarn>$(NoWarn);CS1591</NoWarn>

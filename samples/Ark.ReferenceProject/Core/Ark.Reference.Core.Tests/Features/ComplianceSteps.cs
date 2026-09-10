@@ -40,18 +40,21 @@ public sealed class ComplianceSteps
     {
         LogManager.Flush(TimeSpan.FromSeconds(2));
 
-        TestHost._logs._getMessages()
-            .Should()
-            .Contain(message => message.Contains("Creating book with author", StringComparison.Ordinal)
+        var cleartextAuthor = ComplianceFakes.PersonName();
+        var messages = TestHost._logs._getMessages();
+        messages.Any(static message => message.Contains("Creating book with author", StringComparison.Ordinal)
                 && message.Contains(ArkErasingRedactor.Marker, StringComparison.Ordinal))
-            .And.NotContain(message => message.Contains(ComplianceFakes.PersonName(), StringComparison.Ordinal));
+            .Should().BeTrue();
+        messages.Any(message => message.Contains(cleartextAuthor, StringComparison.Ordinal))
+            .Should().BeFalse();
 
-        TestHost._telemetry._getSpans()
-            .Should()
-            .Contain(span => span.Name == "book.create"
+        var spans = TestHost._telemetry._getSpans();
+        spans.Any(static span => span.Name == "book.create"
                 && span.Tags.TryGetValue("ark.compliance.book.author", out var value)
                 && value == ArkErasingRedactor.Marker)
-            .And.NotContain(span => span.Tags.Values.Contains(ComplianceFakes.PersonName(), StringComparer.Ordinal));
+            .Should().BeTrue();
+        spans.Any(span => span.Tags.Values.Contains(cleartextAuthor, StringComparer.Ordinal))
+            .Should().BeFalse();
     }
 
     [Then("the database masks the author for a low-privilege reader")]

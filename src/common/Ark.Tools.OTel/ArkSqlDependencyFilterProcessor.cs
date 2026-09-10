@@ -95,10 +95,10 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
 
     private static string? _read(DbConnectionStringBuilder builder, params string[] keys)
     {
-        foreach (var candidate in builder.Keys.Cast<string>())
+        foreach (var key in keys)
         {
-            if (keys.Any(key => string.Equals(key, candidate, StringComparison.OrdinalIgnoreCase)))
-                return builder[candidate] as string;
+            if (builder.TryGetValue(key, out var value))
+                return value as string;
         }
 
         return null;

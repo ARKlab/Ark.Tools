@@ -40,7 +40,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
     internal static readonly DiagnosticDescriptor _missingRedactionRegistration = new(
         "ARKPII013", "Register Ark redaction for Microsoft telemetry",
         "Project references Microsoft.Extensions.Telemetry but does not call AddArkRedaction(); classified logging can remain unredacted",
-        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, customTags: ["CompilationEnd"]);
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, customTags: ["CompilationEnd"]);
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
@@ -62,7 +62,13 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
 
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
-            var telemetryRequiresRegistration = start.Compilation.ReferencedAssemblyNames.Any(static name =>
+            var isTestProject = start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                    "build_property.IsTestProject", out var testProject)
+                && string.Equals(testProject, "true", StringComparison.OrdinalIgnoreCase);
+            // Only a composition root (an executable host) can register redaction; libraries and tests are exempt.
+            var isHost = start.Compilation.Options.OutputKind
+                is OutputKind.ConsoleApplication or OutputKind.WindowsApplication or OutputKind.WindowsRuntimeApplication;
+            var telemetryRequiresRegistration = isHost && !isTestProject && start.Compilation.ReferencedAssemblyNames.Any(static name =>
                 name.Name is "Microsoft.Extensions.Telemetry" or "Microsoft.Extensions.Telemetry.Abstractions");
             var hasRedactionRegistration = 0;
             if (telemetryRequiresRegistration)

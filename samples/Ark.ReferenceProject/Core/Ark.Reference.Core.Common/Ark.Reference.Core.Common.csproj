@@ -1,9 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
-  </PropertyGroup>
-
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.Compliance" />

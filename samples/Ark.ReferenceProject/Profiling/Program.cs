@@ -5,6 +5,7 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.Tests.Auth;
 using Ark.Reference.Core.Tests.Init;
+using Ark.Tools.Compliance;
 using Ark.Tools.Rebus.Tests;
 
 using BenchmarkDotNet.Attributes;
@@ -224,7 +225,7 @@ public class ReferenceEndpointBenchmarks
             .PostJsonAsync(new Book.V1.Create
             {
                 Title = $"Profiling book {sequence}",
-                Author = "Ark.Tools",
+                Author = PersonName.From("Ark.Tools"),
                 Genre = BookGenre.Technology,
                 ISBN = $"978-0135957{sequence % 10000:D4}"
             })

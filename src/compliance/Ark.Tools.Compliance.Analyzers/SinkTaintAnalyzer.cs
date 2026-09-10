@@ -149,7 +149,17 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             {
                 if (invocation.Instance is not null)
                 {
-                    _check(context, invocation.Instance, "ARKPII005");
+                    if (SinkFlow._isSelfProtecting(invocation.Instance.Type)
+                        && invocation.Instance.Type is not null
+                        && !_reviewed(context.ContainingSymbol, "ARKPII005"))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(_format, invocation.Syntax.GetLocation(),
+                            invocation.Instance.Type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), "SensitiveValue"));
+                    }
+                    else
+                    {
+                        _check(context, invocation.Instance, "ARKPII005");
+                    }
                 }
 
                 foreach (var argument in invocation.Arguments)

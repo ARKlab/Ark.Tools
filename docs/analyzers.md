@@ -110,7 +110,7 @@ analyzers together with the composable `ComplianceLexicon.Ark.txt` /
 | ARKPII010 | Error | A classified member has an unsupported redaction surface |
 | ARKPII011 | Error | Classified data reaches a formatting sink |
 | ARKPII012 | Warning | A classified contract lacks an egress purpose |
-| ARKPII013 | Warning | Reserved for Microsoft telemetry redaction registration checks |
+| ARKPII013 | Warning | An executable host references Microsoft telemetry without `AddArkRedaction()` |
 | ARKPII020 | Error | The compliance surface baseline has drifted |
 | ARKPII021 | Error | The compliance baseline is invalid or classification was weakened |
 | LOGGEN035 | Error | A generated logging parameter leaks sensitive data |
@@ -138,8 +138,10 @@ EF Core interceptors, and Azure Functions middleware), use the injected
 remains structured NLog with invariant culture. The LOGGEN policy does **not**
 activate Microsoft's runtime redaction by itself. Register
 `services.AddArkRedaction()` to configure both Microsoft redactors and logging
-redaction; `ARKPII013` reports a referenced Microsoft telemetry stack without
-that registration. `LOGGEN035` is also proven against an Ark-classified record
+redaction; `ARKPII013` reports an executable, non-test host that references the
+Microsoft telemetry stack without that registration (libraries and test
+projects are exempt, as only the composition root can register services).
+`LOGGEN035` is also proven against an Ark-classified record
 member in the clean-consumer fixture, so no adapter or bridge is required.
 
 ### 1. Microsoft.CodeAnalysis.NetAnalyzers (Built-in)

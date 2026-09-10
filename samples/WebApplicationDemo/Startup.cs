@@ -2,6 +2,7 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Compliance;
 
 using Asp.Versioning;
 using Asp.Versioning.Conventions;
@@ -44,6 +45,8 @@ public class Startup : ArkStartupWebApi
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
+
+        services.AddArkRedaction();
 
         var auth0Scheme = "Auth0";
         var audience = "Audience";

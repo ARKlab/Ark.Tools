@@ -1,7 +1,7 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Tests.Init;
-using Ark.Tools.Core;
 using Ark.Tools.Compliance;
+using Ark.Tools.Core;
 
 using AwesomeAssertions;
 
@@ -35,9 +35,9 @@ public sealed class BookSteps
     {
         var testBooks = new[]
         {
-            new Book.V1.Create { Title = "Clean Code", Author = ComplianceFakes.PersonName(), Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0132350884" },
-            new Book.V1.Create { Title = "Design Patterns", Author = ComplianceFakes.PersonName(2), Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0201633610" },
-            new Book.V1.Create { Title = "The Hobbit", Author = ComplianceFakes.PersonName(1), Genre = Common.Enum.BookGenre.Fiction, ISBN = "978-0345339683" }
+            new Book.V1.Create { Title = "Clean Code", Author = PersonName.From(ComplianceFakes.PersonName()), Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0132350884" },
+            new Book.V1.Create { Title = "Design Patterns", Author = PersonName.From(ComplianceFakes.PersonName(2)), Genre = Common.Enum.BookGenre.Technology, ISBN = "978-0201633610" },
+            new Book.V1.Create { Title = "The Hobbit", Author = PersonName.From(ComplianceFakes.PersonName(1)), Genre = Common.Enum.BookGenre.Fiction, ISBN = "978-0345339683" }
         };
 
         foreach (var book in testBooks)
@@ -213,7 +213,7 @@ public sealed class BookSteps
         if (!string.IsNullOrWhiteSpace(expected.Title))
             output!.Title.Should().Be(expected.Title);
 
-        if (!string.IsNullOrWhiteSpace(expected.Author))
+        if (expected.Author is not null)
             output!.Author.Should().Be(expected.Author);
 
         if (expected.Genre.HasValue && expected.Genre.Value != Common.Enum.BookGenre.NotSet)

@@ -2,6 +2,7 @@ using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using System.Security.Claims;
@@ -48,7 +49,7 @@ public class Book_UpdateRequestHandler : IRequestHandler<Book_UpdateRequest.V1, 
             Author = request.Data.Author,
             Genre = request.Data.Genre,
             ISBN = request.Data.ISBN,
-            Description = $"Book updated: {request.Data.Title} by {ComplianceReferenceData._mask(request.Data.Author)}"
+            Description = $"Book updated: {request.Data.Title} by {request.Data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description"))}"
         };
 
         await ctx.PutBookAsync(updateBookData, ctk).ConfigureAwait(false);

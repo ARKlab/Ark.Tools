@@ -7,7 +7,6 @@ using Ark.Tools.Compliance.NLog;
 using NLog;
 using NLog.Common;
 using NLog.Config;
-using NLog.Layouts;
 using NLog.Targets;
 
 using System.Collections.Concurrent;
@@ -46,9 +45,10 @@ internal sealed class ComplianceLogCollector : IDisposable
     public void Dispose()
     {
         LogManager.Flush(TimeSpan.FromSeconds(2));
-        _configuration.RemoveRule(_rule);
+        _configuration.LoggingRules.Remove(_rule);
         _configuration.RemoveTarget("ComplianceTest");
         LogManager.Configuration = _configuration;
+        _target.Dispose();
     }
 
     private sealed class CollectorTarget : TargetWithLayout

@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Reference.Core.Tests.Init;
-using Ark.Tools.Compliance;
 using Ark.Tools.Compliance.OpenApi;
 
 using AwesomeAssertions;
@@ -33,7 +32,7 @@ public sealed class SwaggerSteps
         var authorSchemas = schemas.EnumerateObject()
             .SelectMany(static schema => _properties(schema.Value)
                 .Where(static property => property.Name.Equals("author", StringComparison.OrdinalIgnoreCase))
-                .Select(property => property.Value))
+                .Select(static property => property.Value))
             .ToArray();
 
         authorSchemas.Should().NotBeEmpty();

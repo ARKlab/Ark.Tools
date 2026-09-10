@@ -1,10 +1,11 @@
 <Project>
   <PropertyGroup>
     <ArkComplianceSurfaceTargetsImported>true</ArkComplianceSurfaceTargetsImported>
-    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == '' AND '$(EnableArkToolsCompliance)' == 'false'">false</ArkComplianceSurfaceEnabled>
-    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == ''">true</ArkComplianceSurfaceEnabled>
-    <EmitCompilerGeneratedFiles Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' != 'false'">true</EmitCompilerGeneratedFiles>
-    <CompilerGeneratedFilesOutputPath Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' != 'false' AND '$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+    <!-- The surface gate follows the opt-in compliance model: unset EnableArkToolsCompliance means disabled. -->
+    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == '' AND '$(EnableArkToolsCompliance)' == 'true'">true</ArkComplianceSurfaceEnabled>
+    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == ''">false</ArkComplianceSurfaceEnabled>
+    <EmitCompilerGeneratedFiles Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' == 'true'">true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' == 'true' AND '$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,7 +30,7 @@
 
   <Target Name="ArkComplianceSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
-          Condition="'$(EnableArkToolsCompliance)' != 'false' AND '$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(IsCrossTargetingBuild)' != 'true' AND '$(DesignTimeBuild)' != 'true' AND '$(SkipCompilerExecution)' != 'true'">
+          Condition="'$(EnableArkToolsCompliance)' == 'true' AND '$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(IsCrossTargetingBuild)' != 'true' AND '$(DesignTimeBuild)' != 'true' AND '$(SkipCompilerExecution)' != 'true'">
     <PropertyGroup>
       <_ArkComplianceGeneratedSurface>$(CompilerGeneratedFilesOutputPath)/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator/ArkComplianceSurface.g.cs</_ArkComplianceGeneratedSurface>
     </PropertyGroup>

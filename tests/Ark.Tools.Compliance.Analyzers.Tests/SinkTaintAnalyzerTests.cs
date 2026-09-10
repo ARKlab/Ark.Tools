@@ -396,20 +396,49 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII002");
     }
 
-    /// <summary>Sensitive contract types and generic constraints preserve classification even without attributes.</summary>
+    /// <summary>Sensitive value objects render redacted everywhere, so masked usage is legal at every sink.</summary>
     [TestMethod]
-    public async Task SensitiveContractAndConstraint_AreRecognized()
+    [DataRow("new NLog.Logger().Info(\"{value}\", value);")]
+    [DataRow("new NLog.Logger().Info($\"User {value}\");")]
+    [DataRow("var text = value.ToString();")]
+    [DataRow("var text = $\"User {value}\";")]
+    [DataRow("new System.Diagnostics.Activity(\"test\").SetTag(\"name\", value.ToString());")]
+    [DataRow("var text = value.Reveal(CompliancePurpose.SendTransactionalEmail);")]
+    [DataRow("var text = $\"By {value.Reveal(CompliancePurpose.SendTransactionalEmail)}\";")]
+    public async Task SensitiveValueObjects_SelfProtectAtSinks(string statement)
     {
-        var diagnostics = await _analyzeAsync("""
+        var diagnostics = await _analyzeAsync($$"""
             using Ark.Tools.Compliance;
-            readonly struct ProtectedValue : ISensitiveValue<ProtectedValue> { }
+            readonly struct ProtectedValue : ISensitiveValue<ProtectedValue>
+            {
+                public string Reveal(CompliancePurpose purpose) => "";
+            }
             class Case
             {
-                void Concrete(ProtectedValue value) { new NLog.Logger().Info("{value}", value); }
-                void Generic<T>(T value) where T : ISensitiveValue<T> { new NLog.Logger().Info("{value}", value); }
+                void Concrete(ProtectedValue value) { {{statement}} }
             }
             """).ConfigureAwait(false);
-        diagnostics.Count(static diagnostic => diagnostic.Id == "ARKPII002").Should().Be(2);
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Reveal on a sensitive value object still requires an explicit purpose.</summary>
+    [TestMethod]
+    [DataRow("var text = value.Reveal(default);")]
+    [DataRow("var text = value.Reveal(new CompliancePurpose());")]
+    public async Task SensitiveValueObjects_RevealWithoutPurposeIsRejected(string statement)
+    {
+        var diagnostics = await _analyzeAsync($$"""
+            using Ark.Tools.Compliance;
+            readonly struct ProtectedValue : ISensitiveValue<ProtectedValue>
+            {
+                public string Reveal(CompliancePurpose purpose) => "";
+            }
+            class Case
+            {
+                void Concrete(ProtectedValue value) { {{statement}} }
+            }
+            """).ConfigureAwait(false);
+        diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII005");
     }
 
     /// <summary>Cycles terminate and inherited classified members remain visible through non-record containers.</summary>

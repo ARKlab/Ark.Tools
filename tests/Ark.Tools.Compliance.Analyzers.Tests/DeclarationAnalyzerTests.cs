@@ -294,7 +294,8 @@ public sealed class DeclarationAnalyzerTests
     {
         var diagnostics = await _analyzeAsync(
             "class Startup { void Configure(object services) { } }",
-            references: [_telemetryReference()]).ConfigureAwait(false);
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
 
         diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII013");
     }
@@ -315,6 +316,18 @@ public sealed class DeclarationAnalyzerTests
             }
             class Startup { void Configure(object services) { services.AddArkRedaction(); } }
             """,
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Only a composition root can register redaction; libraries are exempt from the telemetry guard.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryInLibraryIsAccepted()
+    {
+        var diagnostics = await _analyzeAsync(
+            "class Startup { void Configure(object services) { } }",
             references: [_telemetryReference()]).ConfigureAwait(false);
 
         diagnostics.Should().BeEmpty();
@@ -323,12 +336,13 @@ public sealed class DeclarationAnalyzerTests
     private static CSharpCompilation _compilation(
         string source,
         IEnumerable<MetadataReference>? references = null,
-        bool includeStubs = true)
+        bool includeStubs = true,
+        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary)
     {
         return CSharpCompilation.Create("DeclarationTests",
             [CSharpSyntaxTree.ParseText((includeStubs ? _stubs : string.Empty) + source, path: "Tests.cs")],
             (references ?? []).Concat(_references()),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(outputKind));
     }
 
     private static MetadataReference _telemetryReference()
@@ -352,9 +366,10 @@ public sealed class DeclarationAnalyzerTests
         string source,
         ImmutableArray<AdditionalText> files = default,
         AnalyzerConfigOptionsProvider? options = null,
-        IEnumerable<MetadataReference>? references = null)
+        IEnumerable<MetadataReference>? references = null,
+        OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary)
     {
-        var compilation = _compilation(source, references);
+        var compilation = _compilation(source, references, outputKind: outputKind);
         return await compilation.WithAnalyzers(
                 [new DeclarationComplianceAnalyzer()],
                 _analyzerOptions(files, options))

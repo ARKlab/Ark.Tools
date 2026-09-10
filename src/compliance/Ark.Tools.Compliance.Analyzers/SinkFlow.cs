@@ -43,6 +43,29 @@ internal sealed class SinkFlow
         return _exhausted ? null : result;
     }
 
+    /// <summary>A sensitive value object renders redacted everywhere (ToString/TryFormat/debugger); only Reveal yields cleartext.</summary>
+    internal static bool _isSelfProtecting(ITypeSymbol? type)
+    {
+        if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
+        {
+            type = nullable.TypeArguments.FirstOrDefault();
+        }
+
+        if (type is not INamedTypeSymbol named)
+        {
+            return false;
+        }
+
+        if (named.GetAttributes().Any(static attribute =>
+            attribute.AttributeClass?.OriginalDefinition.MetadataName == "SensitiveValueObjectAttribute`1"
+            && attribute.AttributeClass?.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance"))
+        {
+            return true;
+        }
+
+        return _isSensitiveContract(named) || named.AllInterfaces.Any(_isSensitiveContract);
+    }
+
     internal static bool _isRedacted(IOperation operation)
     {
         if (operation.Type?.ToDisplayString() == "Ark.Tools.Compliance.RedactedValue")
@@ -72,7 +95,8 @@ internal sealed class SinkFlow
 
     private Source? _find(IOperation? operation, int depth)
     {
-        if (operation is null || !_enter(depth) || operation.ConstantValue.HasValue || _isRedacted(operation))
+        if (operation is null || !_enter(depth) || operation.ConstantValue.HasValue || _isRedacted(operation)
+            || _isSelfProtecting(operation.Type))
         {
             return null;
         }
@@ -145,7 +169,7 @@ internal sealed class SinkFlow
 
     private Source? _direct(IOperation? operation, int depth)
     {
-        if (operation is null || !_enter(depth))
+        if (operation is null || !_enter(depth) || _isSelfProtecting(operation.Type))
         {
             return null;
         }
@@ -310,7 +334,7 @@ internal sealed class SinkFlow
 
     private Source? _type(ITypeSymbol? type, int depth, HashSet<ITypeSymbol> visited)
     {
-        if (type is null || !_enter(depth) || !visited.Add(type))
+        if (type is null || !_enter(depth) || !visited.Add(type) || _isSelfProtecting(type))
         {
             return null;
         }

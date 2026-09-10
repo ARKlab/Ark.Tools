@@ -1099,6 +1099,7 @@
         "dependencies": {
           "Ark.Tools.AspNetCore": "[1.0.0, )",
           "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Hosting": "[1.0.0, )",
           "Ark.Tools.Http": "[1.0.0, )",
