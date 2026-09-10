@@ -64,8 +64,8 @@ the same guarantees as the NLog path.
 
 - [x] `ArkComplianceMode` has exactly two states and one documented opt-out.
 - [x] The packaged config is inert without the analyzer package.
-- [ ] LOGGEN guards are escalated and proven against Ark-classified types.
-- [ ] `AddArkRedaction()` and `ARKPII013` remove the half-configured state.
+- [x] LOGGEN guards are escalated and proven against Ark-classified types.
+- [x] `AddArkRedaction()` and `ARKPII013` remove the half-configured state.
 - [x] Documentation covers the rules and the Microsoft-logging boundary rule.
 - [x] The [task board](../README.md) status for PII-IMP-10 matches this task.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
@@ -84,9 +84,11 @@ the same guarantees as the NLog path.
   files. `ARKPII001` remains a warning under `TreatWarningsAsErrors`.
 - `docs/analyzers.md` documents the default policy, opt-out, per-rule overrides,
   and Microsoft-stack logging boundary.
-- Pending: `AddArkRedaction()`, `ARKPII013`, and an actual LOGGEN generator
-  compatibility test. Microsoft telemetry/redaction packages are not currently
-  repository dependencies; no new third-party packages were introduced.
+- `AddArkRedaction()` configures both Microsoft redaction and logging redaction;
+  `ARKPII013` rejects telemetry consumers without that registration.
+- The clean-consumer fixture proves `LOGGEN035` against an Ark-classified record
+  member without an adapter or bridge. Microsoft telemetry/redaction packages
+  are pinned centrally and pass the dependency advisory scan.
 - Focused validation: SDK test-project build passed with zero warnings/errors;
   `ComplianceConfigurationIsDefaultOnAndSwitchable` and
   `CompilerConfigurationPrecedenceAndBannedApiAreEnforced` both passed. These

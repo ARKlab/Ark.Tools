@@ -136,10 +136,11 @@ Inside Microsoft stack extension points (middleware, filters, hosted services,
 EF Core interceptors, and Azure Functions middleware), use the injected
 `ILogger<T>`; `NLogConfigurer` bridges that path to NLog. Ordinary Ark logging
 remains structured NLog with invariant culture. The LOGGEN policy does **not**
-activate Microsoft's runtime redaction. The combined `AddArkRedaction()` helper,
-`ARKPII013` implementation, and LOGGEN integration proof remain pending; they
-require the Microsoft telemetry/redaction packages, which are not currently
-dependencies of this repository.
+activate Microsoft's runtime redaction by itself. Register
+`services.AddArkRedaction()` to configure both Microsoft redactors and logging
+redaction; `ARKPII013` reports a referenced Microsoft telemetry stack without
+that registration. `LOGGEN035` is also proven against an Ark-classified record
+member in the clean-consumer fixture, so no adapter or bridge is required.
 
 ### 1. Microsoft.CodeAnalysis.NetAnalyzers (Built-in)
 

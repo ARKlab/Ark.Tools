@@ -75,7 +75,7 @@ SDK-IMP-03's asset conventions.
 | [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Complete |
 | [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Complete |
 | [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Complete |
-| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Partial |
+| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | In progress |
 | [PII-IMP-11](compliance/PII-IMP-11-reference-project-adoption.md) | ReferenceProject adoption and end-to-end proof | Migration | Pending |
 
 PII-IMP-01 unblocks everything. PII-IMP-02, PII-IMP-04, and PII-IMP-07 can then
