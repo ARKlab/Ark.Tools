@@ -183,7 +183,7 @@ internal sealed class SinkFlow
     internal IReadOnlyList<IOperation> _localValues(ILocalReferenceOperation reference, int depth = 0)
     {
         var root = (IOperation)reference;
-        while (root.Parent is not null && root.Parent is not IAnonymousFunctionOperation and not ILocalFunctionOperation)
+        while (root.Parent is not (null or IAnonymousFunctionOperation or ILocalFunctionOperation))
         {
             if (!_enter(depth))
             {

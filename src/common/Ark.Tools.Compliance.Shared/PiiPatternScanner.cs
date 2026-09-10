@@ -19,7 +19,7 @@ internal static partial class PiiPatternScanner
     private static readonly SearchValues<char> _candidates = SearchValues.Create("@0123456789");
 
     [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
-    private static partial Regex _regex();
+    private static partial Regex _regex { get; }
 
     internal static string _redact(string value, string replacement)
     {
