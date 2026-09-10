@@ -51,11 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj"
-                      ReferenceOutputAssembly="false"
-                      AdditionalProperties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)" />
+                      ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj"
-                      ReferenceOutputAssembly="false"
-                      AdditionalProperties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)" />
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Script.PostDeployment.sql">
@@ -69,15 +67,29 @@
     <Folder Include="Security\" />
     <Folder Include="_Migrations\" />
   </ItemGroup>
-  <Target Name="ArkMaterializeComplianceSql" BeforeTargets="Build"
+  <Target Name="ArkMaterializeComplianceSql" BeforeTargets="_SetupSqlBuildInputs;SqlBuild"
           Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
-      <_ArkComplianceSqlPolicy Include="$(ArkComplianceSqlOutputPath)\policy-*.compliance.sql" />
+      <_ArkComplianceSqlPolicyToDelete Include="$(ArkComplianceSqlOutputPath)\**\policy-*.compliance.sql" />
     </ItemGroup>
+    <Delete Files="@(_ArkComplianceSqlPolicyToDelete)" />
+    <MSBuild Projects="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj"
+            Targets="ArkGenerateComplianceSql"
+            Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\Ark.Reference.Common;EnableArkToolsCompliance=true"
+            BuildInParallel="false" />
+    <MSBuild Projects="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj"
+            Targets="ArkGenerateComplianceSql"
+            Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\Ark.Reference.Core.Common;EnableArkToolsCompliance=true"
+            BuildInParallel="false" />
+    <ItemGroup>
+      <_ArkComplianceSqlPolicy Include="$(ArkComplianceSqlOutputPath)\**\policy-*.compliance.sql" />
+    </ItemGroup>
+    <MakeDir Directories="$(ArkComplianceSqlOutputPath)"
+            Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0" />
     <Delete Files="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
-            Condition="@(_ArkComplianceSqlPolicy->Count()) == 0" />
-    <ReadLinesFromFile Files="@(_ArkComplianceSqlPolicy)"
-                       Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0">
+           Condition="@(_ArkComplianceSqlPolicy->Count()) == 0" />
+    <ReadLinesFromFile File="%(_ArkComplianceSqlPolicy.Identity)"
+                      Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0">
       <Output TaskParameter="Lines" ItemName="_ArkComplianceSqlLine" />
     </ReadLinesFromFile>
     <WriteLinesToFile File="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
