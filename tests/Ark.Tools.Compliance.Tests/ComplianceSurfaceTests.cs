@@ -364,8 +364,15 @@ public sealed class ComplianceSurfaceTests
         while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "Ark.Tools.slnx")))
             repository = repository.Parent;
         repository.Should().NotBeNull();
-        var targets = Path.Combine(repository!.FullName, "src", "compliance", "Ark.Tools.Compliance.Generators",
-            "buildTransitive", "Ark.Tools.Compliance.Surface.targets");
+        var relativeSegments = new[]
+        {
+            "src", "compliance", "Ark.Tools.Compliance.Generators", "buildTransitive",
+            "Ark.Tools.Compliance.Surface.targets"
+        };
+        if (relativeSegments.Any(Path.IsPathRooted))
+            throw new InvalidOperationException("Compliance target path segments must be relative.");
+
+        var targets = Path.Combine(repository!.FullName, relativeSegments);
         var directory = Path.Combine(AppContext.BaseDirectory, "SurfaceTargetTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
