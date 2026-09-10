@@ -40,7 +40,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
     internal static readonly DiagnosticDescriptor _missingRedactionRegistration = new(
         "ARKPII013", "Register Ark redaction for Microsoft telemetry",
         "Project references Microsoft.Extensions.Telemetry but does not call AddArkRedaction(); classified logging can remain unredacted",
-        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, customTags: ["CompilationEnd"]);
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
@@ -76,7 +76,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                     {
                         Interlocked.Exchange(ref hasRedactionRegistration, 1);
                     }
-                }, Microsoft.CodeAnalysis.Operations.OperationKind.Invocation);
+                }, Microsoft.CodeAnalysis.OperationKind.Invocation);
                 start.RegisterCompilationEndAction(endContext =>
                 {
                     if (Volatile.Read(ref hasRedactionRegistration) == 0)

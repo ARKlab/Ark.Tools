@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Telemetry;
+using Microsoft.Extensions.Logging;
 
 namespace Ark.Tools.Compliance;
 

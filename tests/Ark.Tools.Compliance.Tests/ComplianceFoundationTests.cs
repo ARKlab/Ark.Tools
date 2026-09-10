@@ -6,6 +6,8 @@ using AwesomeAssertions;
 using Ark.Tools.Compliance.Dapper;
 
 using Microsoft.Extensions.Compliance.Classification;
+using Microsoft.Extensions.Compliance.Redaction;
+using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -211,6 +213,21 @@ public sealed class ComplianceFoundationTests
         new PseudonymousAttribute().Classification.Should().Be(ArkDataClassifications.Pseudonymous);
 
         typeof(PersonalDataAttribute).BaseType.Should().Be<DataClassificationAttribute>();
+    }
+
+    /// <summary>Ark redaction registers classification-aware and fallback redactors.</summary>
+    [TestMethod]
+    public void ArkRedaction_RegistersFailClosedMicrosoftPipeline()
+    {
+        using var provider = new ServiceCollection()
+            .AddArkRedaction()
+            .BuildServiceProvider();
+        var redactorProvider = provider.GetRequiredService<IRedactorProvider>();
+
+        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.PersonalData))
+            .Redact("person@example.com").Should().Be("***");
+        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.Secret))
+            .Redact("secret-value").Should().Be("***");
     }
 
     /// <summary>

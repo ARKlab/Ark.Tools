@@ -151,6 +151,62 @@ public sealed class SdkPackageTests
         StringAssert.Contains(unsupported.Output, "ArkComplianceMode is derived", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Proves that LOGGEN recognizes an Ark classification without an adapter.
+    /// </summary>
+    [TestMethod]
+    public async Task LoggerGenerationRejectsArkClassifiedParameter()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-loggen-compatibility");
+        var scenarioRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            _feed,
+            "loggen",
+            "Consumer.csproj",
+            _createSdkLoggingProject()).ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Consumer.cs"),
+            """
+            #pragma warning disable CS1591, CA1050, MA0047
+            using Microsoft.Extensions.Logging;
+            using Ark.Tools.Compliance;
+
+            namespace Ark.Tools.Compliance
+            {
+                [AttributeUsage(AttributeTargets.Parameter)]
+                public sealed class PersonalDataAttribute : Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute
+                {
+                    public PersonalDataAttribute() : base(new("Ark", "PersonalData")) { }
+                }
+
+                public static class Registration
+                {
+                    public static void AddArkRedaction(this object services) { }
+                }
+            }
+
+            public record Customer([property: PersonalData] string Email);
+
+            public static partial class Log
+            {
+                [LoggerMessage(1, LogLevel.Information, "Customer {Customer}")]
+                public static partial void Write(ILogger logger, Customer customer);
+            }
+
+            public static class Startup
+            {
+                public static void Configure(object services) => services.AddArkRedaction();
+            }
+            """).ConfigureAwait(false);
+
+        var result = await _runForExitCode(
+            "dotnet",
+            $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"",
+            _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
+        Assert.AreNotEqual(0, result.ExitCode);
+        StringAssert.Contains(result.Output, "LOGGEN035", StringComparison.Ordinal);
+    }
+
     private static readonly string[] _allSyntheticAnalyzers =
     [
         "DevLooped.SponsorLink.dll",
@@ -1130,6 +1186,23 @@ public sealed class ConsumerTests
     <TargetFramework>{targetFramework}</TargetFramework>
     {properties}
   </PropertyGroup>
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+""";
+    }
+
+    private static string _createSdkLoggingProject()
+    {
+        return """
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.9.0" />
+  </ItemGroup>
   <Sdk Name="Ark.Tools.Sdk" />
 </Project>
 """;
