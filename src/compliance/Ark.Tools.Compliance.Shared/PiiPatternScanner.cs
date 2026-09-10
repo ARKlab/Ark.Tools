@@ -36,7 +36,7 @@ internal static partial class PiiPatternScanner
             return value;
         try
         {
-            StringBuilder? builder = null;
+            System.Text.StringBuilder? builder = null;
             var previous = 0;
 #if NET10_0_OR_GREATER
             for (var match = _regex.Match(value); match.Success; match = match.NextMatch())
@@ -51,7 +51,7 @@ internal static partial class PiiPatternScanner
                     : PersonalDataKind.Email;
                 if (!PersonalDataPatterns._isChecksumValid(kind, match.Value))
                     continue;
-                builder ??= new StringBuilder(value.Length);
+                builder ??= new System.Text.StringBuilder(value.Length);
                 builder.Append(value, previous, match.Index - previous);
                 builder.Append(replacement);
                 previous = match.Index + match.Length;
