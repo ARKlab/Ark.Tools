@@ -158,6 +158,7 @@ public sealed class SdkPackageTests
     public async Task LoggerGenerationRejectsArkClassifiedParameter()
     {
         var fixtureRoot = Path.Join(_root, "artifacts", "sdk-loggen-compatibility");
+        _prepareSdkFixture(fixtureRoot);
         var scenarioRoot = await _createSdkScenarioAsync(
             fixtureRoot,
             _feed,
@@ -173,7 +174,7 @@ public sealed class SdkPackageTests
 
             namespace Ark.Tools.Compliance
             {
-                [AttributeUsage(AttributeTargets.Parameter)]
+                [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
                 public sealed class PersonalDataAttribute : Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute
                 {
                     public PersonalDataAttribute() : base(new("Ark", "PersonalData")) { }
