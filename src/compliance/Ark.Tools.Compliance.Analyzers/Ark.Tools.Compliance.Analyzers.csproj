@@ -10,6 +10,7 @@
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <IncludeSymbols>false</IncludeSymbols>
     <DevelopmentDependency>true</DevelopmentDependency>
+    <ArkToolsComplianceAnalyzerProject>true</ArkToolsComplianceAnalyzerProject>
     <Description>Privacy declaration, fixture and sink diagnostics for Ark.Tools.</Description>
     <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
   </PropertyGroup>

@@ -6,6 +6,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
+    <ArkToolsComplianceAnalyzerProject>true</ArkToolsComplianceAnalyzerProject>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
   </PropertyGroup>

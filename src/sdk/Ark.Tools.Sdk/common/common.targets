@@ -26,7 +26,7 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false"
                       PrivateAssets="all"
-                      Condition="'$(EnableArkToolsCompliance)' != 'false' and '$(_ArkToolsSdkSourceBuild)' == 'true'" />
+                      Condition="'$(EnableArkToolsCompliance)' != 'false' and '$(_ArkToolsSdkSourceBuild)' == 'true' and '$(ArkToolsComplianceAnalyzerProject)' != 'true'" />
   </ItemGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)../../../compliance/Ark.Tools.Compliance.Analyzers/buildTransitive/Ark.Tools.Compliance.Analyzers.props"
