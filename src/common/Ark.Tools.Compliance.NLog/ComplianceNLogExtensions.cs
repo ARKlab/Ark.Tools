@@ -9,27 +9,20 @@ namespace Ark.Tools.Compliance.NLog;
 /// <summary>Registers the stateless NLog adapters used by Ark compliance configuration.</summary>
 public static class ComplianceNLogExtensions
 {
-    /// <summary>The configuration variable that enables exception redaction.</summary>
-    public const string RedactionVariable = "ArkComplianceRedaction";
-
-    /// <summary>Enables NLog message-template parsing and compliance-aware value formatting.</summary>
+    /// <summary>Enables NLog message-template parsing for safe generated value formatting.</summary>
     /// <param name="builder">The NLog serialization setup builder.</param>
-    /// <param name="formatter">The formatter used for values after redaction.</param>
-    /// <param name="redactor">The immutable runtime redaction policy.</param>
+    /// <param name="formatter">The formatter used for ordinary values.</param>
     /// <returns>The same setup builder for chaining.</returns>
     public static ISetupSerializationBuilder UseComplianceRedaction(
         this ISetupSerializationBuilder builder,
-        IValueFormatter formatter,
-        ComplianceRedactor redactor)
+        IValueFormatter formatter)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(formatter);
-        ArgumentNullException.ThrowIfNull(redactor);
 
         return builder
             .ParseMessageTemplates(true)
-            .RegisterValueFormatter(new ComplianceValueFormatter(formatter, redactor))
-            .RegisterObjectTransformation<IRuntimeClassifiedValue>(value => redactor.Redact(value)!);
+            .RegisterValueFormatter(formatter);
     }
 
     /// <summary>Enables NLog message-template parsing with an ordinary value formatter.</summary>
@@ -48,16 +41,4 @@ public static class ComplianceNLogExtensions
             .RegisterValueFormatter(formatter);
     }
 
-    /// <summary>Registers the layout renderer used for exception redaction.</summary>
-    /// <param name="builder">The NLog extensions setup builder.</param>
-    /// <returns>The same setup builder for chaining.</returns>
-    public static ISetupExtensionsBuilder RegisterComplianceLayoutRenderers(
-        this ISetupExtensionsBuilder builder)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        return builder
-            .RegisterLayoutRenderer<ComplianceExceptionLayoutRenderer>("ark.compliance.exception")
-            ;
-    }
 }

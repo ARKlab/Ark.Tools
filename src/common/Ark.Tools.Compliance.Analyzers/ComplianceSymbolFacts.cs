@@ -18,7 +18,9 @@ internal static class ComplianceSymbolFacts
 
     internal static bool _isAttribute(AttributeData attribute, string name)
     {
-        return attribute.AttributeClass?.ToDisplayString() == "Ark.Tools.Compliance." + name;
+        var qualifiedName = "Ark.Tools.Compliance." + name;
+        return attribute.AttributeClass?.ToDisplayString() == qualifiedName
+            || attribute.AttributeClass?.OriginalDefinition.ToDisplayString() == qualifiedName;
     }
 
     internal static bool _isClassified(ISymbol? symbol)

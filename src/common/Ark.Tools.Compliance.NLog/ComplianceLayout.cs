@@ -10,28 +10,28 @@ namespace Ark.Tools.Compliance.NLog;
 public sealed class ComplianceLayout : Layout
 {
     private readonly Layout _inner;
-    private readonly Func<ComplianceRedactor?> _redactorProvider;
+    private readonly Func<PiiScanner?> _scannerProvider;
 
     /// <summary>Initializes a layout wrapper.</summary>
     /// <param name="inner">The configured layout to render.</param>
-    /// <param name="redactorProvider">Provides the current runtime redaction policy.</param>
-    public ComplianceLayout(Layout inner, Func<ComplianceRedactor?> redactorProvider)
+    /// <param name="scannerProvider">Provides the current PII scanner.</param>
+    public ComplianceLayout(Layout inner, Func<PiiScanner?> scannerProvider)
     {
         ArgumentNullException.ThrowIfNull(inner);
-        ArgumentNullException.ThrowIfNull(redactorProvider);
+        ArgumentNullException.ThrowIfNull(scannerProvider);
         _inner = inner;
-        _redactorProvider = redactorProvider;
+        _scannerProvider = scannerProvider;
     }
 
     protected override void RenderFormattedMessage(LogEventInfo logEvent, StringBuilder target)
     {
         var rendered = _inner.Render(logEvent);
-        target.Append(_redactorProvider()?.Scan(rendered) ?? rendered);
+        target.Append(_scannerProvider()?.Scan(rendered) ?? rendered);
     }
 
     protected override string GetFormattedMessage(LogEventInfo logEvent)
     {
         var rendered = _inner.Render(logEvent);
-        return _redactorProvider()?.Scan(rendered) ?? rendered;
+        return _scannerProvider()?.Scan(rendered) ?? rendered;
     }
 }

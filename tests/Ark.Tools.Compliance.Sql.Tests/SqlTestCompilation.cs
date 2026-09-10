@@ -11,6 +11,10 @@ internal static class SqlTestCompilation
     private static readonly MetadataReference[] _references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
         .Split(Path.PathSeparator)
         .Select(static path => MetadataReference.CreateFromFile(path))
+        .Concat([
+            MetadataReference.CreateFromFile(typeof(SensitiveValueObjectAttribute<>).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(SqlDataPolicyAttribute).Assembly.Location),
+        ])
         .ToArray();
 
     internal static CSharpCompilation _create(string source)

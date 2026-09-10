@@ -117,21 +117,14 @@ These are separate concerns:
 
 - `[SensitiveValueObject<T>]` remains the generator contract. The generated type is intrinsically sensitive.
 - The generator receives the redaction behavior as an explicit type-level setting, or applies a documented default.
-- `[PersonalData]`, `[SensitivePersonalData]`, `[Secret]`, and `[Pseudonymous]` become classification/inventory metadata, not runtime proof that a value needs redaction.
+- `[PersonalData]`, `[SensitivePersonalData]`, `[Secret]`, and `[Pseudonymous]` remain on the generated value-object declaration for inventory and policy tooling, not as usage-site annotations or runtime proof that a value needs redaction.
 - A separate `[SensitiveData]` marker should not be introduced merely to make runtime redaction discoverable.
-- If a classification is required for analyzer, inventory, SQL, or egress policy, it may remain as metadata on the generated type or its declaration. Its absence must not make the type render cleartext.
+- The redaction setting is part of the generated type and its generated rendering methods. Developers do not repeat classification attributes at usage sites; analyzers guide them toward dedicated types such as `SensitiveEmail` or `PrivacyEmail` when policy variants are needed.
 - Ordinary `string` remains ordinary text. The analyzer should require a generated sensitive type or an explicit reviewed exemption where the domain says a string carries regulated data.
 
 This preserves the useful taxonomy without requiring every sink to rediscover it.
 
-### Question to resolve
-
-Should classification metadata be:
-
-1. retained on the value-object declaration for inventory and policy tooling; or
-2. moved to a separate catalog/attribute that never participates in runtime rendering?
-
-Either choice is compatible with intrinsic sensitivity. The important invariant is that sink safety cannot depend on the classification attribute being present.
+Classification metadata is retained on the value-object declaration. The important invariant is that sink safety comes from the generated type and cannot depend on an attribute being repeated at a usage site.
 
 ## 5. NLog design after the reset
 
@@ -152,7 +145,7 @@ The revised NLog integration should therefore:
 - keep NLog's normal message-template parser and formatter;
 - allow generated sensitive values to flow through their safe `ToString`/formatting methods;
 - allow NLog's serializer to recurse normally;
-- avoid a general `ComplianceValueFormatter` that converts arbitrary objects through `ComplianceRedactor`;
+- ensure `JsonLayout` treats generated values as ordinary rendered values, not as transport properties; its output must use the safe generated representation rather than the transport converter that calls `Reveal`;
 - avoid `RegisterObjectTransformation` for general compliance traversal;
 - retain `ComplianceLayout` only where Ark explicitly owns a final text layout and pattern scanning is enabled.
 
@@ -251,7 +244,7 @@ This review does not authorize the changes, but the resulting implementation sho
 
 - `ComplianceRedactor.Redact(object?)` recursive graph traversal;
 - reflection metadata caches, graph budgets, and cycle handling used only by that traversal;
-- runtime classification dispatch through `IRuntimeClassifiedValue` for ordinary logging;
+- `IRuntimeClassifiedValue` and runtime classification dispatch;
 - general NLog object transformations that recreate serializer behavior;
 - blanket exception marker behavior;
 - separate HMAC key paths.
@@ -266,9 +259,7 @@ This review does not authorize the changes, but the resulting implementation sho
 - analyzer diagnostics and explicit reviewed exemptions;
 - native NLog stack-trace rendering.
 
-### Compatibility concern
-
-Removing `IRuntimeClassifiedValue` from generated values may affect public consumers or existing OTel/NLog adapters. Before removing it, identify whether it is part of the supported public API or only an implementation hook. If retained for compatibility, it should not force recursive runtime redaction; it can expose metadata without being used as a graph-walking trigger.
+The current work is not released, so `IRuntimeClassifiedValue` can be removed rather than preserved as a compatibility shim. No supported adapter should depend on runtime classification after this change.
 
 ## 9. Analyzer and generator implications
 
@@ -295,10 +286,10 @@ The generator should make the safe behavior unambiguous:
 
 Before implementation is accepted, tests should demonstrate:
 
-1. A generated sensitive value is safe through NLog message-template formatting without `ComplianceRedactor.Redact(object?)`.
+1. A generated sensitive value is safe through NLog message-template formatting without a runtime object redactor.
 2. A generated sensitive value is safe as a nested JSON property using NLog's native serializer.
 3. HMAC output is identical through `ToString`, message templates, JSON serialization, and any supported integration.
-4. Missing HMAC configuration fails clearly when HMAC mode is selected.
+4. Missing HMAC configuration fails closed when HMAC mode is selected.
 5. Pattern scanning still masks untyped legacy strings when enabled.
 6. Pattern scanning remains scoped to configured Ark-owned layouts.
 7. An ordinary exception message is retained when it contains no matching pattern.
@@ -319,22 +310,21 @@ If the revised design is accepted:
 - document which classification attributes are metadata-only;
 - update NLog examples to show separate message and stack-trace layouts;
 - update OTel documentation to define its supported boundary;
-- mark any removed public runtime APIs obsolete before deletion if compatibility requires it;
-- add a migration note for consumers relying on blanket exception markers or runtime graph rewriting.
+- add a migration note for consumers relying on blanket exception markers or runtime graph rewriting; the current work is unreleased, so no compatibility shim is required.
 
 ## 12. Decisions requested from the PR
 
-Please confirm these decisions before implementation resumes:
+The review accepts these decisions:
 
-1. **Intrinsic sensitivity:** Is every `[SensitiveValueObject<T>]` generated type sensitive by definition, regardless of classification attributes?
-2. **Classification metadata:** Should personal/secret classification remain for inventory and policy tooling while being removed from runtime sink-safety decisions?
-3. **HMAC lifecycle:** Should one immutable process-level HMAC configuration be the only runtime secret, shared by generated values and integrations?
-4. **Runtime redactor:** May the recursive `ComplianceRedactor.Redact(object?)` path be removed or reduced to text scanning and HMAC support?
-5. **NLog:** Should NLog rely on native formatting/serialization plus scoped Ark layout scanning rather than a general object redactor?
-6. **Exceptions:** Should exception messages retain their original text and receive pattern scanning when enabled, instead of always becoming `***ARKPII***`?
-7. **Stack traces:** Should stack traces remain native and separate from exception-message scanning?
-8. **OTel:** Should the OTel processor be narrowed to supported formatting/export boundaries instead of recursively rewriting tag graphs?
-9. **Compatibility:** Is `IRuntimeClassifiedValue` a supported public contract that must remain, or may it be removed after adapter migration?
+1. **Intrinsic sensitivity:** Every `[SensitiveValueObject<T>]` generated type is sensitive by definition.
+2. **Classification metadata:** Personal/secret classification remains on the generated type for inventory and policy tooling, but is never required at usage sites or used for runtime sink safety.
+3. **HMAC lifecycle:** The generated type's redaction setting selects the only runtime secret, the HMAC key.
+4. **Runtime redactor:** Remove recursive object-graph redaction and use a dedicated `PiiScanner` for PII scanning.
+5. **NLog:** Use native formatting and JSON serialization plus scoped Ark layout scanning. Transport converters that call `Reveal` must not be used by diagnostic JSON layouts.
+6. **Exceptions:** Preserve exception messages and PII-scan them when enabled instead of always emitting `***ARKPII***`.
+7. **Stack traces:** Keep native stack-trace rendering separate from exception-message scanning.
+8. **OTel:** Narrow the processor to generated safe formatting and PII scanning of untyped strings; do not rewrite arbitrary tag graphs.
+9. **Compatibility:** Remove `IRuntimeClassifiedValue`; this design is not released and does not need a compatibility shim.
 
 ## 13. Conclusion
 

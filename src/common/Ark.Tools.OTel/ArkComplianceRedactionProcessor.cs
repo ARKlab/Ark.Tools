@@ -10,21 +10,21 @@ using System.Diagnostics;
 
 namespace Ark.Tools.OTel;
 
-/// <summary>Redacts classified span attributes before they reach an exporter.</summary>
+/// <summary>Scans untyped span text before it reaches an exporter.</summary>
 /// <remarks>
-/// Register before exporters. String tags have no CLR member classification metadata;
-/// retain sensitive value objects until this processor, or enable pattern scanning.
+/// Register before exporters. Generated sensitive values own their safe formatting;
+/// this processor only scans strings when PII scanning is enabled.
 /// Event, link and baggage attributes are outside this processor's scope.
 /// </remarks>
 public sealed class ArkComplianceRedactionProcessor : BaseProcessor<Activity>
 {
-    private readonly ComplianceRedactor _redactor;
+    private readonly PiiScanner _scanner;
 
-    /// <summary>Initializes a span processor with fail-closed defaults.</summary>
+    /// <summary>Initializes a span processor with PII scanning disabled by default.</summary>
     /// <param name="options">Optional policy overrides.</param>
     public ArkComplianceRedactionProcessor(ComplianceRedactionOptions? options = null)
     {
-        _redactor = new(options);
+        _scanner = new(options is null ? PiiScanMode.Off : options.PiiScan);
     }
 
     /// <inheritdoc />
@@ -32,12 +32,15 @@ public sealed class ArkComplianceRedactionProcessor : BaseProcessor<Activity>
     {
         ArgumentNullException.ThrowIfNull(data);
         foreach (var tag in data.TagObjects.ToArray())
-            data.SetTag(tag.Key, _redactor.Redact(tag.Value));
-        if (_redactor.PatternScan != PatternScanMode.Off)
         {
-            data.DisplayName = _redactor.Scan(data.DisplayName);
+            if (tag.Value is string text)
+                data.SetTag(tag.Key, _scanner.Scan(text));
+        }
+        if (_scanner.IsEnabled)
+        {
+            data.DisplayName = _scanner.Scan(data.DisplayName);
             if (data.StatusDescription is not null)
-                data.SetStatus(data.Status, _redactor.Scan(data.StatusDescription));
+                data.SetStatus(data.Status, _scanner.Scan(data.StatusDescription));
         }
     }
 }

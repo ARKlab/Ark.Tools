@@ -11,7 +11,7 @@ namespace Ark.Tools.NLog.Slack;
 [Target(NLogConfigurer.SlackTarget)]
 public class SlackTarget : TargetWithContext
 {
-    internal Func<object?, object?>? _valueRedactor;
+    internal Func<object?, string?>? _valueRedactor;
     internal Layout? _exceptionLayout;
 
     [SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "NLog configuration limitation")]
@@ -80,8 +80,8 @@ public class SlackTarget : TargetWithContext
         if (this.ShouldIncludeProperties(info.LogEvent) || this.ContextProperties.Count > 0)
         {
             var allProperties = this.GetAllProperties(info.LogEvent)
-                .Where(static w => !string.IsNullOrEmpty(w.Key) && !string.IsNullOrEmpty(w.Value?.ToString()))
-                .Select(s => (s.Key, _valueRedactor?.Invoke(s.Value)?.ToString() ?? s.Value?.ToString()));
+                .Select(s => (s.Key, Value: _valueRedactor?.Invoke(s.Value) ?? s.Value?.ToString()))
+                .Where(static w => !string.IsNullOrEmpty(w.Key) && !string.IsNullOrEmpty(w.Value));
 
             slack.AddAttachment(color, allProperties);
         }

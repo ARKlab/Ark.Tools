@@ -627,12 +627,11 @@ private void _logSupportContext(Customer c) { … }
 
 ### 6.9 Runtime redaction (second net)
 
-`Ark.Tools.Compliance.NLog` adds a native NLog value formatter, a configured-layout
-wrapper, and an exception layout renderer to the existing `NLogConfigurer` chain.
-NLog has no log-event interceptor, so `Ark.Tools.NLog` composes those primitives
-only into its own affected layouts. The layout wrapper scans rendered output as a
-last resort without caching or cloning the `LogEventInfo`; unrelated layouts such
-as a database stack trace remain untouched.
+`Ark.Tools.Compliance.NLog` adds a configured-layout wrapper to the existing
+`NLogConfigurer` chain. NLog has no log-event interceptor, so `Ark.Tools.NLog`
+composes the wrapper only into its own affected layouts. The wrapper scans rendered
+output as a last resort without caching or cloning the `LogEventInfo`; unrelated
+layouts such as a database stack trace remain untouched.
 
 **It is on by default.** `NLogConfigurer.WithArkDefaultTargetsAndRules(...)` —
 and therefore `WithDefaultTargetsAndRulesFromConfiguration` and
@@ -657,28 +656,26 @@ NLogConfigurer.For(appName)
     .WithArkDefaultTargetsAndRules(config)
     .WithComplianceRedaction(o =>
     {
-        o.Default = ArkRedaction.Erase;                        // fail closed (default)
-        o.For(ArkDataClassifications.PersonalData, ArkRedaction.Hmac);
-        o.For(ArkDataClassifications.Secret, ArkRedaction.Erase);
-        o.PatternScan = PatternScanMode.MessageAndProperties;  // last-resort text scan, off by default
+        o.PiiScan = PiiScanMode.MessageAndProperties;           // last-resort text scan, off by default
     })
     .Apply();
 ```
 
-Defaults applied without any call: `Default = Erase`, `PersonalData = Hmac`,
-`SensitivePersonalData = Erase`, `Secret = Erase`, `Pseudonymous = None`,
-`PatternScan = Off` (decision PII‑06 — the scan is the only part with a
-measurable cost, and enabling it silently would hide analyzer gaps).
+Defaults applied without any call: generated types use the redaction mode declared
+on their type, and `PiiScan = Off` (decision PII‑06 — the scan is the only part with
+a measurable cost, and enabling it silently would hide analyzer gaps).
 
 Three mechanisms, all AoT-safe:
 
-1. **Typed transformation** — for every generated sensitive value object the
-   generator also emits a registration
-   (`SetupSerialization(s => s.RegisterObjectTransformation<EmailAddress>(…))`),
-   so structured properties are redacted even when they arrive as `object`.
-2. **Value formatter** — an `IValueFormatter` decorator that intercepts message
-   template parameter rendering for classified types not covered above.
-3. **Pattern scan** — a `ComplianceLayout` wrapper running a single pass over
+1. **Generated formatting** — every generated sensitive value object has safe
+   `ToString`, `IFormattable`, `ISpanFormattable`, debugger, and type-conversion
+   behavior. NLog message templates and JSON layouts use those normal formatting
+   surfaces. Transport converters are separate and may call `Reveal` only for an
+   explicit egress purpose.
+2. **Native serialization** — NLog owns traversal of nested event properties and
+   collections. Ark does not clone or recursively rewrite arbitrary object graphs.
+3. **PII scan** — a dedicated `PiiScanner` used by the `ComplianceLayout` wrapper
+   runs a single pass over
    rendered Ark target layouts with `[GeneratedRegex]`-compiled
    patterns pre-filtered by `SearchValues<char>` prefilters (email `@`, IBAN
    country prefixes, digit runs). Off by default; measured budget: ≤ 2 µs per
@@ -687,12 +684,15 @@ Three mechanisms, all AoT-safe:
 
 `Ark.Tools.OTel` gains `ArkComplianceRedactionProcessor : BaseProcessor<Activity>`
 following the existing `ArkPreFilterProcessor`/`ArkTelemetryEnrichmentProcessor`
-pattern, applying the same `Redactor` to tag values, likewise registered by the
-default OTel setup rather than by an opt-in call.
+pattern. Generated sensitive values retain their safe type until exporter
+serialization; the processor only PII-scans untyped string tags and display/status
+text when enabled. It is registered by the default OTel setup rather than by an
+opt-in call.
 
-> The runtime layer is deliberately dumb. If it ever fires in production, that is
-> a bug report against the analyzers, and the mask string (`***ARKPII***`) is
-> designed to be alertable in the log platform.
+> The runtime layer is deliberately narrow. Generated types own their redaction;
+the dedicated PII scanner is a fallback for untyped text. If it fires in production,
+that is a bug report against the analyzers, and the mask string (`***ARKPII***`) is
+designed to be alertable in the log platform.
 
 ### 6.10 Compliance inventory
 

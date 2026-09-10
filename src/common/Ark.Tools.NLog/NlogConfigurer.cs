@@ -28,7 +28,7 @@ public static class NLogConfigurer
     public const string MailTarget = "Ark.Mail";
     public const string MailFromDefault = "noreply@ark-energy.eu";
 
-    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${ark.compliance.exception}}";
+    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=Message}}";
 
     static NLogConfigurer()
     {
@@ -40,7 +40,6 @@ public static class NLogConfigurer
                 .RegisterLayoutRenderer<ActivityIdLayoutRenderer>()
                 .RegisterLayoutRenderer<HostNameLayoutRenderer>()
                 .RegisterLayoutRenderer<ActivityTraceLayoutRenderer>()
-                .RegisterComplianceLayoutRenderers()
                 .RegisterTarget<DiagnosticListenerTarget>())
             ;
 
@@ -158,9 +157,7 @@ public static class NLogConfigurer
     public sealed class Configurer
     {
         internal LoggingConfiguration _config = new();
-        private ComplianceRedactionOptions? _complianceOptions;
-        private bool _complianceEnabled = true;
-        private ComplianceRedactor? _complianceRedactor = new();
+        private PiiScanner? _piiScanner = new();
         public string AppName { get; }
 
         internal Configurer(string appName)
@@ -209,8 +206,8 @@ public static class NLogConfigurer
             {
                 WebHookUrl = slackwebhook,
                 Layout = _createMessageLayout(),
-                _exceptionLayout = "${ark.compliance.exception}",
-                _valueRedactor = value => _complianceRedactor?.Redact(value) ?? value
+                _exceptionLayout = _createScannedLayout("${exception:format=Message}"),
+                _valueRedactor = _scanSlackValue
             };
             _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);
             return this;
@@ -317,7 +314,7 @@ VALUES
             })));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", _createMessageLayout()));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${ark.compliance.exception:format=Message}}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", _createScannedLayout("${onexception:${exception:format=Message}}")));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=StackTrace}}"));
             _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
 
@@ -502,9 +499,7 @@ VALUES
         {
             var options = new ComplianceRedactionOptions();
             configure?.Invoke(options);
-            _complianceOptions = options;
-            _complianceEnabled = true;
-            _complianceRedactor = new ComplianceRedactor(options);
+            _piiScanner = new PiiScanner(options.PiiScan);
             return this;
         }
 
@@ -512,9 +507,7 @@ VALUES
         /// <returns>The original configurer.</returns>
         public Configurer WithoutComplianceRedaction()
         {
-            _complianceOptions = null;
-            _complianceEnabled = false;
-            _complianceRedactor = null;
+            _piiScanner = null;
             return this;
         }
 
@@ -548,27 +541,12 @@ VALUES
                 LogManager.GlobalThreshold = LogLevel.Info;
         }
 
-        private void _configureCompliance()
+        private static void _configureCompliance()
         {
             var activeFormatter = (IValueFormatter)LogManager.LogFactory.ServiceRepository.GetService(typeof(IValueFormatter));
-            while (activeFormatter is ComplianceValueFormatter complianceFormatter)
-                activeFormatter = complianceFormatter.InnerFormatter;
-
-            var redactor = _complianceEnabled
-                ? _complianceRedactor ??= new ComplianceRedactor(_complianceOptions)
-                : null;
-            _config.Variables.Remove(ComplianceNLogExtensions.RedactionVariable);
-            if (redactor is not null)
-                _config.Variables[ComplianceNLogExtensions.RedactionVariable] = Layout.FromLiteral("true");
 
             LogManager.Setup()
-                .SetupSerialization(builder =>
-                {
-                    if (redactor is null)
-                        builder.UseArkMessageTemplateParsing(activeFormatter);
-                    else
-                        builder.UseComplianceRedaction(activeFormatter, redactor);
-                });
+                .SetupSerialization(builder => builder.UseComplianceRedaction(activeFormatter));
 
         }
 
@@ -586,7 +564,13 @@ VALUES
 
         private Layout _createScannedLayout(Layout layout)
         {
-            return new ComplianceLayout(layout, () => _complianceRedactor);
+            return new ComplianceLayout(layout, () => _piiScanner);
+        }
+
+        private string? _scanSlackValue(object? value)
+        {
+            var text = value?.ToString();
+            return text is null ? null : _piiScanner?.Scan(text) ?? text;
         }
     }
 

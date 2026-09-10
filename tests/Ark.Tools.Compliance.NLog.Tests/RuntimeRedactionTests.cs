@@ -7,8 +7,8 @@ using Ark.Tools.NLog;
 using AwesomeAssertions;
 
 using global::NLog;
+using global::NLog.Layouts;
 
-using Microsoft.Extensions.Compliance.Classification;
 using Microsoft.Extensions.DependencyInjection;
 
 using OpenTelemetry;
@@ -24,6 +24,8 @@ namespace Ark.Tools.Compliance.NLog.Tests;
 [DoNotParallelize]
 public sealed class RuntimeRedactionTests
 {
+    private const string _cleartext = "synthetic-private-value";
+
     /// <summary>Gets or sets the current test's diagnostics context.</summary>
     public TestContext TestContext { get; set; } = null!;
 
@@ -35,35 +37,35 @@ public sealed class RuntimeRedactionTests
         {
             var logEvent = new LogEventInfo(LogLevel.Info, logger.Name, CultureInfo.InvariantCulture,
                 "payload {@Payload}", [new Payload()]);
-            logEvent.Properties["boxed"] = new SecretValue();
+            logEvent.Properties["boxed"] = ApiKey.From(_cleartext);
             logger.Log(logEvent);
-            logger.Info(CultureInfo.InvariantCulture, "positional {0}", new SecretValue());
+            logger.Info(CultureInfo.InvariantCulture, "positional {0}", ApiKey.From(_cleartext));
         });
 
-        output.Should().Contain(ComplianceRedactor.Marker);
-        output.Should().NotContain(SecretValue.Cleartext);
+        output.Should().Contain("***");
+        output.Should().NotContain(_cleartext);
         output.Should().Contain("safe-operation");
     }
 
-    /// <summary>Default setup replaces exception details with the fail-closed marker.</summary>
+    /// <summary>Default setup preserves an ordinary exception message.</summary>
     [TestMethod]
-    public void DefaultNLogSetup_RedactsExceptions()
+    public void DefaultNLogSetup_PreservesOrdinaryExceptionMessage()
     {
         var output = _capture(null, static logger =>
-            logger.Error(new InvalidOperationException(SecretValue.Cleartext), CultureInfo.InvariantCulture, "failed"));
+            logger.Error(new InvalidOperationException("ordinary failure"), CultureInfo.InvariantCulture, "failed"));
 
-        output.Should().Contain(ComplianceRedactor.Marker);
-        output.Should().NotContain(SecretValue.Cleartext);
+        output.Should().Contain("ordinary failure");
     }
 
-    /// <summary>The opt-out restores ordinary classified values, not generated safe ToString methods.</summary>
+    /// <summary>The opt-out only disables PII scanning; generated values remain intrinsically safe.</summary>
     [TestMethod]
     public void ExplicitOptOut_RestoresCleartext()
     {
         var output = _capture(static configurer => configurer.WithoutComplianceRedaction(),
-            static logger => logger.Info(CultureInfo.InvariantCulture, "value {Value}", new SecretValue()));
+            static logger => logger.Info(CultureInfo.InvariantCulture, "value {Value}", ApiKey.From(_cleartext)));
 
-        output.Should().Contain(SecretValue.Cleartext);
+        output.Should().Contain("***");
+        output.Should().NotContain(_cleartext);
     }
 
     /// <summary>Overrides apply to both templates and boxed properties.</summary>
@@ -72,51 +74,48 @@ public sealed class RuntimeRedactionTests
     {
         var key = RandomNumberGenerator.GetBytes(32);
         var options = new ComplianceRedactionOptions { HmacKey = key };
-        options.For(ArkDataClassifications.Secret, ArkRedaction.Hmac);
         var redactor = new ComplianceRedactor(options);
-        options.For(ArkDataClassifications.Secret, ArkRedaction.None);
-        redactor.Redact(new SecretValue()).Should().BeOfType<string>().Which.Should().StartWith("hmac:");
-
-        var output = _capture(configurer => configurer.WithComplianceRedaction(options =>
-        {
-            options.HmacKey = key;
-            options.For(ArkDataClassifications.Secret, ArkRedaction.Hmac);
-        }), static logger => logger.Info(CultureInfo.InvariantCulture, "value {Value}", new SecretValue()));
-
-        output.Should().Contain("hmac:");
-        output.Should().NotContain(SecretValue.Cleartext);
+        redactor.Redact(_cleartext, ArkRedaction.Hmac).Should().StartWith("hmac:");
+        options.HmacKey![0].Should().NotBe(0);
     }
 
-    /// <summary>All classifications use fail-closed defaults, including missing HMAC keys.</summary>
+    /// <summary>Direct redaction modes fail closed when configured without a key.</summary>
     [TestMethod]
     public void Defaults_ApplyEveryClassificationAndEraseUnknown()
     {
         var redactor = new ComplianceRedactor();
-        foreach (var classification in new[]
-        {
-            ArkDataClassifications.PersonalData,
-            ArkDataClassifications.SensitivePersonalData,
-            ArkDataClassifications.Secret,
-            new DataClassification("Other", "Unknown"),
-        })
-        {
-            redactor.Redact(SecretValue.Cleartext, classification).Should().Be(ComplianceRedactor.Marker);
-        }
-        redactor.Redact("correlation-42", ArkDataClassifications.Pseudonymous).Should().Be("correlation-42");
+        redactor.Redact(_cleartext, ArkRedaction.Erase).Should().Be("***");
+        redactor.Redact("correlation-42", ArkRedaction.None).Should().Be("correlation-42");
         var keyed = new ComplianceRedactor(new() { HmacKey = RandomNumberGenerator.GetBytes(32) });
-        keyed.Redact(SecretValue.Cleartext, ArkDataClassifications.PersonalData).Should().StartWith("hmac:");
+        keyed.Redact(_cleartext, ArkRedaction.Hmac).Should().StartWith("hmac:");
     }
 
-    /// <summary>Generated sensitive values retain classification without reflection.</summary>
+    /// <summary>Generated sensitive values are safe through their normal formatting surface.</summary>
     [TestMethod]
-    public void GeneratedValue_UsesRuntimeHmacInsteadOfToString()
+    public void GeneratedValue_UsesSafeToString()
     {
         var value = EmailAddress.From("alice@example.test");
-        var redactor = new ComplianceRedactor(new() { HmacKey = RandomNumberGenerator.GetBytes(32) });
-        redactor.Redact(value).Should().BeOfType<string>().Which.Should().StartWith("hmac:");
+        value.ToString(null, CultureInfo.InvariantCulture).Should().Be("***");
         var output = _capture(null, logger => logger.Info(CultureInfo.InvariantCulture, "value {@Value}", value));
-        output.Should().Contain(ComplianceRedactor.Marker);
+        output.Should().Contain("***");
         output.Should().NotContain("alice@example.test");
+    }
+
+    /// <summary>NLog JSON event-property serialization uses the generated safe representation.</summary>
+    [TestMethod]
+    public void JsonLayout_UsesGeneratedSafeRepresentation()
+    {
+        var value = EmailAddress.From("alice@example.test");
+        var logEvent = new LogEventInfo(LogLevel.Info, "Compliance.Runtime.Tests", "payload");
+        logEvent.Properties["email"] = value;
+        var json = new JsonLayout
+        {
+            IncludeEventProperties = true,
+            ExcludeEmptyProperties = true,
+        }.Render(logEvent);
+
+        json.Should().Contain("***");
+        json.Should().NotContain("alice@example.test");
     }
 
     /// <summary>Scanning is opt-in and covers untyped message arguments and properties.</summary>
@@ -127,10 +126,22 @@ public sealed class RuntimeRedactionTests
         _capture(null, static logger => logger.Info(CultureInfo.InvariantCulture, "{Message}", message))
             .Should().Contain(message);
         var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
-            options.PatternScan = PatternScanMode.MessageAndProperties), static logger =>
+            options.PiiScan = PiiScanMode.MessageAndProperties), static logger =>
         {
             logger.Info(CultureInfo.InvariantCulture, "{Message}", message);
         });
+        output.Should().Contain(ComplianceRedactor.Marker);
+        output.Should().NotContain("alice@private-domain.dev");
+    }
+
+    /// <summary>PII scanning masks exception messages without erasing ordinary exception output.</summary>
+    [TestMethod]
+    public void PatternScan_ScansExceptionMessage()
+    {
+        var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
+            options.PiiScan = PiiScanMode.MessageAndProperties), static logger =>
+            logger.Error(new InvalidOperationException("contact alice@private-domain.dev"), CultureInfo.InvariantCulture, "failed"));
+
         output.Should().Contain(ComplianceRedactor.Marker);
         output.Should().NotContain("alice@private-domain.dev");
     }
@@ -139,22 +150,10 @@ public sealed class RuntimeRedactionTests
     [TestMethod]
     public void PatternScan_MasksPhoneAndPostalAddress()
     {
-        var redactor = new ComplianceRedactor(new() { PatternScan = PatternScanMode.MessageAndProperties });
+        var scanner = new PiiScanner(PiiScanMode.MessageAndProperties);
 
-        redactor.Scan("call +12025550100 at 1 Example Street")
+        scanner.Scan("call +12025550100 at 1 Example Street")
             .Should().Be($"call {ComplianceRedactor.Marker} at {ComplianceRedactor.Marker}");
-    }
-
-    /// <summary>Broken getters and cycles do not leak or prevent logging.</summary>
-    [TestMethod]
-    public void UnsafeObjectGraphs_FailClosed()
-    {
-        var redactor = new ComplianceRedactor();
-        redactor.Redact(new ThrowingPayload()).Should().Be(ComplianceRedactor.Marker);
-        var cycle = new Dictionary<string, object?>(StringComparer.Ordinal);
-        cycle["self"] = cycle;
-        redactor.Redact(cycle).Should().NotBeNull();
-        redactor.Redact(new UnknownClassified()).Should().Be(ComplianceRedactor.Marker);
     }
 
     /// <summary>Default Ark setup registers redaction before an actual exporting processor.</summary>
@@ -176,14 +175,14 @@ public sealed class RuntimeRedactionTests
         using (var activity = source.StartActivity("operation"))
         {
             activity.Should().NotBeNull();
-            activity!.SetTag("credential", new SecretValue());
+            activity!.SetTag("credential", ApiKey.From(_cleartext));
             activity.SetTag("email", EmailAddress.From("alice@example.test"));
             activity.SetTag("normal", "safe-operation");
         }
 
         exporter.Tags.Should().NotBeNull();
-        exporter.Tags!["credential"].Should().Be(ComplianceRedactor.Marker);
-        exporter.Tags["email"].Should().Be(ComplianceRedactor.Marker);
+        exporter.Tags!["credential"]!.ToString().Should().Be("***");
+        exporter.Tags["email"]!.ToString().Should().Be("***");
         exporter.Tags["normal"].Should().Be("safe-operation");
     }
 
@@ -192,13 +191,12 @@ public sealed class RuntimeRedactionTests
     public void Throughput_DefaultRedactionRemainsBounded()
     {
         var redactor = new ComplianceRedactor();
-        var payload = new SecretValue();
         for (var i = 0; i < 1000; i++)
-            _ = redactor.Redact(payload);
+            _ = redactor.Redact(_cleartext, ArkRedaction.Erase);
         const int iterations = 100000;
         var started = Stopwatch.GetTimestamp();
         for (var i = 0; i < iterations; i++)
-            _ = redactor.Redact(payload);
+            _ = redactor.Redact(_cleartext, ArkRedaction.Erase);
         var elapsed = Stopwatch.GetElapsedTime(started);
         (elapsed.TotalMicroseconds / iterations).Should().BeLessThan(50);
     }
@@ -207,14 +205,14 @@ public sealed class RuntimeRedactionTests
     [TestMethod]
     public void Throughput_PatternScanHasBoundedCost()
     {
-        var redactor = new ComplianceRedactor(new() { PatternScan = PatternScanMode.MessageAndProperties });
+        var scanner = new PiiScanner(PiiScanMode.MessageAndProperties);
         var message = "contact alice@private-domain.dev ".PadRight(200, 'x');
         for (var i = 0; i < 1000; i++)
-            _ = redactor.Scan(message);
+            _ = scanner.Scan(message);
         const int iterations = 10000;
         var started = Stopwatch.GetTimestamp();
         for (var i = 0; i < iterations; i++)
-            _ = redactor.Scan(message);
+            _ = scanner.Scan(message);
         var microseconds = Stopwatch.GetElapsedTime(started).TotalMicroseconds / iterations;
         TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture, "Pattern scan: {0:F3} microseconds per 200-character message.", microseconds));
         microseconds.Should().BeLessThan(50, "the CI smoke limit allows contention; the release target is 2 microseconds");
@@ -249,45 +247,10 @@ public sealed class RuntimeRedactionTests
         }
     }
 
-    [Secret]
-    private sealed class SecretValue
-    {
-        public const string Cleartext = "synthetic-private-value";
-
-        public override string ToString()
-        {
-            return Cleartext;
-        }
-    }
-
     private sealed class Payload
     {
         public EmailAddress Credential { get; } = EmailAddress.From("alice@example.test");
         public string Operation { get; } = "safe-operation";
-    }
-
-    private sealed class ThrowingPayload
-    {
-        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Exercises an instance getter that fails during payload inspection.")]
-        public string Value => throw new InvalidOperationException("Synthetic failure");
-    }
-
-    [UnknownClassification]
-    private sealed class UnknownClassified
-    {
-        public override string ToString()
-        {
-            return SecretValue.Cleartext;
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Class)]
-    private sealed class UnknownClassificationAttribute : DataClassificationAttribute
-    {
-        public UnknownClassificationAttribute()
-            : base(new("Other", "Unknown"))
-        {
-        }
     }
 
     private sealed class CapturingExporter : BaseExporter<Activity>

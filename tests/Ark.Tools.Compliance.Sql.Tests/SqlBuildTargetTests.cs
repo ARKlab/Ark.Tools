@@ -64,22 +64,23 @@ public sealed class SqlBuildTargetTests
 
     private static async Task<(int ExitCode, string Log, string Sql)> _run(string template, (string Name, string Value)[] tokens)
     {
-        var directory = Path.Combine(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
+        var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
         {
-            var manifest = Path.Combine(directory, "manifest.g.cs");
+            var manifest = Path.Join(directory, "manifest.g.cs");
             await File.WriteAllTextAsync(manifest,
                 "// ArkComplianceSqlTemplate:" + _fileName + ":" + Convert.ToBase64String(Encoding.UTF8.GetBytes(template)) + "\n")
                 .ConfigureAwait(false);
-            var project = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "SqlTokens.proj"));
+            var fixturesDirectory = Path.Join(AppContext.BaseDirectory, "Fixtures");
+            var project = XDocument.Load(Path.Join(fixturesDirectory, "SqlTokens.proj"));
             project.Root!.Element("Import")!.SetAttributeValue("Project",
-                Path.Combine(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets"));
+                Path.Join(fixturesDirectory, "Ark.Tools.Compliance.Sql.targets"));
             project.Root.Add(new XElement("ItemGroup", tokens.Select(static token =>
                 new XElement("ArkComplianceSqlToken", new XAttribute("Include", token.Name),
                     new XAttribute("Value", token.Value.Replace("%", "%25", StringComparison.Ordinal)
                         .Replace("$", "%24", StringComparison.Ordinal))))));
-            var projectPath = Path.Combine(directory, "tokens.proj");
+            var projectPath = Path.Join(directory, "tokens.proj");
             project.Save(projectPath);
             var start = new ProcessStartInfo("dotnet")
             {
