@@ -35,8 +35,8 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                 {
                     ConnectionString = sqlConnectionString,
                 };
-                _dataSource = _read(builder, "Data Source", "Server", "Address", "Addr", "Network Address");
-                _database = _read(builder, "Initial Catalog", "Database");
+                _dataSource = _read(builder, "Data Source", "DataSource", "Server", "Address", "Addr", "Network Address");
+                _database = _read(builder, "Initial Catalog", "InitialCatalog", "Database");
                 _enabled = !string.IsNullOrWhiteSpace(_dataSource) &&
                            !string.IsNullOrWhiteSpace(_database);
             }
