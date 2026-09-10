@@ -96,8 +96,9 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
         {
             foreach (var r in resourceIds)
             {
-                ArgumentException.ThrowIfNullOrWhiteSpace(r);
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(r.Length, 300, nameof(r));
+                if (string.IsNullOrWhiteSpace(r))
+                    throw new ArgumentException("Resource ID cannot be null or whitespace.", nameof(resourceIds));
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(r.Length, 300, nameof(resourceIds));
             }
         }
 
@@ -194,10 +195,12 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
         var st = states.AsList();
         foreach (var s in st)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(s.Tenant);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(s.Tenant.Length, 128, nameof(s.Tenant));
-            ArgumentException.ThrowIfNullOrWhiteSpace(s.ResourceId);
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(s.ResourceId.Length, 300, nameof(s.ResourceId));
+            if (string.IsNullOrWhiteSpace(s.Tenant))
+                throw new ArgumentException("Tenant cannot be null or whitespace.", nameof(states));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(s.Tenant.Length, 128, nameof(states));
+            if (string.IsNullOrWhiteSpace(s.ResourceId))
+                throw new ArgumentException("Resource ID cannot be null or whitespace.", nameof(states));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(s.ResourceId.Length, 300, nameof(states));
         }
 
 

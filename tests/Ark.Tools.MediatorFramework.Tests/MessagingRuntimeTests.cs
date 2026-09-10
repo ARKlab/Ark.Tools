@@ -273,7 +273,9 @@ public sealed partial class MessagingRuntimeTests
     {
         var exception = new InvalidOperationException(
             new string('m', 300),
+#pragma warning disable MA0015 // The exception is constructed as test data without a method parameter.
             new ArgumentException(new string('i', 300)));
+#pragma warning restore MA0015
 
         var info = MessagingExceptionInfo.From(exception);
 
@@ -348,7 +350,7 @@ public sealed partial class MessagingRuntimeTests
         delivery._completed.Should().Be(0);
         delivery._abandoned.Should().Be(0);
         delivery._deadLetters.Should().ContainSingle();
-        delivery._deadLetterReason.Should().Be(MessagingFailFastReason.MalformedPayload.ToString());
+        delivery._deadLetterReason.Should().Be(nameof(MessagingFailFastReason.MalformedPayload));
         secondLevelDispatched.Should().BeFalse();
     }
 

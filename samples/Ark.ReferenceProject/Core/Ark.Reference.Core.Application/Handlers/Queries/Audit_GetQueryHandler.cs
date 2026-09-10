@@ -16,7 +16,6 @@ internal sealed class Audit_GetQueryHandler : IQueryHandler<Audit_GetQuery.V1, P
     {
         _dataContext = dataContext;
     }
-
     public async Task<PagedResult<AuditDto<AuditKind>>> ExecuteAsync(Audit_GetQuery.V1 query, CancellationToken ctk = default)
     {
         var ctx = await _dataContext.CreateAsync(ctk).ConfigureAwait(false);

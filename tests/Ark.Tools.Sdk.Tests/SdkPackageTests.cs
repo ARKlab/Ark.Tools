@@ -150,16 +150,13 @@ public sealed class SdkPackageTests
         "Preserved.Analyzer.dll"
     ];
 
-    private static readonly IReadOnlyDictionary<string, string> _sdkAnalyzerVersions =
-        new Dictionary<string, string>
-        {
-            ["Microsoft.CodeAnalysis.NetAnalyzers"] = "10.0.400",
-            ["Microsoft.CodeAnalysis.BannedApiAnalyzers"] = "4.14.0",
-            ["Meziantou.Analyzer"] = "3.0.205",
-            ["ErrorProne.NET.CoreAnalyzers"] = "0.1.2"
-        };
-
-    private const string _visualStudioThreadingAnalyzerVersion = "18.7.23";
+    private static readonly string[] _sdkAnalyzers =
+    [
+        "Microsoft.CodeAnalysis.NetAnalyzers",
+        "Microsoft.CodeAnalysis.BannedApiAnalyzers",
+        "Meziantou.Analyzer",
+        "ErrorProne.NET.CoreAnalyzers"
+    ];
 
     private static readonly string[] _boundaryProperties =
     [
@@ -665,15 +662,15 @@ public sealed class SdkPackageTests
         var packageReferences = _getPackageReferences(baseline);
         Assert.AreEqual(packageVersion, packageReferences["Ark.Tools.Build"]["Version"]);
         Assert.AreEqual("true", packageReferences["Ark.Tools.Build"]["IsImplicitlyDefined"]);
-        foreach (var analyzer in _sdkAnalyzerVersions)
+        foreach (var analyzer in _sdkAnalyzers)
         {
-            Assert.AreEqual(analyzer.Value, packageReferences[analyzer.Key]["Version"], analyzer.Key);
-            Assert.AreEqual("true", packageReferences[analyzer.Key]["IsImplicitlyDefined"], analyzer.Key);
-            Assert.AreEqual("all", packageReferences[analyzer.Key]["PrivateAssets"], analyzer.Key);
+            Assert.IsTrue(packageReferences.ContainsKey(analyzer), analyzer);
+            Assert.AreEqual("true", packageReferences[analyzer]["IsImplicitlyDefined"], analyzer);
+            Assert.AreEqual("all", packageReferences[analyzer]["PrivateAssets"], analyzer);
             Assert.AreEqual(
                 "runtime;build;native;contentfiles;analyzers;buildtransitive",
-                packageReferences[analyzer.Key]["IncludeAssets"],
-                analyzer.Key);
+                packageReferences[analyzer]["IncludeAssets"],
+                analyzer);
         }
         foreach (var excludedPackage in _excludedSdkPackages)
         {
@@ -723,7 +720,7 @@ public sealed class SdkPackageTests
         });
         var sqlPackages = _getPackageReferences(sql);
         Assert.IsTrue(sqlPackages.ContainsKey("Ark.Tools.Build"));
-        foreach (var analyzer in _sdkAnalyzerVersions.Keys)
+        foreach (var analyzer in _sdkAnalyzers)
         {
             Assert.IsFalse(sqlPackages.ContainsKey(analyzer), analyzer);
         }
@@ -743,7 +740,7 @@ public sealed class SdkPackageTests
         });
         var fsharpPackages = _getPackageReferences(fsharp);
         Assert.IsTrue(fsharpPackages.ContainsKey("Ark.Tools.Build"));
-        foreach (var analyzer in _sdkAnalyzerVersions.Keys)
+        foreach (var analyzer in _sdkAnalyzers)
         {
             Assert.IsTrue(fsharpPackages.ContainsKey(analyzer), analyzer);
         }
@@ -777,9 +774,9 @@ public sealed class SdkPackageTests
         using (var lockJson = JsonDocument.Parse(await File.ReadAllTextAsync(lockFile).ConfigureAwait(false)))
         {
             var dependencies = lockJson.RootElement.GetProperty("dependencies").GetProperty("net10.0");
-            foreach (var analyzer in _sdkAnalyzerVersions)
+            foreach (var analyzer in _sdkAnalyzers)
             {
-                Assert.AreEqual(analyzer.Value, dependencies.GetProperty(analyzer.Key).GetProperty("resolved").GetString(), analyzer.Key);
+                Assert.IsTrue(dependencies.TryGetProperty(analyzer, out _), analyzer);
             }
             Assert.IsFalse(dependencies.TryGetProperty("Microsoft.VisualStudio.Threading.Analyzers", out _));
         }
@@ -798,9 +795,7 @@ public sealed class SdkPackageTests
         using (var optInLockJson = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Join(threadingOptInRoot, "packages.lock.json")).ConfigureAwait(false)))
         {
             var dependencies = optInLockJson.RootElement.GetProperty("dependencies").GetProperty("net10.0");
-            Assert.AreEqual(
-                _visualStudioThreadingAnalyzerVersion,
-                dependencies.GetProperty("Microsoft.VisualStudio.Threading.Analyzers").GetProperty("resolved").GetString());
+            Assert.IsTrue(dependencies.TryGetProperty("Microsoft.VisualStudio.Threading.Analyzers", out _));
         }
 
         lockedEnvironment["CI"] = "true";

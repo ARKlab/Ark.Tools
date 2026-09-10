@@ -124,13 +124,13 @@ public sealed class ArkAdaptiveSampler : Sampler
     private OperationBucket _getOrCreateBucket(string operationName)
     {
         if (!_options.EnablePerOperationBucketing)
-            return _buckets.GetOrAdd("__global__", _ => new OperationBucket(_currentRate));
+            return _buckets.GetOrAdd("__global__", static (_, rate) => new OperationBucket(rate), _currentRate);
 
         // If we've reached the bucket limit, use the global bucket for overflow.
         if (_buckets.Count >= _options.MaxOperationBuckets && !_buckets.ContainsKey(operationName))
-            return _buckets.GetOrAdd("__overflow__", _ => new OperationBucket(_currentRate));
+            return _buckets.GetOrAdd("__overflow__", static (_, rate) => new OperationBucket(rate), _currentRate);
 
-        return _buckets.GetOrAdd(operationName, _ => new OperationBucket(_currentRate));
+        return _buckets.GetOrAdd(operationName, static (_, rate) => new OperationBucket(rate), _currentRate);
     }
 
     private async Task _runAdaptiveControllerAsync()

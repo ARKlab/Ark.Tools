@@ -45,7 +45,11 @@ public class TestableStateProvider<TExtensions> : IStateProvider<TExtensions>
         foreach (var s in states)
         {
             var key = (s.Tenant ?? string.Empty, s.ResourceId);
-            _store.AddOrUpdate(key, s, (k, v) => s);
+            _store.AddOrUpdate(
+                key,
+                static (_, state) => state,
+                static (_, _, state) => state,
+                s);
         }
 
         return Task.CompletedTask;
@@ -101,7 +105,11 @@ public class TestableStateProvider<TExtensions> : IStateProvider<TExtensions>
     public void SetState(ResourceState<TExtensions> state)
     {
         var key = (state.Tenant ?? string.Empty, state.ResourceId);
-        _store.AddOrUpdate(key, state, (k, v) => state);
+        _store.AddOrUpdate(
+            key,
+            static (_, value) => value,
+            static (_, _, value) => value,
+            state);
     }
 
     /// <summary>

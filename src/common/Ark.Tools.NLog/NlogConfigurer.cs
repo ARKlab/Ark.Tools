@@ -15,8 +15,6 @@ using NLog.Targets.Wrappers;
 
 using System.Diagnostics;
 using System.Reflection;
-using System.Text.Json;
-
 namespace Ark.Tools.NLog;
 
 public static class NLogConfigurer
@@ -660,32 +658,5 @@ END
 #pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
         cmd.CommandTimeout = 180;
         cmd.ExecuteNonQuery();
-    }
-
-
-    internal sealed class STJSerializer : IJsonConverter
-    {
-
-        /// <summary>Serialization of an object into JSON format.</summary>
-        /// <param name="value">The object to serialize to JSON.</param>
-        /// <param name="builder">Output destination.</param>
-        /// <returns>Serialize succeeded (true/false)</returns>
-        [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-            Justification = "This method is used by NLog for diagnostic logging purposes. The types being serialized are determined at runtime based on what developers log, making static analysis impossible. NLog already handles serialization failures gracefully by catching exceptions.")]
-        public bool SerializeObject(object? value, StringBuilder builder)
-        {
-#pragma warning disable CA1031 // Do not catch general exception types
-            try
-            {
-                builder.Append(JsonSerializer.Serialize(value, ArkSerializerOptions.JsonOptions));
-                return true;
-            }
-            catch (Exception e)
-            {
-                InternalLogger.Error(e, "Error when serializing type '{type}' '{string}' as json.", value?.GetType(), value?.ToString());
-                return false;
-            }
-#pragma warning restore CA1031 // Do not catch general exception types
-        }
     }
 }
