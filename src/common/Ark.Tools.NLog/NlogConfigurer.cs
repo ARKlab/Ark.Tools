@@ -543,11 +543,8 @@ VALUES
 
         private static void _configureCompliance()
         {
-            var activeFormatter = (IValueFormatter)LogManager.LogFactory.ServiceRepository.GetService(typeof(IValueFormatter));
-
             LogManager.Setup()
-                .SetupSerialization(builder => builder.UseComplianceRedaction(activeFormatter));
-
+                .SetupSerialization(static builder => builder.UseComplianceRedaction());
         }
 
         private Layout _createTextLineLayout()

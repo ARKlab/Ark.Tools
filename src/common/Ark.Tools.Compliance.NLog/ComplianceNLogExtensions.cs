@@ -11,34 +11,24 @@ public static class ComplianceNLogExtensions
 {
     /// <summary>Enables NLog message-template parsing for safe generated value formatting.</summary>
     /// <param name="builder">The NLog serialization setup builder.</param>
-    /// <param name="formatter">The formatter used for ordinary values.</param>
     /// <returns>The same setup builder for chaining.</returns>
     public static ISetupSerializationBuilder UseComplianceRedaction(
-        this ISetupSerializationBuilder builder,
-        IValueFormatter formatter)
+        this ISetupSerializationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(formatter);
 
-        return builder
-            .ParseMessageTemplates(true)
-            .RegisterValueFormatter(formatter);
+        return builder.ParseMessageTemplates(true);
     }
 
-    /// <summary>Enables NLog message-template parsing with an ordinary value formatter.</summary>
+    /// <summary>Enables NLog message-template parsing.</summary>
     /// <param name="builder">The NLog serialization setup builder.</param>
-    /// <param name="formatter">The formatter to register.</param>
     /// <returns>The same setup builder for chaining.</returns>
     public static ISetupSerializationBuilder UseArkMessageTemplateParsing(
-        this ISetupSerializationBuilder builder,
-        IValueFormatter formatter)
+        this ISetupSerializationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ArgumentNullException.ThrowIfNull(formatter);
 
-        return builder
-            .ParseMessageTemplates(true)
-            .RegisterValueFormatter(formatter);
+        return builder.ParseMessageTemplates(true);
     }
 
 }

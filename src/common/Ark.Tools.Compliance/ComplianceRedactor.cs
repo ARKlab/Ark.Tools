@@ -5,7 +5,7 @@ using Microsoft.Extensions.Compliance.Redaction;
 
 namespace Ark.Tools.Compliance;
 
-/// <summary>Redacts classified values and projects object graphs into safe sink values.</summary>
+/// <summary>Applies direct text redaction policies.</summary>
 /// <remarks>Generated sensitive value objects own their safe rendering; this type only supplies direct redactors.</remarks>
 public sealed class ComplianceRedactor
 {

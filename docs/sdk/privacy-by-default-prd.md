@@ -138,10 +138,10 @@ not possible without rewriting every call site (see [§13.3](#133-rejected-migra
   `internal`, and `SinkKind` is a closed enum — a PII sink kind cannot be added.
   `dotnet/roslyn-analyzers` is archived; the code now lives in
   `dotnet/roslyn/src/RoslynAnalyzers`.
-- NLog has **no** `ILogEventInterceptor`. The real extension points are
-  `SetupSerialization(s => s.RegisterObjectTransformation<T>(…))`,
-  `RegisterValueFormatter(IValueFormatter)`, `WrapperTargetBase`, layout
-  renderers, and filters. The design below uses exactly those.
+- NLog has **no** `ILogEventInterceptor`. Its extension points include
+  `SetupSerialization`, `WrapperTargetBase`, layout renderers, and filters. The
+  design below uses native formatting plus a scoped layout wrapper; it does not
+  register global object transformations or value formatters.
 - No analyzer anywhere (Microsoft, CodeQL, Sonar, SCS, Puma) checks personal data
   flowing into **exception messages**.
 - Two source generators cannot observe each other's output in one compilation.
@@ -800,7 +800,7 @@ existing mediator-framework generator discipline.
 | --- | --- | --- |
 | `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the generator DLL as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | analyzer and code-fix DLLs as `analyzers/dotnet/cs` plus the canonical `ComplianceLexicon.Ark.txt`/`ComplianceSinks.Ark.txt` `AdditionalFiles`; added implicitly by `Ark.Tools.Sdk` | `netstandard2.0` |
-| `Ark.Tools.Compliance.NLog` | `ComplianceLayout`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.NLog` | `ComplianceLayout`/`PiiScanner`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.NewtonsoftJson` | `SensitiveValueJsonConverter<T>` and `SensitiveValueNewtonsoftJson` registrations | `net8.0;net10.0` |
@@ -870,7 +870,7 @@ then guarantees no *new* undeclared personal data can be added afterwards.
 - `ArkComplianceSurface.txt` reviewed on every PR that changes it.
 - Runtime redaction never fires in the reference project's integration tests
   (i.e. the compile-time layer is doing the work).
-- No measurable logging throughput regression with `PatternScan` disabled;
+- No measurable logging throughput regression with `PiiScan` disabled;
   < 5 % with it enabled.
 
 ## 13. Rejected approaches
@@ -1172,7 +1172,7 @@ deliberately a **narrow** type:
 | --- | --- |
 | Any underlying primitive, `INumber<T>` hoisting, comparison generation, `[Instance]`, EF Core/LinqToDb/Bson/Orleans/ServiceStack/Xml/OpenAPI conversions, `StaticAbstracts`, `ParsableForPrimitives`, LinqPad dump, Swashbuckle filters | **Not implemented.** Out of scope. |
 | `string` (and a small set of validated primitives) with `_validate`/`_normalize`, `From`/`TryFrom`, equality, STJ/Newtonsoft/Dapper/**protobuf-net**/**MessagePack**/**OpenAPI**/Reqnroll converters | Implemented, closed-generic and AoT-clean; OpenAPI as a `MapType` mapping, never a reflection-based `ISchemaFilter`. |
-| — | **New:** classification attribute flow, redacted `ToString`/`TryFormat`/`IConvertible`/debugger surfaces, `Reveal(CompliancePurpose)`, NLog `RegisterObjectTransformation` registration, `ArkComplianceSurface.txt` entry, `ARKPII*` integration. |
+| — | **New:** classification attribute flow, redacted `ToString`/`TryFormat`/type-conversion/debugger surfaces, `Reveal(CompliancePurpose)`, native NLog formatting with scoped PII scanning, `ArkComplianceSurface.txt` entry, `ARKPII*` integration. |
 
 The estimate is a single-primitive-shape generator plus converter templates —
 materially smaller than Vogen, and every line of it exists because it is the
@@ -1269,7 +1269,7 @@ open decisions blocking implementation.
 - `DE0001: SecureString shouldn't be used` — <https://github.com/dotnet/platform-compat/blob/master/docs/DE0001.md>
 
 **Ecosystem**
-- NLog serialization setup (`RegisterObjectTransformation`, `RegisterValueFormatter`) — <https://github.com/NLog/NLog/blob/dev/src/NLog/SetupSerializationBuilderExtensions.cs>
+- NLog serialization setup — <https://github.com/NLog/NLog/blob/dev/src/NLog/SetupSerializationBuilderExtensions.cs>
 - NLog `WrapperTargetBase` — <https://github.com/NLog/NLog/blob/dev/src/NLog/Targets/Wrappers/WrapperTargetBase.cs>
 - CodeQL C# sensitive-data heuristics — <https://github.com/github/codeql/blob/main/csharp/ql/lib/semmle/code/csharp/security/SensitiveActions.qll>
 - CodeQL C# query help — <https://codeql.github.com/codeql-query-help/csharp/>

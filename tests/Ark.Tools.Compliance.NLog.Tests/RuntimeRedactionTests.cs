@@ -59,7 +59,7 @@ public sealed class RuntimeRedactionTests
 
     /// <summary>The opt-out only disables PII scanning; generated values remain intrinsically safe.</summary>
     [TestMethod]
-    public void ExplicitOptOut_RestoresCleartext()
+    public void ExplicitOptOut_DoesNotDisableGeneratedValueSafety()
     {
         var output = _capture(static configurer => configurer.WithoutComplianceRedaction(),
             static logger => logger.Info(CultureInfo.InvariantCulture, "value {Value}", ApiKey.From(_cleartext)));
@@ -120,7 +120,7 @@ public sealed class RuntimeRedactionTests
 
     /// <summary>Scanning is opt-in and covers untyped message arguments and properties.</summary>
     [TestMethod]
-    public void PatternScan_IsOffByDefaultAndMasksUntypedPayloadsWhenEnabled()
+    public void PiiScan_IsOffByDefaultAndMasksUntypedPayloadsWhenEnabled()
     {
         const string message = "contact alice@private-domain.dev";
         _capture(null, static logger => logger.Info(CultureInfo.InvariantCulture, "{Message}", message))
@@ -136,7 +136,7 @@ public sealed class RuntimeRedactionTests
 
     /// <summary>PII scanning masks exception messages without erasing ordinary exception output.</summary>
     [TestMethod]
-    public void PatternScan_ScansExceptionMessage()
+    public void PiiScan_ScansExceptionMessage()
     {
         var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
             options.PiiScan = PiiScanMode.MessageAndProperties), static logger =>
@@ -148,7 +148,7 @@ public sealed class RuntimeRedactionTests
 
     /// <summary>Pattern scanning classifies phone and postal-address matches independently from email.</summary>
     [TestMethod]
-    public void PatternScan_MasksPhoneAndPostalAddress()
+    public void PiiScan_MasksPhoneAndPostalAddress()
     {
         var scanner = new PiiScanner(PiiScanMode.MessageAndProperties);
 
@@ -203,7 +203,7 @@ public sealed class RuntimeRedactionTests
 
     /// <summary>Measures scanner cost on a representative 200-character untyped message.</summary>
     [TestMethod]
-    public void Throughput_PatternScanHasBoundedCost()
+    public void Throughput_PiiScanHasBoundedCost()
     {
         var scanner = new PiiScanner(PiiScanMode.MessageAndProperties);
         var message = "contact alice@private-domain.dev ".PadRight(200, 'x');
@@ -214,7 +214,7 @@ public sealed class RuntimeRedactionTests
         for (var i = 0; i < iterations; i++)
             _ = scanner.Scan(message);
         var microseconds = Stopwatch.GetElapsedTime(started).TotalMicroseconds / iterations;
-        TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture, "Pattern scan: {0:F3} microseconds per 200-character message.", microseconds));
+        TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture, "PII scan: {0:F3} microseconds per 200-character message.", microseconds));
         microseconds.Should().BeLessThan(50, "the CI smoke limit allows contention; the release target is 2 microseconds");
     }
 
@@ -225,7 +225,6 @@ public sealed class RuntimeRedactionTests
         _ = NLogConfigurer.For("initialize");
         var originalConfiguration = LogManager.Configuration;
         var originalOutput = Console.Out;
-        var formatter = (IValueFormatter)LogManager.LogFactory.ServiceRepository.GetService(typeof(IValueFormatter));
         using var output = new StringWriter(CultureInfo.InvariantCulture);
         try
         {
@@ -243,7 +242,6 @@ public sealed class RuntimeRedactionTests
         {
             Console.SetOut(originalOutput);
             LogManager.Configuration = originalConfiguration;
-            LogManager.Setup().SetupSerialization(builder => builder.RegisterValueFormatter(formatter));
         }
     }
 
