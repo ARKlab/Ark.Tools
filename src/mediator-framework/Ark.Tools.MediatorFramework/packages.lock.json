@@ -178,8 +178,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
-          "Ark.Tools.Core": "[999.9.9, )",
-          "Ark.Tools.SystemTextJson": "[999.9.9, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.0.2, )",
           "NLog": "[6.2.0, )",
@@ -193,35 +193,35 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[999.9.9, )"
+          "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Nodatime": "[999.9.9, )",
+          "Ark.Tools.Nodatime": "[1.0.0, )",
           "NodaTime.Serialization.SystemTextJson": "[1.4.0, )"
         }
       },
       "ark.tools.outbox": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[999.9.9, )",
+          "Ark.Tools.Core": "[1.0.0, )",
           "NLog": "[6.2.0, )"
         }
       },
       "ark.tools.solid": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[999.9.9, )",
-          "Ark.Tools.NLog": "[999.9.9, )"
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[999.9.9, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[999.9.9, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
       },

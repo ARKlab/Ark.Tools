@@ -59,7 +59,7 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[999.9.9, )"
+          "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "NodaTime": {
@@ -141,7 +141,7 @@
       "ark.tools.nodatime": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Core": "[999.9.9, )"
+          "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "NodaTime": {
