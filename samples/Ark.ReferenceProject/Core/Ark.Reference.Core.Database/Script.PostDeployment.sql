@@ -10,4 +10,6 @@ Post-Deployment Script Template
 --------------------------------------------------------------------------------------
 */
 
+:r .\obj\ArkCompliance.Sql\CompliancePolicies.sql
+
 EXEC [ops].[InitConfig]

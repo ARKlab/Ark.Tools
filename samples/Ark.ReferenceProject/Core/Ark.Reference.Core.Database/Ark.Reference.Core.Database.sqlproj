@@ -7,6 +7,7 @@
   </PropertyGroup>
   <PropertyGroup>
 	  <TargetFramework>net10.0</TargetFramework>
+    <ArkComplianceSqlOutputPath>$(MSBuildProjectDirectory)\obj\ArkCompliance.Sql</ArkComplianceSqlOutputPath>
     <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <ModelCollation>1033, CI</ModelCollation>
@@ -49,6 +50,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj"
+                      ReferenceOutputAssembly="false"
+                      AdditionalProperties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)" />
+    <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj"
+                      ReferenceOutputAssembly="false"
+                      AdditionalProperties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)" />
+  </ItemGroup>
+  <ItemGroup>
     <PostDeploy Include="Script.PostDeployment.sql">
       <CopyToOutputDirectory>DoNotCopy</CopyToOutputDirectory>
     </PostDeploy>
@@ -60,4 +69,20 @@
     <Folder Include="Security\" />
     <Folder Include="_Migrations\" />
   </ItemGroup>
+  <Target Name="ArkMaterializeComplianceSql" BeforeTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_ArkComplianceSqlPolicy Include="$(ArkComplianceSqlOutputPath)\policy-*.compliance.sql" />
+    </ItemGroup>
+    <Delete Files="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
+            Condition="@(_ArkComplianceSqlPolicy->Count()) == 0" />
+    <ReadLinesFromFile Files="@(_ArkComplianceSqlPolicy)"
+                       Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0">
+      <Output TaskParameter="Lines" ItemName="_ArkComplianceSqlLine" />
+    </ReadLinesFromFile>
+    <WriteLinesToFile File="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
+                      Lines="@(_ArkComplianceSqlLine)"
+                      Overwrite="true"
+                      Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0" />
+  </Target>
 </Project>
