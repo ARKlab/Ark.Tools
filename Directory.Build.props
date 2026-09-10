@@ -9,8 +9,6 @@
 	<IsPackable>true</IsPackable>
 	<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
-	<!-- The repository validates the analyzer itself through dedicated analyzer tests. -->
-	<EnableArkToolsCompliance>false</EnableArkToolsCompliance>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props" />

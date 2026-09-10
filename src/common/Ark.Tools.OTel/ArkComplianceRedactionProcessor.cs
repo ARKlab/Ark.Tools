@@ -31,17 +31,17 @@ public sealed class ArkComplianceRedactionProcessor : BaseProcessor<Activity>
     public override void OnEnd(Activity data)
     {
         ArgumentNullException.ThrowIfNull(data);
+        if (!_scanner.IsEnabled)
+            return;
+
         foreach (var tag in data.TagObjects.ToArray())
         {
             if (tag.Value is string text)
                 data.SetTag(tag.Key, _scanner.Scan(text));
         }
-        if (_scanner.IsEnabled)
-        {
-            data.DisplayName = _scanner.Scan(data.DisplayName);
-            if (data.StatusDescription is not null)
-                data.SetStatus(data.Status, _scanner.Scan(data.StatusDescription));
-        }
+        data.DisplayName = _scanner.Scan(data.DisplayName);
+        if (data.StatusDescription is not null)
+            data.SetStatus(data.Status, _scanner.Scan(data.StatusDescription));
     }
 }
 

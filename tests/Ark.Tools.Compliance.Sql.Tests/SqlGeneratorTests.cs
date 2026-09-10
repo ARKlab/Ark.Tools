@@ -172,7 +172,7 @@ public sealed class SqlGeneratorTests
     [TestMethod]
     public void BuildTargetMaterializesEscapedSql()
     {
-        var paths = Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "ComplianceSql"), "*.compliance.sql");
+        var paths = Directory.GetFiles(Path.Join(AppContext.BaseDirectory, "ComplianceSql"), "*.compliance.sql");
         paths.Should().ContainSingle();
         var sql = File.ReadAllText(paths[0]);
         sql.Should().Contain("[tenant]]schema].[Customers].[email_address]")

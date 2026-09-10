@@ -103,7 +103,7 @@ public sealed class SqlBuildTargetTests
             var error = process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync().ConfigureAwait(false);
             var log = await output.ConfigureAwait(false) + await error.ConfigureAwait(false);
-            var path = Path.Combine(directory, _fileName);
+            var path = Path.Join(directory, Path.GetFileName(_fileName));
             var sql = File.Exists(path) ? await File.ReadAllTextAsync(path).ConfigureAwait(false) : string.Empty;
             return (process.ExitCode, log, sql);
         }

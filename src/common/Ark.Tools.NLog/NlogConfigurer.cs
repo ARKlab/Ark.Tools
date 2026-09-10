@@ -204,7 +204,7 @@ public static class NLogConfigurer
             {
                 WebHookUrl = slackwebhook,
                 Layout = _createMessageLayout(),
-                _exceptionLayout = _createScannedLayout("${exception:format=Message}"),
+                _exceptionLayout = _createScannedLayout("${exception:format=ToString}"),
                 _valueRedactor = _scanSlackValue
             };
             _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);

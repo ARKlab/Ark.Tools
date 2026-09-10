@@ -26,9 +26,7 @@ public static class ComplianceNLogExtensions
     public static ISetupSerializationBuilder UseArkMessageTemplateParsing(
         this ISetupSerializationBuilder builder)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        return builder.ParseMessageTemplates(true);
+        return builder.UseComplianceRedaction();
     }
 
 }
