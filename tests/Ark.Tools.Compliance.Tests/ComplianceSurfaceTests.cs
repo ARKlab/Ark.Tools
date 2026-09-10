@@ -400,6 +400,7 @@ public sealed class ComplianceSurfaceTests
                   <PropertyGroup>
                     <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
                     <ImportDirectoryBuildTargets>false</ImportDirectoryBuildTargets>
+                    <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
                     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
                   </PropertyGroup>
                   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
