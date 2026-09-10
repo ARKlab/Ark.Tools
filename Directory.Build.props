@@ -9,6 +9,8 @@
 	<IsPackable>true</IsPackable>
 	<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+	<ArkToolsComplianceImplementationProject
+	  Condition="$(MSBuildProjectDirectory.Contains('/src/')) Or $(MSBuildProjectDirectory.Contains('\src\'))">true</ArkToolsComplianceImplementationProject>
 	<!-- The repository validates the analyzer itself through dedicated analyzer tests. -->
 	<EnableArkToolsCompliance>false</EnableArkToolsCompliance>
   </PropertyGroup>

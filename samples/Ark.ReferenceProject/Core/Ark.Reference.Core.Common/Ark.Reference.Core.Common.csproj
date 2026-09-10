@@ -2,6 +2,8 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.Compliance" />
+    <PackageReference Include="Ark.Tools.Compliance.Sql" />
     <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj" />
   </ItemGroup>
 	

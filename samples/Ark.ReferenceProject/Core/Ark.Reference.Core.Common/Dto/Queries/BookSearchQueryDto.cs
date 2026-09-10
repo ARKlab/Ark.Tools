@@ -1,5 +1,6 @@
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
+using Ark.Tools.Compliance;
 
 
 namespace Ark.Reference.Core.Common.Dto;
@@ -10,7 +11,7 @@ public static class BookSearchQueryDto
     {
         public int[] Id { get; init; } = [];
         public string[] Title { get; init; } = [];
-        public string[] Author { get; init; } = [];
+        public PersonName[] Author { get; init; } = [];
         public BookGenre[] Genre { get; init; } = [];
 
         public IEnumerable<string> Sort { get; set; } = [];

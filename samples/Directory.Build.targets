@@ -22,6 +22,7 @@
             <CommonPath>$(ArkToolsSourceRoot)common\%(Identity)\%(Identity).csproj</CommonPath>
             <MediatorFrameworkPath>$(ArkToolsSourceRoot)mediator-framework\%(Identity)\%(Identity).csproj</MediatorFrameworkPath>
             <AspNetCorePath>$(ArkToolsSourceRoot)aspnetcore\%(Identity)\%(Identity).csproj</AspNetCorePath>
+            <CompliancePath>$(ArkToolsSourceRoot)compliance\%(Identity)\%(Identity).csproj</CompliancePath>
             <ResourceWatcherPath>$(ArkToolsSourceRoot)resourcewatcher\%(Identity)\%(Identity).csproj</ResourceWatcherPath>
          </_ArkToolsCandidates>
       </ItemGroup>
@@ -36,6 +37,9 @@
          <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(AspNetCorePath)')">
             <ProjectPath>%(AspNetCorePath)</ProjectPath>
          </_ArkToolsToReplace>
+         <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(CompliancePath)')">
+            <ProjectPath>%(CompliancePath)</ProjectPath>
+         </_ArkToolsToReplace>
          <_ArkToolsToReplace Include="@(_ArkToolsCandidates)" Condition="Exists('%(ResourceWatcherPath)')">
             <ProjectPath>%(ResourceWatcherPath)</ProjectPath>
          </_ArkToolsToReplace>
@@ -45,7 +49,8 @@
         <PackageReference Remove="@(_ArkToolsToReplace)" />
         <ProjectReference Include="@(_ArkToolsToReplace->'%(ProjectPath)')"
                           OutputItemType="%(_ArkToolsToReplace.OutputItemType)"
-                          ReferenceOutputAssembly="%(_ArkToolsToReplace.ReferenceOutputAssembly)" />
+                          ReferenceOutputAssembly="%(_ArkToolsToReplace.ReferenceOutputAssembly)"
+                          AdditionalProperties="EnableArkToolsCompliance=false" />
 
         <!-- Package consumption gets these analyzers from analyzers/dotnet/cs. The sample's
              local PackageReference-to-ProjectReference replacement bypasses NuGet assets,
@@ -54,7 +59,19 @@
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.Core.Analyzers\Ark.Tools.Core.Analyzers.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false"
+                          AdditionalProperties="EnableArkToolsCompliance=false"
                           Condition="@(_ArkToolsToReplace->Count()) > 0" />
+
+        <ProjectReference Include="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Analyzers\Ark.Tools.Compliance.Analyzers.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          AdditionalProperties="EnableArkToolsCompliance=false"
+                          Condition="'$(EnableArkToolsCompliance)' != 'false' And '$(ArkToolsComplianceImplementationProject)' != 'true'" />
+        <ProjectReference Include="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Generators\Ark.Tools.Compliance.Generators.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"
+                          AdditionalProperties="EnableArkToolsCompliance=false"
+                          Condition="'$(EnableArkToolsCompliance)' != 'false' And '$(ArkToolsComplianceImplementationProject)' != 'true'" />
 
         <ProjectReference Include="$(ArkToolsSourceRoot)common\Ark.Tools.Solid.Analyzers\Ark.Tools.Solid.Analyzers.csproj"
                           OutputItemType="Analyzer"
@@ -106,4 +123,8 @@
    <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Solid\buildTransitive\Ark.Tools.Solid.targets" />
    <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.props" />
    <Import Project="$(ArkToolsSourceRoot)common\Ark.Tools.Core\buildTransitive\Ark.Tools.Core.targets" />
+   <Import Project="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Generators\buildTransitive\Ark.Tools.Compliance.Surface.targets"
+            Condition="'$(EnableArkToolsCompliance)' != 'false' And '$(ArkToolsComplianceImplementationProject)' != 'true' And '$(MSBuildProjectExtension)' == '.csproj'" />
+   <Import Project="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql\buildTransitive\Ark.Tools.Compliance.Sql.targets"
+            Condition="'$(EnableArkToolsCompliance)' != 'false' And '$(ArkToolsComplianceImplementationProject)' != 'true' And '$(MSBuildProjectExtension)' == '.csproj'" />
 </Project>

@@ -8,7 +8,7 @@
     <ArkComplianceMode Condition="'$(EnableArkToolsCompliance)' == 'false'">Off</ArkComplianceMode>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' != 'false'">
+  <PropertyGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' != 'false' and '$(ArkToolsComplianceImplementationProject)' != 'true'">
     <!-- The name-based heuristic must not become a build error under TreatWarningsAsErrors. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);ARKPII001</WarningsNotAsErrors>
   </PropertyGroup>

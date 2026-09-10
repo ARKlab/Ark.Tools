@@ -4,6 +4,7 @@
     <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == '' AND '$(EnableArkToolsCompliance)' == 'false'">false</ArkComplianceSurfaceEnabled>
     <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == ''">true</ArkComplianceSurfaceEnabled>
     <EmitCompilerGeneratedFiles Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' != 'false'">true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' != 'false' AND '$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

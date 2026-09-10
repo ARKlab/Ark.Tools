@@ -919,11 +919,24 @@
           "Microsoft.Extensions.Telemetry": "[10.9.0, )"
         }
       },
+      "ark.tools.compliance.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Dapper": "[2.1.79, )"
+        }
+      },
       "ark.tools.compliance.nlog": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
           "NLog": "[6.2.0, )"
+        }
+      },
+      "ark.tools.compliance.sql": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )"
         }
       },
       "ark.tools.core": {

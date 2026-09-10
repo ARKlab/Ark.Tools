@@ -2,6 +2,8 @@
 
 
 	<ItemGroup>
+		<PackageReference Include="Ark.Tools.Compliance.Dapper" />
+		<PackageReference Include="Ark.Tools.Compliance.Sql" />
 		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
 		<PackageReference Include="Azure.Storage.Blobs" />
 		<PackageReference Include="Polly" />

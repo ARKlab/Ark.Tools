@@ -1,5 +1,7 @@
 using Ark.Reference.Common.Services.Audit;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Compliance;
+using Ark.Tools.Compliance.Sql;
 
 
 namespace Ark.Reference.Core.Common.Dto;
@@ -27,7 +29,8 @@ public static class Book
             /// <summary>
             /// Gets or initializes the author of the Book
             /// </summary>
-            public string? Author { get; init; }
+            [SqlColumnPolicy("Author", StoragePolicy.Masked, InformationType = "Person Name")]
+            public PersonName? Author { get; init; }
 
             /// <summary>
             /// Gets or initializes the genre of the Book
@@ -54,6 +57,7 @@ public static class Book
         /// <summary>
         /// Output representation of a Book entity
         /// </summary>
+        [SqlDataPolicy(Schema = "dbo", Table = "Book", Label = "Personal Data")]
         public record Output : Update, IAuditEntity
         {
             /// <summary>

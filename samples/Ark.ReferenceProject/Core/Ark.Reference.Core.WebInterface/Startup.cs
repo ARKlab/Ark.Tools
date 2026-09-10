@@ -3,6 +3,7 @@ using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Common;
 using Ark.Reference.Core.Common.Auth;
 using Ark.Reference.Core.WebInterface.Utils;
+using Ark.ReferenceProject;
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.AspNetCore.Swashbuckle;
@@ -46,6 +47,7 @@ public class Startup : ArkStartupWebApi
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
+        services.AddReferenceCompliance();
         services.AddArkAzureMonitorOpenTelemetry(Configuration);
         services.AddOpenTelemetry()
             .WithTracing(static tracing => tracing.AddSource(ReferenceTelemetry.ActivitySourceName));

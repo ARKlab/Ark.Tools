@@ -1,4 +1,6 @@
-﻿namespace Ark.Reference.Core.Common.Auth;
+﻿using Ark.Tools.Compliance;
+
+namespace Ark.Reference.Core.Common.Auth;
 
 
 public static class AuthConstants
@@ -8,7 +10,8 @@ public static class AuthConstants
 
     public const string IntegrationTestsAudience = "API";
     public const string IntegrationTestsDomain = "local.dev";
-    public const string IntegrationTestsEncryptionKey = "IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLongVeryLong";
+    [Secret]
+    public const string IntegrationTestsEncryptionKey = "IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong";
 
     public const string ScopePrefix = "extension_Scope";
 
