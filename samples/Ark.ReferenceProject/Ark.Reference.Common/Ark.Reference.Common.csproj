@@ -1,5 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<PropertyGroup>
+	  <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Ark.Tools.Compliance.Dapper" />
@@ -19,10 +22,6 @@
 		<PackageReference Include="Ark.Tools.SystemTextJson" />
 		<PackageReference Include="Ark.Tools.Solid.Authorization" />
 		<PackageReference Include="Ark.Tools.Solid.FluentValidaton" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Include="..\ComplianceRegistration.cs" Link="ComplianceRegistration.cs" />
 	</ItemGroup>
 
 </Project>

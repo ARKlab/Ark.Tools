@@ -1,13 +1,11 @@
 using Ark.Tools.Compliance;
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Ark.ReferenceProject;
 
-public static class ComplianceRegistration
+internal static class ComplianceRegistration
 {
-    public static IServiceCollection AddReferenceCompliance(this IServiceCollection services)
+    public static void Register(IServiceCollection services)
     {
-        return services.AddArkRedaction();
+        _ = services.AddArkRedaction();
     }
 }
