@@ -364,7 +364,7 @@ public sealed class ComplianceSurfaceTests
         while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "Ark.Tools.slnx")))
             repository = repository.Parent;
         repository.Should().NotBeNull();
-        var targets = Path.Combine(repository!.FullName, "src", "common", "Ark.Tools.Compliance.Generators",
+        var targets = Path.Combine(repository!.FullName, "src", "compliance", "Ark.Tools.Compliance.Generators",
             "buildTransitive", "Ark.Tools.Compliance.Surface.targets");
         var directory = Path.Combine(AppContext.BaseDirectory, "SurfaceTargetTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);

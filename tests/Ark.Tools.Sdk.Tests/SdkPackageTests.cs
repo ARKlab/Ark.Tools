@@ -43,7 +43,7 @@ public sealed class SdkPackageTests
             .ConfigureAwait(false);
         await _run(
             "dotnet",
-            $"pack \"{Path.Join(_root, "src", "common", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
     }
 
@@ -89,20 +89,28 @@ public sealed class SdkPackageTests
     private static readonly string[] _preservedAnalyzer = ["Preserved.Analyzer.dll"];
 
     /// <summary>
-    /// Verifies compliance configuration is packaged, default-on, switchable, and inert without its analyzers.
+    /// Verifies compliance configuration is packaged, opt-in, switchable, and inert without its analyzers.
     /// </summary>
     [TestMethod]
-    public async Task ComplianceConfigurationIsDefaultOnAndSwitchable()
+    public async Task ComplianceConfigurationIsOptInAndSwitchable()
     {
         var fixtureRoot = Path.Join(_root, "artifacts", "sdk-compliance-configuration");
         var feed = _prepareSdkFixture(fixtureRoot);
         using var baseline = await _evaluateSdkAsync(
             fixtureRoot, feed, "default", "Consumer.csproj", _createSdkCSharpProject());
-        Assert.AreEqual("Enforce", _getProperty(baseline, "ArkComplianceMode"));
-        StringAssert.Contains(_getProperty(baseline, "WarningsNotAsErrors"), "ARKPII001", StringComparison.Ordinal);
-        CollectionAssert.Contains(_getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
-        CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(baseline, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
-        CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(baseline, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
+        Assert.AreEqual("Off", _getProperty(baseline, "ArkComplianceMode"));
+        CollectionAssert.DoesNotContain(_getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
+        CollectionAssert.DoesNotContain(_getComplianceAnalyzerItemFileNames(baseline, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
+        CollectionAssert.DoesNotContain(_getComplianceAnalyzerItemFileNames(baseline, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
+
+        using var enabled = await _evaluateSdkAsync(
+            fixtureRoot, feed, "enabled", "Consumer.csproj",
+            _createSdkCSharpProject("<EnableArkToolsCompliance>true</EnableArkToolsCompliance>"));
+        Assert.AreEqual("Enforce", _getProperty(enabled, "ArkComplianceMode"));
+        StringAssert.Contains(_getProperty(enabled, "WarningsNotAsErrors"), "ARKPII001", StringComparison.Ordinal);
+        CollectionAssert.Contains(_getArkBuildItemFileNames(enabled, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
+        CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(enabled, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
+        CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(enabled, "AdditionalFiles"), "ComplianceSinks.Ark.txt");
 
         using var disabled = await _evaluateSdkAsync(
             fixtureRoot, feed, "disabled", "Consumer.csproj",
@@ -116,7 +124,7 @@ public sealed class SdkPackageTests
             _getArkBuildItemFileNames(baseline, "GlobalAnalyzerConfigFiles").Where(static name => name != "Ark.Tools.Compliance.globalconfig").ToArray(),
             _getArkBuildItemFileNames(disabled, "GlobalAnalyzerConfigFiles"));
 
-        var configPath = _getItemIdentities(baseline, "GlobalAnalyzerConfigFiles")
+        var configPath = _getItemIdentities(enabled, "GlobalAnalyzerConfigFiles")
             .Single(static path => path.EndsWith("Ark.Tools.Compliance.globalconfig", StringComparison.Ordinal));
         var config = await File.ReadAllTextAsync(configPath).ConfigureAwait(false);
         foreach (var id in new[] { "001", "006", "008", "009", "012", "013" })
@@ -133,7 +141,7 @@ public sealed class SdkPackageTests
         }
         StringAssert.Contains(config, "dotnet_diagnostic.LOGGEN036.severity = warning", StringComparison.Ordinal);
 
-        var scenarioRoot = Path.Join(fixtureRoot, "default");
+        var scenarioRoot = Path.Join(fixtureRoot, "enabled");
         await _run("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore",
             _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
         var unsupported = await _runForExitCode(
