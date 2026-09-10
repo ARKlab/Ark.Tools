@@ -372,7 +372,7 @@ public sealed class ComplianceSurfaceTests
         if (relativeSegments.Any(Path.IsPathRooted))
             throw new InvalidOperationException("Compliance target path segments must be relative.");
 
-        var targets = Path.Combine(repository!.FullName, relativeSegments);
+        var targets = Path.Combine([repository!.FullName, .. relativeSegments]);
         var directory = Path.Combine(AppContext.BaseDirectory, "SurfaceTargetTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
