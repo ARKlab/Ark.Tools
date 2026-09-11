@@ -39,7 +39,7 @@ public sealed class SwaggerSteps
         foreach (var authorSchema in authorSchemas)
         {
             var schema = _resolveSchema(schemas, authorSchema);
-            schema.GetProperty("type").GetString().Should().Be("string");
+            _schemaTypes(schema).Should().Contain("string");
             schema.GetProperty(SensitiveValueSchemaDescriptor.ClassificationExtension)
                 .GetString()
                 .Should()
@@ -53,6 +53,15 @@ public sealed class SwaggerSteps
         return schema.TryGetProperty("properties", out var properties)
             ? properties.EnumerateObject()
             : [];
+    }
+
+    // OpenAPI 3.1 renders nullable primitives as "type": ["string", "null"]
+    private static string?[] _schemaTypes(JsonElement schema)
+    {
+        var type = schema.GetProperty("type");
+        return type.ValueKind == JsonValueKind.Array
+            ? type.EnumerateArray().Select(static t => t.GetString()).ToArray()
+            : [type.GetString()];
     }
 
     private static JsonElement _resolveSchema(JsonElement schemas, JsonElement schema)

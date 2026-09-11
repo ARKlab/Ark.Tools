@@ -130,6 +130,7 @@
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Mcp.Generators/Ark.Tools.MediatorFramework.Mcp.Generators.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.OutboxProcessor/Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />

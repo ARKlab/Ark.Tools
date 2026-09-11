@@ -2233,6 +2233,13 @@
           "Microsoft.AspNetCore.OpenApi": "[10.0.11, )"
         }
       },
+      "ark.tools.compliance.reqnroll": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Reqnroll": "[3.3.4, )"
+        }
+      },
       "ark.tools.compliance.sql": {
         "type": "Project",
         "dependencies": {

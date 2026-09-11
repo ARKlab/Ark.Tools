@@ -11,6 +11,7 @@
     <PackageVersion Include="Ark.Tools.AspNetCore" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.OTel" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Compliance.Reqnroll" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance.Sql" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance.Dapper" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Http" Version="999.9.9" />

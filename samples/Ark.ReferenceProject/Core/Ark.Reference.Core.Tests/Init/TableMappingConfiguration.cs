@@ -28,5 +28,8 @@ public class TableMappingConfiguration
 
         Reqnroll.Assist.Service.Instance.ValueRetrievers.Register(new NestedJsonRetrieverAndComparer<decimal?[]>());
         Reqnroll.Assist.Service.Instance.ValueComparers.Register(new NestedJsonRetrieverAndComparer<decimal?[]>());
+
+        // maps table cells to sensitive value objects (e.g. PersonName) via their generated TypeConverter
+        Ark.Tools.Compliance.Reqnroll.SensitiveValueReqnroll.Register();
     }
 }

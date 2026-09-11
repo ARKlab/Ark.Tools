@@ -2005,6 +2005,7 @@
           "Ark.Reference.Core.Application": "[6.6.6, )",
           "Ark.Reference.Core.Common": "[6.6.6, )",
           "Ark.Reference.Core.WebInterface": "[6.6.6, )",
+          "Ark.Tools.Compliance.Reqnroll": "[999.9.9, )",
           "Ark.Tools.Reqnroll": "[1.0.0, )",
           "AwesomeAssertions": "[9.6.0, )",
           "ExcelDataReader": "[3.9.0, )",
@@ -2168,6 +2169,13 @@
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.11, )"
+        }
+      },
+      "ark.tools.compliance.reqnroll": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Reqnroll": "[3.3.4, )"
         }
       },
       "ark.tools.compliance.sql": {
