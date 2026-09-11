@@ -1,0 +1,10 @@
+<Project>
+  <!-- Isolated from repo root Directory.Build.props on purpose: evaluation projects are throw-away PoCs, not part of Ark.Tools.slnx nor of CI -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+</Project>
