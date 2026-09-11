@@ -51,7 +51,7 @@ public partial class CoreDataContext_Sql
         {
             @Id = query.Id,
             @Title = query.Title,
-            @Author = query.Author,
+            @Author = query.Author?.Select(static x => SensitiveValueSerialization.ToTransport(x, "Dapper")),
             @Genre = query.Genre?.Select(static x => x.ToString()),
             @Skip = query.Skip,
             @Limit = query.Limit
@@ -144,7 +144,7 @@ public partial class CoreDataContext_Sql
 
         var rows = entities.Select(entity => new BookBulkInsertRow(
             entity.Title,
-            entity.Author,
+            entity.Author is { } author ? SensitiveValueSerialization.ToTransport(author, "Dapper") : null,
             entity.Genre?.ToString(),
             entity.ISBN,
             entity.Description,
@@ -293,7 +293,7 @@ public partial class CoreDataContext_Sql
     #region Private view
     private sealed record BookBulkInsertRow(
         string? Title,
-        PersonName? Author,
+        [property: PersonalData] string? Author,
         string? Genre,
         string? ISBN,
         string? Description,

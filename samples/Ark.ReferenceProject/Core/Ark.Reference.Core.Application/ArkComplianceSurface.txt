@@ -11,7 +11,6 @@ CLASSIFIED	Ark.Reference.Core.Application.Config.ApiHostConfig	RebusBusConfig_St
 CLASSIFIED	Ark.Reference.Core.Application.Config.IRebusBusConfig	AsbConnectionString	Ark:Secret		
 CLASSIFIED	Ark.Reference.Core.Application.Config.IRebusBusConfig	StorageConnectionString	Ark:Secret		
 CLASSIFIED	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql.EnsureAudit(Ark.Reference.Core.Common.Enum.AuditKind, string?, string?, System.Threading.CancellationToken):userId	Ark:Pseudonymous		
-CLASSIFIED	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql.BookBulkInsertRow	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql.BookBulkInsertRow.BookBulkInsertRow(string?, Ark.Tools.Compliance.PersonName?, string?, string?, string?, System.Guid):Author	Ark:PersonalData		
-CLASSIFIED	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql.BookBulkInsertRow	Author	Ark:PersonalData		System.Text.Json
+CLASSIFIED	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql.BookBulkInsertRow	Author	Ark:PersonalData		
 CLASSIFIED	Ark.Reference.Core.Application.DAL.CoreDataContext_Sql.BookView	Author	Ark:PersonalData		System.Text.Json
 */
