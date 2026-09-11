@@ -446,3 +446,7 @@ $RECYCLE.BIN/
 
 # Local NuGet packages for sample projects
 /packages/
+
+
+# APM dependencies
+apm_modules/

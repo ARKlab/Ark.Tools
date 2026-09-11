@@ -1,0 +1,26 @@
+name: Ark.Tools
+version: 1.0.0
+description: APM project for Ark.Tools
+author: Andrea Cuneo
+targets:
+- copilot
+- opencode
+dependencies:
+  apm:
+  - dotnet/skills/plugins/dotnet
+  mcp:
+  - name: ado
+    registry: false
+    transport: http
+    url: https://mcp.dev.azure.com/arklabita
+  - name: microsoftdocs
+    registry: false
+    transport: http
+    url: https://learn.microsoft.com/api/mcp
+  - io.github.github/github-mcp-server
+  - name: github
+    registry: false
+    transport: http
+    url: https://api.githubcopilot.com/mcp
+includes: auto
+scripts: {}

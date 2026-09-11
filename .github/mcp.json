@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "ado": {
+      "type": "http",
+      "url": "https://mcp.dev.azure.com/arklabita",
+      "tools": [
+        "*"
+      ],
+      "id": ""
+    },
+    "microsoftdocs": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "tools": [
+        "*"
+      ],
+      "id": ""
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp",
+      "tools": [
+        "*"
+      ],
+      "id": ""
+    }
+  }
+}

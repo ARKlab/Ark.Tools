@@ -1,0 +1,154 @@
+lockfile_version: '1'
+apm_version: 0.30.0
+dependencies:
+- repo_url: dotnet/skills
+  name: dotnet
+  host: github.com
+  resolved_commit: 8a5a42d3e392b402768fc29416831643b79e402b
+  version: 0.2.3
+  virtual_path: plugins/dotnet
+  is_virtual: true
+  package_type: skill_bundle
+  deployed_files:
+  - .agents/skills/setup-local-sdk
+  - .agents/skills/setup-local-sdk/SKILL.md
+  deployed_file_hashes:
+    .agents/skills/setup-local-sdk/SKILL.md: sha256:6b4904db9ae950da582f85dc2f4cf2adf586776d84ce805a273edb4045f1a74e
+  content_hash: sha256:50c83994e2e17b718d6cdd5ddbefa634ac8e74ab1d0423a6f027038cb19a7572
+  discovered_via: dotnet-agent-skills
+  marketplace_plugin_name: dotnet
+deployments:
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/setup-local-sdk
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet
+  active_owner: dotnet/skills/plugins/dotnet
+  content_hash: null
+- kind: project-relative
+  target: legacy
+  value: .agents/skills/setup-local-sdk/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet
+  active_owner: dotnet/skills/plugins/dotnet
+  content_hash: sha256:6b4904db9ae950da582f85dc2f4cf2adf586776d84ce805a273edb4045f1a74e
+- kind: uri
+  target: lsp
+  value: csharp
+  runtime: copilot
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: ado
+  runtime: copilot
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: github
+  runtime: copilot
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: microsoftdocs
+  runtime: copilot
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: ado
+  runtime: opencode
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: github
+  runtime: opencode
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: uri
+  target: mcp
+  value: microsoftdocs
+  runtime: opencode
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+mcp_servers:
+- ado
+- github
+- microsoftdocs
+mcp_configs:
+  ado:
+    name: ado
+    transport: http
+    registry: false
+    url: https://mcp.dev.azure.com/arklabita
+  github:
+    name: github
+    transport: http
+    registry: false
+    url: https://api.githubcopilot.com/mcp
+  microsoftdocs:
+    name: microsoftdocs
+    transport: http
+    registry: false
+    url: https://learn.microsoft.com/api/mcp
+mcp_target_servers:
+  copilot:
+  - ado
+  - github
+  - microsoftdocs
+  opencode:
+  - ado
+  - github
+  - microsoftdocs
+lsp_servers:
+- csharp
+lsp_configs:
+  csharp:
+    name: csharp
+    command: dnx
+    args:
+    - roslyn-language-server
+    - --yes
+    - --prerelease
+    - --
+    - --stdio
+    - --daemon-mode
+    - --autoLoadProjects
+    extensionToLanguage:
+      .cs: csharp
+      .razor: aspnetcorerazor
+      .cshtml: aspnetcorerazor
+    startupTimeout: 120000
+lsp_target_servers:
+  copilot:
+  - csharp
+lsp_config_provenance:
+  csharp: package:dotnet/skills/plugins/dotnet
