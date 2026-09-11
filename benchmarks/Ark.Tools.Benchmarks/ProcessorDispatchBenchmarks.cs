@@ -58,7 +58,7 @@ public class ProcessorDispatchBenchmarks : IDisposable
     [Benchmark]
     public async Task<int> Query_reflection_dynamic()
     {
-        var handlerType = typeof(IQueryHandler<,>).MakeGenericType(_query.GetType(), typeof(int));
+        var handlerType = typeof(IQueryHandler<,>).MakeGenericType(typeof(BenchmarkQuery), typeof(int));
         dynamic handler = _container.GetInstance(handlerType);
         return await handler.ExecuteAsync((dynamic)_query);
     }
@@ -72,7 +72,7 @@ public class ProcessorDispatchBenchmarks : IDisposable
     [Benchmark]
     public async Task<int> Request_reflection_dynamic()
     {
-        var handlerType = typeof(IRequestHandler<,>).MakeGenericType(_request.GetType(), typeof(int));
+        var handlerType = typeof(IRequestHandler<,>).MakeGenericType(typeof(BenchmarkRequest), typeof(int));
         dynamic handler = _container.GetInstance(handlerType);
         return await handler.ExecuteAsync((dynamic)_request);
     }
@@ -86,7 +86,7 @@ public class ProcessorDispatchBenchmarks : IDisposable
     [Benchmark]
     public async Task Command_reflection_dynamic()
     {
-        var handlerType = typeof(ICommandHandler<>).MakeGenericType(_command.GetType());
+        var handlerType = typeof(ICommandHandler<>).MakeGenericType(typeof(BenchmarkCommand));
         dynamic handler = _container.GetInstance(handlerType);
         await handler.ExecuteAsync((dynamic)_command);
     }
