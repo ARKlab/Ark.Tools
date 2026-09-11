@@ -9,10 +9,11 @@
 	<IsPackable>true</IsPackable>
 	<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+	<!-- The compliance implementation cannot analyze itself; it is validated through dedicated analyzer tests. -->
 	<ArkToolsComplianceImplementationProject
-	  Condition="$(MSBuildProjectDirectory.Contains('/src/')) Or $(MSBuildProjectDirectory.Contains('\src\'))">true</ArkToolsComplianceImplementationProject>
-	<!-- The repository validates the analyzer itself through dedicated analyzer tests. -->
-	<EnableArkToolsCompliance>false</EnableArkToolsCompliance>
+	  Condition="$(MSBuildProjectDirectory.Contains('/src/compliance/')) Or $(MSBuildProjectDirectory.Contains('\src\compliance\'))">true</ArkToolsComplianceImplementationProject>
+	<!-- Ark.Tools libraries are themselves checked against compliance (dogfooding). -->
+	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == ''">true</EnableArkToolsCompliance>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props" />
