@@ -139,7 +139,7 @@ public sealed class MessagingOutgoingContext
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _inner.GetEnumerator();
         public bool Remove(string key) { MessagingHeadersGuard.ThrowIfReserved(key); return _inner.Remove(key); }
         public bool Remove(KeyValuePair<string, string> item) { MessagingHeadersGuard.ThrowIfReserved(item.Key); return _inner.Remove(item); }
-        public bool TryGetValue(string key, out string value) => _inner.TryGetValue(key, out value!);
+        public bool TryGetValue(string key, [MaybeNullWhen(false)] out string value) => _inner.TryGetValue(key, out value!);
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
