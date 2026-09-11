@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
@@ -194,7 +195,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static bool _emptyPurpose(IOperation operation, OperationAnalysisContext context, int depth)
+    private static bool _emptyPurpose(IOperation operation, OperationAnalysisContext context, int depth, HashSet<ILocalSymbol>? visited = null)
     {
         if (depth >= 64)
         {
@@ -209,9 +210,15 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
         if (operation is ILocalReferenceOperation local)
         {
+            visited ??= new HashSet<ILocalSymbol>(SymbolEqualityComparer.Default);
+            if (!visited.Add(local.Local))
+            {
+                return false;
+            }
+
             var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(local.Syntax.SyntaxTree);
             return new SinkFlow(options, context.CancellationToken)._localValues(local)
-                .Any(value => _emptyPurpose(value, context, depth + 1));
+                .Any(value => _emptyPurpose(value, context, depth + 1, visited));
         }
 
         return operation is IDefaultValueOperation
@@ -219,7 +226,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             || operation.ConstantValue is { HasValue: true, Value: null };
     }
 
-    private static bool _isExceptionData(IOperation? operation, OperationAnalysisContext context, int depth)
+    private static bool _isExceptionData(IOperation? operation, OperationAnalysisContext context, int depth, HashSet<ILocalSymbol>? visited = null)
     {
         for (; operation is not null && depth < 64; depth++)
         {
@@ -240,10 +247,16 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             }
             else if (operation is ILocalReferenceOperation local)
             {
+                visited ??= new HashSet<ILocalSymbol>(SymbolEqualityComparer.Default);
+                if (!visited.Add(local.Local))
+                {
+                    return false;
+                }
+
                 var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(local.Syntax.SyntaxTree);
                 var nextDepth = depth + 1;
                 return new SinkFlow(options, context.CancellationToken)._localValues(local)
-                    .Any(value => _isExceptionData(value, context, nextDepth));
+                    .Any(value => _isExceptionData(value, context, nextDepth, visited));
             }
             else
             {

@@ -179,6 +179,32 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>Mutually referencing locals reassigned inside a loop terminate instead of expanding exponentially.</summary>
+    [TestMethod]
+    [Timeout(120000)]
+    public async Task CyclicLocalAssignmentsInLoop_Terminate()
+    {
+        // ponytail: mirrors SqlLikeStringUtilities.SqlLike, the real-world shape that hung the build.
+        var diagnostics = await _analyzeAsync(_method("""
+            var last = -1;
+            var index = 0;
+            var mode = 0;
+            for (var i = 0; i < c.Key.Length; i++)
+            {
+                if (choose) { last = index; }
+                if (choose) { index = last; }
+                if (choose) { mode = index; }
+                if (choose) { index = mode; }
+                if (choose) { last = mode; }
+                if (choose) { mode = last; }
+                if (choose && index > 0) { index = index; }
+            }
+            var map = new System.Collections.Generic.Dictionary<int, string>();
+            map[index] = c.Key;
+            """)).ConfigureAwait(false);
+        diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "AD0001");
+    }
+
     /// <summary>Telemetry covers Activity tags, events, baggage and metric dimensions.</summary>
     [TestMethod]
     [DataRow("new System.Diagnostics.Activity(\"test\").SetTag(\"email\", c.Email);")]
