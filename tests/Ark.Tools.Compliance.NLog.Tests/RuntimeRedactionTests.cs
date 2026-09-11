@@ -122,7 +122,7 @@ public sealed class RuntimeRedactionTests
     [TestMethod]
     public void PiiScan_IsOffByDefaultAndMasksUntypedPayloadsWhenEnabled()
     {
-        const string message = "contact alice@private-domain.dev";
+        const string message = "contact alice@private-domain.test";
         _capture(null, static logger => logger.Info(CultureInfo.InvariantCulture, "{Message}", message))
             .Should().Contain(message);
         var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
@@ -131,7 +131,7 @@ public sealed class RuntimeRedactionTests
             logger.Info(CultureInfo.InvariantCulture, "{Message}", message);
         });
         output.Should().Contain(ComplianceRedactor.Marker);
-        output.Should().NotContain("alice@private-domain.dev");
+        output.Should().NotContain("alice@private-domain.test");
     }
 
     /// <summary>PII scanning masks exception messages without erasing ordinary exception output.</summary>
@@ -140,10 +140,10 @@ public sealed class RuntimeRedactionTests
     {
         var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
             options.PiiScan = PiiScanMode.MessageAndProperties), static logger =>
-            logger.Error(new InvalidOperationException("contact alice@private-domain.dev"), CultureInfo.InvariantCulture, "failed"));
+            logger.Error(new InvalidOperationException("contact alice@private-domain.test"), CultureInfo.InvariantCulture, "failed"));
 
         output.Should().Contain(ComplianceRedactor.Marker);
-        output.Should().NotContain("alice@private-domain.dev");
+        output.Should().NotContain("alice@private-domain.test");
     }
 
     /// <summary>Pattern scanning classifies phone and postal-address matches independently from email.</summary>
@@ -206,7 +206,7 @@ public sealed class RuntimeRedactionTests
     public void Throughput_PiiScanHasBoundedCost()
     {
         var scanner = new PiiScanner(PiiScanMode.MessageAndProperties);
-        var message = "contact alice@private-domain.dev ".PadRight(200, 'x');
+        var message = "contact alice@private-domain.test ".PadRight(200, 'x');
         for (var i = 0; i < 1000; i++)
             _ = scanner.Scan(message);
         const int iterations = 10000;
