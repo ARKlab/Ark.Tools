@@ -80,8 +80,10 @@ to inspect or rewrite arbitrary object graphs.
   formatting handles messages, properties, JSON, and stack traces without mutating,
   caching, or cloning the caller's event.
 - `ComplianceRedactionOptions`, `ComplianceRedactor`, and `PiiScanner` live in the
-  foundation so OTel does not acquire an NLog dependency. Missing HMAC keys emit
-  the alertable `***ARKPII***` marker. Supply `HmacKey` from the application's
+  foundation so OTel does not acquire an NLog dependency. A keyless
+  `ArkHmacRedactor` fails closed by erasing values to the `***` marker, while the
+  `PiiScanner` uses the distinct alertable `***ARKPII***` marker for detected
+  pattern leaks. Supply `HmacKey` from the application's
   secret provider to obtain stable text pseudonyms.
 - Generated sensitive values implement reflection-free intrinsic safe formatting.
   Runtime redaction does not inspect arbitrary DTOs, invoke getters, or traverse

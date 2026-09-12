@@ -18,13 +18,18 @@
     <PackageReference Include="Microsoft.Extensions.Telemetry" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll"
-          Pack="true"
-          PackagePath="analyzers/dotnet/cs"
-          Visible="false"
-          Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll')" />
-  </ItemGroup>
+  <!-- Evaluation-time Exists() would silently drop the generator on a clean pack; resolve the
+       dll after the referenced generator project has built, right before package file collection. -->
+  <Target Name="_ArkPackComplianceGenerators"
+          DependsOnTargets="ResolveProjectReferences"
+          BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <None Include="../Ark.Tools.Compliance.Generators/buildTransitive/Ark.Tools.Compliance.Surface.targets"

@@ -154,7 +154,11 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
                 IParameterReferenceOperation parameter => parameter.Parameter,
                 _ => null,
             };
+            // Anonymous-type payloads carry no classification on their generated properties;
+            // the initializer values are the classified sources (new { Email = customer.Email }).
+            var initializedClassified = _hasClassifiedInitializer(value, 0);
             if (type is null || (!ComplianceSymbolFacts._isClassified(source)
+                    && !initializedClassified
                     && !_containsClassified(type, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default)))
                 || _hasEgressPolicy(type) || (source is not null && _hasEgressPolicy(source)))
             {
@@ -163,6 +167,50 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(Diagnostic.Create(_missingEgress, argument.Syntax.GetLocation(),
                 type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat), channel));
         }
+    }
+
+    // Walks object/anonymous-object/collection initializer values to find classified sources or
+    // classified member types feeding a transport payload. Depth-bounded for safety.
+    // ponytail: depth 4 covers realistic payload nesting; deeper graphs fall back to type-based checks.
+    private static bool _hasClassifiedInitializer(IOperation operation, int depth)
+    {
+        if (depth > 4)
+        {
+            return false;
+        }
+
+        var children = operation switch
+        {
+            IAnonymousObjectCreationOperation anonymous => anonymous.Initializers,
+            IObjectCreationOperation { Initializer: { } initializer } => initializer.Initializers,
+            _ => ImmutableArray<IOperation>.Empty,
+        };
+
+        foreach (var child in children)
+        {
+            var value = child is ISimpleAssignmentOperation assignment ? assignment.Value : child;
+            while (value is IConversionOperation conversion)
+            {
+                value = conversion.Operand;
+            }
+            ISymbol? source = value switch
+            {
+                IPropertyReferenceOperation property => property.Property,
+                IFieldReferenceOperation field => field.Field,
+                IParameterReferenceOperation parameter => parameter.Parameter,
+                _ => null,
+            };
+            if (ComplianceSymbolFacts._isClassified(source)
+                || (value.Type is { } valueType
+                    && _containsClassified(valueType, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default))
+                    && !_hasEgressPolicy(valueType))
+                || _hasClassifiedInitializer(value, depth + 1))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void _reportEgress(SymbolAnalysisContext context, ISymbol boundary, ITypeSymbol contract,

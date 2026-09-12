@@ -28,7 +28,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor _invalidDeclaration = new(
         "ARKPII202",
         "Invalid sensitive value object declaration",
-        "Sensitive value object '{0}' must be declared as a readonly partial struct",
+        "Sensitive value object '{0}' must be declared as a non-generic readonly partial struct",
         "Compliance",
         DiagnosticSeverity.Error,
         true);
@@ -92,6 +92,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         }
 
         if (type.ContainingType is not null
+            || type.Arity != 0
             || !declaration.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.PartialKeyword))
             || !declaration.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.ReadOnlyKeyword)))
         {
@@ -175,10 +176,10 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         var accessibility = type.DeclaredAccessibility == Accessibility.Public ? "public " : "internal ";
         var redactor = settings.Redaction switch
         {
-            1 => "ArkMaskingRedactor.Instance",
-            2 => "new ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))",
-            3 => "ArkNullRedactor.Instance",
-            _ => "ArkErasingRedactor.Instance",
+            1 => "global::Ark.Tools.Compliance.ArkMaskingRedactor.Instance",
+            2 => "new global::Ark.Tools.Compliance.ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))",
+            3 => "global::Ark.Tools.Compliance.ArkNullRedactor.Instance",
+            _ => "global::Ark.Tools.Compliance.ArkErasingRedactor.Instance",
         };
 
         var builder = new StringBuilder();
@@ -285,7 +286,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.Append("    public static bool operator ==(").Append(typeName).Append(" left, ").Append(typeName).AppendLine(" right) => left.Equals(right);");
         builder.Append("    public static bool operator !=(").Append(typeName).Append(" left, ").Append(typeName).AppendLine(" right) => !left.Equals(right);");
         builder.AppendLine();
-        builder.Append("    private static readonly global::Microsoft.Extensions.Compliance.Redaction.Redactor _redactor = global::Ark.Tools.Compliance.")
+        builder.Append("    private static readonly global::Microsoft.Extensions.Compliance.Redaction.Redactor _redactor = ")
             .Append(redactor).AppendLine(";");
         builder.AppendLine();
         builder.AppendLine("    private static string _redact(string value)");

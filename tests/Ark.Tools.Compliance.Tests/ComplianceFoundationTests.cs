@@ -129,12 +129,13 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
-    /// The generator emits a stable redactor shape for every supported redaction mode.
+    /// The generator emits a stable redactor shape for every supported redaction mode,
+    /// and the emitted code compiles (regression: HMAC mode once emitted an invalid prefix).
     /// </summary>
     [TestMethod]
     public void Generator_EmitsEachRedactionMode()
     {
-        var generated = _runGenerator(
+        const string source =
             """
             using Ark.Tools.Compliance;
             [SensitiveValueObject<string>(ArkRedaction.Erase)]
@@ -145,14 +146,24 @@ public sealed class ComplianceFoundationTests
             public readonly partial struct Hashed { }
             [SensitiveValueObject<string>(ArkRedaction.None)]
             public readonly partial struct Clear { }
-            """);
+            """;
+        var generated = _runGenerator(source);
 
-        generated.Should().Contain("ArkErasingRedactor.Instance");
-        generated.Should().Contain("ArkMaskingRedactor.Instance");
-        generated.Should().Contain("new ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))");
-        generated.Should().Contain("ArkNullRedactor.Instance");
+        generated.Should().Contain("global::Ark.Tools.Compliance.ArkErasingRedactor.Instance");
+        generated.Should().Contain("global::Ark.Tools.Compliance.ArkMaskingRedactor.Instance");
+        generated.Should().Contain("new global::Ark.Tools.Compliance.ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))");
+        generated.Should().Contain("global::Ark.Tools.Compliance.ArkNullRedactor.Instance");
         generated.Should().Contain("Reveal");
         generated.Should().Contain("TryFormat");
+
+        var compilation = _createCompilation(source)
+            .AddSyntaxTrees(
+                CSharpSyntaxTree.ParseText(generated),
+                // Real consumers get `using System;` via ImplicitUsings (AsSpan extension resolution).
+                CSharpSyntaxTree.ParseText("global using System;"));
+        compilation.GetDiagnostics()
+            .Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Should().BeEmpty();
     }
 
     /// <summary>
@@ -166,6 +177,7 @@ public sealed class ComplianceFoundationTests
             using Ark.Tools.Compliance;
             [SensitiveValueObject<int>] public readonly partial struct WrongType { }
             [SensitiveValueObject<string>] public readonly struct NotPartial { }
+            [SensitiveValueObject<string>] public readonly partial struct Generic<T> { }
             [SensitiveValueObject<string>] public readonly partial struct ClearToString
             {
                 public override string ToString() => "clear";
@@ -183,6 +195,7 @@ public sealed class ComplianceFoundationTests
         var ids = diagnostics.Select(static diagnostic => diagnostic.Id).ToList();
 
         ids.Should().Contain(["ARKPII201", "ARKPII202", "ARKPII203", "ARKPII204"]);
+        ids.Count(static id => string.Equals(id, "ARKPII202", StringComparison.Ordinal)).Should().Be(2);
         ids.Count(static id => string.Equals(id, "ARKPII204", StringComparison.Ordinal)).Should().Be(2);
     }
 

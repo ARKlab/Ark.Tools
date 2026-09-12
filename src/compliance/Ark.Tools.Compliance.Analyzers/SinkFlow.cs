@@ -95,7 +95,10 @@ internal sealed class SinkFlow
 
     private Source? _find(IOperation? operation, int depth)
     {
-        if (operation is null || !_enter(depth) || operation.ConstantValue.HasValue || _isRedacted(operation)
+        // Classified const fields must still surface: only literals and non-field constants are safe.
+        if (operation is null || !_enter(depth)
+            || (operation.ConstantValue.HasValue && operation is not IFieldReferenceOperation)
+            || _isRedacted(operation)
             || _isSelfProtecting(operation.Type))
         {
             return null;

@@ -125,4 +125,8 @@
     </ItemGroup>
     <Delete Files="@(_ArkDisabledSql)" />
   </Target>
+  <!-- Entry point for database projects that materialize the generated policy scripts directly.
+       ArkGenerateComplianceSql only fires after CoreCompile during a normal build; requesting it
+       standalone on a clean build would find no generated manifest, so run Compile first here. -->
+  <Target Name="ArkGenerateComplianceSqlStandalone" DependsOnTargets="Compile;ArkGenerateComplianceSql" />
 </Project>

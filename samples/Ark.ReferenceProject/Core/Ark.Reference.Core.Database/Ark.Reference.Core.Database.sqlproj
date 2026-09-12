@@ -74,11 +74,11 @@
     </ItemGroup>
     <Delete Files="@(_ArkComplianceSqlPolicyToDelete)" />
     <MSBuild Projects="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj"
-            Targets="ArkGenerateComplianceSql"
+            Targets="ArkGenerateComplianceSqlStandalone"
             Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\Ark.Reference.Common;EnableArkToolsCompliance=true"
             BuildInParallel="false" />
     <MSBuild Projects="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj"
-            Targets="ArkGenerateComplianceSql"
+            Targets="ArkGenerateComplianceSqlStandalone"
             Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\Ark.Reference.Core.Common;EnableArkToolsCompliance=true"
             BuildInParallel="false" />
     <ItemGroup>

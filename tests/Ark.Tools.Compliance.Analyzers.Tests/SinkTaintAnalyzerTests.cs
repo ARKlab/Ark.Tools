@@ -81,6 +81,7 @@ public sealed class SinkTaintAnalyzerTests
         public class Customer
         {
             [Ark.Tools.Compliance.PersonalData] public string Email { get; set; }
+            [Ark.Tools.Compliance.PersonalData] public const string DefaultEmail = "person@example.com";
             [Ark.Tools.Compliance.Secret] public string Token;
             [Ark.Tools.Compliance.Pseudonymous] public string Key { get; set; }
             public string Status { get; set; }
@@ -94,6 +95,7 @@ public sealed class SinkTaintAnalyzerTests
     /// <summary>Logs reject direct and locally composed classified data.</summary>
     [TestMethod]
     [DataRow("logger.Info(\"{Email}\", c.Email);")]
+    [DataRow("logger.Info(\"{Email}\", Customer.DefaultEmail);")]
     [DataRow("logger.Info(System.Globalization.CultureInfo.InvariantCulture, \"{Email}\", c.Email);")]
     [DataRow("logger.Info($\"User {c.Email}\");")]
     [DataRow("var value = c.Email; logger.Info(\"{Email}\", value);")]

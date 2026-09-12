@@ -88,6 +88,20 @@ public sealed class SqlPolicyAnalyzerTests
         diagnostics.Should().ContainSingle(static d => d.Id == "ARKPII012" && d.Severity == DiagnosticSeverity.Warning);
     }
 
+    /// <summary>Anonymous-object payloads carrying classified members still require a declared purpose.</summary>
+    [TestMethod]
+    public async Task AnonymousPayloadWithClassifiedMemberWarns()
+    {
+        var diagnostics = await _diagnostics("""
+            public class Customer { [PersonalData] public string Email { get; set; } = ""; }
+            public static class Transport
+            {
+                public static string Send(Customer value) => System.Text.Json.JsonSerializer.Serialize(new { value.Email });
+            }
+            """).ConfigureAwait(false);
+        diagnostics.Should().ContainSingle(static d => d.Id == "ARKPII012" && d.Severity == DiagnosticSeverity.Warning);
+    }
+
     /// <summary>A lawful-purpose declaration on the contract satisfies the transport rule.</summary>
     [TestMethod]
     public async Task DeclaredContractPurposeSilencesEgressWarning()
