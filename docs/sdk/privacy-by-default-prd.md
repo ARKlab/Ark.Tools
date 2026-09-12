@@ -287,7 +287,10 @@ with:
   `ArkRedaction.Erase` ⇒ `***`);
 - `IFormattable.ToString(format, provider)` where `"R"` is redacted (default) and
   the **only** way to obtain cleartext is the explicit, greppable
-  `Reveal(CompliancePurpose purpose)` method;
+  `Reveal(CompliancePurpose purpose, CompliancePurposeCategory category)` method,
+  where the required category classifies the processing GDPR-style
+  (`TechnicalFunctional`, `TechnicalTelemetry`, `Marketing`, …) and is recorded in
+  the compliance inventory;
 - equality/hash over the normalised value;
 - the full serialisation surface Ark actually uses — because serialisation is
   expected, and a type people cannot serialise is a type people will not adopt.
@@ -402,7 +405,7 @@ quietly become a new cleartext egress.
 One trap the generator has to close: `DebuggerDisplay`, `TypeConverter`, and any
 `IParsable`/`ISpanFormattable` implementation are all cleartext-leaking surfaces
 if generated naively. Ark's generator emits redacted forms for all of them, with
-cleartext reachable only via `Reveal(CompliancePurpose)` and the serialisation
+cleartext reachable only via `Reveal(CompliancePurpose, CompliancePurposeCategory)` and the serialisation
 converters above.
 
 Ark ships ready-made ones so most projects never write their own:
@@ -413,7 +416,7 @@ Reading cleartext is deliberate and visible:
 
 ```csharp
 // Compiles. Explicit, greppable, and recorded in the compliance inventory.
-var body = new MailMessage(from, customer.Email.Reveal(CompliancePurpose.SendTransactionalEmail));
+var body = new MailMessage(from, customer.Email.Reveal(CompliancePurpose.SendTransactionalEmail, CompliancePurposeCategory.CustomerSupport));
 
 // error ARKPII005: 'EmailAddress.Reveal' requires a CompliancePurpose; implicit conversion to string is banned.
 string raw = customer.Email;
