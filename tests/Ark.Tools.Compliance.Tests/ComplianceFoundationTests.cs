@@ -39,7 +39,7 @@ public sealed class ComplianceFoundationTests
         string.Format("{0}", value).Should().Be("***");
         value.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
         new string(buffer, 0, written).Should().Be("***");
-        value.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
+        value.Reveal(CompliancePurpose.Custom("test"), CompliancePurposeCategory.TechnicalFunctional).Should().Be("secret-value");
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public sealed class ComplianceFoundationTests
         var restored = JsonSerializer.Deserialize<TestSensitiveValue>(serialized);
 
         serialized.Should().Be("\"secret-value\"");
-        restored!.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
+        restored!.Reveal(CompliancePurpose.Custom("test"), CompliancePurposeCategory.TechnicalFunctional).Should().Be("secret-value");
         var buffer = new char[3];
         restored.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
         new string(buffer, 0, written).Should().Be("***");
@@ -71,7 +71,7 @@ public sealed class ComplianceFoundationTests
         var restored = handler.Parse("person@example.com");
         handler.SetValue(parameter, restored);
 
-        restored.Reveal(CompliancePurpose.Custom("test")).Should().Be("person@example.com");
+        restored.Reveal(CompliancePurpose.Custom("test"), CompliancePurposeCategory.TechnicalFunctional).Should().Be("person@example.com");
         restored.ToString().Should().Be("***");
         parameter.Value.Should().Be("person@example.com");
     }
@@ -125,7 +125,7 @@ public sealed class ComplianceFoundationTests
         var exception = () => EmailAddress.From(input);
 
         exception.Should().Throw<ArgumentException>().Which.Message.Should().NotContain(input);
-        ApiKey.From(" key ").Reveal(CompliancePurpose.Custom("test")).Should().Be("key");
+        ApiKey.From(" key ").Reveal(CompliancePurpose.Custom("test"), CompliancePurposeCategory.TechnicalFunctional).Should().Be("key");
     }
 
     /// <summary>

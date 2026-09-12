@@ -208,10 +208,11 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             {
                 token.ThrowIfCancellationRequested();
                 if (invocation.Expression is not MemberAccessExpressionSyntax access || access.Name.Identifier.ValueText != "Reveal"
-                    || invocation.ArgumentList.Arguments.Count != 1
+                    || invocation.ArgumentList.Arguments.Count != 2
                     || model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
-                    || method.Parameters.Length != 1
+                    || method.Parameters.Length != 2
                     || method.Parameters[0].Type.ToDisplayString() != Prefix + "CompliancePurpose"
+                    || method.Parameters[1].Type.ToDisplayString() != Prefix + "CompliancePurposeCategory"
                     || model.GetSymbolInfo(access.Expression, token).Symbol is not { } member)
                     continue;
 
@@ -229,7 +230,13 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                     if (constant.HasValue && constant.Value is string value)
                         text = value;
                 }
-                _add(result, _key(member), "Reveal: " + (text ?? "(dynamic purpose)"));
+
+                var categorySymbol = model.GetSymbolInfo(invocation.ArgumentList.Arguments[1].Expression, token).Symbol;
+                var category = categorySymbol is IFieldSymbol { ContainingType.Name: "CompliancePurposeCategory" } field
+                    && field.ContainingType.ToDisplayString() == Prefix + "CompliancePurposeCategory"
+                    ? field.Name
+                    : "(dynamic category)";
+                _add(result, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + category + "]");
             }
         }
         return result;

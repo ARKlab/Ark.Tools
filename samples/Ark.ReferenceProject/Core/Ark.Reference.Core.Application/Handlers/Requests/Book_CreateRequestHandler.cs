@@ -51,7 +51,7 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
             Author = request.Data.Author,
             Genre = request.Data.Genre,
             ISBN = request.Data.ISBN,
-            Description = $"Book created: {request.Data.Title} by {request.Data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description"))}"
+            Description = $"Book created: {request.Data.Title} by {request.Data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description"), CompliancePurposeCategory.TechnicalFunctional)}"
         };
 
         var id = await ctx.InsertBookAsync(createBookData, ctk).ConfigureAwait(false);

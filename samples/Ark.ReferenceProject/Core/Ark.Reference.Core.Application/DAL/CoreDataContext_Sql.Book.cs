@@ -144,7 +144,7 @@ public partial class CoreDataContext_Sql
 
         var rows = entities.Select(entity => new BookBulkInsertRow(
             entity.Title,
-            entity.Author is { } author ? SensitiveValueSerialization.ToTransport(author, "Dapper") : null,
+            entity.Author,
             entity.Genre?.ToString(),
             entity.ISBN,
             entity.Description,
@@ -293,7 +293,7 @@ public partial class CoreDataContext_Sql
     #region Private view
     private sealed record BookBulkInsertRow(
         string? Title,
-        [property: PersonalData] string? Author,
+        PersonName? Author,
         string? Genre,
         string? ISBN,
         string? Description,

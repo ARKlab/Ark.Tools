@@ -251,14 +251,14 @@ public sealed class ComplianceSurfaceTests
             {
                 /// <summary>Contact address; needed for order confirmation.</summary>
                 public EmailAddress Email { get; set; }
-                public string Send() => Email.Reveal(CompliancePurpose.SendTransactionalEmail);
-                public string Export() => Email.Reveal(CompliancePurpose.Custom("ticket\tARK-1 */\nreview"));
+                public string Send() => Email.Reveal(CompliancePurpose.SendTransactionalEmail, CompliancePurposeCategory.CustomerSupport);
+                public string Export() => Email.Reveal(CompliancePurpose.Custom("ticket\tARK-1 */\nreview"), CompliancePurposeCategory.LegalObligation);
             }
             """);
 
         result.Text.Should().Contain("Contact address; needed for order confirmation.");
-        result.Text.Should().Contain("Reveal: SendTransactionalEmail");
-        result.Text.Should().Contain("Reveal: ticket\\tARK-1 *\\/\\nreview");
+        result.Text.Should().Contain("Reveal: SendTransactionalEmail [CustomerSupport]");
+        result.Text.Should().Contain("Reveal: ticket\\tARK-1 *\\/\\nreview [LegalObligation]");
         _run("""
             using Ark.Tools.Compliance;
             namespace Example;

@@ -25,10 +25,11 @@ public interface ISensitiveValue<TSelf>
     /// <returns><see langword="true"/> when the value is valid.</returns>
     static abstract bool TryFrom(string? value, out TSelf result);
 
-    /// <summary>Reveals the cleartext value for an explicitly named purpose.</summary>
+    /// <summary>Reveals the cleartext value for an explicitly named and categorized purpose.</summary>
     /// <param name="purpose">The reviewed compliance purpose.</param>
+    /// <param name="category">The GDPR-style category of the processing this reveal serves.</param>
     /// <returns>The cleartext value.</returns>
-    string Reveal(CompliancePurpose purpose);
+    string Reveal(CompliancePurpose purpose, CompliancePurposeCategory category);
 }
 
 /// <summary>
@@ -67,7 +68,7 @@ public static class SensitiveValueSerialization
         where T : struct, ISensitiveValue<T>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serializer);
-        return value.Reveal(CompliancePurpose.Custom(serializer));
+        return value.Reveal(CompliancePurpose.Custom(serializer), CompliancePurposeCategory.TechnicalFunctional);
     }
 
     /// <summary>

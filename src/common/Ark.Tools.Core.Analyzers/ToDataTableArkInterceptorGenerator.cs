@@ -200,7 +200,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         var conversion = _determineConversion(underlying);
         var columnType = conversion switch
         {
-            ConversionKind.EnumToString or ConversionKind.EvolvableEnumToString => "global::System.String",
+            ConversionKind.EnumToString or ConversionKind.EvolvableEnumToString or ConversionKind.SensitiveValueToTransport => "global::System.String",
             ConversionKind.LocalDateToDateTime or ConversionKind.LocalDateTimeToDateTime or ConversionKind.InstantToDateTime => "global::System.DateTime",
             ConversionKind.OffsetDateTimeToDateTimeOffset or ConversionKind.OffsetDateToDateTimeOffset => "global::System.DateTimeOffset",
             ConversionKind.LocalTimeToTimeSpan => "global::System.TimeSpan",
@@ -234,6 +234,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             return ConversionKind.EvolvableEnumToString;
         }
 
+        if (_isSensitiveValue(type))
+            return ConversionKind.SensitiveValueToTransport;
+
         return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) switch
         {
             "global::NodaTime.LocalDate" => ConversionKind.LocalDateToDateTime,
@@ -244,6 +247,18 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             "global::NodaTime.LocalTime" => ConversionKind.LocalTimeToTimeSpan,
             _ => ConversionKind.Direct,
         };
+    }
+
+    // A generated (or hand-written) sensitive value object: a struct implementing
+    // Ark.Tools.Compliance.ISensitiveValue<TSelf> with itself as TSelf. Its DataColumn carries the
+    // cleartext transport string obtained through the inventoried ToTransport serialization egress,
+    // matching the behavior of the other serializer adapters (Dapper, Json, ...).
+    private static bool _isSensitiveValue(ITypeSymbol type)
+    {
+        return type.TypeKind == TypeKind.Struct
+            && type.AllInterfaces.Any(static @interface =>
+                @interface.MetadataName == "ISensitiveValue`1"
+                && @interface.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance");
     }
 
     private static bool _isGloballyAccessible(INamedTypeSymbol type)
@@ -430,6 +445,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     private static string _applyConversion(string accessor, ConversionKind conversion) => conversion switch
     {
         ConversionKind.EnumToString or ConversionKind.EvolvableEnumToString => accessor + ".ToString()",
+        ConversionKind.SensitiveValueToTransport => "global::Ark.Tools.Compliance.SensitiveValueSerialization.ToTransport(" + accessor + ", \"ToDataTableArk\")",
         ConversionKind.LocalDateToDateTime => accessor + ".ToDateTimeUnspecified()",
         ConversionKind.LocalDateTimeToDateTime => accessor + ".ToDateTimeUnspecified()",
         ConversionKind.InstantToDateTime => accessor + ".ToDateTimeUtc()",

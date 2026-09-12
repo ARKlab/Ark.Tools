@@ -41,6 +41,9 @@ internal enum ConversionKind
 
     /// <summary>NodaTime LocalTime converted via TimeSpan.FromTicks(TickOfDay).</summary>
     LocalTimeToTimeSpan,
+
+    /// <summary>Sensitive value objects (Ark.Tools.Compliance.ISensitiveValue&lt;TSelf&gt;) converted to their cleartext transport string via SensitiveValueSerialization.ToTransport.</summary>
+    SensitiveValueToTransport,
 }
 
 /// <summary>A single shredded column: its source member name, nullability, conversion, and derived DataColumn type.</summary>

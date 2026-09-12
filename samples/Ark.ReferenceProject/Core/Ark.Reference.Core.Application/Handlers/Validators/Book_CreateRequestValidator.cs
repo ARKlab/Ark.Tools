@@ -43,7 +43,7 @@ public class Book_CreateValidator : AbstractValidator<Book.V1.Create>
         RuleFor(static x => x.Author)
             .NotNull()
             .NotEmpty()
-            .Must(static x => x is null || x.Value.Reveal(Ark.Tools.Compliance.CompliancePurpose.Custom("Validate the author length")).Length <= 100)
+            .Must(static x => x is null || x.Value.Reveal(Ark.Tools.Compliance.CompliancePurpose.Custom("Validate the author length"), Ark.Tools.Compliance.CompliancePurposeCategory.TechnicalFunctional).Length <= 100)
             .WithMessage("'Author' must be 100 characters or fewer.")
             ;
 

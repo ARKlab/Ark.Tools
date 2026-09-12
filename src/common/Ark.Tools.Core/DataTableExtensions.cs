@@ -332,6 +332,9 @@ public static class DataTableExtensions
             if (_isEvolvableEnum(elementType))
                 return typeof(string);
 
+            if (_isSensitiveValue(elementType))
+                return typeof(string);
+
             return elementType;
         }
 
@@ -339,6 +342,67 @@ public static class DataTableExtensions
             type.IsGenericType
             && (type.GetGenericTypeDefinition() == typeof(EvolvableEnum<>)
                 || type.GetGenericTypeDefinition() == typeof(EvolvableEnum<,>));
+
+        // A sensitive value object (a struct implementing Ark.Tools.Compliance.ISensitiveValue<TSelf>
+        // with itself as TSelf), detected by name so Ark.Tools.Core takes no compliance dependency.
+        // Its DataColumn carries the cleartext transport string obtained through the value's own
+        // Reveal(purpose, category) inventoried egress, matching the other serializer adapters.
+        private static bool _isSensitiveValue(Type type) =>
+            _getSensitiveValueInterface(type) is not null;
+
+        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+            Justification = "Interfaces of a value type used as a shredded member are preserved together with the type itself; a miss only skips the sensitive value conversion.")]
+        private static Type? _getSensitiveValueInterface(Type type)
+        {
+            if (!type.IsValueType)
+                return null;
+
+            foreach (var @interface in type.GetInterfaces())
+            {
+                if (@interface.IsGenericType
+                    && @interface.FullName?.StartsWith("Ark.Tools.Compliance.ISensitiveValue`1", StringComparison.Ordinal) == true
+                    && @interface.GetGenericArguments()[0] == type)
+                {
+                    return @interface;
+                }
+            }
+
+            return null;
+        }
+
+        // Builds `value.Reveal(CompliancePurpose.Custom("ToDataTableArk"), CompliancePurposeCategory.TechnicalFunctional)`
+        // with the purpose/category constants materialized once at plan time via reflection on the
+        // compliance assembly that declares the interface (never trimmed: the member's type implements it).
+        private static Expression _buildSensitiveValueReveal(Expression access, Type memberType, Type interfaceType)
+        {
+            var (reveal, purpose, category, purposeType, categoryType) = _resolveReveal(memberType, interfaceType);
+            return Expression.Call(access, reveal, Expression.Constant(purpose, purposeType), Expression.Constant(category, categoryType));
+        }
+
+        private static object? _revealSensitiveValue(object value, Type interfaceType)
+        {
+            var (reveal, purpose, category, _, _) = _resolveReveal(value.GetType(), interfaceType);
+            return reveal.Invoke(value, [purpose, category]);
+        }
+
+        [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+            Justification = "CompliancePurpose/CompliancePurposeCategory are public contract types of the compliance assembly that declares ISensitiveValue; they are preserved whenever the interface itself is.")]
+        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+            Justification = "The interface-mapped public Reveal method is preserved because the member's type implements ISensitiveValue<TSelf>.")]
+        [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern",
+            Justification = "The compliance contract types and the interface-mapped Reveal method are preserved because the member's type implements ISensitiveValue<TSelf>.")]
+        private static (MethodInfo Reveal, object? Purpose, object Category, Type PurposeType, Type CategoryType) _resolveReveal(Type memberType, Type interfaceType)
+        {
+            var complianceAssembly = interfaceType.Assembly;
+            var purposeType = complianceAssembly.GetType("Ark.Tools.Compliance.CompliancePurpose", throwOnError: true)!;
+            var categoryType = complianceAssembly.GetType("Ark.Tools.Compliance.CompliancePurposeCategory", throwOnError: true)!;
+            var custom = purposeType.GetMethod("Custom", BindingFlags.Public | BindingFlags.Static, [typeof(string)])!;
+            var purpose = custom.Invoke(null, ["ToDataTableArk"]);
+            var category = Enum.Parse(categoryType, "TechnicalFunctional");
+            var reveal = memberType.GetMethod("Reveal", BindingFlags.Public | BindingFlags.Instance, [purposeType, categoryType])
+                ?? throw new InvalidOperationException($"Type '{memberType}' implements ISensitiveValue but does not expose a public Reveal(CompliancePurpose, CompliancePurposeCategory) method.");
+            return (reveal, purpose, category, purposeType, categoryType);
+        }
 
         // Builds the cached column plan (name + DataColumn type + compiled accessor) for every public
         // instance field and readable, non-indexed instance property of T (fields-then-properties
@@ -421,6 +485,9 @@ public static class DataTableExtensions
             if (_isEvolvableEnum(memberType))
                 return Expression.Call(access, _objectToString);
 
+            if (_getSensitiveValueInterface(memberType) is { } sensitiveInterface)
+                return _buildSensitiveValueReveal(access, memberType, sensitiveInterface);
+
             if (memberType == typeof(LocalDate))
                 return Expression.Call(access, _localDateToDateTimeUnspecified);
 
@@ -460,6 +527,12 @@ public static class DataTableExtensions
 
             if (_isEvolvableEnum(value.GetType()))
                 return value.ToString();
+
+            if (_getSensitiveValueInterface(value.GetType()) is { } sensitiveInterface)
+            {
+                // Rare path: a sensitive value object stored in an object/interface-typed member.
+                return _revealSensitiveValue(value, sensitiveInterface);
+            }
 
             return value switch
             {
