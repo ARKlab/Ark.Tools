@@ -18,10 +18,11 @@
     <PackageReference Include="Microsoft.Extensions.Telemetry" />
   </ItemGroup>
 
-  <!-- Evaluation-time Exists() would silently drop the generator on a clean pack; resolve the
-       dll after the referenced generator project has built, right before package file collection. -->
+  <!-- Evaluation-time Exists() would silently drop the generator on a clean pack; add the dll at
+       execution time right before package file collection, after inner builds produced it.
+       No DependsOnTargets: _GetPackageFiles runs in the cross-targeting outer build where
+       ResolveProjectReferences does not exist (MSB4057). -->
   <Target Name="_ArkPackComplianceGenerators"
-          DependsOnTargets="ResolveProjectReferences"
           BeforeTargets="_GetPackageFiles">
     <ItemGroup>
       <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll"
