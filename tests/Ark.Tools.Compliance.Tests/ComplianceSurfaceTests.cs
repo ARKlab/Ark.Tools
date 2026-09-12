@@ -251,8 +251,8 @@ public sealed class ComplianceSurfaceTests
             {
                 /// <summary>Contact address; needed for order confirmation.</summary>
                 public EmailAddress Email { get; set; }
-                public string Send() => Email.Reveal(CompliancePurpose.SendTransactionalEmail, CompliancePurposeCategory.CustomerSupport);
-                public string Export() => Email.Reveal(CompliancePurpose.Custom("ticket\tARK-1 */\nreview"), CompliancePurposeCategory.LegalObligation);
+                public string Send() => Email.Reveal(CompliancePurpose.SendTransactionalEmail);
+                public string Export() => Email.Reveal(CompliancePurpose.Custom("ticket\tARK-1 */\nreview", CompliancePurposeCategory.LegalObligation));
             }
             """);
 

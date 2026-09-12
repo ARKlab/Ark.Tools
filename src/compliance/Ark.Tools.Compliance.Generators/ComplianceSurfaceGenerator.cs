@@ -208,38 +208,67 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             {
                 token.ThrowIfCancellationRequested();
                 if (invocation.Expression is not MemberAccessExpressionSyntax access || access.Name.Identifier.ValueText != "Reveal"
-                    || invocation.ArgumentList.Arguments.Count != 2
+                    || invocation.ArgumentList.Arguments.Count != 1
                     || model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
-                    || method.Parameters.Length != 2
+                    || method.Parameters.Length != 1
                     || method.Parameters[0].Type.ToDisplayString() != Prefix + "CompliancePurpose"
-                    || method.Parameters[1].Type.ToDisplayString() != Prefix + "CompliancePurposeCategory"
                     || model.GetSymbolInfo(access.Expression, token).Symbol is not { } member)
                     continue;
 
                 var expression = invocation.ArgumentList.Arguments[0].Expression;
                 var purpose = model.GetSymbolInfo(expression, token).Symbol;
                 string? text = null;
+                string? category = null;
                 if (purpose is IPropertySymbol property && property.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose")
+                {
                     text = property.Name;
+                    category = _builtInCategory(property, token);
+                }
                 else if (expression is InvocationExpressionSyntax custom
                     && purpose is IMethodSymbol { Name: "Custom" } customMethod
                     && customMethod.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose"
-                    && custom.ArgumentList.Arguments.Count == 1)
+                    && custom.ArgumentList.Arguments.Count == 2)
                 {
                     var constant = model.GetConstantValue(custom.ArgumentList.Arguments[0].Expression, token);
                     if (constant.HasValue && constant.Value is string value)
                         text = value;
+                    var categorySymbol = model.GetSymbolInfo(custom.ArgumentList.Arguments[1].Expression, token).Symbol;
+                    if (categorySymbol is IFieldSymbol categoryField
+                        && categoryField.ContainingType.ToDisplayString() == Prefix + "CompliancePurposeCategory")
+                    {
+                        category = categoryField.Name;
+                    }
                 }
-
-                var categorySymbol = model.GetSymbolInfo(invocation.ArgumentList.Arguments[1].Expression, token).Symbol;
-                var category = categorySymbol is IFieldSymbol { ContainingType.Name: "CompliancePurposeCategory" } field
-                    && field.ContainingType.ToDisplayString() == Prefix + "CompliancePurposeCategory"
-                    ? field.Name
-                    : "(dynamic category)";
-                _add(result, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + category + "]");
+                _add(result, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + (category ?? "(dynamic category)") + "]");
             }
         }
         return result;
+    }
+
+    // Resolves the category a built-in CompliancePurpose property (for example SendTransactionalEmail)
+    // carries: from its declaration syntax when compiled from source, else from the known built-in map
+    // (metadata references expose no syntax and enum property bodies are not evaluable in a generator).
+    // ponytail: the map must be kept in sync with CompliancePurpose's built-in properties; a miss only
+    // degrades the note to "(dynamic category)".
+    private static string? _builtInCategory(IPropertySymbol property, CancellationToken token)
+    {
+        foreach (var reference in property.DeclaringSyntaxReferences)
+        {
+            foreach (var access in reference.GetSyntax(token).DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+            {
+                if (access.Expression is IdentifierNameSyntax { Identifier.ValueText: "CompliancePurposeCategory" }
+                    || (access.Expression is MemberAccessExpressionSyntax nested && nested.Name.Identifier.ValueText == "CompliancePurposeCategory"))
+                {
+                    return access.Name.Identifier.ValueText;
+                }
+            }
+        }
+
+        return property.Name switch
+        {
+            "SendTransactionalEmail" => "CustomerSupport",
+            _ => null,
+        };
     }
 
     private static Dictionary<string, SortedSet<string>> _registrations(Compilation compilation, CancellationToken token)

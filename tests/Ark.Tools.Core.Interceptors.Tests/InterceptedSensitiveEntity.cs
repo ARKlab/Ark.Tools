@@ -40,12 +40,12 @@ public readonly struct InterceptedSensitiveValue : ISensitiveValue<InterceptedSe
     }
 
     /// <inheritdoc cref="ISensitiveValue{TSelf}.Reveal"/>
-    public string Reveal(CompliancePurpose purpose, CompliancePurposeCategory category)
+    public string Reveal(CompliancePurpose purpose)
     {
         if (string.IsNullOrWhiteSpace(purpose.Reason))
             throw new ArgumentException("A compliance purpose is required.", nameof(purpose));
-        if (category == CompliancePurposeCategory.Unspecified || !Enum.IsDefined(category))
-            throw new ArgumentException("A defined compliance purpose category is required.", nameof(category));
+        if (purpose.Category == CompliancePurposeCategory.Unspecified)
+            throw new ArgumentException("A categorized compliance purpose is required.", nameof(purpose));
         return _value ?? string.Empty;
     }
 

@@ -52,7 +52,7 @@ public sealed class Book_BulkCreateRequestHandler : IRequestHandler<Book_BulkCre
                 Author = data.Author,
                 Genre = data.Genre,
                 ISBN = data.ISBN,
-                Description = $"Book created: {data.Title} by {data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description"), CompliancePurposeCategory.TechnicalFunctional)}"
+                Description = $"Book created: {data.Title} by {data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description", CompliancePurposeCategory.TechnicalFunctional))}"
             })
             .ToArray();
 

@@ -29,7 +29,7 @@ namespace Ark.Tools.Compliance.Tests;
 [TestClass]
 public sealed class SerializationTargetTests
 {
-    private static readonly CompliancePurpose _purpose = CompliancePurpose.Custom("test");
+    private static readonly CompliancePurpose _purpose = CompliancePurpose.Custom("test", CompliancePurposeCategory.TechnicalFunctional);
 
     /// <summary>The Newtonsoft.Json converter round-trips cleartext and restores redaction.</summary>
     [TestMethod]
@@ -43,7 +43,7 @@ public sealed class SerializationTargetTests
         var restored = JsonConvert.DeserializeObject<EmailAddress>(serialized, settings);
 
         serialized.Should().Be("\"" + ComplianceFakes.Email() + "\"");
-        restored.Reveal(_purpose, CompliancePurposeCategory.TechnicalFunctional).Should().Be(ComplianceFakes.Email());
+        restored.Reveal(_purpose).Should().Be(ComplianceFakes.Email());
         restored.ToString().Should().NotContain("example.com");
     }
 
@@ -83,7 +83,7 @@ public sealed class SerializationTargetTests
         stream.Position = 0;
         var restored = model.Deserialize<PhoneNumber>(stream);
 
-        restored.Reveal(_purpose, CompliancePurposeCategory.TechnicalFunctional).Should().Be(ComplianceFakes.PhoneNumber());
+        restored.Reveal(_purpose).Should().Be(ComplianceFakes.PhoneNumber());
         restored.ToString().Should().NotBe(ComplianceFakes.PhoneNumber());
     }
 
@@ -127,7 +127,7 @@ public sealed class SerializationTargetTests
 
         MessagePackSerializer.ConvertToJson(bytes, options)
             .Should().Be("\"" + ComplianceFakes.NationalIdentifier() + "\"");
-        restored.Reveal(_purpose, CompliancePurposeCategory.TechnicalFunctional).Should().Be(ComplianceFakes.NationalIdentifier());
+        restored.Reveal(_purpose).Should().Be(ComplianceFakes.NationalIdentifier());
         restored.ToString().Should().Be("***");
     }
 
@@ -227,7 +227,7 @@ public sealed class SerializationTargetTests
         var retrieved = adapter.Retrieve(cell, typeof(object), typeof(EmailAddress));
 
         retrieved.Should().BeOfType<EmailAddress>()
-            .Which.Reveal(_purpose, CompliancePurposeCategory.TechnicalFunctional).Should().Be(ComplianceFakes.Email());
+            .Which.Reveal(_purpose).Should().Be(ComplianceFakes.Email());
         adapter.CanCompare(retrieved!).Should().BeTrue();
         adapter.Compare(ComplianceFakes.Email(), retrieved!).Should().BeTrue();
         adapter.Compare(retrieved!.ToString()!, retrieved).Should().BeTrue();

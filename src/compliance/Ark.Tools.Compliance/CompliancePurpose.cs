@@ -4,31 +4,37 @@
 namespace Ark.Tools.Compliance;
 
 /// <summary>
-/// Names the reviewed purpose for an explicit clear-text data reveal.
+/// Names the reviewed purpose for an explicit clear-text data reveal, together with its
+/// GDPR-style processing category recorded in the compliance inventory.
 /// </summary>
 public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
 {
     private readonly string? _reason;
+    private readonly CompliancePurposeCategory _category;
 
-    private CompliancePurpose(string reason)
+    private CompliancePurpose(string reason, CompliancePurposeCategory category)
     {
         _reason = reason;
+        _category = category;
     }
 
     /// <summary>
     /// Gets the purpose for sending a transactional email.
     /// </summary>
-    public static CompliancePurpose SendTransactionalEmail => new("SendTransactionalEmail");
+    public static CompliancePurpose SendTransactionalEmail => new("SendTransactionalEmail", CompliancePurposeCategory.CustomerSupport);
 
     /// <summary>
-    /// Creates a purpose with an explicitly recorded reason.
+    /// Creates a purpose with an explicitly recorded reason and processing category.
     /// </summary>
     /// <param name="reason">The reason for revealing clear-text data.</param>
+    /// <param name="category">The GDPR-style category of the processing this reveal serves.</param>
     /// <returns>A custom compliance purpose.</returns>
-    public static CompliancePurpose Custom(string reason)
+    public static CompliancePurpose Custom(string reason, CompliancePurposeCategory category)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
-        return new CompliancePurpose(reason);
+        if (category == CompliancePurposeCategory.Unspecified || !Enum.IsDefined(category))
+            throw new ArgumentException("A defined compliance purpose category is required.", nameof(category));
+        return new CompliancePurpose(reason, category);
     }
 
     /// <summary>
@@ -41,10 +47,15 @@ public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
     /// </summary>
     public string Value => _reason ?? string.Empty;
 
+    /// <summary>
+    /// Gets the GDPR-style category of the processing this purpose serves.
+    /// </summary>
+    public CompliancePurposeCategory Category => _category;
+
     /// <inheritdoc />
     public bool Equals(CompliancePurpose other)
     {
-        return string.Equals(_reason, other._reason, StringComparison.Ordinal);
+        return string.Equals(_reason, other._reason, StringComparison.Ordinal) && _category == other._category;
     }
 
     /// <inheritdoc />
@@ -56,13 +67,13 @@ public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
     /// <inheritdoc />
     public override int GetHashCode()
     {
-        return _reason?.GetHashCode(StringComparison.Ordinal) ?? 0;
+        return HashCode.Combine(_reason?.GetHashCode(StringComparison.Ordinal) ?? 0, _category);
     }
 
     /// <inheritdoc />
     public override string ToString()
     {
-        return _reason ?? string.Empty;
+        return _reason is null ? string.Empty : _reason + " [" + _category + "]";
     }
 
     /// <summary>

@@ -346,7 +346,7 @@ public static class DataTableExtensions
         // A sensitive value object (a struct implementing Ark.Tools.Compliance.ISensitiveValue<TSelf>
         // with itself as TSelf), detected by name so Ark.Tools.Core takes no compliance dependency.
         // Its DataColumn carries the cleartext transport string obtained through the value's own
-        // Reveal(purpose, category) inventoried egress, matching the other serializer adapters.
+        // Reveal(categorized purpose) inventoried egress, matching the other serializer adapters.
         private static bool _isSensitiveValue(Type type) =>
             _getSensitiveValueInterface(type) is not null;
 
@@ -370,19 +370,19 @@ public static class DataTableExtensions
             return null;
         }
 
-        // Builds `value.Reveal(CompliancePurpose.Custom("ToDataTableArk"), CompliancePurposeCategory.TechnicalFunctional)`
+        // Builds `value.Reveal(CompliancePurpose.Custom("ToDataTableArk", CompliancePurposeCategory.TechnicalFunctional))`
         // with the purpose/category constants materialized once at plan time via reflection on the
         // compliance assembly that declares the interface (never trimmed: the member's type implements it).
         private static Expression _buildSensitiveValueReveal(Expression access, Type memberType, Type interfaceType)
         {
-            var (reveal, purpose, category, purposeType, categoryType) = _resolveReveal(memberType, interfaceType);
-            return Expression.Call(access, reveal, Expression.Constant(purpose, purposeType), Expression.Constant(category, categoryType));
+            var (reveal, purpose, purposeType) = _resolveReveal(memberType, interfaceType);
+            return Expression.Call(access, reveal, Expression.Constant(purpose, purposeType));
         }
 
         private static object? _revealSensitiveValue(object value, Type interfaceType)
         {
-            var (reveal, purpose, category, _, _) = _resolveReveal(value.GetType(), interfaceType);
-            return reveal.Invoke(value, [purpose, category]);
+            var (reveal, purpose, _) = _resolveReveal(value.GetType(), interfaceType);
+            return reveal.Invoke(value, [purpose]);
         }
 
         [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
@@ -391,17 +391,16 @@ public static class DataTableExtensions
             Justification = "The interface-mapped public Reveal method is preserved because the member's type implements ISensitiveValue<TSelf>.")]
         [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern",
             Justification = "The compliance contract types and the interface-mapped Reveal method are preserved because the member's type implements ISensitiveValue<TSelf>.")]
-        private static (MethodInfo Reveal, object? Purpose, object Category, Type PurposeType, Type CategoryType) _resolveReveal(Type memberType, Type interfaceType)
+        private static (MethodInfo Reveal, object? Purpose, Type PurposeType) _resolveReveal(Type memberType, Type interfaceType)
         {
             var complianceAssembly = interfaceType.Assembly;
             var purposeType = complianceAssembly.GetType("Ark.Tools.Compliance.CompliancePurpose", throwOnError: true)!;
             var categoryType = complianceAssembly.GetType("Ark.Tools.Compliance.CompliancePurposeCategory", throwOnError: true)!;
-            var custom = purposeType.GetMethod("Custom", BindingFlags.Public | BindingFlags.Static, [typeof(string)])!;
-            var purpose = custom.Invoke(null, ["ToDataTableArk"]);
-            var category = Enum.Parse(categoryType, "TechnicalFunctional");
-            var reveal = memberType.GetMethod("Reveal", BindingFlags.Public | BindingFlags.Instance, [purposeType, categoryType])
-                ?? throw new InvalidOperationException($"Type '{memberType}' implements ISensitiveValue but does not expose a public Reveal(CompliancePurpose, CompliancePurposeCategory) method.");
-            return (reveal, purpose, category, purposeType, categoryType);
+            var custom = purposeType.GetMethod("Custom", BindingFlags.Public | BindingFlags.Static, [typeof(string), categoryType])!;
+            var purpose = custom.Invoke(null, ["ToDataTableArk", Enum.Parse(categoryType, "TechnicalFunctional")]);
+            var reveal = memberType.GetMethod("Reveal", BindingFlags.Public | BindingFlags.Instance, [purposeType])
+                ?? throw new InvalidOperationException($"Type '{memberType}' implements ISensitiveValue but does not expose a public Reveal(CompliancePurpose) method.");
+            return (reveal, purpose, purposeType);
         }
 
         // Builds the cached column plan (name + DataColumn type + compiled accessor) for every public

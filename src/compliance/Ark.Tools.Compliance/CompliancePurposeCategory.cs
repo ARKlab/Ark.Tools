@@ -9,7 +9,7 @@ namespace Ark.Tools.Compliance;
 /// </summary>
 public enum CompliancePurposeCategory
 {
-    /// <summary>No category was chosen; rejected by <c>Reveal</c> so every reveal is consciously categorized.</summary>
+    /// <summary>No category was chosen; rejected by <c>CompliancePurpose.Custom</c> and <c>Reveal</c> so every reveal is consciously categorized.</summary>
     Unspecified = 0,
 
     /// <summary>Technical processing required to deliver the requested functionality (serialization, persistence, validation).</summary>
