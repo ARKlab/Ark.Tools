@@ -2,7 +2,10 @@ using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
+
+using NLog;
 
 using System.Security.Claims;
 
@@ -13,6 +16,7 @@ namespace Ark.Reference.Core.Application.Handlers.Requests;
 /// </summary>
 public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, Book.V1.Output>
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private readonly ICoreDataContextFactory _coreDataContext;
     private readonly IContextProvider<ClaimsPrincipal> _userContext;
 
@@ -32,6 +36,10 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
     {
         ArgumentNullException.ThrowIfNull(request.Data);
 
+        using var activity = ReferenceTelemetry.ActivitySource.StartActivity("book.create");
+        activity?.SetTag("ark.compliance.book.author", request.Data.Author?.ToString(null, CultureInfo.InvariantCulture));
+        _logger.Info(CultureInfo.InvariantCulture, "Creating book with author {author}", request.Data.Author);
+
         var ctx = await _coreDataContext.CreateAsync(ctk).ConfigureAwait(false);
         await using var _ = ctx.ConfigureAwait(false);
 
@@ -43,7 +51,7 @@ public class Book_CreateRequestHandler : IRequestHandler<Book_CreateRequest.V1, 
             Author = request.Data.Author,
             Genre = request.Data.Genre,
             ISBN = request.Data.ISBN,
-            Description = $"Book created: {request.Data.Title} by {request.Data.Author}"
+            Description = $"Book created: {request.Data.Title} by {request.Data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description", CompliancePurposeCategory.TechnicalFunctional))}"
         };
 
         var id = await ctx.InsertBookAsync(createBookData, ctk).ConfigureAwait(false);

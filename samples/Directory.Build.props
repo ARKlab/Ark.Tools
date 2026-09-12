@@ -2,6 +2,8 @@
   <PropertyGroup>
 	<!-- Source-build harness; remove the local SDK imports when ejected. -->
 	  <_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+    <!-- Samples dogfood the compliance analyzers even while the SDK default is opt-out. -->
+    <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
   </PropertyGroup>
 

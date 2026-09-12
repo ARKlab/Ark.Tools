@@ -1,0 +1,71 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.Tools.Compliance.Internal;
+
+using System.Buffers;
+using System.Text.RegularExpressions;
+
+namespace Ark.Tools.Compliance.Shared;
+
+internal static partial class PiiPatternScanner
+{
+    private const string _pattern =
+        "(?<Email>" + PersonalDataPatterns._email + ")"
+        + "|(?<Phone>" + PersonalDataPatterns._phone + ")"
+        + "|(?<NationalIdentifier>" + PersonalDataPatterns._nationalIdentifier + ")"
+        + "|(?<Iban>" + PersonalDataPatterns._iban + ")"
+        + "|(?<PostalAddress>" + PersonalDataPatterns._postalAddress + ")";
+    private static readonly SearchValues<char> _candidates = SearchValues.Create("@0123456789");
+
+#if NET10_0_OR_GREATER
+    [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
+    private static partial Regex _regex { get; }
+#else
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Meziantou.Analyzer",
+        "MA0190",
+        Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
+    [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
+    private static partial Regex _regex();
+#endif
+
+    internal static string _redact(string value, string replacement)
+    {
+        if (!value.AsSpan().ContainsAny(_candidates))
+            return value;
+        try
+        {
+            System.Text.StringBuilder? builder = null;
+            var previous = 0;
+#if NET10_0_OR_GREATER
+            for (var match = _regex.Match(value); match.Success; match = match.NextMatch())
+#else
+            for (var match = _regex().Match(value); match.Success; match = match.NextMatch())
+#endif
+            {
+                var kind = match.Groups["Phone"].Success ? PersonalDataKind.Phone
+                    : match.Groups["PostalAddress"].Success ? PersonalDataKind.PostalAddress
+                    : match.Groups["Iban"].Success ? PersonalDataKind.Iban
+                    : match.Groups["NationalIdentifier"].Success ? PersonalDataKind.NationalIdentifier
+                    : PersonalDataKind.Email;
+                if (!PersonalDataPatterns._isChecksumValid(kind, match.Value))
+                    continue;
+                builder ??= new System.Text.StringBuilder(value.Length);
+                builder.Append(value, previous, match.Index - previous);
+                builder.Append(replacement);
+                previous = match.Index + match.Length;
+                if (!value.AsSpan(previous).ContainsAny(_candidates))
+                    break;
+            }
+            if (builder is null)
+                return value;
+            builder.Append(value, previous, value.Length - previous);
+            return builder.ToString();
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return replacement;
+        }
+    }
+}

@@ -16,8 +16,8 @@ the same guarantees as the NLog path.
 
 ## Execution map
 
-- **`ArkComplianceMode`**: `Enforce` (default, §7 severities from day one) or
-  `Off` via `EnableArkToolsCompliance=false`. There is no Observe stage: most
+- **`ArkComplianceMode`**: `Off` while the analyzer is beta; opt into `Enforce`
+  with `EnableArkToolsCompliance=true` (§7 severities). There is no Observe stage: most
   code here is written by agents outside an IDE, and a `suggestion` that does not
   fail `dotnet build` is a diagnostic nobody reads. Per-rule `.editorconfig`
   overrides remain available.
@@ -57,18 +57,41 @@ the same guarantees as the NLog path.
 
 ## Outcomes
 
-- Enforcement is the default for every consumer of the SDK.
+- Enforcement is opt-in for every consumer of the SDK until the analyzer leaves beta.
 - The NLog and Microsoft logging paths have equivalent guarantees.
 
 ## Acceptance
 
-- [ ] `ArkComplianceMode` has exactly two states and one documented opt-out.
-- [ ] The packaged config is inert without the analyzer package.
-- [ ] LOGGEN guards are escalated and proven against Ark-classified types.
-- [ ] `AddArkRedaction()` and `ARKPII013` remove the half-configured state.
-- [ ] Documentation covers the rules and the Microsoft-logging boundary rule.
-- [ ] The [task board](../README.md) status for PII-IMP-10 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] `ArkComplianceMode` has exactly two states and one documented opt-out.
+- [x] The packaged config is inert without the analyzer package.
+- [x] LOGGEN guards are escalated and proven against Ark-classified types.
+- [x] `AddArkRedaction()` and `ARKPII013` remove the half-configured state.
+- [x] Documentation covers the rules and the Microsoft-logging boundary rule.
+- [x] The [task board](../README.md) status for PII-IMP-10 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
+
+## Implementation progress
+
+- Packaged all PRD diagnostic severities, including LOGGEN escalations, in
+  `Ark.Tools.Compliance.globalconfig`.
+- `ArkComplianceMode` is derived from `EnableArkToolsCompliance`; the single
+  opt-out removes compliance configuration/AdditionalFiles and reaches analyzers
+  through a compiler-visible property. Other build policy remains active.
+- The SDK includes consumer-composable lexicon/sink files and test `.feature`
+  files. `ARKPII001` remains a warning under `TreatWarningsAsErrors`.
+- `docs/analyzers.md` documents the default policy, opt-out, per-rule overrides,
+  and Microsoft-stack logging boundary.
+- `AddArkRedaction()` configures both Microsoft redaction and logging redaction;
+  `ARKPII013` rejects telemetry consumers without that registration.
+- The clean-consumer fixture proves `LOGGEN035` against an Ark-classified record
+  member without an adapter or bridge. Microsoft telemetry/redaction packages
+  are pinned centrally and pass the dependency advisory scan.
+- Focused validation: SDK test-project build passed with zero warnings/errors;
+  `ComplianceConfigurationIsDefaultOnAndSwitchable` and
+  `CompilerConfigurationPrecedenceAndBannedApiAreEnforced` both passed. These
+  exercise packed consumer assets, default/disabled modes, unsupported-mode
+  rejection, an analyzer-free consumer build, and unrelated configuration
+  precedence/composition.

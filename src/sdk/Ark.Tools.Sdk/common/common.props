@@ -14,6 +14,8 @@
     <RestoreUseStaticGraphEvaluation Condition="'$(RestoreUseStaticGraphEvaluation)' == ''">false</RestoreUseStaticGraphEvaluation>
     <RestoreSerializeGlobalProperties Condition="'$(RestoreSerializeGlobalProperties)' == ''">true</RestoreSerializeGlobalProperties>
 
+    <!-- Compliance remains opt-in while the analyzer is beta. -->
+    <EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == ''">false</EnableArkToolsCompliance>
     <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
     <NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
     <NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
@@ -46,6 +48,11 @@
   <PropertyGroup Label="Disable SourceLink for Copilot Sandboxes" Condition="'$(COPILOT_AGENT_ACTION)' != '' and '$(EnableArkToolsCopilotSandboxWorkaround)' != 'false'">
     <EnableSourceControlManagerQueries>false</EnableSourceControlManagerQueries>
     <EnableSourceLink>false</EnableSourceLink>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- The value is replaced with the package version by GenerateSdkVersionedAssets. -->
+    <ArkToolsSdkPackageVersion>$(Version)</ArkToolsSdkPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(_ArkToolsSdkSourceBuild)' != 'true' and '$(EnableArkToolsBuild)' != 'false'">

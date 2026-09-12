@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+    <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
     
     <LangVersion>14.0</LangVersion>
 

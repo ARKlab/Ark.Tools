@@ -1,0 +1,49 @@
+<Project>
+  <PropertyGroup>
+    <ArkComplianceSurfaceTargetsImported>true</ArkComplianceSurfaceTargetsImported>
+    <!-- The surface gate follows the opt-in compliance model: unset EnableArkToolsCompliance means disabled. -->
+    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == '' AND '$(EnableArkToolsCompliance)' == 'true'">true</ArkComplianceSurfaceEnabled>
+    <ArkComplianceSurfaceEnabled Condition="'$(ArkComplianceSurfaceEnabled)' == ''">false</ArkComplianceSurfaceEnabled>
+    <EmitCompilerGeneratedFiles Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' == 'true'">true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath Condition="'$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(EnableArkToolsCompliance)' == 'true' AND '$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
+    <CompilerVisibleProperty Include="ArkComplianceSurfaceEnabled" />
+    <CompilerVisibleProperty Include="ArkComplianceSurfaceUpdating" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/ArkComplianceSurface.txt')">
+    <AdditionalFiles Include="$(MSBuildProjectDirectory)/ArkComplianceSurface.txt"
+                     Condition="'@(AdditionalFiles->WithMetadataValue('Identity', '$(MSBuildProjectDirectory)/ArkComplianceSurface.txt'))' == ''" />
+  </ItemGroup>
+
+  <Target Name="ArkComplianceSurfaceSetOutputPath"
+          BeforeTargets="CoreCompile"
+            Condition="'$(ArkComplianceSurfaceEnabled)' == 'true'">
+    <PropertyGroup>
+        <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+    </PropertyGroup>
+    <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
+  </Target>
+
+  <Target Name="ArkComplianceSurfaceWriteCurrent"
+          AfterTargets="CoreCompile"
+          Condition="'$(EnableArkToolsCompliance)' == 'true' AND '$(ArkComplianceSurfaceEnabled)' == 'true' AND '$(IsCrossTargetingBuild)' != 'true' AND '$(DesignTimeBuild)' != 'true' AND '$(SkipCompilerExecution)' != 'true'">
+    <PropertyGroup>
+      <_ArkComplianceGeneratedSurface>$(CompilerGeneratedFilesOutputPath)/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator/ArkComplianceSurface.g.cs</_ArkComplianceGeneratedSurface>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_ArkComplianceGeneratedSurface)')"
+           Text="The compliance surface generator is missing or generated files are disabled. Reference Ark.Tools.Compliance with analyzer assets and enable EmitCompilerGeneratedFiles." />
+    <Copy SourceFiles="$(_ArkComplianceGeneratedSurface)"
+          DestinationFiles="$(IntermediateOutputPath)ArkComplianceSurface.current.txt"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(_ArkComplianceGeneratedSurface)')" />
+    <ItemGroup>
+      <FileWrites Include="$(IntermediateOutputPath)ArkComplianceSurface.current.txt" />
+      <FileWrites Include="$(_ArkComplianceGeneratedSurface)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

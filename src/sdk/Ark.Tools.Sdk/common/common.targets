@@ -21,7 +21,16 @@
     <PackageReference Include="Meziantou.Analyzer" Version="3.0.235" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsMeziantouAnalyzer)' != 'false'" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsVisualStudioThreading)' == 'true'" />
     <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsErrorProne)' != 'false'" />
+    <PackageReference Include="Ark.Tools.Compliance.Analyzers" Version="$(ArkToolsSdkPackageVersion)" IsImplicitlyDefined="true" PrivateAssets="all" IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(_ArkToolsSdkSourceBuild)' != 'true'" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../../compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all"
+                      Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(_ArkToolsSdkSourceBuild)' == 'true' and '$(ArkToolsComplianceAnalyzerProject)' != 'true'" />
   </ItemGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)../../../compliance/Ark.Tools.Compliance.Analyzers/buildTransitive/Ark.Tools.Compliance.Analyzers.props"
+          Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(_ArkToolsSdkSourceBuild)' == 'true'" />
 
   <ItemGroup Condition="'$(EnableArkToolsAppSettings)' != 'false'">
     <Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />

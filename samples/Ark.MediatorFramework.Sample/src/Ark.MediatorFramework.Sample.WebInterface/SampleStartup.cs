@@ -7,6 +7,7 @@ using Ark.MediatorFramework.Sample.API.JsonContext;
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.MediatorFramework.Sample.Application.JsonContext;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
+using Ark.Tools.Compliance;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
@@ -117,6 +118,7 @@ public sealed class SampleStartup
     public void ConfigureServices(IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddArkRedaction();
         NodaTimeConverter.Register();
 
         if (_configuration.GetSection("EntraId").Exists()

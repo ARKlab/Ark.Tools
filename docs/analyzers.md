@@ -87,6 +87,63 @@ they must not contain PII, secrets, or unexpected exception details.
 
 ## Installed Analyzers
 
+### Compliance policy
+
+`Ark.Tools.Build` ships `Ark.Tools.Compliance.globalconfig`; its entries are inert
+when the implementing assembly is absent. While the analyzer is beta,
+`Ark.Tools.Compliance.Analyzers` is disabled by default in `Ark.Tools.Sdk`; opt in
+with `EnableArkToolsCompliance=true`. When enabled, it ships the
+analyzers together with the composable `ComplianceLexicon.Ark.txt` /
+`ComplianceSinks.Ark.txt` additional files.
+
+| ID | Default severity | Meaning |
+|---|---|---|
+| ARKPII001 | Warning | A PII-suggestive declaration is not classified |
+| ARKPII002 | Error | Classified data reaches logging |
+| ARKPII003 | Error | Classified data reaches an exception |
+| ARKPII004 | Error | Classified data reaches telemetry |
+| ARKPII005 | Error | Classified data is formatted or revealed without a purpose |
+| ARKPII006 | Warning | Test data resembles non-reserved personal data |
+| ARKPII007 | Error | A SQL-mapped classified member lacks a column policy |
+| ARKPII008 | Warning | A compliance review lacks a reason or has expired |
+| ARKPII009 | Warning | A non-personal-data justification is missing or boilerplate |
+| ARKPII010 | Error | A classified member has an unsupported redaction surface |
+| ARKPII011 | Error | Classified data reaches a formatting sink |
+| ARKPII012 | Warning | A classified contract lacks an egress purpose |
+| ARKPII013 | Warning | An executable host references Microsoft telemetry without `AddArkRedaction()` |
+| ARKPII020 | Error | The compliance surface baseline has drifted |
+| ARKPII021 | Error | The compliance baseline is invalid or classification was weakened |
+| LOGGEN035 | Error | A generated logging parameter leaks sensitive data |
+| LOGGEN017 | Error | Property/tag expansion conflicts with classification |
+| LOGGEN026 | Error | A tag provider opts out of redaction |
+| LOGGEN036 | Warning | A logged value has no meaningful formatting surface |
+
+The evaluated `ArkComplianceMode` is `Off` by default while the analyzer is beta,
+and `Enforce` when `EnableArkToolsCompliance=true` is set. The switch removes compliance
+configuration and additional files and is passed to the analyzers; it does not
+disable unrelated analyzers or change the safe formatting of sensitive value
+objects. Set it in the project or `Directory.Build.props`. Local `.editorconfig`
+entries retain normal precedence over the packaged defaults. `ARKPII001` is
+exempt from `TreatWarningsAsErrors`, so a name-only heuristic cannot break a
+build; explicitly setting its severity to `error` remains possible.
+
+Test projects include `.feature` files from their `None` items as analyzer
+additional files. Consumer lexicon/sink files are additive rather than replacing
+the packaged defaults. See the individual compliance task documents for their
+file formats, implemented coverage, and remaining acceptance requirements.
+
+Inside Microsoft stack extension points (middleware, filters, hosted services,
+EF Core interceptors, and Azure Functions middleware), use the injected
+`ILogger<T>`; `NLogConfigurer` bridges that path to NLog. Ordinary Ark logging
+remains structured NLog with invariant culture. The LOGGEN policy does **not**
+activate Microsoft's runtime redaction by itself. Register
+`services.AddArkRedaction()` to configure both Microsoft redactors and logging
+redaction; `ARKPII013` reports an executable, non-test host that references the
+Microsoft telemetry stack without that registration (libraries and test
+projects are exempt, as only the composition root can register services).
+`LOGGEN035` is also proven against an Ark-classified record
+member in the clean-consumer fixture, so no adapter or bridge is required.
+
 ### 1. Microsoft.CodeAnalysis.NetAnalyzers (Built-in)
 
 **Source:** Built into .NET SDK  

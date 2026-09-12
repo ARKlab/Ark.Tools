@@ -587,15 +587,51 @@
           "Microsoft.EntityFrameworkCore": "8.0.11"
         }
       },
+      "Microsoft.Extensions.AmbientMetadata.Application": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "Sa4xD2ab5yNRJYt4piS05C9b5Gpd1G3TZpvVJFgHyqLYdRThUNLcLHpREI4yjkmElCjHXoPcF+SHUim9cZ8cvQ=="
+      },
       "Microsoft.Extensions.Compliance.Abstractions": {
         "type": "Transitive",
         "resolved": "10.10.0",
         "contentHash": "Sh3ujDRJpCMNY4x+43ljCROt4qBOoWfsL8l816RPYZS1S+Tw277r5002rbB15Sh6hFcCT8mGYBO7NtpfSYrQ0Q=="
       },
+      "Microsoft.Extensions.Compliance.Redaction": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "RW0HuSIl5CH/SSLa31MIKc6LPmy3DjtJmf/5LjTTKMmwBeNex6ZnF1Q46vzklAPSQ2BDu/MHL/6G5CBoyWLQAA==",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "10.10.0"
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.AutoActivation": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "AJ2lFnzzJkN2ZRvfPBKQ5k3EJFkhmsm1tEhWzK58KsxU+WK3GVOh/5WHUhQ56TWjnxGZCGgr0+U1QUuJ4rJVuA=="
+      },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
         "resolved": "8.0.2",
         "contentHash": "mUBDZZRgZrSyFOsJ2qJJ9fXfqd/kXJwf3AiDoqLD9m6TjY5OO/vLNOb9fb4juC0487eq4hcGN/M2Rh/CKS7QYw=="
+      },
+      "Microsoft.Extensions.Telemetry": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "GeJofTliWSVoYAeTfRbnp+TaOUl502yZIcZ+qHFiyOoAIzwTk12eKypnSR9uN2oiHgGW32Y0XN1i+VaQizl0IQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AmbientMetadata.Application": "10.10.0",
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "10.10.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "10.10.0"
+        }
+      },
+      "Microsoft.Extensions.Telemetry.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "I76SAZ95I5lYh4whVZvLpKhpvHI1o21FfGqiASU85GtIVA4ULv+TVIE5+swKhnC63+xI4XjCcIWa9LbyR3pFNw==",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "10.10.0"
+        }
       },
       "Microsoft.Identity.Abstractions": {
         "type": "Transitive",
@@ -1263,6 +1299,8 @@
       "ark.reference.common": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Dapper": "[999.9.9, )",
+          "Ark.Tools.Compliance.Sql": "[999.9.9, )",
           "Ark.Tools.Http": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Nodatime": "[1.0.0, )",
@@ -1299,7 +1337,9 @@
       "ark.reference.core.common": {
         "type": "Project",
         "dependencies": {
-          "Ark.Reference.Common": "[6.6.6, )"
+          "Ark.Reference.Common": "[6.6.6, )",
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Ark.Tools.Compliance.Sql": "[999.9.9, )"
         }
       },
       "ark.tools.aspnetcore": {
@@ -1415,7 +1455,23 @@
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )",
+          "Microsoft.Extensions.Compliance.Redaction": "[10.10.0, )",
+          "Microsoft.Extensions.Telemetry": "[10.10.0, )"
+        }
+      },
+      "ark.tools.compliance.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Dapper": "[2.1.79, )"
+        }
+      },
+      "ark.tools.compliance.nlog": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "NLog": "[6.2.0, )"
         }
       },
       "ark.tools.compliance.openapi": {
@@ -1423,6 +1479,12 @@
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
+        }
+      },
+      "ark.tools.compliance.sql": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )"
         }
       },
       "ark.tools.core": {
@@ -1460,6 +1522,7 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Ben.Demystifier": "[0.4.1, )",
@@ -1510,7 +1573,7 @@
       "ark.tools.otel": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Data.SqlClient": "[7.0.3, )",
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "OpenTelemetry": "[1.18.0, )"
         }
       },

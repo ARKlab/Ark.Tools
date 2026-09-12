@@ -92,6 +92,8 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsVisualStudioThreading` | Disabled unless `true` | Build props and SDK restore | Set `true` |
 | `EnableArkToolsIdentityModelConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
+| `EnableArkToolsCompliance` | Disabled by default while the analyzer is beta | Build targets and analyzer options | Set `true` to opt into compliance analysis/configuration |
+| `ArkComplianceMode` | `Off`, or `Enforce` when `EnableArkToolsCompliance=true` | Build targets | Derived; use `EnableArkToolsCompliance`, not a separate mode override |
 | `EnableArkToolsBannedApi` | Enabled unless `false` | Build targets and SDK restore | Set `false` |
 | `EnableArkToolsSponsorLinkRemoval` | Enabled unless `false` | Before `CoreCompile` | Set `false` |
 | `EnableArkToolsGlobalUsings` | Enabled unless `false` when implicit usings are enabled | Build targets | Set `false` |
@@ -102,6 +104,15 @@ duplicate-import detection, not consumer configuration points. The SDK
 standard analyzer configuration is inert when its corresponding analyzer is
 absent. Consumer `AdditionalFiles` and explicitly supplied global configuration files
 are combined with, rather than replaced by, Ark.Tools assets.
+
+Compliance policy includes `Ark.Tools.Compliance.globalconfig`, the canonical
+lexicon and sink additional files, and test `.feature` files. Reference the
+compliance package to supply its analyzers; configuration alone neither installs
+them nor enables runtime log redaction. See the [rule table](../analyzers.md#compliance-policy)
+and [compliance task board](progress/tasks/README.md#compliance-privacy-by-default)
+for implemented coverage. Local `.editorconfig` diagnostic severities override
+the packaged policy. `ARKPII001` stays a warning even with
+`TreatWarningsAsErrors=true`; other warning policy is unchanged.
 
 ### Restore, compiler, and packaging properties
 

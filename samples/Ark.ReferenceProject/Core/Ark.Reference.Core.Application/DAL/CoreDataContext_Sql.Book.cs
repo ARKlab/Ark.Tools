@@ -4,6 +4,7 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
 using Ark.Tools.Sql.SqlServer;
+using Ark.Tools.Compliance;
 
 using Dapper;
 
@@ -50,7 +51,7 @@ public partial class CoreDataContext_Sql
         {
             @Id = query.Id,
             @Title = query.Title,
-            @Author = query.Author,
+            @Author = query.Author?.Select(static x => SensitiveValueSerialization.ToTransport(x, "Dapper")),
             @Genre = query.Genre?.Select(static x => x.ToString()),
             @Skip = query.Skip,
             @Limit = query.Limit
@@ -292,7 +293,7 @@ public partial class CoreDataContext_Sql
     #region Private view
     private sealed record BookBulkInsertRow(
         string? Title,
-        string? Author,
+        PersonName? Author,
         string? Genre,
         string? ISBN,
         string? Description,
@@ -302,7 +303,7 @@ public partial class CoreDataContext_Sql
     {
         public int Id { get; set; }
         public string? Title { get; set; }
-        public string? Author { get; set; }
+        public PersonName? Author { get; set; }
         public string? Genre { get; set; }
         public string? ISBN { get; set; }
         public string? Description { get; set; }

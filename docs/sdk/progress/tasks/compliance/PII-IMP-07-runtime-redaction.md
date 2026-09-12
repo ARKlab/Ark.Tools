@@ -8,37 +8,35 @@
 
 ## Problem
 
-Analyzers cannot see third-party types, dynamic payloads, or data that arrives
-as `object`. The runtime net catches what compile time missed — and a redaction
-you have to remember to switch on is a redaction that leaks, so it must be on by
-default.
+Analyzers cannot see third-party types, dynamic payloads, or untyped text. The
+runtime net catches selected text cases that compile time missed. Generated
+sensitive value objects remain intrinsically safe, so runtime code does not need
+to inspect or rewrite arbitrary object graphs.
 
 ## Execution map
 
-- **Package**: `Ark.Tools.Compliance.NLog`, built on NLog's real extension
-  points — `RegisterObjectTransformation`, `RegisterValueFormatter`, and a
-  `WrapperTargetBase`. NLog has no `ILogEventInterceptor`, contrary to common
-  claims; the design must not assume one.
+- **Package**: `Ark.Tools.Compliance.NLog`, built on a configured-layout wrapper.
+  NLog has no `ILogEventInterceptor`; native NLog formatting handles generated
+  sensitive values and nested properties without global object transformations.
 - **On by default**: `NLogConfigurer.WithArkDefaultTargetsAndRules` — and
   therefore `WithDefaultTargetsAndRulesFromConfiguration` and
-  `IHostBuilder.ConfigureNLog` — wires redaction whenever the package is
-  referenced. Defaults with no call: `Default = Erase`, `PersonalData = Hmac`,
-  `SensitivePersonalData = Erase`, `Secret = Erase`, `Pseudonymous = None`,
-  `PatternScan = Off`.
+  `IHostBuilder.ConfigureNLog` — wires the configured layout scanner whenever the
+  package is referenced. Generated value types own their redaction policy;
+  `PiiScan = Off` is the default.
 - **`WithComplianceRedaction(...)`** overrides those defaults;
   **`WithoutComplianceRedaction()`** is the explicit, greppable opt-out.
-- **Pattern scan** (decision PII‑06): ships, default off, optimised matching over
-  a compiled pattern set for values that arrive untyped.
+- **PII scan** (decision PII‑06): ships default-off, with optimised matching over
+  a source-generated pattern set for explicitly wrapped text layouts.
 - **OTel**: a redaction processor in the shape of the existing
   `ArkPreFilterProcessor`, registered by the default setup.
 
 ## Implementation steps
 
-1. Implement the transformation/formatter registrations and the wrapper target.
+1. Implement generated safe formatting and the configured-layout scanner wrapper.
 2. Wire the defaults into `NLogConfigurer` behind a reference check so projects
    without the package are unaffected.
 3. Implement `WithComplianceRedaction`/`WithoutComplianceRedaction`.
-4. Implement the pattern scanner with a compiled, allocation-conscious matcher
+4. Implement the PII scanner with a compiled, allocation-conscious matcher
    and a documented throughput budget.
 5. Implement and register the OTel processor.
 
@@ -46,27 +44,80 @@ default.
 
 - An integration test logs a classified value with **no** redaction call in the
   setup and asserts the mask appears in the target output.
-- Each classification uses its default redactor; overrides apply.
+- Generated sensitive values use their type-level redaction policy; overrides apply
+  to direct text redaction.
 - `WithoutComplianceRedaction()` restores cleartext, proving the opt-out is real
   and greppable.
-- The pattern scanner is off by default and, when enabled, masks a known
+- The PII scanner is off by default and, when enabled, masks a known
   pattern in an untyped payload.
-- The OTel processor redacts attributes on exported spans.
+- The OTel processor scans string attributes and textual span fields on exported
+  spans without rewriting generated sensitive values.
 - A throughput test bounds the added cost per log event.
 
 ## Outcomes
 
 - A second net that is active without any developer action.
-- Fail-closed defaults: an unknown classification erases rather than prints.
+- Generated sensitive values never print cleartext through normal diagnostic
+  formatting; direct text redaction fails closed when configured.
 
 ## Acceptance
 
-- [ ] Redaction is wired by the default NLog setup with no explicit call.
-- [ ] Overrides and an explicit opt-out exist and are tested.
-- [ ] Pattern scan ships default-off.
-- [ ] The OTel processor is registered by the default setup.
-- [ ] The [task board](../README.md) status for PII-IMP-07 matches this task.
-- [ ] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
+- [x] Redaction is wired by the default NLog setup with no explicit call.
+- [x] Overrides and an explicit opt-out exist and are tested.
+- [x] Pattern scan ships default-off.
+- [x] The OTel processor is registered by the default setup.
+- [x] The [task board](../README.md) status for PII-IMP-07 matches this task.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.
-- [ ] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1`
   passes.
+
+## Implementation notes
+
+- `Ark.Tools.Compliance.NLog` exposes the configured-layout wrapper and
+  `PiiScanner`. `Ark.Tools.NLog` owns policy composition, enables
+  `ParseMessageTemplates`, and wraps only its affected target layouts. Native NLog
+  formatting handles messages, properties, JSON, and stack traces without mutating,
+  caching, or cloning the caller's event.
+- `ComplianceRedactionOptions`, `ComplianceRedactor`, and `PiiScanner` live in the
+  foundation so OTel does not acquire an NLog dependency. A keyless
+  `ArkHmacRedactor` fails closed by erasing values to the `***` marker, while the
+  `PiiScanner` uses the distinct alertable `***ARKPII***` marker for detected
+  pattern leaks. Supply `HmacKey` from the application's
+  secret provider to obtain stable text pseudonyms.
+- Generated sensitive values implement reflection-free intrinsic safe formatting.
+  Runtime redaction does not inspect arbitrary DTOs, invoke getters, or traverse
+  object graphs; transport serializers may call `Reveal(CompliancePurpose)` only
+  for an explicit egress purpose.
+- The shared `PersonalDataPatterns` source supplies the same patterns and
+  checksum validation to ARKPII006 and the runtime scanner. Runtime matching uses
+  `GeneratedRegex`, a `SearchValues<char>` prefilter and a 25 ms timeout that
+  erases on failure. Reserved test values are still redacted at runtime.
+- NLog exception messages use native formatting and optional PII scanning; ordinary
+  exception text is not blanket-replaced. Stack traces use NLog's native renderer.
+  Explicit opt-out does not undo generated sensitive values' safe `ToString()`
+  behavior.
+- Default ASP.NET Core, ResourceWatcher and Application Insights tracing setup
+  registers the span processor. Custom tracing pipelines must register redaction
+  **before exporters**. Span tags are covered; event/link attributes, baggage,
+  metrics and independent OpenTelemetry log export are not covered by this task.
+- `Ark.Tools.NLog` references `Ark.Tools.Compliance.NLog` directly. Its default
+  setup calls the compliance extensions without reflection or generated startup
+  code, so every Ark NLog consumer gets the fail-closed policy by default.
+
+## Focused validation
+
+The runtime package has built successfully for net8.0 and net10.0; focused NLog,
+OTel and Application Insights builds have reported zero warnings. Default
+redaction, policy overrides, opt-out, generated values and exported span tags
+have passed focused integration tests. Emitted sensitive-value `.g.cs` files
+were inspected.
+
+Throughput tests exercise the actual wrapper and a 200-character scanned message.
+The CI smoke ceiling is 50 microseconds per operation, allowing shared-runner
+contention. The PRD's **2 microseconds** release scanner target still requires
+an isolated, warmed release measurement; it is not claimed as satisfied.
+Focused compliance builds and tests are complete. Full-solution build/test
+acceptance must be rerun after this refactor. The PRD's 2 microseconds release
+scanner target still requires an isolated, warmed release measurement; it is not
+claimed as satisfied.

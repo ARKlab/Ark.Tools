@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+using Ark.Tools.Compliance.NLog;
 using Ark.Tools.NLog.Slack;
 
 using Microsoft.Data.SqlClient;
@@ -24,7 +26,7 @@ public static class NLogConfigurer
     public const string MailTarget = "Ark.Mail";
     public const string MailFromDefault = "noreply@ark-energy.eu";
 
-    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=ToString,Data}}";
+    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=Message}}";
 
     static NLogConfigurer()
     {
@@ -153,7 +155,7 @@ public static class NLogConfigurer
     public sealed class Configurer
     {
         internal LoggingConfiguration _config = new();
-
+        private PiiScanner? _piiScanner = new();
         public string AppName { get; }
 
         internal Configurer(string appName)
@@ -183,7 +185,7 @@ public static class NLogConfigurer
         {
             _config.AddTarget("Debugger", new DebuggerTarget("Debugger")
             {
-                Layout = TextLineLayout
+                Layout = _createTextLineLayout()
             });
             return this;
         }
@@ -201,6 +203,9 @@ public static class NLogConfigurer
             var slackTarget = new SlackTarget
             {
                 WebHookUrl = slackwebhook,
+                Layout = _createMessageLayout(),
+                _exceptionLayout = _createScannedLayout("${exception:format=ToString}"),
+                _valueRedactor = _scanSlackValue
             };
             _config.AddTarget(SlackTarget, async ? _wrapWithAsyncTargetWrapper(slackTarget) : slackTarget);
             return this;
@@ -210,7 +215,7 @@ public static class NLogConfigurer
             var consoleTarget = new ConsoleTarget();
             consoleTarget.ForceWriteLine = !async;
             consoleTarget.AutoFlush = !async;
-            consoleTarget.Layout = TextLineLayout;
+            consoleTarget.Layout = _createTextLineLayout();
 
             _config.AddTarget(ConsoleTarget, async ? _wrapWithAsyncTargetWrapper(consoleTarget) : consoleTarget);
             return this;
@@ -220,7 +225,7 @@ public static class NLogConfigurer
         {
             var fileTarget = new FileTarget();
 
-            fileTarget.Layout = TextLineLayout;
+            fileTarget.Layout = _createTextLineLayout();
             fileTarget.FileName = @"${basedir}\Logs\Trace.log";
             fileTarget.KeepFileOpen = true;
             fileTarget.ArchiveFileName = @"${basedir}\Logs\Trace_{#}.log";
@@ -296,7 +301,7 @@ VALUES
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("AppName", "${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("RequestID", @"${mdlc:item=RequestID}"));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("ActivityId", "${activity:property=TraceId}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", new JsonLayout()
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Properties", _createScannedLayout(new JsonLayout()
             {
                 ExcludeEmptyProperties = true,
                 IncludeGdc = false, //false, due to NLog not respecting ExcludeProperties for GDC and we want to exclude AppName :(
@@ -304,22 +309,22 @@ VALUES
                 RenderEmptyObject = true,
                 IncludeEventProperties = true,
                 ExcludeProperties = { "Message", "Exception", "AppName" }
-            }));
+            })));
             databaseTarget.Parameters.Add(new DatabaseParameterInfo("Host", @"${ark.hostname}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", @"${message}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", @"${onexception:${exception:format=Type,Message}}"));
-            databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=ToString,Data}}"));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("Message", _createMessageLayout()));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("ExceptionMessage", _createScannedLayout("${onexception:${exception:format=Message}}")));
+            databaseTarget.Parameters.Add(new DatabaseParameterInfo("StackTrace", @"${onexception:${exception:format=StackTrace}}"));
             _config.AddTarget(DatabaseTarget, async ? _wrapWithAsyncTargetWrapper(databaseTarget) : databaseTarget);
 
             return this;
         }
 
-        private static MailTarget _getBasicMailTarget()
+        private MailTarget _getBasicMailTarget()
         {
             var target = new MailTarget();
             target.AddNewLines = true;
             target.Encoding = Encoding.UTF8;
-            target.Layout = TextLineLayout;
+            target.Layout = _createTextLineLayout();
             target.Html = true;
             target.ReplaceNewlineWithBrTagInHtml = true;
             target.Subject = "Errors from ${scopeproperty:item=AppName:whenempty=${gdc:item=AppName}}@${ark.hostname}";
@@ -481,6 +486,26 @@ VALUES
             {
                 _config.RemoveRuleByName(MailTarget);
             }
+
+            return this;
+        }
+
+        /// <summary>Overrides the default runtime redaction policy.</summary>
+        /// <param name="configure">Optional overrides of fail-closed defaults.</param>
+        /// <returns>The original configurer.</returns>
+        public Configurer WithComplianceRedaction(Action<ComplianceRedactionOptions>? configure = null)
+        {
+            var options = new ComplianceRedactionOptions();
+            configure?.Invoke(options);
+            _piiScanner = new PiiScanner(options.PiiScan);
+            return this;
+        }
+
+        /// <summary>Explicitly disables runtime redaction for this NLog configuration.</summary>
+        /// <returns>The original configurer.</returns>
+        public Configurer WithoutComplianceRedaction()
+        {
+            _piiScanner = null;
             return this;
         }
 
@@ -506,11 +531,41 @@ VALUES
             LogManager.ThrowExceptions = _isVisualStudioAttached();
             LogManager.ThrowConfigExceptions = true;
             InternalLogger.LogToConsole = true;
+            _configureCompliance();
             // this is last, so that ThrowConfigExceptions is respected on Config change
             LogManager.Configuration = _config;
 
             if (_isProduction())
                 LogManager.GlobalThreshold = LogLevel.Info;
+        }
+
+        private static void _configureCompliance()
+        {
+            LogManager.Setup()
+                .SetupSerialization(static builder => builder.UseComplianceRedaction());
+        }
+
+        private Layout _createTextLineLayout()
+        {
+            return _createScannedLayout(Layout.FromString(TextLineLayout));
+        }
+
+        private Layout _createMessageLayout()
+        {
+            return _createScannedLayout(Layout.FromMethod(
+                static logEvent => logEvent.FormattedMessage,
+                LayoutRenderOptions.ThreadAgnostic));
+        }
+
+        private Layout _createScannedLayout(Layout layout)
+        {
+            return new ComplianceLayout(layout, () => _piiScanner);
+        }
+
+        private string? _scanSlackValue(object? value)
+        {
+            var text = value?.ToString();
+            return text is null ? null : _piiScanner?.Scan(text) ?? text;
         }
     }
 

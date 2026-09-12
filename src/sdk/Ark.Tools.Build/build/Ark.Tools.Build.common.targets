@@ -3,12 +3,43 @@
     <ArkToolsBuildTargetsImported>true</ArkToolsBuildTargetsImported>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <!-- Compliance is opt-in while the analyzer is beta: unset means Off. -->
+    <ArkComplianceMode Condition="'$(EnableArkToolsCompliance)' == 'true'">Enforce</ArkComplianceMode>
+    <ArkComplianceMode Condition="'$(EnableArkToolsCompliance)' != 'true'">Off</ArkComplianceMode>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' == 'true'">
+    <!-- The name-based heuristic must not become a build error under TreatWarningsAsErrors.
+         The MSBuild engine list is needed too: MSBuildTreatWarningsAsErrors re-elevates
+         compiler-demoted warnings at the logging layer. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);ARKPII001</WarningsNotAsErrors>
+    <MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);ARKPII001</MSBuildWarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
+    <CompilerVisibleProperty Include="IsTestProject" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' == 'true'">
+    <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/Ark.Tools.Compliance.globalconfig"
+                               KeepDuplicates="false" />
+  </ItemGroup>
+
   
   <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)../configuration/analyzers/BannedSymbols.Ark.txt"
                      KeepDuplicates="false"
                      Condition="'$(EnableArkToolsBannedApi)' != 'false'" />
   </ItemGroup>
+
+  <Target Name="ValidateArkComplianceMode"
+          BeforeTargets="CoreCompile"
+          Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <Error Condition="('$(EnableArkToolsCompliance)' == 'true' and '$(ArkComplianceMode)' != 'Enforce') or ('$(EnableArkToolsCompliance)' != 'true' and '$(ArkComplianceMode)' != 'Off')"
+           Text="ArkComplianceMode is derived from EnableArkToolsCompliance. Use EnableArkToolsCompliance=true to opt in; no other compliance modes are supported." />
+  </Target>
 
   <Target Name="Disable_SponsorLink"
           BeforeTargets="CoreCompile"

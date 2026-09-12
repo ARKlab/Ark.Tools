@@ -1,4 +1,4 @@
-// Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using AwesomeAssertions;
@@ -6,6 +6,8 @@ using AwesomeAssertions;
 using Ark.Tools.Compliance.Dapper;
 
 using Microsoft.Extensions.Compliance.Classification;
+using Microsoft.Extensions.Compliance.Redaction;
+using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -37,20 +39,21 @@ public sealed class ComplianceFoundationTests
         string.Format("{0}", value).Should().Be("***");
         value.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
         new string(buffer, 0, written).Should().Be("***");
-        value.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
+        value.Reveal(CompliancePurpose.Custom("test", CompliancePurposeCategory.TechnicalFunctional)).Should().Be("secret-value");
     }
 
     /// <summary>
     /// The generated JSON converter writes cleartext for transport and restores safe rendering.
     /// </summary>
     [TestMethod]
+    [PersonalDataEgress(Purpose = "verify serialization round-trip in tests")]
     public void SensitiveValueObject_JsonRoundTripsCleartext()
     {
         var serialized = JsonSerializer.Serialize(TestSensitiveValue.From("secret-value"));
         var restored = JsonSerializer.Deserialize<TestSensitiveValue>(serialized);
 
         serialized.Should().Be("\"secret-value\"");
-        restored!.Reveal(CompliancePurpose.Custom("test")).Should().Be("secret-value");
+        restored!.Reveal(CompliancePurpose.Custom("test", CompliancePurposeCategory.TechnicalFunctional)).Should().Be("secret-value");
         var buffer = new char[3];
         restored.TryFormat(buffer.AsSpan(), out var written, default, null).Should().BeTrue();
         new string(buffer, 0, written).Should().Be("***");
@@ -68,7 +71,7 @@ public sealed class ComplianceFoundationTests
         var restored = handler.Parse("person@example.com");
         handler.SetValue(parameter, restored);
 
-        restored.Reveal(CompliancePurpose.Custom("test")).Should().Be("person@example.com");
+        restored.Reveal(CompliancePurpose.Custom("test", CompliancePurposeCategory.TechnicalFunctional)).Should().Be("person@example.com");
         restored.ToString().Should().Be("***");
         parameter.Value.Should().Be("person@example.com");
     }
@@ -122,16 +125,17 @@ public sealed class ComplianceFoundationTests
         var exception = () => EmailAddress.From(input);
 
         exception.Should().Throw<ArgumentException>().Which.Message.Should().NotContain(input);
-        ApiKey.From(" key ").Reveal(CompliancePurpose.Custom("test")).Should().Be("key");
+        ApiKey.From(" key ").Reveal(CompliancePurpose.Custom("test", CompliancePurposeCategory.TechnicalFunctional)).Should().Be("key");
     }
 
     /// <summary>
-    /// The generator emits a stable redactor shape for every supported redaction mode.
+    /// The generator emits a stable redactor shape for every supported redaction mode,
+    /// and the emitted code compiles (regression: HMAC mode once emitted an invalid prefix).
     /// </summary>
     [TestMethod]
     public void Generator_EmitsEachRedactionMode()
     {
-        var generated = _runGenerator(
+        const string source =
             """
             using Ark.Tools.Compliance;
             [SensitiveValueObject<string>(ArkRedaction.Erase)]
@@ -142,14 +146,24 @@ public sealed class ComplianceFoundationTests
             public readonly partial struct Hashed { }
             [SensitiveValueObject<string>(ArkRedaction.None)]
             public readonly partial struct Clear { }
-            """);
+            """;
+        var generated = _runGenerator(source);
 
-        generated.Should().Contain("ArkErasingRedactor.Instance");
-        generated.Should().Contain("ArkMaskingRedactor.Instance");
-        generated.Should().Contain("new ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))");
-        generated.Should().Contain("ArkNullRedactor.Instance");
+        generated.Should().Contain("global::Ark.Tools.Compliance.ArkErasingRedactor.Instance");
+        generated.Should().Contain("global::Ark.Tools.Compliance.ArkMaskingRedactor.Instance");
+        generated.Should().Contain("new global::Ark.Tools.Compliance.ArkHmacRedactor(global::System.Environment.GetEnvironmentVariable(\"ARK_TOOLS_COMPLIANCE_HMAC_KEY\"))");
+        generated.Should().Contain("global::Ark.Tools.Compliance.ArkNullRedactor.Instance");
         generated.Should().Contain("Reveal");
         generated.Should().Contain("TryFormat");
+
+        var compilation = _createCompilation(source)
+            .AddSyntaxTrees(
+                CSharpSyntaxTree.ParseText(generated),
+                // Real consumers get `using System;` via ImplicitUsings (AsSpan extension resolution).
+                CSharpSyntaxTree.ParseText("global using System;"));
+        compilation.GetDiagnostics()
+            .Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Should().BeEmpty();
     }
 
     /// <summary>
@@ -163,6 +177,7 @@ public sealed class ComplianceFoundationTests
             using Ark.Tools.Compliance;
             [SensitiveValueObject<int>] public readonly partial struct WrongType { }
             [SensitiveValueObject<string>] public readonly struct NotPartial { }
+            [SensitiveValueObject<string>] public readonly partial struct Generic<T> { }
             [SensitiveValueObject<string>] public readonly partial struct ClearToString
             {
                 public override string ToString() => "clear";
@@ -180,6 +195,7 @@ public sealed class ComplianceFoundationTests
         var ids = diagnostics.Select(static diagnostic => diagnostic.Id).ToList();
 
         ids.Should().Contain(["ARKPII201", "ARKPII202", "ARKPII203", "ARKPII204"]);
+        ids.Count(static id => string.Equals(id, "ARKPII202", StringComparison.Ordinal)).Should().Be(2);
         ids.Count(static id => string.Equals(id, "ARKPII204", StringComparison.Ordinal)).Should().Be(2);
     }
 
@@ -211,6 +227,21 @@ public sealed class ComplianceFoundationTests
         new PseudonymousAttribute().Classification.Should().Be(ArkDataClassifications.Pseudonymous);
 
         typeof(PersonalDataAttribute).BaseType.Should().Be<DataClassificationAttribute>();
+    }
+
+    /// <summary>Ark redaction registers classification-aware and fallback redactors.</summary>
+    [TestMethod]
+    public void ArkRedaction_RegistersFailClosedMicrosoftPipeline()
+    {
+        using var provider = new ServiceCollection()
+            .AddArkRedaction()
+            .BuildServiceProvider();
+        var redactorProvider = provider.GetRequiredService<IRedactorProvider>();
+
+        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.PersonalData))
+            .Redact("person@example.com").Should().Be("***");
+        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.Secret))
+            .Redact("secret-value").Should().Be("***");
     }
 
     /// <summary>
@@ -291,14 +322,17 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
-    /// Custom purposes retain a greppable reason and named purposes compare by value.
+    /// Custom purposes retain a greppable reason plus category and named purposes compare by value.
     /// </summary>
     [TestMethod]
     public void CompliancePurpose_PreservesReason()
     {
-        CompliancePurpose.Custom("ticket ARK-1234").ToString().Should().Be("ticket ARK-1234");
+        CompliancePurpose.Custom("ticket ARK-1234", CompliancePurposeCategory.LegalObligation).ToString().Should().Be("ticket ARK-1234 [LegalObligation]");
+        CompliancePurpose.SendTransactionalEmail.Category.Should().Be(CompliancePurposeCategory.CustomerSupport);
         CompliancePurpose.SendTransactionalEmail.Should().Be(
-            CompliancePurpose.Custom("SendTransactionalEmail"));
+            CompliancePurpose.Custom("SendTransactionalEmail", CompliancePurposeCategory.CustomerSupport));
+        var uncategorized = static () => CompliancePurpose.Custom("ticket ARK-1234", CompliancePurposeCategory.Unspecified);
+        uncategorized.Should().Throw<ArgumentException>();
     }
 
     private static string _runGenerator(string source)

@@ -1,5 +1,6 @@
 using Ark.Reference.Common;
 using Ark.Reference.Common.Services.FileStorageService;
+using Ark.Tools.Compliance;
 using Ark.Tools.Sql;
 
 using Microsoft.Extensions.Configuration;
@@ -11,18 +12,24 @@ namespace Ark.Reference.Core.Application.Config;
 public class ApiHostConfig : IApiHostConfig
 {
     public string? ApiHostConfig_SwaggerClientId { get; set; }
+    [Secret]
     public string? RebusBusConfig_AsbConnectionString { get; set; }
     public string? RebusBusConfig_RequestQueue { get; set; }
+    [Secret]
     public string? RebusBusConfig_StorageConnectionString { get; set; }
+    [Secret]
     public string? CoreDataContextConfig_SQLConnectionString { get; set; }
 
     public string? CoreConfig_Environment { get; set; }
 
     public string? ArtesianConnectionConfig_Audience { get; set; }
     public string? ArtesianConnectionConfig_Domain { get; set; }
+    [Secret]
     public string? ArtesianConnectionConfig_ClientSecret { get; set; }
     public string? ArtesianConnectionConfig_ClientId { get; set; }
+    [NotPersonalData("The base address identifies infrastructure, not a person.")]
     public Uri? ArtesianConnectionConfig_BaseAddress { get; set; }
+    [Secret]
     public string? ArtesianConnectionConfig_ApiKey { get; set; }
 
     public string? FileServiceStorageAccount { get; set; }
@@ -32,10 +39,13 @@ public class ApiHostConfig : IApiHostConfig
     public string SchemaName => "dbo";
 
     string? IApiHostConfig.SwaggerClientId => ApiHostConfig_SwaggerClientId;
+    [Secret]
     string? IRebusBusConfig.AsbConnectionString => RebusBusConfig_AsbConnectionString;
     string? IRebusBusConfig.RequestQueue => RebusBusConfig_RequestQueue;
+    [Secret]
     string? IRebusBusConfig.StorageConnectionString => RebusBusConfig_StorageConnectionString;
 
+    [Secret]
     string ISqlContextConfig.ConnectionString => CoreDataContextConfig_SQLConnectionString ?? throw new InvalidOperationException(nameof(CoreDataContextConfig_SQLConnectionString) + " shouldn't be null.");
 
     string? ICoreConfig.Environment => CoreConfig_Environment;

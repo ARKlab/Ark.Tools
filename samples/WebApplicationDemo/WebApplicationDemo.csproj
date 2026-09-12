@@ -19,6 +19,7 @@
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.MessagePack/Ark.Tools.AspNetCore.MessagePack.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Http/Ark.Tools.Http.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Hosting/Ark.Tools.Hosting.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Nodatime.Dapper/Ark.Tools.Nodatime.Dapper.csproj" />

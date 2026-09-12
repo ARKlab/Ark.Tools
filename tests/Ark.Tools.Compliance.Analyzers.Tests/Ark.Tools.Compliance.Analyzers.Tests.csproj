@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Analyzers.CodeFixes/Ark.Tools.Compliance.Analyzers.CodeFixes.csproj" />
+    <None Include="../../src/compliance/Ark.Tools.Compliance.Analyzers/buildTransitive/ComplianceLexicon.Ark.txt"
+          Link="ComplianceLexicon.Ark.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../../src/compliance/Ark.Tools.Compliance/ComplianceFakes.cs" Link="Fixtures/ComplianceFakes.cs" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,4 @@
-// Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Compliance.MessagePack;
@@ -29,10 +29,11 @@ namespace Ark.Tools.Compliance.Tests;
 [TestClass]
 public sealed class SerializationTargetTests
 {
-    private static readonly CompliancePurpose _purpose = CompliancePurpose.Custom("test");
+    private static readonly CompliancePurpose _purpose = CompliancePurpose.Custom("test", CompliancePurposeCategory.TechnicalFunctional);
 
     /// <summary>The Newtonsoft.Json converter round-trips cleartext and restores redaction.</summary>
     [TestMethod]
+    [PersonalDataEgress(Purpose = "verify serialization round-trip in tests")]
     public void NewtonsoftJson_RoundTripsCleartextAndStaysRedacted()
     {
         var settings = SensitiveValueNewtonsoftJson.RegisterBuiltIn(new JsonSerializerSettings());
@@ -254,7 +255,7 @@ public sealed class SerializationTargetTests
             || value.StartsWith("example-api-key", StringComparison.Ordinal)
             || value.StartsWith("+1555010", StringComparison.Ordinal)
             || value.StartsWith("+1555019", StringComparison.Ordinal)
-            || value.StartsWith("+447700900", StringComparison.Ordinal)
+            || (value.StartsWith("+44", StringComparison.Ordinal) && value.Contains("7700900", StringComparison.Ordinal))
             || value.All(static character => character is 'X' or '0' or '-');
     }
 }

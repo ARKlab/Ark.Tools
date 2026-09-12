@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.NLog/Ark.Tools.Compliance.NLog.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.NLog/Ark.Tools.NLog.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ark.Tools.AspNetCore.OTel.csproj" />
+  </ItemGroup>
+</Project>

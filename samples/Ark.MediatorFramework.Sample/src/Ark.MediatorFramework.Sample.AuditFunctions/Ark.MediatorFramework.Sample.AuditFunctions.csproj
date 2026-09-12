@@ -16,6 +16,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
+    <PackageReference Include="Ark.Tools.Compliance" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
   </ItemGroup>
 

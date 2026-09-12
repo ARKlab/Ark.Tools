@@ -1,10 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Microsoft.Data.SqlClient;
-
 using OpenTelemetry;
 
+using System.Data.Common;
 using System.Diagnostics;
 
 namespace Ark.Tools.OTel;
@@ -32,9 +31,12 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
         {
             try
             {
-                var builder = new SqlConnectionStringBuilder(sqlConnectionString);
-                _dataSource = builder.DataSource;
-                _database = builder.InitialCatalog;
+                var builder = new DbConnectionStringBuilder
+                {
+                    ConnectionString = sqlConnectionString,
+                };
+                _dataSource = _read(builder, "Data Source", "DataSource", "Server", "Address", "Addr", "Network Address");
+                _database = _read(builder, "Initial Catalog", "InitialCatalog", "Database");
                 _enabled = !string.IsNullOrWhiteSpace(_dataSource) &&
                            !string.IsNullOrWhiteSpace(_database);
             }
@@ -89,5 +91,16 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                 data.IsAllDataRequested = false;
             }
         }
+    }
+
+    private static string? _read(DbConnectionStringBuilder builder, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (builder.TryGetValue(key, out var value))
+                return value as string;
+        }
+
+        return null;
     }
 }
