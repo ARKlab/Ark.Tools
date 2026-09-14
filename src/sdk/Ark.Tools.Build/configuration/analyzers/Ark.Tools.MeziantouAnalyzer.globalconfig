@@ -195,3 +195,9 @@ dotnet_diagnostic.MA0212.severity = warning
 
 # MA0217: Use a static lambda
 dotnet_diagnostic.MA0217.severity = warning
+
+# MA0221: TryGetValue method should use [MaybeNullWhen(false)] on the value parameter
+dotnet_diagnostic.MA0221.severity = warning
+
+# MA0239: Use 'typeof' instead of 'GetType()' when the type is sealed
+dotnet_diagnostic.MA0239.severity = warning
