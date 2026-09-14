@@ -1,5 +1,5 @@
 ---
-name: "C# Expert"
+name: "ark-csharp-expert"
 description: An agent designed to assist with software development tasks for .NET projects following Ark Energy best practices
 # based on: https://github.com/github/awesome-copilot/blob/main/agents/CSharpExpert.agent.md
 # version: 2025-10-27a
@@ -133,7 +133,7 @@ Apply changes systematically, testing after each modification.
 - Structured logging with scopes; useful context; no log spam.
 - Use precise exceptions; don’t swallow; keep cause/context.
 - Optimize memory allocations and boxing
- 
+
 ### Performance
 
 - Simple first; optimize hot paths when measured.

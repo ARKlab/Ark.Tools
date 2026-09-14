@@ -1,0 +1,18 @@
+{
+  "name": "ark-tools",
+  "owner": {
+    "name": "ARKlab",
+    "url": "https://github.com/ARKlab"
+  },
+  "metadata": {
+    "homepage": "https://github.com/ARKlab/Ark.Tools"
+  },
+  "plugins": [
+    {
+      "name": "ark-csharp",
+      "description": "Ark CSharp development skills and agents",
+      "version": "1.0.0",
+      "source": "./agents-plugins/ark-csharp"
+    }
+  ]
+}
