@@ -8,7 +8,8 @@ five cooperating layers. A leak has to pass all of them:
 2. **Refuse** — Roslyn analyzers turn "classified value reaches a log/exception/telemetry
    sink" into a compile error (`ARKPII*` diagnostics).
 3. **Inventory** — a generated, committed `ArkComplianceSurface.txt` baseline: new or
-   changed personal data cannot enter the codebase without a visible diff.
+   changed personal data cannot enter the codebase without a visible diff. This supports
+   the records of processing activities required by [GDPR Art. 30](https://gdpr-info.eu/art-30-gdpr/).
 4. **Enforce downstream** — generated SQL Server sensitivity classification and dynamic
    data masking DDL; serializer adapters for every transport Ark uses.
 5. **Redact at runtime** — sensitive value objects render redacted by `ToString()`;

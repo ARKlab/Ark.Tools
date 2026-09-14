@@ -82,16 +82,6 @@ public sealed class ComplianceSurfaceTests
         _run(_personalMember, "invalid baseline", enabled: true, complianceEnabled: false).Diagnostics.Should().BeEmpty();
     }
 
-    /// <summary>The update build emits the inventory without blocking the explicit acceptance operation.</summary>
-    [TestMethod]
-    public void Surface_UpdateModeSuppressesOnlyBaselineDiagnostics()
-    {
-        var result = _run(_personalMember, enabled: true, updating: true);
-
-        result.Diagnostics.Should().BeEmpty();
-        result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tEmail\tArk:PersonalData");
-    }
-
     /// <summary>A reviewed snapshot accepts the same compilation, including CRLF baselines.</summary>
     [TestMethod]
     public void Surface_AcceptsMatchingBaselineAndLineEndings()
@@ -267,9 +257,9 @@ public sealed class ComplianceSurfaceTests
             .Which.Id.Should().Be("ARKPII020");
     }
 
-    /// <summary>PII-IMP-03 serializer registrations appear on the classified member's inventory line.</summary>
+    /// <summary>Serializer registrations appear on the classified member's inventory line.</summary>
     [TestMethod]
-    public void Surface_RecordsRegisteredSerializerEgress()
+    public void Surface_RecordsRegisteredSerializers()
     {
         var result = _run("""
             using Ark.Tools.Compliance;
@@ -317,59 +307,6 @@ public sealed class ComplianceSurfaceTests
 
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tHidden\tArk:PersonalData\t\t\n");
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tVisible\tArk:PersonalData\t\tNewtonsoft.Json,System.Text.Json");
-    }
-
-    /// <summary>Transport contracts carry their egress through nested DTOs and query result types.</summary>
-    [TestMethod]
-    public void Surface_RecordsHttpResultAndNestedDtoEgress()
-    {
-        var result = _run("""
-            using Ark.Tools.Compliance;
-            namespace Ark.Tools.MediatorFramework
-            {
-                public sealed class HttpEndpointAttribute : System.Attribute { }
-                public interface IQuery<T> { }
-            }
-            namespace Example
-            {
-                [Ark.Tools.MediatorFramework.HttpEndpoint]
-                public sealed class GetCustomer : Ark.Tools.MediatorFramework.IQuery<Customer> { }
-                public class Customer { public Contact Contact { get; set; } = new(); }
-                public class Contact { public EmailAddress Email { get; set; } }
-            }
-            """);
-
-        result.Text.Should().Contain("CLASSIFIED\tExample.Contact\tEmail\tArk:PersonalData\t\tHttp:Example.GetCustomer,System.Text.Json");
-    }
-
-    /// <summary>Ignored DTO paths do not produce false transport egress, and recursive generic graphs terminate.</summary>
-    [TestMethod]
-    public void Surface_StopsRecursiveContractsAndIgnoresHiddenDtoPaths()
-    {
-        var result = _run("""
-            using Ark.Tools.Compliance;
-            namespace Ark.Tools.MediatorFramework
-            {
-                public sealed class HttpEndpointAttribute : System.Attribute { }
-                public interface IQuery<T> { }
-            }
-            namespace Example
-            {
-                [Ark.Tools.MediatorFramework.HttpEndpoint]
-                public sealed class GetCustomer : Ark.Tools.MediatorFramework.IQuery<Customer> { }
-                public class Customer
-                {
-                    [System.Text.Json.Serialization.JsonIgnore]
-                    public Contact Hidden { get; set; } = new();
-                    public Node<string> Chain { get; set; } = new();
-                }
-                public class Contact { public EmailAddress Email { get; set; } }
-                public class Node<T> { public Node<System.Collections.Generic.List<T>>? Next { get; set; } }
-            }
-            """);
-
-        result.Text.Should().Contain("CLASSIFIED\tExample.Contact\tEmail\tArk:PersonalData\t\tSystem.Text.Json");
-        result.Text.Should().NotContain("Http:");
     }
 
     /// <summary>Real MSBuild acceptance produces identical net8/net10 baselines for manual review.</summary>
@@ -430,10 +367,12 @@ public sealed class ComplianceSurfaceTests
             missing.ExitCode.Should().NotBe(0);
             missing.Output.Should().Contain("ARKPII020");
 
-            var generation = await _buildFixture(project, properties: ["ArkComplianceSurfaceUpdating=true"]).ConfigureAwait(false);
-            generation.ExitCode.Should().Be(0, generation.Output);
-            var net8 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net8.0", "ArkComplianceSurface.current.txt")).ConfigureAwait(false);
-            var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "ArkComplianceSurface.current.txt")).ConfigureAwait(false);
+            var net8 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net8.0", "generated",
+                "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
+                "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
+            var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "generated",
+                "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
+                "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
             net8.Should().Equal(net10);
             await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net8).ConfigureAwait(false);
             var accepted = await _buildFixture(project).ConfigureAwait(false);
@@ -495,7 +434,7 @@ public sealed class ComplianceSurfaceTests
     }
 
     private static (string Text, ImmutableArray<Diagnostic> Diagnostics) _run(string source,
-        string? baseline = null, bool enabled = false, bool updating = false, bool duplicateBaseline = false,
+        string? baseline = null, bool enabled = false, bool duplicateBaseline = false,
         bool complianceEnabled = true)
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
@@ -510,7 +449,7 @@ public sealed class ComplianceSurfaceTests
             files = files.Add(new BaselineText("other/ArkComplianceSurface.txt", baseline!));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new ComplianceSurfaceGenerator().AsSourceGenerator()], additionalTexts: files,
-            optionsProvider: new OptionsProvider(enabled, updating, complianceEnabled));
+            optionsProvider: new OptionsProvider(enabled, complianceEnabled));
         driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var output, out _);
         var result = driver.GetRunResult();
         result.Results.Should().OnlyContain(static generator => generator.Exception == null);
@@ -532,10 +471,10 @@ public sealed class ComplianceSurfaceTests
         }
     }
 
-    private sealed class OptionsProvider(bool enabled, bool updating, bool complianceEnabled) : AnalyzerConfigOptionsProvider
+    private sealed class OptionsProvider(bool enabled, bool complianceEnabled) : AnalyzerConfigOptionsProvider
     {
         /// <inheritdoc />
-        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(enabled, updating, complianceEnabled);
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(enabled, complianceEnabled);
 
         /// <inheritdoc />
         public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
@@ -550,7 +489,7 @@ public sealed class ComplianceSurfaceTests
         }
     }
 
-    private sealed class Options(bool enabled, bool updating, bool complianceEnabled) : AnalyzerConfigOptions
+    private sealed class Options(bool enabled, bool complianceEnabled) : AnalyzerConfigOptions
     {
         /// <inheritdoc />
         public override bool TryGetValue(string key, out string value)
@@ -559,7 +498,6 @@ public sealed class ComplianceSurfaceTests
             {
                 "build_property.EnableArkToolsCompliance" => complianceEnabled ? "true" : "false",
                 "build_property.ArkComplianceSurfaceEnabled" => enabled ? "true" : "false",
-                "build_property.ArkComplianceSurfaceUpdating" => updating ? "true" : "false",
                 _ => string.Empty,
             };
             return value.Length > 0;

@@ -7,9 +7,8 @@ Everything a consumer can set, in one place.
 | Property | Default | Meaning |
 | --- | --- | --- |
 | `EnableArkToolsCompliance` | `false` (beta) | Master opt-in. With `Ark.Tools.Sdk`: adds the analyzer package, the globalconfig severities, the lexicon/sinks files, and the surface baseline gate. Also gates the SQL policy targets and the surface generator in any project referencing the respective packages. |
-| `ArkComplianceMode` | derived | **Do not set.** Derived from `EnableArkToolsCompliance` (`Enforce`/`Off`); the build errors on any manual value. |
+| `ArkComplianceMode` | derived | Internal build state used to validate the compliance opt-in invariant. **Do not set.** It is derived from `EnableArkToolsCompliance` (`Enforce`/`Off`); the build errors on any manual value. |
 | `ArkComplianceSurfaceEnabled` | `true` iff compliance enabled | Per-project opt-out of compliance-surface generation/verification. |
-| `ArkComplianceSurfaceUpdating` | `false` | Set `true` (e.g. `-p:ArkComplianceSurfaceUpdating=true`) to skip baseline verification while intentionally regenerating `ArkComplianceSurface.txt`. |
 | `ArkComplianceSqlOutputPath` | `$(IntermediateOutputPath)ArkCompliance.Sql` | Where `Ark.Tools.Compliance.Sql` writes the `policy-*.compliance.sql` scripts. Database projects usually point it at a stable path under their own `obj\`. |
 
 ## MSBuild items

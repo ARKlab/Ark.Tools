@@ -23,7 +23,6 @@ diagnostics. Referenced automatically by `Ark.Tools.Sdk` when
 | ARKPII009 | Warning | `[NotPersonalData]` justification is missing or boilerplate. |
 | ARKPII010 | Error | Classification on a member the pipeline cannot redact (`object`, `dynamic`, delegate). |
 | ARKPII011 | Error | Classified value passed to a banned formatting sink (`Console.*`, `Debug.*`, `Trace.*`, `StringBuilder.Append`). |
-| ARKPII012 | Warning | Contract exposes personal data over a transport without `[PersonalDataEgress(Purpose = …)]`. |
 | ARKPII013 | Warning | Project logs through `Microsoft.Extensions.Telemetry` without calling `AddArkRedaction()`. |
 | ARKPII020 | Error | `ArkComplianceSurface.txt` drift — the classified surface changed vs the committed baseline. |
 | ARKPII021 | Error | A classified member was removed or its protection weakened vs the baseline. |
@@ -104,10 +103,7 @@ Workflow:
 
 3. Commit — the privacy change is now a visible line in the PR diff.
 
-While doing a large refactor you can temporarily skip verification with
-`<ArkComplianceSurfaceUpdating>true</ArkComplianceSurfaceUpdating>` (or
-`-p:ArkComplianceSurfaceUpdating=true`); regenerate and re-commit the baseline
-before merging. To exclude a single project from surface tracking set
+To exclude a single project from surface tracking set
 `<ArkComplianceSurfaceEnabled>false</ArkComplianceSurfaceEnabled>`.
 
 ## Escape hatches

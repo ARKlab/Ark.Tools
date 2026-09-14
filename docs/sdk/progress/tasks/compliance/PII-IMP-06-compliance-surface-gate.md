@@ -17,7 +17,7 @@ file, and makes every addition a reviewed change.
 
 - **`ArkComplianceSurface.txt`**, deterministic and stable-sorted, one line per
   classified member: declaring type, member, classification, purpose notes, and
-  the egress targets it is serialised to.
+  registered serializers.
 - **Separate from `ArkApiSurface.txt`** (decision PII‑04): different audience and
   cadence, and a privacy diff must not hide inside an API diff.
 - **`ARKPII020`**: the committed surface file does not match the compilation —
@@ -41,7 +41,7 @@ file, and makes every addition a reviewed change.
 - Adding a classified member without updating the baseline fails the build with
   `ARKPII020`; manually copying the generated intermediate inventory fixes it.
 - Weakening a classification is reported by `ARKPII021`.
-- Egress targets from PII-IMP-03 appear on the member's line.
+- Registered serializers appear on the member's line.
 
 ## Outcomes
 
@@ -61,18 +61,15 @@ does not flow NuGet build assets.
 # Normal compilation rejects unreviewed additions, removals, or changes.
 dotnet build path/to/Service.csproj
 
-# Generate the reviewed inventory without applying it.
-dotnet build path/to/Service.csproj -p:ArkComplianceSurfaceUpdating=true
-
-# Copy the generated intermediate inventory to the committed baseline.
-cp path/to/Service/obj/Debug/net10.0/ArkComplianceSurface.current.txt \
+# Copy the generated inventory to the committed baseline.
+cp path/to/Service/obj/Debug/net10.0/generated/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator/ArkComplianceSurface.g.cs \
    path/to/Service/ArkComplianceSurface.txt
 ```
 
-The updating property bypasses only the two baseline diagnostics, not unrelated
-compiler/analyzer errors. Copy the generated inventory to
-`ArkComplianceSurface.txt` only after inspecting the diff. Normal builds write
-`obj/<configuration>/<framework>/ArkComplianceSurface.current.txt`;
+Copy the generated inventory to `ArkComplianceSurface.txt` only after inspecting
+the diff. Normal builds write
+`obj/<configuration>/<framework>/ArkComplianceSurface.current.txt` on successful
+compilation;
 the generated `ArkComplianceSurface.g.cs` remains inspectable under the configured
 compiler-generated-files directory even when baseline drift stops compilation.
 Like the existing API snapshot, the accepted file may include the generated C#
@@ -89,11 +86,11 @@ The versioned format starts with `COMPLIANCE-SURFACE 1`. Each subsequent line ha
 six tab-separated columns:
 
 ```text
-CLASSIFIED    declaring-type    member    classifications    notes    egress
+CLASSIFIED    declaring-type    member    classifications    notes    serializers
 ```
 
 The spaces above illustrate column boundaries; actual separators are tabs.
-Columns, classifications, notes, and egress are ordered ordinally. No timestamp,
+Columns, classifications, notes, and serializers are ordered ordinally. No timestamp,
 assembly version, target framework, machine path, or current culture participates.
 Backslashes, tabs, line breaks, and comment terminators in notes are escaped.
 UTF-8 output is byte-identical between .NET 8 and .NET 10 for the same declared
@@ -115,12 +112,10 @@ surface. CRLF and LF baselines are accepted.
 - Notes contain XML summaries and named/constant purposes from direct
   `member.Reveal(...)` calls. Dynamic purpose arguments are recorded as dynamic,
   not evaluated.
-- Egress includes the in-box sensitive-value JSON converter, explicit
+- Serializers include the in-box sensitive-value JSON converter, explicit
   `Register<T>`/`RegisterBuiltIn` registrations for Dapper, Newtonsoft.Json,
-  protobuf-net, and MessagePack, explicit serializer member attributes, and
-  reachable HTTP/gRPC/Rebus/message/event contract DTOs. Known ignore attributes
-  suppress the corresponding serializer, and ignored HTTP/gRPC DTO paths do not
-  propagate their transport target.
+  protobuf-net, and MessagePack, and explicit serializer member attributes.
+  Known ignore attributes suppress the corresponding serializer.
 
 This is a static declared-capability inventory, not runtime taint tracking.
 Reflection-only serializer registration, dynamically selected serializers,
@@ -132,18 +127,17 @@ single shared baseline.
 ### Focused validation
 
 - Generator and compliance test-project builds succeeded with zero warnings.
-- All 18 surface regression tests passed. They cover deterministic ordering, framework metadata,
+- All 16 surface regression tests passed. They cover deterministic ordering, framework metadata,
   source-compilable output, missing/matching/malformed/duplicate baselines,
   acceptance mode, additions, classification removal/weakening/strengthening,
   nullable/collection/record/inheritance handling, purpose-note escaping,
-  serializer registrations and ignores, and transport graph traversal.
+  serializer registrations and ignores.
 - A standalone consumer and an automated MSBuild regression fixture were restored
   and built against real `net8.0;net10.0`
   reference assemblies: the missing baseline failed with `ARKPII020`, the
-  `ArkComplianceSurfaceUpdating` build property enabled generation of the
-  replacement, and manually copying `ArkComplianceSurface.current.txt` to the
-  committed baseline made verification succeed. `cmp` confirmed byte-identical
-  inventories. Both emitted `.g.cs` files were inspected.
+  manually copying the generated `ArkComplianceSurface.g.cs` to the committed
+  baseline made verification succeed. `cmp` confirmed byte-identical inventories. Both
+  emitted `.g.cs` files were inspected.
 - Full-solution build/test commands were deliberately not run by this task.
 
 ## Acceptance
@@ -151,8 +145,7 @@ single shared baseline.
 - [x] `ArkComplianceSurface.txt` is generated deterministically and separately
   from the API surface.
 - [x] `ARKPII020/021` gate baseline drift.
-- [x] The `ArkComplianceSurfaceUpdating` property, manual baseline-copy
-  workflow, and CI step exist and are documented.
+- [x] The manual baseline-copy workflow and CI step exist and are documented.
 - [x] The [task board](../README.md) status for PII-IMP-06 matches this task.
 - [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero
   warnings.

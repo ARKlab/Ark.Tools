@@ -70,20 +70,6 @@ public string SegmentName { get; init; } = default!;
 
 An empty or boilerplate justification is flagged by `ARKPII009`.
 
-## Declaring an egress
-
-Serializing personal data is normal and stays legal — what the kit wants is the
-*purpose on record*. A contract type (or member) that exposes classified data over
-a transport declares it with:
-
-```csharp
-[PersonalDataEgress(Purpose = "Return book data to authenticated API clients")]
-public sealed class BookController : ApiController { … }
-```
-
-Without it, `ARKPII012` warns that a contract exposes personal data with no
-declared handling policy. The purpose text lands in the compliance inventory.
-
 ## Reviewed exceptions
 
 When a diagnostic is a true positive but the usage is reviewed and accepted,

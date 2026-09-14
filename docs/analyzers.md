@@ -109,7 +109,6 @@ analyzers together with the composable `ComplianceLexicon.Ark.txt` /
 | ARKPII009 | Warning | A non-personal-data justification is missing or boilerplate |
 | ARKPII010 | Error | A classified member has an unsupported redaction surface |
 | ARKPII011 | Error | Classified data reaches a formatting sink |
-| ARKPII012 | Warning | A classified contract lacks an egress purpose |
 | ARKPII013 | Warning | An executable host references Microsoft telemetry without `AddArkRedaction()` |
 | ARKPII020 | Error | The compliance surface baseline has drifted |
 | ARKPII021 | Error | The compliance baseline is invalid or classification was weakened |
@@ -118,9 +117,9 @@ analyzers together with the composable `ComplianceLexicon.Ark.txt` /
 | LOGGEN026 | Error | A tag provider opts out of redaction |
 | LOGGEN036 | Warning | A logged value has no meaningful formatting surface |
 
-The evaluated `ArkComplianceMode` is `Off` by default while the analyzer is beta,
-and `Enforce` when `EnableArkToolsCompliance=true` is set. The switch removes compliance
-configuration and additional files and is passed to the analyzers; it does not
+`ArkComplianceMode` is an internal derived build state: `Off` by default while the
+analyzer is beta, and `Enforce` when `EnableArkToolsCompliance=true` is set. The
+switch removes compliance configuration and additional files and is passed to the analyzers; it does not
 disable unrelated analyzers or change the safe formatting of sensitive value
 objects. Set it in the project or `Directory.Build.props`. Local `.editorconfig`
 entries retain normal precedence over the packaged defaults. `ARKPII001` is

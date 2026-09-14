@@ -33,7 +33,6 @@ public sealed class SerializationTargetTests
 
     /// <summary>The Newtonsoft.Json converter round-trips cleartext and restores redaction.</summary>
     [TestMethod]
-    [PersonalDataEgress(Purpose = "verify serialization round-trip in tests")]
     public void NewtonsoftJson_RoundTripsCleartextAndStaysRedacted()
     {
         var settings = SensitiveValueNewtonsoftJson.RegisterBuiltIn(new JsonSerializerSettings());

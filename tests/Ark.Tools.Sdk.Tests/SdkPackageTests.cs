@@ -127,7 +127,7 @@ public sealed class SdkPackageTests
         var configPath = _getItemIdentities(enabled, "GlobalAnalyzerConfigFiles")
             .Single(static path => path.EndsWith("Ark.Tools.Compliance.globalconfig", StringComparison.Ordinal));
         var config = await File.ReadAllTextAsync(configPath).ConfigureAwait(false);
-        foreach (var id in new[] { "001", "006", "008", "009", "012", "013" })
+        foreach (var id in new[] { "001", "006", "008", "009", "013" })
         {
             StringAssert.Contains(config, $"dotnet_diagnostic.ARKPII{id}.severity = warning", StringComparison.Ordinal);
         }

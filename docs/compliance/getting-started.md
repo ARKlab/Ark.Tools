@@ -3,10 +3,11 @@
 ## With Ark.Tools.Sdk (recommended)
 
 Projects using the `Ark.Tools.Sdk` MSBuild SDK get the whole kit with a single property.
+It layers on the default .NET SDK, so list both SDKs in the project declaration:
 Compliance is **opt-in while the analyzer is in beta**:
 
 ```xml
-<Project Sdk="Ark.Tools.Sdk">
+<Project Sdk="Microsoft.NET.Sdk;Ark.Tools.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -35,7 +36,8 @@ Compliance is **opt-in while the analyzer is in beta**:
 You still add `Ark.Tools.Compliance` as a `PackageReference` where you *declare*
 classified members — the attributes and value objects are a normal runtime library.
 
-Do not set `ArkComplianceMode` yourself: it is derived from
+`ArkComplianceMode` is an internal build state used to validate the opt-in invariant.
+Do not set it yourself: it is derived from
 `EnableArkToolsCompliance` (`Enforce` when `true`, `Off` otherwise) and the build
 rejects any other value.
 

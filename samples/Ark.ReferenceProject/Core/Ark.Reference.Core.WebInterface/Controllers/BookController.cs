@@ -16,7 +16,6 @@ namespace Ark.Reference.Core.WebInterface.Controllers;
 /// Controller for managing Book entities
 /// </summary>
 [Route("book")]
-[PersonalDataEgress(Purpose = "Return book data to authenticated API clients")]
 public class BookController : ApiController
 {
     private readonly IQueryProcessor _queryProcessor;

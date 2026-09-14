@@ -49,7 +49,7 @@ public sealed record CustomerEntity
   application before storage).
 - Inside a `[SqlDataPolicy]` type, every classified member **must** declare a
   `[SqlColumnPolicy]` — a missing one is error `ARKPII007`. Types without
-  `[SqlDataPolicy]` generate nothing and are governed by `ARKPII012` instead.
+  `[SqlDataPolicy]` generate nothing; they remain covered by the catalog and sink analyzers.
 
 ## What gets generated
 

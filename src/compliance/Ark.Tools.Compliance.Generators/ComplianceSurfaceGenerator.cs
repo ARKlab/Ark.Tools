@@ -44,9 +44,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             !(options.GlobalOptions.TryGetValue("build_property.EnableArkToolsCompliance", out var compliance)
                 && string.Equals(compliance, "false", StringComparison.OrdinalIgnoreCase))
             && options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceEnabled", out var value)
-            && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
-            && !(options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceUpdating", out var updating)
-                && string.Equals(updating, "true", StringComparison.OrdinalIgnoreCase)));
+            && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
 
         context.RegisterSourceOutput(inventory, static (production, surface) =>
             production.AddSource("ArkComplianceSurface.g.cs", "/*\n" + surface.Text + "*/\n"));
@@ -63,7 +61,6 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         var types = _types(compilation.Assembly.GlobalNamespace).ToArray();
         var notes = _revealNotes(compilation, token);
         var registrations = _registrations(compilation, token);
-        var transport = _transportTypes(types, token);
         var entries = new SortedDictionary<string, Entry>(StringComparer.Ordinal);
         var members = new HashSet<string>(StringComparer.Ordinal);
 
@@ -86,11 +83,11 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 _documentation(member, purposeNotes, token);
                 if (notes.TryGetValue(key, out var purposes))
                     purposeNotes.UnionWith(purposes);
-                var egress = _egress(member, valueType, registrations, transport);
+                var serializers = _serializers(member, valueType, registrations);
                 var fields = new[]
                 {
                     "CLASSIFIED", _name(type), _memberName(member), string.Join(",", classifications),
-                    string.Join("; ", purposeNotes), string.Join(",", egress),
+                    string.Join("; ", purposeNotes), string.Join(",", serializers),
                 };
                 entries[key] = new Entry(key, string.Join("\t", fields.Select(_escape)),
                     classifications.ToImmutableArray(), member.Locations.FirstOrDefault() ?? Location.None);
@@ -308,79 +305,13 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         return result;
     }
 
-    private static Dictionary<string, SortedSet<string>> _transportTypes(INamedTypeSymbol[] types, CancellationToken token)
-    {
-        var result = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
-        foreach (var type in types)
-        {
-            var transports = type.GetAttributes()
-                .Select(static attribute => attribute.AttributeClass?.ToDisplayString() switch
-                {
-                    "Ark.Tools.MediatorFramework.HttpEndpointAttribute" => "Http",
-                    "Ark.Tools.MediatorFramework.GrpcMethodAttribute" => "Grpc",
-                    "Ark.Tools.MediatorFramework.RebusMessageAttribute" => "Rebus",
-                    "Ark.Tools.MediatorFramework.MessageAttribute" => "Message",
-                    "Ark.Tools.MediatorFramework.EventAttribute" => "Event",
-                    _ => null,
-                })
-                .Where(static transport => transport is not null);
-            foreach (var transport in transports)
-            {
-                var target = transport + ":" + _name(type);
-                var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
-                var path = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-                _walkTransport(type, target, result, visited, path, token);
-                foreach (var contract in type.AllInterfaces)
-                {
-                    foreach (var argument in contract.TypeArguments)
-                        _walkTransport(argument, target, result, visited, path, token);
-                }
-            }
-        }
-        return result;
-    }
-
-    private static void _walkTransport(ITypeSymbol type, string target, Dictionary<string, SortedSet<string>> result,
-        HashSet<ITypeSymbol> visited, HashSet<INamedTypeSymbol> path, CancellationToken token)
-    {
-        token.ThrowIfCancellationRequested();
-        if (!visited.Add(type))
-            return;
-        _add(result, _name(type), target);
-        if (type is IArrayTypeSymbol array)
-            _walkTransport(array.ElementType, target, result, visited, path, token);
-        if (type is not INamedTypeSymbol named)
-            return;
-        _add(result, _name(named.OriginalDefinition), target);
-        foreach (var argument in named.TypeArguments)
-            _walkTransport(argument, target, result, visited, path, token);
-        if (!path.Add(named.OriginalDefinition))
-            return;
-        if (named.BaseType is { SpecialType: not SpecialType.System_Object } baseType)
-            _walkTransport(baseType, target, result, visited, path, token);
-        if (named.Locations.Any(static location => location.IsInSource))
-        {
-            foreach (var (member, value) in named.GetMembers()
-                .Select(member => (member, value: _valueType(member)))
-                .Where(item => item.value is not null
-                    && _isSerializableMember(item.member)
-                    && !_ignoredByTransport(item.member, target)))
-            {
-                _walkTransport(value!, target, result, visited, path, token);
-            }
-        }
-        path.Remove(named.OriginalDefinition);
-    }
-
-    private static SortedSet<string> _egress(ISymbol member, ITypeSymbol? valueType,
-        Dictionary<string, SortedSet<string>> registrations, Dictionary<string, SortedSet<string>> transport)
+    private static SortedSet<string> _serializers(ISymbol member, ITypeSymbol? valueType,
+        Dictionary<string, SortedSet<string>> registrations)
     {
         var result = new SortedSet<string>(StringComparer.Ordinal);
         if (!_isSerializableMember(member))
             return result;
-        if (transport.TryGetValue(_name(member.ContainingType), out var targets))
-            result.UnionWith(targets.Where(target => !_ignoredByTransport(member, target)));
-        _valueEgress(valueType, result, registrations, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+        _valueSerializers(valueType, result, registrations, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
         foreach (var serializer in member.GetAttributes().Concat(member.ContainingType.GetAttributes())
             .Select(static attribute => attribute.AttributeClass?.ToDisplayString() switch
             {
@@ -406,13 +337,6 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         return result;
     }
 
-    private static bool _ignoredByTransport(ISymbol member, string target)
-    {
-        return (target.StartsWith("Http:", StringComparison.Ordinal)
-                && _hasAttribute(member, "System.Text.Json.Serialization.JsonIgnoreAttribute", alwaysOnly: true))
-            || (target.StartsWith("Grpc:", StringComparison.Ordinal) && _hasAttribute(member, "ProtoBuf.ProtoIgnoreAttribute"));
-    }
-
     private static bool _isSerializableMember(ISymbol member)
     {
         return !member.IsStatic && member is not IParameterSymbol
@@ -424,7 +348,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 || _hasAttribute(member, "MessagePack.KeyAttribute"));
     }
 
-    private static void _valueEgress(ITypeSymbol? type, SortedSet<string> result,
+    private static void _valueSerializers(ITypeSymbol? type, SortedSet<string> result,
         Dictionary<string, SortedSet<string>> registrations, HashSet<ITypeSymbol> visited)
     {
         if (type is null || !visited.Add(type))
@@ -435,11 +359,11 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             attribute.AttributeClass?.OriginalDefinition.ToDisplayString() == Prefix + "SensitiveValueObjectAttribute<T>"))
             result.Add("System.Text.Json");
         if (type is IArrayTypeSymbol array)
-            _valueEgress(array.ElementType, result, registrations, visited);
+            _valueSerializers(array.ElementType, result, registrations, visited);
         if (type is INamedTypeSymbol named)
         {
             foreach (var argument in named.TypeArguments)
-                _valueEgress(argument, result, registrations, visited);
+                _valueSerializers(argument, result, registrations, visited);
         }
     }
 

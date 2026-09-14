@@ -88,7 +88,7 @@ to inspect or rewrite arbitrary object graphs.
 - Generated sensitive values implement reflection-free intrinsic safe formatting.
   Runtime redaction does not inspect arbitrary DTOs, invoke getters, or traverse
   object graphs; transport serializers may call `Reveal(CompliancePurpose)` only
-  for an explicit egress purpose.
+  for an explicit purpose.
 - The shared `PersonalDataPatterns` source supplies the same patterns and
   checksum validation to ARKPII006 and the runtime scanner. Runtime matching uses
   `GeneratedRegex`, a `SearchValues<char>` prefilter and a 25 ms timeout that

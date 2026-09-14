@@ -15,5 +15,4 @@ ARKPII008 | Compliance | Warning | Missing or expired review
 ARKPII009 | Compliance | Warning | Missing exclusion justification
 ARKPII010 | Compliance | Error | Unsupported classification shape
 ARKPII011 | Compliance | Error | Classified data in formatting sinks
-ARKPII012 | Compliance | Warning | Missing contract egress purpose
 ARKPII013 | Compliance | Warning | Microsoft telemetry without Ark redaction registration

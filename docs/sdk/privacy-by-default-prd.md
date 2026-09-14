@@ -386,8 +386,8 @@ c.MapArkComplianceTypes();
 Two deliberate properties: it is a **`MapType` mapping, not an `ISchemaFilter`**,
 so nothing reflects over the type at startup and the AoT/trim guarantee survives;
 and the schema carries `x-ark-classification`, which makes the published OpenAPI
-document itself an egress record — the same fact that `ARKPII012` and
-`ArkComplianceSurface.txt` track, now visible to API consumers and gateway
+document an inventory view of the same classifications that
+`ArkComplianceSurface.txt` tracks, now visible to API consumers and gateway
 policy. `ArkStartupWebApiCommon` calls the generated extension by default, so a
 classified type is documented correctly without the developer wiring anything.
 Examples come from the RFC 2606 reserved-domain generator used by `ARKPII006`,
@@ -491,7 +491,7 @@ Serialising personal data is normal and stays legal. What changes is that the
 *shape* is declared, so the inventory and the downstream generators know about it.
 
 ```csharp
-// OK, and recorded in ArkComplianceSurface.txt as an egress of PersonalData.
+// OK, and recorded in ArkComplianceSurface.txt as classified PersonalData.
 [HttpEndpoint(HttpVerb.Get, "/customers/{id}")]
 public sealed record GetCustomer : IQuery<CustomerDto> { … }
 
@@ -504,15 +504,9 @@ public sealed record CustomerDto
 }
 ```
 
-```
-warning ARKPII012: Contract 'CustomerDto' exposes personal data over HTTP but declares no
-                   handling policy. Apply [PersonalDataEgress(Purpose = …)] to record the
-                   lawful purpose in the compliance inventory.
-```
-
 Value-object converters make this transparent: `EmailAddress` serialises as the
-cleartext string on the wire (a JSON converter is an explicit egress and is
-therefore exempt from `ARKPII005`), while `ToString()` everywhere else stays redacted.
+cleartext string on the wire through an explicit converter, while `ToString()`
+everywhere else stays redacted.
 
 ### 6.6 Persistence policy
 
@@ -552,7 +546,7 @@ public sealed record CustomerEntity
   derives it from the property name. Schema/table may be overridden per member
   for split-table mappings.
 - `ARKPII007` fires only inside a `[SqlDataPolicy]` type. Types with no SQL
-  mapping at all (DTOs, messages) are governed by `ARKPII012` instead.
+  mapping at all (DTOs, messages) remain covered by the inventory and sink analyzers.
 
 Build output — a `.sql` **template**, not a finished script
 (`obj/…/generated/…/ArkCompliance.Sql/CustomerEntity.compliance.sql`), consumed
@@ -674,7 +668,7 @@ Three mechanisms, all AoT-safe:
    `ToString`, `IFormattable`, `ISpanFormattable`, debugger, and type-conversion
    behavior. NLog message templates and JSON layouts use those normal formatting
    surfaces. Transport converters are separate and may call `Reveal` only for an
-   explicit egress purpose.
+   explicit purpose.
 2. **Native serialization** — NLog owns traversal of nested event properties and
    collections. Ark does not clone or recursively rewrite arbitrary object graphs.
 3. **PII scan** — a dedicated `PiiScanner` used by the `ComplianceLayout` wrapper
@@ -743,7 +737,6 @@ a packaged `Ark.Tools.Compliance.globalconfig`.
 | ARKPII009 | Warning | `[NotPersonalData]` justification is missing or boilerplate |
 | ARKPII010 | **Error** | Classification attribute on a member the pipeline cannot redact (open `object`, `dynamic`, delegate, or a `[ValueObject]` type with cleartext-leaking `Conversions`/debugger attributes — [§14.5](#145-interop-not-exclusion)) |
 | ARKPII011 | **Error** | Classified value passed to a banned formatting sink (`Console.*`, `Debug.*`, `Trace.*`, `StringBuilder.Append`) |
-| ARKPII012 | Warning | Contract exposes personal data with no declared egress purpose |
 | ARKPII013 | Warning | Project uses `Microsoft.Extensions.Telemetry` logging without `AddArkRedaction()` (see [§13.3](#133-rejected-migrating-ark-logging-to-loggermessage--loggen-wholesale)) |
 | ARKPII020 | **Error** | `ArkComplianceSurface.txt` drift |
 | ARKPII021 | **Error** | `ArkComplianceSurface.txt` missing or malformed |

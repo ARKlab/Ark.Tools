@@ -11,7 +11,6 @@
   <ItemGroup>
     <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
     <CompilerVisibleProperty Include="ArkComplianceSurfaceEnabled" />
-    <CompilerVisibleProperty Include="ArkComplianceSurfaceUpdating" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/ArkComplianceSurface.txt')">

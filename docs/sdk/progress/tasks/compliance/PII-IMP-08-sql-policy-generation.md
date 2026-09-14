@@ -23,8 +23,6 @@ not generated.
   override schema/table per member for split mappings.
 - **`ARKPII007`**: a classified member inside a `[SqlDataPolicy]` type with no
   column policy. It fires only there.
-- **`ARKPII012`**: classified data crossing an egress with no declared policy,
-  covering DTOs and messages that have no SQL mapping.
 - **Generated artifact** (decision PII‑05): an opt-in `.sql` **template** using
   SQLCMD variables, applied via SqlPackage/`sqlcmd` or replaced at build time by
   `ArkComplianceSqlToken` MSBuild items, because schemas and label taxonomies
@@ -34,7 +32,7 @@ not generated.
 
 1. Add `Ark.Tools.Compliance.Sql` with the two attributes and the
    `StoragePolicy` enum (`None`, `Masked`, `ApplicationEncrypted`).
-2. Implement the two diagnostics.
+2. Implement the storage-policy diagnostic.
 3. Implement the template generator with deterministic ordering, emitting
    dynamic data masking and sensitivity-classification statements.
 4. Implement token substitution as MSBuild items and document the SQLCMD path.
@@ -50,8 +48,6 @@ not generated.
 - The emitted script is deterministic and contains unresolved tokens until
   substitution; substituted output is valid T-SQL against the reference
   database.
-- `ARKPII012` fires for an undeclared egress and is silenced by a declared
-  policy.
 
 ## Outcomes
 
@@ -110,18 +106,12 @@ or pretending to provision encryption or keys; application encryption handlers
 and Always Encrypted DDL are not implemented by this task.
 
 `ARKPII007` is an error for an unpolicied classified member of an opted-in type,
-including inherited members and nullable sensitive value objects. `ARKPII012`
-is a warning at recognized JSON serialization, Rebus message, MVC HTTP-action,
-and Ark `HttpEndpoint` contract boundaries. A nonempty
-`[PersonalDataEgress(Purpose = "...")]` on the contract or boundary records the
-purpose. Arbitrary custom transports and cross-method value provenance are not
-inferred by this rule.
+including inherited members and nullable sensitive value objects.
 
 ## Acceptance
 
 - [x] SQL generation is opt-in per type and per column, with verbatim names.
-- [x] `ARKPII007` is scoped to `[SqlDataPolicy]` types; `ARKPII012` covers other
-  egresses.
+- [x] `ARKPII007` is scoped to `[SqlDataPolicy]` types.
 - [x] The emitted script is a token template with a documented substitution
   path.
 - [x] The [task board](../README.md) status for PII-IMP-08 matches this task.

@@ -16,8 +16,8 @@ the same guarantees as the NLog path.
 
 ## Execution map
 
-- **`ArkComplianceMode`**: `Off` while the analyzer is beta; opt into `Enforce`
-  with `EnableArkToolsCompliance=true` (§7 severities). There is no Observe stage: most
+- **`ArkComplianceMode`**: an internal derived state, `Off` while the analyzer is beta;
+  opt into `Enforce` with `EnableArkToolsCompliance=true` (§7 severities). There is no Observe stage: most
   code here is written by agents outside an IDE, and a `suggestion` that does not
   fail `dotnet build` is a diagnostic nobody reads. Per-rule `.editorconfig`
   overrides remain available.

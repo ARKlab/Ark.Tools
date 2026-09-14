@@ -12,7 +12,6 @@ dotnet_diagnostic.ARKPII008.severity = warning
 dotnet_diagnostic.ARKPII009.severity = warning
 dotnet_diagnostic.ARKPII010.severity = error
 dotnet_diagnostic.ARKPII011.severity = error
-dotnet_diagnostic.ARKPII012.severity = warning
 dotnet_diagnostic.ARKPII013.severity = warning
 dotnet_diagnostic.ARKPII020.severity = error
 dotnet_diagnostic.ARKPII021.severity = error

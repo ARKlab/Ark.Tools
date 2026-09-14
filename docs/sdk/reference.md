@@ -93,7 +93,7 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsIdentityModelConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsCompliance` | Disabled by default while the analyzer is beta | Build targets and analyzer options | Set `true` to opt into compliance analysis/configuration |
-| `ArkComplianceMode` | `Off`, or `Enforce` when `EnableArkToolsCompliance=true` | Build targets | Derived; use `EnableArkToolsCompliance`, not a separate mode override |
+| `ArkComplianceMode` | `Off`, or `Enforce` when `EnableArkToolsCompliance=true` | Build targets | Internal derived state used to validate the opt-in invariant; use `EnableArkToolsCompliance`, not a separate mode override |
 | `EnableArkToolsBannedApi` | Enabled unless `false` | Build targets and SDK restore | Set `false` |
 | `EnableArkToolsSponsorLinkRemoval` | Enabled unless `false` | Before `CoreCompile` | Set `false` |
 | `EnableArkToolsGlobalUsings` | Enabled unless `false` when implicit usings are enabled | Build targets | Set `false` |

@@ -46,7 +46,6 @@ public sealed class ComplianceFoundationTests
     /// The generated JSON converter writes cleartext for transport and restores safe rendering.
     /// </summary>
     [TestMethod]
-    [PersonalDataEgress(Purpose = "verify serialization round-trip in tests")]
     public void SensitiveValueObject_JsonRoundTripsCleartext()
     {
         var serialized = JsonSerializer.Serialize(TestSensitiveValue.From("secret-value"));
