@@ -63,6 +63,13 @@ The main libraries used by Ark in its stack are:
 If you want to learn more about each project, look at the respective README files when present or directly at the code.
 Documentation improvements are welcome!
 
+## Compliance (PII & secrets protection)
+
+The `Ark.Tools.Compliance` package family provides privacy-by-default: data
+classification attributes, sensitive value objects, `ARKPII*` analyzers, SQL
+sensitivity/masking DDL generation, and runtime log redaction. See the
+[Compliance consumer guide](docs/compliance/README.md).
+
 ## Migration Guides
 
 Upgrading from an older version? Check out our migration guides:
