@@ -14,6 +14,11 @@
       "type": "remote",
       "enabled": true,
       "url": "https://api.githubcopilot.com/mcp"
+    },
+    "github-mcp-server": {
+      "type": "remote",
+      "enabled": true,
+      "url": "https://api.githubcopilot.com/mcp/"
     }
   }
 }
