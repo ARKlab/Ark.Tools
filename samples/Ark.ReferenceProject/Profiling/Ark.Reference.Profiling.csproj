@@ -5,6 +5,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!-- The benchmark harness composes the API through the test host; redaction is
+         registered by the hosted Startup (AddArkRedaction), not by this entry point. -->
+    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

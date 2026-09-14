@@ -1,0 +1,132 @@
+<Project>
+  <PropertyGroup>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
+  </ItemGroup>
+
+  <UsingTask TaskName="ArkWriteComplianceSqlTemplates" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <GeneratedFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <Tokens ParameterType="Microsoft.Build.Framework.ITaskItem[]" />
+      <OutputDirectory ParameterType="System.String" Required="true" />
+      <OutputFiles ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Using Namespace="System.Collections.Generic" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var token in Tokens ?? new Microsoft.Build.Framework.ITaskItem[0])
+        {
+            var name = token.ItemSpec;
+            var value = token.GetMetadata("Value");
+            if (!Regex.IsMatch(name, @"^[A-Za-z_][A-Za-z0-9_]*$") || value.Contains("$" + "(")
+                || Regex.IsMatch(value, @"[\x00-\x1F\x7F]") || values.ContainsKey(name))
+            {
+                Log.LogError("Invalid or duplicate ArkComplianceSqlToken '{0}'. Values must be single-line and cannot introduce SQLCMD variables.", name);
+                return false;
+            }
+            values.Add(name, value);
+        }
+        var outputs = new List<Microsoft.Build.Framework.ITaskItem>();
+        const string marker = "// ArkComplianceSqlTemplate:";
+        var expected = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var file in GeneratedFiles)
+        {
+          foreach (var line in File.ReadLines(file.ItemSpec))
+          {
+            if (!line.StartsWith(marker, StringComparison.Ordinal)) continue;
+            var start = marker.Length;
+            var separator = line.IndexOf(':', start);
+            if (separator <= start || separator == line.Length - 1)
+            {
+                Log.LogError("Invalid compliance SQL template marker.");
+                return false;
+            }
+            var name = line.Substring(start, separator - start);
+            if (!Regex.IsMatch(name, @"^policy-[a-f0-9]{64}\.compliance\.sql$"))
+            {
+                Log.LogError("Invalid compliance SQL artifact name.");
+                return false;
+            }
+            string encoded = line.Substring(separator + 1).Trim();
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(encoded);
+            }
+            catch (FormatException)
+            {
+                Log.LogError("Invalid base64 payload in compliance SQL template '{0}'.", name);
+                return false;
+            }
+            var template = Encoding.UTF8.GetString(bytes);
+            // Tokens occur only inside bracketed identifiers or string literals. Escape each replacement
+            // for its own SQL context, never recursively expanding replacement values.
+            var sql = Regex.Replace(template, @"\[(?:[^\]]|\]\])*\]|'(?:[^']|'')*'", match =>
+            {
+                var identifier = match.Value[0] == '[';
+                return Regex.Replace(match.Value, @"\$\(([A-Za-z_][A-Za-z0-9_]*)\)", variable =>
+                {
+                    string replacement;
+                    if (!values.TryGetValue(variable.Groups[1].Value, out replacement)) return variable.Value;
+                    return identifier ? replacement.Replace("]", "]]") : replacement.Replace("'", "''");
+                });
+            });
+            Directory.CreateDirectory(OutputDirectory);
+            var output = Path.Combine(OutputDirectory, name);
+            if (!File.Exists(output) || File.ReadAllText(output) != sql)
+                File.WriteAllText(output, sql, new UTF8Encoding(false));
+            expected.Add(Path.GetFullPath(output));
+            outputs.Add(new Microsoft.Build.Utilities.TaskItem(output));
+          }
+        }
+        // A removed opt-in must not leave a stale deployable policy behind.
+        if (Directory.Exists(OutputDirectory))
+        {
+            foreach (var old in Directory.GetFiles(OutputDirectory, "policy-*.compliance.sql"))
+                if (!expected.Contains(Path.GetFullPath(old))) File.Delete(old);
+        }
+        OutputFiles = outputs.ToArray();
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="ArkGenerateComplianceSql" AfterTargets="CoreCompile"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != '' and '$(EnableArkToolsCompliance)' == 'true'">
+    <PropertyGroup>
+      <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_ArkSqlGenerated Include="$(CompilerGeneratedFilesOutputPath)/**/Ark.Tools.Compliance.Generators.SqlPolicyGenerator/ArkComplianceSql.manifest.g.cs" />
+    </ItemGroup>
+    <ArkWriteComplianceSqlTemplates GeneratedFiles="@(_ArkSqlGenerated)" Tokens="@(ArkComplianceSqlToken)"
+                                    OutputDirectory="$(ArkComplianceSqlOutputPath)">
+      <Output TaskParameter="OutputFiles" ItemName="ArkComplianceSqlScript" />
+    </ArkWriteComplianceSqlTemplates>
+    <ItemGroup>
+      <FileWrites Include="@(ArkComplianceSqlScript)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_ArkClearDisabledComplianceSql" AfterTargets="CoreCompile"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != '' and '$(EnableArkToolsCompliance)' != 'true'">
+    <PropertyGroup>
+      <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_ArkDisabledSql Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql" />
+    </ItemGroup>
+    <Delete Files="@(_ArkDisabledSql)" />
+  </Target>
+  <!-- Entry point for database projects that materialize the generated policy scripts directly.
+       ArkGenerateComplianceSql only fires after CoreCompile during a normal build; requesting it
+       standalone on a clean build would find no generated manifest, so run Compile first here. -->
+  <Target Name="ArkGenerateComplianceSqlStandalone" DependsOnTargets="Compile;ArkGenerateComplianceSql" />
+</Project>

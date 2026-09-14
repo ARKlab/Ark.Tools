@@ -2,6 +2,7 @@ using Ark.Reference.Core.API.Requests;
 using Ark.Reference.Core.Application.DAL;
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using System.Security.Claims;
@@ -51,7 +52,7 @@ public sealed class Book_BulkCreateRequestHandler : IRequestHandler<Book_BulkCre
                 Author = data.Author,
                 Genre = data.Genre,
                 ISBN = data.ISBN,
-                Description = $"Book created: {data.Title} by {data.Author}"
+                Description = $"Book created: {data.Title} by {data.Author?.Reveal(CompliancePurpose.Custom("Compose the Book description", CompliancePurposeCategory.TechnicalFunctional))}"
             })
             .ToArray();
 

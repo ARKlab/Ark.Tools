@@ -18,6 +18,7 @@
 	</ItemGroup>
 	
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.Compliance.Reqnroll" />
     <PackageReference Include="Ark.Tools.Reqnroll" />
   </ItemGroup>
 

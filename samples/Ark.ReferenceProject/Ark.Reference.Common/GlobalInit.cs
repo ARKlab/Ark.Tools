@@ -1,4 +1,5 @@
-﻿using Ark.Tools.Nodatime;
+using Ark.Tools.Compliance.Dapper;
+using Ark.Tools.Nodatime;
 using Ark.Tools.Sql.SqlServer;
 
 namespace Ark.Reference.Common;
@@ -11,6 +12,7 @@ public static class GlobalInit
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
 
         NodaTimeDapperSqlServer.Setup();
+        SensitiveValueDapper.RegisterBuiltIn();
         NodeTimeConverter.Register();
     }
 }

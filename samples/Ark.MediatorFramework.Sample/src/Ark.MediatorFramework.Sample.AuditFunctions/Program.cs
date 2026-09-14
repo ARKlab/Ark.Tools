@@ -3,6 +3,7 @@
 
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.NLog;
@@ -38,6 +39,7 @@ public static class Program
                 CaptureMessageProperties = true
             });
             builder.ConfigureFunctionsWebApplication();
+            builder.Services.AddArkRedaction();
             builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
 
             var sqlConnectionString = builder.Configuration["ConnectionStrings:Sample"];

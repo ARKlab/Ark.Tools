@@ -18,6 +18,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.Compliance" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Functions\Ark.MediatorFramework.Sample.Functions.csproj" />

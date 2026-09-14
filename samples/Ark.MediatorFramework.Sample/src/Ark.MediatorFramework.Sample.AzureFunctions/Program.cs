@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
@@ -35,6 +36,7 @@ public static class Program
                 CaptureMessageProperties = true
             });
             builder.ConfigureFunctionsWebApplication();
+            builder.Services.AddArkRedaction();
             builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
 
 #pragma warning disable CA2000 // The hosted service owns and disposes the container at process shutdown.

@@ -1,6 +1,7 @@
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Tools.Core;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 namespace Ark.Reference.Core.API.Queries;
@@ -11,7 +12,7 @@ public static class Book_GetByFiltersQuery
     {
         public int[]? Id { get; init; }
         public string[]? Title { get; init; }
-        public string[]? Author { get; init; }
+        public PersonName[]? Author { get; init; }
         public BookGenre[]? Genre { get; init; }
 
         public string[]? Sort { get; init; }

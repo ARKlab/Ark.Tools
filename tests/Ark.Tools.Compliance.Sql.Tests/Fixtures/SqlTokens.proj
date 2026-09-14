@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <ArkSqlTargetsPath Condition="'$(ArkSqlTargetsPath)' == ''">$(MSBuildThisFileDirectory)Ark.Tools.Compliance.Sql.targets</ArkSqlTargetsPath>
+  </PropertyGroup>
+  <Import Project="$(ArkSqlTargetsPath)" />
+  <Target Name="Render">
+    <ItemGroup>
+      <_Input Include="$(TemplateFile)" />
+    </ItemGroup>
+    <ArkWriteComplianceSqlTemplates GeneratedFiles="@(_Input)" Tokens="@(ArkComplianceSqlToken)"
+                                    OutputDirectory="$(SqlOutputDirectory)" />
+  </Target>
+</Project>

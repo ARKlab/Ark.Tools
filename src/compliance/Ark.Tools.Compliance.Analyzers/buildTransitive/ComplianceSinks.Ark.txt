@@ -1,0 +1,21 @@
+# Documentation-comment method ID prefix; diagnostic ID.
+# Consumer ComplianceSinks*.txt files compose with these defaults.
+# Prefix a method ID with - to remove a reviewed sink.
+M:NLog.Logger.Trace*;ARKPII002
+M:NLog.Logger.Debug*;ARKPII002
+M:NLog.Logger.Info*;ARKPII002
+M:NLog.Logger.Warn*;ARKPII002
+M:NLog.Logger.Error*;ARKPII002
+M:NLog.Logger.Fatal*;ARKPII002
+M:NLog.Logger.Log*;ARKPII002
+M:Microsoft.Extensions.Logging.LoggerExtensions.Log*;ARKPII002
+M:Microsoft.Extensions.Logging.LoggerExtensions.BeginScope*;ARKPII002
+M:System.Diagnostics.Activity.SetTag*;ARKPII004
+M:System.Diagnostics.Activity.AddTag*;ARKPII004
+M:System.Diagnostics.Activity.SetBaggage*;ARKPII004
+M:System.Diagnostics.Activity.AddBaggage*;ARKPII004
+M:System.Diagnostics.Activity.AddEvent*;ARKPII004
+M:System.Console.*;ARKPII011
+M:System.Diagnostics.Debug.*;ARKPII011
+M:System.Diagnostics.Trace.*;ARKPII011
+M:System.Text.StringBuilder.Append*;ARKPII011

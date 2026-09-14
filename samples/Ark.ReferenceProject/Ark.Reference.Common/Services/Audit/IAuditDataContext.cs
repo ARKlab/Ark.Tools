@@ -1,4 +1,5 @@
 using Ark.Tools.Core;
+using Ark.Tools.Compliance;
 
 
 namespace Ark.Reference.Common.Services.Audit;
@@ -18,7 +19,7 @@ public interface IAuditDataContext<TAuditKind> : IAsyncContext
 
     ValueTask<AuditDto<TAuditKind>> EnsureAudit(
         TAuditKind kind
-        , string? userId
+        , [Pseudonymous] string? userId
         , string? infoMessage
         , CancellationToken ctk = default
         );

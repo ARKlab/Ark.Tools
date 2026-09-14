@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\common\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
+    <ProjectReference Include="..\..\compliance\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
   </ItemGroup>
 
 </Project>

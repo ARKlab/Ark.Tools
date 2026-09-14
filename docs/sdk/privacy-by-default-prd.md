@@ -138,10 +138,10 @@ not possible without rewriting every call site (see [§13.3](#133-rejected-migra
   `internal`, and `SinkKind` is a closed enum — a PII sink kind cannot be added.
   `dotnet/roslyn-analyzers` is archived; the code now lives in
   `dotnet/roslyn/src/RoslynAnalyzers`.
-- NLog has **no** `ILogEventInterceptor`. The real extension points are
-  `SetupSerialization(s => s.RegisterObjectTransformation<T>(…))`,
-  `RegisterValueFormatter(IValueFormatter)`, `WrapperTargetBase`, layout
-  renderers, and filters. The design below uses exactly those.
+- NLog has **no** `ILogEventInterceptor`. Its extension points include
+  `SetupSerialization`, `WrapperTargetBase`, layout renderers, and filters. The
+  design below uses native formatting plus a scoped layout wrapper; it does not
+  register global object transformations or value formatters.
 - No analyzer anywhere (Microsoft, CodeQL, Sonar, SCS, Puma) checks personal data
   flowing into **exception messages**.
 - Two source generators cannot observe each other's output in one compilation.
@@ -162,8 +162,7 @@ Five layers, in order of authority. A leak must pass all five.
 1. **Declare** — classification attributes and sensitive value objects
    (`Ark.Tools.Compliance`).
 2. **Refuse** — `ARKPII*` analyzers turn use-at-a-sink into a compile error
-   (`Ark.Tools.Compliance.Analyzers`, shipped inside `Ark.Tools.Compliance`, wired by
-   `Ark.Tools.Sdk`).
+   (`Ark.Tools.Compliance.Analyzers`, added implicitly by `Ark.Tools.Sdk`).
 3. **Inventory** — a generated, committed `ArkComplianceSurface.txt` snapshot; new or
    changed personal data cannot enter the codebase without an explicit diff, the
    same gate style already used for `ArkApiSurface.txt` (`ARKAPI001..004`).
@@ -200,8 +199,11 @@ public static class ArkDataClassifications
     /// <summary>Special categories of personal data (GDPR Art. 9).</summary>
     public static DataClassification SensitivePersonalData => new(TaxonomyName, nameof(SensitivePersonalData));
 
-    /// <summary>Credentials, keys, tokens, connection strings.</summary>
-    public static DataClassification Secret => new(TaxonomyName, nameof(Secret));
+    /// <summary>Passwords and keys supplied by users for third-party services.</summary>
+    public static DataClassification UserCredentials => new(TaxonomyName, nameof(UserCredentials));
+
+    /// <summary>Secrets used to connect or authenticate infrastructure.</summary>
+    public static DataClassification InfrastructureSecret => new(TaxonomyName, nameof(InfrastructureSecret));
 
     /// <summary>Re-identifiable only with additional data held separately.</summary>
     public static DataClassification Pseudonymous => new(TaxonomyName, nameof(Pseudonymous));
@@ -213,7 +215,8 @@ Developer-facing attributes:
 ```csharp
 public sealed class PersonalDataAttribute : DataClassificationAttribute { … }
 public sealed class SensitivePersonalDataAttribute : DataClassificationAttribute { … }
-public sealed class SecretAttribute : DataClassificationAttribute { … }
+public sealed class UserCredentialsAttribute : DataClassificationAttribute { … }
+public sealed class InfrastructureSecretAttribute : DataClassificationAttribute { … }
 public sealed class PseudonymousAttribute : DataClassificationAttribute { … }
 
 /// <summary>Explicit, reviewed statement that a PII-looking member is not personal data.</summary>
@@ -288,7 +291,10 @@ with:
   `ArkRedaction.Erase` ⇒ `***`);
 - `IFormattable.ToString(format, provider)` where `"R"` is redacted (default) and
   the **only** way to obtain cleartext is the explicit, greppable
-  `Reveal(CompliancePurpose purpose)` method;
+  `Reveal(CompliancePurpose purpose)` method, where the purpose carries a required
+  `CompliancePurposeCategory` classifying the processing GDPR-style
+  (`TechnicalFunctional`, `TechnicalTelemetry`, `Marketing`, …) and is recorded in
+  the compliance inventory;
 - equality/hash over the normalised value;
 - the full serialisation surface Ark actually uses — because serialisation is
   expected, and a type people cannot serialise is a type people will not adopt.
@@ -384,8 +390,8 @@ c.MapArkComplianceTypes();
 Two deliberate properties: it is a **`MapType` mapping, not an `ISchemaFilter`**,
 so nothing reflects over the type at startup and the AoT/trim guarantee survives;
 and the schema carries `x-ark-classification`, which makes the published OpenAPI
-document itself an egress record — the same fact that `ARKPII012` and
-`ArkComplianceSurface.txt` track, now visible to API consumers and gateway
+document an inventory view of the same classifications that
+`ArkComplianceSurface.txt` tracks, now visible to API consumers and gateway
 policy. `ArkStartupWebApiCommon` calls the generated extension by default, so a
 classified type is documented correctly without the developer wiring anything.
 Examples come from the RFC 2606 reserved-domain generator used by `ARKPII006`,
@@ -403,7 +409,7 @@ quietly become a new cleartext egress.
 One trap the generator has to close: `DebuggerDisplay`, `TypeConverter`, and any
 `IParsable`/`ISpanFormattable` implementation are all cleartext-leaking surfaces
 if generated naively. Ark's generator emits redacted forms for all of them, with
-cleartext reachable only via `Reveal(CompliancePurpose)` and the serialisation
+cleartext reachable only via `Reveal(CompliancePurpose)` — with the category carried by the purpose — and the serialisation
 converters above.
 
 Ark ships ready-made ones so most projects never write their own:
@@ -489,7 +495,7 @@ Serialising personal data is normal and stays legal. What changes is that the
 *shape* is declared, so the inventory and the downstream generators know about it.
 
 ```csharp
-// OK, and recorded in ArkComplianceSurface.txt as an egress of PersonalData.
+// OK, and recorded in ArkComplianceSurface.txt as classified PersonalData.
 [HttpEndpoint(HttpVerb.Get, "/customers/{id}")]
 public sealed record GetCustomer : IQuery<CustomerDto> { … }
 
@@ -502,15 +508,9 @@ public sealed record CustomerDto
 }
 ```
 
-```
-warning ARKPII012: Contract 'CustomerDto' exposes personal data over HTTP but declares no
-                   handling policy. Apply [PersonalDataEgress(Purpose = …)] to record the
-                   lawful purpose in the compliance inventory.
-```
-
 Value-object converters make this transparent: `EmailAddress` serialises as the
-cleartext string on the wire (a JSON converter is an explicit egress and is
-therefore exempt from `ARKPII005`), while `ToString()` everywhere else stays redacted.
+cleartext string on the wire through an explicit converter, while `ToString()`
+everywhere else stays redacted.
 
 ### 6.6 Persistence policy
 
@@ -550,7 +550,7 @@ public sealed record CustomerEntity
   derives it from the property name. Schema/table may be overridden per member
   for split-table mappings.
 - `ARKPII007` fires only inside a `[SqlDataPolicy]` type. Types with no SQL
-  mapping at all (DTOs, messages) are governed by `ARKPII012` instead.
+  mapping at all (DTOs, messages) remain covered by the inventory and sink analyzers.
 
 Build output — a `.sql` **template**, not a finished script
 (`obj/…/generated/…/ArkCompliance.Sql/CustomerEntity.compliance.sql`), consumed
@@ -628,10 +628,11 @@ private void _logSupportContext(Customer c) { … }
 
 ### 6.9 Runtime redaction (second net)
 
-`Ark.Tools.Compliance.NLog` adds one wrapper target and one value formatter to the
-existing `NLogConfigurer` chain. NLog has no log-event interceptor, so the wrapper
-target is the correct place: it sees the `LogEventInfo` once, before fan-out to
-console/file/database/Slack/mail.
+`Ark.Tools.Compliance.NLog` adds a configured-layout wrapper to the existing
+`NLogConfigurer` chain. NLog has no log-event interceptor, so `Ark.Tools.NLog`
+composes the wrapper only into its own affected layouts. The wrapper scans rendered
+output as a last resort without caching or cloning the `LogEventInfo`; unrelated
+layouts such as a database stack trace remain untouched.
 
 **It is on by default.** `NLogConfigurer.WithArkDefaultTargetsAndRules(...)` —
 and therefore `WithDefaultTargetsAndRulesFromConfiguration` and
@@ -656,29 +657,27 @@ NLogConfigurer.For(appName)
     .WithArkDefaultTargetsAndRules(config)
     .WithComplianceRedaction(o =>
     {
-        o.Default = ArkRedaction.Erase;                        // fail closed (default)
-        o.For(ArkDataClassifications.PersonalData, ArkRedaction.Hmac);
-        o.For(ArkDataClassifications.Secret, ArkRedaction.Erase);
-        o.PatternScan = PatternScanMode.MessageAndProperties;  // last-resort text scan, off by default
+        o.PiiScan = PiiScanMode.MessageAndProperties;           // last-resort text scan, off by default
     })
     .Apply();
 ```
 
-Defaults applied without any call: `Default = Erase`, `PersonalData = Hmac`,
-`SensitivePersonalData = Erase`, `Secret = Erase`, `Pseudonymous = None`,
-`PatternScan = Off` (decision PII‑06 — the scan is the only part with a
-measurable cost, and enabling it silently would hide analyzer gaps).
+Defaults applied without any call: generated types use the redaction mode declared
+on their type, and `PiiScan = Off` (decision PII‑06 — the scan is the only part with
+a measurable cost, and enabling it silently would hide analyzer gaps).
 
 Three mechanisms, all AoT-safe:
 
-1. **Typed transformation** — for every generated sensitive value object the
-   generator also emits a registration
-   (`SetupSerialization(s => s.RegisterObjectTransformation<EmailAddress>(…))`),
-   so structured properties are redacted even when they arrive as `object`.
-2. **Value formatter** — an `IValueFormatter` decorator that intercepts message
-   template parameter rendering for classified types not covered above.
-3. **Pattern scan** — a `RedactingTargetWrapper : WrapperTargetBase` running a
-   single pass over the rendered message with `[GeneratedRegex]`-compiled
+1. **Generated formatting** — every generated sensitive value object has safe
+   `ToString`, `IFormattable`, `ISpanFormattable`, debugger, and type-conversion
+   behavior. NLog message templates and JSON layouts use those normal formatting
+   surfaces. Transport converters are separate and may call `Reveal` only for an
+   explicit purpose.
+2. **Native serialization** — NLog owns traversal of nested event properties and
+   collections. Ark does not clone or recursively rewrite arbitrary object graphs.
+3. **PII scan** — a dedicated `PiiScanner` used by the `ComplianceLayout` wrapper
+   runs a single pass over
+   rendered Ark target layouts with `[GeneratedRegex]`-compiled
    patterns pre-filtered by `SearchValues<char>` prefilters (email `@`, IBAN
    country prefixes, digit runs). Off by default; measured budget: ≤ 2 µs per
    event for a 200-char message. Regexes are source-generated with a timeout,
@@ -686,12 +685,15 @@ Three mechanisms, all AoT-safe:
 
 `Ark.Tools.OTel` gains `ArkComplianceRedactionProcessor : BaseProcessor<Activity>`
 following the existing `ArkPreFilterProcessor`/`ArkTelemetryEnrichmentProcessor`
-pattern, applying the same `Redactor` to tag values, likewise registered by the
-default OTel setup rather than by an opt-in call.
+pattern. Generated sensitive values retain their safe type until exporter
+serialization; the processor only PII-scans untyped string tags and display/status
+text when enabled. It is registered by the default OTel setup rather than by an
+opt-in call.
 
-> The runtime layer is deliberately dumb. If it ever fires in production, that is
-> a bug report against the analyzers, and the mask string (`***ARKPII***`) is
-> designed to be alertable in the log platform.
+> The runtime layer is deliberately narrow. Generated types own their redaction;
+the dedicated PII scanner is a fallback for untyped text. If it fires in production,
+that is a bug report against the analyzers, and the mask string (`***ARKPII***`) is
+designed to be alertable in the log platform.
 
 ### 6.10 Compliance inventory
 
@@ -739,7 +741,6 @@ a packaged `Ark.Tools.Compliance.globalconfig`.
 | ARKPII009 | Warning | `[NotPersonalData]` justification is missing or boilerplate |
 | ARKPII010 | **Error** | Classification attribute on a member the pipeline cannot redact (open `object`, `dynamic`, delegate, or a `[ValueObject]` type with cleartext-leaking `Conversions`/debugger attributes — [§14.5](#145-interop-not-exclusion)) |
 | ARKPII011 | **Error** | Classified value passed to a banned formatting sink (`Console.*`, `Debug.*`, `Trace.*`, `StringBuilder.Append`) |
-| ARKPII012 | Warning | Contract exposes personal data with no declared egress purpose |
 | ARKPII013 | Warning | Project uses `Microsoft.Extensions.Telemetry` logging without `AddArkRedaction()` (see [§13.3](#133-rejected-migrating-ark-logging-to-loggermessage--loggen-wholesale)) |
 | ARKPII020 | **Error** | `ArkComplianceSurface.txt` drift |
 | ARKPII021 | **Error** | `ArkComplianceSurface.txt` missing or malformed |
@@ -797,9 +798,9 @@ existing mediator-framework generator discipline.
 
 | Package | Contents | TFMs |
 | --- | --- | --- |
-| `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the analyzer + generator + code-fix DLLs as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
-| `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | `IsPackable=false`, packed into the above | `netstandard2.0` |
-| `Ark.Tools.Compliance.NLog` | `RedactingTargetWrapper`, `IValueFormatter`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
+| `Ark.Tools.Compliance` | attributes, taxonomy, `Redactor`s, value objects, `Reveal`/`CompliancePurpose`, `ISensitiveValue<T>` + the in-box `System.Text.Json`/`TypeConverter` adapters; ships the generator DLL as `analyzers/dotnet/cs` (same pattern as `Ark.Tools.Core`); **no serialization dependencies** | `net8.0;net10.0` |
+| `Ark.Tools.Compliance.Analyzers` (+ `.CodeFixes`) | analyzer and code-fix DLLs as `analyzers/dotnet/cs` plus the canonical `ComplianceLexicon.Ark.txt`/`ComplianceSinks.Ark.txt` `AdditionalFiles`; added implicitly by `Ark.Tools.Sdk` | `netstandard2.0` |
+| `Ark.Tools.Compliance.NLog` | `ComplianceLayout`/`PiiScanner`, redaction wired **by default** into `WithArkDefaultTargetsAndRules`; `WithComplianceRedaction`/`WithoutComplianceRedaction` for override/opt-out | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Dapper` | `SensitiveValueTypeHandler<T>` and `SensitiveValueDapper` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Sql` | Dapper handlers for encrypted columns, opt-in DDL template generation (`[SqlDataPolicy]`) | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.NewtonsoftJson` | `SensitiveValueJsonConverter<T>` and `SensitiveValueNewtonsoftJson` registrations | `net8.0;net10.0` |
@@ -807,7 +808,7 @@ existing mediator-framework generator discipline.
 | `Ark.Tools.Compliance.Reqnroll` | value retriever and comparer for feature tables | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.OpenApi` | `Microsoft.OpenApi` schema descriptors, the `x-ark-classification` extension and `AddArkComplianceSchemas()`; consumed by MediatorFramework Minimal API hosts and, through `Ark.Tools.AspNetCore.Swashbuckle`, by `ArkStartupWebApiCommon` | `net10.0` |
 | `Ark.Tools.OTel` (existing) | `ArkComplianceRedactionProcessor`, registered by the default setup | unchanged |
-| `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ComplianceSinks`/`ComplianceLexicon` `AdditionalFiles`, `ArkComplianceSurface.txt` gate | unchanged |
+| `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` to `Ark.Tools.Compliance.Analyzers` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ArkComplianceSurface.txt` gate | unchanged |
 
 Opt-out follows the SDK convention already established
 (`EnableArkToolsCompliance=false`, per-rule severity overrides), and the analyzer
@@ -830,16 +831,16 @@ softer default.
 
 Two modes only:
 
-1. `ArkComplianceMode=Enforce` (**default**) — the severities in §7.
-2. `ArkComplianceMode=Off` (`EnableArkToolsCompliance=false`) — for a solution
-   that cannot absorb the change yet. Opting out is a single, greppable,
-   review-visible MSBuild property; per-rule severity overrides in
-   `.editorconfig` remain available for finer control.
+1. `ArkComplianceMode=Off` (**default while the analyzer is beta**).
+2. `ArkComplianceMode=Enforce` (`EnableArkToolsCompliance=true`) — opt in to the
+   severities in §7. Opting in is a single, greppable, review-visible MSBuild
+   property; per-rule severity overrides in `.editorconfig` remain available
+   for finer control.
 
-Existing solutions therefore adopt this the same way they adopt any other
-breaking SDK change: bump the SDK on a branch, fix or suppress what the build
-reports, commit `ArkComplianceSurface.txt` as the baseline. `ARKPII020` (drift)
-then guarantees no *new* undeclared personal data can be added afterwards.
+Solutions can evaluate the analyzer on a branch before the beta ends by opting
+in, fixing or suppressing what the build reports, and committing
+`ArkComplianceSurface.txt` as the baseline. `ARKPII020` (drift) then guarantees
+no *new* undeclared personal data can be added afterwards.
 
 ## 11. Testing
 
@@ -869,7 +870,7 @@ then guarantees no *new* undeclared personal data can be added afterwards.
 - `ArkComplianceSurface.txt` reviewed on every PR that changes it.
 - Runtime redaction never fires in the reference project's integration tests
   (i.e. the compile-time layer is doing the work).
-- No measurable logging throughput regression with `PatternScan` disabled;
+- No measurable logging throughput regression with `PiiScan` disabled;
   < 5 % with it enabled.
 
 ## 13. Rejected approaches
@@ -930,9 +931,9 @@ requires two things from this design:
    `[PersonalData]`-marked member in an Ark type with no bridge, no duplicate
    attribute, and no adapter. This is the concrete reason the dependency is
    taken rather than reimplemented.
-2. **LOGGEN guards enabled by default in the SDK.** `Ark.Tools.Build` ships them
-   escalated in the packaged global config, so a `[LoggerMessage]` leak is a
-   build break, not a warning someone scrolls past:
+2. **LOGGEN guards available when compliance is enabled in the SDK.**
+   `Ark.Tools.Build` ships them escalated in the packaged global config, so a
+   `[LoggerMessage]` leak is a build break, not a warning someone scrolls past:
 
    ```ini
    # Ark.Tools.Compliance.globalconfig
@@ -1171,7 +1172,7 @@ deliberately a **narrow** type:
 | --- | --- |
 | Any underlying primitive, `INumber<T>` hoisting, comparison generation, `[Instance]`, EF Core/LinqToDb/Bson/Orleans/ServiceStack/Xml/OpenAPI conversions, `StaticAbstracts`, `ParsableForPrimitives`, LinqPad dump, Swashbuckle filters | **Not implemented.** Out of scope. |
 | `string` (and a small set of validated primitives) with `_validate`/`_normalize`, `From`/`TryFrom`, equality, STJ/Newtonsoft/Dapper/**protobuf-net**/**MessagePack**/**OpenAPI**/Reqnroll converters | Implemented, closed-generic and AoT-clean; OpenAPI as a `MapType` mapping, never a reflection-based `ISchemaFilter`. |
-| — | **New:** classification attribute flow, redacted `ToString`/`TryFormat`/`IConvertible`/debugger surfaces, `Reveal(CompliancePurpose)`, NLog `RegisterObjectTransformation` registration, `ArkComplianceSurface.txt` entry, `ARKPII*` integration. |
+| — | **New:** classification attribute flow, redacted `ToString`/`TryFormat`/type-conversion/debugger surfaces, `Reveal(CompliancePurpose)`, native NLog formatting with scoped PII scanning, `ArkComplianceSurface.txt` entry, `ARKPII*` integration. |
 
 The estimate is a single-primitive-shape generator plus converter templates —
 materially smaller than Vogen, and every line of it exists because it is the
@@ -1268,7 +1269,7 @@ open decisions blocking implementation.
 - `DE0001: SecureString shouldn't be used` — <https://github.com/dotnet/platform-compat/blob/master/docs/DE0001.md>
 
 **Ecosystem**
-- NLog serialization setup (`RegisterObjectTransformation`, `RegisterValueFormatter`) — <https://github.com/NLog/NLog/blob/dev/src/NLog/SetupSerializationBuilderExtensions.cs>
+- NLog serialization setup — <https://github.com/NLog/NLog/blob/dev/src/NLog/SetupSerializationBuilderExtensions.cs>
 - NLog `WrapperTargetBase` — <https://github.com/NLog/NLog/blob/dev/src/NLog/Targets/Wrappers/WrapperTargetBase.cs>
 - CodeQL C# sensitive-data heuristics — <https://github.com/github/codeql/blob/main/csharp/ql/lib/semmle/code/csharp/security/SensitiveActions.qll>
 - CodeQL C# query help — <https://codeql.github.com/codeql-query-help/csharp/>

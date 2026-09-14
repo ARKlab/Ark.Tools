@@ -49,6 +49,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />
+    <ProjectReference Include="..\..\compliance\Ark.Tools.Compliance.NLog\Ark.Tools.Compliance.NLog.csproj" />
     <ProjectReference Include="..\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
 
   </ItemGroup>

@@ -3,15 +3,21 @@
     <Project Path="src/sdk/Ark.Tools.Build/Ark.Tools.Build.csproj" />
     <Project Path="src/sdk/Ark.Tools.Sdk/Ark.Tools.Sdk.csproj" />
   </Folder>
+  <Folder Name="/src/compliance/">
+    <Project Path="src/compliance/Ark.Tools.Compliance.Sql/Ark.Tools.Compliance.Sql.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.MessagePack/Ark.Tools.Compliance.MessagePack.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.NewtonsoftJson/Ark.Tools.Compliance.NewtonsoftJson.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.NLog/Ark.Tools.Compliance.NLog.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Protobuf/Ark.Tools.Compliance.Protobuf.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Reqnroll/Ark.Tools.Compliance.Reqnroll.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Analyzers.CodeFixes/Ark.Tools.Compliance.Analyzers.CodeFixes.csproj" />
+  </Folder>
   <Folder Name="/src/common/">
     <Project Path="src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Dapper/Ark.Tools.Compliance.Dapper.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.MessagePack/Ark.Tools.Compliance.MessagePack.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.NewtonsoftJson/Ark.Tools.Compliance.NewtonsoftJson.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Protobuf/Ark.Tools.Compliance.Protobuf.csproj" />
-    <Project Path="src/common/Ark.Tools.Compliance.Reqnroll/Ark.Tools.Compliance.Reqnroll.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
@@ -124,6 +130,7 @@
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Mcp.Generators/Ark.Tools.MediatorFramework.Mcp.Generators.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.OutboxProcessor/Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
@@ -168,6 +175,9 @@
     <Project Path="benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Compliance.NLog.Tests/Ark.Tools.Compliance.NLog.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Compliance.Sql.Tests/Ark.Tools.Compliance.Sql.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Compliance.Tests/Ark.Tools.Compliance.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Sdk.Tests/Ark.Tools.Sdk.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Hosting.Contracts/Ark.Tools.MediatorFramework.Hosting.Contracts.csproj" />

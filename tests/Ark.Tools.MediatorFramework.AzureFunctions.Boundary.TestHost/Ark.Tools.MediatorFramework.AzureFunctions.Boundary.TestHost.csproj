@@ -6,6 +6,8 @@
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <FunctionsInDependencies>true</FunctionsInDependencies>
     <OutputType>Exe</OutputType>
+    <!-- Non-production host: redaction registration (ARKPII013) not required -->
+    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

@@ -163,7 +163,7 @@ Feature: Ping
     When I get the last audit for 'Ping'
     Then the audit record has
       | Key    | Value                   |
-      | UserId | testUser1@ark-energy.eu |
+      | UserId | jane.doe@example.com |
     When I get the list of changes for this audit
     Then the list of changes contains 1 records
     Then the current Ping audit is
@@ -178,7 +178,7 @@ Feature: Ping
     When I get the last audit for 'Ping'
     Then the audit record has
       | Key    | Value                   |
-      | UserId | testUser1@ark-energy.eu |
+      | UserId | jane.doe@example.com |
     When I get the list of changes for this audit
     Then the list of changes contains 1 records
     Then the current Ping audit is
@@ -206,7 +206,7 @@ Feature: Ping
     When I get the last audit for 'Ping'
     Then the audit record has
       | Key    | Value                   |
-      | UserId | testUser1@ark-energy.eu |
+      | UserId | jane.doe@example.com |
     When I get the list of changes for this audit
     Then the list of changes contains 1 records
     Then the current Ping audit is

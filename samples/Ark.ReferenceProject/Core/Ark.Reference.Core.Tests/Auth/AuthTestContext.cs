@@ -1,5 +1,6 @@
 using Ark.Reference.Common.Auth;
 using Ark.Reference.Core.Common.Auth;
+using Ark.Tools.Compliance;
 
 using Flurl.Http;
 
@@ -80,7 +81,7 @@ public class AuthTestContext
     [BeforeScenario]
     public void SetAuthUser(ScenarioContext sctx, FeatureContext fctx)
     {
-        SetUser("testUser1@ark-energy.eu");
+        SetUser(ComplianceFakes.Email());
     }
 
     [Given(@"User scopes as")]

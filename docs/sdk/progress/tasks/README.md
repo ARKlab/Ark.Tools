@@ -69,13 +69,13 @@ SDK-IMP-03's asset conventions.
 | [PII-IMP-01](compliance/PII-IMP-01-compliance-foundation.md) | Compliance foundation: attributes, taxonomy, redactors | Foundation | Complete |
 | [PII-IMP-02](compliance/PII-IMP-02-sensitive-value-object-generator.md) | Sensitive value-object generator | Generator | Complete |
 | [PII-IMP-03](compliance/PII-IMP-03-serialization-targets.md) | Serialization targets incl. OpenAPI/Swashbuckle | Generator | Complete |
-| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Pending |
-| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Pending |
-| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Pending |
-| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Pending |
-| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Pending |
-| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Pending |
-| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | Pending |
+| [PII-IMP-04](compliance/PII-IMP-04-declaration-tier-analyzers.md) | Declaration-tier analyzers and code fixes | Analyzer | Complete |
+| [PII-IMP-05](compliance/PII-IMP-05-sink-tier-analyzers.md) | Sink-tier analyzers (logs, exceptions) | Analyzer | Complete |
+| [PII-IMP-06](compliance/PII-IMP-06-compliance-surface-gate.md) | Compliance surface inventory and gate | Tooling | Complete |
+| [PII-IMP-07](compliance/PII-IMP-07-runtime-redaction.md) | Runtime redaction: NLog pipeline and OTel processor | Runtime | Complete |
+| [PII-IMP-08](compliance/PII-IMP-08-sql-policy-generation.md) | SQL policy attributes and script generation | Persistence | Complete |
+| [PII-IMP-09](compliance/PII-IMP-09-test-data-rules.md) | Test data rules and reserved-value fakes | Testing | Complete |
+| [PII-IMP-10](compliance/PII-IMP-10-sdk-wiring-and-loggen-guards.md) | SDK wiring, LOGGEN guards, documentation | SDK policy | In progress |
 | [PII-IMP-11](compliance/PII-IMP-11-reference-project-adoption.md) | ReferenceProject adoption and end-to-end proof | Migration | Pending |
 
 PII-IMP-01 unblocks everything. PII-IMP-02, PII-IMP-04, and PII-IMP-07 can then
@@ -87,3 +87,16 @@ PII-IMP-11 is last because it consumes all of them.
 Upstream Vogen contributions are **not** on this board: Ark.Tools does not use
 Vogen, so they are recorded as a draft in
 [`../future-improvements.md`](../future-improvements.md) instead.
+
+### Full-suite validation (2026-09-07)
+
+PII-IMP-04 through PII-IMP-09 meet their documented acceptance criteria. The
+Debug solution build succeeded with zero warnings and errors, and the full
+solution test run passed 1,257 tests with no failures, skips, or unexpected
+test-count violations. The compliance package was packed and its analyzer,
+code-fix, generator, and build-transitive assets inspected.
+
+The implementation remains intentionally separate from the unresolved
+PII-IMP-10 LOGGEN proof and PII-IMP-11 reference-project adoption. Runtime
+release-throughput acceptance and the reference-database SQL application proof
+remain outstanding in their task files.

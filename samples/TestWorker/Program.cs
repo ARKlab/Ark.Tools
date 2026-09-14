@@ -1,4 +1,5 @@
 ﻿using Ark.Tools.NLog;
+using Ark.Tools.Compliance;
 using Ark.Tools.ResourceWatcher.ApplicationInsights;
 using Ark.Tools.ResourceWatcher.WorkerHost.Hosting;
 
@@ -17,6 +18,7 @@ sealed class Program
         var hostBuilder = Host.CreateDefaultBuilder(args)
             .AddApplicationInsightsForWorkerHost()
             .ConfigureNLog(Test_Constants.AppName)
+            .ConfigureServices(static services => services.AddArkRedaction())
             .AddWorkerHost(
                 static s =>
                 {

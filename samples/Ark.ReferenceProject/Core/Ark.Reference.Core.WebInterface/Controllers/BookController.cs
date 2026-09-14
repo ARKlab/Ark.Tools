@@ -4,6 +4,7 @@ using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
 using Ark.Reference.Core.WebInterface.Utils;
 using Ark.Tools.Core;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using Microsoft.AspNetCore.Mvc;
@@ -126,7 +127,7 @@ public class BookController : ApiController
         {
             Id = id,
             Title = title,
-            Author = author,
+            Author = author.Select(static value => PersonName.From(value)).ToArray(),
             Genre = genre,
 
             Sort = sort,

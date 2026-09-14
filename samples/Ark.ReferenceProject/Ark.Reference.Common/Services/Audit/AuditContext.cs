@@ -1,4 +1,5 @@
 using Dapper;
+using Ark.Tools.Compliance;
 
 using NLog;
 
@@ -103,7 +104,7 @@ public class AuditContext<TAuditKind>
     }
 
 
-    public async ValueTask<AuditDto<TAuditKind>> EnsureAudit(TAuditKind kind, string? userId, string? infoMessage, CancellationToken ctk = default)
+    public async ValueTask<AuditDto<TAuditKind>> EnsureAudit(TAuditKind kind, [Pseudonymous] string? userId, string? infoMessage, CancellationToken ctk = default)
     {
         if (_currentAudit == null)
         {

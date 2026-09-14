@@ -22,7 +22,8 @@ Microsoft one rather than a parallel Ark taxonomy.
   `packages.lock.json` in the same commit; CI restores with
   `RestoreLockedMode=true`.
 - **Attributes**: `PersonalDataAttribute`, `SensitivePersonalDataAttribute`,
-  `SecretAttribute`, `PseudonymousAttribute`, each deriving from
+  `UserCredentialsAttribute`, `InfrastructureSecretAttribute`, and
+  `PseudonymousAttribute`, each deriving from
   `DataClassificationAttribute` so `LOGGEN035` and Microsoft redaction recognise
   Ark-classified members with no bridge. Each carries `Notes` (purpose of
   processing) and is valid on property, field, parameter, and type.

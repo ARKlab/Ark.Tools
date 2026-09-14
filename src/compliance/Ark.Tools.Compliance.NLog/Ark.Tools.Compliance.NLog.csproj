@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Default-on classification-aware NLog redaction for Ark applications.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NLog" />
+    <ProjectReference Include="../Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+  </ItemGroup>
+</Project>

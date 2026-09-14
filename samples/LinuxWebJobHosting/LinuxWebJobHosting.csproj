@@ -10,6 +10,7 @@
 		<ProjectReference Include="../../src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
 		<ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
 		<ProjectReference Include="../../src/common/Ark.Tools.NLog.Configuration/Ark.Tools.NLog.Configuration.csproj" />
+		<ProjectReference Include="../../src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
 		<ProjectReference Include="..\TestWorker\TestWorker.csproj" />
 	</ItemGroup>
 

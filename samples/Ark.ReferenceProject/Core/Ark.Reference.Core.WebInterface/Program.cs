@@ -25,6 +25,8 @@ public static class Program
         return builder
             .ConfigureNLog("Ark.Reference.Core.WebInterface"
             // , configure: c => c.WithDatabaseRule("*", NLog.LogLevel.Info) // always log INFO to Database Target if present
+            , configure: static c => c.WithComplianceRedaction(static options =>
+                options.PiiScan = Ark.Tools.Compliance.PiiScanMode.MessageAndProperties)
             )
             .ConfigureWebHostDefaults(webBuilder =>
             {

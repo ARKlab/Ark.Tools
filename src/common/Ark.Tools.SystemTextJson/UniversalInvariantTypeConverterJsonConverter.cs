@@ -41,7 +41,10 @@ public sealed class UniversalInvariantTypeConverterJsonConverter : JsonConverter
     }
 
     public override bool CanConvert(Type typeToConvert) =>
-        typeToConvert.GetCustomAttribute<TypeConverterAttribute>() != null;
+        typeToConvert.GetCustomAttribute<TypeConverterAttribute>() != null
+        // A type-level JsonConverter is an explicit JSON contract and must win over the
+        // TypeConverter bridge (options-level converters otherwise take precedence in STJ).
+        && typeToConvert.GetCustomAttribute<JsonConverterAttribute>() == null;
 
     [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via reflection in CreateConverter method")]
     private sealed class TypeConverterJsonConverter<T> : JsonConverter<T>

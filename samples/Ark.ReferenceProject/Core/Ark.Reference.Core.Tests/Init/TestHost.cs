@@ -45,6 +45,7 @@ public sealed class TestHost : IDisposable
     public static IHost Server { get => _server ?? throw new InvalidOperationException("_server is null"); set => _server = value; }
     public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
     internal static readonly OtelTestCollector _telemetry = new();
+    internal static ComplianceLogCollector _logs = null!;
 
     private static ArkFlurlClientFactory? _factory;
     private static ArkTelemetryFileCollector? _fileTelemetry;
@@ -59,6 +60,7 @@ public sealed class TestHost : IDisposable
     {
         _scenarioContext = ctx;
         _telemetry._reset();
+        _logs._reset();
     }
 
     [AfterScenario(Order = int.MinValue)]
@@ -201,6 +203,7 @@ public sealed class TestHost : IDisposable
             });
 
         Server = builder.Start();
+        _logs = new ComplianceLogCollector();
         Factory = new ArkFlurlClientFactory(new TestServerfactory(Server.GetTestServer()));
 
         var configuration = Server.Services.GetRequiredService<IConfiguration>();
@@ -241,6 +244,7 @@ public sealed class TestHost : IDisposable
     public static void AfterTests()
     {
         _server?.Dispose();
+        _logs.Dispose();
         _fileTelemetry?.Dispose();
         _telemetry.Dispose();
     }

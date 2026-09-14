@@ -1,5 +1,6 @@
 using Ark.Tools.AspNetCore.Startup;
 using Ark.Tools.AspNetCore.Swashbuckle;
+using Ark.Tools.Compliance;
 
 using Asp.Versioning;
 
@@ -39,6 +40,8 @@ public class PrivateStartup : ArkStartupNestedWebApi<PrivateArea>
     public override void ConfigureServices(IServiceCollection services)
     {
         base.ConfigureServices(services);
+
+        services.AddArkRedaction();
 
         //Removed AUTH 
 

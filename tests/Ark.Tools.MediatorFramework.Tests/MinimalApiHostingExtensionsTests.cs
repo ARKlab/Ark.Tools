@@ -314,7 +314,7 @@ public sealed class MinimalApiHostingExtensionsTests
 
         var apiKey = _resolveSchema(document.RootElement, properties.GetProperty("apiKey"));
         apiKey.GetProperty(SensitiveValueSchemaDescriptor.ClassificationExtension).GetString()
-            .Should().Be("Ark:Secret");
+            .Should().Be("Ark:UserCredentials");
 
         var nullable = properties.GetProperty("nullableEmail");
         if (nullable.TryGetProperty("oneOf", out var oneOf))

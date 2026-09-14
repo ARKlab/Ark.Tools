@@ -1,0 +1,12 @@
+<Project>
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)ComplianceLexicon.Ark.txt" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)ComplianceSinks.Ark.txt" />
+    <CompilerVisibleProperty Include="IsTestProject" />
+  </ItemGroup>
+  <Target Name="_ArkComplianceFeatureFiles" BeforeTargets="CoreCompile" Condition="'$(IsTestProject)' == 'true'">
+    <ItemGroup>
+      <AdditionalFiles Include="@(None->WithMetadataValue('Extension', '.feature'))" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Core.Analyzers/Ark.Tools.Core.Analyzers.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

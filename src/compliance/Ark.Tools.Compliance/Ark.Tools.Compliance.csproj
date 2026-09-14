@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Classification and redaction primitives for compliance-aware applications.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;Redaction</PackageTags>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Ark.Tools.Compliance.Shared/PiiPatternScanner.cs" Link="Shared/PiiPatternScanner.cs" />
+    <ProjectReference Include="..\Ark.Tools.Compliance.Generators\Ark.Tools.Compliance.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Compliance.Redaction" />
+    <PackageReference Include="Microsoft.Extensions.Telemetry" />
+  </ItemGroup>
+
+  <!-- Evaluation-time Exists() would silently drop the generator on a clean pack; add the dll at
+       execution time right before package file collection, after inner builds produced it.
+       No DependsOnTargets: _GetPackageFiles runs in the cross-targeting outer build where
+       ResolveProjectReferences does not exist (MSB4057). -->
+  <Target Name="_ArkPackComplianceGenerators"
+          BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.Compliance.Generators\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Generators.dll"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs"
+            Visible="false" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <None Include="../Ark.Tools.Compliance.Generators/buildTransitive/Ark.Tools.Compliance.Surface.targets"
+          Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.targets" Visible="false" />
+  </ItemGroup>
+
+</Project>

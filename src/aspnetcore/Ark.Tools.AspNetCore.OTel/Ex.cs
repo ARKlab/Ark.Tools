@@ -101,6 +101,7 @@ public static class Ex
                 .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
+                .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction)
                 .AddProcessor(new WebApi4xxAsSuccessProcessor()))
             .WithMetrics(static metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
@@ -138,9 +139,6 @@ public static class Ex
             ?? configuration?["APPLICATIONINSIGHTS_CONNECTION_STRING"]
             ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
 
-        if (!string.IsNullOrWhiteSpace(connectionString))
-            builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
-
         services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
@@ -150,6 +148,9 @@ public static class Ex
             configureArkOtel,
             configureAdaptiveSampler,
             configuration);
+
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
 
         return services;
     }

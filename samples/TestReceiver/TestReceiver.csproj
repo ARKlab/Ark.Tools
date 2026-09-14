@@ -6,6 +6,9 @@
     <Version>1.2.3</Version>
     <OutputType>Exe</OutputType>
 	  <IsPackable>false</IsPackable>
+      <!-- SimpleInjector-composed host without an IServiceCollection: Microsoft telemetry
+         is only a transitive reference and redaction cannot be registered here. -->
+    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

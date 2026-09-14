@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Explicit SQL storage policies and opt-in SQLCMD compliance templates.</Description>
+    <PackageTags>Ark;Compliance;Privacy;PII;Sql</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+    <ProjectReference Include="../Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <None Include="buildTransitive/Ark.Tools.Compliance.Sql.targets" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+</Project>

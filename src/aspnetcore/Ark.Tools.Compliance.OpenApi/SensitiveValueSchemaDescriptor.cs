@@ -1,4 +1,4 @@
-// Copyright (C) 2026 Ark Energy S.r.l. All rights reserved.
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Text.Json.Nodes;
@@ -56,7 +56,7 @@ public sealed record SensitiveValueSchemaDescriptor(
         For<PersonName>(ArkDataClassifications.PersonalData, ComplianceFakes.PersonName()),
         For<PostalAddressLine>(ArkDataClassifications.PersonalData, ComplianceFakes.PostalAddressLine()),
         For<NationalIdentifier>(ArkDataClassifications.SensitivePersonalData, ComplianceFakes.NationalIdentifier()),
-        For<ApiKey>(ArkDataClassifications.Secret, ComplianceFakes.ApiKey(), "password"),
+        For<ApiKey>(ArkDataClassifications.UserCredentials, ComplianceFakes.ApiKey(), "password"),
     ];
 
     /// <summary>
