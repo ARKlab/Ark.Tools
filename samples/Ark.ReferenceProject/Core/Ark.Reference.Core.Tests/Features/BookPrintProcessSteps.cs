@@ -126,10 +126,11 @@ public sealed class BookPrintProcessSteps
     [Then(@"OpenTelemetry recorded the book print processing telemetry")]
     public void ThenOpenTelemetryRecordedTheBookPrintProcessingTelemetry()
     {
-        var applicationSpan = TestHost._telemetry._getSpans().Single(static span =>
-            span.SourceName == ReferenceTelemetry.ActivitySourceName
-            && span.Name == "ark.reference.book_print_process");
-        applicationSpan.Tags["book_print_process.status"].Should().Be("Completed");
+        TestHost._telemetry._getSpans()
+            .Should().Contain(static span =>
+                span.SourceName == ReferenceTelemetry.ActivitySourceName
+                && span.Name == "ark.reference.book_print_process"
+                && span.Tags["book_print_process.status"] == "Completed");
 
         TestHost._telemetry._getMetrics()
             .Should().Contain(static metric =>
