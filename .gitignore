@@ -17,6 +17,7 @@
 mono_crash.*
 
 # Build results
+build/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -446,3 +447,7 @@ $RECYCLE.BIN/
 
 # Local NuGet packages for sample projects
 /packages/
+
+
+# APM dependencies
+apm_modules/

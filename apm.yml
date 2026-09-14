@@ -1,0 +1,50 @@
+name: Ark.Tools
+version: 1.0.0
+description: APM project for Ark.Tools
+author: Andrea Cuneo
+targets:
+  - copilot
+  - opencode
+includes: auto
+scripts: {}
+devDependencies:
+  apm:
+    - microsoft/apm/packages/apm-guide#main
+    - dotnet/skills/plugins/dotnet#main
+    - git: https://github.com/obra/superpowers#main
+  mcp:
+    - name: ado
+      registry: false
+      transport: http
+      url: https://mcp.dev.azure.com/arklabita
+    - name: microsoftdocs
+      registry: false
+      transport: http
+      url: https://learn.microsoft.com/api/mcp
+    - io.github.github/github-mcp-server
+    - name: github
+      registry: false
+      transport: http
+      url: https://api.githubcopilot.com/mcp
+dependencies:
+  apm: []
+marketplace:
+  name: Ark.Tools
+  owner:
+    name: ARKlab
+    url: https://github.com/ARKlab
+
+  versioning:
+    strategy: lockstep
+
+  metadata:
+    homepage: https://github.com/ARKlab/Ark.Tools
+
+  outputs:
+    claude: {}
+
+  packages:
+    - name: ark-csharp
+      description: Ark CSharp development skills and agents
+      source: ./agents-plugins/ark-csharp
+      version: 1.0.0
