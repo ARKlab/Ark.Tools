@@ -90,7 +90,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
                     sql.Append("ADD SENSITIVITY CLASSIFICATION TO ").Append(key)
                         .Append("\n    WITH (LABEL = ").Append(_literal(label))
                         .Append(", INFORMATION_TYPE = ").Append(_literal(information))
-                        .Append(", RANK = ").Append(classification is "Secret" or "SensitivePersonalData" ? "CRITICAL" : "HIGH")
+                        .Append(", RANK = ").Append(classification is "UserCredentials" or "InfrastructureSecret" or "Secret" or "SensitivePersonalData" ? "CRITICAL" : "HIGH")
                         .Append(");\n");
                 }
                 if (storage == 1)

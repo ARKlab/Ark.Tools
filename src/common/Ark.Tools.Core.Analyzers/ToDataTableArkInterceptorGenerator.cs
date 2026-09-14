@@ -256,9 +256,11 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     private static bool _isSensitiveValue(ITypeSymbol type)
     {
         return type.TypeKind == TypeKind.Struct
-            && type.AllInterfaces.Any(static @interface =>
+            && type.AllInterfaces.Any(@interface =>
                 @interface.MetadataName == "ISensitiveValue`1"
-                && @interface.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance");
+                && @interface.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance"
+                && @interface.TypeArguments.Length == 1
+                && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], type));
     }
 
     private static bool _isGloballyAccessible(INamedTypeSymbol type)

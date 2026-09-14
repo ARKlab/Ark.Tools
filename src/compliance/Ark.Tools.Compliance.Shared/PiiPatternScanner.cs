@@ -19,14 +19,14 @@ internal static partial class PiiPatternScanner
     private static readonly SearchValues<char> _candidates = SearchValues.Create("@0123456789");
 
 #if NET10_0_OR_GREATER
-    [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
+    [GeneratedRegex(_pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 25)]
     private static partial Regex _regex { get; }
 #else
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Meziantou.Analyzer",
         "MA0190",
         Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
-    [GeneratedRegex(_pattern, RegexOptions.CultureInvariant, 25)]
+    [GeneratedRegex(_pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 25)]
     private static partial Regex _regex();
 #endif
 

@@ -63,7 +63,7 @@ internal sealed class SinkFlow
             return true;
         }
 
-        return _isSensitiveContract(named) || named.AllInterfaces.Any(_isSensitiveContract);
+        return _isSensitiveContract(named) || named.AllInterfaces.Any(candidate => _isSensitiveContract(candidate, named));
     }
 
     internal static bool _isRedacted(IOperation operation)
@@ -460,7 +460,7 @@ internal sealed class SinkFlow
         }
 
         if (!pseudonymous && symbol is INamedTypeSymbol named
-            && (sensitive || _isSensitiveContract(named) || named.AllInterfaces.Any(_isSensitiveContract)))
+            && (sensitive || _isSensitiveContract(named) || named.AllInterfaces.Any(candidate => _isSensitiveContract(candidate, named))))
         {
             return new Source(symbol, "SensitiveValue");
         }
@@ -468,10 +468,12 @@ internal sealed class SinkFlow
         return null;
     }
 
-    private static bool _isSensitiveContract(INamedTypeSymbol type)
+    private static bool _isSensitiveContract(INamedTypeSymbol type, ITypeSymbol? expectedType = null)
     {
         return type.OriginalDefinition.MetadataName == "ISensitiveValue`1"
-            && type.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance";
+            && type.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance"
+            && (expectedType is null || (type.TypeArguments.Length == 1
+                && SymbolEqualityComparer.Default.Equals(type.TypeArguments[0], expectedType)));
     }
 
     internal sealed class Source
