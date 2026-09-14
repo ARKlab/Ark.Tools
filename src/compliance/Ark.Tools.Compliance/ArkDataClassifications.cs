@@ -26,9 +26,14 @@ public static class ArkDataClassifications
     public static DataClassification SensitivePersonalData => new(TaxonomyName, nameof(SensitivePersonalData));
 
     /// <summary>
-    /// Represents credentials, keys, tokens, and connection strings.
+    /// Represents passwords and keys supplied by users for third-party services.
     /// </summary>
-    public static DataClassification Secret => new(TaxonomyName, nameof(Secret));
+    public static DataClassification UserCredentials => new(TaxonomyName, nameof(UserCredentials));
+
+    /// <summary>
+    /// Represents secrets used to connect or authenticate infrastructure.
+    /// </summary>
+    public static DataClassification InfrastructureSecret => new(TaxonomyName, nameof(InfrastructureSecret));
 
     /// <summary>
     /// Represents data that is re-identifiable only with additional data.

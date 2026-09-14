@@ -108,7 +108,7 @@ These are separate concerns:
 | Analyzer recognition of a sensitive value | Yes | No, if the type is the source of truth |
 | Data inventory and discovery | No | Yes |
 | Personal versus sensitive-personal policy | No | Yes |
-| Secret versus personal-data policy | No | Yes |
+| User credentials versus personal-data policy | No | Yes |
 | SQL column and transport documentation | No | Yes |
 | Retention, residency, or egress rules | No | Yes |
 | HMAC versus erase selection | Yes, through generator/type policy | Optional, but must not be rediscovered dynamically |
@@ -117,7 +117,7 @@ These are separate concerns:
 
 - `[SensitiveValueObject<T>]` remains the generator contract. The generated type is intrinsically sensitive.
 - The generator receives the redaction behavior as an explicit type-level setting, or applies a documented default.
-- `[PersonalData]`, `[SensitivePersonalData]`, `[Secret]`, and `[Pseudonymous]` remain on the generated value-object declaration for inventory and policy tooling, not as usage-site annotations or runtime proof that a value needs redaction.
+- `[PersonalData]`, `[SensitivePersonalData]`, `[UserCredentials]`, and `[Pseudonymous]` remain on the generated value-object declaration for inventory and policy tooling, not as usage-site annotations or runtime proof that a value needs redaction. Infrastructure secrets are redacted but omitted from the compliance inventory.
 - A separate `[SensitiveData]` marker should not be introduced merely to make runtime redaction discoverable.
 - The redaction setting is part of the generated type and its generated rendering methods. Developers do not repeat classification attributes at usage sites; analyzers guide them toward dedicated types such as `SensitiveEmail` or `PrivacyEmail` when policy variants are needed.
 - Ordinary `string` remains ordinary text. The analyzer should require a generated sensitive type or an explicit reviewed exemption where the domain says a string carries regulated data.

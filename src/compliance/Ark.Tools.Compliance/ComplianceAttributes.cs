@@ -36,16 +36,31 @@ public sealed class SensitivePersonalDataAttribute : DataClassificationAttribute
 }
 
 /// <summary>
-/// Marks credentials, keys, tokens, and other authentication material.
+/// Marks passwords and keys supplied by users for third-party services.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public sealed class SecretAttribute : DataClassificationAttribute
+public sealed class UserCredentialsAttribute : DataClassificationAttribute
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="SecretAttribute"/> class.
+    /// Initializes a new instance of the <see cref="UserCredentialsAttribute"/> class.
     /// </summary>
-    public SecretAttribute()
-        : base(ArkDataClassifications.Secret)
+    public UserCredentialsAttribute()
+        : base(ArkDataClassifications.UserCredentials)
+    {
+    }
+}
+
+/// <summary>
+/// Marks secrets used to connect or authenticate infrastructure.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+public sealed class InfrastructureSecretAttribute : DataClassificationAttribute
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InfrastructureSecretAttribute"/> class.
+    /// </summary>
+    public InfrastructureSecretAttribute()
+        : base(ArkDataClassifications.InfrastructureSecret)
     {
     }
 }

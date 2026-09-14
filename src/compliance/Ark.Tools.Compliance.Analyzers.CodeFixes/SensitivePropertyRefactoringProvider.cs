@@ -50,7 +50,8 @@ public sealed class SensitivePropertyRefactoringProvider : CodeRefactoringProvid
                 if (type.ToDisplayString() is "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"
                     or "Ark.Tools.Compliance.PersonalDataAttribute"
                     or "Ark.Tools.Compliance.SensitivePersonalDataAttribute"
-                    or "Ark.Tools.Compliance.SecretAttribute"
+                    or "Ark.Tools.Compliance.UserCredentialsAttribute"
+                    or "Ark.Tools.Compliance.InfrastructureSecretAttribute"
                     or "Ark.Tools.Compliance.PseudonymousAttribute")
                 {
                     return true;

@@ -25,7 +25,8 @@ public static class ArkRedactionExtensions
             builder.SetRedactor<ArkMaskingRedactor>(ArkDataClassifications.PersonalData);
             builder.SetRedactor<ArkErasingRedactor>(
                 ArkDataClassifications.SensitivePersonalData,
-                ArkDataClassifications.Secret,
+                ArkDataClassifications.UserCredentials,
+                ArkDataClassifications.InfrastructureSecret,
                 ArkDataClassifications.Pseudonymous);
             builder.SetFallbackRedactor<ArkErasingRedactor>();
         });

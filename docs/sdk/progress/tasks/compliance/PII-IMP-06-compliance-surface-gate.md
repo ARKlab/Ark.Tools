@@ -101,10 +101,11 @@ surface. CRLF and LF baselines are accepted.
   type, or through their value-object/nullable/collection element type.
   Inherited class and overridden property classifications are retained.
   Compiler-generated backing fields are excluded.
-- The four Ark classifications are tracked independently. Removing a
+- Ark classifications are tracked independently, except `InfrastructureSecret`,
+  which is intentionally omitted from the report. Removing a
   classification or downgrading `SensitivePersonalData` to `PersonalData` or
   `PersonalData` to `Pseudonymous` produces `ARKPII021`, alongside ordinary drift.
-  `Secret` is not interchangeable with personal-data classifications.
+  `UserCredentials` is not interchangeable with personal-data classifications.
 - A missing/malformed/duplicate baseline or any changed entry produces
   `ARKPII020`. An entry absent from an existing baseline additionally produces
   `ARKPII021`: without historical source, a new classified declaration and a

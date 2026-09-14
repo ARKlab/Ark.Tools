@@ -222,7 +222,8 @@ public sealed class ComplianceFoundationTests
     {
         new PersonalDataAttribute().Classification.Should().Be(ArkDataClassifications.PersonalData);
         new SensitivePersonalDataAttribute().Classification.Should().Be(ArkDataClassifications.SensitivePersonalData);
-        new SecretAttribute().Classification.Should().Be(ArkDataClassifications.Secret);
+        new UserCredentialsAttribute().Classification.Should().Be(ArkDataClassifications.UserCredentials);
+        new InfrastructureSecretAttribute().Classification.Should().Be(ArkDataClassifications.InfrastructureSecret);
         new PseudonymousAttribute().Classification.Should().Be(ArkDataClassifications.Pseudonymous);
 
         typeof(PersonalDataAttribute).BaseType.Should().Be<DataClassificationAttribute>();
@@ -239,7 +240,9 @@ public sealed class ComplianceFoundationTests
 
         redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.PersonalData))
             .Redact("person@example.com").Should().Be("***");
-        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.Secret))
+        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.UserCredentials))
+            .Redact("secret-value").Should().Be("***");
+        redactorProvider.GetRedactor(new DataClassificationSet(ArkDataClassifications.InfrastructureSecret))
             .Redact("secret-value").Should().Be("***");
     }
 

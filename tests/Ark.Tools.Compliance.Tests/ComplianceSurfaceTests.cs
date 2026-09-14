@@ -39,7 +39,7 @@ public sealed class ComplianceSurfaceTests
             public partial class Customer
             {
                 [PersonalData] public string Z { get; set; } = "";
-                [Secret] public string A { get; set; } = "";
+                [UserCredentials] public string A { get; set; } = "";
             }
             """;
         var first = _run(source);
@@ -53,7 +53,7 @@ public sealed class ComplianceSurfaceTests
             namespace Example;
             public partial class Customer
             {
-                [Secret] public string A { get; set; } = "";
+                [UserCredentials] public string A { get; set; } = "";
                 [PersonalData] public string Z { get; set; } = "";
             }
             """);
@@ -119,7 +119,7 @@ public sealed class ComplianceSurfaceTests
     [TestMethod]
     public void Surface_ChangingSecretToSensitivePersonalDataIsNotStrengthening()
     {
-        var baseline = _run(_personalMember.Replace("[PersonalData]", "[Secret]", StringComparison.Ordinal)).Text;
+        var baseline = _run(_personalMember.Replace("[PersonalData]", "[UserCredentials]", StringComparison.Ordinal)).Text;
         var result = _run(_personalMember.Replace("[PersonalData]", "[SensitivePersonalData]", StringComparison.Ordinal),
             baseline, enabled: true);
 
@@ -181,7 +181,7 @@ public sealed class ComplianceSurfaceTests
             {
                 public EmailAddress? Optional { get; set; }
                 public List<EmailAddress> Addresses { get; set; } = new();
-                [Secret] public string Field = "";
+                [UserCredentials] public string Field = "";
             }
             public class Base
             {
@@ -196,7 +196,7 @@ public sealed class ComplianceSurfaceTests
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tEmail\tArk:PersonalData");
         result.Text.Should().Contain("CLASSIFIED\tExample.Other\tOptional\tArk:PersonalData");
         result.Text.Should().Contain("CLASSIFIED\tExample.Other\tAddresses\tArk:PersonalData");
-        result.Text.Should().Contain("CLASSIFIED\tExample.Other\tField\tArk:Secret");
+        result.Text.Should().Contain("CLASSIFIED\tExample.Other\tField\tArk:UserCredentials");
         result.Text.Should().Contain("CLASSIFIED\tExample.Derived\tValue\tArk:PersonalData");
         result.Text.Should().NotContain("BackingField");
     }
@@ -210,11 +210,30 @@ public sealed class ComplianceSurfaceTests
             namespace Example;
             public static class Secrets
             {
-                [Secret] public const string ApiKey = "reserved";
+                [UserCredentials] public const string ApiKey = "reserved";
             }
             """);
 
-        result.Text.Should().Contain("CLASSIFIED\tExample.Secrets\tApiKey\tArk:Secret");
+        result.Text.Should().Contain("CLASSIFIED\tExample.Secrets\tApiKey\tArk:UserCredentials");
+    }
+
+    /// <summary>Infrastructure secrets remain protected but do not pollute the compliance surface.</summary>
+    [TestMethod]
+    public void Surface_SkipsInfrastructureSecrets()
+    {
+        var result = _run("""
+            using Ark.Tools.Compliance;
+            namespace Example;
+            public sealed class Configuration
+            {
+                [InfrastructureSecret] public string ConnectionString { get; set; } = "";
+                [UserCredentials] public string ApiKey { get; set; } = "";
+            }
+            """);
+
+        result.Text.Should().Contain("CLASSIFIED\tExample.Configuration\tApiKey\tArk:UserCredentials");
+        result.Text.Should().NotContain("ConnectionString");
+        result.Text.Should().NotContain("Ark:InfrastructureSecret");
     }
 
     /// <summary>Unrelated attributes with the same short name do not classify data.</summary>

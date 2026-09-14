@@ -10,7 +10,7 @@ public static class AuthConstants
 
     public const string IntegrationTestsAudience = "API";
     public const string IntegrationTestsDomain = "local.dev";
-    [Secret]
+    [InfrastructureSecret]
     public const string IntegrationTestsEncryptionKey = "IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong";
 
     public const string ScopePrefix = "extension_Scope";

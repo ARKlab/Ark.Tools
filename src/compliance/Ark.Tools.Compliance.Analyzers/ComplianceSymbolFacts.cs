@@ -37,7 +37,8 @@ internal static class ComplianceSymbolFacts
                 if (type.ToDisplayString() == "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"
                     || type.ToDisplayString() is "Ark.Tools.Compliance.PersonalDataAttribute"
                         or "Ark.Tools.Compliance.SensitivePersonalDataAttribute"
-                        or "Ark.Tools.Compliance.SecretAttribute"
+                        or "Ark.Tools.Compliance.UserCredentialsAttribute"
+                        or "Ark.Tools.Compliance.InfrastructureSecretAttribute"
                         or "Ark.Tools.Compliance.PseudonymousAttribute")
                 {
                     return true;

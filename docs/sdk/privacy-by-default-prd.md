@@ -199,8 +199,11 @@ public static class ArkDataClassifications
     /// <summary>Special categories of personal data (GDPR Art. 9).</summary>
     public static DataClassification SensitivePersonalData => new(TaxonomyName, nameof(SensitivePersonalData));
 
-    /// <summary>Credentials, keys, tokens, connection strings.</summary>
-    public static DataClassification Secret => new(TaxonomyName, nameof(Secret));
+    /// <summary>Passwords and keys supplied by users for third-party services.</summary>
+    public static DataClassification UserCredentials => new(TaxonomyName, nameof(UserCredentials));
+
+    /// <summary>Secrets used to connect or authenticate infrastructure.</summary>
+    public static DataClassification InfrastructureSecret => new(TaxonomyName, nameof(InfrastructureSecret));
 
     /// <summary>Re-identifiable only with additional data held separately.</summary>
     public static DataClassification Pseudonymous => new(TaxonomyName, nameof(Pseudonymous));
@@ -212,7 +215,8 @@ Developer-facing attributes:
 ```csharp
 public sealed class PersonalDataAttribute : DataClassificationAttribute { … }
 public sealed class SensitivePersonalDataAttribute : DataClassificationAttribute { … }
-public sealed class SecretAttribute : DataClassificationAttribute { … }
+public sealed class UserCredentialsAttribute : DataClassificationAttribute { … }
+public sealed class InfrastructureSecretAttribute : DataClassificationAttribute { … }
 public sealed class PseudonymousAttribute : DataClassificationAttribute { … }
 
 /// <summary>Explicit, reviewed statement that a PII-looking member is not personal data.</summary>

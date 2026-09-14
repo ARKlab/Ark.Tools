@@ -76,6 +76,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 _classifications(member, classifications);
                 _classifications(type, classifications);
                 _typeClassifications(valueType, classifications, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+                classifications.Remove("Ark:InfrastructureSecret");
                 if (classifications.Count == 0)
                     continue;
 
@@ -153,8 +154,10 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 output.Add("Ark:PersonalData");
             else if (name == Prefix + "SensitivePersonalDataAttribute")
                 output.Add("Ark:SensitivePersonalData");
-            else if (name == Prefix + "SecretAttribute")
-                output.Add("Ark:Secret");
+            else if (name == Prefix + "UserCredentialsAttribute")
+                output.Add("Ark:UserCredentials");
+            else if (name == Prefix + "InfrastructureSecretAttribute")
+                output.Add("Ark:InfrastructureSecret");
             else if (name == Prefix + "PseudonymousAttribute")
                 output.Add("Ark:Pseudonymous");
         }
@@ -466,7 +469,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 return false;
             var classifications = fields[3].Split(',');
             if (classifications.Any(static classification => classification is not
-                    ("Ark:PersonalData" or "Ark:SensitivePersonalData" or "Ark:Secret" or "Ark:Pseudonymous")))
+                    ("Ark:PersonalData" or "Ark:SensitivePersonalData" or "Ark:UserCredentials" or "Ark:InfrastructureSecret" or "Ark:Pseudonymous")))
                 return false;
             var key = fields[1] + "\t" + fields[2];
             if (entries.ContainsKey(key))

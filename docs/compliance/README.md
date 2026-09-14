@@ -4,7 +4,7 @@ The Compliance kit protects personal data (PII) and secrets in .NET applications
 five cooperating layers. A leak has to pass all of them:
 
 1. **Declare** — classification attributes and sensitive value objects mark what is
-   personal data, sensitive data, a secret, or pseudonymous.
+   personal data, sensitive data, a user credential, an infrastructure secret, or pseudonymous.
 2. **Refuse** — Roslyn analyzers turn "classified value reaches a log/exception/telemetry
    sink" into a compile error (`ARKPII*` diagnostics).
 3. **Inventory** — a generated, committed `ArkComplianceSurface.txt` baseline: new or

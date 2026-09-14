@@ -56,7 +56,7 @@ public sealed record SensitiveValueSchemaDescriptor(
         For<PersonName>(ArkDataClassifications.PersonalData, ComplianceFakes.PersonName()),
         For<PostalAddressLine>(ArkDataClassifications.PersonalData, ComplianceFakes.PostalAddressLine()),
         For<NationalIdentifier>(ArkDataClassifications.SensitivePersonalData, ComplianceFakes.NationalIdentifier()),
-        For<ApiKey>(ArkDataClassifications.Secret, ComplianceFakes.ApiKey(), "password"),
+        For<ApiKey>(ArkDataClassifications.UserCredentials, ComplianceFakes.ApiKey(), "password"),
     ];
 
     /// <summary>
