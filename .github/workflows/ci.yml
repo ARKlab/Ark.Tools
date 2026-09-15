@@ -65,6 +65,12 @@ jobs:
     - name: 'Checkout'
       uses: actions/checkout@v7
 
+    - name: 'Install APM'
+      uses: microsoft/apm-action@v1
+      with:
+        setup-only: true
+        apm-version: 0.30.0
+
     - name: 'Wait for Service Bus emulator'
       run: |
         timeout 300s bash -c '
