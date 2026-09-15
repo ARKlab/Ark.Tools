@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Core analyzers
-- **Diagnostic message:** `Enum '{0}' must declare an explicit NOT_SET = 0 member`
+- **Diagnostic message:** `Declare an explicit NOT_SET = 0 member in enum '{0}'`
 
 ## What it checks
 

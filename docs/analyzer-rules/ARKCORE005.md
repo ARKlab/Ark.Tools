@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Core analyzers
-- **Diagnostic message:** `The exception thrown from this catch clause must include the caught exception as its inner exception`
+- **Diagnostic message:** `Throw a replacement exception that includes the caught exception as its inner exception`
 
 ## What it checks
 

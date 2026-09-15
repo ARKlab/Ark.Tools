@@ -1,8 +1,8 @@
-# ARKPII002: Microsoft.Extensions.Logging.ILogger
+# ARKPII002: Classified data reaches a log
 
-- **Severity:** Info
+- **Severity:** Error
 - **Component:** Compliance
-- **Diagnostic message:** `System.Diagnostics.Activity`
+- **Diagnostic message:** `Classified member '{0}' ([{1}]) reaches a log template, argument, or scope; log the key, not the person, or pass the value through a redactor. Analysis is intra-method only`
 
 ## What it checks
 

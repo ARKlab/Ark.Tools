@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Core analyzers
-- **Diagnostic message:** `Evolvable enum name '{0}' is used by multiple enum members`
+- **Diagnostic message:** `Rename one enum member so evolvable name '{0}' is unique`
 
 ## What it checks
 

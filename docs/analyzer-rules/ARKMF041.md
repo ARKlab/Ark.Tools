@@ -15,14 +15,23 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-// Generated contract or host declaration does not satisfy the diagnostic.
+{
+  "version": "2.0",
+  "extensions": {
+    "queues": { "messageEncoding": "base64" }
+  }
+}
 ```
 
 ### Correct
 
 ```csharp
-// Correct the contract or host declaration as requested by the diagnostic.
+{
+  "version": "2.0",
+  "extensions": {
+    "queues": { "messageEncoding": "none" }
+  }
+}
 ```
 
 ## Suppression and configuration

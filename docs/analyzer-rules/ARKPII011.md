@@ -1,8 +1,8 @@
 # ARKPII011: Classified data reaches a formatting sink
 
-- **Severity:** Info
+- **Severity:** Error
 - **Component:** Compliance
-- **Diagnostic message:** `a banned formatting sink`
+- **Diagnostic message:** `Classified member '{0}' ([{1}]) reaches a banned formatting sink; log the key, not the person, or pass the value through a redactor. Analysis is intra-method only`
 
 ## What it checks
 

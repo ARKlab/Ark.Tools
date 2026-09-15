@@ -1,8 +1,8 @@
 # ARKPII005: Classified data is formatted without protection
 
-- **Severity:** Info
+- **Severity:** Error
 - **Component:** Compliance
-- **Diagnostic message:** `unredacted formatting or Reveal without a purpose`
+- **Diagnostic message:** `Classified member '{0}' ([{1}]) reaches unredacted formatting or Reveal without a purpose; log the key, not the person, or pass the value through a redactor. Analysis is intra-method only`
 
 ## What it checks
 

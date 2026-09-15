@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Core analyzers
-- **Diagnostic message:** `Backing type '{0}' must exactly match enum '{1}' backing type '{2}'`
+- **Diagnostic message:** `Use backing type '{2}' for enum '{1}' instead of '{0}'`
 
 ## What it checks
 

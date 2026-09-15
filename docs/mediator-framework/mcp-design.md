@@ -182,7 +182,7 @@ the XML documentation directly:
 
 Property `<remarks>` elements are not copied to parameter descriptions. A
 missing type summary or remarks leaves that metadata unset and produces
-`ARKMF037`; a missing property summary leaves the parameter description unset
+`ARKMF055`; a missing property summary leaves the parameter description unset
 without changing its binding. The generated `[Description]` attributes are required because the official SDK
 uses them when it creates the tool metadata and input schema from the method.
 
@@ -564,16 +564,13 @@ The initial set should include:
 
 | Diagnostic | Severity | Condition |
 | --- | --- | --- |
-| `ARKMF030` | Error | Invalid MCP tool name. |
-| `ARKMF031` | Error | Duplicate MCP tool name in one generated surface. |
-| `ARKMF032` | Error | Contract is not a supported request, query, or command. |
-| `ARKMF033` | Error | MCP contract has an unsupported input member shape. |
-| `ARKMF034` | Error | No compatible mediator processor registration can be resolved. |
-| `ARKMF035` | Error | MCP metadata is contradictory or invalid. |
-| `ARKMF036` | Error | Marker context is not partial or assembly selection is invalid. |
-| `ARKMF037` | Warning | Tool has no description or XML documentation. |
-| `ARKMF038` | Error | MCP name collides with a generated tool from another marker. |
-| `ARKMF039` | Error | MCP attachment input or output has an unsupported shape. |
+| `ARKMF050` | Error | Invalid MCP tool name. |
+| `ARKMF051` | Error | Duplicate MCP tool name in one generated surface. |
+| `ARKMF052` | Error | Contract is not a supported request, query, or command. |
+| `ARKMF053` | Error | MCP contract has an unsupported input member shape. |
+| `ARKMF054` | Error | MCP contract does not declare a compatible constructor. |
+| `ARKMF055` | Warning | Tool has no description or XML documentation. |
+| `ARKMF056` | Error | Marker context is not partial. |
 
 Diagnostics point to the `[McpTool]` or marker attribute location. Invalid
 contracts are omitted from the registry; valid independent tools continue to
@@ -660,7 +657,7 @@ The following decisions close the design questions for the first implementation:
    HTTP binding metadata is ignored. Constructor-only immutable records are
    supported by generated constructor binding; a single contract-object argument
    is not generated.
-3. **Descriptions:** missing contract descriptions produce `ARKMF037` as a
+3. **Descriptions:** missing contract descriptions produce `ARKMF055` as a
    warning. Explicit attribute metadata wins, then type `<summary>`/`<remarks>`;
    property `<summary>` supplies the parameter description.
 4. **Attachments:** use the confirmed `{ name, mimeType, blob }` JSON upload

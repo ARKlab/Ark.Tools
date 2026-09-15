@@ -2,7 +2,7 @@
 
 - **Severity:** Warning
 - **Component:** Core analyzers
-- **Diagnostic message:** `Enum '{0}' uses every value available in backing type '{1}'`
+- **Diagnostic message:** `Leave at least one unused value in enum '{0}' backing type '{1}' for future members`
 
 ## What it checks
 

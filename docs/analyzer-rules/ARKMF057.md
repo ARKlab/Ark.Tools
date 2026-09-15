@@ -15,14 +15,18 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-// Generated contract or host declaration does not satisfy the diagnostic.
+[ArkRebusHost(typeof(OrphanParticipant))]
+public sealed partial class OrphanRebusHost;
 ```
 
 ### Correct
 
 ```csharp
-// Correct the contract or host declaration as requested by the diagnostic.
+[MessagingNetwork(Members = new[] { typeof(Participant) })]
+public sealed class OrdersNetwork;
+
+[ArkRebusHost(typeof(Participant))]
+public sealed partial class OrdersRebusHost;
 ```
 
 ## Suppression and configuration

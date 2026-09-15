@@ -1,8 +1,8 @@
 # ARKSOLID001: Use the self-referencing generic interface for reflection-free dispatch
 
 - **Severity:** Warning
-- **Component:** Core analyzers
-- **Diagnostic message:** `Type '{0}' should implement '{1}' to enable reflection-free processor dispatch`
+- **Component:** Solid analyzers
+- **Diagnostic message:** `Type '{0}' must implement '{1}' to enable reflection-free processor dispatch`
 
 ## What it checks
 

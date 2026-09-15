@@ -15,15 +15,23 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+[SqlDataPolicy(Table = "Customers")]
+public sealed class Customer
+{
+    [SqlColumnPolicy("", StoragePolicy.None)]
+    public string Email { get; set; } = string.Empty;
+}
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+[SqlDataPolicy(Schema = "sales", Table = "Customers")]
+public sealed class Customer
+{
+    [SqlColumnPolicy("Email", StoragePolicy.Masked)]
+    public string Email { get; set; } = string.Empty;
+}
 ```
 
 ## Suppression and configuration

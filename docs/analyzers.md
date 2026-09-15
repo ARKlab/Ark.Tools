@@ -9,7 +9,7 @@ Ark.Tools uses multiple analyzer packages to maintain code quality, prevent bugs
 
 ## Ark.Tools-owned diagnostic rules
 
-Every Ark.Tools diagnostic has a dedicated page with its severity, trigger, fix examples, and suppression guidance.
+Every Ark.Tools diagnostic has a dedicated page with its severity, rule-specific trigger and fix examples, and suppression guidance.
 
 - [ARKAPI001](analyzer-rules/ARKAPI001.md)
 - [ARKAPI002](analyzer-rules/ARKAPI002.md)

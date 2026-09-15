@@ -1,8 +1,8 @@
 # ARKPII004: Classified data reaches telemetry
 
-- **Severity:** Info
+- **Severity:** Error
 - **Component:** Compliance
-- **Diagnostic message:** `an Activity tag, metric dimension, or baggage`
+- **Diagnostic message:** `Classified member '{0}' ([{1}]) reaches an Activity tag, metric dimension, or baggage; log the key, not the person, or pass the value through a redactor. Analysis is intra-method only`
 
 ## What it checks
 

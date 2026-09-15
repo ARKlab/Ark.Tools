@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Core analyzers
-- **Diagnostic message:** `The catch clause must capture the exception before throwing a replacement`
+- **Diagnostic message:** `Name the caught exception before throwing a replacement so it can be used as the inner exception`
 
 ## What it checks
 
