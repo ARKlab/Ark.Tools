@@ -135,13 +135,13 @@ public sealed class EntitySteps
     [When("I create a Entity with")]
     public async Task CreateEntity(Table table)
     {
-        await _entity.CreateAsync(table.CreateInstance<Entity>()).ConfigureAwait(false);
+        await _entity.CreateAsync(table.CreateInstance<Entity.V1.Create>()).ConfigureAwait(false);
     }
 
     [When("I try to create a Entity with")]
     public async Task TryCreateEntity(Table table)
     {
-        await _try(CreateEntity(table));
+        await _try(() => CreateEntity(table)).ConfigureAwait(false);
     }
 
     [When("I retrieve the current Entity")]
@@ -154,7 +154,7 @@ public sealed class EntitySteps
     public async Task UpdateCurrentEntity(Table table)
     {
         var merged = table.MergeInstance(_entity.Current);
-        await _entity.UpdateCurrentAsync(new Entity
+        await _entity.UpdateCurrentAsync(new Entity.V1.Input
         {
             Title = merged.Title,
             Author = merged.Author,
