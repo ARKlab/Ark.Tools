@@ -275,7 +275,8 @@ public sealed class GeneratorSnapshotTests
             var diagnostic = result.Diagnostics.First(item => item.Id == testCase.Id);
 
             diagnostic.GetMessage().Should().NotBeNullOrWhiteSpace();
-            diagnostic.Descriptor.Title.ToString().Should().NotBeNullOrWhiteSpace();
+            diagnostic.Descriptor.Title.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                .Should().NotBeNullOrWhiteSpace();
             diagnostic.Descriptor.HelpLinkUri.Should()
                 .Be($"https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/{testCase.Id}.md");
         }
@@ -1638,7 +1639,8 @@ public sealed class GeneratorSnapshotTests
         var diagnostic = result.Diagnostics.Single(static item => item.Id == "ARKMF057");
         diagnostic.GetMessage().Should().Be(
             "The bound messaging participant is not listed in a messaging network.. Configure a supported Rebus participant host binding");
-        diagnostic.Descriptor.Title.ToString().Should().Be("Use a valid Rebus participant host binding");
+        diagnostic.Descriptor.Title.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            .Should().Be("Use a valid Rebus participant host binding");
         diagnostic.Descriptor.HelpLinkUri.Should()
             .Be("https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF057.md");
     }
