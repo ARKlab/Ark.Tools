@@ -39,6 +39,7 @@ internal sealed class ComplianceLogCollector : IDisposable
     {
         while (_messages.TryDequeue(out _))
         {
+            // Drain the queue.
         }
     }
 

@@ -200,8 +200,9 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
             if (hash.Length == 32)
                 return hash;
         }
-        catch (FormatException)
+        catch (FormatException exception)
         {
+            throw _attachmentFailure("The payload attachment SHA-256 digest is invalid.", exception);
         }
 
         throw _attachmentFailure("The payload attachment SHA-256 digest is invalid.");

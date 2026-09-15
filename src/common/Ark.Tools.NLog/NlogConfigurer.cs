@@ -154,7 +154,7 @@ public static class NLogConfigurer
     [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public sealed class Configurer
     {
-        internal LoggingConfiguration _config = new();
+        internal readonly LoggingConfiguration _config = new();
         private PiiScanner? _piiScanner = new();
         public string AppName { get; }
 

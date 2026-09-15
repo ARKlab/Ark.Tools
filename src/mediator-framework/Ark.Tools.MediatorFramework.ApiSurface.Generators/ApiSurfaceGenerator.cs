@@ -571,7 +571,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         AttributeData? network,
         IReadOnlyDictionary<INamedTypeSymbol, string[]> networkMemberships)
     {
-        var clrName = type.ToDisplayString();
         if (message is not null)
             AddMessagingBlock(
                 blocks,
