@@ -4,12 +4,12 @@ Feature: Ping
 
   Scenario: Endpoint Ping Test
     Given I make a request to ping
-    Then the request succeded
+    Then the request succeeded
     Then the response is 'pong'
 
   Scenario: Endpoint Ping Test by Name
     Given I make a request to 'SUCCESSFUL' ping
-    Then the request succeded
+    Then the request succeeded
     Then the ping response is
       | Name       | Code                 |
       | SUCCESSFUL | PING_CODE_SUCCESSFUL |
@@ -18,12 +18,12 @@ Feature: Ping
     When I create a single Ping with
       | Name      | Type  |
       | PingName1 | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     Then the stored Ping response should be
       | Name      | Type  | Code                |
       | PingName1 | Ping1 | PING_CODE_PingName1 |
     When I request the Ping 'PingName1' by id
-    Then the request succeded
+    Then the request succeeded
     Then the Ping response should match
       | Name      | Type  | Code                |
       | PingName1 | Ping1 | PING_CODE_PingName1 |
@@ -37,12 +37,12 @@ Feature: Ping
     And I request the Ping by
       | Name      |
       | PingNameB |
-    Then the request succeded
+    Then the request succeeded
     Then the Ping response count should be 1
     When I request the Ping by
       | Type  |
       | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     Then the Ping response count should be 2
 
   Scenario: Endpoint Ping Put
@@ -51,11 +51,11 @@ Feature: Ping
       | PingA | Ping1 |
       | PingB | Ping2 |
       | PingC | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I update using 'PUT' the Ping 'PingA' with
       | Name        | Type  |
       | PingNewName | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I request the Ping 'PingNewName' by id
     Then the Ping response should match
       | Name        | Type  | Code                  |
@@ -73,11 +73,11 @@ Feature: Ping
       | PingA | Ping1 |
       | PingB | Ping2 |
       | PingC | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I update using 'PATCH' the Ping 'PingA' with
       | Name      |
       | PatchName |
-    Then the request succeded
+    Then the request succeeded
     When I request the Ping 'PatchName' by id
     Then the Ping response should match
       | Name      | Type  | Code                |
@@ -85,7 +85,7 @@ Feature: Ping
     When I update using 'PATCH' the Ping 'PatchName' with
       | Type  |
       | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I request the Ping 'PatchName' by id
     Then the Ping response should match
       | Name      | Type  | Code                |
@@ -102,9 +102,9 @@ Feature: Ping
       | Name  | Type  |
       | PingA | Ping1 |
       | PingB | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I delete the Ping 'PingA' by id
-    Then the request succeded
+    Then the request succeeded
     When I request the Ping 'PingA' by id
     Then the request fails with 404
 
@@ -112,14 +112,14 @@ Feature: Ping
     When I create a single Ping And SendMsg with
       | Name      | Type  |
       | PingName1 | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     Then the stored Ping response should be
       | Name      | Type  | Code                |
       | PingName1 | Ping1 | PING_CODE_PingName1 |
     When I wait background bus to idle and outbox to be empty
-    Then the request succeded
+    Then the request succeeded
     When I request the Ping 'PingName1' by id
-    Then the request succeded
+    Then the request succeeded
     Then the Ping response should match
       | Name      | Type  | Code                |
       | PingName1 | Ping1 | HandleOk_MsgCount_1 |
@@ -128,13 +128,13 @@ Feature: Ping
     When I create a single Ping And SendMsg with
       | Name      | Type  |
       | PingFails | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     Then the stored Ping response should be
       | Name      | Type  | Code                |
       | PingFails | Ping1 | PING_CODE_PingFails |
     When I wait background bus to idle and outbox to be empty
     When I request the Ping 'PingFails' by id
-    Then the request succeded
+    Then the request succeeded
     Then the Ping response should match
       | Name      | Type  | Code                                        |
       | PingFails | Ping1 | HandleFailed_NormalEx_MsgCount_1_MsgCount_3 |
@@ -143,13 +143,13 @@ Feature: Ping
     When I create a single Ping And SendMsg with
       | Name          | Type  |
       | PingFailsFast | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     Then the stored Ping response should be
       | Name          | Type  | Code                    |
       | PingFailsFast | Ping1 | PING_CODE_PingFailsFast |
     When I wait background bus to idle and outbox to be empty
     When I request the Ping 'PingFailsFast' by id
-    Then the request succeded
+    Then the request succeeded
     Then the Ping response should match
       | Name          | Type  | Code                                          |
       | PingFailsFast | Ping1 | HandleFailed_FailFastEx_MsgCount_1_MsgCount_1 |
@@ -159,7 +159,7 @@ Feature: Ping
     When I create a single Ping with
       | Name      | Type  |
       | AuditPing | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     When I get the last audit for 'Ping'
     Then the audit record has
       | Key    | Value                   |
@@ -174,7 +174,7 @@ Feature: Ping
     When I create a single Ping with
       | Name      | Type  |
       | AuditPing | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     When I get the last audit for 'Ping'
     Then the audit record has
       | Key    | Value                   |
@@ -187,7 +187,7 @@ Feature: Ping
     When I update using 'PUT' the Ping 'AuditPing' with
       | Name             | Type  |
       | AuditPingUpdated | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I wait background bus to idle and outbox to be empty
     When I get the last audit for 'Ping'
     And I get the list of changes for this audit
@@ -202,7 +202,7 @@ Feature: Ping
     When I create a single Ping with
       | Name      | Type  |
       | AuditPing | Ping1 |
-    Then the request succeded
+    Then the request succeeded
     When I get the last audit for 'Ping'
     Then the audit record has
       | Key    | Value                   |
@@ -215,7 +215,7 @@ Feature: Ping
     When I update using 'PATCH' the Ping 'AuditPing' with
       | Type  |
       | Ping2 |
-    Then the request succeded
+    Then the request succeeded
     When I wait background bus to idle and outbox to be empty
     When I get the last audit for 'Ping'
     And I get the list of changes for this audit

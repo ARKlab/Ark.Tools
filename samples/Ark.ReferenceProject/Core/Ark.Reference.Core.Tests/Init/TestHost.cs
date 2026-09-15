@@ -19,6 +19,9 @@ using Microsoft.Extensions.Hosting;
 
 using NLog;
 
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+
 using Polly;
 
 using Rebus.Persistence.InMem;
@@ -150,6 +153,17 @@ public sealed class TestHost : IDisposable
         inprocess.Should().Be(0);
         deferred.Should().Be(0);
         outbox.Should().Be(0);
+
+        _flushTelemetry();
+    }
+
+    private static void _flushTelemetry()
+    {
+        var tracerProvider = Server.Services.GetService<TracerProvider>();
+        tracerProvider?.ForceFlush();
+
+        var meterProvider = Server.Services.GetService<MeterProvider>();
+        meterProvider?.ForceFlush();
     }
 
     [AfterScenario(Order = int.MaxValue - 1)]
