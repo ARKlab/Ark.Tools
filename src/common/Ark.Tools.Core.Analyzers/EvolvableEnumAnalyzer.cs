@@ -19,42 +19,42 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _backingTypeMismatch = new(
         "ARKCORE001",
         "Evolvable enum backing type mismatch",
-        "Backing type '{0}' must exactly match enum '{1}' backing type '{2}'",
+        "Use backing type '{2}' for enum '{1}' instead of '{0}'",
         "Usage",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "The EvolvableEnum backing type must match the enum's declared underlying type.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE001.md");
 
     private static readonly DiagnosticDescriptor _missingNotSet = new(
         "ARKCORE002",
         "Evolvable enum requires NOT_SET",
-        "Enum '{0}' must declare an explicit NOT_SET = 0 member",
+        "Declare an explicit NOT_SET = 0 member in enum '{0}'",
         "Usage",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Evolvable enums require an explicit zero-valued NOT_SET member for forward-compatible defaults.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE002.md");
 
     private static readonly DiagnosticDescriptor _duplicateName = new(
         "ARKCORE003",
         "Evolvable enum names must be unique",
-        "Evolvable enum name '{0}' is used by multiple enum members",
+        "Rename one enum member so evolvable name '{0}' is unique",
         "Usage",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Names from enum members and supported naming attributes must be unique.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE003.md");
 
     private static readonly DiagnosticDescriptor _fullEnum = new(
         "ARKCORE004",
         "Evolvable enum cannot evolve",
-        "Enum '{0}' uses every value available in backing type '{1}'",
+        "Leave at least one unused value in enum '{0}' backing type '{1}' for future members",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "An evolvable enum with no unused backing values cannot accept future members.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE004.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

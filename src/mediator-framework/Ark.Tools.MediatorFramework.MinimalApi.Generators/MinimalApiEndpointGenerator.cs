@@ -47,42 +47,42 @@ namespace Ark.Tools.MediatorFramework.Generators
             "HTTP endpoint '{0}' declares more than one IArkAttachment property",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF001.md");
         private static readonly DiagnosticDescriptor UnsupportedAttachmentCollection = new DiagnosticDescriptor(
             "ARKMF005",
             "Unsupported attachment collection",
             "HTTP endpoint '{0}' has attachment collection property '{1}' with an unsupported shape",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF005.md");
         private static readonly DiagnosticDescriptor ServerSetPropertyCannotBeReset = new DiagnosticDescriptor(
             "ARKMF002",
             "Server-set property cannot be reset",
             "HTTP endpoint '{0}' has server-set property '{1}' without an accessible setter",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF002.md");
         private static readonly DiagnosticDescriptor PossibleMassAssignment = new DiagnosticDescriptor(
             "ARKMF003",
             "Possible mass assignment",
             "HTTP endpoint '{0}' has property '{1}' that may be server-owned; mark it with [ServerSet] or suppress this warning",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Warning,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF003.md");
         private static readonly DiagnosticDescriptor DuplicateOperationName = new DiagnosticDescriptor(
             "ARKMF016",
             "Duplicate operation name",
             "HTTP endpoints '{0}' and '{1}' resolve to the same operation name '{2}' in API version {3}",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF016.md");
         private static readonly DiagnosticDescriptor VersionPrefixMissingToken = new DiagnosticDescriptor(
             "ARKMF020",
             "Version prefix is missing the version token",
             "The version prefix must contain the '{version}' token",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Error,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF020.md");
 
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)

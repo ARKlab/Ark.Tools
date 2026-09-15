@@ -20,27 +20,27 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
     internal static readonly DiagnosticDescriptor _unclassified = new(
         "ARKPII001", "Declare personal data before it escapes redaction",
         "Member '{0}' looks like personal data but is not classified; unclassified data escapes redaction and the compliance inventory",
-        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII001.md");
 
     internal static readonly DiagnosticDescriptor _review = new(
         "ARKPII008", "Keep compliance reviews justified and current",
         "Compliance review on '{0}' has no reason or has an invalid or expired Expires date; an unreviewed exception can expose personal data",
-        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII008.md");
 
     internal static readonly DiagnosticDescriptor _justification = new(
         "ARKPII009", "Explain why a declaration contains no personal data",
         "NotPersonalData on '{0}' needs a specific justification, not a placeholder; incorrectly excluded data escapes redaction",
-        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII009.md");
 
     internal static readonly DiagnosticDescriptor _unsupported = new(
         "ARKPII010", "Use a classification shape that can be safely redacted",
         "Classified declaration '{0}' cannot be safely redacted: {1}",
-        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII010.md");
 
     internal static readonly DiagnosticDescriptor _missingRedactionRegistration = new(
         "ARKPII013", "Register Ark redaction for Microsoft telemetry",
         "Project references Microsoft.Extensions.Telemetry but does not call AddArkRedaction(); classified logging can remain unredacted",
-        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, customTags: ["CompilationEnd"]);
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, customTags: ["CompilationEnd"], helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII013.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

@@ -52,9 +52,9 @@ public class SelfGenericInterfaceAnalyzerTests
         diagnostics.Should().OnlyContain(static d => d.Id == "ARKSOLID001" && d.Severity == DiagnosticSeverity.Warning);
         diagnostics.Select(static d => d.GetMessage(null)).Should().BeEquivalentTo(
         [
-            "Type 'MyQuery' should implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch",
-            "Type 'MyRequest' should implement 'IRequest<MyRequest, string>' to enable reflection-free processor dispatch",
-            "Type 'MyCommand' should implement 'ICommand<MyCommand>' to enable reflection-free processor dispatch",
+            "Type 'MyQuery' must implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch",
+            "Type 'MyRequest' must implement 'IRequest<MyRequest, string>' to enable reflection-free processor dispatch",
+            "Type 'MyCommand' must implement 'ICommand<MyCommand>' to enable reflection-free processor dispatch",
         ]);
     }
 
@@ -97,7 +97,7 @@ public class SelfGenericInterfaceAnalyzerTests
 
         diagnostics.Should().ContainSingle();
         diagnostics[0].GetMessage(null).Should().Be(
-            "Type 'MyQuery' should implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch");
+            "Type 'MyQuery' must implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch");
     }
 
     /// <summary>Verifies generic records keep their type parameters in the suggested self interface.</summary>
@@ -161,9 +161,9 @@ public class SelfGenericInterfaceAnalyzerTests
         diagnostics.Select(static diagnostic => diagnostic.GetMessage(null))
             .Should().BeEquivalentTo(
             [
-                "Type 'MyHandler' should implement 'IQuery<MyHandler, int>' to enable reflection-free processor dispatch",
-                "Type 'MyHandler' should implement 'IRequest<MyHandler, string>' to enable reflection-free processor dispatch",
-                "Type 'MyHandler' should implement 'ICommand<MyHandler>' to enable reflection-free processor dispatch",
+                "Type 'MyHandler' must implement 'IQuery<MyHandler, int>' to enable reflection-free processor dispatch",
+                "Type 'MyHandler' must implement 'IRequest<MyHandler, string>' to enable reflection-free processor dispatch",
+                "Type 'MyHandler' must implement 'ICommand<MyHandler>' to enable reflection-free processor dispatch",
             ]);
     }
 

@@ -20,7 +20,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
 
     private static readonly DiagnosticDescriptor _invalidMapping = new(
         "ARKPII207", "Invalid SQL policy mapping",
-        "SQL policy for '{0}' is invalid: {1}", "Compliance", DiagnosticSeverity.Error, true);
+        "SQL policy for '{0}' is invalid: {1}", "Compliance", DiagnosticSeverity.Error, true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII207.md");
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)

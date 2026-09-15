@@ -19,7 +19,7 @@ public static class MessagingContractTopologyValidator
         "Contract '{0}' is used by participant '{1}' with effective protocol MessagePack and must declare MessagePack.MessagePackObjectAttribute",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMSG025.md");
 
     internal static readonly DiagnosticDescriptor _missingProtobufShape = new(
         "ARKMSG026",
@@ -27,7 +27,7 @@ public static class MessagingContractTopologyValidator
         "Contract '{0}' is used by participant '{1}' with effective protocol Protobuf and must implement Google.Protobuf.IMessage<T> and expose the generated parser shape",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMSG026.md");
 
     internal static void _validate(
         Action<DiagnosticDescriptor, Location, object[]> report,

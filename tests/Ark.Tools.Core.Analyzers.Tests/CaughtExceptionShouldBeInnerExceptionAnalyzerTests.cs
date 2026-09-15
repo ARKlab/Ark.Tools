@@ -36,7 +36,10 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             """);
 
         diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE005");
-        diagnostics.Single(static item => item.Id == "ARKCORE005").Severity.Should().Be(DiagnosticSeverity.Error);
+        var diagnostic = diagnostics.Single(static item => item.Id == "ARKCORE005");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage().Should().Be(
+            "Throw a replacement exception that includes the caught exception as its inner exception");
     }
 
     /// <summary>Verifies direct and named inner exception arguments are accepted.</summary>
@@ -190,7 +193,10 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
-        diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE006" && item.Severity == DiagnosticSeverity.Error);
+        var diagnostic = diagnostics.Single(static item => item.Id == "ARKCORE006");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage().Should().Be(
+            "Name the caught exception before throwing a replacement so it can be used as the inner exception");
     }
 
     /// <summary>Verifies bare rethrows from catch clauses without variables are accepted.</summary>

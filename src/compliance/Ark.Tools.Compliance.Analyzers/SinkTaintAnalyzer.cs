@@ -55,7 +55,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             "Classified member '{0}' ([{1}]) reaches " + sink + "; log the key, not the person, or pass the value through a redactor. Analysis is intra-method only",
             "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true,
             description: "Tracks classified values through bounded intra-method IOperation reachability; cross-method flow is intentionally not analyzed.",
-            helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/sdk/privacy-by-default-prd.md");
+            helpLinkUri: $"https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/{id}.md");
     }
 
     private static void _analyze(OperationAnalysisContext context, SinkConfiguration sinks)

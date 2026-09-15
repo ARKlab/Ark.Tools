@@ -10,3 +10,4 @@ ARKMF011 | Ark.Tools.MediatorFramework | Error | Unsupported handler kind
 ARKMF014 | Ark.Tools.MediatorFramework | Error | Duplicate Rebus registration
 ARKMF015 | Ark.Tools.MediatorFramework | Error | Conflicting Rebus owner queues
 ARKMF019 | Ark.Tools.MediatorFramework | Error | Unsupported streaming response
+ARKMF057 | Ark.Tools.MediatorFramework | Error | Use a valid Rebus participant host binding

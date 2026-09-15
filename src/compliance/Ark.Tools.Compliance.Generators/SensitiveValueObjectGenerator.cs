@@ -23,7 +23,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         "Sensitive value object '{0}' must use string as its underlying type",
         "Compliance",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII201.md");
 
     private static readonly DiagnosticDescriptor _invalidDeclaration = new(
         "ARKPII202",
@@ -31,7 +31,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         "Sensitive value object '{0}' must be declared as a non-generic readonly partial struct",
         "Compliance",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII202.md");
 
     private static readonly DiagnosticDescriptor _clearTextToString = new(
         "ARKPII203",
@@ -39,7 +39,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         "Sensitive value object '{0}' cannot declare a ToString method",
         "Compliance",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII203.md");
 
     private static readonly DiagnosticDescriptor _invalidHook = new(
         "ARKPII204",
@@ -47,7 +47,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         "Sensitive value object '{0}' declares '{1}' with an unsupported signature; it must be 'private static {2} {1}(string value)'",
         "Compliance",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII204.md");
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)

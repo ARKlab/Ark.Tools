@@ -62,6 +62,10 @@ public class EvolvableEnumAnalyzerTests
 
         diagnostics.Select(static item => item.Id).Should().BeEquivalentTo(["ARKCORE001", "ARKCORE002"]);
         diagnostics.Should().OnlyContain(static item => item.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static item => item.Id == "ARKCORE001").GetMessage().Should()
+            .Be("Use backing type 'byte' for enum 'CompactStatus' instead of 'int'");
+        diagnostics.Single(static item => item.Id == "ARKCORE002").GetMessage().Should()
+            .Be("Declare an explicit NOT_SET = 0 member in enum 'CompactStatus'");
     }
 
     /// <summary>Verifies aliases and lookalike generic types are matched by symbol identity.</summary>
@@ -122,7 +126,9 @@ public class EvolvableEnumAnalyzerTests
             """);
 
         diagnostics.Select(static item => item.Id).Should().Contain("ARKCORE003");
-        diagnostics.Single(static item => item.Id == "ARKCORE003").Severity.Should().Be(DiagnosticSeverity.Error);
+        var diagnostic = diagnostics.Single(static item => item.Id == "ARKCORE003");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage().Should().Be("Rename one enum member so evolvable name 'same' is unique");
     }
 
     /// <summary>Verifies a full small backing type produces an evolvability warning.</summary>
@@ -147,7 +153,10 @@ public class EvolvableEnumAnalyzerTests
             """);
 
         diagnostics.Should().ContainSingle(static item => item.Id == "ARKCORE004");
-        diagnostics.Single(static item => item.Id == "ARKCORE004").Severity.Should().Be(DiagnosticSeverity.Warning);
+        var diagnostic = diagnostics.Single(static item => item.Id == "ARKCORE004");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Warning);
+        diagnostic.GetMessage().Should().Be(
+            "Leave at least one unused value in enum 'FullStatus' backing type 'byte' for future members");
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)

@@ -22,7 +22,8 @@ public sealed class ContractSolidKindAnalyzer : DiagnosticAnalyzer
         "Contract '{0}' can implement only one of IQuery, IRequest, or ICommand",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF021.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

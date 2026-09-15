@@ -9,25 +9,25 @@ internal static class DiagnosticDescriptors
 {
     public static readonly DiagnosticDescriptor UnknownHttpVerb = new(
         "ARKMF010", "Unknown HTTP verb", "HTTP endpoint '{0}' uses unsupported verb '{1}'",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF010.md");
 
     public static readonly DiagnosticDescriptor UnsupportedHandlerKind = new(
         "ARKMF011", "Unsupported handler kind", "Attributed type '{0}' does not implement a supported handler interface",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF011.md");
 
     public static readonly DiagnosticDescriptor MissingRouteProperty = new(
         "ARKMF012", "Missing route property", "HTTP endpoint '{0}' has route placeholder '{1}' without a matching property",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF012.md");
 
     public static readonly DiagnosticDescriptor InvalidContractShape = new(
         "ARKMF013", "Invalid contract shape", "HTTP endpoint '{0}' must be a record with settable properties for body or multipart binding",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF013.md");
 
     public static readonly DiagnosticDescriptor InvalidETagProperty = new(
         "ARKMF017", "Invalid ETag property", "HTTP endpoint '{0}' marks property '{1}' with [ETag], but the property type is not string",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF017.md");
 
     public static readonly DiagnosticDescriptor DuplicateETagProperty = new(
         "ARKMF018", "Duplicate ETag property", "HTTP endpoint '{0}' has more than one property marked with [ETag]",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF018.md");
 }

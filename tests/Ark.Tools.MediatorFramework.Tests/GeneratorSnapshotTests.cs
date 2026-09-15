@@ -188,6 +188,101 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorReportsInvalidInputsWithActionableMetadata()
+    {
+        var cases = new (string Id, string Source)[]
+        {
+            ("ARKMF050", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                using Ark.Tools.Solid;
+                [McpTool(Name = "invalid/name")]
+                public sealed class InvalidName : ICommand { }
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public partial class Context { }
+                public sealed class Marker { }
+                """),
+            ("ARKMF051", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                using Ark.Tools.Solid;
+                [McpTool(Name = "same")]
+                public sealed class First : ICommand { }
+                [McpTool(Name = "same")]
+                public sealed class Second : ICommand { }
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public partial class Context { }
+                public sealed class Marker { }
+                """),
+            ("ARKMF052", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                [McpTool]
+                public sealed class Unsupported { }
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public partial class Context { }
+                public sealed class Marker { }
+                """),
+            ("ARKMF053", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                using Ark.Tools.Solid;
+                [McpTool]
+                public sealed class UnsupportedMember : IRequest<UnsupportedMember, string>
+                {
+                    public string Value { get; }
+                }
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public partial class Context { }
+                public sealed class Marker { }
+                """),
+            ("ARKMF054", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                using Ark.Tools.Solid;
+                [McpTool]
+                public sealed class MissingConstructor : IRequest<MissingConstructor, string>
+                {
+                    public MissingConstructor(int value) { }
+                }
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public partial class Context { }
+                public sealed class Marker { }
+                """),
+            ("ARKMF055", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                using Ark.Tools.Solid;
+                [McpTool]
+                public sealed class MissingDescription : ICommand { }
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public partial class Context { }
+                public sealed class Marker { }
+                """),
+            ("ARKMF056", """
+                using Ark.Tools.MediatorFramework;
+                using Ark.Tools.MediatorFramework.Mcp;
+                [ArkGenerateMcpToolsForAssembly(typeof(Marker))]
+                public class Context { }
+                public sealed class Marker { }
+                """),
+        };
+
+        foreach (var testCase in cases)
+        {
+            var result = _runGeneratorResult<McpToolGenerator>(testCase.Source);
+            result.Diagnostics.Select(static item => item.Id).Should().Contain(testCase.Id);
+            var diagnostic = result.Diagnostics.First(item => item.Id == testCase.Id);
+
+            diagnostic.GetMessage().Should().NotBeNullOrWhiteSpace();
+            diagnostic.Descriptor.Title.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                .Should().NotBeNullOrWhiteSpace();
+            diagnostic.Descriptor.HelpLinkUri.Should()
+                .Be($"https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/{testCase.Id}.md");
+        }
+    }
+
+    [TestMethod]
     public void McpToolErrorsExposeSafeValidationProblemDetails()
     {
         var exception = new ValidationException(
@@ -1541,7 +1636,13 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class OrphanRebusHost;
             """);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
+        var diagnostic = result.Diagnostics.Single(static item => item.Id == "ARKMF057");
+        diagnostic.GetMessage().Should().Be(
+            "The bound messaging participant is not listed in a messaging network.. Configure a supported Rebus participant host binding");
+        diagnostic.Descriptor.Title.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            .Should().Be("Use a valid Rebus participant host binding");
+        diagnostic.Descriptor.HelpLinkUri.Should()
+            .Be("https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF057.md");
     }
 
     [TestMethod]
@@ -1564,7 +1665,10 @@ public sealed class GeneratorSnapshotTests
             public partial class RebusHost;
             """);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
+        var diagnostic = result.Diagnostics.Single(static item => item.Id == "ARKMF057");
+        diagnostic.GetMessage().Should().Contain("Configure a supported Rebus participant host binding");
+        diagnostic.Descriptor.HelpLinkUri.Should()
+            .Be("https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF057.md");
     }
 
     [TestMethod]

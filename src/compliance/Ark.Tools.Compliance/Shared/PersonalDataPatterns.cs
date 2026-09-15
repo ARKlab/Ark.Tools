@@ -21,7 +21,7 @@ internal enum PersonalDataKind
 internal static class PersonalDataPatterns
 {
     internal const string _email = @"(?<![\w.+-])[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+(?![\w-])";
-    internal const string _phone = @"(?<![\w\d])(?:\+[1-9](?:[ ()-]*[0-9]){7,14}|\(?[2-9][0-9]{2}\)?[ .-][2-9][0-9]{2}[ .-][0-9]{4})(?![0-9])";
+    internal const string _phone = @"(?<![\w\d])(?:\+[1-9](?>[ ()-]*[0-9]){7,14}|\(?[2-9][0-9]{2}\)?[ .-][2-9][0-9]{2}[ .-][0-9]{4})(?![0-9])";
     internal const string _nationalIdentifier = @"(?<![A-Za-z0-9])(?:[0-9]{3}-[0-9]{2}-[0-9]{4}|[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z])(?![A-Za-z0-9])";
     internal const string _iban = @"(?<![A-Za-z0-9])(?:"
         + @"NO[0-9]{2}(?: ?[A-Z0-9]){11}|BE[0-9]{2}(?: ?[A-Z0-9]){12}|"
@@ -39,7 +39,7 @@ internal static class PersonalDataPatterns
         + @"(?:JO|KW|MU)[0-9]{2}(?: ?[A-Z0-9]){26}|"
         + @"(?:MT|SC)[0-9]{2}(?: ?[A-Z0-9]){27}|LC[0-9]{2}(?: ?[A-Z0-9]){28}|"
         + @"[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30})(?![A-Za-z0-9])";
-    internal const string _postalAddress = @"(?<![A-Za-z0-9])[0-9]{1,5}[ ]+(?:[A-Z][a-z]+[ ]+){1,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd)\b";
+    internal const string _postalAddress = @"(?<![A-Za-z0-9])[0-9]{1,5}[ ]+(?>(?:[A-Z][a-z]+[ ]+)){1,4}(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd)\b";
 
     internal static string _reservedValue(PersonalDataKind kind)
     {
