@@ -9,18 +9,18 @@ internal static class DiagnosticDescriptors
 {
     public static readonly DiagnosticDescriptor UnsupportedHandlerKind = new(
         "ARKMF011", "Unsupported handler kind", "Attributed type '{0}' does not implement a supported handler interface",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF011.md");
 
     public static readonly DiagnosticDescriptor DuplicateRegistration = new(
         "ARKMF014", "Duplicate Rebus registration", "Rebus contract '{0}' is registered more than once",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF014.md");
 
     public static readonly DiagnosticDescriptor ConflictingOwnerQueue = new(
         "ARKMF015", "Conflicting Rebus owner queue", "Rebus contract '{0}' has conflicting owner queues: '{1}' and '{2}'",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF015.md");
 
     public static readonly DiagnosticDescriptor StreamingResponseNotSupported = new(
         "ARKMF019", "Streaming Rebus response is not supported",
         "Rebus contract '{0}' cannot use an IAsyncEnumerable response because Rebus does not enumerate it; the sequence would be discarded and may or may not alter outcomes",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF019.md");
 }

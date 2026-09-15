@@ -32,7 +32,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
-            DiagnosticSeverity.Error, isEnabledByDefault: true);
+            DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF004.md");
         /// <inheritdoc />
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
@@ -537,12 +537,13 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 spc.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor(
-                        "ARKMF020",
-                        "Invalid Rebus participant host binding",
-                        "{0}",
+                        "ARKMF057",
+                        "Use a valid Rebus participant host binding",
+                        "{0}. Configure a supported Rebus participant host binding",
                         "Ark.Tools.MediatorFramework",
                         DiagnosticSeverity.Error,
-                        isEnabledByDefault: true),
+                        isEnabledByDefault: true,
+                        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF057.md"),
                     invalidHost.Location,
                     invalidHost.Error));
             }

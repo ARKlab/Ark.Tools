@@ -24,7 +24,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "The EvolvableEnum backing type must match the enum's declared underlying type.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE001.md");
 
     private static readonly DiagnosticDescriptor _missingNotSet = new(
         "ARKCORE002",
@@ -34,7 +34,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Evolvable enums require an explicit zero-valued NOT_SET member for forward-compatible defaults.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE002.md");
 
     private static readonly DiagnosticDescriptor _duplicateName = new(
         "ARKCORE003",
@@ -44,7 +44,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Names from enum members and supported naming attributes must be unique.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE003.md");
 
     private static readonly DiagnosticDescriptor _fullEnum = new(
         "ARKCORE004",
@@ -54,7 +54,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "An evolvable enum with no unused backing values cannot accept future members.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE004.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

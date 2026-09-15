@@ -25,12 +25,12 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor _drift = new(
         "ARKPII020", "Compliance surface changed",
         "Compliance surface differs from ArkComplianceSurface.txt: {0}. Review obj/.../ArkComplianceSurface.current.txt and copy it to ArkComplianceSurface.txt to accept this change.",
-        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII020.md");
 
     private static readonly DiagnosticDescriptor _weakened = new(
         "ARKPII021", "Classified member removed or weakened",
         "Classified member '{0}' is absent from the baseline or its classification has been weakened. Review this privacy change before updating ArkComplianceSurface.txt",
-        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII021.md");
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)

@@ -23,7 +23,7 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "When a caught exception is replaced with another exception, preserve it as the inner exception.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE005.md");
 
     private static readonly DiagnosticDescriptor _missingDeclarationDiagnostic = new(
         "ARKCORE006",
@@ -33,7 +33,7 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "When a caught exception is replaced with another exception, capture it so it can be preserved as the inner exception.",
-        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzers.md");
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKCORE006.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

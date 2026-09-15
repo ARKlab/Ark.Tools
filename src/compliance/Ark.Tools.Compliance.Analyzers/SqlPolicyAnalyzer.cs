@@ -17,7 +17,7 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _missingColumn = new(
         "ARKPII007", "Declare storage protection for a classified column",
         "Classified member '{0}' has no SqlColumnPolicy on a SqlDataPolicy type; declare its verbatim column name and storage protection",
-        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII007.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>

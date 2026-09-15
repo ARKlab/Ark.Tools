@@ -34,23 +34,29 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
-        "ARKMF030", "Invalid MCP tool name", "MCP tool name '{0}' is invalid",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
+        "ARKMF050", "Use a valid MCP tool name", "MCP tool name '{0}' is invalid; rename the tool to a valid MCP identifier",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF050.md");
     private static readonly DiagnosticDescriptor DuplicateName = new(
-        "ARKMF031", "Duplicate MCP tool name", "MCP tool name '{0}' is declared more than once",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
+        "ARKMF051", "Use a unique MCP tool name", "MCP tool name '{0}' is declared more than once; rename one tool",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF051.md");
     private static readonly DiagnosticDescriptor UnsupportedContract = new(
-        "ARKMF032", "Unsupported MCP contract", "MCP contract '{0}' is not a supported request, query, or command",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
+        "ARKMF052", "Use a supported MCP contract", "MCP contract '{0}' must be a supported request, query, or command",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF052.md");
     private static readonly DiagnosticDescriptor UnsupportedMember = new(
-        "ARKMF033", "Unsupported MCP input member", "MCP contract '{0}' has unsupported input member '{1}'",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
+        "ARKMF053", "Use supported MCP input members", "MCP contract '{0}' has unsupported input member '{1}'; remove or change the member",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF053.md");
     private static readonly DiagnosticDescriptor MissingConstructor = new(
-        "ARKMF040", "Missing MCP contract constructor", "MCP contract '{0}' has no constructor matching its input members",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true);
+        "ARKMF054", "Add the MCP contract constructor", "MCP contract '{0}' must declare a constructor matching its input members",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF054.md");
     private static readonly DiagnosticDescriptor MissingDescription = new(
-        "ARKMF037", "Missing MCP description", "MCP tool '{0}' has no XML description",
-        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true);
+        "ARKMF055", "Document the MCP tool", "MCP tool '{0}' must have an XML description",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF055.md");
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -130,8 +136,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             if (marker.InvalidLocation is not null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    new DiagnosticDescriptor("ARKMF036", "Invalid MCP marker", "MCP context must be partial",
-                        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true),
+                    new DiagnosticDescriptor("ARKMF056", "Declare the MCP context as partial", "MCP context must be declared partial",
+                        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+                        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF056.md"),
                     marker.InvalidLocation));
                 continue;
             }

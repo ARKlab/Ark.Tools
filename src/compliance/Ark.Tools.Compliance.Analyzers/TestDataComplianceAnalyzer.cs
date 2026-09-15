@@ -25,7 +25,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _rule = new(
         "ARKPII006", "Keep real personal data out of test fixtures",
         "Test data contains a plausible {0}; repository clones and CI logs retain it. Replace it with reserved test data.",
-        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true);
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII006.md");
     private static readonly ImmutableArray<Pattern> _patterns = ImmutableArray.Create(
         new Pattern(PersonalDataKind.Email, PersonalDataPatterns._email),
         new Pattern(PersonalDataKind.Phone, PersonalDataPatterns._phone),

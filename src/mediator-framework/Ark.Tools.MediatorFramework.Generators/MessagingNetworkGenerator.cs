@@ -111,7 +111,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error);
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
-        return new DiagnosticDescriptor(id, title, message, "Ark.Tools.MediatorFramework", severity, true);
+        return new DiagnosticDescriptor(id, title, message, "Ark.Tools.MediatorFramework", severity, true,
+            helpLinkUri: $"https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/{id}.md");
     }
 
     /// <inheritdoc />

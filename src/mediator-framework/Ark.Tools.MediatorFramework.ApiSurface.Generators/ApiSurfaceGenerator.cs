@@ -42,7 +42,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "ArkApiSurface.txt is missing. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to generate ArkApiSurface.current.txt, copy it to $(MSBuildProjectDirectory)/ArkApiSurface.txt, and commit it.",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKAPI001.md");
 
     private static readonly DiagnosticDescriptor ContractChanged = new(
         "ARKAPI002",
@@ -50,7 +50,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "Contract '{0}' has changed since the last accepted snapshot. Run 'dotnet build -p:EmitCompilerGeneratedFiles=true' to inspect ArkApiSurface.current.txt, then update ArkApiSurface.txt to accept this change.",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKAPI002.md");
 
     private static readonly DiagnosticDescriptor MultipleSnapshots = new(
         "ARKAPI003",
@@ -58,7 +58,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "Only one ArkApiSurface.txt baseline is allowed, but {0} were found",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKAPI003.md");
 
     private static readonly DiagnosticDescriptor MalformedSnapshot = new(
         "ARKAPI004",
@@ -66,7 +66,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         "ArkApiSurface.txt contains an invalid snapshot entry: '{0}'. Messaging entries use multiline blocks; regenerate ArkApiSurface.current.txt and replace the baseline.",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKAPI004.md");
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)

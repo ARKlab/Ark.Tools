@@ -39,7 +39,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         "HTTP endpoint '{0}' enables MessagePack and cannot be selected by an Azure Functions host",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF030.md");
 
     private static readonly DiagnosticDescriptor _duplicateRoute = new(
         "ARKMF031",
@@ -47,7 +47,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         "HTTP endpoints '{0}' and '{1}' resolve to the same Azure Functions route '{2}'",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF031.md");
 
     private static readonly DiagnosticDescriptor _duplicateFunction = new(
         "ARKMF032",
@@ -55,7 +55,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         "HTTP endpoints '{0}' and '{1}' resolve to the same Azure Functions name '{2}'",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF032.md");
 
     private static readonly DiagnosticDescriptor _invalidHostPrefix = new(
         "ARKMF047",
@@ -63,7 +63,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         "HTTP host version prefix '{0}' must contain the '{{version}}' token",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF047.md");
 
     private static readonly DiagnosticDescriptor _conflictingHostPrefixes = new(
         "ARKMF048",
@@ -71,7 +71,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         "HTTP host markers for contract assembly '{0}' declare conflicting version prefixes '{1}' and '{2}'",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF048.md");
 
     private static readonly DiagnosticDescriptor _invalidHostSelection = new(
         "ARKMF049",
@@ -79,7 +79,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         "Type '{0}' in the host {1} list is not an [HttpEndpoint] contract declared by assembly '{2}'",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
-        true);
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF049.md");
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)

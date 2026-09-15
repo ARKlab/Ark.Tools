@@ -1,0 +1,34 @@
+# ARKMF014: Duplicate Rebus registration
+
+- **Severity:** Error
+- **Component:** Mediator Framework
+- **Diagnostic message:** `Rebus contract '{0}' is registered more than once`
+
+## What it checks
+
+This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
+
+## How to fix it
+
+Apply the correction stated by the diagnostic. Do not suppress the rule when changing the declaration, contract, host configuration, or data flow is possible.
+
+### Incorrect
+
+```csharp
+// Violates the rule
+// Generated contract or host declaration does not satisfy the diagnostic.
+```
+
+### Correct
+
+```csharp
+// Correct the contract or host declaration as requested by the diagnostic.
+```
+
+## Suppression and configuration
+
+Use the standard `dotnet_diagnostic.ARKMF014.severity` EditorConfig setting only for an intentional exception. Prefer a documented, reviewed suppression over disabling the rule globally.
+
+## Source
+
+This rule is implemented in Ark.Tools and its descriptor links here: `https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF014.md`.

@@ -861,7 +861,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             message,
             "Ark.Tools.MediatorFramework",
             severity,
-            isEnabledByDefault: true);
+            isEnabledByDefault: true,
+            helpLinkUri: $"https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/{id}.md");
     }
 
     private readonly struct Host
