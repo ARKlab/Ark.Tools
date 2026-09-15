@@ -15,15 +15,20 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+// Violates the rule: sensitive value object declares cleartext ToString.
+[SensitiveValueObject<string>]
+public readonly partial struct ClassifiedValue
+{
+    public override string ToString() => "cleartext";
+}
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+// Compliant: the generator provides a redacted ToString.
+[SensitiveValueObject<string>]
+public readonly partial struct ClassifiedValue { }
 ```
 
 ## Suppression and configuration
