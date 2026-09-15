@@ -124,32 +124,8 @@ public sealed class BookPrintProcessSteps
     }
 
     [Then(@"OpenTelemetry recorded the book print processing telemetry")]
-    public async Task ThenOpenTelemetryRecordedTheBookPrintProcessingTelemetry()
+    public void ThenOpenTelemetryRecordedTheBookPrintProcessingTelemetry()
     {
-        var timeout = TimeSpan.FromSeconds(5);
-        var pollInterval = TimeSpan.FromMilliseconds(100);
-        var deadline = DateTime.UtcNow + timeout;
-
-        while (DateTime.UtcNow < deadline)
-        {
-            var hasExpectedSpan = TestHost._telemetry._getSpans().Any(static span =>
-                span.SourceName == ReferenceTelemetry.ActivitySourceName
-                && span.Name == "ark.reference.book_print_process"
-                && span.Tags["book_print_process.status"] == "Completed");
-
-            var hasExpectedMetric = TestHost._telemetry._getMetrics().Any(static metric =>
-                metric.MeterName == Ark.Tools.Rebus.OpenTelemetryProcessingMetricsStep.MeterName
-                && metric.Name == "ark.tools.rebus.message_processing_time"
-                && metric.Tags["operation.result"] == "success");
-
-            if (hasExpectedSpan && hasExpectedMetric)
-            {
-                break;
-            }
-
-            await Task.Delay(pollInterval).ConfigureAwait(false);
-        }
-
         TestHost._telemetry._getSpans()
             .Should().Contain(static span =>
                 span.SourceName == ReferenceTelemetry.ActivitySourceName
