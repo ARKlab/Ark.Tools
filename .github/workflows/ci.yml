@@ -67,6 +67,9 @@ jobs:
 
     - name: 'Install APM'
       uses: microsoft/apm-action@v1
+      with:
+        setup-only: true
+        version: 0.30.0
 
     - name: 'Wait for Service Bus emulator'
       run: |
