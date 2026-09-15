@@ -33,7 +33,7 @@ Use this skill when adding or reviewing Reqnroll features or Binding/Steps class
   clock, or client between scenarios.
 - Steps classes are not per-Feature file and are supposed to be re-used even across features.
 - Let drivers own domain state and contract dispatch; bindings should only map
-  Gherkin input to driver calls and implement assertions. Drivers should swallow exceptions and track them for asserions to check.
+  Gherkin input to driver calls and implement assertions. Drivers should swallow exceptions and track them for assertions to check.
 - Model remote dependencies behind mock drivers. Do not mock
   application-owned infrastructure such as databases or message buses.
 - For asynchronous workflows, build independent sender and receiver
@@ -139,7 +139,7 @@ public sealed class EntitySteps
     }
 
     [When("I try to create a Entity with")]
-    public async Task CreateEntity(Table table)
+    public async Task TryCreateEntity(Table table)
     {
         await _try(CreateEntity(table));
     }
@@ -171,7 +171,14 @@ public sealed class EntitySteps
 
     private async Task _try(Func<Task> action)
     {
-      try { await action() } catch (Exception e) { _exception = e; }
+        try
+        {
+            await action();
+        }
+        catch (Exception e)
+        {
+            _exception = e;
+        }
     }
 }
 
