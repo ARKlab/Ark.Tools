@@ -19,9 +19,7 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 [SensitiveValueObject<string>]
 public readonly partial struct ClassifiedValue
 {
-    public string Value { get; }
-
-    public override string ToString() => Value;
+    public override string ToString() => "cleartext";
 }
 ```
 
@@ -30,10 +28,7 @@ public readonly partial struct ClassifiedValue
 ```csharp
 // Compliant: the generator provides a redacted ToString.
 [SensitiveValueObject<string>]
-public readonly partial struct ClassifiedValue
-{
-    public string Value { get; }
-}
+public readonly partial struct ClassifiedValue { }
 ```
 
 ## Suppression and configuration

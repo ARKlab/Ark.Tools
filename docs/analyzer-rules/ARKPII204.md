@@ -15,7 +15,7 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule: unsupported hook signature (public, instance, wrong parameter type)
+// Violates the rule: unsupported hook signature (wrong parameter type)
 [SensitiveValueObject<string>]
 public readonly partial struct ClassifiedValue
 {
