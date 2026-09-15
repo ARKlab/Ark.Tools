@@ -15,15 +15,21 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+// Violates the rule: generic and not readonly partial struct.
+public partial struct SensitiveValue<T>
+{
+    public T Value { get; }
+}
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+// Sensitive value object must be a non-generic readonly partial struct.
+public readonly partial struct SensitiveValue
+{
+    public string Value { get; }
+}
 ```
 
 ## Suppression and configuration

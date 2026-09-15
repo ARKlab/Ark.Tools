@@ -15,15 +15,15 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+// Violates the rule: sensitive value object uses a non-string underlying type.
+public readonly record struct CustomerSsn(int Value);
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+// Complies with the rule: sensitive value object uses string as its underlying type.
+public readonly record struct CustomerSsn(string Value);
 ```
 
 ## Suppression and configuration

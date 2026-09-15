@@ -15,15 +15,18 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+// Violates the rule: sensitive value object declares cleartext ToString.
+public sealed record ClassifiedValue(string Value)
+{
+    public override string ToString() => Value;
+}
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+// Compliant: sensitive value object does not declare/override ToString.
+public sealed record ClassifiedValue(string Value);
 ```
 
 ## Suppression and configuration

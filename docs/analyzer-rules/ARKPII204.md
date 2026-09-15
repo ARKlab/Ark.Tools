@@ -15,15 +15,21 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+// Violates the rule: unsupported hook signature (public, instance, wrong parameter type)
+public ClassifiedValue Normalize(int value)
+{
+    return new ClassifiedValue(value.ToString());
+}
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+// Correct: hook matches required signature `private static {type} {hook}(string value)`
+private static ClassifiedValue Normalize(string value)
+{
+    return new ClassifiedValue(value);
+}
 ```
 
 ## Suppression and configuration

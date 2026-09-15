@@ -15,15 +15,26 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule
-logger.LogInformation("{Value}", classifiedValue);
+// Violates the rule: telemetry is configured, but Ark redaction is not registered.
+var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddOpenTelemetry();
+
+var app = builder.Build();
+app.Run();
 ```
 
 ### Correct
 
 ```csharp
-// Use the approved classification, purpose, policy, or redactor described by the diagnostic.
-logger.LogInformation("Value available");
+// Complies with the rule: register Ark redaction when using Microsoft telemetry.
+var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddArkRedaction();
+builder.Services.AddOpenTelemetry();
+
+var app = builder.Build();
+app.Run();
 ```
 
 ## Suppression and configuration
