@@ -22,11 +22,12 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
     internal static readonly DiagnosticDescriptor _rule = new(
         DiagnosticId,
         "Use the self-referencing generic interface for reflection-free dispatch",
-        "Type '{0}' should implement '{1}' to enable reflection-free processor dispatch",
+        "Type '{0}' must implement '{1}' to enable reflection-free processor dispatch",
         "Performance",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "Implementing the self-referencing generic interface (e.g. IQuery<TSelf, TResult>) allows the processor to resolve both the concrete type and the result type at compile time, avoiding reflection and runtime caches.");
+        description: "Implementing the self-referencing generic interface (e.g. IQuery<TSelf, TResult>) allows the processor to resolve both the concrete type and the result type at compile time, avoiding reflection and runtime caches.",
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKSOLID001.md");
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics

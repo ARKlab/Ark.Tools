@@ -18,7 +18,7 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
     private static readonly DiagnosticDescriptor _diagnostic = new(
         "ARKCORE005",
         "Preserve the caught exception",
-        "The exception thrown from this catch clause must include the caught exception as its inner exception",
+        "Throw a replacement exception that includes the caught exception as its inner exception",
         "Exception handling",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
@@ -28,7 +28,7 @@ public sealed class CaughtExceptionShouldBeInnerExceptionAnalyzer : DiagnosticAn
     private static readonly DiagnosticDescriptor _missingDeclarationDiagnostic = new(
         "ARKCORE006",
         "Capture the caught exception",
-        "The catch clause must capture the exception before throwing a replacement",
+        "Name the caught exception before throwing a replacement so it can be used as the inner exception",
         "Exception handling",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,

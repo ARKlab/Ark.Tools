@@ -19,7 +19,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _backingTypeMismatch = new(
         "ARKCORE001",
         "Evolvable enum backing type mismatch",
-        "Backing type '{0}' must exactly match enum '{1}' backing type '{2}'",
+        "Use backing type '{2}' for enum '{1}' instead of '{0}'",
         "Usage",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
@@ -29,7 +29,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _missingNotSet = new(
         "ARKCORE002",
         "Evolvable enum requires NOT_SET",
-        "Enum '{0}' must declare an explicit NOT_SET = 0 member",
+        "Declare an explicit NOT_SET = 0 member in enum '{0}'",
         "Usage",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
@@ -39,7 +39,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _duplicateName = new(
         "ARKCORE003",
         "Evolvable enum names must be unique",
-        "Evolvable enum name '{0}' is used by multiple enum members",
+        "Rename one enum member so evolvable name '{0}' is unique",
         "Usage",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true,
@@ -49,7 +49,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
     private static readonly DiagnosticDescriptor _fullEnum = new(
         "ARKCORE004",
         "Evolvable enum cannot evolve",
-        "Enum '{0}' uses every value available in backing type '{1}'",
+        "Leave at least one unused value in enum '{0}' backing type '{1}' for future members",
         "Usage",
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,

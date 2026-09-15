@@ -1541,7 +1541,7 @@ public sealed class GeneratorSnapshotTests
             public sealed partial class OrphanRebusHost;
             """);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF057");
     }
 
     [TestMethod]
@@ -1564,7 +1564,7 @@ public sealed class GeneratorSnapshotTests
             public partial class RebusHost;
             """);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF020");
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF057");
     }
 
     [TestMethod]
