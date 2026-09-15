@@ -377,8 +377,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             var candidates = new[]
             {
                 Path.ChangeExtension(portableReference.FilePath, ".xml"),
-                Path.Combine(directory, assemblyXmlFileName),
-                Path.GetFullPath(Path.Combine(directory, "..", assemblyXmlFileName)),
+                Path.Join(directory, assemblyXmlFileName),
+                Path.GetFullPath(Path.Join(directory, "..", assemblyXmlFileName)),
             };
             var documentationFile = candidates.FirstOrDefault(File.Exists);
             if (documentationFile is null)

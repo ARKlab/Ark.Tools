@@ -30,7 +30,7 @@ public sealed class NativeOutboxIntegrationTests
         var factory = _sqlFactory();
         var committedAuditId = Guid.NewGuid();
         var committed = await factory.CreateAsync().ConfigureAwait(false);
-        await using (var __committed = committed.ConfigureAwait(false))
+        await using (var _ = committed.ConfigureAwait(false))
         {
             await committed.WriteAuditAsync(_audit(committedAuditId)).ConfigureAwait(false);
             await committed.SendAsync([_message(1)]).ConfigureAwait(false);
@@ -41,7 +41,7 @@ public sealed class NativeOutboxIntegrationTests
         (await _countAsync("Outbox").ConfigureAwait(false)).Should().Be(1);
 
         var rolledBack = await factory.CreateAsync().ConfigureAwait(false);
-        await using (var __rolledBack = rolledBack.ConfigureAwait(false))
+        await using (var _ = rolledBack.ConfigureAwait(false))
         {
             await rolledBack.WriteAuditAsync(_audit(Guid.NewGuid())).ConfigureAwait(false);
             await rolledBack.SendAsync([_message(2)]).ConfigureAwait(false);

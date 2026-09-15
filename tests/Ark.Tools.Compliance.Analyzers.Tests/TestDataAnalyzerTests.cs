@@ -144,6 +144,42 @@ public sealed class TestDataAnalyzerTests
             .Should().Be("fixture.person@corporate-domain.com");
     }
 
+    /// <summary>Feature fixture scanning respects the build-level compliance opt-out.</summary>
+    [TestMethod]
+    public async Task ComplianceOptOut_DisablesFeatureDiagnostics()
+    {
+        var diagnostics = await _analyzeFeatureAsync(
+            """
+            Feature: Contact fixtures
+              Scenario: Creating a contact
+                Given I create a contact with
+                  | Email                              |
+                  | fixture.person@corporate-domain.com |
+            """,
+            complianceEnabled: false).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Non-test feature files outside test paths are ignored.</summary>
+    [TestMethod]
+    public async Task NonTestFeatureOutsideTestPath_IsNotScanned()
+    {
+        var diagnostics = await _analyzeFeatureAsync(
+            """
+            Feature: Contact fixtures
+              Scenario: Creating a contact
+                Given I create a contact with
+                  | Email                              |
+                  | fixture.person@corporate-domain.com |
+            """,
+            assemblyName: "Production",
+            featurePath: "src/Contact.feature",
+            isTestProject: false).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
     /// <summary>A literal containing several shapes is fixed atomically without erasing surrounding text.</summary>
     [TestMethod]
     public async Task FixtureFixPreservesTextAndCompiles()
@@ -202,6 +238,21 @@ public sealed class TestDataAnalyzerTests
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
+    private static async Task<ImmutableArray<Diagnostic>> _analyzeFeatureAsync(
+        string feature,
+        string assemblyName = "Fixtures.Tests",
+        string featurePath = "Contact.feature",
+        bool complianceEnabled = true,
+        bool isTestProject = true)
+    {
+        var compilation = _compilation("safe", assemblyName);
+        var options = new AnalyzerOptions(
+            [new TextFile(featurePath, feature)],
+            new OptionsProvider(complianceEnabled, isTestProject));
+        return await compilation.WithAnalyzers([new TestDataComplianceAnalyzer()], options)
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+    }
+
     private sealed class TextFile(string path, string content) : AdditionalText
     {
         public override string Path => path;
@@ -212,9 +263,9 @@ public sealed class TestDataAnalyzerTests
         }
     }
 
-    private sealed class OptionsProvider(bool complianceEnabled = true) : AnalyzerConfigOptionsProvider
+    private sealed class OptionsProvider(bool complianceEnabled = true, bool isTestProject = true) : AnalyzerConfigOptionsProvider
     {
-        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(complianceEnabled);
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new Options(complianceEnabled, isTestProject);
 
         public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
         {
@@ -227,15 +278,22 @@ public sealed class TestDataAnalyzerTests
         }
     }
 
-    private sealed class Options(bool complianceEnabled) : AnalyzerConfigOptions
+    private sealed class Options(bool complianceEnabled, bool isTestProject) : AnalyzerConfigOptions
     {
         public override bool TryGetValue(string key, out string value)
         {
-            value = key == "build_property.IsTestProject"
-                ? "true"
-                : "false";
-            return key is "build_property.IsTestProject" or "build_property.EnableArkToolsCompliance"
-                && (key == "build_property.IsTestProject" || !complianceEnabled);
+            switch (key)
+            {
+                case "build_property.IsTestProject":
+                    value = isTestProject ? "true" : "false";
+                    return true;
+                case "build_property.EnableArkToolsCompliance" when !complianceEnabled:
+                    value = "false";
+                    return true;
+                default:
+                    value = "false";
+                    return false;
+            }
         }
     }
 }

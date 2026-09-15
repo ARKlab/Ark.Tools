@@ -251,6 +251,7 @@ public sealed class TestClient
     }
 
     [Then("the request succeded")]
+    [Then("the request succeeded")]
     public void ThenTheRequestSucceded()
     {
         if (!LastResponse.ResponseMessage.IsSuccessStatusCode)

@@ -83,6 +83,19 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         });
         context.RegisterAdditionalFileAction(static fileContext =>
         {
+            if (fileContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                    "build_property.EnableArkToolsCompliance", out var enabled)
+                && string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (!_isTestProject(fileContext.Compilation, fileContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions)
+                && !_isTestPath(fileContext.AdditionalFile.Path))
+            {
+                return;
+            }
+
             var file = fileContext.AdditionalFile;
             if (!file.Path.EndsWith(".feature", StringComparison.OrdinalIgnoreCase)
                 || file.GetText(fileContext.CancellationToken) is not { } text)

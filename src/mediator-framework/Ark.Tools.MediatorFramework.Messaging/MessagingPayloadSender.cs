@@ -93,7 +93,7 @@ public sealed class MessagingPayloadSender
         {
             if (destinationTask.IsCompletedSuccessfully)
             {
-                var completedPayload = await destinationTask.ConfigureAwait(false);
+                using var completedPayload = await destinationTask.ConfigureAwait(false);
                 try
                 {
                     await _deleteAttachmentAsync(completedPayload).ConfigureAwait(false);
@@ -101,10 +101,6 @@ public sealed class MessagingPayloadSender
                 catch (Exception cleanupException) when (!_isCriticalException(cleanupException))
                 {
                     throw new AggregateException(exception, cleanupException);
-                }
-                finally
-                {
-                    completedPayload.Dispose();
                 }
             }
             throw;
@@ -123,19 +119,18 @@ public sealed class MessagingPayloadSender
                 var exception = new MessagingFailFastException(
                     MessagingFailFastReason.OversizedHeaders,
                     "Attachment-reference envelope exceeds the transport inline ceiling.");
-                try
+                using (result)
                 {
-                    await _deleteAttachmentAsync(result).ConfigureAwait(false);
+                    try
+                    {
+                        await _deleteAttachmentAsync(result).ConfigureAwait(false);
+                    }
+                    catch (Exception cleanupException) when (!_isCriticalException(cleanupException))
+                    {
+                        throw new AggregateException(exception, cleanupException);
+                    }
+                    throw exception;
                 }
-                catch (Exception cleanupException) when (!_isCriticalException(cleanupException))
-                {
-                    throw new AggregateException(exception, cleanupException);
-                }
-                finally
-                {
-                    result.Dispose();
-                }
-                throw exception;
             }
         }
 

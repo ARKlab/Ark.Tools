@@ -483,14 +483,9 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
 
     private static LocalDateTime _getEarliestModified(IResourceMetadata<TExtensions> info)
     {
-        if (info.ModifiedSources != null && info.ModifiedSources.Count != 0)
-        {
-            return info.ModifiedSources.Max(static x => x.Value);
-        }
-        else
-        {
-            return info.Modified;
-        }
+        return info.ModifiedSources != null && info.ModifiedSources.Count != 0
+            ? info.ModifiedSources.Max(static x => x.Value)
+            : info.Modified;
     }
 
     protected virtual void Dispose(bool disposing)
