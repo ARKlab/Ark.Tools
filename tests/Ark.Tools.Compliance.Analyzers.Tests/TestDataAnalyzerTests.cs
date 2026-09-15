@@ -68,6 +68,15 @@ public sealed class TestDataAnalyzerTests
         (await _analyzeAsync(value).ConfigureAwait(false)).Should().ContainSingle();
     }
 
+    /// <summary>Long non-matching literals do not cause the fixture scanner to time out.</summary>
+    [TestMethod]
+    public async Task LongNonMatchingLiteralDoesNotTimeOut()
+    {
+        var value = "1 " + new string('A', 100_000);
+
+        (await _analyzeAsync(value).ConfigureAwait(false)).Should().BeEmpty();
+    }
+
     /// <summary>The actual shared OpenAPI/Reqnroll fake generator stays deterministic and scanner-safe for all seeds.</summary>
     [TestMethod]
     [DataRow(int.MinValue)]
