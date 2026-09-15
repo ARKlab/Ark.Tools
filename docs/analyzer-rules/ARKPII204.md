@@ -16,9 +16,13 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 
 ```csharp
 // Violates the rule: unsupported hook signature (public, instance, wrong parameter type)
-public ClassifiedValue Normalize(int value)
+[SensitiveValueObject<string>]
+public readonly partial struct ClassifiedValue
 {
-    return new ClassifiedValue(value.ToString());
+    private static string _normalize(int value)
+    {
+        return value.ToString();
+    }
 }
 ```
 
@@ -26,9 +30,13 @@ public ClassifiedValue Normalize(int value)
 
 ```csharp
 // Correct: hook matches required signature `private static {type} {hook}(string value)`
-private static ClassifiedValue Normalize(string value)
+[SensitiveValueObject<string>]
+public readonly partial struct ClassifiedValue
 {
-    return new ClassifiedValue(value);
+    private static string _normalize(string value)
+    {
+        return value.Trim();
+    }
 }
 ```
 

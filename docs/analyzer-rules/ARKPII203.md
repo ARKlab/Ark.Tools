@@ -16,8 +16,11 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 
 ```csharp
 // Violates the rule: sensitive value object declares cleartext ToString.
-public sealed record ClassifiedValue(string Value)
+[SensitiveValueObject<string>]
+public readonly partial struct ClassifiedValue
 {
+    public string Value { get; }
+
     public override string ToString() => Value;
 }
 ```
@@ -25,8 +28,12 @@ public sealed record ClassifiedValue(string Value)
 ### Correct
 
 ```csharp
-// Compliant: sensitive value object does not declare/override ToString.
-public sealed record ClassifiedValue(string Value);
+// Compliant: the generator provides a redacted ToString.
+[SensitiveValueObject<string>]
+public readonly partial struct ClassifiedValue
+{
+    public string Value { get; }
+}
 ```
 
 ## Suppression and configuration

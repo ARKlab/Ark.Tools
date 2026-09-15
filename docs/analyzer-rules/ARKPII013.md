@@ -15,7 +15,8 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 ### Incorrect
 
 ```csharp
-// Violates the rule: telemetry is configured, but Ark redaction is not registered.
+// In an executable project referencing Microsoft.Extensions.Telemetry:
+// telemetry is configured, but Ark redaction is not registered.
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddOpenTelemetry();
@@ -27,7 +28,8 @@ app.Run();
 ### Correct
 
 ```csharp
-// Complies with the rule: register Ark redaction when using Microsoft telemetry.
+// In an executable project referencing Microsoft.Extensions.Telemetry:
+// register Ark redaction when using Microsoft telemetry.
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddArkRedaction();

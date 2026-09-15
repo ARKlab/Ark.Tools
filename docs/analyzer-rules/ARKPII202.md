@@ -16,6 +16,7 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 
 ```csharp
 // Violates the rule: generic and not readonly partial struct.
+[SensitiveValueObject<string>]
 public partial struct SensitiveValue<T>
 {
     public T Value { get; }
@@ -26,6 +27,7 @@ public partial struct SensitiveValue<T>
 
 ```csharp
 // Sensitive value object must be a non-generic readonly partial struct.
+[SensitiveValueObject<string>]
 public readonly partial struct SensitiveValue
 {
     public string Value { get; }

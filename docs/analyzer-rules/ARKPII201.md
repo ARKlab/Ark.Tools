@@ -16,14 +16,22 @@ Apply the correction stated by the diagnostic. Do not suppress the rule when cha
 
 ```csharp
 // Violates the rule: sensitive value object uses a non-string underlying type.
-public readonly record struct CustomerSsn(int Value);
+[SensitiveValueObject<int>]
+public readonly partial struct CustomerSsn
+{
+    public int Value { get; }
+}
 ```
 
 ### Correct
 
 ```csharp
 // Complies with the rule: sensitive value object uses string as its underlying type.
-public readonly record struct CustomerSsn(string Value);
+[SensitiveValueObject<string>]
+public readonly partial struct CustomerSsn
+{
+    public string Value { get; }
+}
 ```
 
 ## Suppression and configuration
