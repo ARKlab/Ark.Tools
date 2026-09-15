@@ -1,5 +1,5 @@
 name: Ark.Tools
-version: 1.0.0
+version: 1.1.0
 description: APM project for Ark.Tools
 author: Andrea Cuneo
 targets:
@@ -47,4 +47,4 @@ marketplace:
     - name: ark-csharp
       description: Ark CSharp development skills and agents
       source: ./agents-plugins/ark-csharp
-      version: 1.0.0
+      version: 1.1.0

@@ -23,6 +23,7 @@ reading activity, covers, streaming, editions, and Rebus printing.
 | 1 | A first `Ping` request, handler, and `Program.cs` | [Getting started](getting-started.md) |
 | 2 | Application/host split and SimpleInjector composition | [Host setup and composition](host-setup-and-composition.md) |
 | 3 | Contract shape, DTOs, versions, and server-owned fields | [Contracts and handlers](contracts-and-handlers.md), [Request and DTO best practices](request-and-dto-best-practices.md), [Versioning](versioning.md) |
+| 3a | Required decisions before adding or changing a contract | [Contract design workflow](contract-design-workflow.md) |
 | 4 | Validation and transport-agnostic authorization | [Validation and authorization](validation-and-authorization.md) |
 | 5 | Generated HTTP binding and multipart inputs | [HTTP endpoints](http-endpoints.md), [Attachments](attachments.md) |
 | 6 | Code-first gRPC and `.proto` export | [gRPC](grpc.md) |

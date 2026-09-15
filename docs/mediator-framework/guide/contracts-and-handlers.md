@@ -4,6 +4,11 @@ A contract is the transport-neutral input to an application operation. A handler
 owns the operation's behavior; endpoint generators only deserialize, authorize,
 dispatch, and serialize.
 
+Before adding or changing one, complete the [contract design
+workflow](contract-design-workflow.md). It records transport exposure, ownership,
+server-set fields, messaging participants, validation, authorization, versioning,
+and test boundaries before implementation.
+
 ## Choose the contract shape
 
 For model and operation naming, follow
