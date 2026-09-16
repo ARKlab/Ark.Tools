@@ -22,7 +22,8 @@ the legacy single-generic interfaces and offers a code fix to migrate them.
 ## Microsoft dependency injection bridge
 
 When an application composes handlers with SimpleInjector but exposes processors through
-`IServiceCollection`, register the existing SimpleInjector processors and then bridge them:
+`IServiceCollection`, bridge the processors and complete the SimpleInjector registrations before
+the bridged processors are executed:
 
 ```csharp
 var container = new Container();
@@ -37,6 +38,9 @@ builder.Services.AddArkSolidProcessors(container);
 `AddArkSolidProcessors` keeps SimpleInjector authoritative for handler and decorator resolution.
 The bridged processors reuse the current `AsyncScopedLifestyle` scope when one is active and
 create one when execution starts outside a scope (for example, in message-driven entry points).
+Processor registrations can be added to SimpleInjector before or after the bridge helper runs, and
+existing `IServiceCollection` processor registrations are preserved so repeated helper calls do not
+append duplicate bridges.
 
 ## Trimming Support
 

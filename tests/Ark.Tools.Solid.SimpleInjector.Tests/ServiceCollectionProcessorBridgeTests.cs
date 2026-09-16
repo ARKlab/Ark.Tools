@@ -64,7 +64,7 @@ public sealed class ServiceCollectionProcessorBridgeTests
         await using var provider = _createProvider(container);
         var requestProcessor = provider.GetRequiredService<IRequestProcessor>();
 
-        await using (AsyncScopedLifestyle.BeginScope(container))
+        await using (AsyncScopedLifestyle.BeginScope(container).ConfigureAwait(false))
         {
             var currentProbe = container.GetInstance<ScopeProbe>();
 
@@ -101,26 +101,138 @@ public sealed class ServiceCollectionProcessorBridgeTests
         result.OuterScopeId.Should().Be(result.InnerScopeId);
     }
 
-    private static ServiceProvider _createProvider(Container container)
+    [TestMethod]
+    public async Task AddArkSolidProcessors_preserves_existing_microsoft_dependency_injection_registrations()
     {
+        await using var container = _createContainer();
+        var existingRequestProcessor = new SimpleInjectorRequestProcessor(container);
+        var existingQueryProcessor = new SimpleInjectorQueryProcessor(container);
+        var existingCommandProcessor = new SimpleInjectorCommandProcessor(container);
         var services = new ServiceCollection();
+        services.AddSingleton<IRequestProcessor>(existingRequestProcessor);
+        services.AddSingleton<IQueryProcessor>(existingQueryProcessor);
+        services.AddSingleton<ICommandProcessor>(existingCommandProcessor);
+
+        await using var provider = _createProvider(container, services);
+
+        provider.GetRequiredService<IRequestProcessor>().Should().BeSameAs(existingRequestProcessor);
+        provider.GetRequiredService<IQueryProcessor>().Should().BeSameAs(existingQueryProcessor);
+        provider.GetRequiredService<ICommandProcessor>().Should().BeSameAs(existingCommandProcessor);
+        provider.GetServices<IRequestProcessor>().Should().ContainSingle().Which.Should().BeSameAs(existingRequestProcessor);
+        provider.GetServices<IQueryProcessor>().Should().ContainSingle().Which.Should().BeSameAs(existingQueryProcessor);
+        provider.GetServices<ICommandProcessor>().Should().ContainSingle().Which.Should().BeSameAs(existingCommandProcessor);
+    }
+
+    [TestMethod]
+    public async Task AddArkSolidProcessors_is_idempotent_for_repeated_helper_calls()
+    {
+        await using var container = _createContainer();
+        var services = new ServiceCollection();
+
         services.AddArkSolidProcessors(container);
+        services.AddArkSolidProcessors(container);
+
+        await using var provider = _createProvider(container, services);
+
+        provider.GetServices<IRequestProcessor>().Should().ContainSingle();
+        provider.GetServices<IQueryProcessor>().Should().ContainSingle();
+        provider.GetServices<ICommandProcessor>().Should().ContainSingle();
+    }
+
+    [TestMethod]
+    public async Task AddArkSolidProcessors_allows_late_simpleinjector_processor_registrations()
+    {
+        await using var container = _createEmptyContainer();
+        var services = new ServiceCollection();
+
+        services.AddArkSolidProcessors(container);
+        _registerDefaultProcessorsAndHandlers(container);
+
+        await using var provider = _buildProvider(container, services);
+        var trace = container.GetInstance<Trace>();
+        var requestProcessor = provider.GetRequiredService<IRequestProcessor>();
+        var queryProcessor = provider.GetRequiredService<IQueryProcessor>();
+        var commandProcessor = provider.GetRequiredService<ICommandProcessor>();
+
+        var requestResult = await requestProcessor.ExecuteAsync(new TestRequest(10)).ConfigureAwait(false);
+        var queryResult = await queryProcessor.ExecuteAsync(new TestQuery(20)).ConfigureAwait(false);
+        await commandProcessor.ExecuteAsync(new TestCommand(30)).ConfigureAwait(false);
+
+        requestResult.Should().Be(10);
+        queryResult.Should().Be(20);
+        trace.Events.Should().Equal(_expectedEvents);
+    }
+
+    [TestMethod]
+    public async Task AddArkSolidProcessors_resolves_scoped_simpleinjector_request_processors_inside_the_execution_scope()
+    {
+        await using var container = _createContainer(static container =>
+        {
+            container.Register<IRequestProcessor, ScopedTrackingRequestProcessor>(Lifestyle.Scoped);
+        });
+        await using var provider = _createProvider(container);
+        var requestProcessor = provider.GetRequiredService<IRequestProcessor>();
+
+        var first = await requestProcessor.ExecuteAsync(new ScopedProcessorRequest()).ConfigureAwait(false);
+        var second = await requestProcessor.ExecuteAsync(new ScopedProcessorRequest()).ConfigureAwait(false);
+
+        first.ProcessorInstanceId.Should().NotBe(second.ProcessorInstanceId);
+        first.ScopeInstanceId.Should().NotBe(second.ScopeInstanceId);
+
+        await using (AsyncScopedLifestyle.BeginScope(container).ConfigureAwait(false))
+        {
+            var inScopeFirst = await requestProcessor.ExecuteAsync(new ScopedProcessorRequest()).ConfigureAwait(false);
+            var inScopeSecond = await requestProcessor.ExecuteAsync(new ScopedProcessorRequest()).ConfigureAwait(false);
+
+            inScopeFirst.ProcessorInstanceId.Should().Be(inScopeSecond.ProcessorInstanceId);
+            inScopeFirst.ScopeInstanceId.Should().Be(inScopeSecond.ScopeInstanceId);
+        }
+    }
+
+    private static ServiceProvider _createProvider(Container container, ServiceCollection? services = null)
+    {
+        services ??= new ServiceCollection();
+        services.AddArkSolidProcessors(container);
+        return _buildProvider(container, services);
+    }
+
+    private static ServiceProvider _buildProvider(Container container, ServiceCollection services)
+    {
         var provider = services.BuildServiceProvider();
         container.RegisterInstance<IServiceProvider>(provider);
         container.Verify();
         return provider;
     }
 
-    private static Container _createContainer()
+    private static Container _createContainer(Action<Container>? registerRequestProcessor = null)
     {
-        var container = new Container
+        var container = _createEmptyContainer();
+        _registerDefaultProcessorsAndHandlers(container, registerRequestProcessor);
+        return container;
+    }
+
+    private static Container _createEmptyContainer()
+    {
+        return new Container
         {
             Options =
             {
                 DefaultScopedLifestyle = new AsyncScopedLifestyle(),
             },
         };
-        container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+    }
+
+    private static void _registerDefaultProcessorsAndHandlers(Container container, Action<Container>? registerRequestProcessor = null)
+    {
+        if (registerRequestProcessor is null)
+        {
+            container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+        }
+        else
+        {
+            registerRequestProcessor(container);
+        }
+
         container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
         container.RegisterInstance(new Trace());
@@ -136,7 +248,6 @@ public sealed class ServiceCollectionProcessorBridgeTests
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(RequestDecorator<,>));
         container.RegisterDecorator(typeof(IQueryHandler<,>), typeof(QueryDecorator<,>));
         container.RegisterDecorator(typeof(ICommandHandler<>), typeof(CommandDecorator<>));
-        return container;
     }
 
     private sealed class Trace
@@ -155,6 +266,8 @@ public sealed class ServiceCollectionProcessorBridgeTests
     private sealed record FailingRequest : IRequest<FailingRequest, int>;
     private sealed record NestedRequest : IRequest<NestedRequest, NestedScopeResult>;
     private sealed record InnerNestedRequest : IRequest<InnerNestedRequest, Guid>;
+    private sealed record ScopedProcessorRequest : IRequest<ScopedProcessorRequest, ScopedProcessorObservation>;
+    private sealed record ScopedProcessorObservation(Guid ProcessorInstanceId, Guid ScopeInstanceId);
     private sealed record TestQuery(int Value) : IQuery<TestQuery, int>;
     private sealed record CancellableQuery : IQuery<CancellableQuery, int>;
     private sealed record TestCommand(int Value) : ICommand<TestCommand>;
@@ -199,6 +312,45 @@ public sealed class ServiceCollectionProcessorBridgeTests
         public async Task<Guid> ExecuteAsync(InnerNestedRequest request, CancellationToken ctk = default)
         {
             return await Task.FromResult(scopeProbe.InstanceId).ConfigureAwait(false);
+        }
+    }
+
+    private sealed class ScopedTrackingRequestProcessor : IRequestProcessor
+    {
+        private readonly ScopeProbe _scopeProbe;
+        private readonly SimpleInjectorRequestProcessor _inner;
+
+        public ScopedTrackingRequestProcessor(Container container, ScopeProbe scopeProbe)
+        {
+            _scopeProbe = scopeProbe;
+            _inner = new SimpleInjectorRequestProcessor(container);
+            ProcessorInstanceId = Guid.NewGuid();
+        }
+
+        public Guid ProcessorInstanceId { get; }
+
+        [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
+#pragma warning disable CS0618 // Type or member is obsolete
+        public TResponse Execute<TResponse>(IRequest<TResponse> request)
+        {
+            throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
+        }
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
+        {
+            return await _inner.ExecuteAsync(request, ctk).ConfigureAwait(false);
+        }
+
+        public async Task<TResponse> ExecuteAsync<TRequest, TResponse>(IRequest<TRequest, TResponse> request, CancellationToken ctk = default)
+            where TRequest : class, IRequest<TRequest, TResponse>
+        {
+            if (request is ScopedProcessorRequest)
+            {
+                return await Task.FromResult((TResponse)(object)new ScopedProcessorObservation(ProcessorInstanceId, _scopeProbe.InstanceId)).ConfigureAwait(false);
+            }
+
+            return await _inner.ExecuteAsync<TRequest, TResponse>(request, ctk).ConfigureAwait(false);
         }
     }
 

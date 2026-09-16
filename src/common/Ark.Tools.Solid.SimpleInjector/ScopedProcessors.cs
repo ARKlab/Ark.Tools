@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
-internal sealed class ScopeAwareRequestProcessor(Container container, IRequestProcessor inner) : IRequestProcessor
+internal sealed class ScopeAwareRequestProcessor(Container container, Func<IRequestProcessor> getInnerProcessor) : IRequestProcessor
 {
     [DebuggerStepThrough]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -22,18 +22,22 @@ internal sealed class ScopeAwareRequestProcessor(Container container, IRequestPr
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
-        return await ScopedProcessorExecution.ExecuteAsync(container, () => inner.ExecuteAsync(request, ctk)).ConfigureAwait(false);
+        return await ScopedProcessorExecution.ExecuteAsync(
+            container,
+            async () => await getInnerProcessor().ExecuteAsync(request, ctk).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [DebuggerStepThrough]
     public async Task<TResponse> ExecuteAsync<TRequest, TResponse>(IRequest<TRequest, TResponse> request, CancellationToken ctk = default)
         where TRequest : class, IRequest<TRequest, TResponse>
     {
-        return await ScopedProcessorExecution.ExecuteAsync(container, () => inner.ExecuteAsync<TRequest, TResponse>(request, ctk)).ConfigureAwait(false);
+        return await ScopedProcessorExecution.ExecuteAsync(
+            container,
+            async () => await getInnerProcessor().ExecuteAsync<TRequest, TResponse>(request, ctk).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }
 
-internal sealed class ScopeAwareQueryProcessor(Container container, IQueryProcessor inner) : IQueryProcessor
+internal sealed class ScopeAwareQueryProcessor(Container container, Func<IQueryProcessor> getInnerProcessor) : IQueryProcessor
 {
     [DebuggerStepThrough]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -48,18 +52,22 @@ internal sealed class ScopeAwareQueryProcessor(Container container, IQueryProces
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
-        return await ScopedProcessorExecution.ExecuteAsync(container, () => inner.ExecuteAsync(query, ctk)).ConfigureAwait(false);
+        return await ScopedProcessorExecution.ExecuteAsync(
+            container,
+            async () => await getInnerProcessor().ExecuteAsync(query, ctk).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [DebuggerStepThrough]
     public async Task<TResult> ExecuteAsync<TQuery, TResult>(IQuery<TQuery, TResult> query, CancellationToken ctk = default)
         where TQuery : class, IQuery<TQuery, TResult>
     {
-        return await ScopedProcessorExecution.ExecuteAsync(container, () => inner.ExecuteAsync<TQuery, TResult>(query, ctk)).ConfigureAwait(false);
+        return await ScopedProcessorExecution.ExecuteAsync(
+            container,
+            async () => await getInnerProcessor().ExecuteAsync<TQuery, TResult>(query, ctk).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }
 
-internal sealed class ScopeAwareCommandProcessor(Container container, ICommandProcessor inner) : ICommandProcessor
+internal sealed class ScopeAwareCommandProcessor(Container container, Func<ICommandProcessor> getInnerProcessor) : ICommandProcessor
 {
     [DebuggerStepThrough]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -74,13 +82,17 @@ internal sealed class ScopeAwareCommandProcessor(Container container, ICommandPr
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
-        await ScopedProcessorExecution.ExecuteAsync(container, () => inner.ExecuteAsync(command, ctk)).ConfigureAwait(false);
+        await ScopedProcessorExecution.ExecuteAsync(
+            container,
+            async () => await getInnerProcessor().ExecuteAsync(command, ctk).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
     [DebuggerStepThrough]
     public async Task ExecuteAsync<TCommand>(ICommand<TCommand> command, CancellationToken ctk = default)
         where TCommand : class, ICommand<TCommand>
     {
-        await ScopedProcessorExecution.ExecuteAsync(container, () => inner.ExecuteAsync<TCommand>(command, ctk)).ConfigureAwait(false);
+        await ScopedProcessorExecution.ExecuteAsync(
+            container,
+            async () => await getInnerProcessor().ExecuteAsync<TCommand>(command, ctk).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }

@@ -40,3 +40,26 @@
 ## Concerns
 - No product concerns identified.
 - Tooling concern: the environment-level `parallel_validation` CodeQL step timed out, so only the targeted build/tests and the code-review portion completed successfully.
+
+## Review fixes (2026-09-16)
+- Updated `AddArkSolidProcessors` to preserve pre-existing Microsoft DI processor registrations and to stay idempotent across repeated helper calls.
+- Changed the scope-aware bridge processors to resolve the SimpleInjector processor registration inside `ScopedProcessorExecution`, so scoped/non-singleton registrations are resolved after an `AsyncScopedLifestyle` scope exists.
+- Added regression coverage for preserved existing registrations, repeated helper calls, and scoped SimpleInjector processor resolution inside the active scope.
+
+### Command/output summary
+- Red phase: `dotnet test tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --filter "FullyQualifiedName~ServiceCollectionProcessorBridgeTests"` failed 3 tests covering overwritten MS DI registrations, duplicate bridge registrations, and scoped processor resolution outside an active scope.
+- Green phase: the same focused test command passed (`8/8` tests).
+- Verification: `dotnet build tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --no-restore` succeeded with `0` warnings and `0` errors.
+- Verification: `dotnet test tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --no-build` passed (`11/11` tests).
+
+## Scoped bridge startup-order fix (2026-09-16)
+- Root cause: `AddArkSolidProcessors` eagerly queried `container.GetRegistration<TProcessor>()` during `IServiceCollection` composition, so calling the bridge before later SimpleInjector processor registrations failed immediately.
+- Fix: removed the eager registration lookup and deferred processor resolution to the bridge execution callback via `container.GetInstance<TProcessor>()`, after `ScopedProcessorExecution` establishes or reuses the `AsyncScopedLifestyle` scope.
+- Preserved the existing Microsoft DI registration guard/idempotence behavior and kept SimpleInjector decorators and late registrations in the active resolution path.
+- Added a regression test that calls the helper before registering the SimpleInjector processors, then resolves and executes request/query/command processors successfully.
+
+### Command/output summary
+- Red phase: `dotnet test tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --filter "FullyQualifiedName~ServiceCollectionProcessorBridgeTests.AddArkSolidProcessors_allows_late_simpleinjector_processor_registrations"` failed (`1/1`) with `InvalidOperationException` from the eager bridge lookup.
+- Focused green run: `dotnet test tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --filter "FullyQualifiedName~ServiceCollectionProcessorBridgeTests"` passed (`9/9` tests).
+- Verification: `dotnet build tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --no-restore` succeeded with `0` warnings and `0` errors.
+- Verification: `dotnet test tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj --no-build` passed (`12/12` tests).
