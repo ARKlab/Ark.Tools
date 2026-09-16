@@ -15,7 +15,6 @@ internal sealed class ComplianceCompilationFacts
 {
     internal readonly ImmutableArray<INamedTypeSymbol> _classificationAttributes;
     internal readonly ImmutableArray<INamedTypeSymbol> _knownSafeTypes;
-    internal readonly bool _complianceEnabled;
     internal readonly bool _telemetryRequiresRegistration;
     internal readonly INamedTypeSymbol? _complianceReviewedAttribute;
     internal readonly INamedTypeSymbol? _notPersonalDataAttribute;
@@ -26,7 +25,6 @@ internal sealed class ComplianceCompilationFacts
     internal readonly INamedTypeSymbol? _vogenValueObjectAttribute;
 
     private ComplianceCompilationFacts(
-        bool complianceEnabled,
         bool telemetryRequiresRegistration,
         INamedTypeSymbol? complianceReviewedAttribute,
         INamedTypeSymbol? notPersonalDataAttribute,
@@ -40,7 +38,6 @@ internal sealed class ComplianceCompilationFacts
     {
         _classificationAttributes = classificationAttributes;
         _knownSafeTypes = knownSafeTypes;
-        _complianceEnabled = complianceEnabled;
         _telemetryRequiresRegistration = telemetryRequiresRegistration;
         _complianceReviewedAttribute = complianceReviewedAttribute;
         _notPersonalDataAttribute = notPersonalDataAttribute;
@@ -53,14 +50,12 @@ internal sealed class ComplianceCompilationFacts
 
     internal static ComplianceCompilationFacts _create(Compilation compilation, AnalyzerConfigOptions options)
     {
-        var complianceEnabled = _isEnabled(options);
         var isTestProject = options.TryGetValue("build_property.IsTestProject", out var testProject)
             && string.Equals(testProject, "true", StringComparison.OrdinalIgnoreCase);
         var isHost = compilation.Options.OutputKind
             is OutputKind.ConsoleApplication or OutputKind.WindowsApplication or OutputKind.WindowsRuntimeApplication;
 
         return new ComplianceCompilationFacts(
-            complianceEnabled,
             isHost
                 && !isTestProject
                 && compilation.ReferencedAssemblyNames.Any(static name =>

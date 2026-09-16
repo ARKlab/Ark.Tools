@@ -30,12 +30,31 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         "ARKPII014", "Complete the test-data compliance scan",
         "Test data could not be fully scanned for personal data because a pattern exceeded the analyzer time limit. Shorten or replace the literal.",
         "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII014.md");
-    private static readonly ImmutableArray<Pattern> _patterns = ImmutableArray.Create(
+    private static readonly ImmutableArray<Pattern> _defaultPatterns = ImmutableArray.Create(
         new Pattern(PersonalDataKind.Email, PersonalDataPatterns._email),
         new Pattern(PersonalDataKind.Phone, PersonalDataPatterns._phone),
         new Pattern(PersonalDataKind.NationalIdentifier, PersonalDataPatterns._nationalIdentifier),
         new Pattern(PersonalDataKind.Iban, PersonalDataPatterns._iban),
         new Pattern(PersonalDataKind.PostalAddress, PersonalDataPatterns._postalAddress));
+    private readonly ImmutableArray<Pattern> _patterns;
+    private readonly Func<string, bool>? _forceIncompleteScan;
+
+    /// <summary>Initializes a new instance of the <see cref="TestDataComplianceAnalyzer"/> class.</summary>
+    public TestDataComplianceAnalyzer()
+        : this(_defaultPatterns)
+    {
+    }
+
+    internal TestDataComplianceAnalyzer(Func<string, bool> forceIncompleteScan)
+        : this(_defaultPatterns)
+    {
+        _forceIncompleteScan = forceIncompleteScan;
+    }
+
+    private TestDataComplianceAnalyzer(ImmutableArray<Pattern> patterns)
+    {
+        _patterns = patterns;
+    }
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(_rule, _scanIncomplete);
@@ -45,7 +64,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterCompilationStartAction(static start =>
+        context.RegisterCompilationStartAction(start =>
         {
             if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
                     "build_property.EnableArkToolsCompliance", out var enabled)
@@ -67,7 +86,12 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     return;
                 }
 
-                var result = _find(value);
+                var result = _find(value, _patterns);
+                if (_forceIncompleteScan?.Invoke(value) == true)
+                {
+                    result = new ScanResult(result._findings, timedOut: true);
+                }
+
                 if (result._findings.Count == 0 && !result._timedOut)
                 {
                     return;
@@ -93,7 +117,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                 }
             }, OperationKind.Literal);
         });
-        context.RegisterAdditionalFileAction(static fileContext =>
+        context.RegisterAdditionalFileAction(fileContext =>
         {
             if (fileContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
                     "build_property.EnableArkToolsCompliance", out var enabled)
@@ -124,7 +148,12 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                var result = _find(content);
+                var result = _find(content, _patterns);
+                if (_forceIncompleteScan?.Invoke(content) == true)
+                {
+                    result = new ScanResult(result._findings, timedOut: true);
+                }
+
                 foreach (var match in result._findings)
                 {
                     var span = new TextSpan(line.Start + match._span.Start, match._span.Length);
@@ -168,11 +197,11 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             || Path.GetFileName(path).EndsWith("Tests.cs", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static ScanResult _find(string value)
+    private static ScanResult _find(string value, ImmutableArray<Pattern> patterns)
     {
         var findings = new List<Finding>();
         var timedOut = false;
-        foreach (var pattern in _patterns)
+        foreach (var pattern in patterns)
         {
             try
             {

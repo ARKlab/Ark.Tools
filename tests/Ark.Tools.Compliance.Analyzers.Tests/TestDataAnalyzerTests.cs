@@ -77,6 +77,20 @@ public sealed class TestDataAnalyzerTests
         (await _analyzeAsync(value).ConfigureAwait(false)).Should().BeEmpty();
     }
 
+    /// <summary>A pattern timeout reports an incomplete scan while preserving findings from other patterns.</summary>
+    [TestMethod]
+    public async Task PatternTimeoutReportsIncompleteScan()
+    {
+        var feature = "| " + new string('a', 100_000) + "b +12025550200 |";
+
+        var diagnostics = await _analyzeFeatureAsync(
+            feature,
+            analyzer: new TestDataComplianceAnalyzer(static _ => true)).ConfigureAwait(false);
+
+        diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKPII006");
+        diagnostics.Select(static diagnostic => diagnostic.Id).Should().Contain("ARKPII014");
+    }
+
     /// <summary>The actual shared OpenAPI/Reqnroll fake generator stays deterministic and scanner-safe for all seeds.</summary>
     [TestMethod]
     [DataRow(int.MinValue)]
@@ -240,17 +254,19 @@ public sealed class TestDataAnalyzerTests
         string value,
         string assemblyName = "Fixtures.Tests",
         string path = "Fixture.cs",
-        bool? complianceEnabled = null)
+        bool? complianceEnabled = null,
+        DiagnosticAnalyzer? analyzer = null)
     {
         var compilation = _compilation(value, assemblyName, path);
+        analyzer ??= new TestDataComplianceAnalyzer();
         if (complianceEnabled is null)
         {
-            return await compilation.WithAnalyzers([new TestDataComplianceAnalyzer()])
+            return await compilation.WithAnalyzers([analyzer])
                 .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
         }
 
         return await compilation.WithAnalyzers(
-                [new TestDataComplianceAnalyzer()],
+                [analyzer],
                 new AnalyzerOptions(ImmutableArray<AdditionalText>.Empty, new OptionsProvider(complianceEnabled.Value)))
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
@@ -260,13 +276,15 @@ public sealed class TestDataAnalyzerTests
         string assemblyName = "Fixtures.Tests",
         string featurePath = "Contact.feature",
         bool complianceEnabled = true,
-        bool isTestProject = true)
+        bool isTestProject = true,
+        DiagnosticAnalyzer? analyzer = null)
     {
         var compilation = _compilation("safe", assemblyName);
         var options = new AnalyzerOptions(
             [new TextFile(featurePath, feature)],
             new OptionsProvider(complianceEnabled, isTestProject));
-        return await compilation.WithAnalyzers([new TestDataComplianceAnalyzer()], options)
+        analyzer ??= new TestDataComplianceAnalyzer();
+        return await compilation.WithAnalyzers([analyzer], options)
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 

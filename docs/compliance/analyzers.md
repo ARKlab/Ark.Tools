@@ -24,6 +24,7 @@ diagnostics. Referenced automatically by `Ark.Tools.Sdk` when
 | ARKPII010 | Error | Classification on a member the pipeline cannot redact (`object`, `dynamic`, delegate). |
 | ARKPII011 | Error | Classified value passed to a banned formatting sink (`Console.*`, `Debug.*`, `Trace.*`, `StringBuilder.Append`). |
 | ARKPII013 | Warning | Project logs through `Microsoft.Extensions.Telemetry` without calling `AddArkRedaction()`. |
+| ARKPII014 | Warning | Test-data scan exceeded its time limit and could not fully check a literal for personal data. |
 | ARKPII020 | Error | `ArkComplianceSurface.txt` drift — the classified surface changed vs the committed baseline. |
 | ARKPII021 | Error | A classified member was removed or its protection weakened vs the baseline. |
 | ARKPII201–204, 207 | Error | Generator misuse: unsupported value type, invalid struct declaration, cleartext `ToString()`, invalid hook signature, invalid SQL policy mapping. |

@@ -254,8 +254,9 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
 
                     _add(notes, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + (category ?? "(dynamic category)") + "]");
                 }
-                if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
-                    || method.Name is not ("Register" or "RegisterBuiltIn"))
+                if (invocation.Expression is not MemberAccessExpressionSyntax registerAccess
+                    || registerAccess.Name.Identifier.ValueText is not ("Register" or "RegisterBuiltIn")
+                    || model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method)
                     continue;
                 var serializer = SymbolEqualityComparer.Default.Equals(method.ContainingType, dapperType)
                     ? "Dapper"
