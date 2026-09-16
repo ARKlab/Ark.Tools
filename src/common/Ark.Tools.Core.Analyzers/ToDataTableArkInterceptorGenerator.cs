@@ -47,7 +47,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
                 transform: static (ctx, ct) => _analyze(ctx, ct))
             .Where(static model => model is not null)
             .Select(static (model, _) => model!.Value)
-            .WithComparer(CallSiteModelComparer.Instance)
+            .WithComparer(CallSiteModelComparer._instance)
             .Collect();
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>

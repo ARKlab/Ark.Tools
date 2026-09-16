@@ -153,19 +153,26 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         var findings = new List<Finding>();
         foreach (var pattern in _patterns)
         {
-            foreach (Match match in pattern._regex.Matches(value))
+            try
             {
-                if (PersonalDataPatterns._isReserved(pattern._kind, match.Value)
-                    || !PersonalDataPatterns._isChecksumValid(pattern._kind, match.Value))
+                foreach (Match match in pattern._regex.Matches(value))
                 {
-                    continue;
-                }
+                    if (PersonalDataPatterns._isReserved(pattern._kind, match.Value)
+                        || !PersonalDataPatterns._isChecksumValid(pattern._kind, match.Value))
+                    {
+                        continue;
+                    }
 
-                var span = new TextSpan(match.Index, match.Length);
-                if (!findings.Any(finding => finding._span.OverlapsWith(span)))
-                {
-                    findings.Add(new Finding(pattern._kind, span));
+                    var span = new TextSpan(match.Index, match.Length);
+                    if (!findings.Any(finding => finding._span.OverlapsWith(span)))
+                    {
+                        findings.Add(new Finding(pattern._kind, span));
+                    }
                 }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                // A pathological literal must not fail the compilation; other patterns still get a chance to match.
             }
         }
 

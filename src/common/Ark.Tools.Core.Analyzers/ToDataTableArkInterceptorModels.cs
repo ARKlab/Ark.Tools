@@ -65,9 +65,19 @@ internal readonly record struct CallSiteModel(TypeModel Type, InterceptableLocat
 
 internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
 {
-    internal static readonly CallSiteModelComparer Instance = new();
+    internal static readonly CallSiteModelComparer _instance = new();
 
-    public bool Equals(CallSiteModel x, CallSiteModel y)
+    bool IEqualityComparer<CallSiteModel>.Equals(CallSiteModel x, CallSiteModel y)
+    {
+        return _equals(x, y);
+    }
+
+    int IEqualityComparer<CallSiteModel>.GetHashCode(CallSiteModel obj)
+    {
+        return _getHashCode(obj);
+    }
+
+    private static bool _equals(CallSiteModel x, CallSiteModel y)
     {
         return x.Location.Version == y.Location.Version
             && string.Equals(x.Location.Data, y.Location.Data, StringComparison.Ordinal)
@@ -78,7 +88,7 @@ internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
             && x.Type.Members.SequenceEqual(y.Type.Members);
     }
 
-    public int GetHashCode(CallSiteModel obj)
+    private static int _getHashCode(CallSiteModel obj)
     {
         var hash = StringComparer.Ordinal.GetHashCode(obj.Location.Data);
         hash = (hash * 397) ^ obj.Location.Version;
