@@ -291,7 +291,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )"
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -903,7 +904,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )"
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )"
         }
       },
       "ark.tools.systemtextjson": {

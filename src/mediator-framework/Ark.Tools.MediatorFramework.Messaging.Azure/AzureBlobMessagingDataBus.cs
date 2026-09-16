@@ -8,10 +8,18 @@ using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Blob implementation of the shared DataBus provider contract.</summary>
-public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
+public sealed class AzureBlobMessagingDataBus :
+    IMessagingDataBus,
+    IMessagingDataBusAttachmentLifetime,
+    IMessagingDataBusStartupValidation,
+    IMessagingDataBusHostedServiceRegistration
 {
     private const string _lengthMetadataName = "amf1_length";
     private const string _sha256MetadataName = "amf1_sha256";
@@ -33,6 +41,13 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
 
     /// <summary>Gets the configured minimum attachment lifetime.</summary>
     public TimeSpan MinimumAttachmentLifetime => _options.MinimumAttachmentLifetime;
+
+    void IMessagingDataBusHostedServiceRegistration.RegisterServices(IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHostedService, AzureBlobMessagingDataBusStartupValidator>());
+    }
 
     /// <summary>
     /// Validates data-plane access and the configured container at host startup.
