@@ -2,7 +2,7 @@
 
 - **Severity:** Warning
 - **Component:** Compliance
-- **Diagnostic message:** `Test data could not be fully scanned for personal data because a pattern exceeded the analyzer time limit; shorten or replace the literal.`
+- **Diagnostic message:** `Test data could not be fully scanned for personal data because a pattern exceeded the analyzer time limit. Shorten or replace the literal.`
 
 ## What it checks
 

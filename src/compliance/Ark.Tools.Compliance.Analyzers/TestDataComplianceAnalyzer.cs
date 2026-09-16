@@ -28,7 +28,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII006.md");
     private static readonly DiagnosticDescriptor _scanIncomplete = new(
         "ARKPII014", "Complete the test-data compliance scan",
-        "Test data could not be fully scanned for personal data because a pattern exceeded the analyzer time limit; shorten or replace the literal.",
+        "Test data could not be fully scanned for personal data because a pattern exceeded the analyzer time limit. Shorten or replace the literal.",
         "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII014.md");
     private static readonly ImmutableArray<Pattern> _patterns = ImmutableArray.Create(
         new Pattern(PersonalDataKind.Email, PersonalDataPatterns._email),
