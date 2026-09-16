@@ -50,6 +50,7 @@ public sealed class SqlGeneratorTests
             """;
         var original = _generate(declaration);
         var renamed = _generate(declaration.Replace("string Email", "string Contact", StringComparison.Ordinal));
+        original.HintNames.Should().Equal(renamed.HintNames);
         original.TemplateFileNames.Should().Equal(renamed.TemplateFileNames);
         original.Sql.Should().Equal(renamed.Sql);
         original.Sql.Single().Should().Contain("[sales].[Customers].[email_address]")
@@ -65,6 +66,7 @@ public sealed class SqlGeneratorTests
         const string prefix = """[SqlDataPolicy(Table = "Customers")] public class Customer { """;
         var original = _generate(prefix + first + second + "}");
         var reordered = _generate(prefix + second + first + "}");
+        original.HintNames.Should().Equal(reordered.HintNames);
         original.TemplateFileNames.Should().Equal(reordered.TemplateFileNames);
         original.Sql.Should().Equal(reordered.Sql);
         original.Sql.Single().IndexOf(".[a]", StringComparison.Ordinal)
