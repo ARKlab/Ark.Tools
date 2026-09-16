@@ -10,8 +10,12 @@ scripts: {}
 devDependencies:
   apm:
     - microsoft/apm/packages/apm-guide#main
+    - Aaronontheweb/dotnet-skills/skills/aot-trimming#master
+    - Aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation#master
     - dotnet/skills/plugins/dotnet#main
+    - dotnet/skills/plugins/dotnet-diag#main
     - git: https://github.com/obra/superpowers#main
+    - DietrichGebert/ponytail#v4.10.0
   mcp:
     - name: ado
       registry: false

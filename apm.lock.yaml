@@ -1,10 +1,102 @@
 lockfile_version: '1'
-apm_version: 0.30.0
+apm_version: 0.31.0
 dependencies:
+- repo_url: aaronontheweb/dotnet-skills
+  materialization_repo_url: Aaronontheweb/dotnet-skills
+  name: aot-trimming
+  host: github.com
+  resolved_commit: f4d0d393b431ed0d7130d1b3711d5dfc6b1744cf
+  resolved_ref: master
+  version: unknown
+  virtual_path: skills/aot-trimming
+  is_virtual: true
+  package_type: claude_skill
+  deployed_files:
+  - .agents/skills/aot-trimming
+  - .agents/skills/aot-trimming/SKILL.md
+  - .agents/skills/aot-trimming/aot-trimming-playbook-reference.md
+  - .agents/skills/aot-trimming/trimming-attributes-reference.md
+  deployed_file_hashes:
+    .agents/skills/aot-trimming/SKILL.md: sha256:3fe49e8120a9869191722c8020e0505901eb21ce2a0e8644c5116e2b19476d9f
+    .agents/skills/aot-trimming/aot-trimming-playbook-reference.md: sha256:057fd3427794ede9bc4d3ff2c587ab17cdd5667a93de57a451b9a8fe530b04b8
+    .agents/skills/aot-trimming/trimming-attributes-reference.md: sha256:80d57a9a4efc7c83605f2c8af8408dde3e2d57e67a75af299e655cb76370925f
+  content_hash: sha256:eb2a0741e36e8d240a3aec2de065d5e1519c52adada243a5bd29f5687473fd92
+  is_dev: true
+- repo_url: aaronontheweb/dotnet-skills
+  materialization_repo_url: Aaronontheweb/dotnet-skills
+  name: opentelemetry-net-instrumentation
+  host: github.com
+  resolved_commit: f4d0d393b431ed0d7130d1b3711d5dfc6b1744cf
+  resolved_ref: master
+  version: unknown
+  virtual_path: skills/opentelementry-dotnet-instrumentation
+  is_virtual: true
+  package_type: claude_skill
+  deployed_files:
+  - .agents/skills/opentelementry-dotnet-instrumentation
+  - .agents/skills/opentelementry-dotnet-instrumentation/SKILL.md
+  - .agents/skills/opentelementry-dotnet-instrumentation/metrics-and-instruments-reference.md
+  - .agents/skills/opentelementry-dotnet-instrumentation/sdk-resources-and-logs-reference.md
+  - .agents/skills/opentelementry-dotnet-instrumentation/traces-and-propagation-reference.md
+  deployed_file_hashes:
+    .agents/skills/opentelementry-dotnet-instrumentation/SKILL.md: sha256:ee4c4d2d7583c73668c55c022be0b3e2d246b2680058a3ca48d41e279bcffe4b
+    .agents/skills/opentelementry-dotnet-instrumentation/metrics-and-instruments-reference.md: sha256:adeac10db48213a291a843f66e613ded3d98c6d88a490dbc324ec40ebf14c06c
+    .agents/skills/opentelementry-dotnet-instrumentation/sdk-resources-and-logs-reference.md: sha256:81859cc6b1c6468c5754ef486a2c0bc8e0683db30989d0992e5bd2f474a40efa
+    .agents/skills/opentelementry-dotnet-instrumentation/traces-and-propagation-reference.md: sha256:aef2b17ac091dfdee54d04ffcdc425cd2d6d299b653e3979ea97df0bb2d4426d
+  content_hash: sha256:c51314d1d83f6b913c6a03fd3b0cd3603d78669f714b14429dfb732bc1505a5f
+  is_dev: true
+- repo_url: dietrichgebert/ponytail
+  materialization_repo_url: DietrichGebert/ponytail
+  name: ponytail
+  host: github.com
+  resolved_commit: 1d95ff7d39de12d87014ea40d4e22201bddc501b
+  resolved_ref: v4.10.0
+  version: 1d95ff7
+  package_type: marketplace_plugin
+  deployed_files:
+  - .agents/skills/ponytail
+  - .agents/skills/ponytail-audit
+  - .agents/skills/ponytail-audit/SKILL.md
+  - .agents/skills/ponytail-debt
+  - .agents/skills/ponytail-debt/SKILL.md
+  - .agents/skills/ponytail-gain
+  - .agents/skills/ponytail-gain/SKILL.md
+  - .agents/skills/ponytail-help
+  - .agents/skills/ponytail-help/SKILL.md
+  - .agents/skills/ponytail-review
+  - .agents/skills/ponytail-review/SKILL.md
+  - .agents/skills/ponytail/SKILL.md
+  - .github/hooks/ponytail-copilot-hooks.json
+  - .github/hooks/scripts/ponytail/hooks/ponytail-activate.js
+  - .github/hooks/scripts/ponytail/hooks/ponytail-config.js
+  - .github/hooks/scripts/ponytail/hooks/ponytail-instructions.js
+  - .github/hooks/scripts/ponytail/hooks/ponytail-mode-tracker.js
+  - .github/hooks/scripts/ponytail/hooks/ponytail-runtime.js
+  - .github/hooks/scripts/ponytail/hooks/ponytail-statusline.ps1
+  - .github/hooks/scripts/ponytail/hooks/ponytail-statusline.sh
+  - .github/hooks/scripts/ponytail/hooks/ponytail-subagent.js
+  deployed_file_hashes:
+    .agents/skills/ponytail-audit/SKILL.md: sha256:5560b8e383dbe2ddfddc873a1e2bf2e586e23e0cd7d995537482b2315331f6d1
+    .agents/skills/ponytail-debt/SKILL.md: sha256:c84fba75f0ca12bfe83f9a78ea02fd125c5dd3f1fbb18124105a489937f284e6
+    .agents/skills/ponytail-gain/SKILL.md: sha256:24e01d1c9715cb136ba1c4f1e52a95940c0193558b876828e537736480d6408b
+    .agents/skills/ponytail-help/SKILL.md: sha256:2264d1615117b02b0fd5a69ec84cd2757006471a78e4d6c22eed6d581c1d37a4
+    .agents/skills/ponytail-review/SKILL.md: sha256:40df33b58fc6ef889b93585733feb9566b76e9586efa7f376785c1e995197ac0
+    .agents/skills/ponytail/SKILL.md: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
+    .github/hooks/ponytail-copilot-hooks.json: sha256:4ad52e6fd633e8fa1b73172da33e6b23d2b874fea94cd18a7def7a08037188a5
+    .github/hooks/scripts/ponytail/hooks/ponytail-activate.js: sha256:362a4b086ee2d6c6da615a32e5593bc8bd3614dc6a6dc9aa465968febdb83ce2
+    .github/hooks/scripts/ponytail/hooks/ponytail-config.js: sha256:0a8daf96cf9ac703dc4cb7b5065253567e513c951d60b8eb94a0fe727514aeca
+    .github/hooks/scripts/ponytail/hooks/ponytail-instructions.js: sha256:23c050103f28dbe6bad953ae21d98cd06d720a20f33d4716e9de419f947d495e
+    .github/hooks/scripts/ponytail/hooks/ponytail-mode-tracker.js: sha256:8643fdadff22bd23ac6fc24cee9e218ce576740a894895ea55faab9f434dc200
+    .github/hooks/scripts/ponytail/hooks/ponytail-runtime.js: sha256:df2205ecf8dd542d3b0d07077d6fdb9d6bd1dfc4b750aebf038b98cd9b32773c
+    .github/hooks/scripts/ponytail/hooks/ponytail-statusline.ps1: sha256:6138f15bc7651ee7e5ced2a2a2280f5c810d58cad3e9f3252c628f4c923e48c9
+    .github/hooks/scripts/ponytail/hooks/ponytail-statusline.sh: sha256:f1dbfa5997a5d4b5339619709053eff557ab16d71af75eb3041c3d3e3dca42ec
+    .github/hooks/scripts/ponytail/hooks/ponytail-subagent.js: sha256:7f6bee86702a488d29ef0dcaabf424bbe2aca345a6a642319d43a1fe0276792e
+  content_hash: sha256:cf663b30a6b47b2d349a5efdab76b32090a3b05733ac6a814d6cf6e835dc7102
+  is_dev: true
 - repo_url: dotnet/skills
   name: dotnet
   host: github.com
-  resolved_commit: 4ecd7d9c76fa458807684771c2bfc7acf1e00ad3
+  resolved_commit: 874ff14cff1015104cf343ed480a6879020b4820
   resolved_ref: main
   version: 0.2.4
   virtual_path: plugins/dotnet
@@ -15,12 +107,102 @@ dependencies:
   - .agents/skills/setup-local-sdk/SKILL.md
   deployed_file_hashes:
     .agents/skills/setup-local-sdk/SKILL.md: sha256:6b4904db9ae950da582f85dc2f4cf2adf586776d84ce805a273edb4045f1a74e
-  content_hash: sha256:0dac048819a4d78dabc51be788be09659d2ee20aed2b20ac13fe912416a0204c
+  content_hash: sha256:cf94e1ee1f4cf0115f324b796b4f52ce0ee500d1eb412ab3234ef36f7248f06a
+  is_dev: true
+- repo_url: dotnet/skills
+  name: dotnet-diag
+  host: github.com
+  resolved_commit: 874ff14cff1015104cf343ed480a6879020b4820
+  resolved_ref: main
+  version: 0.1.2
+  virtual_path: plugins/dotnet-diag
+  is_virtual: true
+  package_type: skill_bundle
+  deployed_files:
+  - .agents/skills/analyzing-dotnet-performance
+  - .agents/skills/analyzing-dotnet-performance/SKILL.md
+  - .agents/skills/analyzing-dotnet-performance/references/async-patterns.md
+  - .agents/skills/analyzing-dotnet-performance/references/collections-and-linq.md
+  - .agents/skills/analyzing-dotnet-performance/references/critical-patterns.md
+  - .agents/skills/analyzing-dotnet-performance/references/io-and-serialization.md
+  - .agents/skills/analyzing-dotnet-performance/references/memory-and-strings.md
+  - .agents/skills/analyzing-dotnet-performance/references/regex-patterns.md
+  - .agents/skills/analyzing-dotnet-performance/references/structural-patterns.md
+  - .agents/skills/android-tombstone-symbolication
+  - .agents/skills/android-tombstone-symbolication/SKILL.md
+  - .agents/skills/android-tombstone-symbolication/scripts/Symbolicate-Tombstone.ps1
+  - .agents/skills/apple-crash-symbolication
+  - .agents/skills/apple-crash-symbolication/SKILL.md
+  - .agents/skills/apple-crash-symbolication/references/ips-crash-format.md
+  - .agents/skills/apple-crash-symbolication/scripts/Symbolicate-Crash.ps1
+  - .agents/skills/clr-activation-debugging
+  - .agents/skills/clr-activation-debugging/SKILL.md
+  - .agents/skills/clr-activation-debugging/references/activation-flow.md
+  - .agents/skills/clr-activation-debugging/references/com-activation.md
+  - .agents/skills/clr-activation-debugging/references/log-format.md
+  - .agents/skills/dotnet-trace-collect
+  - .agents/skills/dotnet-trace-collect/SKILL.md
+  - .agents/skills/dotnet-trace-collect/references/dotnet-monitor.md
+  - .agents/skills/dotnet-trace-collect/references/dotnet-trace-collect-linux.md
+  - .agents/skills/dotnet-trace-collect/references/dotnet-trace-collect.md
+  - .agents/skills/dotnet-trace-collect/references/perfcollect.md
+  - .agents/skills/dotnet-trace-collect/references/perfview.md
+  - .agents/skills/dump-collect
+  - .agents/skills/dump-collect/SKILL.md
+  - .agents/skills/dump-collect/references/container-dumps.md
+  - .agents/skills/dump-collect/references/coreclr-dumps.md
+  - .agents/skills/dump-collect/references/nativeaot-dumps.md
+  - .agents/skills/microbenchmarking
+  - .agents/skills/microbenchmarking/SKILL.md
+  - .agents/skills/microbenchmarking/references/bdn-internals-and-tuning.md
+  - .agents/skills/microbenchmarking/references/comparison-strategies.md
+  - .agents/skills/microbenchmarking/references/diagnosers-and-exporters.md
+  - .agents/skills/microbenchmarking/references/project-setup-and-running.md
+  - .agents/skills/microbenchmarking/references/writing-benchmarks.md
+  - .github/agents/optimizing-dotnet-performance.agent.md
+  - .opencode/agents/optimizing-dotnet-performance.md
+  deployed_file_hashes:
+    .agents/skills/analyzing-dotnet-performance/SKILL.md: sha256:66d06c577cf6cf55d548318c10bd80de3c8ee5495bea1f6d20d277ddde63ea83
+    .agents/skills/analyzing-dotnet-performance/references/async-patterns.md: sha256:18e881ff7fbddbaf8e1da84cd46f182fa81c2c2c070915286e2aba671fcd3be7
+    .agents/skills/analyzing-dotnet-performance/references/collections-and-linq.md: sha256:6911129ce735bd7c232ab75fd93fe5c4c0e6ddef911c0062ae974b33c76eeddf
+    .agents/skills/analyzing-dotnet-performance/references/critical-patterns.md: sha256:ac17e1301a2f997a1be552d8efc5210b9b3c1ca30c71a5d60ed6f7d03d2e8290
+    .agents/skills/analyzing-dotnet-performance/references/io-and-serialization.md: sha256:a9cb85c2bbfdce1059cc8e4c102d728728b79b8cb0c1d6091076bf79bca05c89
+    .agents/skills/analyzing-dotnet-performance/references/memory-and-strings.md: sha256:917ea09f0496a59a15fe5abe2cea7b6ac38cf8d85e19b730bb497d35eb387d59
+    .agents/skills/analyzing-dotnet-performance/references/regex-patterns.md: sha256:cfbd9bb1a4596b8acc537ed4a58d939237441e8716d5c747175cd8bc3b840a62
+    .agents/skills/analyzing-dotnet-performance/references/structural-patterns.md: sha256:ee75e7da219e1d5fcc91c728babe9978793be97e37e01a78b51cc47316ecf170
+    .agents/skills/android-tombstone-symbolication/SKILL.md: sha256:3e25d754833c1a362b3d1968cc81ab75b0d1824b161c3ab9d14113a41cacbe9f
+    .agents/skills/android-tombstone-symbolication/scripts/Symbolicate-Tombstone.ps1: sha256:050257edb89ce80796233ee6870bfc178c6c1ef1bb3f3ac05e4f893368acaa5a
+    .agents/skills/apple-crash-symbolication/SKILL.md: sha256:c8db1d3298cb94e321c47b29fdc0a611b22716b4fc72c32442db0d717de79198
+    .agents/skills/apple-crash-symbolication/references/ips-crash-format.md: sha256:df15e681730d1962b53e9006345f4c5d7caee9a0ab3ea05d87e675aaea766694
+    .agents/skills/apple-crash-symbolication/scripts/Symbolicate-Crash.ps1: sha256:5dd9ffdd9097adf7c104b504ced59e31514202ead8a8c22f5744ee3a0bbc3019
+    .agents/skills/clr-activation-debugging/SKILL.md: sha256:de030774c23c61b3297e82af68e1b15e37e2ad8df4028a54975b2a5af3183762
+    .agents/skills/clr-activation-debugging/references/activation-flow.md: sha256:04d748a40788aa47dd7bb325f682615486da71812b3a80b9a6403ce97eca4d9f
+    .agents/skills/clr-activation-debugging/references/com-activation.md: sha256:3da57d54a8f6dd85bfb9e2a3b617fa5521e6551b7187bfc3bac73f71c1b6c9bc
+    .agents/skills/clr-activation-debugging/references/log-format.md: sha256:f594da621cd46f457a93aebc5273ed2e102730a03086eb9cb0cb96e07e2e8472
+    .agents/skills/dotnet-trace-collect/SKILL.md: sha256:a701fd47f61e196b456cea55699d2e523cc8fc37f382e53d241c153b1c21a494
+    .agents/skills/dotnet-trace-collect/references/dotnet-monitor.md: sha256:726655946aac6f654c58cb3a92e37b9e1b0b4b7c2d990cd9bdfd1e54912882dd
+    .agents/skills/dotnet-trace-collect/references/dotnet-trace-collect-linux.md: sha256:fcb65d649219958c61e6070f4278caaac07e75a418328976bed7bddc77ef24af
+    .agents/skills/dotnet-trace-collect/references/dotnet-trace-collect.md: sha256:c47af38a982c1184cf43eafed795260c9872a85f09718d7b51095b7f22afbe6d
+    .agents/skills/dotnet-trace-collect/references/perfcollect.md: sha256:5b5de0486d84ff2e1b86be7de04631a2a3b32d55ca0bb2a3c2c636c0d167943a
+    .agents/skills/dotnet-trace-collect/references/perfview.md: sha256:c8018e9f1844fa854d971f0d1d75e61887e9ebd5ca97def209650ac634626813
+    .agents/skills/dump-collect/SKILL.md: sha256:d00af814b354faae10cd78fedf7c94a78de6e64f04d4c15703b8fbac5e08e2e2
+    .agents/skills/dump-collect/references/container-dumps.md: sha256:e8f1bad53e928efa41caa6855b7022062e30f11b96fdf9ded37526e03b86f5e3
+    .agents/skills/dump-collect/references/coreclr-dumps.md: sha256:180c6b4ab82f2d27b85b751e309bf0aa445fde68ddc0c6a507b51999f02cf195
+    .agents/skills/dump-collect/references/nativeaot-dumps.md: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
+    .agents/skills/microbenchmarking/SKILL.md: sha256:64dab692a441a8af87b40cda1f3c2c9e5046551446fdea55d2801eaabb34785e
+    .agents/skills/microbenchmarking/references/bdn-internals-and-tuning.md: sha256:213842a5ced85bbdd5db4d7f6de4c3bdd231367b292f7c994a504960e32c83f0
+    .agents/skills/microbenchmarking/references/comparison-strategies.md: sha256:cdbc8e7d4b9b2c9eeb1dbc1a7ceaee5b3cb453d041211bf30fc93b150c4fecf7
+    .agents/skills/microbenchmarking/references/diagnosers-and-exporters.md: sha256:9410eb556b83af2a63bdb593a791077a4a070210df569887f6265d9ecd825b14
+    .agents/skills/microbenchmarking/references/project-setup-and-running.md: sha256:dd6866d218be83e84e772b9bda17d1d8261da4a8318d6b098faffe71b95bfcdf
+    .agents/skills/microbenchmarking/references/writing-benchmarks.md: sha256:00279137333ae46cec081a3b85d53858cec9a7565beddf902e15a6f7abe81f09
+    .github/agents/optimizing-dotnet-performance.agent.md: sha256:bcabb8c04cd05765bf0e0c2b6e322510b1434319121890dcfe5717d3a56198e4
+    .opencode/agents/optimizing-dotnet-performance.md: sha256:bcabb8c04cd05765bf0e0c2b6e322510b1434319121890dcfe5717d3a56198e4
+  content_hash: sha256:5b4c681750c887d985590edeada596f5ed2e44af81e276f9ebe0800eb3f52761
   is_dev: true
 - repo_url: microsoft/apm
   name: apm-guide
   host: github.com
-  resolved_commit: 6f3dd393ce82e4aa3b56d0de292836590af2d59e
+  resolved_commit: 8fd10ac5eafee7ca77d41cc34ba139d812fdacd5
   resolved_ref: main
   version: 1.0.0
   virtual_path: packages/apm-guide
@@ -41,7 +223,7 @@ dependencies:
   - .opencode/agents/apm-expert.md
   deployed_file_hashes:
     .agents/skills/apm-usage/SKILL.md: sha256:a76e5e768e5d2257cf910d04063418424a6dc1ff7c02949c69c9824d90e05565
-    .agents/skills/apm-usage/authentication.md: sha256:ad5c0debeb4a73bba2cd0ed2ad1d0140ee3c2e82858240b6e1d9ef2adea36ad1
+    .agents/skills/apm-usage/authentication.md: sha256:7bc0522150f74e93f5dd11e9a892ab7df91474755f527a8074a596ccf251cd1c
     .agents/skills/apm-usage/commands.md: sha256:5e40cf98efa3261449d165253ba50aa2da156133829c09477a2277c5a023af85
     .agents/skills/apm-usage/dependencies.md: sha256:f0b4b61dcfb4c66c08b23366f9f64decee840363bbb1db590f770da33b366b76
     .agents/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
@@ -51,7 +233,7 @@ dependencies:
     .agents/skills/apm-usage/workflow.md: sha256:b38359a5bf58a9448be0b4e204a1cf6f3e73c1bd832bcffc792f9f3d245cdf39
     .github/agents/apm-expert.agent.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
     .opencode/agents/apm-expert.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
-  content_hash: sha256:a830fd46f5e2b2ee4556714691c1933c397087b1e27e710b83efa06d965d6d0d
+  content_hash: sha256:680f10a401d9479d66cc2fd6e83812a235d49f52a4a805053a148f476d773dec
   is_dev: true
   declared_license: MIT
 - repo_url: obra/superpowers
@@ -191,6 +373,150 @@ dependencies:
 deployments:
 - kind: project-relative
   target: copilot
+  value: .agents/skills/analyzing-dotnet-performance
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:66d06c577cf6cf55d548318c10bd80de3c8ee5495bea1f6d20d277ddde63ea83
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/async-patterns.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:18e881ff7fbddbaf8e1da84cd46f182fa81c2c2c070915286e2aba671fcd3be7
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/collections-and-linq.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:6911129ce735bd7c232ab75fd93fe5c4c0e6ddef911c0062ae974b33c76eeddf
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/critical-patterns.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:ac17e1301a2f997a1be552d8efc5210b9b3c1ca30c71a5d60ed6f7d03d2e8290
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/io-and-serialization.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:a9cb85c2bbfdce1059cc8e4c102d728728b79b8cb0c1d6091076bf79bca05c89
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/memory-and-strings.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:917ea09f0496a59a15fe5abe2cea7b6ac38cf8d85e19b730bb497d35eb387d59
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/regex-patterns.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:cfbd9bb1a4596b8acc537ed4a58d939237441e8716d5c747175cd8bc3b840a62
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/analyzing-dotnet-performance/references/structural-patterns.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:ee75e7da219e1d5fcc91c728babe9978793be97e37e01a78b51cc47316ecf170
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/android-tombstone-symbolication
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/android-tombstone-symbolication/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:3e25d754833c1a362b3d1968cc81ab75b0d1824b161c3ab9d14113a41cacbe9f
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/android-tombstone-symbolication/scripts/Symbolicate-Tombstone.ps1
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:050257edb89ce80796233ee6870bfc178c6c1ef1bb3f3ac05e4f893368acaa5a
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/aot-trimming
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/aot-trimming
+  active_owner: aaronontheweb/dotnet-skills/skills/aot-trimming
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/aot-trimming/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/aot-trimming
+  active_owner: aaronontheweb/dotnet-skills/skills/aot-trimming
+  content_hash: sha256:3fe49e8120a9869191722c8020e0505901eb21ce2a0e8644c5116e2b19476d9f
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/aot-trimming/aot-trimming-playbook-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/aot-trimming
+  active_owner: aaronontheweb/dotnet-skills/skills/aot-trimming
+  content_hash: sha256:057fd3427794ede9bc4d3ff2c587ab17cdd5667a93de57a451b9a8fe530b04b8
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/aot-trimming/trimming-attributes-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/aot-trimming
+  active_owner: aaronontheweb/dotnet-skills/skills/aot-trimming
+  content_hash: sha256:80d57a9a4efc7c83605f2c8af8408dde3e2d57e67a75af299e655cb76370925f
+- kind: project-relative
+  target: copilot
   value: .agents/skills/apm-usage
   runtime: null
   scope: project
@@ -215,7 +541,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:ad5c0debeb4a73bba2cd0ed2ad1d0140ee3c2e82858240b6e1d9ef2adea36ad1
+  content_hash: sha256:7bc0522150f74e93f5dd11e9a892ab7df91474755f527a8074a596ccf251cd1c
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/commands.md
@@ -279,6 +605,42 @@ deployments:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
   content_hash: sha256:b38359a5bf58a9448be0b4e204a1cf6f3e73c1bd832bcffc792f9f3d245cdf39
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/apple-crash-symbolication
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/apple-crash-symbolication/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:c8db1d3298cb94e321c47b29fdc0a611b22716b4fc72c32442db0d717de79198
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/apple-crash-symbolication/references/ips-crash-format.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:df15e681730d1962b53e9006345f4c5d7caee9a0ab3ea05d87e675aaea766694
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/apple-crash-symbolication/scripts/Symbolicate-Crash.ps1
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:5dd9ffdd9097adf7c104b504ced59e31514202ead8a8c22f5744ee3a0bbc3019
 - kind: project-relative
   target: copilot
   value: .agents/skills/brainstorming
@@ -362,6 +724,51 @@ deployments:
   content_hash: sha256:77eb44a4ec3408bb3dafb872288ecd94beb8cf21da4f2bafa54fd08255d7808b
 - kind: project-relative
   target: copilot
+  value: .agents/skills/clr-activation-debugging
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/clr-activation-debugging/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:de030774c23c61b3297e82af68e1b15e37e2ad8df4028a54975b2a5af3183762
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/clr-activation-debugging/references/activation-flow.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:04d748a40788aa47dd7bb325f682615486da71812b3a80b9a6403ce97eca4d9f
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/clr-activation-debugging/references/com-activation.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:3da57d54a8f6dd85bfb9e2a3b617fa5521e6551b7187bfc3bac73f71c1b6c9bc
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/clr-activation-debugging/references/log-format.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:f594da621cd46f457a93aebc5273ed2e102730a03086eb9cb0cb96e07e2e8472
+- kind: project-relative
+  target: copilot
   value: .agents/skills/dispatching-parallel-agents
   runtime: null
   scope: project
@@ -378,6 +785,114 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:1968923066f3b707eb01d1992cdf4c42284c3855f70253b9cd5000ff45fca13c
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:a701fd47f61e196b456cea55699d2e523cc8fc37f382e53d241c153b1c21a494
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect/references/dotnet-monitor.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:726655946aac6f654c58cb3a92e37b9e1b0b4b7c2d990cd9bdfd1e54912882dd
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect/references/dotnet-trace-collect-linux.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:fcb65d649219958c61e6070f4278caaac07e75a418328976bed7bddc77ef24af
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect/references/dotnet-trace-collect.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:c47af38a982c1184cf43eafed795260c9872a85f09718d7b51095b7f22afbe6d
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect/references/perfcollect.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:5b5de0486d84ff2e1b86be7de04631a2a3b32d55ca0bb2a3c2c636c0d167943a
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dotnet-trace-collect/references/perfview.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:c8018e9f1844fa854d971f0d1d75e61887e9ebd5ca97def209650ac634626813
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dump-collect
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dump-collect/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:d00af814b354faae10cd78fedf7c94a78de6e64f04d4c15703b8fbac5e08e2e2
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dump-collect/references/container-dumps.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:e8f1bad53e928efa41caa6855b7022062e30f11b96fdf9ded37526e03b86f5e3
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dump-collect/references/coreclr-dumps.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:180c6b4ab82f2d27b85b751e309bf0aa445fde68ddc0c6a507b51999f02cf195
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/dump-collect/references/nativeaot-dumps.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
 - kind: project-relative
   target: copilot
   value: .agents/skills/executing-plans
@@ -414,6 +929,222 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:8db5a922b242dd4e1bf824cb91c13b3e8d8e8a86d6ceaf7f0774eb9cce909d65
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:64dab692a441a8af87b40cda1f3c2c9e5046551446fdea55d2801eaabb34785e
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking/references/bdn-internals-and-tuning.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:213842a5ced85bbdd5db4d7f6de4c3bdd231367b292f7c994a504960e32c83f0
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking/references/comparison-strategies.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:cdbc8e7d4b9b2c9eeb1dbc1a7ceaee5b3cb453d041211bf30fc93b150c4fecf7
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking/references/diagnosers-and-exporters.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:9410eb556b83af2a63bdb593a791077a4a070210df569887f6265d9ecd825b14
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking/references/project-setup-and-running.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:dd6866d218be83e84e772b9bda17d1d8261da4a8318d6b098faffe71b95bfcdf
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/microbenchmarking/references/writing-benchmarks.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:00279137333ae46cec081a3b85d53858cec9a7565beddf902e15a6f7abe81f09
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/opentelementry-dotnet-instrumentation
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  active_owner: aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/opentelementry-dotnet-instrumentation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  active_owner: aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  content_hash: sha256:ee4c4d2d7583c73668c55c022be0b3e2d246b2680058a3ca48d41e279bcffe4b
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/opentelementry-dotnet-instrumentation/metrics-and-instruments-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  active_owner: aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  content_hash: sha256:adeac10db48213a291a843f66e613ded3d98c6d88a490dbc324ec40ebf14c06c
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/opentelementry-dotnet-instrumentation/sdk-resources-and-logs-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  active_owner: aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  content_hash: sha256:81859cc6b1c6468c5754ef486a2c0bc8e0683db30989d0992e5bd2f474a40efa
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/opentelementry-dotnet-instrumentation/traces-and-propagation-reference.md
+  runtime: null
+  scope: project
+  owners:
+  - aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  active_owner: aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation
+  content_hash: sha256:aef2b17ac091dfdee54d04ffcdc425cd2d6d299b653e3979ea97df0bb2d4426d
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-audit
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-audit/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:5560b8e383dbe2ddfddc873a1e2bf2e586e23e0cd7d995537482b2315331f6d1
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-debt
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-debt/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:c84fba75f0ca12bfe83f9a78ea02fd125c5dd3f1fbb18124105a489937f284e6
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-gain
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-gain/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:24e01d1c9715cb136ba1c4f1e52a95940c0193558b876828e537736480d6408b
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-help
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-help/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:2264d1615117b02b0fd5a69ec84cd2757006471a78e4d6c22eed6d581c1d37a4
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-review
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:40df33b58fc6ef889b93585733feb9566b76e9586efa7f376785c1e995197ac0
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/ponytail/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
 - kind: project-relative
   target: copilot
   value: .agents/skills/receiving-code-review
@@ -893,6 +1624,96 @@ deployments:
   content_hash: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
 - kind: project-relative
   target: copilot
+  value: .github/agents/optimizing-dotnet-performance.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:bcabb8c04cd05765bf0e0c2b6e322510b1434319121890dcfe5717d3a56198e4
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/ponytail-copilot-hooks.json
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:4ad52e6fd633e8fa1b73172da33e6b23d2b874fea94cd18a7def7a08037188a5
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-activate.js
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:362a4b086ee2d6c6da615a32e5593bc8bd3614dc6a6dc9aa465968febdb83ce2
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-config.js
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:0a8daf96cf9ac703dc4cb7b5065253567e513c951d60b8eb94a0fe727514aeca
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-instructions.js
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:23c050103f28dbe6bad953ae21d98cd06d720a20f33d4716e9de419f947d495e
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-mode-tracker.js
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:8643fdadff22bd23ac6fc24cee9e218ce576740a894895ea55faab9f434dc200
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-runtime.js
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:df2205ecf8dd542d3b0d07077d6fdb9d6bd1dfc4b750aebf038b98cd9b32773c
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-statusline.ps1
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:6138f15bc7651ee7e5ced2a2a2280f5c810d58cad3e9f3252c628f4c923e48c9
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-statusline.sh
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:f1dbfa5997a5d4b5339619709053eff557ab16d71af75eb3041c3d3e3dca42ec
+- kind: project-relative
+  target: copilot
+  value: .github/hooks/scripts/ponytail/hooks/ponytail-subagent.js
+  runtime: null
+  scope: project
+  owners:
+  - dietrichgebert/ponytail
+  active_owner: dietrichgebert/ponytail
+  content_hash: sha256:7f6bee86702a488d29ef0dcaabf424bbe2aca345a6a642319d43a1fe0276792e
+- kind: project-relative
+  target: copilot
   value: .github/hooks/scripts/superpowers/hooks/run-hook.cmd
   runtime: null
   scope: project
@@ -1008,6 +1829,15 @@ deployments:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
   content_hash: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/optimizing-dotnet-performance.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-diag
+  active_owner: dotnet/skills/plugins/dotnet-diag
+  content_hash: sha256:bcabb8c04cd05765bf0e0c2b6e322510b1434319121890dcfe5717d3a56198e4
 mcp_servers:
 - ado
 - github
