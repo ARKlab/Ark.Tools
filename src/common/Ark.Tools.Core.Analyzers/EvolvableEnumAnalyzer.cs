@@ -1,10 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System.Collections.Immutable;
-using System.Collections.Generic;
-using System.Linq;
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -67,37 +67,38 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static startContext =>
         {
-            var evolvableEnum1 = startContext.Compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`1");
-            var evolvableEnum2 = startContext.Compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`2");
-            if (evolvableEnum1 is null && evolvableEnum2 is null)
+            var facts = CompilationFacts._create(startContext.Compilation);
+            if (!facts._isEnabled)
+            {
                 return;
+            }
 
             startContext.RegisterSyntaxNodeAction(
-                syntaxContext => _analyzeGenericName(syntaxContext, evolvableEnum1, evolvableEnum2),
+                syntaxContext => _analyzeGenericName(syntaxContext, facts),
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.GenericName);
         });
     }
 
     private static void _analyzeGenericName(
         SyntaxNodeAnalysisContext context,
-        INamedTypeSymbol? evolvableEnum1,
-        INamedTypeSymbol? evolvableEnum2)
+        CompilationFacts facts)
     {
         var syntax = (GenericNameSyntax)context.Node;
         if (syntax.Identifier.ValueText != "EvolvableEnum")
             return;
 
         if (context.SemanticModel.GetTypeInfo(syntax, context.CancellationToken).Type is not INamedTypeSymbol wrapper
-            || (!SymbolEqualityComparer.Default.Equals(wrapper.OriginalDefinition, evolvableEnum1)
-                && !SymbolEqualityComparer.Default.Equals(wrapper.OriginalDefinition, evolvableEnum2))
+            || (!SymbolEqualityComparer.Default.Equals(wrapper.OriginalDefinition, facts._evolvableEnum1)
+                && !SymbolEqualityComparer.Default.Equals(wrapper.OriginalDefinition, facts._evolvableEnum2))
             || wrapper.TypeArguments.Length is < 1 or > 2
             || wrapper.TypeArguments[0] is not INamedTypeSymbol enumType
             || enumType.TypeKind != TypeKind.Enum
             || enumType.EnumUnderlyingType is null)
             return;
 
+        var fields = enumType.GetMembers().OfType<IFieldSymbol>().ToImmutableArray();
         var requestedBacking = wrapper.TypeArguments.Length == 1
-            ? context.Compilation.GetSpecialType(SpecialType.System_Int32)
+            ? facts._int32Type
             : wrapper.TypeArguments[1];
 
         if (!SymbolEqualityComparer.Default.Equals(requestedBacking, enumType.EnumUnderlyingType))
@@ -111,9 +112,8 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 enumType.EnumUnderlyingType.ToDisplayString()));
         }
 
-        var hasNotSet = enumType.GetMembers("NOT_SET")
-            .OfType<IFieldSymbol>()
-            .Any(static field => field.HasConstantValue && _isZero(field.ConstantValue));
+        var hasNotSet = fields.Any(static field =>
+            field.Name == "NOT_SET" && field.HasConstantValue && _isZero(field.ConstantValue));
         if (!hasNotSet)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -123,7 +123,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 enumType.ToDisplayString()));
         }
 
-        if (_isFull(enumType))
+        if (_isFull(enumType, fields))
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 _fullEnum,
@@ -133,9 +133,9 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         }
 
         var names = new Dictionary<string, IFieldSymbol>(StringComparer.Ordinal);
-        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        foreach (var field in fields)
         {
-            foreach (var name in _getNames(field))
+            foreach (var name in _getNames(field, facts))
             {
                 if (names.TryGetValue(name, out var previous))
                 {
@@ -161,10 +161,10 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         || value is long l && l == 0
         || value is ulong ul && ul == 0;
 
-    private static bool _isFull(INamedTypeSymbol enumType)
+    private static bool _isFull(INamedTypeSymbol enumType, ImmutableArray<IFieldSymbol> fields)
     {
         var values = new HashSet<object>();
-        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        foreach (var field in fields)
         {
             if (field.IsConst && field.HasConstantValue && field.ConstantValue is object value)
                 values.Add(value);
@@ -178,23 +178,62 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         };
     }
 
-    private static IEnumerable<string> _getNames(IFieldSymbol field)
+    private static IEnumerable<string> _getNames(IFieldSymbol field, CompilationFacts facts)
     {
         yield return field.Name;
         foreach (var attribute in field.GetAttributes())
         {
-            var attributeType = attribute.AttributeClass;
-            var typeName = attributeType?.Name;
-            var namespaceName = attributeType?.ContainingNamespace.ToDisplayString();
-            if (typeName == "EnumMemberAttribute" && namespaceName == "System.Runtime.Serialization"
+            if (_matchesAttribute(attribute, facts._enumMemberAttribute)
                 && attribute.NamedArguments.FirstOrDefault(static item => item.Key == "Value").Value.Value is string enumMember)
+            {
                 yield return enumMember;
-            else if (typeName == "DisplayAttribute" && namespaceName == "System.ComponentModel.DataAnnotations"
+            }
+            else if (_matchesAttribute(attribute, facts._displayAttribute)
                 && attribute.NamedArguments.FirstOrDefault(static item => item.Key == "Name").Value.Value is string display)
+            {
                 yield return display;
-            else if (typeName == "DisplayNameAttribute" && namespaceName == "System.ComponentModel"
+            }
+            else if (_matchesAttribute(attribute, facts._displayNameAttribute)
                 && attribute.ConstructorArguments.FirstOrDefault().Value is string displayName)
+            {
                 yield return displayName;
+            }
+        }
+    }
+
+    private static bool _matchesAttribute(AttributeData attribute, INamedTypeSymbol? expected)
+    {
+        return expected is not null
+            && attribute.AttributeClass is { } attributeClass
+            && SymbolEqualityComparer.Default.Equals(attributeClass.OriginalDefinition, expected);
+    }
+
+    private readonly struct CompilationFacts(
+        INamedTypeSymbol? evolvableEnum1,
+        INamedTypeSymbol? evolvableEnum2,
+        INamedTypeSymbol int32Type,
+        INamedTypeSymbol? enumMemberAttribute,
+        INamedTypeSymbol? displayAttribute,
+        INamedTypeSymbol? displayNameAttribute)
+    {
+        internal readonly INamedTypeSymbol? _evolvableEnum1 = evolvableEnum1;
+        internal readonly INamedTypeSymbol? _evolvableEnum2 = evolvableEnum2;
+        internal readonly INamedTypeSymbol _int32Type = int32Type;
+        internal readonly INamedTypeSymbol? _enumMemberAttribute = enumMemberAttribute;
+        internal readonly INamedTypeSymbol? _displayAttribute = displayAttribute;
+        internal readonly INamedTypeSymbol? _displayNameAttribute = displayNameAttribute;
+
+        internal bool _isEnabled => _evolvableEnum1 is not null || _evolvableEnum2 is not null;
+
+        internal static CompilationFacts _create(Compilation compilation)
+        {
+            return new CompilationFacts(
+                compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`1"),
+                compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`2"),
+                compilation.GetSpecialType(SpecialType.System_Int32),
+                compilation.GetTypeByMetadataName("System.Runtime.Serialization.EnumMemberAttribute"),
+                compilation.GetTypeByMetadataName("System.ComponentModel.DataAnnotations.DisplayAttribute"),
+                compilation.GetTypeByMetadataName("System.ComponentModel.DisplayNameAttribute"));
         }
     }
 }

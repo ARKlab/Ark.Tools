@@ -1,8 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using System;
 using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Linq;
 
 using Microsoft.CodeAnalysis;
@@ -30,31 +30,52 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static start =>
         {
-            if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
-                    "build_property.EnableArkToolsCompliance", out var enabled)
-                && string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+            var facts = ComplianceCompilationFacts._create(
+                start.Compilation,
+                start.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
+            if (!facts._complianceEnabled)
             {
                 return;
             }
-            start.RegisterSymbolAction(_analyzeType, SymbolKind.NamedType);
+
+            start.RegisterSymbolAction(symbolContext => _analyzeType(symbolContext, facts), SymbolKind.NamedType);
         });
     }
 
-    private static void _analyzeType(SymbolAnalysisContext context)
+    private static void _analyzeType(SymbolAnalysisContext context, ComplianceCompilationFacts facts)
     {
         var type = (INamedTypeSymbol)context.Symbol;
-        if (_hasAttribute(type, "Ark.Tools.Compliance.Sql.SqlDataPolicyAttribute"))
+        if (ComplianceSymbolFacts._hasAttribute(type, facts._sqlDataPolicyAttribute))
         {
+            var classifiedCache = new Dictionary<ISymbol, bool>(SymbolEqualityComparer.Default);
+            bool isClassified(ISymbol? candidate)
+            {
+                if (candidate is null)
+                {
+                    return false;
+                }
+
+                if (!classifiedCache.TryGetValue(candidate, out var result))
+                {
+                    result = ComplianceSymbolFacts._isClassified(candidate, facts);
+                    classifiedCache[candidate] = result;
+                }
+
+                return result;
+            }
+
+            var typeIsClassified = isClassified(type);
             for (var current = type; current is not null; current = current.BaseType)
             {
                 foreach (var member in current.GetMembers().Where(static m => !m.IsStatic && !m.IsImplicitlyDeclared
                              && m.Kind is SymbolKind.Property or SymbolKind.Field))
                 {
                     var valueType = ComplianceSymbolFacts._getValueType(member);
-                    if ((ComplianceSymbolFacts._isClassified(member)
-                         || ComplianceSymbolFacts._isClassified(type)
-                         || (valueType is not null && ComplianceSymbolFacts._isClassified(ComplianceSymbolFacts._unwrapNullable(valueType))))
-                        && !_hasAttribute(member, "Ark.Tools.Compliance.Sql.SqlColumnPolicyAttribute"))
+                    var unwrappedValueType = valueType is null ? null : ComplianceSymbolFacts._unwrapNullable(valueType);
+                    if ((isClassified(member)
+                         || typeIsClassified
+                         || isClassified(unwrappedValueType))
+                        && !ComplianceSymbolFacts._hasAttribute(member, facts._sqlColumnPolicyAttribute))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(_missingColumn,
                             member.Locations.FirstOrDefault(static l => l.IsInSource) ?? type.Locations.FirstOrDefault(),
@@ -64,10 +85,5 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
             }
         }
 
-    }
-
-    private static bool _hasAttribute(ISymbol symbol, string name)
-    {
-        return symbol.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == name);
     }
 }
