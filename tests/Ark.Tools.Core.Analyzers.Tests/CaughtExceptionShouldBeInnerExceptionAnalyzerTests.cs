@@ -193,6 +193,7 @@ public class CaughtExceptionShouldBeInnerExceptionAnalyzerTests
             }
             """);
 
+        diagnostics.Should().ContainSingle();
         var diagnostic = diagnostics.Single(static item => item.Id == "ARKCORE006");
         diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
         diagnostic.GetMessage().Should().Be(

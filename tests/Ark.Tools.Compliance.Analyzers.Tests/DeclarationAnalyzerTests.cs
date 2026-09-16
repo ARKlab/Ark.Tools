@@ -282,8 +282,13 @@ public sealed class DeclarationAnalyzerTests
     [TestMethod]
     public async Task ComplianceOptOut_DisablesDeclarationDiagnostics()
     {
+        const string source = "class Customer { public string Email; }";
+        var enabledDiagnostics = await _analyzeAsync(source).ConfigureAwait(false);
+        enabledDiagnostics.Should().ContainSingle(static diagnostic =>
+            diagnostic.Id == "ARKPII001" && diagnostic.Severity == DiagnosticSeverity.Warning);
+
         var diagnostics = await _analyzeAsync(
-            "class Customer { public string Email; }",
+            source,
             options: new DeclarationOptionsProvider(complianceEnabled: false)).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
     }

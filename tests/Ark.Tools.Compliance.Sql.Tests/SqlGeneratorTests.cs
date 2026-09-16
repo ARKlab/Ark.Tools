@@ -50,6 +50,7 @@ public sealed class SqlGeneratorTests
             """;
         var original = _generate(declaration);
         var renamed = _generate(declaration.Replace("string Email", "string Contact", StringComparison.Ordinal));
+        original.TemplateFileNames.Should().Equal(renamed.TemplateFileNames);
         original.Sql.Should().Equal(renamed.Sql);
         original.Sql.Single().Should().Contain("[sales].[Customers].[email_address]")
             .And.Contain("FUNCTION = 'email()'").And.NotContain(".[Email]");
@@ -64,6 +65,7 @@ public sealed class SqlGeneratorTests
         const string prefix = """[SqlDataPolicy(Table = "Customers")] public class Customer { """;
         var original = _generate(prefix + first + second + "}");
         var reordered = _generate(prefix + second + first + "}");
+        original.TemplateFileNames.Should().Equal(reordered.TemplateFileNames);
         original.Sql.Should().Equal(reordered.Sql);
         original.Sql.Single().IndexOf(".[a]", StringComparison.Ordinal)
             .Should().BeLessThan(original.Sql.Single().IndexOf(".[z]", StringComparison.Ordinal));
@@ -184,18 +186,27 @@ public sealed class SqlGeneratorTests
     [TestMethod]
     public void ComplianceOptOutSuppressesSqlGeneration()
     {
-        var result = _generate("""
+        const string source = """
             [SqlDataPolicy] public class Customer
             {
                 [PersonalData, SqlColumnPolicy("email", StoragePolicy.Masked)]
                 public string Email { get; set; } = "";
             }
-            """, enabled: false);
+            """;
+        var enabledResult = _generate(source, expectMappingError: true);
+        enabledResult.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII207");
+        enabledResult.HintNames.Should().Equal(["ArkComplianceSql.manifest.g.cs"]);
+
+        var result = _generate(source, enabled: false);
         result.Sql.Should().BeEmpty();
         result.Diagnostics.Should().BeEmpty();
+        result.HintNames.Should().Equal(["ArkComplianceSql.manifest.g.cs"]);
     }
 
-    private static (string[] Sql, ImmutableArray<Diagnostic> Diagnostics) _generate(string source, bool expectMappingError = false, bool enabled = true)
+    private static (string[] Sql, string[] TemplateFileNames, string[] HintNames, ImmutableArray<Diagnostic> Diagnostics) _generate(
+        string source,
+        bool expectMappingError = false,
+        bool enabled = true)
     {
         var compilation = SqlTestCompilation._create(source);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
@@ -209,10 +220,14 @@ public sealed class SqlGeneratorTests
         output.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
         var generated = driver.GetRunResult().Results.Single().GeneratedSources;
         const string marker = "// ArkComplianceSqlTemplate:";
-        var sql = generated.SelectMany(static s => s.SourceText.ToString().Split('\n'))
-            .Where(static line => line.StartsWith(marker, StringComparison.Ordinal))
-            .Select(static line => Encoding.UTF8.GetString(Convert.FromBase64String(line[(line.IndexOf(':', marker.Length) + 1)..])))
+        var templates = generated.SelectMany(static source => source.SourceText.ToString().Split('\n')
+                .Where(static line => line.StartsWith(marker, StringComparison.Ordinal))
+                .Select(static line => line[marker.Length..].Split(':', 2)))
+            .Select(static parts => (FileName: parts[0], Sql: Encoding.UTF8.GetString(Convert.FromBase64String(parts[1]))))
             .ToArray();
-        return (sql, diagnostics);
+        return (templates.Select(static template => template.Sql).ToArray(),
+            templates.Select(static template => template.FileName).ToArray(),
+            generated.Select(static source => source.HintName).ToArray(),
+            diagnostics);
     }
 }

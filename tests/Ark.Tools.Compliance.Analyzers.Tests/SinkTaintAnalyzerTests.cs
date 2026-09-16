@@ -580,12 +580,18 @@ public sealed class SinkTaintAnalyzerTests
     [TestMethod]
     public async Task ComplianceOptOut_DisablesSinkDiagnostics()
     {
-        var diagnostics = await _analyzeAsync(_method("""
+        const string body = """
             logger.Info(c.Email);
             Console.WriteLine(c.Email);
             new System.Diagnostics.Activity("test").SetTag("email", c.Email);
             throw new InvalidOperationException($"Invalid {c.Email}");
-            """),
+            """;
+        var enabledDiagnostics = await _analyzeAsync(_method(body)).ConfigureAwait(false);
+        enabledDiagnostics.Select(static diagnostic => diagnostic.Id).Should().BeEquivalentTo(
+            ["ARKPII002", "ARKPII011", "ARKPII004", "ARKPII003", "ARKPII005"]);
+        enabledDiagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        var diagnostics = await _analyzeAsync(_method(body),
             options: new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["build_property.EnableArkToolsCompliance"] = "false",

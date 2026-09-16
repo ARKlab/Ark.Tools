@@ -100,6 +100,27 @@ public class SelfGenericInterfaceAnalyzerTests
             "Type 'MyQuery' must implement 'IQuery<MyQuery, int>' to enable reflection-free processor dispatch");
     }
 
+    /// <summary>Verifies repeated legacy interfaces in the same closure still report only one warning.</summary>
+    [TestMethod]
+    public async Task RepeatedLegacyInterfaceClosure_ShouldReportSingleWarning()
+    {
+        var diagnostics = await _analyzeAsync(
+            _solidStubs +
+            """
+
+            namespace Tests
+            {
+                using Ark.Tools.Solid;
+                interface LegacyQuery<T> : IQuery<T> { }
+                interface DerivedLegacyQuery<T> : LegacyQuery<T>, IQuery<T> { }
+                sealed class MyQuery : DerivedLegacyQuery<int> { }
+            }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle(static diagnostic =>
+            diagnostic.Id == "ARKSOLID001" && diagnostic.Severity == DiagnosticSeverity.Warning);
+    }
+
     /// <summary>Verifies generic records keep their type parameters in the suggested self interface.</summary>
     [TestMethod]
     public async Task GenericRecord_ShouldReportAndFixWithQualification()

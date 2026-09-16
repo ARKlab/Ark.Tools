@@ -125,6 +125,9 @@ public sealed class TestDataAnalyzerTests
     [TestMethod]
     public async Task ComplianceOptOut_DisablesFixtureDiagnostics()
     {
+        (await _analyzeAsync("fixture.person@corporate-domain.com").ConfigureAwait(false))
+            .Should().ContainSingle(static diagnostic =>
+                diagnostic.Id == "ARKPII006" && diagnostic.Severity == DiagnosticSeverity.Warning);
         (await _analyzeAsync("fixture.person@corporate-domain.com", complianceEnabled: false).ConfigureAwait(false))
             .Should().BeEmpty();
     }
@@ -157,14 +160,19 @@ public sealed class TestDataAnalyzerTests
     [TestMethod]
     public async Task ComplianceOptOut_DisablesFeatureDiagnostics()
     {
-        var diagnostics = await _analyzeFeatureAsync(
-            """
+        const string feature = """
             Feature: Contact fixtures
               Scenario: Creating a contact
                 Given I create a contact with
                   | Email                              |
                   | fixture.person@corporate-domain.com |
-            """,
+            """;
+        (await _analyzeFeatureAsync(feature).ConfigureAwait(false))
+            .Should().ContainSingle(static diagnostic =>
+                diagnostic.Id == "ARKPII006" && diagnostic.Severity == DiagnosticSeverity.Warning);
+
+        var diagnostics = await _analyzeFeatureAsync(
+            feature,
             complianceEnabled: false).ConfigureAwait(false);
 
         diagnostics.Should().BeEmpty();
