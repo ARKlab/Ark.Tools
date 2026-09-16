@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "node \".github/hooks/scripts/ponytail/hooks/ponytail-activate.js\"",
+        "powershell": "node \".github/hooks/scripts/ponytail/hooks/ponytail-activate.js\"",
+        "timeoutSec": 5
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "node \".github/hooks/scripts/ponytail/hooks/ponytail-mode-tracker.js\"",
+        "powershell": "node \".github/hooks/scripts/ponytail/hooks/ponytail-mode-tracker.js\"",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}
