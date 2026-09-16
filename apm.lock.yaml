@@ -3,13 +3,16 @@ apm_version: 0.31.0
 dependencies:
 - repo_url: _local/ark-csharp
   name: ark-csharp
-  version: 1.2.0
+  version: 1.3.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/ark-compliance
   - .agents/skills/ark-compliance/SKILL.md
   - .agents/skills/ark-mediator-framework
   - .agents/skills/ark-mediator-framework/SKILL.md
+  - .agents/skills/roslyn-incremental-generator-specialist
+  - .agents/skills/roslyn-incremental-generator-specialist/SKILL.md
+  - .agents/skills/roslyn-incremental-generator-specialist/references/guidelines.md
   - .github/agents/ark-csharp-expert.agent.md
   - .github/agents/roslyn-incremental-generator-specialist.agent.md
   - .opencode/agents/ark-csharp-expert.md
@@ -17,12 +20,14 @@ dependencies:
   deployed_file_hashes:
     .agents/skills/ark-compliance/SKILL.md: sha256:f5a864b3fc05d3a3ef630703133fdce4ee5f95ff217d23cb5798abe2a9525e3a
     .agents/skills/ark-mediator-framework/SKILL.md: sha256:c2ce7022e626112e08311213f51f7fb166052595b310302c0d99898dfb530027
+    .agents/skills/roslyn-incremental-generator-specialist/SKILL.md: sha256:90e89e345158201e31e7f41c6e055cc6f96676c77568d33f1eb00599380048e6
+    .agents/skills/roslyn-incremental-generator-specialist/references/guidelines.md: sha256:5e5802fa036e9d90e6793599e482d2b397a207cdb0b24d550f847da4887b93a5
     .github/agents/ark-csharp-expert.agent.md: sha256:64a86fd8ee7ffb82c30efb84429829029e5ea2bbb52b29f91408b14a9959041d
-    .github/agents/roslyn-incremental-generator-specialist.agent.md: sha256:e2e098c3398dc3753d80a9c6c5003014765a0a7f9c3f2b98e7f8274de8d0d9d0
+    .github/agents/roslyn-incremental-generator-specialist.agent.md: sha256:7aa3a1308ab56b2cc969dc9fc7820cb668ea5b66fb263715301a9397d47385a4
     .opencode/agents/ark-csharp-expert.md: sha256:64a86fd8ee7ffb82c30efb84429829029e5ea2bbb52b29f91408b14a9959041d
-    .opencode/agents/roslyn-incremental-generator-specialist.md: sha256:e2e098c3398dc3753d80a9c6c5003014765a0a7f9c3f2b98e7f8274de8d0d9d0
+    .opencode/agents/roslyn-incremental-generator-specialist.md: sha256:7aa3a1308ab56b2cc969dc9fc7820cb668ea5b66fb263715301a9397d47385a4
   source: local
-  local_path: .\agents-plugins\ark-csharp
+  local_path: ./agents-plugins/ark-csharp
   is_dev: true
 - repo_url: aaronontheweb/dotnet-skills
   materialization_repo_url: Aaronontheweb/dotnet-skills

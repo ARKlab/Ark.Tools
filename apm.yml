@@ -16,7 +16,7 @@ devDependencies:
     - dotnet/skills/plugins/dotnet-diag#main
     - git: https://github.com/obra/superpowers#main
     - DietrichGebert/ponytail#v4.10.0
-    - .\agents-plugins\ark-csharp
+    - ./agents-plugins/ark-csharp
   mcp:
     - name: ado
       registry: false
