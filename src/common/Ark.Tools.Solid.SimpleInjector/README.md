@@ -19,6 +19,25 @@ The same applies to `IRequest<TSelf, TResponse>` and `ICommand<TSelf>`. The `ARK
 analyzer (shipped with the Ark.Tools.Solid package) reports a warning for types still using
 the legacy single-generic interfaces and offers a code fix to migrate them.
 
+## Microsoft dependency injection bridge
+
+When an application composes handlers with SimpleInjector but exposes processors through
+`IServiceCollection`, register the existing SimpleInjector processors and then bridge them:
+
+```csharp
+var container = new Container();
+container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
+container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
+container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
+container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+
+builder.Services.AddArkSolidProcessors(container);
+```
+
+`AddArkSolidProcessors` keeps SimpleInjector authoritative for handler and decorator resolution.
+The bridged processors reuse the current `AsyncScopedLifestyle` scope when one is active and
+create one when execution starts outside a scope (for example, in message-driven entry points).
+
 ## Trimming Support
 
 **Status**: ❌ NOT TRIMMABLE
