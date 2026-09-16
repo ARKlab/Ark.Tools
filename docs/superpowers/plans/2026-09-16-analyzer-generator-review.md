@@ -6,7 +6,7 @@
 
 **Architecture:** Keep public analyzer and generator entry points stable. Reduce repeated semantic work through shared constants and cached compilation facts, and make incremental generator models value-equatable at pipeline boundaries. Leave all `src/mediator-framework` projects untouched.
 
-**Tech Stack:** C#, Roslyn analyzers and incremental generators, .NET 10 SDK, xUnit/AwesomeAssertions test projects.
+**Tech Stack:** C#, Roslyn analyzers and incremental generators, .NET 10 SDK, MSTest/AwesomeAssertions test projects.
 
 **Spec:** Approved in-chat design from the analyzer/generator review request.
 
@@ -37,7 +37,7 @@
 - Consumes: Existing analyzer/generator test harnesses and current diagnostic contracts.
 - Produces: Regression assertions for disabled-compliance paths, duplicate work edge cases, deterministic generated output, and unchanged diagnostic IDs.
 
-- [ ] **Step 1: Add one focused regression assertion per affected behavior**
+- [x] **Step 1: Add one focused regression assertion per affected behavior**
 
 Use the existing test helper and assert the existing diagnostic ID or generated text, for example:
 
@@ -45,7 +45,7 @@ Use the existing test helper and assert the existing diagnostic ID or generated 
 result.Diagnostics.Should().ContainSingle(diagnostic => diagnostic.Id == "ARKPII007");
 ```
 
-- [ ] **Step 2: Run only the affected test projects**
+- [x] **Step 2: Run only the affected test projects**
 
 Run:
 
@@ -58,7 +58,7 @@ dotnet test tests/Ark.Tools.Compliance.Sql.Tests/Ark.Tools.Compliance.Sql.Tests.
 
 Expected: existing tests pass and new assertions fail only where the intended refactor has not yet been applied.
 
-- [ ] **Step 3: Commit the focused regression coverage**
+- [x] **Step 3: Commit the focused regression coverage**
 
 ```bash
 git add tests/Ark.Tools.Core.Analyzers.Tests tests/Ark.Tools.Solid.Analyzers.Tests tests/Ark.Tools.Compliance.Analyzers.Tests tests/Ark.Tools.Compliance.Sql.Tests
@@ -78,19 +78,19 @@ git commit -m "test: cover analyzer generator contracts"
 - Consumes: Existing analyzer callbacks and diagnostic descriptors.
 - Produces: Compilation-start facts and ordinal metadata-name checks that preserve all current diagnostics.
 
-- [ ] **Step 1: Introduce immutable compilation facts at compilation start**
+- [x] **Step 1: Introduce immutable compilation facts at compilation start**
 
 Materialize compliance-enabled state, known metadata symbols, test/host flags, and other invariant options once; pass that immutable state into callbacks instead of rereading global options or reconstructing equivalent strings.
 
-- [ ] **Step 2: Replace repeated display-name comparisons with metadata-name or symbol comparisons**
+- [x] **Step 2: Replace repeated display-name comparisons with metadata-name or symbol comparisons**
 
 Use `MetadataName`, `ContainingNamespace`, and `SymbolEqualityComparer.Default` where available. Keep display strings only for diagnostic messages.
 
-- [ ] **Step 3: Cache per-symbol classification checks within each callback**
+- [x] **Step 3: Cache per-symbol classification checks within each callback**
 
 Avoid recomputing member/type classification and positional-record counterpart lookups when one symbol analysis needs the same fact more than once.
 
-- [ ] **Step 4: Run focused analyzer tests**
+- [x] **Step 4: Run focused analyzer tests**
 
 ```bash
 dotnet test tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj
@@ -99,7 +99,7 @@ dotnet test tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Anal
 dotnet test tests/Ark.Tools.Compliance.Sql.Tests/Ark.Tools.Compliance.Sql.Tests.csproj
 ```
 
-- [ ] **Step 5: Commit the analyzer refactor**
+- [x] **Step 5: Commit the analyzer refactor**
 
 ```bash
 git add src/common/Ark.Tools.Core.Analyzers src/common/Ark.Tools.Solid.Analyzers src/compliance/Ark.Tools.Compliance.Analyzers
@@ -119,23 +119,23 @@ git commit -m "perf: cache analyzer compilation facts"
 - Consumes: Existing generator attributes, symbols, and output contracts.
 - Produces: Immutable primitive specs crossing incremental boundaries; emitters consume only materialized specs.
 
-- [ ] **Step 1: Keep syntax predicates shape-only**
+- [x] **Step 1: Keep syntax predicates shape-only**
 
 Ensure predicates only test syntax shape and defer semantic checks to transforms.
 
-- [ ] **Step 2: Project symbols into immutable equatable specs before collection**
+- [x] **Step 2: Project symbols into immutable equatable specs before collection**
 
 Carry stable names, locations, attribute values, and generated source data rather than symbol instances or mutable collections through collected providers.
 
-- [ ] **Step 3: Centralize deterministic ordering and hint-name creation**
+- [x] **Step 3: Centralize deterministic ordering and hint-name creation**
 
 Use ordinal sorting and stable fully qualified identifiers before emission; retain existing hint names where they are part of the output contract.
 
-- [ ] **Step 4: Propagate cancellation through parsing and emission**
+- [x] **Step 4: Propagate cancellation through parsing and emission**
 
 Call `ThrowIfCancellationRequested` around compilation-wide scans and source emission loops.
 
-- [ ] **Step 5: Run generator tests and inspect generated output**
+- [x] **Step 5: Run generator tests and inspect generated output**
 
 ```bash
 dotnet test tests/Ark.Tools.Core.Interceptors.Tests/Ark.Tools.Core.Interceptors.Tests.csproj
@@ -145,7 +145,7 @@ dotnet build Ark.Tools.slnx --no-restore
 
 Inspect generated files under each affected project's `obj/Debug/<target-framework>/generated` directory and confirm output remains deterministic.
 
-- [ ] **Step 6: Commit the generator refactor**
+- [x] **Step 6: Commit the generator refactor**
 
 ```bash
 git add src/common/Ark.Tools.Core.Analyzers src/compliance/Ark.Tools.Compliance.Generators
@@ -163,26 +163,26 @@ git commit -m "perf: tighten incremental generator models"
 - Consumes: Existing lexicon files, additional-file diagnostics, and compliance surface inventory.
 - Produces: Same findings and surface lines with fewer allocations and repeated syntax-tree semantic-model walks.
 
-- [ ] **Step 1: Replace avoidable split/substr allocations in lexicon parsing**
+- [x] **Step 1: Replace avoidable split/substr allocations in lexicon parsing**
 
 Use line spans or the existing source-text line model while preserving comments, prefixes, exclusions, and wildcard semantics.
 
-- [ ] **Step 2: Avoid repeated full-string scans for overlapping test-data findings**
+- [x] **Step 2: Avoid repeated full-string scans for overlapping test-data findings**
 
 Keep the current precedence and replacement behavior while using a single ordered finding pass per literal.
 
-- [ ] **Step 3: Cache or combine compilation-wide surface scans**
+- [x] **Step 3: Cache or combine compilation-wide surface scans**
 
 Do not change inventory content; avoid separately walking the same syntax trees for reveal notes and serializer registrations when a shared scan can produce both maps.
 
-- [ ] **Step 4: Run compliance analyzer and SQL generator tests**
+- [x] **Step 4: Run compliance analyzer and SQL generator tests**
 
 ```bash
 dotnet test tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj
 dotnet test tests/Ark.Tools.Compliance.Sql.Tests/Ark.Tools.Compliance.Sql.Tests.csproj
 ```
 
-- [ ] **Step 5: Commit the scanning optimization**
+- [x] **Step 5: Commit the scanning optimization**
 
 ```bash
 git add src/compliance/Ark.Tools.Compliance.Analyzers src/compliance/Ark.Tools.Compliance.Generators
@@ -194,20 +194,20 @@ git commit -m "perf: reduce compliance scanning allocations"
 **Files:**
 - Verify: all modified files from Tasks 1-4.
 
-- [ ] **Step 1: Restore and build the solution**
+- [x] **Step 1: Restore and build the solution**
 
 ```bash
 dotnet restore Ark.Tools.slnx
 dotnet build Ark.Tools.slnx --no-restore
 ```
 
-- [ ] **Step 2: Run the complete test suite**
+- [x] **Step 2: Run the complete test suite**
 
 ```bash
 dotnet test Ark.Tools.slnx --no-build
 ```
 
-- [ ] **Step 3: Check scope and generated changes**
+- [x] **Step 3: Check scope and generated changes**
 
 ```bash
 git diff --check
@@ -217,15 +217,15 @@ git diff --name-only -- src/mediator-framework
 
 Expected: no mediator-framework files are modified and no unintended generated or lock files are staged.
 
-- [ ] **Step 4: Scan modified files for secrets**
+- [x] **Step 4: Scan modified files for secrets**
 
 Run the repository secret-scanning tool with the exact modified-file list before the final commit.
 
-- [ ] **Step 5: Run parallel code review and CodeQL validation**
+- [x] **Step 5: Run parallel code review and CodeQL validation**
 
 Classify CodeQL as non-trivial because analyzer and generator logic changes affect compilation behavior and generated code.
 
-- [ ] **Step 6: Commit final fixes with a Conventional Commit**
+- [x] **Step 6: Commit final fixes with a Conventional Commit**
 
 ```bash
 git add <modified-files>

@@ -203,6 +203,12 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         Compilation compilation,
         CancellationToken token)
     {
+        var compliancePurposeType = compilation.GetTypeByMetadataName(Prefix + "CompliancePurpose");
+        var compliancePurposeCategoryType = compilation.GetTypeByMetadataName(Prefix + "CompliancePurposeCategory");
+        var dapperType = compilation.GetTypeByMetadataName(Prefix + "Dapper.SensitiveValueDapper");
+        var newtonsoftJsonType = compilation.GetTypeByMetadataName(Prefix + "NewtonsoftJson.SensitiveValueNewtonsoftJson");
+        var protobufType = compilation.GetTypeByMetadataName(Prefix + "Protobuf.SensitiveValueProtobuf");
+        var messagePackType = compilation.GetTypeByMetadataName(Prefix + "MessagePack.SensitiveValueFormatterResolver");
         var notes = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         var registrations = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         foreach (var tree in compilation.SyntaxTrees)
@@ -216,14 +222,15 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                     && invocation.ArgumentList.Arguments.Count == 1
                     && model.GetSymbolInfo(invocation, token).Symbol is IMethodSymbol revealMethod
                     && revealMethod.Parameters.Length == 1
-                    && revealMethod.Parameters[0].Type.ToDisplayString() == Prefix + "CompliancePurpose"
+                    && SymbolEqualityComparer.Default.Equals(revealMethod.Parameters[0].Type, compliancePurposeType)
                     && model.GetSymbolInfo(access.Expression, token).Symbol is { } member)
                 {
                     var expression = invocation.ArgumentList.Arguments[0].Expression;
                     var purpose = model.GetSymbolInfo(expression, token).Symbol;
                     string? text = null;
                     string? category = null;
-                    if (purpose is IPropertySymbol property && property.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose")
+                    if (purpose is IPropertySymbol property
+                        && SymbolEqualityComparer.Default.Equals(property.ContainingType, compliancePurposeType))
                     {
                         text = property.Name;
                         category = _builtInCategory(property, token);
@@ -231,7 +238,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
 
                     else if (expression is InvocationExpressionSyntax custom
                         && purpose is IMethodSymbol { Name: "Custom" } customMethod
-                        && customMethod.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose"
+                        && SymbolEqualityComparer.Default.Equals(customMethod.ContainingType, compliancePurposeType)
                         && custom.ArgumentList.Arguments.Count == 2)
                     {
                         var constant = model.GetConstantValue(custom.ArgumentList.Arguments[0].Expression, token);
@@ -239,7 +246,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                             text = value;
                         var categorySymbol = model.GetSymbolInfo(custom.ArgumentList.Arguments[1].Expression, token).Symbol;
                         if (categorySymbol is IFieldSymbol categoryField
-                            && categoryField.ContainingType.ToDisplayString() == Prefix + "CompliancePurposeCategory")
+                            && SymbolEqualityComparer.Default.Equals(categoryField.ContainingType, compliancePurposeCategoryType))
                         {
                             category = categoryField.Name;
                         }
@@ -250,14 +257,15 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
                     || method.Name is not ("Register" or "RegisterBuiltIn"))
                     continue;
-                var serializer = method.ContainingType.ToDisplayString() switch
-                {
-                    Prefix + "Dapper.SensitiveValueDapper" => "Dapper",
-                    Prefix + "NewtonsoftJson.SensitiveValueNewtonsoftJson" => "Newtonsoft.Json",
-                    Prefix + "Protobuf.SensitiveValueProtobuf" => "Protobuf",
-                    Prefix + "MessagePack.SensitiveValueFormatterResolver" => "MessagePack",
-                    _ => null,
-                };
+                var serializer = SymbolEqualityComparer.Default.Equals(method.ContainingType, dapperType)
+                    ? "Dapper"
+                    : SymbolEqualityComparer.Default.Equals(method.ContainingType, newtonsoftJsonType)
+                        ? "Newtonsoft.Json"
+                        : SymbolEqualityComparer.Default.Equals(method.ContainingType, protobufType)
+                            ? "Protobuf"
+                            : SymbolEqualityComparer.Default.Equals(method.ContainingType, messagePackType)
+                                ? "MessagePack"
+                                : null;
                 if (serializer is null)
                     continue;
                 if (method.Name == "RegisterBuiltIn")

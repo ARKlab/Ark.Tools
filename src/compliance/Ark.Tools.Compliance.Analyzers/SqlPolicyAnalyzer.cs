@@ -30,13 +30,15 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static start =>
         {
-            var facts = ComplianceCompilationFacts._create(
-                start.Compilation,
-                start.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
-            if (!facts._complianceEnabled)
+            var options = start.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+            if (!ComplianceCompilationFacts._isEnabled(options))
             {
                 return;
             }
+
+            var facts = ComplianceCompilationFacts._create(
+                start.Compilation,
+                options);
 
             start.RegisterSymbolAction(symbolContext => _analyzeType(symbolContext, facts), SymbolKind.NamedType);
         });

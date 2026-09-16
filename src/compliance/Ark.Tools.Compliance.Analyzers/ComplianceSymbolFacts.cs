@@ -53,8 +53,7 @@ internal sealed class ComplianceCompilationFacts
 
     internal static ComplianceCompilationFacts _create(Compilation compilation, AnalyzerConfigOptions options)
     {
-        var complianceEnabled = !options.TryGetValue("build_property.EnableArkToolsCompliance", out var enabled)
-            || !string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase);
+        var complianceEnabled = _isEnabled(options);
         var isTestProject = options.TryGetValue("build_property.IsTestProject", out var testProject)
             && string.Equals(testProject, "true", StringComparison.OrdinalIgnoreCase);
         var isHost = compilation.Options.OutputKind
@@ -83,6 +82,12 @@ internal sealed class ComplianceCompilationFacts
             _symbols(
                 compilation.GetTypeByMetadataName("System.Threading.CancellationToken"),
                 compilation.GetTypeByMetadataName("System.Threading.CancellationTokenSource")));
+    }
+
+    internal static bool _isEnabled(AnalyzerConfigOptions options)
+    {
+        return !options.TryGetValue("build_property.EnableArkToolsCompliance", out var enabled)
+            || !string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase);
     }
 
     private static ImmutableArray<INamedTypeSymbol> _symbols(params INamedTypeSymbol?[] candidates)

@@ -227,10 +227,18 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
 
         internal static CompilationFacts _create(Compilation compilation)
         {
+            var evolvableEnum1 = compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`1");
+            var evolvableEnum2 = compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`2");
+            var int32Type = compilation.GetSpecialType(SpecialType.System_Int32);
+            if (evolvableEnum1 is null && evolvableEnum2 is null)
+            {
+                return new CompilationFacts(evolvableEnum1, evolvableEnum2, int32Type, null, null, null);
+            }
+
             return new CompilationFacts(
-                compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`1"),
-                compilation.GetTypeByMetadataName("Ark.Tools.Core.EvolvableEnum`2"),
-                compilation.GetSpecialType(SpecialType.System_Int32),
+                evolvableEnum1,
+                evolvableEnum2,
+                int32Type,
                 compilation.GetTypeByMetadataName("System.Runtime.Serialization.EnumMemberAttribute"),
                 compilation.GetTypeByMetadataName("System.ComponentModel.DataAnnotations.DisplayAttribute"),
                 compilation.GetTypeByMetadataName("System.ComponentModel.DisplayNameAttribute"));

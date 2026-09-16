@@ -53,13 +53,15 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static start =>
         {
-            var facts = ComplianceCompilationFacts._create(
-                start.Compilation,
-                start.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
-            if (!facts._complianceEnabled)
+            var options = start.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+            if (!ComplianceCompilationFacts._isEnabled(options))
             {
                 return;
             }
+
+            var facts = ComplianceCompilationFacts._create(
+                start.Compilation,
+                options);
 
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
@@ -124,7 +126,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        var classifiedCache = new Dictionary<ISymbol, bool>(SymbolEqualityComparer.Default);
+        Dictionary<ISymbol, bool>? classifiedCache = null;
         bool isClassified(ISymbol? candidate)
         {
             if (candidate is null)
@@ -132,6 +134,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 return false;
             }
 
+            classifiedCache ??= new Dictionary<ISymbol, bool>(SymbolEqualityComparer.Default);
             if (!classifiedCache.TryGetValue(candidate, out var result))
             {
                 result = ComplianceSymbolFacts._isClassified(candidate, facts);
