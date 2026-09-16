@@ -129,6 +129,7 @@ jobs:
         file: coverage.cobertura.xml
         language: 'C#'
         label: Ark.Tools
+        fail-on-error: false
 
     - name: Create code coverage report
       run: |
