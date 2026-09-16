@@ -395,7 +395,7 @@ dependencies:
     .github/hooks/scripts/superpowers/hooks/run-hook.cmd: sha256:d3d9c6199678dab2858e60509dde5e7414f13c2a2b5e48a38b1d368b6e1d6abb
     .github/hooks/scripts/superpowers/hooks/session-start: sha256:88a060272ca8047e0d1cd73a016e1cebba8396807a44be1e296d7c02dcbb9934
     .github/hooks/superpowers-hooks.json: sha256:af6432012a1b5a0b1644cf05d13acfac69c6671dbf12d0bf08cd8acc062d979d
-  content_hash: sha256:d80e17596fdf5b41aae998b898d30e5469503ca7cdfaf97b2e09125dabd697bc
+  content_hash: sha256:680dd955e1b2ae42486a354278e0780eed4b268e26e2450e6cd61414e206ae3d
   is_dev: true
   declared_license: MIT
 deployments:
