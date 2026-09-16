@@ -16,6 +16,7 @@ devDependencies:
     - dotnet/skills/plugins/dotnet-diag#main
     - git: https://github.com/obra/superpowers#main
     - DietrichGebert/ponytail#v4.10.0
+    - .\agents-plugins\ark-csharp
   mcp:
     - name: ado
       registry: false
@@ -51,4 +52,4 @@ marketplace:
     - name: ark-csharp
       description: Ark CSharp development skills and agents
       source: ./agents-plugins/ark-csharp
-      version: 1.1.0
+      version: 1.2.0
