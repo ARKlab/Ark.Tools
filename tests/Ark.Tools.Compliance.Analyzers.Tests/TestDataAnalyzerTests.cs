@@ -12,6 +12,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
+using System.Text.RegularExpressions;
+
 namespace Ark.Tools.Compliance.Analyzers.Tests;
 
 #pragma warning disable ARKPII006 // Synthetic, intentionally non-reserved values exercise the fixture diagnostic.
@@ -81,11 +83,14 @@ public sealed class TestDataAnalyzerTests
     [TestMethod]
     public async Task PatternTimeoutReportsIncompleteScan()
     {
-        var feature = "| " + new string('a', 100_000) + "b +12025550200 |";
+        #pragma warning disable MA0110, MA0023 // The custom timeout regex is a deterministic test seam.
+        var timeoutPattern = new Regex("(a+)+z", RegexOptions.ExplicitCapture, TimeSpan.FromTicks(1));
+        #pragma warning restore MA0110, MA0023
+        var feature = "| " + new string('a', 20) + "b +12025552345 |";
 
         var diagnostics = await _analyzeFeatureAsync(
             feature,
-            analyzer: new TestDataComplianceAnalyzer(static _ => true)).ConfigureAwait(false);
+            analyzer: new TestDataComplianceAnalyzer(timeoutPattern)).ConfigureAwait(false);
 
         diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKPII006");
         diagnostics.Select(static diagnostic => diagnostic.Id).Should().Contain("ARKPII014");

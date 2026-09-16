@@ -254,8 +254,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
 
                     _add(notes, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + (category ?? "(dynamic category)") + "]");
                 }
-                if (invocation.Expression is not MemberAccessExpressionSyntax registerAccess
-                    || registerAccess.Name.Identifier.ValueText is not ("Register" or "RegisterBuiltIn")
+                if (_invocationName(invocation) is not ("Register" or "RegisterBuiltIn")
                     || model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method)
                     continue;
                 var serializer = SymbolEqualityComparer.Default.Equals(method.ContainingType, dapperType)
@@ -282,6 +281,17 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             }
         }
         return (notes, registrations);
+    }
+
+    private static string? _invocationName(InvocationExpressionSyntax invocation)
+    {
+        return invocation.Expression switch
+        {
+            MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
+            MemberBindingExpressionSyntax memberBinding => memberBinding.Name.Identifier.ValueText,
+            SimpleNameSyntax simpleName => simpleName.Identifier.ValueText,
+            _ => null,
+        };
     }
 
     // Resolves the category a built-in CompliancePurpose property (for example SendTransactionalEmail)

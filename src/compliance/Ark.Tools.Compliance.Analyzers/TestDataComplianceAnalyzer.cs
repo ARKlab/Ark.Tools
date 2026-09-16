@@ -37,7 +37,6 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         new Pattern(PersonalDataKind.Iban, PersonalDataPatterns._iban),
         new Pattern(PersonalDataKind.PostalAddress, PersonalDataPatterns._postalAddress));
     private readonly ImmutableArray<Pattern> _patterns;
-    private readonly Func<string, bool>? _forceIncompleteScan;
 
     /// <summary>Initializes a new instance of the <see cref="TestDataComplianceAnalyzer"/> class.</summary>
     public TestDataComplianceAnalyzer()
@@ -45,10 +44,9 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
     {
     }
 
-    internal TestDataComplianceAnalyzer(Func<string, bool> forceIncompleteScan)
-        : this(_defaultPatterns)
+    internal TestDataComplianceAnalyzer(Regex emailPattern)
+        : this(_defaultPatterns.SetItem(0, new Pattern(PersonalDataKind.Email, emailPattern)))
     {
-        _forceIncompleteScan = forceIncompleteScan;
     }
 
     private TestDataComplianceAnalyzer(ImmutableArray<Pattern> patterns)
@@ -87,25 +85,20 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                 }
 
                 var result = _find(value, _patterns);
-                if (_forceIncompleteScan?.Invoke(value) == true)
-                {
-                    result = new ScanResult(result._findings, timedOut: true);
-                }
-
                 if (result._findings.Count == 0 && !result._timedOut)
                 {
                     return;
                 }
 
-                var replacement = new StringBuilder(value);
-                foreach (var match in result._findings.OrderByDescending(static match => match._span.Start))
-                {
-                    replacement.Remove(match._span.Start, match._span.Length)
-                        .Insert(match._span.Start, PersonalDataPatterns._reservedValue(match._kind));
-                }
-
                 if (result._findings.Count > 0)
                 {
+                    var replacement = new StringBuilder(value);
+                    foreach (var match in result._findings.OrderByDescending(static match => match._span.Start))
+                    {
+                        replacement.Remove(match._span.Start, match._span.Length)
+                            .Insert(match._span.Start, PersonalDataPatterns._reservedValue(match._kind));
+                    }
+
                     operationContext.ReportDiagnostic(Diagnostic.Create(_rule, literal.Syntax.GetLocation(),
                         ImmutableDictionary<string, string?>.Empty.Add("Replacement", replacement.ToString()),
                         result._findings[0]._kind.ToString()));
@@ -149,11 +142,6 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                 }
 
                 var result = _find(content, _patterns);
-                if (_forceIncompleteScan?.Invoke(content) == true)
-                {
-                    result = new ScanResult(result._findings, timedOut: true);
-                }
-
                 foreach (var match in result._findings)
                 {
                     var span = new TextSpan(line.Start + match._span.Start, match._span.Length);
@@ -235,6 +223,12 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         {
             _kind = kind;
             _regex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(100));
+        }
+
+        internal Pattern(PersonalDataKind kind, Regex regex)
+        {
+            _kind = kind;
+            _regex = regex;
         }
 
         internal PersonalDataKind _kind { get; }

@@ -85,10 +85,11 @@ public class EvolvableEnumAnalyzerTests
                 public struct EvolvableEnum<T> { }
             }
             enum Status { NOT_SET = 0, Active = 1 }
+            enum BrokenStatus : byte { Active = 1 }
             class Contract
             {
                 CoreStatus Value;
-                Other.EvolvableEnum<Status> OtherValue;
+                Other.EvolvableEnum<BrokenStatus> OtherValue;
             }
             """);
 
