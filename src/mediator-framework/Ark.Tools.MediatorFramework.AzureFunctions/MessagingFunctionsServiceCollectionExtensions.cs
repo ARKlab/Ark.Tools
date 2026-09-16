@@ -128,8 +128,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             dataBus,
             manifest.Resources,
             management,
-            manifest.OutgoingSteps,
-            container.GetInstance);
+            manifest.OutgoingSteps);
         _registerBusBridge(services, container);
         services.AddSingleton(manifest);
         services.AddSingleton(MessagingTriggeredHostMarker.Instance);
@@ -162,10 +161,11 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             serviceProvider.GetRequiredService<IMessagingDataBus>(),
             descriptor.Network));
         services.AddSingleton(serviceProvider => new MessagingDispatcher(
-            container,
+            serviceProvider,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             descriptor.RetryPolicy,
+            serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
             (logicalName, payload, processor, ctk) =>
                 descriptor.Dispatch!(logicalName, payload, processor, ctk),
             descriptor.DispatchFailed is null
@@ -178,8 +178,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
                         error,
                         processor,
                         ctk),
-            manifest.IncomingSteps,
-            container.GetInstance));
+            manifest.IncomingSteps));
 
         return services;
     }

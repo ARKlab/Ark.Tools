@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.Solid;
 
 using AwesomeAssertions;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using NodaTime;
 using NodaTime.Testing;
@@ -119,36 +122,73 @@ public sealed partial class MessagingBusTests
             .BeEquivalentTo("Send", "Defer", "Defer", "Publish");
     }
 
+    [TestMethod]
+    public async Task SendUsesConfiguredPipelineProcessor()
+    {
+        var transport = new InMemoryMessagingTransport();
+        await using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+        var pipelineProcessor = new RecordingPipelineProcessor();
+        var network = _createNetwork(MessagingCapabilities.SendReceive);
+        using var bus = new MessagingBus(
+            transport,
+            network,
+            new TestContractRegistry(network.NetworkIdentity),
+            _createCodecRegistry(),
+            new MessagingPayloadSender(new InMemoryMessagingDataBus(), network, CompressionAlgorithm.None, 0),
+            "sender",
+            serviceProvider,
+            pipelineProcessor,
+            [typeof(RecordingOutgoingStep)]);
+
+        await bus.Send(new TestMessage { Value = "Ada" }).ConfigureAwait(false);
+
+        pipelineProcessor._invocations.Should().ContainSingle();
+        var delivery = await _receiveOnce(transport, "processor").ConfigureAwait(false);
+        delivery.Headers["processor"].Should().Be("executed");
+        await delivery.CompleteAsync(default).ConfigureAwait(false);
+    }
+
     private static MessagingBus _createBus(
         IMessagingTransport transport,
         MessagingCapabilities capabilities,
         FakeClock? clock = null,
         string participantIdentity = "sender")
     {
-        var network = new MessagingNetworkOptions(
+        var network = _createNetwork(capabilities);
+        var dataBus = new InMemoryMessagingDataBus(
+            clock ?? new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0)),
+            Duration.FromHours(1));
+        var codecRegistry = _createCodecRegistry();
+        var registry = new TestContractRegistry(network.NetworkIdentity);
+        return new MessagingBus(
+            transport,
+            network,
+            registry,
+            codecRegistry,
+            new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0),
+            participantIdentity,
+            utcNow: () => (clock ?? new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0)))
+                .GetCurrentInstant().ToDateTimeOffset());
+    }
+
+    private static MessagingNetworkOptions _createNetwork(MessagingCapabilities capabilities)
+    {
+        return new MessagingNetworkOptions(
             typeof(MessagingBusTests),
             new MessagingNetworkAttribute
             {
                 Requires = capabilities,
                 MaximumSchedulingDelay = TimeSpan.FromDays(1)
             });
-        var dataBus = new InMemoryMessagingDataBus(
-            clock ?? new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0)),
-            Duration.FromHours(1));
+    }
+
+    private static MessagingCodecRegistry _createCodecRegistry()
+    {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
             TypeInfoResolver = TestJsonContext.Default
         });
-        var registry = new TestContractRegistry(network.NetworkIdentity);
-        return new MessagingBus(
-            transport,
-            network,
-            registry,
-            new MessagingCodecRegistry([codec]),
-            new MessagingPayloadSender(dataBus, network, CompressionAlgorithm.None, 0),
-            participantIdentity,
-            utcNow: () => (clock ?? new FakeClock(Instant.FromUtc(2024, 1, 1, 0, 0)))
-                .GetCurrentInstant().ToDateTimeOffset());
+        return new MessagingCodecRegistry([codec]);
     }
 
     private sealed class TestContractRegistry : IMessagingContractRegistry
@@ -217,6 +257,45 @@ public sealed partial class MessagingBusTests
 
     private sealed class UnwiredMessage
     {
+    }
+
+    private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
+    {
+        public async Task ProcessAsync(
+            MessagingOutgoingContext context,
+            Func<Task> next,
+            CancellationToken cancellationToken)
+        {
+            context.Headers["processor"] = "executed";
+            await next().ConfigureAwait(false);
+        }
+    }
+
+    private sealed class RecordingPipelineProcessor : IMessagingPipelineProcessor
+    {
+        internal List<IReadOnlyList<Type>> _invocations { get; } = [];
+
+        public Task ProcessIncomingAsync(
+            IServiceProvider serviceProvider,
+            IReadOnlyList<Type> orderedStepTypes,
+            MessagingIncomingContext context,
+            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public async Task ProcessOutgoingAsync(
+            IServiceProvider serviceProvider,
+            IReadOnlyList<Type> orderedStepTypes,
+            MessagingOutgoingContext context,
+            Func<CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            _invocations.Add(orderedStepTypes);
+            context.Headers["processor"] = "executed";
+            await terminal(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     [JsonSerializable(typeof(TestMessage))]

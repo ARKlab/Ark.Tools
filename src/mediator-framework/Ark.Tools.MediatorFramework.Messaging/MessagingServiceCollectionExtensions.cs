@@ -28,6 +28,7 @@ public static class MessagingServiceCollectionExtensions
 
         services.AddOptions<JsonSerializerOptions>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IMessagingCodec, JsonMessagingCodec>());
+        services.TryAddSingleton<IMessagingPipelineProcessor, ServiceProviderMessagingPipelineProcessor>();
         services.AddSingleton<MessagingCodecRegistry>();
         services.AddSingleton<IMessagingCodecRegistry>(
             static serviceProvider => serviceProvider.GetRequiredService<MessagingCodecRegistry>());
@@ -227,33 +228,6 @@ public static class MessagingServiceCollectionExtensions
         string participantIdentity,
         IReadOnlyList<Type>? outgoingStepTypes = null)
     {
-        return services._addArkMessagingBus(
-            network,
-            registry,
-            payloadSender,
-            participantIdentity,
-            outgoingStepTypes,
-            null);
-    }
-
-    /// <summary>Registers the native restricted bus for one messaging participant.</summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="network">The resolved network options.</param>
-    /// <param name="registry">The generated contract registry.</param>
-    /// <param name="payloadSender">The participant-configured payload sender.</param>
-    /// <param name="participantIdentity">The sending participant identity.</param>
-    /// <param name="outgoingStepTypes">Optional outgoing pipeline step types.</param>
-    /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
-    /// <returns>The same service collection.</returns>
-    internal static IServiceCollection _addArkMessagingBus(
-        this IServiceCollection services,
-        MessagingNetworkOptions network,
-        IMessagingContractRegistry registry,
-        MessagingPayloadSender payloadSender,
-        string participantIdentity,
-        IReadOnlyList<Type>? outgoingStepTypes,
-        Func<Type, object>? resolveStep)
-    {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(network);
         ArgumentNullException.ThrowIfNull(registry);
@@ -267,8 +241,10 @@ public static class MessagingServiceCollectionExtensions
                 serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
                 payloadSender,
                 participantIdentity,
+                serviceProvider,
+                serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
                 outgoingStepTypes,
-                resolveStep ?? serviceProvider.GetRequiredService));
+                utcNow: null));
         services.AddSingleton<IBus>(
             static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         services.AddSingleton<IBusOutboxEnlistment>(
@@ -285,15 +261,13 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="transport">The selected runtime transport.</param>
     /// <param name="dataBus">The shared network DataBus.</param>
     /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
-    /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
     internal static IServiceCollection _addArkMessagingParticipant(
         this IServiceCollection services,
         MessagingParticipantDescriptor participant,
         IMessagingTransport transport,
         IMessagingDataBus dataBus,
-        IReadOnlyList<Type>? outgoingStepTypes = null,
-        Func<Type, object>? resolveStep = null)
+        IReadOnlyList<Type>? outgoingStepTypes = null)
     {
         var resources = participant.Network.ResourceLifecycle == MessagingResourceLifecycle.CreateIfMissing
             && participant.PublishedTopics.Count > 0
@@ -312,8 +286,7 @@ public static class MessagingServiceCollectionExtensions
             dataBus,
             resources,
             transport as IMessagingTransportManagement,
-            outgoingStepTypes,
-            resolveStep);
+            outgoingStepTypes);
     }
 
     /// <summary>Registers one generated participant with explicit resource lifecycle services.</summary>
@@ -324,7 +297,6 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="resources">Optional generated desired-resource manifest.</param>
     /// <param name="management">Optional resource-management seam.</param>
     /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
-    /// <param name="resolveStep">Optional host pipeline-step resolver.</param>
     /// <returns>The same service collection.</returns>
     internal static IServiceCollection _addArkMessagingParticipant(
         this IServiceCollection services,
@@ -333,8 +305,7 @@ public static class MessagingServiceCollectionExtensions
         IMessagingDataBus dataBus,
         MessagingResourceManifest? resources,
         IMessagingTransportManagement? management,
-        IReadOnlyList<Type>? outgoingStepTypes,
-        Func<Type, object>? resolveStep)
+        IReadOnlyList<Type>? outgoingStepTypes)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(participant);
@@ -365,8 +336,7 @@ public static class MessagingServiceCollectionExtensions
             participant.Registry,
             payloadSender,
             participant.Identity,
-            outgoingStepTypes,
-            resolveStep);
+            outgoingStepTypes);
         services.AddSingleton<IHostedService, MessagingParticipantStartupValidator>();
         if (resources?.Lifecycle == MessagingResourceLifecycle.CreateIfMissing)
         {

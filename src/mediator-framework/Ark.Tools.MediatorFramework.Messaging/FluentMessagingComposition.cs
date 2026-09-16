@@ -9,8 +9,6 @@ using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 
-using SimpleInjector;
-
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Provides the single entry point for native messaging composition.</summary>
@@ -128,22 +126,18 @@ public sealed class MessagingCompositionBuilder<TNetwork>
 
     /// <summary>Configures a custom-hosted receiving participant.</summary>
     /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
-    /// <param name="container">The application Simple Injector container.</param>
     /// <param name="configure">The receiver configuration.</param>
     /// <returns>This builder.</returns>
     public MessagingCompositionBuilder<TNetwork> Receiver<TParticipant>(
-        Container container,
         Action<MessagingReceiverBuilder<TNetwork, TParticipant>> configure)
         where TParticipant : class, IMessagingParticipant<TParticipant>
     {
         _selectMode();
-        ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new MessagingReceiverBuilder<TNetwork, TParticipant>(
             _services,
             _network,
-            _registry,
-            container);
+            _registry);
         configure(builder);
         _registration = builder._register;
         return this;
@@ -661,16 +655,12 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
     where TNetwork : class, IMessagingNetwork<TNetwork>
     where TParticipant : class, IMessagingParticipant<TParticipant>
 {
-    private readonly Container _container;
-
     internal MessagingReceiverBuilder(
         IServiceCollection services,
         MessagingNetworkOptions network,
-        IMessagingContractRegistry registry,
-        Container container)
+        IMessagingContractRegistry registry)
         : base(services, network, registry)
     {
-        _container = container;
     }
 
     /// <summary>Registers the configured receiver participant and dispatcher.</summary>
@@ -708,10 +698,11 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         _servicesValue.TryAddSingleton<IMessagingConcurrencyController>(static serviceProvider =>
             new MessagingAimdConcurrencyController(serviceProvider.GetService<MessagingProcessingOptions>()));
         _servicesValue.AddSingleton(serviceProvider => new MessagingDispatcher(
-            _container,
+            serviceProvider,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             participant.RetryPolicy,
+            serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
             (logicalName, payload, processor, ctk) =>
                 participant.Dispatch!(logicalName, payload, processor, ctk),
             participant.DispatchFailed is null
@@ -725,7 +716,6 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
                         processor,
                         ctk),
             IncomingSteps,
-            _container.GetInstance,
             clock: null,
             serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
         _servicesValue.AddSingleton<IHostedService>(serviceProvider => new MessagingProcessorHost(

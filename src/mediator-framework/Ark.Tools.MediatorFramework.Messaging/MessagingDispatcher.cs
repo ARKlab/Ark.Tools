@@ -3,8 +3,6 @@
 
 using Ark.Tools.Solid;
 
-using SimpleInjector;
-using SimpleInjector.Lifestyles;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using NodaTime;
@@ -17,10 +15,11 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 public sealed class MessagingDispatcher
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private readonly Container _container;
+    private readonly IServiceProvider _serviceProvider;
     private readonly MessagingHeaderProcessor _headerProcessor;
     private readonly MessagingPayloadReceiver _payloadReceiver;
     private readonly IMessagingRetryPolicy _retryPolicy;
+    private readonly IMessagingPipelineProcessor _pipelineProcessor;
     private readonly Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> _dispatch;
     private readonly Func<
         string,
@@ -31,26 +30,26 @@ public sealed class MessagingDispatcher
         CancellationToken,
         Task>? _dispatchFailed;
     private readonly IReadOnlyList<Type> _incomingStepTypes;
-    private readonly Func<Type, object> _resolveStep;
     private readonly IClock _clock;
     private readonly IMessagingConcurrencyController? _concurrency;
 
     /// <summary>Creates a receive dispatcher for one participant.</summary>
-    /// <param name="container">The participant's SimpleInjector container.</param>
+    /// <param name="serviceProvider">The application service provider.</param>
     /// <param name="headerProcessor">The bounded header classifier.</param>
     /// <param name="payloadReceiver">The payload preparation runtime.</param>
     /// <param name="retryPolicy">The participant retry policy.</param>
+    /// <param name="pipelineProcessor">The pipeline processor used for per-delivery execution.</param>
     /// <param name="dispatch">The generated normal-message binder.</param>
     /// <param name="dispatchFailed">The generated inline failure binder, when installed.</param>
     /// <param name="incomingStepTypes">The incoming pipeline steps in execution order.</param>
-    /// <param name="resolveStep">The pipeline step resolver.</param>
     /// <param name="clock">The clock used for processing metrics.</param>
     /// <param name="concurrencyController">The host concurrency controller notified of adverse signals.</param>
     public MessagingDispatcher(
-        Container container,
+        IServiceProvider serviceProvider,
         MessagingHeaderProcessor headerProcessor,
         MessagingPayloadReceiver payloadReceiver,
         IMessagingRetryPolicy retryPolicy,
+        IMessagingPipelineProcessor pipelineProcessor,
         Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
         Func<
             string,
@@ -61,15 +60,15 @@ public sealed class MessagingDispatcher
             CancellationToken,
             Task>? dispatchFailed = null,
         IReadOnlyList<Type>? incomingStepTypes = null,
-        Func<Type, object>? resolveStep = null,
         IClock? clock = null,
         IMessagingConcurrencyController? concurrencyController = null)
     {
-        _container = container ?? throw new ArgumentNullException(nameof(container));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
         _payloadReceiver = payloadReceiver ?? throw new ArgumentNullException(nameof(payloadReceiver));
         MessagingRetryPolicyValidation.Validate(retryPolicy);
         _retryPolicy = retryPolicy;
+        _pipelineProcessor = pipelineProcessor ?? throw new ArgumentNullException(nameof(pipelineProcessor));
         _dispatch = dispatch ?? throw new ArgumentNullException(nameof(dispatch));
         _dispatchFailed = dispatchFailed;
         if (_retryPolicy.SecondLevelRetriesEnabled && _dispatchFailed is null)
@@ -78,7 +77,6 @@ public sealed class MessagingDispatcher
                 "Second-level retries require a generated failure binder.");
         _incomingStepTypes = new ReadOnlyCollection<Type>(
             (incomingStepTypes ?? Array.Empty<Type>()).ToArray());
-        _resolveStep = resolveStep ?? container.GetInstance;
         _clock = clock ?? SystemClock.Instance;
         _concurrency = concurrencyController;
     }
@@ -196,20 +194,16 @@ public sealed class MessagingDispatcher
             await _invokeStageAsync(
                 async stageToken =>
                 {
-#pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
-                    await using var scope = AsyncScopedLifestyle.BeginScope(_container);
-#pragma warning restore MA0004
                     var context = new MessagingIncomingContext(
                         delivery.Headers,
                         delivery.DeliveryCount,
                         stageToken);
                     context.Items[MessagingMetrics._dispatcherManagedItem] = true;
-                    var processor = scope.GetInstance<ICommandProcessor>();
-                    await MessagingPipelineInvoker.InvokeIncomingAsync(
+                    await _pipelineProcessor.ProcessIncomingAsync(
+                        _serviceProvider,
                         _incomingStepTypes,
-                        _resolveStep,
                         context,
-                        () => _dispatch(logicalName, payload, processor, stageToken),
+                        (processor, pipelineToken) => _dispatch(logicalName, payload, processor, pipelineToken),
                         stageToken).ConfigureAwait(false);
                 },
                 _retryPolicy.MaximumHandlerDuration,
@@ -268,34 +262,22 @@ public sealed class MessagingDispatcher
             await _invokeStageAsync(
                 async stageToken =>
                 {
-#pragma warning disable MA0004 // The scope lifetime is bounded by this delivery stage.
-                    await using var scope = AsyncScopedLifestyle.BeginScope(_container);
-#pragma warning restore MA0004
-                    var processor = scope.GetInstance<ICommandProcessor>();
-                    await _dispatchFailed(
-                        logicalName,
-                        payload,
-                        delivery.DeliveryCount,
-                        error,
-                        processor,
+                    await _pipelineProcessor.ProcessIncomingAsync(
+                        _serviceProvider,
+                        Array.Empty<Type>(),
+                        new MessagingIncomingContext(delivery.Headers, delivery.DeliveryCount, stageToken),
+                        (processor, pipelineToken) => _dispatchFailed(
+                            logicalName,
+                            payload,
+                            delivery.DeliveryCount,
+                            error,
+                            processor,
+                            pipelineToken),
                         stageToken).ConfigureAwait(false);
                 },
                 _retryPolicy.MaximumHandlerDuration,
                 cancellationToken).ConfigureAwait(false);
             return (MessagingSettlementDecision.Complete, null);
-        }
-        catch (ActivationException exception)
-        {
-            var failFast = new MessagingFailFastException(
-                MessagingFailFastReason.MissingSecondLevelHandler,
-                logicalName,
-                exception);
-            _logger.Warn(
-                exception,
-                CultureInfo.InvariantCulture,
-                "Messaging second-level handler activation failed for {MessageType}",
-                logicalName);
-            return (MessagingSettlementDecision.DeadLetter, MessagingExceptionInfo.From(failFast));
         }
         catch (MessagingFailFastException exception)
         {
