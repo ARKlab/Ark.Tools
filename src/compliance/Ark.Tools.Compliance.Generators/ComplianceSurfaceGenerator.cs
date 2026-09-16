@@ -59,8 +59,7 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
     private static Surface _build(Compilation compilation, CancellationToken token)
     {
         var types = _types(compilation.Assembly.GlobalNamespace).ToArray();
-        var notes = _revealNotes(compilation, token);
-        var registrations = _registrations(compilation, token);
+        var (notes, registrations) = _scanInvocations(compilation, token);
         var entries = new SortedDictionary<string, Entry>(StringComparer.Ordinal);
         var members = new HashSet<string>(StringComparer.Ordinal);
 
@@ -198,51 +197,82 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
         }
     }
 
-    private static Dictionary<string, SortedSet<string>> _revealNotes(Compilation compilation, CancellationToken token)
+    private static (
+        Dictionary<string, SortedSet<string>> Notes,
+        Dictionary<string, SortedSet<string>> Registrations) _scanInvocations(
+        Compilation compilation,
+        CancellationToken token)
     {
-        var result = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+        var notes = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+        var registrations = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         foreach (var tree in compilation.SyntaxTrees)
         {
             var model = compilation.GetSemanticModel(tree);
             foreach (var invocation in tree.GetRoot(token).DescendantNodes().OfType<InvocationExpressionSyntax>())
             {
                 token.ThrowIfCancellationRequested();
-                if (invocation.Expression is not MemberAccessExpressionSyntax access || access.Name.Identifier.ValueText != "Reveal"
-                    || invocation.ArgumentList.Arguments.Count != 1
-                    || model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
-                    || method.Parameters.Length != 1
-                    || method.Parameters[0].Type.ToDisplayString() != Prefix + "CompliancePurpose"
-                    || model.GetSymbolInfo(access.Expression, token).Symbol is not { } member)
-                    continue;
-
-                var expression = invocation.ArgumentList.Arguments[0].Expression;
-                var purpose = model.GetSymbolInfo(expression, token).Symbol;
-                string? text = null;
-                string? category = null;
-                if (purpose is IPropertySymbol property && property.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose")
+                if (invocation.Expression is MemberAccessExpressionSyntax access
+                    && access.Name.Identifier.ValueText == "Reveal"
+                    && invocation.ArgumentList.Arguments.Count == 1
+                    && model.GetSymbolInfo(invocation, token).Symbol is IMethodSymbol revealMethod
+                    && revealMethod.Parameters.Length == 1
+                    && revealMethod.Parameters[0].Type.ToDisplayString() == Prefix + "CompliancePurpose"
+                    && model.GetSymbolInfo(access.Expression, token).Symbol is { } member)
                 {
-                    text = property.Name;
-                    category = _builtInCategory(property, token);
-                }
-                else if (expression is InvocationExpressionSyntax custom
-                    && purpose is IMethodSymbol { Name: "Custom" } customMethod
-                    && customMethod.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose"
-                    && custom.ArgumentList.Arguments.Count == 2)
-                {
-                    var constant = model.GetConstantValue(custom.ArgumentList.Arguments[0].Expression, token);
-                    if (constant.HasValue && constant.Value is string value)
-                        text = value;
-                    var categorySymbol = model.GetSymbolInfo(custom.ArgumentList.Arguments[1].Expression, token).Symbol;
-                    if (categorySymbol is IFieldSymbol categoryField
-                        && categoryField.ContainingType.ToDisplayString() == Prefix + "CompliancePurposeCategory")
+                    var expression = invocation.ArgumentList.Arguments[0].Expression;
+                    var purpose = model.GetSymbolInfo(expression, token).Symbol;
+                    string? text = null;
+                    string? category = null;
+                    if (purpose is IPropertySymbol property && property.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose")
                     {
-                        category = categoryField.Name;
+                        text = property.Name;
+                        category = _builtInCategory(property, token);
                     }
+
+                    else if (expression is InvocationExpressionSyntax custom
+                        && purpose is IMethodSymbol { Name: "Custom" } customMethod
+                        && customMethod.ContainingType.ToDisplayString() == Prefix + "CompliancePurpose"
+                        && custom.ArgumentList.Arguments.Count == 2)
+                    {
+                        var constant = model.GetConstantValue(custom.ArgumentList.Arguments[0].Expression, token);
+                        if (constant.HasValue && constant.Value is string value)
+                            text = value;
+                        var categorySymbol = model.GetSymbolInfo(custom.ArgumentList.Arguments[1].Expression, token).Symbol;
+                        if (categorySymbol is IFieldSymbol categoryField
+                            && categoryField.ContainingType.ToDisplayString() == Prefix + "CompliancePurposeCategory")
+                        {
+                            category = categoryField.Name;
+                        }
+                    }
+
+                    _add(notes, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + (category ?? "(dynamic category)") + "]");
                 }
-                _add(result, _key(member), "Reveal: " + (text ?? "(dynamic purpose)") + " [" + (category ?? "(dynamic category)") + "]");
+                if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
+                    || method.Name is not ("Register" or "RegisterBuiltIn"))
+                    continue;
+                var serializer = method.ContainingType.ToDisplayString() switch
+                {
+                    Prefix + "Dapper.SensitiveValueDapper" => "Dapper",
+                    Prefix + "NewtonsoftJson.SensitiveValueNewtonsoftJson" => "Newtonsoft.Json",
+                    Prefix + "Protobuf.SensitiveValueProtobuf" => "Protobuf",
+                    Prefix + "MessagePack.SensitiveValueFormatterResolver" => "MessagePack",
+                    _ => null,
+                };
+                if (serializer is null)
+                    continue;
+                if (method.Name == "RegisterBuiltIn")
+                {
+                    foreach (var name in new[] { "EmailAddress", "PhoneNumber", "PersonName", "PostalAddressLine", "NationalIdentifier", "ApiKey" })
+                        _add(registrations, Prefix + name, serializer);
+                }
+                else
+                {
+                    foreach (var argument in method.TypeArguments)
+                        _add(registrations, _name(argument), serializer);
+                }
             }
         }
-        return result;
+        return (notes, registrations);
     }
 
     // Resolves the category a built-in CompliancePurpose property (for example SendTransactionalEmail)
@@ -269,43 +299,6 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
             "SendTransactionalEmail" => "CustomerSupport",
             _ => null,
         };
-    }
-
-    private static Dictionary<string, SortedSet<string>> _registrations(Compilation compilation, CancellationToken token)
-    {
-        var result = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
-        foreach (var tree in compilation.SyntaxTrees)
-        {
-            var model = compilation.GetSemanticModel(tree);
-            foreach (var invocation in tree.GetRoot(token).DescendantNodes().OfType<InvocationExpressionSyntax>())
-            {
-                token.ThrowIfCancellationRequested();
-                if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method
-                    || method.Name is not ("Register" or "RegisterBuiltIn"))
-                    continue;
-                var serializer = method.ContainingType.ToDisplayString() switch
-                {
-                    Prefix + "Dapper.SensitiveValueDapper" => "Dapper",
-                    Prefix + "NewtonsoftJson.SensitiveValueNewtonsoftJson" => "Newtonsoft.Json",
-                    Prefix + "Protobuf.SensitiveValueProtobuf" => "Protobuf",
-                    Prefix + "MessagePack.SensitiveValueFormatterResolver" => "MessagePack",
-                    _ => null,
-                };
-                if (serializer is null)
-                    continue;
-                if (method.Name == "RegisterBuiltIn")
-                {
-                    foreach (var name in new[] { "EmailAddress", "PhoneNumber", "PersonName", "PostalAddressLine", "NationalIdentifier", "ApiKey" })
-                        _add(result, Prefix + name, serializer);
-                }
-                else
-                {
-                    foreach (var argument in method.TypeArguments)
-                        _add(result, _name(argument), serializer);
-                }
-            }
-        }
-        return result;
     }
 
     private static SortedSet<string> _serializers(ISymbol member, ITypeSymbol? valueType,
