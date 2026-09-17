@@ -72,34 +72,6 @@ internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
         return _equals(x, y);
     }
 
-    internal sealed class CallSiteModelArrayComparer : IEqualityComparer<ImmutableArray<CallSiteModel>>
-    {
-        internal static readonly CallSiteModelArrayComparer _instance = new();
-
-        public bool Equals(ImmutableArray<CallSiteModel> x, ImmutableArray<CallSiteModel> y)
-        {
-            if (x.Length != y.Length)
-                return false;
-
-            for (var i = 0; i < x.Length; i++)
-            {
-                if (!CallSiteModelComparer._instance.Equals(x[i], y[i]))
-                    return false;
-            }
-
-            return true;
-        }
-
-        public int GetHashCode(ImmutableArray<CallSiteModel> obj)
-        {
-            var hash = 17;
-            foreach (var item in obj)
-                hash = (hash * 397) ^ CallSiteModelComparer._instance.GetHashCode(item);
-
-            return hash;
-        }
-    }
-
     public int GetHashCode(CallSiteModel obj)
     {
         return _getHashCode(obj);
@@ -128,6 +100,34 @@ internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
         {
             hash = (hash * 397) ^ member.GetHashCode();
         }
+
+        return hash;
+    }
+}
+
+internal sealed class CallSiteModelArrayComparer : IEqualityComparer<ImmutableArray<CallSiteModel>>
+{
+    internal static readonly CallSiteModelArrayComparer _instance = new();
+
+    public bool Equals(ImmutableArray<CallSiteModel> x, ImmutableArray<CallSiteModel> y)
+    {
+        if (x.Length != y.Length)
+            return false;
+
+        for (var i = 0; i < x.Length; i++)
+        {
+            if (!CallSiteModelComparer._instance.Equals(x[i], y[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    public int GetHashCode(ImmutableArray<CallSiteModel> obj)
+    {
+        var hash = 17;
+        foreach (var item in obj)
+            hash = (hash * 397) ^ CallSiteModelComparer._instance.GetHashCode(item);
 
         return hash;
     }
