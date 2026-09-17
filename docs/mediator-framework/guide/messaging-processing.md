@@ -4,6 +4,24 @@ A **processor host** consumes a participant queue in a long-running process:
 a worker service, a console host, or any ASP.NET Core host. Register it and the
 framework fetches, paces, keeps locks alive, and settles deliveries for you.
 
+The core `Ark.Tools.MediatorFramework.Messaging` package is transport-neutral.
+Azure Service Bus, Storage Queue, and Blob DataBus integrations are provided by
+`Ark.Tools.MediatorFramework.Messaging.Azure`; reference that package when using
+those transports.
+
+Generated endpoints and messaging hosts resolve `ICommandProcessor`,
+`IQueryProcessor`, and `IRequestProcessor` from Microsoft DI. Applications that
+keep Simple Injector as their composition root should register the bridge once:
+
+```csharp
+services.AddArkSolidProcessors(container);
+```
+
+The bridge resolves the application processors inside an async scope and reuses
+an active scope. SimpleInjector remains authoritative for handler
+registrations, decorators, and verification; the bridge does not replace
+existing Microsoft DI registrations.
+
 You do **not** need this chapter when your receiver is an Azure Function: the
 generated trigger and the Functions host own that loop. See
 [Azure Functions](azure-functions.md).

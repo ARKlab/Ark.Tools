@@ -8,8 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-using SimpleInjector;
-
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>Minimal API helpers for mapping multipart attachment uploads.</summary>
@@ -47,8 +45,7 @@ public static class ArkMultipartEx
                 return Results.BadRequest("Missing 'file' part.");
 
             var attachment = new ArkAttachment(file.FileName, file.ContentType, file.OpenReadStream);
-            var container = context.RequestServices.GetRequiredService<Container>();
-            var processor = container.GetInstance<IRequestProcessor>();
+            var processor = context.RequestServices.GetRequiredService<IRequestProcessor>();
             var response = await processor
                 .ExecuteAsync<TRequest, TResponse>(factory(attachment), cancellationToken)
                 .ConfigureAwait(false);

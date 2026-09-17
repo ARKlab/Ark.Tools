@@ -18,6 +18,7 @@ using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Rebus;
 using Ark.Tools.Nodatime;
 using Ark.Tools.Nodatime.Protobuf;
+using Ark.Tools.Solid.SimpleInjector;
 
 using MessagePack.Resolvers;
 
@@ -126,6 +127,7 @@ public sealed class SampleStartup
         {
             services.ConfigureAuthentication(_configuration, _environment);
         }
+        services.AddArkSolidProcessors(_container);
         services.AddArkMinimalApiHost(_container, options =>
         {
             options.RequireAuthenticatedUser = _configureFallbackPolicy;

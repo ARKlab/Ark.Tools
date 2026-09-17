@@ -569,10 +569,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
         else
             builder.AppendLine(");");
-        builder.Append("            var container = services.GetRequiredService<global::SimpleInjector.Container>();").AppendLine();
         if (model.Kind == HandlerKind.Query)
         {
-            builder.Append("            var result = await container.GetInstance<global::Ark.Tools.Solid.IQueryProcessor>().ExecuteAsync<")
+            builder.Append("            var result = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(services).ExecuteAsync<")
                 .Append(response).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
@@ -581,7 +580,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
         else if (model.Kind == HandlerKind.Request)
         {
-            builder.Append("            var result = await container.GetInstance<global::Ark.Tools.Solid.IRequestProcessor>().ExecuteAsync<")
+            builder.Append("            var result = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IRequestProcessor>(services).ExecuteAsync<")
                 .Append(response).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
@@ -590,7 +589,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
         else
         {
-            builder.AppendLine("            await container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>().ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            builder.AppendLine("            await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(services).ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
         }
         builder.AppendLine("        }");
         builder.AppendLine("    }");

@@ -14,6 +14,8 @@ using AwesomeAssertions;
 
 using Azure.Storage.Queues;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -90,13 +92,14 @@ public sealed class MessagingBusSampleTests
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
         container.Register<ICommandHandler<ProcessBookPrintProcessRequest>, FailingBookCommandHandler>(Lifestyle.Scoped);
         container.Register<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>, RecordingBookFailureHandler>(Lifestyle.Scoped);
+        await using var provider = _buildServiceProvider(container);
         var dispatcher = new MessagingDispatcher(
-            container,
             new MessagingHeaderProcessor(
                 new MessagingCodecRegistry([codec]),
                 network.NetworkIdentity),
             new MessagingPayloadReceiver(dataBus, network),
             retryPolicy,
+            new SimpleInjectorPipelineProcessor(container),
             SampleMessagingParticipant.DispatchAsync,
             SampleMessagingParticipant.DispatchFailedAsync);
         var settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -186,7 +189,21 @@ public sealed class MessagingBusSampleTests
             bookPrintAuditSink: auditSink);
         notificationContainer.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
         auditContainer.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
+        using var bus = new MessagingBus(
+            transport,
+            network,
+            SampleMessagingNetwork.Registry,
+            new MessagingCodecRegistry([codec]),
+            SampleMessagingPublisherParticipant.CreatePayloadSender(dataBus, network),
+            SampleMessagingPublisherParticipant.Identity);
+        notificationContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBus>(bus);
+        notificationContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(bus);
+        auditContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBus>(bus);
+        auditContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(bus);
+        await using var notificationProvider = _buildServiceProvider(notificationContainer);
+        await using var auditProvider = _buildServiceProvider(auditContainer);
         var notificationDispatcher = _createDispatcher(
+            notificationProvider,
             notificationContainer,
             dataBus,
             network,
@@ -195,6 +212,7 @@ public sealed class MessagingBusSampleTests
             SampleMessagingNotificationParticipant.DispatchAsync,
             SampleMessagingNotificationParticipant.DispatchFailedAsync);
         var auditDispatcher = _createDispatcher(
+            auditProvider,
             auditContainer,
             dataBus,
             network,
@@ -211,13 +229,6 @@ public sealed class MessagingBusSampleTests
             SampleMessagingAuditParticipant.Identity,
             auditDispatcher.OnDeliveryAsync);
 #pragma warning restore MA0004
-        using var bus = new MessagingBus(
-            transport,
-            network,
-            SampleMessagingNetwork.Registry,
-            new MessagingCodecRegistry([codec]),
-            SampleMessagingPublisherParticipant.CreatePayloadSender(dataBus, network),
-            SampleMessagingPublisherParticipant.Identity);
 
         await bus.Publish(new BookPrintCompleted { BookId = Guid.Parse("00000000-0000-0000-0000-000000000042") })
             .ConfigureAwait(false);
@@ -358,7 +369,18 @@ public sealed class MessagingBusSampleTests
         }
     }
 
+    private static ServiceProvider _buildServiceProvider(Container container)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddArkSolidProcessors(container);
+        return services.BuildServiceProvider();
+    }
+
     private static MessagingDispatcher _createDispatcher(
+        IServiceProvider serviceProvider,
         Container container,
         InMemoryMessagingDataBus dataBus,
         MessagingNetworkOptions network,
@@ -368,14 +390,45 @@ public sealed class MessagingBusSampleTests
         Func<string, IMessagingPayloadReader, int, MessagingExceptionInfo, ICommandProcessor, CancellationToken, Task> dispatchFailed)
     {
         return new MessagingDispatcher(
-            container,
             new MessagingHeaderProcessor(
                 new MessagingCodecRegistry([codec]),
                 network.NetworkIdentity),
             new MessagingPayloadReceiver(dataBus, network),
             retryPolicy,
+            new SimpleInjectorPipelineProcessor(container),
             dispatch,
             dispatchFailed);
+    }
+
+    private sealed class SimpleInjectorPipelineProcessor : IMessagingPipelineProcessor
+    {
+        private readonly Container _container;
+
+        public SimpleInjectorPipelineProcessor(Container container)
+        {
+            _container = container;
+        }
+
+        public async Task ProcessIncomingAsync(
+            IReadOnlyList<Type> orderedStepTypes,
+            MessagingIncomingContext context,
+            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+            await terminal(_container.GetInstance<ICommandProcessor>(), cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public async Task ProcessOutgoingAsync(
+            IReadOnlyList<Type> orderedStepTypes,
+            MessagingOutgoingContext context,
+            Func<CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            await using var scope = AsyncScopedLifestyle.BeginScope(_container);
+            await terminal(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>

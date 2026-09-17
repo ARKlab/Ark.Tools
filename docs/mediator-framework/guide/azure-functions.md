@@ -9,10 +9,17 @@ Function process.
 
 ```xml
 <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+<PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
+<PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
                   OutputItemType="Analyzer"
                   PrivateAssets="all" />
 ```
+
+`Ark.Tools.MediatorFramework.AzureFunctions` provides the Functions host adapter
+and trigger generator. Azure Service Bus, Storage Queue, and Blob DataBus
+integrations come from `Ark.Tools.MediatorFramework.Messaging.Azure`; the core
+`Ark.Tools.MediatorFramework.Messaging` runtime stays transport-neutral.
 
 Select the public API assembly at assembly level:
 
@@ -59,6 +66,7 @@ if (bool.TryParse(
         outboundServiceBusConfiguration);
 }
 builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkSolidProcessors(container);
 builder.Services.AddArkHealthChecks();
 builder.Services.AddHostedService(
     _ => new AzureFunctionsContainerHostedService(container));
@@ -67,11 +75,14 @@ await builder.Build().RunAsync().ConfigureAwait(false);
 ```
 
 This composes the application and HTTP boundary only. Add the native messaging
-host in step 4. The sample also supports an explicitly enabled, outbound-only
-Rebus client for HTTP-to-Rebus compatibility. That client is added to the same
-application container; native messaging and its generated Function trigger
-remain registered. It never registers Rebus handlers, an input queue,
-subscriptions, or a worker.
+host in step 4. `AddArkSolidProcessors` bridges Microsoft DI-visible
+`IRequestProcessor`, `IQueryProcessor`, and `ICommandProcessor` back into the
+same SimpleInjector application container; it does not replace handler
+registrations or decorators. The sample also supports an explicitly enabled,
+outbound-only Rebus client for HTTP-to-Rebus compatibility. That client is
+added to the same application container; native messaging and its generated
+Function trigger remain registered. It never registers Rebus handlers, an input
+queue, subscriptions, or a worker.
 
 Enable the optional client with external configuration:
 
@@ -285,6 +296,8 @@ limits, host-local steps, forwarding subscriptions, and generated runtime
 descriptor. Compose it into the existing application container:
 
 ```csharp
+builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkSolidProcessors(container);
 builder.Services.ConfigureArkMessagingFunctions(
     container,
     builder.Configuration,
@@ -304,6 +317,12 @@ network, transport capabilities, serializers, consumed-message handlers, and
 trigger binding before registering the bus and dispatcher. A receive-capable
 Functions participant cannot select InMemory, because its receive pump is a
 long-running worker.
+
+The generated trigger and dispatcher execute through Microsoft DI, but
+SimpleInjector remains authoritative for the application graph.
+`AddArkSolidProcessors` creates a message scope when the Functions host starts
+processing a delivery and reuses the ambient scope for nested sends, publishes,
+or mediator dispatches inside that same message flow.
 
 `UseOutbox()` enables the native transaction boundary without starting
 background work. A handler enlists its `IOutboxContextCore`, sends or
@@ -661,9 +680,9 @@ minimum lifetime.
 ## 5. Add messaging pipeline steps
 
 Incoming and outgoing steps are opt-in and host-local. Compose them around the
-stable `MessagingPipelineStage` positions and invoke them with
-`MessagingPipelineInvoker`; each invocation receives a fresh context and items
-bag. Steps may add application headers before serialization, but `amf1-*`
+stable `MessagingPipelineStage` positions; the host's registered
+`IMessagingPipelineProcessor` resolves and invokes them. Each invocation receives
+a fresh context and items bag. Steps may add application headers before serialization, but `amf1-*`
 routing, content, encoding, attachment, and identity headers are framework-owned
 and cannot be overridden.
 

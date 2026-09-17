@@ -599,22 +599,23 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("    {");
 
             // RegisterArkRebusHandlersFromAssembly is always emitted so callers can unconditionally invoke it.
-            sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers into the SimpleInjector collection resolved by the Rebus activator. TAssemblyMarker selects the assembly scanned for attributed handlers.</summary>");
-            sb.AppendLine("        public static void RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>(global::SimpleInjector.Container container)");
+            sb.AppendLine("        /// <summary>Registers the generated Rebus handler wrappers through the supplied callback. TAssemblyMarker selects the assembly scanned for attributed handlers.</summary>");
+            sb.AppendLine("        public static void RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>(global::System.Action<global::System.Type, global::System.Type> register)");
             sb.AppendLine("        {");
+            sb.AppendLine("            global::System.ArgumentNullException.ThrowIfNull(register);");
             if (!legacyRegistrationItems.IsDefaultOrEmpty)
             {
                 foreach (var e in legacyRegistrationItems)
                 {
-                    sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
+                    sb.AppendLine("            register(typeof(global::Rebus.Handlers.IHandleMessages<" + e.TypeFullName + ">), typeof(" + e.TypeName + "RebusHandler));");
                 }
             }
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Registers handlers selected by ArkGenerateRebusForAssemblyAttribute on TContext.</summary>");
-            sb.AppendLine("        public static void RegisterArkRebusHandlers<TContext>(global::SimpleInjector.Container container)");
+            sb.AppendLine("        public static void RegisterArkRebusHandlers<TContext>(global::System.Action<global::System.Type, global::System.Type> register)");
             sb.AppendLine("        {");
-            sb.AppendLine("            RegisterArkRebusHandlersFromAssembly<TContext>(container);");
+            sb.AppendLine("            RegisterArkRebusHandlersFromAssembly<TContext>(register);");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Registers generated owner queues with Rebus type-based routing.</summary>");
@@ -693,24 +694,14 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.Append("    ").Append(host.Accessibility).Append(" sealed partial class ").Append(host.Name)
                 .AppendLine(" : global::Ark.Tools.MediatorFramework.Rebus.IArkRebusHost");
             sb.AppendLine("    {");
-            sb.AppendLine("        /// <summary>Registers the generated Rebus handlers and transport-neutral bus for this host.</summary>");
-            sb.AppendLine("        public static void Register(global::SimpleInjector.Container container)");
+            sb.AppendLine("        /// <summary>Registers the generated Rebus handlers for this host through the supplied callback.</summary>");
+            sb.AppendLine("        public static void Register(global::System.Action<global::System.Type, global::System.Type> register)");
             sb.AppendLine("        {");
+            sb.AppendLine("            global::System.ArgumentNullException.ThrowIfNull(register);");
             foreach (var handler in handlers)
-                sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<" + handler.TypeFullName + ">), typeof(" + handler.TypeName + "RebusHandler));");
+                sb.AppendLine("            register(typeof(global::Rebus.Handlers.IHandleMessages<" + handler.TypeFullName + ">), typeof(" + handler.TypeName + "RebusHandler));");
             foreach (var contract in host.Processes)
-                sb.AppendLine("            container.Collection.Append(typeof(global::Rebus.Handlers.IHandleMessages<global::Rebus.Retry.Simple.IFailed<" + contract + ">>), typeof(global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingFailedHandler<" + contract + ">));");
-            sb.AppendLine("            container.RegisterSingleton<global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>");
-            sb.AppendLine("                new global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(");
-            sb.AppendLine("                    container.GetInstance<global::Rebus.Bus.IBus>(),");
-            sb.AppendLine("                    " + StringLiteral(host.Identity) + ",");
-            sb.AppendLine("                    new global::System.Type[]");
-            sb.AppendLine("                    {");
-            foreach (var contract in host.Publishes)
-                sb.AppendLine("                        typeof(" + contract + "),");
-            sb.AppendLine("                    }));");
-            sb.AppendLine("            container.RegisterSingleton<global::Ark.Tools.MediatorFramework.IBus>(() => container.GetInstance<global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());");
-            sb.AppendLine("            container.RegisterSingleton<global::Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(() => container.GetInstance<global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());");
+                sb.AppendLine("            register(typeof(global::Rebus.Handlers.IHandleMessages<global::Rebus.Retry.Simple.IFailed<" + contract + ">>), typeof(global::Ark.Tools.MediatorFramework.Rebus.RebusMessagingFailedHandler<" + contract + ">));");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>Configures owner queues for this host.</summary>");

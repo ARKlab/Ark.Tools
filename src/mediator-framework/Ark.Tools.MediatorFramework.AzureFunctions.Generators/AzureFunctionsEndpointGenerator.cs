@@ -406,15 +406,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
         }
 
-        // Dispatch via Simple Injector scope
-        source.AppendLine("        var _container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(request.HttpContext.RequestServices);");
-        source.AppendLine("        var _scope = global::SimpleInjector.Lifestyles.AsyncScopedLifestyle.BeginScope(_container);");
+        // Dispatch via the ASP.NET Core service provider.
+        source.AppendLine("        var _services = request.HttpContext.RequestServices;");
         source.AppendLine("        try");
         source.AppendLine("        {");
 
         if (endpoint.Kind == HandlerKind.Command)
         {
-            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
+            source.AppendLine("        var _processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(_services);");
             source.Append("        await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.SuccessStatusCode == 200 ? "204" : endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture))
@@ -422,7 +421,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else if (endpoint.Kind == HandlerKind.Query)
         {
-            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.IQueryProcessor>();");
+            source.AppendLine("        var _processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(_services);");
             source.Append("        var _result = await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "404" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
@@ -432,7 +431,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else
         {
-            source.AppendLine("        var _processor = _container.GetInstance<global::Ark.Tools.Solid.IRequestProcessor>();");
+            source.AppendLine("        var _processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IRequestProcessor>(_services);");
             source.Append("        var _result = await _processor.ExecuteAsync<").Append(endpoint.FullyQualifiedType).Append(", ").Append(endpoint.ResponseType).AppendLine(">(body, cancellationToken).ConfigureAwait(false);");
             source.Append("        if (_result is null) return global::Microsoft.AspNetCore.Http.Results.StatusCode(")
                 .Append(endpoint.NullResultStatusCode == 0 ? "204" : endpoint.NullResultStatusCode.ToString(CultureInfo.InvariantCulture))
@@ -449,10 +448,6 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("        catch (global::System.Exception _exception)");
         source.AppendLine("        {");
         source.AppendLine("            return global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
-        source.AppendLine("        }");
-        source.AppendLine("        finally");
-        source.AppendLine("        {");
-        source.AppendLine("            await _scope.DisposeAsync().ConfigureAwait(false);");
         source.AppendLine("        }");
         source.AppendLine("    }");
     }

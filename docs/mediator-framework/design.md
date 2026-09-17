@@ -6,8 +6,8 @@
   it over Minimal API, Azure Functions HTTP, code-first gRPC and Rebus.
 - Replace runtime reflection (MVC model binding, dynamic mediator dispatch) with
   **compile-time source generation**.
-- Keep dependency resolution inside **SimpleInjector** (non-conforming,
-  decorator-first), validated at startup.
+- Keep the application graph authoritative in **SimpleInjector**
+  (non-conforming, decorator-first), validated at startup.
 - Keep C# as the single source of truth for contracts and routes.
 
 ## Non-goals
@@ -25,7 +25,7 @@
 |  IRequest<T> / IQuery<T> / ICommand + *Handler            |
 |  - no HttpContext, no ServerCallContext, no MessageContext|
 +-----------------------------------------------------------+
-             ^ resolved from SimpleInjector async scope
+             ^ resolved from transport/request scope through application-owned processors/handlers
 +-----------------------------------------------------------+
 |  Generated transport adapters (source generator output)   |
 |  Minimal API | Azure Functions HTTP | gRPC | Rebus       |
@@ -317,7 +317,7 @@ the generator never silently picks one. Queue ownership is routing metadata
 only: it does not create queues, configure a transport, or alter generated
 `IHandleMessages<T>` wrappers.
 
-### Why resolve from SimpleInjector explicitly
+### Why HTTP/gRPC/Rebus adapters resolve from SimpleInjector explicitly
 
 Native Minimal API / gRPC parameter injection uses the conforming container.
 To keep the domain graph in SimpleInjector (lifestyle scoping, decorators,
@@ -332,6 +332,13 @@ handler-registration lookup at startup. Missing closed handler services are
 aggregated into one actionable exception naming each contract and interface;
 this check does not invoke or duplicate SimpleInjector's `Verify()` dependency
 graph validation.
+
+Native messaging processor hosts and Azure Functions triggers add one extra seam:
+their runtime creates or reuses a host scope and resolves
+`ICommandProcessor`/`IQueryProcessor`/`IRequestProcessor` from Microsoft DI.
+When the application stays in SimpleInjector, `AddArkSolidProcessors` bridges
+those processor interfaces back into the application container while preserving
+SimpleInjector ownership of handlers, decorators, and scopes.
 
 ## Error handling
 

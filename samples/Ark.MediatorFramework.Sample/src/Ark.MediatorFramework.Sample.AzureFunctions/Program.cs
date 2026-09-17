@@ -7,6 +7,7 @@ using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.NLog;
+using Ark.Tools.Solid.SimpleInjector;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
@@ -60,6 +61,7 @@ public static class Program
                     outboundServiceBusConfiguration);
             }
             builder.Services.AddArkAzureFunctions(applicationContainer);
+            builder.Services.AddArkSolidProcessors(applicationContainer);
             builder.Services.ConfigureArkMessagingFunctions(
                 applicationContainer,
                 builder.Configuration,

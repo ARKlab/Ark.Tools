@@ -15,6 +15,7 @@
     <PackageReference Include="SimpleInjector" />
     <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
     <ProjectReference Include="..\Ark.Tools.AspNetCore.HealthChecks\Ark.Tools.AspNetCore.HealthChecks.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
   </ItemGroup>
 
 </Project>

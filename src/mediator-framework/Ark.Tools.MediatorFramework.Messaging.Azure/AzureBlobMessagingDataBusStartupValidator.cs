@@ -7,11 +7,11 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 
 internal sealed class AzureBlobMessagingDataBusStartupValidator : IHostedService
 {
-    private readonly AzureBlobMessagingDataBus _dataBus;
+    private readonly IMessagingDataBusStartupValidation _dataBus;
 
-    public AzureBlobMessagingDataBusStartupValidator(AzureBlobMessagingDataBus dataBus)
+    public AzureBlobMessagingDataBusStartupValidator(IMessagingDataBusStartupValidation dataBus)
     {
-        _dataBus = dataBus;
+        _dataBus = dataBus ?? throw new ArgumentNullException(nameof(dataBus));
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)

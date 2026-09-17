@@ -11,6 +11,7 @@ using Azure.Storage.Queues;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 using SimpleInjector;
@@ -121,6 +122,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         _validateHandlers(container, descriptor);
         _registerSteps(container, manifest.IncomingSteps);
         _registerSteps(container, manifest.OutgoingSteps);
+        services.TryAddSingleton<IMessagingPipelineProcessor>(
+            _ => new SimpleInjectorMessagingPipelineProcessor(container));
         management ??= transport as IMessagingTransportManagement;
         services._addArkMessagingParticipant(
             descriptor,
@@ -128,8 +131,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             dataBus,
             manifest.Resources,
             management,
-            manifest.OutgoingSteps,
-            container.GetInstance);
+            manifest.OutgoingSteps);
         _registerBusBridge(services, container);
         services.AddSingleton(manifest);
         services.AddSingleton(MessagingTriggeredHostMarker.Instance);
@@ -162,10 +164,10 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             serviceProvider.GetRequiredService<IMessagingDataBus>(),
             descriptor.Network));
         services.AddSingleton(serviceProvider => new MessagingDispatcher(
-            container,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             descriptor.RetryPolicy,
+            serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
             (logicalName, payload, processor, ctk) =>
                 descriptor.Dispatch!(logicalName, payload, processor, ctk),
             descriptor.DispatchFailed is null
@@ -178,8 +180,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
                         error,
                         processor,
                         ctk),
-            manifest.IncomingSteps,
-            container.GetInstance));
+            manifest.IncomingSteps));
 
         return services;
     }

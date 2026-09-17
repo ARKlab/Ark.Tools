@@ -477,9 +477,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                         sb.AppendLine("        [global::System.CodeDom.Compiler.GeneratedCode(\"Ark.Tools.MediatorFramework.Grpc.Generators\", \"1.0.0\")]");
                         sb.AppendLine("        public sealed partial class " + identifier + "GrpcService : I" + identifier + "GrpcService");
                         sb.AppendLine("        {");
-                        sb.AppendLine("            private readonly global::SimpleInjector.Container _container;");
+                        sb.AppendLine("            private readonly global::System.IServiceProvider _services;");
                         sb.AppendLine("            /// <summary>Initializes a new instance.</summary>");
-                        sb.AppendLine("            public " + identifier + "GrpcService(global::SimpleInjector.Container container) { _container = container; }");
+                        sb.AppendLine("            public " + identifier + "GrpcService(global::System.IServiceProvider services) { _services = services; }");
                         foreach (var e in active)
                         {
                             spc.CancellationToken.ThrowIfCancellationRequested();
@@ -500,7 +500,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             else
                                 sb.AppendLine("            public async global::System.Threading.Tasks.ValueTask<" + e.Response + "> " + e.TypeName + "Async(" + e.TypeFullName + " request, global::ProtoBuf.Grpc.CallContext context = default)");
                             sb.AppendLine("            {");
-                            sb.AppendLine("                var processor = _container.GetInstance<" + processorService + ">();");
+                            sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(_services);");
                             if (e.AttachmentRequest != AttachmentRequestKind.None)
                             {
                                 var attachmentValue = e.AttachmentRequest == AttachmentRequestKind.Collection
@@ -556,15 +556,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServicesFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
-            foreach (var handler in items
-                .Select(HandlerService)
-                .Distinct(StringComparer.Ordinal))
+            foreach (var item in items)
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
-                var contract = items
-                    .First(item => HandlerService(item) == handler)
-                    .TypeFullName;
-                sb.AppendLine("            VerifyGrpcHandlerRegistration(app.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
+                sb.AppendLine("            VerifyGrpcHandlerRegistration(app.ServiceProvider, typeof(" + HandlerService(item) + "), " + Literal(item.TypeFullName) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
@@ -586,8 +581,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine();
             sb.AppendLine("        private static void VerifyGrpcHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
             sb.AppendLine("        {");
-            sb.AppendLine("            var container = services.GetService(typeof(global::SimpleInjector.Container)) as global::SimpleInjector.Container;");
-            sb.AppendLine("            if (container is not null ? container.GetRegistration(handlerType) is null : services.GetService(handlerType) is null)");
+            sb.AppendLine("            var handlerVerifier = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<global::Ark.Tools.Solid.IMediatorHandlerRegistrationVerifier>(services);");
+            sb.AppendLine("            if (services.GetService(handlerType) is null && (handlerVerifier is null || !handlerVerifier.IsRegistered(handlerType)))");
             sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
@@ -604,6 +599,15 @@ namespace Ark.Tools.MediatorFramework.Generators
                 : item.Kind == HandlerKind.Command
                     ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
                     : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
+        }
+
+        private static string ProcessorService(EndpointModel item)
+        {
+            return item.Kind == HandlerKind.Query
+                ? "global::Ark.Tools.Solid.IQueryProcessor"
+                : item.Kind == HandlerKind.Command
+                    ? "global::Ark.Tools.Solid.ICommandProcessor"
+                    : "global::Ark.Tools.Solid.IRequestProcessor";
         }
 
         private static void AppendNotFoundGuard(StringBuilder sb)

@@ -703,13 +703,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
-            foreach (var handler in items
-                .Where(static item => item.IsValid)
-                .GroupBy(HandlerService, StringComparer.Ordinal)
-                .Select(static group => (Handler: group.Key, Contract: group.First().TypeFullName)))
+            foreach (var item in items.Where(static item => item.IsValid))
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
-                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler.Handler + "), " + Literal(handler.Contract) + ", missingHandlers);");
+                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + HandlerService(item) + "), " + Literal(item.TypeFullName) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
@@ -891,8 +888,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             }
                             EmitServerSetAssignments(sb, e, "request");
                             EmitETagAssignment(sb, e);
-                            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                            sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+                            sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                             sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
                             if (e.IsStreaming)
                             {
@@ -953,8 +949,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         }
                         EmitServerSetAssignments(sb, e, "request");
                         EmitETagAssignment(sb, e);
-                        sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-                        sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+                        sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                         sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
                         if (e.IsStreaming)
                         {
@@ -998,8 +993,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine();
             sb.AppendLine("        private static void VerifyMinimalApiHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
             sb.AppendLine("        {");
-            sb.AppendLine("            var container = services.GetService(typeof(global::SimpleInjector.Container)) as global::SimpleInjector.Container;");
-            sb.AppendLine("            if (container is not null ? container.GetRegistration(handlerType) is null : services.GetService(handlerType) is null)");
+            sb.AppendLine("            var handlerVerifier = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<global::Ark.Tools.Solid.IMediatorHandlerRegistrationVerifier>(services);");
+            sb.AppendLine("            if (services.GetService(handlerType) is null && (handlerVerifier is null || !handlerVerifier.IsRegistered(handlerType)))");
             sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
@@ -1015,6 +1010,15 @@ namespace Ark.Tools.MediatorFramework.Generators
                 : item.Kind == HandlerKind.Command
                     ? "global::Ark.Tools.Solid.ICommandHandler<" + item.TypeFullName + ">"
                     : "global::Ark.Tools.Solid.IRequestHandler<" + item.TypeFullName + ", " + item.Response + ">";
+        }
+
+        private static string ProcessorService(EndpointModel item)
+        {
+            return item.Kind == HandlerKind.Query
+                ? "global::Ark.Tools.Solid.IQueryProcessor"
+                : item.Kind == HandlerKind.Command
+                    ? "global::Ark.Tools.Solid.ICommandProcessor"
+                    : "global::Ark.Tools.Solid.IRequestProcessor";
         }
 
         private static string BindingType(PropertyModel property)
@@ -1201,8 +1205,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                };");
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
-            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-            sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+            sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
             sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
@@ -1255,8 +1258,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
-            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-            sb.AppendLine("                var processor = container.GetInstance<" + processorService + ">();");
+            sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
             sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
@@ -1310,8 +1312,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
-            sb.AppendLine("                var container = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::SimpleInjector.Container>(httpContext.RequestServices);");
-            sb.AppendLine("                var processor = container.GetInstance<global::Ark.Tools.Solid.ICommandProcessor>();");
+            sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices);");
             sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
             sb.Append("            })").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion));

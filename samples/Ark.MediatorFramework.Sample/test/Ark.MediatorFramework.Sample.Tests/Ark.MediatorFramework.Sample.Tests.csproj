@@ -19,6 +19,8 @@
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
     <PackageReference Include="Ark.Tools.Reqnroll" />
+    <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
   </ItemGroup>
 
   <ItemGroup>

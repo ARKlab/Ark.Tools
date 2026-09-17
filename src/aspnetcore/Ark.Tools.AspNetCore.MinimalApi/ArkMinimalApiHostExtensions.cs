@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 
 using Ark.Tools.AspNetCore.HealthChecks;
+using Ark.Tools.Solid.SimpleInjector;
 
 using SimpleInjector;
 
@@ -91,6 +92,7 @@ public static class ArkMinimalApiHostExtensions
                 options.CrossWireContainer?.Invoke(container, simpleInjector.ApplicationServices);
             };
         });
+        services.AddArkSolidProcessors(container);
 
         options.RegisterContainer?.Invoke(container);
         services.AddSingleton(options);

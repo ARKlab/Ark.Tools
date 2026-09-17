@@ -16,9 +16,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NodaTime;
 using NodaTime.Testing;
 
-using SimpleInjector;
-using SimpleInjector.Lifestyles;
-
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -301,14 +298,37 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public async Task MessagingRegistrationProvidesDefaultPipelineProcessorAndAllowsApplicationOverride()
+    {
+        var custom = new StubMessagingPipelineProcessor();
+        await using var provider = new ServiceCollection()
+            ._addArkMessaging()
+            .AddSingleton<IMessagingPipelineProcessor>(custom)
+            .BuildServiceProvider();
+
+        provider.GetRequiredService<IMessagingPipelineProcessor>().Should().BeSameAs(custom);
+        provider.GetServices<IMessagingPipelineProcessor>().Should().Contain(custom);
+    }
+
+    [TestMethod]
+    public void CoreMessagingSourceDoesNotReferenceSimpleInjector()
+    {
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var projectRoot = Path.Join(root, "src", "mediator-framework", "Ark.Tools.MediatorFramework.Messaging");
+        var source = Directory.EnumerateFiles(projectRoot, "*.cs", SearchOption.AllDirectories)
+            .Select(File.ReadAllText)
+            .ToArray();
+
+        source.Should().OnlyContain(static text => !text.Contains("SimpleInjector", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task DispatcherCompletesSuccessfulDelivery()
     {
-        await using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        await using var provider = _createServices();
         var delivery = new TestLockedDelivery(1);
         var dispatcher = _createDispatcher(
-            container,
+            provider,
             new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
             static async (_, payload, _, token) =>
             {
@@ -323,17 +343,41 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public async Task DispatcherDoesNotUseSimpleInjectorContainerRegisteredInTheServiceProvider()
+    {
+        await using var container = new global::SimpleInjector.Container();
+        container.Options.DefaultScopedLifestyle = new global::SimpleInjector.Lifestyles.AsyncScopedLifestyle();
+        container.Register<ICommandProcessor, TestCommandProcessor>(global::SimpleInjector.Lifestyle.Scoped);
+        await using var provider = new ServiceCollection()
+            ._addArkMessaging()
+            .AddSingleton(container)
+            .BuildServiceProvider();
+        var delivery = new TestLockedDelivery(1);
+        var dispatcher = _createDispatcher(
+            provider,
+            new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
+            static async (_, payload, _, token) =>
+            {
+                await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
+            });
+
+        await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
+
+        delivery._completed.Should().Be(0);
+        delivery._abandoned.Should().Be(1);
+        delivery._deadLetters.Should().BeEmpty();
+    }
+
+    [TestMethod]
     public async Task DispatcherDeadLettersMalformedPayloadWithoutSecondLevelDispatch()
     {
-        await using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        await using var provider = _createServices();
         var delivery = new TestLockedDelivery(
             2,
             new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("{")));
         var secondLevelDispatched = false;
         var dispatcher = _createDispatcher(
-            container,
+            provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             static async (_, payload, _, token) =>
             {
@@ -357,14 +401,12 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public async Task DispatcherRunsFailureHandlerOnceAtRetryBoundary()
     {
-        await using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
-        container.Register<ICommandHandler<MessagingFailed<DispatchCommand>>, RecordingFailedHandler>(Lifestyle.Scoped);
+        await using var provider = _createServices(static services =>
+            services.AddScoped<ICommandHandler<MessagingFailed<DispatchCommand>>, RecordingFailedHandler>());
         var failureHandled = new List<MessagingFailed<DispatchCommand>>();
         var delivery = new TestLockedDelivery(2);
         var dispatcher = _createDispatcher(
-            container,
+            provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             static (_, _, _, _) => throw new InvalidOperationException("handler failed"),
             async (_, payload, count, error, processor, token) =>
@@ -383,39 +425,39 @@ public sealed partial class MessagingRuntimeTests
         failureHandled.Should().ContainSingle();
         failureHandled[0].DeliveryCount.Should().Be(2);
         failureHandled[0].ErrorDescription.Should().Contain("handler failed");
-        container.GetRegistration<ICommandHandler<MessagingFailed<DispatchCommand>>>().Should().NotBeNull();
+        var scope = provider.CreateAsyncScope();
+        await using (scope.ConfigureAwait(false))
+        {
+            scope.ServiceProvider.GetRequiredService<ICommandHandler<MessagingFailed<DispatchCommand>>>()
+                .Should().NotBeNull();
+        }
     }
 
     [TestMethod]
-    public async Task DispatcherDeadLettersWhenFailureHandlerIsMissing()
+    public async Task DispatcherAbandonsWhenFailureHandlerResolutionFails()
     {
-        await using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        await using var provider = _createServices();
         var delivery = new TestLockedDelivery(2);
         var dispatcher = _createDispatcher(
-            container,
+            provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             static (_, _, _, _) => throw new InvalidOperationException("handler failed"),
-            static (_, _, _, _, _, _) => throw new ActivationException("missing handler"));
+            static (_, _, _, _, _, _) => throw new global::SimpleInjector.ActivationException("missing handler"));
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
 
         delivery._completed.Should().Be(0);
-        delivery._abandoned.Should().Be(0);
-        delivery._deadLetters.Should().ContainSingle().Which.Should().Be("tests.dispatch");
-        delivery._deadLetterReason.Should().Be(typeof(MessagingFailFastException).FullName);
+        delivery._abandoned.Should().Be(1);
+        delivery._deadLetters.Should().BeEmpty();
     }
 
     [TestMethod]
     public async Task DispatcherAbandonsWhenHandlerExceedsMaximumDuration()
     {
-        await using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        await using var provider = _createServices();
         var delivery = new TestLockedDelivery(1);
         var dispatcher = _createDispatcher(
-            container,
+            provider,
             new TestRetryPolicy(
                 3,
                 secondLevelRetriesEnabled: false,
@@ -433,12 +475,10 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public void DispatcherRequiresFailureBinderWhenSecondLevelIsEnabled()
     {
-        using var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        container.Register<ICommandProcessor, TestCommandProcessor>(Lifestyle.Scoped);
+        using var provider = _createServices();
 
         var act = () => _createDispatcher(
-            container,
+            provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
             static async (_, payload, _, token) =>
             {
@@ -456,26 +496,23 @@ public sealed partial class MessagingRuntimeTests
         var context = new MessagingOutgoingContext(
             new Dictionary<string, string>(StringComparer.Ordinal),
             "books");
-        var cancellationTokens = new List<CancellationToken>();
-        var resolvedCount = 0;
-        var stepTypes = new[] { typeof(RecordingOutgoingStep), typeof(RecordingOutgoingStep) };
+        await using var provider = _createServices(services =>
+        {
+            services.AddSingleton(order);
+            services.AddTransient<FirstRecordingOutgoingStep>();
+            services.AddTransient<SecondRecordingOutgoingStep>();
+        });
+        var stepTypes = new[] { typeof(FirstRecordingOutgoingStep), typeof(SecondRecordingOutgoingStep) };
         using var cancellationSource = new CancellationTokenSource();
         var cancellationToken = cancellationSource.Token;
+        var processor = provider.GetRequiredService<IMessagingPipelineProcessor>();
 
         async Task InvokeAsync()
         {
-            await MessagingPipelineInvoker.InvokeOutgoingAsync(
+            await processor.ProcessOutgoingAsync(
                 stepTypes,
-                _ =>
-                {
-                    resolvedCount++;
-                    return new RecordingOutgoingStep(
-                        resolvedCount % 2 == 1 ? "first" : "second",
-                        order,
-                        cancellationTokens);
-                },
                 context,
-                () =>
+                _ =>
                 {
                     order.Add("terminal");
                     return Task.CompletedTask;
@@ -489,14 +526,35 @@ public sealed partial class MessagingRuntimeTests
         order.Should().Equal(
             "first", "second", "terminal",
             "first", "second", "terminal");
-        resolvedCount.Should().Be(4);
-        cancellationTokens.Should().HaveCount(4);
-        foreach (var token in cancellationTokens)
-            token.Should().Be(cancellationToken);
         var action = () => context.Headers[MessagingHeaders.MessageType] = "spoofed";
         action.Should().Throw<InvalidOperationException>();
         var differentlyCasedAction = () => context.Headers["AMF1-message-type"] = "spoofed";
         differentlyCasedAction.Should().Throw<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task PublicPipelineInvokerResolvesStepsThroughTheCompatibilityCallback()
+    {
+        var order = new List<string>();
+        var context = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books");
+        var step = new FirstRecordingOutgoingStep(order);
+
+        await MessagingPipelineInvoker.InvokeOutgoingAsync(
+            new[] { typeof(FirstRecordingOutgoingStep) },
+            type => type == typeof(FirstRecordingOutgoingStep)
+                ? step
+                : throw new InvalidOperationException(),
+            context,
+            () =>
+            {
+                order.Add("terminal");
+                return Task.CompletedTask;
+            },
+            CancellationToken.None).ConfigureAwait(false);
+
+        order.Should().Equal("first", "terminal");
     }
 
     [TestMethod]
@@ -658,8 +716,17 @@ public sealed partial class MessagingRuntimeTests
             && Math.Abs(x.Value - 0.25d) < 1e-9);
     }
 
+    private static ServiceProvider _createServices(Action<IServiceCollection>? configure = null)
+    {
+        var services = new ServiceCollection()
+            ._addArkMessaging();
+        services.AddScoped<ICommandProcessor, TestCommandProcessor>();
+        configure?.Invoke(services);
+        return services.BuildServiceProvider();
+    }
+
     private static MessagingDispatcher _createDispatcher(
-        Container container,
+        IServiceProvider serviceProvider,
         IMessagingRetryPolicy retryPolicy,
         Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
         Func<
@@ -683,10 +750,10 @@ public sealed partial class MessagingRuntimeTests
             new InMemoryMessagingDataBus(),
             network);
         return new MessagingDispatcher(
-            container,
             new MessagingHeaderProcessor(registry, "tests"),
             payloadReceiver,
             retryPolicy,
+            serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
             dispatch,
             dispatchFailed);
     }
@@ -793,30 +860,48 @@ public sealed partial class MessagingRuntimeTests
         }
     }
 
-    private sealed class RecordingOutgoingStep : IMessagingOutgoingStep
+    private sealed class FirstRecordingOutgoingStep(List<string> order) : IMessagingOutgoingStep
     {
-        private readonly string _name;
-        private readonly IList<string> _order;
-        private readonly IList<CancellationToken> _cancellationTokens;
-
-        public RecordingOutgoingStep(
-            string name,
-            IList<string> order,
-            IList<CancellationToken> cancellationTokens)
-        {
-            _name = name;
-            _order = order;
-            _cancellationTokens = cancellationTokens;
-        }
-
         public async Task ProcessAsync(
             MessagingOutgoingContext context,
             Func<Task> next,
             CancellationToken cancellationToken)
         {
-            _order.Add(_name);
-            _cancellationTokens.Add(cancellationToken);
+            order.Add("first");
             await next().ConfigureAwait(false);
+        }
+    }
+
+    private sealed class SecondRecordingOutgoingStep(List<string> order) : IMessagingOutgoingStep
+    {
+        public async Task ProcessAsync(
+            MessagingOutgoingContext context,
+            Func<Task> next,
+            CancellationToken cancellationToken)
+        {
+            order.Add("second");
+            await next().ConfigureAwait(false);
+        }
+    }
+
+    private sealed class StubMessagingPipelineProcessor : IMessagingPipelineProcessor
+    {
+        public async Task ProcessIncomingAsync(
+            IReadOnlyList<System.Type> orderedStepTypes,
+            MessagingIncomingContext context,
+            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            await terminal(new TestCommandProcessor(), cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task ProcessOutgoingAsync(
+            IReadOnlyList<System.Type> orderedStepTypes,
+            MessagingOutgoingContext context,
+            Func<CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            await terminal(cancellationToken).ConfigureAwait(false);
         }
     }
 

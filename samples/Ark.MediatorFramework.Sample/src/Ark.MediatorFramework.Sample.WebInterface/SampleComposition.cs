@@ -68,7 +68,18 @@ public static class SampleComposition
         // IHttpContextAccessor is forwarded from Microsoft DI by SampleStartup when the
         // SimpleInjector container locks, after ASP.NET Core has built its service provider.
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, HostUserContextProvider>();
-        SampleRebusHost.Register(container);
+        var requirements = SampleRebusHost.GetRequirements();
+        SampleRebusHost.Register(
+            (serviceType, implementationType) => container.Collection.Append(serviceType, implementationType));
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>
+            new Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(
+                container.GetInstance<global::Rebus.Bus.IBus>(),
+                requirements.Identity,
+                requirements.PublishedEventTypes));
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
+            () => container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
+            () => container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
 
         container.ConfigureRebus(cfg =>
         {

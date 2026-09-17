@@ -9,8 +9,6 @@ using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 
-using SimpleInjector;
-
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Provides the single entry point for native messaging composition.</summary>
@@ -128,22 +126,18 @@ public sealed class MessagingCompositionBuilder<TNetwork>
 
     /// <summary>Configures a custom-hosted receiving participant.</summary>
     /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
-    /// <param name="container">The application Simple Injector container.</param>
     /// <param name="configure">The receiver configuration.</param>
     /// <returns>This builder.</returns>
     public MessagingCompositionBuilder<TNetwork> Receiver<TParticipant>(
-        Container container,
         Action<MessagingReceiverBuilder<TNetwork, TParticipant>> configure)
         where TParticipant : class, IMessagingParticipant<TParticipant>
     {
         _selectMode();
-        ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new MessagingReceiverBuilder<TNetwork, TParticipant>(
             _services,
             _network,
-            _registry,
-            container);
+            _registry);
         configure(builder);
         _registration = builder._register;
         return this;
@@ -198,37 +192,6 @@ public sealed class MessagingTransportBuilder
         return this;
     }
 
-    /// <summary>Uses Azure Service Bus.</summary>
-    /// <param name="client">The configured Service Bus client.</param>
-    /// <param name="configure">
-    /// Optional entity-shaping options. The declared lock duration is what the renewer plans
-    /// against, so declaring it here keeps provisioning and processing reading the same number.
-    /// </param>
-    /// <returns>This builder.</returns>
-    public MessagingTransportBuilder UseServiceBus(
-        Azure.Messaging.ServiceBus.ServiceBusClient client,
-        Action<ServiceBusMessagingOptions>? configure = null)
-    {
-        ArgumentNullException.ThrowIfNull(client);
-        var options = new ServiceBusMessagingOptions();
-        configure?.Invoke(options);
-        options.Validate();
-#pragma warning disable CA2000 // Ownership is transferred to the composition service provider.
-        _select(new ServiceBusMessagingTransport(client, lockDuration: options.LockDuration));
-#pragma warning restore CA2000
-        return this;
-    }
-
-    /// <summary>Uses Azure Storage Queues.</summary>
-    /// <param name="client">The configured Queue Storage service client.</param>
-    /// <returns>This builder.</returns>
-    public MessagingTransportBuilder UseStorageQueue(Azure.Storage.Queues.QueueServiceClient client)
-    {
-        ArgumentNullException.ThrowIfNull(client);
-        _select(new StorageQueueMessagingTransport(client));
-        return this;
-    }
-
     /// <summary>Uses a supplied transport.</summary>
     /// <param name="transport">The transport.</param>
     /// <returns>This builder.</returns>
@@ -259,16 +222,6 @@ public sealed class MessagingDataBusBuilder
         _select(new InMemoryMessagingDataBus(
             clock ?? SystemClock.Instance,
             lifetime ?? Duration.FromHours(1)));
-        return this;
-    }
-
-    /// <summary>Uses Azure Blob Storage.</summary>
-    /// <param name="options">The Azure Blob DataBus options.</param>
-    /// <returns>This builder.</returns>
-    public MessagingDataBusBuilder UseAzureBlob(AzureBlobDataBusOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        _select(new AzureBlobMessagingDataBus(options));
         return this;
     }
 
@@ -450,19 +403,6 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return UseDataBus(new InMemoryMessagingDataBus(
             clock ?? SystemClock.Instance,
             lifetime ?? Duration.FromHours(1)));
-    }
-
-    /// <summary>Uses an Azure Blob DataBus.</summary>
-    /// <param name="options">The Azure Blob DataBus options.</param>
-    /// <returns>This builder.</returns>
-    public MessagingModeBuilder<TNetwork, TParticipant> UseAzureBlobDataBus(
-        AzureBlobDataBusOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        if (_dataBus is not null)
-            throw new InvalidOperationException("A messaging DataBus is already selected.");
-        _dataBus = new AzureBlobMessagingDataBus(options);
-        return this;
     }
 
     /// <summary>Enables the MessagePack codec.</summary>
@@ -661,16 +601,12 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
     where TNetwork : class, IMessagingNetwork<TNetwork>
     where TParticipant : class, IMessagingParticipant<TParticipant>
 {
-    private readonly Container _container;
-
     internal MessagingReceiverBuilder(
         IServiceCollection services,
         MessagingNetworkOptions network,
-        IMessagingContractRegistry registry,
-        Container container)
+        IMessagingContractRegistry registry)
         : base(services, network, registry)
     {
-        _container = container;
     }
 
     /// <summary>Registers the configured receiver participant and dispatcher.</summary>
@@ -708,10 +644,10 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         _servicesValue.TryAddSingleton<IMessagingConcurrencyController>(static serviceProvider =>
             new MessagingAimdConcurrencyController(serviceProvider.GetService<MessagingProcessingOptions>()));
         _servicesValue.AddSingleton(serviceProvider => new MessagingDispatcher(
-            _container,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             participant.RetryPolicy,
+            serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
             (logicalName, payload, processor, ctk) =>
                 participant.Dispatch!(logicalName, payload, processor, ctk),
             participant.DispatchFailed is null
@@ -725,7 +661,6 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
                         processor,
                         ctk),
             IncomingSteps,
-            _container.GetInstance,
             clock: null,
             serviceProvider.GetRequiredService<IMessagingConcurrencyController>()));
         _servicesValue.AddSingleton<IHostedService>(serviceProvider => new MessagingProcessorHost(

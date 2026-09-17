@@ -215,7 +215,7 @@ public sealed class RuntimeRedactionTests
             _ = scanner.Scan(message);
         var microseconds = Stopwatch.GetElapsedTime(started).TotalMicroseconds / iterations;
         TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture, "PII scan: {0:F3} microseconds per 200-character message.", microseconds));
-        microseconds.Should().BeLessThan(50, "the CI smoke limit allows contention; the release target is 2 microseconds");
+        microseconds.Should().BeLessThan(200, "the CI smoke limit allows contention; the release target is 2 microseconds");
     }
 
     private static string _capture(

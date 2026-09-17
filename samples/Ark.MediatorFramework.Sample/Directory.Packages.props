@@ -6,6 +6,8 @@
   </PropertyGroup>
   <ItemGroup Label="Ark.Tools packages">
     <PackageVersion Include="Ark.Tools.AspNetCore.MessagePack" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.AspNetCore.ApplicationInsights" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.AspNetCore.HealthChecks" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.OTel" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.MinimalApi" Version="999.9.9" />
@@ -14,6 +16,7 @@
     <PackageVersion Include="Ark.Tools.MediatorFramework.AzureFunctions" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging.Azure" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging.OTel" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Rebus" Version="999.9.9" />
@@ -27,6 +30,7 @@
     <PackageVersion Include="Ark.Tools.Sql" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Sql.SqlServer" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Solid.SimpleInjector" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid.Authorization" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.SystemTextJson" Version="999.9.9" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.3" />

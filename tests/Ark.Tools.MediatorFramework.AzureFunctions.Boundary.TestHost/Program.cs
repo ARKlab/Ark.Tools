@@ -38,6 +38,7 @@ public static class Program
         var container = _buildContainer();
 #pragma warning restore CA2000
         builder.Services.AddArkAzureFunctions(container);
+        builder.Services.AddArkSolidProcessors(container);
         builder.Services.AddArkHealthChecks();
         builder.Services.AddSingleton(
             new QueueServiceClient(

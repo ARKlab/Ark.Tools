@@ -11,6 +11,20 @@ The sample keeps the first seam in
 and the web seam in
 [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
 
+SimpleInjector remains the authoritative application container. When a host also
+owns an `IServiceCollection` and generated endpoints or native messaging resolve
+mediator processors from Microsoft DI, register the bridge once:
+
+```csharp
+services.AddArkSolidProcessors(container);
+```
+
+The bridge exposes `IRequestProcessor`, `IQueryProcessor`, and
+`ICommandProcessor` through Microsoft DI while keeping handler registrations,
+decorators, and verification in SimpleInjector. It creates a scope using the
+container's configured `DefaultScopedLifestyle` when a host call begins and
+reuses the ambient scope for nested dispatch.
+
 ## Fluent native messaging composition
 
 Native messaging hosts use one composition call for the generated network and
@@ -35,18 +49,18 @@ Use `Receiver<TParticipant>(container, ...)` for a custom receive host. Azure
 Functions hosts use `ConfigureArkMessagingFunctions` and select either Service
 Bus or Storage Queue. Generated network, participant, and Functions metadata are
 resolved by the composition layer; application handlers remain in Simple
-Injector.
+Injector, with the processor bridge exposing them to the Functions host.
 
 ```csharp
-services.ConfigureArkMessagingFunctions(
-    applicationContainer,
-    configuration,
+builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkSolidProcessors(container);
+builder.Services.ConfigureArkMessagingFunctions(
+    container,
+    builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
         .UseTransport(transport => transport.UseServiceBus())
-        .UseDataBus(dataBus => dataBus.UseInMemory(
-            SystemClock.Instance,
-            Duration.FromHours(2)))
+        .UseDataBus(dataBus => dataBus.UseInMemory())
         .UseOutbox(outbox => outbox.UseEnqueue()));
 ```
 
@@ -127,6 +141,19 @@ provides participant-derived routing, receive adapters, exact retry mapping,
 post-start event subscriptions, the transport-neutral bus adapter, and an
 immutable requirements descriptor. Application handlers remain explicitly
 registered by the application composition.
+
+Generated Rebus registration is application-container-owned by default. The
+sample appends the generated `IHandleMessages<T>` implementations into
+SimpleInjector:
+
+```csharp
+RebusProcessorHost.Register(
+    (serviceType, implementationType) =>
+        container.Collection.Append(serviceType, implementationType));
+```
+
+If a future generator API offers Microsoft DI registration helpers, they remain
+opt-in host choices. They do not replace application-container ownership.
 
 The declaration is shared generator input, not a wire bridge. A deployed network
 must be entirely Rebus or entirely native messaging; never bind some

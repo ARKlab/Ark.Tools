@@ -22,8 +22,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     private readonly IMessagingCodecRegistry _codecs;
     private readonly MessagingPayloadSender _payloadSender;
     private readonly string _participantIdentity;
+    private readonly IMessagingPipelineProcessor? _pipelineProcessor;
     private readonly IReadOnlyList<Type> _outgoingStepTypes;
-    private readonly Func<Type, object> _resolveStep;
     private readonly Func<DateTimeOffset> _utcNow;
     private readonly AsyncLocal<MessagingOutboxScope?> _outboxScope = new();
     private int _disposed;
@@ -35,8 +35,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     /// <param name="codecs">The installed serialization codecs.</param>
     /// <param name="payloadSender">The payload serialization and claim-check runtime.</param>
     /// <param name="participantIdentity">The identity of the sending participant.</param>
+    /// <param name="pipelineProcessor">The outgoing pipeline processor.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline steps.</param>
-    /// <param name="resolveStep">The resolver for outgoing pipeline steps.</param>
     /// <param name="utcNow">The clock used for message and scheduled-send timestamps.</param>
     public MessagingBus(
         IMessagingTransport transport,
@@ -45,8 +45,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         IMessagingCodecRegistry codecs,
         MessagingPayloadSender payloadSender,
         string participantIdentity,
+        IMessagingPipelineProcessor? pipelineProcessor = null,
         IReadOnlyList<Type>? outgoingStepTypes = null,
-        Func<Type, object>? resolveStep = null,
         Func<DateTimeOffset>? utcNow = null)
     {
         _transport = transport ?? throw new ArgumentNullException(nameof(transport));
@@ -64,10 +64,14 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
 
         _network.Validate(transport.Capabilities);
         _participantIdentity = participantIdentity;
+        _pipelineProcessor = pipelineProcessor;
         _outgoingStepTypes = new ReadOnlyCollection<Type>(
             (outgoingStepTypes ?? Array.Empty<Type>()).ToArray());
-        _resolveStep = resolveStep ?? (static _ =>
-            throw new InvalidOperationException("A pipeline step resolver is required when outgoing steps are configured."));
+        if (_outgoingStepTypes.Count != 0 && _pipelineProcessor is null)
+        {
+            throw new InvalidOperationException(
+                "A pipeline processor is required when outgoing steps are configured.");
+        }
         _utcNow = utcNow ?? (static () => DateTimeOffset.UtcNow);
     }
 
@@ -199,53 +203,59 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            await MessagingPipelineInvoker.InvokeOutgoingAsync(
-                _outgoingStepTypes,
-                _resolveStep,
-                context,
-                async () =>
+            async Task _sendAsync()
+            {
+                var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
+                using var payload = await _payloadSender
+                    .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
+                    .ConfigureAwait(false);
+                _validateHeaders(context.Headers);
+                var transportHeaders = new ReadOnlyDictionary<string, string>(
+                    new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
+                var outboxScope = _outboxScope.Value;
+                if (outboxScope is not null)
                 {
-                    var codec = _codecs.GetByProtocol(_registry.GetWireProtocol<T>());
-                    using var payload = await _payloadSender
-                        .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
-                        .ConfigureAwait(false);
-                    _validateHeaders(context.Headers);
-                    var transportHeaders = new ReadOnlyDictionary<string, string>(
-                        new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
-                    var outboxScope = _outboxScope.Value;
-                    if (outboxScope is not null)
+                    var outboxHeaders = new Dictionary<string, string>(context.Headers, StringComparer.Ordinal)
                     {
-                        var outboxHeaders = new Dictionary<string, string>(context.Headers, StringComparer.Ordinal)
-                        {
-                            [MessagingHeaders.OutboxDestinationKind] = publish ? "topic" : "queue",
-                            [MessagingHeaders.OutboxDestination] = destination,
-                        };
-                        if (dueTime is not null)
-                            outboxHeaders[MessagingHeaders.OutboxDueTime] =
-                                dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
-                        _validateHeaders(outboxHeaders);
-                        outboxScope.Add(new OutboxMessage
-                        {
-                            Headers = outboxHeaders,
-                            Body = payload.Sequence.ToArray(),
-                        });
-                    }
-                    else if (publish)
-                        await _transport.PublishAsync(
-                            destination,
-                            transportHeaders,
-                            payload.Sequence,
-                            cancellationToken)
-                            .ConfigureAwait(false);
-                    else
-                        await _transport.SendAsync(
-                            destination,
-                            transportHeaders,
-                            payload.Sequence,
-                            dueTime,
-                            cancellationToken).ConfigureAwait(false);
-                },
-                cancellationToken).ConfigureAwait(false);
+                        [MessagingHeaders.OutboxDestinationKind] = publish ? "topic" : "queue",
+                        [MessagingHeaders.OutboxDestination] = destination,
+                    };
+                    if (dueTime is not null)
+                        outboxHeaders[MessagingHeaders.OutboxDueTime] =
+                            dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
+                    _validateHeaders(outboxHeaders);
+                    outboxScope.Add(new OutboxMessage
+                    {
+                        Headers = outboxHeaders,
+                        Body = payload.Sequence.ToArray(),
+                    });
+                }
+                else if (publish)
+                    await _transport.PublishAsync(
+                        destination,
+                        transportHeaders,
+                        payload.Sequence,
+                        cancellationToken)
+                        .ConfigureAwait(false);
+                else
+                    await _transport.SendAsync(
+                        destination,
+                        transportHeaders,
+                        payload.Sequence,
+                        dueTime,
+                        cancellationToken).ConfigureAwait(false);
+            }
+
+            if (_outgoingStepTypes.Count == 0)
+                await _sendAsync().ConfigureAwait(false);
+            else
+                await _pipelineProcessor!
+                    .ProcessOutgoingAsync(
+                        _outgoingStepTypes,
+                        context,
+                        _ => _sendAsync(),
+                        cancellationToken)
+                    .ConfigureAwait(false);
         }
         finally
         {

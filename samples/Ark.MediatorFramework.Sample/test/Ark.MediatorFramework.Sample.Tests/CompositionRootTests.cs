@@ -5,6 +5,7 @@
 using Ark.Tools.Outbox;
 using Ark.MediatorFramework.Sample.WebInterface;
 using Ark.Tools.AspNetCore.MinimalApi;
+using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
@@ -23,6 +24,39 @@ namespace Ark.MediatorFramework.Sample.Tests;
 [TestClass]
 public sealed class CompositionRootTests
 {
+    /// <summary>Exposes the SimpleInjector-backed processors through the host service provider.</summary>
+    [TestMethod]
+    public async Task ProductionCompositionRegistersProcessorsInMicrosoftDependencyInjection()
+    {
+        var network = new InMemNetwork();
+        var dataContextFactory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        var container = SampleComposition.BuildContainer(
+            network,
+            useSqlStore: false,
+            dataContextFactory: dataContextFactory);
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            ApplicationName = typeof(SampleHost).Assembly.GetName().Name,
+            EnvironmentName = "IntegrationTests",
+            ContentRootPath = AppContext.BaseDirectory,
+        });
+        builder.WebHost.UseTestServer();
+
+        var startup = SampleHost.Configure(
+            builder,
+            container,
+            network,
+            useSqlStore: false,
+            sharedDataContextFactory: dataContextFactory);
+        await using var app = builder.Build();
+        startup.Configure(app);
+        await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        app.Services.GetRequiredService<IRequestProcessor>().Should().NotBeNull();
+        app.Services.GetRequiredService<IQueryProcessor>().Should().NotBeNull();
+        app.Services.GetRequiredService<ICommandProcessor>().Should().NotBeNull();
+    }
+
     /// <summary>Runs production registrations without contacting external providers.</summary>
     [TestMethod]
     public async Task ProductionCompositionStartsAndExposesHealth()

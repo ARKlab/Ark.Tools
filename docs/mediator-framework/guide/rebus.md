@@ -118,6 +118,8 @@ Source: [`ProcessBookPrintProcessHandler.cs`](../../../samples/Ark.MediatorFrame
 
 The generated Rebus wrapper resolves this handler in a message scope. The
 handler does not know whether the sender is HTTP, Functions, or another worker.
+That scope stays application-container-owned, and nested mediator dispatch
+reuses the active message scope.
 
 ## 4. Configure a receiver
 
@@ -139,7 +141,9 @@ container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
 var requirements = GreetingRebusHost.GetRequirements();
-GreetingRebusHost.Register(container);
+GreetingRebusHost.Register(
+    (serviceType, implementationType) =>
+        container.Collection.Append(serviceType, implementationType));
 container.RegisterDecorator(
     typeof(IHandleMessages<>),
     typeof(RebusScopeDecorator<>));
@@ -170,6 +174,12 @@ await GreetingRebusHost
     .ConfigureAwait(false);
 ```
 Source: [`RebusProcessorComposition.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs)
+
+`GreetingRebusHost.Register(...)` keeps the generated `IHandleMessages<T>`
+registrations in the application container by default. The current generator API
+does not require Microsoft DI here; if a DI registration overload is added in
+the future, it remains opt-in rather than a replacement for SimpleInjector
+composition.
 
 For local tests, use the sample's `InMemNetwork`. It still exercises routing,
 scopes, retries, and outbox behavior.

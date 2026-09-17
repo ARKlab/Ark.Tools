@@ -231,6 +231,7 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<UploadBookCoverRequest.V1, UploadResponse>, UploadBookCoverHandler>();
         container.Register<IQueryHandler<DownloadBookCoverQuery.V1, IArkAttachment>, DownloadBookCoverHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
+        container.Register<ICommandHandler<MessagingFailed<BookPrintCompleted>>, BookPrintCompletedFailureHandler>();
         if (registerBookPrintNotificationHandler)
             container.Register<ICommandHandler<BookPrintCompleted>, BookPrintNotificationHandler>();
 

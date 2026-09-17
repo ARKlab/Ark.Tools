@@ -19,8 +19,6 @@
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="MessagePack.NodaTime" />
-    <PackageReference Include="SimpleInjector" />
-    <PackageReference Include="SimpleInjector.Integration.AspNetCore.Mvc.Core" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\aspnetcore\Ark.Tools.AspNetCore.ProblemDetails\Ark.Tools.AspNetCore.ProblemDetails.csproj" />

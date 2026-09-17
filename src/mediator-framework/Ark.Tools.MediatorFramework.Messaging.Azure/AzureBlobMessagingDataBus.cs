@@ -8,10 +8,18 @@ using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Azure Blob implementation of the shared DataBus provider contract.</summary>
-public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
+public sealed class AzureBlobMessagingDataBus :
+    IMessagingDataBus,
+    IMessagingDataBusAttachmentLifetime,
+    IMessagingDataBusStartupValidation,
+    IMessagingDataBusHostedServiceRegistration
 {
     private const string _lengthMetadataName = "amf1_length";
     private const string _sha256MetadataName = "amf1_sha256";
@@ -34,22 +42,29 @@ public sealed class AzureBlobMessagingDataBus : IMessagingDataBus
     /// <summary>Gets the configured minimum attachment lifetime.</summary>
     public TimeSpan MinimumAttachmentLifetime => _options.MinimumAttachmentLifetime;
 
+    void IMessagingDataBusHostedServiceRegistration.RegisterServices(IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHostedService, AzureBlobMessagingDataBusStartupValidator>());
+    }
+
     /// <summary>
     /// Validates data-plane access and the configured container at host startup.
     /// </summary>
-    /// <param name="ctk">The cancellation token.</param>
-    public async Task ValidateAsync(CancellationToken ctk)
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public async Task ValidateAsync(CancellationToken cancellationToken)
     {
         if (_options.EnsureContainer)
         {
-            await _container.CreateIfNotExistsAsync(cancellationToken: ctk)
+            await _container.CreateIfNotExistsAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
             return;
         }
 
         try
         {
-            await _container.GetPropertiesAsync(cancellationToken: ctk)
+            await _container.GetPropertiesAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
