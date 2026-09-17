@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Org.Mentalis.Network.ProxySocket.Authentication;
 
 using System.Net.Sockets;
@@ -31,7 +33,7 @@ internal sealed class Socks5Handler : SocksHandler
     /// <param name="user">The username to use.</param>
     /// <param name="pass">The password to use.</param>
     /// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> -or- <c>pass</c> is null.</exception>
-    public Socks5Handler(Socket server, string user, string pass) : base(server, user)
+    public Socks5Handler(Socket server, [UserCredentials] string user, [UserCredentials] string pass) : base(server, user)
     {
         m_Password = pass;
     }
@@ -426,6 +428,7 @@ internal sealed class Socks5Handler : SocksHandler
     /// Gets or sets the password to use when authenticating with the SOCKS5 server.
     /// </summary>
     /// <value>The password to use when authenticating with the SOCKS5 server.</value>
+    [UserCredentials]
     private string Password
     {
         get
@@ -454,6 +457,7 @@ internal sealed class Socks5Handler : SocksHandler
     }
     // private variables
     /// <summary>Holds the value of the Password property.</summary>
+    [UserCredentials]
     private string m_Password;
     /// <summary>Holds the value of the HandShake property.</summary>
     private byte[]? m_HandShake;

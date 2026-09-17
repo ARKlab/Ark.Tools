@@ -12,7 +12,6 @@
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.5" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.10.0" />
@@ -26,9 +25,13 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
     <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
     <PackageVersion Include="DistributedLock.Core" Version="1.0.9" />

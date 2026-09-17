@@ -45,7 +45,7 @@ public class SqlConnectionManager : IDbConnectionManager
         }
     }
 
-    protected virtual SqlConnection Build(string connectionString)
+    protected virtual SqlConnection Build([InfrastructureSecret] string connectionString)
     {
         var conn = new SqlConnection(connectionString);
         conn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);

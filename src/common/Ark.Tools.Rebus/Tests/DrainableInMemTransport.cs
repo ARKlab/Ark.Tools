@@ -1,9 +1,9 @@
+using Ark.Tools.Compliance;
+
 using Rebus.Transport;
 using Rebus.Transport.InMem;
 
-
 namespace Ark.Tools.Rebus.Tests;
-
 
 public class DrainableInMemTransport : InMemTransport
 {
@@ -29,7 +29,7 @@ public class DrainableInMemTransport : InMemTransport
         }
     }
 
-    public DrainableInMemTransport(InMemNetwork network, string? inputQueueAddress)
+    public DrainableInMemTransport(InMemNetwork network, [NotPersonalData] string? inputQueueAddress)
         : base(network, inputQueueAddress)
     {
     }

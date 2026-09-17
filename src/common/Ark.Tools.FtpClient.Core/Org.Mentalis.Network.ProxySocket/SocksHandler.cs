@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using System.Net.Sockets;
 
 namespace Org.Mentalis.Network.ProxySocket;
@@ -120,6 +122,7 @@ internal abstract class SocksHandler
     /// </summary>
     /// <value>A string that holds the username to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    [UserCredentials]
     protected string Username
     {
         get
@@ -182,6 +185,7 @@ internal abstract class SocksHandler
     /// <summary>Holds the value of the Server property.</summary>
     private Socket _server;
     /// <summary>Holds the value of the Username property.</summary>
+    [UserCredentials]
     private string _username;
     /// <summary>Holds the value of the AsyncResult property.</summary>
     private IAsyncProxyResult? _asyncResult;

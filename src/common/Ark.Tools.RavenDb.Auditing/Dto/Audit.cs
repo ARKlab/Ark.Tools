@@ -1,4 +1,6 @@
 
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools.RavenDb.Auditing;
 
 public class Audit
@@ -6,6 +8,7 @@ public class Audit
     public Guid AuditId { get; set; }
     public string Id => AuditId.ToString();
 
+    [NotPersonalData]
     public string? UserId { get; set; }
     public DateTime LastUpdatedUtc { get; set; }
 

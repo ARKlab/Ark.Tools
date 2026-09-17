@@ -1,5 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Sql;
 
@@ -15,6 +16,7 @@ namespace Ark.Tools.ResourceWatcher;
 
 public interface ISqlStateProviderConfig
 {
+    [InfrastructureSecret]
     string DbConnectionString { get; }
 
     /// <summary>

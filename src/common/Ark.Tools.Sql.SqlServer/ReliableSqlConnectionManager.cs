@@ -1,12 +1,14 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Microsoft.Data.SqlClient;
 
 namespace Ark.Tools.Sql.SqlServer;
 
 public class ReliableSqlConnectionManager : SqlConnectionManager
 {
-    protected override SqlConnection Build(string connectionString)
+    protected override SqlConnection Build([InfrastructureSecret] string connectionString)
     {
         var opt = new SqlConnectionStringBuilder(connectionString);
         if (!opt.ShouldSerialize("ConnectRetryCount"))

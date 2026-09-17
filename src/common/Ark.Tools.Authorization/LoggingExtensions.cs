@@ -9,11 +9,11 @@ internal static partial class LoggingExtensions
 {
     public static void UserAuthorizationSucceeded(this ILogger logger, [PersonalData] string username, string policyName)
     {
-        logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Authorization for policy {PolicyName} succeeded for user {Username}.", policyName, username);
+        logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Authorization for policy {PolicyName} succeeded.", policyName);
     }
 
     public static void UserAuthorizationFailed(this ILogger logger, [PersonalData] string username, string policyName, IEnumerable<IAuthorizationRequirement> failedRequirements)
     {
-        logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Authorization for policy {PolicyName} failed for user {Username}. Missing requirements {FailedRequirements}", policyName, username, string.Join(", ", failedRequirements));
+        logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Authorization for policy {PolicyName} failed. Missing requirements {FailedRequirements}", policyName, string.Join(", ", failedRequirements));
     }
 }

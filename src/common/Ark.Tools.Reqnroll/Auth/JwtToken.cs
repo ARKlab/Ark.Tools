@@ -1,14 +1,16 @@
+using Ark.Tools.Compliance;
+
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-
 
 namespace Ark.Tools.Reqnroll.Auth;
 
 public sealed class JwtToken
 {
+    [InfrastructureSecret]
     private readonly SecurityTokenDescriptor _token;
 
-    internal JwtToken(SecurityTokenDescriptor token)
+    internal JwtToken([InfrastructureSecret] SecurityTokenDescriptor token)
     {
         this._token = token;
     }

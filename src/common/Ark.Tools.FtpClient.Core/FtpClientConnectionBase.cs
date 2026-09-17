@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using NLog;
 
 using Polly;
@@ -11,6 +13,8 @@ public abstract class FtpClientConnectionBase : IFtpClientConnection
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     public Uri Uri { get; }
+
+    [UserCredentials]
     public NetworkCredential Credentials { get; }
 
     public FtpConfig FtpConfig { get; }
