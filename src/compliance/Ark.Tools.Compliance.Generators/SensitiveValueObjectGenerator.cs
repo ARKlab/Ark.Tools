@@ -5,9 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Ark.Tools.Compliance.Generators;
 
@@ -55,7 +57,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         var values = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _attributeName,
                 static (node, _) => node is StructDeclarationSyntax,
-                static (ctx, _) => _analyze(ctx))
+                static (ctx, token) => _parse(ctx, token))
             .Where(static value => value is not null);
 
         context.RegisterSourceOutput(values, static (spc, value) =>
@@ -63,16 +65,17 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             var model = value!.Value;
             if (model.Diagnostic is not null)
             {
-                spc.ReportDiagnostic(model.Diagnostic);
+                spc.ReportDiagnostic(model.Diagnostic.Value.Create());
                 return;
             }
 
-            spc.AddSource(model.HintName!, model.Source!);
+            spc.AddSource(model.HintName!, _emit(model));
         });
     }
 
-    private static Model? _analyze(GeneratorAttributeSyntaxContext context)
+    private static Model? _parse(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (context.TargetNode is not StructDeclarationSyntax declaration
             || context.TargetSymbol is not INamedTypeSymbol type)
         {
@@ -83,12 +86,17 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
 
         var location = declaration.GetLocation();
         var typeName = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var namespaceName = type.ContainingNamespace.IsGlobalNamespace
+            ? null
+            : type.ContainingNamespace.ToDisplayString();
+        var isPublic = type.DeclaredAccessibility == Accessibility.Public;
 
         if (attribute.AttributeClass is not INamedTypeSymbol attributeClass
             || attributeClass.TypeArguments.Length != 1
             || attributeClass.TypeArguments[0].SpecialType != SpecialType.System_String)
         {
-            return new Model(null, null, Diagnostic.Create(_unsupportedType, location, typeName));
+            return new Model(null, null, null, false, default,
+                new DiagnosticSpec(DiagnosticKind.UnsupportedType, typeName, null, null, SourceLocation.Create(location)));
         }
 
         if (type.ContainingType is not null
@@ -96,32 +104,39 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
             || !declaration.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.PartialKeyword))
             || !declaration.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.ReadOnlyKeyword)))
         {
-            return new Model(null, null, Diagnostic.Create(_invalidDeclaration, location, typeName));
+            return new Model(null, null, null, false, default,
+                new DiagnosticSpec(DiagnosticKind.InvalidDeclaration, typeName, null, null, SourceLocation.Create(location)));
         }
 
         if (type.GetMembers("ToString").OfType<IMethodSymbol>().Any(static method =>
                 method.Parameters.Length == 0))
         {
-            return new Model(null, null, Diagnostic.Create(_clearTextToString, location, typeName));
+            return new Model(null, null, null, false, default,
+                new DiagnosticSpec(DiagnosticKind.ClearTextToString, typeName, null, null, SourceLocation.Create(location)));
         }
 
         var validateHook = _findHook(type, "_validate", "Ark.Tools.Compliance.ValidationResult", out var invalidValidate);
         if (invalidValidate)
         {
-            return new Model(null, null, Diagnostic.Create(
-                _invalidHook, location, typeName, "_validate", "global::Ark.Tools.Compliance.ValidationResult"));
+            return new Model(null, null, null, false, default,
+                new DiagnosticSpec(DiagnosticKind.InvalidHook, typeName, "_validate",
+                    "global::Ark.Tools.Compliance.ValidationResult", SourceLocation.Create(location)));
         }
 
         var normalizeHook = _findHook(type, "_normalize", "string", out var invalidNormalize);
         if (invalidNormalize)
         {
-            return new Model(null, null, Diagnostic.Create(_invalidHook, location, typeName, "_normalize", "string"));
+            return new Model(null, null, null, false, default,
+                new DiagnosticSpec(DiagnosticKind.InvalidHook, typeName, "_normalize", "string", SourceLocation.Create(location)));
         }
 
         var redaction = _getEnumValue(attribute, 0, "Redaction", 0);
         return new Model(
-            _hintName(type),
-            _emit(type, new Settings(redaction, validateHook, normalizeHook)),
+            _hintName(namespaceName, typeName),
+            namespaceName,
+            typeName,
+            isPublic,
+            new Settings(redaction, validateHook, normalizeHook),
             null);
     }
 
@@ -144,11 +159,11 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
                 : method.ReturnType.ToDisplayString() == returnType);
     }
 
-    private static string _hintName(INamedTypeSymbol type)
+    private static string _hintName(string? namespaceName, string typeName)
     {
-        return (type.ContainingNamespace.IsGlobalNamespace
-            ? type.Name
-            : type.ContainingNamespace.ToDisplayString().Replace('.', '_') + "." + type.Name)
+        return (namespaceName is null
+            ? typeName
+            : namespaceName + "." + typeName)
             + ".SensitiveValueObject.g.cs";
     }
 
@@ -167,13 +182,12 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         return namedValue ?? defaultValue;
     }
 
-    private static string _emit(INamedTypeSymbol type, Settings settings)
+    private static string _emit(Model model)
     {
-        var namespaceName = type.ContainingNamespace.IsGlobalNamespace
-            ? null
-            : type.ContainingNamespace.ToDisplayString();
-        var typeName = type.Name;
-        var accessibility = type.DeclaredAccessibility == Accessibility.Public ? "public " : "internal ";
+        var namespaceName = model.NamespaceName;
+        var typeName = model.TypeName!;
+        var accessibility = model.IsPublic ? "public " : "internal ";
+        var settings = model.Settings;
         var redactor = settings.Redaction switch
         {
             1 => "global::Ark.Tools.Compliance.ArkMaskingRedactor.Instance",
@@ -307,11 +321,87 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
 
     private readonly record struct Model(
         string? HintName,
-        string? Source,
-        Diagnostic? Diagnostic);
+        string? NamespaceName,
+        string? TypeName,
+        bool IsPublic,
+        Settings Settings,
+        DiagnosticSpec? Diagnostic);
 
     private readonly record struct Settings(
         int Redaction,
         bool HasValidate,
         bool HasNormalize);
+
+    private enum DiagnosticKind
+    {
+        UnsupportedType,
+        InvalidDeclaration,
+        ClearTextToString,
+        InvalidHook,
+    }
+
+    private readonly record struct DiagnosticSpec(
+        DiagnosticKind Kind,
+        string TypeName,
+        string? HookName,
+        string? ReturnType,
+        SourceLocation Location)
+    {
+        internal Diagnostic Create()
+        {
+            return Kind switch
+            {
+                DiagnosticKind.UnsupportedType => Diagnostic.Create(_unsupportedType, Location.ToLocation(), TypeName),
+                DiagnosticKind.InvalidDeclaration => Diagnostic.Create(_invalidDeclaration, Location.ToLocation(), TypeName),
+                DiagnosticKind.ClearTextToString => Diagnostic.Create(_clearTextToString, Location.ToLocation(), TypeName),
+                DiagnosticKind.InvalidHook => Diagnostic.Create(
+                    _invalidHook,
+                    Location.ToLocation(),
+                    TypeName,
+                    HookName,
+                    ReturnType),
+                _ => throw new InvalidOperationException(),
+            };
+        }
+    }
+
+    private readonly record struct SourceLocation(
+        string FilePath,
+        int Start,
+        int Length,
+        int StartLine,
+        int StartCharacter,
+        int EndLine,
+        int EndCharacter)
+    {
+        internal static SourceLocation Create(Location location)
+        {
+            if (!location.IsInSource)
+            {
+                return new SourceLocation(string.Empty, 0, 0, 0, 0, 0, 0);
+            }
+
+            var lineSpan = location.GetLineSpan().Span;
+            return new SourceLocation(
+                location.SourceTree?.FilePath ?? string.Empty,
+                location.SourceSpan.Start,
+                location.SourceSpan.Length,
+                lineSpan.Start.Line,
+                lineSpan.Start.Character,
+                lineSpan.End.Line,
+                lineSpan.End.Character);
+        }
+
+        internal Location ToLocation()
+        {
+            return string.IsNullOrEmpty(FilePath)
+                ? Location.None
+                : Location.Create(
+                    FilePath,
+                    new TextSpan(Start, Length),
+                    new LinePositionSpan(
+                        new LinePosition(StartLine, StartCharacter),
+                        new LinePosition(EndLine, EndCharacter)));
+        }
+    }
 }

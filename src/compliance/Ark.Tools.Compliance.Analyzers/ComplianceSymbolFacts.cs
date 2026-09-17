@@ -2,28 +2,119 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Ark.Tools.Compliance.Analyzers;
 
+internal sealed class ComplianceCompilationFacts
+{
+    internal readonly ImmutableArray<INamedTypeSymbol> _classificationAttributes;
+    internal readonly ImmutableArray<INamedTypeSymbol> _knownSafeTypes;
+    internal readonly bool _telemetryRequiresRegistration;
+    internal readonly INamedTypeSymbol? _complianceReviewedAttribute;
+    internal readonly INamedTypeSymbol? _notPersonalDataAttribute;
+    internal readonly INamedTypeSymbol? _sensitiveValueInterface;
+    internal readonly INamedTypeSymbol? _sensitiveValueObjectAttribute;
+    internal readonly INamedTypeSymbol? _sqlColumnPolicyAttribute;
+    internal readonly INamedTypeSymbol? _sqlDataPolicyAttribute;
+    internal readonly INamedTypeSymbol? _vogenValueObjectAttribute;
+
+    private ComplianceCompilationFacts(
+        bool telemetryRequiresRegistration,
+        INamedTypeSymbol? complianceReviewedAttribute,
+        INamedTypeSymbol? notPersonalDataAttribute,
+        INamedTypeSymbol? sensitiveValueInterface,
+        INamedTypeSymbol? sensitiveValueObjectAttribute,
+        INamedTypeSymbol? sqlColumnPolicyAttribute,
+        INamedTypeSymbol? sqlDataPolicyAttribute,
+        INamedTypeSymbol? vogenValueObjectAttribute,
+        ImmutableArray<INamedTypeSymbol> classificationAttributes,
+        ImmutableArray<INamedTypeSymbol> knownSafeTypes)
+    {
+        _classificationAttributes = classificationAttributes;
+        _knownSafeTypes = knownSafeTypes;
+        _telemetryRequiresRegistration = telemetryRequiresRegistration;
+        _complianceReviewedAttribute = complianceReviewedAttribute;
+        _notPersonalDataAttribute = notPersonalDataAttribute;
+        _sensitiveValueInterface = sensitiveValueInterface;
+        _sensitiveValueObjectAttribute = sensitiveValueObjectAttribute;
+        _sqlColumnPolicyAttribute = sqlColumnPolicyAttribute;
+        _sqlDataPolicyAttribute = sqlDataPolicyAttribute;
+        _vogenValueObjectAttribute = vogenValueObjectAttribute;
+    }
+
+    internal static ComplianceCompilationFacts _create(Compilation compilation, AnalyzerConfigOptions options)
+    {
+        var isTestProject = options.TryGetValue("build_property.IsTestProject", out var testProject)
+            && string.Equals(testProject, "true", StringComparison.OrdinalIgnoreCase);
+        var isHost = compilation.Options.OutputKind
+            is OutputKind.ConsoleApplication or OutputKind.WindowsApplication or OutputKind.WindowsRuntimeApplication;
+
+        return new ComplianceCompilationFacts(
+            isHost
+                && !isTestProject
+                && compilation.ReferencedAssemblyNames.Any(static name =>
+                    name.Name is "Microsoft.Extensions.Telemetry" or "Microsoft.Extensions.Telemetry.Abstractions"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.ComplianceReviewedAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.NotPersonalDataAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.ISensitiveValue`1"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.SensitiveValueObjectAttribute`1"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.Sql.SqlColumnPolicyAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.Sql.SqlDataPolicyAttribute"),
+            compilation.GetTypeByMetadataName("Vogen.ValueObjectAttribute`1"),
+            _symbols(
+                compilation.GetTypeByMetadataName("Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"),
+                compilation.GetTypeByMetadataName("Ark.Tools.Compliance.PersonalDataAttribute"),
+                compilation.GetTypeByMetadataName("Ark.Tools.Compliance.SensitivePersonalDataAttribute"),
+                compilation.GetTypeByMetadataName("Ark.Tools.Compliance.UserCredentialsAttribute"),
+                compilation.GetTypeByMetadataName("Ark.Tools.Compliance.InfrastructureSecretAttribute"),
+                compilation.GetTypeByMetadataName("Ark.Tools.Compliance.PseudonymousAttribute")),
+            _symbols(
+                compilation.GetTypeByMetadataName("System.Threading.CancellationToken"),
+                compilation.GetTypeByMetadataName("System.Threading.CancellationTokenSource")));
+    }
+
+    internal static bool _isEnabled(AnalyzerConfigOptions options)
+    {
+        return !options.TryGetValue("build_property.EnableArkToolsCompliance", out var enabled)
+            || !string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static ImmutableArray<INamedTypeSymbol> _symbols(params INamedTypeSymbol?[] candidates)
+    {
+        var builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+        foreach (var candidate in candidates)
+        {
+            if (candidate is not null)
+            {
+                builder.Add(candidate);
+            }
+        }
+
+        return builder.ToImmutable();
+    }
+}
+
 internal static class ComplianceSymbolFacts
 {
-    internal static bool _hasAttribute(ISymbol symbol, string name)
+    internal static bool _hasAttribute(ISymbol symbol, INamedTypeSymbol? expected)
     {
-        return symbol.GetAttributes().Any(attribute => _isAttribute(attribute, name));
+        return expected is not null && symbol.GetAttributes().Any(attribute => _matchesAttribute(attribute, expected));
     }
 
-    internal static bool _isAttribute(AttributeData attribute, string name)
+    internal static bool _matchesAttribute(AttributeData attribute, INamedTypeSymbol? expected)
     {
-        var qualifiedName = "Ark.Tools.Compliance." + name;
-        return attribute.AttributeClass?.ToDisplayString() == qualifiedName
-            || attribute.AttributeClass?.OriginalDefinition.ToDisplayString() == qualifiedName;
+        return expected is not null
+            && attribute.AttributeClass is { } attributeClass
+            && SymbolEqualityComparer.Default.Equals(attributeClass.OriginalDefinition, expected);
     }
 
-    internal static bool _isClassified(ISymbol? symbol)
+    internal static bool _isClassified(ISymbol? symbol, ComplianceCompilationFacts facts)
     {
         if (symbol is null)
         {
@@ -34,12 +125,7 @@ internal static class ComplianceSymbolFacts
         {
             for (var type = attribute.AttributeClass; type is not null; type = type.BaseType)
             {
-                if (type.ToDisplayString() == "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"
-                    || type.ToDisplayString() is "Ark.Tools.Compliance.PersonalDataAttribute"
-                        or "Ark.Tools.Compliance.SensitivePersonalDataAttribute"
-                        or "Ark.Tools.Compliance.UserCredentialsAttribute"
-                        or "Ark.Tools.Compliance.InfrastructureSecretAttribute"
-                        or "Ark.Tools.Compliance.PseudonymousAttribute")
+                if (_containsSymbol(facts._classificationAttributes, type))
                 {
                     return true;
                 }
@@ -48,9 +134,10 @@ internal static class ComplianceSymbolFacts
 
         if (symbol is INamedTypeSymbol named)
         {
-            return named.AllInterfaces.Any(static candidate =>
-                candidate.OriginalDefinition.ToDisplayString() == "Ark.Tools.Compliance.ISensitiveValue<TSelf>")
-                || _hasAttribute(named, "SensitiveValueObjectAttribute<T>");
+            return facts._sensitiveValueInterface is not null
+                && named.AllInterfaces.Any(candidate =>
+                    SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, facts._sensitiveValueInterface))
+                || _hasAttribute(named, facts._sensitiveValueObjectAttribute);
         }
 
         return false;
@@ -74,12 +161,10 @@ internal static class ComplianceSymbolFacts
             : type;
     }
 
-    internal static bool _isKnownSafeDotNetType(ITypeSymbol type)
+    internal static bool _isKnownSafeDotNetType(ITypeSymbol type, ComplianceCompilationFacts facts)
     {
         type = _unwrapNullable(type);
-        return type.ToDisplayString() is
-            "System.Threading.CancellationToken"
-            or "System.Threading.CancellationTokenSource";
+        return type is INamedTypeSymbol named && _containsSymbol(facts._knownSafeTypes, named);
     }
 
     internal static bool _isReviewValid(AttributeData attribute, DateTime today)
@@ -117,5 +202,36 @@ internal static class ComplianceSymbolFacts
             && !normalized.StartsWith("justify", StringComparison.Ordinal)
             && !normalized.StartsWith("add justification", StringComparison.Ordinal)
             && !normalized.StartsWith("your reason", StringComparison.Ordinal);
+    }
+
+    internal static bool _isArkToolsComplianceNamespace(INamespaceSymbol? @namespace)
+    {
+        return @namespace is
+        {
+            Name: "Compliance",
+            ContainingNamespace:
+            {
+                Name: "Tools",
+                ContainingNamespace:
+                {
+                    Name: "Ark",
+                    ContainingNamespace: { IsGlobalNamespace: true },
+                },
+            },
+        };
+    }
+
+    private static bool _containsSymbol(ImmutableArray<INamedTypeSymbol> symbols, INamedTypeSymbol candidate)
+    {
+        var originalDefinition = candidate.OriginalDefinition;
+        foreach (var symbol in symbols)
+        {
+            if (SymbolEqualityComparer.Default.Equals(originalDefinition, symbol))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

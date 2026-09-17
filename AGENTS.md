@@ -9,7 +9,7 @@
 - Use `CultureInfo.InvariantCulture` when formatting strings for logging
 - Use `IArkFlurlClientFactory` instead of `IFlurlClientFactory`
 - Run `dotnet build` after making changes to verify compilation
-- Run `dotnet test` after making changes to ensure tests pass
+- Run focused `dotnet test` commands for the areas affected by the changes; the full suite takes more than 5 minutes and must not be run by default
 - Work in small, tested increments - make one logical change at a time, build and test before proceeding
 - Follow existing patterns in the codebase - check similar files first
 - Follow SOLID and KISS principles
@@ -40,11 +40,8 @@ Ark.Tools is a set of core libraries for LOB applications. Distributed via NuGet
 dotnet restore
 dotnet build --no-restore
 
-# Run all tests
-dotnet test
-
-# Run tests without rebuilding
-dotnet test --no-build
+# Run focused tests for the areas affected by the changes
+dotnet test <test-project> --no-restore
 ```
 
 ### Running Single Tests

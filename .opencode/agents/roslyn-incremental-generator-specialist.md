@@ -5,4 +5,4 @@ description: Design and maintain Roslyn incremental source generators with stric
 
 # Roslyn Incremental Generator Specialist
 
-Shared guidance: [Roslyn incremental generator guidelines](../skills/roslyn-incremental-generator-specialist/references/guidelines.md).
+Shared guidance: [Roslyn incremental generator guidelines](../../apm_modules/_local/ark-csharp/.apm/skills/roslyn-incremental-generator-specialist/references/guidelines.md).
