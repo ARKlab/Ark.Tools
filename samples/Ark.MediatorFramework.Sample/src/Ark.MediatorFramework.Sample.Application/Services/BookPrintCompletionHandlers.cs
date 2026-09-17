@@ -82,3 +82,17 @@ public sealed class BookPrintAuditHandler : ICommandHandler<BookPrintCompleted>
         await _sink.RecordAsync(command.BookId, ctk).ConfigureAwait(false);
     }
 }
+
+/// <summary>Acknowledges exhausted subscriber deliveries in the sample application.</summary>
+public sealed class BookPrintCompletedFailureHandler :
+    ICommandHandler<MessagingFailed<BookPrintCompleted>>
+{
+    /// <inheritdoc />
+    public async Task ExecuteAsync(
+        MessagingFailed<BookPrintCompleted> command,
+        CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+}

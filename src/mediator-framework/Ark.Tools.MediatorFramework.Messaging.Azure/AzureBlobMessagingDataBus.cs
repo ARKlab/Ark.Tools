@@ -52,19 +52,19 @@ public sealed class AzureBlobMessagingDataBus :
     /// <summary>
     /// Validates data-plane access and the configured container at host startup.
     /// </summary>
-    /// <param name="ctk">The cancellation token.</param>
-    public async Task ValidateAsync(CancellationToken ctk)
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public async Task ValidateAsync(CancellationToken cancellationToken)
     {
         if (_options.EnsureContainer)
         {
-            await _container.CreateIfNotExistsAsync(cancellationToken: ctk)
+            await _container.CreateIfNotExistsAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
             return;
         }
 
         try
         {
-            await _container.GetPropertiesAsync(cancellationToken: ctk)
+            await _container.GetPropertiesAsync(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (RequestFailedException ex) when (ex.Status == 404)

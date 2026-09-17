@@ -1185,6 +1185,7 @@
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
           "Microsoft.Azure.Functions.Worker": "[2.52.0, )",

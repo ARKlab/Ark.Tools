@@ -230,6 +230,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.WebHost.UseTestServer();
         builder.Services.AddSingleton(Container);
         builder.Services.AddSingleton(_principalProvider);
+        builder.Services.AddArkSolidProcessors(Container);
         builder.Services.AddSimpleInjector(Container, static simpleInjector => simpleInjector.AddAspNetCore());
         builder.Services
             .AddAuthentication(TestAuthenticationHandler._schemeName)
@@ -286,6 +287,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         _hostContainers.Add(container);
         builder.Services.AddSingleton(container);
         builder.Services.AddSingleton(_principalProvider);
+        builder.Services.AddArkSolidProcessors(container);
         builder.Services.AddSimpleInjector(container, static simpleInjector => simpleInjector.AddAspNetCore());
         var app = builder.Build();
         app.UseAuthentication();

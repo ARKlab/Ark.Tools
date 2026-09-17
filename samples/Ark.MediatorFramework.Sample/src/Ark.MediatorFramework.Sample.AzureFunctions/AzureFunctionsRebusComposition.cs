@@ -41,7 +41,18 @@ public static class AzureFunctionsRebusComposition
             throw new InvalidOperationException(
                 "Azure Service Bus configuration is required for the Functions outbound bus.");
 
-        AzureFunctionsRebusHost.Register(container);
+        var requirements = AzureFunctionsRebusHost.GetRequirements();
+        AzureFunctionsRebusHost.Register(
+            (serviceType, implementationType) => container.Collection.Append(serviceType, implementationType));
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>
+            new Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(
+                container.GetInstance<global::Rebus.Bus.IBus>(),
+                requirements.Identity,
+                requirements.PublishedEventTypes));
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
+            () => container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
+            () => container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
         ApplicationComposition.RegisterOutboundRebus(
             container,
             transport => _configureTransport(transport, serviceBusConnectionString),

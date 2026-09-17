@@ -93,7 +93,18 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         _container.Register<IRequestHandler<ScopeProbeRequest, Guid>, ScopeProbeHandler>();
         _container.Register<IRequestHandler<NestedScopeRequest, ScopeObservation>, NestedScopeHandler>();
         _container.Register<IRequestHandler<FailingScopeRequest, bool>, FailingScopeHandler>();
-        SampleRebusHost.Register(_container);
+        var rebusRequirements = SampleRebusHost.GetRequirements();
+        SampleRebusHost.Register(
+            (serviceType, implementationType) => _container.Collection.Append(serviceType, implementationType));
+        _container.RegisterSingleton<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>
+            new Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(
+                _container.GetInstance<global::Rebus.Bus.IBus>(),
+                rebusRequirements.Identity,
+                rebusRequirements.PublishedEventTypes));
+        _container.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
+            () => _container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
+        _container.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
+            () => _container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
         ApplicationComposition.RegisterOutboundRebus(
             _container,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(Network),

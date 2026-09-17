@@ -58,7 +58,11 @@ public static class MessagingPipelineInvoker
             .ConfigureAwait(false);
     }
 
-    internal static IMessagingIncomingStep[] ResolveIncomingSteps(
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2072",
+        Justification = "Messaging step types are host-owned concrete registrations reviewed at composition time.")]
+    internal static IMessagingIncomingStep[] _resolveIncomingSteps(
         IServiceProvider serviceProvider,
         IReadOnlyList<Type> orderedStepTypes)
     {
@@ -71,7 +75,11 @@ public static class MessagingPipelineInvoker
         return steps;
     }
 
-    internal static IMessagingOutgoingStep[] ResolveOutgoingSteps(
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2072",
+        Justification = "Messaging step types are host-owned concrete registrations reviewed at composition time.")]
+    internal static IMessagingOutgoingStep[] _resolveOutgoingSteps(
         IServiceProvider serviceProvider,
         IReadOnlyList<Type> orderedStepTypes)
     {
@@ -84,7 +92,7 @@ public static class MessagingPipelineInvoker
         return steps;
     }
 
-    internal static async Task InvokeIncomingCoreAsync(
+    internal static async Task _invokeIncomingCoreAsync(
         IReadOnlyList<IMessagingIncomingStep> orderedSteps,
         MessagingIncomingContext context,
         Func<Task> terminal,
@@ -106,7 +114,7 @@ public static class MessagingPipelineInvoker
         await next().ConfigureAwait(false);
     }
 
-    internal static async Task InvokeOutgoingCoreAsync(
+    internal static async Task _invokeOutgoingCoreAsync(
         IReadOnlyList<IMessagingOutgoingStep> orderedSteps,
         MessagingOutgoingContext context,
         Func<Task> terminal,
@@ -128,6 +136,10 @@ public static class MessagingPipelineInvoker
         await next().ConfigureAwait(false);
     }
 
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2067",
+        Justification = "Messaging step types are host-owned concrete registrations reviewed at composition time.")]
     private static TStep _resolveStep<TStep>(
         IServiceProvider serviceProvider,
         Type stepType,

@@ -122,7 +122,7 @@ public static class MessagingServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(networks);
         _validateDataBusLifetime(dataBus, networks);
         if (dataBus is IMessagingDataBusStartupValidation startupValidation)
-            services.AddSingleton(typeof(IMessagingDataBusStartupValidation), startupValidation);
+            services.AddSingleton(startupValidation);
         if (dataBus is IMessagingDataBusHostedServiceRegistration hostedServiceRegistration)
             hostedServiceRegistration.RegisterServices(services);
         services.AddSingleton<IMessagingDataBus>(dataBus);

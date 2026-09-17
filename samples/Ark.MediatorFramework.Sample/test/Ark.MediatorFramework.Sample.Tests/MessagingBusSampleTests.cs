@@ -97,6 +97,7 @@ public sealed class MessagingBusSampleTests
                 network.NetworkIdentity),
             new MessagingPayloadReceiver(dataBus, network),
             retryPolicy,
+            new ForwardingPipelineProcessor(),
             SampleMessagingParticipant.DispatchAsync,
             SampleMessagingParticipant.DispatchFailedAsync);
         var settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -374,8 +375,42 @@ public sealed class MessagingBusSampleTests
                 network.NetworkIdentity),
             new MessagingPayloadReceiver(dataBus, network),
             retryPolicy,
+            new ForwardingPipelineProcessor(),
             dispatch,
             dispatchFailed);
+    }
+
+    private sealed class ForwardingPipelineProcessor : IMessagingPipelineProcessor
+    {
+        public async Task ProcessIncomingAsync(
+            IServiceProvider serviceProvider,
+            IReadOnlyList<Type> orderedStepTypes,
+            MessagingIncomingContext context,
+            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            await MessagingPipelineInvoker.InvokeIncomingAsync(
+                serviceProvider,
+                orderedStepTypes,
+                context,
+                terminal,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task ProcessOutgoingAsync(
+            IServiceProvider serviceProvider,
+            IReadOnlyList<Type> orderedStepTypes,
+            MessagingOutgoingContext context,
+            Func<CancellationToken, Task> terminal,
+            CancellationToken cancellationToken)
+        {
+            await MessagingPipelineInvoker.InvokeOutgoingAsync(
+                serviceProvider,
+                orderedStepTypes,
+                context,
+                terminal,
+                cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>

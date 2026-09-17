@@ -6,6 +6,7 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
+using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.NLog;
 
 using Microsoft.Azure.Functions.Worker.Builder;
@@ -49,6 +50,7 @@ public static class Program
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
             builder.Services.AddArkAzureFunctions(applicationContainer);
+            builder.Services.AddArkSolidProcessors(applicationContainer);
             builder.Services.ConfigureArkMessagingFunctions(
                 applicationContainer,
                 builder.Configuration,

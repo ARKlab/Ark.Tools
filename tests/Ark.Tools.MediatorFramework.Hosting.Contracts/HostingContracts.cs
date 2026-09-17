@@ -88,7 +88,8 @@ public static class HostingEndpointMappings
     public static void RegisterRebusHandlers(Container container)
     {
         ArgumentNullException.ThrowIfNull(container);
-        ArkGeneratedEndpoints.RegisterArkRebusHandlers<HostingRebusContext>(container);
+        ArkGeneratedEndpoints.RegisterArkRebusHandlers<HostingRebusContext>(
+            (serviceType, implementationType) => container.Collection.Append(serviceType, implementationType));
     }
 
     /// <summary>Configures generated owner-queue routing for the synthetic Rebus messages.</summary>

@@ -181,6 +181,10 @@ public sealed class GeneratorSnapshotTests
             "public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
         result.Generated.Should().Contain("RegisterMcpTools");
         result.Generated.Should().Contain("IQueryProcessor");
+        result.Generated.Should().Contain(
+            "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(services)");
+        result.Generated.Should().NotContain("SimpleInjector");
+        result.Generated.Should().NotContain("GetInstance<");
         result.Generated.Should().Contain("Task<string>");
         result.Generated.Should().Contain("McpServerToolType");
         result.Generated.Should().Contain("McpServerTool(");
@@ -347,6 +351,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("Route = \"api/v2/greetings/{id}\"");
         result.Generated.Should().Contain("AuthorizationLevel.Anonymous");
         result.Generated.Should().Contain("IQueryProcessor");
+        result.Generated.Should().Contain(
+            "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(_services)");
+        result.Generated.Should().NotContain("SimpleInjector");
+        result.Generated.Should().NotContain("AsyncScopedLifestyle");
         result.Generated.Should().Contain("new global::GetGreeting()");
         result.Generated.Should().NotContain("InvokeQueryAsync");
         result.Diagnostics.Should().NotContain(
@@ -1355,7 +1363,10 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("configure?.Invoke(group);");
         generated.Should().Contain("return group;");
         generated.Should().Contain("Missing mediator handler registrations");
-        generated.Should().Contain("GetRegistration(handlerType)");
+        generated.Should().Contain(
+            "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(httpContext.RequestServices)");
+        generated.Should().NotContain("SimpleInjector");
+        generated.Should().NotContain("GetRegistration(handlerType)");
     }
 
     [TestMethod]
@@ -1475,7 +1486,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("GetInstance<global::Ark.Tools.Solid.ICommandProcessor>()");
+        generated.Should().Contain(
+            "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices)");
         generated.Should().Contain("TypedResults.NoContent()");
         generated.Should().Contain(".Produces(204)");
         generated.Should().NotContain("Rebus.Bus.IBus");
@@ -1523,6 +1535,10 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("MapArkGrpcServices<TContext>");
         generated.Should().Contain("await processor.ExecuteAsync<global::DeleteCommand>");
         generated.Should().Contain("Missing mediator handler registrations");
+        generated.Should().Contain("private readonly global::System.IServiceProvider _services;");
+        generated.Should().Contain(
+            "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(_services)");
+        generated.Should().NotContain("SimpleInjector");
     }
 
     [TestMethod]
@@ -1541,7 +1557,9 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ConfigureArkRebusRouting");
         generated.Should().Contain("RegisterArkRebusHandlersFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("RegisterArkRebusHandlers<TContext>");
+        generated.Should().Contain("global::System.Action<global::System.Type, global::System.Type> register");
         generated.Should().Contain("Map<global::CreateOrder>(\"orders\")");
+        generated.Should().NotContain("SimpleInjector");
         generated.Should().NotContain("GetRegistration(handlerType)");
         generated.Should().NotContain("Missing mediator handler registrations");
     }
@@ -1612,11 +1630,13 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("internal sealed partial class PublisherRebusHost");
         generated.Should().Contain(": global::Ark.Tools.MediatorFramework.Rebus.IArkRebusHost");
         generated.Should().Contain("public static void Register(");
+        generated.Should().Contain("global::System.Action<global::System.Type, global::System.Type> register");
         generated.Should().Contain("RebusMessagingFailedHandler<global::ProcessOrder>");
         generated.Should().Contain("public static void ConfigureOptions(");
         generated.Should().Contain("public static async global::System.Threading.Tasks.Task SubscribeAsync(");
         generated.Should().Contain("public static global::Ark.Tools.MediatorFramework.Rebus.ArkRebusParticipantRequirements GetRequirements()");
         generated.Should().Contain("private sealed class ProcessOrderRebusHandler");
+        generated.Should().NotContain("SimpleInjector");
     }
 
     [TestMethod]

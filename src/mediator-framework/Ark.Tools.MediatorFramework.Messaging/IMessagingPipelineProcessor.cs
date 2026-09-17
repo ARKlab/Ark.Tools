@@ -66,11 +66,12 @@ internal sealed class ServiceProviderMessagingPipelineProcessor : IMessagingPipe
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(terminal);
 
-        await using var scope = serviceProvider.CreateAsyncScope();
+        var scope = serviceProvider.CreateAsyncScope();
+        await using var _scope = scope.ConfigureAwait(false);
         var scopedProvider = scope.ServiceProvider;
         var scopedCommandProcessor = scopedProvider.GetRequiredService<ICommandProcessor>();
-        await MessagingPipelineInvoker.InvokeIncomingCoreAsync(
-            MessagingPipelineInvoker.ResolveIncomingSteps(scopedProvider, orderedStepTypes),
+        await MessagingPipelineInvoker._invokeIncomingCoreAsync(
+            MessagingPipelineInvoker._resolveIncomingSteps(scopedProvider, orderedStepTypes),
             context,
             () => terminal(scopedCommandProcessor, cancellationToken),
             cancellationToken).ConfigureAwait(false);
@@ -88,9 +89,10 @@ internal sealed class ServiceProviderMessagingPipelineProcessor : IMessagingPipe
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(terminal);
 
-        await using var scope = serviceProvider.CreateAsyncScope();
-        await MessagingPipelineInvoker.InvokeOutgoingCoreAsync(
-            MessagingPipelineInvoker.ResolveOutgoingSteps(scope.ServiceProvider, orderedStepTypes),
+        var scope = serviceProvider.CreateAsyncScope();
+        await using var _scope = scope.ConfigureAwait(false);
+        await MessagingPipelineInvoker._invokeOutgoingCoreAsync(
+            MessagingPipelineInvoker._resolveOutgoingSteps(scope.ServiceProvider, orderedStepTypes),
             context,
             () => terminal(cancellationToken),
             cancellationToken).ConfigureAwait(false);

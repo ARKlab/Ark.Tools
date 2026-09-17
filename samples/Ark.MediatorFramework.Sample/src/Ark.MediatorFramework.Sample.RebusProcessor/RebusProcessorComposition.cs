@@ -65,7 +65,18 @@ public static class RebusProcessorComposition
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
 
-        RebusProcessorHost.Register(container);
+        var requirements = RebusProcessorHost.GetRequirements();
+        RebusProcessorHost.Register(
+            (serviceType, implementationType) => container.Collection.Append(serviceType, implementationType));
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>
+            new Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(
+                container.GetInstance<global::Rebus.Bus.IBus>(),
+                requirements.Identity,
+                requirements.PublishedEventTypes));
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
+            () => container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
+        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
+            () => container.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
 
         container.ConfigureRebus(cfg =>

@@ -6,9 +6,9 @@ namespace Ark.Tools.MediatorFramework.Rebus;
 /// <summary>Defines the generated composition contract for a Rebus host.</summary>
 public interface IArkRebusHost
 {
-    /// <summary>Registers generated handlers and the transport-neutral bus.</summary>
-    /// <param name="container">The application container.</param>
-    static abstract void Register(global::SimpleInjector.Container container);
+    /// <summary>Registers generated Rebus handlers through an application-owned callback.</summary>
+    /// <param name="register">The callback that registers a handler service type and implementation type.</param>
+    static abstract void Register(global::System.Action<global::System.Type, global::System.Type> register);
 
     /// <summary>Configures generated owner-queue routes.</summary>
     /// <param name="routing">The Rebus routing configurer.</param>

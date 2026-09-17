@@ -134,6 +134,16 @@
         "resolved": "6.0.3",
         "contentHash": "kt2JDsmcFGzeanCo6hJNalMcjEvgtYoxSQjqh00Nm1xXmahHzuR48TxjS1nq/lpnYh+g+wLqD5D9WSz8xsybhw=="
       },
+      "Microsoft.Extensions.AmbientMetadata.Application": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "Sa4xD2ab5yNRJYt4piS05C9b5Gpd1G3TZpvVJFgHyqLYdRThUNLcLHpREI4yjkmElCjHXoPcF+SHUim9cZ8cvQ=="
+      },
+      "Microsoft.Extensions.DependencyInjection.AutoActivation": {
+        "type": "Transitive",
+        "resolved": "10.10.0",
+        "contentHash": "AJ2lFnzzJkN2ZRvfPBKQ5k3EJFkhmsm1tEhWzK58KsxU+WK3GVOh/5WHUhQ56TWjnxGZCGgr0+U1QUuJ4rJVuA=="
+      },
       "Microsoft.IdentityModel.Abstractions": {
         "type": "Transitive",
         "resolved": "8.22.0",
@@ -160,6 +170,15 @@
         "type": "Transitive",
         "resolved": "1.0.0",
         "contentHash": "N4KeF3cpcm1PUHym1RmakkzfkEv3GRMyofVv40uXsQhCQeglr2OHNcUk2WOG51AKpGO8ynGpo9M/kFXSzghwug=="
+      },
+      "MimeKit": {
+        "type": "Transitive",
+        "resolved": "4.17.0",
+        "contentHash": "h/KXsCreJf8RpR/PSAtlbvYtZFndp9N8Wn1Bs248AL7ITyhn+AiIY5bLTvt60tbN2mu6g8KadtBNWygTji2lqg==",
+        "dependencies": {
+          "BouncyCastle.Cryptography": "2.6.2",
+          "System.Security.Cryptography.Pkcs": "10.0.0"
+        }
       },
       "OpenTelemetry.Api.ProviderBuilderExtensions": {
         "type": "Transitive",
@@ -237,8 +256,8 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
-        "resolved": "9.0.13",
-        "contentHash": "dxJhkuoaelvWy588wPXjShNks+ZMiSgXnN75/u+DPbER5PqKrLPDftE0BvGM7nDK/scQAVlD+gRXlCAAjWi58Q=="
+        "resolved": "10.0.0",
+        "contentHash": "UPWqLSygJlFerRi9XNIuM0a1VC8gHUIufyP24xQ0sc+XimqUAEcjpOz9DhKpyDjH+5B/wO3RpC0KpkEeDj/ddg=="
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
@@ -263,10 +282,41 @@
           "SSH.NET": "[2026.0.0, )"
         }
       },
+      "ark.tools.compliance": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )",
+          "Microsoft.Extensions.Compliance.Redaction": "[10.10.0, )",
+          "Microsoft.Extensions.Telemetry": "[10.10.0, )"
+        }
+      },
+      "ark.tools.compliance.nlog": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "NLog": "[6.2.0, )"
+        }
+      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
           "NodaTime": "[3.3.3, )"
+        }
+      },
+      "ark.tools.nlog": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance.NLog": "[999.9.9, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Ben.Demystifier": "[0.4.1, )",
+          "Microsoft.Data.SqlClient": "[7.0.3, )",
+          "NLog": "[6.2.0, )",
+          "NLog.Database": "[6.0.3, )",
+          "NLog.DiagnosticSource": "[6.1.4, )",
+          "NLog.MailKit": "[6.1.5, )",
+          "Newtonsoft.Json": "[13.0.4, )",
+          "Slack.Webhooks": "[1.1.6, )"
         }
       },
       "ark.tools.nodatime": {
@@ -286,6 +336,20 @@
         "type": "Project",
         "dependencies": {
           "SimpleInjector": "[5.6.0, )"
+        }
+      },
+      "ark.tools.solid": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )"
+        }
+      },
+      "ark.tools.solid.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.SimpleInjector": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -370,11 +434,26 @@
           "Microsoft.Azure.Amqp": "2.7.0"
         }
       },
+      "Ben.Demystifier": {
+        "type": "CentralTransitive",
+        "requested": "[0.4.1, )",
+        "resolved": "0.4.1",
+        "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
+      },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",
         "requested": "[3.0.0, )",
         "resolved": "3.0.0",
         "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
+      },
+      "MailKit": {
+        "type": "CentralTransitive",
+        "requested": "[4.17.0, )",
+        "resolved": "4.17.0",
+        "contentHash": "1nUAVLxM9fhT/78we6/AGsCesnpn5dRNLLeRqOfr52Wnk87pzVwo5YMTMyqnmoXrYc7piGhmayiMA/OgDluIjg==",
+        "dependencies": {
+          "MimeKit": "4.17.0"
+        }
       },
       "Microsoft.ApplicationInsights": {
         "type": "CentralTransitive",
@@ -400,6 +479,41 @@
           "Microsoft.SqlServer.Server": "[1.0.0, 2.0.0)",
           "System.Configuration.ConfigurationManager": "9.0.13",
           "System.Security.Cryptography.Pkcs": "9.0.13"
+        }
+      },
+      "Microsoft.Extensions.Compliance.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "Sh3ujDRJpCMNY4x+43ljCROt4qBOoWfsL8l816RPYZS1S+Tw277r5002rbB15Sh6hFcCT8mGYBO7NtpfSYrQ0Q=="
+      },
+      "Microsoft.Extensions.Compliance.Redaction": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "RW0HuSIl5CH/SSLa31MIKc6LPmy3DjtJmf/5LjTTKMmwBeNex6ZnF1Q46vzklAPSQ2BDu/MHL/6G5CBoyWLQAA==",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "10.10.0"
+        }
+      },
+      "Microsoft.Extensions.Telemetry": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "GeJofTliWSVoYAeTfRbnp+TaOUl502yZIcZ+qHFiyOoAIzwTk12eKypnSR9uN2oiHgGW32Y0XN1i+VaQizl0IQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AmbientMetadata.Application": "10.10.0",
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "10.10.0",
+          "Microsoft.Extensions.Telemetry.Abstractions": "10.10.0"
+        }
+      },
+      "Microsoft.Extensions.Telemetry.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "I76SAZ95I5lYh4whVZvLpKhpvHI1o21FfGqiASU85GtIVA4ULv+TVIE5+swKhnC63+xI4XjCcIWa9LbyR3pFNw==",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "10.10.0"
         }
       },
       "Microsoft.Identity.Client": {
@@ -447,6 +561,46 @@
         "dependencies": {
           "Microsoft.IdentityModel.Protocols": "8.22.0",
           "System.IdentityModel.Tokens.Jwt": "8.22.0"
+        }
+      },
+      "Newtonsoft.Json": {
+        "type": "CentralTransitive",
+        "requested": "[13.0.4, )",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
+      },
+      "NLog": {
+        "type": "CentralTransitive",
+        "requested": "[6.2.0, )",
+        "resolved": "6.2.0",
+        "contentHash": "CxK6AjM1Wy3hM8YeBpLJJuB/JdoeIVvX0/fMTWeIXD917UozCtzv6cZDamevugeEaBBF0TIatfcNX2iJHI0Cew=="
+      },
+      "NLog.Database": {
+        "type": "CentralTransitive",
+        "requested": "[6.0.3, )",
+        "resolved": "6.0.3",
+        "contentHash": "uMzSeSQbjHjAG+zF6E7DudXyLhyxNObBtHkyQE+IoLudqadKR1xojGsk9z02fWNlcyvCb3odkPh7Cf71eBi0/Q==",
+        "dependencies": {
+          "NLog": "6.0.3"
+        }
+      },
+      "NLog.DiagnosticSource": {
+        "type": "CentralTransitive",
+        "requested": "[6.1.4, )",
+        "resolved": "6.1.4",
+        "contentHash": "hJQn9R7SXRRrbVM1jW9N6EmGbPejZOy1IOee8L7LcMyX/1kwBxxwZl99T/jzel16xG5eXs1xaqCjRYejlgJyog==",
+        "dependencies": {
+          "NLog": "6.1.4"
+        }
+      },
+      "NLog.MailKit": {
+        "type": "CentralTransitive",
+        "requested": "[6.1.5, )",
+        "resolved": "6.1.5",
+        "contentHash": "khJJ6sjKBzY5KR5l6RLyt3WchiELKY9N952WDwvX8Lv36sdtbx+VtTyu9pTtrYGaNQGlGjiVb5d8U1VWKzK7fA==",
+        "dependencies": {
+          "MailKit": "4.17.0",
+          "NLog": "6.1.4"
         }
       },
       "NodaTime": {
@@ -497,6 +651,15 @@
           "System.Diagnostics.PerformanceCounter": "8.0.0",
           "System.DirectoryServices.Protocols": "8.0.2",
           "System.Security.Cryptography.Pkcs": "8.0.1"
+        }
+      },
+      "Slack.Webhooks": {
+        "type": "CentralTransitive",
+        "requested": "[1.1.6, )",
+        "resolved": "1.1.6",
+        "contentHash": "Xl16kn26BwU71QEv9kn+TVpnIr3QiwJJL/JyQkUdIgAN6l0fubMtK4eU5OR3g/BcPlXSKWWScH3gNrbagK/Dww==",
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.4"
         }
       },
       "SSH.NET": {
