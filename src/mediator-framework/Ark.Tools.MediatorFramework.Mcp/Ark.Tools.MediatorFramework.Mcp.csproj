@@ -13,7 +13,6 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
-    <PackageReference Include="SimpleInjector" />
     <ProjectReference Include="..\..\aspnetcore\Ark.Tools.AspNetCore.ProblemDetails\Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
