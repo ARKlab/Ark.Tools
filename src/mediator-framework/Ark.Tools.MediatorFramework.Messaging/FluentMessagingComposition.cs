@@ -644,7 +644,6 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
         _servicesValue.TryAddSingleton<IMessagingConcurrencyController>(static serviceProvider =>
             new MessagingAimdConcurrencyController(serviceProvider.GetService<MessagingProcessingOptions>()));
         _servicesValue.AddSingleton(serviceProvider => new MessagingDispatcher(
-            serviceProvider,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             participant.RetryPolicy,

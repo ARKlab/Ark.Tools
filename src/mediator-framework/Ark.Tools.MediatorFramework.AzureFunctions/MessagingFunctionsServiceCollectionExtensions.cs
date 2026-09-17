@@ -161,7 +161,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             serviceProvider.GetRequiredService<IMessagingDataBus>(),
             descriptor.Network));
         services.AddSingleton(serviceProvider => new MessagingDispatcher(
-            serviceProvider,
             serviceProvider.GetRequiredService<MessagingHeaderProcessor>(),
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             descriptor.RetryPolicy,

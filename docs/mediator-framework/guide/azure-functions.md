@@ -10,6 +10,7 @@ Function process.
 ```xml
 <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
 <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
+<PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
                   OutputItemType="Analyzer"
                   PrivateAssets="all" />
@@ -679,9 +680,9 @@ minimum lifetime.
 ## 5. Add messaging pipeline steps
 
 Incoming and outgoing steps are opt-in and host-local. Compose them around the
-stable `MessagingPipelineStage` positions and invoke them with
-`MessagingPipelineInvoker`; each invocation receives a fresh context and items
-bag. Steps may add application headers before serialization, but `amf1-*`
+stable `MessagingPipelineStage` positions; the host's registered
+`IMessagingPipelineProcessor` resolves and invokes them. Each invocation receives
+a fresh context and items bag. Steps may add application headers before serialization, but `amf1-*`
 routing, content, encoding, attachment, and identity headers are framework-owned
 and cannot be overridden.
 

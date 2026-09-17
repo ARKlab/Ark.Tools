@@ -459,24 +459,11 @@
           "NLog": "[6.2.0, )"
         }
       },
-      "ark.tools.simpleinjector": {
-        "type": "Project",
-        "dependencies": {
-          "SimpleInjector": "[5.6.0, )"
-        }
-      },
       "ark.tools.solid": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )"
-        }
-      },
-      "ark.tools.solid.simpleinjector": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.SimpleInjector": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )"
         }
       },
       "ark.tools.sql": {

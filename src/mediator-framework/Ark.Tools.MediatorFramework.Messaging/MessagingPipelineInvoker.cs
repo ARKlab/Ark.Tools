@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Solid;
-
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -10,54 +8,6 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Composes messaging steps into continuation pipelines.</summary>
 public static class MessagingPipelineInvoker
 {
-    /// <summary>Invokes an incoming pipeline through service-provider-based resolution.</summary>
-    /// <param name="serviceProvider">The application service provider.</param>
-    /// <param name="orderedStepTypes">The step types in execution order.</param>
-    /// <param name="context">The per-invocation context.</param>
-    /// <param name="terminal">The terminal dispatch operation.</param>
-    /// <param name="cancellationToken">The invocation cancellation token.</param>
-    /// <returns>A task that completes after the pipeline finishes.</returns>
-    public static async Task InvokeIncomingAsync(
-        IServiceProvider serviceProvider,
-        IReadOnlyList<Type> orderedStepTypes,
-        MessagingIncomingContext context,
-        Func<ICommandProcessor, CancellationToken, Task> terminal,
-        CancellationToken cancellationToken)
-    {
-        await new ServiceProviderMessagingPipelineProcessor()
-            .ProcessIncomingAsync(
-                serviceProvider,
-                orderedStepTypes,
-                context,
-                terminal,
-                cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    /// <summary>Invokes an outgoing pipeline through service-provider-based resolution.</summary>
-    /// <param name="serviceProvider">The application service provider.</param>
-    /// <param name="orderedStepTypes">The step types in execution order.</param>
-    /// <param name="context">The per-invocation context.</param>
-    /// <param name="terminal">The terminal send operation.</param>
-    /// <param name="cancellationToken">The invocation cancellation token.</param>
-    /// <returns>A task that completes after the pipeline finishes.</returns>
-    public static async Task InvokeOutgoingAsync(
-        IServiceProvider serviceProvider,
-        IReadOnlyList<Type> orderedStepTypes,
-        MessagingOutgoingContext context,
-        Func<CancellationToken, Task> terminal,
-        CancellationToken cancellationToken)
-    {
-        await new ServiceProviderMessagingPipelineProcessor()
-            .ProcessOutgoingAsync(
-                serviceProvider,
-                orderedStepTypes,
-                context,
-                terminal,
-                cancellationToken)
-            .ConfigureAwait(false);
-    }
-
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
         "Trimming",
         "IL2072",

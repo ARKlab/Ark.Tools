@@ -27,7 +27,6 @@
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.Messaging.Azure\Ark.Tools.MediatorFramework.Messaging.Azure.csproj" />
     <ProjectReference Include="..\..\aspnetcore\Ark.Tools.AspNetCore.ProblemDetails\Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
-    <ProjectReference Include="..\..\common\Ark.Tools.Solid.SimpleInjector\Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
     <ProjectReference Include="..\Ark.Tools.MediatorFramework.AzureFunctions.Generators\Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <None Include="buildTransitive/Ark.Tools.MediatorFramework.AzureFunctions.props" Pack="true" PackagePath="buildTransitive" />

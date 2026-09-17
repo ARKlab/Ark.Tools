@@ -510,7 +510,6 @@ public sealed partial class MessagingRuntimeTests
         async Task InvokeAsync()
         {
             await processor.ProcessOutgoingAsync(
-                provider,
                 stepTypes,
                 context,
                 _ =>
@@ -726,7 +725,6 @@ public sealed partial class MessagingRuntimeTests
             new InMemoryMessagingDataBus(),
             network);
         return new MessagingDispatcher(
-            serviceProvider,
             new MessagingHeaderProcessor(registry, "tests"),
             payloadReceiver,
             retryPolicy,
@@ -864,7 +862,6 @@ public sealed partial class MessagingRuntimeTests
     private sealed class StubMessagingPipelineProcessor : IMessagingPipelineProcessor
     {
         public async Task ProcessIncomingAsync(
-            IServiceProvider serviceProvider,
             IReadOnlyList<System.Type> orderedStepTypes,
             MessagingIncomingContext context,
             Func<ICommandProcessor, CancellationToken, Task> terminal,
@@ -874,7 +871,6 @@ public sealed partial class MessagingRuntimeTests
         }
 
         public async Task ProcessOutgoingAsync(
-            IServiceProvider serviceProvider,
             IReadOnlyList<System.Type> orderedStepTypes,
             MessagingOutgoingContext context,
             Func<CancellationToken, Task> terminal,

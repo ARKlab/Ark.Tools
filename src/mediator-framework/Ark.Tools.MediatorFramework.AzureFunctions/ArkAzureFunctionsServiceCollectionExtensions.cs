@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 
 using Ark.Tools.Solid;
-using Ark.Tools.Solid.SimpleInjector;
 using SimpleInjector;
 
 using System.Security.Claims;
@@ -137,7 +136,6 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
         var httpContextAccessor = new HttpContextAccessor();
         services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
         services.AddSingleton(container);
-        services.AddArkSolidProcessors(container);
         container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(
             new ArkAzureFunctionsUserContextProvider(httpContextAccessor));
         return services.AddArkAzureFunctions(additionalContexts);

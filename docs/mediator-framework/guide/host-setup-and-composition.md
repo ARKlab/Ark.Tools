@@ -21,9 +21,9 @@ services.AddArkSolidProcessors(container);
 
 The bridge exposes `IRequestProcessor`, `IQueryProcessor`, and
 `ICommandProcessor` through Microsoft DI while keeping handler registrations,
-decorators, and verification in SimpleInjector. It creates an
-`AsyncScopedLifestyle` scope when a host call begins and reuses the ambient
-scope for nested dispatch.
+decorators, and verification in SimpleInjector. It creates a scope using the
+container's configured `DefaultScopedLifestyle` when a host call begins and
+reuses the ambient scope for nested dispatch.
 
 ## Fluent native messaging composition
 

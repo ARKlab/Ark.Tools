@@ -220,7 +220,6 @@ public static class MessagingServiceCollectionExtensions
                 serviceProvider.GetRequiredService<IMessagingCodecRegistry>(),
                 payloadSender,
                 participantIdentity,
-                serviceProvider,
                 serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
                 outgoingStepTypes,
                 utcNow: null));

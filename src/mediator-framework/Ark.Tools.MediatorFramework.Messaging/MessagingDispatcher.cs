@@ -15,7 +15,6 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 public sealed class MessagingDispatcher
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private readonly IServiceProvider _serviceProvider;
     private readonly MessagingHeaderProcessor _headerProcessor;
     private readonly MessagingPayloadReceiver _payloadReceiver;
     private readonly IMessagingRetryPolicy _retryPolicy;
@@ -34,7 +33,6 @@ public sealed class MessagingDispatcher
     private readonly IMessagingConcurrencyController? _concurrency;
 
     /// <summary>Creates a receive dispatcher for one participant.</summary>
-    /// <param name="serviceProvider">The application service provider.</param>
     /// <param name="headerProcessor">The bounded header classifier.</param>
     /// <param name="payloadReceiver">The payload preparation runtime.</param>
     /// <param name="retryPolicy">The participant retry policy.</param>
@@ -45,7 +43,6 @@ public sealed class MessagingDispatcher
     /// <param name="clock">The clock used for processing metrics.</param>
     /// <param name="concurrencyController">The host concurrency controller notified of adverse signals.</param>
     public MessagingDispatcher(
-        IServiceProvider serviceProvider,
         MessagingHeaderProcessor headerProcessor,
         MessagingPayloadReceiver payloadReceiver,
         IMessagingRetryPolicy retryPolicy,
@@ -63,7 +60,6 @@ public sealed class MessagingDispatcher
         IClock? clock = null,
         IMessagingConcurrencyController? concurrencyController = null)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _headerProcessor = headerProcessor ?? throw new ArgumentNullException(nameof(headerProcessor));
         _payloadReceiver = payloadReceiver ?? throw new ArgumentNullException(nameof(payloadReceiver));
         MessagingRetryPolicyValidation.Validate(retryPolicy);
@@ -200,7 +196,6 @@ public sealed class MessagingDispatcher
                         stageToken);
                     context.Items[MessagingMetrics._dispatcherManagedItem] = true;
                     await _pipelineProcessor.ProcessIncomingAsync(
-                        _serviceProvider,
                         _incomingStepTypes,
                         context,
                         (processor, pipelineToken) => _dispatch(logicalName, payload, processor, pipelineToken),
@@ -263,7 +258,6 @@ public sealed class MessagingDispatcher
                 async stageToken =>
                 {
                     await _pipelineProcessor.ProcessIncomingAsync(
-                        _serviceProvider,
                         Array.Empty<Type>(),
                         new MessagingIncomingContext(delivery.Headers, delivery.DeliveryCount, stageToken),
                         (processor, pipelineToken) => _dispatchFailed(

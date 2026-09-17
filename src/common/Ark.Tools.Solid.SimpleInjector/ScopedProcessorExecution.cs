@@ -8,8 +8,6 @@ namespace Ark.Tools.Solid.SimpleInjector;
 
 internal static class ScopedProcessorExecution
 {
-    private const string _asyncScopedLifestyleMessage = "AddArkSolidProcessors requires Container.Options.DefaultScopedLifestyle to be AsyncScopedLifestyle so processor execution can create or reuse SimpleInjector scopes.";
-
     public static void EnsureSupported(Container container)
     {
         ArgumentNullException.ThrowIfNull(container);
@@ -35,7 +33,7 @@ internal static class ScopedProcessorExecution
         }
 
 #pragma warning disable MA0004 // The scope lifetime is bounded by the processor execution.
-        await using var asyncScope = AsyncScopedLifestyle.BeginScope(container);
+        await using var createdScope = _beginScope(container);
 #pragma warning restore MA0004
         await callback().ConfigureAwait(false);
     }
@@ -51,16 +49,24 @@ internal static class ScopedProcessorExecution
         }
 
 #pragma warning disable MA0004 // The scope lifetime is bounded by the processor execution.
-        await using var asyncScope = AsyncScopedLifestyle.BeginScope(container);
+        await using var createdScope = _beginScope(container);
 #pragma warning restore MA0004
         return await callback().ConfigureAwait(false);
     }
 
-    private static AsyncScopedLifestyle _getScopedLifestyle(Container container)
+    private static ScopedLifestyle _getScopedLifestyle(Container container)
     {
         ArgumentNullException.ThrowIfNull(container);
 
-        return container.Options.DefaultScopedLifestyle as AsyncScopedLifestyle
-            ?? throw new InvalidOperationException(_asyncScopedLifestyleMessage);
+        return container.Options.DefaultScopedLifestyle
+            ?? throw new InvalidOperationException("DefaultScopedLifestyle must be configured.");
+    }
+
+    private static Scope _beginScope(Container container)
+    {
+        var lifestyle = _getScopedLifestyle(container);
+        var scope = new Scope(container);
+        lifestyle.SetCurrentScope(scope);
+        return scope;
     }
 }

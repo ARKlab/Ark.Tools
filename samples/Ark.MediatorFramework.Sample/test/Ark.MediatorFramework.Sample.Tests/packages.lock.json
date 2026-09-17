@@ -1998,6 +1998,7 @@
           "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )"
         }
       },
@@ -2012,6 +2013,7 @@
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.12, )",
           "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )"
         }
@@ -2212,7 +2214,6 @@
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
           "Microsoft.Azure.Functions.Worker": "[2.52.0, )",

@@ -58,6 +58,20 @@ public sealed class ServiceCollectionProcessorBridgeTests
     }
 
     [TestMethod]
+    public async Task AddArkSolidProcessors_uses_the_configured_scoped_lifestyle()
+    {
+        await using var container = _createContainer(scopedLifestyle: new ThreadScopedLifestyle());
+        await using var provider = _createProvider(container);
+        var requestProcessor = provider.GetRequiredService<IRequestProcessor>();
+
+        var first = await requestProcessor.ExecuteAsync(new ScopeRequest()).ConfigureAwait(false);
+        var second = await requestProcessor.ExecuteAsync(new ScopeRequest()).ConfigureAwait(false);
+
+        first.Should().NotBe(second);
+        container.Options.DefaultScopedLifestyle!.GetCurrentScope(container).Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task AddArkSolidProcessors_reuses_the_active_scope()
     {
         await using var container = _createContainer();
@@ -204,20 +218,22 @@ public sealed class ServiceCollectionProcessorBridgeTests
         return provider;
     }
 
-    private static Container _createContainer(Action<Container>? registerRequestProcessor = null)
+    private static Container _createContainer(
+        Action<Container>? registerRequestProcessor = null,
+        ScopedLifestyle? scopedLifestyle = null)
     {
-        var container = _createEmptyContainer();
+        var container = _createEmptyContainer(scopedLifestyle);
         _registerDefaultProcessorsAndHandlers(container, registerRequestProcessor);
         return container;
     }
 
-    private static Container _createEmptyContainer()
+    private static Container _createEmptyContainer(ScopedLifestyle? scopedLifestyle = null)
     {
         return new Container
         {
             Options =
             {
-                DefaultScopedLifestyle = new AsyncScopedLifestyle(),
+                DefaultScopedLifestyle = scopedLifestyle ?? new AsyncScopedLifestyle(),
             },
         };
     }

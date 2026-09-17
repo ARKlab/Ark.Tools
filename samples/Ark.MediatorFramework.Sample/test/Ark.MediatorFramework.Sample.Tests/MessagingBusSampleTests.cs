@@ -94,7 +94,6 @@ public sealed class MessagingBusSampleTests
         container.Register<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>, RecordingBookFailureHandler>(Lifestyle.Scoped);
         await using var provider = _buildServiceProvider(container);
         var dispatcher = new MessagingDispatcher(
-            provider,
             new MessagingHeaderProcessor(
                 new MessagingCodecRegistry([codec]),
                 network.NetworkIdentity),
@@ -391,7 +390,6 @@ public sealed class MessagingBusSampleTests
         Func<string, IMessagingPayloadReader, int, MessagingExceptionInfo, ICommandProcessor, CancellationToken, Task> dispatchFailed)
     {
         return new MessagingDispatcher(
-            serviceProvider,
             new MessagingHeaderProcessor(
                 new MessagingCodecRegistry([codec]),
                 network.NetworkIdentity),
@@ -412,7 +410,6 @@ public sealed class MessagingBusSampleTests
         }
 
         public async Task ProcessIncomingAsync(
-            IServiceProvider serviceProvider,
             IReadOnlyList<Type> orderedStepTypes,
             MessagingIncomingContext context,
             Func<ICommandProcessor, CancellationToken, Task> terminal,
@@ -424,7 +421,6 @@ public sealed class MessagingBusSampleTests
         }
 
         public async Task ProcessOutgoingAsync(
-            IServiceProvider serviceProvider,
             IReadOnlyList<Type> orderedStepTypes,
             MessagingOutgoingContext context,
             Func<CancellationToken, Task> terminal,

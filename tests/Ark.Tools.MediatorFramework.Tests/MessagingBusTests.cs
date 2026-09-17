@@ -136,7 +136,6 @@ public sealed partial class MessagingBusTests
             _createCodecRegistry(),
             new MessagingPayloadSender(new InMemoryMessagingDataBus(), network, CompressionAlgorithm.None, 0),
             "sender",
-            serviceProvider,
             pipelineProcessor,
             [typeof(RecordingOutgoingStep)]);
 
@@ -276,7 +275,6 @@ public sealed partial class MessagingBusTests
         internal List<IReadOnlyList<Type>> _invocations { get; } = [];
 
         public Task ProcessIncomingAsync(
-            IServiceProvider serviceProvider,
             IReadOnlyList<Type> orderedStepTypes,
             MessagingIncomingContext context,
             Func<ICommandProcessor, CancellationToken, Task> terminal,
@@ -286,7 +284,6 @@ public sealed partial class MessagingBusTests
         }
 
         public async Task ProcessOutgoingAsync(
-            IServiceProvider serviceProvider,
             IReadOnlyList<Type> orderedStepTypes,
             MessagingOutgoingContext context,
             Func<CancellationToken, Task> terminal,

@@ -22,7 +22,6 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     private readonly IMessagingCodecRegistry _codecs;
     private readonly MessagingPayloadSender _payloadSender;
     private readonly string _participantIdentity;
-    private readonly IServiceProvider? _serviceProvider;
     private readonly IMessagingPipelineProcessor? _pipelineProcessor;
     private readonly IReadOnlyList<Type> _outgoingStepTypes;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -36,7 +35,6 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     /// <param name="codecs">The installed serialization codecs.</param>
     /// <param name="payloadSender">The payload serialization and claim-check runtime.</param>
     /// <param name="participantIdentity">The identity of the sending participant.</param>
-    /// <param name="serviceProvider">The application service provider used for outgoing step resolution.</param>
     /// <param name="pipelineProcessor">The outgoing pipeline processor.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline steps.</param>
     /// <param name="utcNow">The clock used for message and scheduled-send timestamps.</param>
@@ -47,7 +45,6 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         IMessagingCodecRegistry codecs,
         MessagingPayloadSender payloadSender,
         string participantIdentity,
-        IServiceProvider? serviceProvider = null,
         IMessagingPipelineProcessor? pipelineProcessor = null,
         IReadOnlyList<Type>? outgoingStepTypes = null,
         Func<DateTimeOffset>? utcNow = null)
@@ -67,14 +64,13 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
 
         _network.Validate(transport.Capabilities);
         _participantIdentity = participantIdentity;
-        _serviceProvider = serviceProvider;
         _pipelineProcessor = pipelineProcessor;
         _outgoingStepTypes = new ReadOnlyCollection<Type>(
             (outgoingStepTypes ?? Array.Empty<Type>()).ToArray());
-        if (_outgoingStepTypes.Count != 0 && (_serviceProvider is null || _pipelineProcessor is null))
+        if (_outgoingStepTypes.Count != 0 && _pipelineProcessor is null)
         {
             throw new InvalidOperationException(
-                "An application service provider and pipeline processor are required when outgoing steps are configured.");
+                "A pipeline processor is required when outgoing steps are configured.");
         }
         _utcNow = utcNow ?? (static () => DateTimeOffset.UtcNow);
     }
@@ -255,7 +251,6 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             else
                 await _pipelineProcessor!
                     .ProcessOutgoingAsync(
-                        _serviceProvider!,
                         _outgoingStepTypes,
                         context,
                         _ => _sendAsync(),
