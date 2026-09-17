@@ -161,7 +161,7 @@ public sealed class ServiceCollectionProcessorBridgeTests
         var verifier = provider.GetRequiredService<IMediatorHandlerRegistrationVerifier>();
 
         verifier.IsRegistered(typeof(IRequestHandler<TestRequest, int>)).Should().BeTrue();
-        verifier.IsRegistered(typeof(IRequestHandler<FailingRequest, string>)).Should().BeFalse();
+        verifier.IsRegistered(typeof(IRequestHandler<UnregisteredRequest, string>)).Should().BeFalse();
     }
 
     [TestMethod]
@@ -291,6 +291,7 @@ public sealed class ServiceCollectionProcessorBridgeTests
     private sealed record TestRequest(int Value) : IRequest<TestRequest, int>;
     private sealed record ScopeRequest : IRequest<ScopeRequest, Guid>;
     private sealed record FailingRequest : IRequest<FailingRequest, int>;
+    private sealed record UnregisteredRequest : IRequest<UnregisteredRequest, string>;
     private sealed record NestedRequest : IRequest<NestedRequest, NestedScopeResult>;
     private sealed record InnerNestedRequest : IRequest<InnerNestedRequest, Guid>;
     private sealed record ScopedProcessorRequest : IRequest<ScopedProcessorRequest, ScopedProcessorObservation>;
