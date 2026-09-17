@@ -14,7 +14,16 @@
 	  Condition="$(MSBuildProjectDirectory.Contains('/src/compliance/')) Or $(MSBuildProjectDirectory.Contains('\src\compliance\'))">true</ArkToolsComplianceImplementationProject>
 	<!-- Ark.Tools libraries are themselves checked against compliance (dogfooding). -->
 	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == ''">true</EnableArkToolsCompliance>
+	<TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
+	<MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(MSBuildProjectExtension)' == '.csproj'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props" />
 
