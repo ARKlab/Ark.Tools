@@ -556,15 +556,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder MapArkGrpcServicesFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app)");
             sb.AppendLine("        {");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
-            foreach (var handler in items
-                .Select(ProcessorService)
-                .Distinct(StringComparer.Ordinal))
+            foreach (var item in items)
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
-                var contract = items
-                    .First(item => ProcessorService(item) == handler)
-                    .TypeFullName;
-                sb.AppendLine("            VerifyGrpcHandlerRegistration(app.ServiceProvider, typeof(" + handler + "), " + Literal(contract) + ", missingHandlers);");
+                sb.AppendLine("            VerifyGrpcHandlerRegistration(app.ServiceProvider, typeof(" + HandlerService(item) + "), " + Literal(item.TypeFullName) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");

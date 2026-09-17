@@ -703,13 +703,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("        {");
             sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
-            foreach (var handler in items
-                .Where(static item => item.IsValid)
-                .GroupBy(ProcessorService, StringComparer.Ordinal)
-                .Select(static group => (Handler: group.Key, Contract: group.First().TypeFullName)))
+            foreach (var item in items.Where(static item => item.IsValid))
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
-                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + handler.Handler + "), " + Literal(handler.Contract) + ", missingHandlers);");
+                sb.AppendLine("            VerifyMinimalApiHandlerRegistration(endpoints.ServiceProvider, typeof(" + HandlerService(item) + "), " + Literal(item.TypeFullName) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
             sb.AppendLine("                throw new global::System.InvalidOperationException(\"Missing mediator handler registrations: \" + string.Join(\"; \", missingHandlers));");
