@@ -1,3 +1,5 @@
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools.EventSourcing.Events;
 
 public sealed class MetadataKeys
@@ -12,6 +14,7 @@ public sealed class MetadataKeys
     public const string AggregateName = "$aggregate_name";
     public const string AggregateId = "$aggregate_id";
 
+    [NotPersonalData("Metadata key label for a user identifier; it is not the personal value itself.")]
     public const string UserId = "$user_id";
     public const string OperationId = "$operation_id";
 }

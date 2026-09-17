@@ -1,3 +1,4 @@
+using Ark.Tools.Compliance;
 
 namespace Ark.Tools.Sql;
 
@@ -27,7 +28,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         _inner = inner;
     }
 
-    public DbConnection Get(string connectionString)
+    public DbConnection Get([InfrastructureSecret] string connectionString)
     {
         var cnn = _inner.Get(connectionString);
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -38,7 +39,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         return cnn;
     }
 
-    public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync([InfrastructureSecret] string connectionString, CancellationToken ctk = default)
     {
         var cnn = await _inner.GetAsync(connectionString, ctk).ConfigureAwait(false);
 #pragma warning disable CA2000 // Dispose objects before losing scope

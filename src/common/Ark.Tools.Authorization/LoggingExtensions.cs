@@ -3,14 +3,16 @@ using NLog;
 
 namespace Ark.Tools.Authorization;
 
+using Ark.Tools.Compliance;
+
 internal static partial class LoggingExtensions
 {
-    public static void UserAuthorizationSucceeded(this ILogger logger, string username, string policyName)
+    public static void UserAuthorizationSucceeded(this ILogger logger, [PersonalData] string username, string policyName)
     {
         logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Authorization for policy {PolicyName} succeeded for user {Username}.", policyName, username);
     }
 
-    public static void UserAuthorizationFailed(this ILogger logger, string username, string policyName, IEnumerable<IAuthorizationRequirement> failedRequirements)
+    public static void UserAuthorizationFailed(this ILogger logger, [PersonalData] string username, string policyName, IEnumerable<IAuthorizationRequirement> failedRequirements)
     {
         logger.Trace(global::System.Globalization.CultureInfo.InvariantCulture, "Authorization for policy {PolicyName} failed for user {Username}. Missing requirements {FailedRequirements}", policyName, username, string.Join(", ", failedRequirements));
     }

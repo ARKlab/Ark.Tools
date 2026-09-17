@@ -17,13 +17,18 @@ using Polly.Caching;
 using Polly.Caching.Memory;
 
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
+
+using Ark.Tools.Compliance;
 
 namespace Ark.Tools.Auth0;
 
 public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
 {
     private readonly IAuthenticationApiClient _inner;
+    [InfrastructureSecret]
     private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
     private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
     private readonly MemoryCache _cache = new(new MemoryCacheOptions());
@@ -48,6 +53,15 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     }
 
+    private static string _hashKey(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        return Convert.ToHexString(hash);
+    }
+
     private static TimeSpan _expiresIn(AccessTokenResponse r)
     {
         var expAccessToken = _expiresIn(r.AccessToken);
@@ -56,7 +70,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return new[] { expAccessToken, expIdToken }.Min();
     }
 
-    private static TimeSpan _expiresIn(string accessToken)
+    private static TimeSpan _expiresIn([InfrastructureSecret] string accessToken)
     {
 #pragma warning disable CS0618 // Type or member is obsolete
         var decode = new JwtBuilder()
@@ -128,7 +142,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     private async Task<AccessTokenResponse> _getToken<TRequest>(
         TRequest request,
         Func<TRequest, string> getKey,
-        Func<TRequest, CancellationToken, Task<AccessTokenResponse>> getTokenAsync,
+        [NotPersonalData("Token retrieval delegate is executable logic, not redacted data.")] Func<TRequest, CancellationToken, Task<AccessTokenResponse>> getTokenAsync,
         CancellationToken cancellationToken = default)
         where TRequest : notnull
     {
@@ -175,7 +189,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(AuthorizationCodeTokenRequest r)
     {
-        return $"AuthorizationCodeTokenRequest{r.ClientId}{r.Code}"; // code should be enough, but being on safe side
+        return $"AuthorizationCodeTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Code)}"; // code should be enough, but being on safe side
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(AuthorizationCodePkceTokenRequest request, CancellationToken cancellationToken = default)
@@ -185,7 +199,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(AuthorizationCodePkceTokenRequest r)
     {
-        return $"AuthorizationCodePkceTokenRequest{r.ClientId}{r.Code}{r.CodeVerifier}";
+        return $"AuthorizationCodePkceTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Code)}{_hashKey(r.CodeVerifier)}";
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(ClientCredentialsTokenRequest request, CancellationToken cancellationToken = default)
@@ -195,7 +209,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(ClientCredentialsTokenRequest r)
     {
-        return $"ClientCredentialsTokenRequest{r.ClientId}{r.Audience}";
+        return $"ClientCredentialsTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Audience)}";
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
@@ -238,7 +252,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(RefreshTokenRequest r)
     {
-        return $"RefreshTokenRequest{r.ClientId}{r.RefreshToken}{r.Audience}{r.Scope}";
+        return $"RefreshTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.RefreshToken)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(ResourceOwnerTokenRequest request, CancellationToken cancellationToken = default)
@@ -248,10 +262,10 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(ResourceOwnerTokenRequest r)
     {
-        return $"ResourceOwnerTokenRequest{r.ClientId}{r.Username}{r.Realm}{r.Audience}{r.Scope}";
+        return $"ResourceOwnerTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Username)}{_hashKey(r.Realm)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
     }
 
-    public Task<UserInfo> GetUserInfoAsync(string accessToken, CancellationToken cancellationToken = default)
+    public Task<UserInfo> GetUserInfoAsync([InfrastructureSecret] string accessToken, CancellationToken cancellationToken = default)
     {
         return _userInfoCachePolicy.ExecuteAsync((_, ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
         {
@@ -259,9 +273,9 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         }), cancellationToken);
     }
 
-    private static string _getKey(string accessToken)
+    private static string _getKey([InfrastructureSecret] string accessToken)
     {
-        return $"GetUserInfo{accessToken}";
+        return $"GetUserInfo{_hashKey(accessToken)}";
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(PasswordlessEmailTokenRequest request, CancellationToken cancellationToken = default)
@@ -271,7 +285,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(PasswordlessEmailTokenRequest r)
     {
-        return $"PasswordlessEmailTokenRequest{r.ClientId}{r.Email}{r.Audience}{r.Scope}";
+        return $"PasswordlessEmailTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Email)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(PasswordlessSmsTokenRequest request, CancellationToken cancellationToken = default)
@@ -281,7 +295,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(PasswordlessSmsTokenRequest r)
     {
-        return $"PasswordlessSmsTokenRequest{r.ClientId}{r.PhoneNumber}{r.Audience}{r.Scope}";
+        return $"PasswordlessSmsTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.PhoneNumber)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
     }
 
     public Task<AccessTokenResponse> GetTokenAsync(DeviceCodeTokenRequest request, CancellationToken cancellationToken = default)
@@ -291,7 +305,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(DeviceCodeTokenRequest r)
     {
-        return $"DeviceCodeTokenRequest{r.ClientId}{r.DeviceCode}";
+        return $"DeviceCodeTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.DeviceCode)}";
     }
 
     public async Task<DeviceCodeResponse> StartDeviceFlowAsync(DeviceCodeRequest request, CancellationToken cancellationToken = default)
@@ -330,7 +344,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return await _inner.AssociateMfaAuthenticatorAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<IList<Authenticator>> ListMfaAuthenticatorsAsync(string accessToken, CancellationToken cancellationToken = default)
+    public async Task<IList<Authenticator>> ListMfaAuthenticatorsAsync([InfrastructureSecret] string accessToken, CancellationToken cancellationToken = default)
     {
         return await _inner.ListMfaAuthenticatorsAsync(accessToken, cancellationToken).ConfigureAwait(false);
     }

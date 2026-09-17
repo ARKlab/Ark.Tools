@@ -75,7 +75,9 @@ public class SmtpConnectionBuilder
     {
         get
         {
-            return $"Server={Server};Port={Port};Username={Username};Password={Password};UseSsl={UseSsl}" + (!string.IsNullOrWhiteSpace(From) ? $";From={From}" : string.Empty);
+            var from = string.IsNullOrWhiteSpace(From) ? string.Empty : ";From=***";
+            var port = Port is null ? "25" : Port.Value.ToString(CultureInfo.InvariantCulture);
+            return $"Server={Server ?? "localhost"};Port={port};Username=***;******;UseSsl={UseSsl}{from}";
         }
         set
         {
@@ -90,5 +92,6 @@ public class SmtpConnectionBuilder
     [InfrastructureSecret]
     public string? Password { get; set; }
     public bool UseSsl { get; set; }
+    [PersonalData]
     public string? From { get; set; }
 }

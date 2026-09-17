@@ -1,9 +1,12 @@
 using System.Reflection;
 
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools.EventSourcing;
 
 public static class Ex
 {
+    [NotPersonalData("Type full-name cache is an internal implementation detail and does not hold any person data.")]
     private static Dictionary<Type, string> _fullNameCache = new();
     /// <summary>
     /// Gets the full name without version information.

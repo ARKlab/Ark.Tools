@@ -19,11 +19,17 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurer
 {
+    [NotPersonalData("Target name for the Slack sink; it identifies a log target, not user data.")]
     public const string SlackTarget = "Ark.Slack";
+    [NotPersonalData("Target name for the console sink; it identifies a log target, not user data.")]
     public const string ConsoleTarget = "Ark.Console";
+    [NotPersonalData("Target name for the file sink; it identifies a log target, not user data.")]
     public const string FileTarget = "Ark.File";
+    [NotPersonalData("Target name for the database sink; it identifies a log target, not user data.")]
     public const string DatabaseTarget = "Ark.Database";
+    [NotPersonalData("Target name for the mail sink; it identifies a log target, not user data.")]
     public const string MailTarget = "Ark.Mail";
+    [NotPersonalData("Default sender email is a service address, not personal data.")]
     public const string MailFromDefault = "noreply@ark-energy.eu";
 
     public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=Message}}";
@@ -81,12 +87,12 @@ public static class NLogConfigurer
 
     [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public record Config(
-        string? SQLConnectionString = null,
+        [InfrastructureSecret] string? SQLConnectionString = null,
         string? SQLTableName = null,
-        string? SmtpConnectionString = null,
-        string? MailTo = null,
-        string? MailFrom = null,
-        string? SlackWebhook = null,
+        [InfrastructureSecret] string? SmtpConnectionString = null,
+        [PersonalData] string? MailTo = null,
+        [PersonalData] string? MailFrom = null,
+        [InfrastructureSecret] string? SlackWebhook = null,
         bool? EnableConsole = null,
         bool Async = true);
 
@@ -237,7 +243,7 @@ public static class NLogConfigurer
             return this;
         }
 
-        public Configurer WithDatabaseTarget(string logTableName, string connectionString, bool async = true)
+        public Configurer WithDatabaseTarget(string logTableName, [InfrastructureSecret] string connectionString, bool async = true)
         {
             logTableName = logTableName.Replace("[", string.Empty, StringComparison.Ordinal).Replace("]", string.Empty, StringComparison.Ordinal).Replace('.', '_');
 
@@ -332,12 +338,12 @@ VALUES
             return target;
         }
 
-        public Configurer WithMailTarget(string to, bool async = true)
+        public Configurer WithMailTarget([PersonalData] string to, bool async = true)
         {
             return this.WithMailTarget(null, to, async);
         }
 
-        public Configurer WithMailTarget(string? from, string to, bool async = true)
+        public Configurer WithMailTarget([PersonalData] string? from, [PersonalData] string to, bool async = true)
         {
             var target = _getBasicMailTarget();
 
@@ -349,12 +355,12 @@ VALUES
             return this;
         }
 
-        public Configurer WithMailTarget(string to, string smtpServer, int smtpPort, string smtpUserName, string smtpPassword, bool useSsl, bool async = true)
+        public Configurer WithMailTarget([PersonalData] string to, string smtpServer, int smtpPort, [InfrastructureSecret] string smtpUserName, [InfrastructureSecret] string smtpPassword, bool useSsl, bool async = true)
         {
             return this.WithMailTarget(null, to, smtpServer, smtpPort, smtpUserName, smtpPassword, useSsl, async);
         }
 
-        public Configurer WithMailTarget(string? from, string to, string? smtpServer, int? smtpPort, string? smtpUserName, string? smtpPassword, bool useSsl, bool async = true)
+        public Configurer WithMailTarget([PersonalData] string? from, [PersonalData] string to, string? smtpServer, int? smtpPort, [InfrastructureSecret] string? smtpUserName, [InfrastructureSecret] string? smtpPassword, bool useSsl, bool async = true)
         {
             if (smtpServer is not null && smtpPort is not null && smtpUserName is not null && smtpPassword is not null)
             {
@@ -375,7 +381,7 @@ VALUES
             return this;
         }
 
-        public Configurer WithMailTarget(string? from, string to, string smtpConnectionString, bool async = true)
+        public Configurer WithMailTarget([PersonalData] string? from, [PersonalData] string to, [InfrastructureSecret] string smtpConnectionString, bool async = true)
         {
             var cs = new SmtpConnectionBuilder(smtpConnectionString);
             return this.WithMailTarget(from ?? cs.From, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);

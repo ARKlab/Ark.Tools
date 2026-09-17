@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.OTel;
 
 namespace Ark.Tools.ApplicationInsights;
@@ -48,7 +49,7 @@ public static class ArkApplicationInsightsExtensions
     public static IServiceCollection AddArkApplicationInsightsCustomizations(
         this IServiceCollection services,
         IConfiguration configuration,
-        string? sqlConnectionStringToFilter = null)
+        [InfrastructureSecret] string? sqlConnectionStringToFilter = null)
     {
         // Configure sampler options with defaults that match the v2.x AdaptiveSampling settings.
         services.Configure<ArkAdaptiveSamplerOptions>(static o =>
