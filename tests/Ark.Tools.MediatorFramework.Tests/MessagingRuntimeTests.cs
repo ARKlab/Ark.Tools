@@ -12,7 +12,6 @@ using MessagePack;
 using MessagePack.Resolvers;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using NodaTime;
 using NodaTime.Testing;
@@ -402,7 +401,7 @@ public sealed partial class MessagingRuntimeTests
     [TestMethod]
     public async Task DispatcherRunsFailureHandlerOnceAtRetryBoundary()
     {
-        await using var provider = _createServices(services =>
+        await using var provider = _createServices(static services =>
             services.AddScoped<ICommandHandler<MessagingFailed<DispatchCommand>>, RecordingFailedHandler>());
         var failureHandled = new List<MessagingFailed<DispatchCommand>>();
         var delivery = new TestLockedDelivery(2);
@@ -426,9 +425,12 @@ public sealed partial class MessagingRuntimeTests
         failureHandled.Should().ContainSingle();
         failureHandled[0].DeliveryCount.Should().Be(2);
         failureHandled[0].ErrorDescription.Should().Contain("handler failed");
-        using var scope = provider.CreateScope();
-        scope.ServiceProvider.GetRequiredService<ICommandHandler<MessagingFailed<DispatchCommand>>>()
-            .Should().NotBeNull();
+        var scope = provider.CreateAsyncScope();
+        await using (scope.ConfigureAwait(false))
+        {
+            scope.ServiceProvider.GetRequiredService<ICommandHandler<MessagingFailed<DispatchCommand>>>()
+                .Should().NotBeNull();
+        }
     }
 
     [TestMethod]

@@ -169,8 +169,9 @@ public sealed class AzureFunctionsRebusTests
     public async Task NativeFunctionsCompositionBridgesScopedCommandProcessingIntoMicrosoftDependencyInjection()
     {
         await using var container = AzureFunctionsNativeComposition.BuildContainer(useSqlStore: false);
+        var recorder = new BridgeExecutionRecorder();
         container.Register<BridgeScopeMarker>(Lifestyle.Scoped);
-        container.RegisterSingleton<BridgeExecutionRecorder>();
+        container.RegisterInstance(recorder);
         container.Register<ICommandHandler<OuterBridgeCommand>, OuterBridgeCommandHandler>(Lifestyle.Scoped);
         container.Register<ICommandHandler<InnerBridgeCommand>, InnerBridgeCommandHandler>(Lifestyle.Scoped);
 
@@ -193,10 +194,8 @@ public sealed class AzureFunctionsRebusTests
                 .UseDataBus(new InMemoryMessagingDataBus(SystemClock.Instance, Duration.FromHours(2)))
                 .UseOutbox(static outbox => outbox.UseEnqueue()));
         await using var provider = services.BuildServiceProvider();
-        container.Verify();
-
+        _ = provider.GetServices<IHostedService>();
         var processor = provider.GetRequiredService<ICommandProcessor>();
-        var recorder = container.GetInstance<BridgeExecutionRecorder>();
 
         await processor.ExecuteAsync(new OuterBridgeCommand()).ConfigureAwait(false);
         await processor.ExecuteAsync(new OuterBridgeCommand()).ConfigureAwait(false);

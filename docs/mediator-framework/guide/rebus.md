@@ -139,7 +139,9 @@ container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
 
 var requirements = GreetingRebusHost.GetRequirements();
-GreetingRebusHost.Register(container);
+GreetingRebusHost.Register(
+    (serviceType, implementationType) =>
+        container.Collection.Append(serviceType, implementationType));
 container.RegisterDecorator(
     typeof(IHandleMessages<>),
     typeof(RebusScopeDecorator<>));
