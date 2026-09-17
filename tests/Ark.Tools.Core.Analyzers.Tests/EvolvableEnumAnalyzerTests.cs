@@ -74,6 +74,7 @@ public class EvolvableEnumAnalyzerTests
     {
         var diagnostics = await _analyzeAsync(
             """
+            using CoreStatus = Ark.Tools.Core.EvolvableEnum<Status>;
             namespace Ark.Tools.Core
             {
                 public struct EvolvableEnum<T> { }
@@ -84,10 +85,11 @@ public class EvolvableEnumAnalyzerTests
                 public struct EvolvableEnum<T> { }
             }
             enum Status { NOT_SET = 0, Active = 1 }
+            enum BrokenStatus : byte { Active = 1 }
             class Contract
             {
                 CoreStatus Value;
-                Other.EvolvableEnum<Status> OtherValue;
+                Other.EvolvableEnum<BrokenStatus> OtherValue;
             }
             """);
 
@@ -166,7 +168,10 @@ public class EvolvableEnumAnalyzerTests
             [CSharpSyntaxTree.ParseText(source)],
             [MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
              MetadataReference.CreateFromFile(typeof(DisplayAttribute).Assembly.Location),
-             MetadataReference.CreateFromFile(typeof(EnumMemberAttribute).Assembly.Location)]);
+             MetadataReference.CreateFromFile(typeof(EnumMemberAttribute).Assembly.Location)],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        compilation.GetDiagnostics().Where(static item => item.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
 
         return await compilation
             .WithAnalyzers([new EvolvableEnumAnalyzer()])

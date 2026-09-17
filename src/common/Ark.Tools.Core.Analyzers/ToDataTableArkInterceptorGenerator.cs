@@ -47,7 +47,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
                 transform: static (ctx, ct) => _analyze(ctx, ct))
             .Where(static model => model is not null)
             .Select(static (model, _) => model!.Value)
-            .Collect();
+            .WithComparer(CallSiteModelComparer._instance)
+            .Collect()
+            .WithComparer(CallSiteModelArrayComparer._instance);
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
             compilation is CSharpCompilation csharpCompilation
@@ -70,7 +72,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             if (!interceptorsEnabled || !languageOk || sites.IsDefaultOrEmpty)
                 return;
 
-            var source = _emit(sites);
+            var source = _emit(sites, spc.CancellationToken);
             if (source is not null)
                 spc.AddSource("ToDataTableArkInterceptors.g.cs", source);
         });
@@ -120,7 +122,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         if (method.TypeArguments[0] is not INamedTypeSymbol elementType)
             return null; // T is an open type parameter, array, pointer, etc. - not compile-time-known here.
 
-        var typeModel = _buildTypeModel(elementType);
+        var typeModel = _buildTypeModel(elementType, cancellationToken);
         if (typeModel is null)
             return null; // T does not meet the "flat, public, instance-only" eligibility rules.
 
@@ -137,8 +139,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     // its containing types accessible from anywhere in the assembly (so the generated code - which
     // lives in an unrelated namespace - can reference it), and every property having an accessible
     // public getter. Anything else is left for the reflection-based fallback to handle.
-    private static TypeModel? _buildTypeModel(INamedTypeSymbol type)
+    private static TypeModel? _buildTypeModel(INamedTypeSymbol type, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (type.IsAnonymousType || !_isGloballyAccessible(type))
             return null;
 
@@ -161,6 +164,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         var properties = ImmutableArray.CreateBuilder<MemberModel>();
         foreach (var member in type.GetMembers())
         {
+            cancellationToken.ThrowIfCancellationRequested();
             switch (member)
             {
                 case IFieldSymbol { DeclaredAccessibility: Accessibility.Public, IsImplicitlyDeclared: false } field:
@@ -274,8 +278,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return true;
     }
 
-    private static string? _emit(ImmutableArray<CallSiteModel> callSites)
+    private static string? _emit(ImmutableArray<CallSiteModel> callSites, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         // Grouped by the fully-qualified type name (a plain string) rather than by TypeModel itself:
         // ImmutableArray<T> equality is reference-based, so two BuildTypeModel calls for the exact
         // same T (from different call sites) produce structurally-identical but not reference-equal
@@ -298,7 +303,8 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         var methodIndex = 0;
         foreach (var group in groups.OrderBy(static group => group.Key, StringComparer.Ordinal))
         {
-            _emitInterceptorMethod(sb, group.First().Type, group.ToArray(), methodIndex++);
+            cancellationToken.ThrowIfCancellationRequested();
+            _emitInterceptorMethod(sb, group.First().Type, group.ToArray(), methodIndex++, cancellationToken);
         }
 
         sb.AppendLine("    }");
@@ -316,8 +322,14 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static void _emitInterceptorMethod(StringBuilder sb, TypeModel type, CallSiteModel[] sites, int methodIndex)
+    private static void _emitInterceptorMethod(
+        StringBuilder sb,
+        TypeModel type,
+        CallSiteModel[] sites,
+        int methodIndex,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var uniqueSites = sites
             .GroupBy(static site => (site.Location.Version, site.Location.Data))
             .Select(static group => group.First())
@@ -327,6 +339,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
 
         foreach (var site in uniqueSites)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             sb.Append("        [global::System.Runtime.CompilerServices.InterceptsLocationAttribute(")
               .Append(site.Location.Version)
               .Append(", ")
@@ -345,7 +358,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         }
         else
         {
-            _emitObjectBody(sb, type);
+            _emitObjectBody(sb, type, cancellationToken);
         }
 
         sb.AppendLine("        }");
@@ -378,7 +391,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("            return table;");
     }
 
-    private static void _emitObjectBody(StringBuilder sb, TypeModel type)
+    private static void _emitObjectBody(StringBuilder sb, TypeModel type, CancellationToken cancellationToken)
     {
         sb.Append("            var table = new global::System.Data.DataTable(")
             .Append(SymbolDisplay.FormatLiteral(type.SimpleName, quote: true))
@@ -407,6 +420,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.Append("                    var values = new object?[").Append(type.Members.Length).AppendLine("];");
         for (var i = 0; i < type.Members.Length; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             sb.Append("                    values[").Append(i).Append("] = ").Append(_buildValueExpressionText(type.Members[i])).AppendLine(";");
         }
 

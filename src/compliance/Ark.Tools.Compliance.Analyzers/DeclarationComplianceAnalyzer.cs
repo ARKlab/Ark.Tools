@@ -53,32 +53,27 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.RegisterCompilationStartAction(static start =>
         {
-            if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
-                    "build_property.EnableArkToolsCompliance", out var enabled)
-                && string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+            var options = start.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+            if (!ComplianceCompilationFacts._isEnabled(options))
             {
                 return;
             }
 
+            var facts = ComplianceCompilationFacts._create(
+                start.Compilation,
+                options);
+
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
-            var isTestProject = start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
-                    "build_property.IsTestProject", out var testProject)
-                && string.Equals(testProject, "true", StringComparison.OrdinalIgnoreCase);
-            // Only a composition root (an executable host) can register redaction; libraries and tests are exempt.
-            var isHost = start.Compilation.Options.OutputKind
-                is OutputKind.ConsoleApplication or OutputKind.WindowsApplication or OutputKind.WindowsRuntimeApplication;
-            var telemetryRequiresRegistration = isHost && !isTestProject && start.Compilation.ReferencedAssemblyNames.Any(static name =>
-                name.Name is "Microsoft.Extensions.Telemetry" or "Microsoft.Extensions.Telemetry.Abstractions");
             var hasRedactionRegistration = 0;
-            if (telemetryRequiresRegistration)
+            if (facts._telemetryRequiresRegistration)
             {
                 start.RegisterOperationAction(operationContext =>
                 {
                     var invocation = (Microsoft.CodeAnalysis.Operations.IInvocationOperation)operationContext.Operation;
                     var method = invocation.TargetMethod;
                     if (method.Name == "AddArkRedaction"
-                        && method.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
+                        && ComplianceSymbolFacts._isArkToolsComplianceNamespace(method.ContainingNamespace))
                     {
                         Interlocked.Exchange(ref hasRedactionRegistration, 1);
                     }
@@ -93,27 +88,32 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             }
             start.RegisterSymbolAction(symbolContext =>
             {
-                _analyze(symbolContext, symbolContext.Symbol, lexicon, today);
+                _analyze(symbolContext, symbolContext.Symbol, lexicon, today, facts);
                 if (symbolContext.Symbol is IMethodSymbol method
                     && method.MethodKind is not MethodKind.PropertyGet and not MethodKind.PropertySet)
                 {
                     foreach (var parameter in method.Parameters)
                     {
-                        _analyze(symbolContext, parameter, lexicon, today);
+                        _analyze(symbolContext, parameter, lexicon, today, facts);
                     }
                 }
                 else if (symbolContext.Symbol is IPropertySymbol property)
                 {
                     foreach (var parameter in property.Parameters)
                     {
-                        _analyze(symbolContext, parameter, lexicon, today);
+                        _analyze(symbolContext, parameter, lexicon, today, facts);
                     }
                 }
             }, SymbolKind.Property, SymbolKind.Field, SymbolKind.Method, SymbolKind.NamedType);
         });
     }
 
-    private static void _analyze(SymbolAnalysisContext context, ISymbol symbol, ComplianceLexicon lexicon, DateTime today)
+    private static void _analyze(
+        SymbolAnalysisContext context,
+        ISymbol symbol,
+        ComplianceLexicon lexicon,
+        DateTime today,
+        ComplianceCompilationFacts facts)
     {
         if (symbol.IsImplicitlyDeclared)
         {
@@ -126,14 +126,32 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             return;
         }
 
+        Dictionary<ISymbol, bool>? classifiedCache = null;
+        bool isClassified(ISymbol? candidate)
+        {
+            if (candidate is null)
+            {
+                return false;
+            }
+
+            classifiedCache ??= new Dictionary<ISymbol, bool>(SymbolEqualityComparer.Default);
+            if (!classifiedCache.TryGetValue(candidate, out var result))
+            {
+                result = ComplianceSymbolFacts._isClassified(candidate, facts);
+                classifiedCache[candidate] = result;
+            }
+
+            return result;
+        }
+
         foreach (var attribute in symbol.GetAttributes())
         {
-            if (ComplianceSymbolFacts._isAttribute(attribute, "ComplianceReviewedAttribute")
+            if (ComplianceSymbolFacts._matchesAttribute(attribute, facts._complianceReviewedAttribute)
                 && !ComplianceSymbolFacts._isReviewValid(attribute, today))
             {
                 context.ReportDiagnostic(Diagnostic.Create(_review, location, symbol.Name));
             }
-            else if (ComplianceSymbolFacts._isAttribute(attribute, "NotPersonalDataAttribute")
+            else if (ComplianceSymbolFacts._matchesAttribute(attribute, facts._notPersonalDataAttribute)
                 && !ComplianceSymbolFacts._isJustificationMeaningful(
                     attribute.ConstructorArguments.FirstOrDefault().Value as string))
             {
@@ -145,40 +163,29 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         if (type is not null)
         {
             type = ComplianceSymbolFacts._unwrapNullable(type);
-            var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type);
-            var classified = ComplianceSymbolFacts._isClassified(symbol)
-                || ComplianceSymbolFacts._isClassified(type)
-                || ComplianceSymbolFacts._isClassified(symbol.ContainingType)
-                || _isPositionalCounterpartClassified(symbol);
-
-            var isPositionalProperty = symbol is IPropertySymbol && _positionalCounterpart(symbol) is not null;
+            var positionalCounterpart = _positionalCounterpart(symbol);
+            var isPositionalProperty = symbol is IPropertySymbol && positionalCounterpart is not null;
+            var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts);
+            var classified = isClassified(symbol)
+                || isClassified(type)
+                || isClassified(symbol.ContainingType)
+                || isClassified(positionalCounterpart);
             if (!isPositionalProperty && !knownSafeDotNetType && !classified && lexicon._matches(symbol.Name)
-                && !ComplianceSymbolFacts._hasAttribute(symbol, "NotPersonalDataAttribute")
-                && !_hasPositionalExclusion(symbol))
+                && !ComplianceSymbolFacts._hasAttribute(symbol, facts._notPersonalDataAttribute)
+                && !_hasPositionalExclusion(positionalCounterpart, facts))
             {
                 context.ReportDiagnostic(Diagnostic.Create(_unclassified, location, symbol.Name));
             }
 
             if (classified && !isPositionalProperty)
             {
-                _checkType(context, symbol, type, location);
+                _checkType(context, symbol, type, location, facts);
             }
         }
-        else if (symbol is INamedTypeSymbol named && ComplianceSymbolFacts._isClassified(named))
+        else if (symbol is INamedTypeSymbol named && isClassified(named))
         {
-            _checkType(context, symbol, named, location);
+            _checkType(context, symbol, named, location, facts);
         }
-    }
-
-    private static bool _isPositionalCounterpartClassified(ISymbol symbol)
-    {
-        return _positionalCounterpart(symbol) is { } counterpart && ComplianceSymbolFacts._isClassified(counterpart);
-    }
-
-    private static bool _hasPositionalExclusion(ISymbol symbol)
-    {
-        return _positionalCounterpart(symbol) is { } counterpart
-            && ComplianceSymbolFacts._hasAttribute(counterpart, "NotPersonalDataAttribute");
     }
 
     private static ISymbol? _positionalCounterpart(ISymbol symbol)
@@ -204,24 +211,40 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         return null;
     }
 
-    private static void _checkType(SymbolAnalysisContext context, ISymbol symbol, ITypeSymbol type, Location location)
+    private static bool _hasPositionalExclusion(ISymbol? counterpart, ComplianceCompilationFacts facts)
     {
+        return counterpart is not null
+            && ComplianceSymbolFacts._hasAttribute(counterpart, facts._notPersonalDataAttribute);
+    }
+
+    private static void _checkType(
+        SymbolAnalysisContext context,
+        ISymbol symbol,
+        ITypeSymbol type,
+        Location location,
+        ComplianceCompilationFacts facts)
+    {
+        var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts);
+        if (knownSafeDotNetType)
+        {
+            return;
+        }
+
         var risk = type.SpecialType == SpecialType.System_Object || type.TypeKind == TypeKind.Dynamic
             ? "replace open object/dynamic with a concrete classified type"
             : type.TypeKind == TypeKind.Delegate
                 ? "a delegate is executable code, not a redactable value"
-                : type is INamedTypeSymbol named ? _vogenRisks(named) : null;
+                : type is INamedTypeSymbol named ? _vogenRisks(named, facts) : null;
         if (risk is not null)
         {
             context.ReportDiagnostic(Diagnostic.Create(_unsupported, location, symbol.Name, risk));
         }
     }
 
-    private static string? _vogenRisks(INamedTypeSymbol type)
+    private static string? _vogenRisks(INamedTypeSymbol type, ComplianceCompilationFacts facts)
     {
-        var valueObject = type.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass?.ContainingNamespace.ToDisplayString() == "Vogen"
-            && attribute.AttributeClass.Name == "ValueObjectAttribute");
+        var valueObject = type.GetAttributes().FirstOrDefault(attribute =>
+            ComplianceSymbolFacts._matchesAttribute(attribute, facts._vogenValueObjectAttribute));
         if (valueObject is null)
         {
             return null;

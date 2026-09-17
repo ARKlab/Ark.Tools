@@ -15,6 +15,7 @@
     <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Ark.Tools.Compliance.Analyzers.Tests" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Update="buildTransitive/Ark.Tools.Compliance.Analyzers.props" Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.Analyzers.props" />

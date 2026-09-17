@@ -16,3 +16,4 @@ ARKPII009 | Compliance | Warning | Missing exclusion justification
 ARKPII010 | Compliance | Error | Unsupported classification shape
 ARKPII011 | Compliance | Error | Classified data in formatting sinks
 ARKPII013 | Compliance | Warning | Microsoft telemetry without Ark redaction registration
+ARKPII014 | Compliance | Warning | Test-data scan exceeded its time limit

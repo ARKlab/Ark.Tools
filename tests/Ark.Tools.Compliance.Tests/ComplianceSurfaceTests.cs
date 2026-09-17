@@ -286,6 +286,7 @@ public sealed class ComplianceSurfaceTests
             using Ark.Tools.Compliance.NewtonsoftJson;
             using Ark.Tools.Compliance.MessagePack;
             using Ark.Tools.Compliance.Protobuf;
+            using static Ark.Tools.Compliance.Dapper.SensitiveValueDapper;
             namespace Example;
             public class Customer
             {
@@ -293,7 +294,7 @@ public sealed class ComplianceSurfaceTests
                 public PhoneNumber Phone { get; set; }
                 public static void Configure()
                 {
-                    SensitiveValueDapper.Register<EmailAddress>();
+                    Register<EmailAddress>();
                     SensitiveValueNewtonsoftJson.Register<EmailAddress>(new Newtonsoft.Json.JsonSerializerSettings());
                     SensitiveValueFormatterResolver.Register<EmailAddress>();
                     ProtoBuf.Meta.RuntimeTypeModel.Create().Register<EmailAddress>();

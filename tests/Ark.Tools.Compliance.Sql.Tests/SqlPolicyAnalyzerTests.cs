@@ -78,12 +78,17 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task ComplianceOptOutSuppressesSqlDiagnostics()
     {
-        var diagnostics = await _diagnostics("""
+        const string source = """
             [SqlDataPolicy(Table = "Customers")] public class Customer
             {
                 [PersonalData] public string Email { get; set; } = "";
             }
-            """, enabled: false).ConfigureAwait(false);
+            """;
+        var enabledDiagnostics = await _diagnostics(source).ConfigureAwait(false);
+        enabledDiagnostics.Should().ContainSingle(static diagnostic =>
+            diagnostic.Id == "ARKPII007" && diagnostic.Severity == DiagnosticSeverity.Error);
+
+        var diagnostics = await _diagnostics(source, enabled: false).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
     }
 

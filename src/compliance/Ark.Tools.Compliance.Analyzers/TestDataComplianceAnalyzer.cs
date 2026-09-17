@@ -26,22 +26,43 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         "ARKPII006", "Keep real personal data out of test fixtures",
         "Test data contains a plausible {0}; repository clones and CI logs retain it. Replace it with reserved test data.",
         "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII006.md");
-    private static readonly ImmutableArray<Pattern> _patterns = ImmutableArray.Create(
+    private static readonly DiagnosticDescriptor _scanIncomplete = new(
+        "ARKPII014", "Complete the test-data compliance scan",
+        "Test data could not be fully scanned for personal data because a pattern exceeded the analyzer time limit. Shorten or replace the literal.",
+        "Compliance", DiagnosticSeverity.Warning, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII014.md");
+    private static readonly ImmutableArray<Pattern> _defaultPatterns = ImmutableArray.Create(
         new Pattern(PersonalDataKind.Email, PersonalDataPatterns._email),
         new Pattern(PersonalDataKind.Phone, PersonalDataPatterns._phone),
         new Pattern(PersonalDataKind.NationalIdentifier, PersonalDataPatterns._nationalIdentifier),
         new Pattern(PersonalDataKind.Iban, PersonalDataPatterns._iban),
         new Pattern(PersonalDataKind.PostalAddress, PersonalDataPatterns._postalAddress));
+    private readonly ImmutableArray<Pattern> _patterns;
+
+    /// <summary>Initializes a new instance of the <see cref="TestDataComplianceAnalyzer"/> class.</summary>
+    public TestDataComplianceAnalyzer()
+        : this(_defaultPatterns)
+    {
+    }
+
+    internal TestDataComplianceAnalyzer(Regex emailPattern)
+        : this(_defaultPatterns.SetItem(0, new Pattern(PersonalDataKind.Email, emailPattern)))
+    {
+    }
+
+    private TestDataComplianceAnalyzer(ImmutableArray<Pattern> patterns)
+    {
+        _patterns = patterns;
+    }
 
     /// <inheritdoc />
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(_rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(_rule, _scanIncomplete);
 
     /// <inheritdoc />
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterCompilationStartAction(static start =>
+        context.RegisterCompilationStartAction(start =>
         {
             if (start.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
                     "build_property.EnableArkToolsCompliance", out var enabled)
@@ -63,25 +84,33 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     return;
                 }
 
-                var matches = _find(value);
-                if (matches.Count == 0)
+                var result = _find(value, _patterns);
+                if (result._findings.Count == 0 && !result._timedOut)
                 {
                     return;
                 }
 
-                var replacement = new StringBuilder(value);
-                foreach (var match in matches.OrderByDescending(static match => match._span.Start))
+                if (result._findings.Count > 0)
                 {
-                    replacement.Remove(match._span.Start, match._span.Length)
-                        .Insert(match._span.Start, PersonalDataPatterns._reservedValue(match._kind));
+                    var replacement = new StringBuilder(value);
+                    foreach (var match in result._findings.OrderByDescending(static match => match._span.Start))
+                    {
+                        replacement.Remove(match._span.Start, match._span.Length)
+                            .Insert(match._span.Start, PersonalDataPatterns._reservedValue(match._kind));
+                    }
+
+                    operationContext.ReportDiagnostic(Diagnostic.Create(_rule, literal.Syntax.GetLocation(),
+                        ImmutableDictionary<string, string?>.Empty.Add("Replacement", replacement.ToString()),
+                        result._findings[0]._kind.ToString()));
                 }
 
-                operationContext.ReportDiagnostic(Diagnostic.Create(_rule, literal.Syntax.GetLocation(),
-                    ImmutableDictionary<string, string?>.Empty.Add("Replacement", replacement.ToString()),
-                    matches[0]._kind.ToString()));
+                if (result._timedOut)
+                {
+                    operationContext.ReportDiagnostic(Diagnostic.Create(_scanIncomplete, literal.Syntax.GetLocation()));
+                }
             }, OperationKind.Literal);
         });
-        context.RegisterAdditionalFileAction(static fileContext =>
+        context.RegisterAdditionalFileAction(fileContext =>
         {
             if (fileContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
                     "build_property.EnableArkToolsCompliance", out var enabled)
@@ -112,7 +141,8 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                foreach (var match in _find(content))
+                var result = _find(content, _patterns);
+                foreach (var match in result._findings)
                 {
                     var span = new TextSpan(line.Start + match._span.Start, match._span.Length);
                     fileContext.ReportDiagnostic(Diagnostic.Create(_rule,
@@ -120,6 +150,13 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                         ImmutableDictionary<string, string?>.Empty.Add("Replacement",
                             PersonalDataPatterns._reservedValue(match._kind)),
                         match._kind.ToString()));
+                }
+
+                if (result._timedOut)
+                {
+                    var lineSpan = new TextSpan(line.Start, line.Span.Length);
+                    fileContext.ReportDiagnostic(Diagnostic.Create(_scanIncomplete,
+                        Location.Create(file.Path, lineSpan, text.Lines.GetLinePositionSpan(lineSpan))));
                 }
             }
         });
@@ -148,28 +185,36 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             || Path.GetFileName(path).EndsWith("Tests.cs", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static List<Finding> _find(string value)
+    private static ScanResult _find(string value, ImmutableArray<Pattern> patterns)
     {
         var findings = new List<Finding>();
-        foreach (var pattern in _patterns)
+        var timedOut = false;
+        foreach (var pattern in patterns)
         {
-            foreach (Match match in pattern._regex.Matches(value))
+            try
             {
-                if (PersonalDataPatterns._isReserved(pattern._kind, match.Value)
-                    || !PersonalDataPatterns._isChecksumValid(pattern._kind, match.Value))
+                foreach (Match match in pattern._regex.Matches(value))
                 {
-                    continue;
-                }
+                    if (PersonalDataPatterns._isReserved(pattern._kind, match.Value)
+                        || !PersonalDataPatterns._isChecksumValid(pattern._kind, match.Value))
+                    {
+                        continue;
+                    }
 
-                var span = new TextSpan(match.Index, match.Length);
-                if (!findings.Any(finding => finding._span.OverlapsWith(span)))
-                {
-                    findings.Add(new Finding(pattern._kind, span));
+                    var span = new TextSpan(match.Index, match.Length);
+                    if (!findings.Any(finding => finding._span.OverlapsWith(span)))
+                    {
+                        findings.Add(new Finding(pattern._kind, span));
+                    }
                 }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                timedOut = true;
             }
         }
 
-        return findings;
+        return new ScanResult(findings, timedOut);
     }
 
     private sealed class Pattern
@@ -178,6 +223,12 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         {
             _kind = kind;
             _regex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(100));
+        }
+
+        internal Pattern(PersonalDataKind kind, Regex regex)
+        {
+            _kind = kind;
+            _regex = regex;
         }
 
         internal PersonalDataKind _kind { get; }
@@ -194,5 +245,17 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
 
         internal PersonalDataKind _kind { get; }
         internal TextSpan _span { get; }
+    }
+
+    private readonly struct ScanResult
+    {
+        internal ScanResult(List<Finding> findings, bool timedOut)
+        {
+            _findings = findings;
+            _timedOut = timedOut;
+        }
+
+        internal List<Finding> _findings { get; }
+        internal bool _timedOut { get; }
     }
 }
