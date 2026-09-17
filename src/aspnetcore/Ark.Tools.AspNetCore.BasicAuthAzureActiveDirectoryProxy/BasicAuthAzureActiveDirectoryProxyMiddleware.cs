@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -97,10 +99,10 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
 #pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
-                    _logger.LogTrace(ex, "Basic authentication failed");
+                    _logger.LogTrace("Basic authentication failed");
 #pragma warning restore CA1848
                 }
 #pragma warning restore CA1031 // Do not catch general exception types
@@ -114,6 +116,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult
     {
+        [InfrastructureSecret]
         public string? Token_Type { get; set; }
         public string? Scope { get; set; }
         public int Expires_In { get; set; }
@@ -121,6 +124,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         public int Expires_On { get; set; }
         public int Not_Before { get; set; }
         public Uri? Resource { get; set; }
+        [InfrastructureSecret]
         public string? Access_Token { get; set; }
     }
 }

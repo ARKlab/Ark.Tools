@@ -379,7 +379,6 @@
       "ark.tools.otel": {
         "type": "Project",
         "dependencies": {
-          "Ark.Tools.Compliance": "[999.9.9, )",
           "OpenTelemetry": "[1.18.0, )"
         }
       },

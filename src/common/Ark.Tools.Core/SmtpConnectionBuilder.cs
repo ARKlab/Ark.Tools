@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools;
 
 public class SmtpConnectionBuilder
@@ -13,7 +15,7 @@ public class SmtpConnectionBuilder
     /// <remarks>
     /// es. Server=smtp.sendgrid.net;Port=587;Username=gnegnegne;Password=nonlosai;UseSsl=true
     /// </remarks>
-    public SmtpConnectionBuilder(string smtpConnectionString)
+    public SmtpConnectionBuilder([InfrastructureSecret] string smtpConnectionString)
     {
         if (string.IsNullOrWhiteSpace(smtpConnectionString))
             throw new ArgumentException("Empty connection string", nameof(smtpConnectionString));
@@ -21,7 +23,7 @@ public class SmtpConnectionBuilder
         _parse(smtpConnectionString);
     }
 
-    private void _parse(string smtpConnectionString)
+    private void _parse([InfrastructureSecret] string smtpConnectionString)
     {
         var span = smtpConnectionString.AsSpan();
 
@@ -68,6 +70,7 @@ public class SmtpConnectionBuilder
         }
     }
 
+    [InfrastructureSecret]
     public string ConnectionString
     {
         get
@@ -82,7 +85,9 @@ public class SmtpConnectionBuilder
 
     public string? Server { get; set; }
     public int? Port { get; set; }
+    [InfrastructureSecret]
     public string? Username { get; set; }
+    [InfrastructureSecret]
     public string? Password { get; set; }
     public bool UseSsl { get; set; }
     public string? From { get; set; }

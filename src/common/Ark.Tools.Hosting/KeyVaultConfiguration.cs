@@ -1,3 +1,5 @@
+using Ark.Tools.Compliance;
+
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
@@ -9,7 +11,7 @@ public static class KeyVaultConfigurationExtensions
 {
     private sealed class ArkKeyVaultSecretManager : KeyVaultSecretManager
     {
-        public override string GetKey(KeyVaultSecret secret)
+        public override string GetKey([InfrastructureSecret] KeyVaultSecret secret)
         {
             return base.GetKey(secret).Replace('-', '.');
         }

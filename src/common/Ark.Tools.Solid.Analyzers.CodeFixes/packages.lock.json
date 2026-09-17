@@ -221,9 +221,6 @@
           "System.Runtime.CompilerServices.Unsafe": "4.5.3"
         }
       },
-      "ark.tools.compliance": {
-        "type": "Project"
-      },
       "ark.tools.solid.analyzers": {
         "type": "Project"
       },

@@ -20,7 +20,7 @@
 
   <PropertyGroup>
     <_ArkToolsComplianceProjectName>$(MSBuildProjectName)</_ArkToolsComplianceProjectName>
-    <_ArkToolsComplianceProjectIsAnalyzerOrGenerator Condition="$([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.Analyzers')) or $([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.Generators')) or '$(MSBuildProjectName)' == 'Ark.Tools.Build' or '$(MSBuildProjectName)' == 'Ark.Tools.Sdk'">true</_ArkToolsComplianceProjectIsAnalyzerOrGenerator>
+    <_ArkToolsComplianceProjectIsAnalyzerOrGenerator Condition="$([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.Analyzers')) or $([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.CodeFixes')) or $([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.Generators')) or '$(MSBuildProjectName)' == 'Ark.Tools.Build' or '$(MSBuildProjectName)' == 'Ark.Tools.Sdk'">true</_ArkToolsComplianceProjectIsAnalyzerOrGenerator>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(MSBuildProjectExtension)' == '.csproj' and '$(_ArkToolsComplianceProjectIsAnalyzerOrGenerator)' != 'true'">
