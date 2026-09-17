@@ -18,7 +18,9 @@ services.AddArkSolidProcessors(container);
 ```
 
 The bridge resolves the application processors inside an async scope and reuses
-an active scope. It does not replace existing Microsoft DI registrations.
+an active scope. SimpleInjector remains authoritative for handler
+registrations, decorators, and verification; the bridge does not replace
+existing Microsoft DI registrations.
 
 You do **not** need this chapter when your receiver is an Azure Function: the
 generated trigger and the Functions host own that loop. See
