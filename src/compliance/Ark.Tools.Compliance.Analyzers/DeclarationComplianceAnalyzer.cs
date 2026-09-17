@@ -63,6 +63,19 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 start.Compilation,
                 options);
 
+            if (facts._classificationAttributes.IsDefaultOrEmpty
+                && facts._complianceReviewedAttribute is null
+                && facts._notPersonalDataAttribute is null
+                && facts._sensitiveValueInterface is null
+                && facts._sensitiveValueObjectAttribute is null
+                && facts._sqlColumnPolicyAttribute is null
+                && facts._sqlDataPolicyAttribute is null
+                && facts._vogenValueObjectAttribute is null
+                && !facts._telemetryRequiresRegistration)
+            {
+                return;
+            }
+
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
             var hasRedactionRegistration = 0;

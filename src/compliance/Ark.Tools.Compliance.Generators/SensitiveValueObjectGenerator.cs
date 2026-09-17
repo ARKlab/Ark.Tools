@@ -163,7 +163,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
     {
         return (namespaceName is null
             ? typeName
-            : namespaceName.Replace('.', '_') + "." + typeName)
+            : namespaceName + "." + typeName)
             + ".SensitiveValueObject.g.cs";
     }
 
