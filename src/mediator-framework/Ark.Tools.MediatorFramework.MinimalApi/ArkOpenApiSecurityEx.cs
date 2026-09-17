@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.OpenApi;
@@ -17,11 +19,11 @@ public sealed record ArkOpenApiSecuritySettings
     /// <param name="clientId">The public OAuth client identifier.</param>
     /// <param name="scopes">The scopes exposed by the authorization server.</param>
     public ArkOpenApiSecuritySettings(
-        Uri authorizationUrl,
-        Uri tokenUrl,
-        Uri openIdConnectUrl,
-        string clientId,
-        IReadOnlyDictionary<string, string> scopes)
+        [NotPersonalData] Uri authorizationUrl,
+        [NotPersonalData] Uri tokenUrl,
+        [NotPersonalData] Uri openIdConnectUrl,
+        [NotPersonalData] string clientId,
+        [NotPersonalData] IReadOnlyDictionary<string, string> scopes)
     {
         AuthorizationUrl = authorizationUrl ?? throw new ArgumentNullException(nameof(authorizationUrl));
         TokenUrl = tokenUrl ?? throw new ArgumentNullException(nameof(tokenUrl));
@@ -35,18 +37,23 @@ public sealed record ArkOpenApiSecuritySettings
     }
 
     /// <summary>Gets the OAuth2 authorization endpoint.</summary>
+    [NotPersonalData]
     public Uri AuthorizationUrl { get; }
 
     /// <summary>Gets the OAuth2 token endpoint.</summary>
+    [NotPersonalData]
     public Uri TokenUrl { get; }
 
     /// <summary>Gets the OpenID Connect discovery endpoint.</summary>
+    [NotPersonalData]
     public Uri OpenIdConnectUrl { get; }
 
     /// <summary>Gets the public OAuth client identifier.</summary>
+    [NotPersonalData]
     public string ClientId { get; }
 
     /// <summary>Gets the OpenAPI scopes.</summary>
+    [NotPersonalData]
     public IReadOnlyDictionary<string, string> Scopes { get; }
 }
 

@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using Microsoft.AspNetCore.Http;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
@@ -44,7 +46,7 @@ public static class ArkETag
     /// Whether <c>If-None-Match</c> should be evaluated for this response.
     /// </param>
     /// <returns>A 304 result when the request matches; otherwise <see langword="null"/>.</returns>
-    public static IResult? ApplyResponseETag(HttpContext context, string? token, bool conditionalGet)
+    public static IResult? ApplyResponseETag(HttpContext context, [NotPersonalData] string? token, bool conditionalGet)
     {
         ArgumentNullException.ThrowIfNull(context);
         if (string.IsNullOrEmpty(token))
