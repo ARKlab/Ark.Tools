@@ -135,12 +135,13 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
     {
         var columns = new SortedDictionary<string, string>(StringComparer.Ordinal);
         var diagnostics = type.Diagnostics.ToBuilder();
+        var sql = new StringBuilder();
         foreach (var member in type.Columns)
         {
             var target = _identifier(member.Schema) + "." + _identifier(member.Table);
             var columnIdentifier = _identifier(member.Column);
             var key = target + "." + columnIdentifier;
-            var sql = new StringBuilder();
+            sql.Clear();
             if (member.Information is not null)
             {
                 sql.Append("ADD SENSITIVITY CLASSIFICATION TO ").Append(key)
