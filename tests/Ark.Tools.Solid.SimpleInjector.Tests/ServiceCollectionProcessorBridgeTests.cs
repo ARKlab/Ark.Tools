@@ -154,6 +154,17 @@ public sealed class ServiceCollectionProcessorBridgeTests
     }
 
     [TestMethod]
+    public async Task AddArkSolidProcessors_exposes_simpleinjector_handler_registrations_to_generated_host_checks()
+    {
+        await using var container = _createContainer();
+        await using var provider = _createProvider(container);
+        var verifier = provider.GetRequiredService<IMediatorHandlerRegistrationVerifier>();
+
+        verifier.IsRegistered(typeof(IRequestHandler<TestRequest, int>)).Should().BeTrue();
+        verifier.IsRegistered(typeof(IRequestHandler<FailingRequest, string>)).Should().BeFalse();
+    }
+
+    [TestMethod]
     public async Task AddArkSolidProcessors_allows_late_simpleinjector_processor_registrations()
     {
         await using var container = _createEmptyContainer();

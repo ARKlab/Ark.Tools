@@ -34,10 +34,20 @@ public static class ArkSolidServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(container);
 
         ScopedProcessorExecution.EnsureSupported(container);
+        _tryAddHandlerRegistrationVerifier(services, container);
         _tryAddRequestProcessorBridge(services, container);
         _tryAddQueryProcessorBridge(services, container);
         _tryAddCommandProcessorBridge(services, container);
         return services;
+    }
+
+    private static void _tryAddHandlerRegistrationVerifier(IServiceCollection services, Container container)
+    {
+        if (services.Any(static descriptor => descriptor.ServiceType == typeof(IMediatorHandlerRegistrationVerifier)))
+            return;
+
+        services.AddSingleton<IMediatorHandlerRegistrationVerifier>(
+            new SimpleInjectorHandlerRegistrationVerifier(container));
     }
 
     private static void _tryAddRequestProcessorBridge(IServiceCollection services, Container container)
@@ -62,5 +72,15 @@ public static class ArkSolidServiceCollectionExtensions
             return;
 
         services.AddSingleton<ICommandProcessor>(_ => new ScopeAwareCommandProcessor(container, () => container.GetInstance<ICommandProcessor>()));
+    }
+
+    private sealed class SimpleInjectorHandlerRegistrationVerifier(Container container)
+        : IMediatorHandlerRegistrationVerifier
+    {
+        public bool IsRegistered(Type handlerType)
+        {
+            ArgumentNullException.ThrowIfNull(handlerType);
+            return container.GetRegistration(handlerType, throwOnFailure: false) is not null;
+        }
     }
 }

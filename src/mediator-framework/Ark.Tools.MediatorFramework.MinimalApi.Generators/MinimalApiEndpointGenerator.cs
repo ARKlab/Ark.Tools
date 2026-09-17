@@ -993,7 +993,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine();
             sb.AppendLine("        private static void VerifyMinimalApiHandlerRegistration(global::System.IServiceProvider services, global::System.Type handlerType, string contract, global::System.Collections.Generic.List<string> missingHandlers)");
             sb.AppendLine("        {");
-            sb.AppendLine("            if (services.GetService(handlerType) is null)");
+            sb.AppendLine("            var handlerVerifier = services.GetService<global::Ark.Tools.Solid.IMediatorHandlerRegistrationVerifier>();");
+            sb.AppendLine("            if (services.GetService(handlerType) is null && (handlerVerifier is null || !handlerVerifier.IsRegistered(handlerType)))");
             sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
