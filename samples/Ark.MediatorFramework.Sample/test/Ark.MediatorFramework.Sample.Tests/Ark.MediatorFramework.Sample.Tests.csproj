@@ -16,10 +16,11 @@
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
     <PackageReference Include="NodaTime.Testing" />
-    <PackageReference Include="Ark.Tools.Rebus" Version="999.9.9" />
-    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" Version="999.9.9" />
-    <PackageReference Include="Ark.Tools.Reqnroll" Version="999.9.9" />
-    <PackageReference Include="Ark.Tools.Solid.SimpleInjector" Version="999.9.9" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
+    <PackageReference Include="Ark.Tools.Reqnroll" />
+    <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +40,6 @@
       <Aliases>AuditFunctions</Aliases>
     </ProjectReference>
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.OutboxProcessor\Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
-    <ProjectReference Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Messaging.Azure\Ark.Tools.MediatorFramework.Messaging.Azure.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </ItemGroup>

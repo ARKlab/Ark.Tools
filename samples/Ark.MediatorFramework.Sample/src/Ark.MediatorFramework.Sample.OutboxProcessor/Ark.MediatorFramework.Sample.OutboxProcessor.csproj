@@ -13,10 +13,10 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" Version="999.9.9" />
-    <PackageReference Include="Ark.Tools.Outbox" Version="999.9.9" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
+    <PackageReference Include="Ark.Tools.Outbox" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
-    <ProjectReference Include="..\..\..\..\src\mediator-framework\Ark.Tools.MediatorFramework.Messaging.Azure\Ark.Tools.MediatorFramework.Messaging.Azure.csproj" />
   </ItemGroup>
 
 </Project>
