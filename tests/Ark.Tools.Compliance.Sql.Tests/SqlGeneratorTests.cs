@@ -73,6 +73,39 @@ public sealed class SqlGeneratorTests
             .Should().BeLessThan(original.Sql.Single().IndexOf(".[z]", StringComparison.Ordinal));
     }
 
+    /// <summary>SQL generator inputs are cached as immutable specifications rather than Roslyn symbols.</summary>
+    [TestMethod]
+    public void GeneratorCachesImmutableSpecifications()
+    {
+        var compilation = SqlTestCompilation._create("""
+            [SqlDataPolicy(Table = "Customers")]
+            public class Customer
+            {
+                [PersonalData, SqlColumnPolicy("email", StoragePolicy.Masked)]
+                public string Email { get; set; } = "";
+            }
+            """);
+        var options = new GeneratorDriverOptions(
+            IncrementalGeneratorOutputKind.None,
+            trackIncrementalGeneratorSteps: true);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new SqlPolicyGenerator().AsSourceGenerator()],
+            driverOptions: options);
+
+        driver = driver.RunGenerators(compilation);
+        driver = driver.RunGenerators(compilation);
+
+        var outputs = driver.GetRunResult().Results
+            .SelectMany(static result => result.TrackedSteps.Values)
+            .SelectMany(static runs => runs)
+            .SelectMany(static run => run.Outputs);
+        outputs.Select(static output => output.Value)
+            .Any(static value => value is INamedTypeSymbol or ImmutableArray<INamedTypeSymbol>)
+            .Should().BeFalse();
+        outputs.Select(static output => output.Reason)
+            .Should().Contain(IncrementalStepRunReason.Cached);
+    }
+
     /// <summary>Unresolved variables are preserved for SQLCMD or build-time substitution.</summary>
     [TestMethod]
     public void TemplatePreservesSqlcmdVariables()

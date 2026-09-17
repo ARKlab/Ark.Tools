@@ -337,6 +337,37 @@ public sealed class ComplianceFoundationTests
         uncategorized.Should().Throw<ArgumentException>();
     }
 
+    /// <summary>Sensitive value generator inputs are cached as immutable specifications.</summary>
+    [TestMethod]
+    public void SensitiveValueGeneratorCachesUnchangedInputs()
+    {
+        var compilation = _createCompilation("""
+            [Ark.Tools.Compliance.SensitiveValueObject<string>(Ark.Tools.Compliance.ArkRedaction.Erase)]
+            public readonly partial struct GeneratedSensitiveValue
+            {
+            }
+            """);
+        var options = new GeneratorDriverOptions(
+            IncrementalGeneratorOutputKind.None,
+            trackIncrementalGeneratorSteps: true);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new Ark.Tools.Compliance.Generators.SensitiveValueObjectGenerator().AsSourceGenerator()],
+            driverOptions: options);
+
+        driver = driver.RunGenerators(compilation);
+        driver = driver.RunGenerators(compilation);
+
+        var outputs = driver.GetRunResult().Results
+            .SelectMany(static result => result.TrackedSteps.Values)
+            .SelectMany(static runs => runs)
+            .SelectMany(static run => run.Outputs)
+            .ToArray();
+        outputs.Any(static output => output.Value is INamedTypeSymbol)
+            .Should().BeFalse();
+        outputs.Select(static output => output.Reason)
+            .Should().Contain(IncrementalStepRunReason.Cached);
+    }
+
     private static string _runGenerator(string source)
     {
         var compilation = _createCompilation(source);
