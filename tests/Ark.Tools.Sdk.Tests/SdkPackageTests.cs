@@ -107,7 +107,7 @@ public sealed class SdkPackageTests
             fixtureRoot, feed, "enabled", "Consumer.csproj",
             _createSdkCSharpProject("<EnableArkToolsCompliance>true</EnableArkToolsCompliance>"));
         Assert.AreEqual("Enforce", _getProperty(enabled, "ArkComplianceMode"));
-        StringAssert.Contains(_getProperty(enabled, "WarningsNotAsErrors"), "ARKPII001", StringComparison.Ordinal);
+        Assert.AreEqual(string.Empty, _getProperty(enabled, "WarningsNotAsErrors") ?? string.Empty);
         CollectionAssert.Contains(_getArkBuildItemFileNames(enabled, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
         CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(enabled, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
         CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(enabled, "AdditionalFiles"), "ComplianceSinks.Ark.txt");

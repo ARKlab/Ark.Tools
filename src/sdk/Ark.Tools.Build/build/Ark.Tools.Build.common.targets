@@ -10,11 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' == 'true'">
-    <!-- The name-based heuristic must not become a build error under TreatWarningsAsErrors.
-         The MSBuild engine list is needed too: MSBuildTreatWarningsAsErrors re-elevates
-         compiler-demoted warnings at the logging layer. -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);ARKPII001</WarningsNotAsErrors>
-    <MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);ARKPII001</MSBuildWarningsNotAsErrors>
+    <!-- Compliance warnings are intentionally build blockers; treat the heuristic rule as a real failure. -->
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">
