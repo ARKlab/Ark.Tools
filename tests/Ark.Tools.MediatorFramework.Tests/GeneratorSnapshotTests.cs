@@ -1347,6 +1347,10 @@ public sealed class GeneratorSnapshotTests
             public sealed class SecureEndpoint : IQuery<string>
             {
             }
+            [HttpEndpoint("GET", "/secure-again")]
+            public sealed class SecureEndpointAgain : IQuery<string>
+            {
+            }
             [HttpEndpoint("GET", "/public", AllowAnonymous = true)]
             public sealed class PublicEndpoint : IQuery<string>
             {
@@ -1363,6 +1367,10 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("configure?.Invoke(group);");
         generated.Should().Contain("return group;");
         generated.Should().Contain("Missing mediator handler registrations");
+        generated.Should().Contain(
+            "typeof(global::Ark.Tools.Solid.IQueryHandler<global::SecureEndpoint, string>)");
+        generated.Should().Contain(
+            "typeof(global::Ark.Tools.Solid.IQueryHandler<global::SecureEndpointAgain, string>)");
         generated.Should().Contain(
             "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(httpContext.RequestServices)");
         generated.Should().NotContain("SimpleInjector");
@@ -1528,6 +1536,10 @@ public sealed class GeneratorSnapshotTests
             public sealed class DeleteCommand : ICommand<DeleteCommand>
             {
             }
+            [GrpcMethod("DeleteAgain")]
+            public sealed class DeleteAgainCommand : ICommand<DeleteAgainCommand>
+            {
+            }
             """);
 
         generated.Should().Contain("Google.Protobuf.WellKnownTypes.Empty");
@@ -1535,6 +1547,10 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("MapArkGrpcServices<TContext>");
         generated.Should().Contain("await processor.ExecuteAsync<global::DeleteCommand>");
         generated.Should().Contain("Missing mediator handler registrations");
+        generated.Should().Contain(
+            "typeof(global::Ark.Tools.Solid.ICommandHandler<global::DeleteCommand>)");
+        generated.Should().Contain(
+            "typeof(global::Ark.Tools.Solid.ICommandHandler<global::DeleteAgainCommand>)");
         generated.Should().Contain("private readonly global::System.IServiceProvider _services;");
         generated.Should().Contain(
             "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(_services)");

@@ -8,10 +8,84 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Composes messaging steps into continuation pipelines.</summary>
 public static class MessagingPipelineInvoker
 {
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2072",
-        Justification = "Messaging step types are host-owned concrete registrations reviewed at composition time.")]
+    /// <summary>Invokes an incoming pipeline, resolving each declared step per invocation.</summary>
+    /// <param name="orderedStepTypes">The step types in execution order.</param>
+    /// <param name="resolveStep">Resolves a step type from the application container.</param>
+    /// <param name="context">The per-invocation context.</param>
+    /// <param name="terminal">The terminal pipeline operation.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    public static async Task InvokeIncomingAsync(
+        IReadOnlyList<Type> orderedStepTypes,
+        Func<Type, object> resolveStep,
+        MessagingIncomingContext context,
+        Func<Task> terminal,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(orderedStepTypes);
+        ArgumentNullException.ThrowIfNull(resolveStep);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(terminal);
+        var next = terminal;
+        for (var index = orderedStepTypes.Count - 1; index >= 0; index--)
+        {
+            var stepType = orderedStepTypes[index]
+                ?? throw new ArgumentException("Pipeline step types cannot be null.", nameof(orderedStepTypes));
+            var continuation = next;
+            next = async () =>
+            {
+                var step = resolveStep(stepType) as IMessagingIncomingStep
+                    ?? throw new InvalidOperationException(
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            "Resolved pipeline step '{0}' does not implement {1}.",
+                            stepType.FullName ?? stepType.Name,
+                            nameof(IMessagingIncomingStep)));
+                await step.ProcessAsync(context, continuation, cancellationToken).ConfigureAwait(false);
+            };
+        }
+
+        await next().ConfigureAwait(false);
+    }
+
+    /// <summary>Invokes an outgoing pipeline, resolving each declared step per invocation.</summary>
+    /// <param name="orderedStepTypes">The step types in execution order.</param>
+    /// <param name="resolveStep">Resolves a step type from the application container.</param>
+    /// <param name="context">The per-invocation context.</param>
+    /// <param name="terminal">The terminal pipeline operation.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    public static async Task InvokeOutgoingAsync(
+        IReadOnlyList<Type> orderedStepTypes,
+        Func<Type, object> resolveStep,
+        MessagingOutgoingContext context,
+        Func<Task> terminal,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(orderedStepTypes);
+        ArgumentNullException.ThrowIfNull(resolveStep);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(terminal);
+        var next = terminal;
+        for (var index = orderedStepTypes.Count - 1; index >= 0; index--)
+        {
+            var stepType = orderedStepTypes[index]
+                ?? throw new ArgumentException("Pipeline step types cannot be null.", nameof(orderedStepTypes));
+            var continuation = next;
+            next = async () =>
+            {
+                var step = resolveStep(stepType) as IMessagingOutgoingStep
+                    ?? throw new InvalidOperationException(
+                        string.Format(
+                            CultureInfo.InvariantCulture,
+                            "Resolved pipeline step '{0}' does not implement {1}.",
+                            stepType.FullName ?? stepType.Name,
+                            nameof(IMessagingOutgoingStep)));
+                await step.ProcessAsync(context, continuation, cancellationToken).ConfigureAwait(false);
+            };
+        }
+
+        await next().ConfigureAwait(false);
+    }
+
     internal static IMessagingIncomingStep[] _resolveIncomingSteps(
         IServiceProvider serviceProvider,
         IReadOnlyList<Type> orderedStepTypes)
@@ -25,10 +99,6 @@ public static class MessagingPipelineInvoker
         return steps;
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2072",
-        Justification = "Messaging step types are host-owned concrete registrations reviewed at composition time.")]
     internal static IMessagingOutgoingStep[] _resolveOutgoingSteps(
         IServiceProvider serviceProvider,
         IReadOnlyList<Type> orderedStepTypes)
@@ -86,10 +156,6 @@ public static class MessagingPipelineInvoker
         await next().ConfigureAwait(false);
     }
 
-    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2067",
-        Justification = "Messaging step types are host-owned concrete registrations reviewed at composition time.")]
     private static TStep _resolveStep<TStep>(
         IServiceProvider serviceProvider,
         Type stepType,
@@ -100,7 +166,7 @@ public static class MessagingPipelineInvoker
         ArgumentNullException.ThrowIfNull(stepType);
         ArgumentException.ThrowIfNullOrEmpty(contractName);
 
-        var step = ActivatorUtilities.GetServiceOrCreateInstance(serviceProvider, stepType) as TStep;
+        var step = serviceProvider.GetRequiredService(stepType) as TStep;
         if (step is null)
         {
             throw new InvalidOperationException(

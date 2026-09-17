@@ -533,6 +533,31 @@ public sealed partial class MessagingRuntimeTests
     }
 
     [TestMethod]
+    public async Task PublicPipelineInvokerResolvesStepsThroughTheCompatibilityCallback()
+    {
+        var order = new List<string>();
+        var context = new MessagingOutgoingContext(
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            "books");
+        var step = new FirstRecordingOutgoingStep(order);
+
+        await MessagingPipelineInvoker.InvokeOutgoingAsync(
+            new[] { typeof(FirstRecordingOutgoingStep) },
+            type => type == typeof(FirstRecordingOutgoingStep)
+                ? step
+                : throw new InvalidOperationException(),
+            context,
+            () =>
+            {
+                order.Add("terminal");
+                return Task.CompletedTask;
+            },
+            CancellationToken.None).ConfigureAwait(false);
+
+        order.Should().Equal("first", "terminal");
+    }
+
+    [TestMethod]
     public async Task UserContextStepsRoundTripClaims()
     {
         ClaimsPrincipal? restored = null;

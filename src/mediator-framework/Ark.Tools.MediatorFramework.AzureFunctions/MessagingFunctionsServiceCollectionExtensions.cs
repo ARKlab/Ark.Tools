@@ -11,6 +11,7 @@ using Azure.Storage.Queues;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 using SimpleInjector;
@@ -121,6 +122,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         _validateHandlers(container, descriptor);
         _registerSteps(container, manifest.IncomingSteps);
         _registerSteps(container, manifest.OutgoingSteps);
+        services.TryAddSingleton<IMessagingPipelineProcessor>(
+            _ => new SimpleInjectorMessagingPipelineProcessor(container));
         management ??= transport as IMessagingTransportManagement;
         services._addArkMessagingParticipant(
             descriptor,
