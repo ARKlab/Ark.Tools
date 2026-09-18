@@ -880,9 +880,9 @@
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.0.12, )",
-          "Microsoft.Extensions.Compliance.Redaction": "[10.0.12, )",
-          "Microsoft.Extensions.Telemetry": "[10.0.12, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )",
+          "Microsoft.Extensions.Compliance.Redaction": "[10.1.0, )",
+          "Microsoft.Extensions.Telemetry": "[10.1.0, )"
         }
       },
       "ark.tools.compliance.nlog": {
