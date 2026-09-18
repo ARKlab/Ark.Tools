@@ -7,7 +7,9 @@ using Ark.MediatorFramework.Sample.API.JsonContext;
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
 using Ark.MediatorFramework.Sample.Application.JsonContext;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.MediatorFramework.Grpc;
@@ -86,7 +88,11 @@ public sealed class SampleStartup
         IHostEnvironment environment,
         IConfiguration? configuration = null,
         bool useSqlStore = true,
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret] string? connectionString = null,
+#else
         string? connectionString = null,
+#endif
         bool configureFallbackPolicy = true,
         ISampleDataContextFactory? sharedDataContextFactory = null)
     {

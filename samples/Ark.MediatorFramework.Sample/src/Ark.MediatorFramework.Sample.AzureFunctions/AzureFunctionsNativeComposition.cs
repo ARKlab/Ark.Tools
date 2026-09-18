@@ -7,6 +7,10 @@ using Ark.Tools.Solid;
 using Ark.MediatorFramework.Sample.Application.Messages;
 using Ark.MediatorFramework.Sample.Application.Services;
 
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
+
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
 
@@ -26,7 +30,11 @@ public static class AzureFunctionsNativeComposition
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
         bool useSqlStore = false,
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret] string? connectionString = null,
+#else
         string? connectionString = null,
+#endif
         bool registerBookPrintNotificationHandler = true,
         IBookPrintNotificationSink? bookPrintNotificationSink = null,
         IBookPrintAuditSink? bookPrintAuditSink = null)

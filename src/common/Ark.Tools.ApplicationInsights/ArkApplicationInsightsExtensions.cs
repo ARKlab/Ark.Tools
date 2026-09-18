@@ -93,7 +93,9 @@ public static class ArkApplicationInsightsExtensions
                         {
                             // Pre-filter processor runs first to drop noisy spans before sampling.
                             tracerBuilder.AddProcessor(new ArkPreFilterProcessor());
+#if NET10_0_OR_GREATER
                             tracerBuilder.AddArkComplianceRedaction();
+#endif
 
                             // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
                             tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));

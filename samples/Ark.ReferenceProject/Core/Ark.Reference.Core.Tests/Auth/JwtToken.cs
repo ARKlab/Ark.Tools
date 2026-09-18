@@ -13,7 +13,11 @@ public sealed class JwtToken
 #endif
     private readonly JwtSecurityToken _token;
 
-    internal JwtToken(JwtSecurityToken token)
+    internal JwtToken(
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret]
+#endif
+        JwtSecurityToken token)
     {
         this._token = token;
     }

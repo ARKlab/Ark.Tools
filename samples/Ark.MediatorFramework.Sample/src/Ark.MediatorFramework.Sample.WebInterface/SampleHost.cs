@@ -7,6 +7,10 @@ using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.MediatorFramework.Messaging.OTel;
 using Ark.Tools.NLog;
 
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
+
 using Azure.Identity;
 
 namespace Ark.MediatorFramework.Sample.WebInterface;
@@ -30,7 +34,11 @@ public static class SampleHost
         SimpleInjector.Container container,
         Rebus.Transport.InMem.InMemNetwork network,
         bool useSqlStore = true,
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret] string? connectionString = null,
+#else
         string? connectionString = null,
+#endif
         bool configureFallbackPolicy = true,
         ISampleDataContextFactory? sharedDataContextFactory = null)
     {

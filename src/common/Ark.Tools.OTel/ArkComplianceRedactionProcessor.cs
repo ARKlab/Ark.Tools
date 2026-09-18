@@ -2,9 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 #if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
-
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
@@ -20,13 +17,13 @@ namespace Ark.Tools.OTel;
 /// </remarks>
 public sealed class ArkComplianceRedactionProcessor : BaseProcessor<Activity>
 {
-    private readonly PiiScanner _scanner;
+    private readonly global::Ark.Tools.Compliance.PiiScanner _scanner;
 
     /// <summary>Initializes a span processor with PII scanning disabled by default.</summary>
     /// <param name="options">Optional policy overrides.</param>
-    public ArkComplianceRedactionProcessor(ComplianceRedactionOptions? options = null)
+    public ArkComplianceRedactionProcessor(global::Ark.Tools.Compliance.ComplianceRedactionOptions? options = null)
     {
-        _scanner = new(options is null ? PiiScanMode.Off : options.PiiScan);
+        _scanner = new(options is null ? global::Ark.Tools.Compliance.PiiScanMode.Off : options.PiiScan);
     }
 
     /// <inheritdoc />
@@ -55,9 +52,10 @@ public static class ArkComplianceRedactionExtensions
     /// <param name="options">Optional policy overrides.</param>
     /// <returns>The tracing builder.</returns>
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The tracing provider owns and disposes registered processors.")]
-    public static TracerProviderBuilder AddArkComplianceRedaction(this TracerProviderBuilder builder, ComplianceRedactionOptions? options = null)
+    public static TracerProviderBuilder AddArkComplianceRedaction(this TracerProviderBuilder builder, global::Ark.Tools.Compliance.ComplianceRedactionOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         return builder.AddProcessor(new ArkComplianceRedactionProcessor(options));
     }
 }
+#endif

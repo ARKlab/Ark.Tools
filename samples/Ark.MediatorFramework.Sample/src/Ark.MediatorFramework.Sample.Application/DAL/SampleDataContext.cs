@@ -62,6 +62,9 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Reads bounded activity for a book and reader.</summary>
     Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         Guid bookId,
+#if NET10_0_OR_GREATER
+        [PersonalData]
+#endif
         string userId,
         int limit,
         CancellationToken ctk = default);
@@ -411,6 +414,9 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
     public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         Guid bookId,
+#if NET10_0_OR_GREATER
+        [PersonalData]
+#endif
         string userId,
         int limit,
         CancellationToken ctk = default)

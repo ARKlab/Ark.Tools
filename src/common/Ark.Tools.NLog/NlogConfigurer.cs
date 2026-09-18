@@ -2,8 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 #if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 using Ark.Tools.Compliance.NLog;
+#endif
 using Ark.Tools.NLog.Slack;
 
 using Microsoft.Data.SqlClient;
@@ -195,7 +195,9 @@ public static class NLogConfigurer
     public sealed class Configurer
     {
         internal readonly LoggingConfiguration _config = new();
-        private PiiScanner? _piiScanner = new();
+#if NET10_0_OR_GREATER
+private global::Ark.Tools.Compliance.PiiScanner? _piiScanner = new();
+#endif
         public string AppName { get; }
 
         internal Configurer(string appName)
@@ -586,14 +588,15 @@ VALUES
             return this;
         }
 
+#if NET10_0_OR_GREATER
         /// <summary>Overrides the default runtime redaction policy.</summary>
         /// <param name="configure">Optional overrides of fail-closed defaults.</param>
         /// <returns>The original configurer.</returns>
-        public Configurer WithComplianceRedaction(Action<ComplianceRedactionOptions>? configure = null)
+        public Configurer WithComplianceRedaction(Action<global::Ark.Tools.Compliance.ComplianceRedactionOptions>? configure = null)
         {
-            var options = new ComplianceRedactionOptions();
+            var options = new global::Ark.Tools.Compliance.ComplianceRedactionOptions();
             configure?.Invoke(options);
-            _piiScanner = new PiiScanner(options.PiiScan);
+            _piiScanner = new global::Ark.Tools.Compliance.PiiScanner(options.PiiScan);
             return this;
         }
 
@@ -604,6 +607,7 @@ VALUES
             _piiScanner = null;
             return this;
         }
+#endif
 
         private static bool _isVisualStudioAttached()
         {
@@ -627,7 +631,9 @@ VALUES
             LogManager.ThrowExceptions = _isVisualStudioAttached();
             LogManager.ThrowConfigExceptions = true;
             InternalLogger.LogToConsole = true;
+#if NET10_0_OR_GREATER
             _configureCompliance();
+#endif
             // this is last, so that ThrowConfigExceptions is respected on Config change
             LogManager.Configuration = _config;
 
@@ -635,17 +641,21 @@ VALUES
                 LogManager.GlobalThreshold = LogLevel.Info;
         }
 
+#if NET10_0_OR_GREATER
         private static void _configureCompliance()
         {
             LogManager.Setup()
                 .SetupSerialization(static builder => builder.UseComplianceRedaction());
         }
+#endif
 
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "This layout factory must keep the compliance-aware instance hook for net10 builds.")]
         private Layout _createTextLineLayout()
         {
             return _createScannedLayout(Layout.FromString(TextLineLayout));
         }
 
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "This layout factory must keep the compliance-aware instance hook for net10 builds.")]
         private Layout _createMessageLayout()
         {
             return _createScannedLayout(Layout.FromMethod(
@@ -653,6 +663,7 @@ VALUES
                 LayoutRenderOptions.ThreadAgnostic));
         }
 
+#if NET10_0_OR_GREATER
         private Layout _createScannedLayout(Layout layout)
         {
             return new ComplianceLayout(layout, () => _piiScanner);
@@ -663,6 +674,17 @@ VALUES
             var text = value?.ToString();
             return text is null ? null : _piiScanner?.Scan(text) ?? text;
         }
+#else
+        private static Layout _createScannedLayout(Layout layout)
+        {
+            return layout;
+        }
+
+        private static string? _scanSlackValue(object? value)
+        {
+            return value?.ToString();
+        }
+#endif
     }
 
     [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]

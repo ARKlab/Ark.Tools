@@ -6,6 +6,10 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
+
 using NodaTime;
 
 using Rebus.Config;
@@ -43,7 +47,11 @@ public static class RebusProcessorComposition
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret] string? connectionString = null,
+#else
         string? connectionString = null,
+#endif
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,

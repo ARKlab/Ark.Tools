@@ -14,18 +14,15 @@ namespace Ark.Tools.NLog;
 public static class NLogConfigurerConfigurationManager
 {
 #pragma warning disable ARKPII001 // SMTP mail addresses are intentionally named as mailFrom/mailTo in the configuration API and are classified at the call site.
-    public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, 
+    public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName,
 #if NET10_0_OR_GREATER
     [PersonalData]
 #endif
- string mailFrom, 
+    string mailFrom,
 #if NET10_0_OR_GREATER
     [PersonalData]
 #endif
- string mailTo, bool async = true)
-    {
-#else
-    public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
+    string mailTo, bool async = true)
     {
         var smtp = ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString
             ?? new SmtpConnectionBuilder()

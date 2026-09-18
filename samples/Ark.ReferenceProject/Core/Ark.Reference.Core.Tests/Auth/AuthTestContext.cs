@@ -2,10 +2,6 @@ using Ark.Reference.Common.Auth;
 using Ark.Reference.Core.Common.Auth;
 using Ark.Tools.Compliance;
 
-#if NET10_0_OR_GREATER
-using Microsoft.Extensions.Compliance.Classification;
-#endif
-
 using Flurl.Http;
 
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +17,9 @@ public class AuthTestContext
     [InfrastructureSecret]
 #endif
     public const string AUTH0_APIKEY = "banana";
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     public string Token => _getToken();
 
 #if NET10_0_OR_GREATER
@@ -56,7 +55,11 @@ public class AuthTestContext
     }
 
     [Given("User email '(.*)'")]
-    public void SetUserEmail(string userEmail)
+    public void SetUserEmail(
+#if NET10_0_OR_GREATER
+        [PersonalData]
+#endif
+        string userEmail)
     {
         _builder.RemoveClaim("emails");
         _builder.AddClaim("emails", userEmail);

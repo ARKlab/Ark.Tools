@@ -4,9 +4,7 @@
 using AwesomeAssertions;
 
 #if NET10_0_OR_GREATER
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 #endif
 
 using System.Diagnostics;
@@ -419,6 +417,9 @@ public sealed partial class AzureFunctionsBoundaryTests
             string logPath,
             Channel<string> logLines,
             Task logPumpTask,
+#if NET10_0_OR_GREATER
+            [NotPersonalData("Test host base address is infrastructure metadata, not personal data.")]
+#endif
             Uri baseAddress)
         {
             _process = process;

@@ -200,16 +200,6 @@
         "resolved": "3.1.8",
         "contentHash": "Vm4g0cR4YRKRchEOmMJ0uVFU6yxdg7cJa2KHv3SUAHEsdYKvMpHMF5A1hZfsix89ymD5cmuzRnw9a6dKMcvq+Q=="
       },
-      "Microsoft.Extensions.AmbientMetadata.Application": {
-        "type": "Transitive",
-        "resolved": "10.1.0",
-        "contentHash": "+T2Ax2fgw7T7nlhio+ZtgSyYGfevHCOXNPqO0vxA+f2HmbtfwAnIwHEE/jm1/4uFRDDP8PEENpxAhbucg+wUWg=="
-      },
-      "Microsoft.Extensions.DependencyInjection.AutoActivation": {
-        "type": "Transitive",
-        "resolved": "10.1.0",
-        "contentHash": "O052pqWkdVNXaj3n9E4x6nLL7sG860434gLh7XHhFp/KpyAY9/rCk9NJUinYfQnDkAA8UgCHimVZz+lTjnEwzQ=="
-      },
       "Microsoft.NET.StringTools": {
         "type": "Transitive",
         "resolved": "17.11.4",
@@ -228,54 +218,11 @@
         "resolved": "10.0.6",
         "contentHash": "1Ttf7dyLoKXks2bVBVULmDPOSjxaMEE3JRTe/KGEJl3rfepCc4ipUEGMIKa/iBKLSN8rjEedF8Qv3UCtiwaDBw=="
       },
-      "ark.tools.compliance": {
-        "type": "Project",
-        "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )",
-          "Microsoft.Extensions.Compliance.Redaction": "[10.1.0, )",
-          "Microsoft.Extensions.Telemetry": "[10.1.0, )"
-        }
-      },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
           "NodaTime": "[3.3.3, )",
           "System.Linq.Async": "[7.0.1, )"
-        }
-      },
-      "Microsoft.Extensions.Compliance.Abstractions": {
-        "type": "CentralTransitive",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "M3JWrgZMkVzyEybZzNkTiC/e8U1ipXTi8xm8bj+PHHp4AcEmhmIEqnxRS0VHVCKZjLkOPt2hY2CIisUFQ6gqLA=="
-      },
-      "Microsoft.Extensions.Compliance.Redaction": {
-        "type": "CentralTransitive",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "hr34RoU4bGHINca44zlvyG3KGg+R0Wmna7Lzic6IcCBP3EwdUgCHpIIhzENMrq9e6wmw5Fs1kwweig1AFnmgJw==",
-        "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "10.1.0"
-        }
-      },
-      "Microsoft.Extensions.Telemetry": {
-        "type": "CentralTransitive",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "OFnpwOBRZZXMMySvM7eJsEQ87ED5SaRbxHg/an1u89MWHw0mXUUbx5WPb5XFN0uS8kJPe6M+ZMRYwRP0nJeDPA==",
-        "dependencies": {
-          "Microsoft.Extensions.AmbientMetadata.Application": "10.1.0",
-          "Microsoft.Extensions.DependencyInjection.AutoActivation": "10.1.0",
-          "Microsoft.Extensions.Telemetry.Abstractions": "10.1.0"
-        }
-      },
-      "Microsoft.Extensions.Telemetry.Abstractions": {
-        "type": "CentralTransitive",
-        "requested": "[10.1.0, )",
-        "resolved": "10.1.0",
-        "contentHash": "0jAF2b0YJ1LOtunmo3PzSoJOx/ThhcGH5Y5kaV0jeM0BUlyr9orjg+fH5YabqnPSmwcN/DSTj0iZ7UwDISn5ag==",
-        "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "10.1.0"
         }
       },
       "NodaTime": {

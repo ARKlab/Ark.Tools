@@ -17,6 +17,10 @@ using SimpleInjector.Lifestyles;
 using System.Security.Claims;
 using NodaTime;
 
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
+
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>Generated Rebus host for the sample web application.</summary>
@@ -43,7 +47,11 @@ public static class SampleComposition
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret] string? connectionString = null,
+#else
         string? connectionString = null,
+#endif
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null)
     {

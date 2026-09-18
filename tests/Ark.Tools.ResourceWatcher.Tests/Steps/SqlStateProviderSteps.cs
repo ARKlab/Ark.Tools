@@ -313,12 +313,13 @@ public sealed class SqlStateProviderSteps : IDisposable
         _statesToSave.Add(state);
         await _stateProvider!.SaveStateAsync([state]).ConfigureAwait(false);
 
-        // Now directly insert invalid JSON into the database for ExtensionsJson column
+        // Now directly insert invalid JSON into the database for ExtensionsJson column.
+        const string invalidJson = "{bad}";
         await using var conn = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
         await conn.OpenAsync().ConfigureAwait(false);
         await conn.ExecuteAsync(
             "UPDATE [State] SET [ExtensionsJson] = @invalidJson WHERE [Tenant] = @tenant AND [ResourceId] = @resourceId",
-            new { invalidJson = "{invalid-json-structure}", tenant = uniqueTenant, resourceId = resourceId }).ConfigureAwait(false);
+            new { invalidJson, tenant = uniqueTenant, resourceId = resourceId }).ConfigureAwait(false);
     }
 
     [Then(@"resource ""(.*)"" should have null Extensions")]
