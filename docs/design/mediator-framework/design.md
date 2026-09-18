@@ -1012,6 +1012,6 @@ Mirroring the ReferenceProject, it separates the transport-agnostic
 **Application** assembly (pure contracts/handlers, store, decorator) from the
 **WebInterface** hosting assembly, where the selected requests/queries are
 exposed via endpoints and the transports (user context, Rebus) are wired.
-See [`progress/implementation-plan.md`](../../plans/mediator-framework/implementation-plan.md) for exactly which pieces
-are proven in code versus specified for follow-up, and [`progress/tasks.md`](../../plans/mediator-framework/tasks.md)
+See [`implementation-plan.md`](../../plans/mediator-framework/implementation-plan.md) for exactly which pieces
+are proven in code versus specified for follow-up, and [`tasks.md`](../../plans/mediator-framework/tasks.md)
 for acceptance criteria.

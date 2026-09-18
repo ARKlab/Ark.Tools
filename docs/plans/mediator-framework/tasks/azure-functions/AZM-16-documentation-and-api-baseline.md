@@ -143,10 +143,10 @@ sections):
 
 | Doc | Must link to | Owned by |
 | --- | --- | --- |
-| `guide/azure-functions.md` | Trigger model, host binding attribute, Storage Queue host.json contract, resource lifecycle | AZM-10/11/12/13 |
-| `guide/host-setup-and-composition.md` | Functions/sender-only composition, outbox hosting split | AZM-13/14A |
-| `guide/rebus.md` | Generated Rebus assistance, adapter `IBus`/`MessagingFailed<T>`, non-interoperability | AZM-14 |
-| `guide/api-surface-snapshots.md` | MESSAGE/EVENT/PARTICIPANT/NETWORK lines, generated trigger entries | AZM-03/16 |
+| `azure-functions.md` | Trigger model, host binding attribute, Storage Queue host.json contract, resource lifecycle | AZM-10/11/12/13 |
+| `host-setup-and-composition.md` | Functions/sender-only composition, outbox hosting split | AZM-13/14A |
+| `rebus.md` | Generated Rebus assistance, adapter `IBus`/`MessagingFailed<T>`, non-interoperability | AZM-14 |
+| `api-surface-snapshots.md` | MESSAGE/EVENT/PARTICIPANT/NETWORK lines, generated trigger entries | AZM-03/16 |
 | `samples/Ark.MediatorFramework.Sample/README.md` | Three-participant topology, two topology modes, `outbox-processor` host commands | AZM-15/16 |
 
 ## Guide contribution

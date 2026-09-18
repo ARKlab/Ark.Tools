@@ -1,8 +1,8 @@
 # Mediator Framework — delivery tracking
 
-This directory tracks delivery. The framework reference documentation remains
-one level up:
-[`../design.md`](../../design/mediator-framework/design.md), [`../research.md`](../../design/mediator-framework/research.md), and
+This directory tracks delivery. The framework design and research records live
+under `docs/design/mediator-framework/`:
+[`docs/design/mediator-framework/design.md`](../../design/mediator-framework/design.md), [`docs/design/mediator-framework/research.md`](../../design/mediator-framework/research.md), and
 [`../../mediator-framework/migration-from-mvc.md`](../../mediator-framework/migration-from-mvc.md).
 
 ## Delivery sequence

@@ -12,7 +12,7 @@ Ark.Tools uses **OpenTelemetry** (via Application Insights v3.x) for distributed
 - [Configuration Reference](#configuration-reference)
 - [Instrumentation Reference](instrumentation-reference.md)
 - [Sampling Strategy](#sampling-strategy) → see [sampling.md](sampling.md)
-- [Migration from Application Insights v2.x](#migration) → see [applicationinsights-migration/](applicationinsights-migration/)
+- [Migration from Application Insights v2.x](#migration) → see [../design/otel/applicationinsights-migration/migration-analysis.md](../design/otel/applicationinsights-migration/migration-analysis.md)
 - [Upgrade guide](upgrade-guide.md)
 
 ---
@@ -246,7 +246,7 @@ See [sampling.md](sampling.md) for a detailed explanation of the adaptive sampli
 
 Migrating from Application Insights SDK v2.x? Start with the
 [upgrade guide](upgrade-guide.md) and the
-[migration summary](applicationinsights-migration/executive-summary.md).
+[migration summary](../design/otel/applicationinsights-migration/migration-analysis.md).
 
 ---
 

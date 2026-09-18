@@ -4,7 +4,7 @@ Each task document is self-contained. Its Execution map, Outcomes, and
 Acceptance section are authoritative; this board records only sequence,
 category, current status, and a link.
 
-The accepted architecture is [`../../design.md`](../../../design/sdk/design.md). Accepted
+The accepted architecture is [`docs/design/sdk/design.md`](../../../design/sdk/design.md). Accepted
 choices and rejected alternatives are in
 [`../decisions.md`](../decisions.md).
 
@@ -59,7 +59,7 @@ arrangement; it does not require a published preview pair.
 
 ## Compliance (privacy by default)
 
-Approved design: [`../../privacy-by-default-prd.md`](../../../design/sdk/privacy-by-default-prd.md).
+Approved design: [`docs/design/sdk/privacy-by-default-prd.md`](../../../design/sdk/privacy-by-default-prd.md).
 These tasks are independent of the `SDK-IMP` sequence except for PII-IMP-10,
 which packages configuration through `Ark.Tools.Build` and therefore follows
 SDK-IMP-03's asset conventions.
