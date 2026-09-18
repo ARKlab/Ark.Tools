@@ -11,15 +11,23 @@ Function process.
 <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
 <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
 <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
+<PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk"
                   OutputItemType="Analyzer"
                   PrivateAssets="all" />
 ```
 
 `Ark.Tools.MediatorFramework.AzureFunctions` provides the Functions host adapter
-and trigger generator. Azure Service Bus, Storage Queue, and Blob DataBus
-integrations come from `Ark.Tools.MediatorFramework.Messaging.Azure`; the core
+and trigger generator. It is container-agnostic: it resolves
+`IRequestProcessor`, `IQueryProcessor`, and `ICommandProcessor` from Microsoft
+dependency injection only, mirroring `Ark.Tools.MediatorFramework.MinimalApi`.
+Azure Service Bus, Storage Queue, and Blob DataBus integrations come from
+`Ark.Tools.MediatorFramework.Messaging.Azure`; the core
 `Ark.Tools.MediatorFramework.Messaging` runtime stays transport-neutral.
+Applications composed with SimpleInjector bridge the two containers with
+`Ark.Tools.Solid.SimpleInjector` (`AddArkSolidProcessors`) and
+`Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector`
+(`AddArkAzureFunctionsSimpleInjectorBridge`).
 
 Select the public API assembly at assembly level:
 
@@ -65,8 +73,9 @@ if (bool.TryParse(
         container,
         outboundServiceBusConfiguration);
 }
-builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkAzureFunctions();
 builder.Services.AddArkSolidProcessors(container);
+builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(container);
 builder.Services.AddArkHealthChecks();
 builder.Services.AddHostedService(
     _ => new AzureFunctionsContainerHostedService(container));
@@ -78,7 +87,13 @@ This composes the application and HTTP boundary only. Add the native messaging
 host in step 4. `AddArkSolidProcessors` bridges Microsoft DI-visible
 `IRequestProcessor`, `IQueryProcessor`, and `ICommandProcessor` back into the
 same SimpleInjector application container; it does not replace handler
-registrations or decorators. The sample also supports an explicitly enabled,
+registrations or decorators. `AddArkAzureFunctionsSimpleInjectorBridge`
+bridges the reverse direction, exposing Microsoft DI's `IBus`,
+`IBusOutboxEnlistment`, and `IContextProvider<ClaimsPrincipal>` (when native
+messaging or Functions HTTP registers them) into the SimpleInjector container
+for handlers that depend on them. Call it after `AddArkAzureFunctions` and, if
+using native messaging, after `ConfigureArkMessagingFunctions`/
+`AddArkMessagingFunctionsHost`. The sample also supports an explicitly enabled,
 outbound-only Rebus client for HTTP-to-Rebus compatibility. That client is
 added to the same application container; native messaging and its generated
 Function trigger remain registered. It never registers Rebus handlers, an input
@@ -296,16 +311,16 @@ limits, host-local steps, forwarding subscriptions, and generated runtime
 descriptor. Compose it into the existing application container:
 
 ```csharp
-builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkAzureFunctions();
 builder.Services.AddArkSolidProcessors(container);
 builder.Services.ConfigureArkMessagingFunctions(
-    container,
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
         .UseTransport(transport => transport.UseServiceBus())
         .UseDataBus(dataBus => dataBus.UseInMemory())
         .UseOutbox(outbox => outbox.UseEnqueue()));
+builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(container);
 ```
 
 The connection setting can contain a connection string or a fully qualified

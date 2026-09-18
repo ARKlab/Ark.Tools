@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" />
     <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.Rebus" />

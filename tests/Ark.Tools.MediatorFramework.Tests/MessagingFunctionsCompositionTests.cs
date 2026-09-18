@@ -19,9 +19,6 @@ using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 
-using SimpleInjector;
-using SimpleInjector.Lifestyles;
-
 namespace Ark.Tools.MediatorFramework.Tests;
 
 /// <summary>Verifies generated participant and Azure Functions host composition.</summary>
@@ -33,7 +30,6 @@ public sealed class MessagingFunctionsCompositionTests
     public async Task FluentFunctionsCompositionUsesManifestAndRegistersOutbox()
     {
         var services = new ServiceCollection();
-        await using var container = _container();
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
@@ -43,7 +39,6 @@ public sealed class MessagingFunctionsCompositionTests
             .Build();
 
         services.ConfigureArkMessagingFunctions(
-            container,
             configuration,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             static messaging => messaging
@@ -62,10 +57,8 @@ public sealed class MessagingFunctionsCompositionTests
     public void FluentFunctionsCompositionRequiresTransport()
     {
         var services = new ServiceCollection();
-        using var container = _container();
 
         var action = () => services.ConfigureArkMessagingFunctions(
-            container,
             new ConfigurationBuilder().Build(),
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             static messaging => messaging.UseDataBus(_dataBus()));
@@ -80,10 +73,8 @@ public sealed class MessagingFunctionsCompositionTests
     public void FluentFunctionsCompositionRejectsDuplicateTransport()
     {
         var services = new ServiceCollection();
-        using var container = _container();
 
         var action = () => services.ConfigureArkMessagingFunctions(
-            container,
             new ConfigurationBuilder().Build(),
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             static messaging => messaging
@@ -100,10 +91,8 @@ public sealed class MessagingFunctionsCompositionTests
     public void FluentFunctionsCompositionRejectsNativeOutboxProcessor()
     {
         var services = new ServiceCollection();
-        using var container = _container();
 
         var action = () => services.ConfigureArkMessagingFunctions(
-            container,
             new ConfigurationBuilder().Build(),
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             static messaging => messaging.UseOutbox(new Ark.Tools.Outbox.InMemoryOutboxContextFactory()));
@@ -136,39 +125,14 @@ public sealed class MessagingFunctionsCompositionTests
         await delivery.CompleteAsync(default).ConfigureAwait(false);
     }
 
-    /// <summary>Verifies Functions cross-wires the native bus into the application container.</summary>
-    [TestMethod]
-    public async Task SenderOnlyCompositionCrossWiresBusAndOutboxEnlistment()
-    {
-        var services = new ServiceCollection();
-        await using var container = _container();
-        services.AddArkMessagingFunctionsHost(
-            container,
-            _manifest(
-                MessagingFunctionsTriggerBinding.ServiceBus,
-                _descriptor(receives: false)),
-            new InMemoryMessagingTransport(),
-            _dataBus());
-        await using var provider = services.BuildServiceProvider();
-        var bridge = provider.GetServices<IHostedService>()
-            .Single(static service => service.GetType().Name == "MessagingFunctionsBusBridge");
-        await bridge.StartAsync(default).ConfigureAwait(false);
-
-        container.GetInstance<IBus>().Should().BeSameAs(provider.GetRequiredService<IBus>());
-        container.GetInstance<IBusOutboxEnlistment>().Should()
-            .BeSameAs(provider.GetRequiredService<IBusOutboxEnlistment>());
-    }
-
     /// <summary>Verifies missing host transport configuration fails before registration.</summary>
     [TestMethod]
     public void MissingConfigurationNamesRequiredKey()
     {
         var services = new ServiceCollection();
-        using var container = _container();
         var configuration = new ConfigurationBuilder().Build();
 
         var action = () => services.AddArkMessagingFunctionsHost(
-            container,
             configuration,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             _dataBus(),
@@ -184,7 +148,6 @@ public sealed class MessagingFunctionsCompositionTests
     public async Task ServiceBusIdentityConfigurationComposesOwnedTransport()
     {
         var services = new ServiceCollection();
-        await using var container = _container();
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
@@ -194,7 +157,6 @@ public sealed class MessagingFunctionsCompositionTests
             .Build();
 
         services.AddArkMessagingFunctionsHost(
-            container,
             configuration,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             _dataBus(),
@@ -212,7 +174,6 @@ public sealed class MessagingFunctionsCompositionTests
     public async Task StorageQueueIdentityConfigurationComposesQueueServiceClient()
     {
         var services = new ServiceCollection();
-        await using var container = _container();
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
@@ -222,7 +183,6 @@ public sealed class MessagingFunctionsCompositionTests
             .Build();
 
         services.AddArkMessagingFunctionsHost(
-            container,
             configuration,
             _manifest(
                 MessagingFunctionsTriggerBinding.StorageQueue,
@@ -240,11 +200,9 @@ public sealed class MessagingFunctionsCompositionTests
     public async Task TriggerBindingMismatchNamesGeneratedAndComposedBindings()
     {
         var services = new ServiceCollection();
-        await using var container = _container();
         await using var transport = _serviceBus();
 
         var action = () => services.AddArkMessagingFunctionsHost(
-            container,
             _manifest(MessagingFunctionsTriggerBinding.StorageQueue),
             transport,
             _dataBus());
@@ -259,10 +217,8 @@ public sealed class MessagingFunctionsCompositionTests
     public void InMemoryReceiveTransportIsRejected()
     {
         var services = new ServiceCollection();
-        using var container = _container();
 
         var action = () => services.AddArkMessagingFunctionsHost(
-            container,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             new InMemoryMessagingTransport(),
             _dataBus());
@@ -280,10 +236,8 @@ public sealed class MessagingFunctionsCompositionTests
         var processorFirst = new ServiceCollection();
         processorFirst.AddSingleton<IMessagingTransport>(new InMemoryMessagingTransport());
         processorFirst.AddArkMessagingOutboxProcessor(factory);
-        using var firstContainer = _container();
 
         var addFunctions = () => processorFirst.AddArkMessagingFunctionsHost(
-            firstContainer,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             new InMemoryMessagingTransport(),
             _dataBus());
@@ -291,9 +245,7 @@ public sealed class MessagingFunctionsCompositionTests
             .WithMessage("*cannot host*native messaging outbox processor*");
 
         var functionsFirst = new ServiceCollection();
-        using var secondContainer = _container();
         functionsFirst.AddArkMessagingFunctionsHost(
-            secondContainer,
             _manifest(
                 MessagingFunctionsTriggerBinding.ServiceBus,
                 _descriptor(receives: false)),
@@ -312,12 +264,10 @@ public sealed class MessagingFunctionsCompositionTests
         var services = new ServiceCollection();
         services.Configure<JsonSerializerOptions>(
             static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
-        await using var container = _container();
 #pragma warning disable CA2000 // The service provider owns the registered transport.
         var transport = _serviceBus();
 #pragma warning restore CA2000
         services.AddArkMessagingFunctionsHost(
-            container,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             transport,
             _dataBus());
@@ -335,7 +285,6 @@ public sealed class MessagingFunctionsCompositionTests
     public async Task SenderOnlyFunctionsCompositionRegistersResourceLifecycle()
     {
         var services = new ServiceCollection();
-        await using var container = _container();
         var descriptor = _descriptor(receives: false);
         var topics = new[] { new MessagingTopicResource("composition-topic", descriptor.Identity) };
         var knownTopics = new[] { "composition-topic" };
@@ -349,7 +298,6 @@ public sealed class MessagingFunctionsCompositionTests
             MessagingResourceLifecycle.CreateIfMissing);
 
         services.AddArkMessagingFunctionsHost(
-            container,
             _manifest(
                 MessagingFunctionsTriggerBinding.ServiceBus,
                 descriptor,
@@ -368,14 +316,12 @@ public sealed class MessagingFunctionsCompositionTests
     public async Task MissingConsumedContractHandlerFailsComposition()
     {
         var services = new ServiceCollection();
-        await using var container = _container();
         await using var transport = _serviceBus();
         var descriptor = _descriptor(
             receives: true,
             new[] { typeof(ICommandHandler<CompositionConsumedMessage>) });
 
         var action = () => services.AddArkMessagingFunctionsHost(
-            container,
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus, descriptor),
             transport,
             _dataBus());
@@ -383,13 +329,6 @@ public sealed class MessagingFunctionsCompositionTests
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*ICommandHandler*CompositionConsumedMessage*not registered*");
         services.Should().BeEmpty();
-    }
-
-    private static Container _container()
-    {
-        var container = new Container();
-        container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-        return container;
     }
 
     private static InMemoryMessagingDataBus _dataBus()

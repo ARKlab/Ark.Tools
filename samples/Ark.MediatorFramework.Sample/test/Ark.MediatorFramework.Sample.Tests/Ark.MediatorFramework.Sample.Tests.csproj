@@ -21,6 +21,7 @@
     <PackageReference Include="Ark.Tools.Reqnroll" />
     <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" />
   </ItemGroup>
 
   <ItemGroup>

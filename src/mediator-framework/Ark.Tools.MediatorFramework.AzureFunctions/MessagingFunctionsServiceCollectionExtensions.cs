@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.Solid;
 
 using Azure.Core;
 using Azure.Identity;
@@ -13,8 +14,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-
-using SimpleInjector;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
@@ -35,7 +34,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// Composes the generated participant with an Azure transport selected from configuration.
     /// </summary>
     /// <param name="services">The Functions service collection.</param>
-    /// <param name="container">The existing application Simple Injector container.</param>
     /// <param name="configuration">The host configuration.</param>
     /// <param name="manifest">The generated Functions messaging manifest.</param>
     /// <param name="dataBus">The shared network DataBus.</param>
@@ -48,7 +46,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
@@ -57,7 +54,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         ServiceBusMessagingOptions? serviceBusOptions = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(dataBus);
@@ -65,11 +61,10 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         return transport switch
         {
             MessagingFunctionsRuntimeTransport.AzureServiceBus =>
-                _addServiceBus(services, container, configuration, manifest, dataBus, serviceBusOptions),
+                _addServiceBus(services, configuration, manifest, dataBus, serviceBusOptions),
             MessagingFunctionsRuntimeTransport.AzureStorageQueue =>
                 _addStorageQueue(
                     services,
-                    container,
                     configuration,
                     manifest,
                     dataBus,
@@ -82,7 +77,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// Composes a generated participant over application-created transport services.
     /// </summary>
     /// <param name="services">The Functions service collection.</param>
-    /// <param name="container">The existing application Simple Injector container.</param>
     /// <param name="manifest">The generated Functions messaging manifest.</param>
     /// <param name="transport">The application-created transport.</param>
     /// <param name="dataBus">The shared network DataBus.</param>
@@ -92,7 +86,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
-        Container container,
         MessagingFunctionsManifest manifest,
         IMessagingTransport transport,
         IMessagingDataBus dataBus,
@@ -101,7 +94,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         StorageQueueFunctionsHostSettings? storageQueueHostSettings = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
@@ -110,8 +102,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             throw new InvalidOperationException(
                 "Azure Functions cannot host the native messaging outbox processor.");
         }
-        if (container.GetRegistration<IBus>(throwOnFailure: false) is not null
-            || container.GetRegistration<IBusOutboxEnlistment>(throwOnFailure: false) is not null)
+        if (services.Any(static service =>
+            service.ServiceType == typeof(IBus) || service.ServiceType == typeof(IBusOutboxEnlistment)))
         {
             throw new InvalidOperationException(
                 "Azure Functions native messaging cannot be mixed with another bus outbox adapter.");
@@ -119,11 +111,9 @@ internal static class MessagingFunctionsServiceCollectionExtensions
 
         _validateManifest(manifest, transport);
         var descriptor = manifest.Descriptor!;
-        _validateHandlers(container, descriptor);
-        _registerSteps(container, manifest.IncomingSteps);
-        _registerSteps(container, manifest.OutgoingSteps);
-        services.TryAddSingleton<IMessagingPipelineProcessor>(
-            _ => new SimpleInjectorMessagingPipelineProcessor(container));
+        _validateHandlers(services, descriptor);
+        _registerSteps(services, manifest.IncomingSteps);
+        _registerSteps(services, manifest.OutgoingSteps);
         management ??= transport as IMessagingTransportManagement;
         services._addArkMessagingParticipant(
             descriptor,
@@ -132,7 +122,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             manifest.Resources,
             management,
             manifest.OutgoingSteps);
-        _registerBusBridge(services, container);
         services.AddSingleton(manifest);
         services.AddSingleton(MessagingTriggeredHostMarker.Instance);
 
@@ -185,22 +174,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         return services;
     }
 
-    private static void _registerBusBridge(IServiceCollection services, Container container)
-    {
-        var bridge = new MessagingFunctionsBusBridge();
-        container.RegisterInstance(bridge);
-        container.RegisterSingleton<IBus>(() => bridge.GetBus());
-        container.RegisterSingleton<IBusOutboxEnlistment>(() => bridge.GetEnlistment());
-        services.AddSingleton<IHostedService>(_ =>
-        {
-            bridge.SetServiceProvider(_);
-            return bridge;
-        });
-    }
-
     private static IServiceCollection _addServiceBus(
         IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
@@ -239,7 +214,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
 
         var transport = new ServiceBusMessagingTransport(client, lockDuration: serviceBusOptions.LockDuration);
         services.AddArkMessagingFunctionsHost(
-            container,
             manifest,
             transport,
             dataBus,
@@ -251,7 +225,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
 
     private static IServiceCollection _addStorageQueue(
         IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
@@ -310,7 +283,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         }
 
         return services.AddArkMessagingFunctionsHost(
-            container,
             manifest,
             transport,
             dataBus,
@@ -374,12 +346,18 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     }
 
     private static void _validateHandlers(
-        Container container,
+        IServiceCollection services,
         MessagingParticipantDescriptor descriptor)
     {
+        var verifier = services
+            .FirstOrDefault(static service => service.ServiceType == typeof(IMediatorHandlerRegistrationVerifier))
+            ?.ImplementationInstance as IMediatorHandlerRegistrationVerifier;
+
         foreach (var handlerServiceType in descriptor.HandlerServiceTypes)
         {
-            if (container.GetRegistration(handlerServiceType, throwOnFailure: false) is null)
+            var isRegistered = services.Any(service => service.ServiceType == handlerServiceType)
+                || (verifier is not null && verifier.IsRegistered(handlerServiceType));
+            if (!isRegistered)
             {
                 throw new InvalidOperationException(
                     string.Format(
@@ -390,14 +368,14 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         }
     }
 
-    private static void _registerSteps(Container container, IEnumerable<Type> stepTypes)
+    // ponytail: pipeline step types are generated/known at compile time by the source generator,
+    // which preserves their public constructors; IL2072 suppression documents that guarantee.
+    [UnconditionalSuppressMessage("Trimming", "IL2072", Justification = "Pipeline step types are preserved by the generated manifest.")]
+    private static void _registerSteps(IServiceCollection services, IEnumerable<Type> stepTypes)
     {
         ArgumentNullException.ThrowIfNull(stepTypes);
         foreach (var stepType in stepTypes)
-        {
-            if (container.GetRegistration(stepType, throwOnFailure: false) is null)
-                container.Register(stepType, stepType, Lifestyle.Scoped);
-        }
+            services.TryAddScoped(stepType, stepType);
     }
 
     private static bool _isConnectionString(string value)
@@ -457,41 +435,6 @@ internal static class MessagingFunctionsServiceCollectionExtensions
                 return;
 
             await _transport.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
-    internal sealed class MessagingFunctionsBusBridge : IHostedService
-    {
-        private IServiceProvider? _serviceProvider;
-
-        public void SetServiceProvider(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
-        public IBus GetBus()
-        {
-            return (_serviceProvider
-                ?? throw new InvalidOperationException("The Functions service provider is not initialized."))
-                .GetRequiredService<IBus>();
-        }
-
-        public IBusOutboxEnlistment GetEnlistment()
-        {
-            return (_serviceProvider
-                ?? throw new InvalidOperationException("The Functions service provider is not initialized."))
-                .GetRequiredService<IBusOutboxEnlistment>();
-        }
-
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await Task.CompletedTask.ConfigureAwait(false);
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            await Task.CompletedTask.ConfigureAwait(false);
         }
     }
 }

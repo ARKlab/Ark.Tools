@@ -10,6 +10,7 @@ using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
+using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 
 using AwesomeAssertions;
@@ -183,16 +184,16 @@ public sealed class AzureFunctionsRebusTests
                 ["AzureServiceBus:ConnectionString"] = "sample.servicebus.windows.net",
             })
             .Build();
-        services.AddArkAzureFunctions(container);
+        services.AddArkAzureFunctions();
         services.AddArkSolidProcessors(container);
         services.ConfigureArkMessagingFunctions(
-            container,
             configuration,
             ArkGeneratedMessagingFunctions.Manifest,
             static messaging => messaging
                 .UseTransport(static transport => transport.UseServiceBus())
                 .UseDataBus(new InMemoryMessagingDataBus(SystemClock.Instance, Duration.FromHours(2)))
                 .UseOutbox(static outbox => outbox.UseEnqueue()));
+        services.AddArkAzureFunctionsSimpleInjectorBridge(container);
         await using var provider = services.BuildServiceProvider();
         _ = provider.GetServices<IHostedService>();
         var processor = provider.GetRequiredService<ICommandProcessor>();

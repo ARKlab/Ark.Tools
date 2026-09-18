@@ -122,6 +122,7 @@
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/Ark.Tools.MediatorFramework.AzureFunctions.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions.Generators/Ark.Tools.MediatorFramework.AzureFunctions.Generators.csproj" />
+    <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector/Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Rebus/Ark.Tools.MediatorFramework.Rebus.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Rebus.Generators/Ark.Tools.MediatorFramework.Rebus.Generators.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj" />

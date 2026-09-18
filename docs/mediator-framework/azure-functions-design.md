@@ -146,14 +146,16 @@ generator is not acceptable because parity would immediately begin to drift.
 
 Each generated method delegates in this order:
 
-1. establish one `AsyncScopedLifestyle` SimpleInjector scope for the invocation;
+1. resolve request-scoped services from `HttpContext.RequestServices` (Microsoft
+   dependency injection) for the invocation;
 2. authenticate a non-anonymous endpoint and populate the principal used by
    `IContextProvider<ClaimsPrincipal>`;
 3. bind route, query, body, headers or multipart form data into the existing
    request envelope;
 4. overwrite `[ServerSet]` members and apply HTTP-owned values such as ETag
    preconditions after client binding;
-5. resolve the exact generated handler interface from SimpleInjector;
+5. resolve the exact generated handler interface (`IRequestProcessor`,
+   `IQueryProcessor`, or `ICommandProcessor`) from `HttpContext.RequestServices`;
 6. execute it with the Functions invocation cancellation token using `async` and
    `await`;
 7. translate the result, status, headers and body;
