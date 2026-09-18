@@ -28,6 +28,31 @@
 
 Ark.Tools is a set of core libraries for LOB applications. Distributed via NuGet, supports .NET 8.0 LTS and .NET 10.0.
 
+## Documentation Structure
+
+Keep documentation in three distinct clusters:
+
+- **Consumer documentation** belongs under the existing product paths in
+  `docs/`. It includes getting-started guides, usage/reference material,
+  migration guides, release notes, analyzer rules, and operational guidance.
+  Consumer documents are the stable public entry points.
+- **Designs and decisions** belong under `docs/design/`. Put architecture,
+  research, product requirements, accepted decisions, and historical rationale
+  there. Consumer documentation may defer implementation rationale to this
+  cluster.
+- **Plans and tasks** belong under `docs/plans/`. Put implementation plans,
+  progress records, task boards, and transient execution notes there. These
+  documents may link to consumer and design documents, but consumer documents
+  must not link to plans or task boards.
+
+`docs/superpowers/` is an intentional exception. Its paths are coupled to the
+repository's agent skills and must remain unchanged.
+
+When moving documentation, use `git mv`, update every repository link including
+links outside `docs/`, and verify that all Markdown links still resolve. Avoid
+content rewrites: reclassify, adjust navigation, and preserve the consumer
+documentation surface.
+
 ## Build & Test Commands
 
 ### Prerequisites

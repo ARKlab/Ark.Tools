@@ -7,7 +7,7 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
 ## Application architecture
 
 - Keep contracts transport-neutral and follow
-  `docs/mediator-framework/guide/request-and-dto-best-practices.md`.
+  `docs/mediator-framework/request-and-dto-best-practices.md`.
 - Namespace versioned models and operation contracts with static classes.
 - Use `Input`/`Create`/`Update`/`Output` model inheritance and compose model
   payloads into `Request`/`Query`/`Command` envelopes.

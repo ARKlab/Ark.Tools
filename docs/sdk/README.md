@@ -12,12 +12,9 @@ and adoption steps.
 
 | Document | Purpose |
 | --- | --- |
-| [`design.md`](design.md) | Current Ark.Tools defaults, packaging alternatives, upstream research, and accepted architecture. |
+| [`design.md`](../design/sdk/design.md) | Current Ark.Tools defaults, packaging alternatives, upstream research, and accepted architecture. |
 | [`reference.md`](reference.md) | Stable consumer capability and property reference. |
-| [`privacy-by-default-prd.md`](privacy-by-default-prd.md) | Approved PII/secret protection product (`Ark.Tools.Compliance`): research, developer experience, `ARKPII*` analyzers, runtime redaction, Vogen analysis, rejected approaches. |
-| [`progress/README.md`](progress/README.md) | Delivery tracking rules and document index. |
-| [`progress/decisions.md`](progress/decisions.md) | Accepted product and compatibility decisions. |
-| [`progress/tasks/README.md`](progress/tasks/README.md) | Canonical implementation task board. |
+| [`privacy-by-default-prd.md`](../design/sdk/privacy-by-default-prd.md) | Approved PII/secret protection product (`Ark.Tools.Compliance`): research, developer experience, `ARKPII*` analyzers, runtime redaction, Vogen analysis, rejected approaches. |
 | [`mtp.md`](mtp.md) | MTP test-profile defaults, extension switches, and CI responsibilities. |
 
 ## Packages

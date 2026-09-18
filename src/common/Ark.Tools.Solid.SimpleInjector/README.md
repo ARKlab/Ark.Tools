@@ -82,5 +82,5 @@ overloads use static generic dispatch and are trim-safe. Otherwise consider:
 
 ### Related
 
-- See [Trimming Guidelines](../../../../docs/trimmable-support/guidelines.md) for more information
+- See [Trimming Guidelines](../../../docs/trimmable-support/guidelines.md) for more information
 - See [Ark.Tools.Solid](../Ark.Tools.Solid/) for the core framework (which is trimmable)
