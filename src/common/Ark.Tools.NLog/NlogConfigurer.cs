@@ -175,6 +175,11 @@ public static class NLogConfigurer
             });
             _config.AddRule(new LoggingRule()
             {
+                LoggerNamePattern = "Azure.*",
+                FinalMinLevel = LogLevel.Warn,
+            });
+            _config.AddRule(new LoggingRule()
+            {
                 LoggerNamePattern = "Microsoft.Hosting.Lifetime.*",
                 FinalMinLevel = LogLevel.Info,
             });
