@@ -50,18 +50,24 @@ Functions hosts use `ConfigureArkMessagingFunctions` and select either Service
 Bus or Storage Queue. Generated network, participant, and Functions metadata are
 resolved by the composition layer; application handlers remain in Simple
 Injector, with the processor bridge exposing them to the Functions host.
+`Ark.Tools.MediatorFramework.AzureFunctions` itself is container-agnostic and
+resolves processors from Microsoft dependency injection only; bridge it into
+SimpleInjector with `AddArkSolidProcessors` and, for the reverse direction
+(`IBus`/`IBusOutboxEnlistment`/`IContextProvider<ClaimsPrincipal>`),
+`Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector`'s
+`AddArkAzureFunctionsSimpleInjectorBridge`.
 
 ```csharp
-builder.Services.AddArkAzureFunctions(container);
+builder.Services.AddArkAzureFunctions();
 builder.Services.AddArkSolidProcessors(container);
 builder.Services.ConfigureArkMessagingFunctions(
-    container,
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
         .UseTransport(transport => transport.UseServiceBus())
         .UseDataBus(dataBus => dataBus.UseInMemory())
         .UseOutbox(outbox => outbox.UseEnqueue()));
+builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(container);
 ```
 
 The Functions entry point rejects in-memory receive transport and hosted native
@@ -290,7 +296,6 @@ the network and participant descriptor used by startup:
 
 ```csharp
 builder.Services.ConfigureArkMessagingFunctions(
-    container,
     builder.Configuration,
     ArkGeneratedMessagingFunctions.Manifest,
     messaging => messaging
@@ -302,9 +307,12 @@ builder.Services.ConfigureArkMessagingFunctions(
 Startup resolves the connection from the generated host binding, validates
 network capabilities, consumed-message handlers, and the generated trigger
 binding, then registers the native restricted `IBus`, codecs, host-local
-pipeline steps, dispatcher, settlement, and resource lifecycle against the
-existing application container. It rejects receive-capable InMemory composition
-and transport/manifest drift.
+pipeline steps, dispatcher, settlement, and resource lifecycle against
+Microsoft dependency injection. It rejects receive-capable InMemory composition
+and transport/manifest drift. Applications composed with SimpleInjector bridge
+handlers and processors with `Ark.Tools.Solid.SimpleInjector` and, for
+`IBus`/`IBusOutboxEnlistment`, with
+`Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector`.
 
 The connection key accepts either a scalar connection string/namespace or the
 standard Functions identity-based child settings

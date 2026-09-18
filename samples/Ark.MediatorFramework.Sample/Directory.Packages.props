@@ -14,6 +14,7 @@
     <PackageVersion Include="Ark.Tools.Dapper" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.AzureFunctions" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging.Azure" Version="999.9.9" />

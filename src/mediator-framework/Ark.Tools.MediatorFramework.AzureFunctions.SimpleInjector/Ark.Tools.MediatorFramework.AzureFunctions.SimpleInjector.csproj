@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+    <TargetFrameworks></TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>Opt-in SimpleInjector bridge for Ark.Tools.MediatorFramework.AzureFunctions consumers that compose their application with SimpleInjector.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;Mediator;Azure;Functions;SimpleInjector</PackageTags>
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+    <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SimpleInjector" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework\Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="..\Ark.Tools.MediatorFramework.AzureFunctions\Ark.Tools.MediatorFramework.AzureFunctions.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.Solid\Ark.Tools.Solid.csproj" />
+  </ItemGroup>
+
+</Project>
