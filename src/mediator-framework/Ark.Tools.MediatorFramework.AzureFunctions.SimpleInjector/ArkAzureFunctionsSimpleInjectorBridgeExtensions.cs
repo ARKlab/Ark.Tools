@@ -40,7 +40,11 @@ public static class ArkAzureFunctionsSimpleInjectorBridgeExtensions
     /// detect which Microsoft dependency injection registrations exist. The SimpleInjector
     /// registrations are lazy: the underlying Microsoft dependency injection service provider is
     /// captured once the generic host starts, which is always before Azure Functions serves
-    /// requests.
+    /// requests. The bridge is registered as an <see cref="IHostedService"/> purely to hook into
+    /// that startup moment: the generic host resolves every <see cref="IHostedService"/> before it
+    /// starts serving requests, which gives the bridge factory delegate above a guaranteed point to
+    /// capture the root <see cref="IServiceProvider"/>. <see cref="IHostedService.StartAsync"/>/
+    /// <see cref="IHostedService.StopAsync"/> themselves have no work to do.
     /// </remarks>
     /// <param name="services">The Functions service collection.</param>
     /// <param name="container">The application SimpleInjector container.</param>
@@ -95,9 +99,17 @@ public static class ArkAzureFunctionsSimpleInjectorBridgeExtensions
             return _resolvedServiceProvider().GetRequiredService<IBusOutboxEnlistment>();
         }
 
-        public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
 
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
 
         private IServiceProvider _resolvedServiceProvider()
         {

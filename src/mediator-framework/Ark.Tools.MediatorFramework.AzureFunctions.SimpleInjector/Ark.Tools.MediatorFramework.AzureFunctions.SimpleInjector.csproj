@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- NU5104: ProjectReference to the sibling MediatorFramework packages is pinned to their exact build
+         version, which can carry the shared $(ArkToolsCoreVersionSuffix) even though this package packs as
+         stable; suppressed repo-wide the same way for the other Ark.Tools packages built alongside it. -->
     <NoWarn>$(NoWarn);NU5104</NoWarn>
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
