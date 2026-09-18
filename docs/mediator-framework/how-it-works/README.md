@@ -5,7 +5,7 @@ formulas, invariants, and the reason a default is what it is.
 
 You do not need it to use the framework. Read it when you are debugging an
 observed behavior, replacing a built-in seam with your own implementation, or
-changing the framework itself. The [guide](../guide/README.md) is the
+changing the framework itself. The [guide](../README.md) is the
 task-oriented documentation: what to write, what to configure, and what to tune.
 
 | Document | Explains |

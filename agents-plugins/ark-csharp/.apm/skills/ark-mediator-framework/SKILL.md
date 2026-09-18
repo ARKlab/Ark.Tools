@@ -6,7 +6,7 @@ description: Use when consuming Ark.Tools.MediatorFramework from NuGet and addin
 # Ark.Tools.MediatorFramework
 
 Use this skill for application code that consumes Mediator Framework from NuGet.
-Read the [contract design workflow](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/mediator-framework/guide/contract-design-workflow.md)
+Read the [contract design workflow](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/mediator-framework/contract-design-workflow.md)
 before editing a contract. This skill is not for developing the framework or
 its source generators.
 
@@ -42,7 +42,7 @@ Do not start implementation while an answer is assumed, guessed, or missing.
 ## Workflow
 
 1. Read the decision tree and only the next relevant guide in the
-   [Mediator Framework guide](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/mediator-framework/guide/README.md).
+   [Mediator Framework guide](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/mediator-framework/README.md).
 2. Decide the contract kind: `IQuery<T>`, `IRequest<T>`, or `ICommand`; split
    immediate HTTP work from delayed/retried background messages.
 3. Keep versioned model types separate from operation envelopes. Mark

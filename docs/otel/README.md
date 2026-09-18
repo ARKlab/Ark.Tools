@@ -244,11 +244,9 @@ See [sampling.md](sampling.md) for a detailed explanation of the adaptive sampli
 
 ## Migration
 
-Migrating from Application Insights SDK v2.x? See the [applicationinsights-migration](applicationinsights-migration/) folder for:
-
-- [Migration Analysis](applicationinsights-migration/migration-analysis.md) – architectural changes and impact
-- [Implementation Plan](applicationinsights-migration/implementation-plan.md) – what was built and why
-- [NuGet Research](applicationinsights-migration/nuget-research.md) – packages considered
+Migrating from Application Insights SDK v2.x? Start with the
+[upgrade guide](upgrade-guide.md) and the
+[migration summary](applicationinsights-migration/executive-summary.md).
 
 ---
 

@@ -1,62 +1,72 @@
-# Source-generated, MVC-free web services framework
+# Mediator Framework guide
 
-This folder contains the research, design and delivery plan for an MVC-free,
-source-generated web services framework for Ark.Tools. The goal is to host a
-single **pure, transport-agnostic handler** over three transports at once —
-ASP.NET Core Minimal APIs, code-first gRPC (`protobuf-net.Grpc`) and Rebus
-asynchronous message handlers — while keeping business logic completely
-isolated from HTTP translation, serialization and routing.
+This guide teaches the framework by extending one small operation. You start
+with a `Ping` contract and a Minimal API host, then add validation,
+authorization, gRPC, Rebus, streaming, OpenAPI, Azure Functions, and Reqnroll.
+Each chapter explains:
 
-## Documents
+1. what the application author writes;
+2. what the source generator creates;
+3. what the host must configure;
+4. how to call and test the result;
+5. which boundary belongs in an application test versus a transport test.
 
-Reference documentation (**what the framework is**) lives in this folder.
-Everything that tracks **how it is being built** — plans, task boards, progress,
-reviews — lives in [`progress/`](progress/README.md).
+The working reference is the Book-focused
+[`samples/Ark.MediatorFramework.Sample`](../../../samples/Ark.MediatorFramework.Sample/README.md).
+It has more domain operations than the tutorial, including catalog, reviews,
+reading activity, covers, streaming, editions, and Rebus printing.
 
-### Reference
+## Follow the learning path
 
-| Document | Purpose |
-| --- | --- |
-| [`design.md`](design.md) | Target architecture: pure handlers, Roslyn incremental generators, transports, DI, error handling, user context, attachments. |
-| [`azure-functions-design.md`](azure-functions-design.md) | Proposed .NET isolated Azure Functions HTTP hosting architecture and parity contract. |
-| [`mcp-design.md`](mcp-design.md) | Proposed source-generated MCP tool bridge using the official ASP.NET Core MCP SDK. |
-| [`messaging-throughput-prd.md`](messaging-throughput-prd.md) | Proposed high-throughput messaging receivers: receive/processing seam split, adaptive concurrency, credit-bounded prefetch, lock renewal, transport profiles. |
-| [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
-| [`migration-from-mvc.md`](migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
+| Step | Capability | Read |
+| --- | --- | --- |
+| 1 | A first `Ping` request, handler, and `Program.cs` | [Getting started](getting-started.md) |
+| 2 | Application/host split and SimpleInjector composition | [Host setup and composition](host-setup-and-composition.md) |
+| 3 | Contract shape, DTOs, versions, and server-owned fields | [Contracts and handlers](contracts-and-handlers.md), [Request and DTO best practices](request-and-dto-best-practices.md), [Versioning](versioning.md) |
+| 3a | Required decisions before adding or changing a contract | [Contract design workflow](contract-design-workflow.md) |
+| 4 | Validation and transport-agnostic authorization | [Validation and authorization](validation-and-authorization.md) |
+| 5 | Generated HTTP binding and multipart inputs | [HTTP endpoints](http-endpoints.md), [Attachments](attachments.md) |
+| 6 | Code-first gRPC and `.proto` export | [gRPC](grpc.md) |
+| 7 | Queue a separate background operation with Rebus | [Rebus](rebus.md) |
+| 8 | Incremental results and cancellation | [Streaming](streaming.md) |
+| 9 | JSON, MessagePack, protobuf, and generated metadata | [Serialization](serialization.md) |
+| 10 | Versioned OpenAPI and Scalar | [OpenAPI](openapi.md) |
+| 11 | Isolated Azure Functions HTTP host | [Azure Functions](azure-functions.md) |
+| 12 | Long-running messaging receivers: processor host, tuning, backpressure | [Messaging processing](messaging-processing.md) |
+| 13 | Reqnroll application and host-boundary testing | [Testing](testing.md) |
+| 14 | API-surface review and custom transport adapters | [API-surface snapshots](api-surface-snapshots.md), [Escape hatches](escape-hatches.md) |
+| 15 | Generator diagnostics, fallback behavior, and troubleshooting | [Diagnostics and troubleshooting](diagnostics-and-troubleshooting.md) |
+| 16 | MCP tools, host composition, and embedded attachments | [MCP](mcp.md) |
 
-Start with the [Mediator Framework user guide](guide/README.md). The
-[how-it-works](how-it-works/README.md) section documents the mechanics behind
-the features for anyone debugging, extending, or changing them.
+Looking for the mechanics behind a behavior rather than how to use it? See
+[How it works](how-it-works/README.md).
 
-### Progress and tracking
+## Capability map
 
-| Document | Purpose |
-| --- | --- |
-| [`progress/README.md`](progress/README.md) | Index of all delivery tracking documents. |
-| [`progress/implementation-plan.md`](progress/implementation-plan.md) | Delivery sequence and workstream ownership map. |
-| [`progress/tasks.md`](progress/tasks.md) | Historical epic index and feature sequence. |
-| [`progress/tasks/README.md`](progress/tasks/README.md) | Canonical current task board with one status and link per task. |
-| [`progress/pre-release-review.md`](progress/pre-release-review.md) | Adversarial pre-release review (DX + security), feature-gap analysis vs Ark.ReferenceProject, and recorded decisions. |
-| [`progress/aspnetcore-hosting-gap-analysis.md`](progress/aspnetcore-hosting-gap-analysis.md) | Accepted Minimal API hosting gap analysis and startup decisions. |
-| [`progress/azure-functions-decision-log.md`](progress/azure-functions-decision-log.md) | Accepted Azure Functions hosting decisions. |
-| [`progress/mediator-testing-plan.md`](progress/mediator-testing-plan.md) | Testing architecture and implementation boundaries. |
-| [`progress/mediator-testing-decisions.md`](progress/mediator-testing-decisions.md) | Accepted testing architecture decisions. |
-| [`progress/future-improvements.md`](progress/future-improvements.md) | Explicitly deferred post-1.0 items. |
+| Capability | Contract metadata | Generated/runtime behavior |
+| --- | --- | --- |
+| HTTP | `[HttpEndpoint]`, `[HttpBody]`, `[HttpQuery]`, `[HttpRoute]` | Minimal API route, binding, status code, multipart support |
+| gRPC | `[GrpcMethod]`, `[GrpcService]`, `[ProtoContract]` | Code-first service, protobuf schema, reflection |
+| Native messaging | `[Message]`, `[Event]`, `[MessagingParticipant]`, `[MessagingNetwork]` | Participant-owned routing, generated dispatch, transport-neutral send/publish |
+| Rebus | `[ArkRebusHost(typeof(MyParticipant))]` | Generated Rebus routing, scoped adapters, retries, and subscriptions |
+| Validation | `IValidator<T>` | Validation decorator before the handler |
+| Authorization | `PolicyAuthorizeAttribute` | Shared policy evaluation for HTTP, gRPC, and messages |
+| Versioning | `[Versioning]`, `v{version}` route | Version-specific HTTP/OpenAPI/gRPC surfaces |
+| Streaming | `IAsyncEnumerable<T>` response | Incremental HTTP JSON and gRPC server stream |
+| OpenAPI | XML docs and host options | Versioned documents, schemas, OAuth metadata |
+| Serialization | source-generated `JsonSerializerContext` | Explicit JSON metadata and stable transport shapes |
+| MCP | `[McpTool]`, assembly marker | Source-generated tools over the official ASP.NET Core MCP SDK |
 
-## Relationship with existing Ark.Tools building blocks
+## What the framework does not hide
 
-The design deliberately reuses what Ark.Tools already ships instead of inventing
-new abstractions:
+You still own:
 
-- **`Ark.Tools.Solid`** already defines `IRequest<T>`/`IRequestHandler<,>`,
-  `IQuery<T>`/`IQueryHandler<,>` and `ICommand`/`ICommandHandler<>`. These are
-  the "pure handler" contracts. The current `IRequestProcessor`/`IQueryProcessor`
-  implementations dispatch **dynamically** (they are annotated
-  `[RequiresUnreferencedCode]`) — that runtime reflection is exactly the tax the
-  source generator removes.
-- **`Ark.Tools.SimpleInjector`** / **`Ark.Tools.Solid.SimpleInjector`** provide
-  the non-conforming container and decorator registration used for cross-cutting
-  concerns.
-- **`Ark.Tools.Rebus`** / **`Ark.Tools.Outbox.Rebus`** provide the messaging
-  infrastructure the generated Rebus wrappers plug into, including the
-  per-message SimpleInjector scope (`RebusScopeDecorator<>`).
+- dependency-injection registration and lifetimes;
+- persistence transactions and outbox boundaries;
+- authentication configuration;
+- queue topology, retries, and deployment settings;
+- application-level tests and cleanup;
+- public contract compatibility.
+
+The generator removes repetitive transport plumbing. It does not decide business
+ownership or operational policy for you.

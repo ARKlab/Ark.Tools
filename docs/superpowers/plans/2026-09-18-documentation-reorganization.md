@@ -23,35 +23,35 @@
 
 ### Task 1: Move documentation into stable clusters
 
-- [ ] Move Mediator Framework guides into `docs/mediator-framework/`.
-- [ ] Move Mediator Framework designs and research into `docs/design/mediator-framework/`.
-- [ ] Move Mediator Framework progress and task files into `docs/plans/mediator-framework/`.
-- [ ] Move SDK design records into `docs/design/sdk/`.
-- [ ] Move SDK progress and task files into `docs/plans/sdk/`.
-- [ ] Move OTel design/research records into `docs/design/otel/`.
-- [ ] Move OTel implementation and progress records into `docs/plans/otel/`.
-- [ ] Move OpenAPI design/research into `docs/design/openapi/`.
-- [ ] Move OpenAPI implementation plans into `docs/plans/openapi/`.
-- [ ] Move completed performance records into `docs/design/performance/`.
-- [ ] Leave `docs/superpowers/` untouched.
+- [x] Move Mediator Framework guides into `docs/mediator-framework/`.
+- [x] Move Mediator Framework designs and research into `docs/design/mediator-framework/`.
+- [x] Move Mediator Framework progress and task files into `docs/plans/mediator-framework/`.
+- [x] Move SDK design records into `docs/design/sdk/`.
+- [x] Move SDK progress and task files into `docs/plans/sdk/`.
+- [x] Move OTel design/research records into `docs/design/otel/`.
+- [x] Move OTel implementation and progress records into `docs/plans/otel/`.
+- [x] Move OpenAPI design/research into `docs/design/openapi/`.
+- [x] Move OpenAPI implementation plans into `docs/plans/openapi/`.
+- [x] Move completed performance records into `docs/design/performance/`.
+- [x] Leave `docs/superpowers/` untouched.
 
 ### Task 2: Repair navigation and consumer boundaries
 
-- [ ] Add indexes for `docs/`, `docs/design/`, and `docs/plans/`.
-- [ ] Update moved-document relative links.
-- [ ] Update links in `README.md`, samples, source READMEs, agent plugins, and other files outside `docs/`.
-- [ ] Remove consumer-document links to task boards and implementation plans, replacing them with stable guidance or design references.
+- [x] Add indexes for `docs/`, `docs/design/`, and `docs/plans/`.
+- [x] Update moved-document relative links.
+- [x] Update links in `README.md`, samples, source READMEs, agent plugins, and other files outside `docs/`.
+- [x] Remove consumer-document links to task boards and implementation plans, replacing them with stable guidance or design references.
 
 ### Task 3: Document the structure
 
-- [ ] Add repository guidance to `AGENTS.md` defining consumer, design/decision, and plan/task clusters.
-- [ ] Record `docs/superpowers/` as an intentional exception.
-- [ ] State that consumer docs must not depend on transient plans.
+- [x] Add repository guidance to `AGENTS.md` defining consumer, design/decision, and plan/task clusters.
+- [x] Record `docs/superpowers/` as an intentional exception.
+- [x] State that consumer docs must not depend on transient plans.
 
 ### Task 4: Validate
 
-- [ ] Check every Markdown link resolves to an existing file or valid external URL.
-- [ ] Search consumer documentation for plan/task references.
-- [ ] Confirm no files moved under `docs/superpowers/`.
+- [x] Check every Markdown link resolves to an existing file or valid external URL.
+- [x] Search consumer documentation for plan/task references.
+- [x] Confirm no files moved under `docs/superpowers/`.
 - [ ] Scan changed files for secrets.
 - [ ] Run documentation-focused repository checks and final validation.

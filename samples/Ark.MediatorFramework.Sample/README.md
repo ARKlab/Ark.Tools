@@ -158,8 +158,8 @@ reflection when configured.
 The MCP release gate extends this host with an authenticated `/mcp` endpoint.
 It must expose a generated query, mutation, and the existing cover
 upload/download operations, and test them through the official SDK client.
-See the [MCP user guide](../../docs/mediator-framework/guide/mcp.md) and the
-[MCP design](../../docs/mediator-framework/mcp-design.md) for the required
+See the [MCP user guide](../../docs/mediator-framework/mcp.md) and the
+[MCP design](../../docs/design/mediator-framework/mcp-design.md) for the required
 composition and attachment/error assertions.
 
 ## Persistence profiles
@@ -478,7 +478,7 @@ ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
 ```
 
 Read the complete hosting walkthrough in
-[`docs/mediator-framework/guide/azure-functions.md`](../../docs/mediator-framework/guide/azure-functions.md).
+[`docs/mediator-framework/azure-functions.md`](../../docs/mediator-framework/azure-functions.md).
 
 ## Tests
 
@@ -495,9 +495,8 @@ eventual effects. They do not assert URLs, status codes, JSON, OpenAPI, or
 generated transport wrappers. Those belong to focused host-boundary tests.
 
 Follow the test-project setup in
-[`docs/mediator-framework/guide/testing.md`](../../docs/mediator-framework/guide/testing.md)
-and the detailed DOC-01 checklist in
-[`docs/mediator-framework/progress/tasks/testing/DOC-01-testing-guidance.md`](../../docs/mediator-framework/progress/tasks/testing/DOC-01-testing-guidance.md).
+[`docs/mediator-framework/testing.md`](../../docs/mediator-framework/testing.md)
+and keep application and framework boundary tests separate.
 
 ## CI/CD examples
 
@@ -521,7 +520,7 @@ names, identity, and application settings.
 ## Guide map
 
 Start with the canonical incremental
-[`Mediator Framework guide`](../../docs/mediator-framework/guide/README.md).
+[`Mediator Framework guide`](../../docs/mediator-framework/README.md).
 Its table is the source of truth for the complete order: Ping hello-world,
 composition, contract design/versioning, validation/authorization, HTTP, gRPC,
 Rebus, streaming, serialization, OpenAPI, Azure Functions, testing, advanced
