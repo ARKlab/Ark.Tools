@@ -1,12 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
-
-#if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
 
 using Reqnroll;
 
@@ -17,9 +14,7 @@ namespace Ark.MediatorFramework.Sample.Tests.Hooks;
 public sealed class DatabaseHooks
 {
     /// <summary>Gets the SQL connection string used by the sample integration database.</summary>
-#if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
     public static string ConnectionString
     {
         get

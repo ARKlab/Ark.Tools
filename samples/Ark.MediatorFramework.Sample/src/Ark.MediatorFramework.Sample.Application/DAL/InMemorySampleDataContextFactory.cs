@@ -3,11 +3,8 @@
 
 using Ark.Tools.Core;
 using Ark.Tools.Core.Reflection;
-using Ark.Tools.Outbox;
-
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
+using Ark.Tools.Outbox;
 
 using System.Collections.Concurrent;
 
@@ -241,10 +238,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
             Guid bookId,
-#if NET10_0_OR_GREATER
-            [PersonalData]
-#endif
-            string userId,
+            [PersonalData] string userId,
             int limit,
             CancellationToken ctk = default)
         {

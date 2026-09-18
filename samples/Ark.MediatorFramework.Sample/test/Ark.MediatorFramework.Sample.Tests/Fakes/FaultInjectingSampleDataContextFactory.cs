@@ -2,12 +2,9 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Outbox;
-
-#if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.MediatorFramework.Sample.Tests.Fakes;
 
@@ -152,10 +149,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
             Guid bookId,
-#if NET10_0_OR_GREATER
-            [PersonalData]
-#endif
-            string userId,
+            [PersonalData] string userId,
             int limit,
             CancellationToken ctk = default)
         {

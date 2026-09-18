@@ -6,10 +6,7 @@ using Ark.Tools.Outbox;
 using Ark.Tools.Core;
 
 using Dapper;
-
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using System.Data.Common;
 
@@ -62,10 +59,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Reads bounded activity for a book and reader.</summary>
     Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         Guid bookId,
-#if NET10_0_OR_GREATER
-        [PersonalData]
-#endif
-        string userId,
+        [PersonalData] string userId,
         int limit,
         CancellationToken ctk = default);
 
@@ -94,20 +88,14 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Tools.Sql
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContextConfig"/> class.</summary>
     /// <param name="connectionString">The SQL Server connection string.</param>
-#if NET10_0_OR_GREATER
-    public SampleDataContextConfig([InfrastructureSecret] string connectionString)
-#else
-    public SampleDataContextConfig(string connectionString)
-#endif
-    {
-        ConnectionString = connectionString;
-    }
+public SampleDataContextConfig([InfrastructureSecret] string connectionString)
+{
+    ConnectionString = connectionString;
+}
 
-    /// <inheritdoc />
-#if NET10_0_OR_GREATER
-    [InfrastructureSecret]
-#endif
-    public string ConnectionString { get; }
+/// <inheritdoc />
+[InfrastructureSecret]
+public string ConnectionString { get; }
 
     /// <inheritdoc />
     public string TableName => "Outbox";
@@ -414,10 +402,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
     public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         Guid bookId,
-#if NET10_0_OR_GREATER
-        [PersonalData]
-#endif
-        string userId,
+        [PersonalData] string userId,
         int limit,
         CancellationToken ctk = default)
     {

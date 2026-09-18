@@ -3,12 +3,9 @@
 
 using Ark.MediatorFramework.Sample.Application.Messages;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Solid.Authorization;
-
-#if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
 
 using Azure.Identity;
 
@@ -37,11 +34,7 @@ public static class AzureFunctionsRebusComposition
     /// </param>
     public static void ConfigureOutbound(
         Container container,
-#if NET10_0_OR_GREATER
         [InfrastructureSecret] string? serviceBusConnectionString)
-#else
-        string? serviceBusConnectionString)
-#endif
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -77,17 +70,9 @@ public static class AzureFunctionsRebusComposition
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
-#if NET10_0_OR_GREATER
         [InfrastructureSecret] string? serviceBusConnectionString,
-#else
-        string? serviceBusConnectionString,
-#endif
         bool useSqlStore = false,
-#if NET10_0_OR_GREATER
         [InfrastructureSecret] string? connectionString = null)
-#else
-        string? connectionString = null)
-#endif
     {
         if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
             throw new InvalidOperationException(
@@ -107,11 +92,7 @@ public static class AzureFunctionsRebusComposition
 
     private static void _configureTransport(
         StandardConfigurer<ITransport> transport,
-#if NET10_0_OR_GREATER
         [InfrastructureSecret] string serviceBusConnectionString)
-#else
-        string serviceBusConnectionString)
-#endif
     {
         if (serviceBusConnectionString.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase))
         {
