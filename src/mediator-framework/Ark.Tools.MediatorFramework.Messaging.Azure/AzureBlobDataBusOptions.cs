@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Composition options for the Azure Blob DataBus provider.</summary>
@@ -23,6 +25,7 @@ public sealed record AzureBlobDataBusOptions
     /// Gets the Azure Blob Storage connection string or service URI. A service URI
     /// uses DefaultAzureCredential.
     /// </summary>
+    [InfrastructureSecret]
     public required string ConnectionString { get; init; }
 
     /// <summary>

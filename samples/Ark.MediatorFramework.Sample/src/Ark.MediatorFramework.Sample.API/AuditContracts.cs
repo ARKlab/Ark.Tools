@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
@@ -28,6 +29,7 @@ public sealed record AuditRecord
     [DefaultValue("anonymous")]
     [ProtoMember(2)]
     [Key(1)]
+    [PersonalData]
     public string UserId { get; set; } = "anonymous";
 
     /// <summary>Gets the type of entity affected by the operation.</summary>

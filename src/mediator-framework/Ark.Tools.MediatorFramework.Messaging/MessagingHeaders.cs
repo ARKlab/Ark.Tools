@@ -69,7 +69,7 @@ public static class MessagingHeaders
     public const string UserAuthenticationType = "ark-auth-type";
 
     /// <summary>User identifier header.</summary>
-    [NotPersonalData]
+    [NotPersonalData("Transport user identifier is non-personal routing metadata.")]
     public const string UserId = "ark-user-id";
 
     /// <summary>User scopes header.</summary>

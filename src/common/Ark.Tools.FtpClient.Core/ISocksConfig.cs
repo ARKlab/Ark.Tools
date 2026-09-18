@@ -8,7 +8,7 @@ namespace Ark.Tools.FtpClient.Core;
 
 public interface ISocksConfig
 {
-    [NotPersonalData]
+    [NotPersonalData("Proxy IP address is network infrastructure metadata, not personal data.")]
     string IpAddress { get; }
 
     int Port { get; }

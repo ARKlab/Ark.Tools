@@ -21,10 +21,10 @@ namespace Ark.Tools.OTel.Tests;
 [DoNotParallelize]
 public sealed class SqlInstrumentationFilterTests
 {
-    [NotPersonalData]
+    [NotPersonalData("Environment variable names are infrastructure metadata and not personal data.")]
     private const string _connectionStringEnvironmentVariable = "ARK_SQL_CONNECTION_STRING";
 
-    [NotPersonalData]
+    [NotPersonalData("Environment variable names are infrastructure metadata and not personal data.")]
     private const string _passwordEnvironmentVariable = "ARK_SQL_PASSWORD";
 
     /// <summary>

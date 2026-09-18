@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using System.Buffers;
 using System.Buffers.Text;
 using System.Collections.Concurrent;
@@ -50,7 +52,7 @@ public sealed class StorageQueueMessagingTransport :
     /// <param name="receiveVisibilityTimeout">The visibility window used by the custom receive pump.</param>
     /// <param name="retryDelay">The delay applied when the custom receive pump abandons a delivery.</param>
     public StorageQueueMessagingTransport(
-        string connectionString,
+        [InfrastructureSecret] string connectionString,
         TimeSpan? receiveVisibilityTimeout = null,
         TimeSpan? retryDelay = null)
         : this(
@@ -68,7 +70,7 @@ public sealed class StorageQueueMessagingTransport :
     /// <param name="retryDelay">The delay applied when the custom receive pump abandons a delivery.</param>
     public StorageQueueMessagingTransport(
         Uri serviceUri,
-        TokenCredential credential,
+        [UserCredentials] TokenCredential credential,
         TimeSpan? receiveVisibilityTimeout = null,
         TimeSpan? retryDelay = null)
         : this(

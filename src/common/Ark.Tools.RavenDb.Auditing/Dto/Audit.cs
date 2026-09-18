@@ -8,7 +8,7 @@ public class Audit
     public Guid AuditId { get; set; }
     public string Id => AuditId.ToString();
 
-    [NotPersonalData]
+    [NotPersonalData("Audit user identifier is a non-sensitive correlation value used for operational tracking.")]
     public string? UserId { get; set; }
     public DateTime LastUpdatedUtc { get; set; }
 

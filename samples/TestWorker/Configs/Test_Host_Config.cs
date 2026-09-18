@@ -1,6 +1,6 @@
+using Ark.Tools.Compliance;
 using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
-
 
 using TestWorker.Constants;
 
@@ -10,6 +10,7 @@ public class Test_Host_Config : DefaultHostConfig, ITest_Host_Config
 {
     public override string WorkerName { get; set; } = Test_Constants.AppName;
 
+    [InfrastructureSecret]
     public string? StateDbConnectionString { get; set; }
-    string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("StateDbConnectionString must be configured.");
+    string ISqlStateProviderConfig.DbConnectionString => StateDbConnectionString ?? throw new InvalidOperationException("StateDbConnectionString must be configured.");
 }

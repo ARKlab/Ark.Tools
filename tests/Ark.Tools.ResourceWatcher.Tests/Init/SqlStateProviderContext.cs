@@ -1,5 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
+using Ark.Tools.Compliance;
 using Ark.Tools.Nodatime.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
@@ -106,6 +107,7 @@ public sealed class SqlStateProviderContext
     /// </summary>
     private sealed class SqlStateProviderConfigImpl : ISqlStateProviderConfig
     {
+        [InfrastructureSecret]
         public required string DbConnectionString { get; init; }
         public System.Text.Json.Serialization.JsonSerializerContext? ExtensionsJsonContext => null;
     }

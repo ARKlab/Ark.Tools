@@ -42,7 +42,7 @@ internal abstract class SocksHandler
     /// </summary>
     /// <param name="address">The IP address to convert.</param>
     /// <returns>An array of four bytes that represents the specified IP address.</returns>
-    protected static byte[] AddressToBytes(long address)
+    protected static byte[] AddressToBytes([NotPersonalData("Network address bytes are infrastructure routing metadata, not personal data.")] long address)
     {
         byte[] ret =
         [

@@ -29,7 +29,7 @@ public class DrainableInMemTransport : InMemTransport
         }
     }
 
-    public DrainableInMemTransport(InMemNetwork network, [NotPersonalData] string? inputQueueAddress)
+    public DrainableInMemTransport(InMemNetwork network, [NotPersonalData("Queue address is infrastructure routing metadata, not personal data.")] string? inputQueueAddress)
         : base(network, inputQueueAddress)
     {
     }

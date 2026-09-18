@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.API.Authorization;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using NodaTime;
@@ -19,6 +20,7 @@ public sealed record BookReview
     public required Guid BookId { get; init; }
 
     /// <summary>Gets the authenticated reviewer identifier.</summary>
+    [PersonalData]
     public required string UserId { get; init; }
 
     /// <summary>Gets the rating from one to five.</summary>
