@@ -6,8 +6,6 @@ using Ark.Tools.MediatorFramework.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using SimpleInjector;
-
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Provides fluent Azure Functions messaging composition.</summary>
@@ -15,27 +13,23 @@ public static class FluentMessagingFunctionsCompositionExtensions
 {
     /// <summary>Configures one generated Azure Functions messaging host from generated metadata.</summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="container">The application Simple Injector container.</param>
     /// <param name="configuration">The host configuration.</param>
     /// <param name="manifest">The generated Functions host manifest.</param>
     /// <param name="configure">The Functions composition callback.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection ConfigureArkMessagingFunctions(
         this IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         Action<MessagingFunctionsCompositionBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(configure);
 
         var builder = new MessagingFunctionsCompositionBuilder(
             services,
-            container,
             configuration,
             manifest);
         configure(builder);
@@ -48,7 +42,6 @@ public static class FluentMessagingFunctionsCompositionExtensions
     /// <typeparam name="TParticipant">The generated participant declaration.</typeparam>
     /// <typeparam name="THost">The generated Functions host declaration.</typeparam>
     /// <param name="services">The service collection.</param>
-    /// <param name="container">The application Simple Injector container.</param>
     /// <param name="configuration">The host configuration.</param>
     /// <param name="configure">The Functions composition callback.</param>
     /// <returns>The same service collection.</returns>
@@ -57,7 +50,6 @@ public static class FluentMessagingFunctionsCompositionExtensions
         TParticipant,
         THost>(
         this IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         Action<MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost>> configure)
         where TNetwork : class, IMessagingNetwork<TNetwork>
@@ -65,13 +57,11 @@ public static class FluentMessagingFunctionsCompositionExtensions
         where THost : class, IMessagingFunctionsHost<THost>
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(configure);
 
         var builder = new MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost>(
             services,
-            container,
             configuration);
         configure(builder);
         builder.Build();
@@ -89,7 +79,6 @@ public sealed class MessagingFunctionsCompositionBuilder
 
     internal MessagingFunctionsCompositionBuilder(
         IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest)
     {
@@ -98,7 +87,6 @@ public sealed class MessagingFunctionsCompositionBuilder
             MessagingCompositionNetwork,
             MessagingCompositionHost>(
             services,
-            container,
             configuration,
             manifest);
     }
@@ -389,7 +377,6 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
     where THost : class, IMessagingFunctionsHost<THost>
 {
     private readonly IServiceCollection _services;
-    private readonly Container _container;
     private readonly IConfiguration _configuration;
     private IMessagingDataBus? _dataBus;
     private MessagingFunctionsRuntimeTransport? _transport;
@@ -403,20 +390,17 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
 
     internal MessagingFunctionsCompositionBuilder(
         IServiceCollection services,
-        Container container,
         IConfiguration configuration)
     {
         _services = services;
-        _container = container;
         _configuration = configuration;
     }
 
     internal MessagingFunctionsCompositionBuilder(
         IServiceCollection services,
-        Container container,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest)
-        : this(services, container, configuration)
+        : this(services, configuration)
     {
         _manifest = manifest;
         _metadataManifest = true;
@@ -595,7 +579,6 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         if (_outboxEnqueue)
             _services._addArkMessagingOutboxEnqueue();
         _services.AddArkMessagingFunctionsHost(
-            _container,
             _configuration,
             manifest,
             dataBus,

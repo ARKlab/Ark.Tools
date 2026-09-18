@@ -8,9 +8,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-using SimpleInjector;
-using SimpleInjector.Lifestyles;
-
 using System.Reflection;
 using System.Text.Json;
 
@@ -76,13 +73,9 @@ public static class ArkAzureFunctionsInvocation
         if (!binding.Succeeded)
             return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
-        var (container, scope) = _beginScope(request);
-        await using (scope.ConfigureAwait(false))
-        {
-            var processor = container.GetInstance<IRequestProcessor>();
-            var result = await processor.ExecuteAsync<TRequest, TResponse>(binding.Value!, cancellationToken).ConfigureAwait(false);
-            return result is null ? Results.NoContent() : Results.Ok(result);
-        }
+        var processor = request.HttpContext.RequestServices.GetRequiredService<IRequestProcessor>();
+        var result = await processor.ExecuteAsync<TRequest, TResponse>(binding.Value!, cancellationToken).ConfigureAwait(false);
+        return result is null ? Results.NoContent() : Results.Ok(result);
     }
 
     /// <summary>Invokes a generated query through the application container.</summary>
@@ -103,13 +96,9 @@ public static class ArkAzureFunctionsInvocation
         if (!binding.Succeeded)
             return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
-        var (container, scope) = _beginScope(request);
-        await using (scope.ConfigureAwait(false))
-        {
-            var processor = container.GetInstance<IQueryProcessor>();
-            var result = await processor.ExecuteAsync<TQuery, TResponse>(binding.Value!, cancellationToken).ConfigureAwait(false);
-            return result is null ? Results.NotFound() : Results.Ok(result);
-        }
+        var processor = request.HttpContext.RequestServices.GetRequiredService<IQueryProcessor>();
+        var result = await processor.ExecuteAsync<TQuery, TResponse>(binding.Value!, cancellationToken).ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
     }
 
     /// <summary>Invokes a generated command through the application container.</summary>
@@ -128,21 +117,9 @@ public static class ArkAzureFunctionsInvocation
         if (!binding.Succeeded)
             return Results.Problem(statusCode: 400, title: "BINDING_FAILURE", detail: binding.Error);
 
-        var (container, scope) = _beginScope(request);
-        await using (scope.ConfigureAwait(false))
-        {
-            var processor = container.GetInstance<ICommandProcessor>();
-            await processor.ExecuteAsync<TCommand>(binding.Value!, cancellationToken).ConfigureAwait(false);
-            return Results.NoContent();
-        }
-    }
-
-    private static (Container Container, Scope Scope) _beginScope(HttpRequest request)
-    {
-        var container = request.HttpContext.RequestServices.GetService<Container>()
-            ?? throw new InvalidOperationException(
-                "The Azure Functions mediator container is not registered. Call AddArkAzureFunctions with the application container.");
-        return (container, AsyncScopedLifestyle.BeginScope(container));
+        var processor = request.HttpContext.RequestServices.GetRequiredService<ICommandProcessor>();
+        await processor.ExecuteAsync<TCommand>(binding.Value!, cancellationToken).ConfigureAwait(false);
+        return Results.NoContent();
     }
 
     // ponytail: reflection on typeof(T) is performed once per T via the static generic cache PropertyCache<T>;
