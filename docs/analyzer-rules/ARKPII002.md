@@ -8,6 +8,8 @@
 
 This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
 
+The receiver of a logging sink is not analysed as data: instance receivers and the `this` argument of extension methods (for example the `ILogger<TCategory>` passed to `LogInformation`) never taint the call.
+
 ## How to fix it
 
 Apply the correction stated by the diagnostic. Do not suppress the rule when changing the declaration, contract, host configuration, or data flow is possible.
