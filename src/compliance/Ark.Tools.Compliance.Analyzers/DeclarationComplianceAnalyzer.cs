@@ -99,6 +99,14 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
                     }, Microsoft.CodeAnalysis.OperationKind.PropertyReference);
+                    start.RegisterOperationAction(operationContext =>
+                    {
+                        var parameter = (Microsoft.CodeAnalysis.Operations.IParameterReferenceOperation)operationContext.Operation;
+                        if (_isServiceCollection(parameter.Type, serviceCollectionType))
+                        {
+                            Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
+                        }
+                    }, Microsoft.CodeAnalysis.OperationKind.ParameterReference);
                 }
                 start.RegisterCompilationEndAction(endContext =>
                 {

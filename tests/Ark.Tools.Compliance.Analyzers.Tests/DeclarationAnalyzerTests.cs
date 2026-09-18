@@ -330,6 +330,30 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII013");
     }
 
+    /// <summary>Microsoft telemetry consumers configuring services through a composition-root parameter must register Ark redaction.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithServiceCollectionParameterWithoutArkRedactionIsRejected()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Microsoft.Extensions.DependencyInjection
+            {
+                public interface IServiceCollection { }
+            }
+            class Startup
+            {
+                void Configure(Microsoft.Extensions.DependencyInjection.IServiceCollection services)
+                {
+                    services.ToString();
+                }
+            }
+            """,
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII013");
+    }
+
     /// <summary>The Ark redaction registration satisfies the telemetry guard.</summary>
     [TestMethod]
     public async Task MicrosoftTelemetryWithArkRedactionIsAccepted()
