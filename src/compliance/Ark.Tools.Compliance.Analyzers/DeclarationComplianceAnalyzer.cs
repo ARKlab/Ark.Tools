@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
@@ -229,7 +229,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    /// <summary>Implemented interface members and overridden base members carry their classification to the declaration.</summary>
+    /// <summary>Implemented interface members and the whole overridden base chain carry their classification to the declaration.</summary>
     private static IReadOnlyList<ISymbol> _inheritedMembers(ISymbol symbol)
     {
         if (symbol is not (IPropertySymbol or IMethodSymbol or IEventSymbol) || symbol.ContainingType is null)
@@ -242,25 +242,28 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         {
             case IPropertySymbol property:
                 members.AddRange(property.ExplicitInterfaceImplementations);
-                if (property.OverriddenProperty is not null)
+                for (var overridden = property.OverriddenProperty; overridden is not null; overridden = overridden.OverriddenProperty)
                 {
-                    members.Add(property.OverriddenProperty);
+                    members.Add(overridden);
+                    members.AddRange(overridden.ExplicitInterfaceImplementations);
                 }
 
                 break;
             case IMethodSymbol method:
                 members.AddRange(method.ExplicitInterfaceImplementations);
-                if (method.OverriddenMethod is not null)
+                for (var overridden = method.OverriddenMethod; overridden is not null; overridden = overridden.OverriddenMethod)
                 {
-                    members.Add(method.OverriddenMethod);
+                    members.Add(overridden);
+                    members.AddRange(overridden.ExplicitInterfaceImplementations);
                 }
 
                 break;
             case IEventSymbol @event:
                 members.AddRange(@event.ExplicitInterfaceImplementations);
-                if (@event.OverriddenEvent is not null)
+                for (var overridden = @event.OverriddenEvent; overridden is not null; overridden = overridden.OverriddenEvent)
                 {
-                    members.Add(@event.OverriddenEvent);
+                    members.Add(overridden);
+                    members.AddRange(overridden.ExplicitInterfaceImplementations);
                 }
 
                 break;

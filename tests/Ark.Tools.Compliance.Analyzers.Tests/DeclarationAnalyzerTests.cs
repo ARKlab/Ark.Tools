@@ -71,6 +71,7 @@ public sealed class DeclarationAnalyzerTests
             class Implicit : IConfig { public string Email => ""; }
             abstract class Base { [PersonalData] public abstract string Email { get; } }
             class Derived : Base { public override string Email => ""; }
+            class Grandchild : Derived { public override string Email => ""; }
             """).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
     }

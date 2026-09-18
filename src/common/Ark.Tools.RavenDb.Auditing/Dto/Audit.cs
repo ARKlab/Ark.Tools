@@ -10,11 +10,9 @@ public class Audit
     public Guid AuditId { get; set; }
     public string Id => AuditId.ToString();
 
-    #if NET10_0_OR_GREATER
-
-    [NotPersonalData("Audit user identifier is a non-sensitive correlation value used for operational tracking.")]
-
-    #endif
+#if NET10_0_OR_GREATER
+    [Pseudonymous]
+#endif
     public string? UserId { get; set; }
     public DateTime LastUpdatedUtc { get; set; }
 
