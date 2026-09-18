@@ -10,26 +10,26 @@
     <!-- COMMON -->
     <PackageVersion Include="Azure.Storage.Queues" Version="12.27.1" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.5" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.1.0" />
-    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.1.0" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.1.0" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="10.1.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="8.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="8.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="8.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="8.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="8.0.31" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.AzureAppServices" Version="8.0.31" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
 
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
     <PackageVersion Include="System.Diagnostics.Tracing" Version="4.3.0" />
     <PackageVersion Include="DistributedLock.Core" Version="1.0.9" />

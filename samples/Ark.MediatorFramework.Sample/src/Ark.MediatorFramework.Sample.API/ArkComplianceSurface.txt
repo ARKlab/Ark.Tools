@@ -1,0 +1,7 @@
+﻿/*
+COMPLIANCE-SURFACE 1
+CLASSIFIED	Ark.MediatorFramework.Sample.API.AuditRecord	UserId	Ark:PersonalData	Gets the authenticated user identifier.	MessagePack,Protobuf
+CLASSIFIED	Ark.MediatorFramework.Sample.API.BookReview	UserId	Ark:PersonalData	Gets the authenticated reviewer identifier.	
+CLASSIFIED	Ark.MediatorFramework.Sample.API.GetAuditsQuery.V1	UserId	Ark:PersonalData	Gets the user identifier filter.	
+CLASSIFIED	Ark.MediatorFramework.Sample.API.ReadingActivity	UserId	Ark:PersonalData	Gets the authenticated reader identifier.	
+*/

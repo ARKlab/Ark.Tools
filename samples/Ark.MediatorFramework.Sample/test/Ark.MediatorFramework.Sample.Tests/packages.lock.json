@@ -865,15 +865,6 @@
           "Microsoft.Extensions.Primitives": "10.0.0"
         }
       },
-      "Microsoft.Extensions.Compliance.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.1.0",
-        "contentHash": "M3JWrgZMkVzyEybZzNkTiC/e8U1ipXTi8xm8bj+PHHp4AcEmhmIEqnxRS0VHVCKZjLkOPt2hY2CIisUFQ6gqLA==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.1",
-          "Microsoft.Extensions.ObjectPool": "10.0.1"
-        }
-      },
       "Microsoft.Extensions.Compliance.Redaction": {
         "type": "Transitive",
         "resolved": "10.1.0",
@@ -1955,6 +1946,7 @@
       "ark.mediatorframework.sample.api": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
@@ -1962,7 +1954,8 @@
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )"
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )"
         }
       },
       "ark.mediatorframework.sample.application": {
@@ -2589,6 +2582,16 @@
           "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
           "Microsoft.Azure.Functions.Worker.Extensions.Rpc": "1.0.1",
           "Microsoft.Extensions.Azure": "1.13.0"
+        }
+      },
+      "Microsoft.Extensions.Compliance.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.1.0, )",
+        "resolved": "10.1.0",
+        "contentHash": "M3JWrgZMkVzyEybZzNkTiC/e8U1ipXTi8xm8bj+PHHp4AcEmhmIEqnxRS0VHVCKZjLkOPt2hY2CIisUFQ6gqLA==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.1",
+          "Microsoft.Extensions.ObjectPool": "10.0.1"
         }
       },
       "Microsoft.Identity.Web": {
