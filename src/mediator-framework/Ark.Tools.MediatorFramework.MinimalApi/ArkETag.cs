@@ -1,12 +1,15 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Microsoft.AspNetCore.Http;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
+#if NET10_0_OR_GREATER
 /// <summary>Reads and validates HTTP opaque ETag preconditions.</summary>
 public static class ArkETag
 {
@@ -99,3 +102,4 @@ public sealed class ArkETagParameterMetadata
     /// <summary>Gets whether the response carries an ETag.</summary>
     public bool ResponseETag { get; }
 }
+#endif

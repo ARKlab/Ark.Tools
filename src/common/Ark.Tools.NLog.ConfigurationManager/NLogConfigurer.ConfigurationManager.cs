@@ -1,6 +1,8 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using System.Configuration;
 
@@ -11,9 +13,14 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurerConfigurationManager
 {
-
+#pragma warning disable ARKPII001 // SMTP mail addresses are intentionally named as mailFrom/mailTo in the configuration API and are classified at the call site.
+#if NET10_0_OR_GREATER
     public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, [PersonalData] string mailFrom, [PersonalData] string mailTo, bool async = true)
     {
+#else
+    public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
+    {
+#endif
         var smtp = ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString
             ?? new SmtpConnectionBuilder()
             {
@@ -39,4 +46,5 @@ public static class NLogConfigurerConfigurationManager
 
         return @this;
     }
+#pragma warning restore ARKPII001
 }

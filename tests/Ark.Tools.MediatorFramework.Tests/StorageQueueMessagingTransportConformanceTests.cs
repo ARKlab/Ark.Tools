@@ -12,6 +12,8 @@ using Azure.Storage.Queues;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
+#pragma warning disable ARKPII001 // emulator connection strings are intentionally literal test fixtures, not user data.
+
 /// <summary>Runs the transport conformance suite against the repository Azurite instance.</summary>
 [TestClass]
 [TestCategory("integration")]
@@ -110,3 +112,4 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
         await client.CreateIfNotExistsAsync().ConfigureAwait(false);
     }
 }
+#pragma warning restore ARKPII001

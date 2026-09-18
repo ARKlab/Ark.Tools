@@ -2,6 +2,10 @@ using Ark.Reference.Common.Auth;
 using Ark.Reference.Core.Common.Auth;
 using Ark.Tools.Compliance;
 
+#if NET10_0_OR_GREATER
+using Microsoft.Extensions.Compliance.Classification;
+#endif
+
 using Flurl.Http;
 
 using Microsoft.IdentityModel.Tokens;
@@ -13,9 +17,15 @@ namespace Ark.Reference.Core.Tests.Auth;
 [Binding]
 public class AuthTestContext
 {
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     public const string AUTH0_APIKEY = "banana";
     public string Token => _getToken();
 
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     public string? ApiKey { get; private set; }
 
     private readonly JwtTokenBuilder _builder = new JwtTokenBuilder()

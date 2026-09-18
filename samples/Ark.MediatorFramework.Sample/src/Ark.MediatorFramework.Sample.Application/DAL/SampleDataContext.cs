@@ -7,6 +7,8 @@ using Ark.Tools.Core;
 
 using Dapper;
 
+using Microsoft.Extensions.Compliance.Classification;
+
 using System.Data.Common;
 
 namespace Ark.MediatorFramework.Sample.Application.DAL;
@@ -87,12 +89,13 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Tools.Sql
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContextConfig"/> class.</summary>
     /// <param name="connectionString">The SQL Server connection string.</param>
-    public SampleDataContextConfig(string connectionString)
+    public SampleDataContextConfig([InfrastructureSecret] string connectionString)
     {
         ConnectionString = connectionString;
     }
 
     /// <inheritdoc />
+    [InfrastructureSecret]
     public string ConnectionString { get; }
 
     /// <inheritdoc />

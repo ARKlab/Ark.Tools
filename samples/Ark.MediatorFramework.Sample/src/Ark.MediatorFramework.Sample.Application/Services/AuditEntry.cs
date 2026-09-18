@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Microsoft.Extensions.Compliance.Classification;
 using NodaTime;
 
 namespace Ark.MediatorFramework.Sample.Application.Services;
@@ -12,6 +13,7 @@ public sealed record AuditEntry
     public Guid Id { get; init; } = Guid.NewGuid();
 
     /// <summary>Gets the authenticated user identifier.</summary>
+    [PersonalData]
     public string UserId { get; init; } = "anonymous";
 
     /// <summary>Gets the type of entity affected by the operation.</summary>

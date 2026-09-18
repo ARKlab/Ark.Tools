@@ -2,6 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.FtpClient.Core;
 
+#if NET10_0_OR_GREATER
+using Microsoft.Extensions.Compliance.Classification;
+#endif
+
 
 
 namespace Ark.Tools.FtpClient.FtpProxy;
@@ -9,6 +13,9 @@ namespace Ark.Tools.FtpClient.FtpProxy;
 public class FtpClientProxyFactory : IFtpClientFactory
 {
     private readonly IFtpClientProxyConfig _config;
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     private readonly TokenProvider _tokenProvider;
 
     public FtpClientProxyFactory(IFtpClientProxyConfig config)

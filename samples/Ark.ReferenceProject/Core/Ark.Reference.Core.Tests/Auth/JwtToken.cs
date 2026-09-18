@@ -1,9 +1,16 @@
 using System.IdentityModel.Tokens.Jwt;
 
+#if NET10_0_OR_GREATER
+using Microsoft.Extensions.Compliance.Classification;
+#endif
+
 namespace Ark.Reference.Core.Tests.Auth;
 
 public sealed class JwtToken
 {
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     private readonly JwtSecurityToken _token;
 
     internal JwtToken(JwtSecurityToken token)

@@ -16,6 +16,8 @@ using System.Diagnostics;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
+#pragma warning disable ARKPII001 // emulator connection strings are intentionally literal test fixtures, not user data.
+
 /// <summary>Reusable processor-host checks that only a real broker can answer.</summary>
 /// <remarks>
 /// The in-memory host tests own the credit algebra; these own the parts the emulators decide:
@@ -311,3 +313,4 @@ public sealed class ServiceBusMessagingProcessorHostBoundaryTests : MessagingPro
         return connectionString[..endpointStart] + dataPlaneEndpoint + connectionString[endpointEnd..];
     }
 }
+#pragma warning restore ARKPII001

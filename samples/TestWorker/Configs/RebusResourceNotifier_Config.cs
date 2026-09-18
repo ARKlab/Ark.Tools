@@ -7,6 +7,7 @@ namespace TestWorker.Configs;
 
 public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 {
+#pragma warning disable ARKPII001 // test worker configuration intentionally uses named Azure Service Bus connection-string members.
     public RebusResourceNotifier_Config([InfrastructureSecret] string? asbConnectionString)
     {
         AsbConnectionString = asbConnectionString ?? throw new ArgumentNullException(nameof(asbConnectionString));
@@ -14,6 +15,7 @@ public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 
     [InfrastructureSecret]
     public string AsbConnectionString { get; set; }
+#pragma warning restore ARKPII001
     public string ProviderName { get; set; } = Test_Constants.ProviderName;
     public bool StartAtCreation { get; set; } = Test_Constants.StartAtCreationDefault;
 

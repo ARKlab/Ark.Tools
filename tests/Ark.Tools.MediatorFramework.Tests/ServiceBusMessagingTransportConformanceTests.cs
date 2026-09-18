@@ -8,6 +8,8 @@ using Azure.Messaging.ServiceBus.Administration;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
+#pragma warning disable ARKPII001 // emulator connection strings are intentionally literal test fixtures, not user data.
+
 /// <summary>Runs the transport conformance suite against the local Service Bus emulator.</summary>
 [TestClass]
 [TestCategory("integration")]
@@ -91,3 +93,4 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
         return connectionString[..endpointStart] + dataPlaneEndpoint + connectionString[endpointEnd..];
     }
 }
+#pragma warning restore ARKPII001

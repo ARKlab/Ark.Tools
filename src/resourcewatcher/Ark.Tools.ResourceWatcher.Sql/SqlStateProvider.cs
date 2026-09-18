@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 using Ark.Tools.Core;
 using Ark.Tools.Sql;
 
@@ -16,8 +18,12 @@ namespace Ark.Tools.ResourceWatcher;
 
 public interface ISqlStateProviderConfig
 {
+#pragma warning disable ARKPII001 // the public surface deliberately models a SQL connection string and the secret classification is enforced at the consuming boundary.
+#if NET10_0_OR_GREATER
     [InfrastructureSecret]
+#endif
     string DbConnectionString { get; }
+#pragma warning restore ARKPII001
 
     /// <summary>
     /// Optional JsonSerializerContext for Extensions serialization.

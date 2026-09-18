@@ -3,6 +3,10 @@
 
 using AwesomeAssertions;
 
+#if NET10_0_OR_GREATER
+using Microsoft.Extensions.Compliance.Classification;
+#endif
+
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
@@ -423,6 +427,9 @@ public sealed partial class AzureFunctionsBoundaryTests
             BaseAddress = baseAddress;
         }
 
+#if NET10_0_OR_GREATER
+        [NotPersonalData("Test host base address is infrastructure metadata, not personal data.")]
+#endif
         public Uri BaseAddress { get; }
 
         public static async Task<FunctionHost> StartAsync(CancellationToken cancellationToken)

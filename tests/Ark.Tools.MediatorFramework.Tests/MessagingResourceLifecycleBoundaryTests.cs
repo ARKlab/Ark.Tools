@@ -10,6 +10,8 @@ using Azure.Storage.Queues;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
+#pragma warning disable ARKPII001 // emulator connection strings are intentionally literal test fixtures, not user data.
+
 /// <summary>Verifies resource reconciliation against the local Azure emulators.</summary>
 [TestClass]
 [TestCategory("integration")]
@@ -155,3 +157,4 @@ public sealed class MessagingResourceLifecycleBoundaryTests
         return _defaultServiceBusConnectionString;
     }
 }
+#pragma warning restore ARKPII001

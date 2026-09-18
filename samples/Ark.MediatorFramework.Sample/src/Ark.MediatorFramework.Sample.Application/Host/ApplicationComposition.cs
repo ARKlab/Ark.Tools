@@ -4,6 +4,8 @@
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
+
+using Microsoft.Extensions.Compliance.Classification;
 using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
@@ -134,7 +136,7 @@ public static class ApplicationComposition
     public static void Register(
         Container container,
         bool useSqlStore = true,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,
@@ -159,15 +161,17 @@ public static class ApplicationComposition
             EvolvableEnumDapper.Register<Book.V1.Genre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
             EvolvableEnumDapper.Register<ReadingActivityKind>();
+#pragma warning disable ARKPII001 // synthetic test connection string uses a literal password name and is intentionally non-production
             var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
             {
-                DataSource = "localhost,1433",
-                InitialCatalog = "Ark.MediatorFramework.Sample",
-                UserID = "sa",
-                Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
-                TrustServerCertificate = true,
-                Encrypt = false,
+               DataSource = "localhost,1433",
+               InitialCatalog = "Ark.MediatorFramework.Sample",
+               UserID = "sa",
+               Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
+               TrustServerCertificate = true,
+               Encrypt = false,
             }.ConnectionString;
+#pragma warning restore ARKPII001
             var config = new SampleDataContextConfig(connectionString ?? localConnectionString);
             container.RegisterInstance(config);
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();

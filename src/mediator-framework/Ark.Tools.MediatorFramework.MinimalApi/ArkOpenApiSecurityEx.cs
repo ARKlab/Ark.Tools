@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Microsoft.AspNetCore.OpenApi;
 
@@ -9,6 +11,7 @@ using Microsoft.OpenApi;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
+#if NET10_0_OR_GREATER
 /// <summary>OpenAPI security settings for browser-based OAuth clients.</summary>
 public sealed record ArkOpenApiSecuritySettings
 {
@@ -114,3 +117,4 @@ public static class ArkOpenApiSecurityEx
         return options;
     }
 }
+#endif
