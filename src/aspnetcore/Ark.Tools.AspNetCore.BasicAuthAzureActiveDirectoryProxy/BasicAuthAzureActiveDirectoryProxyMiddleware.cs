@@ -80,7 +80,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
 
                             var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
 
-                            var result = await Policy
+                            await Policy
                                 .Handle<Exception>()
                                 .RetryAsync(2)
                                 .ExecuteAsync(async ct =>
