@@ -54,11 +54,8 @@ value unless stated otherwise.
 | Content | Test and application projects | `appsettings*.json`, `reqnroll*.json`, and `testconfig.json` output/publish metadata |
 | IDE and source control | Supported .NET SDK projects | Visual Studio acceleration and the Copilot SourceLink workaround |
 
-The focused references are [analyzer configuration and build policy](progress/tasks/SDK-IMP-03-analyzer-configuration-assets.md),
-[restore and analyzers](progress/tasks/SDK-IMP-04-sdk-restore-and-analyzers.md),
-[source and packaging](progress/tasks/SDK-IMP-05-source-and-packaging-profile.md),
-[MTP](mtp.md), [content and Reqnroll](progress/tasks/SDK-IMP-07-content-and-reqnroll-profile.md),
-and [ReferenceProject adoption](progress/tasks/SDK-IMP-09-reference-project-migration.md).
+The focused references are the [MTP profile](mtp.md) and the adoption guidance
+in this document.
 
 ## Property reference
 
@@ -109,7 +106,6 @@ Compliance policy includes `Ark.Tools.Compliance.globalconfig`, the canonical
 lexicon and sink additional files, and test `.feature` files. Reference the
 compliance package to supply its analyzers; configuration alone neither installs
 them nor enables runtime log redaction. See the [rule table](../analyzers.md#compliance-policy)
-and [compliance task board](progress/tasks/README.md#compliance-privacy-by-default)
 for implemented coverage. Local `.editorconfig` diagnostic severities override
 the packaged policy. `ARKPII001` stays a warning even with
 `TreatWarningsAsErrors=true`; other warning policy is unchanged.

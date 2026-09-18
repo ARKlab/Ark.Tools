@@ -1471,7 +1471,15 @@
           "Microsoft.Azure.Functions.Worker": "[2.52.0, )",
           "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore": "[2.1.1, )",
           "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )",
-          "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": "[5.5.5, )",
+          "Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues": "[5.5.5, )"
+        }
+      },
+      "ark.tools.mediatorframework.azurefunctions.simpleinjector": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
+          "Ark.Tools.Solid": "[1.0.0, )",
           "SimpleInjector": "[5.6.0, )"
         }
       },

@@ -1,7 +1,7 @@
 # Messaging processor host mechanics
 
 How `MessagingProcessorHost` fetches, buffers, renews, and paces work. Read
-[Messaging processing](../guide/messaging-processing.md) first: it covers how to
+[Messaging processing](../messaging-processing.md) first: it covers how to
 run a processor host and which setting to change for which symptom.
 
 ## Two seams, deliberately separate

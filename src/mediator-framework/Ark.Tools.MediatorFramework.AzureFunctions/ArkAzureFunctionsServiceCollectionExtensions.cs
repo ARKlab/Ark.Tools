@@ -2,11 +2,11 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 
 using Ark.Tools.Solid;
-using SimpleInjector;
 
 using System.Security.Claims;
 using System.Text.Json;
@@ -96,6 +96,9 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.AddHttpContextAccessor();
+        services.TryAddSingleton<IContextProvider<ClaimsPrincipal>, ArkAzureFunctionsUserContextProvider>();
+
         services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.ConfigureArkDefaults();
@@ -114,31 +117,6 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
         services.AddHealthChecks();
 
         return services;
-    }
-
-    /// <summary>
-    /// Registers the Azure Functions mediator runtime services and the application container.
-    /// </summary>
-    /// <param name="services">The service collection to configure.</param>
-    /// <param name="container">The application Simple Injector container.</param>
-    /// <param name="additionalContexts">
-    /// Optional source-generated <see cref="JsonSerializerContext"/> instances to include in the
-    /// type-info resolver chain.
-    /// </param>
-    /// <returns>The same service collection.</returns>
-    public static IServiceCollection AddArkAzureFunctions(
-        this IServiceCollection services,
-        Container container,
-        params JsonSerializerContext[] additionalContexts)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(container);
-        var httpContextAccessor = new HttpContextAccessor();
-        services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
-        services.AddSingleton(container);
-        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(
-            new ArkAzureFunctionsUserContextProvider(httpContextAccessor));
-        return services.AddArkAzureFunctions(additionalContexts);
     }
 }
 

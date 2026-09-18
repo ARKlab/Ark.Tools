@@ -949,7 +949,7 @@ using Ark.Tools.Core.Reflection;
 ### Documentation
 
 For more details on trimming, see:
-- [docs/trimmable-support/guidelines.md](../trimmable-support/guidelines.md)
+- [docs/trimmable-support/guidelines.md](trimmable-support/guidelines.md)
 
 ## TypeConverter Registration for Dictionary Keys (.NET 9+ only)
 
@@ -1236,5 +1236,4 @@ That ensures code quality:
 ### Documentation
 
 For more details on Trimmable, see:
-- [docs/trimmable-support/guidelines.md](../trimmable-support/guidelines.md)
-
+- [docs/trimmable-support/guidelines.md](trimmable-support/guidelines.md)

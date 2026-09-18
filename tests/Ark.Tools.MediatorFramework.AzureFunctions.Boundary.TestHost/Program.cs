@@ -37,7 +37,7 @@ public static class Program
 #pragma warning disable CA2000 // The container lives for the whole process.
         var container = _buildContainer();
 #pragma warning restore CA2000
-        builder.Services.AddArkAzureFunctions(container);
+        builder.Services.AddArkAzureFunctions();
         builder.Services.AddArkSolidProcessors(container);
         builder.Services.AddArkHealthChecks();
         builder.Services.AddSingleton(

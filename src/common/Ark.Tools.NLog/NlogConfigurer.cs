@@ -217,6 +217,11 @@ private global::Ark.Tools.Compliance.PiiScanner? _piiScanner = new();
             });
             _config.AddRule(new LoggingRule()
             {
+                LoggerNamePattern = "Azure.*",
+                FinalMinLevel = LogLevel.Warn,
+            });
+            _config.AddRule(new LoggingRule()
+            {
                 LoggerNamePattern = "Microsoft.Hosting.Lifetime.*",
                 FinalMinLevel = LogLevel.Info,
             });

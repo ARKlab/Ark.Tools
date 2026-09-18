@@ -1,0 +1,452 @@
+# AZM-10 — Azure Service Bus transport and trigger source generation
+
+**Category**: azure-functions-messaging · **Priority**: core
+**Depends on**: AZM-05, AZM-08, AZM-09
+**Scope**: TRANSPORT + GENERATOR
+**Design**: [Transport abstraction](../../azure-functions-messaging-design.md#5-transport-abstraction-packaging-and-inmemory-transport), [Generated Functions surface](../../azure-functions-messaging-design.md#6-generated-functions-surface)
+
+## Problem
+
+Production participants need the Azure Service Bus transport plus generated
+Azure
+Functions triggers. Trigger attributes are compile-time facts, so a Functions
+host running a receive-capable participant selects its trigger binding at
+compile time
+through a dedicated assembly-level attribute in the Azure Functions package,
+while the send side and non-Functions test hosts keep selecting
+the transport at runtime composition. Because the AZM-09 dispatcher
+already works, generated triggers are never emitted without a working
+dispatcher: this task is a single unit so the codebase never contains
+dispatcher-less trigger code.
+
+## Execution map
+
+- **Transport**: implement the Service Bus transport
+  (`Capabilities = Receive | PubSub | ScheduledSend`, hard 256 KB total
+  standard-tier message limit including application properties) in
+  `Ark.Tools.MediatorFramework.Messaging` using the AZM-05 contract:
+  envelope-to-message mapping via application properties and binary body,
+  native scheduling, topic publish, and PeekLock settlement mapped to
+  complete/abandon/dead-letter with the native `DeliveryCount`. Producer-only
+  participants reference only this messaging package. Its AZM-05 measurement
+  must evaluate the full native message, not body bytes alone.
+- **Generator project**:
+  `Ark.Tools.MediatorFramework.AzureFunctions.Generators`. Generated methods
+  call the existing AZM-09 runtime dispatcher; generated source contains no
+  codec, pipeline, retry, or DI logic. The Functions-binding settlement
+  adapter lives in `Ark.Tools.MediatorFramework.AzureFunctions`, which
+  references the messaging package.
+- **Trigger selection**: emit the Service Bus trigger only when the Functions
+  host assembly binds itself to a consumer participant through the
+  `[assembly: MessagingFunctionsHost(typeof(PrintingParticipant), MessagingFunctionsTriggerBinding.ServiceBus)]`
+  attribute defined in `Ark.Tools.MediatorFramework.AzureFunctions`; the
+  Storage Queue selection is handled by AZM-11. A Functions host assembly
+  binding a consumer participant without this attribute, or binding a
+  participant listed in no network, is a
+  compile-time diagnostic.
+- **Output per Functions app**: exactly one bound
+  `[MessagingFunctionsHost]` participant is permitted. That participant emits
+  zero or one identity-queue trigger plus one deterministic desired-resource
+  manifest. Multiple messaging participant bindings are a compile-time
+  diagnostic.
+- **Binding verification**: inspect the exact installed
+  `Microsoft.Azure.Functions.Worker.Extensions.ServiceBus` API before emitting
+  attributes; add a compile fixture using the actual package.
+- **Conformance**: run the AZM-05 transport conformance suite against the
+  Service Bus transport against the Azure Service Bus emulator (Docker) or a
+  live namespace; absence of
+  infrastructure is explicit, never a silent skip.
+- **Generated-code gate**: after building, inspect emitted `.g.cs` in the
+  boundary test host and sample as required by repository policy.
+- **Runnable state**: triggers dispatch through the proven runtime at task
+  end; full solution builds and tests green without Azure credentials.
+
+## Implementation steps
+
+1. Implement the Service Bus transport send path: envelope headers to
+   application properties, binary body, scheduled enqueue for delayed send,
+   and topic publish.
+2. Implement the receive-side settlement adapter mapping the Functions
+   Service Bus binding objects (message + message actions) onto the AZM-05
+   locked-delivery contract consumed by the dispatcher.
+3. Extend the incremental generator with contract, network, and participant
+   metadata
+   inputs, honoring the Functions host binding attribute, which references the
+   participant type, selects the trigger binding, and may add host-local steps
+   (the transport-neutral `[MessagingParticipant]` attribute from AZM-02 has
+   no trigger or step members). A Functions app may bind exactly one messaging
+   participant; diagnose multiple `[MessagingFunctionsHost]` bindings before
+   generating source.
+4. Emit one stable trigger for the bound participant's identity queue when the
+   participant declares `Processes` or `Subscribes` and the assembly declares
+   the Service
+   Bus trigger selection. A bound participant with no `Processes` and no
+   `Subscribes` is a send-only Functions host:
+   emit an information diagnostic and no trigger.
+   Do not discover handler registrations in the
+   generator; dispatch always goes through the processors.
+5. Emit subscription manifest entries that forward each subscribed event into
+   the participant identity queue. Do not emit direct subscription triggers.
+6. Emit a deterministic resource/subscription manifest for startup management
+   (consumed by AZM-12). Record the selected trigger binding in the manifest
+   so AZM-13 startup composition can fail when the composed runtime transport
+   does not match it.
+7. Emit thin async methods that pass the exact Azure binding object and
+   cancellation token to the runtime dispatcher.
+8. Diagnose missing owners/publishers, duplicate routes, invalid names,
+   duplicate subscription declarations, capability-usage violations,
+   conflicting protocol settings, and unsupported contract shapes.
+9. Generated triggers must use PeekLock, set `AutoCompleteMessages = false`,
+   bind `ServiceBusMessageActions`, and pass manual settlement to the
+   runtime. ReceiveAndDelete is rejected. Complete maps to
+   `CompleteMessageAsync`. Abandon maps to immediate `AbandonMessageAsync`
+   — Service Bus cannot delay abandon beyond the five-minute PeekLock cap,
+   so `RetryDelay` is ignored and a retry storm is accepted. Fail-fast and
+   missing-`MessagingFailed` DLQ map to `DeadLetterMessageAsync` with bounded
+   reason and description. Apply entity `MaxDeliveryCount = 2N` when the
+   participant's retry policy enables second-level retries, otherwise `N`.
+   `maxAutoLockRenewalDuration` must cover `MaximumHandlerDuration`.
+10. Keep generated host and transport details out of API-surface snapshots,
+    which describe contracts and interactions only.
+
+Participants that consume nothing (no `Processes`, no `Subscribes`) emit no
+receive trigger or subscription manifest entry.
+Participants composed over InMemory cannot be hosted in Azure Functions: their
+assemblies emit no trigger, Functions composition rejects the InMemory receive
+transport (AZM-13), and their receive side runs through the runtime pump in a
+test or custom host. Azure Functions end-to-end tests use Azurite or the Azure
+Service Bus emulator (Docker).
+
+## Core code shapes
+
+Conceptual shapes — final public names are selected by this task; the
+signatures' invariants are fixed. Snippets use the canonical runtime seams
+defined by AZM-04/05/07/08 (`MessagingHeaders`, `IMessagingTransport`,
+`IMessagingLockedDelivery`, `MessagingFailFastException`) and the participant
+receive binder generated by AZM-03A.
+
+Service Bus transport adapter over `Azure.Messaging.ServiceBus`: headers map
+to application properties, the payload maps to the binary body, scheduled
+send uses native scheduling, and native measurement covers the complete
+message:
+
+```csharp
+namespace Ark.MediatorFramework.Messaging;
+
+/// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
+public sealed class ServiceBusMessagingTransport : IMessagingTransport, IAsyncDisposable
+{
+    private const int _amqpPropertyOverheadBytes = 8; // per-property AMQP framing estimate
+
+    private readonly ServiceBusClient _client;
+    private readonly ConcurrentDictionary<string, ServiceBusSender> _senders = new(StringComparer.Ordinal);
+
+    /// <summary>Creates the transport over an application-composed client.</summary>
+    public ServiceBusMessagingTransport(ServiceBusClient client)
+    {
+        _client = client;
+    }
+
+    /// <inheritdoc/>
+    public MessagingCapabilities Capabilities =>
+        MessagingCapabilities.SendReceive
+        | MessagingCapabilities.PubSub
+        | MessagingCapabilities.ScheduledSend;
+
+    /// <summary>Standard-tier total message ceiling, including application properties.</summary>
+    public long MaximumPayloadBytes => 256 * 1024;
+
+    /// <inheritdoc/>
+    public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
+    {
+        // Complete native message: body bytes plus every application property.
+        var size = 0L;
+        foreach (var (key, value) in headers)
+        {
+            size += Encoding.UTF8.GetByteCount(key)
+                + Encoding.UTF8.GetByteCount(value)
+                + _amqpPropertyOverheadBytes;
+        }
+
+        return size;
+    }
+
+    /// <inheritdoc/>
+    public async Task SendAsync(
+        string queue,
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload,
+        DateTimeOffset? dueTime,
+        CancellationToken ctk)
+    {
+        var sender = _senders.GetOrAdd(queue, static (name, c) => c.CreateSender(name), _client);
+        var message = _toNativeMessage(headers, payload);
+
+        if (dueTime is { } scheduled)
+        {
+            await sender.ScheduleMessageAsync(message, scheduled, ctk).ConfigureAwait(false);
+        }
+        else
+        {
+            await sender.SendMessageAsync(message, ctk).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task PublishAsync(
+        string topic,
+        IReadOnlyDictionary<string, string> headers,
+        ReadOnlySequence<byte> payload,
+        CancellationToken ctk)
+    {
+        var sender = _senders.GetOrAdd(topic, static (name, c) => c.CreateSender(name), _client);
+        await sender.SendMessageAsync(_toNativeMessage(headers, payload), ctk).ConfigureAwait(false);
+    }
+
+    private static ServiceBusMessage _toNativeMessage(
+        IReadOnlyDictionary<string, string> headers, in ReadOnlySequence<byte> payload)
+    {
+        // The transport owns the single buffered payload representation: the sequence is
+        // copied once into a transport-owned buffer; byte[] never appears in the
+        // framework-facing API.
+        var buffer = new ArrayBufferWriter<byte>(checked((int)payload.Length));
+        foreach (var segment in payload)
+        {
+            buffer.Write(segment.Span);
+        }
+
+        var message = new ServiceBusMessage(BinaryData.FromBytes(buffer.WrittenMemory));
+        foreach (var (key, value) in headers)
+        {
+            message.ApplicationProperties[key] = value;
+        }
+
+        return message;
+    }
+}
+```
+
+Assembly-level Functions host binding, defined in
+`Ark.Tools.MediatorFramework.AzureFunctions` and applied exactly once in the
+Functions host assembly:
+
+```csharp
+namespace Ark.MediatorFramework.AzureFunctions;
+
+/// <summary>Trigger binding selected by a Functions messaging host.</summary>
+public enum MessagingFunctionsTriggerBinding
+{
+    /// <summary>Azure Service Bus PeekLock trigger.</summary>
+    ServiceBus,
+
+    /// <summary>Azure Storage Queue trigger.</summary>
+    StorageQueue
+}
+
+/// <summary>Binds this Functions app to exactly one messaging participant.</summary>
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false)]
+public sealed class MessagingFunctionsHostAttribute : Attribute
+{
+    /// <summary>Creates the binding for one participant and one trigger selection.</summary>
+    public MessagingFunctionsHostAttribute(Type participant, MessagingFunctionsTriggerBinding binding)
+    {
+        Participant = participant;
+        Binding = binding;
+    }
+
+    /// <summary>Gets the bound participant declaration type.</summary>
+    public Type Participant { get; }
+
+    /// <summary>Gets the compile-time trigger binding selection.</summary>
+    public MessagingFunctionsTriggerBinding Binding { get; }
+
+    /// <summary>Gets or sets host-local incoming pipeline step types.</summary>
+    public Type[] IncomingSteps { get; set; } = Array.Empty<Type>();
+
+    /// <summary>Gets or sets host-local outgoing pipeline step types.</summary>
+    public Type[] OutgoingSteps { get; set; } = Array.Empty<Type>();
+}
+
+// Usage, in a source file of the Functions host assembly (one per Functions app):
+[assembly: MessagingFunctionsHost(
+    typeof(PrintingParticipant),
+    MessagingFunctionsTriggerBinding.ServiceBus,
+    IncomingSteps = new[] { typeof(BookUserContextIncomingStep) },
+    OutgoingSteps = new[] { typeof(BookUserContextOutgoingStep) })]
+```
+
+Generated trigger for the `printing` identity queue, mirroring the
+repository's generated-source style (`// <auto-generated />`, `#nullable
+enable`, `global::`-qualified names, thin single-call body):
+
+```csharp
+// <auto-generated />
+#nullable enable
+namespace Ark.MediatorFramework.AzureFunctions.Generated;
+
+public static class ArkGeneratedFunctions
+{
+    /// <summary>Receives the "printing" participant identity queue.</summary>
+    [global::Microsoft.Azure.Functions.Worker.Function("printing")]
+    public static async global::System.Threading.Tasks.Task Printing(
+        [global::Microsoft.Azure.Functions.Worker.ServiceBusTrigger(
+            "printing",
+            Connection = "BookMessagingNetwork",
+            AutoCompleteMessages = false)]
+        global::Azure.Messaging.ServiceBus.ServiceBusReceivedMessage message,
+        global::Microsoft.Azure.Functions.Worker.ServiceBusMessageActions messageActions,
+        global::System.Threading.CancellationToken cancellationToken)
+    {
+        await global::Ark.MediatorFramework.AzureFunctions.MessagingFunctionsDispatcher
+            .DispatchAsync(message, messageActions, cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
+```
+
+Runtime dispatcher helper in `Ark.Tools.MediatorFramework.AzureFunctions`:
+maps the binding onto the locked-delivery contract, runs the non-generated
+header phase, invokes the participant's generated binder, and settles through
+`ServiceBusMessageActions`:
+
+```csharp
+namespace Ark.MediatorFramework.AzureFunctions;
+
+/// <summary>Maps the Functions Service Bus binding onto the transport-neutral dispatch runtime.</summary>
+public static class MessagingFunctionsDispatcher
+{
+    /// <summary>Runs the header phase, the generated binder, and explicit settlement.</summary>
+    public static async Task DispatchAsync(
+        ServiceBusReceivedMessage message,
+        ServiceBusMessageActions messageActions,
+        CancellationToken ctk)
+    {
+        var delivery = new ServiceBusLockedDelivery(message, messageActions);
+
+        // Non-generated receive pipeline (AZM-09):
+        // 1. Header phase: parse/bound headers, classify MessagingFailFastReason values,
+        //    prepare the payload source (DataBus fetch, bounded decompression).
+        // 2. Typed phase via the participant's generated binder (AZM-03A):
+        //    await PrintingParticipant.DispatchAsync(logicalName, payloadReader, processor, ctk)
+        //    where logicalName = Headers[MessagingHeaders.MessageType] (e.g. "books.print_book").
+        // 3. Settlement: success -> CompleteAsync; MessagingFailFastException and missing
+        //    MessagingFailed<T> at delivery N -> DeadLetterAsync; any other failure -> AbandonAsync.
+        await MessagingReceivePipeline.ProcessAsync(delivery, ctk).ConfigureAwait(false);
+    }
+
+    private sealed class ServiceBusLockedDelivery : IMessagingLockedDelivery
+    {
+        private readonly ServiceBusReceivedMessage _message;
+        private readonly ServiceBusMessageActions _actions;
+        private readonly Dictionary<string, string> _headers;
+
+        public ServiceBusLockedDelivery(
+            ServiceBusReceivedMessage message, ServiceBusMessageActions actions)
+        {
+            _message = message;
+            _actions = actions;
+            _headers = message.ApplicationProperties.ToDictionary(
+                p => p.Key, p => p.Value?.ToString() ?? string.Empty, StringComparer.Ordinal);
+        }
+
+        public IReadOnlyDictionary<string, string> Headers => _headers;
+
+        public ReadOnlySequence<byte> Payload => new(_message.Body.ToMemory());
+
+        public int DeliveryCount => _message.DeliveryCount;
+
+        public async Task CompleteAsync(CancellationToken ctk)
+        {
+            await _actions.CompleteMessageAsync(_message, ctk).ConfigureAwait(false);
+        }
+
+        public async Task AbandonAsync(CancellationToken ctk)
+        {
+            // Service Bus abandon is immediate; RetryDelay is ignored on this transport.
+            await _actions.AbandonMessageAsync(_message, cancellationToken: ctk)
+                .ConfigureAwait(false);
+        }
+
+        public async Task DeadLetterAsync(string reason, string description, CancellationToken ctk)
+        {
+            await _actions.DeadLetterMessageAsync(
+                    _message,
+                    deadLetterReason: reason,
+                    deadLetterErrorDescription: description,
+                    cancellationToken: ctk)
+                .ConfigureAwait(false);
+        }
+    }
+}
+```
+
+## Guide contribution
+
+Update [`guide/azure-functions.md`](../../../../mediator-framework/azure-functions.md) with the
+generated queue/subscription trigger model, deterministic routes, the
+compile-time Functions-host attribute in the Functions host assembly, and
+the relationship between participant identity, network declaration, and event
+subscriptions.
+
+## Sample extension
+
+Add the Functions host with the generated Service Bus trigger for the Book
+consumer participant
+beside the existing InMemory-composed fixtures. The sample compiles and its
+generated `.g.cs` is inspected; live Azure execution is optional and explicit.
+
+## Required test coverage
+
+- At most one trigger per participant identity queue.
+- Multiple `[MessagingFunctionsHost]` bindings in one Functions app are
+  diagnosed; one bound sender-only participant remains valid and emits no
+  trigger.
+- A bound participant with an empty receive set (no `Processes`, no
+  `Subscribes`) produces an information diagnostic and no trigger.
+- Multiple types in one queue map to typed generated dispatch.
+- Same topic subscribed by two participant configurations generates distinct,
+  deterministic subscription identities.
+- Repeated generator runs produce byte-identical output.
+- Invalid and excluded contracts produce the expected diagnostics/no source.
+- Portable queue-name violations and ownership/membership diagnostics are
+  raised before trigger generation.
+- PeekLock is configured and ReceiveAndDelete is rejected.
+- Every event subscription forwards to the participant identity queue.
+- The manifest records the selected trigger binding deterministically.
+- Envelope-to-Service-Bus mapping round-trips headers and binary payloads.
+- Settlement adapter maps complete/immediate-abandon/dead-letter (with
+  reason) and exposes the native delivery count. No abandon delay is
+  implemented or tested.
+- Transport conformance suite runs against Service Bus through the Azure
+  Service Bus emulator (Docker) or a live namespace, with explicit absence
+  reporting.
+
+## Caveats
+
+- Verify exact Worker/Service Bus extension attribute signatures before
+  emitting source; do not infer them from memory.
+- Generated code must not reference Minimal API runtime types or Rebus handler
+  types.
+
+## Outcomes
+
+- A Functions host gets discoverable Service Bus triggers for its consumer
+  participant from contract
+  metadata, dispatching through the already-proven runtime.
+- Trigger source remains thin and reflection-free.
+- Startup receives a deterministic desired-resource manifest.
+
+## Acceptance
+
+- [x] Service Bus transport implements the AZM-05 contract including
+  settlement and delivery count.
+- [x] Identity-queue triggers and forwarding subscription manifests are
+  deterministic and typed.
+- [x] Generated source awaits runtime dispatch and contains no serializer or
+  retry logic.
+- [x] Diagnostics cover all invalid routing and participant-selection cases.
+- [x] API-surface snapshots remain independent of generated host and transport
+  details.
+- [x] The [task board](../README.md) status for AZM-10 is updated to this task's acceptance state.
+- [x] `dotnet build Ark.Tools.slnx --configuration Debug` succeeds with zero warnings.
+- [x] `dotnet test Ark.Tools.slnx --no-build --configuration Debug --minimum-expected-tests 1` passes.

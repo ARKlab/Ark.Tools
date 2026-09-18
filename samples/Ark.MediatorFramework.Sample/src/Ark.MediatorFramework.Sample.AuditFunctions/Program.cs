@@ -6,6 +6,7 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
+using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.NLog;
 
@@ -49,16 +50,16 @@ public static class Program
                 useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
-            builder.Services.AddArkAzureFunctions(applicationContainer);
+            builder.Services.AddArkAzureFunctions();
             builder.Services.AddArkSolidProcessors(applicationContainer);
             builder.Services.ConfigureArkMessagingFunctions(
-                applicationContainer,
                 builder.Configuration,
                 ArkGeneratedMessagingFunctions.Manifest,
                 static messaging => messaging
                     .UseTransport(static transport => transport.UseServiceBus())
                     .UseDataBus(static dataBus => dataBus.UseInMemory())
                     .UseOutbox(static outbox => outbox.UseEnqueue()));
+            builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(applicationContainer);
             builder.Services.AddArkHealthChecks();
             builder.Services.AddHostedService<ContainerHostedService>();
 
