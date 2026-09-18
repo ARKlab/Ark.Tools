@@ -1,4 +1,5 @@
 using Ark.Tools.Activity.Processor;
+using Ark.Tools.Compliance;
 
 using SimpleInjector;
 
@@ -7,14 +8,19 @@ namespace TestReceiver;
 
 sealed class Config : ITestReceiver_Config, IRebusSliceActivityManagerConfig
 {
+    [InfrastructureSecret]
     public string? RebusConnstring { get; set; }
+
+    [InfrastructureSecret]
     public string ActivitySqlConnectionString
     {
         get { return "DB"; }
     }
 
+    [InfrastructureSecret]
     public string AsbConnectionString => RebusConnstring ?? throw new InvalidOperationException("");
 
+    [InfrastructureSecret]
     public string SagaSqlConnectionString
     {
         get { return "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=TestPlayground.Database;Integrated Security=True;Persist Security Info=False;Pooling=True;MultipleActiveResultSets=True;Connect Timeout=60;Encrypt=False;TrustServerCertificate=True"; }

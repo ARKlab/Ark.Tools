@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
   </ItemGroup>
 
 </Project>

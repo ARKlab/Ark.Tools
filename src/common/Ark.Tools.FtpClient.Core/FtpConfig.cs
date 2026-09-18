@@ -16,9 +16,10 @@ public class FtpConfig : IDisposable
     [UserCredentials]
     public NetworkCredential? Credentials { get; }
 
+    [InfrastructureSecret]
     public X509Certificate2? ClientCertificate { get; private set; }
 
-    public FtpConfig(Uri uri, [UserCredentials] NetworkCredential? credential = null, X509Certificate2? certificate = null)
+    public FtpConfig(Uri uri, [UserCredentials] NetworkCredential? credential = null, [InfrastructureSecret] X509Certificate2? certificate = null)
     {
         Uri = uri;
         Credentials = credential;

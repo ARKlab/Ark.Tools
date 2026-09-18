@@ -18,7 +18,6 @@ using Polly.Caching.Memory;
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json.Serialization;
 
 using Ark.Tools.Compliance;

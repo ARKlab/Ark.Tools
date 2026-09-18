@@ -46,7 +46,13 @@ internal sealed class HttpsHandler : SocksHandler
         sb.AppendFormat(CultureInfo.InvariantCulture, "Host: {0}:{1}", host, port).AppendLine();
         if (!string.IsNullOrEmpty(Username))
         {
-            string auth = Convert.ToBase64String(Encoding.ASCII.GetBytes(String.Format(CultureInfo.InvariantCulture, "{0}:{1}", Username, Password)));
+            var authBytes = new byte[Username.Length + Password.Length + 1];
+            var span = authBytes.AsSpan();
+            Encoding.ASCII.GetBytes(Username.AsSpan(), span);
+            span = span[Username.Length..];
+            span[0] = (byte)':';
+            Encoding.ASCII.GetBytes(Password.AsSpan(), span[1..]);
+            var auth = Convert.ToBase64String(authBytes);
             sb.AppendFormat(CultureInfo.InvariantCulture, "Proxy-Authorization: Basic {0}", auth).AppendLine();
         }
         sb.AppendLine();
