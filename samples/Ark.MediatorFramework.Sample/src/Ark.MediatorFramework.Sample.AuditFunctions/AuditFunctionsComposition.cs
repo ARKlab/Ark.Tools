@@ -6,12 +6,9 @@ using Ark.MediatorFramework.Sample.Application.Host;
 using Ark.MediatorFramework.Sample.Application.Messages;
 using Ark.MediatorFramework.Sample.Application.Services;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
-
-#if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -28,11 +25,7 @@ public static class AuditFunctionsComposition
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
         bool useSqlStore = false,
-#if NET10_0_OR_GREATER
         [InfrastructureSecret] string? connectionString = null,
-#else
-        string? connectionString = null,
-#endif
         IBookPrintAuditSink? bookPrintAuditSink = null)
     {
         var container = new Container();

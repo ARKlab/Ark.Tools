@@ -1,14 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
-
-#if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
 
 using NodaTime;
 

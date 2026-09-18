@@ -10,6 +10,10 @@ using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
+
 using NodaTime;
 using NodaTime.Testing;
 
@@ -35,6 +39,9 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     private readonly MockPrintCompletedNotificationService _printCompletedNotificationService;
     private readonly ScenarioPrintCompletedNotificationService _printCompletedNotificationProxy;
     private readonly bool _usesSqlStore;
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     private readonly string? _connectionString;
     private bool _verified;
     private bool _busStarted;
@@ -50,7 +57,11 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="network">The optional Rebus network shared with another test resource.</param>
     public ApplicationTestContext(
         bool? useSqlStore = null,
+#if NET10_0_OR_GREATER
+        [InfrastructureSecret] string? connectionString = null,
+#else
         string? connectionString = null,
+#endif
         ISampleDataContextFactory? dataContextFactory = null,
         MockPrintCompletedNotificationService? printCompletedNotificationService = null,
         InMemNetwork? network = null)
@@ -122,6 +133,9 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     public bool UsesSqlStore => _usesSqlStore;
 
     /// <summary>Gets the optional SQL Server connection-string override for this scenario.</summary>
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     public string? ConnectionString => _connectionString;
 
     public IPrintCompletedNotificationService PrintCompletedNotificationService => _printCompletedNotificationProxy;
