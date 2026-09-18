@@ -24,7 +24,7 @@ public class FtpConfig : IDisposable
 
     #if NET10_0_OR_GREATER
 
-    [InfrastructureSecret]
+    [Secret]
 
     #endif
     public X509Certificate2? ClientCertificate { get; private set; }
@@ -35,7 +35,7 @@ public class FtpConfig : IDisposable
 #endif
  NetworkCredential? credential = null, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  X509Certificate2? certificate = null)
     {

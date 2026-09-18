@@ -66,6 +66,21 @@ public sealed class InfrastructureSecretAttribute : DataClassificationAttribute
 }
 
 /// <summary>
+/// Marks a library secret whose infrastructure or user origin is not known.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+public sealed class SecretAttribute : DataClassificationAttribute
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SecretAttribute"/> class.
+    /// </summary>
+    public SecretAttribute()
+        : base(ArkDataClassifications.InfrastructureSecret)
+    {
+    }
+}
+
+/// <summary>
 /// Marks data that can identify a person only when combined with separately held data.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]

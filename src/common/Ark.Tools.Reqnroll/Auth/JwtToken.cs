@@ -10,13 +10,13 @@ namespace Ark.Tools.Reqnroll.Auth;
 public sealed class JwtToken
 {
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     private readonly SecurityTokenDescriptor _token;
 
     internal JwtToken(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  SecurityTokenDescriptor token)
     {

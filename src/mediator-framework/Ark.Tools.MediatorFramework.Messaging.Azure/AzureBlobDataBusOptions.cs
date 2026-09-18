@@ -28,7 +28,7 @@ public sealed record AzureBlobDataBusOptions
     /// uses DefaultAzureCredential.
     /// </summary>
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     public required string ConnectionString { get; init; }
 

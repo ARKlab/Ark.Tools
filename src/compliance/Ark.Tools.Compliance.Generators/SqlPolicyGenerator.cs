@@ -208,11 +208,11 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
         {
             return _classification(nullable.TypeArguments[0]);
         }
-        foreach (var name in new[] { "Secret", "SensitivePersonalData", "PersonalData", "Pseudonymous" })
+        foreach (var name in new[] { "InfrastructureSecret", "Secret", "SensitivePersonalData", "PersonalData", "Pseudonymous" })
         {
             if (symbol.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == "Ark.Tools.Compliance." + name + "Attribute"))
             {
-                return name;
+                return name is "Secret" or "InfrastructureSecret" ? "InfrastructureSecret" : name;
             }
         }
         if (symbol.GetAttributes().Any(static a => a.AttributeClass?.OriginalDefinition.ToDisplayString()

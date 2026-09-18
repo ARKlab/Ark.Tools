@@ -103,13 +103,13 @@ public static class NLogConfigurer
     public record Config(
         
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string? SQLConnectionString = null,
         string? SQLTableName = null,
         
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string? SmtpConnectionString = null,
         
@@ -124,7 +124,7 @@ public static class NLogConfigurer
  string? MailFrom = null,
         
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string? SlackWebhook = null,
         bool? EnableConsole = null,
@@ -286,7 +286,7 @@ private global::Ark.Tools.Compliance.PiiScanner? _piiScanner = new();
 
         public Configurer WithDatabaseTarget(string logTableName, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString, bool async = true)
         {
@@ -418,11 +418,11 @@ VALUES
 #endif
  string to, string smtpServer, int smtpPort, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string smtpUserName, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string smtpPassword, bool useSsl, bool async = true)
         {
@@ -439,11 +439,11 @@ VALUES
 #endif
  string to, string? smtpServer, int? smtpPort, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string? smtpUserName, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string? smtpPassword, bool useSsl, bool async = true)
         {
@@ -476,7 +476,7 @@ VALUES
 #endif
  string to, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string smtpConnectionString, bool async = true)
         {

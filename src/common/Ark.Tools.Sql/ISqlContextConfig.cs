@@ -10,7 +10,7 @@ namespace Ark.Tools.Sql;
 public interface ISqlContextConfig
 {
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     string ConnectionString { get; }
     IsolationLevel? IsolationLevel { get; }

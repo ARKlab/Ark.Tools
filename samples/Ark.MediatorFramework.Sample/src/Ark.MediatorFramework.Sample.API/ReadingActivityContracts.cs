@@ -37,7 +37,7 @@ public sealed record ReadingActivity
     public required Guid BookId { get; init; }
 
     /// <summary>Gets the authenticated reader identifier.</summary>
-    [PersonalData]
+    [Pseudonymous]
     public required string UserId { get; init; }
 
     /// <summary>Gets the activity kind.</summary>

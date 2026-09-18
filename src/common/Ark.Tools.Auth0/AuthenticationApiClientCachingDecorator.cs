@@ -30,7 +30,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 {
     private readonly IAuthenticationApiClient _inner;
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
     private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
@@ -75,7 +75,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static TimeSpan _expiresIn(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string accessToken)
     {
@@ -278,7 +278,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public Task<UserInfo> GetUserInfoAsync(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string accessToken, CancellationToken cancellationToken = default)
     {
@@ -290,7 +290,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string accessToken)
     {
@@ -365,7 +365,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     public async Task<IList<Authenticator>> ListMfaAuthenticatorsAsync(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string accessToken, CancellationToken cancellationToken = default)
     {

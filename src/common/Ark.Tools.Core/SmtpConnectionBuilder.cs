@@ -19,7 +19,7 @@ public class SmtpConnectionBuilder
     /// </remarks>
     public SmtpConnectionBuilder(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string smtpConnectionString)
     {
@@ -31,7 +31,7 @@ public class SmtpConnectionBuilder
 
     private void _parse(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string smtpConnectionString)
     {
@@ -82,7 +82,7 @@ public class SmtpConnectionBuilder
 
     #if NET10_0_OR_GREATER
 
-    [InfrastructureSecret]
+    [Secret]
 
     #endif
     public string ConnectionString
@@ -102,11 +102,11 @@ public class SmtpConnectionBuilder
     public string? Server { get; set; }
     public int? Port { get; set; }
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     public string? Username { get; set; }
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     public string? Password { get; set; }
     public bool UseSsl { get; set; }

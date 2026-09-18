@@ -53,7 +53,7 @@ public static class ArkApplicationInsightsExtensions
         IConfiguration configuration,
         
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string? sqlConnectionStringToFilter = null)
     {

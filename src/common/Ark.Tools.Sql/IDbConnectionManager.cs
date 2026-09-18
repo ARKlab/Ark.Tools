@@ -11,12 +11,12 @@ public interface IDbConnectionManager
 {
     DbConnection Get(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString);
     Task<DbConnection> GetAsync(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString, CancellationToken ctk = default);
 }

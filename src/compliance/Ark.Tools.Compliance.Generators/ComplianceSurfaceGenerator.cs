@@ -157,6 +157,8 @@ public sealed class ComplianceSurfaceGenerator : IIncrementalGenerator
                 output.Add("Ark:UserCredentials");
             else if (name == Prefix + "InfrastructureSecretAttribute")
                 output.Add("Ark:InfrastructureSecret");
+            else if (name == Prefix + "SecretAttribute")
+                output.Add("Ark:InfrastructureSecret");
             else if (name == Prefix + "PseudonymousAttribute")
                 output.Add("Ark:Pseudonymous");
         }

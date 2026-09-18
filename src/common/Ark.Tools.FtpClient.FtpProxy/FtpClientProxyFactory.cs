@@ -14,7 +14,7 @@ public class FtpClientProxyFactory : IFtpClientFactory
 {
     private readonly IFtpClientProxyConfig _config;
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     private readonly TokenProvider _tokenProvider;
 

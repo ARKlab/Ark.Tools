@@ -29,7 +29,7 @@ public sealed record AuditRecord
     [DefaultValue("anonymous")]
     [ProtoMember(2)]
     [Key(1)]
-    [PersonalData]
+    [Pseudonymous]
     public string UserId { get; set; } = "anonymous";
 
     /// <summary>Gets the type of entity affected by the operation.</summary>
@@ -62,7 +62,7 @@ public static class GetAuditsQuery
     {
         /// <summary>Gets the user identifier filter.</summary>
         [HttpQuery]
-        [PersonalData]
+        [Pseudonymous]
         public string? UserId { get; init; }
 
         /// <summary>Gets the entity type filter.</summary>

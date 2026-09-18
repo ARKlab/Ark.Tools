@@ -227,12 +227,14 @@ public sealed class ComplianceSurfaceTests
             public sealed class Configuration
             {
                 [InfrastructureSecret] public string ConnectionString { get; set; } = "";
+                [Secret] public string ClientSecret { get; set; } = "";
                 [UserCredentials] public string ApiKey { get; set; } = "";
             }
             """);
 
         result.Text.Should().Contain("CLASSIFIED\tExample.Configuration\tApiKey\tArk:UserCredentials");
         result.Text.Should().NotContain("ConnectionString");
+        result.Text.Should().NotContain("ClientSecret");
         result.Text.Should().NotContain("Ark:InfrastructureSecret");
     }
 

@@ -56,7 +56,7 @@ public sealed class StorageQueueMessagingTransport :
     public StorageQueueMessagingTransport(
         
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString,
         TimeSpan? receiveVisibilityTimeout = null,

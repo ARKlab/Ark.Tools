@@ -19,7 +19,7 @@ public class SqlConnectionManager : IDbConnectionManager
 
     public DbConnection Get(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString)
     {
@@ -38,7 +38,7 @@ public class SqlConnectionManager : IDbConnectionManager
 
     public async Task<DbConnection> GetAsync(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString, CancellationToken ctk = default)
     {
@@ -57,7 +57,7 @@ public class SqlConnectionManager : IDbConnectionManager
 
     protected virtual SqlConnection Build(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString)
     {

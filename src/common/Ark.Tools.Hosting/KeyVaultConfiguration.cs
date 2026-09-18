@@ -15,7 +15,7 @@ public static class KeyVaultConfigurationExtensions
     {
         public override string GetKey(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  KeyVaultSecret secret)
         {

@@ -13,7 +13,7 @@ public sealed record AuditEntry
     public Guid Id { get; init; } = Guid.NewGuid();
 
     /// <summary>Gets the authenticated user identifier.</summary>
-    [PersonalData]
+    [Pseudonymous]
     public string UserId { get; init; } = "anonymous";
 
     /// <summary>Gets the type of entity affected by the operation.</summary>

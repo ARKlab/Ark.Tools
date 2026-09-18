@@ -19,7 +19,7 @@ public sealed class FtpClientProxy : IFtpClientPool
 {
     private readonly IFtpClientProxyConfig _config;
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     private readonly TokenProvider _tokenProvider;
     private readonly ConnectionInfo _connectionInfo;
@@ -34,7 +34,7 @@ public sealed class FtpClientProxy : IFtpClientPool
     }
 
 #if NET10_0_OR_GREATER
-    internal FtpClientProxy(IFtpClientProxyConfig config, [InfrastructureSecret] TokenProvider tokenProvider, FtpConfig ftpConfig)
+    internal FtpClientProxy(IFtpClientProxyConfig config, [Secret] TokenProvider tokenProvider, FtpConfig ftpConfig)
 #else
     internal FtpClientProxy(IFtpClientProxyConfig config, TokenProvider tokenProvider, FtpConfig ftpConfig)
 #endif
@@ -56,7 +56,7 @@ public sealed class FtpClientProxy : IFtpClientPool
     public Uri Uri { get; private set; }
 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
     public NetworkCredential? Credentials { get; private set; }
     public FtpConfig FtpConfig { get; private set; }
@@ -74,7 +74,7 @@ public sealed class FtpClientProxy : IFtpClientPool
         #endif
         public string? Username { get; set; }
         #if NET10_0_OR_GREATER
-        [InfrastructureSecret]
+        [Secret]
         #endif
         public string? Password { get; set; }
     }

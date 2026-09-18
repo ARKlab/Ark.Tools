@@ -7,7 +7,7 @@ namespace WebApplicationDemo.Dto;
 public class Post
 {
     [JsonPropertyName("userId")]
-    [PersonalData]
+    [Pseudonymous]
     public int UserId { get; set; }
 
     [JsonPropertyName("id")]

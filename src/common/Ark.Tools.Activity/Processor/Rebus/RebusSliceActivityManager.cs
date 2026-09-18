@@ -94,11 +94,11 @@ public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager
 public interface IRebusSliceActivityManagerConfig
 {
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     string AsbConnectionString { get; }
     #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
     #endif
     string SagaSqlConnectionString { get; }
 }

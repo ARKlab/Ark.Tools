@@ -16,7 +16,7 @@ public static class Ex
     sealed record SqlStateProviderConfig : ISqlStateProviderConfig
     {
         #if NET10_0_OR_GREATER
-        [InfrastructureSecret]
+        [Secret]
         #endif
         public string DbConnectionString { get; set; } = string.Empty;
     }
@@ -33,7 +33,7 @@ public static class Ex
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter>
         (this WorkerHost<TFile, TMetadata, TQueryFilter> host, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata>
@@ -84,7 +84,7 @@ public static class Ex
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
         (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, 
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata, TExtensions>

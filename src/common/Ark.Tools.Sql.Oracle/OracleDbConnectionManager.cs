@@ -29,7 +29,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
 
     public DbConnection Get(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString)
     {
@@ -48,7 +48,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
 
     public async Task<DbConnection> GetAsync(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString, CancellationToken ctk = default)
     {
@@ -78,7 +78,7 @@ public class OracleDbConnectionManager : IDbConnectionManager
     /// </remarks>
     protected virtual OracleConnection Build(
 #if NET10_0_OR_GREATER
-    [InfrastructureSecret]
+    [Secret]
 #endif
  string connectionString)
     {

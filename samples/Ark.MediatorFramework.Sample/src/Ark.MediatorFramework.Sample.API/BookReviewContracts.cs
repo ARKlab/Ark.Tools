@@ -20,7 +20,7 @@ public sealed record BookReview
     public required Guid BookId { get; init; }
 
     /// <summary>Gets the authenticated reviewer identifier.</summary>
-    [PersonalData]
+    [Pseudonymous]
     public required string UserId { get; init; }
 
     /// <summary>Gets the rating from one to five.</summary>

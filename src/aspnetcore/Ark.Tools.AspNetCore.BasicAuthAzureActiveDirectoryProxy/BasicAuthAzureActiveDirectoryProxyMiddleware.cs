@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -67,15 +65,18 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
 
                         if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
                         {
+                            var username = usernameSpan.ToString();
+                            var password = passwordSpan.ToString();
+
                             using var content = new FormUrlEncodedContent(
                                 [
                                     new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
                                     new KeyValuePair<string, string>("client_id", _config.ProxyClientId ?? string.Empty),
                                     new KeyValuePair<string, string>("grant_type", "password"),
-                                    new KeyValuePair<string, string>("username", string.Empty),
-                                    new KeyValuePair<string, string>("password", string.Empty),
+                                    new KeyValuePair<string, string>("username", username),
+                                    new KeyValuePair<string, string>("password", password),
                                     new KeyValuePair<string, string>("scope", "openid"),
-                                    new KeyValuePair<string, string>("client_secret", string.Empty),
+                                    new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
                                 ]);
 
                             var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
@@ -98,9 +99,9 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                 }
                 catch (Exception)
                 {
-#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
+#pragma warning disable CA1848, ARKPII002 // The static message does not include the OAuth client secret.
                     _logger.LogTrace("Basic authentication failed");
-#pragma warning restore CA1848
+#pragma warning restore CA1848, ARKPII002
                     throw;
                 }
 #pragma warning restore CA1031 // Do not catch general exception types
@@ -113,9 +114,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult
     {
-        #if NET10_0_OR_GREATER
-        [InfrastructureSecret]
-        #endif
+        [Secret]
         public string? Token_Type { get; set; }
         public string? Scope { get; set; }
         public int Expires_In { get; set; }
@@ -123,9 +122,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         public int Expires_On { get; set; }
         public int Not_Before { get; set; }
         public Uri? Resource { get; set; }
-        #if NET10_0_OR_GREATER
-        [InfrastructureSecret]
-        #endif
+        [Secret]
         public string? Access_Token { get; set; }
     }
 }

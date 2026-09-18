@@ -238,7 +238,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
             Guid bookId,
-            [PersonalData] string userId,
+            [Pseudonymous] string userId,
             int limit,
             CancellationToken ctk = default)
         {
