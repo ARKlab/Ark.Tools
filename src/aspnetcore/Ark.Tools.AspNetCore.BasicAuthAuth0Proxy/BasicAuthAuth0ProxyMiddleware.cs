@@ -52,7 +52,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
             if ("Basic".Equals(authHeader.Scheme,
                                  StringComparison.OrdinalIgnoreCase))
             {
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031, ERP022, ARKPII002 // Basic auth is intentionally best-effort; failures are only logged and ignored.
                 try
                 {
                     string parameter = Encoding.UTF8.GetString(
@@ -98,7 +98,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                     _logger.LogTrace("Basic authentication failed");
 #pragma warning restore CA1848
                 }
-#pragma warning restore CA1031 // Do not catch general exception types
+#pragma warning restore CA1031, ERP022, ARKPII002 // Basic auth is intentionally best-effort; failures are only logged and ignored.
             }
         }
 
