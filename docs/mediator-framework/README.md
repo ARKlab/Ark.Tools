@@ -12,7 +12,7 @@ Each chapter explains:
 5. which boundary belongs in an application test versus a transport test.
 
 The working reference is the Book-focused
-[`samples/Ark.MediatorFramework.Sample`](../../../samples/Ark.MediatorFramework.Sample/README.md).
+[`samples/Ark.MediatorFramework.Sample`](../../samples/Ark.MediatorFramework.Sample/README.md).
 It has more domain operations than the tutorial, including catalog, reviews,
 reading activity, covers, streaming, editions, and Rebus printing.
 

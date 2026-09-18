@@ -367,7 +367,7 @@ While `AdvancedMetrics` is false the measurements are not even computed.
    to the measured limit when you want a fixed, reviewable value.
 
 A worked run of this procedure, with the histogram views it needs, is in the
-[sample walkthrough](../../../samples/Ark.MediatorFramework.Sample/README.md#throughput-tuning-walkthrough).
+[sample walkthrough](../../samples/Ark.MediatorFramework.Sample/README.md#throughput-tuning-walkthrough).
 
 ### Measuring the host itself
 

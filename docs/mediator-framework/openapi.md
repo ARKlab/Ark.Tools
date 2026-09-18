@@ -16,7 +16,7 @@ public sealed record CreateGreetingRequest : IRequest<CreateGreetingRequest, Gre
     public required string Name { get; init; }
 }
 ```
-Source: [`BookContracts.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
 
 Document public properties and response values. The XML comments become
 operation and schema descriptions.
@@ -42,7 +42,7 @@ private static void ConfigureOpenApi(OpenApiOptions options)
             (ShapeKind.Square, typeof(Square)));
 }
 ```
-Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
+Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 Why each option exists:
 
@@ -70,7 +70,7 @@ endpoints.MapScalarApiReference(options =>
         .WithPkce(Pkce.Sha256));
 }).AllowAnonymous();
 ```
-Source: [`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
+Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
 
 Expected sample URLs:
 

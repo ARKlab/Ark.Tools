@@ -89,6 +89,6 @@ stack traces, connection strings, and sensitive exception messages are never
 returned.
 
 The reference implementation is demonstrated in
-[`samples/Ark.MediatorFramework.Sample`](../../../samples/Ark.MediatorFramework.Sample/README.md).
+[`samples/Ark.MediatorFramework.Sample`](../../samples/Ark.MediatorFramework.Sample/README.md).
 Its release gate must list and call generated query, mutation, upload, and
 download tools through an ASP.NET Core test host and the official SDK client.

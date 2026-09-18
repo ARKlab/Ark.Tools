@@ -7,9 +7,9 @@ The framework has two deliberate seams:
 
 Do not put ASP.NET Core, gRPC server, or Rebus transport objects in a handler.
 The sample keeps the first seam in
-[`ApplicationComposition.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs)
+[`ApplicationComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs)
 and the web seam in
-[`SampleStartup.cs`](../../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
+[`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
 
 SimpleInjector remains the authoritative application container. When a host also
 owns an `IServiceCollection` and generated endpoints or native messaging resolve
