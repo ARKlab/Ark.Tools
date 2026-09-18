@@ -138,6 +138,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
+                // The receiver of an extension sink is the sink itself (logger, activity, builder), never
+                // the logged data; instance sinks are already exempt because Instance is not checked.
+                if (_isExtensionReceiver(invocation, argument))
+                {
+                    continue;
+                }
+
                 _check(context, argument.Value, rule);
             }
         }
@@ -180,6 +187,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         {
             _check(context, invocation, "ARKPII005");
         }
+    }
+
+    private static bool _isExtensionReceiver(IInvocationOperation invocation, IArgumentOperation argument)
+    {
+        return invocation.TargetMethod.IsExtensionMethod
+            && invocation.Instance is null
+            && argument.Parameter?.Ordinal == 0;
     }
 
     private static bool _isInsideConfiguredSink(IOperation operation, SinkConfiguration sinks)

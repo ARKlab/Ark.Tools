@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
@@ -160,7 +160,6 @@ public static class ApplicationComposition
             EvolvableEnumDapper.Register<Book.V1.Genre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
             EvolvableEnumDapper.Register<ReadingActivityKind>();
-#pragma warning disable ARKPII001 // synthetic test connection string uses a literal password name and is intentionally non-production
             var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
             {
                DataSource = "localhost,1433",
@@ -170,7 +169,6 @@ public static class ApplicationComposition
                TrustServerCertificate = true,
                Encrypt = false,
             }.ConnectionString;
-#pragma warning restore ARKPII001
             var config = new SampleDataContextConfig(connectionString ?? localConnectionString);
             container.RegisterInstance(config);
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();

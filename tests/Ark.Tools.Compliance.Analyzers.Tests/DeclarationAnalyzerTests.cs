@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Immutable;
@@ -59,6 +59,20 @@ public sealed class DeclarationAnalyzerTests
     {
         (await _analyzeAsync("record Contact(string Email);").ConfigureAwait(false))
             .Should().ContainSingle().Which.Id.Should().Be("ARKPII001");
+    }
+
+    /// <summary>Implementations and overrides inherit the classification of the member they implement.</summary>
+    [TestMethod]
+    public async Task ImplementedAndOverriddenMembersInheritClassification()
+    {
+        var diagnostics = await _analyzeAsync("""
+            interface IConfig { [PersonalData] string Email { get; } }
+            class Explicit : IConfig { string IConfig.Email => ""; }
+            class Implicit : IConfig { public string Email => ""; }
+            abstract class Base { [PersonalData] public abstract string Email { get; } }
+            class Derived : Base { public override string Email => ""; }
+            """).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
     }
 
     /// <summary>Explicit declarations, classified types and reviewed exclusions avoid guesses.</summary>

@@ -303,6 +303,24 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Count(static diagnostic => diagnostic.Id == "ARKPII002").Should().Be(4);
     }
 
+    /// <summary>The receiver of an extension sink is the sink, so its category type must not taint the call.</summary>
+    [TestMethod]
+    public async Task ExtensionSinkReceiver_IsNotTainted()
+    {
+        var diagnostics = await _analyzeAsync("""
+            using Microsoft.Extensions.Logging;
+            class Service
+            {
+                private Customer _customer;
+                void M(ILogger<Service> logger)
+                {
+                    logger.LogInformation("failed");
+                }
+            }
+            """).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
+    }
+
     /// <summary>Consumer entries add sinks and remove exact or wildcard defaults deterministically.</summary>
     [TestMethod]
     [DataRow("log")]

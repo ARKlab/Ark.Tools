@@ -4,13 +4,8 @@
 using System.Data;
 using System.Diagnostics;
 
-using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Core.Benchmarks;
-
-using Microsoft.Extensions.DependencyInjection;
-
-_ = new ServiceCollection().AddArkRedaction();
 
 // Dependency-free comparison of historical, optimized fallback, and intercepted
 // ToDataTableArk implementations, plus MoreLINQ-style row insertion.

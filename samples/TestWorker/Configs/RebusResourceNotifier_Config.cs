@@ -1,4 +1,4 @@
-using Ark.Tools.Activity.Provider;
+﻿using Ark.Tools.Activity.Provider;
 using Ark.Tools.Compliance;
 
 using TestWorker.Constants;
@@ -7,7 +7,6 @@ namespace TestWorker.Configs;
 
 public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 {
-#pragma warning disable ARKPII001 // test worker configuration intentionally uses named Azure Service Bus connection-string members.
     public RebusResourceNotifier_Config([InfrastructureSecret] string? asbConnectionString)
     {
         AsbConnectionString = asbConnectionString ?? throw new ArgumentNullException(nameof(asbConnectionString));
@@ -15,13 +14,10 @@ public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 
     [InfrastructureSecret]
     public string AsbConnectionString { get; set; }
-#pragma warning restore ARKPII001
     public string ProviderName { get; set; } = Test_Constants.ProviderName;
     public bool StartAtCreation { get; set; } = Test_Constants.StartAtCreationDefault;
 
-#pragma warning disable ARKPII001 // explicit interface implementation is the interface contract for the test worker definition
     string IRebusResourceNotifier_Config.AsbConnectionString { get { return this.AsbConnectionString; } }
-#pragma warning restore ARKPII001
     string IRebusResourceNotifier_Config.ProviderName { get { return this.ProviderName; } }
     bool IRebusResourceNotifier_Config.StartAtCreation { get { return this.StartAtCreation; } }
 }

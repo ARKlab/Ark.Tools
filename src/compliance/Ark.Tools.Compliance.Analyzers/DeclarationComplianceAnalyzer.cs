@@ -204,12 +204,15 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             var positionalCounterpart = _positionalCounterpart(symbol);
             var isPositionalProperty = symbol is IPropertySymbol && positionalCounterpart is not null;
             var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts);
+            var inherited = _inheritedMembers(symbol);
             var classified = isClassified(symbol)
                 || isClassified(type)
                 || isClassified(symbol.ContainingType)
-                || isClassified(positionalCounterpart);
+                || isClassified(positionalCounterpart)
+                || inherited.Any(isClassified);
             if (!isPositionalProperty && !knownSafeDotNetType && !classified && lexicon._matches(symbol.Name)
                 && !ComplianceSymbolFacts._hasAttribute(symbol, facts._notPersonalDataAttribute)
+                && !inherited.Any(candidate => ComplianceSymbolFacts._hasAttribute(candidate, facts._notPersonalDataAttribute))
                 && !_hasPositionalExclusion(positionalCounterpart, facts))
             {
                 context.ReportDiagnostic(Diagnostic.Create(_unclassified, location, symbol.Name));
@@ -224,6 +227,55 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         {
             _checkType(context, symbol, named, location, facts);
         }
+    }
+
+    /// <summary>Implemented interface members and overridden base members carry their classification to the declaration.</summary>
+    private static IReadOnlyList<ISymbol> _inheritedMembers(ISymbol symbol)
+    {
+        if (symbol is not (IPropertySymbol or IMethodSymbol or IEventSymbol) || symbol.ContainingType is null)
+        {
+            return Array.Empty<ISymbol>();
+        }
+
+        var members = new List<ISymbol>();
+        switch (symbol)
+        {
+            case IPropertySymbol property:
+                members.AddRange(property.ExplicitInterfaceImplementations);
+                if (property.OverriddenProperty is not null)
+                {
+                    members.Add(property.OverriddenProperty);
+                }
+
+                break;
+            case IMethodSymbol method:
+                members.AddRange(method.ExplicitInterfaceImplementations);
+                if (method.OverriddenMethod is not null)
+                {
+                    members.Add(method.OverriddenMethod);
+                }
+
+                break;
+            case IEventSymbol @event:
+                members.AddRange(@event.ExplicitInterfaceImplementations);
+                if (@event.OverriddenEvent is not null)
+                {
+                    members.Add(@event.OverriddenEvent);
+                }
+
+                break;
+        }
+
+        foreach (var candidate in symbol.ContainingType.AllInterfaces.SelectMany(static @interface => @interface.GetMembers()))
+        {
+            if (candidate.Name == symbol.Name
+                && SymbolEqualityComparer.Default.Equals(symbol.ContainingType.FindImplementationForInterfaceMember(candidate), symbol))
+            {
+                members.Add(candidate);
+            }
+        }
+
+        return members;
     }
 
     private static ISymbol? _positionalCounterpart(ISymbol symbol)

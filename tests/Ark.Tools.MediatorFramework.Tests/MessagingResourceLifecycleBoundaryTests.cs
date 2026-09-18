@@ -1,6 +1,7 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
@@ -10,13 +11,13 @@ using Azure.Storage.Queues;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
-#pragma warning disable ARKPII001 // emulator connection strings are intentionally literal test fixtures, not user data.
 
 /// <summary>Verifies resource reconciliation against the local Azure emulators.</summary>
 [TestClass]
 [TestCategory("integration")]
 public sealed class MessagingResourceLifecycleBoundaryTests
 {
+    [InfrastructureSecret]
     private const string _defaultServiceBusConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
     private const string _ownerPrefix = "ark.tools.mediator-framework:";
     private const string _storageParticipant = "azm12-reconcile-consumer";
@@ -157,4 +158,3 @@ public sealed class MessagingResourceLifecycleBoundaryTests
         return _defaultServiceBusConnectionString;
     }
 }
-#pragma warning restore ARKPII001
