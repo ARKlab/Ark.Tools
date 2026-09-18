@@ -293,12 +293,37 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
-    /// <summary>Microsoft telemetry consumers must register Ark redaction.</summary>
+    /// <summary>Console applications without dependency-injection setup do not require Ark redaction.</summary>
     [TestMethod]
-    public async Task MicrosoftTelemetryWithoutArkRedactionIsRejected()
+    public async Task MicrosoftTelemetryWithoutServiceCollectionIsAccepted()
     {
         var diagnostics = await _analyzeAsync(
             "class Startup { void Configure(object services) { } }",
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Microsoft telemetry consumers configuring a service collection must register Ark redaction.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithServiceCollectionWithoutArkRedactionIsRejected()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Microsoft.Extensions.DependencyInjection
+            {
+                public interface IServiceCollection { }
+                public sealed class ServiceCollection : IServiceCollection { }
+            }
+            class Startup
+            {
+                void Configure()
+                {
+                    var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+                }
+            }
+            """,
             references: [_telemetryReference()],
             outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
 

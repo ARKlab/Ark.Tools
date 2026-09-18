@@ -66,8 +66,11 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
             var hasRedactionRegistration = 0;
+            var hasServiceCollectionSetup = 0;
             if (facts._telemetryRequiresRegistration)
             {
+                var serviceCollectionType = start.Compilation.GetTypeByMetadataName(
+                    "Microsoft.Extensions.DependencyInjection.IServiceCollection");
                 start.RegisterOperationAction(operationContext =>
                 {
                     var invocation = (Microsoft.CodeAnalysis.Operations.IInvocationOperation)operationContext.Operation;
@@ -78,9 +81,29 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                         Interlocked.Exchange(ref hasRedactionRegistration, 1);
                     }
                 }, Microsoft.CodeAnalysis.OperationKind.Invocation);
+                if (serviceCollectionType is not null)
+                {
+                    start.RegisterOperationAction(operationContext =>
+                    {
+                        var creation = (Microsoft.CodeAnalysis.Operations.IObjectCreationOperation)operationContext.Operation;
+                        if (_isServiceCollection(creation.Type, serviceCollectionType))
+                        {
+                            Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
+                        }
+                    }, Microsoft.CodeAnalysis.OperationKind.ObjectCreation);
+                    start.RegisterOperationAction(operationContext =>
+                    {
+                        var property = (Microsoft.CodeAnalysis.Operations.IPropertyReferenceOperation)operationContext.Operation;
+                        if (_isServiceCollection(property.Type, serviceCollectionType))
+                        {
+                            Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
+                        }
+                    }, Microsoft.CodeAnalysis.OperationKind.PropertyReference);
+                }
                 start.RegisterCompilationEndAction(endContext =>
                 {
-                    if (Volatile.Read(ref hasRedactionRegistration) == 0)
+                    if (Volatile.Read(ref hasServiceCollectionSetup) != 0
+                        && Volatile.Read(ref hasRedactionRegistration) == 0)
                     {
                         endContext.ReportDiagnostic(Diagnostic.Create(_missingRedactionRegistration, Location.None));
                     }
@@ -106,6 +129,13 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 }
             }, SymbolKind.Property, SymbolKind.Field, SymbolKind.Method, SymbolKind.NamedType);
         });
+    }
+
+    private static bool _isServiceCollection(ITypeSymbol? type, INamedTypeSymbol serviceCollectionType)
+    {
+        return type is INamedTypeSymbol named
+            && (SymbolEqualityComparer.Default.Equals(named, serviceCollectionType)
+                || named.AllInterfaces.Any(candidate => SymbolEqualityComparer.Default.Equals(candidate, serviceCollectionType)));
     }
 
     private static void _analyze(
