@@ -48,4 +48,27 @@ public class NLogConfigurerTests
             LogManager.Configuration = originalConfiguration;
         }
     }
+
+    /// <summary>Verifies that Azure loggers are limited to warning level and above.</summary>
+    [TestMethod]
+    public void For_AddsAzureWarningRule()
+    {
+        var originalConfiguration = LogManager.Configuration;
+
+        try
+        {
+            NLogConfigurer.For("NLogConfigurerTests").Apply();
+
+            var azureRule = LogManager.Configuration!.LoggingRules
+                .Single(static rule => rule.LoggerNamePattern == "Azure.*");
+
+            azureRule.IsLoggingEnabledForLevel(LogLevel.Trace).Should().BeFalse();
+            azureRule.IsLoggingEnabledForLevel(LogLevel.Info).Should().BeFalse();
+            azureRule.IsLoggingEnabledForLevel(LogLevel.Warn).Should().BeTrue();
+        }
+        finally
+        {
+            LogManager.Configuration = originalConfiguration;
+        }
+    }
 }
