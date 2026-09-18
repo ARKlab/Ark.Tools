@@ -300,5 +300,4 @@ Applications using **MVC + Ark.Tools.AspNetCore** cannot trim (Microsoft limitat
 
 - [Microsoft: ASP.NET Core Trimming Guidance](https://aka.ms/aspnet/trimming)
 - [Microsoft: Minimal APIs Overview](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/overview)
-- [Common Libraries Trimming Progress](../../../docs/trimmable-support/progress-tracker.md)
-- [Trimming Implementation Plan](../../../docs/trimmable-support/implementation-plan.md)
+- [Trimming and Native AOT guidance](../../docs/trimmable-support/guidelines.md)
