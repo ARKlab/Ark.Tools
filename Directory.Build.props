@@ -70,6 +70,7 @@
   </PropertyGroup>
   
 
+<!-- Keep NuGet metadata SPDX-aware and include the repository README in every package. -->
 	<PropertyGroup Label="NuGet Package Info" Condition="'$(IsPackable)' != 'false'">
 
 		<PackageProjectUrl>https://github.com/ARKlab/Ark.Tools</PackageProjectUrl>
