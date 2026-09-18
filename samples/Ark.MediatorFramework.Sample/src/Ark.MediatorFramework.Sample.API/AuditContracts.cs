@@ -62,6 +62,7 @@ public static class GetAuditsQuery
     {
         /// <summary>Gets the user identifier filter.</summary>
         [HttpQuery]
+        [PersonalData]
         public string? UserId { get; init; }
 
         /// <summary>Gets the entity type filter.</summary>

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.Compliance" />
+    <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.MediatorFramework.MinimalApi" />
