@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 namespace Ark.Tools;
 
@@ -15,7 +17,11 @@ public class SmtpConnectionBuilder
     /// <remarks>
     /// es. Server=smtp.sendgrid.net;Port=587;Username=gnegnegne;Password=nonlosai;UseSsl=true
     /// </remarks>
-    public SmtpConnectionBuilder([InfrastructureSecret] string smtpConnectionString)
+    public SmtpConnectionBuilder(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string smtpConnectionString)
     {
         if (string.IsNullOrWhiteSpace(smtpConnectionString))
             throw new ArgumentException("Empty connection string", nameof(smtpConnectionString));
@@ -23,7 +29,11 @@ public class SmtpConnectionBuilder
         _parse(smtpConnectionString);
     }
 
-    private void _parse([InfrastructureSecret] string smtpConnectionString)
+    private void _parse(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string smtpConnectionString)
     {
         var span = smtpConnectionString.AsSpan();
 
@@ -70,7 +80,11 @@ public class SmtpConnectionBuilder
         }
     }
 
+    #if NET10_0_OR_GREATER
+
     [InfrastructureSecret]
+
+    #endif
     public string ConnectionString
     {
         get
@@ -87,11 +101,17 @@ public class SmtpConnectionBuilder
 
     public string? Server { get; set; }
     public int? Port { get; set; }
+    #if NET10_0_OR_GREATER
     [InfrastructureSecret]
+    #endif
     public string? Username { get; set; }
+    #if NET10_0_OR_GREATER
     [InfrastructureSecret]
+    #endif
     public string? Password { get; set; }
     public bool UseSsl { get; set; }
+    #if NET10_0_OR_GREATER
     [PersonalData]
+    #endif
     public string? From { get; set; }
 }

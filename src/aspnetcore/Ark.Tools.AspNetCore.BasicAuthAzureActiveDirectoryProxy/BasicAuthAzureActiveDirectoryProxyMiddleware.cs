@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -111,7 +113,9 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult
     {
+        #if NET10_0_OR_GREATER
         [InfrastructureSecret]
+        #endif
         public string? Token_Type { get; set; }
         public string? Scope { get; set; }
         public int Expires_In { get; set; }
@@ -119,7 +123,9 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         public int Expires_On { get; set; }
         public int Not_Before { get; set; }
         public Uri? Resource { get; set; }
+        #if NET10_0_OR_GREATER
         [InfrastructureSecret]
+        #endif
         public string? Access_Token { get; set; }
     }
 }

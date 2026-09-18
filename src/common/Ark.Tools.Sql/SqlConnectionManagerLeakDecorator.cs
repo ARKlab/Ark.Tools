@@ -1,4 +1,6 @@
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 namespace Ark.Tools.Sql;
 
@@ -15,8 +17,7 @@ namespace Ark.Tools.Sql;
 /// #if DEBUG
 /// if (Debugger.IsAttached)
 ///     _container.RegisterDecorator<IDbConnectionManager, SqlConnectionManagerLeakDecorator>();
-/// #endif
-/// ]]>
+/// /// ]]>
 /// </code>
 /// </example>
 public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
@@ -28,7 +29,11 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         _inner = inner;
     }
 
-    public DbConnection Get([InfrastructureSecret] string connectionString)
+    public DbConnection Get(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString)
     {
         var cnn = _inner.Get(connectionString);
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -39,7 +44,11 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         return cnn;
     }
 
-    public async Task<DbConnection> GetAsync([InfrastructureSecret] string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString, CancellationToken ctk = default)
     {
         var cnn = await _inner.GetAsync(connectionString, ctk).ConfigureAwait(false);
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -57,8 +66,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
     /// connection.Open()
     /// #if DEBUG
     /// new ConnectionLeakWatcher(connection);
-    /// #endif
-    /// That's it. Don't store a reference to the watcher. It will make itself available for garbage collection
+    ///     /// That's it. Don't store a reference to the watcher. It will make itself available for garbage collection
     /// once it has fulfilled its purpose. Watch the visual studio debug output for details on potentially leaked connections.
     /// Note that a connection could possibly just be taking its time and may eventually be closed properly despite being flagged by this class.
     /// So take the output with a pinch of salt.

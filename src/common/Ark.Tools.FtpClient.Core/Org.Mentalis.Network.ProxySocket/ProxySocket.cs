@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using System.Net.Sockets;
 
@@ -35,7 +37,11 @@ public class ProxySocket : Socket
     /// <param name="socketType">One of the SocketType values.</param>
     /// <param name="protocolType">One of the ProtocolType values.</param>
     /// <exception cref="SocketException">The combination of addressFamily, socketType, and protocolType results in an invalid socket.</exception>
-    public ProxySocket([NotPersonalData("Socket address family is network infrastructure metadata, not personal data.")] AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType) : this(addressFamily, socketType, protocolType, "") { }
+    public ProxySocket(
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Socket address family is network infrastructure metadata, not personal data.")]
+#endif
+ AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType) : this(addressFamily, socketType, protocolType, "") { }
     /// <summary>
     /// Initializes a new instance of the ProxySocket class.
     /// </summary>
@@ -45,7 +51,15 @@ public class ProxySocket : Socket
     /// <param name="proxyUsername">The username to use when authenticating with the proxy server.</param>
     /// <exception cref="SocketException">The combination of addressFamily, socketType, and protocolType results in an invalid socket.</exception>
     /// <exception cref="ArgumentNullException"><c>proxyUsername</c> is null.</exception>
-    public ProxySocket([NotPersonalData("Socket address family is network infrastructure metadata, not personal data.")] AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, [UserCredentials] string proxyUsername) : this(addressFamily, socketType, protocolType, proxyUsername, "") { }
+    public ProxySocket(
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Socket address family is network infrastructure metadata, not personal data.")]
+#endif
+ AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, 
+#if NET10_0_OR_GREATER
+    [UserCredentials]
+#endif
+ string proxyUsername) : this(addressFamily, socketType, protocolType, proxyUsername, "") { }
     /// <summary>
     /// Initializes a new instance of the ProxySocket class.
     /// </summary>
@@ -56,7 +70,19 @@ public class ProxySocket : Socket
     /// <param name="proxyPassword">The password to use when authenticating with the proxy server.</param>
     /// <exception cref="SocketException">The combination of addressFamily, socketType, and protocolType results in an invalid socket.</exception>
     /// <exception cref="ArgumentNullException"><c>proxyUsername</c> -or- <c>proxyPassword</c> is null.</exception>
-    public ProxySocket([NotPersonalData("Socket address family is network infrastructure metadata, not personal data.")] AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, [UserCredentials] string proxyUsername, [UserCredentials] string proxyPassword) : base(addressFamily, socketType, protocolType)
+    public ProxySocket(
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Socket address family is network infrastructure metadata, not personal data.")]
+#endif
+ AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, 
+#if NET10_0_OR_GREATER
+    [UserCredentials]
+#endif
+ string proxyUsername, 
+#if NET10_0_OR_GREATER
+    [UserCredentials]
+#endif
+ string proxyPassword) : base(addressFamily, socketType, protocolType)
     {
         ProxyUser = proxyUsername ?? String.Empty;
         ProxyPass = proxyPassword ?? String.Empty;

@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 
@@ -13,7 +15,9 @@ public static class Ex
 {
     sealed record SqlStateProviderConfig : ISqlStateProviderConfig
     {
+        #if NET10_0_OR_GREATER
         [InfrastructureSecret]
+        #endif
         public string DbConnectionString { get; set; } = string.Empty;
     }
 
@@ -27,7 +31,11 @@ public static class Ex
     /// <param name="connectionString">The SQL connectionString</param>
     /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter>
-        (this WorkerHost<TFile, TMetadata, TQueryFilter> host, [InfrastructureSecret] string connectionString, bool skipInit = false)
+        (this WorkerHost<TFile, TMetadata, TQueryFilter> host, 
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata>
         where TMetadata : class, IResourceMetadata
         where TQueryFilter : class, new()
@@ -74,7 +82,11 @@ public static class Ex
     /// <param name="connectionString">The SQL connectionString</param>
     /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
     public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
-        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, [InfrastructureSecret] string connectionString, bool skipInit = false)
+        (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, 
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata, TExtensions>
         where TMetadata : class, IResourceMetadata<TExtensions>
         where TQueryFilter : class, new()

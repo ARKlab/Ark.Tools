@@ -6,7 +6,7 @@ using Microsoft.SqlServer.Dac;
 using Reqnroll;
 
 #if NET10_0_OR_GREATER
-using Microsoft.Extensions.Compliance.Classification;
+using Ark.Tools.Compliance;
 #endif
 
 using System.Data;

@@ -5,7 +5,9 @@ using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
 
-using Microsoft.Extensions.Compliance.Classification;
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
 using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
@@ -136,7 +138,11 @@ public static class ApplicationComposition
     public static void Register(
         Container container,
         bool useSqlStore = true,
+#if NET10_0_OR_GREATER
         [InfrastructureSecret] string? connectionString = null,
+#else
+        string? connectionString = null,
+#endif
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,

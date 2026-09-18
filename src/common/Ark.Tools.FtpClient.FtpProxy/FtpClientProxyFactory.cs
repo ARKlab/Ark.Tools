@@ -3,7 +3,7 @@
 using Ark.Tools.FtpClient.Core;
 
 #if NET10_0_OR_GREATER
-using Microsoft.Extensions.Compliance.Classification;
+using Ark.Tools.Compliance;
 #endif
 
 
@@ -13,9 +13,9 @@ namespace Ark.Tools.FtpClient.FtpProxy;
 public class FtpClientProxyFactory : IFtpClientFactory
 {
     private readonly IFtpClientProxyConfig _config;
-#if NET10_0_OR_GREATER
+    #if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
+    #endif
     private readonly TokenProvider _tokenProvider;
 
     public FtpClientProxyFactory(IFtpClientProxyConfig config)

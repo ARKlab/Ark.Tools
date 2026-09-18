@@ -7,7 +7,9 @@ using Ark.Tools.Core;
 
 using Dapper;
 
-using Microsoft.Extensions.Compliance.Classification;
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
 
 using System.Data.Common;
 
@@ -89,13 +91,19 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Tools.Sql
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContextConfig"/> class.</summary>
     /// <param name="connectionString">The SQL Server connection string.</param>
+#if NET10_0_OR_GREATER
     public SampleDataContextConfig([InfrastructureSecret] string connectionString)
+#else
+    public SampleDataContextConfig(string connectionString)
+#endif
     {
         ConnectionString = connectionString;
     }
 
     /// <inheritdoc />
+#if NET10_0_OR_GREATER
     [InfrastructureSecret]
+#endif
     public string ConnectionString { get; }
 
     /// <inheritdoc />

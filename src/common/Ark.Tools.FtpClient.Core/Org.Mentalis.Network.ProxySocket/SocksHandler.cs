@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using System.Net.Sockets;
 
@@ -42,7 +44,11 @@ internal abstract class SocksHandler
     /// </summary>
     /// <param name="address">The IP address to convert.</param>
     /// <returns>An array of four bytes that represents the specified IP address.</returns>
-    protected static byte[] AddressToBytes([NotPersonalData("Network address bytes are infrastructure routing metadata, not personal data.")] long address)
+    protected static byte[] AddressToBytes(
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Network address bytes are infrastructure routing metadata, not personal data.")]
+#endif
+ long address)
     {
         byte[] ret =
         [
@@ -122,7 +128,9 @@ internal abstract class SocksHandler
     /// </summary>
     /// <value>A string that holds the username to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    #if NET10_0_OR_GREATER
     [UserCredentials]
+    #endif
     protected string Username
     {
         get
@@ -185,7 +193,9 @@ internal abstract class SocksHandler
     /// <summary>Holds the value of the Server property.</summary>
     private Socket _server;
     /// <summary>Holds the value of the Username property.</summary>
+    #if NET10_0_OR_GREATER
     [UserCredentials]
+    #endif
     private string _username;
     /// <summary>Holds the value of the AsyncResult property.</summary>
     private IAsyncProxyResult? _asyncResult;

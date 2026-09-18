@@ -3,7 +3,9 @@
 
 using System.Text.Json.Nodes;
 
-using Microsoft.Extensions.Compliance.Classification;
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
 
 namespace Ark.Tools.Compliance.OpenApi;
 

@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using HealthChecks.UI.Client;
 
@@ -113,7 +115,11 @@ public static class ArkAzureFunctionsHttp
     /// <param name="cancellationToken">The invocation cancellation token.</param>
     /// <returns>An HTTP result representing the health-check status.</returns>
     public static async Task<IResult> CheckHealthAsync(
-        [NotPersonalData("Health check service is infrastructure metadata, not personal data.")] HealthCheckService healthChecks,
+        
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Health check service is infrastructure metadata, not personal data.")]
+#endif
+ HealthCheckService healthChecks,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(healthChecks);

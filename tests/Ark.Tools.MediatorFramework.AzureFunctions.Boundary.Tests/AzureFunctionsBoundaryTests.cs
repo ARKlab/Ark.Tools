@@ -4,7 +4,9 @@
 using AwesomeAssertions;
 
 #if NET10_0_OR_GREATER
-using Microsoft.Extensions.Compliance.Classification;
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
 #endif
 
 using System.Diagnostics;

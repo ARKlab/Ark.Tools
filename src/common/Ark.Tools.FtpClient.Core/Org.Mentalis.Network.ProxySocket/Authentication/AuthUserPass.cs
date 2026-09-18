@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using System.Net.Sockets;
 
@@ -18,7 +20,15 @@ internal sealed class AuthUserPass : AuthMethod
     /// <param name="user">The username to use.</param>
     /// <param name="pass">The password to use.</param>
     /// <exception cref="ArgumentNullException"><c>user</c> -or- <c>pass</c> is null.</exception>
-    public AuthUserPass(Socket server, [UserCredentials] string user, [UserCredentials] string pass) : base(server)
+    public AuthUserPass(Socket server, 
+#if NET10_0_OR_GREATER
+    [UserCredentials]
+#endif
+ string user, 
+#if NET10_0_OR_GREATER
+    [UserCredentials]
+#endif
+ string pass) : base(server)
     {
         m_Username = user;
         m_Password = pass;
@@ -124,7 +134,9 @@ internal sealed class AuthUserPass : AuthMethod
     /// </summary>
     /// <value>The username to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    #if NET10_0_OR_GREATER
     [UserCredentials]
+    #endif
     private string Username
     {
         get
@@ -143,7 +155,9 @@ internal sealed class AuthUserPass : AuthMethod
     /// </summary>
     /// <value>The password to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    #if NET10_0_OR_GREATER
     [UserCredentials]
+    #endif
     private string Password
     {
         get
@@ -159,9 +173,13 @@ internal sealed class AuthUserPass : AuthMethod
     }
     // private variables
     /// <summary>Holds the value of the Username property.</summary>
+    #if NET10_0_OR_GREATER
     [UserCredentials]
+    #endif
     private string m_Username;
     /// <summary>Holds the value of the Password property.</summary>
+    #if NET10_0_OR_GREATER
     [UserCredentials]
+    #endif
     private string m_Password;
 }

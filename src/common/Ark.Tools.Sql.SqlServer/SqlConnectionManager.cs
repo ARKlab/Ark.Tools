@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Microsoft.Data.SqlClient;
 
@@ -15,7 +17,11 @@ public class SqlConnectionManager : IDbConnectionManager
         SqlExceptionHandler.LogSqlInfoMessage(ev);
     }
 
-    public DbConnection Get([InfrastructureSecret] string connectionString)
+    public DbConnection Get(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString)
     {
         var conn = Build(connectionString);
         try
@@ -30,7 +36,11 @@ public class SqlConnectionManager : IDbConnectionManager
         }
     }
 
-    public async Task<DbConnection> GetAsync([InfrastructureSecret] string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString, CancellationToken ctk = default)
     {
         var conn = Build(connectionString);
         try
@@ -45,7 +55,11 @@ public class SqlConnectionManager : IDbConnectionManager
         }
     }
 
-    protected virtual SqlConnection Build([InfrastructureSecret] string connectionString)
+    protected virtual SqlConnection Build(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString)
     {
         var conn = new SqlConnection(connectionString);
         conn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);

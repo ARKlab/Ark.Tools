@@ -1,4 +1,6 @@
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Rebus.Transport;
 using Rebus.Transport.InMem;
@@ -29,7 +31,11 @@ public class DrainableInMemTransport : InMemTransport
         }
     }
 
-    public DrainableInMemTransport(InMemNetwork network, [NotPersonalData("Queue address is infrastructure routing metadata, not personal data.")] string? inputQueueAddress)
+    public DrainableInMemTransport(InMemNetwork network, 
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Queue address is infrastructure routing metadata, not personal data.")]
+#endif
+ string? inputQueueAddress)
         : base(network, inputQueueAddress)
     {
     }

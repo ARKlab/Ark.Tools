@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using System.Reflection;
 
@@ -139,7 +141,11 @@ public static class ReflectionHelper
     }
 
     [RequiresUnreferencedCode("Uses reflection to inspect type metadata. Type information may be incomplete when trimmed.")]
-    private static string _toCSReservatedWord(this Type type, [NotPersonalData("Type metadata from reflection, not personal data.")] bool fullName)
+    private static string _toCSReservatedWord(this Type type, 
+#if NET10_0_OR_GREATER
+    [NotPersonalData("Type metadata from reflection, not personal data.")]
+#endif
+ bool fullName)
     {
         if (type == typeof(string))
         {

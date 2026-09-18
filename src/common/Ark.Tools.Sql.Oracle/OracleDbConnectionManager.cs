@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Oracle.ManagedDataAccess.Client;
 
@@ -25,7 +27,11 @@ public class OracleDbConnectionManager : IDbConnectionManager
     }
 
 
-    public DbConnection Get([InfrastructureSecret] string connectionString)
+    public DbConnection Get(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString)
     {
         var conn = Build(connectionString);
         try
@@ -40,7 +46,11 @@ public class OracleDbConnectionManager : IDbConnectionManager
         }
     }
 
-    public async Task<DbConnection> GetAsync([InfrastructureSecret] string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString, CancellationToken ctk = default)
     {
         var conn = Build(connectionString);
         try
@@ -66,7 +76,11 @@ public class OracleDbConnectionManager : IDbConnectionManager
     /// Commands created from this connection will inherit the 30-second timeout unless explicitly overridden.
     /// See: <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html">Oracle Connection Properties Documentation</a>
     /// </remarks>
-    protected virtual OracleConnection Build([InfrastructureSecret] string connectionString)
+    protected virtual OracleConnection Build(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string connectionString)
     {
         var conn = new OracleConnection(connectionString);
 

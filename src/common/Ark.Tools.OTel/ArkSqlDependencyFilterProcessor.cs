@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using OpenTelemetry;
 
@@ -27,7 +29,11 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
     /// The SQL connection string whose <c>Data Source</c> and <c>Initial Catalog</c>
     /// identify the database to filter. If <see langword="null"/> or empty, the processor is disabled.
     /// </param>
-    public ArkSqlDependencyFilterProcessor([InfrastructureSecret] string? sqlConnectionString)
+    public ArkSqlDependencyFilterProcessor(
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string? sqlConnectionString)
     {
         if (!string.IsNullOrWhiteSpace(sqlConnectionString))
         {

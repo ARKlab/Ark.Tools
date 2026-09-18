@@ -19,7 +19,9 @@ public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
     public string ProviderName { get; set; } = Test_Constants.ProviderName;
     public bool StartAtCreation { get; set; } = Test_Constants.StartAtCreationDefault;
 
+#pragma warning disable ARKPII001 // explicit interface implementation is the interface contract for the test worker definition
     string IRebusResourceNotifier_Config.AsbConnectionString { get { return this.AsbConnectionString; } }
+#pragma warning restore ARKPII001
     string IRebusResourceNotifier_Config.ProviderName { get { return this.ProviderName; } }
     bool IRebusResourceNotifier_Config.StartAtCreation { get { return this.StartAtCreation; } }
 }

@@ -19,9 +19,9 @@ namespace Ark.Tools.ResourceWatcher;
 public interface ISqlStateProviderConfig
 {
 #pragma warning disable ARKPII001 // the public surface deliberately models a SQL connection string and the secret classification is enforced at the consuming boundary.
-#if NET10_0_OR_GREATER
+    #if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
+    #endif
     string DbConnectionString { get; }
 #pragma warning restore ARKPII001
 

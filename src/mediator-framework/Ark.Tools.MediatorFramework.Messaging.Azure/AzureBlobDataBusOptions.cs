@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -25,7 +27,9 @@ public sealed record AzureBlobDataBusOptions
     /// Gets the Azure Blob Storage connection string or service URI. A service URI
     /// uses DefaultAzureCredential.
     /// </summary>
+    #if NET10_0_OR_GREATER
     [InfrastructureSecret]
+    #endif
     public required string ConnectionString { get; init; }
 
     /// <summary>

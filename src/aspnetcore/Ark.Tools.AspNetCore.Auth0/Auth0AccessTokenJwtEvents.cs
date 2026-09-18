@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
+#endif
 
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
@@ -24,13 +26,19 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
     private readonly AuthenticationApiClient _auth0;
     public const string AuthorizationExtensionAudience = "urn:auth0-authz-api";
     private readonly string _clientId;
+    #if NET10_0_OR_GREATER
     [InfrastructureSecret]
+    #endif
     private readonly string _clientSecret;
     private readonly string _authzApiUrl;
     private readonly string _domain;
     private readonly string _issuer;
 
-    public Auth0AccessTokenJwtEvents(string domain, string clientId, [InfrastructureSecret] string clientSecret, string authzApiUrl)
+    public Auth0AccessTokenJwtEvents(string domain, string clientId, 
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
+ string clientSecret, string authzApiUrl)
     {
         _auth0 = new AuthenticationApiClient(domain);
         _domain = domain;
