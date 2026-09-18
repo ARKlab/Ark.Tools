@@ -62,6 +62,9 @@ public sealed class SampleStartup
     private readonly Container _container;
     private readonly InMemNetwork _network;
     private readonly bool _useSqlStore;
+#if NET10_0_OR_GREATER
+    [InfrastructureSecret]
+#endif
     private readonly string? _connectionString;
     private readonly ISampleDataContextFactory? _sharedDataContextFactory;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
