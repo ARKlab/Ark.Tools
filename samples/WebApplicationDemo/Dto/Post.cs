@@ -1,10 +1,13 @@
-﻿using System.Text.Json.Serialization;
+﻿using Ark.Tools.Compliance;
+
+using System.Text.Json.Serialization;
 
 namespace WebApplicationDemo.Dto;
 
 public class Post
 {
     [JsonPropertyName("userId")]
+    [PersonalData]
     public int UserId { get; set; }
 
     [JsonPropertyName("id")]

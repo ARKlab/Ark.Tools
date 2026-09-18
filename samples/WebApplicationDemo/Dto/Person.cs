@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Ark.Tools.Compliance;
+
+using System.ComponentModel.DataAnnotations;
 
 namespace WebApplicationDemo.Dto;
 
@@ -22,6 +24,7 @@ public static class Person
         /// <value>The person's first name.</value>
         [Required]
         [StringLength(25)]
+        [PersonalData]
         public string? FirstName { get; set; }
 
         /// <summary>
@@ -30,12 +33,14 @@ public static class Person
         /// <value>The person's last name.</value>
         [Required]
         [StringLength(25)]
+        [PersonalData]
         public string? LastName { get; set; }
 
         /// <summary>
         /// Gets or sets the email address for a person.
         /// </summary>
         /// <value>The person's email address.</value>
+        [PersonalData]
         public string? Email { get; set; }
 
     }
@@ -51,6 +56,7 @@ public static class Person
         /// Gets or sets the telephone number for a person.
         /// </summary>
         /// <value>The person's telephone number.</value>
+        [PersonalData]
         public string? Phone { get; set; }
     }
 
