@@ -7,7 +7,6 @@ using System.Collections.Immutable;
 using System.Linq;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 
 namespace Ark.Tools.Core.Analyzers;
 
@@ -66,8 +65,8 @@ internal readonly record struct TypeModel(
     bool IsPrimitiveScalar,
     ImmutableArray<MemberModel> Members);
 
-/// <summary>A single ToDataTableArk() call site: the element type it was called with, and its unique interceptable source location.</summary>
-internal readonly record struct CallSiteModel(TypeModel Type, InterceptableLocation Location);
+/// <summary>A single ToDataTableArk() call site: the element type it was called with, and its unique primitive interceptable source location.</summary>
+internal readonly record struct CallSiteModel(TypeModel Type, int LocationVersion, string LocationData);
 
 internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
 {
@@ -85,8 +84,8 @@ internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
 
     private static bool _equals(CallSiteModel x, CallSiteModel y)
     {
-        return x.Location.Version == y.Location.Version
-            && string.Equals(x.Location.Data, y.Location.Data, StringComparison.Ordinal)
+        return x.LocationVersion == y.LocationVersion
+            && string.Equals(x.LocationData, y.LocationData, StringComparison.Ordinal)
             && string.Equals(x.Type.FullyQualifiedName, y.Type.FullyQualifiedName, StringComparison.Ordinal)
             && string.Equals(x.Type.SimpleName, y.Type.SimpleName, StringComparison.Ordinal)
             && x.Type.IsReferenceType == y.Type.IsReferenceType
@@ -96,8 +95,8 @@ internal sealed class CallSiteModelComparer : IEqualityComparer<CallSiteModel>
 
     private static int _getHashCode(CallSiteModel obj)
     {
-        var hash = StringComparer.Ordinal.GetHashCode(obj.Location.Data);
-        hash = (hash * 397) ^ obj.Location.Version;
+        var hash = StringComparer.Ordinal.GetHashCode(obj.LocationData);
+        hash = (hash * 397) ^ obj.LocationVersion;
         hash = (hash * 397) ^ StringComparer.Ordinal.GetHashCode(obj.Type.FullyQualifiedName);
         hash = (hash * 397) ^ StringComparer.Ordinal.GetHashCode(obj.Type.SimpleName);
         hash = (hash * 397) ^ obj.Type.IsReferenceType.GetHashCode();
