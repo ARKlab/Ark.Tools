@@ -1246,7 +1246,7 @@ open decisions blocking implementation.
 | ID | Question | Decision |
 | --- | --- | --- |
 | PII‑01 | Depend on `Microsoft.Extensions.Compliance.Abstractions` (MIT, 10.9.0)? | **Depend on it.** Ark attributes derive from `DataClassificationAttribute`, so classification is one vocabulary across NLog and the Microsoft stack, and the `LOGGEN` guards (§13.3) work on Ark-classified types with no bridge. |
-| PII‑02 | Default severity of `ARKPII001` | **Warning.** It is the only name-heuristic rule; a false positive must not break the build. Every attribute/type-driven rule stays an error. |
+| PII‑02 | Default severity of `ARKPII001` | **Warning.** It is the only name-heuristic rule. Every attribute/type-driven rule stays an error. The SDK does not exempt it from `TreatWarningsAsErrors`: consumers lower the severity in `.editorconfig` if they want a heuristic hit to stay non-blocking. |
 | PII‑03 | `Reveal(CompliancePurpose)` gate vs. plain `Value` property | **Purpose-gated.** Cleartext is reachable only through `Reveal(CompliancePurpose)`; the purpose argument is what makes the access greppable, reviewable, and inventoriable. No plain `Value` accessor is generated. |
 | PII‑04 | Is `ArkComplianceSurface.txt` separate from `ArkApiSurface.txt`? | **Separate file.** Different audience (DPO/GDPR Art. 30 vs. API compatibility), different change cadence, and a privacy diff must not be lost in an API diff. |
 | PII‑05 | SQL policy output | **Opt-in template script.** A post-deployment `.sql` emitted only for `[SqlDataPolicy]` types, with SQLCMD/MSBuild token replacement because SQL naming and label taxonomies differ from the C# side (§6.6). No DACPAC refactor integration. |

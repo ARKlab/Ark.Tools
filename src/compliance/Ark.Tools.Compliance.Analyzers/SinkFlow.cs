@@ -335,6 +335,15 @@ internal sealed class SinkFlow
         return false;
     }
 
+    /// <summary>Framework types never declare Ark classifications, so their members carry no taint.</summary>
+    internal static bool _isFrameworkType(ITypeSymbol? type)
+    {
+        var assembly = type?.ContainingAssembly?.Identity.Name;
+        return assembly is "mscorlib" or "netstandard"
+            || assembly?.StartsWith("System.", StringComparison.Ordinal) == true
+            || assembly?.StartsWith("Microsoft.", StringComparison.Ordinal) == true;
+    }
+
     private Source? _type(ITypeSymbol? type, int depth, HashSet<ITypeSymbol> visited)
     {
         if (type is null || !_enter(depth) || !visited.Add(type) || _isSelfProtecting(type))
@@ -381,10 +390,7 @@ internal sealed class SinkFlow
             }
         }
 
-        var assembly = named.ContainingAssembly?.Identity.Name;
-        if (assembly is "mscorlib" or "netstandard"
-            || assembly?.StartsWith("System.", StringComparison.Ordinal) == true
-            || assembly?.StartsWith("Microsoft.", StringComparison.Ordinal) == true)
+        if (_isFrameworkType(named))
         {
             return null;
         }

@@ -321,6 +321,30 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// A consumer may configure any method as a sink, including an extension declared on its own
+    /// classified type. The receiver exemption must not turn that payload into a blind spot.
+    /// </summary>
+    [TestMethod]
+    public async Task ConsumerExtensionSinkOnClassifiedReceiver_IsReported()
+    {
+        var diagnostics = await _analyzeAsync("""
+            static class AuditSink
+            {
+                public static void Dump(this Customer customer) { }
+            }
+            class Case
+            {
+                void M(Customer c) { c.Dump(); }
+            }
+            """,
+            [
+                new SinkText("ComplianceSinks.Consumer.txt", "M:AuditSink.Dump(Customer);ARKPII002"),
+            ]).ConfigureAwait(false);
+        diagnostics.Should().ContainSingle();
+        diagnostics[0].Id.Should().Be("ARKPII002");
+    }
+
     /// <summary>Consumer entries add sinks and remove exact or wildcard defaults deterministically.</summary>
     [TestMethod]
     [DataRow("log")]
@@ -364,6 +388,22 @@ public sealed class SinkTaintAnalyzerTests
                     new NLog.Logger().Info(c.Email);
             #pragma warning restore ARKPII002
                 }
+            }
+            """).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>A review declared on a property covers the diagnostics raised in its accessor bodies.</summary>
+    [TestMethod]
+    public async Task ReviewOnProperty_CoversAccessorBodies()
+    {
+        var diagnostics = await _analyzeAsync("""
+            using Ark.Tools.Compliance;
+            class Case
+            {
+                [Secret] public string? Token { get; set; }
+                [ComplianceReviewed("ARKPII005", "transport")]
+                public string Value { get { return $"t={Token}"; } }
             }
             """).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();

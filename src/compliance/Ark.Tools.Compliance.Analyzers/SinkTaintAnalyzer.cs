@@ -189,11 +189,18 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         }
     }
 
+    /// <summary>
+    /// The receiver of a framework extension sink is the sink itself (an <c>ILogger</c>, an activity, a
+    /// builder), and it only taints through an unrelated generic argument such as <c>ILogger&lt;TCategory&gt;</c>.
+    /// The exemption stops at framework receivers on purpose: sink configuration accepts arbitrary method
+    /// IDs, so a consumer extension declared on its own classified type must stay reportable.
+    /// </summary>
     private static bool _isExtensionReceiver(IInvocationOperation invocation, IArgumentOperation argument)
     {
         return invocation.TargetMethod.IsExtensionMethod
             && invocation.Instance is null
-            && argument.Parameter?.Ordinal == 0;
+            && argument.Parameter?.Ordinal == 0
+            && SinkFlow._isFrameworkType(argument.Parameter.Type);
     }
 
     private static bool _isInsideConfiguredSink(IOperation operation, SinkConfiguration sinks)
@@ -343,7 +350,10 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
     private static bool _reviewed(ISymbol? symbol, string rule)
     {
-        for (; symbol is not null; symbol = symbol.ContainingSymbol)
+        // An accessor's ContainingSymbol is the type, not the property/event it belongs to, so the
+        // walk goes through AssociatedSymbol first; otherwise a review declared on a property (an
+        // AttributeUsage target of ComplianceReviewedAttribute) would never reach its accessor bodies.
+        for (; symbol is not null; symbol = (symbol as IMethodSymbol)?.AssociatedSymbol ?? symbol.ContainingSymbol)
         {
             foreach (var attribute in symbol.GetAttributes())
             {

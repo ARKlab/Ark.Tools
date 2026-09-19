@@ -37,7 +37,7 @@ Reference the full `Ark.Tools.Compliance` package when you need the redactors,
   (`ComplianceSinks.Ark.txt`) as analyzer `AdditionalFiles`;
 - apply the packaged `Ark.Tools.Compliance.globalconfig` severities
   (errors for sinks, warnings for declaration hygiene; `ARKPII001` is
-  excluded from `TreatWarningsAsErrors` so a name-heuristic hit never breaks a build);
+  a warning you resolve by declaring, or silence per-rule via `.editorconfig`);
 - enable the compliance surface baseline check (see
   [Analyzers — compliance surface](analyzers.md#the-compliance-surface-baseline)).
 

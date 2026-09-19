@@ -1,15 +1,18 @@
-<Project>
+﻿<Project>
   <!--
   The compliance analyzers are packed inside this package (analyzers/dotnet/cs), which by itself only
   reaches the project that directly references it. This file re-adds them for transitive consumers,
   following the same pattern as Ark.Tools.Core, so that classified public surfaces keep being enforced
   everywhere in the dependency graph.
 
-  Ark.Tools.Sdk adds the standalone Ark.Tools.Compliance.Analyzers package when EnableArkToolsCompliance
-  is true. Loading both copies would raise CS8032 and duplicate every diagnostic, so the embedded copy is
+  Compliance stays opt-in while the analyzer is beta, so nothing is contributed unless the consumer sets
+  EnableArkToolsCompliance=true: merely referencing an Ark.Tools package must not start reporting ARKPII
+  diagnostics. Ark.Tools.Sdk adds the standalone Ark.Tools.Compliance.Analyzers package on that same
+  opt-in; loading both copies would raise CS8032 and duplicate every diagnostic, so the embedded copy is
   skipped whenever the standalone package contributed its own analyzer assembly.
   -->
-  <Target Name="_ArkComplianceAbstractionsAnalyzers" BeforeTargets="CoreCompile">
+  <Target Name="_ArkComplianceAbstractionsAnalyzers" BeforeTargets="CoreCompile"
+          Condition="'$(EnableArkToolsCompliance)' == 'true'">
     <PropertyGroup>
       <_ArkComplianceEmbeddedAnalyzerDir>$(MSBuildThisFileDirectory)../analyzers/dotnet/cs/</_ArkComplianceEmbeddedAnalyzerDir>
       <_ArkComplianceStandaloneAnalyzerPresent>false</_ArkComplianceStandaloneAnalyzerPresent>
@@ -23,15 +26,17 @@
     </ItemGroup>
   </Target>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true'">
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)ComplianceLexicon.Ark.txt"
                      Condition="Exists('$(MSBuildThisFileDirectory)ComplianceLexicon.Ark.txt') AND '@(AdditionalFiles->WithMetadataValue('Filename', 'ComplianceLexicon.Ark'))' == ''" />
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)ComplianceSinks.Ark.txt"
                      Condition="Exists('$(MSBuildThisFileDirectory)ComplianceSinks.Ark.txt') AND '@(AdditionalFiles->WithMetadataValue('Filename', 'ComplianceSinks.Ark'))' == ''" />
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
     <CompilerVisibleProperty Include="IsTestProject" />
   </ItemGroup>
 
-  <Target Name="_ArkComplianceAbstractionsFeatureFiles" BeforeTargets="CoreCompile" Condition="'$(IsTestProject)' == 'true'">
+  <Target Name="_ArkComplianceAbstractionsFeatureFiles" BeforeTargets="CoreCompile"
+          Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(IsTestProject)' == 'true'">
     <ItemGroup>
       <AdditionalFiles Include="@(None->WithMetadataValue('Extension', '.feature'))" />
     </ItemGroup>

@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <PropertyGroup Condition="'$(ArkToolsBuildTargetsImported)' != 'true'">
     <ArkToolsBuildTargetsImported>true</ArkToolsBuildTargetsImported>
   </PropertyGroup>
@@ -7,10 +7,6 @@
     <!-- Compliance is opt-in while the analyzer is beta: unset means Off. -->
     <ArkComplianceMode Condition="'$(EnableArkToolsCompliance)' == 'true'">Enforce</ArkComplianceMode>
     <ArkComplianceMode Condition="'$(EnableArkToolsCompliance)' != 'true'">Off</ArkComplianceMode>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(EnableArkToolsCompliance)' == 'true'">
-    <!-- Compliance warnings are intentionally build blockers; treat the heuristic rule as a real failure. -->
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UsingMicrosoftBuildSqlSdk)' != 'true'">

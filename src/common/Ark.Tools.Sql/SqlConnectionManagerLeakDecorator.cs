@@ -17,7 +17,8 @@ namespace Ark.Tools.Sql;
 /// #if DEBUG
 /// if (Debugger.IsAttached)
 ///     _container.RegisterDecorator<IDbConnectionManager, SqlConnectionManagerLeakDecorator>();
-/// /// ]]>
+/// #endif
+/// ]]>
 /// </code>
 /// </example>
 public class SqlConnectionManagerLeakDecorator : IDbConnectionManager

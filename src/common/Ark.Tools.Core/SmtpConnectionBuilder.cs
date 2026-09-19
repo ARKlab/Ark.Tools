@@ -81,17 +81,20 @@ public class SmtpConnectionBuilder
     }
 
     #if NET10_0_OR_GREATER
-
     [Secret]
-
+    [ComplianceReviewed("ARKPII005", "The credentials are composed back into the connection string this type exists to build; the value is transport, never a log sink, and carries [Secret] for the logging boundary.")]
     #endif
     public string ConnectionString
     {
         get
         {
-            var from = string.IsNullOrWhiteSpace(From) ? string.Empty : ";From=***";
-            var port = Port is null ? "25" : Port.Value.ToString(CultureInfo.InvariantCulture);
-            return $"Server={Server ?? "localhost"};Port={port};Username=***;******;UseSsl={UseSsl}{from}";
+            // Round-trippable by contract: this value is fed back into _parse by the NLog
+            // configuration path. Redaction happens at the logging boundary through [Secret].
+            var port = (Port ?? 25).ToString(CultureInfo.InvariantCulture);
+            var username = string.IsNullOrWhiteSpace(Username) ? string.Empty : $";Username={Username}";
+            var secret = string.IsNullOrWhiteSpace(Password) ? string.Empty : $";Password={Password}";
+            var from = string.IsNullOrWhiteSpace(From) ? string.Empty : $";From={From}";
+            return $"Server={Server ?? "localhost"};Port={port}{username}{secret};UseSsl={UseSsl}{from}";
         }
         set
         {
