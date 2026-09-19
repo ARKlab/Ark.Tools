@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using System.Net.Sockets;
 
 namespace Org.Mentalis.Network.ProxySocket.Authentication;
@@ -16,7 +18,9 @@ internal sealed class AuthUserPass : AuthMethod
     /// <param name="user">The username to use.</param>
     /// <param name="pass">The password to use.</param>
     /// <exception cref="ArgumentNullException"><c>user</c> -or- <c>pass</c> is null.</exception>
-    public AuthUserPass(Socket server, string user, string pass) : base(server)
+    public AuthUserPass(Socket server,
+    [Secret] string user,
+    [Secret] string pass) : base(server)
     {
         m_Username = user;
         m_Password = pass;
@@ -122,6 +126,7 @@ internal sealed class AuthUserPass : AuthMethod
     /// </summary>
     /// <value>The username to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    [Secret]
     private string Username
     {
         get
@@ -140,6 +145,7 @@ internal sealed class AuthUserPass : AuthMethod
     /// </summary>
     /// <value>The password to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    [Secret]
     private string Password
     {
         get
@@ -155,7 +161,9 @@ internal sealed class AuthUserPass : AuthMethod
     }
     // private variables
     /// <summary>Holds the value of the Username property.</summary>
+    [Secret]
     private string m_Username;
     /// <summary>Holds the value of the Password property.</summary>
+    [Secret]
     private string m_Password;
 }

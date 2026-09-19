@@ -1,5 +1,7 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using System.Configuration;
 
 using static Ark.Tools.NLog.NLogConfigurer;
@@ -9,8 +11,9 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurerConfigurationManager
 {
-
-    public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName, string mailFrom, string mailTo, bool async = true)
+    public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName,
+    [PersonalData] string mailFrom,
+    [PersonalData] string mailTo, bool async = true)
     {
         var smtp = ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString
             ?? new SmtpConnectionBuilder()

@@ -3,6 +3,8 @@
 using Ark.Tools.FtpClient.Core;
 using Ark.Tools.Http;
 
+using Ark.Tools.Compliance;
+
 using Flurl.Http;
 using Flurl.Http.Configuration;
 
@@ -14,6 +16,7 @@ namespace Ark.Tools.FtpClient.FtpProxy;
 public sealed class FtpClientProxy : IFtpClientPool
 {
     private readonly IFtpClientProxyConfig _config;
+    [Secret]
     private readonly TokenProvider _tokenProvider;
     private readonly ConnectionInfo _connectionInfo;
 
@@ -26,7 +29,7 @@ public sealed class FtpClientProxy : IFtpClientPool
         FtpConfig = ftpConfig;
     }
 
-    internal FtpClientProxy(IFtpClientProxyConfig config, TokenProvider tokenProvider, FtpConfig ftpConfig)
+    internal FtpClientProxy(IFtpClientProxyConfig config, [Secret] TokenProvider tokenProvider, FtpConfig ftpConfig)
     {
         _config = config;
 
@@ -44,6 +47,7 @@ public sealed class FtpClientProxy : IFtpClientPool
 
     public Uri Uri { get; private set; }
 
+[Secret]
     public NetworkCredential? Credentials { get; private set; }
     public FtpConfig FtpConfig { get; private set; }
 
@@ -55,7 +59,9 @@ public sealed class FtpClientProxy : IFtpClientPool
     sealed record ConnectionInfo
     {
         public Uri? Uri { get; set; }
+        [PersonalData]
         public string? Username { get; set; }
+        [Secret]
         public string? Password { get; set; }
     }
 

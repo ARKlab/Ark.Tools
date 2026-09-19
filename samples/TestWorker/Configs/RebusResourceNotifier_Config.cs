@@ -1,5 +1,5 @@
-using Ark.Tools.Activity.Provider;
-
+﻿using Ark.Tools.Activity.Provider;
+using Ark.Tools.Compliance;
 
 using TestWorker.Constants;
 
@@ -7,11 +7,12 @@ namespace TestWorker.Configs;
 
 public class RebusResourceNotifier_Config : IRebusResourceNotifier_Config
 {
-    public RebusResourceNotifier_Config(string? asbConnectionString)
+    public RebusResourceNotifier_Config([InfrastructureSecret] string? asbConnectionString)
     {
         AsbConnectionString = asbConnectionString ?? throw new ArgumentNullException(nameof(asbConnectionString));
     }
 
+    [InfrastructureSecret]
     public string AsbConnectionString { get; set; }
     public string ProviderName { get; set; } = Test_Constants.ProviderName;
     public bool StartAtCreation { get; set; } = Test_Constants.StartAtCreationDefault;

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
@@ -66,8 +66,11 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             var lexicon = new ComplianceLexicon(start.Options.AdditionalFiles, start.CancellationToken);
             var today = DateTime.UtcNow.Date;
             var hasRedactionRegistration = 0;
+            var hasServiceCollectionSetup = 0;
             if (facts._telemetryRequiresRegistration)
             {
+                var serviceCollectionType = start.Compilation.GetTypeByMetadataName(
+                    "Microsoft.Extensions.DependencyInjection.IServiceCollection");
                 start.RegisterOperationAction(operationContext =>
                 {
                     var invocation = (Microsoft.CodeAnalysis.Operations.IInvocationOperation)operationContext.Operation;
@@ -78,9 +81,37 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                         Interlocked.Exchange(ref hasRedactionRegistration, 1);
                     }
                 }, Microsoft.CodeAnalysis.OperationKind.Invocation);
+                if (serviceCollectionType is not null)
+                {
+                    start.RegisterOperationAction(operationContext =>
+                    {
+                        var creation = (Microsoft.CodeAnalysis.Operations.IObjectCreationOperation)operationContext.Operation;
+                        if (_isServiceCollection(creation.Type, serviceCollectionType))
+                        {
+                            Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
+                        }
+                    }, Microsoft.CodeAnalysis.OperationKind.ObjectCreation);
+                    start.RegisterOperationAction(operationContext =>
+                    {
+                        var property = (Microsoft.CodeAnalysis.Operations.IPropertyReferenceOperation)operationContext.Operation;
+                        if (_isServiceCollection(property.Type, serviceCollectionType))
+                        {
+                            Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
+                        }
+                    }, Microsoft.CodeAnalysis.OperationKind.PropertyReference);
+                    start.RegisterOperationAction(operationContext =>
+                    {
+                        var parameter = (Microsoft.CodeAnalysis.Operations.IParameterReferenceOperation)operationContext.Operation;
+                        if (_isServiceCollection(parameter.Type, serviceCollectionType))
+                        {
+                            Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
+                        }
+                    }, Microsoft.CodeAnalysis.OperationKind.ParameterReference);
+                }
                 start.RegisterCompilationEndAction(endContext =>
                 {
-                    if (Volatile.Read(ref hasRedactionRegistration) == 0)
+                    if (Volatile.Read(ref hasServiceCollectionSetup) != 0
+                        && Volatile.Read(ref hasRedactionRegistration) == 0)
                     {
                         endContext.ReportDiagnostic(Diagnostic.Create(_missingRedactionRegistration, Location.None));
                     }
@@ -106,6 +137,13 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 }
             }, SymbolKind.Property, SymbolKind.Field, SymbolKind.Method, SymbolKind.NamedType);
         });
+    }
+
+    private static bool _isServiceCollection(ITypeSymbol? type, INamedTypeSymbol serviceCollectionType)
+    {
+        return type is INamedTypeSymbol named
+            && (SymbolEqualityComparer.Default.Equals(named, serviceCollectionType)
+                || named.AllInterfaces.Any(candidate => SymbolEqualityComparer.Default.Equals(candidate, serviceCollectionType)));
     }
 
     private static void _analyze(
@@ -166,12 +204,15 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             var positionalCounterpart = _positionalCounterpart(symbol);
             var isPositionalProperty = symbol is IPropertySymbol && positionalCounterpart is not null;
             var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts);
+            var inherited = _inheritedMembers(symbol);
             var classified = isClassified(symbol)
                 || isClassified(type)
                 || isClassified(symbol.ContainingType)
-                || isClassified(positionalCounterpart);
+                || isClassified(positionalCounterpart)
+                || inherited.Any(isClassified);
             if (!isPositionalProperty && !knownSafeDotNetType && !classified && lexicon._matches(symbol.Name)
                 && !ComplianceSymbolFacts._hasAttribute(symbol, facts._notPersonalDataAttribute)
+                && !inherited.Any(candidate => ComplianceSymbolFacts._hasAttribute(candidate, facts._notPersonalDataAttribute))
                 && !_hasPositionalExclusion(positionalCounterpart, facts))
             {
                 context.ReportDiagnostic(Diagnostic.Create(_unclassified, location, symbol.Name));
@@ -186,6 +227,58 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         {
             _checkType(context, symbol, named, location, facts);
         }
+    }
+
+    /// <summary>Implemented interface members and the whole overridden base chain carry their classification to the declaration.</summary>
+    private static IReadOnlyList<ISymbol> _inheritedMembers(ISymbol symbol)
+    {
+        if (symbol is not (IPropertySymbol or IMethodSymbol or IEventSymbol) || symbol.ContainingType is null)
+        {
+            return Array.Empty<ISymbol>();
+        }
+
+        var members = new List<ISymbol>();
+        switch (symbol)
+        {
+            case IPropertySymbol property:
+                members.AddRange(property.ExplicitInterfaceImplementations);
+                for (var overridden = property.OverriddenProperty; overridden is not null; overridden = overridden.OverriddenProperty)
+                {
+                    members.Add(overridden);
+                    members.AddRange(overridden.ExplicitInterfaceImplementations);
+                }
+
+                break;
+            case IMethodSymbol method:
+                members.AddRange(method.ExplicitInterfaceImplementations);
+                for (var overridden = method.OverriddenMethod; overridden is not null; overridden = overridden.OverriddenMethod)
+                {
+                    members.Add(overridden);
+                    members.AddRange(overridden.ExplicitInterfaceImplementations);
+                }
+
+                break;
+            case IEventSymbol @event:
+                members.AddRange(@event.ExplicitInterfaceImplementations);
+                for (var overridden = @event.OverriddenEvent; overridden is not null; overridden = overridden.OverriddenEvent)
+                {
+                    members.Add(overridden);
+                    members.AddRange(overridden.ExplicitInterfaceImplementations);
+                }
+
+                break;
+        }
+
+        foreach (var candidate in symbol.ContainingType.AllInterfaces.SelectMany(static @interface => @interface.GetMembers()))
+        {
+            if (candidate.Name == symbol.Name
+                && SymbolEqualityComparer.Default.Equals(symbol.ContainingType.FindImplementationForInterfaceMember(candidate), symbol))
+            {
+                members.Add(candidate);
+            }
+        }
+
+        return members;
     }
 
     private static ISymbol? _positionalCounterpart(ISymbol symbol)

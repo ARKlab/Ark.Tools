@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using AwesomeAssertions;
 
 using Microsoft.Data.SqlClient;
@@ -19,7 +21,10 @@ namespace Ark.Tools.OTel.Tests;
 [DoNotParallelize]
 public sealed class SqlInstrumentationFilterTests
 {
+    [NotPersonalData("Environment variable names are infrastructure metadata and not personal data.")]
     private const string _connectionStringEnvironmentVariable = "ARK_SQL_CONNECTION_STRING";
+
+    [NotPersonalData("Environment variable names are infrastructure metadata and not personal data.")]
     private const string _passwordEnvironmentVariable = "ARK_SQL_PASSWORD";
 
     /// <summary>
@@ -99,7 +104,7 @@ public sealed class SqlInstrumentationFilterTests
             static builder => builder.AddSqlClientInstrumentation());
     }
 
-    private static async Task _executeScalarAsync(string connectionString)
+    private static async Task _executeScalarAsync([InfrastructureSecret] string connectionString)
     {
         using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync().ConfigureAwait(false);

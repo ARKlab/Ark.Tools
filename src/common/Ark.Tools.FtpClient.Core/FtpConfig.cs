@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 
+using Ark.Tools.Compliance;
+
 using System.Security.Cryptography.X509Certificates;
 
 namespace Ark.Tools.FtpClient.Core;
@@ -10,11 +12,16 @@ public class FtpConfig : IDisposable
     private bool _isDisposed;
 
     public Uri Uri { get; }
+
+    [Secret]
     public NetworkCredential? Credentials { get; }
 
+    [Secret]
     public X509Certificate2? ClientCertificate { get; private set; }
 
-    public FtpConfig(Uri uri, NetworkCredential? credential = null, X509Certificate2? certificate = null)
+    public FtpConfig(Uri uri,
+    [Secret] NetworkCredential? credential = null,
+    [Secret] X509Certificate2? certificate = null)
     {
         Uri = uri;
         Credentials = credential;

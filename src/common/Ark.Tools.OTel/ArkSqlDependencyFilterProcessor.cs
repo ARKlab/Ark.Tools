@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using OpenTelemetry;
 
 using System.Data.Common;
@@ -25,7 +27,8 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
     /// The SQL connection string whose <c>Data Source</c> and <c>Initial Catalog</c>
     /// identify the database to filter. If <see langword="null"/> or empty, the processor is disabled.
     /// </param>
-    public ArkSqlDependencyFilterProcessor(string? sqlConnectionString)
+    public ArkSqlDependencyFilterProcessor(
+        [Secret] string? sqlConnectionString)
     {
         if (!string.IsNullOrWhiteSpace(sqlConnectionString))
         {

@@ -1,6 +1,7 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 
 using Azure.Messaging.ServiceBus;
@@ -8,14 +9,18 @@ using Azure.Messaging.ServiceBus.Administration;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
+
 /// <summary>Runs the transport conformance suite against the local Service Bus emulator.</summary>
 [TestClass]
 [TestCategory("integration")]
 [DoNotParallelize]
 public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTransportConformanceTests
 {
+    [InfrastructureSecret]
     private const string _defaultAdministrationConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+    [InfrastructureSecret]
     private static readonly string _administrationConnectionString = _serviceBusConnectionString();
+    [InfrastructureSecret]
     private static readonly string _connectionString = _dataPlaneConnectionString(_administrationConnectionString);
     private const string _queueName = "ark-mf-conformance";
     private const string _emptyQueueName = "ark-mf-conformance-empty";
@@ -79,7 +84,8 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
         return _defaultAdministrationConnectionString;
     }
 
-    private static string _dataPlaneConnectionString(string connectionString)
+    [ComplianceReviewed("ARKPII005", "The emulator connection string is rewritten locally to reach the data plane and is never logged.")]
+    private static string _dataPlaneConnectionString([InfrastructureSecret] string connectionString)
     {
         const string endpointPrefix = "Endpoint=";
         var endpointStart = connectionString.IndexOf(endpointPrefix, StringComparison.Ordinal)

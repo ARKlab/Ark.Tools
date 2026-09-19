@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Application;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging.OTel;
 using Ark.Tools.NLog;
 
@@ -30,7 +31,7 @@ public static class SampleHost
         SimpleInjector.Container container,
         Rebus.Transport.InMem.InMemNetwork network,
         bool useSqlStore = true,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         bool configureFallbackPolicy = true,
         ISampleDataContextFactory? sharedDataContextFactory = null)
     {

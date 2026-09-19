@@ -1,3 +1,4 @@
+using Ark.Tools.Compliance;
 
 namespace Ark.Tools.Sql;
 
@@ -27,7 +28,8 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         _inner = inner;
     }
 
-    public DbConnection Get(string connectionString)
+    public DbConnection Get(
+        [Secret] string connectionString)
     {
         var cnn = _inner.Get(connectionString);
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -38,7 +40,8 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
         return cnn;
     }
 
-    public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync(
+        [Secret] string connectionString, CancellationToken ctk = default)
     {
         var cnn = await _inner.GetAsync(connectionString, ctk).ConfigureAwait(false);
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -56,8 +59,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
     /// connection.Open()
     /// #if DEBUG
     /// new ConnectionLeakWatcher(connection);
-    /// #endif
-    /// That's it. Don't store a reference to the watcher. It will make itself available for garbage collection
+    ///     /// That's it. Don't store a reference to the watcher. It will make itself available for garbage collection
     /// once it has fulfilled its purpose. Watch the visual studio debug output for details on potentially leaked connections.
     /// Note that a connection could possibly just be taking its time and may eventually be closed properly despite being flagged by this class.
     /// So take the output with a pinch of salt.

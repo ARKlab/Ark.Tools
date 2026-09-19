@@ -90,7 +90,7 @@ public readonly partial struct NationalIdentifier
     private static string _normalize(string value) => value.Trim();
 }
 
-[UserCredentials]
+[Secret]
 [SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct ApiKey
 {

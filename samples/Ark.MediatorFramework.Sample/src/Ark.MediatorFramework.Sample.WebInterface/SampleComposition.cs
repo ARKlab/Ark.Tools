@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application.Messages;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
@@ -43,7 +44,7 @@ public static class SampleComposition
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null)
     {

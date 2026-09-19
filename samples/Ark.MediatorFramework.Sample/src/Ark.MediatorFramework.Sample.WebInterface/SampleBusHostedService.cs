@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Rebus;
 using Rebus.Transport.InMem;
 
@@ -32,7 +33,7 @@ internal sealed class SampleBusHostedService : IHostedService
     public SampleBusHostedService(
         InMemNetwork network,
         bool useSqlStore,
-        string? connectionString,
+        [InfrastructureSecret] string? connectionString,
         ISampleDataContextFactory? sharedDataContextFactory)
     {
         _processorContainer = RebusProcessorComposition.BuildContainer(

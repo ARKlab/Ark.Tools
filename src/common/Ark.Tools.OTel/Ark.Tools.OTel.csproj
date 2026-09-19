@@ -21,9 +21,12 @@
   <!--===============================================================================-->
 
   <ItemGroup>
-    <ProjectReference Include="../../compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <PackageReference Include="OpenTelemetry" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

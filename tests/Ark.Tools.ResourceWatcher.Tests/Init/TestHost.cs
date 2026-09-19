@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 #pragma warning disable IDE0005 // Using directives needed for nested types 
+using Ark.Tools.Compliance;
 using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 using Ark.Tools.Sql.SqlServer;
@@ -113,6 +114,7 @@ public sealed class TestHost
 
     private sealed class TestSqlStateProviderConfig : ISqlStateProviderConfig
     {
+        [InfrastructureSecret]
         public required string DbConnectionString { get; init; }
         public System.Text.Json.Serialization.JsonSerializerContext? ExtensionsJsonContext => null;
     }
@@ -123,5 +125,6 @@ public sealed class TestHost
 /// </summary>
 public class TestHostConfig : DefaultHostConfig
 {
+    [InfrastructureSecret]
     public string? DbConnectionString { get; set; }
 }

@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.API.Authorization;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
@@ -36,6 +37,7 @@ public sealed record ReadingActivity
     public required Guid BookId { get; init; }
 
     /// <summary>Gets the authenticated reader identifier.</summary>
+    [Pseudonymous]
     public required string UserId { get; init; }
 
     /// <summary>Gets the activity kind.</summary>

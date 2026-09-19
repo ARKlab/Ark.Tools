@@ -3,6 +3,7 @@
 
 using Ark.Tools.Core;
 using Ark.Tools.Core.Reflection;
+using Ark.Tools.Compliance;
 using Ark.Tools.Outbox;
 
 using System.Collections.Concurrent;
@@ -237,7 +238,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
             Guid bookId,
-            string userId,
+            [Pseudonymous] string userId,
             int limit,
             CancellationToken ctk = default)
         {

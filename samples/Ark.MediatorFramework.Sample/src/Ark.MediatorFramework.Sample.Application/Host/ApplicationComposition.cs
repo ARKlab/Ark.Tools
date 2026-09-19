@@ -1,9 +1,10 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
+using Ark.Tools.Compliance;
 using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
@@ -134,7 +135,7 @@ public static class ApplicationComposition
     public static void Register(
         Container container,
         bool useSqlStore = true,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,
@@ -161,12 +162,12 @@ public static class ApplicationComposition
             EvolvableEnumDapper.Register<ReadingActivityKind>();
             var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
             {
-                DataSource = "localhost,1433",
-                InitialCatalog = "Ark.MediatorFramework.Sample",
-                UserID = "sa",
-                Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
-                TrustServerCertificate = true,
-                Encrypt = false,
+               DataSource = "localhost,1433",
+               InitialCatalog = "Ark.MediatorFramework.Sample",
+               UserID = "sa",
+               Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
+               TrustServerCertificate = true,
+               Encrypt = false,
             }.ConnectionString;
             var config = new SampleDataContextConfig(connectionString ?? localConnectionString);
             container.RegisterInstance(config);

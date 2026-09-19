@@ -81,7 +81,8 @@ the same guarantees as the NLog path.
   opt-out removes compliance configuration/AdditionalFiles and reaches analyzers
   through a compiler-visible property. Other build policy remains active.
 - The SDK includes consumer-composable lexicon/sink files and test `.feature`
-  files. `ARKPII001` remains a warning under `TreatWarningsAsErrors`.
+  files. `ARKPII001` ships as a warning and is not exempted from
+  `TreatWarningsAsErrors`.
 - `docs/analyzers.md` documents the default policy, opt-out, per-rule overrides,
   and Microsoft-stack logging boundary.
 - `AddArkRedaction()` configures both Microsoft redaction and logging redaction;

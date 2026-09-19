@@ -54,4 +54,8 @@
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
       
+  <ItemGroup>
+    <ProjectReference Include="../../compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+  </ItemGroup>
+
 </Project>

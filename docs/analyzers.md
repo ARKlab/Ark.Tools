@@ -228,9 +228,9 @@ analyzer is beta, and `Enforce` when `EnableArkToolsCompliance=true` is set. The
 switch removes compliance configuration and additional files and is passed to the analyzers; it does not
 disable unrelated analyzers or change the safe formatting of sensitive value
 objects. Set it in the project or `Directory.Build.props`. Local `.editorconfig`
-entries retain normal precedence over the packaged defaults. `ARKPII001` is
-exempt from `TreatWarningsAsErrors`, so a name-only heuristic cannot break a
-build; explicitly setting its severity to `error` remains possible.
+entries retain normal precedence over the packaged defaults. `ARKPII001` ships
+as a warning; the SDK does not exempt it from `TreatWarningsAsErrors`, so lower
+its severity in `.editorconfig` if a name-only heuristic hit is unwanted.
 
 Test projects include `.feature` files from their `None` items as analyzer
 additional files. Consumer lexicon/sink files are additive rather than replacing

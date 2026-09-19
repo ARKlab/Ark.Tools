@@ -226,6 +226,11 @@ public sealed class ComplianceFoundationTests
         new InfrastructureSecretAttribute().Classification.Should().Be(ArkDataClassifications.InfrastructureSecret);
         new PseudonymousAttribute().Classification.Should().Be(ArkDataClassifications.Pseudonymous);
 
+        var secretAttributeType = typeof(PersonalDataAttribute).Assembly.GetType("Ark.Tools.Compliance.SecretAttribute");
+        secretAttributeType.Should().NotBeNull();
+        ((DataClassificationAttribute)Activator.CreateInstance(secretAttributeType!)!).Classification
+            .Should().Be(ArkDataClassifications.InfrastructureSecret);
+
         typeof(PersonalDataAttribute).BaseType.Should().Be<DataClassificationAttribute>();
     }
 

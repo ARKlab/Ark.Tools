@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 
@@ -22,12 +24,15 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
     private readonly AuthenticationApiClient _auth0;
     public const string AuthorizationExtensionAudience = "urn:auth0-authz-api";
     private readonly string _clientId;
+    [Secret]
     private readonly string _clientSecret;
     private readonly string _authzApiUrl;
     private readonly string _domain;
     private readonly string _issuer;
 
-    public Auth0AccessTokenJwtEvents(string domain, string clientId, string clientSecret, string authzApiUrl)
+    public Auth0AccessTokenJwtEvents(string domain, string clientId, 
+    [Secret]
+ string clientSecret, string authzApiUrl)
     {
         _auth0 = new AuthenticationApiClient(domain);
         _domain = domain;
@@ -200,7 +205,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
         return !string.IsNullOrWhiteSpace(_clientId);
     }
 
-    private static bool _isDelegation(JwtSecurityToken jwt)
+    private static bool _isDelegation([SensitivePersonalData] JwtSecurityToken jwt)
     {
         return jwt.Claims.Any(static x => x.Type == "azp");
     }

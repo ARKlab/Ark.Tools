@@ -69,7 +69,11 @@ public sealed class ComplianceSteps
         privileged.Should().Be(ComplianceFakes.PersonName());
     }
 
-    private static async Task<string?> _readAuthorAs(string userName, int bookId)
+    private static async Task<string?> _readAuthorAs(
+#if NET10_0_OR_GREATER
+        [PersonalData]
+#endif
+        string userName, int bookId)
     {
         await using var connection = new SqlConnection(TestHost.DBConfig.ConnectionString);
         await connection.OpenAsync().ConfigureAwait(false);

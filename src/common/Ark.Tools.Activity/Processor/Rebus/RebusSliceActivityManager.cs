@@ -1,4 +1,5 @@
 using Ark.Tools.Activity.Messages;
+using Ark.Tools.Compliance;
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.SimpleInjector;
@@ -90,6 +91,8 @@ public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager
 
 public interface IRebusSliceActivityManagerConfig
 {
+    [Secret]
     string AsbConnectionString { get; }
+    [Secret]
     string SagaSqlConnectionString { get; }
 }

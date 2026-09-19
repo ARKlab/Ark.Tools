@@ -34,4 +34,8 @@
     <ProjectReference Include="..\..\common\Ark.Tools.Auth0\Ark.Tools.Auth0.csproj" />
   </ItemGroup>
   
+  <ItemGroup>
+    <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools.MediatorFramework.Messaging;
 
 /// <summary>Names of headers used by the transport-neutral messaging runtime.</summary>
@@ -67,6 +69,7 @@ public static class MessagingHeaders
     public const string UserAuthenticationType = "ark-auth-type";
 
     /// <summary>User identifier header.</summary>
+    [NotPersonalData("Transport user identifier is non-personal routing metadata.")]
     public const string UserId = "ark-user-id";
 
     /// <summary>User scopes header.</summary>

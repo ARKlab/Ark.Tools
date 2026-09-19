@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 namespace Ark.Tools;
 
 public class SmtpConnectionBuilder
@@ -13,7 +15,8 @@ public class SmtpConnectionBuilder
     /// <remarks>
     /// es. Server=smtp.sendgrid.net;Port=587;Username=gnegnegne;Password=nonlosai;UseSsl=true
     /// </remarks>
-    public SmtpConnectionBuilder(string smtpConnectionString)
+    public SmtpConnectionBuilder(
+        [Secret] string smtpConnectionString)
     {
         if (string.IsNullOrWhiteSpace(smtpConnectionString))
             throw new ArgumentException("Empty connection string", nameof(smtpConnectionString));
@@ -21,7 +24,8 @@ public class SmtpConnectionBuilder
         _parse(smtpConnectionString);
     }
 
-    private void _parse(string smtpConnectionString)
+    private void _parse(
+        [Secret] string smtpConnectionString)
     {
         var span = smtpConnectionString.AsSpan();
 
@@ -68,11 +72,19 @@ public class SmtpConnectionBuilder
         }
     }
 
+    [Secret]
+    [ComplianceReviewed("ARKPII005", "The credentials are composed back into the connection string this type exists to build; the value is transport, never a log sink, and carries [Secret] for the logging boundary.")]
     public string ConnectionString
     {
         get
         {
-            return $"Server={Server};Port={Port};Username={Username};Password={Password};UseSsl={UseSsl}" + (!string.IsNullOrWhiteSpace(From) ? $";From={From}" : string.Empty);
+            // Round-trippable by contract: this value is fed back into _parse by the NLog
+            // configuration path. Redaction happens at the logging boundary through [Secret].
+            var port = (Port ?? 25).ToString(CultureInfo.InvariantCulture);
+            var username = string.IsNullOrWhiteSpace(Username) ? string.Empty : $";Username={Username}";
+            var secret = string.IsNullOrWhiteSpace(Password) ? string.Empty : $";Password={Password}";
+            var from = string.IsNullOrWhiteSpace(From) ? string.Empty : $";From={From}";
+            return $"Server={Server ?? "localhost"};Port={port}{username}{secret};UseSsl={UseSsl}{from}";
         }
         set
         {
@@ -82,8 +94,11 @@ public class SmtpConnectionBuilder
 
     public string? Server { get; set; }
     public int? Port { get; set; }
+    [Secret]
     public string? Username { get; set; }
+    [Secret]
     public string? Password { get; set; }
     public bool UseSsl { get; set; }
+    [PersonalData]
     public string? From { get; set; }
 }

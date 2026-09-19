@@ -1,0 +1,7 @@
+﻿/*
+COMPLIANCE-SURFACE 1
+CLASSIFIED	Ark.MediatorFramework.Sample.Application.DAL.ISampleDataContext	Ark.MediatorFramework.Sample.Application.DAL.ISampleDataContext.ReadReadingActivityAsync(System.Guid, string, int, System.Threading.CancellationToken):userId	Ark:Pseudonymous		
+CLASSIFIED	Ark.MediatorFramework.Sample.Application.DAL.InMemorySampleDataContextFactory.Context	Ark.MediatorFramework.Sample.Application.DAL.InMemorySampleDataContextFactory.Context.ReadReadingActivityAsync(System.Guid, string, int, System.Threading.CancellationToken):userId	Ark:Pseudonymous		
+CLASSIFIED	Ark.MediatorFramework.Sample.Application.DAL.SampleDataContext	Ark.MediatorFramework.Sample.Application.DAL.SampleDataContext.ReadReadingActivityAsync(System.Guid, string, int, System.Threading.CancellationToken):userId	Ark:Pseudonymous		
+CLASSIFIED	Ark.MediatorFramework.Sample.Application.Services.AuditEntry	UserId	Ark:Pseudonymous	Gets the authenticated user identifier.	
+*/

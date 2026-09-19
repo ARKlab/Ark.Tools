@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
@@ -43,7 +44,7 @@ public static class RebusProcessorComposition
     public static Container BuildContainer(
         InMemNetwork network,
         bool useSqlStore = true,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         IClock? clock = null,
         ISampleDataContextFactory? dataContextFactory = null,
         IPrintCompletedNotificationService? printCompletedNotificationService = null,

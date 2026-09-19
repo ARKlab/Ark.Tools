@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Application.Messages;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Solid.Authorization;
 
@@ -33,7 +34,7 @@ public static class AzureFunctionsRebusComposition
     /// </param>
     public static void ConfigureOutbound(
         Container container,
-        string? serviceBusConnectionString)
+        [InfrastructureSecret] string? serviceBusConnectionString)
     {
         ArgumentNullException.ThrowIfNull(container);
 
@@ -69,9 +70,9 @@ public static class AzureFunctionsRebusComposition
     /// <param name="connectionString">Optional SQL Server connection string.</param>
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
-        string? serviceBusConnectionString,
+        [InfrastructureSecret] string? serviceBusConnectionString,
         bool useSqlStore = false,
-        string? connectionString = null)
+        [InfrastructureSecret] string? connectionString = null)
     {
         if (string.IsNullOrWhiteSpace(serviceBusConnectionString))
             throw new InvalidOperationException(
@@ -91,7 +92,7 @@ public static class AzureFunctionsRebusComposition
 
     private static void _configureTransport(
         StandardConfigurer<ITransport> transport,
-        string serviceBusConnectionString)
+        [InfrastructureSecret] string serviceBusConnectionString)
     {
         if (serviceBusConnectionString.Contains("SharedAccess", StringComparison.OrdinalIgnoreCase))
         {

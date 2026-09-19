@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Microsoft.Data.SqlClient;
 
 using System.Data.Common;
@@ -13,7 +15,8 @@ public class SqlConnectionManager : IDbConnectionManager
         SqlExceptionHandler.LogSqlInfoMessage(ev);
     }
 
-    public DbConnection Get(string connectionString)
+    public DbConnection Get(
+        [Secret] string connectionString)
     {
         var conn = Build(connectionString);
         try
@@ -28,7 +31,8 @@ public class SqlConnectionManager : IDbConnectionManager
         }
     }
 
-    public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync(
+        [Secret] string connectionString, CancellationToken ctk = default)
     {
         var conn = Build(connectionString);
         try
@@ -43,7 +47,8 @@ public class SqlConnectionManager : IDbConnectionManager
         }
     }
 
-    protected virtual SqlConnection Build(string connectionString)
+    protected virtual SqlConnection Build(
+        [Secret] string connectionString)
     {
         var conn = new SqlConnection(connectionString);
         conn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);

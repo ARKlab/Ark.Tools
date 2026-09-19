@@ -16,7 +16,7 @@ Most projects never write their own. `Ark.Tools.Compliance` ships:
 | `PersonName` | `[PersonalData]` | Mask | 1–200 chars, trimmed |
 | `PostalAddressLine` | `[PersonalData]` | Erase | 1–500 chars |
 | `NationalIdentifier` | `[SensitivePersonalData]` | Erase | 1–100 chars |
-| `ApiKey` | `[UserCredentials]` | Erase | 1–4096 chars |
+| `ApiKey` | `[Secret]` | Erase | 1–4096 chars |
 
 ```csharp
 var email = EmailAddress.From("Jane.Doe@Example.com");   // normalized, validated

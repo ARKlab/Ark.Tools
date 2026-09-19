@@ -1,4 +1,4 @@
-# Getting started
+﻿# Getting started
 
 ## With Ark.Tools.Sdk (recommended)
 
@@ -21,6 +21,14 @@ Compliance is **opt-in while the analyzer is in beta**:
 </Project>
 ```
 
+A library that only classifies its own data can reference
+`Ark.Tools.Compliance.Abstractions` instead: it carries the attributes, the
+`CompliancePurpose`/`ISensitiveValue<T>` contracts and the `ARKPII*` analyzers,
+and its only dependency is `Microsoft.Extensions.Compliance.Abstractions`.
+Reference the full `Ark.Tools.Compliance` package when you need the redactors,
+`AddArkRedaction()`, the built-in sensitive value objects or the
+`[SensitiveValueObject<T>]` source generator.
+
 `EnableArkToolsCompliance=true` makes the SDK:
 
 - add `Ark.Tools.Compliance.Analyzers` implicitly as a development dependency
@@ -29,7 +37,7 @@ Compliance is **opt-in while the analyzer is in beta**:
   (`ComplianceSinks.Ark.txt`) as analyzer `AdditionalFiles`;
 - apply the packaged `Ark.Tools.Compliance.globalconfig` severities
   (errors for sinks, warnings for declaration hygiene; `ARKPII001` is
-  excluded from `TreatWarningsAsErrors` so a name-heuristic hit never breaks a build);
+  a warning you resolve by declaring, or silence per-rule via `.editorconfig`);
 - enable the compliance surface baseline check (see
   [Analyzers — compliance surface](analyzers.md#the-compliance-surface-baseline)).
 

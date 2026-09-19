@@ -4,6 +4,7 @@
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Http;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
 using Ark.Tools.MediatorFramework.Grpc;
@@ -403,9 +404,11 @@ public sealed record HostingETagResponse
 {
     /// <summary>Gets the opaque concurrency token of the resource.</summary>
     [ETag]
+    [NotPersonalData("Opaque ETag is a non-personal concurrency token.")]
     public string? Token { get; init; }
 
     /// <summary>Gets the ETag received by the handler, if any.</summary>
+    [NotPersonalData("Opaque ETag is a non-personal concurrency token.")]
     public string? ReceivedETag { get; init; }
 }
 
@@ -431,6 +434,7 @@ public sealed record HostingETagUpdateRequest : Solid.IRequest<HostingETagUpdate
 
     /// <summary>Gets or sets the opaque ETag supplied by the caller.</summary>
     [ETag]
+    [NotPersonalData("Opaque ETag is a non-personal concurrency token.")]
     public string? ETag { get; set; }
 }
 

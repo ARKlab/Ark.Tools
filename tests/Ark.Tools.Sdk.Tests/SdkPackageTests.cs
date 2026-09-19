@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.IO.Compression;
@@ -66,6 +66,45 @@ public sealed class SdkPackageTests
         Assert.AreEqual(gitCommit, repository.Attribute("commit")?.Value);
     }
 
+    /// <summary>
+    /// Ensures packages that carry Ark compliance attributes declare the attribute package they emit
+    /// metadata from, so consumers can restore it and reflect over the attributed members.
+    /// </summary>
+    [TestMethod]
+    public async Task ComplianceAttributeConsumersDeclareAbstractionsDependency()
+    {
+        var output = Path.Join(_root, "artifacts", "sdk-test-shared", "compliance-dependency");
+        Directory.CreateDirectory(output);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(_root, "src", "common", "Ark.Tools.Core", "Ark.Tools.Core.csproj")}\" -c Debug -o \"{output}\" -p:PackageVersion={_packageVersion}")
+            .ConfigureAwait(false);
+
+        var packagePath = Directory.GetFiles(output, "Ark.Tools.Core.*.nupkg").Single();
+        using var archive = await ZipFile.OpenReadAsync(packagePath).ConfigureAwait(false);
+        var nuspecEntry = archive.Entries.Single(static entry => entry.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
+        await using var nuspecStream = await nuspecEntry.OpenAsync().ConfigureAwait(false);
+        var nuspec = await XDocument.LoadAsync(nuspecStream, LoadOptions.None, CancellationToken.None).ConfigureAwait(false);
+
+        var groups = nuspec.Descendants().Where(static element => element.Name.LocalName == "group").ToList();
+        Assert.AreNotEqual(0, groups.Count, "The packed nuspec declares no dependency groups.");
+        foreach (var group in groups)
+        {
+            var dependencies = group.Elements()
+                .Where(static element => element.Name.LocalName == "dependency")
+                .Select(static element => element.Attribute("id")?.Value)
+                .ToList();
+            CollectionAssert.Contains(
+                dependencies,
+                "Ark.Tools.Compliance.Abstractions",
+                $"Target framework '{group.Attribute("targetFramework")?.Value}' does not declare Ark.Tools.Compliance.Abstractions.");
+            CollectionAssert.DoesNotContain(
+                dependencies,
+                "Ark.Tools.Compliance",
+                "Attribute-only consumers must not drag in the compliance runtime package.");
+        }
+    }
+
     private static readonly string[] _selectedProperties =
     [
         "TreatWarningsAsErrors",
@@ -107,7 +146,7 @@ public sealed class SdkPackageTests
             fixtureRoot, feed, "enabled", "Consumer.csproj",
             _createSdkCSharpProject("<EnableArkToolsCompliance>true</EnableArkToolsCompliance>"));
         Assert.AreEqual("Enforce", _getProperty(enabled, "ArkComplianceMode"));
-        StringAssert.Contains(_getProperty(enabled, "WarningsNotAsErrors"), "ARKPII001", StringComparison.Ordinal);
+        Assert.AreEqual(string.Empty, _getProperty(enabled, "WarningsNotAsErrors") ?? string.Empty);
         CollectionAssert.Contains(_getArkBuildItemFileNames(enabled, "GlobalAnalyzerConfigFiles"), "Ark.Tools.Compliance.globalconfig");
         CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(enabled, "AdditionalFiles"), "ComplianceLexicon.Ark.txt");
         CollectionAssert.Contains(_getComplianceAnalyzerItemFileNames(enabled, "AdditionalFiles"), "ComplianceSinks.Ark.txt");

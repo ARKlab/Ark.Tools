@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Frozen;
@@ -344,7 +344,10 @@ public static class DataTableExtensions
                 || type.GetGenericTypeDefinition() == typeof(EvolvableEnum<,>));
 
         // A sensitive value object (a struct implementing Ark.Tools.Compliance.ISensitiveValue<TSelf>
-        // with itself as TSelf), detected by name so Ark.Tools.Core takes no compliance dependency.
+        // with itself as TSelf), detected by name. Ark.Tools.Core references
+        // Ark.Tools.Compliance.Abstractions for the classification attributes, but the shredding plan
+        // stays name-based so it also accepts value objects declared against a different version of
+        // that contract.
         // Its DataColumn carries the cleartext transport string obtained through the value's own
         // Reveal(categorized purpose) inventoried egress, matching the other serializer adapters.
         private static bool _isSensitiveValue(Type type) =>
@@ -372,7 +375,8 @@ public static class DataTableExtensions
 
         // Builds `value.Reveal(CompliancePurpose.Custom("ToDataTableArk", CompliancePurposeCategory.TechnicalFunctional))`
         // with the purpose/category constants materialized once at plan time via reflection on the
-        // compliance assembly that declares the interface (never trimmed: the member's type implements it).
+        // compliance abstractions assembly that declares the interface (never trimmed: the member's type
+        // implements it).
         private static Expression _buildSensitiveValueReveal(Expression access, Type memberType, Type interfaceType)
         {
             var (reveal, purpose, purposeType) = _resolveReveal(memberType, interfaceType);

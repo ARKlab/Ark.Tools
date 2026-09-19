@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Collections.Immutable;
@@ -59,6 +59,21 @@ public sealed class DeclarationAnalyzerTests
     {
         (await _analyzeAsync("record Contact(string Email);").ConfigureAwait(false))
             .Should().ContainSingle().Which.Id.Should().Be("ARKPII001");
+    }
+
+    /// <summary>Implementations and overrides inherit the classification of the member they implement.</summary>
+    [TestMethod]
+    public async Task ImplementedAndOverriddenMembersInheritClassification()
+    {
+        var diagnostics = await _analyzeAsync("""
+            interface IConfig { [PersonalData] string Email { get; } }
+            class Explicit : IConfig { string IConfig.Email => ""; }
+            class Implicit : IConfig { public string Email => ""; }
+            abstract class Base { [PersonalData] public abstract string Email { get; } }
+            class Derived : Base { public override string Email => ""; }
+            class Grandchild : Derived { public override string Email => ""; }
+            """).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
     }
 
     /// <summary>Explicit declarations, classified types and reviewed exclusions avoid guesses.</summary>
@@ -293,12 +308,61 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
-    /// <summary>Microsoft telemetry consumers must register Ark redaction.</summary>
+    /// <summary>Console applications without dependency-injection setup do not require Ark redaction.</summary>
     [TestMethod]
-    public async Task MicrosoftTelemetryWithoutArkRedactionIsRejected()
+    public async Task MicrosoftTelemetryWithoutServiceCollectionIsAccepted()
     {
         var diagnostics = await _analyzeAsync(
             "class Startup { void Configure(object services) { } }",
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Microsoft telemetry consumers configuring a service collection must register Ark redaction.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithServiceCollectionWithoutArkRedactionIsRejected()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Microsoft.Extensions.DependencyInjection
+            {
+                public interface IServiceCollection { }
+                public sealed class ServiceCollection : IServiceCollection { }
+            }
+            class Startup
+            {
+                void Configure()
+                {
+                    var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+                }
+            }
+            """,
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII013");
+    }
+
+    /// <summary>Microsoft telemetry consumers configuring services through a composition-root parameter must register Ark redaction.</summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithServiceCollectionParameterWithoutArkRedactionIsRejected()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Microsoft.Extensions.DependencyInjection
+            {
+                public interface IServiceCollection { }
+            }
+            class Startup
+            {
+                void Configure(Microsoft.Extensions.DependencyInjection.IServiceCollection services)
+                {
+                    services.ToString();
+                }
+            }
+            """,
             references: [_telemetryReference()],
             outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
 

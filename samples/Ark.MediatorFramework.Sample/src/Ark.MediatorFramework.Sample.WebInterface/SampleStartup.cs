@@ -60,6 +60,7 @@ public sealed class SampleStartup
     private readonly Container _container;
     private readonly InMemNetwork _network;
     private readonly bool _useSqlStore;
+    [InfrastructureSecret]
     private readonly string? _connectionString;
     private readonly ISampleDataContextFactory? _sharedDataContextFactory;
     private readonly ArkOpenApiSecuritySettings _openApiSecurity;
@@ -86,7 +87,7 @@ public sealed class SampleStartup
         IHostEnvironment environment,
         IConfiguration? configuration = null,
         bool useSqlStore = true,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         bool configureFallbackPolicy = true,
         ISampleDataContextFactory? sharedDataContextFactory = null)
     {

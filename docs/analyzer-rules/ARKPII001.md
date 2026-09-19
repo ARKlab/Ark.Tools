@@ -8,6 +8,8 @@
 
 This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
 
+A member that implements an interface member or overrides a base member inherits its classification, so only the declaring member needs the attribute.
+
 ## How to fix it
 
 Apply the correction stated by the diagnostic. Do not suppress the rule when changing the declaration, contract, host configuration, or data flow is possible.

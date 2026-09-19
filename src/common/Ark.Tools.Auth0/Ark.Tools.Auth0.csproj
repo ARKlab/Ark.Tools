@@ -26,4 +26,8 @@
     <PackageReference Include="Polly" />
     <PackageReference Include="Polly.Caching.Memory" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

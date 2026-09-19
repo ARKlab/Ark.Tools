@@ -1,9 +1,10 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
 using System.Diagnostics;
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
@@ -12,11 +13,13 @@ using Azure.Storage.Queues;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
+
 /// <summary>Runs the transport conformance suite against the repository Azurite instance.</summary>
 [TestClass]
 [TestCategory("integration")]
 public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTransportConformanceTests
 {
+    [InfrastructureSecret]
     private const string _connectionString = "UseDevelopmentStorage=true";
     private const string _queue = "amf1-azm11-conformance";
     private const string _emptyQueue = "amf1-azm11-empty";

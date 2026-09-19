@@ -1,3 +1,5 @@
+using Ark.Tools.Compliance;
+
 using Rebus.Config;
 using Rebus.Transport;
 
@@ -83,9 +85,11 @@ public static class FakeDeliveryCountExtensions
             _count = count;
         }
 
+        [NotPersonalData("In-memory queue address is infrastructure routing metadata, not personal data.")]
         public string Address => _inner.Address;
 
-        public void CreateQueue(string address)
+        public void CreateQueue(
+            [NotPersonalData("Queue name is infrastructure routing metadata, not personal data.")] string address)
         {
             _inner.CreateQueue(address);
         }
@@ -98,7 +102,8 @@ public static class FakeDeliveryCountExtensions
             return m;
         }
 
-        public Task Send(string destinationAddress, TransportMessage message, ITransactionContext context)
+        public Task Send(
+            [NotPersonalData("Destination queue address is infrastructure routing metadata, not personal data.")] string destinationAddress, TransportMessage message, ITransactionContext context)
         {
             return _inner.Send(destinationAddress, message, context);
         }

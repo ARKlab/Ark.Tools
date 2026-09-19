@@ -15,8 +15,13 @@ compliance stack (`Microsoft.Extensions.Compliance.Redaction`,
 | `Ark:PersonalData` | `[PersonalData]` | Directly identifies a natural person (GDPR Art. 4(1)): email, phone, name, address, IP. |
 | `Ark:SensitivePersonalData` | `[SensitivePersonalData]` | Special categories (GDPR Art. 9): health, religion, ethnicity, orientation, biometrics. |
 | `Ark:UserCredentials` | `[UserCredentials]` | Passwords and keys supplied by users for third-party services. |
-| `Ark:InfrastructureSecret` | `[InfrastructureSecret]` | Connection strings and secrets used by application infrastructure; protected at sinks but omitted from the compliance surface. |
+| `Ark:InfrastructureSecret` | `[Secret]` | Library secrets with an unknown origin; protected at sinks but omitted from the compliance surface. `[InfrastructureSecret]` remains supported for known infrastructure secrets. |
 | `Ark:Pseudonymous` | `[Pseudonymous]` | Re-identifiable only with additional data held separately (internal user IDs, hashed identifiers). |
+
+Libraries cannot know whether a secret they receive is infrastructure-owned or
+user-supplied, so **library code annotates secrets with `[Secret]`**.
+`[UserCredentials]` and `[InfrastructureSecret]` are for applications, where the
+origin of the value is known.
 
 The attributes apply to classes, structs, properties, fields, and parameters.
 Classifications from *other* `DataClassificationAttribute`-derived taxonomies are

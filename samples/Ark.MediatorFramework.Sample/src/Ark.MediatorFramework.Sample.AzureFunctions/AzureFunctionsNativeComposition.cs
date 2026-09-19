@@ -3,6 +3,7 @@
 
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid;
+using Ark.Tools.Compliance;
 
 using Ark.MediatorFramework.Sample.Application.Messages;
 using Ark.MediatorFramework.Sample.Application.Services;
@@ -26,7 +27,7 @@ public static class AzureFunctionsNativeComposition
     /// <returns>The configured application container.</returns>
     public static Container BuildContainer(
         bool useSqlStore = false,
-        string? connectionString = null,
+        [InfrastructureSecret] string? connectionString = null,
         bool registerBookPrintNotificationHandler = true,
         IBookPrintNotificationSink? bookPrintNotificationSink = null,
         IBookPrintAuditSink? bookPrintAuditSink = null)

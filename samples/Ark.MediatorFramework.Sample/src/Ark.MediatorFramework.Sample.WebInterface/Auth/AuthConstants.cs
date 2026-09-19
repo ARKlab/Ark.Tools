@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 namespace Ark.MediatorFramework.Sample.WebInterface.Auth;
 
 /// <summary>Authentication scheme and integration-test settings.</summary>
@@ -22,6 +24,7 @@ public static class AuthConstants
     public const string IntegrationTestsDomain = "local.dev";
 
     /// <summary>Gets the integration-test signing key.</summary>
+    [InfrastructureSecret]
     public const string IntegrationTestsEncryptionKey = "IntegrationTestsSecretVeryLongForH256VeryLongVeryLongVeryLongVeryLongVeryLong";
 
     /// <summary>Gets the role claim type.</summary>

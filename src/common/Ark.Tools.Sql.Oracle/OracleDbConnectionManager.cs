@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Oracle.ManagedDataAccess.Client;
 
 using System.Data.Common;
@@ -23,7 +25,8 @@ public class OracleDbConnectionManager : IDbConnectionManager
     }
 
 
-    public DbConnection Get(string connectionString)
+    public DbConnection Get(
+        [Secret] string connectionString)
     {
         var conn = Build(connectionString);
         try
@@ -38,7 +41,8 @@ public class OracleDbConnectionManager : IDbConnectionManager
         }
     }
 
-    public async Task<DbConnection> GetAsync(string connectionString, CancellationToken ctk = default)
+    public async Task<DbConnection> GetAsync(
+        [Secret] string connectionString, CancellationToken ctk = default)
     {
         var conn = Build(connectionString);
         try
@@ -64,7 +68,8 @@ public class OracleDbConnectionManager : IDbConnectionManager
     /// Commands created from this connection will inherit the 30-second timeout unless explicitly overridden.
     /// See: <a href="https://docs.oracle.com/en/database/oracle/oracle-database/23/odpnt/ConnectionProperties.html">Oracle Connection Properties Documentation</a>
     /// </remarks>
-    protected virtual OracleConnection Build(string connectionString)
+    protected virtual OracleConnection Build(
+        [Secret] string connectionString)
     {
         var conn = new OracleConnection(connectionString);
 

@@ -1,6 +1,7 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
@@ -15,6 +16,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace Ark.Tools.MediatorFramework.Tests;
+
 
 /// <summary>Reusable processor-host checks that only a real broker can answer.</summary>
 /// <remarks>
@@ -242,9 +244,12 @@ public sealed class StorageQueueMessagingProcessorHostBoundaryTests : MessagingP
 [DoNotParallelize]
 public sealed class ServiceBusMessagingProcessorHostBoundaryTests : MessagingProcessorHostBoundaryTests
 {
+    [InfrastructureSecret]
     private const string _defaultAdministrationConnectionString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
     private const string _queue = "ark-mf-host-boundary";
+    [InfrastructureSecret]
     private static readonly string _administrationConnectionString = _serviceBusConnectionString();
+    [InfrastructureSecret]
     private static readonly string _connectionString = _dataPlaneConnectionString(_administrationConnectionString);
     private readonly ServiceBusAdministrationClient _administration = new(_administrationConnectionString);
     private readonly List<ServiceBusMessagingTransport> _transports = new();
@@ -299,7 +304,8 @@ public sealed class ServiceBusMessagingProcessorHostBoundaryTests : MessagingPro
         return _defaultAdministrationConnectionString;
     }
 
-    private static string _dataPlaneConnectionString(string connectionString)
+    [ComplianceReviewed("ARKPII005", "The emulator connection string is rewritten locally to reach the data plane and is never logged.")]
+    private static string _dataPlaneConnectionString([InfrastructureSecret] string connectionString)
     {
         const string endpointPrefix = "Endpoint=";
         var endpointStart = connectionString.IndexOf(endpointPrefix, StringComparison.Ordinal)

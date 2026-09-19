@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using System.Reflection;
 
 namespace Ark.Tools.Core.Reflection;
@@ -137,7 +139,8 @@ public static class ReflectionHelper
     }
 
     [RequiresUnreferencedCode("Uses reflection to inspect type metadata. Type information may be incomplete when trimmed.")]
-    private static string _toCSReservatedWord(this Type type, bool fullName)
+    private static string _toCSReservatedWord(this Type type,
+    [NotPersonalData("Type metadata from reflection, not personal data.")] bool fullName)
     {
         if (type == typeof(string))
         {

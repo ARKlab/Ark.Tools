@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../Ark.Tools.Compliance.Shared/PiiPatternScanner.cs" Link="Shared/PiiPatternScanner.cs" />
+    <ProjectReference Include="..\Ark.Tools.Compliance.Abstractions\Ark.Tools.Compliance.Abstractions.csproj" />
     <ProjectReference Include="..\Ark.Tools.Compliance.Generators\Ark.Tools.Compliance.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

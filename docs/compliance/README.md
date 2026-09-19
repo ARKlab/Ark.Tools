@@ -1,4 +1,4 @@
-# Ark.Tools.Compliance — Consumer Guide
+﻿# Ark.Tools.Compliance — Consumer Guide
 
 The Compliance kit protects personal data (PII) and secrets in .NET applications with
 five cooperating layers. A leak has to pass all of them:
@@ -19,7 +19,8 @@ five cooperating layers. A leak has to pass all of them:
 
 | Package | What it gives you |
 | --- | --- |
-| `Ark.Tools.Compliance` | Classification attributes, `Ark` taxonomy, redactors, `CompliancePurpose`, built-in sensitive value objects, the `[SensitiveValueObject<T>]` source generator, `System.Text.Json`/`TypeConverter` support. No serialization dependencies. |
+| `Ark.Tools.Compliance.Abstractions` | Classification attributes, `Ark` taxonomy, `CompliancePurpose`, `ISensitiveValue<T>`/`[SensitiveValueObject<T>]` contracts and the PII scanner. Depends only on `Microsoft.Extensions.Compliance.Abstractions`, and carries the `ARKPII*` analyzers. Reference this from libraries that only need to classify data. |
+| `Ark.Tools.Compliance` | Everything in `Ark.Tools.Compliance.Abstractions` plus the runtime: redactors, `AddArkRedaction()`, built-in sensitive value objects, the `[SensitiveValueObject<T>]` source generator and `System.Text.Json`/`TypeConverter` support. Pulls in `Microsoft.Extensions.Compliance.Redaction` and `Microsoft.Extensions.Telemetry`. |
 | `Ark.Tools.Compliance.Analyzers` | The `ARKPII*` analyzers and code fixes plus the default lexicon/sinks configuration. Development dependency only (`PrivateAssets="all"`), nothing ships at runtime. |
 | `Ark.Tools.Compliance.Sql` | `[SqlDataPolicy]`/`[SqlColumnPolicy]` attributes and the MSBuild targets that turn them into SQL Server sensitivity-classification and masking scripts. |
 | `Ark.Tools.Compliance.NLog` | `ComplianceLayout` wrapper and PII scanning for NLog output. Referenced automatically by `Ark.Tools.NLog`. |

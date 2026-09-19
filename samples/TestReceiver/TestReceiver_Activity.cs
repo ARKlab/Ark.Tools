@@ -1,5 +1,6 @@
 using Ark.Tools.Activity;
 using Ark.Tools.Activity.Processor;
+using Ark.Tools.Compliance;
 
 using NodaTime;
 
@@ -8,6 +9,7 @@ namespace TestReceiver;
 
 internal interface ITestReceiver_Config
 {
+    [InfrastructureSecret]
     string ActivitySqlConnectionString { get; }
 }
 

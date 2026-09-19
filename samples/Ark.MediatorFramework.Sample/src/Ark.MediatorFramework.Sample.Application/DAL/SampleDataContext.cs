@@ -6,6 +6,7 @@ using Ark.Tools.Outbox;
 using Ark.Tools.Core;
 
 using Dapper;
+using Ark.Tools.Compliance;
 
 using System.Data.Common;
 
@@ -58,7 +59,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Reads bounded activity for a book and reader.</summary>
     Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         Guid bookId,
-        string userId,
+        [Pseudonymous] string userId,
         int limit,
         CancellationToken ctk = default);
 
@@ -87,13 +88,14 @@ public sealed class SampleDataContextConfig : IOutboxContextSqlConfig, Tools.Sql
 {
     /// <summary>Initializes a new instance of the <see cref="SampleDataContextConfig"/> class.</summary>
     /// <param name="connectionString">The SQL Server connection string.</param>
-    public SampleDataContextConfig(string connectionString)
-    {
-        ConnectionString = connectionString;
-    }
+public SampleDataContextConfig([InfrastructureSecret] string connectionString)
+{
+    ConnectionString = connectionString;
+}
 
-    /// <inheritdoc />
-    public string ConnectionString { get; }
+/// <inheritdoc />
+[InfrastructureSecret]
+public string ConnectionString { get; }
 
     /// <inheritdoc />
     public string TableName => "Outbox";
@@ -400,7 +402,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
     public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         Guid bookId,
-        string userId,
+        [Pseudonymous] string userId,
         int limit,
         CancellationToken ctk = default)
     {

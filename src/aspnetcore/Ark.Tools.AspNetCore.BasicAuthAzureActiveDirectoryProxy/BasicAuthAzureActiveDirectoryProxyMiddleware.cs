@@ -1,5 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
+using Ark.Tools.Compliance;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -35,6 +37,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         ((IDisposable)_client).Dispose();
     }
 
+    [ComplianceReviewed("ARKPII005", "The access token is composed into the outgoing Authorization header, never logged or persisted.")]
     [RequiresUnreferencedCode("Invoke uses System.Text.Json reflection-based serialization for OAuthResult type.")]
     public async Task Invoke(HttpContext context)
     {
@@ -114,6 +117,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult
     {
+        [NotPersonalData("OAuth token type is a scheme name such as Bearer.")]
         public string? Token_Type { get; set; }
         public string? Scope { get; set; }
         public int Expires_In { get; set; }
@@ -121,6 +125,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
         public int Expires_On { get; set; }
         public int Not_Before { get; set; }
         public Uri? Resource { get; set; }
+        [Secret]
         public string? Access_Token { get; set; }
     }
 }

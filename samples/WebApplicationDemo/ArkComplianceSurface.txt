@@ -1,0 +1,8 @@
+﻿/*
+COMPLIANCE-SURFACE 1
+CLASSIFIED	WebApplicationDemo.Dto.Person.V1	Email	Ark:PersonalData	Gets or sets the email address for a person.	
+CLASSIFIED	WebApplicationDemo.Dto.Person.V1	FirstName	Ark:PersonalData	Gets or sets the first name of a person.	
+CLASSIFIED	WebApplicationDemo.Dto.Person.V1	LastName	Ark:PersonalData	Gets or sets the last name of a person.	
+CLASSIFIED	WebApplicationDemo.Dto.Person.V2	Phone	Ark:PersonalData	Gets or sets the telephone number for a person.	
+CLASSIFIED	WebApplicationDemo.Dto.Post	UserId	Ark:Pseudonymous		System.Text.Json
+*/

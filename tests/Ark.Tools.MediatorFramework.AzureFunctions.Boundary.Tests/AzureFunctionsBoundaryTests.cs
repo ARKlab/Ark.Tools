@@ -3,6 +3,10 @@
 
 using AwesomeAssertions;
 
+#if NET10_0_OR_GREATER
+using Ark.Tools.Compliance;
+#endif
+
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
@@ -413,6 +417,9 @@ public sealed partial class AzureFunctionsBoundaryTests
             string logPath,
             Channel<string> logLines,
             Task logPumpTask,
+#if NET10_0_OR_GREATER
+            [NotPersonalData("Test host base address is infrastructure metadata, not personal data.")]
+#endif
             Uri baseAddress)
         {
             _process = process;
@@ -423,6 +430,9 @@ public sealed partial class AzureFunctionsBoundaryTests
             BaseAddress = baseAddress;
         }
 
+#if NET10_0_OR_GREATER
+        [NotPersonalData("Test host base address is infrastructure metadata, not personal data.")]
+#endif
         public Uri BaseAddress { get; }
 
         public static async Task<FunctionHost> StartAsync(CancellationToken cancellationToken)

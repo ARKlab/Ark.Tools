@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Outbox;
 
@@ -148,7 +149,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
             Guid bookId,
-            string userId,
+            [Pseudonymous] string userId,
             int limit,
             CancellationToken ctk = default)
         {

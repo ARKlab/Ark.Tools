@@ -12,9 +12,30 @@
 	<!-- The compliance implementation cannot analyze itself; it is validated through dedicated analyzer tests. -->
 	<ArkToolsComplianceImplementationProject
 	  Condition="$(MSBuildProjectDirectory.Contains('/src/compliance/')) Or $(MSBuildProjectDirectory.Contains('\src\compliance\'))">true</ArkToolsComplianceImplementationProject>
-	<!-- Ark.Tools libraries are themselves checked against compliance (dogfooding). -->
-	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == ''">true</EnableArkToolsCompliance>
+	<!-- Compliance analysis remains net10-only while the beta analyzer is still being stabilized. -->
+	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == '' and ('$(TargetFramework)' == 'net10.0' or $([System.String]::Copy('$(TargetFramework)').Contains('net10')))">true</EnableArkToolsCompliance>
+	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == '' and '$(TargetFramework)' != '' and !$([System.String]::Copy('$(TargetFramework)').Contains('net10'))">false</EnableArkToolsCompliance>
+	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == '' and '$(TargetFramework)' == '' and $([System.String]::Copy('$(TargetFrameworks)').Contains('net10'))">true</EnableArkToolsCompliance>
+	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == '' and '$(TargetFramework)' == '' and !$([System.String]::Copy('$(TargetFrameworks)').Contains('net10'))">false</EnableArkToolsCompliance>
+	<TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
+	<MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <_ArkToolsComplianceProjectName>$(MSBuildProjectName)</_ArkToolsComplianceProjectName>
+    <_ArkToolsComplianceProjectIsAnalyzerOrGenerator Condition="$([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.Analyzers')) or $([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.CodeFixes')) or $([System.String]::Copy('$(_ArkToolsComplianceProjectName)').EndsWith('.Generators')) or '$(MSBuildProjectName)' == 'Ark.Tools.Build' or '$(MSBuildProjectName)' == 'Ark.Tools.Sdk'">true</_ArkToolsComplianceProjectIsAnalyzerOrGenerator>
+  </PropertyGroup>
+
+  <!-- Only the analyzer is injected repository-wide, and only it may be private: it contributes no metadata.
+       Projects that use the classification attributes declare a normal, non-private reference to
+       Ark.Tools.Compliance.Abstractions themselves, so the packages they produce keep declaring the
+       assembly that defines those attributes. -->
+  <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(MSBuildProjectExtension)' == '.csproj' and '$(_ArkToolsComplianceProjectIsAnalyzerOrGenerator)' != 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props" />
 
