@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Microsoft.Extensions.Compliance.Redaction;
@@ -10,7 +10,7 @@ namespace Ark.Tools.Compliance;
 public sealed class ComplianceRedactor
 {
     /// <summary>The alertable marker emitted by runtime erasure and pattern scanning.</summary>
-    public const string Marker = "***ARKPII***";
+    public const string Marker = PiiScanner.Marker;
 
     private readonly ArkHmacRedactor _hmac;
 

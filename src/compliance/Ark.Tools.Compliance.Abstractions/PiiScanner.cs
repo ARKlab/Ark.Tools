@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Compliance.Shared;
@@ -9,7 +9,7 @@ namespace Ark.Tools.Compliance;
 public sealed class PiiScanner
 {
     /// <summary>The alertable marker emitted for a detected PII pattern.</summary>
-    public const string Marker = ComplianceRedactor.Marker;
+    public const string Marker = "***ARKPII***";
 
     /// <summary>Initializes a PII scanner.</summary>
     /// <param name="mode">The scan mode.</param>

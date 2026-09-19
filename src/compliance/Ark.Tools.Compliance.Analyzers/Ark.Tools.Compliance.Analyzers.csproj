@@ -21,7 +21,7 @@
     <None Update="buildTransitive/Ark.Tools.Compliance.Analyzers.props" Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.Analyzers.props" />
     <None Update="buildTransitive/ComplianceLexicon.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceLexicon.Ark.txt" />
     <None Update="buildTransitive/ComplianceSinks.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceSinks.Ark.txt" />
-    <Compile Include="../Ark.Tools.Compliance/Shared/PersonalDataPatterns.cs" Link="Shared/PersonalDataPatterns.cs" />
+    <Compile Include="../Ark.Tools.Compliance.Abstractions/Shared/PersonalDataPatterns.cs" Link="Shared/PersonalDataPatterns.cs" />
     <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     <ProjectReference Include="../Ark.Tools.Compliance.Analyzers.CodeFixes/Ark.Tools.Compliance.Analyzers.CodeFixes.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />

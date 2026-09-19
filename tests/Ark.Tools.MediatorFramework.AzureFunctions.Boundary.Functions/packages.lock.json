@@ -523,15 +523,23 @@
       "ark.tools.authorization": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )",
           "Microsoft.Extensions.Compliance.Redaction": "[10.1.0, )",
           "Microsoft.Extensions.Telemetry": "[10.1.0, )"
+        }
+      },
+      "ark.tools.compliance.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )"
         }
       },
       "ark.tools.compliance.nlog": {
@@ -544,6 +552,7 @@
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "NodaTime": "[3.3.3, )"
         }
       },
@@ -559,6 +568,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.AspNetCore.ProblemDetails": "[1.0.0, )",
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
@@ -574,6 +584,7 @@
       "ark.tools.mediatorframework.messaging": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Google.Protobuf": "[3.36.1, )",
@@ -588,6 +599,7 @@
       "ark.tools.mediatorframework.messaging.azure": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
@@ -600,6 +612,7 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
@@ -650,12 +663,14 @@
       "ark.tools.sql": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "ark.tools.sql.sqlserver": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
@@ -665,6 +680,7 @@
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"

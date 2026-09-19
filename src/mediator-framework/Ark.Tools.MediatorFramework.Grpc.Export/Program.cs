@@ -1,16 +1,8 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
-
-#if NET10_0_OR_GREATER
-using Ark.Tools.Compliance;
-#endif
-
-using Microsoft.Extensions.DependencyInjection;
 
 using System.Reflection;
 using System.Runtime.Loader;
-
-_ = new ServiceCollection().AddArkRedaction();
 
 if (args.Length != 2)
     throw new ArgumentException("Expected target assembly and destination directory.", nameof(args));

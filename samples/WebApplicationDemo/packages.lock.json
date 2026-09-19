@@ -682,6 +682,7 @@
       "ark.tools.aspnetcore.auth0": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Auth0.AuthenticationApi": "[7.49.0, )",
           "Auth0.ManagementApi": "[10.1.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.12, )",
@@ -731,6 +732,7 @@
       "ark.tools.aspnetcore.swashbuckle": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
@@ -745,15 +747,23 @@
       "ark.tools.authorization": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.NLog": "[1.0.0, )"
         }
       },
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )",
           "Microsoft.Extensions.Compliance.Redaction": "[10.1.0, )",
           "Microsoft.Extensions.Telemetry": "[10.1.0, )"
+        }
+      },
+      "ark.tools.compliance.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.1.0, )"
         }
       },
       "ark.tools.compliance.nlog": {
@@ -766,18 +776,21 @@
       "ark.tools.compliance.openapi": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
         }
       },
       "ark.tools.core": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "NodaTime": "[3.3.3, )"
         }
       },
       "ark.tools.hosting": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
           "Azure.Identity": "[1.21.0, )",
           "DistributedLock.Core": "[1.0.9, )"
@@ -804,6 +817,7 @@
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
@@ -820,6 +834,7 @@
       "ark.tools.nlog.configuration": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "NLog.Extensions.Logging": "[6.2.0, )"
         }
@@ -882,12 +897,14 @@
       "ark.tools.sql": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )"
         }
       },
       "ark.tools.sql.sqlserver": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
           "Ark.Tools.Sql": "[1.0.0, )",
@@ -897,6 +914,7 @@
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"

@@ -5,8 +5,4 @@
     <IsPackable>false</IsPackable>
     <Description>Build-time protobuf exporter for Ark.Tools MediatorFramework gRPC services</Description>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\compliance\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
-  </ItemGroup>
 </Project>

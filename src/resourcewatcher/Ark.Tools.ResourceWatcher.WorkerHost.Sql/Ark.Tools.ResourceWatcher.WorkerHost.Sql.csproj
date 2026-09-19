@@ -26,4 +26,8 @@
     <ProjectReference Include="..\Ark.Tools.ResourceWatcher.WorkerHost\Ark.Tools.ResourceWatcher.WorkerHost.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>
