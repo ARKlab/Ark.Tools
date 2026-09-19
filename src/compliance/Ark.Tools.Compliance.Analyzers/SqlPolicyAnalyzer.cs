@@ -59,7 +59,7 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
 
                 if (!classifiedCache.TryGetValue(candidate, out var result))
                 {
-                    result = ComplianceSymbolFacts._isClassified(candidate, facts);
+                    result = ComplianceSymbolFacts._isClassified(candidate, facts, context.CancellationToken);
                     classifiedCache[candidate] = result;
                 }
 

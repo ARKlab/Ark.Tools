@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 using Ark.Tools.Compliance.Internal;
 
@@ -84,7 +85,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     return;
                 }
 
-                var result = _find(value, _patterns);
+                var result = _find(value, _patterns, operationContext.CancellationToken);
                 if (result._findings.Count == 0 && !result._timedOut)
                 {
                     return;
@@ -95,6 +96,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     var replacement = new StringBuilder(value);
                     foreach (var match in result._findings.OrderByDescending(static match => match._span.Start))
                     {
+                        operationContext.CancellationToken.ThrowIfCancellationRequested();
                         replacement.Remove(match._span.Start, match._span.Length)
                             .Insert(match._span.Start, PersonalDataPatterns._reservedValue(match._kind));
                     }
@@ -141,9 +143,10 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                var result = _find(content, _patterns);
+                var result = _find(content, _patterns, fileContext.CancellationToken);
                 foreach (var match in result._findings)
                 {
+                    fileContext.CancellationToken.ThrowIfCancellationRequested();
                     var span = new TextSpan(line.Start + match._span.Start, match._span.Length);
                     fileContext.ReportDiagnostic(Diagnostic.Create(_rule,
                         Location.Create(file.Path, span, text.Lines.GetLinePositionSpan(span)),
@@ -170,11 +173,22 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         }
 
         var name = compilation.AssemblyName ?? string.Empty;
-        return name.EndsWith(".Tests", StringComparison.OrdinalIgnoreCase)
+        if (name.EndsWith(".Tests", StringComparison.OrdinalIgnoreCase)
             || name.EndsWith(".Test", StringComparison.OrdinalIgnoreCase)
-            || name is "Tests" or "Test"
-            || compilation.ReferencedAssemblyNames.Any(static assembly =>
-                assembly.Name is "Microsoft.VisualStudio.TestPlatform.TestFramework" or "xunit.core" or "nunit.framework");
+            || name is "Tests" or "Test")
+        {
+            return true;
+        }
+
+        foreach (var assembly in compilation.ReferencedAssemblyNames)
+        {
+            if (assembly.Name is "Microsoft.VisualStudio.TestPlatform.TestFramework" or "xunit.core" or "nunit.framework")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool _isTestPath(string path)
@@ -185,16 +199,21 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             || Path.GetFileName(path).EndsWith("Tests.cs", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static ScanResult _find(string value, ImmutableArray<Pattern> patterns)
+    private static ScanResult _find(
+        string value,
+        ImmutableArray<Pattern> patterns,
+        CancellationToken cancellationToken)
     {
         var findings = new List<Finding>();
         var timedOut = false;
         foreach (var pattern in patterns)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             try
             {
                 foreach (Match match in pattern._regex.Matches(value))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (PersonalDataPatterns._isReserved(pattern._kind, match.Value)
                         || !PersonalDataPatterns._isChecksumValid(pattern._kind, match.Value))
                     {
@@ -202,7 +221,17 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     }
 
                     var span = new TextSpan(match.Index, match.Length);
-                    if (!findings.Any(finding => finding._span.OverlapsWith(span)))
+                    var overlaps = false;
+                    foreach (var finding in findings)
+                    {
+                        if (finding._span.OverlapsWith(span))
+                        {
+                            overlaps = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlaps)
                     {
                         findings.Add(new Finding(pattern._kind, span));
                     }

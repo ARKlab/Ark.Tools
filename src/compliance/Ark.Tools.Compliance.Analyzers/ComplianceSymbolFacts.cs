@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Globalization;
-using System.Linq;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -58,8 +58,7 @@ internal sealed class ComplianceCompilationFacts
         return new ComplianceCompilationFacts(
             isHost
                 && !isTestProject
-                && compilation.ReferencedAssemblyNames.Any(static name =>
-                    name.Name is "Microsoft.Extensions.Telemetry" or "Microsoft.Extensions.Telemetry.Abstractions"),
+                && _referencesTelemetry(compilation),
             compilation.GetTypeByMetadataName("Ark.Tools.Compliance.ComplianceReviewedAttribute"),
             compilation.GetTypeByMetadataName("Ark.Tools.Compliance.NotPersonalDataAttribute"),
             compilation.GetTypeByMetadataName("Ark.Tools.Compliance.ISensitiveValue`1"),
@@ -98,13 +97,39 @@ internal sealed class ComplianceCompilationFacts
 
         return builder.ToImmutable();
     }
+
+    private static bool _referencesTelemetry(Compilation compilation)
+    {
+        foreach (var name in compilation.ReferencedAssemblyNames)
+        {
+            if (name.Name is "Microsoft.Extensions.Telemetry" or "Microsoft.Extensions.Telemetry.Abstractions")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 internal static class ComplianceSymbolFacts
 {
     internal static bool _hasAttribute(ISymbol symbol, INamedTypeSymbol? expected)
     {
-        return expected is not null && symbol.GetAttributes().Any(attribute => _matchesAttribute(attribute, expected));
+        if (expected is null)
+        {
+            return false;
+        }
+
+        foreach (var attribute in symbol.GetAttributes())
+        {
+            if (_matchesAttribute(attribute, expected))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal static bool _matchesAttribute(AttributeData attribute, INamedTypeSymbol? expected)
@@ -114,8 +139,12 @@ internal static class ComplianceSymbolFacts
             && SymbolEqualityComparer.Default.Equals(attributeClass.OriginalDefinition, expected);
     }
 
-    internal static bool _isClassified(ISymbol? symbol, ComplianceCompilationFacts facts)
+    internal static bool _isClassified(
+        ISymbol? symbol,
+        ComplianceCompilationFacts facts,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (symbol is null)
         {
             return false;
@@ -123,8 +152,10 @@ internal static class ComplianceSymbolFacts
 
         foreach (var attribute in symbol.GetAttributes())
         {
+            cancellationToken.ThrowIfCancellationRequested();
             for (var type = attribute.AttributeClass; type is not null; type = type.BaseType)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (_containsSymbol(facts._classificationAttributes, type))
                 {
                     return true;
@@ -134,10 +165,21 @@ internal static class ComplianceSymbolFacts
 
         if (symbol is INamedTypeSymbol named)
         {
-            return facts._sensitiveValueInterface is not null
-                && named.AllInterfaces.Any(candidate =>
-                    SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, facts._sensitiveValueInterface))
-                || _hasAttribute(named, facts._sensitiveValueObjectAttribute);
+            if (facts._sensitiveValueInterface is not null)
+            {
+                foreach (var candidate in named.AllInterfaces)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (SymbolEqualityComparer.Default.Equals(
+                        candidate.OriginalDefinition,
+                        facts._sensitiveValueInterface))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return _hasAttribute(named, facts._sensitiveValueObjectAttribute);
         }
 
         return false;
@@ -176,12 +218,15 @@ internal static class ComplianceSymbolFacts
             return false;
         }
 
-        foreach (var argument in attribute.NamedArguments.Where(static argument => argument.Key == "Expires"))
+        foreach (var argument in attribute.NamedArguments)
         {
-            return argument.Value.Value is string expires
-                && DateTime.TryParseExact(expires, "yyyy-MM-dd", CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var date)
-                && date.Date >= today.Date;
+            if (argument.Key == "Expires")
+            {
+                return argument.Value.Value is string expires
+                    && DateTime.TryParseExact(expires, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                        DateTimeStyles.None, out var date)
+                    && date.Date >= today.Date;
+            }
         }
 
         return true;
@@ -231,7 +276,6 @@ internal static class ComplianceSymbolFacts
                 return true;
             }
         }
-
         return false;
     }
 }
