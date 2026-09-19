@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Compliance classification attributes and contracts for Ark.Tools, with the compliance analyzers embedded.</Description>
+    <Description>Analyzer-free compliance classification attributes and contracts for Ark.Tools.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;Classification</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
     <IsTrimmable>true</IsTrimmable>
