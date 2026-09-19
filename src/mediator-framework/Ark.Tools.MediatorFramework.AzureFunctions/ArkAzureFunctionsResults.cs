@@ -2,9 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.AspNetCore.ProblemDetails;
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Microsoft.AspNetCore.Http;
 
@@ -53,11 +51,8 @@ public static class ArkAzureFunctionsResults
     /// <param name="token">The opaque handler-produced token.</param>
     /// <param name="conditionalGet">Whether to evaluate <c>If-None-Match</c>.</param>
     /// <returns>A 304 result when the token matches; otherwise <see langword="null"/>.</returns>
-    public static IResult? ApplyResponseETag(HttpContext context, 
-#if NET10_0_OR_GREATER
-    [NotPersonalData("Opaque ETag is a non-personal concurrency token.")]
-#endif
- string? token, bool conditionalGet)
+    public static IResult? ApplyResponseETag(HttpContext context,
+    [NotPersonalData("Opaque ETag is a non-personal concurrency token.")] string? token, bool conditionalGet)
     {
         ArgumentNullException.ThrowIfNull(context);
         if (string.IsNullOrEmpty(token))

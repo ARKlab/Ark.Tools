@@ -1,6 +1,4 @@
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Rebus.Messages;
 using Rebus.Transport;
@@ -21,18 +19,11 @@ internal sealed class OutboxTransportDecorator : ITransport
         _inner = inner;
     }
 
-    #if NET10_0_OR_GREATER
-
     [NotPersonalData("Rebus transport address is infrastructure routing metadata, not personal data.")]
-
-    #endif
     public string Address => _inner.Address;
 
     public void CreateQueue(
-#if NET10_0_OR_GREATER
-    [NotPersonalData("Queue address is infrastructure routing metadata, not personal data.")]
-#endif
- string address)
+        [NotPersonalData("Queue address is infrastructure routing metadata, not personal data.")] string address)
     {
         _inner.CreateQueue(address);
     }
@@ -43,10 +34,7 @@ internal sealed class OutboxTransportDecorator : ITransport
     }
 
     public Task Send(
-#if NET10_0_OR_GREATER
-    [NotPersonalData("Destination queue address is infrastructure routing metadata, not personal data.")]
-#endif
- string destinationAddress, TransportMessage message, ITransactionContext context)
+        [NotPersonalData("Destination queue address is infrastructure routing metadata, not personal data.")] string destinationAddress, TransportMessage message, ITransactionContext context)
     {
         // if there is a IOutboxContext associated with this Send(), batch message and store them on commit
         var ctx = context.GetOrNull<IOutboxContextCore>(_outboxContextItemsKey);

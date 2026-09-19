@@ -1,7 +1,5 @@
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.Tools.RavenDb.Auditing;
 
@@ -10,9 +8,7 @@ public class Audit
     public Guid AuditId { get; set; }
     public string Id => AuditId.ToString();
 
-#if NET10_0_OR_GREATER
-    [Pseudonymous]
-#endif
+[Pseudonymous]
     public string? UserId { get; set; }
     public DateTime LastUpdatedUtc { get; set; }
 

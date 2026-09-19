@@ -1,6 +1,4 @@
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.Tools.Sql;
 
@@ -31,10 +29,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
     }
 
     public DbConnection Get(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string connectionString)
+        [Secret] string connectionString)
     {
         var cnn = _inner.Get(connectionString);
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -46,10 +41,7 @@ public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
     }
 
     public async Task<DbConnection> GetAsync(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string connectionString, CancellationToken ctk = default)
+        [Secret] string connectionString, CancellationToken ctk = default)
     {
         var cnn = await _inner.GetAsync(connectionString, ctk).ConfigureAwait(false);
 #pragma warning disable CA2000 // Dispose objects before losing scope

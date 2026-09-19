@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.Tools;
 
@@ -18,10 +16,7 @@ public class SmtpConnectionBuilder
     /// es. Server=smtp.sendgrid.net;Port=587;Username=gnegnegne;Password=nonlosai;UseSsl=true
     /// </remarks>
     public SmtpConnectionBuilder(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string smtpConnectionString)
+        [Secret] string smtpConnectionString)
     {
         if (string.IsNullOrWhiteSpace(smtpConnectionString))
             throw new ArgumentException("Empty connection string", nameof(smtpConnectionString));
@@ -30,10 +25,7 @@ public class SmtpConnectionBuilder
     }
 
     private void _parse(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string smtpConnectionString)
+        [Secret] string smtpConnectionString)
     {
         var span = smtpConnectionString.AsSpan();
 
@@ -80,10 +72,8 @@ public class SmtpConnectionBuilder
         }
     }
 
-    #if NET10_0_OR_GREATER
     [Secret]
     [ComplianceReviewed("ARKPII005", "The credentials are composed back into the connection string this type exists to build; the value is transport, never a log sink, and carries [Secret] for the logging boundary.")]
-    #endif
     public string ConnectionString
     {
         get
@@ -104,17 +94,11 @@ public class SmtpConnectionBuilder
 
     public string? Server { get; set; }
     public int? Port { get; set; }
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     public string? Username { get; set; }
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     public string? Password { get; set; }
     public bool UseSsl { get; set; }
-    #if NET10_0_OR_GREATER
     [PersonalData]
-    #endif
     public string? From { get; set; }
 }

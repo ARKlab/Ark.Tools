@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
 using Ark.Tools.Compliance.NLog;
-#endif
 using Ark.Tools.NLog.Slack;
 
 using Microsoft.Data.SqlClient;
@@ -21,29 +19,17 @@ namespace Ark.Tools.NLog;
 
 public static class NLogConfigurer
 {
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Target name for the Slack sink; it identifies a log target, not user data.")]
-    #endif
     public const string SlackTarget = "Ark.Slack";
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Target name for the console sink; it identifies a log target, not user data.")]
-    #endif
     public const string ConsoleTarget = "Ark.Console";
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Target name for the file sink; it identifies a log target, not user data.")]
-    #endif
     public const string FileTarget = "Ark.File";
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Target name for the database sink; it identifies a log target, not user data.")]
-    #endif
     public const string DatabaseTarget = "Ark.Database";
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Target name for the mail sink; it identifies a log target, not user data.")]
-    #endif
     public const string MailTarget = "Ark.Mail";
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Default sender email is a service address, not personal data.")]
-    #endif
     public const string MailFromDefault = "noreply@ark-energy.eu";
 
     public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=Message}}";
@@ -101,32 +87,12 @@ public static class NLogConfigurer
 
     [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public record Config(
-        
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string? SQLConnectionString = null,
+        [Secret] string? SQLConnectionString = null,
         string? SQLTableName = null,
-        
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string? SmtpConnectionString = null,
-        
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? MailTo = null,
-        
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? MailFrom = null,
-        
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string? SlackWebhook = null,
+        [Secret] string? SmtpConnectionString = null,
+        [PersonalData] string? MailTo = null,
+        [PersonalData] string? MailFrom = null,
+        [Secret] string? SlackWebhook = null,
         bool? EnableConsole = null,
         bool Async = true);
 
@@ -195,9 +161,7 @@ public static class NLogConfigurer
     public sealed class Configurer
     {
         internal readonly LoggingConfiguration _config = new();
-#if NET10_0_OR_GREATER
-private global::Ark.Tools.Compliance.PiiScanner? _piiScanner = new();
-#endif
+        private global::Ark.Tools.Compliance.PiiScanner? _piiScanner = new();
         public string AppName { get; }
 
         internal Configurer(string appName)
@@ -284,11 +248,8 @@ private global::Ark.Tools.Compliance.PiiScanner? _piiScanner = new();
             return this;
         }
 
-        public Configurer WithDatabaseTarget(string logTableName, 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string connectionString, bool async = true)
+        public Configurer WithDatabaseTarget(string logTableName,
+        [Secret] string connectionString, bool async = true)
         {
             logTableName = logTableName.Replace("[", string.Empty, StringComparison.Ordinal).Replace("]", string.Empty, StringComparison.Ordinal).Replace('.', '_');
 
@@ -384,23 +345,14 @@ VALUES
         }
 
         public Configurer WithMailTarget(
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string to, bool async = true)
+            [PersonalData] string to, bool async = true)
         {
             return this.WithMailTarget(null, to, async);
         }
 
         public Configurer WithMailTarget(
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? from, 
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string to, bool async = true)
+            [PersonalData] string? from,
+            [PersonalData] string to, bool async = true)
         {
             var target = _getBasicMailTarget();
 
@@ -413,39 +365,18 @@ VALUES
         }
 
         public Configurer WithMailTarget(
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string to, string smtpServer, int smtpPort, 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string smtpUserName, 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string smtpPassword, bool useSsl, bool async = true)
+            [PersonalData] string to, string smtpServer, int smtpPort,
+            [Secret] string smtpUserName,
+            [Secret] string smtpPassword, bool useSsl, bool async = true)
         {
             return this.WithMailTarget(null, to, smtpServer, smtpPort, smtpUserName, smtpPassword, useSsl, async);
         }
 
         public Configurer WithMailTarget(
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? from, 
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string to, string? smtpServer, int? smtpPort, 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string? smtpUserName, 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string? smtpPassword, bool useSsl, bool async = true)
+            [PersonalData] string? from,
+            [PersonalData] string to, string? smtpServer, int? smtpPort,
+            [Secret] string? smtpUserName,
+            [Secret] string? smtpPassword, bool useSsl, bool async = true)
         {
             if (smtpServer is not null && smtpPort is not null && smtpUserName is not null && smtpPassword is not null)
             {
@@ -467,18 +398,9 @@ VALUES
         }
 
         public Configurer WithMailTarget(
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? from, 
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string to, 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string smtpConnectionString, bool async = true)
+            [PersonalData] string? from,
+            [PersonalData] string to,
+            [Secret] string smtpConnectionString, bool async = true)
         {
             var cs = new SmtpConnectionBuilder(smtpConnectionString);
             return this.WithMailTarget(from ?? cs.From, to, cs.Server, cs.Port, cs.Username, cs.Password, cs.UseSsl, async);
@@ -593,7 +515,6 @@ VALUES
             return this;
         }
 
-#if NET10_0_OR_GREATER
         /// <summary>Overrides the default runtime redaction policy.</summary>
         /// <param name="configure">Optional overrides of fail-closed defaults.</param>
         /// <returns>The original configurer.</returns>
@@ -612,7 +533,6 @@ VALUES
             _piiScanner = null;
             return this;
         }
-#endif
 
         private static bool _isVisualStudioAttached()
         {
@@ -636,9 +556,7 @@ VALUES
             LogManager.ThrowExceptions = _isVisualStudioAttached();
             LogManager.ThrowConfigExceptions = true;
             InternalLogger.LogToConsole = true;
-#if NET10_0_OR_GREATER
             _configureCompliance();
-#endif
             // this is last, so that ThrowConfigExceptions is respected on Config change
             LogManager.Configuration = _config;
 
@@ -646,13 +564,11 @@ VALUES
                 LogManager.GlobalThreshold = LogLevel.Info;
         }
 
-#if NET10_0_OR_GREATER
         private static void _configureCompliance()
         {
             LogManager.Setup()
                 .SetupSerialization(static builder => builder.UseComplianceRedaction());
         }
-#endif
 
         [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "This layout factory must keep the compliance-aware instance hook for net10 builds.")]
         private Layout _createTextLineLayout()
@@ -668,7 +584,6 @@ VALUES
                 LayoutRenderOptions.ThreadAgnostic));
         }
 
-#if NET10_0_OR_GREATER
         private Layout _createScannedLayout(Layout layout)
         {
             return new ComplianceLayout(layout, () => _piiScanner);
@@ -679,17 +594,6 @@ VALUES
             var text = value?.ToString();
             return text is null ? null : _piiScanner?.Scan(text) ?? text;
         }
-#else
-        private static Layout _createScannedLayout(Layout layout)
-        {
-            return layout;
-        }
-
-        private static string? _scanSlackValue(object? value)
-        {
-            return value?.ToString();
-        }
-#endif
     }
 
     [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "Sync init method")]

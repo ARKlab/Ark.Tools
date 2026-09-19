@@ -3,9 +3,7 @@
 using Ark.Tools.FtpClient.Core;
 using Ark.Tools.Http;
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Flurl.Http;
 using Flurl.Http.Configuration;
@@ -18,9 +16,7 @@ namespace Ark.Tools.FtpClient.FtpProxy;
 public sealed class FtpClientProxy : IFtpClientPool
 {
     private readonly IFtpClientProxyConfig _config;
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     private readonly TokenProvider _tokenProvider;
     private readonly ConnectionInfo _connectionInfo;
 
@@ -33,11 +29,7 @@ public sealed class FtpClientProxy : IFtpClientPool
         FtpConfig = ftpConfig;
     }
 
-#if NET10_0_OR_GREATER
     internal FtpClientProxy(IFtpClientProxyConfig config, [Secret] TokenProvider tokenProvider, FtpConfig ftpConfig)
-#else
-    internal FtpClientProxy(IFtpClientProxyConfig config, TokenProvider tokenProvider, FtpConfig ftpConfig)
-#endif
     {
         _config = config;
 
@@ -55,9 +47,7 @@ public sealed class FtpClientProxy : IFtpClientPool
 
     public Uri Uri { get; private set; }
 
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
+[Secret]
     public NetworkCredential? Credentials { get; private set; }
     public FtpConfig FtpConfig { get; private set; }
 
@@ -69,13 +59,9 @@ public sealed class FtpClientProxy : IFtpClientPool
     sealed record ConnectionInfo
     {
         public Uri? Uri { get; set; }
-        #if NET10_0_OR_GREATER
         [PersonalData]
-        #endif
         public string? Username { get; set; }
-        #if NET10_0_OR_GREATER
         [Secret]
-        #endif
         public string? Password { get; set; }
     }
 

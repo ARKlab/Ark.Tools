@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 using Ark.Tools.Core;
 
 using System.Collections.Frozen;
@@ -149,10 +147,7 @@ internal static class EvolvableEnumJsonConverter
     }
 
     private static JsonException _unexpectedToken<TEnum>(
-#if NET10_0_OR_GREATER
-    [NotPersonalData("JSON token type is a syntax marker, not a person or secret value.")]
-#endif
- JsonTokenType jsonTokenType)
+        [NotPersonalData("JSON token type is a syntax marker, not a person or secret value.")] JsonTokenType jsonTokenType)
         => new($"Cannot deserialize EvolvableEnum<{typeof(TEnum).Name}> from {jsonTokenType}.");
 
     private static FrozenDictionary<string, JsonEncodedText> _createEncodedNames<

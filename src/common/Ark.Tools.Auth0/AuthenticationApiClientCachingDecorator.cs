@@ -20,18 +20,14 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.Tools.Auth0;
 
 public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
 {
     private readonly IAuthenticationApiClient _inner;
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     private readonly AsyncPolicy<AccessTokenResponse> _accessTokenResponseCachePolicy;
     private readonly AsyncPolicy<UserInfo> _userInfoCachePolicy;
     private readonly MemoryCache _cache = new(new MemoryCacheOptions());
@@ -74,10 +70,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     }
 
     private static TimeSpan _expiresIn(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string accessToken)
+        [Secret] string accessToken)
     {
 #pragma warning disable CS0618 // Type or member is obsolete
         var decode = new JwtBuilder()
@@ -149,11 +142,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     private async Task<AccessTokenResponse> _getToken<TRequest>(
         TRequest request,
         Func<TRequest, string> getKey,
-        
-#if NET10_0_OR_GREATER
-    [NotPersonalData("Token retrieval delegate is executable logic, not redacted data.")]
-#endif
- Func<TRequest, CancellationToken, Task<AccessTokenResponse>> getTokenAsync,
+        [NotPersonalData("Token retrieval delegate is executable logic, not redacted data.")] Func<TRequest, CancellationToken, Task<AccessTokenResponse>> getTokenAsync,
         CancellationToken cancellationToken = default)
         where TRequest : notnull
     {
@@ -277,10 +266,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     }
 
     public Task<UserInfo> GetUserInfoAsync(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string accessToken, CancellationToken cancellationToken = default)
+        [Secret] string accessToken, CancellationToken cancellationToken = default)
     {
         return _userInfoCachePolicy.ExecuteAsync((_, ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
         {
@@ -289,10 +275,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     }
 
     private static string _getKey(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string accessToken)
+        [Secret] string accessToken)
     {
         return $"GetUserInfo{_hashKey(accessToken)}";
     }
@@ -364,10 +347,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     }
 
     public async Task<IList<Authenticator>> ListMfaAuthenticatorsAsync(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string accessToken, CancellationToken cancellationToken = default)
+        [Secret] string accessToken, CancellationToken cancellationToken = default)
     {
         return await _inner.ListMfaAuthenticatorsAsync(accessToken, cancellationToken).ConfigureAwait(false);
     }

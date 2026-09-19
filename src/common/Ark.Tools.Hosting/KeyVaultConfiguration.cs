@@ -1,6 +1,4 @@
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
@@ -14,10 +12,7 @@ public static class KeyVaultConfigurationExtensions
     private sealed class ArkKeyVaultSecretManager : KeyVaultSecretManager
     {
         public override string GetKey(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- KeyVaultSecret secret)
+            [Secret] KeyVaultSecret secret)
         {
             return base.GetKey(secret).Replace('-', '.');
         }

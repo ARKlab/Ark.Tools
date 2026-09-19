@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Microsoft.AspNetCore.Http;
 
@@ -48,11 +46,8 @@ public static class ArkETag
     /// Whether <c>If-None-Match</c> should be evaluated for this response.
     /// </param>
     /// <returns>A 304 result when the request matches; otherwise <see langword="null"/>.</returns>
-    public static IResult? ApplyResponseETag(HttpContext context, 
-#if NET10_0_OR_GREATER
-    [NotPersonalData("ETag is an opaque response validation token, not personal data.")]
-#endif
- string? token, bool conditionalGet)
+    public static IResult? ApplyResponseETag(HttpContext context,
+    [NotPersonalData("ETag is an opaque response validation token, not personal data.")] string? token, bool conditionalGet)
     {
         ArgumentNullException.ThrowIfNull(context);
         if (string.IsNullOrEmpty(token))

@@ -1,8 +1,6 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using System.Configuration;
 
@@ -14,14 +12,8 @@ namespace Ark.Tools.NLog;
 public static class NLogConfigurerConfigurationManager
 {
     public static Configurer WithDefaultTargetsAndRulesFromAppSettings(this Configurer @this, string logTableName,
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
-    string mailFrom,
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
-    string mailTo, bool async = true)
+    [PersonalData] string mailFrom,
+    [PersonalData] string mailTo, bool async = true)
     {
         var smtp = ConfigurationManager.ConnectionStrings[NLogDefaultConfigKeys.SmtpConnStringName].ConnectionString
             ?? new SmtpConnectionBuilder()

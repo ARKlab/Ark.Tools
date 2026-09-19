@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using System.Buffers;
 using System.Buffers.Text;
@@ -54,11 +52,7 @@ public sealed class StorageQueueMessagingTransport :
     /// <param name="receiveVisibilityTimeout">The visibility window used by the custom receive pump.</param>
     /// <param name="retryDelay">The delay applied when the custom receive pump abandons a delivery.</param>
     public StorageQueueMessagingTransport(
-        
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- string connectionString,
+        [Secret] string connectionString,
         TimeSpan? receiveVisibilityTimeout = null,
         TimeSpan? retryDelay = null)
         : this(
@@ -76,11 +70,7 @@ public sealed class StorageQueueMessagingTransport :
     /// <param name="retryDelay">The delay applied when the custom receive pump abandons a delivery.</param>
     public StorageQueueMessagingTransport(
         Uri serviceUri,
-        
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- TokenCredential credential,
+        [Secret] TokenCredential credential,
         TimeSpan? receiveVisibilityTimeout = null,
         TimeSpan? retryDelay = null)
         : this(

@@ -1,6 +1,4 @@
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -9,16 +7,11 @@ namespace Ark.Tools.Reqnroll.Auth;
 
 public sealed class JwtToken
 {
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     private readonly SecurityTokenDescriptor _token;
 
     internal JwtToken(
-#if NET10_0_OR_GREATER
-    [Secret]
-#endif
- SecurityTokenDescriptor token)
+        [Secret] SecurityTokenDescriptor token)
     {
         this._token = token;
     }

@@ -1,16 +1,12 @@
 using System.Reflection;
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.Tools.EventSourcing;
 
 public static class Ex
 {
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Type full-name cache is an internal implementation detail and does not hold any person data.")]
-    #endif
     private static Dictionary<Type, string> _fullNameCache = new();
     /// <summary>
     /// Gets the full name without version information.

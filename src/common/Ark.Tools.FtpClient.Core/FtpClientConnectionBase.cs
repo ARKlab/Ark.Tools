@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using NLog;
 
@@ -16,11 +14,7 @@ public abstract class FtpClientConnectionBase : IFtpClientConnection
 
     public Uri Uri { get; }
 
-    #if NET10_0_OR_GREATER
-
     [Secret]
-
-    #endif
     public NetworkCredential Credentials { get; }
 
     public FtpConfig FtpConfig { get; }

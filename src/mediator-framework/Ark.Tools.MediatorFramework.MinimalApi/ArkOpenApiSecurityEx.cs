@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Microsoft.AspNetCore.OpenApi;
 
@@ -21,31 +19,11 @@ public sealed record ArkOpenApiSecuritySettings
     /// <param name="clientId">The public OAuth client identifier.</param>
     /// <param name="scopes">The scopes exposed by the authorization server.</param>
     public ArkOpenApiSecuritySettings(
-        
-#if NET10_0_OR_GREATER
-    [NotPersonalData("OAuth authorization endpoint is public infrastructure metadata.")]
-#endif
- Uri authorizationUrl,
-        
-#if NET10_0_OR_GREATER
-    [NotPersonalData("OAuth token endpoint is public infrastructure metadata.")]
-#endif
- Uri tokenUrl,
-        
-#if NET10_0_OR_GREATER
-    [NotPersonalData("OpenID Connect discovery endpoint is public infrastructure metadata.")]
-#endif
- Uri openIdConnectUrl,
-        
-#if NET10_0_OR_GREATER
-    [NotPersonalData("The OAuth client identifier is a public, non-personal application identifier.")]
-#endif
- string clientId,
-        
-#if NET10_0_OR_GREATER
-    [NotPersonalData("OAuth scope names are public authorization metadata, not personal data.")]
-#endif
- IReadOnlyDictionary<string, string> scopes)
+        [NotPersonalData("OAuth authorization endpoint is public infrastructure metadata.")] Uri authorizationUrl,
+        [NotPersonalData("OAuth token endpoint is public infrastructure metadata.")] Uri tokenUrl,
+        [NotPersonalData("OpenID Connect discovery endpoint is public infrastructure metadata.")] Uri openIdConnectUrl,
+        [NotPersonalData("The OAuth client identifier is a public, non-personal application identifier.")] string clientId,
+        [NotPersonalData("OAuth scope names are public authorization metadata, not personal data.")] IReadOnlyDictionary<string, string> scopes)
     {
         AuthorizationUrl = authorizationUrl ?? throw new ArgumentNullException(nameof(authorizationUrl));
         TokenUrl = tokenUrl ?? throw new ArgumentNullException(nameof(tokenUrl));
@@ -59,33 +37,23 @@ public sealed record ArkOpenApiSecuritySettings
     }
 
     /// <summary>Gets the OAuth2 authorization endpoint.</summary>
-    #if NET10_0_OR_GREATER
     [NotPersonalData("OAuth authorization endpoint is public infrastructure metadata.")]
-    #endif
     public Uri AuthorizationUrl { get; }
 
     /// <summary>Gets the OAuth2 token endpoint.</summary>
-    #if NET10_0_OR_GREATER
     [NotPersonalData("OAuth token endpoint is public infrastructure metadata.")]
-    #endif
     public Uri TokenUrl { get; }
 
     /// <summary>Gets the OpenID Connect discovery endpoint.</summary>
-    #if NET10_0_OR_GREATER
     [NotPersonalData("OpenID Connect discovery endpoint is public infrastructure metadata.")]
-    #endif
     public Uri OpenIdConnectUrl { get; }
 
     /// <summary>Gets the public OAuth client identifier.</summary>
-    #if NET10_0_OR_GREATER
     [NotPersonalData("The OAuth client identifier is a public, non-personal application identifier.")]
-    #endif
     public string ClientId { get; }
 
     /// <summary>Gets the OpenAPI scopes.</summary>
-    #if NET10_0_OR_GREATER
     [NotPersonalData("OAuth scope names are public authorization metadata, not personal data.")]
-    #endif
     public IReadOnlyDictionary<string, string> Scopes { get; }
 }
 

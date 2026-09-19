@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -52,11 +50,8 @@ public static class NLogConfigurerConfiguration
         return res;
     }
 
-    public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName, 
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? mailFrom = null, bool async = true)
+    public static Configurer WithDefaultTargetsAndRulesFromConfiguration(this Configurer @this, IConfiguration cfg, string logTableName,
+    [PersonalData] string? mailFrom = null, bool async = true)
     {
         var config = new Config
         {
@@ -74,11 +69,8 @@ public static class NLogConfigurerConfiguration
         return @this;
     }
 
-    public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null, 
-#if NET10_0_OR_GREATER
-    [PersonalData]
-#endif
- string? mailFrom = null, Action<Configurer>? configure = null)
+    public static IHostBuilder ConfigureNLog(this IHostBuilder builder, string? appName = null,
+    [PersonalData] string? mailFrom = null, Action<Configurer>? configure = null)
     {
         appName ??= Assembly.GetEntryAssembly()?.GetName().Name ?? AppDomain.CurrentDomain.FriendlyName ?? "Unknown";
 

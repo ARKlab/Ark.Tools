@@ -1,9 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 namespace Ark.Tools.MediatorFramework.Messaging;
 
@@ -71,9 +69,7 @@ public static class MessagingHeaders
     public const string UserAuthenticationType = "ark-auth-type";
 
     /// <summary>User identifier header.</summary>
-    #if NET10_0_OR_GREATER
     [NotPersonalData("Transport user identifier is non-personal routing metadata.")]
-    #endif
     public const string UserId = "ark-user-id";
 
     /// <summary>User scopes header.</summary>

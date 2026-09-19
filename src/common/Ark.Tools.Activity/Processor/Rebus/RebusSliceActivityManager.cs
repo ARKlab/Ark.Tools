@@ -1,7 +1,5 @@
 using Ark.Tools.Activity.Messages;
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Retry;
 using Ark.Tools.SimpleInjector;
@@ -93,12 +91,8 @@ public sealed class RebusSliceActivityManager<TActivity> : ISliceActivityManager
 
 public interface IRebusSliceActivityManagerConfig
 {
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     string AsbConnectionString { get; }
-    #if NET10_0_OR_GREATER
     [Secret]
-    #endif
     string SagaSqlConnectionString { get; }
 }
