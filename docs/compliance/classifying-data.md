@@ -18,6 +18,11 @@ compliance stack (`Microsoft.Extensions.Compliance.Redaction`,
 | `Ark:InfrastructureSecret` | `[Secret]` | Library secrets with an unknown origin; protected at sinks but omitted from the compliance surface. `[InfrastructureSecret]` remains supported for known infrastructure secrets. |
 | `Ark:Pseudonymous` | `[Pseudonymous]` | Re-identifiable only with additional data held separately (internal user IDs, hashed identifiers). |
 
+Libraries cannot know whether a secret they receive is infrastructure-owned or
+user-supplied, so **library code annotates secrets with `[Secret]`**.
+`[UserCredentials]` and `[InfrastructureSecret]` are for applications, where the
+origin of the value is known.
+
 The attributes apply to classes, structs, properties, fields, and parameters.
 Classifications from *other* `DataClassificationAttribute`-derived taxonomies are
 recognized too — the analyzers and the compliance surface record them as

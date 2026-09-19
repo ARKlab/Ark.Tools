@@ -17,7 +17,7 @@ public class FtpConfig : IDisposable
 
     #if NET10_0_OR_GREATER
 
-    [UserCredentials]
+    [Secret]
 
     #endif
     public NetworkCredential? Credentials { get; }
@@ -31,7 +31,7 @@ public class FtpConfig : IDisposable
 
     public FtpConfig(Uri uri, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  NetworkCredential? credential = null, 
 #if NET10_0_OR_GREATER

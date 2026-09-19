@@ -18,7 +18,7 @@ public interface IFtpClientConnection : IConnection
 {
     Uri Uri { get; }
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     NetworkCredential Credentials { get; }
 

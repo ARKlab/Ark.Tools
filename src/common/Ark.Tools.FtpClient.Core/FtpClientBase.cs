@@ -18,7 +18,7 @@ public abstract class FtpClientBase : IFtpClient
 
     #if NET10_0_OR_GREATER
 
-    [UserCredentials]
+    [Secret]
 
     #endif
     public NetworkCredential Credentials { get; }

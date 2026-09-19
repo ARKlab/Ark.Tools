@@ -37,11 +37,11 @@ internal sealed class Socks5Handler : SocksHandler
     /// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> -or- <c>pass</c> is null.</exception>
     public Socks5Handler(Socket server, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string user, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string pass) : base(server, user)
     {
@@ -439,7 +439,7 @@ internal sealed class Socks5Handler : SocksHandler
     /// </summary>
     /// <value>The password to use when authenticating with the SOCKS5 server.</value>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string Password
     {
@@ -470,7 +470,7 @@ internal sealed class Socks5Handler : SocksHandler
     // private variables
     /// <summary>Holds the value of the Password property.</summary>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string m_Password;
     /// <summary>Holds the value of the HandShake property.</summary>

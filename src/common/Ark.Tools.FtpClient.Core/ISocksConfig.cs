@@ -19,14 +19,14 @@ public interface ISocksConfig
 
     #if NET10_0_OR_GREATER
 
-    [UserCredentials]
+    [Secret]
 
     #endif
     string UserName { get; }
 
     #if NET10_0_OR_GREATER
 
-    [UserCredentials]
+    [Secret]
 
     #endif
     string Password { get; }

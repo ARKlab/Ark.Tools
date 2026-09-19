@@ -78,7 +78,7 @@ public sealed class StorageQueueMessagingTransport :
         Uri serviceUri,
         
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  TokenCredential credential,
         TimeSpan? receiveVisibilityTimeout = null,

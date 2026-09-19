@@ -22,11 +22,11 @@ internal sealed class AuthUserPass : AuthMethod
     /// <exception cref="ArgumentNullException"><c>user</c> -or- <c>pass</c> is null.</exception>
     public AuthUserPass(Socket server, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string user, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string pass) : base(server)
     {
@@ -135,7 +135,7 @@ internal sealed class AuthUserPass : AuthMethod
     /// <value>The username to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string Username
     {
@@ -156,7 +156,7 @@ internal sealed class AuthUserPass : AuthMethod
     /// <value>The password to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string Password
     {
@@ -174,12 +174,12 @@ internal sealed class AuthUserPass : AuthMethod
     // private variables
     /// <summary>Holds the value of the Username property.</summary>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string m_Username;
     /// <summary>Holds the value of the Password property.</summary>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string m_Password;
 }

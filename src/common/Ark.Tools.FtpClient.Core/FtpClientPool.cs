@@ -126,7 +126,7 @@ public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
 
         #if NET10_0_OR_GREATER
 
-        [UserCredentials]
+        [Secret]
 
         #endif
         public NetworkCredential Credentials => Inner.Credentials;

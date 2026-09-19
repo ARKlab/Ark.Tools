@@ -57,7 +57,7 @@ public class ProxySocket : Socket
 #endif
  AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string proxyUsername) : this(addressFamily, socketType, protocolType, proxyUsername, "") { }
     /// <summary>
@@ -76,11 +76,11 @@ public class ProxySocket : Socket
 #endif
  AddressFamily addressFamily, SocketType socketType, ProtocolType protocolType, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string proxyUsername, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string proxyPassword) : base(addressFamily, socketType, protocolType)
     {

@@ -129,7 +129,7 @@ internal abstract class SocksHandler
     /// <value>A string that holds the username to use when authenticating with the proxy server.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     protected string Username
     {
@@ -194,7 +194,7 @@ internal abstract class SocksHandler
     private Socket _server;
     /// <summary>Holds the value of the Username property.</summary>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string _username;
     /// <summary>Holds the value of the AsyncResult property.</summary>

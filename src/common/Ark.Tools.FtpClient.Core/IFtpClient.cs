@@ -26,7 +26,7 @@ public interface IFtpClient
     /// The credentials.
     /// </value>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     NetworkCredential? Credentials { get; }
 

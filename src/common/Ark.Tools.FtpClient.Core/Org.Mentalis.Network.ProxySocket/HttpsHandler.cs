@@ -35,11 +35,11 @@ internal sealed class HttpsHandler : SocksHandler
     /// <exception cref="ArgumentNullException"><c>server</c> -or- <c>user</c> -or- <c>pass</c> is null.</exception>
     public HttpsHandler(Socket server, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string user, 
 #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
 #endif
  string pass) : base(server, user)
     {
@@ -295,7 +295,7 @@ internal sealed class HttpsHandler : SocksHandler
     /// </summary>
     /// <value>The password to use when authenticating with the HTTPS server.</value>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string Password
     {
@@ -313,7 +313,7 @@ internal sealed class HttpsHandler : SocksHandler
     // private variables
     /// <summary>Holds the value of the Password property.</summary>
     #if NET10_0_OR_GREATER
-    [UserCredentials]
+    [Secret]
     #endif
     private string _password;
     /// <summary>Holds the count of newline characters received.</summary>
