@@ -21,6 +21,14 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
     private const string _dataPolicy = "Ark.Tools.Compliance.Sql.SqlDataPolicyAttribute";
     private const string _columnPolicy = "Ark.Tools.Compliance.Sql.SqlColumnPolicyAttribute";
 
+    private static readonly ImmutableArray<(string AttributeName, string Classification)> _classificationPrecedence =
+        ImmutableArray.Create(
+            ("Ark.Tools.Compliance.InfrastructureSecretAttribute", "InfrastructureSecret"),
+            ("Ark.Tools.Compliance.SecretAttribute", "InfrastructureSecret"),
+            ("Ark.Tools.Compliance.SensitivePersonalDataAttribute", "SensitivePersonalData"),
+            ("Ark.Tools.Compliance.PersonalDataAttribute", "PersonalData"),
+            ("Ark.Tools.Compliance.PseudonymousAttribute", "Pseudonymous"));
+
     private static readonly DiagnosticDescriptor _invalidMapping = new(
         "ARKPII207", "Invalid SQL policy mapping",
         "SQL policy for '{0}' is invalid: {1}", "Compliance", DiagnosticSeverity.Error, true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII207.md");
@@ -208,20 +216,23 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
         {
             return _classification(nullable.TypeArguments[0]);
         }
-        foreach (var name in new[] { "InfrastructureSecret", "Secret", "SensitivePersonalData", "PersonalData", "Pseudonymous" })
+        var attributes = symbol.GetAttributes();
+        foreach (var precedence in _classificationPrecedence)
         {
-            if (symbol.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == "Ark.Tools.Compliance." + name + "Attribute"))
+            foreach (var attribute in attributes)
             {
-                return name is "Secret" or "InfrastructureSecret" ? "InfrastructureSecret" : name;
+                if (attribute.AttributeClass?.ToDisplayString() == precedence.AttributeName)
+                    return precedence.Classification;
             }
         }
-        if (symbol.GetAttributes().Any(static a => a.AttributeClass?.OriginalDefinition.ToDisplayString()
-                == "Ark.Tools.Compliance.SensitiveValueObjectAttribute<T>"))
+        foreach (var attribute in attributes)
         {
-            return "PersonalData";
-        }
-        foreach (var attribute in symbol.GetAttributes())
-        {
+            if (attribute.AttributeClass?.OriginalDefinition.ToDisplayString()
+                == "Ark.Tools.Compliance.SensitiveValueObjectAttribute<T>")
+            {
+                return "PersonalData";
+            }
+
             for (var current = attribute.AttributeClass?.BaseType; current is not null; current = current.BaseType)
             {
                 if (current.ToDisplayString() == "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute")
