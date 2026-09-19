@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="2.2.0" />
+  <Sdk Name="Microsoft.Build.Sql" Version="2.3.0" />
   <PropertyGroup>
     <Name>Ark.MediatorFramework.Sample.Database</Name>
     <ProjectGuid>{A3F7C251-8E14-4B9D-BE62-5D1F2C830947}</ProjectGuid>
