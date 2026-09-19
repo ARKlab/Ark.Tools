@@ -352,6 +352,7 @@ public static class Program
             "src/common/Ark.Tools.Nodatime/Ark.Tools.Nodatime.csproj",
             "src/common/Ark.Tools.Nodatime.Protobuf/Ark.Tools.Nodatime.Protobuf.csproj",
             "src/common/Ark.Tools.Nodatime.SystemTextJson/Ark.Tools.Nodatime.SystemTextJson.csproj",
+            "src/compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj",
             "src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj",
             "src/compliance/Ark.Tools.Compliance.NLog/Ark.Tools.Compliance.NLog.csproj",
             "src/common/Ark.Tools.NLog/Ark.Tools.NLog.csproj",
