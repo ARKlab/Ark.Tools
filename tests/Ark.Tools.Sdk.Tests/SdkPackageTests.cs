@@ -175,6 +175,11 @@ public sealed class SdkPackageTests
             """)
             .ConfigureAwait(false);
 
+        await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
+            _createEnvironment(scenarioRoot)).ConfigureAwait(false);
+
         using var evaluation = JsonDocument.Parse(await _run(
             "dotnet",
             $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -getItem:CompilerVisibleProperty",
