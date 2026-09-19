@@ -710,13 +710,13 @@ public sealed class SdkPackageTests
         var packageReferences = _getPackageReferences(baseline);
         foreach (var package in new[]
         {
-            ("Microsoft.Testing.Extensions.CrashDump", "2.4.0"),
-            ("Microsoft.Testing.Extensions.CodeCoverage", "18.11.0"),
-            ("Microsoft.Testing.Extensions.HangDump", "2.4.0"),
-            ("Microsoft.Testing.Extensions.HotReload", "2.4.0"),
-            ("Microsoft.Testing.Extensions.Retry", "2.4.0"),
-            ("Microsoft.Testing.Extensions.TrxReport", "2.4.0"),
-            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.4.0")
+            ("Microsoft.Testing.Extensions.CrashDump", "2.4.1"),
+            ("Microsoft.Testing.Extensions.CodeCoverage", "18.11.2"),
+            ("Microsoft.Testing.Extensions.HangDump", "2.4.1"),
+            ("Microsoft.Testing.Extensions.HotReload", "2.4.1"),
+            ("Microsoft.Testing.Extensions.Retry", "2.4.1"),
+            ("Microsoft.Testing.Extensions.TrxReport", "2.4.1"),
+            ("Microsoft.Testing.Extensions.AzureDevOpsReport", "2.4.1")
         })
         {
             Assert.AreEqual(package.Item2, packageReferences[package.Item1]["Version"], package.Item1);
