@@ -15,6 +15,12 @@ namespace Ark.Tools.Core.Analyzers;
 // ToDataTableArkInterceptorGenerator. Keeping these free of ISymbol/SyntaxNode references lets the
 // incremental pipeline compare and (in principle) cache values across compilations by value.
 
+internal static class ToDataTableArkInterceptorTrackingNames
+{
+    internal const string _callSites = "ToDataTableArkCallSites";
+    internal const string _collectedCallSites = "ToDataTableArkCollectedCallSites";
+}
+
 /// <summary>The kind of per-value conversion a single shredded member requires, mirroring the runtime fallback's ConvertColumnValue rules.</summary>
 internal enum ConversionKind
 {

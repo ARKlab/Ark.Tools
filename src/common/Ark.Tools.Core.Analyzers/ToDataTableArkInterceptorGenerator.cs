@@ -48,8 +48,10 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             .Where(static model => model is not null)
             .Select(static (model, _) => model!.Value)
             .WithComparer(CallSiteModelComparer._instance)
+            .WithTrackingName(ToDataTableArkInterceptorTrackingNames._callSites)
             .Collect()
-            .WithComparer(CallSiteModelArrayComparer._instance);
+            .WithComparer(CallSiteModelArrayComparer._instance)
+            .WithTrackingName(ToDataTableArkInterceptorTrackingNames._collectedCallSites);
 
         var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
             compilation is CSharpCompilation csharpCompilation
@@ -185,12 +187,13 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             }
         }
 
+        fields.AddRange(properties);
         return new TypeModel(
             type.ToFullyQualifiedString(),
             type.MetadataName,
             IsReferenceType: type.TypeKind == TypeKind.Class,
             IsPrimitiveScalar: false,
-            Members: fields.ToImmutable().AddRange(properties));
+            Members: fields.ToImmutable());
     }
 
     private static bool _requiresRuntimeValueConversion(ITypeSymbol type)
@@ -407,6 +410,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("            try");
         sb.AppendLine("            {");
         sb.AppendLine("                using var e = source.GetEnumerator();");
+        sb.Append("                var values = new object?[").Append(type.Members.Length).AppendLine("];");
         sb.AppendLine("                while (e.MoveNext())");
         sb.AppendLine("                {");
         sb.AppendLine("                    var it = e.Current;");
@@ -417,7 +421,6 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             sb.AppendLine("                        throw new global::System.Reflection.TargetException(\"Non-static method requires a target.\");");
         }
 
-        sb.Append("                    var values = new object?[").Append(type.Members.Length).AppendLine("];");
         for (var i = 0; i < type.Members.Length; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
