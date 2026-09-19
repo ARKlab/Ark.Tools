@@ -71,7 +71,9 @@ internal sealed class ComplianceLexicon
     {
         if (term.EndsWith("*", StringComparison.Ordinal))
         {
-            return name.StartsWith(term.Substring(0, term.Length - 1), StringComparison.OrdinalIgnoreCase);
+            var prefixLength = term.Length - 1;
+            return prefixLength <= name.Length
+                && string.Compare(name, 0, term, 0, prefixLength, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         for (var index = 0; index + term.Length <= name.Length; index++)

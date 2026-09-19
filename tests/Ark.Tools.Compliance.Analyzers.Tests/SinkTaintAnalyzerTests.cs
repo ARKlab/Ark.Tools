@@ -137,6 +137,16 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII002");
     }
 
+    /// <summary>Array traversal continues past a safe first child to a later classified child.</summary>
+    [TestMethod]
+    public async Task ArrayWithLaterClassifiedChild_ReportsError()
+    {
+        var diagnostics = await _analyzeAsync(
+            _method("logger.Info(\"{Values}\", new[] { \"safe\", c.Email });")).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII002");
+    }
+
     /// <summary>Safe identifiers, masks, constants and overwritten locals do not taint logs.</summary>
     [TestMethod]
     [DataRow("logger.Info(\"{Key}\", c.Key);")]

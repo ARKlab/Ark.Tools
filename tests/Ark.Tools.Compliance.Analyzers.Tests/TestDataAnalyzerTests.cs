@@ -96,6 +96,20 @@ public sealed class TestDataAnalyzerTests
         diagnostics.Select(static diagnostic => diagnostic.Id).Should().Contain("ARKPII014");
     }
 
+    /// <summary>A fixture scan propagates cancellation that was requested before scanning starts.</summary>
+    [TestMethod]
+    public async Task PreCancelledFeatureFixtureScanThrows()
+    {
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync().ConfigureAwait(false);
+
+        Func<Task> act = async () => await _analyzeFeatureAsync(
+            "| fixture.person@corporate-domain.com |",
+            cancellationToken: cancellation.Token).ConfigureAwait(false);
+
+        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+    }
+
     /// <summary>The actual shared OpenAPI/Reqnroll fake generator stays deterministic and scanner-safe for all seeds.</summary>
     [TestMethod]
     [DataRow(int.MinValue)]
@@ -282,7 +296,8 @@ public sealed class TestDataAnalyzerTests
         string featurePath = "Contact.feature",
         bool complianceEnabled = true,
         bool isTestProject = true,
-        DiagnosticAnalyzer? analyzer = null)
+        DiagnosticAnalyzer? analyzer = null,
+        CancellationToken cancellationToken = default)
     {
         var compilation = _compilation("safe", assemblyName);
         var options = new AnalyzerOptions(
@@ -290,7 +305,7 @@ public sealed class TestDataAnalyzerTests
             new OptionsProvider(complianceEnabled, isTestProject));
         analyzer ??= new TestDataComplianceAnalyzer();
         return await compilation.WithAnalyzers([analyzer], options)
-            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+            .GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private sealed class TextFile(string path, string content) : AdditionalText
