@@ -89,3 +89,48 @@ Secret scanning reported no secrets in the ten committed files.
 - `dotnet build Ark.Tools.slnx --no-restore` is blocked by a pre-existing locked dependency mismatch in `benchmarks/Ark.Tools.Benchmarks` (`Ark.Tools.Outbox` project-reference shape differs from its lock file). Targeted builds are green.
 - `Ark.Tools.Compliance.Sql.Tests` builds successfully after locked restore, but its VSTest runner cannot execute under the solution's Microsoft.Testing.Platform setting; direct `dotnet vstest` also lacks the SDK's `testhost` asset.
 - Parallel Code Review/CodeQL validation reached its tool time limit and produced no findings or result.
+
+## Task 3 review follow-up — 2026-09-19
+
+### Status
+
+All three review findings are resolved without dependency or diagnostic changes.
+
+### Tests added first
+
+- `PreCancelledFeatureFixtureScanThrows` exercises a pre-cancelled feature-file scan through the existing `TestDataComplianceAnalyzer` test scanner.
+- `ArrayWithLaterClassifiedChild_ReportsError` proves sink traversal continues past a safe first array child and reports the later classified child.
+- Both regressions passed against the pre-correction lexicon implementation, as expected for behavior-preserving coverage.
+
+### Changes
+
+- Replaced wildcard-prefix `Substring` allocation with a length-bounded `string.Compare` using `StringComparison.OrdinalIgnoreCase`.
+- Preserved empty-prefix, wildcard, exclusion, and case-insensitive matching semantics.
+- Added cancellation and later-array-child regression coverage.
+
+### Verification
+
+```text
+dotnet run --project tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj --no-restore -- --filter "FullyQualifiedName~PreCancelledFeatureFixtureScanThrows|FullyQualifiedName~ArrayWithLaterClassifiedChild_ReportsError"
+Passed: 2, Failed: 0, Skipped: 0.
+```
+
+```text
+dotnet build src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj --no-restore -v minimal
+Build succeeded. 0 warnings, 0 errors.
+```
+
+```text
+dotnet run --project tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj --no-restore --
+Passed: 193, Failed: 0, Skipped: 0.
+```
+
+Secret scanning found no secrets in the three implementation/test files.
+
+### Commit
+
+- `32dd19b50b165688d7877e33ab999cbc96817c7c` — `perf(Compliance): remove lexicon wildcard allocation`
+
+### Concerns
+
+- The plan's `dotnet test` form is currently rejected because `global.json` selects Microsoft.Testing.Platform while the CLI classifies this project as VSTest. Running the generated MTP executable with `dotnet run` completed all 193 focused analyzer tests successfully.
