@@ -45,6 +45,10 @@ public sealed class SdkPackageTests
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Abstractions", "Ark.Tools.Compliance.Abstractions.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -103,6 +107,117 @@ public sealed class SdkPackageTests
                 "Ark.Tools.Compliance",
                 "Attribute-only consumers must not drag in the compliance runtime package.");
         }
+    }
+
+    /// <summary>
+    /// Ensures the abstractions package does not implicitly install the opt-in compliance analyzers.
+    /// </summary>
+    [TestMethod]
+    public async Task ComplianceAbstractionsDoesNotEmbedAnalyzers()
+    {
+        var packagePath = Directory.GetFiles(_feed, "Ark.Tools.Compliance.Abstractions.*.nupkg").Single();
+        using var archive = await ZipFile.OpenReadAsync(packagePath).ConfigureAwait(false);
+        var entries = archive.Entries.Select(static entry => entry.FullName).ToArray();
+
+        CollectionAssert.DoesNotContain(entries, "analyzers/dotnet/cs/Ark.Tools.Compliance.Analyzers.dll");
+        CollectionAssert.DoesNotContain(entries, "analyzers/dotnet/cs/Ark.Tools.Compliance.Analyzers.CodeFixes.dll");
+        CollectionAssert.DoesNotContain(entries, "buildTransitive/Ark.Tools.Compliance.Abstractions.targets");
+        CollectionAssert.DoesNotContain(entries, "buildTransitive/ComplianceLexicon.Ark.txt");
+        CollectionAssert.DoesNotContain(entries, "buildTransitive/ComplianceSinks.Ark.txt");
+    }
+
+    /// <summary>
+    /// Ensures the standalone analyzer package honors the compliance opt-out with the abstractions package.
+    /// </summary>
+    [TestMethod]
+    public async Task StandaloneComplianceAnalyzerHonorsOptOut()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-compliance-analyzer-optout");
+        _prepareSdkFixture(fixtureRoot);
+        var project = $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableArkToolsCompliance>false</EnableArkToolsCompliance>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.Compliance.Abstractions" Version="{_packageVersion}" />
+    <PackageReference Include="Ark.Tools.Compliance.Analyzers" Version="{_packageVersion}" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
+""";
+        var scenarioRoot = Path.Join(fixtureRoot, "disabled");
+        Directory.CreateDirectory(scenarioRoot);
+        await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Consumer.csproj"), project).ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Directory.Packages.props"),
+            "<Project><PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally></PropertyGroup></Project>")
+            .ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "NuGet.Config"),
+            $"<configuration><packageSources><clear /><add key=\"local\" value=\"{_feed}\" /><add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" /></packageSources></configuration>")
+            .ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Consumer.cs"),
+            """
+            using Ark.Tools.Compliance;
+            namespace Consumer;
+            public sealed class Customer
+            {
+                [PersonalData]
+                public string Email { get; init; } = "";
+            }
+            public static class Entry
+            {
+                public static void Run(Customer customer) => throw new InvalidOperationException(customer.Email);
+            }
+            """)
+            .ConfigureAwait(false);
+
+        await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
+            _createEnvironment(scenarioRoot)).ConfigureAwait(false);
+
+        using var evaluation = JsonDocument.Parse(await _run(
+            "dotnet",
+            $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -getItem:CompilerVisibleProperty",
+            _createEnvironment(scenarioRoot)).ConfigureAwait(false));
+        CollectionAssert.Contains(_getItemIdentities(evaluation, "CompilerVisibleProperty"), "EnableArkToolsCompliance");
+
+        var result = await _runForExitCode(
+            "dotnet",
+            $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"",
+            _createEnvironment(scenarioRoot)).ConfigureAwait(false);
+
+        Assert.AreEqual(0, result.ExitCode, result.Output);
+
+        var enabledRoot = Path.Join(fixtureRoot, "enabled");
+        Directory.CreateDirectory(enabledRoot);
+        await File.WriteAllTextAsync(Path.Join(enabledRoot, "Consumer.csproj"), project.Replace(
+            "<EnableArkToolsCompliance>false</EnableArkToolsCompliance>",
+            "<EnableArkToolsCompliance>true</EnableArkToolsCompliance>",
+            StringComparison.Ordinal)).ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(enabledRoot, "Directory.Packages.props"),
+            "<Project><PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally></PropertyGroup></Project>")
+            .ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(enabledRoot, "NuGet.Config"),
+            $"<configuration><packageSources><clear /><add key=\"local\" value=\"{_feed}\" /><add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" /></packageSources></configuration>")
+            .ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(enabledRoot, "Consumer.cs"),
+            await File.ReadAllTextAsync(Path.Join(scenarioRoot, "Consumer.cs")).ConfigureAwait(false)).ConfigureAwait(false);
+
+        var enabledResult = await _runForExitCode(
+            "dotnet",
+            $"build \"{Path.Join(enabledRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(enabledRoot, "NuGet.Config")}\"",
+            _createEnvironment(enabledRoot)).ConfigureAwait(false);
+
+        Assert.AreNotEqual(0, enabledResult.ExitCode, enabledResult.Output);
+        StringAssert.Contains(enabledResult.Output, "ARKPII003", StringComparison.Ordinal);
     }
 
     private static readonly string[] _selectedProperties =
