@@ -45,6 +45,10 @@ public sealed class SdkPackageTests
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
+        await _run(
+            "dotnet",
+            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Abstractions", "Ark.Tools.Compliance.Abstractions.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -103,6 +107,23 @@ public sealed class SdkPackageTests
                 "Ark.Tools.Compliance",
                 "Attribute-only consumers must not drag in the compliance runtime package.");
         }
+    }
+
+    /// <summary>
+    /// Ensures the abstractions package does not implicitly install the opt-in compliance analyzers.
+    /// </summary>
+    [TestMethod]
+    public async Task ComplianceAbstractionsDoesNotEmbedAnalyzers()
+    {
+        var packagePath = Directory.GetFiles(_feed, "Ark.Tools.Compliance.Abstractions.*.nupkg").Single();
+        using var archive = await ZipFile.OpenReadAsync(packagePath).ConfigureAwait(false);
+        var entries = archive.Entries.Select(static entry => entry.FullName).ToArray();
+
+        CollectionAssert.DoesNotContain(entries, "analyzers/dotnet/cs/Ark.Tools.Compliance.Analyzers.dll");
+        CollectionAssert.DoesNotContain(entries, "analyzers/dotnet/cs/Ark.Tools.Compliance.Analyzers.CodeFixes.dll");
+        CollectionAssert.DoesNotContain(entries, "buildTransitive/Ark.Tools.Compliance.Abstractions.targets");
+        CollectionAssert.DoesNotContain(entries, "buildTransitive/ComplianceLexicon.Ark.txt");
+        CollectionAssert.DoesNotContain(entries, "buildTransitive/ComplianceSinks.Ark.txt");
     }
 
     private static readonly string[] _selectedProperties =
