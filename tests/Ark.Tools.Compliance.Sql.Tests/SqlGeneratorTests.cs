@@ -158,6 +158,21 @@ public sealed class SqlGeneratorTests
             .And.NotContain("ENCRYPTED WITH");
     }
 
+    /// <summary><c>[Secret]</c> maps to the <c>InfrastructureSecret</c> information type at CRITICAL rank.</summary>
+    [TestMethod]
+    public void SecretColumnIsClassifiedAsInfrastructureSecret()
+    {
+        var result = _generate("""
+            [SqlDataPolicy(Table = "Customers")]
+            public class Customer
+            {
+                [Secret, SqlColumnPolicy("api_key", StoragePolicy.None)]
+                public string ApiKey { get; set; } = "";
+            }
+            """);
+        result.Sql.Single().Should().Contain("INFORMATION_TYPE = 'InfrastructureSecret'").And.Contain("RANK = CRITICAL");
+    }
+
     /// <summary>Sensitive value object types carry classification into SQL policy output.</summary>
     [TestMethod]
     public void SensitiveValueTypeIsClassifiedWithoutMemberAttribute()

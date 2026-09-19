@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Compliance;
 
@@ -350,6 +350,7 @@ public class ProxySocket : Socket
     /// </summary>
     /// <value>A string that holds the username that's used when authenticating with the proxy.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    [Secret]
     public string ProxyUser
     {
         get
@@ -368,6 +369,7 @@ public class ProxySocket : Socket
     /// </summary>
     /// <value>A string that holds the password that's used when authenticating with the proxy.</value>
     /// <exception cref="ArgumentNullException">The specified value is null.</exception>
+    [Secret]
     public string ProxyPass
     {
         get
