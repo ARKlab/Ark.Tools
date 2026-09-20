@@ -480,7 +480,7 @@ internal static class MessagingFunctionsParser
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return type;
-            foreach (var nested in _nestedTypes(type))
+            foreach (var nested in _nestedTypes(type, cancellationToken))
                 yield return nested;
         }
 
@@ -491,12 +491,15 @@ internal static class MessagingFunctionsParser
         }
     }
 
-    private static IEnumerable<INamedTypeSymbol> _nestedTypes(INamedTypeSymbol type)
+    private static IEnumerable<INamedTypeSymbol> _nestedTypes(
+        INamedTypeSymbol type,
+        CancellationToken cancellationToken)
     {
         foreach (var nested in type.GetTypeMembers())
         {
+            cancellationToken.ThrowIfCancellationRequested();
             yield return nested;
-            foreach (var descendant in _nestedTypes(nested))
+            foreach (var descendant in _nestedTypes(nested, cancellationToken))
                 yield return descendant;
         }
     }

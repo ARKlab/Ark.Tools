@@ -8,6 +8,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+
+using Ark.Tools.MediatorFramework.Generators;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -36,6 +39,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string ServerSet = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string Versioning = "Ark.Tools.MediatorFramework.VersioningAttribute";
     private const string McpTool = "Ark.Tools.MediatorFramework.McpToolAttribute";
+    private const string SpecStage = "ApiSurfaceSpecs";
+    private const string OutputStage = "ApiSurfaceOutput";
 
     private static readonly DiagnosticDescriptor MissingSnapshot = new(
         "ARKAPI001",
@@ -72,78 +77,43 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var httpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Http,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var httpTypes = _specsForAttribute(context, Http)
             .Collect();
-        var grpcTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Grpc,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var grpcTypes = _specsForAttribute(context, Grpc)
             .Collect();
-        var rebusTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Rebus,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var rebusTypes = _specsForAttribute(context, Rebus)
             .Collect();
-        var messageTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Message,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var messageTypes = _specsForAttribute(context, Message)
             .Collect();
-        var eventTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Event,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var eventTypes = _specsForAttribute(context, Event)
             .Collect();
-        var participantTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Participant,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var participantTypes = _specsForAttribute(context, Participant)
             .Collect();
-        var networkTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                Network,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var networkTypes = _specsForAttribute(context, Network)
             .Collect();
-        var mcpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
-                McpTool,
-                static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
+        var mcpTypes = _specsForAttribute(context, McpTool)
             .Collect();
-        var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
+        var contractSpecs = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
             .Combine(messageTypes).Combine(eventTypes).Combine(participantTypes).Combine(networkTypes).Combine(mcpTypes)
             .Select(static (pair, _) =>
             {
                 var (((((((http, grpc), rebus), messages), events), participants), networks), mcp) = pair;
-                return http.AddRange(grpc).AddRange(rebus)
-                    .AddRange(messages).AddRange(events).AddRange(participants).AddRange(networks).AddRange(mcp);
-            });
-        var surfaceProvider = contractTypes.Select(static (types, cancellationToken) =>
-            BuildSurface(types, cancellationToken));
+                return new ApiSurfaceAggregateSpec(
+                    http.AddRange(grpc).AddRange(rebus)
+                        .AddRange(messages).AddRange(events).AddRange(participants).AddRange(networks).AddRange(mcp)
+                        .Distinct()
+                        .OrderBy(static spec => spec.FullyQualifiedIdentity, StringComparer.Ordinal)
+                        .ToImmutableArray());
+            })
+            .WithTrackingName(SpecStage);
+        var surfaceProvider = contractSpecs
+            .Select(static (spec, cancellationToken) => BuildSurface(spec.Types.Values, cancellationToken))
+            .WithTrackingName(OutputStage);
 
         // Emit the .g.cs snapshot file (unchanged behaviour)
         context.RegisterSourceOutput(surfaceProvider, static (spc, surface) =>
         {
-            var (lines, _) = surface;
-            var text = string.Join("\n", lines) + (lines.Length == 0 ? string.Empty : "\n");
+            var text = string.Join("\n", surface.Lines) + (surface.Lines.Count == 0 ? string.Empty : "\n");
             spc.AddSource("ArkApiSurface.g.cs", "/*\n" + text.Replace("*/", "* /") + "*/\n");
         });
 
@@ -169,7 +139,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             static (spc, combined) =>
             {
                 var ((surface, baselineFiles), isEnabled) = combined;
-                var (currentLines, locations) = surface;
+                var currentLines = surface.Lines.Values;
+                var locations = surface.Locations.Values.ToDictionary(
+                    static location => location.Key,
+                    static location => LocationSpec._toLocation(location.Location),
+                    StringComparer.Ordinal);
                 if (!isEnabled)
                     return;
 
@@ -222,29 +196,85 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             });
     }
 
+    private static IncrementalValuesProvider<ApiSurfaceTypeSpec> _specsForAttribute(
+        IncrementalGeneratorInitializationContext context,
+        string attributeName)
+    {
+        return context.SyntaxProvider.ForAttributeWithMetadataName<ApiSurfaceTypeSpec?>(
+                attributeName,
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, cancellationToken) =>
+                    attributeContext.TargetSymbol is INamedTypeSymbol type
+                        ? ReadTypeSpec(type, cancellationToken)
+                        : null)
+            .Where(static spec => spec is not null)
+            .Select(static (spec, _) => spec!.Value);
+    }
+
+    private static ApiSurfaceTypeSpec ReadTypeSpec(INamedTypeSymbol type, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var lines = new List<string>();
+        var messagingBlocks = new List<MessagingBlock>();
+        var locations = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
+        AddType(
+            lines,
+            messagingBlocks,
+            locations,
+            type,
+            new Dictionary<INamedTypeSymbol, string[]>(SymbolEqualityComparer.Default));
+        var network = Attribute(type, Network);
+
+        return new ApiSurfaceTypeSpec(
+            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            type.ToDisplayString(),
+            lines.ToImmutableArray(),
+            messagingBlocks.ToImmutableArray(),
+            network is null
+                ? ImmutableArray<string>.Empty
+                : TypeNames(network, "Members").ToImmutableArray(),
+            locations.Select(static pair =>
+                    new ApiSurfaceLocationSpec(pair.Key, LocationSpec._from(pair.Value)))
+                .OrderBy(static location => location.Key, StringComparer.Ordinal)
+                .ToImmutableArray());
+    }
+
     // Builds the sorted, deduplicated surface lines and a contract-name → Location index.
-    private static (ImmutableArray<string> Lines, ImmutableDictionary<string, Location> Locations) BuildSurface(
-        ImmutableArray<INamedTypeSymbol> contractTypes,
+    private static ApiSurfaceSnapshotSpec BuildSurface(
+        ImmutableArray<ApiSurfaceTypeSpec> contractTypes,
         CancellationToken cancellationToken)
     {
         var lines = new List<string>();
         var messagingBlocks = new List<MessagingBlock>();
-        var locBuilder = ImmutableDictionary.CreateBuilder<string, Location>(StringComparer.Ordinal);
+        var locations = new Dictionary<string, ApiSurfaceLocationSpec>(StringComparer.Ordinal);
+        var networkMemberships = BuildNetworkMemberships(contractTypes);
 
-        var types = contractTypes
-            .GroupBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
-            .Select(static group => group.First())
-            .OrderBy(static type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
-            .ToArray();
-        var networkMemberships = BuildNetworkMemberships(types);
-
-        foreach (var type in types)
+        foreach (var type in contractTypes.OrderBy(static type => type.FullyQualifiedIdentity, StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var key = TypeName(type);
-            if (!locBuilder.ContainsKey(key))
-                locBuilder[key] = type.Locations.FirstOrDefault() ?? Location.None;
-            AddType(lines, messagingBlocks, locBuilder, type, networkMemberships);
+            lines.AddRange(type.Lines);
+            foreach (var location in type.Locations)
+                locations[location.Key] = location;
+            foreach (var block in type.MessagingBlocks)
+            {
+                if (block.Kind != "PARTICIPANT")
+                {
+                    messagingBlocks.Add(block);
+                    continue;
+                }
+
+                var networkNames = networkMemberships.TryGetValue(block.Owner, out var memberships)
+                    ? string.Join("|", memberships)
+                    : "-";
+                messagingBlocks.Add(block with
+                {
+                    Fields = block.Fields.Values
+                        .Select(field => field.Name == "network"
+                            ? field with { Value = networkNames }
+                            : field)
+                        .ToImmutableArray(),
+                });
+            }
         }
 
         var ordered = lines.Distinct(StringComparer.Ordinal)
@@ -254,7 +284,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 .ThenBy(block => block.Owner, StringComparer.Ordinal)
                 .SelectMany(FormatMessagingBlock))
             .ToImmutableArray();
-        return (ordered, locBuilder.ToImmutable());
+        return new ApiSurfaceSnapshotSpec(
+            ordered,
+            locations.Values.OrderBy(static location => location.Key, StringComparer.Ordinal).ToImmutableArray());
     }
 
     private static SnapshotParseResult ParseSnapshotLines(string text)
@@ -479,26 +511,21 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static readonly char[] _ownerTerminators = { ' ', '.', '[' };
 
-    private static Dictionary<INamedTypeSymbol, string[]> BuildNetworkMemberships(
-        IEnumerable<INamedTypeSymbol> types)
+    private static Dictionary<string, string[]> BuildNetworkMemberships(
+        IEnumerable<ApiSurfaceTypeSpec> types)
     {
-        var result = new Dictionary<INamedTypeSymbol, List<string>>(SymbolEqualityComparer.Default);
+        var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         foreach (var network in types)
         {
-            var attribute = Attribute(network, Network);
-            if (attribute is null)
-                continue;
-
-            var networkName = network.ToDisplayString();
-            foreach (var member in TypeSymbols(attribute, "Members"))
+            foreach (var member in network.NetworkMembers)
             {
                 if (!result.TryGetValue(member, out var networks))
                     result.Add(member, networks = new List<string>());
-                networks.Add(networkName);
+                networks.Add(network.DisplayName);
             }
         }
 
-        var memberships = new Dictionary<INamedTypeSymbol, string[]>(SymbolEqualityComparer.Default);
+        var memberships = new Dictionary<string, string[]>(StringComparer.Ordinal);
         foreach (var pair in result)
             memberships[pair.Key] = pair.Value
                 .Distinct(StringComparer.Ordinal)
@@ -929,10 +956,26 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         bool IsValid,
         string InvalidLine);
 
+    private sealed record ApiSurfaceAggregateSpec(EquatableArray<ApiSurfaceTypeSpec> Types);
+
+    private sealed record ApiSurfaceSnapshotSpec(
+        EquatableArray<string> Lines,
+        EquatableArray<ApiSurfaceLocationSpec> Locations);
+
+    private readonly record struct ApiSurfaceTypeSpec(
+        string FullyQualifiedIdentity,
+        string DisplayName,
+        EquatableArray<string> Lines,
+        EquatableArray<MessagingBlock> MessagingBlocks,
+        EquatableArray<string> NetworkMembers,
+        EquatableArray<ApiSurfaceLocationSpec> Locations);
+
+    private readonly record struct ApiSurfaceLocationSpec(string Key, LocationSpec? Location);
+
     private readonly record struct MessagingBlock(
         string Kind,
         string Owner,
-        ImmutableArray<MessagingField> Fields);
+        EquatableArray<MessagingField> Fields);
 
     private readonly record struct MessagingField(string Name, string Value);
 }

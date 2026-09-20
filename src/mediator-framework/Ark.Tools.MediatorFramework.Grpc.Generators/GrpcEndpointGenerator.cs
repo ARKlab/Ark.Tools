@@ -696,6 +696,14 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("    public static class ArkGeneratedProtos");
             sb.AppendLine("    {");
             var contracts = compilation.ProtoContracts.Items;
+            var contractsByType = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
+            var contractsByName = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
+            foreach (var contract in contracts)
+            {
+                contractsByType.TryAdd(contract.TypeFullName, contract);
+                contractsByName.TryAdd(contract.Name, contract);
+            }
+            var contractLookup = new ProtoContractLookup(contractsByType, contractsByName);
             var entries = new List<string>();
             var content = new StringBuilder();
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
@@ -703,14 +711,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                 cancellationToken.ThrowIfCancellationRequested();
                 var active = group.ToArray();
                 var requestNames = active
-                    .Select(item => ProtoTypeName(item.TypeFullName, contracts))
+                    .Select(item => ProtoTypeName(item.TypeFullName, contractLookup))
                     .ToHashSet(StringComparer.Ordinal);
                 var reachable = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var endpoint in active)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    AddReachable(endpoint.TypeFullName, contracts, reachable);
-                    AddReachable(endpoint.IsStreaming ? endpoint.StreamElement! : endpoint.Response, contracts, reachable);
+                    AddReachable(endpoint.TypeFullName, contractLookup, reachable);
+                    AddReachable(endpoint.IsStreaming ? endpoint.StreamElement! : endpoint.Response, contractLookup, reachable);
                 }
 
                 content.Clear();
@@ -723,9 +731,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 content.AppendLine("import \"google/type/date.proto\";");
                 content.AppendLine("import \"google/type/datetime.proto\";");
                 content.AppendLine("import \"google/protobuf/empty.proto\";");
-                if (reachable.Any(type => contracts
-                    .FirstOrDefault(contract => string.Equals(contract.TypeFullName, type, StringComparison.Ordinal))?
-                    .Members.Items.Any(member => IsArkNodaTimePeriod(member.Type)) == true))
+                if (reachable.Any(type => contractLookup.ByType.TryGetValue(type, out var contract)
+                    && contract.Members.Items.Any(member => IsArkNodaTimePeriod(member.Type))))
                 {
                     content.AppendLine("import \"ark/nodatime.proto\";");
                 }
@@ -751,7 +758,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 foreach (var contract in contracts
                     .Where(contract => reachable.Contains(contract.TypeFullName))
                     .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
-                    EmitProtoMessage(content, contract, contracts, requestNames.Contains(contract.Name));
+                    EmitProtoMessage(content, contract, contractLookup, requestNames.Contains(contract.Name));
 
                 var maxVersion = active.Max(static x => Math.Max(
                     x.GrpcIntroducedIn,
@@ -771,13 +778,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                         content.Append("  rpc ").Append(item.GrpcMethod)
                             .Append(item.AttachmentRequest != AttachmentRequestKind.None
                                 ? "(stream ark.mediator.UploadDocumentChunk) returns "
-                                : "(" + ProtoTypeName(item.TypeFullName, contracts) + ") returns ");
+                                : "(" + ProtoTypeName(item.TypeFullName, contractLookup) + ") returns ");
                         if (item.AttachmentResponse)
                             content.Append("(stream DownloadDocumentChunk);");
                         else if (item.IsStreaming)
-                            content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contracts)).Append(");");
+                            content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contractLookup)).Append(");");
                         else
-                            content.Append('(').Append(ProtoTypeName(item.Response, contracts)).Append(");");
+                            content.Append('(').Append(ProtoTypeName(item.Response, contractLookup)).Append(");");
                         content.AppendLine();
                     }
                     content.AppendLine("}");
@@ -817,7 +824,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static void EmitProtoMessage(
             StringBuilder sb,
             ProtoContractModel contract,
-            IReadOnlyList<ProtoContractModel> contracts,
+            ProtoContractLookup contractLookup,
             bool isRequest)
         {
             WriteComment(sb, contract.Summary);
@@ -835,7 +842,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .OrderBy(static member => member.Number))
             {
                 WriteComment(sb, member.Description);
-                var type = member.PrecomputedProtoType ?? ProtoTypeName(member.Type, contracts);
+                var type = member.PrecomputedProtoType ?? ProtoTypeName(member.Type, contractLookup);
                 sb.Append("  ");
                 if (member.IsRepeated)
                     sb.Append("repeated ");
@@ -916,37 +923,39 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static void AddReachable(
             string displayName,
-            IReadOnlyList<ProtoContractModel> contracts,
+            ProtoContractLookup contractLookup,
             ISet<string> reachable)
         {
             var name = SimpleName(displayName);
-            var contract = contracts.FirstOrDefault(item =>
-                string.Equals(item.TypeFullName, displayName, StringComparison.Ordinal))
-                ?? contracts.FirstOrDefault(item => item.Name == name);
+            var contract = contractLookup.ByType.TryGetValue(displayName, out var byType)
+                ? byType
+                : contractLookup.ByName.TryGetValue(name, out var byName)
+                    ? byName
+                    : null;
             if (contract is null || !reachable.Add(contract.TypeFullName))
                 return;
 
             foreach (var member in contract.Members.Items)
-                AddReachable(member.Type, contracts, reachable);
+                AddReachable(member.Type, contractLookup, reachable);
             foreach (var include in contract.Includes.Items)
-                AddReachable(include.TypeName, contracts, reachable);
+                AddReachable(include.TypeName, contractLookup, reachable);
         }
 
-        private static string ProtoTypeName(string typeName, IReadOnlyList<ProtoContractModel> contracts)
+        private static string ProtoTypeName(string typeName, ProtoContractLookup contractLookup)
         {
             if (typeName.EndsWith("[]", StringComparison.Ordinal))
-                return ProtoTypeName(typeName[..^2], contracts);
+                return ProtoTypeName(typeName[..^2], contractLookup);
 
             foreach (var collectionPrefix in _collectionPrefixes)
             {
                 if (typeName.StartsWith(collectionPrefix, StringComparison.Ordinal)
                     && typeName.EndsWith(">", StringComparison.Ordinal))
-                    return ProtoTypeName(typeName[collectionPrefix.Length..^1], contracts);
+                    return ProtoTypeName(typeName[collectionPrefix.Length..^1], contractLookup);
             }
 
             if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
                 && typeName.EndsWith(">", StringComparison.Ordinal))
-                return ProtoTypeName(typeName["global::System.Nullable<".Length..^1], contracts);
+                return ProtoTypeName(typeName["global::System.Nullable<".Length..^1], contractLookup);
 
             if (typeName.StartsWith("global::Ark.Tools.Core.EvolvableEnum<", StringComparison.Ordinal))
             {
@@ -994,9 +1003,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (name is not null)
                 return name;
 
-            var contract = contracts.FirstOrDefault(item =>
-                string.Equals(item.TypeFullName, typeName, StringComparison.Ordinal));
-            return contract?.Name ?? "bytes";
+            return contractLookup.ByType.TryGetValue(typeName, out var contract)
+                ? contract.Name
+                : "bytes";
         }
 
         private static bool IsRepeatedProtoType(ITypeSymbol type)
@@ -1220,6 +1229,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                 names.Push(current.Name);
             return string.Join("_", names);
         }
+
+        private sealed record ProtoContractLookup(
+            IReadOnlyDictionary<string, ProtoContractModel> ByType,
+            IReadOnlyDictionary<string, ProtoContractModel> ByName);
 
         private sealed record ProtoContractModel(
             string TypeFullName,
