@@ -2847,7 +2847,9 @@ public sealed class GeneratorSnapshotTests
             public sealed class InvalidGrpc;
             """);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF011");
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF011").Subject;
+        diagnostic.Location.IsInSource.Should().BeTrue();
+        diagnostic.Location.SourceSpan.Should().NotBe(default);
     }
 
     [TestMethod]

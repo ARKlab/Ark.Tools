@@ -1265,6 +1265,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private readonly record struct LocationSpec(
             string FilePath,
+            SyntaxTree? SourceTree,
             int Start,
             int Length,
             int StartLine,
@@ -1278,8 +1279,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                     return default;
 
                 var lineSpan = location.GetLineSpan();
+                var filePath = location.SourceTree?.FilePath ?? string.Empty;
                 return new LocationSpec(
-                    location.SourceTree?.FilePath ?? string.Empty,
+                    filePath,
+                    filePath.Length == 0 ? location.SourceTree : null,
                     location.SourceSpan.Start,
                     location.SourceSpan.Length,
                     lineSpan.StartLinePosition.Line,
@@ -1290,6 +1293,9 @@ namespace Ark.Tools.MediatorFramework.Generators
 
             public Location ToLocation()
             {
+                if (SourceTree is not null)
+                    return Location.Create(SourceTree, new TextSpan(Start, Length));
+
                 return string.IsNullOrEmpty(FilePath)
                     ? Location.None
                     : Location.Create(
