@@ -52,21 +52,41 @@ and [v7 migration guide](migration-v7.md#1-adopt-arktoolssdk).
 
 ### Ark.Tools.Compliance
 
-`Ark.Tools.Compliance` adds data-classification attributes, sensitive value
-objects, `ARKPII*` analyzers, SQL sensitivity and masking policy generation,
-and runtime redaction. Compliance analyzer enforcement is opt-in during beta:
-set `EnableArkToolsCompliance=true` and add the runtime package where classified
+`Ark.Tools.Compliance` makes privacy a build-time concern rather than a
+best-effort code-review task. Classify personal data once, and `ARKPII*`
+analyzers prevent it from silently reaching log templates, exception messages,
+and telemetry tags. Sensitive value objects provide purposeful access to
+cleartext instead of another unguarded string.
+
+The same classification drives generated SQL sensitivity and masking policy,
+serializer and Dapper adapters, Reqnroll test-data protection, and a committed
+`ArkComplianceSurface.txt` inventory. Runtime redaction is the second safety
+net for dynamic and third-party payloads; it fails closed when classification is
+unknown.
+
+Compliance analyzer enforcement is opt-in during beta: set
+`EnableArkToolsCompliance=true` and add the runtime package where classified
 data is declared.
 
 Start with the [Compliance consumer guide](compliance/README.md).
 
 ### Ark.Tools.MediatorFramework
 
-The preview Mediator Framework provides source-generated, transport-neutral
-contracts and hosting for Minimal APIs, Rebus, gRPC, and Azure Functions.
-Migrate endpoint by endpoint: keep handlers and contracts transport-neutral,
-generate a replacement route, and remove the controller only after equivalent
-integration coverage passes. See [migration from MVC](mediator-framework/migration-from-mvc.md).
+The preview Mediator Framework lets one pure application handler serve the
+transports its contract explicitly opts into: Minimal APIs, Rebus, code-first
+gRPC, and Azure Functions. Generated adapters keep routing, binding,
+serialization, and transport context out of business logic while removing the
+MVC and reflection dispatch tax from the hot path.
+
+Choose only the transport packages a host needs. The framework generates
+transport-specific contracts, registration, OpenAPI/proto metadata, standardized
+errors, authorization boundaries, and streaming/attachment handling while the
+application keeps one handler and one model.
+
+Migration is incremental: keep existing controllers as compatibility adapters,
+generate one endpoint at a time, and remove MVC only after equivalent
+integration coverage passes. See
+[migration from MVC](mediator-framework/migration-from-mvc.md).
 
 ### OpenTelemetry is the telemetry contract
 
