@@ -16,19 +16,20 @@ Pin the released v7 SDK version in `global.json`:
 }
 ```
 
-Add it beside the primary SDK in every project that needs the full profile:
+Add the SDK once as the first child of the solution-root
+`Directory.Build.props`:
 
 ```xml
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
   <Sdk Name="Ark.Tools.Sdk" />
 </Project>
 ```
 
 The SDK supplies build safety defaults, analyzers, package and restore policy,
-content metadata, and Microsoft Testing Platform defaults. Keep only
-application-specific settings in `Directory.Build.props` and
-`Directory.Build.targets`. The [SDK reference](sdk/reference.md) lists each
-default and its opt-out switch.
+content metadata, and Microsoft Testing Platform defaults to all projects below
+that directory. Keep only application-specific settings in
+`Directory.Build.props` and `Directory.Build.targets`. The
+[SDK reference](sdk/reference.md) lists each default and its opt-out switch.
 
 ## 2. Upgrade an ejected `Ark.ReferenceProject`
 
@@ -61,7 +62,21 @@ Application Insights processors:
 2. Call `builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration)`.
 3. Configure `ApplicationInsights:ConnectionString` or
    `APPLICATIONINSIGHTS_CONNECTION_STRING`.
-4. Add Rebus and ResourceWatcher OTel instrumentation explicitly where used.
+4. Add only the instrumentation used by the application:
+   - **Rebus:** reference `Ark.Tools.Rebus`, then register tracing and metrics
+    with the existing Rebus options configuration:
+
+    ```csharp
+    options.UseOpenTelemetry(container);
+    options.UseOpenTelemetryMetrics(container);
+    ```
+
+   - **ResourceWatcher:** reference `Ark.Tools.ResourceWatcher.OTel`, then call
+    `builder.AddArkOpenTelemetryForWorkerHost()` for a worker host, or compose
+    `services.AddOpenTelemetry().AddArkResourceWatcherOpenTelemetry()` into an
+    existing provider.
+   - **Outbox:** reference `Ark.Tools.Outbox.OTel`, then compose
+    `services.AddOpenTelemetry().AddArkOutboxOpenTelemetry()`.
 5. Update dashboards and alerts to query OTel spans, metrics, attributes, and
    exception events instead of Application Insights item types.
 
@@ -73,7 +88,9 @@ while those calls are migrated. Do not expect `Ark.Tools.AspNetCore`,
 implicitly.
 
 The [telemetry upgrade guide](otel/upgrade-guide.md) contains the complete
-signal mapping and rollout checklist.
+signal mapping and rollout checklist. The
+[instrumentation reference](otel/instrumentation-reference.md) covers package
+selection and registration for each Ark component.
 
 ## 4. Opt into Compliance
 
