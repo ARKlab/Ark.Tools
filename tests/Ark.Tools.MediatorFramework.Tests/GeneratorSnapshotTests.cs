@@ -2568,6 +2568,7 @@ public sealed class GeneratorSnapshotTests
         _getGeneratedSource(driver).Should().Be(original);
         foreach (var trackingName in trackingNames)
             _assertRunReasons(driver, trackingName, isUnrelatedEdit: true);
+        _assertOutputRunReasons(driver, isUnrelatedEdit: true);
 
         compilation = compilation.ReplaceSyntaxTree(
             sourceTree,
@@ -2576,6 +2577,7 @@ public sealed class GeneratorSnapshotTests
 
         foreach (var trackingName in trackingNames)
             _assertRunReasons(driver, trackingName, isUnrelatedEdit: false);
+        _assertOutputRunReasons(driver, isUnrelatedEdit: false);
     }
 
     private static (GeneratorDriver Driver, CSharpCompilation Compilation) _runTrackedGenerator<TGenerator>(
@@ -2637,6 +2639,27 @@ public sealed class GeneratorSnapshotTests
                 .Should().BeTrue(
                     "{0} should be cached for an unrelated edit, but its reasons were {1}",
                     trackingName,
+                    string.Join(", ", outputs.Select(static output => output.Reason)));
+            return;
+        }
+
+        outputs.Select(static output => output.Reason).Should().Contain(IncrementalStepRunReason.Modified);
+    }
+
+    private static void _assertOutputRunReasons(GeneratorDriver driver, bool isUnrelatedEdit)
+    {
+        var outputs = driver.GetRunResult().Results
+            .SelectMany(static result => result.TrackedOutputSteps.Values)
+            .SelectMany(static steps => steps)
+            .SelectMany(static step => step.Outputs)
+            .ToArray();
+        outputs.Should().NotBeEmpty();
+        if (isUnrelatedEdit)
+        {
+            outputs.All(static output =>
+                    output.Reason is IncrementalStepRunReason.Cached or IncrementalStepRunReason.Unchanged)
+                .Should().BeTrue(
+                    "the source output should be cached for an unrelated edit, but its reasons were {0}",
                     string.Join(", ", outputs.Select(static output => output.Reason)));
             return;
         }

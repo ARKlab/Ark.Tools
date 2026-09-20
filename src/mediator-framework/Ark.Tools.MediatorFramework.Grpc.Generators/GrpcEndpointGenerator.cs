@@ -60,8 +60,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
-                .SelectMany(static (mapping, _) => mapping.AssemblyNames)
-                .Collect();
+                .SelectMany(static (mapping, _) => mapping.AssemblyNames.Items)
+                .Collect()
+                .Select(static (assemblies, _) => new ImmutableEquatableArray<string>(assemblies));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     GrpcMethodAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
@@ -73,19 +74,28 @@ namespace Ark.Tools.MediatorFramework.Generators
             var referencedEndpoints = context.CompilationProvider
                 .Combine(endpointAssemblies)
                 .SelectMany(static (pair, cancellationToken) =>
-                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
+                    GetReferencedEndpoints(pair.Left, pair.Right.Items, cancellationToken));
+            var compilationModel = context.CompilationProvider
+                .Select(static (compilation, cancellationToken) =>
+                    GetCompilationModel(compilation, cancellationToken));
+            var collectedMappings = endpointMappings.Collect()
+                .Select(static (mappings, _) => new ImmutableEquatableArray<AssemblyMapping>(mappings));
 
-            var collected = sourceEndpoints.Collect()
-                .Combine(referencedEndpoints.Collect())
-                .Combine(endpointMappings.Collect())
+            var output = sourceEndpoints.Collect()
+                .Select(static (endpoints, _) => new ImmutableEquatableArray<EndpointModel>(endpoints))
+                .Combine(referencedEndpoints.Collect()
+                    .Select(static (endpoints, _) => new ImmutableEquatableArray<EndpointModel>(endpoints)))
+                .Combine(collectedMappings)
+                .Combine(compilationModel)
+                .Select(static (pair, cancellationToken) => BuildOutput(
+                    pair.Left.Left.Left.Items.AddRange(pair.Left.Left.Right.Items),
+                    pair.Right,
+                    cancellationToken))
                 .WithTrackingName(OutputTrackingName);
 
             context.RegisterSourceOutput(
-                collected.Combine(context.CompilationProvider),
-                static (spc, pair) => Emit(
-                    spc,
-                    pair.Left.Left.Left.AddRange(pair.Left.Left.Right),
-                    pair.Right));
+                output,
+                static (spc, output) => Emit(spc, output));
         }
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
@@ -379,8 +389,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 streamElement,
                 attachmentRequest,
                 attachmentProperties.FirstOrDefault()?.Name,
-                Array.Empty<DiagnosticInfo>(),
-                type.Locations.FirstOrDefault());
+                ImmutableEquatableArray<DiagnosticInfo>.Empty);
         }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
@@ -441,21 +450,27 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
 
-        private static void Emit(
-            SourceProductionContext spc,
+        private static CompilationModel GetCompilationModel(
+            Compilation compilation,
+            CancellationToken cancellationToken)
+        {
+            return new CompilationModel(
+                GetProtoNamespace(compilation),
+                new ImmutableEquatableArray<ProtoContractModel>(
+                    GetProtoContracts(compilation, cancellationToken)));
+        }
+
+        private static GrpcOutput BuildOutput(
             ImmutableArray<EndpointModel> items,
-            Compilation compilation)
+            CompilationModel compilation,
+            CancellationToken cancellationToken)
         {
             if (items.IsDefaultOrEmpty)
-                return;
+                return new GrpcOutput(null, ImmutableEquatableArray<DiagnosticInfo>.Empty);
 
             items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
-            foreach (var item in items)
-            {
-                spc.CancellationToken.ThrowIfCancellationRequested();
-                foreach (var diagnostic in item.Diagnostics)
-                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
-            }
+            var diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(
+                items.SelectMany(static item => item.Diagnostics.Items).ToImmutableArray());
             items = items.Where(static item => item.IsValid).ToImmutableArray();
 
             var sb = new StringBuilder();
@@ -489,7 +504,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         sb.AppendLine("        {");
                         foreach (var e in active)
                         {
-                            spc.CancellationToken.ThrowIfCancellationRequested();
+                            cancellationToken.ThrowIfCancellationRequested();
                             if (e.Summary is not null)
                                 sb.AppendLine("            /// <summary>" + Escape(e.Summary) + "</summary>");
                             else
@@ -516,7 +531,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         sb.AppendLine("            public " + identifier + "GrpcService(global::System.IServiceProvider services) { _services = services; }");
                         foreach (var e in active)
                         {
-                            spc.CancellationToken.ThrowIfCancellationRequested();
+                            cancellationToken.ThrowIfCancellationRequested();
                             var processorService = e.Kind == HandlerKind.Query
                                 ? "global::Ark.Tools.Solid.IQueryProcessor"
                                 : e.Kind == HandlerKind.Command
@@ -592,7 +607,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var item in items)
             {
-                spc.CancellationToken.ThrowIfCancellationRequested();
+                cancellationToken.ThrowIfCancellationRequested();
                 sb.AppendLine("            VerifyGrpcHandlerRegistration(app.ServiceProvider, typeof(" + HandlerService(item) + "), " + Literal(item.TypeFullName) + ", missingHandlers);");
             }
             sb.AppendLine("            if (missingHandlers.Count > 0)");
@@ -620,10 +635,24 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
-            EmitProtoAssets(sb, items, compilation, spc.CancellationToken);
+            EmitProtoAssets(sb, items, compilation, cancellationToken);
             sb.AppendLine("}");
 
-            spc.AddSource("ArkGeneratedEndpoints.Grpc.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+            return new GrpcOutput(sb.ToString(), diagnostics);
+        }
+
+        private static void Emit(SourceProductionContext context, GrpcOutput output)
+        {
+            foreach (var diagnostic in output.Diagnostics.Items)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    diagnostic.Descriptor,
+                    diagnostic.Location.ToLocation(),
+                    diagnostic.TypeName));
+            }
+
+            if (output.Source is not null)
+                context.AddSource("ArkGeneratedEndpoints.Grpc.g.cs", SourceText.From(output.Source, Encoding.UTF8));
         }
 
         private static string HandlerService(EndpointModel item)
@@ -660,13 +689,13 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static void EmitProtoAssets(
             StringBuilder sb,
             ImmutableArray<EndpointModel> items,
-            Compilation compilation,
+            CompilationModel compilation,
             CancellationToken cancellationToken)
         {
             sb.AppendLine("    /// <summary>Source-generated protobuf assets for the discovered gRPC contracts.</summary>");
             sb.AppendLine("    public static class ArkGeneratedProtos");
             sb.AppendLine("    {");
-            var contracts = GetProtoContracts(compilation);
+            var contracts = compilation.ProtoContracts.Items;
             var entries = new List<string>();
             var content = new StringBuilder();
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
@@ -688,7 +717,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 content.AppendLine("syntax = \"proto3\";");
                 content.AppendLine();
                 content.Append("option csharp_namespace = ")
-                    .Append(Literal(GetProtoNamespace(compilation)))
+                    .Append(Literal(compilation.ProtoNamespace))
                     .AppendLine(";");
                 content.AppendLine();
                 content.AppendLine("import \"google/type/date.proto\";");
@@ -696,7 +725,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 content.AppendLine("import \"google/protobuf/empty.proto\";");
                 if (reachable.Any(type => contracts
                     .FirstOrDefault(contract => string.Equals(contract.TypeFullName, type, StringComparison.Ordinal))?
-                    .Members.Any(member => IsArkNodaTimePeriod(member.Type)) == true))
+                    .Members.Items.Any(member => IsArkNodaTimePeriod(member.Type)) == true))
                 {
                     content.AppendLine("import \"ark/nodatime.proto\";");
                 }
@@ -793,14 +822,14 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             WriteComment(sb, contract.Summary);
             sb.Append("message ").Append(contract.Name).AppendLine(" {");
-            foreach (var include in contract.Includes)
+            foreach (var include in contract.Includes.Items)
             {
                 sb.Append("  ").Append(SimpleName(include.TypeName)).Append(' ')
                     .Append(SnakeCase(SimpleName(include.TypeName))).Append(" = ")
                     .Append(include.Number).AppendLine(";");
             }
 
-            foreach (var member in contract.Members
+            foreach (var member in contract.Members.Items
                 .Where(member => !isRequest || (!member.IsServerSet
                     && !member.Type.Contains("IArkAttachment", StringComparison.Ordinal)))
                 .OrderBy(static member => member.Number))
@@ -817,19 +846,23 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine();
         }
 
-        private static IReadOnlyList<ProtoContractModel> GetProtoContracts(Compilation compilation)
+        private static ImmutableArray<ProtoContractModel> GetProtoContracts(
+            Compilation compilation,
+            CancellationToken cancellationToken)
         {
             var protoAttribute = compilation.GetTypeByMetadataName("ProtoBuf.ProtoContractAttribute");
             if (protoAttribute is null)
-                return Array.Empty<ProtoContractModel>();
+                return ImmutableArray<ProtoContractModel>.Empty;
 
-            var result = new List<ProtoContractModel>();
+            var result = ImmutableArray.CreateBuilder<ProtoContractModel>();
             foreach (var assembly in _relevantAssemblies(compilation, protoAttribute.ContainingAssembly))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace)
                     .Where(type => type.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute))))
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var protoContract = type.GetAttributes().First(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
                     var members = AllProperties(type)
@@ -852,7 +885,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             ? EvolvableEnumProtoType(evolvableEnum)
                             : null))
                         .Where(member => member.Number > 0)
-                        .ToArray();
+                        .ToImmutableArray();
 
                     var includes = type.GetAttributes()
                         .Where(attribute => attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoIncludeAttribute")
@@ -865,7 +898,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         .Select(include => new ProtoIncludeModel(
                             include.Type!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                             include.Number))
-                        .ToArray();
+                        .ToImmutableArray();
 
                     var name = protoContract.NamedArguments
                         .FirstOrDefault(argument => argument.Key == "Name")
@@ -874,11 +907,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                         type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
                         XmlDocumentation.Summary(type),
-                        members,
-                        includes));
+                        new ImmutableEquatableArray<ProtoMemberModel>(members),
+                        new ImmutableEquatableArray<ProtoIncludeModel>(includes)));
                 }
             }
-            return result;
+            return result.ToImmutable();
         }
 
         private static void AddReachable(
@@ -893,9 +926,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (contract is null || !reachable.Add(contract.TypeFullName))
                 return;
 
-            foreach (var member in contract.Members)
+            foreach (var member in contract.Members.Items)
                 AddReachable(member.Type, contracts, reachable);
-            foreach (var include in contract.Includes)
+            foreach (var include in contract.Includes.Items)
                 AddReachable(include.TypeName, contracts, reachable);
         }
 
@@ -1097,11 +1130,17 @@ namespace Ark.Tools.MediatorFramework.Generators
             Collection = 2,
         }
 
-        private readonly record struct AssemblyMapping(ImmutableArray<string> AssemblyNames);
+        private readonly record struct AssemblyMapping(ImmutableEquatableArray<string> AssemblyNames)
+        {
+            public AssemblyMapping(ImmutableArray<string> assemblyNames)
+                : this(new ImmutableEquatableArray<string>(assemblyNames))
+            {
+            }
+        }
 
         private readonly record struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, IReadOnlyList<DiagnosticInfo> diagnostics, Location? location)
+            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, ImmutableEquatableArray<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -1118,16 +1157,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                 AttachmentRequest = attachmentRequest;
                 AttachmentPropertyName = attachmentPropertyName;
                 Diagnostics = diagnostics;
-                Location = location;
-                IsValid = diagnostics.Count == 0;
+                IsValid = diagnostics.Items.IsEmpty;
             }
 
             private EndpointModel(INamedTypeSymbol type, DiagnosticInfo diagnostic)
             {
                 TypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 TypeName = GeneratedName(type);
-                Diagnostics = new[] { diagnostic };
-                Location = diagnostic.Location;
+                Diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(ImmutableArray.Create(diagnostic));
                 IsValid = false;
                 GrpcMethod = string.Empty;
                 ServiceGroup = string.Empty;
@@ -1158,8 +1195,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public AttachmentRequestKind AttachmentRequest { get; }
             public string? AttachmentPropertyName { get; }
             public bool IsStreaming => StreamElement is not null;
-            public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
-            public Location? Location { get; }
+            public ImmutableEquatableArray<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }
         }
 
@@ -1168,13 +1204,13 @@ namespace Ark.Tools.MediatorFramework.Generators
             public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location)
             {
                 Descriptor = descriptor;
-                Location = location;
-                Arguments = new object[] { typeName };
+                TypeName = typeName;
+                Location = LocationSpec.Create(location);
             }
 
             public DiagnosticDescriptor Descriptor { get; }
-            public Location Location { get; }
-            public object[] Arguments { get; }
+            public string TypeName { get; }
+            public LocationSpec Location { get; }
         }
 
         private static string GeneratedName(INamedTypeSymbol type)
@@ -1189,8 +1225,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             string TypeFullName,
             string Name,
             string? Summary,
-            IReadOnlyList<ProtoMemberModel> Members,
-            IReadOnlyList<ProtoIncludeModel> Includes);
+            ImmutableEquatableArray<ProtoMemberModel> Members,
+            ImmutableEquatableArray<ProtoIncludeModel> Includes);
 
         private readonly record struct ProtoMemberModel(
             string Name,
@@ -1204,6 +1240,83 @@ namespace Ark.Tools.MediatorFramework.Generators
         private readonly record struct ProtoIncludeModel(string TypeFullName, int Number)
         {
             public string TypeName => SimpleName(TypeFullName);
+        }
+
+        private sealed record CompilationModel(
+            string ProtoNamespace,
+            ImmutableEquatableArray<ProtoContractModel> ProtoContracts);
+
+        private readonly record struct GrpcOutput(
+            string? Source,
+            ImmutableEquatableArray<DiagnosticInfo> Diagnostics);
+
+        private readonly record struct LocationSpec(
+            string FilePath,
+            int Start,
+            int Length,
+            int StartLine,
+            int StartCharacter,
+            int EndLine,
+            int EndCharacter)
+        {
+            public static LocationSpec Create(Location? location)
+            {
+                if (location is null || !location.IsInSource)
+                    return default;
+
+                var lineSpan = location.GetLineSpan();
+                return new LocationSpec(
+                    location.SourceTree?.FilePath ?? string.Empty,
+                    location.SourceSpan.Start,
+                    location.SourceSpan.Length,
+                    lineSpan.StartLinePosition.Line,
+                    lineSpan.StartLinePosition.Character,
+                    lineSpan.EndLinePosition.Line,
+                    lineSpan.EndLinePosition.Character);
+            }
+
+            public Location ToLocation()
+            {
+                return string.IsNullOrEmpty(FilePath)
+                    ? Location.None
+                    : Location.Create(
+                        FilePath,
+                        new TextSpan(Start, Length),
+                        new LinePositionSpan(
+                            new LinePosition(StartLine, StartCharacter),
+                            new LinePosition(EndLine, EndCharacter)));
+            }
+        }
+
+        private readonly struct ImmutableEquatableArray<T> : IEquatable<ImmutableEquatableArray<T>>
+        {
+            public static ImmutableEquatableArray<T> Empty { get; } =
+                new(ImmutableArray<T>.Empty);
+
+            public ImmutableEquatableArray(ImmutableArray<T> items)
+            {
+                Items = items;
+            }
+
+            public ImmutableArray<T> Items { get; }
+
+            public bool Equals(ImmutableEquatableArray<T> other)
+            {
+                return Items.SequenceEqual(other.Items);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                return obj is ImmutableEquatableArray<T> other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                var hash = 17;
+                foreach (var item in Items)
+                    hash = unchecked((hash * 397) ^ EqualityComparer<T>.Default.GetHashCode(item!));
+                return hash;
+            }
         }
     }
 }
