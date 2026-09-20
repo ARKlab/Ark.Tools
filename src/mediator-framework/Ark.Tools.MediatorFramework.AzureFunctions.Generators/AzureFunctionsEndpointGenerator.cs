@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 
@@ -92,10 +93,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .Collect();
         var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _endpointAttribute,
-                static (_, _) => true,
-                static (attributeContext, _) => new EndpointCandidate(
-                    (INamedTypeSymbol)attributeContext.TargetSymbol,
-                    attributeContext.Attributes[0]))
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
+                    ? new EndpointCandidate(type, attributeContext.Attributes[0])
+                    : (EndpointCandidate?)null)
+            .Where(static endpoint => endpoint is not null)
+            .Select(static (endpoint, _) => endpoint!.Value)
             .Collect();
 
         context.RegisterSourceOutput(

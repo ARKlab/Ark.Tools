@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Ark.Tools.MediatorFramework.ApiSurface;
 
@@ -73,43 +74,59 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     {
         var httpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Http,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var grpcTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Grpc,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var rebusTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Rebus,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var messageTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Message,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var eventTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Event,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var participantTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Participant,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var networkTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 Network,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var mcpTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
                 McpTool,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var contractTypes = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
             .Combine(messageTypes).Combine(eventTypes).Combine(participantTypes).Combine(networkTypes).Combine(mcpTypes)

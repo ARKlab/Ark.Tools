@@ -121,14 +121,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var networks = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 _networkAttribute,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var participants = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 _participantAttribute,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
 
         context.RegisterSourceOutput(

@@ -1258,82 +1258,171 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorCachesUnchangedInputs()
+    public void AttributeGeneratorsIgnoreInvalidTargets()
     {
-        var source = """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/cached")]
-            public sealed class CachedEndpoint : IQuery<string>
-            {
-            }
-            """;
-        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path))
-            .Concat(
-            [
-                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(ArkGenerateMcpToolsForAssemblyAttribute).Assembly.Location),
-            ]);
-        var compilation = CSharpCompilation.Create(
-            "Incrementality",
-            [CSharpSyntaxTree.ParseText(source)],
-            references,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-        var options = new GeneratorDriverOptions(
-            IncrementalGeneratorOutputKind.None,
-            trackIncrementalGeneratorSteps: true);
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            [new ArkMinimalApiEndpointGenerator().AsSourceGenerator()],
-            driverOptions: options);
-
-        driver = driver.RunGenerators(compilation);
-        driver = driver.RunGenerators(compilation);
-
-        var reasons = driver.GetRunResult().Results
-            .SelectMany(static result => result.TrackedSteps.Values)
-            .SelectMany(static stepRuns => stepRuns)
-            .SelectMany(static stepRun => stepRun.Outputs)
-            .Select(static output => output.Reason);
-        reasons.Should().Contain(IncrementalStepRunReason.Cached);
-    }
-
-    [TestMethod]
-    public void GrpcGeneratorCachesUnchangedInputs()
-    {
-        _assertGeneratorCaches<ArkGrpcEndpointGenerator>(
+        var minimalApi = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [GrpcMethod("Cached")]
-            public sealed class CachedGrpc : IQuery<string> { }
+            [HttpEndpoint("GET", "/valid")]
+            public sealed class ValidHttpEndpoint : IQuery<string> { }
+            public sealed class InvalidHttpTarget
+            {
+                [HttpEndpoint("GET", "/invalid")]
+                public void Method() { }
+            }
             """);
-    }
-
-    [TestMethod]
-    public void RebusGeneratorCachesUnchangedInputs()
-    {
-        _assertGeneratorCaches<ArkRebusEndpointGenerator>(
+        var grpc = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [GrpcMethod("Valid")]
+            public sealed class ValidGrpcEndpoint : IQuery<string> { }
+            public sealed class InvalidGrpcTarget
+            {
+                [GrpcMethod("Invalid")]
+                public int Field;
+            }
+            """);
+        var rebus = _runGeneratorResult<ArkRebusEndpointGenerator>(
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             [RebusMessage]
-            public sealed class CachedRebus : ICommand { }
+            public sealed class ValidRebusEndpoint : ICommand { }
+            public sealed class InvalidRebusTarget
+            {
+                [RebusMessage]
+                public void Method() { }
+            }
             """);
-    }
-
-    [TestMethod]
-    public void ApiSurfaceGeneratorCachesUnchangedInputs()
-    {
-        _assertGeneratorCaches<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(
+        var apiSurface = _runGeneratorResult<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/cached-api")]
-            public sealed class CachedApi : IQuery<string> { }
+            [HttpEndpoint("GET", "/valid")]
+            public sealed class ValidApiSurfaceEndpoint : IQuery<string> { }
+            public sealed class InvalidApiSurfaceTargets
+            {
+                [HttpEndpoint("GET", "/invalid")] public void Http() { }
+                [GrpcMethod("Invalid")] public void Grpc() { }
+                [RebusMessage] public void Rebus() { }
+                [Message] public void Message() { }
+                [Event] public void Event() { }
+                [MessagingParticipant] public void Participant() { }
+                [MessagingNetwork] public void Network() { }
+                [McpTool] public void Mcp() { }
+            }
             """);
+        var azureFunctions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/valid")]
+            public sealed class ValidAzureFunctionsEndpoint : IQuery<string> { }
+            public sealed class InvalidAzureFunctionsTarget
+            {
+                [HttpEndpoint("GET", "/invalid")]
+                public void Method() { }
+            }
+            """);
+        var messaging = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant]
+            public sealed partial class ValidParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(ValidParticipant) })]
+            public sealed partial class ValidNetwork { }
+            public sealed class InvalidMessagingTargets
+            {
+                [MessagingParticipant] public void Participant() { }
+                [MessagingNetwork] public void Network() { }
+            }
+            """);
+
+        minimalApi.Generated.Should().Contain("ValidHttpEndpoint");
+        grpc.Generated.Should().Contain("ValidGrpcEndpoint");
+        rebus.Generated.Should().Contain("ValidRebusEndpoint");
+        apiSurface.Generated.Should().Contain("ValidApiSurfaceEndpoint");
+        azureFunctions.Generated.Should().Contain("ValidAzureFunctionsEndpoint");
+        messaging.Generated.Should().Contain("ValidNetwork");
+        new[] { minimalApi, grpc, rebus, apiSurface, azureFunctions, messaging }
+            .SelectMany(static result => result.Diagnostics)
+            .Should().NotContain(static diagnostic => diagnostic.Id == "CS8785");
+    }
+
+    [TestMethod]
+    public void MappingGeneratorsParseOnlySyntacticCandidates()
+    {
+        const string unrelatedInvocations = """
+                global::System.Console.WriteLine("unrelated");
+                Unrelated<int>();
+                MapArkEndpointsFromAssembly<Marker, Marker>();
+                MapArkGrpcServicesFromAssembly<Marker, Marker>();
+                RegisterArkRebusHandlersFromAssembly<Marker, Marker>();
+            """;
+        _assertMappingParserFilters<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            MapArkEndpointsFromAssembly<Marker>();
+            {{UNRELATED}}
+            [HttpEndpoint("GET", "/valid")]
+            public sealed class ValidEndpoint : IQuery<string> { }
+            public sealed class Marker { }
+            """,
+            unrelatedInvocations,
+            "MinimalApiMappingParser");
+        _assertMappingParserFilters<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            MapArkGrpcServicesFromAssembly<Marker>();
+            {{UNRELATED}}
+            [GrpcMethod("Valid")]
+            public sealed class ValidEndpoint : IQuery<string> { }
+            public sealed class Marker { }
+            """,
+            unrelatedInvocations,
+            "GrpcMappingParser");
+        _assertMappingParserFilters<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage]
+            public sealed class ValidEndpoint : ICommand { }
+            public sealed class Marker { }
+            public static class Startup
+            {
+                public static void Configure()
+                {
+                    RegisterArkRebusHandlersFromAssembly<Marker>();
+                    {{UNRELATED}}
+                }
+                private static void RegisterArkRebusHandlersFromAssembly<T>() { }
+            }
+            """,
+            unrelatedInvocations,
+            "RebusMappingParser");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorCachesNamedStages()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [GrpcMethod("Cached")]
+            public sealed class CachedGrpc : IQuery<string> { }
+            """;
+        _assertGeneratorCaches<ArkGrpcEndpointGenerator>(
+            source,
+            source.Replace("\"Cached\"", "\"Modified\"", StringComparison.Ordinal),
+            "GrpcEndpointParser",
+            "GrpcModel",
+            "GrpcOutput");
     }
 
     [TestMethod]
@@ -2432,7 +2521,72 @@ public sealed class GeneratorSnapshotTests
             .ConfigureAwait(false);
     }
 
-    private static void _assertGeneratorCaches<TGenerator>(string source)
+    private static void _assertMappingParserFilters<TGenerator>(
+        string sourceTemplate,
+        string unrelatedInvocations,
+        string trackingName)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var source = sourceTemplate.Replace("{{UNRELATED}}", string.Empty, StringComparison.Ordinal);
+        var noisySource = sourceTemplate.Replace("{{UNRELATED}}", unrelatedInvocations, StringComparison.Ordinal);
+        var (originalDriver, _) = _runTrackedGenerator<TGenerator>(source);
+        var original = _getGeneratedSource(originalDriver);
+        var (driver, _) = _runTrackedGenerator<TGenerator>(noisySource);
+        var result = driver.GetRunResult().Results.Single();
+
+        string.Join(
+                Environment.NewLine,
+                result.GeneratedSources.Select(static generated => generated.SourceText.ToString()))
+            .Should().Be(original);
+        result.TrackedSteps.ContainsKey(trackingName).Should().BeTrue(
+            "tracked steps were {0}",
+            string.Join(", ", result.TrackedSteps.Keys));
+        result.TrackedSteps[trackingName]
+            .SelectMany(static step => step.Outputs)
+            .Should().ContainSingle();
+    }
+
+    private static void _assertGeneratorCaches<TGenerator>(
+        string source,
+        string relevantEdit,
+        params string[] trackingNames)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var sourceTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
+        var unrelatedTree = CSharpSyntaxTree.ParseText(
+            "public static class Unrelated { public static int Value => 1; }",
+            path: "Unrelated.cs");
+        var (driver, compilation) = _runTrackedGenerator<TGenerator>(sourceTree, unrelatedTree);
+        var original = _getGeneratedSource(driver);
+        var unrelatedEdit = CSharpSyntaxTree.ParseText(
+            "public static class Unrelated { public static int Value => 2; }",
+            path: "Unrelated.cs");
+
+        compilation = compilation.ReplaceSyntaxTree(unrelatedTree, unrelatedEdit);
+        driver = driver.RunGenerators(compilation);
+
+        _getGeneratedSource(driver).Should().Be(original);
+        foreach (var trackingName in trackingNames)
+            _assertRunReasons(driver, trackingName, isUnrelatedEdit: true);
+
+        compilation = compilation.ReplaceSyntaxTree(
+            sourceTree,
+            CSharpSyntaxTree.ParseText(relevantEdit, path: "Contracts.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        foreach (var trackingName in trackingNames)
+            _assertRunReasons(driver, trackingName, isUnrelatedEdit: false);
+    }
+
+    private static (GeneratorDriver Driver, CSharpCompilation Compilation) _runTrackedGenerator<TGenerator>(
+        string source)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        return _runTrackedGenerator<TGenerator>(CSharpSyntaxTree.ParseText(source, path: "Contracts.cs"));
+    }
+
+    private static (GeneratorDriver Driver, CSharpCompilation Compilation) _runTrackedGenerator<TGenerator>(
+        params SyntaxTree[] syntaxTrees)
         where TGenerator : IIncrementalGenerator, new()
     {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
@@ -2447,7 +2601,7 @@ public sealed class GeneratorSnapshotTests
             ]);
         var compilation = CSharpCompilation.Create(
             "Incrementality",
-            [CSharpSyntaxTree.ParseText(source)],
+            syntaxTrees,
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var options = new GeneratorDriverOptions(
@@ -2457,15 +2611,37 @@ public sealed class GeneratorSnapshotTests
             [new TGenerator().AsSourceGenerator()],
             driverOptions: options);
 
-        driver = driver.RunGenerators(compilation);
-        driver = driver.RunGenerators(compilation);
+        return (driver.RunGenerators(compilation), compilation);
+    }
 
-        var reasons = driver.GetRunResult().Results
-            .SelectMany(static result => result.TrackedSteps.Values)
-            .SelectMany(static stepRuns => stepRuns)
-            .SelectMany(static stepRun => stepRun.Outputs)
-            .Select(static output => output.Reason);
-        reasons.Should().Contain(IncrementalStepRunReason.Cached);
+    private static string _getGeneratedSource(GeneratorDriver driver)
+    {
+        return string.Join(
+            Environment.NewLine,
+            driver.GetRunResult().Results
+                .SelectMany(static result => result.GeneratedSources)
+                .Select(static generated => generated.SourceText.ToString()));
+    }
+
+    private static void _assertRunReasons(GeneratorDriver driver, string trackingName, bool isUnrelatedEdit)
+    {
+        var outputs = driver.GetRunResult().Results
+            .SelectMany(result => result.TrackedSteps[trackingName])
+            .SelectMany(static step => step.Outputs)
+            .ToArray();
+        outputs.Should().NotBeEmpty();
+        if (isUnrelatedEdit)
+        {
+            outputs.All(static output =>
+                    output.Reason is IncrementalStepRunReason.Cached or IncrementalStepRunReason.Unchanged)
+                .Should().BeTrue(
+                    "{0} should be cached for an unrelated edit, but its reasons were {1}",
+                    trackingName,
+                    string.Join(", ", outputs.Select(static output => output.Reason)));
+            return;
+        }
+
+        outputs.Select(static output => output.Reason).Should().Contain(IncrementalStepRunReason.Modified);
     }
 
     [TestMethod]
