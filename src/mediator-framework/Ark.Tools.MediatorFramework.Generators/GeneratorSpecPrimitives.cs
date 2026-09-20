@@ -106,21 +106,44 @@ internal static class EquatableArrayExtensions
 /// <summary>A symbol-free description of a source location carried by generator specifications.</summary>
 internal readonly struct LocationSpec : IEquatable<LocationSpec>
 {
-    private LocationSpec(string filePath, TextSpan textSpan, LinePositionSpan lineSpan)
+    private LocationSpec(
+        string filePath,
+        int start,
+        int length,
+        int startLine,
+        int startCharacter,
+        int endLine,
+        int endCharacter)
     {
         FilePath = filePath;
-        TextSpan = textSpan;
-        LineSpan = lineSpan;
+        Start = start;
+        Length = length;
+        StartLine = startLine;
+        StartCharacter = startCharacter;
+        EndLine = endLine;
+        EndCharacter = endCharacter;
     }
 
     /// <summary>Gets the file that declares the described syntax.</summary>
     public string FilePath { get; }
 
-    /// <summary>Gets the described span.</summary>
-    public TextSpan TextSpan { get; }
+    /// <summary>Gets the zero-based source offset.</summary>
+    public int Start { get; }
 
-    /// <summary>Gets the described line span.</summary>
-    public LinePositionSpan LineSpan { get; }
+    /// <summary>Gets the source span length.</summary>
+    public int Length { get; }
+
+    /// <summary>Gets the zero-based starting line.</summary>
+    public int StartLine { get; }
+
+    /// <summary>Gets the zero-based starting character.</summary>
+    public int StartCharacter { get; }
+
+    /// <summary>Gets the zero-based ending line.</summary>
+    public int EndLine { get; }
+
+    /// <summary>Gets the zero-based ending character.</summary>
+    public int EndCharacter { get; }
 
     /// <summary>Projects a location into a symbol-free specification.</summary>
     /// <param name="location">The location to project.</param>
@@ -130,10 +153,15 @@ internal readonly struct LocationSpec : IEquatable<LocationSpec>
         if (location is null || location.SourceTree is null)
             return null;
 
+        var lineSpan = location.GetLineSpan().Span;
         return new LocationSpec(
             location.SourceTree.FilePath,
-            location.SourceSpan,
-            location.GetLineSpan().Span);
+            location.SourceSpan.Start,
+            location.SourceSpan.Length,
+            lineSpan.Start.Line,
+            lineSpan.Start.Character,
+            lineSpan.End.Line,
+            lineSpan.End.Character);
     }
 
     /// <summary>Projects the first source location of a symbol.</summary>
@@ -153,14 +181,23 @@ internal readonly struct LocationSpec : IEquatable<LocationSpec>
     /// <returns>The materialized location, or <see cref="Location.None"/> when no span is known.</returns>
     public static Location _toLocation(LocationSpec? spec)
         => spec is { } value
-            ? Location.Create(value.FilePath, value.TextSpan, value.LineSpan)
+            ? Location.Create(
+                value.FilePath,
+                new TextSpan(value.Start, value.Length),
+                new LinePositionSpan(
+                    new LinePosition(value.StartLine, value.StartCharacter),
+                    new LinePosition(value.EndLine, value.EndCharacter)))
             : Location.None;
 
     /// <inheritdoc />
     public bool Equals(LocationSpec other)
         => string.Equals(FilePath, other.FilePath, StringComparison.Ordinal)
-            && TextSpan.Equals(other.TextSpan)
-            && LineSpan.Equals(other.LineSpan);
+            && Start == other.Start
+            && Length == other.Length
+            && StartLine == other.StartLine
+            && StartCharacter == other.StartCharacter
+            && EndLine == other.EndLine
+            && EndCharacter == other.EndCharacter;
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is LocationSpec other && Equals(other);
@@ -171,26 +208,31 @@ internal readonly struct LocationSpec : IEquatable<LocationSpec>
         unchecked
         {
             var hash = FilePath is null ? 0 : StringComparer.Ordinal.GetHashCode(FilePath);
-            hash = (hash * 31) + TextSpan.GetHashCode();
-            return (hash * 31) + LineSpan.GetHashCode();
+            hash = (hash * 31) + Start;
+            hash = (hash * 31) + Length;
+            hash = (hash * 31) + StartLine;
+            hash = (hash * 31) + StartCharacter;
+            hash = (hash * 31) + EndLine;
+            return (hash * 31) + EndCharacter;
         }
     }
 }
 
 /// <summary>A symbol-free description of a diagnostic produced while parsing generator inputs.</summary>
-/// <param name="Descriptor">The diagnostic descriptor.</param>
+/// <param name="DescriptorId">The diagnostic identifier.</param>
 /// <param name="Location">The reported location.</param>
 /// <param name="Arguments">The message arguments.</param>
 internal readonly record struct DiagnosticSpec(
-    DiagnosticDescriptor Descriptor,
+    string DescriptorId,
     LocationSpec? Location,
     EquatableArray<string> Arguments)
 {
     /// <summary>Materializes the described diagnostic.</summary>
+    /// <param name="resolveDescriptor">Resolves a diagnostic identifier at the output boundary.</param>
     /// <returns>The diagnostic to report.</returns>
-    public Diagnostic _toDiagnostic()
+    public Diagnostic _toDiagnostic(Func<string, DiagnosticDescriptor> resolveDescriptor)
         => Diagnostic.Create(
-            Descriptor,
+            resolveDescriptor(DescriptorId),
             LocationSpec._toLocation(Location),
             Arguments.Values.Cast<object?>().ToArray());
 }

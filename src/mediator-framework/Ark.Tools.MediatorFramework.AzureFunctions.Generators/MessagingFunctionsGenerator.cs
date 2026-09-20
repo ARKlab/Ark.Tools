@@ -26,6 +26,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     private const string _hostAttributeStage = "MessagingFunctionsHostAttributes";
     private const string _hostSpecStage = "MessagingFunctionsHostSpecs";
     private const string _hostJsonStage = "MessagingFunctionsHostJson";
+    private const string _specStage = "MessagingFunctionsSpecs";
+    private const string _outputStage = "MessagingFunctionsOutput";
     private const int _serviceBusBinding = 0;
     private const int _storageQueueBinding = 1;
 
@@ -50,10 +52,24 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 text.GetText(cancellationToken)?.ToString())
             .WithTrackingName(_hostJsonStage)
             .Collect();
+        var specs = hosts.Combine(hostJson)
+            .Select(static (pair, _) => new MessagingFunctionsAggregateSpec(
+                pair.Left
+                    .OrderBy(static host => host.ParticipantTypeName, StringComparer.Ordinal)
+                    .ThenBy(static host => host.Binding)
+                    .ToImmutableArray(),
+                pair.Right
+                    .OrderBy(static content => content ?? string.Empty, StringComparer.Ordinal)
+                    .ToImmutableArray()))
+            .WithTrackingName(_specStage);
+        var output = specs
+            .Select(static (spec, _) => spec)
+            .WithTrackingName(_outputStage);
 
         context.RegisterSourceOutput(
-            hosts.Combine(hostJson),
-            static (productionContext, input) => _emit(productionContext, input.Left, input.Right));
+            output,
+            static (productionContext, spec) =>
+                _emit(productionContext, spec.Hosts.Values, spec.HostJson.Values));
     }
 
     private static void _emit(
@@ -78,13 +94,13 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 
         var host = ordered[0];
         foreach (var diagnostic in host.ParseDiagnostics)
-            context.ReportDiagnostic(diagnostic._toDiagnostic());
+            context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
 
         if (host.ValidateHostJson)
             _validateHostJson(context, host, hostJson);
 
         foreach (var diagnostic in host.TopologyDiagnostics)
-            context.ReportDiagnostic(diagnostic._toDiagnostic());
+            context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
 
         if (!host.IsEmittable)
             return;
@@ -326,4 +342,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             RegexOptions.CultureInvariant,
             TimeSpan.FromSeconds(1));
     }
+
+    private sealed record MessagingFunctionsAggregateSpec(
+        EquatableArray<MessagingHostSpec> Hosts,
+        EquatableArray<string?> HostJson);
 }

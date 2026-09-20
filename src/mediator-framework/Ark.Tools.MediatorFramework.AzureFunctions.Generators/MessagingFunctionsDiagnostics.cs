@@ -1,7 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System;
+
 using Microsoft.CodeAnalysis;
+
+using Ark.Tools.MediatorFramework.Generators;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 
@@ -105,6 +109,30 @@ internal static class MessagingFunctionsDiagnostics
         "Messaging native entity name collision",
         "Logical messaging names '{0}' and '{1}' map to the same {2} entity name '{3}'",
         DiagnosticSeverity.Error);
+
+    internal static DiagnosticDescriptor _descriptor(string id)
+    {
+        return id switch
+        {
+            "ARKMF033" => _multipleHosts,
+            "ARKMF034" => _invalidParticipant,
+            "ARKMF035" => _missingNetwork,
+            "ARKMF036" => _multipleNetworks,
+            "ARKMF037" => _senderOnly,
+            "ARKMF038" => _unsupportedBinding,
+            "ARKMF039" => _invalidSubscription,
+            "ARKMF040" => _hostJsonNotInspectable,
+            "ARKMF041" => _invalidMessageEncoding,
+            "ARKMF042" => _invalidMaximumDequeueCount,
+            "ARKMF043" => _invalidVisibilityTimeout,
+            "ARKMF044" => _missingStorageQueueRetry,
+            "ARKMF045" => _serializerMismatch,
+            "ARKMF046" => _nativeNameCollision,
+            "ARKMSG025" => MessagingContractTopologyValidator._missingMessagePackShape,
+            "ARKMSG026" => MessagingContractTopologyValidator._missingProtobufShape,
+            _ => throw new InvalidOperationException("Unknown messaging functions diagnostic '" + id + "'."),
+        };
+    }
 
     private static DiagnosticDescriptor _rule(
         string id,

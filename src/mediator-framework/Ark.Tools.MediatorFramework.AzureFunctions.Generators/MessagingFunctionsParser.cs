@@ -466,7 +466,7 @@ internal static class MessagingFunctionsParser
         params object[] arguments)
     {
         return new DiagnosticSpec(
-            descriptor,
+            descriptor.Id,
             location,
             arguments.Select(static argument => argument?.ToString() ?? string.Empty).ToImmutableArray());
     }

@@ -24,6 +24,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string _hostSpecStage = "AzureFunctionsHostSpecs";
     private const string _endpointAttributeStage = "AzureFunctionsEndpointAttributes";
     private const string _endpointSpecStage = "AzureFunctionsEndpointSpecs";
+    private const string _specStage = "AzureFunctionsSpecs";
+    private const string _outputStage = "AzureFunctionsOutput";
 
     private static readonly DiagnosticDescriptor _messagePackNotSupported = new(
         "ARKMF030",
@@ -95,10 +97,24 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .Select(static (endpoint, _) => endpoint!.Value)
             .WithTrackingName(_endpointSpecStage)
             .Collect();
+        var specs = hosts.Combine(sourceEndpoints)
+            .Select(static (pair, _) => new AzureFunctionsAggregateSpec(
+                pair.Left
+                    .OrderBy(static host => host.MarkerFullyQualifiedType, StringComparer.Ordinal)
+                    .ThenBy(static host => host.Prefix, StringComparer.Ordinal)
+                    .ToImmutableArray(),
+                pair.Right
+                    .OrderBy(static endpoint => endpoint.FullyQualifiedType, StringComparer.Ordinal)
+                    .ToImmutableArray()))
+            .WithTrackingName(_specStage);
+        var output = specs
+            .Select(static (spec, _) => spec)
+            .WithTrackingName(_outputStage);
 
         context.RegisterSourceOutput(
-            hosts.Combine(sourceEndpoints),
-            static (productionContext, pair) => _emit(productionContext, pair.Left, pair.Right));
+            output,
+            static (productionContext, spec) =>
+                _emit(productionContext, spec.Hosts.Values, spec.Endpoints.Values));
     }
 
     private static void _emit(
@@ -521,4 +537,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             : _combine(prefix.Replace("{version}", versionText), template);
         return route.Trim('/');
     }
+
+    private sealed record AzureFunctionsAggregateSpec(
+        EquatableArray<HostSpec> Hosts,
+        EquatableArray<EndpointSpec> Endpoints);
 }

@@ -1471,6 +1471,156 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorCachesAggregateSpecsAndEmitsOrderedLfSource()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/zeta")]
+            public sealed class ZetaEndpoint : IQuery<string> { }
+            [HttpEndpoint("GET", "/alpha")]
+            public sealed class AlphaEndpoint : IQuery<string> { }
+            """;
+        const string reversed = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/alpha")]
+            public sealed class AlphaEndpoint : IQuery<string> { }
+            [HttpEndpoint("GET", "/zeta")]
+            public sealed class ZetaEndpoint : IQuery<string> { }
+            """;
+
+        _assertAggregateGenerator(
+            new Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator(),
+            source,
+            reversed,
+            source.Replace("/zeta", "/updated", StringComparison.Ordinal),
+            "ApiSurfaceSpecs",
+            "ApiSurfaceOutput");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorCachesAggregateSpecsAndEmitsOrderedLfSource()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/zeta")]
+            public sealed class ZetaEndpoint : IQuery<string> { }
+            [HttpEndpoint("GET", "/alpha")]
+            public sealed class AlphaEndpoint : IQuery<string> { }
+            """;
+        const string reversed = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/alpha")]
+            public sealed class AlphaEndpoint : IQuery<string> { }
+            [HttpEndpoint("GET", "/zeta")]
+            public sealed class ZetaEndpoint : IQuery<string> { }
+            """;
+
+        _assertAggregateGenerator(
+            new AzureFunctionsEndpointGenerator(),
+            source,
+            reversed,
+            source.Replace("/zeta", "/updated", StringComparison.Ordinal),
+            "AzureFunctionsSpecs",
+            "AzureFunctionsOutput");
+    }
+
+    [TestMethod]
+    public void MessagingFunctionsGeneratorCachesAggregateSpecsAndEmitsOrderedLfSource()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            using Ark.Tools.Solid;
+            [assembly: MessagingFunctionsHost(
+                typeof(PublishingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                ConnectionConfigurationKey = "BookMessaging")]
+            [Event(Name = "zeta")]
+            public sealed class ZetaEvent : ICommand<ZetaEvent> { }
+            [Event(Name = "alpha")]
+            public sealed class AlphaEvent : ICommand<AlphaEvent> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(ZetaEvent), typeof(AlphaEvent) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PublishingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+        const string reversed = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            using Ark.Tools.Solid;
+            [assembly: MessagingFunctionsHost(
+                typeof(PublishingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                ConnectionConfigurationKey = "BookMessaging")]
+            [MessagingNetwork(
+                Members = new[] { typeof(PublishingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(ZetaEvent), typeof(AlphaEvent) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [Event(Name = "alpha")]
+            public sealed class AlphaEvent : ICommand<AlphaEvent> { }
+            [Event(Name = "zeta")]
+            public sealed class ZetaEvent : ICommand<ZetaEvent> { }
+            """;
+
+        _assertAggregateGenerator(
+            new MessagingFunctionsGenerator(),
+            source,
+            reversed,
+            source.Replace("BookMessaging", "UpdatedMessaging", StringComparison.Ordinal),
+            "MessagingFunctionsSpecs",
+            "MessagingFunctionsOutput");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorCachesAggregateSpecsAndEmitsOrderedLfSource()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            [MessagingParticipant(Identity = "zeta")]
+            public sealed partial class ZetaParticipant { }
+            [MessagingParticipant(Identity = "alpha")]
+            public sealed partial class AlphaParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(ZetaParticipant), typeof(AlphaParticipant) })]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+        const string reversed = """
+            using Ark.Tools.MediatorFramework;
+            [MessagingNetwork(Members = new[] { typeof(ZetaParticipant), typeof(AlphaParticipant) })]
+            public sealed partial class BookMessagingNetwork { }
+            [MessagingParticipant(Identity = "alpha")]
+            public sealed partial class AlphaParticipant { }
+            [MessagingParticipant(Identity = "zeta")]
+            public sealed partial class ZetaParticipant { }
+            """;
+
+        _assertAggregateGenerator(
+            new MessagingNetworkGenerator(),
+            source,
+            reversed,
+            source.Replace("\"zeta\"", "\"zeta-updated\"", StringComparison.Ordinal),
+            "MessagingNetworkSpecs",
+            "MessagingNetworkOutput");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorSecuresEndpointsAndSupportsAnonymousOptOut()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
@@ -2620,6 +2770,35 @@ public sealed class GeneratorSnapshotTests
         _assertOutputRunReasons(driver, isUnrelatedEdit: false);
     }
 
+    private static void _assertAggregateGenerator<TGenerator>(
+        TGenerator generator,
+        string source,
+        string reversedSource,
+        string relevantEdit,
+        string specStage,
+        string outputStage)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var first = _getGeneratedArtifacts(generator, source);
+        var reversed = _getGeneratedArtifacts(generator, reversedSource);
+
+        reversed.Should().Be(first);
+        first.Should().NotContain("\r");
+        _assertGeneratorCaches<TGenerator>(source, relevantEdit, specStage, outputStage);
+    }
+
+    private static string _getGeneratedArtifacts<TGenerator>(TGenerator generator, string source)
+        where TGenerator : IIncrementalGenerator
+    {
+        var syntaxTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
+        var (driver, _) = _runTrackedGenerator(generator, syntaxTree);
+        return string.Join(
+            "\n---\n",
+            driver.GetRunResult().Results
+                .SelectMany(static result => result.GeneratedSources)
+                .Select(static generated => generated.HintName + "\n" + generated.SourceText));
+    }
+
     private static (GeneratorDriver Driver, CSharpCompilation Compilation) _runTrackedGenerator<TGenerator>(
         string source)
         where TGenerator : IIncrementalGenerator, new()
@@ -2631,6 +2810,14 @@ public sealed class GeneratorSnapshotTests
         params SyntaxTree[] syntaxTrees)
         where TGenerator : IIncrementalGenerator, new()
     {
+        return _runTrackedGenerator(new TGenerator(), syntaxTrees);
+    }
+
+    private static (GeneratorDriver Driver, CSharpCompilation Compilation) _runTrackedGenerator<TGenerator>(
+        TGenerator generator,
+        params SyntaxTree[] syntaxTrees)
+        where TGenerator : IIncrementalGenerator
+    {
         var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             .Select(static path => MetadataReference.CreateFromFile(path))
@@ -2639,6 +2826,7 @@ public sealed class GeneratorSnapshotTests
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(GrpcMethodAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(MessagingFunctionsHostAttribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
             ]);
         var compilation = CSharpCompilation.Create(
@@ -2650,7 +2838,7 @@ public sealed class GeneratorSnapshotTests
             IncrementalGeneratorOutputKind.None,
             trackIncrementalGeneratorSteps: true);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            [new TGenerator().AsSourceGenerator()],
+            [generator.AsSourceGenerator()],
             driverOptions: options);
 
         return (driver.RunGenerators(compilation), compilation);
