@@ -400,7 +400,6 @@
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.1.0, )",
           "NLog": "[6.2.1, )",
           "NLog.Database": "[6.0.3, )",
@@ -431,12 +430,6 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
-      },
-      "Ben.Demystifier": {
-        "type": "CentralTransitive",
-        "requested": "[0.4.1, )",
-        "resolved": "0.4.1",
-        "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",
@@ -1189,7 +1182,6 @@
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.1.0, )",
           "NLog": "[6.2.1, )",
           "NLog.Database": "[6.0.3, )",
@@ -1220,12 +1212,6 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Macross.Json.Extensions": "[3.0.0, )"
         }
-      },
-      "Ben.Demystifier": {
-        "type": "CentralTransitive",
-        "requested": "[0.4.1, )",
-        "resolved": "0.4.1",
-        "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
       },
       "Macross.Json.Extensions": {
         "type": "CentralTransitive",
