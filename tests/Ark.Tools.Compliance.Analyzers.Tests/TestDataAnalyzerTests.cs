@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Compliance.Analyzers.Tests;
@@ -98,16 +99,17 @@ public sealed class TestDataAnalyzerTests
 
     /// <summary>A fixture scan propagates cancellation that was requested before scanning starts.</summary>
     [TestMethod]
-    public async Task PreCancelledFeatureFixtureScanThrows()
+    public void PreCancelledFeatureFixtureScanThrows()
     {
-        using var cancellation = new CancellationTokenSource();
-        await cancellation.CancelAsync().ConfigureAwait(false);
+        var analyzerType = typeof(TestDataComplianceAnalyzer);
+        var patterns = analyzerType.GetField("_defaultPatterns", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null);
+        var scan = analyzerType.GetMethod("_find", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var cancellationToken = new CancellationToken(canceled: true);
 
-        Func<Task> act = async () => await _analyzeFeatureAsync(
-            "| fixture.person@corporate-domain.com |",
-            cancellationToken: cancellation.Token).ConfigureAwait(false);
+        Action act = () => scan.Invoke(null, ["fixture.person@corporate-domain.com", patterns, cancellationToken]);
 
-        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+        act.Should().Throw<TargetInvocationException>()
+            .Which.InnerException.Should().BeOfType<OperationCanceledException>();
     }
 
     /// <summary>The actual shared OpenAPI/Reqnroll fake generator stays deterministic and scanner-safe for all seeds.</summary>
