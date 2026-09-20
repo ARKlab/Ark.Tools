@@ -34,7 +34,6 @@
     <Project Path="src/common/Ark.Tools.EventSourcing.Rebus/Ark.Tools.EventSourcing.Rebus.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing.SimpleInjector/Ark.Tools.EventSourcing.SimpleInjector.csproj" />
     <Project Path="src/common/Ark.Tools.EventSourcing/Ark.Tools.EventSourcing.csproj" />
-    <Project Path="src/common/Ark.Tools.FtpClient.ArxOne/Ark.Tools.FtpClient.ArxOne.csproj" />
     <Project Path="src/common/Ark.Tools.FtpClient.Core/Ark.Tools.FtpClient.Core.csproj" />
     <Project Path="src/common/Ark.Tools.FtpClient.FluentFtp/Ark.Tools.FtpClient.FluentFtp.csproj" />
     <Project Path="src/common/Ark.Tools.FtpClient.FtpProxy/Ark.Tools.FtpClient.FtpProxy.csproj" />
