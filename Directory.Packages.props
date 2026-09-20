@@ -59,7 +59,6 @@
     <PackageVersion Include="System.Reactive" Version="7.0.0" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="SimpleInjector" Version="5.6.0" />
-    <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
     <PackageVersion Include="FluentFTP" Version="55.0.0" />
     <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
     <PackageVersion Include="Flurl.Http" Version="4.0.2" />
