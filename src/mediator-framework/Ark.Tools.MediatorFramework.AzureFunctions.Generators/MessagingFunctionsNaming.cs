@@ -67,10 +67,13 @@ internal static class MessagingFunctionsNaming
     /// <summary>Escapes a value for a generated C# string literal.</summary>
     /// <param name="value">The value to escape.</param>
     /// <returns>The escaped value.</returns>
-    public static string _escape(string value)
-    {
-        return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
-    }
+return value.Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", "\\r")
+            .Replace("\n", "\\n")
+            .Replace("\t", "\\t")
+            .Replace("\u2028", "\\u2028")
+            .Replace("\u2029", "\\u2029");
 
     /// <summary>Splits a value into casing-aware words.</summary>
     /// <param name="value">The value to split.</param>
