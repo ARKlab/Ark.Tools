@@ -201,6 +201,26 @@ public sealed class ComplianceSurfaceTests
         _run(_personalMember, result.Text, enabled: true).Diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>Surface diagnostics preserve paths and positions mapped by line directives.</summary>
+    [TestMethod]
+    public void Surface_DiagnosticUsesMappedSourceLocation()
+    {
+        var result = _run("""
+            using Ark.Tools.Compliance;
+            namespace Example;
+            public class Customer
+            {
+            #line 42 "MappedCustomer.cs"
+                [PersonalData] public string Email { get; set; } = "";
+            #line default
+            }
+            """, "COMPLIANCE-SURFACE 1\n", enabled: true);
+
+        var location = result.Diagnostics.Single(static diagnostic => diagnostic.Id == "ARKPII020").Location.GetLineSpan();
+        location.Path.Should().Be("MappedCustomer.cs");
+        location.StartLinePosition.Line.Should().Be(41);
+    }
+
     /// <summary>Weakening personal information to a pseudonymous classification is a distinct privacy error.</summary>
     [TestMethod]
     public void Surface_WeakeningClassificationIsReported()

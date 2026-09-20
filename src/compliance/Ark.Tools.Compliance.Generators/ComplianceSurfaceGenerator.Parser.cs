@@ -429,15 +429,17 @@ public sealed partial class ComplianceSurfaceGenerator
             if (location is null || !location.IsInSource)
                 return default;
 
-            var lineSpan = location.GetLineSpan().Span;
+            var mappedLineSpan = location.GetMappedLineSpan();
             return new LocationSpec(
-                location.SourceTree?.FilePath ?? string.Empty,
+                string.IsNullOrEmpty(mappedLineSpan.Path)
+                    ? location.SourceTree?.FilePath ?? string.Empty
+                    : mappedLineSpan.Path,
                 location.SourceSpan.Start,
                 location.SourceSpan.Length,
-                lineSpan.Start.Line,
-                lineSpan.Start.Character,
-                lineSpan.End.Line,
-                lineSpan.End.Character);
+                mappedLineSpan.StartLinePosition.Line,
+                mappedLineSpan.StartLinePosition.Character,
+                mappedLineSpan.EndLinePosition.Line,
+                mappedLineSpan.EndLinePosition.Character);
         }
 
         internal Location ToLocation()
